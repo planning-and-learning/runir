@@ -5,6 +5,7 @@
 #include "runir/cnf_grammar/concept_index.hpp"
 #include "runir/cnf_grammar/constructor_index.hpp"
 #include "runir/cnf_grammar/derivation_rule_index.hpp"
+#include "runir/cnf_grammar/grammar_index.hpp"
 #include "runir/cnf_grammar/non_terminal_index.hpp"
 #include "runir/cnf_grammar/numerical_index.hpp"
 #include "runir/cnf_grammar/role_index.hpp"

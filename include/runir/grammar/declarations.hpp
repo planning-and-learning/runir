@@ -6,6 +6,8 @@
 namespace runir::grammar
 {
 
+struct GrammarTag;
+
 template<runir::ConceptConstructorTag Tag>
 struct Concept;
 

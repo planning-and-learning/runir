@@ -3,9 +3,9 @@
 
 #include "runir/grammar/indices.hpp"
 
+#include <cista/containers/variant.h>
 #include <tuple>
 #include <tyr/common/types.hpp>
-#include <variant>
 
 namespace tyr
 {
@@ -13,7 +13,7 @@ namespace tyr
 template<runir::CategoryTag Category>
 struct Data<runir::grammar::ConstructorOrNonTerminal<Category>>
 {
-    using Variant = std::variant<Index<runir::grammar::Constructor<Category>>, Index<runir::grammar::NonTerminal<Category>>>;
+    using Variant = ::cista::offset::variant<Index<runir::grammar::Constructor<Category>>, Index<runir::grammar::NonTerminal<Category>>>;
 
     Index<runir::grammar::ConstructorOrNonTerminal<Category>> index;
     Variant value;
@@ -24,7 +24,7 @@ struct Data<runir::grammar::ConstructorOrNonTerminal<Category>>
     void clear() noexcept
     {
         tyr::clear(index);
-        value = Variant();
+        tyr::clear(value);
     }
 
     auto cista_members() const noexcept { return std::tie(index, value); }

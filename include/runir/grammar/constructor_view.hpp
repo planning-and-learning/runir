@@ -1,7 +1,11 @@
-#ifndef RUNIR_GRAMMAR_CONSTRUCTOR_OR_NON_TERMINAL_VIEW_HPP_
-#define RUNIR_GRAMMAR_CONSTRUCTOR_OR_NON_TERMINAL_VIEW_HPP_
+#ifndef RUNIR_GRAMMAR_CONSTRUCTOR_VIEW_HPP_
+#define RUNIR_GRAMMAR_CONSTRUCTOR_VIEW_HPP_
 
-#include "runir/grammar/constructor_or_non_terminal_data.hpp"
+#include "runir/grammar/boolean_view.hpp"
+#include "runir/grammar/concept_view.hpp"
+#include "runir/grammar/constructor_data.hpp"
+#include "runir/grammar/numerical_view.hpp"
+#include "runir/grammar/role_view.hpp"
 
 #include <tuple>
 #include <tyr/common/types.hpp>
@@ -11,14 +15,14 @@ namespace tyr
 {
 
 template<runir::CategoryTag Category, typename C>
-class View<Index<runir::grammar::ConstructorOrNonTerminal<Category>>, C>
+class View<Index<runir::grammar::Constructor<Category>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::grammar::ConstructorOrNonTerminal<Category>> m_handle;
+    Index<runir::grammar::Constructor<Category>> m_handle;
 
 public:
-    View(Index<runir::grammar::ConstructorOrNonTerminal<Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::grammar::Constructor<Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }
@@ -30,6 +34,6 @@ public:
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
-}  // namespace tyr
+}
 
 #endif
