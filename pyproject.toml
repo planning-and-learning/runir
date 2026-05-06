@@ -1,0 +1,69 @@
+[build-system]
+requires = [
+    "scikit-build-core>=0.10",
+    "pyyggdrasil==0.0.6",
+]
+build-backend = "pytemplate_feature_build_backend"
+backend-path = ["python"]
+
+[project]
+name = "pytemplate_feature"
+version = "0.0.1"
+description = "Template C++ library with Python bindings"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    {name = "Dominik Drexler", email = "dominik.drexler@liu.se"},
+]
+dependencies = [
+    "pyyggdrasil==0.0.6",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+[project.urls]
+Homepage = "https://github.com/planning-and-learning/project-template-cpp-python"
+
+[tool.scikit-build]
+build.targets = ["pytemplate_feature_wheel"]
+cmake.build-type = "Release"
+install.components = ["pytemplate_feature"]
+wheel.packages = []
+
+[tool.scikit-build.sdist]
+include = [
+    "CMakeLists.txt",
+    "Config.cmake.in",
+    "README.md",
+    "pyproject.toml",
+    "cmake/**",
+    "include/**",
+    "python/**",
+    "src/**",
+    "tests/**",
+]
+exclude = [
+    "build*/**",
+    "*.egg-info/**",
+]
+
+[tool.scikit-build.cmake.define]
+BUILD_SHARED_LIBS = "ON"
+BUILD_PYTEMPLATE_FEATURE = "ON"
+TEMPLATE_FEATURE_BUILD_TESTS = "OFF"
+TEMPLATE_FEATURE_LINK_STATIC_DEPENDENCIES = "OFF"
+CMAKE_INSTALL_LIBDIR = "lib"
+
+[tool.cibuildwheel]
+container-engine = "docker"
+before-build = "python -m pip install --no-cache-dir pyyggdrasil==0.0.6"
+
+[tool.cibuildwheel.linux]
+repair-wheel-command = "LD_LIBRARY_PATH=$(python -c 'import os, pyyggdrasil; print(os.pathsep.join(str(path) for path in sorted(pyyggdrasil.native_prefix().glob(\"lib*\")) if path.is_dir()))') auditwheel repair -w {dest_dir} {wheel}"
+
+[tool.cibuildwheel.macos]
+repair-wheel-command = "DYLD_LIBRARY_PATH=$(python -c 'import os, pyyggdrasil; print(os.pathsep.join(str(path) for path in sorted(pyyggdrasil.native_prefix().glob(\"lib*\")) if path.is_dir()))') delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
+
