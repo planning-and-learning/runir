@@ -1,0 +1,21 @@
+#ifndef RUNIR_GRAMMAR_DERIVATION_RULE_INDEX_HPP_
+#define RUNIR_GRAMMAR_DERIVATION_RULE_INDEX_HPP_
+
+#include "runir/grammar/declarations.hpp"
+
+#include <tyr/common/index_mixins.hpp>
+#include <tyr/common/types.hpp>
+
+namespace tyr
+{
+
+template<runir::CategoryTag Category>
+struct Index<runir::grammar::DerivationRule<Category>> : IndexMixin<Index<runir::grammar::DerivationRule<Category>>>
+{
+    using Base = IndexMixin<Index<runir::grammar::DerivationRule<Category>>>;
+    using Base::Base;
+};
+
+}
+
+#endif
