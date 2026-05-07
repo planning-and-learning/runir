@@ -9,6 +9,7 @@
 
 #include <cassert>
 #include <limits>
+#include <type_traits>
 #include <tyr/common/dynamic_bitset.hpp>
 #include <tyr/common/types.hpp>
 #include <tyr/formalism/object_index.hpp>
@@ -83,24 +84,71 @@ auto role_count(const RoleBuilderPtr& role) noexcept -> uint_t
     return result;
 }
 
+template<tyr::planning::TaskKind Kind, typename F>
+void for_each_current_atom(EvaluationContext<Kind>& context, std::type_identity<tyr::formalism::StaticTag>, F&& f)
+{
+    for (auto atom : context.get_state().get_static_atoms_view())
+        std::forward<F>(f)(atom);
+}
+
+template<tyr::planning::TaskKind Kind, typename F>
+void for_each_current_atom(EvaluationContext<Kind>& context, std::type_identity<tyr::formalism::FluentTag>, F&& f)
+{
+    for (auto fact : context.get_state().get_fluent_facts_view())
+        if (auto atom = fact.get_atom())
+            std::forward<F>(f)(*atom);
+}
+
+template<tyr::planning::TaskKind Kind, typename F>
+void for_each_current_atom(EvaluationContext<Kind>& context, std::type_identity<tyr::formalism::DerivedTag>, F&& f)
+{
+    for (auto atom : context.get_state().get_derived_atoms_view())
+        std::forward<F>(f)(atom);
+}
+
 template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename F>
 void for_each_current_atom(EvaluationContext<Kind>& context, F&& f)
 {
-    if constexpr (std::same_as<T, tyr::formalism::StaticTag>)
+    for_each_current_atom(context, std::type_identity<T> {}, std::forward<F>(f));
+}
+
+template<tyr::formalism::FactKind T, typename Goal, typename F>
+void for_each_goal_literal_atom(Goal goal, bool polarity, F&& f)
+{
+    for (auto literal : goal.template get_literals<T>())
+        if (literal.get_polarity() == polarity)
+            std::forward<F>(f)(literal.get_atom());
+}
+
+template<typename Goal, typename F>
+void for_each_goal_fact_atom(Goal goal, tyr::formalism::PositiveTag, F&& f)
+{
+    for (auto fact : goal.template get_facts<tyr::formalism::PositiveTag>())
+        if (auto atom = fact.get_atom())
+            std::forward<F>(f)(*atom);
+}
+
+template<typename Goal, typename F>
+void for_each_goal_fact_atom(Goal goal, tyr::formalism::NegativeTag, F&& f)
+{
+    for (auto fact : goal.template get_facts<tyr::formalism::NegativeTag>())
+        if (auto atom = fact.get_atom())
+            std::forward<F>(f)(*atom);
+}
+
+template<tyr::formalism::FactKind T, typename Goal, typename F>
+void for_each_goal_atom(Goal goal, bool polarity, F&& f)
+{
+    if constexpr (std::same_as<T, tyr::formalism::FluentTag> && requires { goal.template get_facts<tyr::formalism::PositiveTag>(); })
     {
-        for (auto atom : context.get_state().get_static_atoms_view())
-            std::forward<F>(f)(atom);
+        if (polarity)
+            for_each_goal_fact_atom(goal, tyr::formalism::PositiveTag {}, std::forward<F>(f));
+        else
+            for_each_goal_fact_atom(goal, tyr::formalism::NegativeTag {}, std::forward<F>(f));
     }
-    else if constexpr (std::same_as<T, tyr::formalism::FluentTag>)
+    else
     {
-        for (auto fact : context.get_state().get_fluent_facts_view())
-            if (auto atom = fact.get_atom())
-                std::forward<F>(f)(*atom);
-    }
-    else if constexpr (std::same_as<T, tyr::formalism::DerivedTag>)
-    {
-        for (auto atom : context.get_state().get_derived_atoms_view())
-            std::forward<F>(f)(atom);
+        for_each_goal_literal_atom<T>(goal, polarity, std::forward<F>(f));
     }
 }
 
@@ -108,37 +156,7 @@ template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename F>
 void for_each_goal_atom(EvaluationContext<Kind>& context, bool polarity, F&& f)
 {
     const auto goal = context.get_state().get_state_repository()->get_task()->get_task().get_goal();
-
-    if constexpr (std::same_as<T, tyr::formalism::StaticTag> || std::same_as<T, tyr::formalism::DerivedTag>)
-    {
-        for (auto literal : goal.template get_literals<T>())
-            if (literal.get_polarity() == polarity)
-                std::forward<F>(f)(literal.get_atom());
-    }
-    else if constexpr (std::same_as<T, tyr::formalism::FluentTag>)
-    {
-        if constexpr (requires { goal.template get_facts<tyr::formalism::PositiveTag>(); })
-        {
-            if (polarity)
-            {
-                for (auto fact : goal.template get_facts<tyr::formalism::PositiveTag>())
-                    if (auto atom = fact.get_atom())
-                        std::forward<F>(f)(*atom);
-            }
-            else
-            {
-                for (auto fact : goal.template get_facts<tyr::formalism::NegativeTag>())
-                    if (auto atom = fact.get_atom())
-                        std::forward<F>(f)(*atom);
-            }
-        }
-        else
-        {
-            for (auto literal : goal.template get_literals<T>())
-                if (literal.get_polarity() == polarity)
-                    std::forward<F>(f)(literal.get_atom());
-        }
-    }
+    for_each_goal_atom<T>(goal, polarity, std::forward<F>(f));
 }
 
 template<tyr::formalism::FactKind T>
