@@ -1,5 +1,5 @@
 function(configure_yggdrasil)
-    if(TEMPLATE_FEATURE_DISABLE_YGGDRASIL_DISCOVERY)
+    if(RUNIR_DISABLE_YGGDRASIL_DISCOVERY)
         return()
     endif()
 

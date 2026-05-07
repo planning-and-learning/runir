@@ -1,5 +1,5 @@
 function(configure_tyr)
-    if(TEMPLATE_FEATURE_DISABLE_TYR_DISCOVERY)
+    if(RUNIR_DISABLE_TYR_DISCOVERY)
         return()
     endif()
 

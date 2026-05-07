@@ -1,15 +1,10 @@
-#include <template_feature/template_feature.hpp>
-
 #include <gtest/gtest.h>
+#include <runir/runir.hpp>
 
-TEST(TemplateFeatureTests, AddsIntegers)
+TEST(RunirTests, AddsIntegers) { EXPECT_EQ(runir::add(20, 22), 42); }
+
+TEST(RunirTests, FormatsSummary)
 {
-    EXPECT_EQ(template_feature::add(20, 22), 42);
+    const auto summary = runir::describe("planner", 7);
+    EXPECT_EQ(runir::format_summary(summary), "planner: 7");
 }
-
-TEST(TemplateFeatureTests, FormatsSummary)
-{
-    const auto summary = template_feature::describe("planner", 7);
-    EXPECT_EQ(template_feature::format_summary(summary), "planner: 7");
-}
-

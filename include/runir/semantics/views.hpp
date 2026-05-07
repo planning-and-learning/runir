@@ -4,6 +4,7 @@
 #include "runir/semantics/boolean_view.hpp"
 #include "runir/semantics/concept_view.hpp"
 #include "runir/semantics/constructor_view.hpp"
+#include "runir/semantics/denotation_view.hpp"
 #include "runir/semantics/numerical_view.hpp"
 #include "runir/semantics/role_view.hpp"
 

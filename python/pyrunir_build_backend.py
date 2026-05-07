@@ -4,7 +4,7 @@ from scikit_build_core import build as scikit_build
 
 
 def _num_jobs() -> int:
-    return int(os.environ.get("TEMPLATE_FEATURE_JOBS", "8"))
+    return int(os.environ.get("RUNIR_JOBS", "8"))
 
 
 def _prepend_cmake_args(*args: str) -> None:
@@ -25,9 +25,9 @@ def _prepare_native_build() -> None:
     _prepend_cmake_args(
         f"-DCMAKE_PREFIX_PATH={yggdrasil_prefix}",
         "-DBUILD_SHARED_LIBS=ON",
-        "-DBUILD_PYTEMPLATE_FEATURE=ON",
-        "-DTEMPLATE_FEATURE_BUILD_TESTS=OFF",
-        "-DTEMPLATE_FEATURE_LINK_STATIC_DEPENDENCIES=OFF",
+        "-DBUILD_PYRUNIR=ON",
+        "-DRUNIR_BUILD_TESTS=OFF",
+        "-DRUNIR_LINK_STATIC_DEPENDENCIES=OFF",
         "-DCMAKE_INSTALL_LIBDIR=lib",
     )
 

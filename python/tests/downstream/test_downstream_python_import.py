@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytemplate_feature
+import pyrunir
 import pyyggdrasil
 import pytest
 
@@ -13,18 +13,18 @@ import pytest
 DOWNSTREAM_PACKAGE_DIR = Path(__file__).resolve().parent / "minimal_downstream_package"
 
 
-def test_downstream_python_binding_links_installed_template_feature(tmp_path):
+def test_downstream_python_binding_links_installed_runir(tmp_path):
     cmake = shutil.which("cmake")
     if cmake is None:
         pytest.skip("cmake is required for the downstream binding smoke test")
 
-    template_prefix = Path(pytemplate_feature.native_prefix())
+    runir_prefix = Path(pyrunir.native_prefix())
     yggdrasil_prefix = Path(pyyggdrasil.native_prefix())
-    template_cmake_dir = template_prefix / "lib" / "cmake" / "template_feature"
-    template_library_dir = template_prefix / "lib"
+    runir_cmake_dir = runir_prefix / "lib" / "cmake" / "runir"
+    runir_library_dir = runir_prefix / "lib"
 
-    if not (template_cmake_dir / "template_featureConfig.cmake").exists():
-        pytest.skip("pytemplate_feature was not installed with template_feature CMake package files")
+    if not (runir_cmake_dir / "runirConfig.cmake").exists():
+        pytest.skip("pyrunir was not installed with runir CMake package files")
 
     project_dir = tmp_path / "minimal_downstream_package"
     shutil.copytree(DOWNSTREAM_PACKAGE_DIR, project_dir)
@@ -37,10 +37,10 @@ def test_downstream_python_binding_links_installed_template_feature(tmp_path):
             str(project_dir),
             "-B",
             str(build_dir),
-            f"-DCMAKE_PREFIX_PATH={template_prefix};{yggdrasil_prefix}",
-            f"-Dtemplate_feature_DIR={template_cmake_dir}",
+            f"-DCMAKE_PREFIX_PATH={runir_prefix};{yggdrasil_prefix}",
+            f"-Drunir_DIR={runir_cmake_dir}",
             f"-DPython_EXECUTABLE={sys.executable}",
-            f"-DDOWNSTREAM_TEMPLATE_FEATURE_RUNTIME_LIBRARY_DIR={template_library_dir}",
+            f"-DDOWNSTREAM_RUNIR_RUNTIME_LIBRARY_DIR={runir_library_dir}",
         ],
         check=True,
     )
@@ -54,10 +54,10 @@ def test_downstream_python_binding_links_installed_template_feature(tmp_path):
             sys.executable,
             "-c",
             (
-                "import json, downstream_template_user; "
+                "import json, downstream_runir_user; "
                 "print(json.dumps({"
-                "'formatted': downstream_template_user.format_summary('planner', 7), "
-                "'sum': downstream_template_user.add(20, 22)"
+                "'formatted': downstream_runir_user.format_summary('planner', 7), "
+                "'sum': downstream_runir_user.add(20, 22)"
                 "}))"
             ),
         ],

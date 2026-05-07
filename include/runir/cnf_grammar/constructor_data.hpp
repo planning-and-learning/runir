@@ -6,6 +6,7 @@
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <tyr/common/types.hpp>
+#include <tyr/common/types_utils.hpp>
 
 namespace tyr
 {
@@ -13,68 +14,72 @@ namespace tyr
 template<>
 struct Data<runir::cnf_grammar::Constructor<runir::ConceptTag>>
 {
-    using PrimitiveVariant = ::cista::offset::variant<Index<runir::cnf_grammar::Concept<runir::BotTag>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::TopTag>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::AtomicStateTag<formalism::StaticTag>>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::AtomicStateTag<formalism::FluentTag>>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::AtomicStateTag<formalism::DerivedTag>>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::AtomicGoalTag<formalism::StaticTag>>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::AtomicGoalTag<formalism::FluentTag>>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::AtomicGoalTag<formalism::DerivedTag>>>>;
+    using Variant = ::cista::offset::variant<Index<runir::cnf_grammar::Concept<runir::BotTag>>,
+                                             Index<runir::cnf_grammar::Concept<runir::TopTag>>,
+                                             Index<runir::cnf_grammar::Concept<runir::AtomicStateTag<formalism::StaticTag>>>,
+                                             Index<runir::cnf_grammar::Concept<runir::AtomicStateTag<formalism::FluentTag>>>,
+                                             Index<runir::cnf_grammar::Concept<runir::AtomicStateTag<formalism::DerivedTag>>>,
+                                             Index<runir::cnf_grammar::Concept<runir::AtomicGoalTag<formalism::StaticTag>>>,
+                                             Index<runir::cnf_grammar::Concept<runir::AtomicGoalTag<formalism::FluentTag>>>,
+                                             Index<runir::cnf_grammar::Concept<runir::AtomicGoalTag<formalism::DerivedTag>>>,
+                                             Index<runir::cnf_grammar::Concept<runir::IntersectionTag>>,
+                                             Index<runir::cnf_grammar::Concept<runir::UnionTag>>,
+                                             Index<runir::cnf_grammar::Concept<runir::NegationTag>>,
+                                             Index<runir::cnf_grammar::Concept<runir::ValueRestrictionTag>>,
+                                             Index<runir::cnf_grammar::Concept<runir::ExistentialQuantificationTag>>,
+                                             Index<runir::cnf_grammar::Concept<runir::RoleValueMapContainmentTag>>,
+                                             Index<runir::cnf_grammar::Concept<runir::RoleValueMapEqualityTag>>,
+                                             Index<runir::cnf_grammar::Concept<runir::NominalTag>>>;
 
-    using CompositeVariant = ::cista::offset::variant<Index<runir::cnf_grammar::Concept<runir::IntersectionTag>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::UnionTag>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::NegationTag>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::ValueRestrictionTag>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::ExistentialQuantificationTag>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::RoleValueMapContainmentTag>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::RoleValueMapEqualityTag>>,
-                                                      Index<runir::cnf_grammar::Concept<runir::NominalTag>>>;
-
-    using Variant = ::cista::offset::variant<PrimitiveVariant, CompositeVariant>;
-
+    Index<runir::cnf_grammar::Constructor<runir::ConceptTag>> index;
     Variant value;
 
     Data() = default;
     Data(Variant value_) : value(value_) {}
 
-    void clear() noexcept { tyr::clear(value); }
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(value);
+    }
 
-    auto cista_members() const noexcept { return std::tie(value); }
+    auto cista_members() const noexcept { return std::tie(index, value); }
     auto identifying_members() const noexcept { return std::tie(value); }
 };
 
 template<>
 struct Data<runir::cnf_grammar::Constructor<runir::RoleTag>>
 {
-    using PrimitiveVariant = ::cista::offset::variant<Index<runir::cnf_grammar::Role<runir::UniversalTag>>,
-                                                      Index<runir::cnf_grammar::Role<runir::AtomicStateTag<formalism::StaticTag>>>,
-                                                      Index<runir::cnf_grammar::Role<runir::AtomicStateTag<formalism::FluentTag>>>,
-                                                      Index<runir::cnf_grammar::Role<runir::AtomicStateTag<formalism::DerivedTag>>>,
-                                                      Index<runir::cnf_grammar::Role<runir::AtomicGoalTag<formalism::StaticTag>>>,
-                                                      Index<runir::cnf_grammar::Role<runir::AtomicGoalTag<formalism::FluentTag>>>,
-                                                      Index<runir::cnf_grammar::Role<runir::AtomicGoalTag<formalism::DerivedTag>>>,
-                                                      Index<runir::cnf_grammar::Role<runir::IntersectionTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::cnf_grammar::Role<runir::UniversalTag>>,
+                                             Index<runir::cnf_grammar::Role<runir::AtomicStateTag<formalism::StaticTag>>>,
+                                             Index<runir::cnf_grammar::Role<runir::AtomicStateTag<formalism::FluentTag>>>,
+                                             Index<runir::cnf_grammar::Role<runir::AtomicStateTag<formalism::DerivedTag>>>,
+                                             Index<runir::cnf_grammar::Role<runir::AtomicGoalTag<formalism::StaticTag>>>,
+                                             Index<runir::cnf_grammar::Role<runir::AtomicGoalTag<formalism::FluentTag>>>,
+                                             Index<runir::cnf_grammar::Role<runir::AtomicGoalTag<formalism::DerivedTag>>>,
+                                             Index<runir::cnf_grammar::Role<runir::IntersectionTag>>,
+                                             Index<runir::cnf_grammar::Role<runir::UnionTag>>,
+                                             Index<runir::cnf_grammar::Role<runir::ComplementTag>>,
+                                             Index<runir::cnf_grammar::Role<runir::InverseTag>>,
+                                             Index<runir::cnf_grammar::Role<runir::CompositionTag>>,
+                                             Index<runir::cnf_grammar::Role<runir::TransitiveClosureTag>>,
+                                             Index<runir::cnf_grammar::Role<runir::ReflexiveTransitiveClosureTag>>,
+                                             Index<runir::cnf_grammar::Role<runir::RestrictionTag>>,
+                                             Index<runir::cnf_grammar::Role<runir::IdentityTag>>>;
 
-    using CompositeVariant = ::cista::offset::variant<Index<runir::cnf_grammar::Role<runir::UnionTag>>,
-                                                      Index<runir::cnf_grammar::Role<runir::ComplementTag>>,
-                                                      Index<runir::cnf_grammar::Role<runir::InverseTag>>,
-                                                      Index<runir::cnf_grammar::Role<runir::CompositionTag>>,
-                                                      Index<runir::cnf_grammar::Role<runir::TransitiveClosureTag>>,
-                                                      Index<runir::cnf_grammar::Role<runir::ReflexiveTransitiveClosureTag>>,
-                                                      Index<runir::cnf_grammar::Role<runir::RestrictionTag>>,
-                                                      Index<runir::cnf_grammar::Role<runir::IdentityTag>>>;
-
-    using Variant = ::cista::offset::variant<PrimitiveVariant, CompositeVariant>;
-
+    Index<runir::cnf_grammar::Constructor<runir::RoleTag>> index;
     Variant value;
 
     Data() = default;
     Data(Variant value_) : value(value_) {}
 
-    void clear() noexcept { tyr::clear(value); }
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(value);
+    }
 
-    auto cista_members() const noexcept { return std::tie(value); }
+    auto cista_members() const noexcept { return std::tie(index, value); }
     auto identifying_members() const noexcept { return std::tie(value); }
 };
 
@@ -86,14 +91,19 @@ struct Data<runir::cnf_grammar::Constructor<runir::BooleanTag>>
                                              Index<runir::cnf_grammar::Boolean<runir::AtomicStateTag<formalism::DerivedTag>>>,
                                              Index<runir::cnf_grammar::Boolean<runir::NonemptyTag>>>;
 
+    Index<runir::cnf_grammar::Constructor<runir::BooleanTag>> index;
     Variant value;
 
     Data() = default;
     Data(Variant value_) : value(value_) {}
 
-    void clear() noexcept { tyr::clear(value); }
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(value);
+    }
 
-    auto cista_members() const noexcept { return std::tie(value); }
+    auto cista_members() const noexcept { return std::tie(index, value); }
     auto identifying_members() const noexcept { return std::tie(value); }
 };
 
@@ -102,14 +112,19 @@ struct Data<runir::cnf_grammar::Constructor<runir::NumericalTag>>
 {
     using Variant = ::cista::offset::variant<Index<runir::cnf_grammar::Numerical<runir::CountTag>>, Index<runir::cnf_grammar::Numerical<runir::DistanceTag>>>;
 
+    Index<runir::cnf_grammar::Constructor<runir::NumericalTag>> index;
     Variant value;
 
     Data() = default;
     Data(Variant value_) : value(value_) {}
 
-    void clear() noexcept { tyr::clear(value); }
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(value);
+    }
 
-    auto cista_members() const noexcept { return std::tie(value); }
+    auto cista_members() const noexcept { return std::tie(index, value); }
     auto identifying_members() const noexcept { return std::tie(value); }
 };
 

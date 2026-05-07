@@ -1,8 +1,7 @@
-#include <template_feature/template_feature.hpp>
-
+#include <runir/runir.hpp>
 #include <utility>
 
-namespace template_feature
+namespace runir
 {
 
 int add(int lhs, int rhs) { return lhs + rhs; }

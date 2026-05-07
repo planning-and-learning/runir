@@ -4,6 +4,7 @@
 #include "runir/semantics/boolean_data.hpp"
 #include "runir/semantics/concept_data.hpp"
 #include "runir/semantics/constructor_data.hpp"
+#include "runir/semantics/denotation_data.hpp"
 #include "runir/semantics/numerical_data.hpp"
 #include "runir/semantics/role_data.hpp"
 
