@@ -184,6 +184,9 @@ using SubstitutionRuleViewList = std::vector<SubstitutionRuleView<Category>>;
 
 using GrammarView = tyr::View<tyr::Index<GrammarTag>, ConstructorRepository>;
 
+inline const ConstructorRepository& get_repository(const ConstructorRepository& repository) noexcept { return repository; }
+inline ConstructorRepository& get_repository(ConstructorRepository& repository) noexcept { return repository; }
+
 }
 
 #endif

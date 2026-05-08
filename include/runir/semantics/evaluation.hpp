@@ -175,7 +175,7 @@ auto evaluate_atomic_state_concept(tyr::View<tyr::Index<Concept<AtomicStateTag<T
     detail::for_each_current_atom<T>(context,
                                      [&](auto atom)
                                      {
-                                         if (atom.get_predicate() != constructor.get_predicate())
+                                         if (atom.get_predicate().get_index() != constructor.get_data().predicate)
                                              return;
 
                                          const auto object = detail::object_index(atom, 0);
@@ -200,7 +200,7 @@ auto evaluate_atomic_goal_concept(tyr::View<tyr::Index<Concept<AtomicGoalTag<T>>
                                   constructor.get_polarity(),
                                   [&](auto atom)
                                   {
-                                      if (atom.get_predicate() != constructor.get_predicate())
+                                      if (atom.get_predicate().get_index() != constructor.get_data().predicate)
                                           return;
 
                                       const auto object = detail::object_index(atom, 0);
@@ -220,7 +220,7 @@ auto evaluate_atomic_state_role(tyr::View<tyr::Index<Role<AtomicStateTag<T>>>, C
     detail::for_each_current_atom<T>(context,
                                      [&](auto atom)
                                      {
-                                         if (atom.get_predicate() != constructor.get_predicate())
+                                         if (atom.get_predicate().get_index() != constructor.get_data().predicate)
                                              return;
 
                                          const auto lhs = detail::object_index(atom, 0);
@@ -247,7 +247,7 @@ auto evaluate_atomic_goal_role(tyr::View<tyr::Index<Role<AtomicGoalTag<T>>>, C> 
                                   constructor.get_polarity(),
                                   [&](auto atom)
                                   {
-                                      if (atom.get_predicate() != constructor.get_predicate())
+                                      if (atom.get_predicate().get_index() != constructor.get_data().predicate)
                                           return;
 
                                       const auto lhs = detail::object_index(atom, 0);
@@ -268,7 +268,7 @@ auto evaluate_atomic_state_boolean(tyr::View<tyr::Index<Boolean<AtomicStateTag<T
     detail::for_each_current_atom<T>(context,
                                      [&](auto atom)
                                      {
-                                         if (atom.get_predicate() == constructor.get_predicate())
+                                         if (atom.get_predicate().get_index() == constructor.get_data().predicate)
                                              value = true;
                                      });
 

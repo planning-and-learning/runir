@@ -73,6 +73,9 @@ using ConstructorListView = tyr::View<tyr::IndexList<Constructor<Category>>, Con
 template<CategoryTag Category>
 using ConstructorViewList = std::vector<ConstructorView<Category>>;
 
+inline const ConstructorRepository& get_repository(const ConstructorRepository& repository) noexcept { return repository; }
+inline ConstructorRepository& get_repository(ConstructorRepository& repository) noexcept { return repository; }
+
 }
 
 #endif
