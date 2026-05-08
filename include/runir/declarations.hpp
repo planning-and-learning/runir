@@ -15,18 +15,22 @@ namespace runir
 
 struct ConceptTag
 {
+    static constexpr auto name = "concept";
 };
 
 struct RoleTag
 {
+    static constexpr auto name = "role";
 };
 
 struct BooleanTag
 {
+    static constexpr auto name = "boolean";
 };
 
 struct NumericalTag
 {
+    static constexpr auto name = "numerical";
 };
 
 template<typename T>

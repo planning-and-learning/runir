@@ -38,68 +38,61 @@ struct Data<runir::Concept<runir::AtomicGoalTag<T>>> : runir::semantics::Predica
 
 template<>
 struct Data<runir::Concept<runir::IntersectionTag>> :
-    runir::semantics::
-        BinaryData<runir::Concept<runir::IntersectionTag>, Index<runir::Constructor<runir::ConceptTag>>, Index<runir::Constructor<runir::ConceptTag>>>
+    runir::semantics::BinaryData<runir::Concept<runir::IntersectionTag>, runir::Constructor<runir::ConceptTag>, runir::Constructor<runir::ConceptTag>>
 {
-    using Base = runir::semantics::
-        BinaryData<runir::Concept<runir::IntersectionTag>, Index<runir::Constructor<runir::ConceptTag>>, Index<runir::Constructor<runir::ConceptTag>>>;
+    using Base =
+        runir::semantics::BinaryData<runir::Concept<runir::IntersectionTag>, runir::Constructor<runir::ConceptTag>, runir::Constructor<runir::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::Concept<runir::UnionTag>> :
-    runir::semantics::BinaryData<runir::Concept<runir::UnionTag>, Index<runir::Constructor<runir::ConceptTag>>, Index<runir::Constructor<runir::ConceptTag>>>
+    runir::semantics::BinaryData<runir::Concept<runir::UnionTag>, runir::Constructor<runir::ConceptTag>, runir::Constructor<runir::ConceptTag>>
 {
-    using Base = runir::semantics::
-        BinaryData<runir::Concept<runir::UnionTag>, Index<runir::Constructor<runir::ConceptTag>>, Index<runir::Constructor<runir::ConceptTag>>>;
+    using Base = runir::semantics::BinaryData<runir::Concept<runir::UnionTag>, runir::Constructor<runir::ConceptTag>, runir::Constructor<runir::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
-struct Data<runir::Concept<runir::NegationTag>> : runir::semantics::UnaryData<runir::Concept<runir::NegationTag>, Index<runir::Constructor<runir::ConceptTag>>>
+struct Data<runir::Concept<runir::NegationTag>> : runir::semantics::UnaryData<runir::Concept<runir::NegationTag>, runir::Constructor<runir::ConceptTag>>
 {
-    using Base = runir::semantics::UnaryData<runir::Concept<runir::NegationTag>, Index<runir::Constructor<runir::ConceptTag>>>;
+    using Base = runir::semantics::UnaryData<runir::Concept<runir::NegationTag>, runir::Constructor<runir::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::Concept<runir::ValueRestrictionTag>> :
-    runir::semantics::
-        BinaryData<runir::Concept<runir::ValueRestrictionTag>, Index<runir::Constructor<runir::RoleTag>>, Index<runir::Constructor<runir::ConceptTag>>>
+    runir::semantics::BinaryData<runir::Concept<runir::ValueRestrictionTag>, runir::Constructor<runir::RoleTag>, runir::Constructor<runir::ConceptTag>>
 {
-    using Base = runir::semantics::
-        BinaryData<runir::Concept<runir::ValueRestrictionTag>, Index<runir::Constructor<runir::RoleTag>>, Index<runir::Constructor<runir::ConceptTag>>>;
+    using Base =
+        runir::semantics::BinaryData<runir::Concept<runir::ValueRestrictionTag>, runir::Constructor<runir::RoleTag>, runir::Constructor<runir::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::Concept<runir::ExistentialQuantificationTag>> :
-    runir::semantics::
-        BinaryData<runir::Concept<runir::ExistentialQuantificationTag>, Index<runir::Constructor<runir::RoleTag>>, Index<runir::Constructor<runir::ConceptTag>>>
+    runir::semantics::BinaryData<runir::Concept<runir::ExistentialQuantificationTag>, runir::Constructor<runir::RoleTag>, runir::Constructor<runir::ConceptTag>>
 {
-    using Base = runir::semantics::BinaryData<runir::Concept<runir::ExistentialQuantificationTag>,
-                                              Index<runir::Constructor<runir::RoleTag>>,
-                                              Index<runir::Constructor<runir::ConceptTag>>>;
+    using Base = runir::semantics::
+        BinaryData<runir::Concept<runir::ExistentialQuantificationTag>, runir::Constructor<runir::RoleTag>, runir::Constructor<runir::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::Concept<runir::RoleValueMapContainmentTag>> :
-    runir::semantics::
-        BinaryData<runir::Concept<runir::RoleValueMapContainmentTag>, Index<runir::Constructor<runir::RoleTag>>, Index<runir::Constructor<runir::RoleTag>>>
+    runir::semantics::BinaryData<runir::Concept<runir::RoleValueMapContainmentTag>, runir::Constructor<runir::RoleTag>, runir::Constructor<runir::RoleTag>>
 {
-    using Base = runir::semantics::
-        BinaryData<runir::Concept<runir::RoleValueMapContainmentTag>, Index<runir::Constructor<runir::RoleTag>>, Index<runir::Constructor<runir::RoleTag>>>;
+    using Base =
+        runir::semantics::BinaryData<runir::Concept<runir::RoleValueMapContainmentTag>, runir::Constructor<runir::RoleTag>, runir::Constructor<runir::RoleTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::Concept<runir::RoleValueMapEqualityTag>> :
-    runir::semantics::
-        BinaryData<runir::Concept<runir::RoleValueMapEqualityTag>, Index<runir::Constructor<runir::RoleTag>>, Index<runir::Constructor<runir::RoleTag>>>
+    runir::semantics::BinaryData<runir::Concept<runir::RoleValueMapEqualityTag>, runir::Constructor<runir::RoleTag>, runir::Constructor<runir::RoleTag>>
 {
-    using Base = runir::semantics::
-        BinaryData<runir::Concept<runir::RoleValueMapEqualityTag>, Index<runir::Constructor<runir::RoleTag>>, Index<runir::Constructor<runir::RoleTag>>>;
+    using Base =
+        runir::semantics::BinaryData<runir::Concept<runir::RoleValueMapEqualityTag>, runir::Constructor<runir::RoleTag>, runir::Constructor<runir::RoleTag>>;
     using Base::Base;
 };
 

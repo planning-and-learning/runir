@@ -30,10 +30,10 @@ template<typename Self, typename Arg>
 struct UnaryData
 {
     tyr::Index<Self> index;
-    Arg arg;
+    tyr::Index<Arg> arg;
 
     UnaryData() = default;
-    UnaryData(Arg arg_) : index(), arg(std::move(arg_)) {}
+    UnaryData(tyr::Index<Arg> arg_) : index(), arg(std::move(arg_)) {}
 
     void clear() noexcept
     {
@@ -49,11 +49,11 @@ template<typename Self, typename Lhs, typename Rhs>
 struct BinaryData
 {
     tyr::Index<Self> index;
-    Lhs lhs;
-    Rhs rhs;
+    tyr::Index<Lhs> lhs;
+    tyr::Index<Rhs> rhs;
 
     BinaryData() = default;
-    BinaryData(Lhs lhs_, Rhs rhs_) : index(), lhs(std::move(lhs_)), rhs(std::move(rhs_)) {}
+    BinaryData(tyr::Index<Lhs> lhs_, tyr::Index<Rhs> rhs_) : index(), lhs(std::move(lhs_)), rhs(std::move(rhs_)) {}
 
     void clear() noexcept
     {
@@ -70,12 +70,12 @@ template<typename Self, typename Lhs, typename Mid, typename Rhs>
 struct TernaryData
 {
     tyr::Index<Self> index;
-    Lhs lhs;
-    Mid mid;
-    Rhs rhs;
+    tyr::Index<Lhs> lhs;
+    tyr::Index<Mid> mid;
+    tyr::Index<Rhs> rhs;
 
     TernaryData() = default;
-    TernaryData(Lhs lhs_, Mid mid_, Rhs rhs_) : index(), lhs(std::move(lhs_)), mid(std::move(mid_)), rhs(std::move(rhs_)) {}
+    TernaryData(tyr::Index<Lhs> lhs_, tyr::Index<Mid> mid_, tyr::Index<Rhs> rhs_) : index(), lhs(std::move(lhs_)), mid(std::move(mid_)), rhs(std::move(rhs_)) {}
 
     void clear() noexcept
     {

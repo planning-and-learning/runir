@@ -1,0 +1,66 @@
+#include "parser_def.hpp"
+
+namespace runir::grammar::parser
+{
+
+BOOST_SPIRIT_INSTANTIATE(concept_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_root_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_bot_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_top_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_atomic_state_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_atomic_goal_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_intersection_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_union_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_negation_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_value_restriction_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_existential_quantification_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_role_value_map_containment_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_role_value_map_equality_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_nominal_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_non_terminal_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_choice_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(concept_derivation_rule_type, iterator_type, context_type)
+
+BOOST_SPIRIT_INSTANTIATE(role_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_root_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_universal_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_atomic_state_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_atomic_goal_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_intersection_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_union_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_complement_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_inverse_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_composition_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_transitive_closure_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_reflexive_transitive_closure_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_restriction_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_identity_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_non_terminal_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_choice_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(role_derivation_rule_type, iterator_type, context_type)
+
+BOOST_SPIRIT_INSTANTIATE(constructor_or_non_terminal_variant_type, iterator_type, context_type)
+
+BOOST_SPIRIT_INSTANTIATE(boolean_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(boolean_root_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(boolean_atomic_state_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(boolean_nonempty_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(boolean_non_terminal_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(boolean_choice_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(boolean_derivation_rule_type, iterator_type, context_type)
+
+BOOST_SPIRIT_INSTANTIATE(numerical_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(numerical_root_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(numerical_count_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(numerical_distance_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(numerical_non_terminal_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(numerical_choice_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(numerical_derivation_rule_type, iterator_type, context_type)
+
+BOOST_SPIRIT_INSTANTIATE(derivation_rule_variant_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(grammar_head_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(grammar_body_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(grammar_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(grammar_root_type, iterator_type, context_type)
+
+}

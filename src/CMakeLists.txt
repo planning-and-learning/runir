@@ -1,4 +1,9 @@
 add_library(core
+    cnf_grammar/generate.cpp
+    cnf_grammar/translate.cpp
+    grammar/parser.cpp
+    grammar/parser/parser.cpp
+    grammar/parser/parser_instantiations.cpp
     runir.cpp
 )
 add_library(runir::core ALIAS core)

@@ -3,6 +3,7 @@
 
 #include "runir/config.hpp"
 #include "runir/declarations.hpp"
+#include "runir/semantics/canonicalization.hpp"
 #include "runir/semantics/denotation_builder.hpp"
 #include "runir/semantics/denotation_data.hpp"
 #include "runir/semantics/denotation_index.hpp"

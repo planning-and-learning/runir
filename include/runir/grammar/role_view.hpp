@@ -30,7 +30,7 @@ public:
     auto get_predicate() const noexcept
         requires(runir::is_atomic_state_tag_v<Tag> || runir::is_atomic_goal_tag_v<Tag>)
     {
-        return make_view(get_data().predicate, *m_context);
+        return make_view(get_data().predicate, m_context->get_planning_repository());
     }
 
     auto get_polarity() const noexcept
@@ -60,7 +60,7 @@ public:
         return make_view(get_data().rhs, *m_context);
     }
 
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    auto identifying_members() const noexcept { return std::tie(get_data()); }
 };
 
 }

@@ -104,20 +104,4 @@ static_assert(uses_trivial_storage_v<runir::semantics::Denotation<runir::RoleTag
 
 }
 
-namespace runir::semantics
-{
-
-template<CategoryTag Category>
-bool is_canonical(const tyr::Data<Denotation<Category>>&) noexcept
-{
-    return true;
-}
-
-template<CategoryTag Category>
-void canonicalize(tyr::Data<Denotation<Category>>&) noexcept
-{
-}
-
-}
-
 #endif

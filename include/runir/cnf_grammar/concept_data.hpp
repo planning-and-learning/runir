@@ -37,78 +37,80 @@ struct Data<runir::cnf_grammar::Concept<runir::AtomicGoalTag<T>>> : runir::cnf_g
 template<>
 struct Data<runir::cnf_grammar::Concept<runir::IntersectionTag>> :
     runir::cnf_grammar::BinaryData<runir::cnf_grammar::Concept<runir::IntersectionTag>,
-                                   runir::cnf_grammar::Symbol<runir::ConceptTag>,
-                                   runir::cnf_grammar::Symbol<runir::ConceptTag>>
+                                   runir::cnf_grammar::NonTerminal<runir::ConceptTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::ConceptTag>>
 {
     using Base = runir::cnf_grammar::BinaryData<runir::cnf_grammar::Concept<runir::IntersectionTag>,
-                                                runir::cnf_grammar::Symbol<runir::ConceptTag>,
-                                                runir::cnf_grammar::Symbol<runir::ConceptTag>>;
+                                                runir::cnf_grammar::NonTerminal<runir::ConceptTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Concept<runir::UnionTag>> :
-    runir::cnf_grammar::
-        BinaryData<runir::cnf_grammar::Concept<runir::UnionTag>, runir::cnf_grammar::Symbol<runir::ConceptTag>, runir::cnf_grammar::Symbol<runir::ConceptTag>>
+    runir::cnf_grammar::BinaryData<runir::cnf_grammar::Concept<runir::UnionTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::ConceptTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::ConceptTag>>
 {
-    using Base = runir::cnf_grammar::
-        BinaryData<runir::cnf_grammar::Concept<runir::UnionTag>, runir::cnf_grammar::Symbol<runir::ConceptTag>, runir::cnf_grammar::Symbol<runir::ConceptTag>>;
+    using Base = runir::cnf_grammar::BinaryData<runir::cnf_grammar::Concept<runir::UnionTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::ConceptTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Concept<runir::NegationTag>> :
-    runir::cnf_grammar::UnaryData<runir::cnf_grammar::Concept<runir::NegationTag>, runir::cnf_grammar::Symbol<runir::ConceptTag>>
+    runir::cnf_grammar::UnaryData<runir::cnf_grammar::Concept<runir::NegationTag>, runir::cnf_grammar::NonTerminal<runir::ConceptTag>>
 {
-    using Base = runir::cnf_grammar::UnaryData<runir::cnf_grammar::Concept<runir::NegationTag>, runir::cnf_grammar::Symbol<runir::ConceptTag>>;
+    using Base = runir::cnf_grammar::UnaryData<runir::cnf_grammar::Concept<runir::NegationTag>, runir::cnf_grammar::NonTerminal<runir::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Concept<runir::ValueRestrictionTag>> :
     runir::cnf_grammar::BinaryData<runir::cnf_grammar::Concept<runir::ValueRestrictionTag>,
-                                   runir::cnf_grammar::Symbol<runir::RoleTag>,
-                                   runir::cnf_grammar::Symbol<runir::ConceptTag>>
+                                   runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::ConceptTag>>
 {
     using Base = runir::cnf_grammar::BinaryData<runir::cnf_grammar::Concept<runir::ValueRestrictionTag>,
-                                                runir::cnf_grammar::Symbol<runir::RoleTag>,
-                                                runir::cnf_grammar::Symbol<runir::ConceptTag>>;
+                                                runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Concept<runir::ExistentialQuantificationTag>> :
     runir::cnf_grammar::BinaryData<runir::cnf_grammar::Concept<runir::ExistentialQuantificationTag>,
-                                   runir::cnf_grammar::Symbol<runir::RoleTag>,
-                                   runir::cnf_grammar::Symbol<runir::ConceptTag>>
+                                   runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::ConceptTag>>
 {
     using Base = runir::cnf_grammar::BinaryData<runir::cnf_grammar::Concept<runir::ExistentialQuantificationTag>,
-                                                runir::cnf_grammar::Symbol<runir::RoleTag>,
-                                                runir::cnf_grammar::Symbol<runir::ConceptTag>>;
+                                                runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Concept<runir::RoleValueMapContainmentTag>> :
     runir::cnf_grammar::BinaryData<runir::cnf_grammar::Concept<runir::RoleValueMapContainmentTag>,
-                                   runir::cnf_grammar::Symbol<runir::RoleTag>,
-                                   runir::cnf_grammar::Symbol<runir::RoleTag>>
+                                   runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::RoleTag>>
 {
     using Base = runir::cnf_grammar::BinaryData<runir::cnf_grammar::Concept<runir::RoleValueMapContainmentTag>,
-                                                runir::cnf_grammar::Symbol<runir::RoleTag>,
-                                                runir::cnf_grammar::Symbol<runir::RoleTag>>;
+                                                runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::RoleTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Concept<runir::RoleValueMapEqualityTag>> :
     runir::cnf_grammar::BinaryData<runir::cnf_grammar::Concept<runir::RoleValueMapEqualityTag>,
-                                   runir::cnf_grammar::Symbol<runir::RoleTag>,
-                                   runir::cnf_grammar::Symbol<runir::RoleTag>>
+                                   runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::RoleTag>>
 {
     using Base = runir::cnf_grammar::BinaryData<runir::cnf_grammar::Concept<runir::RoleValueMapEqualityTag>,
-                                                runir::cnf_grammar::Symbol<runir::RoleTag>,
-                                                runir::cnf_grammar::Symbol<runir::RoleTag>>;
+                                                runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::RoleTag>>;
     using Base::Base;
 };
 

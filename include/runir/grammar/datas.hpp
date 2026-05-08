@@ -1,6 +1,7 @@
 #ifndef RUNIR_GRAMMAR_DATAS_HPP_
 #define RUNIR_GRAMMAR_DATAS_HPP_
 
+#include "runir/canonicalization.hpp"
 #include "runir/grammar/boolean_data.hpp"
 #include "runir/grammar/concept_data.hpp"
 #include "runir/grammar/constructor_data.hpp"

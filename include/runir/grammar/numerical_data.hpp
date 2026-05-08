@@ -9,26 +9,38 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::grammar::Numerical<runir::CountTag>> :
-    runir::grammar::UnaryData<runir::grammar::Numerical<runir::CountTag>,
-                              ::cista::offset::variant<runir::grammar::Symbol<runir::ConceptTag>, runir::grammar::Symbol<runir::RoleTag>>>
+struct Data<runir::grammar::Numerical<runir::CountTag>>
 {
-    using Arg = ::cista::offset::variant<runir::grammar::Symbol<runir::ConceptTag>, runir::grammar::Symbol<runir::RoleTag>>;
-    using Base = runir::grammar::UnaryData<runir::grammar::Numerical<runir::CountTag>, Arg>;
-    using Base::Base;
+    using Arg = ::cista::offset::variant<tyr::Index<runir::grammar::ConstructorOrNonTerminal<runir::ConceptTag>>,
+                                         tyr::Index<runir::grammar::ConstructorOrNonTerminal<runir::RoleTag>>>;
+
+    Index<runir::grammar::Numerical<runir::CountTag>> index;
+    Arg arg;
+
+    Data() = default;
+    explicit Data(Arg arg_) : index(), arg(std::move(arg_)) {}
+
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(arg);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, arg); }
+    auto identifying_members() const noexcept { return std::tie(arg); }
 };
 
 template<>
 struct Data<runir::grammar::Numerical<runir::DistanceTag>> :
     runir::grammar::TernaryData<runir::grammar::Numerical<runir::DistanceTag>,
-                                runir::grammar::Symbol<runir::ConceptTag>,
-                                runir::grammar::Symbol<runir::RoleTag>,
-                                runir::grammar::Symbol<runir::ConceptTag>>
+                                runir::grammar::ConstructorOrNonTerminal<runir::ConceptTag>,
+                                runir::grammar::ConstructorOrNonTerminal<runir::RoleTag>,
+                                runir::grammar::ConstructorOrNonTerminal<runir::ConceptTag>>
 {
     using Base = runir::grammar::TernaryData<runir::grammar::Numerical<runir::DistanceTag>,
-                                             runir::grammar::Symbol<runir::ConceptTag>,
-                                             runir::grammar::Symbol<runir::RoleTag>,
-                                             runir::grammar::Symbol<runir::ConceptTag>>;
+                                             runir::grammar::ConstructorOrNonTerminal<runir::ConceptTag>,
+                                             runir::grammar::ConstructorOrNonTerminal<runir::RoleTag>,
+                                             runir::grammar::ConstructorOrNonTerminal<runir::ConceptTag>>;
     using Base::Base;
 };
 

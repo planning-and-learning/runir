@@ -3,6 +3,7 @@
 
 #include "runir/grammar/indices.hpp"
 
+#include <cista/containers/string.h>
 #include <string>
 #include <tuple>
 #include <tyr/common/types.hpp>
@@ -15,10 +16,11 @@ template<runir::CategoryTag Category>
 struct Data<runir::grammar::NonTerminal<Category>>
 {
     Index<runir::grammar::NonTerminal<Category>> index;
-    std::string name;
+    ::cista::offset::string name;
 
     Data() = default;
-    Data(std::string name_) : index(), name(std::move(name_)) {}
+    Data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
+    Data(const std::string& name_) : index(), name(name_) {}
 
     void clear() noexcept
     {

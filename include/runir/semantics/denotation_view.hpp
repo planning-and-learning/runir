@@ -72,7 +72,7 @@ public:
         return Bitset(vector.data() + Layout::row_block_offset(object, data.num_objects), data.num_objects);
     }
 
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    auto identifying_members() const noexcept { return std::tie(get_data()); }
 };
 
 }

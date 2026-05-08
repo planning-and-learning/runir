@@ -29,81 +29,87 @@ struct Data<runir::cnf_grammar::Role<runir::AtomicGoalTag<T>>> : runir::cnf_gram
 
 template<>
 struct Data<runir::cnf_grammar::Role<runir::IntersectionTag>> :
-    runir::cnf_grammar::
-        BinaryData<runir::cnf_grammar::Role<runir::IntersectionTag>, runir::cnf_grammar::Symbol<runir::RoleTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>
+    runir::cnf_grammar::BinaryData<runir::cnf_grammar::Role<runir::IntersectionTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::RoleTag>>
 {
-    using Base = runir::cnf_grammar::
-        BinaryData<runir::cnf_grammar::Role<runir::IntersectionTag>, runir::cnf_grammar::Symbol<runir::RoleTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>;
+    using Base = runir::cnf_grammar::BinaryData<runir::cnf_grammar::Role<runir::IntersectionTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::RoleTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Role<runir::UnionTag>> :
     runir::cnf_grammar::
-        BinaryData<runir::cnf_grammar::Role<runir::UnionTag>, runir::cnf_grammar::Symbol<runir::RoleTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>
+        BinaryData<runir::cnf_grammar::Role<runir::UnionTag>, runir::cnf_grammar::NonTerminal<runir::RoleTag>, runir::cnf_grammar::NonTerminal<runir::RoleTag>>
 {
     using Base = runir::cnf_grammar::
-        BinaryData<runir::cnf_grammar::Role<runir::UnionTag>, runir::cnf_grammar::Symbol<runir::RoleTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>;
+        BinaryData<runir::cnf_grammar::Role<runir::UnionTag>, runir::cnf_grammar::NonTerminal<runir::RoleTag>, runir::cnf_grammar::NonTerminal<runir::RoleTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Role<runir::ComplementTag>> :
-    runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::ComplementTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>
+    runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::ComplementTag>, runir::cnf_grammar::NonTerminal<runir::RoleTag>>
 {
-    using Base = runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::ComplementTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>;
+    using Base = runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::ComplementTag>, runir::cnf_grammar::NonTerminal<runir::RoleTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Role<runir::InverseTag>> :
-    runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::InverseTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>
+    runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::InverseTag>, runir::cnf_grammar::NonTerminal<runir::RoleTag>>
 {
-    using Base = runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::InverseTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>;
+    using Base = runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::InverseTag>, runir::cnf_grammar::NonTerminal<runir::RoleTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Role<runir::CompositionTag>> :
-    runir::cnf_grammar::
-        BinaryData<runir::cnf_grammar::Role<runir::CompositionTag>, runir::cnf_grammar::Symbol<runir::RoleTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>
+    runir::cnf_grammar::BinaryData<runir::cnf_grammar::Role<runir::CompositionTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::RoleTag>>
 {
-    using Base = runir::cnf_grammar::
-        BinaryData<runir::cnf_grammar::Role<runir::CompositionTag>, runir::cnf_grammar::Symbol<runir::RoleTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>;
+    using Base = runir::cnf_grammar::BinaryData<runir::cnf_grammar::Role<runir::CompositionTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::RoleTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Role<runir::TransitiveClosureTag>> :
-    runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::TransitiveClosureTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>
+    runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::TransitiveClosureTag>, runir::cnf_grammar::NonTerminal<runir::RoleTag>>
 {
-    using Base = runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::TransitiveClosureTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>;
+    using Base = runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::TransitiveClosureTag>, runir::cnf_grammar::NonTerminal<runir::RoleTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Role<runir::ReflexiveTransitiveClosureTag>> :
-    runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::ReflexiveTransitiveClosureTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>
+    runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::ReflexiveTransitiveClosureTag>, runir::cnf_grammar::NonTerminal<runir::RoleTag>>
 {
-    using Base = runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::ReflexiveTransitiveClosureTag>, runir::cnf_grammar::Symbol<runir::RoleTag>>;
+    using Base = runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::ReflexiveTransitiveClosureTag>, runir::cnf_grammar::NonTerminal<runir::RoleTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Role<runir::RestrictionTag>> :
-    runir::cnf_grammar::
-        BinaryData<runir::cnf_grammar::Role<runir::RestrictionTag>, runir::cnf_grammar::Symbol<runir::RoleTag>, runir::cnf_grammar::Symbol<runir::ConceptTag>>
+    runir::cnf_grammar::BinaryData<runir::cnf_grammar::Role<runir::RestrictionTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                   runir::cnf_grammar::NonTerminal<runir::ConceptTag>>
 {
-    using Base = runir::cnf_grammar::
-        BinaryData<runir::cnf_grammar::Role<runir::RestrictionTag>, runir::cnf_grammar::Symbol<runir::RoleTag>, runir::cnf_grammar::Symbol<runir::ConceptTag>>;
+    using Base = runir::cnf_grammar::BinaryData<runir::cnf_grammar::Role<runir::RestrictionTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::RoleTag>,
+                                                runir::cnf_grammar::NonTerminal<runir::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::cnf_grammar::Role<runir::IdentityTag>> :
-    runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::IdentityTag>, runir::cnf_grammar::Symbol<runir::ConceptTag>>
+    runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::IdentityTag>, runir::cnf_grammar::NonTerminal<runir::ConceptTag>>
 {
-    using Base = runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::IdentityTag>, runir::cnf_grammar::Symbol<runir::ConceptTag>>;
+    using Base = runir::cnf_grammar::UnaryData<runir::cnf_grammar::Role<runir::IdentityTag>, runir::cnf_grammar::NonTerminal<runir::ConceptTag>>;
     using Base::Base;
 };
 

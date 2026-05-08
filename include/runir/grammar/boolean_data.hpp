@@ -16,13 +16,25 @@ struct Data<runir::grammar::Boolean<runir::AtomicStateTag<T>>> : runir::grammar:
 };
 
 template<>
-struct Data<runir::grammar::Boolean<runir::NonemptyTag>> :
-    runir::grammar::UnaryData<runir::grammar::Boolean<runir::NonemptyTag>,
-                              ::cista::offset::variant<runir::grammar::Symbol<runir::ConceptTag>, runir::grammar::Symbol<runir::RoleTag>>>
+struct Data<runir::grammar::Boolean<runir::NonemptyTag>>
 {
-    using Arg = ::cista::offset::variant<runir::grammar::Symbol<runir::ConceptTag>, runir::grammar::Symbol<runir::RoleTag>>;
-    using Base = runir::grammar::UnaryData<runir::grammar::Boolean<runir::NonemptyTag>, Arg>;
-    using Base::Base;
+    using Arg = ::cista::offset::variant<tyr::Index<runir::grammar::ConstructorOrNonTerminal<runir::ConceptTag>>,
+                                         tyr::Index<runir::grammar::ConstructorOrNonTerminal<runir::RoleTag>>>;
+
+    Index<runir::grammar::Boolean<runir::NonemptyTag>> index;
+    Arg arg;
+
+    Data() = default;
+    explicit Data(Arg arg_) : index(), arg(std::move(arg_)) {}
+
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(arg);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, arg); }
+    auto identifying_members() const noexcept { return std::tie(arg); }
 };
 
 }  // namespace tyr

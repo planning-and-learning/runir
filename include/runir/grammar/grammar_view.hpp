@@ -28,7 +28,7 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
 
     auto get_index() const noexcept { return m_handle; }
-    auto get_domain() const noexcept { return make_view(get_data().domain, *m_context); }
+    auto get_domain() const noexcept { return make_view(get_data().domain, m_context->get_planning_repository()); }
 
     template<runir::CategoryTag Category>
     auto get_start() const noexcept
@@ -56,7 +56,7 @@ public:
             return make_view(get_data().numerical_derivation_rules, *m_context);
     }
 
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    auto identifying_members() const noexcept { return std::tie(get_data()); }
 };
 
 }  // namespace tyr

@@ -37,6 +37,84 @@ struct Data<runir::cnf_grammar::GrammarTag>
 
     Data() = default;
 
+    template<runir::CategoryTag Category>
+    constexpr auto& get_start() noexcept
+    {
+        if constexpr (std::same_as<Category, runir::ConceptTag>)
+            return concept_start;
+        else if constexpr (std::same_as<Category, runir::RoleTag>)
+            return role_start;
+        else if constexpr (std::same_as<Category, runir::BooleanTag>)
+            return boolean_start;
+        else if constexpr (std::same_as<Category, runir::NumericalTag>)
+            return numerical_start;
+    }
+
+    template<runir::CategoryTag Category>
+    constexpr const auto& get_start() const noexcept
+    {
+        if constexpr (std::same_as<Category, runir::ConceptTag>)
+            return concept_start;
+        else if constexpr (std::same_as<Category, runir::RoleTag>)
+            return role_start;
+        else if constexpr (std::same_as<Category, runir::BooleanTag>)
+            return boolean_start;
+        else if constexpr (std::same_as<Category, runir::NumericalTag>)
+            return numerical_start;
+    }
+
+    template<runir::CategoryTag Category>
+    constexpr auto& get_derivation_rules() noexcept
+    {
+        if constexpr (std::same_as<Category, runir::ConceptTag>)
+            return concept_derivation_rules;
+        else if constexpr (std::same_as<Category, runir::RoleTag>)
+            return role_derivation_rules;
+        else if constexpr (std::same_as<Category, runir::BooleanTag>)
+            return boolean_derivation_rules;
+        else if constexpr (std::same_as<Category, runir::NumericalTag>)
+            return numerical_derivation_rules;
+    }
+
+    template<runir::CategoryTag Category>
+    constexpr const auto& get_derivation_rules() const noexcept
+    {
+        if constexpr (std::same_as<Category, runir::ConceptTag>)
+            return concept_derivation_rules;
+        else if constexpr (std::same_as<Category, runir::RoleTag>)
+            return role_derivation_rules;
+        else if constexpr (std::same_as<Category, runir::BooleanTag>)
+            return boolean_derivation_rules;
+        else if constexpr (std::same_as<Category, runir::NumericalTag>)
+            return numerical_derivation_rules;
+    }
+
+    template<runir::CategoryTag Category>
+    constexpr auto& get_substitution_rules() noexcept
+    {
+        if constexpr (std::same_as<Category, runir::ConceptTag>)
+            return concept_substitution_rules;
+        else if constexpr (std::same_as<Category, runir::RoleTag>)
+            return role_substitution_rules;
+        else if constexpr (std::same_as<Category, runir::BooleanTag>)
+            return boolean_substitution_rules;
+        else if constexpr (std::same_as<Category, runir::NumericalTag>)
+            return numerical_substitution_rules;
+    }
+
+    template<runir::CategoryTag Category>
+    constexpr const auto& get_substitution_rules() const noexcept
+    {
+        if constexpr (std::same_as<Category, runir::ConceptTag>)
+            return concept_substitution_rules;
+        else if constexpr (std::same_as<Category, runir::RoleTag>)
+            return role_substitution_rules;
+        else if constexpr (std::same_as<Category, runir::BooleanTag>)
+            return boolean_substitution_rules;
+        else if constexpr (std::same_as<Category, runir::NumericalTag>)
+            return numerical_substitution_rules;
+    }
+
     void clear() noexcept
     {
         tyr::clear(index);

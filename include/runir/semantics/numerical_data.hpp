@@ -11,26 +11,37 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::Numerical<runir::CountTag>> :
-    runir::semantics::UnaryData<runir::Numerical<runir::CountTag>,
-                                ::cista::offset::variant<Index<runir::Constructor<runir::ConceptTag>>, Index<runir::Constructor<runir::RoleTag>>>>
+struct Data<runir::Numerical<runir::CountTag>>
 {
     using ConstructorVariant = ::cista::offset::variant<Index<runir::Constructor<runir::ConceptTag>>, Index<runir::Constructor<runir::RoleTag>>>;
-    using Base = runir::semantics::UnaryData<runir::Numerical<runir::CountTag>, ConstructorVariant>;
-    using Base::Base;
+
+    Index<runir::Numerical<runir::CountTag>> index;
+    ConstructorVariant arg;
+
+    Data() = default;
+    explicit Data(ConstructorVariant arg_) : index(), arg(std::move(arg_)) {}
+
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(arg);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, arg); }
+    auto identifying_members() const noexcept { return std::tie(arg); }
 };
 
 template<>
 struct Data<runir::Numerical<runir::DistanceTag>> :
     runir::semantics::TernaryData<runir::Numerical<runir::DistanceTag>,
-                                  Index<runir::Constructor<runir::ConceptTag>>,
-                                  Index<runir::Constructor<runir::RoleTag>>,
-                                  Index<runir::Constructor<runir::ConceptTag>>>
+                                  runir::Constructor<runir::ConceptTag>,
+                                  runir::Constructor<runir::RoleTag>,
+                                  runir::Constructor<runir::ConceptTag>>
 {
     using Base = runir::semantics::TernaryData<runir::Numerical<runir::DistanceTag>,
-                                               Index<runir::Constructor<runir::ConceptTag>>,
-                                               Index<runir::Constructor<runir::RoleTag>>,
-                                               Index<runir::Constructor<runir::ConceptTag>>>;
+                                               runir::Constructor<runir::ConceptTag>,
+                                               runir::Constructor<runir::RoleTag>,
+                                               runir::Constructor<runir::ConceptTag>>;
     using Base::Base;
 };
 

@@ -27,9 +27,6 @@ using PredicateData = runir::semantics::PredicateData<Self, T>;
 template<typename Self>
 using ObjectData = runir::semantics::ObjectData<Self>;
 
-template<runir::CategoryTag Category>
-using Symbol = tyr::Index<NonTerminal<Category>>;
-
 }
 
 #endif
