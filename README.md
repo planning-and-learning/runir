@@ -16,7 +16,7 @@ Runir uses:
 ## Build C++
 
 ```console
-python -m pip install pyyggdrasil>=0.0.7 pytyr>=0.0.13
+python -m pip install pyyggdrasil>=0.0.8 pytyr>=0.0.12
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Debug \
   -DRUNIR_BUILD_TESTS=ON \

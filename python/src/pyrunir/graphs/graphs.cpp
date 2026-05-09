@@ -1,6 +1,8 @@
 #include "graphs.hpp"
 
 #include <nanobind/stl/vector.h>
+#include <runir/graphs/algorithms/color_refinement.hpp>
+#include <runir/graphs/algorithms/weisfeiler_leman.hpp>
 #include <runir/graphs/bgl/algorithms.hpp>
 
 namespace runir::python
@@ -92,6 +94,18 @@ auto topological_sort(const Graph& graph)
 }
 
 template<typename Graph>
+auto color_refinement_certificate(const Graph& graph)
+{
+    return to_list(graphs::color_refinement::compute_certificate(graph).get_colors());
+}
+
+template<std::size_t K, typename Graph>
+auto weisfeiler_leman_certificate(const Graph& graph)
+{
+    return to_list(graphs::weisfeiler_leman::compute_certificate<K>(graph).get_colors());
+}
+
+template<typename Graph>
 auto dense_dijkstra_shortest_paths(const Graph& graph, const std::vector<double>& weights, const std::vector<graphs::VertexIndex>& sources)
 {
     const auto [predecessors, distances] = graphs::bgl::dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end());
@@ -125,6 +139,9 @@ void bind_dense_graph_algorithms(nb::module_& m)
     m.def("breadth_first_search", &breadth_first_search<Graph>, "graph"_a, "sources"_a);
     m.def("depth_first_search", &depth_first_search<Graph>, "graph"_a, "sources"_a);
     m.def("topological_sort", &topological_sort<Graph>, "graph"_a);
+    m.def("color_refinement_certificate", &color_refinement_certificate<Graph>, "graph"_a);
+    m.def("weisfeiler_leman_2_certificate", &weisfeiler_leman_certificate<2, Graph>, "graph"_a);
+    m.def("weisfeiler_leman_3_certificate", &weisfeiler_leman_certificate<3, Graph>, "graph"_a);
     m.def("dijkstra_shortest_paths", &dense_dijkstra_shortest_paths<Graph>, "graph"_a, "weights"_a, "sources"_a);
     m.def("floyd_warshall_all_pairs_shortest_paths", &dense_floyd_warshall_all_pairs_shortest_paths<Graph>, "graph"_a, "weights"_a);
 }
@@ -136,6 +153,9 @@ void bind_sparse_graph_algorithms(nb::module_& m)
     m.def("breadth_first_search", &breadth_first_search<Graph>, "graph"_a, "sources"_a);
     m.def("depth_first_search", &depth_first_search<Graph>, "graph"_a, "sources"_a);
     m.def("topological_sort", &topological_sort<Graph>, "graph"_a);
+    m.def("color_refinement_certificate", &color_refinement_certificate<Graph>, "graph"_a);
+    m.def("weisfeiler_leman_2_certificate", &weisfeiler_leman_certificate<2, Graph>, "graph"_a);
+    m.def("weisfeiler_leman_3_certificate", &weisfeiler_leman_certificate<3, Graph>, "graph"_a);
     m.def("dijkstra_shortest_paths", &sparse_dijkstra_shortest_paths<Graph>, "graph"_a, "weights"_a, "sources"_a);
     m.def("floyd_warshall_all_pairs_shortest_paths", &sparse_floyd_warshall_all_pairs_shortest_paths<Graph>, "graph"_a, "weights"_a);
 }

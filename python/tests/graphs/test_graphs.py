@@ -6,11 +6,13 @@ from pyrunir.graphs import (
     StaticGraph, 
     StaticGraphBuilder,
     breadth_first_search,
+    color_refinement_certificate,
     depth_first_search,
     dijkstra_shortest_paths,
     floyd_warshall_all_pairs_shortest_paths,
     strong_components,
     topological_sort,
+    weisfeiler_leman_2_certificate,
 )
 
 
@@ -163,3 +165,18 @@ def test_dynamic_graph_boost_algorithms():
     }
     _, weighted_distances = dijkstra_shortest_paths(graph, weights, [a])
     assert weighted_distances[c] == 5.0
+
+
+def test_graph_certificates():
+    builder = StaticGraphBuilder()
+
+    a = builder.add_vertex("x")
+    b = builder.add_vertex("x")
+    c = builder.add_vertex("x")
+    builder.add_directed_edge(a, b, "a-b")
+    builder.add_directed_edge(b, c, "b-c")
+
+    graph = StaticGraph(builder)
+
+    assert len(color_refinement_certificate(graph)) == graph.get_num_vertices()
+    assert len(weisfeiler_leman_2_certificate(graph)) == graph.get_num_vertices() ** 2
