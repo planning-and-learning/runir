@@ -117,6 +117,17 @@ concept IsDenseGraph =
     && std::same_as<typename GraphTraits<std::remove_cvref_t<G>>::EdgeIndexRange, DenseIndexRangeTag>
     && std::same_as<typename GraphTraits<std::remove_cvref_t<G>>::OutEdgeIndexRange, DenseIndexRangeTag>;
 
+template<IsDenseGraph G>
+class BackwardStaticGraphView;
+
+template<IsDenseGraph G>
+struct GraphTraits<BackwardStaticGraphView<G>>
+{
+    using VertexIndexRange = DenseIndexRangeTag;
+    using EdgeIndexRange = DenseIndexRangeTag;
+    using OutEdgeIndexRange = DenseIndexRangeTag;
+};
+
 template<typename T>
 concept IsVertex = requires(T vertex) {
     typename T::PropertyType;

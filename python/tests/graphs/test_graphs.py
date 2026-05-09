@@ -4,7 +4,13 @@ from pyrunir.graphs import (
     BidirectionalStaticGraph,
     DynamicGraph, 
     StaticGraph, 
-    StaticGraphBuilder
+    StaticGraphBuilder,
+    breadth_first_search,
+    depth_first_search,
+    dijkstra_shortest_paths,
+    floyd_warshall_all_pairs_shortest_paths,
+    strong_components,
+    topological_sort,
 )
 
 
@@ -82,3 +88,78 @@ def test_graph_properties_must_be_hashable():
 
     with pytest.raises(TypeError):
         graph.add_vertex([])
+
+
+def test_static_graph_boost_algorithms():
+    builder = StaticGraphBuilder()
+
+    a = builder.add_vertex("a")
+    b = builder.add_vertex("b")
+    c = builder.add_vertex("c")
+    builder.add_directed_edge(a, b, "a-b")
+    builder.add_directed_edge(b, c, "b-c")
+    builder.add_directed_edge(a, c, "a-c")
+
+    graph = StaticGraph(builder)
+
+    num_components, components = strong_components(graph)
+    assert num_components == 3
+    assert len(components) == 3
+
+    predecessors, distances = breadth_first_search(graph, [a])
+    assert predecessors[b] == a
+    assert distances[c] == 1
+
+    dfs_predecessors = depth_first_search(graph, [a])
+    assert len(dfs_predecessors) == 3
+
+    topological_order = topological_sort(graph)
+    assert set(topological_order) == {a, b, c}
+
+    weights = [1.0] * graph.get_num_edges()
+    for edge in graph.get_edge_indices():
+        if graph.get_source(edge) == a and graph.get_target(edge) == c:
+            weights[edge] = 5.0
+
+    _, weighted_distances = dijkstra_shortest_paths(graph, weights, [a])
+    assert weighted_distances[c] == 2.0
+
+    all_pairs_distances = floyd_warshall_all_pairs_shortest_paths(graph, weights)
+    assert all_pairs_distances[a][c] == 2.0
+
+
+def test_backward_static_graph_boost_algorithms():
+    builder = StaticGraphBuilder()
+
+    a = builder.add_vertex("a")
+    b = builder.add_vertex("b")
+    c = builder.add_vertex("c")
+    builder.add_directed_edge(a, b, "a-b")
+    builder.add_directed_edge(c, b, "c-b")
+
+    graph = BidirectionalStaticGraph(builder)
+
+    _, distances = breadth_first_search(graph.get_backward_graph(), [b])
+    assert distances[a] == 1
+    assert distances[c] == 1
+
+
+def test_dynamic_graph_boost_algorithms():
+    graph = DynamicGraph()
+
+    a = graph.add_vertex("a")
+    b = graph.add_vertex("b")
+    c = graph.add_vertex("c")
+    edge_ab = graph.add_directed_edge(a, b, "a-b")
+    edge_bc = graph.add_directed_edge(b, c, "b-c")
+
+    predecessors, distances = breadth_first_search(graph, [a])
+    assert predecessors[b] == a
+    assert distances[c] == 2
+
+    weights = {
+        edge_ab: 2.0,
+        edge_bc: 3.0,
+    }
+    _, weighted_distances = dijkstra_shortest_paths(graph, weights, [a])
+    assert weighted_distances[c] == 5.0
