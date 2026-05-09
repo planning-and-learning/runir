@@ -44,96 +44,123 @@ using CategoryTags = tyr::TypeList<ConceptTag, RoleTag, BooleanTag, NumericalTag
 
 struct BotTag
 {
+    static constexpr auto name = "bot";
 };
 
 struct TopTag
 {
+    static constexpr auto name = "top";
 };
 
 template<tyr::formalism::FactKind T>
 struct AtomicStateTag
 {
+    using FactKind = T;
+
+    static constexpr auto name = "atomic_state";
 };
 
 template<tyr::formalism::FactKind T>
 struct AtomicGoalTag
 {
+    using FactKind = T;
+
+    static constexpr auto name = "atomic_goal";
 };
 
 struct IntersectionTag
 {
+    static constexpr auto name = "intersection";
 };
 
 struct UnionTag
 {
+    static constexpr auto name = "union";
 };
 
 struct NegationTag
 {
+    static constexpr auto name = "negation";
 };
 
 struct ValueRestrictionTag
 {
+    static constexpr auto name = "value_restriction";
 };
 
 struct ExistentialQuantificationTag
 {
+    static constexpr auto name = "existential_quantification";
 };
 
 struct RoleValueMapContainmentTag
 {
+    static constexpr auto name = "role_value_map_containment";
 };
 
 struct RoleValueMapEqualityTag
 {
+    static constexpr auto name = "role_value_map_equality";
 };
 
 struct NominalTag
 {
+    static constexpr auto name = "nominal";
 };
 
 struct UniversalTag
 {
+    static constexpr auto name = "universal";
 };
 
 struct ComplementTag
 {
+    static constexpr auto name = "complement";
 };
 
 struct InverseTag
 {
+    static constexpr auto name = "inverse";
 };
 
 struct CompositionTag
 {
+    static constexpr auto name = "composition";
 };
 
 struct TransitiveClosureTag
 {
+    static constexpr auto name = "transitive_closure";
 };
 
 struct ReflexiveTransitiveClosureTag
 {
+    static constexpr auto name = "reflexive_transitive_closure";
 };
 
 struct RestrictionTag
 {
+    static constexpr auto name = "restriction";
 };
 
 struct IdentityTag
 {
+    static constexpr auto name = "identity";
 };
 
 struct NonemptyTag
 {
+    static constexpr auto name = "nonempty";
 };
 
 struct CountTag
 {
+    static constexpr auto name = "count";
 };
 
 struct DistanceTag
 {
+    static constexpr auto name = "distance";
 };
 
 template<typename T>

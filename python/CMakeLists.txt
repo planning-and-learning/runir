@@ -12,6 +12,13 @@ set(PYRUNIR_NATIVE_LIBDIR "${PYRUNIR_NATIVE_DIR}/${CMAKE_INSTALL_LIBDIR}")
 nanobind_add_module(pyrunir
     src/bindings.cpp
     src/pyrunir/graphs/graphs.cpp
+    src/pyrunir/kr/dl/cnf_grammar.cpp
+    src/pyrunir/kr/dl/datas.cpp
+    src/pyrunir/kr/dl/dl.cpp
+    src/pyrunir/kr/dl/grammar.cpp
+    src/pyrunir/kr/dl/indices.cpp
+    src/pyrunir/kr/dl/repositories.cpp
+    src/pyrunir/kr/dl/views.cpp
 )
 
 target_link_libraries(pyrunir PRIVATE runir::core runir::graphs)
@@ -36,6 +43,12 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/pyrunir/__init__.py"
         COMPONENT pyrunir)
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/pyrunir/graphs/__init__.py"
         DESTINATION "${PYRUNIR_PACKAGE_DIR}/graphs"
+        COMPONENT pyrunir)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/pyrunir/kr/__init__.py"
+        DESTINATION "${PYRUNIR_PACKAGE_DIR}/kr"
+        COMPONENT pyrunir)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/pyrunir/kr/dl/__init__.py"
+        DESTINATION "${PYRUNIR_PACKAGE_DIR}/kr/dl"
         COMPONENT pyrunir)
 
 add_custom_target(pyrunir_wheel DEPENDS pyrunir)
