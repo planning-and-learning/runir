@@ -1,13 +1,13 @@
-#include "runir/cnf_grammar/translate.hpp"
+#include "runir/knowledge_representation/dl/cnf_grammar/translate.hpp"
 
-#include "runir/cnf_grammar/canonicalization.hpp"
+#include "runir/knowledge_representation/dl/cnf_grammar/canonicalization.hpp"
 
 #include <cassert>
 #include <concepts>
 #include <string>
 #include <unordered_set>
 
-namespace runir::cnf_grammar
+namespace runir::kr::dl::cnf_grammar
 {
 namespace
 {
@@ -19,7 +19,7 @@ auto intern(ConstructorRepository& repository, tyr::Data<T>& data)
     return repository.get_or_create(data).first;
 }
 
-template<runir::CategoryTag Category, typename T>
+template<runir::kr::dl::CategoryTag Category, typename T>
 auto intern_constructor(ConstructorRepository& repository, tyr::Index<T> index)
 {
     tyr::Data<Constructor<Category>> data(index);
@@ -28,20 +28,20 @@ auto intern_constructor(ConstructorRepository& repository, tyr::Index<T> index)
 
 struct TranslationContext
 {
-    const runir::grammar::GrammarView& source;
+    const runir::kr::dl::grammar::GrammarView& source;
     ConstructorRepository& repository;
     tyr::Data<GrammarTag> data;
     std::unordered_set<std::string> non_terminal_names;
     size_t next_fresh_index = 0;
 
-    TranslationContext(const runir::grammar::GrammarView& source_, ConstructorRepository& repository_) : source(source_), repository(repository_)
+    TranslationContext(const runir::kr::dl::grammar::GrammarView& source_, ConstructorRepository& repository_) : source(source_), repository(repository_)
     {
         assert(repository.get_planning_repository_ptr() == source.get_context().get_planning_repository_ptr());
         data.domain = source.get_data().domain;
     }
 };
 
-template<runir::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 class Translator
 {
 private:
@@ -81,7 +81,7 @@ private:
 public:
     Translator(TranslationContext& context) : m_context(context) {}
 
-    auto translate_non_terminal(runir::grammar::NonTerminalView<Category> source)
+    auto translate_non_terminal(runir::kr::dl::grammar::NonTerminalView<Category> source)
     {
         const auto name = std::string(source.get_name().str());
         non_terminal_names().insert(name);
@@ -90,13 +90,13 @@ public:
         return intern(repository(), data);
     }
 
-    auto translate_to_non_terminal(runir::grammar::ConstructorOrNonTerminalView<Category> source)
+    auto translate_to_non_terminal(runir::kr::dl::grammar::ConstructorOrNonTerminalView<Category> source)
     {
         return source.get_variant().apply(
             [&](auto value)
             {
                 using View = std::decay_t<decltype(value)>;
-                if constexpr (std::same_as<View, runir::grammar::NonTerminalView<Category>>)
+                if constexpr (std::same_as<View, runir::kr::dl::grammar::NonTerminalView<Category>>)
                 {
                     return translate_non_terminal(value);
                 }
@@ -110,12 +110,12 @@ public:
             });
     }
 
-    auto translate_constructor(runir::grammar::ConstructorView<Category> source)
+    auto translate_constructor(runir::kr::dl::grammar::ConstructorView<Category> source)
     {
         return source.get_variant().apply([&](auto value) { return translate_concrete_constructor(value); });
     }
 
-    void translate_rule(runir::grammar::DerivationRuleView<Category> source)
+    void translate_rule(runir::kr::dl::grammar::DerivationRuleView<Category> source)
     {
         const auto lhs = translate_non_terminal(source.get_lhs());
 
@@ -125,7 +125,7 @@ public:
                 [&](auto value)
                 {
                     using View = std::decay_t<decltype(value)>;
-                    if constexpr (std::same_as<View, runir::grammar::NonTerminalView<Category>>)
+                    if constexpr (std::same_as<View, runir::kr::dl::grammar::NonTerminalView<Category>>)
                     {
                         add_substitution_rule(lhs, translate_non_terminal(value));
                     }
@@ -137,247 +137,248 @@ public:
         }
     }
 
-    auto translate_concrete_constructor(runir::grammar::ConceptView<runir::BotTag>)
-        requires std::same_as<Category, runir::ConceptTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::BotTag>)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        tyr::Data<Concept<runir::BotTag>> data;
+        tyr::Data<Concept<runir::kr::dl::BotTag>> data;
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::grammar::ConceptView<runir::TopTag>)
-        requires std::same_as<Category, runir::ConceptTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::TopTag>)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        tyr::Data<Concept<runir::TopTag>> data;
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    template<tyr::formalism::FactKind T>
-    auto translate_concrete_constructor(runir::grammar::ConceptView<runir::AtomicStateTag<T>> source)
-        requires std::same_as<Category, runir::ConceptTag>
-    {
-        tyr::Data<Concept<runir::AtomicStateTag<T>>> data(source.get_data().predicate, source.get_data().polarity);
+        tyr::Data<Concept<runir::kr::dl::TopTag>> data;
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
     template<tyr::formalism::FactKind T>
-    auto translate_concrete_constructor(runir::grammar::ConceptView<runir::AtomicGoalTag<T>> source)
-        requires std::same_as<Category, runir::ConceptTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::AtomicStateTag<T>> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        tyr::Data<Concept<runir::AtomicGoalTag<T>>> data(source.get_data().predicate, source.get_data().polarity);
+        tyr::Data<Concept<runir::kr::dl::AtomicStateTag<T>>> data(source.get_data().predicate, source.get_data().polarity);
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::grammar::ConceptView<runir::IntersectionTag> source)
-        requires std::same_as<Category, runir::ConceptTag>
+    template<tyr::formalism::FactKind T>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::AtomicGoalTag<T>> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        tyr::Data<Concept<runir::IntersectionTag>> data(translate_to_non_terminal(source.get_lhs()).get_index(),
-                                                        translate_to_non_terminal(source.get_rhs()).get_index());
+        tyr::Data<Concept<runir::kr::dl::AtomicGoalTag<T>>> data(source.get_data().predicate, source.get_data().polarity);
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::grammar::ConceptView<runir::UnionTag> source)
-        requires std::same_as<Category, runir::ConceptTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::IntersectionTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        tyr::Data<Concept<runir::UnionTag>> data(translate_to_non_terminal(source.get_lhs()).get_index(),
-                                                 translate_to_non_terminal(source.get_rhs()).get_index());
+        tyr::Data<Concept<runir::kr::dl::IntersectionTag>> data(translate_to_non_terminal(source.get_lhs()).get_index(),
+                                                                translate_to_non_terminal(source.get_rhs()).get_index());
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::grammar::ConceptView<runir::NegationTag> source)
-        requires std::same_as<Category, runir::ConceptTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::UnionTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        tyr::Data<Concept<runir::NegationTag>> data(translate_to_non_terminal(source.get_arg()).get_index());
+        tyr::Data<Concept<runir::kr::dl::UnionTag>> data(translate_to_non_terminal(source.get_lhs()).get_index(),
+                                                         translate_to_non_terminal(source.get_rhs()).get_index());
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::grammar::ConceptView<runir::ValueRestrictionTag> source)
-        requires std::same_as<Category, runir::ConceptTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::NegationTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        tyr::Data<Concept<runir::ValueRestrictionTag>> data(translate_child<runir::RoleTag>(source.get_lhs()).get_index(),
+        tyr::Data<Concept<runir::kr::dl::NegationTag>> data(translate_to_non_terminal(source.get_arg()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::ValueRestrictionTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::ValueRestrictionTag>> data(translate_child<runir::kr::dl::RoleTag>(source.get_lhs()).get_index(),
+                                                                    translate_to_non_terminal(source.get_rhs()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::ExistentialQuantificationTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::ExistentialQuantificationTag>> data(translate_child<runir::kr::dl::RoleTag>(source.get_lhs()).get_index(),
+                                                                             translate_to_non_terminal(source.get_rhs()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::RoleValueMapContainmentTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::RoleValueMapContainmentTag>> data(translate_child<runir::kr::dl::RoleTag>(source.get_lhs()).get_index(),
+                                                                           translate_child<runir::kr::dl::RoleTag>(source.get_rhs()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::RoleValueMapEqualityTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::RoleValueMapEqualityTag>> data(translate_child<runir::kr::dl::RoleTag>(source.get_lhs()).get_index(),
+                                                                        translate_child<runir::kr::dl::RoleTag>(source.get_rhs()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::NominalTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::NominalTag>> data(source.get_data().object);
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::UniversalTag>)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        tyr::Data<Role<runir::kr::dl::UniversalTag>> data;
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    template<tyr::formalism::FactKind T>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::AtomicStateTag<T>> source)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        tyr::Data<Role<runir::kr::dl::AtomicStateTag<T>>> data(source.get_data().predicate, source.get_data().polarity);
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    template<tyr::formalism::FactKind T>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::AtomicGoalTag<T>> source)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        tyr::Data<Role<runir::kr::dl::AtomicGoalTag<T>>> data(source.get_data().predicate, source.get_data().polarity);
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::IntersectionTag> source)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        tyr::Data<Role<runir::kr::dl::IntersectionTag>> data(translate_to_non_terminal(source.get_lhs()).get_index(),
+                                                             translate_to_non_terminal(source.get_rhs()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::UnionTag> source)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        tyr::Data<Role<runir::kr::dl::UnionTag>> data(translate_to_non_terminal(source.get_lhs()).get_index(),
+                                                      translate_to_non_terminal(source.get_rhs()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::ComplementTag> source)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        tyr::Data<Role<runir::kr::dl::ComplementTag>> data(translate_to_non_terminal(source.get_arg()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::InverseTag> source)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        tyr::Data<Role<runir::kr::dl::InverseTag>> data(translate_to_non_terminal(source.get_arg()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::CompositionTag> source)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        tyr::Data<Role<runir::kr::dl::CompositionTag>> data(translate_to_non_terminal(source.get_lhs()).get_index(),
                                                             translate_to_non_terminal(source.get_rhs()).get_index());
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::grammar::ConceptView<runir::ExistentialQuantificationTag> source)
-        requires std::same_as<Category, runir::ConceptTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::TransitiveClosureTag> source)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        tyr::Data<Concept<runir::ExistentialQuantificationTag>> data(translate_child<runir::RoleTag>(source.get_lhs()).get_index(),
-                                                                     translate_to_non_terminal(source.get_rhs()).get_index());
+        tyr::Data<Role<runir::kr::dl::TransitiveClosureTag>> data(translate_to_non_terminal(source.get_arg()).get_index());
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::grammar::ConceptView<runir::RoleValueMapContainmentTag> source)
-        requires std::same_as<Category, runir::ConceptTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::ReflexiveTransitiveClosureTag> source)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        tyr::Data<Concept<runir::RoleValueMapContainmentTag>> data(translate_child<runir::RoleTag>(source.get_lhs()).get_index(),
-                                                                   translate_child<runir::RoleTag>(source.get_rhs()).get_index());
+        tyr::Data<Role<runir::kr::dl::ReflexiveTransitiveClosureTag>> data(translate_to_non_terminal(source.get_arg()).get_index());
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::grammar::ConceptView<runir::RoleValueMapEqualityTag> source)
-        requires std::same_as<Category, runir::ConceptTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::RestrictionTag> source)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        tyr::Data<Concept<runir::RoleValueMapEqualityTag>> data(translate_child<runir::RoleTag>(source.get_lhs()).get_index(),
-                                                                translate_child<runir::RoleTag>(source.get_rhs()).get_index());
+        tyr::Data<Role<runir::kr::dl::RestrictionTag>> data(translate_to_non_terminal(source.get_lhs()).get_index(),
+                                                            translate_child<runir::kr::dl::ConceptTag>(source.get_rhs()).get_index());
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::grammar::ConceptView<runir::NominalTag> source)
-        requires std::same_as<Category, runir::ConceptTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::RoleView<runir::kr::dl::IdentityTag> source)
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
-        tyr::Data<Concept<runir::NominalTag>> data(source.get_data().object);
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    auto translate_concrete_constructor(runir::grammar::RoleView<runir::UniversalTag>)
-        requires std::same_as<Category, runir::RoleTag>
-    {
-        tyr::Data<Role<runir::UniversalTag>> data;
+        tyr::Data<Role<runir::kr::dl::IdentityTag>> data(translate_child<runir::kr::dl::ConceptTag>(source.get_arg()).get_index());
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
     template<tyr::formalism::FactKind T>
-    auto translate_concrete_constructor(runir::grammar::RoleView<runir::AtomicStateTag<T>> source)
-        requires std::same_as<Category, runir::RoleTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::BooleanView<runir::kr::dl::AtomicStateTag<T>> source)
+        requires std::same_as<Category, runir::kr::dl::BooleanTag>
     {
-        tyr::Data<Role<runir::AtomicStateTag<T>>> data(source.get_data().predicate, source.get_data().polarity);
+        tyr::Data<Boolean<runir::kr::dl::AtomicStateTag<T>>> data(source.get_data().predicate, source.get_data().polarity);
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    template<tyr::formalism::FactKind T>
-    auto translate_concrete_constructor(runir::grammar::RoleView<runir::AtomicGoalTag<T>> source)
-        requires std::same_as<Category, runir::RoleTag>
-    {
-        tyr::Data<Role<runir::AtomicGoalTag<T>>> data(source.get_data().predicate, source.get_data().polarity);
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    auto translate_concrete_constructor(runir::grammar::RoleView<runir::IntersectionTag> source)
-        requires std::same_as<Category, runir::RoleTag>
-    {
-        tyr::Data<Role<runir::IntersectionTag>> data(translate_to_non_terminal(source.get_lhs()).get_index(),
-                                                     translate_to_non_terminal(source.get_rhs()).get_index());
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    auto translate_concrete_constructor(runir::grammar::RoleView<runir::UnionTag> source)
-        requires std::same_as<Category, runir::RoleTag>
-    {
-        tyr::Data<Role<runir::UnionTag>> data(translate_to_non_terminal(source.get_lhs()).get_index(), translate_to_non_terminal(source.get_rhs()).get_index());
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    auto translate_concrete_constructor(runir::grammar::RoleView<runir::ComplementTag> source)
-        requires std::same_as<Category, runir::RoleTag>
-    {
-        tyr::Data<Role<runir::ComplementTag>> data(translate_to_non_terminal(source.get_arg()).get_index());
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    auto translate_concrete_constructor(runir::grammar::RoleView<runir::InverseTag> source)
-        requires std::same_as<Category, runir::RoleTag>
-    {
-        tyr::Data<Role<runir::InverseTag>> data(translate_to_non_terminal(source.get_arg()).get_index());
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    auto translate_concrete_constructor(runir::grammar::RoleView<runir::CompositionTag> source)
-        requires std::same_as<Category, runir::RoleTag>
-    {
-        tyr::Data<Role<runir::CompositionTag>> data(translate_to_non_terminal(source.get_lhs()).get_index(),
-                                                    translate_to_non_terminal(source.get_rhs()).get_index());
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    auto translate_concrete_constructor(runir::grammar::RoleView<runir::TransitiveClosureTag> source)
-        requires std::same_as<Category, runir::RoleTag>
-    {
-        tyr::Data<Role<runir::TransitiveClosureTag>> data(translate_to_non_terminal(source.get_arg()).get_index());
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    auto translate_concrete_constructor(runir::grammar::RoleView<runir::ReflexiveTransitiveClosureTag> source)
-        requires std::same_as<Category, runir::RoleTag>
-    {
-        tyr::Data<Role<runir::ReflexiveTransitiveClosureTag>> data(translate_to_non_terminal(source.get_arg()).get_index());
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    auto translate_concrete_constructor(runir::grammar::RoleView<runir::RestrictionTag> source)
-        requires std::same_as<Category, runir::RoleTag>
-    {
-        tyr::Data<Role<runir::RestrictionTag>> data(translate_to_non_terminal(source.get_lhs()).get_index(),
-                                                    translate_child<runir::ConceptTag>(source.get_rhs()).get_index());
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    auto translate_concrete_constructor(runir::grammar::RoleView<runir::IdentityTag> source)
-        requires std::same_as<Category, runir::RoleTag>
-    {
-        tyr::Data<Role<runir::IdentityTag>> data(translate_child<runir::ConceptTag>(source.get_arg()).get_index());
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    template<tyr::formalism::FactKind T>
-    auto translate_concrete_constructor(runir::grammar::BooleanView<runir::AtomicStateTag<T>> source)
-        requires std::same_as<Category, runir::BooleanTag>
-    {
-        tyr::Data<Boolean<runir::AtomicStateTag<T>>> data(source.get_data().predicate, source.get_data().polarity);
-        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
-    }
-
-    auto translate_concrete_constructor(runir::grammar::BooleanView<runir::NonemptyTag> source)
-        requires std::same_as<Category, runir::BooleanTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::BooleanView<runir::kr::dl::NonemptyTag> source)
+        requires std::same_as<Category, runir::kr::dl::BooleanTag>
     {
         const auto arg = source.get_arg().apply(
-            [&](auto value) -> typename tyr::Data<Boolean<runir::NonemptyTag>>::Arg
+            [&](auto value) -> typename tyr::Data<Boolean<runir::kr::dl::NonemptyTag>>::Arg
             {
                 using View = std::decay_t<decltype(value)>;
-                if constexpr (std::same_as<View, runir::grammar::ConstructorOrNonTerminalView<runir::ConceptTag>>)
-                    return translate_child<runir::ConceptTag>(value).get_index();
+                if constexpr (std::same_as<View, runir::kr::dl::grammar::ConstructorOrNonTerminalView<runir::kr::dl::ConceptTag>>)
+                    return translate_child<runir::kr::dl::ConceptTag>(value).get_index();
                 else
-                    return translate_child<runir::RoleTag>(value).get_index();
+                    return translate_child<runir::kr::dl::RoleTag>(value).get_index();
             });
 
-        tyr::Data<Boolean<runir::NonemptyTag>> data(arg);
+        tyr::Data<Boolean<runir::kr::dl::NonemptyTag>> data(arg);
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::grammar::NumericalView<runir::CountTag> source)
-        requires std::same_as<Category, runir::NumericalTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::NumericalView<runir::kr::dl::CountTag> source)
+        requires std::same_as<Category, runir::kr::dl::NumericalTag>
     {
         const auto arg = source.get_arg().apply(
-            [&](auto value) -> typename tyr::Data<Numerical<runir::CountTag>>::Arg
+            [&](auto value) -> typename tyr::Data<Numerical<runir::kr::dl::CountTag>>::Arg
             {
                 using View = std::decay_t<decltype(value)>;
-                if constexpr (std::same_as<View, runir::grammar::ConstructorOrNonTerminalView<runir::ConceptTag>>)
-                    return translate_child<runir::ConceptTag>(value).get_index();
+                if constexpr (std::same_as<View, runir::kr::dl::grammar::ConstructorOrNonTerminalView<runir::kr::dl::ConceptTag>>)
+                    return translate_child<runir::kr::dl::ConceptTag>(value).get_index();
                 else
-                    return translate_child<runir::RoleTag>(value).get_index();
+                    return translate_child<runir::kr::dl::RoleTag>(value).get_index();
             });
 
-        tyr::Data<Numerical<runir::CountTag>> data(arg);
+        tyr::Data<Numerical<runir::kr::dl::CountTag>> data(arg);
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::grammar::NumericalView<runir::DistanceTag> source)
-        requires std::same_as<Category, runir::NumericalTag>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::NumericalView<runir::kr::dl::DistanceTag> source)
+        requires std::same_as<Category, runir::kr::dl::NumericalTag>
     {
-        tyr::Data<Numerical<runir::DistanceTag>> data(translate_child<runir::ConceptTag>(source.get_lhs()).get_index(),
-                                                      translate_child<runir::RoleTag>(source.get_mid()).get_index(),
-                                                      translate_child<runir::ConceptTag>(source.get_rhs()).get_index());
+        tyr::Data<Numerical<runir::kr::dl::DistanceTag>> data(translate_child<runir::kr::dl::ConceptTag>(source.get_lhs()).get_index(),
+                                                              translate_child<runir::kr::dl::RoleTag>(source.get_mid()).get_index(),
+                                                              translate_child<runir::kr::dl::ConceptTag>(source.get_rhs()).get_index());
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    template<runir::CategoryTag ChildCategory>
-    auto translate_child(runir::grammar::ConstructorOrNonTerminalView<ChildCategory> source)
+    template<runir::kr::dl::CategoryTag ChildCategory>
+    auto translate_child(runir::kr::dl::grammar::ConstructorOrNonTerminalView<ChildCategory> source)
     {
         auto child_translator = Translator<ChildCategory>(m_context);
         return child_translator.translate_to_non_terminal(source);
     }
 };
 
-template<runir::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 void translate_category(TranslationContext& context)
 {
     auto translator = Translator<Category>(context);
@@ -391,14 +392,14 @@ void translate_category(TranslationContext& context)
 
 }
 
-GrammarView translate(const runir::grammar::GrammarView& grammar, ConstructorRepository& repository)
+GrammarView translate(const runir::kr::dl::grammar::GrammarView& grammar, ConstructorRepository& repository)
 {
     auto context = TranslationContext(grammar, repository);
 
-    translate_category<runir::ConceptTag>(context);
-    translate_category<runir::RoleTag>(context);
-    translate_category<runir::BooleanTag>(context);
-    translate_category<runir::NumericalTag>(context);
+    translate_category<runir::kr::dl::ConceptTag>(context);
+    translate_category<runir::kr::dl::RoleTag>(context);
+    translate_category<runir::kr::dl::BooleanTag>(context);
+    translate_category<runir::kr::dl::NumericalTag>(context);
 
     canonicalize(context.data);
     return intern(repository, context.data);

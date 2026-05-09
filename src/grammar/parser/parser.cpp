@@ -1,14 +1,14 @@
-#include "runir/grammar/parser/parser.hpp"
+#include "runir/knowledge_representation/dl/grammar/parser/parser.hpp"
 
-#include "runir/grammar/parser/error_handler.hpp"
-#include "runir/grammar/parser/parsers.hpp"
+#include "runir/knowledge_representation/dl/grammar/parser/error_handler.hpp"
+#include "runir/knowledge_representation/dl/grammar/parser/parsers.hpp"
 
 #include <boost/spirit/home/x3.hpp>
 #include <functional>
 #include <sstream>
 #include <stdexcept>
 
-namespace runir::grammar::parser
+namespace runir::kr::dl::grammar::parser
 {
 
 ast::Grammar parse_grammar_ast(const std::string& description)

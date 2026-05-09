@@ -1,14 +1,14 @@
 #ifndef RUNIR_SRC_GRAMMAR_PARSER_PARSER_DEF_HPP_
 #define RUNIR_SRC_GRAMMAR_PARSER_PARSER_DEF_HPP_
 
-#include "runir/grammar/ast/ast.hpp"
-#include "runir/grammar/ast/ast_adapted.hpp"
-#include "runir/grammar/parser/error_handler.hpp"
-#include "runir/grammar/parser/parsers.hpp"
+#include "runir/knowledge_representation/dl/grammar/ast/ast.hpp"
+#include "runir/knowledge_representation/dl/grammar/ast/ast_adapted.hpp"
+#include "runir/knowledge_representation/dl/grammar/parser/error_handler.hpp"
+#include "runir/knowledge_representation/dl/grammar/parser/parsers.hpp"
 
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
 
-namespace runir::grammar::parser
+namespace runir::kr::dl::grammar::parser
 {
 namespace x3 = boost::spirit::x3;
 namespace ascii = boost::spirit::x3::ascii;
@@ -220,102 +220,102 @@ BOOST_SPIRIT_DEFINE(numerical, numerical_root, numerical_count, numerical_distan
 BOOST_SPIRIT_DEFINE(derivation_rule_variant, grammar_head, grammar_body, grammar, grammar_root)
 
 template<>
-struct ConstructorClass<runir::ConceptTag> : x3::annotate_on_success
+struct ConstructorClass<runir::kr::dl::ConceptTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct ConstructorRootClass<runir::ConceptTag> : ErrorHandlerBase
+struct ConstructorRootClass<runir::kr::dl::ConceptTag> : ErrorHandlerBase
 {
 };
 
 template<>
-struct ConstructorClass<runir::RoleTag> : x3::annotate_on_success
+struct ConstructorClass<runir::kr::dl::RoleTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct ConstructorRootClass<runir::RoleTag> : ErrorHandlerBase
+struct ConstructorRootClass<runir::kr::dl::RoleTag> : ErrorHandlerBase
 {
 };
 
 template<>
-struct ConstructorClass<runir::BooleanTag> : x3::annotate_on_success
+struct ConstructorClass<runir::kr::dl::BooleanTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct ConstructorRootClass<runir::BooleanTag> : ErrorHandlerBase
+struct ConstructorRootClass<runir::kr::dl::BooleanTag> : ErrorHandlerBase
 {
 };
 
 template<>
-struct ConstructorClass<runir::NumericalTag> : x3::annotate_on_success
+struct ConstructorClass<runir::kr::dl::NumericalTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct ConstructorRootClass<runir::NumericalTag> : ErrorHandlerBase
+struct ConstructorRootClass<runir::kr::dl::NumericalTag> : ErrorHandlerBase
 {
 };
 
 template<>
-struct NonTerminalClass<runir::ConceptTag> : x3::annotate_on_success
+struct NonTerminalClass<runir::kr::dl::ConceptTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct NonTerminalClass<runir::RoleTag> : x3::annotate_on_success
+struct NonTerminalClass<runir::kr::dl::RoleTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct NonTerminalClass<runir::BooleanTag> : x3::annotate_on_success
+struct NonTerminalClass<runir::kr::dl::BooleanTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct NonTerminalClass<runir::NumericalTag> : x3::annotate_on_success
+struct NonTerminalClass<runir::kr::dl::NumericalTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct ConstructorOrNonTerminalClass<runir::ConceptTag> : x3::annotate_on_success
+struct ConstructorOrNonTerminalClass<runir::kr::dl::ConceptTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct ConstructorOrNonTerminalClass<runir::RoleTag> : x3::annotate_on_success
+struct ConstructorOrNonTerminalClass<runir::kr::dl::RoleTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct ConstructorOrNonTerminalClass<runir::BooleanTag> : x3::annotate_on_success
+struct ConstructorOrNonTerminalClass<runir::kr::dl::BooleanTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct ConstructorOrNonTerminalClass<runir::NumericalTag> : x3::annotate_on_success
+struct ConstructorOrNonTerminalClass<runir::kr::dl::NumericalTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct DerivationRuleClass<runir::ConceptTag> : x3::annotate_on_success
+struct DerivationRuleClass<runir::kr::dl::ConceptTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct DerivationRuleClass<runir::RoleTag> : x3::annotate_on_success
+struct DerivationRuleClass<runir::kr::dl::RoleTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct DerivationRuleClass<runir::BooleanTag> : x3::annotate_on_success
+struct DerivationRuleClass<runir::kr::dl::BooleanTag> : x3::annotate_on_success
 {
 };
 
 template<>
-struct DerivationRuleClass<runir::NumericalTag> : x3::annotate_on_success
+struct DerivationRuleClass<runir::kr::dl::NumericalTag> : x3::annotate_on_success
 {
 };
 

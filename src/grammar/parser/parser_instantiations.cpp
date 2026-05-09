@@ -1,6 +1,6 @@
 #include "parser_def.hpp"
 
-namespace runir::grammar::parser
+namespace runir::kr::dl::grammar::parser
 {
 
 BOOST_SPIRIT_INSTANTIATE(concept_type, iterator_type, context_type)

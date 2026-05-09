@@ -1,6 +1,6 @@
-#include "runir/grammar/parser.hpp"
+#include "runir/knowledge_representation/dl/grammar/parser.hpp"
 
-#include "runir/grammar/canonicalization.hpp"
+#include "runir/knowledge_representation/dl/grammar/canonicalization.hpp"
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <boost/variant/apply_visitor.hpp>
@@ -10,7 +10,7 @@
 #include <string>
 #include <type_traits>
 
-namespace runir::grammar
+namespace runir::kr::dl::grammar
 {
 namespace
 {
@@ -41,24 +41,24 @@ auto intern(ConstructorRepository& repository, tyr::Data<T>& data)
     return repository.get_or_create(data).first;
 }
 
-template<runir::CategoryTag Category, typename T>
+template<runir::kr::dl::CategoryTag Category, typename T>
 auto intern_constructor(ConstructorRepository& repository, tyr::Index<T> index)
 {
     tyr::Data<Constructor<Category>> data(index);
     return intern(repository, data);
 }
 
-template<runir::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 auto parse(const ast::Constructor<Category>& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository);
 
-template<runir::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 auto parse(const ast::NonTerminal<Category>& node, tyr::formalism::planning::DomainView, ConstructorRepository& repository)
 {
     tyr::Data<NonTerminal<Category>> data(node.name);
     return intern(repository, data);
 }
 
-template<runir::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 auto parse(const ast::ConstructorOrNonTerminal<Category>& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
 {
     const auto index = boost::apply_visitor([&](const auto& arg) -> tyr::Data<ConstructorOrNonTerminal<Category>>::Variant
@@ -332,13 +332,13 @@ auto parse(const ast::NumericalDistance& node, tyr::formalism::planning::DomainV
     return intern_constructor<NumericalTag>(repository, intern(repository, data).get_index());
 }
 
-template<runir::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 auto parse(const ast::Constructor<Category>& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
 {
     return boost::apply_visitor([&](const auto& arg) { return parse(unwrap(arg), domain, repository); }, node.get());
 }
 
-template<runir::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 auto parse(const ast::DerivationRule<Category>& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
 {
     auto rhs = tyr::IndexList<ConstructorOrNonTerminal<Category>> {};
@@ -349,7 +349,7 @@ auto parse(const ast::DerivationRule<Category>& node, tyr::formalism::planning::
     return intern(repository, data);
 }
 
-template<runir::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 void append_derivation_rule(tyr::IndexList<DerivationRule<Category>>& rules,
                             const ast::DerivationRule<Category>& node,
                             tyr::formalism::planning::DomainView domain,
