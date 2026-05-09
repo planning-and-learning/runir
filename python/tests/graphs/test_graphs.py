@@ -1,6 +1,7 @@
 import pytest
 
 from pyrunir.graphs import (
+    BidirectionalStaticGraph,
     DynamicGraph, 
     StaticGraph, 
     StaticGraphBuilder
@@ -49,6 +50,31 @@ def test_static_graph_preserves_builder_indices_and_properties():
     assert graph.get_target(edge) == target
     assert graph.get_vertex_property(source) == "source"
     assert graph.get_edge_property(edge) == ("edge", 1)
+
+
+def test_bidirectional_static_graph_exposes_forward_and_backward_graphs():
+    builder = StaticGraphBuilder()
+
+    a = builder.add_vertex("a")
+    b = builder.add_vertex("b")
+    c = builder.add_vertex("c")
+    builder.add_directed_edge(a, b, "a-b")
+    builder.add_directed_edge(c, b, "c-b")
+    builder.add_directed_edge(b, a, "b-a")
+
+    graph = BidirectionalStaticGraph(builder)
+
+    forward_targets = [
+        graph.get_forward_graph().get_target(edge)
+        for edge in graph.get_forward_graph().get_out_edge_indices(b)
+    ]
+    backward_targets = [
+        graph.get_backward_graph().get_target(edge)
+        for edge in graph.get_backward_graph().get_out_edge_indices(b)
+    ]
+
+    assert forward_targets == [a]
+    assert backward_targets == [a, c]
 
 
 def test_graph_properties_must_be_hashable():

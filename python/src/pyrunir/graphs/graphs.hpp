@@ -6,6 +6,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/pair.h>
 #include <ranges>
+#include <runir/graphs/bidirectional_static_graph.hpp>
 #include <runir/graphs/dynamic_graph.hpp>
 #include <runir/graphs/static_graph.hpp>
 
@@ -64,6 +65,8 @@ namespace runir::python
 using PyObjectDynamicGraph = graphs::DynamicGraph<PyObjectProperty, PyObjectProperty>;
 using PyObjectStaticGraphBuilder = graphs::StaticGraphBuilder<PyObjectProperty, PyObjectProperty>;
 using PyObjectStaticGraph = graphs::StaticGraph<PyObjectProperty, PyObjectProperty>;
+using PyObjectBackwardStaticGraphView = graphs::BackwardStaticGraphView<PyObjectStaticGraph>;
+using PyObjectBidirectionalStaticGraph = graphs::BidirectionalStaticGraph<PyObjectProperty, PyObjectProperty>;
 
 template<typename Graph, typename Range>
 auto make_graph_iterator(const char* name, Range&& range)

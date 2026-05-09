@@ -25,6 +25,16 @@ void bind_graphs(nb::module_& m)
     static_graph.def(nb::init<>()).def(nb::init<const PyObjectStaticGraphBuilder&>());
     bind_basic_graph(static_graph);
     bind_forward_graph(static_graph);
+
+    auto backward_static_graph_view = nb::class_<PyObjectBackwardStaticGraphView>(m, "BackwardStaticGraphView");
+    bind_basic_graph(backward_static_graph_view);
+    bind_forward_graph(backward_static_graph_view);
+
+    auto bidirectional_static_graph = nb::class_<PyObjectBidirectionalStaticGraph>(m, "BidirectionalStaticGraph");
+    bidirectional_static_graph.def(nb::init<>())
+        .def(nb::init<const PyObjectStaticGraphBuilder&>())
+        .def("get_forward_graph", &PyObjectBidirectionalStaticGraph::get_forward_graph, nb::rv_policy::reference_internal)
+        .def("get_backward_graph", &PyObjectBidirectionalStaticGraph::get_backward_graph, nb::rv_policy::reference_internal);
 }
 
 }  // namespace runir::python

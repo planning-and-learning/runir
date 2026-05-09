@@ -1,11 +1,9 @@
-from ..pyrunir import graphs as _graphs
+# Import all classes for better IDE support
 
-DynamicGraph = _graphs.DynamicGraph
-StaticGraph = _graphs.StaticGraph
-StaticGraphBuilder = _graphs.StaticGraphBuilder
-
-__all__ = [
-    "DynamicGraph",
-    "StaticGraph",
-    "StaticGraphBuilder",
-]
+from ..pyrunir.graphs import (
+    BackwardStaticGraphView,
+    BidirectionalStaticGraph,
+    DynamicGraph,
+    StaticGraph,
+    StaticGraphBuilder,
+)

@@ -45,6 +45,9 @@ template<Property VertexProperty, Property EdgeProperty>
 class StaticGraph;
 
 template<Property VertexProperty, Property EdgeProperty>
+class BidirectionalStaticGraph;
+
+template<Property VertexProperty, Property EdgeProperty>
 class DynamicGraph;
 
 template<typename G>
