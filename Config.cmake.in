@@ -17,7 +17,7 @@ if(tyr_FOUND)
     message(STATUS "Found tyr: ${tyr_DIR} (found version ${tyr_VERSION})")
 endif()
 
-set(_runir_supported_components core)
+set(_runir_supported_components core graphs)
 if(NOT runir_FIND_COMPONENTS)
     set(runir_FIND_COMPONENTS core)
 endif()

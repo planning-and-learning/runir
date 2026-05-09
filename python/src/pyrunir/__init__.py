@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from ._core import FeatureSummary, add, describe, format_summary
+from .pyrunir import FeatureSummary, add, describe, format_summary
+from . import graphs
 
 
 def native_prefix() -> Path:
@@ -12,6 +13,6 @@ __all__ = [
     "add",
     "describe",
     "format_summary",
+    "graphs",
     "native_prefix",
 ]
-

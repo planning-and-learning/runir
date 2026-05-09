@@ -1,7 +1,7 @@
 #ifndef RUNIR_SEMANTICS_DENOTATION_DATA_HPP_
 #define RUNIR_SEMANTICS_DENOTATION_DATA_HPP_
 
-#include "runir/knowledge_representation/dl/config.hpp"
+#include "runir/common/config.hpp"
 #include "runir/knowledge_representation/dl/semantics/denotation_index.hpp"
 
 #include <tuple>
@@ -37,10 +37,10 @@ template<>
 struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>
 {
     Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>> index;
-    runir::kr::dl::uint_t value = 0;
+    runir::uint_t value = 0;
 
     Data() = default;
-    explicit Data(runir::kr::dl::uint_t value_) noexcept : value(value_) {}
+    explicit Data(runir::uint_t value_) noexcept : value(value_) {}
 
     void clear() noexcept
     {
@@ -51,19 +51,19 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>
     auto cista_members() const noexcept { return std::tie(index, value); }
     auto identifying_members() const noexcept { return std::tie(value); }
 
-    auto get_data() noexcept -> runir::kr::dl::uint_t& { return value; }
-    auto get_data() const noexcept -> const runir::kr::dl::uint_t& { return value; }
+    auto get_data() noexcept -> runir::uint_t& { return value; }
+    auto get_data() const noexcept -> const runir::uint_t& { return value; }
 };
 
 template<>
 struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
 {
     Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> index;
-    runir::kr::dl::uint_t num_objects = 0;
-    runir::kr::dl::uint_t vec_index = 0;
+    runir::uint_t num_objects = 0;
+    runir::uint_t vec_index = 0;
 
     Data() = default;
-    Data(runir::kr::dl::uint_t num_objects_, runir::kr::dl::uint_t vec_index_) noexcept : num_objects(num_objects_), vec_index(vec_index_) {}
+    Data(runir::uint_t num_objects_, runir::uint_t vec_index_) noexcept : num_objects(num_objects_), vec_index(vec_index_) {}
 
     void clear() noexcept
     {
@@ -80,11 +80,11 @@ template<>
 struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
 {
     Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> index;
-    runir::kr::dl::uint_t num_objects = 0;
-    runir::kr::dl::uint_t vec_index = 0;
+    runir::uint_t num_objects = 0;
+    runir::uint_t vec_index = 0;
 
     Data() = default;
-    Data(runir::kr::dl::uint_t num_objects_, runir::kr::dl::uint_t vec_index_) noexcept : num_objects(num_objects_), vec_index(vec_index_) {}
+    Data(runir::uint_t num_objects_, runir::uint_t vec_index_) noexcept : num_objects(num_objects_), vec_index(vec_index_) {}
 
     void clear() noexcept
     {

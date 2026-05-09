@@ -47,7 +47,7 @@ public:
         requires(std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
         using Layout = Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>;
-        using Bitset = BitsetSpan<const runir::kr::dl::uint_t>;
+        using Bitset = BitsetSpan<const runir::uint_t>;
 
         const auto vector = get_vector();
         const auto& data = get_data();
@@ -61,7 +61,7 @@ public:
         requires(std::same_as<Category, runir::kr::dl::RoleTag>)
     {
         using Layout = Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>;
-        using Bitset = BitsetSpan<const runir::kr::dl::uint_t>;
+        using Bitset = BitsetSpan<const runir::uint_t>;
 
         const auto vector = get_vector();
         const auto& data = get_data();

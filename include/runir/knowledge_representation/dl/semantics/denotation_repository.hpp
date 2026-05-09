@@ -1,7 +1,7 @@
 #ifndef RUNIR_SEMANTICS_DENOTATION_REPOSITORY_HPP_
 #define RUNIR_SEMANTICS_DENOTATION_REPOSITORY_HPP_
 
-#include "runir/knowledge_representation/dl/config.hpp"
+#include "runir/common/config.hpp"
 #include "runir/knowledge_representation/dl/declarations.hpp"
 #include "runir/knowledge_representation/dl/semantics/canonicalization.hpp"
 #include "runir/knowledge_representation/dl/semantics/denotation_builder.hpp"

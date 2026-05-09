@@ -1,3 +1,5 @@
+add_subdirectory(graphs)
+
 add_library(core
     cnf_grammar/generate.cpp
     cnf_grammar/translate.cpp

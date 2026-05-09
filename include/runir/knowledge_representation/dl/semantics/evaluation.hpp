@@ -1,7 +1,7 @@
 #ifndef RUNIR_SEMANTICS_EVALUATION_HPP_
 #define RUNIR_SEMANTICS_EVALUATION_HPP_
 
-#include "runir/knowledge_representation/dl/config.hpp"
+#include "runir/common/config.hpp"
 #include "runir/knowledge_representation/dl/semantics/constructors.hpp"
 #include "runir/knowledge_representation/dl/semantics/denotations.hpp"
 #include "runir/knowledge_representation/dl/semantics/evaluation_context.hpp"
