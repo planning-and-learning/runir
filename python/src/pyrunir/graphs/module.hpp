@@ -5,11 +5,11 @@
 
 namespace nb = nanobind;
 
-namespace runir::python
+namespace runir::graphs
 {
 
-void bind_graphs(nb::module_& m);
+void bind_module_definitions(nb::module_& m);
 
-}  // namespace runir::python
+}  // namespace runir::graphs
 
 #endif

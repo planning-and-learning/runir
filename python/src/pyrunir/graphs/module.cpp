@@ -7,10 +7,10 @@
 #include <nanobind/stl/vector.h>
 #include <tyr/common/python/type_casters.hpp>
 
-namespace runir::python
+namespace runir::graphs
 {
 
-void bind_graphs(nb::module_& m)
+void bind_module_definitions(nb::module_& m)
 {
     bind_graph_certificates(m);
 
@@ -50,4 +50,4 @@ void bind_graphs(nb::module_& m)
     bind_graph_algorithms<PyObjectBackwardStaticGraphView>(m);
 }
 
-}  // namespace runir::python
+}  // namespace runir::graphs

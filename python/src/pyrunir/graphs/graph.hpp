@@ -17,7 +17,7 @@
 
 using namespace nanobind::literals;
 
-namespace runir::python
+namespace runir::graphs
 {
 
 struct PyObjectProperty
@@ -32,15 +32,15 @@ struct PyObjectProperty
     }
 };
 
-}  // namespace runir::python
+}  // namespace runir::graphs
 
 namespace tyr
 {
 
 template<>
-struct Hash<runir::python::PyObjectProperty>
+struct Hash<runir::graphs::PyObjectProperty>
 {
-    auto operator()(const runir::python::PyObjectProperty& property) const -> std::size_t
+    auto operator()(const runir::graphs::PyObjectProperty& property) const -> std::size_t
     {
         const auto hash = PyObject_Hash(property.value.ptr());
         if (hash == -1 && PyErr_Occurred())
@@ -50,9 +50,9 @@ struct Hash<runir::python::PyObjectProperty>
 };
 
 template<>
-struct EqualTo<runir::python::PyObjectProperty>
+struct EqualTo<runir::graphs::PyObjectProperty>
 {
-    auto operator()(const runir::python::PyObjectProperty& lhs, const runir::python::PyObjectProperty& rhs) const -> bool
+    auto operator()(const runir::graphs::PyObjectProperty& lhs, const runir::graphs::PyObjectProperty& rhs) const -> bool
     {
         const auto result = PyObject_RichCompareBool(lhs.value.ptr(), rhs.value.ptr(), Py_EQ);
         if (result == -1)
@@ -63,7 +63,7 @@ struct EqualTo<runir::python::PyObjectProperty>
 
 }  // namespace tyr
 
-namespace runir::python
+namespace runir::graphs
 {
 
 using PyObjectDynamicGraph = graphs::DynamicGraph<PyObjectProperty, PyObjectProperty>;
@@ -216,6 +216,6 @@ void bind_graph_algorithms(nb::module_& m)
     m.def("floyd_warshall_all_pairs_shortest_paths", &graphs::algorithms::floyd_warshall_all_pairs_shortest_paths<Graph>, "graph"_a, "weights"_a);
 }
 
-}  // namespace runir::python
+}  // namespace runir::graphs
 
 #endif
