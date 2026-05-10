@@ -1,16 +1,20 @@
-#ifndef PYRUNIR_GRAPHS_GRAPHS_HPP_
-#define PYRUNIR_GRAPHS_GRAPHS_HPP_
+#ifndef PYRUNIR_GRAPHS_GRAPH_HPP_
+#define PYRUNIR_GRAPHS_GRAPH_HPP_
+
+#include "module.hpp"
 
 #include <functional>
 #include <nanobind/make_iterator.h>
-#include <nanobind/nanobind.h>
+#include <nanobind/stl/array.h>
 #include <nanobind/stl/pair.h>
 #include <ranges>
+#include <runir/graphs/algorithms.hpp>
 #include <runir/graphs/bidirectional_static_graph.hpp>
 #include <runir/graphs/dynamic_graph.hpp>
+#include <runir/graphs/formatter.hpp>
 #include <runir/graphs/static_graph.hpp>
+#include <tyr/common/python/bindings.hpp>
 
-namespace nb = nanobind;
 using namespace nanobind::literals;
 
 namespace runir::python
@@ -67,6 +71,50 @@ using PyObjectStaticGraphBuilder = graphs::StaticGraphBuilder<PyObjectProperty, 
 using PyObjectStaticGraph = graphs::StaticGraph<PyObjectProperty, PyObjectProperty>;
 using PyObjectBackwardStaticGraphView = graphs::BackwardStaticGraphView<PyObjectStaticGraph>;
 using PyObjectBidirectionalStaticGraph = graphs::BidirectionalStaticGraph<PyObjectProperty, PyObjectProperty>;
+
+inline void bind_graph_certificates(nb::module_& m)
+{
+    using ColorRefinementCertificate = graphs::color_refinement::Certificate<PyObjectProperty>;
+    using WeisfeilerLeman2Signature = graphs::weisfeiler_leman::Signature<2>;
+    using WeisfeilerLeman3Signature = graphs::weisfeiler_leman::Signature<3>;
+    using WeisfeilerLeman2Certificate = graphs::weisfeiler_leman::Certificate<2>;
+    using WeisfeilerLeman3Certificate = graphs::weisfeiler_leman::Certificate<3>;
+
+    auto weisfeiler_leman_2_signature = nb::class_<WeisfeilerLeman2Signature>(m, "WeisfeilerLeman2Signature")  //
+                                            .def(nb::init<>())
+                                            .def_rw("color", &WeisfeilerLeman2Signature::color)
+                                            .def_rw("neighbor_colors", &WeisfeilerLeman2Signature::neighbor_colors);
+    tyr::add_print(weisfeiler_leman_2_signature);
+    tyr::add_hash(weisfeiler_leman_2_signature);
+
+    auto weisfeiler_leman_3_signature = nb::class_<WeisfeilerLeman3Signature>(m, "WeisfeilerLeman3Signature")  //
+                                            .def(nb::init<>())
+                                            .def_rw("color", &WeisfeilerLeman3Signature::color)
+                                            .def_rw("neighbor_colors", &WeisfeilerLeman3Signature::neighbor_colors);
+    tyr::add_print(weisfeiler_leman_3_signature);
+    tyr::add_hash(weisfeiler_leman_3_signature);
+
+    auto color_refinement_certificate = nb::class_<ColorRefinementCertificate>(m, "ColorRefinementCertificate")  //
+                                            .def(nb::init<>())
+                                            .def("get_refinement_colors", &ColorRefinementCertificate::get_refinement_colors)
+                                            .def("get_colors", &ColorRefinementCertificate::get_colors);
+    tyr::add_print(color_refinement_certificate);
+    tyr::add_hash(color_refinement_certificate);
+
+    auto weisfeiler_leman_2_certificate = nb::class_<WeisfeilerLeman2Certificate>(m, "WeisfeilerLeman2Certificate")  //
+                                              .def(nb::init<>())
+                                              .def("get_refinement_colors", &WeisfeilerLeman2Certificate::get_refinement_colors)
+                                              .def("get_colors", &WeisfeilerLeman2Certificate::get_colors);
+    tyr::add_print(weisfeiler_leman_2_certificate);
+    tyr::add_hash(weisfeiler_leman_2_certificate);
+
+    auto weisfeiler_leman_3_certificate = nb::class_<WeisfeilerLeman3Certificate>(m, "WeisfeilerLeman3Certificate")  //
+                                              .def(nb::init<>())
+                                              .def("get_refinement_colors", &WeisfeilerLeman3Certificate::get_refinement_colors)
+                                              .def("get_colors", &WeisfeilerLeman3Certificate::get_colors);
+    tyr::add_print(weisfeiler_leman_3_certificate);
+    tyr::add_hash(weisfeiler_leman_3_certificate);
+}
 
 template<typename Graph, typename Range>
 auto make_graph_iterator(const char* name, Range&& range)
@@ -154,7 +202,19 @@ void bind_constructible_graph(nb::class_<Graph>& cls)
             "property"_a = nb::none());
 }
 
-void bind_graphs(nb::module_& m);
+template<typename Graph>
+void bind_graph_algorithms(nb::module_& m)
+{
+    m.def("strong_components", &graphs::algorithms::strong_components<Graph>, "graph"_a);
+    m.def("breadth_first_search", &graphs::algorithms::breadth_first_search<Graph>, "graph"_a, "sources"_a);
+    m.def("depth_first_search", &graphs::algorithms::depth_first_search<Graph>, "graph"_a, "sources"_a);
+    m.def("topological_sort", &graphs::algorithms::topological_sort<Graph>, "graph"_a);
+    m.def("color_refinement_certificate", &graphs::algorithms::color_refinement_certificate<Graph>, "graph"_a);
+    m.def("weisfeiler_leman_2_certificate", &graphs::algorithms::weisfeiler_leman_2_certificate<Graph>, "graph"_a);
+    m.def("weisfeiler_leman_3_certificate", &graphs::algorithms::weisfeiler_leman_3_certificate<Graph>, "graph"_a);
+    m.def("dijkstra_shortest_paths", &graphs::algorithms::dijkstra_shortest_paths<Graph>, "graph"_a, "weights"_a, "sources"_a);
+    m.def("floyd_warshall_all_pairs_shortest_paths", &graphs::algorithms::floyd_warshall_all_pairs_shortest_paths<Graph>, "graph"_a, "weights"_a);
+}
 
 }  // namespace runir::python
 

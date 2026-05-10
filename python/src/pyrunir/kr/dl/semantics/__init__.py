@@ -1,6 +1,6 @@
-# Import all classes and functions for better IDE support
+# Import all classes for better IDE support
 
-from ...pyrunir.kr.dl.semantics import (
+from ....pyrunir.kr.dl.semantics import (
     Boolean,
     BooleanAtomicStateDerived,
     BooleanAtomicStateDerivedData,
@@ -128,10 +128,4 @@ from ...pyrunir.kr.dl.semantics import (
     RoleUniversal,
     RoleUniversalData,
     RoleUniversalIndex,
-)
-
-from . import (
-    cnf_grammar as cnf_grammar,
-    grammar as grammar,
-    semantics as semantics,
 )

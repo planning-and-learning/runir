@@ -147,6 +147,12 @@ auto breadth_first_search(const G& graph, SourceInputIterator first, SourceInput
     return std::make_tuple(predecessors, distances);
 }
 
+template<IsGraph G>
+auto breadth_first_search(const G& graph, const std::vector<VertexIndex>& sources)
+{
+    return breadth_first_search(graph, sources.begin(), sources.end());
+}
+
 template<IsGraph G, typename SourceInputIterator>
 auto depth_first_search(const G& graph, SourceInputIterator first, SourceInputIterator last)
 {
@@ -174,6 +180,12 @@ auto depth_first_search(const G& graph, SourceInputIterator first, SourceInputIt
             boost::depth_first_search(graph, visitor, color_map, *first);
 
     return predecessors;
+}
+
+template<IsGraph G>
+auto depth_first_search(const G& graph, const std::vector<VertexIndex>& sources)
+{
+    return depth_first_search(graph, sources.begin(), sources.end());
 }
 
 template<IsGraph G>
@@ -248,11 +260,25 @@ auto dijkstra_shortest_paths(const G& graph, const std::vector<Cost>& weights, S
     return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last);
 }
 
+template<IsGraph G, typename Cost>
+    requires IsDenseGraphV<G>
+auto dijkstra_shortest_paths(const G& graph, const std::vector<Cost>& weights, const std::vector<VertexIndex>& sources)
+{
+    return dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end());
+}
+
 template<IsGraph G, typename Cost, typename SourceInputIterator>
     requires(!IsDenseGraphV<G>)
 auto dijkstra_shortest_paths(const G& graph, const tyr::UnorderedMap<EdgeIndex, Cost>& weights, SourceInputIterator first, SourceInputIterator last)
 {
     return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last);
+}
+
+template<IsGraph G, typename Cost>
+    requires(!IsDenseGraphV<G>)
+auto dijkstra_shortest_paths(const G& graph, const tyr::UnorderedMap<EdgeIndex, Cost>& weights, const std::vector<VertexIndex>& sources)
+{
+    return dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end());
 }
 
 template<IsGraph G, typename Cost>

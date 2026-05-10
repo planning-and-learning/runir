@@ -178,5 +178,10 @@ def test_graph_certificates():
 
     graph = StaticGraph(builder)
 
-    assert len(color_refinement_certificate(graph)) == graph.get_num_vertices()
-    assert len(weisfeiler_leman_2_certificate(graph)) == graph.get_num_vertices() ** 2
+    color_refinement = color_refinement_certificate(graph)
+    weisfeiler_leman = weisfeiler_leman_2_certificate(graph)
+
+    assert len(color_refinement.get_colors()) == graph.get_num_vertices()
+    assert len(color_refinement.get_refinement_colors()) > 0
+    assert len(weisfeiler_leman.get_colors()) == graph.get_num_vertices() ** 2
+    assert len(weisfeiler_leman.get_refinement_colors()) > 0

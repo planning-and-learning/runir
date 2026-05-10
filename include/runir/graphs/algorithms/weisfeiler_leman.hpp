@@ -27,8 +27,7 @@ struct Signature
     Color color {};
     ColorTupleList<K> neighbor_colors;
 
-    auto operator==(const Signature&) const -> bool = default;
-    auto operator<=>(const Signature&) const = default;
+    auto identifying_members() const noexcept { return std::tie(color, neighbor_colors); }
 };
 
 template<std::size_t K>

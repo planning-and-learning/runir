@@ -1,6 +1,7 @@
 #ifndef RUNIR_SEMANTICS_FORMATTER_HPP_
 #define RUNIR_SEMANTICS_FORMATTER_HPP_
 
+#include "runir/common/config.hpp"
 #include "runir/knowledge_representation/dl/grammar/ast/ast.hpp"
 #include "runir/knowledge_representation/dl/semantics/constructor_view.hpp"
 
@@ -128,6 +129,7 @@ class View<Index<runir::kr::dl::Constructor<Category>>, C>;
 
 }  // namespace tyr
 
+#if RUNIR_ENABLE_FMT_FORMATTERS
 template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
 struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::Concept<Tag>>, C>> : fmt::formatter<std::string_view>
 {
@@ -175,5 +177,6 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::Constructor<Category>>
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
+#endif
 
 #endif

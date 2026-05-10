@@ -1,6 +1,7 @@
 #ifndef RUNIR_CNF_GRAMMAR_FORMATTER_HPP_
 #define RUNIR_CNF_GRAMMAR_FORMATTER_HPP_
 
+#include "runir/common/config.hpp"
 #include "runir/knowledge_representation/dl/cnf_grammar/grammar_view.hpp"
 #include "runir/knowledge_representation/dl/cnf_grammar/views.hpp"
 #include "runir/knowledge_representation/dl/grammar/ast/ast.hpp"
@@ -157,6 +158,7 @@ std::string grammar(View view)
 
 }  // namespace runir::kr::dl::cnf_grammar::format
 
+#if RUNIR_ENABLE_FMT_FORMATTERS
 template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
 struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Concept<Tag>>, C>> : fmt::formatter<std::string_view>
 {
@@ -235,5 +237,6 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::GrammarTa
         return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::format::grammar(view), ctx);
     }
 };
+#endif
 
 #endif

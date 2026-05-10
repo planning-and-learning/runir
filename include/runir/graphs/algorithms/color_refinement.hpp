@@ -43,16 +43,17 @@ class SignatureInterner
 {
 private:
     std::vector<std::pair<Signature, Color>> m_data;
+    tyr::UnorderedMap<Signature, Color> m_index;
 
 public:
     auto get_or_create(Signature signature) -> Color
     {
-        const auto it = std::find_if(m_data.begin(), m_data.end(), [&](const auto& entry) { return entry.first == signature; });
-        if (it != m_data.end())
+        const auto color = static_cast<Color>(m_data.size());
+        const auto [it, inserted] = m_index.emplace(std::move(signature), color);
+        if (!inserted)
             return it->second;
 
-        const auto color = static_cast<Color>(m_data.size());
-        m_data.emplace_back(std::move(signature), color);
+        m_data.emplace_back(it->first, color);
         return color;
     }
 

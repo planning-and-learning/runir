@@ -1,19 +1,10 @@
-#include "dl.hpp"
+#include "module.hpp"
 
-#include "binding_helpers.hpp"
-
-#include <memory>
 #include <nanobind/stl/chrono.h>
 #include <nanobind/stl/optional.h>
-#include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/vector.h>
-#include <runir/knowledge_representation/dl/cnf_grammar/datas.hpp>
-#include <runir/knowledge_representation/dl/cnf_grammar/formatter.hpp>
 #include <runir/knowledge_representation/dl/cnf_grammar/generate.hpp>
-#include <runir/knowledge_representation/dl/cnf_grammar/translate.hpp>
-#include <runir/knowledge_representation/dl/cnf_grammar/views.hpp>
 #include <runir/knowledge_representation/dl/repository.hpp>
-#include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/ground_task/state_view.hpp>
 #include <tyr/planning/lifted_task/state_view.hpp>
 
@@ -21,7 +12,6 @@ namespace runir::kr::dl
 {
 
 namespace cnf = runir::kr::dl::cnf_grammar;
-namespace fp = tyr::formalism::planning;
 
 using namespace nanobind::literals;
 
@@ -39,23 +29,8 @@ auto generate(cnf::GrammarView grammar,
 
 }  // namespace
 
-void bind_cnf_grammar_module_definitions(nb::module_& m)
+void bind_cnf_grammar_generate(nb::module_& m)
 {
-    python_detail::bind_constructor_indices<cnf::Concept, cnf::Role, cnf::Boolean, cnf::Numerical, cnf::Constructor>(m);
-    python_detail::bind_constructor_datas<cnf::Concept, cnf::Role, cnf::Boolean, cnf::Numerical, cnf::Constructor>(m);
-    python_detail::bind_constructor_views<cnf::Concept, cnf::Role, cnf::Boolean, cnf::Numerical, cnf::Constructor, cnf::ConstructorRepository>(m);
-
-    auto repository = nb::class_<cnf::ConstructorRepository>(m, "ConstructorRepository");
-    repository.def(nb::new_([](size_t index, std::shared_ptr<const fp::Repository> planning_repository)
-                            { return std::make_unique<cnf::ConstructorRepository>(index, std::move(planning_repository)); }),
-                   "index"_a,
-                   "planning_repository"_a);
-    python_detail::bind_clearable_repository(repository);
-
-    python_detail::bind_view<cnf::GrammarTag, cnf::ConstructorRepository>(m, "Grammar");
-
-    m.def("translate", &cnf::translate, "grammar"_a, "repository"_a, nb::keep_alive<0, 2>());
-
     nb::class_<cnf::GenerateStatistics>(m, "GenerateStatistics")
         .def_ro("num_generated", &cnf::GenerateStatistics::num_generated)
         .def_ro("num_pruned", &cnf::GenerateStatistics::num_pruned)

@@ -41,6 +41,13 @@ else()
 endif()
 
 option(RUNIR_LINK_STATIC_DEPENDENCIES "Prefer static dependency libraries when finding installed dependencies." OFF)
+option(RUNIR_ENABLE_FMT_FORMATTERS "Enable Runir's public fmt::formatter specializations." ON)
+if(RUNIR_ENABLE_FMT_FORMATTERS)
+    add_compile_definitions(RUNIR_ENABLE_FMT_FORMATTERS=1)
+else()
+    add_compile_definitions(RUNIR_ENABLE_FMT_FORMATTERS=0)
+endif()
+
 option(BUILD_PYRUNIR "Build runir for the pyrunir Python wheel." OFF)
 
 if(BUILD_PYRUNIR)

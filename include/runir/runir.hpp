@@ -1,5 +1,7 @@
 #pragma once
 
+#include "runir/common/config.hpp"
+
 #include <fmt/format.h>
 #include <string>
 #include <string_view>
@@ -21,6 +23,7 @@ std::string format_summary(const FeatureSummary& summary);
 
 }
 
+#if RUNIR_ENABLE_FMT_FORMATTERS
 template<>
 struct fmt::formatter<runir::FeatureSummary> : fmt::formatter<std::string_view>
 {
@@ -31,3 +34,4 @@ struct fmt::formatter<runir::FeatureSummary> : fmt::formatter<std::string_view>
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
+#endif

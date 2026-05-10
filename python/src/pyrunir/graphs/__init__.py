@@ -1,11 +1,16 @@
 # Import all classes for better IDE support
 
-from ..pyrunir.graphs import (
+from .pyrunir.graphs import (
     BackwardStaticGraphView,
     BidirectionalStaticGraph,
+    ColorRefinementCertificate,
     DynamicGraph,
     StaticGraph,
     StaticGraphBuilder,
+    WeisfeilerLeman2Certificate,
+    WeisfeilerLeman2Signature,
+    WeisfeilerLeman3Certificate,
+    WeisfeilerLeman3Signature,
     breadth_first_search,
     color_refinement_certificate,
     depth_first_search,
