@@ -12,7 +12,6 @@
 #include <tyr/common/equal_to.hpp>
 #include <tyr/common/hash.hpp>
 #include <tyr/common/types.hpp>
-#include <unordered_set>
 #include <vector>
 
 namespace runir::graphs
@@ -20,11 +19,11 @@ namespace runir::graphs
 
 using VertexIndex = uint_t;
 using VertexIndexList = std::vector<VertexIndex>;
-using VertexIndexSet = std::unordered_set<VertexIndex>;
+using VertexIndexSet = tyr::UnorderedSet<VertexIndex>;
 
 using EdgeIndex = uint_t;
 using EdgeIndexList = std::vector<EdgeIndex>;
-using EdgeIndexSet = std::unordered_set<EdgeIndex>;
+using EdgeIndexSet = tyr::UnorderedSet<EdgeIndex>;
 
 using Degree = uint_t;
 using DegreeList = std::vector<Degree>;
