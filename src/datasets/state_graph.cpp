@@ -34,39 +34,11 @@ namespace
 {
 
 template<tyr::planning::TaskKind Kind>
-class NeverGoalStrategy : public tyr::planning::GoalStrategy<Kind>
-{
-public:
-    bool is_static_goal_satisfied(const tyr::planning::Task<Kind>& task) override
-    {
-        static_cast<void>(task);
-        return true;
-    }
-
-    bool is_dynamic_goal_satisfied(const tyr::planning::StateView<Kind>& state) override
-    {
-        static_cast<void>(state);
-        return false;
-    }
-};
-
-template<tyr::planning::TaskKind Kind>
-struct StateGraphEdgeRecord
-{
-    graphs::VertexIndex source;
-    graphs::VertexIndex target;
-    tyr::formalism::planning::GroundActionView action;
-    tyr::float_t cost;
-};
-
-template<tyr::planning::TaskKind Kind>
 class StateGraphEventHandler : public tyr::planning::astar_eager::EventHandler<Kind>
 {
 private:
-    std::vector<tyr::planning::Node<Kind>> m_nodes;
-    std::vector<StateGraphEdgeRecord<Kind>> m_edges;
+    StateGraphBuilder<Kind> m_builder;
     std::unordered_map<uint_t, graphs::VertexIndex> m_state_to_vertex;
-    graphs::VertexIndex m_current_source = std::numeric_limits<graphs::VertexIndex>::max();
 
     auto get_or_create_vertex(tyr::planning::Node<Kind> node) -> graphs::VertexIndex
     {
@@ -74,36 +46,50 @@ private:
         if (const auto it = m_state_to_vertex.find(state_index); it != m_state_to_vertex.end())
             return it->second;
 
-        const auto vertex = static_cast<graphs::VertexIndex>(m_nodes.size());
+        const auto vertex = static_cast<graphs::VertexIndex>(m_state_to_vertex.size());
         m_state_to_vertex.emplace(state_index, vertex);
-        m_nodes.emplace_back(std::move(node));
+        [[maybe_unused]] const auto added = m_builder.add_vertex(StateGraphVertexLabel<Kind> { node.get_state() });
+        assert(added == vertex);
         return vertex;
     }
 
-    void record_edge(const tyr::planning::LabeledNode<Kind>& labeled_succ_node)
+    void record_edge(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node)
     {
-        assert(m_current_source != std::numeric_limits<graphs::VertexIndex>::max());
-
+        const auto source = get_or_create_vertex(source_node);
         const auto target = get_or_create_vertex(labeled_succ_node.node);
-        const auto& source_node = m_nodes[m_current_source];
         const auto cost = labeled_succ_node.node.get_metric() - source_node.get_metric();
-        m_edges.push_back(StateGraphEdgeRecord<Kind> { m_current_source, target, labeled_succ_node.label, cost });
+        m_builder.add_directed_edge(source, target, StateGraphEdgeLabel { labeled_succ_node.label, cost });
     }
 
 public:
-    void on_expand_node(const tyr::planning::Node<Kind>& node) override { m_current_source = get_or_create_vertex(node); }
+    void on_expand_node(const tyr::planning::Node<Kind>& node) override { get_or_create_vertex(node); }
 
     void on_expand_goal_node(const tyr::planning::Node<Kind>& node) override { static_cast<void>(node); }
 
-    void on_generate_node(const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override { record_edge(labeled_succ_node); }
+    void on_generate_node(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
+    {
+        record_edge(source_node, labeled_succ_node);
+    }
 
-    void on_generate_node_relaxed(const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override { static_cast<void>(labeled_succ_node); }
+    void on_generate_node_relaxed(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
+    {
+        static_cast<void>(source_node);
+        static_cast<void>(labeled_succ_node);
+    }
 
-    void on_generate_node_not_relaxed(const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override { record_edge(labeled_succ_node); }
+    void on_generate_node_not_relaxed(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
+    {
+        record_edge(source_node, labeled_succ_node);
+    }
 
     void on_close_node(const tyr::planning::Node<Kind>& node) override { static_cast<void>(node); }
 
     void on_prune_node(const tyr::planning::Node<Kind>& node) override { static_cast<void>(node); }
+
+    void on_prune_node(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
+    {
+        record_edge(source_node, labeled_succ_node);
+    }
 
     void on_start_search(const tyr::planning::Node<Kind>& node, tyr::float_t f_value) override
     {
@@ -121,24 +107,32 @@ public:
 
     void on_exhausted() override {}
 
-    auto release() && { return std::make_pair(std::move(m_nodes), std::move(m_edges)); }
+    auto release() && { return StateGraph<Kind>(std::move(m_builder)); }
 };
 
-template<tyr::planning::TaskKind Kind>
-auto build_state_graph(std::vector<tyr::planning::Node<Kind>> nodes, std::vector<StateGraphEdgeRecord<Kind>> edges) -> StateGraph<Kind>
+template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+class PolicyStateGraphPruningStrategy : public tyr::planning::PruningStrategy<Kind>
 {
-    auto builder = StateGraphBuilder<Kind> {};
-    for (graphs::VertexIndex vertex = 0; vertex < nodes.size(); ++vertex)
+private:
+    uint_t m_state_graph_index;
+    Policy* m_policy;
+
+public:
+    PolicyStateGraphPruningStrategy(uint_t state_graph_index, Policy& policy) : m_state_graph_index(state_graph_index), m_policy(&policy) {}
+
+    bool should_prune_state(const tyr::planning::StateView<Kind>& state) override
     {
-        [[maybe_unused]] const auto added = builder.add_vertex(StateGraphVertexLabel<Kind> { nodes[vertex].get_state() });
-        assert(added == vertex);
+        return !m_policy->try_insert(StateGraphVertexCandidate<Kind> { m_state_graph_index, state });
     }
 
-    for (const auto& edge : edges)
-        builder.add_directed_edge(edge.source, edge.target, StateGraphEdgeLabel { edge.action, edge.cost });
+    bool should_prune_successor_state(const tyr::planning::StateView<Kind>& state, const tyr::planning::StateView<Kind>& succ_state, bool is_new_succ) override
+    {
+        if (!is_new_succ)
+            return false;
 
-    return StateGraph<Kind>(std::move(builder));
-}
+        return !m_policy->try_insert(StateGraphTransitionCandidate<Kind> { m_state_graph_index, state, succ_state });
+    }
+};
 
 template<typename G>
 auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexIndex>& goal_vertices, StateGraphCostMode cost_mode)
@@ -181,13 +175,27 @@ auto generate_state_graph(TaskSearchContext<Kind>& context) -> StateGraph<Kind>
     auto event_handler = std::make_shared<StateGraphEventHandler<Kind>>();
     auto options = tyr::planning::astar_eager::Options<Kind> {};
     options.event_handler = event_handler;
-    options.goal_strategy = std::make_shared<NeverGoalStrategy<Kind>>();
+    options.goal_strategy = tyr::planning::ExhaustiveGoalStrategy<Kind>::create();
     options.pruning_strategy = tyr::planning::PruningStrategy<Kind>::create();
 
     [[maybe_unused]] const auto result = tyr::planning::astar_eager::find_solution(*context.task, *context.successor_generator, heuristic, options);
 
-    auto [nodes, edges] = std::move(*event_handler).release();
-    return build_state_graph<Kind>(std::move(nodes), std::move(edges));
+    return std::move(*event_handler).release();
+}
+
+template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+auto generate_state_graph(TaskSearchContext<Kind>& context, uint_t state_graph_index, Policy& policy) -> StateGraph<Kind>
+{
+    auto heuristic = tyr::planning::BlindHeuristic<Kind> {};
+    auto event_handler = std::make_shared<StateGraphEventHandler<Kind>>();
+    auto options = tyr::planning::astar_eager::Options<Kind> {};
+    options.event_handler = event_handler;
+    options.goal_strategy = tyr::planning::ExhaustiveGoalStrategy<Kind>::create();
+    options.pruning_strategy = std::make_shared<PolicyStateGraphPruningStrategy<Kind, Policy>>(state_graph_index, policy);
+
+    [[maybe_unused]] const auto result = tyr::planning::astar_eager::find_solution(*context.task, *context.successor_generator, heuristic, options);
+
+    return std::move(*event_handler).release();
 }
 
 template<tyr::planning::TaskKind Kind>
@@ -238,6 +246,16 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
 template auto generate_state_graph<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&) -> StateGraph<tyr::planning::GroundTag>;
 
 template auto generate_state_graph<tyr::planning::LiftedTag>(TaskSearchContext<tyr::planning::LiftedTag>&) -> StateGraph<tyr::planning::LiftedTag>;
+
+template auto generate_state_graph<tyr::planning::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::GroundTag>&,
+                                                                                                        uint_t,
+                                                                                                        EquivalencePolicy<IdentityEquivalenceTag>&)
+    -> StateGraph<tyr::planning::GroundTag>;
+
+template auto generate_state_graph<tyr::planning::LiftedTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::LiftedTag>&,
+                                                                                                        uint_t,
+                                                                                                        EquivalencePolicy<IdentityEquivalenceTag>&)
+    -> StateGraph<tyr::planning::LiftedTag>;
 
 template auto annotate_state_graph<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&,
                                                              const StateGraph<tyr::planning::GroundTag>&,

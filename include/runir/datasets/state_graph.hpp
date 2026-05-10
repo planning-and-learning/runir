@@ -21,6 +21,7 @@
 #include "runir/common/config.hpp"
 #include "runir/datasets/class_of_tasks.hpp"
 #include "runir/datasets/config.hpp"
+#include "runir/datasets/equivalence_policy.hpp"
 #include "runir/graphs/bidirectional_static_graph.hpp"
 #include "runir/graphs/dynamic_graph.hpp"
 #include "runir/graphs/static_graph.hpp"
@@ -88,6 +89,9 @@ using DynamicAnnotatedStateGraph = graphs::DynamicGraph<AnnotatedStateGraphVerte
 
 template<tyr::planning::TaskKind Kind>
 auto generate_state_graph(TaskSearchContext<Kind>& context) -> StateGraph<Kind>;
+
+template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+auto generate_state_graph(TaskSearchContext<Kind>& context, uint_t state_graph_index, Policy& policy) -> StateGraph<Kind>;
 
 template<tyr::planning::TaskKind Kind>
 auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kind>& graph, StateGraphCostMode cost_mode) -> AnnotatedStateGraph<Kind>;
