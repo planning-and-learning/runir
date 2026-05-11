@@ -33,8 +33,9 @@ else()
     message("Build tests disabled.")
 endif()
 
-option(BUILD_SHARED_LIBS "Build shared libraries." ON)
-if(BUILD_SHARED_LIBS)
+option(RUNIR_BUILD_SHARED "Build runir native libraries as shared libraries." ON)
+set(BUILD_SHARED_LIBS ${RUNIR_BUILD_SHARED})
+if(RUNIR_BUILD_SHARED)
     message("Build shared libraries enabled.")
 else()
     message("Build shared libraries disabled.")
@@ -50,25 +51,23 @@ endif()
 
 option(BUILD_PYRUNIR "Build runir for the pyrunir Python wheel." OFF)
 
-if(BUILD_PYRUNIR)
-    set(RUNIR_INSTALL_PREFIX "pyrunir/native/")
-    set(RUNIR_INSTALL_COMPONENT pyrunir)
-    set(RUNIR_INSTALL_INTERFACE_INCLUDEDIR "${RUNIR_INSTALL_PREFIX}${CMAKE_INSTALL_INCLUDEDIR}")
-else()
-    set(RUNIR_INSTALL_PREFIX "")
-    set(RUNIR_INSTALL_COMPONENT runir)
-    set(RUNIR_INSTALL_INTERFACE_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
-endif()
-
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include("configure_yggdrasil")
+include("configure_pypddl")
 include("configure_tyr")
 configure_yggdrasil()
+configure_pypddl()
 configure_tyr()
 
 find_package(fmt CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 if(fmt_FOUND)
     message(STATUS "Found fmt: ${fmt_DIR} (found version ${fmt_VERSION})")
+endif()
+
+find_package(TBB CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+if(TBB_FOUND)
+    include_directories(${TBB_INCLUDE_DIRS})
+    message(STATUS "Found TBB: ${TBB_DIR} (found version ${TBB_VERSION})")
 endif()
 
 find_package(tyr 0.0.13 CONFIG REQUIRED COMPONENTS core PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
@@ -79,7 +78,7 @@ endif()
 add_subdirectory(src)
 
 if(BUILD_PYRUNIR)
-    add_subdirectory(python)
+    add_subdirectory(python/src)
 endif()
 
 if(RUNIR_BUILD_TESTS)
@@ -87,13 +86,13 @@ if(RUNIR_BUILD_TESTS)
 endif()
 
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/runir"
-    DESTINATION "${RUNIR_INSTALL_PREFIX}${CMAKE_INSTALL_INCLUDEDIR}"
-    COMPONENT ${RUNIR_INSTALL_COMPONENT})
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    COMPONENT runir)
 
 install(
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/"
-    DESTINATION "${RUNIR_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/cmake/runir/cmake"
-    COMPONENT ${RUNIR_INSTALL_COMPONENT}
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/runir/cmake"
+    COMPONENT runir
 )
 
 include(CMakePackageConfigHelpers)
@@ -106,7 +105,7 @@ write_basic_package_version_file(
 
 configure_package_config_file("${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/runirConfig.cmake"
-    INSTALL_DESTINATION "${RUNIR_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/cmake/runir"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/runir"
     NO_CHECK_REQUIRED_COMPONENTS_MACRO
 )
 
@@ -114,6 +113,6 @@ install(
     FILES
         "${CMAKE_CURRENT_BINARY_DIR}/runirConfig.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/runirConfigVersion.cmake"
-    DESTINATION "${RUNIR_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/cmake/runir"
-    COMPONENT ${RUNIR_INSTALL_COMPONENT}
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/runir"
+    COMPONENT runir
 )

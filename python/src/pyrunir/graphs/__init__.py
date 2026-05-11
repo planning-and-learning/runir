@@ -1,6 +1,6 @@
 # Import all classes for better IDE support
 
-from .pyrunir.graphs import (
+from .._pyrunir.graphs import (
     BackwardStaticGraphView,
     BidirectionalStaticGraph,
     ColorRefinementCertificate,

@@ -1,4 +1,10 @@
 import os
+import base64
+import csv
+import hashlib
+import shutil
+import tempfile
+import zipfile
 from pathlib import Path
 
 from scikit_build_core import build as scikit_build
@@ -14,10 +20,12 @@ def _prepend_cmake_args(*args: str) -> None:
 
 
 def _native_prefixes() -> list[Path]:
+    import pypddl
     import pyyggdrasil
     import pytyr
 
     return [
+        pypddl.native_prefix().resolve(),
         pyyggdrasil.native_prefix().resolve(),
         pytyr.native_prefix().resolve(),
     ]
@@ -40,6 +48,73 @@ def _prepend_env_paths(name: str, paths: list[Path]) -> None:
     os.environ[name] = os.pathsep.join(entries)
 
 
+def _record_digest(path: Path) -> tuple[str, str]:
+    content = path.read_bytes()
+    digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b"=").decode("ascii")
+    return f"sha256={digest}", str(len(content))
+
+
+def _rewrite_record(wheel_root: Path) -> None:
+    record_files = list(wheel_root.glob("*.dist-info/RECORD"))
+    if len(record_files) != 1:
+        raise RuntimeError(f"expected exactly one RECORD file, found {len(record_files)}")
+
+    record_file = record_files[0]
+    rows = []
+    for path in sorted(wheel_root.rglob("*")):
+        if not path.is_file():
+            continue
+
+        relative_path = path.relative_to(wheel_root).as_posix()
+        if path == record_file:
+            rows.append((relative_path, "", ""))
+        else:
+            digest, size = _record_digest(path)
+            rows.append((relative_path, digest, size))
+
+    with record_file.open("w", newline="") as out:
+        csv.writer(out).writerows(rows)
+
+
+def _fix_wheel_stubs(wheel_path: Path) -> None:
+    with tempfile.TemporaryDirectory(prefix="pyrunir-wheel-") as tmp:
+        wheel_root = Path(tmp) / "wheel"
+        with zipfile.ZipFile(wheel_path) as wheel:
+            wheel.extractall(wheel_root)
+
+        def install_stub(path: Path, target: Path) -> None:
+            package_dir = target.with_suffix("")
+            if package_dir.is_dir():
+                target = package_dir / "__init__.pyi"
+
+            if target.exists():
+                raise RuntimeError(
+                    f"stubgen emitted both {path.relative_to(wheel_root)} "
+                    f"and {target.relative_to(wheel_root)}"
+                )
+
+            target.parent.mkdir(parents=True, exist_ok=True)
+            text = path.read_text(encoding="utf-8")
+            target.write_text(text.replace("pyrunir._pyrunir.", "pyrunir."), encoding="utf-8")
+
+        private_stub_root = wheel_root / "pyrunir" / "_pyrunir"
+        if private_stub_root.is_dir():
+            public_stub_root = wheel_root / "pyrunir"
+            for path in sorted(private_stub_root.rglob("*.pyi")):
+                install_stub(path, public_stub_root / path.relative_to(private_stub_root))
+            shutil.rmtree(private_stub_root)
+
+        _rewrite_record(wheel_root)
+
+        replacement_path = wheel_path.with_suffix(".tmp")
+        with zipfile.ZipFile(replacement_path, "w", compression=zipfile.ZIP_DEFLATED) as wheel:
+            for path in sorted(wheel_root.rglob("*")):
+                if path.is_file():
+                    wheel.write(path, path.relative_to(wheel_root).as_posix())
+
+        replacement_path.replace(wheel_path)
+
+
 def _prepare_native_build() -> None:
     native_prefixes = _native_prefixes()
     native_library_dirs = _native_library_dirs(native_prefixes)
@@ -49,7 +124,7 @@ def _prepare_native_build() -> None:
     _prepend_env_paths("DYLD_LIBRARY_PATH", native_library_dirs)
     _prepend_cmake_args(
         f"-DCMAKE_PREFIX_PATH={';'.join(str(prefix) for prefix in native_prefixes)}",
-        "-DBUILD_SHARED_LIBS=ON",
+        "-DRUNIR_BUILD_SHARED=ON",
         "-DBUILD_PYRUNIR=ON",
         "-DRUNIR_BUILD_TESTS=OFF",
         "-DRUNIR_LINK_STATIC_DEPENDENCIES=OFF",
@@ -71,12 +146,16 @@ def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None):
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     _prepare_native_build()
-    return scikit_build.build_wheel(wheel_directory, config_settings, metadata_directory)
+    wheel_filename = scikit_build.build_wheel(wheel_directory, config_settings, metadata_directory)
+    _fix_wheel_stubs(Path(wheel_directory) / wheel_filename)
+    return wheel_filename
 
 
 def build_editable(wheel_directory, config_settings=None, metadata_directory=None):
     _prepare_native_build()
-    return scikit_build.build_editable(wheel_directory, config_settings, metadata_directory)
+    wheel_filename = scikit_build.build_editable(wheel_directory, config_settings, metadata_directory)
+    _fix_wheel_stubs(Path(wheel_directory) / wheel_filename)
+    return wheel_filename
 
 
 def build_sdist(sdist_directory, config_settings=None):

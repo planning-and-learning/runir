@@ -1,6 +1,6 @@
 # Import all classes and functions for better IDE support
 
-from ...pyrunir.kr.dl.semantics import (
+from ..._pyrunir.kr.dl.semantics import (
     Boolean,
     BooleanAtomicStateDerived,
     BooleanAtomicStateDerivedData,

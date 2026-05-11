@@ -53,7 +53,7 @@ exclude = [
 ]
 
 [tool.scikit-build.cmake.define]
-BUILD_SHARED_LIBS = "ON"
+RUNIR_BUILD_SHARED = "ON"
 BUILD_PYRUNIR = "ON"
 RUNIR_BUILD_TESTS = "OFF"
 RUNIR_LINK_STATIC_DEPENDENCIES = "OFF"
@@ -61,10 +61,10 @@ CMAKE_INSTALL_LIBDIR = "lib"
 
 [tool.cibuildwheel]
 container-engine = "docker"
-before-build = "python -m pip install --no-cache-dir pyyggdrasil>=0.0.8 pytyr>=0.0.12"
+before-build = "python -m pip install --no-cache-dir pypddl pyyggdrasil>=0.0.8 pytyr>=0.0.12"
 
 [tool.cibuildwheel.linux]
-repair-wheel-command = "LD_LIBRARY_PATH=$(python -c 'import os, pyyggdrasil, pytyr; prefixes = [pyyggdrasil.native_prefix(), pytyr.native_prefix()]; print(os.pathsep.join(str(path) for prefix in prefixes for path in sorted(prefix.glob(\"lib*\")) if path.is_dir()))') auditwheel repair -w {dest_dir} {wheel}"
+repair-wheel-command = "LD_LIBRARY_PATH=$(python -c 'import os, pypddl, pyyggdrasil, pytyr; prefixes = [pypddl.native_prefix(), pyyggdrasil.native_prefix(), pytyr.native_prefix()]; print(os.pathsep.join(str(path) for prefix in prefixes for path in sorted(prefix.glob(\"lib*\")) if path.is_dir()))') auditwheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.macos]
-repair-wheel-command = "DYLD_LIBRARY_PATH=$(python -c 'import os, pyyggdrasil, pytyr; prefixes = [pyyggdrasil.native_prefix(), pytyr.native_prefix()]; print(os.pathsep.join(str(path) for prefix in prefixes for path in sorted(prefix.glob(\"lib*\")) if path.is_dir()))') delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
+repair-wheel-command = "DYLD_LIBRARY_PATH=$(python -c 'import os, pypddl, pyyggdrasil, pytyr; prefixes = [pypddl.native_prefix(), pyyggdrasil.native_prefix(), pytyr.native_prefix()]; print(os.pathsep.join(str(path) for prefix in prefixes for path in sorted(prefix.glob(\"lib*\")) if path.is_dir()))') delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
