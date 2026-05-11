@@ -380,6 +380,27 @@ void append_derivation_rule(tyr::Data<GrammarTag>& data,
         node.get());
 }
 
+template<runir::kr::dl::CategoryTag Category>
+auto fixed_start_name()
+{
+    if constexpr (std::same_as<Category, ConceptTag>)
+        return "c_0";
+    else if constexpr (std::same_as<Category, RoleTag>)
+        return "r_0";
+    else if constexpr (std::same_as<Category, BooleanTag>)
+        return "b_0";
+    else if constexpr (std::same_as<Category, NumericalTag>)
+        return "n_0";
+}
+
+template<runir::kr::dl::CategoryTag Category>
+auto parse_fixed_start(tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+{
+    ast::NonTerminal<Category> start;
+    start.name = fixed_start_name<Category>();
+    return parse(start, domain, repository).get_index();
+}
+
 }
 
 GrammarView parse_grammar(const std::string& description, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
@@ -388,16 +409,12 @@ GrammarView parse_grammar(const std::string& description, tyr::formalism::planni
 
     tyr::Data<GrammarTag> data;
 
-    if (ast.head.concept_start)
-        data.concept_start = parse(*ast.head.concept_start, domain, repository).get_index();
-    if (ast.head.role_start)
-        data.role_start = parse(*ast.head.role_start, domain, repository).get_index();
-    if (ast.head.boolean_start)
-        data.boolean_start = parse(*ast.head.boolean_start, domain, repository).get_index();
-    if (ast.head.numerical_start)
-        data.numerical_start = parse(*ast.head.numerical_start, domain, repository).get_index();
+    data.concept_start = parse_fixed_start<ConceptTag>(domain, repository);
+    data.role_start = parse_fixed_start<RoleTag>(domain, repository);
+    data.boolean_start = parse_fixed_start<BooleanTag>(domain, repository);
+    data.numerical_start = parse_fixed_start<NumericalTag>(domain, repository);
 
-    for (const auto& rule : ast.body.rules)
+    for (const auto& rule : ast.rules)
         append_derivation_rule(data, rule, domain, repository);
 
     data.domain = domain.get_index();

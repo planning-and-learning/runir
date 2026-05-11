@@ -49,8 +49,6 @@ struct NumericalDistance;
 struct ConstructorOrNonTerminalVariant;
 struct DerivationRuleVariant;
 
-struct GrammarHead;
-struct GrammarBody;
 struct Grammar;
 
 template<runir::kr::dl::CategoryTag D>
@@ -137,24 +135,24 @@ struct DerivationRule : x3::position_tagged
 
 struct ConceptBot : x3::position_tagged
 {
-    static constexpr auto keyword = "concept_bot";
+    static constexpr auto keyword = "c_bot";
 };
 
 struct ConceptTop : x3::position_tagged
 {
-    static constexpr auto keyword = "concept_top";
+    static constexpr auto keyword = "c_top";
 };
 
 struct ConceptAtomicState : x3::position_tagged
 {
-    static constexpr auto keyword = "concept_atomic_state";
+    static constexpr auto keyword = "c_atomic_state";
 
     std::string predicate_name;
 };
 
 struct ConceptAtomicGoal : x3::position_tagged
 {
-    static constexpr auto keyword = "concept_atomic_goal";
+    static constexpr auto keyword = "c_atomic_goal";
 
     std::string predicate_name;
     bool polarity;
@@ -162,7 +160,7 @@ struct ConceptAtomicGoal : x3::position_tagged
 
 struct ConceptIntersection : x3::position_tagged
 {
-    static constexpr auto keyword = "concept_intersection";
+    static constexpr auto keyword = "c_intersection";
 
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> rhs;
@@ -170,7 +168,7 @@ struct ConceptIntersection : x3::position_tagged
 
 struct ConceptUnion : x3::position_tagged
 {
-    static constexpr auto keyword = "concept_union";
+    static constexpr auto keyword = "c_union";
 
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> rhs;
@@ -178,14 +176,14 @@ struct ConceptUnion : x3::position_tagged
 
 struct ConceptNegation : x3::position_tagged
 {
-    static constexpr auto keyword = "concept_negation";
+    static constexpr auto keyword = "c_negation";
 
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> arg;
 };
 
 struct ConceptValueRestriction : x3::position_tagged
 {
-    static constexpr auto keyword = "concept_value_restriction";
+    static constexpr auto keyword = "c_value_restriction";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> rhs;
@@ -193,7 +191,7 @@ struct ConceptValueRestriction : x3::position_tagged
 
 struct ConceptExistentialQuantification : x3::position_tagged
 {
-    static constexpr auto keyword = "concept_existential_quantification";
+    static constexpr auto keyword = "c_existential_quantification";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> rhs;
@@ -201,7 +199,7 @@ struct ConceptExistentialQuantification : x3::position_tagged
 
 struct ConceptRoleValueMapContainment : x3::position_tagged
 {
-    static constexpr auto keyword = "concept_role_value_map_containment";
+    static constexpr auto keyword = "c_role_value_map_containment";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> rhs;
@@ -209,7 +207,7 @@ struct ConceptRoleValueMapContainment : x3::position_tagged
 
 struct ConceptRoleValueMapEquality : x3::position_tagged
 {
-    static constexpr auto keyword = "concept_role_value_map_equality";
+    static constexpr auto keyword = "c_role_value_map_equality";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> rhs;
@@ -217,26 +215,26 @@ struct ConceptRoleValueMapEquality : x3::position_tagged
 
 struct ConceptNominal : x3::position_tagged
 {
-    static constexpr auto keyword = "concept_nominal";
+    static constexpr auto keyword = "c_nominal";
 
     std::string object_name;
 };
 
 struct RoleUniversal : x3::position_tagged
 {
-    static constexpr auto keyword = "role_universal";
+    static constexpr auto keyword = "r_universal";
 };
 
 struct RoleAtomicState : x3::position_tagged
 {
-    static constexpr auto keyword = "role_atomic_state";
+    static constexpr auto keyword = "r_atomic_state";
 
     std::string predicate_name;
 };
 
 struct RoleAtomicGoal : x3::position_tagged
 {
-    static constexpr auto keyword = "role_atomic_goal";
+    static constexpr auto keyword = "r_atomic_goal";
 
     std::string predicate_name;
     bool polarity;
@@ -244,7 +242,7 @@ struct RoleAtomicGoal : x3::position_tagged
 
 struct RoleIntersection : x3::position_tagged
 {
-    static constexpr auto keyword = "role_intersection";
+    static constexpr auto keyword = "r_intersection";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> rhs;
@@ -252,7 +250,7 @@ struct RoleIntersection : x3::position_tagged
 
 struct RoleUnion : x3::position_tagged
 {
-    static constexpr auto keyword = "role_union";
+    static constexpr auto keyword = "r_union";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> rhs;
@@ -260,21 +258,21 @@ struct RoleUnion : x3::position_tagged
 
 struct RoleComplement : x3::position_tagged
 {
-    static constexpr auto keyword = "role_complement";
+    static constexpr auto keyword = "r_complement";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> arg;
 };
 
 struct RoleInverse : x3::position_tagged
 {
-    static constexpr auto keyword = "role_inverse";
+    static constexpr auto keyword = "r_inverse";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> arg;
 };
 
 struct RoleComposition : x3::position_tagged
 {
-    static constexpr auto keyword = "role_composition";
+    static constexpr auto keyword = "r_composition";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> rhs;
@@ -282,21 +280,21 @@ struct RoleComposition : x3::position_tagged
 
 struct RoleTransitiveClosure : x3::position_tagged
 {
-    static constexpr auto keyword = "role_transitive_closure";
+    static constexpr auto keyword = "r_transitive_closure";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> arg;
 };
 
 struct RoleReflexiveTransitiveClosure : x3::position_tagged
 {
-    static constexpr auto keyword = "role_reflexive_transitive_closure";
+    static constexpr auto keyword = "r_reflexive_transitive_closure";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> arg;
 };
 
 struct RoleRestriction : x3::position_tagged
 {
-    static constexpr auto keyword = "role_restriction";
+    static constexpr auto keyword = "r_restriction";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> rhs;
@@ -304,7 +302,7 @@ struct RoleRestriction : x3::position_tagged
 
 struct RoleIdentity : x3::position_tagged
 {
-    static constexpr auto keyword = "role_identity";
+    static constexpr auto keyword = "r_identity";
 
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> arg;
 };
@@ -317,7 +315,7 @@ struct ConstructorOrNonTerminalVariant : x3::variant<ConstructorOrNonTerminal<ru
 
 struct BooleanAtomicState : x3::position_tagged
 {
-    static constexpr auto keyword = "boolean_atomic_state";
+    static constexpr auto keyword = "b_atomic_state";
 
     std::string predicate_name;
     bool polarity;
@@ -325,21 +323,21 @@ struct BooleanAtomicState : x3::position_tagged
 
 struct BooleanNonempty : x3::position_tagged
 {
-    static constexpr auto keyword = "boolean_nonempty";
+    static constexpr auto keyword = "b_nonempty";
 
     ConstructorOrNonTerminalVariant arg;
 };
 
 struct NumericalCount : x3::position_tagged
 {
-    static constexpr auto keyword = "numerical_count";
+    static constexpr auto keyword = "n_count";
 
     ConstructorOrNonTerminalVariant arg;
 };
 
 struct NumericalDistance : x3::position_tagged
 {
-    static constexpr auto keyword = "numerical_distance";
+    static constexpr auto keyword = "n_distance";
 
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> mid;
@@ -357,23 +355,9 @@ struct DerivationRuleVariant :
     using base_type::operator=;
 };
 
-struct GrammarHead : x3::position_tagged
-{
-    boost::optional<NonTerminal<runir::kr::dl::ConceptTag>> concept_start;
-    boost::optional<NonTerminal<runir::kr::dl::RoleTag>> role_start;
-    boost::optional<NonTerminal<runir::kr::dl::BooleanTag>> boolean_start;
-    boost::optional<NonTerminal<runir::kr::dl::NumericalTag>> numerical_start;
-};
-
-struct GrammarBody : x3::position_tagged
-{
-    std::vector<DerivationRuleVariant> rules;
-};
-
 struct Grammar : x3::position_tagged
 {
-    GrammarHead head;
-    GrammarBody body;
+    std::vector<DerivationRuleVariant> rules;
 };
 
 }

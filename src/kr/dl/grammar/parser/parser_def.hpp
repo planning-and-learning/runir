@@ -23,6 +23,7 @@ using x3::raw;
 using ascii::alnum;
 using ascii::alpha;
 using ascii::char_;
+using ascii::digit;
 
 concept_type const concept_ = "concept";
 concept_root_type const concept_root = "concept_root";
@@ -80,18 +81,17 @@ numerical_derivation_rule_type const numerical_derivation_rule = "numerical_deri
 
 derivation_rule_variant_type const derivation_rule_variant = "derivation_rule_variant";
 
-grammar_head_type const grammar_head = "grammar_head";
 grammar_body_type const grammar_body = "grammar_body";
 grammar_type const grammar = "grammar";
 grammar_root_type const grammar_root = "grammar_root";
 
-inline auto concept_non_terminal_string_parser() { return raw[lexeme["<concept" > *(alnum | char_('-') | char_('_') | char_('=')) > ">"]]; }
+inline auto concept_non_terminal_string_parser() { return raw[lexeme[lit("c_") >> +digit]]; }
 
-inline auto role_non_terminal_string_parser() { return raw[lexeme["<role" > *(alnum | char_('-') | char_('_') | char_('=')) > ">"]]; }
+inline auto role_non_terminal_string_parser() { return raw[lexeme[lit("r_") >> +digit]]; }
 
-inline auto boolean_non_terminal_string_parser() { return raw[lexeme["<boolean" > *(alnum | char_('-') | char_('_') | char_('=')) > ">"]]; }
+inline auto boolean_non_terminal_string_parser() { return raw[lexeme[lit("b_") >> +digit]]; }
 
-inline auto numerical_non_terminal_string_parser() { return raw[lexeme["<numerical" > *(alnum | char_('-') | char_('_') | char_('=')) > ">"]]; }
+inline auto numerical_non_terminal_string_parser() { return raw[lexeme[lit("n_") >> +digit]]; }
 
 inline auto predicate_name_string_parser()
 {
@@ -106,73 +106,80 @@ inline auto bool_string_parser()
                       | (x3::lit("0") >> x3::attr(false))];
 }
 
+template<typename Parser>
+auto with_constructor_parentheses(Parser parser)
+{
+    return (lit("(") >> parser >> lit(")")) | parser;
+}
+
 const auto concept__def = concept_bot | concept_top | concept_atomic_state | concept_atomic_goal | concept_intersection | concept_union | concept_negation
                           | concept_value_restriction | concept_existential_quantification | concept_role_value_map_containment
                           | concept_role_value_map_equality | concept_nominal;
 const auto concept_root_def = concept_ > eoi;
 
-const auto concept_bot_def = lit(std::string("@") + ast::ConceptBot::keyword) >> x3::attr(ast::ConceptBot {});
-const auto concept_top_def = lit(std::string("@") + ast::ConceptTop::keyword) >> x3::attr(ast::ConceptTop {});
-const auto concept_atomic_state_def = lit(std::string("@") + ast::ConceptAtomicState::keyword) > predicate_name_string_parser();
-const auto concept_atomic_goal_def = lit(std::string("@") + ast::ConceptAtomicGoal::keyword) > predicate_name_string_parser() > bool_string_parser();
-const auto concept_intersection_def = lit(std::string("@") + ast::ConceptIntersection::keyword) > concept_choice > concept_choice;
-const auto concept_union_def = lit(std::string("@") + ast::ConceptUnion::keyword) > concept_choice > concept_choice;
-const auto concept_negation_def = lit(std::string("@") + ast::ConceptNegation::keyword) > concept_choice;
-const auto concept_value_restriction_def = lit(std::string("@") + ast::ConceptValueRestriction::keyword) > role_choice > concept_choice;
-const auto concept_existential_quantification_def = lit(std::string("@") + ast::ConceptExistentialQuantification::keyword) > role_choice > concept_choice;
-const auto concept_role_value_map_containment_def = lit(std::string("@") + ast::ConceptRoleValueMapContainment::keyword) > role_choice > role_choice;
-const auto concept_role_value_map_equality_def = lit(std::string("@") + ast::ConceptRoleValueMapEquality::keyword) > role_choice > role_choice;
-const auto concept_nominal_def = lit(std::string("@") + ast::ConceptNominal::keyword) > object_name_string_parser();
+const auto concept_bot_def = with_constructor_parentheses(lit(ast::ConceptBot::keyword) >> x3::attr(ast::ConceptBot {}));
+const auto concept_top_def = with_constructor_parentheses(lit(ast::ConceptTop::keyword) >> x3::attr(ast::ConceptTop {}));
+const auto concept_atomic_state_def = with_constructor_parentheses(lit(ast::ConceptAtomicState::keyword) > predicate_name_string_parser());
+const auto concept_atomic_goal_def = with_constructor_parentheses(lit(ast::ConceptAtomicGoal::keyword) > predicate_name_string_parser() > bool_string_parser());
+const auto concept_intersection_def = with_constructor_parentheses(lit(ast::ConceptIntersection::keyword) > concept_choice > concept_choice);
+const auto concept_union_def = with_constructor_parentheses(lit(ast::ConceptUnion::keyword) > concept_choice > concept_choice);
+const auto concept_negation_def = with_constructor_parentheses(lit(ast::ConceptNegation::keyword) > concept_choice);
+const auto concept_value_restriction_def = with_constructor_parentheses(lit(ast::ConceptValueRestriction::keyword) > role_choice > concept_choice);
+const auto concept_existential_quantification_def =
+    with_constructor_parentheses(lit(ast::ConceptExistentialQuantification::keyword) > role_choice > concept_choice);
+const auto concept_role_value_map_containment_def = with_constructor_parentheses(lit(ast::ConceptRoleValueMapContainment::keyword) > role_choice > role_choice);
+const auto concept_role_value_map_equality_def = with_constructor_parentheses(lit(ast::ConceptRoleValueMapEquality::keyword) > role_choice > role_choice);
+const auto concept_nominal_def = with_constructor_parentheses(lit(ast::ConceptNominal::keyword) > object_name_string_parser());
 const auto concept_non_terminal_def = concept_non_terminal_string_parser();
 const auto concept_choice_def = concept_non_terminal | concept_;
-const auto concept_derivation_rule_def = concept_non_terminal > "::=" > -(concept_choice % lit("|"));
+const auto concept_derivation_rule_def = lit("(") >> concept_non_terminal
+                                         > ((lit("(") > (concept_choice % lit("or")) > lit(")")) | x3::repeat(1)[concept_choice]) > lit(")");
 
 const auto role_def = role_universal | role_atomic_state | role_atomic_goal | role_intersection | role_union | role_complement | role_inverse | role_composition
                       | role_transitive_closure | role_reflexive_transitive_closure | role_restriction | role_identity;
 const auto role_root_def = role > eoi;
 
-const auto role_universal_def = lit(std::string("@") + ast::RoleUniversal::keyword) >> x3::attr(ast::RoleUniversal {});
-const auto role_atomic_state_def = lit(std::string("@") + ast::RoleAtomicState::keyword) > predicate_name_string_parser();
-const auto role_atomic_goal_def = lit(std::string("@") + ast::RoleAtomicGoal::keyword) > predicate_name_string_parser() > bool_string_parser();
-const auto role_intersection_def = lit(std::string("@") + ast::RoleIntersection::keyword) > role_choice > role_choice;
-const auto role_union_def = lit(std::string("@") + ast::RoleUnion::keyword) > role_choice > role_choice;
-const auto role_complement_def = lit(std::string("@") + ast::RoleComplement::keyword) > role_choice;
-const auto role_inverse_def = lit(std::string("@") + ast::RoleInverse::keyword) > role_choice;
-const auto role_composition_def = lit(std::string("@") + ast::RoleComposition::keyword) > role_choice > role_choice;
-const auto role_transitive_closure_def = lit(std::string("@") + ast::RoleTransitiveClosure::keyword) > role_choice;
-const auto role_reflexive_transitive_closure_def = lit(std::string("@") + ast::RoleReflexiveTransitiveClosure::keyword) > role_choice;
-const auto role_restriction_def = lit(std::string("@") + ast::RoleRestriction::keyword) > role_choice > concept_choice;
-const auto role_identity_def = lit(std::string("@") + ast::RoleIdentity::keyword) > concept_choice;
+const auto role_universal_def = with_constructor_parentheses(lit(ast::RoleUniversal::keyword) >> x3::attr(ast::RoleUniversal {}));
+const auto role_atomic_state_def = with_constructor_parentheses(lit(ast::RoleAtomicState::keyword) > predicate_name_string_parser());
+const auto role_atomic_goal_def = with_constructor_parentheses(lit(ast::RoleAtomicGoal::keyword) > predicate_name_string_parser() > bool_string_parser());
+const auto role_intersection_def = with_constructor_parentheses(lit(ast::RoleIntersection::keyword) > role_choice > role_choice);
+const auto role_union_def = with_constructor_parentheses(lit(ast::RoleUnion::keyword) > role_choice > role_choice);
+const auto role_complement_def = with_constructor_parentheses(lit(ast::RoleComplement::keyword) > role_choice);
+const auto role_inverse_def = with_constructor_parentheses(lit(ast::RoleInverse::keyword) > role_choice);
+const auto role_composition_def = with_constructor_parentheses(lit(ast::RoleComposition::keyword) > role_choice > role_choice);
+const auto role_transitive_closure_def = with_constructor_parentheses(lit(ast::RoleTransitiveClosure::keyword) > role_choice);
+const auto role_reflexive_transitive_closure_def = with_constructor_parentheses(lit(ast::RoleReflexiveTransitiveClosure::keyword) > role_choice);
+const auto role_restriction_def = with_constructor_parentheses(lit(ast::RoleRestriction::keyword) > role_choice > concept_choice);
+const auto role_identity_def = with_constructor_parentheses(lit(ast::RoleIdentity::keyword) > concept_choice);
 const auto role_non_terminal_def = role_non_terminal_string_parser();
 const auto role_choice_def = role_non_terminal | role;
-const auto role_derivation_rule_def = role_non_terminal > "::=" > -(role_choice % lit("|"));
+const auto role_derivation_rule_def = lit("(") >> role_non_terminal > ((lit("(") > (role_choice % lit("or")) > lit(")")) | x3::repeat(1)[role_choice])
+                                      > lit(")");
 
 const auto constructor_or_non_terminal_variant_def = concept_choice | role_choice;
 
 const auto boolean_def = boolean_atomic_state | boolean_nonempty;
 const auto boolean_root_def = boolean > eoi;
-const auto boolean_atomic_state_def = lit(std::string("@") + ast::BooleanAtomicState::keyword) > predicate_name_string_parser() > bool_string_parser();
-const auto boolean_nonempty_def = lit(std::string("@") + ast::BooleanNonempty::keyword) > constructor_or_non_terminal_variant;
+const auto boolean_atomic_state_def =
+    with_constructor_parentheses(lit(ast::BooleanAtomicState::keyword) > predicate_name_string_parser() > bool_string_parser());
+const auto boolean_nonempty_def = with_constructor_parentheses(lit(ast::BooleanNonempty::keyword) > constructor_or_non_terminal_variant);
 const auto boolean_non_terminal_def = boolean_non_terminal_string_parser();
 const auto boolean_choice_def = boolean_non_terminal | boolean;
-const auto boolean_derivation_rule_def = boolean_non_terminal > "::=" > -(boolean_choice % lit("|"));
+const auto boolean_derivation_rule_def = lit("(") >> boolean_non_terminal
+                                         > ((lit("(") > (boolean_choice % lit("or")) > lit(")")) | x3::repeat(1)[boolean_choice]) > lit(")");
 
 const auto numerical_def = numerical_count | numerical_distance;
 const auto numerical_root_def = numerical > eoi;
-const auto numerical_count_def = lit(std::string("@") + ast::NumericalCount::keyword) > constructor_or_non_terminal_variant;
-const auto numerical_distance_def = lit(std::string("@") + ast::NumericalDistance::keyword) > concept_choice > role_choice > concept_choice;
+const auto numerical_count_def = with_constructor_parentheses(lit(ast::NumericalCount::keyword) > constructor_or_non_terminal_variant);
+const auto numerical_distance_def = with_constructor_parentheses(lit(ast::NumericalDistance::keyword) > concept_choice > role_choice > concept_choice);
 const auto numerical_non_terminal_def = numerical_non_terminal_string_parser();
 const auto numerical_choice_def = numerical_non_terminal | numerical;
-const auto numerical_derivation_rule_def = numerical_non_terminal > "::=" > -(numerical_choice % lit("|"));
+const auto numerical_derivation_rule_def = lit("(") >> numerical_non_terminal
+                                           > ((lit("(") > (numerical_choice % lit("or")) > lit(")")) | x3::repeat(1)[numerical_choice]) > lit(")");
 
 const auto derivation_rule_variant_def = concept_derivation_rule | role_derivation_rule | boolean_derivation_rule | numerical_derivation_rule;
-const auto grammar_head_def = lit("[start_symbols]")                                   //
-                              > -(lit("concept") > lit("::=") > concept_non_terminal)  //
-                              > -(lit("role") > lit("::=") > role_non_terminal)        //
-                              > -(lit("boolean") > lit("::=") > boolean_non_terminal)  //
-                              > -(lit("numerical") > lit("::=") > numerical_non_terminal);
-const auto grammar_body_def = lit("[grammar_rules]") > *derivation_rule_variant;
-const auto grammar_def = grammar_head > grammar_body;
+const auto grammar_body_def = lit("(") > lit(":rules") > *derivation_rule_variant > lit(")");
+const auto grammar_def = lit("(") > lit("grammar") > grammar_body > lit(")");
 const auto grammar_root_def = grammar > eoi;
 
 BOOST_SPIRIT_DEFINE(concept_,
@@ -217,7 +224,7 @@ BOOST_SPIRIT_DEFINE(boolean, boolean_root, boolean_atomic_state, boolean_nonempt
 
 BOOST_SPIRIT_DEFINE(numerical, numerical_root, numerical_count, numerical_distance, numerical_non_terminal, numerical_choice, numerical_derivation_rule)
 
-BOOST_SPIRIT_DEFINE(derivation_rule_variant, grammar_head, grammar_body, grammar, grammar_root)
+BOOST_SPIRIT_DEFINE(derivation_rule_variant, grammar_body, grammar, grammar_root)
 
 template<>
 struct ConstructorClass<runir::kr::dl::ConceptTag> : x3::annotate_on_success
@@ -439,10 +446,6 @@ struct DerivationRuleVariantClass : x3::annotate_on_success
 {
 };
 
-struct GrammarHeadClass : x3::annotate_on_success
-{
-};
-
 struct GrammarBodyClass : x3::annotate_on_success
 {
 };
@@ -510,7 +513,6 @@ numerical_choice_type const& numerical_choice_parser() { return numerical_choice
 numerical_derivation_rule_type const& numerical_derivation_rule_parser() { return numerical_derivation_rule; }
 
 derivation_rule_variant_type const& derivation_rule_variant_parser() { return derivation_rule_variant; }
-grammar_head_type const& grammar_head_parser() { return grammar_head; }
 grammar_body_type const& grammar_body_parser() { return grammar_body; }
 grammar_type const& grammar_parser() { return grammar; }
 grammar_root_type const& grammar_root_parser() { return grammar_root; }

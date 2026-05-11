@@ -58,7 +58,6 @@ BOOST_SPIRIT_INSTANTIATE(numerical_choice_type, iterator_type, context_type)
 BOOST_SPIRIT_INSTANTIATE(numerical_derivation_rule_type, iterator_type, context_type)
 
 BOOST_SPIRIT_INSTANTIATE(derivation_rule_variant_type, iterator_type, context_type)
-BOOST_SPIRIT_INSTANTIATE(grammar_head_type, iterator_type, context_type)
 BOOST_SPIRIT_INSTANTIATE(grammar_body_type, iterator_type, context_type)
 BOOST_SPIRIT_INSTANTIATE(grammar_type, iterator_type, context_type)
 BOOST_SPIRIT_INSTANTIATE(grammar_root_type, iterator_type, context_type)

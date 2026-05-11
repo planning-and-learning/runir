@@ -1,14 +1,13 @@
 add_subdirectory(graphs)
 
 add_library(core
-    cnf_grammar/generate.cpp
-    cnf_grammar/translate.cpp
     datasets/state_graph.cpp
-    grammar/grammar_factory.cpp
-    grammar/parser.cpp
-    grammar/parser/parser.cpp
-    grammar/parser/parser_instantiations.cpp
-    runir.cpp
+    kr/dl/cnf_grammar/generate.cpp
+    kr/dl/cnf_grammar/translate.cpp
+    kr/dl/grammar/grammar_factory.cpp
+    kr/dl/grammar/parser.cpp
+    kr/dl/grammar/parser/parser.cpp
+    kr/dl/grammar/parser/parser_instantiations.cpp
 )
 add_library(runir::core ALIAS core)
 

@@ -61,7 +61,6 @@ struct BooleanNonemptyClass;
 struct NumericalCountClass;
 struct NumericalDistanceClass;
 
-struct GrammarHeadClass;
 struct GrammarBodyClass;
 struct GrammarClass;
 struct GrammarRootClass;
@@ -122,8 +121,7 @@ using numerical_derivation_rule_type = x3::rule<DerivationRuleClass<runir::kr::d
 
 using derivation_rule_variant_type = x3::rule<DerivationRuleVariantClass, ast::DerivationRuleVariant>;
 
-using grammar_head_type = x3::rule<GrammarHeadClass, ast::GrammarHead>;
-using grammar_body_type = x3::rule<GrammarBodyClass, ast::GrammarBody>;
+using grammar_body_type = x3::rule<GrammarBodyClass, std::vector<ast::DerivationRuleVariant>>;
 using grammar_type = x3::rule<GrammarClass, ast::Grammar>;
 using grammar_root_type = x3::rule<GrammarRootClass, ast::Grammar>;
 
@@ -181,7 +179,7 @@ BOOST_SPIRIT_DECLARE(numerical_type,
                      numerical_choice_type,
                      numerical_derivation_rule_type)
 
-BOOST_SPIRIT_DECLARE(derivation_rule_variant_type, grammar_head_type, grammar_body_type)
+BOOST_SPIRIT_DECLARE(derivation_rule_variant_type, grammar_body_type)
 BOOST_SPIRIT_DECLARE(grammar_type, grammar_root_type)
 
 concept_type const& concept_parser();
@@ -240,7 +238,6 @@ numerical_derivation_rule_type const& numerical_derivation_rule_parser();
 
 derivation_rule_variant_type const& derivation_rule_variant_parser();
 
-grammar_head_type const& grammar_head_parser();
 grammar_body_type const& grammar_body_parser();
 
 grammar_type const& grammar_parser();

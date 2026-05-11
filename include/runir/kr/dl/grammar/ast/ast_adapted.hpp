@@ -42,8 +42,6 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::BooleanNonempty, arg)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::NumericalCount, arg)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::NumericalDistance, lhs, mid, rhs)
 
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::GrammarHead, concept_start, role_start, boolean_start, numerical_start)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::GrammarBody, rules)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::Grammar, head, body)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::Grammar, rules)
 
 #endif

@@ -7,6 +7,7 @@
 #include <nanobind/make_iterator.h>
 #include <nanobind/stl/array.h>
 #include <nanobind/stl/pair.h>
+#include <nanobind/stl/string.h>
 #include <ranges>
 #include <runir/graphs/algorithms.hpp>
 #include <runir/graphs/bidirectional_static_graph.hpp>
@@ -62,6 +63,22 @@ struct EqualTo<runir::graphs::PyObjectProperty>
 };
 
 }  // namespace tyr
+
+namespace fmt
+{
+
+template<>
+struct formatter<runir::graphs::PyObjectProperty, char> : formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::graphs::PyObjectProperty& property, FormatContext& ctx) const
+    {
+        const auto text = nb::cast<std::string>(nb::repr(property.value));
+        return formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+}  // namespace fmt
 
 namespace runir::graphs
 {
@@ -139,6 +156,8 @@ auto get_edge_property(const Graph& graph, graphs::EdgeIndex edge)
 template<typename Graph>
 void bind_basic_graph(nb::class_<Graph>& cls)
 {
+    tyr::add_print(cls);
+
     cls.def("get_num_vertices", &Graph::get_num_vertices)
         .def("get_num_edges", &Graph::get_num_edges)
         .def(

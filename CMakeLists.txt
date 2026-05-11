@@ -49,7 +49,8 @@ else()
     add_compile_definitions(RUNIR_ENABLE_FMT_FORMATTERS=0)
 endif()
 
-option(BUILD_PYRUNIR "Build runir for the pyrunir Python wheel." OFF)
+option(RUNIR_BUILD_EXECUTABLES "Build runir executables." OFF)
+option(RUNIR_BUILD_PYRUNIR "Build pyrunir Python bindings." OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include("configure_yggdrasil")
@@ -77,7 +78,15 @@ endif()
 
 add_subdirectory(src)
 
-if(BUILD_PYRUNIR)
+if(RUNIR_BUILD_EXECUTABLES)
+    find_package(argparse CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+    if(argparse_FOUND)
+        message(STATUS "Found argparse: ${argparse_DIR} (found version ${argparse_VERSION})")
+    endif()
+    add_subdirectory(exe)
+endif()
+
+if(RUNIR_BUILD_PYRUNIR)
     add_subdirectory(python/src)
 endif()
 

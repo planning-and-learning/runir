@@ -56,8 +56,7 @@ def test_downstream_python_binding_links_installed_runir(tmp_path):
             (
                 "import json, downstream_runir_user; "
                 "print(json.dumps({"
-                "'formatted': downstream_runir_user.format_summary('planner', 7), "
-                "'sum': downstream_runir_user.add(20, 22)"
+                "'dot': downstream_runir_user.make_graph_dot()"
                 "}))"
             ),
         ],
@@ -67,7 +66,8 @@ def test_downstream_python_binding_links_installed_runir(tmp_path):
         env=env,
     )
 
-    assert json.loads(result.stdout) == {
-        "formatted": "planner: 7",
-        "sum": 42,
-    }
+    dot = json.loads(result.stdout)["dot"]
+    assert "digraph G" in dot
+    assert "source" in dot
+    assert "target" in dot
+    assert "edge" in dot

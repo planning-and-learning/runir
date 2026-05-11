@@ -1,37 +1,9 @@
-#pragma once
+#ifndef RUNIR_RUNIR_HPP_
+#define RUNIR_RUNIR_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/common/common.hpp"
+#include "runir/datasets/datasets.hpp"
+#include "runir/graphs/graphs.hpp"
+#include "runir/kr/dl.hpp"
 
-#include <fmt/format.h>
-#include <string>
-#include <string_view>
-
-namespace runir
-{
-
-struct FeatureSummary
-{
-    std::string name;
-    int score = 0;
-};
-
-int add(int lhs, int rhs);
-
-FeatureSummary describe(std::string name, int score);
-
-std::string format_summary(const FeatureSummary& summary);
-
-}
-
-#if RUNIR_ENABLE_FMT_FORMATTERS
-template<>
-struct fmt::formatter<runir::FeatureSummary> : fmt::formatter<std::string_view>
-{
-    template<typename FormatContext>
-    auto format(const runir::FeatureSummary& summary, FormatContext& ctx) const
-    {
-        const auto text = fmt::format("{}: {}", summary.name, summary.score);
-        return fmt::formatter<std::string_view>::format(text, ctx);
-    }
-};
 #endif

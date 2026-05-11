@@ -44,6 +44,7 @@ void bind_module_definitions(nb::module_& m)
         .def(nb::init<const PyObjectStaticGraphBuilder&>())
         .def("get_forward_graph", &PyObjectBidirectionalStaticGraph::get_forward_graph, nb::rv_policy::reference_internal)
         .def("get_backward_graph", &PyObjectBidirectionalStaticGraph::get_backward_graph, nb::rv_policy::reference_internal);
+    tyr::add_print(bidirectional_static_graph);
 
     bind_graph_algorithms<PyObjectDynamicGraph>(m);
     bind_graph_algorithms<PyObjectStaticGraph>(m);
