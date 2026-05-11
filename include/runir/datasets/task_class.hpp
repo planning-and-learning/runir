@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RUNIR_DATASETS_CLASS_OF_TASKS_HPP_
-#define RUNIR_DATASETS_CLASS_OF_TASKS_HPP_
+#ifndef RUNIR_DATASETS_TASK_CLASS_HPP_
+#define RUNIR_DATASETS_TASK_CLASS_HPP_
 
 #include <tuple>
 #include <tyr/planning/planning.hpp>
@@ -39,18 +39,24 @@ struct TaskSearchContext
 {
     tyr::planning::TaskPtr<Kind> task;
     tyr::ExecutionContextPtr execution_context;
-    tyr::planning::SuccessorGeneratorPtr<Kind> successor_generator;
-    tyr::planning::StateRepositoryPtr<Kind> state_repository;
+    tyr::planning::AxiomEvaluatorFactory<Kind> axiom_evaluator_factory;
+    tyr::planning::StateRepositoryFactory<Kind> state_repository_factory;
+    tyr::planning::SuccessorGeneratorFactory<Kind> successor_generator_factory;
     tyr::planning::AxiomEvaluatorPtr<Kind> axiom_evaluator;
+    tyr::planning::StateRepositoryPtr<Kind> state_repository;
+    tyr::planning::SuccessorGeneratorPtr<Kind> successor_generator;
 
     TaskSearchContext() = default;
 
     TaskSearchContext(tyr::planning::TaskPtr<Kind> task_, tyr::ExecutionContextPtr execution_context_) :
         task(std::move(task_)),
         execution_context(std::move(execution_context_)),
-        successor_generator(tyr::planning::SuccessorGenerator<Kind>::create(task, execution_context)),
-        state_repository(successor_generator->get_state_repository()),
-        axiom_evaluator(state_repository->get_axiom_evaluator())
+        axiom_evaluator_factory(),
+        state_repository_factory(),
+        successor_generator_factory(),
+        axiom_evaluator(axiom_evaluator_factory.create(task, execution_context)),
+        state_repository(state_repository_factory.create(task, axiom_evaluator)),
+        successor_generator(successor_generator_factory.create(task, execution_context, state_repository))
     {
     }
 };

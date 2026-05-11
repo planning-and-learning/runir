@@ -19,9 +19,9 @@
 #define RUNIR_DATASETS_STATE_GRAPH_HPP_
 
 #include "runir/common/config.hpp"
-#include "runir/datasets/class_of_tasks.hpp"
 #include "runir/datasets/config.hpp"
 #include "runir/datasets/equivalence_policy.hpp"
+#include "runir/datasets/task_class.hpp"
 #include "runir/graphs/bidirectional_static_graph.hpp"
 #include "runir/graphs/dynamic_graph.hpp"
 #include "runir/graphs/static_graph.hpp"
