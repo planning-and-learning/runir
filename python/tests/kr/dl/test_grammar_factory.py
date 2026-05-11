@@ -10,7 +10,8 @@ from pytyr.formalism.planning import Parser, ParserOptions
 
 def test_france_et_al_aaai2021_grammar_factory_for_gripper_domain():
     root = Path(__file__).resolve().parents[4]
-    data_dir = root / "data" / "tests" / "classical" / "gripper"
+    prefix = root / "data" / "planning-benchmarks"
+    data_dir = prefix / "tests" / "classical" / "gripper"
 
     parser = Parser(data_dir / "domain.pddl", ParserOptions())
     planning_domain = parser.get_domain()

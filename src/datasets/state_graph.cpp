@@ -23,7 +23,6 @@
 #include <limits>
 #include <memory>
 #include <tuple>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -38,17 +37,17 @@ class StateGraphEventHandler : public tyr::planning::astar_eager::EventHandler<K
 {
 private:
     StateGraphBuilder<Kind> m_builder;
-    std::unordered_map<uint_t, graphs::VertexIndex> m_state_to_vertex;
+    tyr::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> m_state_to_vertex;
 
     auto get_or_create_vertex(tyr::planning::Node<Kind> node) -> graphs::VertexIndex
     {
-        const auto state_index = static_cast<uint_t>(node.get_state().get_index());
-        if (const auto it = m_state_to_vertex.find(state_index); it != m_state_to_vertex.end())
+        const auto state = node.get_state();
+        if (const auto it = m_state_to_vertex.find(state); it != m_state_to_vertex.end())
             return it->second;
 
         const auto vertex = static_cast<graphs::VertexIndex>(m_state_to_vertex.size());
-        m_state_to_vertex.emplace(state_index, vertex);
-        [[maybe_unused]] const auto added = m_builder.add_vertex(StateGraphVertexLabel<Kind> { node.get_state() });
+        m_state_to_vertex.emplace(state, vertex);
+        [[maybe_unused]] const auto added = m_builder.add_vertex(StateGraphVertexLabel<Kind> { state });
         assert(added == vertex);
         return vertex;
     }
@@ -205,7 +204,6 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
     const auto static_goal_satisfied = goal_strategy.is_static_goal_satisfied(*context.task);
     const auto initial_state = context.successor_generator->get_initial_node().get_state();
-    const auto initial_state_index = initial_state.get_index();
 
     auto is_goal = std::vector<bool>(forward_graph.get_num_vertices(), false);
     auto goal_vertices = std::vector<graphs::VertexIndex> {};
@@ -225,12 +223,13 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
     {
         const auto& state = forward_graph.get_vertex(vertex_index).get_property().state;
         const auto is_alive = goal_distance[vertex_index] != std::numeric_limits<tyr::float_t>::infinity();
-        [[maybe_unused]] const auto added = builder.add_vertex(AnnotatedStateGraphVertexLabel<Kind> { state,
-                                                                                                      goal_distance[vertex_index],
-                                                                                                      state.get_index() == initial_state_index,
-                                                                                                      is_goal[vertex_index],
-                                                                                                      is_alive,
-                                                                                                      !is_alive });
+        [[maybe_unused]] const auto added =
+            builder.add_vertex(AnnotatedStateGraphVertexLabel<Kind> { state,
+                                                                      goal_distance[vertex_index],
+                                                                      tyr::EqualTo<tyr::planning::StateView<Kind>> {}(state, initial_state),
+                                                                      is_goal[vertex_index],
+                                                                      is_alive,
+                                                                      !is_alive });
         assert(added == vertex_index);
     }
 

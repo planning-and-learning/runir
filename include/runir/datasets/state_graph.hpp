@@ -39,7 +39,7 @@ struct StateGraphVertexLabel
 {
     tyr::planning::StateView<Kind> state;
 
-    auto identifying_members() const noexcept { return std::make_tuple(state.get_index()); }
+    auto identifying_members() const noexcept { return std::tie(state); }
 };
 
 template<tyr::planning::TaskKind Kind>
@@ -52,7 +52,7 @@ struct AnnotatedStateGraphVertexLabel
     bool is_alive = false;
     bool is_unsolvable = false;
 
-    auto identifying_members() const noexcept { return std::make_tuple(state.get_index(), goal_distance, is_initial, is_goal, is_alive, is_unsolvable); }
+    auto identifying_members() const noexcept { return std::tie(state, goal_distance, is_initial, is_goal, is_alive, is_unsolvable); }
 };
 
 struct StateGraphEdgeLabel

@@ -41,7 +41,7 @@ struct StateGraphVertexCandidate
     uint_t state_graph_index = 0;
     tyr::planning::StateView<Kind> state;
 
-    auto identifying_members() const noexcept { return std::make_tuple(state_graph_index, state.get_index()); }
+    auto identifying_members() const noexcept { return std::tie(state_graph_index, state); }
 };
 
 template<tyr::planning::TaskKind Kind>
@@ -51,7 +51,7 @@ struct StateGraphTransitionCandidate
     tyr::planning::StateView<Kind> source_state;
     tyr::planning::StateView<Kind> target_state;
 
-    auto identifying_members() const noexcept { return std::make_tuple(state_graph_index, source_state.get_index(), target_state.get_index()); }
+    auto identifying_members() const noexcept { return std::tie(state_graph_index, source_state, target_state); }
 };
 
 template<typename Policy, typename Kind>

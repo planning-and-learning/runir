@@ -10,6 +10,8 @@ namespace
 
 std::filesystem::path runir_root() { return std::filesystem::path(RUNIR_ROOT_DIR); }
 
+std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "planning-benchmarks"; }
+
 }  // namespace
 
 TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
@@ -17,7 +19,7 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
     namespace grammar = runir::kr::dl::grammar;
     namespace fp = tyr::formalism::planning;
 
-    const auto domain_filepath = runir_root() / "data" / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto domain_filepath = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
     const auto planning_domain = fp::Parser(domain_filepath).get_domain();
     const auto domain = planning_domain.get_domain();
 
