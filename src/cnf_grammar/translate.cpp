@@ -1,6 +1,6 @@
-#include "runir/knowledge_representation/dl/cnf_grammar/translate.hpp"
+#include "runir/kr/dl/cnf_grammar/translate.hpp"
 
-#include "runir/knowledge_representation/dl/cnf_grammar/canonicalization.hpp"
+#include "runir/kr/dl/cnf_grammar/canonicalization.hpp"
 
 #include <cassert>
 #include <concepts>

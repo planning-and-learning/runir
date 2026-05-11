@@ -1,10 +1,10 @@
-#include "runir/knowledge_representation/dl/cnf_grammar/generate.hpp"
+#include "runir/kr/dl/cnf_grammar/generate.hpp"
 
-#include "runir/knowledge_representation/dl/canonicalization.hpp"
-#include "runir/knowledge_representation/dl/semantics/builder.hpp"
-#include "runir/knowledge_representation/dl/semantics/denotation_repository.hpp"
-#include "runir/knowledge_representation/dl/semantics/evaluation.hpp"
-#include "runir/knowledge_representation/dl/semantics/evaluation_workspace.hpp"
+#include "runir/kr/dl/canonicalization.hpp"
+#include "runir/kr/dl/semantics/builder.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 
 #include <chrono>
 #include <concepts>

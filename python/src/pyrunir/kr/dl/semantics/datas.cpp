@@ -1,7 +1,8 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
-#include <runir/knowledge_representation/dl/semantics/datas.hpp>
+#include <runir/kr/dl/semantics/datas.hpp>
+#include <tyr/common/python/type_casters.hpp>
 
 namespace runir::kr::dl
 {

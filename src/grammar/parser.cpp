@@ -1,6 +1,6 @@
-#include "runir/knowledge_representation/dl/grammar/parser.hpp"
+#include "runir/kr/dl/grammar/parser.hpp"
 
-#include "runir/knowledge_representation/dl/grammar/canonicalization.hpp"
+#include "runir/kr/dl/grammar/canonicalization.hpp"
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <boost/variant/apply_visitor.hpp>

@@ -1,9 +1,9 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
-#include <runir/knowledge_representation/dl/cnf_grammar/indices.hpp>
-#include <runir/knowledge_representation/dl/grammar/indices.hpp>
-#include <runir/knowledge_representation/dl/indices.hpp>
+#include <runir/kr/dl/cnf_grammar/indices.hpp>
+#include <runir/kr/dl/grammar/indices.hpp>
+#include <runir/kr/dl/indices.hpp>
 #include <tyr/common/python/bindings.hpp>
 
 namespace runir::kr::dl

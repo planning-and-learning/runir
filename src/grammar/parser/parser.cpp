@@ -1,7 +1,7 @@
-#include "runir/knowledge_representation/dl/grammar/parser/parser.hpp"
+#include "runir/kr/dl/grammar/parser/parser.hpp"
 
-#include "runir/knowledge_representation/dl/grammar/parser/error_handler.hpp"
-#include "runir/knowledge_representation/dl/grammar/parser/parsers.hpp"
+#include "runir/kr/dl/grammar/parser/error_handler.hpp"
+#include "runir/kr/dl/grammar/parser/parsers.hpp"
 
 #include <boost/spirit/home/x3.hpp>
 #include <functional>

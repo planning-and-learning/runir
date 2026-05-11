@@ -133,6 +133,7 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/cmake/"
 
 set(PYRUNIR_PYTHON_FILES
     pyrunir/__init__.py
+    pyrunir/__init__.pyi
     pyrunir/graphs/__init__.py
     pyrunir/kr/__init__.py
     pyrunir/kr/dl/__init__.py
@@ -177,5 +178,7 @@ nanobind_add_stub(
     PYTHON_PATH "."
     COMPONENT pyrunir
 )
+
+install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/patch_python_stubs.cmake" COMPONENT pyrunir)
 
 add_custom_target(pyrunir_wheel DEPENDS _pyrunir)

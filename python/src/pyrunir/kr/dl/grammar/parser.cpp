@@ -1,7 +1,7 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
-#include <runir/knowledge_representation/dl/grammar/parser.hpp>
+#include <runir/kr/dl/grammar/parser.hpp>
 
 namespace runir::kr::dl
 {

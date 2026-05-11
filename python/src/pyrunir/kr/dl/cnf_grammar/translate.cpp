@@ -1,6 +1,6 @@
 #include "module.hpp"
 
-#include <runir/knowledge_representation/dl/cnf_grammar/translate.hpp>
+#include <runir/kr/dl/cnf_grammar/translate.hpp>
 
 namespace runir::kr::dl
 {

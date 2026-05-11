@@ -1,6 +1,6 @@
 #include "module.hpp"
 
-#include <runir/knowledge_representation/dl/grammar/indices.hpp>
+#include <runir/kr/dl/grammar/indices.hpp>
 #include <tyr/common/python/bindings.hpp>
 
 namespace runir::kr::dl

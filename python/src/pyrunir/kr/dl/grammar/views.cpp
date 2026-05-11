@@ -1,10 +1,11 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
-#include <runir/knowledge_representation/dl/grammar/constructor_repository.hpp>
-#include <runir/knowledge_representation/dl/grammar/formatter.hpp>
-#include <runir/knowledge_representation/dl/grammar/views.hpp>
+#include <runir/kr/dl/grammar/constructor_repository.hpp>
+#include <runir/kr/dl/grammar/formatter.hpp>
+#include <runir/kr/dl/grammar/views.hpp>
 #include <tyr/common/python/bindings.hpp>
+#include <tyr/common/python/type_casters.hpp>
 
 namespace runir::kr::dl
 {

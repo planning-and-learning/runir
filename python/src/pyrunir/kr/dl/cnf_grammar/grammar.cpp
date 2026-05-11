@@ -1,9 +1,9 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
-#include <runir/knowledge_representation/dl/cnf_grammar/constructor_repository.hpp>
-#include <runir/knowledge_representation/dl/cnf_grammar/formatter.hpp>
-#include <runir/knowledge_representation/dl/cnf_grammar/grammar_view.hpp>
+#include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
+#include <runir/kr/dl/cnf_grammar/formatter.hpp>
+#include <runir/kr/dl/cnf_grammar/grammar_view.hpp>
 #include <tyr/common/python/bindings.hpp>
 
 namespace runir::kr::dl

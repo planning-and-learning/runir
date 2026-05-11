@@ -1,10 +1,10 @@
 #ifndef RUNIR_SRC_GRAMMAR_PARSER_PARSER_DEF_HPP_
 #define RUNIR_SRC_GRAMMAR_PARSER_PARSER_DEF_HPP_
 
-#include "runir/knowledge_representation/dl/grammar/ast/ast.hpp"
-#include "runir/knowledge_representation/dl/grammar/ast/ast_adapted.hpp"
-#include "runir/knowledge_representation/dl/grammar/parser/error_handler.hpp"
-#include "runir/knowledge_representation/dl/grammar/parser/parsers.hpp"
+#include "runir/kr/dl/grammar/ast/ast.hpp"
+#include "runir/kr/dl/grammar/ast/ast_adapted.hpp"
+#include "runir/kr/dl/grammar/parser/error_handler.hpp"
+#include "runir/kr/dl/grammar/parser/parsers.hpp"
 
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
 

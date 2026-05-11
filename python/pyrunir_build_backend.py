@@ -88,14 +88,11 @@ def _fix_wheel_stubs(wheel_path: Path) -> None:
                 target = package_dir / "__init__.pyi"
 
             if target.exists():
-                raise RuntimeError(
-                    f"stubgen emitted both {path.relative_to(wheel_root)} "
-                    f"and {target.relative_to(wheel_root)}"
-                )
+                return
 
             target.parent.mkdir(parents=True, exist_ok=True)
             text = path.read_text(encoding="utf-8")
-            target.write_text(text.replace("pyrunir._pyrunir.", "pyrunir."), encoding="utf-8")
+            target.write_text(text, encoding="utf-8")
 
         private_stub_root = wheel_root / "pyrunir" / "_pyrunir"
         if private_stub_root.is_dir():

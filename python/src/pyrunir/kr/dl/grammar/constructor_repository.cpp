@@ -1,7 +1,7 @@
 #include "module.hpp"
 
 #include <memory>
-#include <runir/knowledge_representation/dl/grammar/constructor_repository.hpp>
+#include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 
 namespace runir::kr::dl
