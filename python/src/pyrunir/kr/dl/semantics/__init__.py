@@ -68,6 +68,7 @@ from ...._pyrunir.kr.dl.semantics import (
     ConceptValueRestrictionData,
     ConceptValueRestrictionIndex,
     ConstructorRepository,
+    ConstructorRepositoryFactory,
     Numerical,
     NumericalCount,
     NumericalCountData,

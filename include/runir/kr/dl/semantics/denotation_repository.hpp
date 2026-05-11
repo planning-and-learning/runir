@@ -10,6 +10,7 @@
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 
 #include <cassert>
+#include <memory>
 #include <optional>
 #include <tyr/common/raw_vector_set.hpp>
 #include <tyr/common/types.hpp>
@@ -21,6 +22,8 @@ namespace runir::kr::dl::semantics
 
 class DenotationRepository
 {
+    friend class DenotationRepositoryFactory;
+
 public:
     using SymbolRepository = tyr::formalism::SymbolRepository<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>>;
     using VectorRepository = tyr::RawVectorSet<uint_t, uint_t>;
@@ -112,9 +115,9 @@ private:
         return m_role_data;
     }
 
-public:
     explicit DenotationRepository(size_t index) : m_symbol_repository(nullptr), m_vector_repository(), m_index(index) { clear(); }
 
+public:
     DenotationRepository(const DenotationRepository&) = delete;
     DenotationRepository& operator=(const DenotationRepository&) = delete;
     DenotationRepository(DenotationRepository&&) = delete;
@@ -214,6 +217,23 @@ public:
     const auto& get_vector_repository() const noexcept { return m_vector_repository; }
     auto& get_vector_repository() noexcept { return m_vector_repository; }
 };
+
+using DenotationRepositoryPtr = std::shared_ptr<DenotationRepository>;
+
+class DenotationRepositoryFactory
+{
+private:
+    size_t m_next_index;
+
+public:
+    DenotationRepositoryFactory() : m_next_index(0) {}
+
+    DenotationRepository create() { return DenotationRepository(m_next_index++); }
+
+    DenotationRepositoryPtr create_shared() { return DenotationRepositoryPtr(new DenotationRepository(m_next_index++)); }
+};
+
+using DenotationRepositoryFactoryPtr = std::shared_ptr<DenotationRepositoryFactory>;
 
 inline const DenotationRepository& get_denotation_repository(const DenotationRepository& repository) noexcept { return repository; }
 

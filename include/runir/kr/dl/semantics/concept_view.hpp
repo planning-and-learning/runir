@@ -68,7 +68,7 @@ public:
         return make_view(get_data().rhs, *m_context);
     }
 
-    auto identifying_members() const noexcept { return std::tie(get_data()); }
+    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
 }

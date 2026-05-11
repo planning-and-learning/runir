@@ -129,11 +129,19 @@ class Pruning
 private:
     const std::vector<tyr::planning::StateView<Kind>>& m_states;
     runir::kr::dl::semantics::Builder m_builder;
+    runir::kr::dl::semantics::DenotationRepositoryFactory m_denotation_repository_factory;
     runir::kr::dl::semantics::DenotationRepository m_denotation_repository;
     runir::kr::dl::semantics::EvaluationWorkspace m_workspace;
 
 public:
-    explicit Pruning(const std::vector<tyr::planning::StateView<Kind>>& states) : m_states(states), m_builder(), m_denotation_repository(0), m_workspace() {}
+    explicit Pruning(const std::vector<tyr::planning::StateView<Kind>>& states) :
+        m_states(states),
+        m_builder(),
+        m_denotation_repository_factory(),
+        m_denotation_repository(m_denotation_repository_factory.create()),
+        m_workspace()
+    {
+    }
 
     template<runir::kr::dl::CategoryTag Category>
     bool should_prune(runir::kr::dl::ConstructorView<Category> constructor)

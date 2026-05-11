@@ -1,9 +1,7 @@
 find_package(GTest CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 
-include(GoogleTest)
-
 add_executable(runir_tests
-    cpp/test_core.cpp
+    unit/kr/grammar/grammar_factory.cpp
 )
 
 target_link_libraries(runir_tests
@@ -12,5 +10,14 @@ target_link_libraries(runir_tests
         GTest::gtest_main
 )
 
-gtest_discover_tests(runir_tests)
+target_compile_definitions(runir_tests
+    PRIVATE
+        RUNIR_ROOT_DIR="${PROJECT_SOURCE_DIR}"
+)
 
+add_test(NAME runir_tests COMMAND runir_tests)
+
+set_tests_properties(runir_tests
+    PROPERTIES
+        ENVIRONMENT "LD_LIBRARY_PATH=$<TARGET_FILE_DIR:TBB::tbb>:$ENV{LD_LIBRARY_PATH};DYLD_LIBRARY_PATH=$<TARGET_FILE_DIR:TBB::tbb>:$ENV{DYLD_LIBRARY_PATH}"
+)

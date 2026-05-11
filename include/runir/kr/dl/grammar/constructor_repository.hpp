@@ -43,6 +43,8 @@ using ConstructorSymbolRepository = tyr::ApplyTypeListT<tyr::formalism::SymbolRe
 
 class ConstructorRepository
 {
+    friend class ConstructorRepositoryFactory;
+
 private:
     ConstructorSymbolRepository m_symbol_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_planning_repository;
@@ -66,7 +68,6 @@ private:
         return { tyr::View<tyr::Index<T>, ConstructorRepository>(index, *this), success };
     }
 
-public:
     ConstructorRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
         m_symbol_repository(nullptr),
         m_planning_repository(std::move(planning_repository)),
@@ -76,6 +77,7 @@ public:
         clear();
     }
 
+public:
     ConstructorRepository(const ConstructorRepository&) = delete;
     ConstructorRepository& operator=(const ConstructorRepository&) = delete;
     ConstructorRepository(ConstructorRepository&&) = delete;
@@ -124,6 +126,27 @@ public:
 };
 
 using ConstructorRepositoryPtr = std::shared_ptr<ConstructorRepository>;
+
+class ConstructorRepositoryFactory
+{
+private:
+    size_t m_next_index;
+
+public:
+    ConstructorRepositoryFactory() : m_next_index(0) {}
+
+    ConstructorRepository create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
+    {
+        return ConstructorRepository(m_next_index++, std::move(planning_repository));
+    }
+
+    ConstructorRepositoryPtr create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
+    {
+        return ConstructorRepositoryPtr(new ConstructorRepository(m_next_index++, std::move(planning_repository)));
+    }
+};
+
+using ConstructorRepositoryFactoryPtr = std::shared_ptr<ConstructorRepositoryFactory>;
 
 template<runir::kr::dl::ConceptConstructorTag Tag>
 using ConceptView = tyr::View<tyr::Index<Concept<Tag>>, ConstructorRepository>;

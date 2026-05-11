@@ -68,6 +68,7 @@ from ...._pyrunir.kr.dl.cnf_grammar import (
     ConceptValueRestrictionData,
     ConceptValueRestrictionIndex,
     ConstructorRepository,
+    ConstructorRepositoryFactory,
     GenerateOptions,
     GenerateResults,
     GenerateStatistics,

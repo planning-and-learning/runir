@@ -27,6 +27,7 @@ nanobind_add_module(_pyrunir
     pyrunir/kr/dl/grammar/constructor_repository.cpp
     pyrunir/kr/dl/grammar/datas.cpp
     pyrunir/kr/dl/grammar/grammar.cpp
+    pyrunir/kr/dl/grammar/grammar_factory.cpp
     pyrunir/kr/dl/grammar/indices.cpp
     pyrunir/kr/dl/grammar/module.cpp
     pyrunir/kr/dl/grammar/parser.cpp
