@@ -129,8 +129,8 @@ struct formatter<runir::graphs::color_refinement::Certificate<VertexProperty>, c
     auto format(const runir::graphs::color_refinement::Certificate<VertexProperty>& certificate, FormatContext& ctx) const
     {
         return fmt::format_to(ctx.out(),
-                              "ColorRefinementCertificate(refinement_colors={}, colors={})",
-                              certificate.get_refinement_colors(),
+                              "ColorRefinementCertificate(round_summaries={}, colors={})",
+                              certificate.get_round_summaries(),
                               certificate.get_colors());
     }
 };
@@ -156,9 +156,9 @@ struct formatter<runir::graphs::weisfeiler_leman::Certificate<K>, char>
     auto format(const runir::graphs::weisfeiler_leman::Certificate<K>& certificate, FormatContext& ctx) const
     {
         return fmt::format_to(ctx.out(),
-                              "WeisfeilerLeman{}Certificate(refinement_colors={}, colors={})",
+                              "WeisfeilerLeman{}Certificate(round_summaries={}, colors={})",
                               K,
-                              certificate.get_refinement_colors(),
+                              certificate.get_round_summaries(),
                               certificate.get_colors());
     }
 };

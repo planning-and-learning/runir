@@ -1,6 +1,7 @@
 find_package(GTest CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 
 add_executable(runir_tests
+    unit/graphs/algorithms/color_refinement.cpp
     unit/kr/grammar/grammar_factory.cpp
 )
 

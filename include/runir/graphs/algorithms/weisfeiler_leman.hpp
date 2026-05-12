@@ -11,6 +11,7 @@ namespace runir::graphs::weisfeiler_leman
 
 using Color = color_refinement::Color;
 using ColorList = color_refinement::ColorList;
+using TupleColorAssignmentList = std::vector<std::pair<Color, std::size_t>>;
 
 template<std::size_t K>
 using VertexTuple = std::array<VertexIndex, K>;
@@ -28,6 +29,8 @@ struct Signature
     ColorTupleList<K> neighbor_colors;
 
     auto identifying_members() const noexcept { return std::tie(color, neighbor_colors); }
+
+    friend auto operator==(const Signature& lhs, const Signature& rhs) noexcept { return lhs.identifying_members() == rhs.identifying_members(); }
 };
 
 template<std::size_t K>
@@ -35,20 +38,22 @@ class Certificate
 {
 public:
     using SignatureList = std::vector<std::pair<Signature<K>, Color>>;
+    using RoundSummary = std::vector<std::pair<Signature<K>, std::size_t>>;
+    using RoundSummaryList = std::vector<RoundSummary>;
 
 private:
-    SignatureList m_refinement_colors;
-    ColorList m_colors;
+    RoundSummaryList m_round_summaries;
+    TupleColorAssignmentList m_colors;
 
 public:
     Certificate() = default;
 
-    Certificate(SignatureList refinement_colors, ColorList colors) : m_refinement_colors(std::move(refinement_colors)), m_colors(std::move(colors)) {}
+    Certificate(RoundSummaryList round_summaries, TupleColorAssignmentList colors) : m_round_summaries(std::move(round_summaries)), m_colors(std::move(colors)) {}
 
-    auto get_refinement_colors() const noexcept -> const SignatureList& { return m_refinement_colors; }
-    auto get_colors() const noexcept -> const ColorList& { return m_colors; }
+    auto get_round_summaries() const noexcept -> const RoundSummaryList& { return m_round_summaries; }
+    auto get_colors() const noexcept -> const TupleColorAssignmentList& { return m_colors; }
 
-    auto identifying_members() const noexcept { return std::tie(m_refinement_colors, m_colors); }
+    auto identifying_members() const noexcept { return std::tie(m_colors, m_round_summaries); }
 };
 
 template<std::size_t K>
@@ -138,20 +143,24 @@ auto compute_certificate(const G& graph)
     const auto n = vertices.size();
     auto colors = initial_tuple_colors<K>(graph, vertices);
 
-    auto refinement_colors = typename Certificate<K>::SignatureList();
+    auto round_summaries = typename Certificate<K>::RoundSummaryList();
+    auto tuple_signatures = std::vector<std::pair<std::size_t, Signature<K>>>();
+    tuple_signatures.reserve(colors.size());
+    auto neighbor_colors = ColorTupleList<K>();
+    neighbor_colors.reserve(K * n);
+    auto interner = color_refinement::SignatureInterner<Signature<K>>();
+    auto next_colors = ColorList(colors.size());
     auto changed = true;
     while (changed)
     {
         changed = false;
 
-        auto interner = color_refinement::SignatureInterner<Signature<K>>();
-        auto next_colors = ColorList(colors.size());
+        tuple_signatures.clear();
         for (std::size_t hash = 0; hash < colors.size(); ++hash)
         {
             const auto tuple = hash_to_tuple<K>(hash, n);
 
-            auto neighbor_colors = ColorTupleList<K>();
-            neighbor_colors.reserve(K * n);
+            neighbor_colors.clear();
             for (std::size_t replacement_position = 0; replacement_position < K; ++replacement_position)
             {
                 for (VertexIndex replacement = 0; replacement < n; ++replacement)
@@ -171,17 +180,45 @@ auto compute_certificate(const G& graph)
             }
             std::sort(neighbor_colors.begin(), neighbor_colors.end());
 
-            auto signature = Signature<K> { colors.at(hash), std::move(neighbor_colors) };
+            tuple_signatures.emplace_back(hash, Signature<K> { colors.at(hash), neighbor_colors });
+        }
+
+        // Canonicalize tuple order based on signature.
+        std::sort(tuple_signatures.begin(), tuple_signatures.end(), [](const auto& lhs, const auto& rhs) {
+            const auto lhs_members = lhs.second.identifying_members();
+            const auto rhs_members = rhs.second.identifying_members();
+            return std::tie(lhs_members, lhs.first) < std::tie(rhs_members, rhs.first);
+        });
+
+        auto round_summary = typename Certificate<K>::RoundSummary();
+        for (const auto& [_, signature] : tuple_signatures)
+        {
+            if (round_summary.empty() || round_summary.back().first.identifying_members() != signature.identifying_members())
+                round_summary.emplace_back(signature, 1);
+            else
+                ++round_summary.back().second;
+        }
+        round_summaries.push_back(std::move(round_summary));
+
+        interner.clear();
+        // Refine tuple colors.
+        for (auto& [hash, signature] : tuple_signatures)
+        {
             const auto next_color = interner.get_or_create(std::move(signature));
             next_colors[hash] = next_color;
             changed = changed || next_color != colors.at(hash);
         }
 
-        refinement_colors = std::move(interner).release();
-        colors = std::move(next_colors);
+        std::swap(colors, next_colors);
     }
 
-    return Certificate<K>(std::move(refinement_colors), std::move(colors));
+    auto dense_colors = TupleColorAssignmentList();
+    dense_colors.reserve(colors.size());
+    for (std::size_t hash = 0; hash < colors.size(); ++hash)
+        dense_colors.emplace_back(colors[hash], hash);
+    std::sort(dense_colors.begin(), dense_colors.end());
+
+    return Certificate<K>(std::move(round_summaries), std::move(dense_colors));
 }
 
 }  // namespace runir::graphs::weisfeiler_leman

@@ -113,21 +113,21 @@ inline void bind_graph_certificates(nb::module_& m)
 
     auto color_refinement_certificate = nb::class_<ColorRefinementCertificate>(m, "ColorRefinementCertificate")  //
                                             .def(nb::init<>())
-                                            .def("get_refinement_colors", &ColorRefinementCertificate::get_refinement_colors)
+                                            .def("get_round_summaries", &ColorRefinementCertificate::get_round_summaries)
                                             .def("get_colors", &ColorRefinementCertificate::get_colors);
     tyr::add_print(color_refinement_certificate);
     tyr::add_hash(color_refinement_certificate);
 
     auto weisfeiler_leman_2_certificate = nb::class_<WeisfeilerLeman2Certificate>(m, "WeisfeilerLeman2Certificate")  //
                                               .def(nb::init<>())
-                                              .def("get_refinement_colors", &WeisfeilerLeman2Certificate::get_refinement_colors)
+                                              .def("get_round_summaries", &WeisfeilerLeman2Certificate::get_round_summaries)
                                               .def("get_colors", &WeisfeilerLeman2Certificate::get_colors);
     tyr::add_print(weisfeiler_leman_2_certificate);
     tyr::add_hash(weisfeiler_leman_2_certificate);
 
     auto weisfeiler_leman_3_certificate = nb::class_<WeisfeilerLeman3Certificate>(m, "WeisfeilerLeman3Certificate")  //
                                               .def(nb::init<>())
-                                              .def("get_refinement_colors", &WeisfeilerLeman3Certificate::get_refinement_colors)
+                                              .def("get_round_summaries", &WeisfeilerLeman3Certificate::get_round_summaries)
                                               .def("get_colors", &WeisfeilerLeman3Certificate::get_colors);
     tyr::add_print(weisfeiler_leman_3_certificate);
     tyr::add_hash(weisfeiler_leman_3_certificate);
