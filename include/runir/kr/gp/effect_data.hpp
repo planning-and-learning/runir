@@ -14,16 +14,11 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::kr::gp::EffectVariantTag>
+struct Data<runir::kr::gp::EffectVariant>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::gp::EffectTag<runir::kr::gp::dl::BooleanFeatureTag, runir::kr::gp::dl::BecomesTrueTag>>,
-                                             Index<runir::kr::gp::EffectTag<runir::kr::gp::dl::BooleanFeatureTag, runir::kr::gp::dl::BecomesFalseTag>>,
-                                             Index<runir::kr::gp::EffectTag<runir::kr::gp::dl::BooleanFeatureTag, runir::kr::gp::dl::UnchangedTag>>,
-                                             Index<runir::kr::gp::EffectTag<runir::kr::gp::dl::NumericalFeatureTag, runir::kr::gp::dl::IncreasesTag>>,
-                                             Index<runir::kr::gp::EffectTag<runir::kr::gp::dl::NumericalFeatureTag, runir::kr::gp::dl::DecreasesTag>>,
-                                             Index<runir::kr::gp::EffectTag<runir::kr::gp::dl::NumericalFeatureTag, runir::kr::gp::dl::UnchangedTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::gp::ConcreteEffectVariant<runir::kr::DlTag>>>;
 
-    Index<runir::kr::gp::EffectVariantTag> index;
+    Index<runir::kr::gp::EffectVariant> index;
     Variant value;
 
     Data() = default;
@@ -39,12 +34,18 @@ struct Data<runir::kr::gp::EffectVariantTag>
     auto identifying_members() const noexcept { return std::tie(value); }
 };
 
-template<typename FeatureTypeTag, typename ChangeTag>
-struct Data<runir::kr::gp::EffectTag<FeatureTypeTag, ChangeTag>>
+template<>
+struct Data<runir::kr::gp::ConcreteEffectVariant<runir::kr::DlTag>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::gp::Effect<runir::kr::DlTag, FeatureTypeTag, ChangeTag>>>;
+    using Variant =
+        ::cista::offset::variant<Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature, runir::kr::gp::dl::BecomesTrue>>,
+                                 Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature, runir::kr::gp::dl::BecomesFalse>>,
+                                 Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature, runir::kr::gp::dl::Unchanged>>,
+                                 Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeature, runir::kr::gp::dl::Increases>>,
+                                 Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeature, runir::kr::gp::dl::Decreases>>,
+                                 Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeature, runir::kr::gp::dl::Unchanged>>>;
 
-    Index<runir::kr::gp::EffectTag<FeatureTypeTag, ChangeTag>> index;
+    Index<runir::kr::gp::ConcreteEffectVariant<runir::kr::DlTag>> index;
     Variant value;
 
     Data() = default;

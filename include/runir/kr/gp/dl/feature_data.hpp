@@ -15,9 +15,9 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::kr::gp::Feature<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeatureTag>>
+struct Data<runir::kr::gp::ConcreteFeature<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature>>
 {
-    Index<runir::kr::gp::Feature<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeatureTag>> index;
+    Index<runir::kr::gp::ConcreteFeature<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature>> index;
     Index<runir::kr::dl::Constructor<runir::kr::dl::BooleanTag>> feature;
     ::cista::offset::string symbol;
     ::cista::offset::string description;
@@ -51,9 +51,9 @@ struct Data<runir::kr::gp::Feature<runir::kr::DlTag, runir::kr::gp::dl::BooleanF
 };
 
 template<>
-struct Data<runir::kr::gp::Feature<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeatureTag>>
+struct Data<runir::kr::gp::ConcreteFeature<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeature>>
 {
-    Index<runir::kr::gp::Feature<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeatureTag>> index;
+    Index<runir::kr::gp::ConcreteFeature<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeature>> index;
     Index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>> feature;
     ::cista::offset::string symbol;
     ::cista::offset::string description;

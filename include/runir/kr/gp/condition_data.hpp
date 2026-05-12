@@ -14,14 +14,11 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::kr::gp::ConditionVariantTag>
+struct Data<runir::kr::gp::ConditionVariant>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::gp::ConditionTag<runir::kr::gp::dl::BooleanFeatureTag, runir::kr::gp::dl::PositiveTag>>,
-                                             Index<runir::kr::gp::ConditionTag<runir::kr::gp::dl::BooleanFeatureTag, runir::kr::gp::dl::NegativeTag>>,
-                                             Index<runir::kr::gp::ConditionTag<runir::kr::gp::dl::NumericalFeatureTag, runir::kr::gp::dl::EqualZeroTag>>,
-                                             Index<runir::kr::gp::ConditionTag<runir::kr::gp::dl::NumericalFeatureTag, runir::kr::gp::dl::GreaterZeroTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::gp::ConcreteConditionVariant<runir::kr::DlTag>>>;
 
-    Index<runir::kr::gp::ConditionVariantTag> index;
+    Index<runir::kr::gp::ConditionVariant> index;
     Variant value;
 
     Data() = default;
@@ -37,12 +34,16 @@ struct Data<runir::kr::gp::ConditionVariantTag>
     auto identifying_members() const noexcept { return std::tie(value); }
 };
 
-template<typename FeatureTypeTag, typename ObservationTag>
-struct Data<runir::kr::gp::ConditionTag<FeatureTypeTag, ObservationTag>>
+template<>
+struct Data<runir::kr::gp::ConcreteConditionVariant<runir::kr::DlTag>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::gp::Condition<runir::kr::DlTag, FeatureTypeTag, ObservationTag>>>;
+    using Variant = ::cista::offset::variant<
+        Index<runir::kr::gp::ConcreteCondition<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature, runir::kr::gp::dl::Positive>>,
+        Index<runir::kr::gp::ConcreteCondition<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature, runir::kr::gp::dl::Negative>>,
+        Index<runir::kr::gp::ConcreteCondition<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeature, runir::kr::gp::dl::EqualZero>>,
+        Index<runir::kr::gp::ConcreteCondition<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeature, runir::kr::gp::dl::GreaterZero>>>;
 
-    Index<runir::kr::gp::ConditionTag<FeatureTypeTag, ObservationTag>> index;
+    Index<runir::kr::gp::ConcreteConditionVariant<runir::kr::DlTag>> index;
     Variant value;
 
     Data() = default;

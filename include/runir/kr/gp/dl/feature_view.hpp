@@ -10,15 +10,15 @@
 namespace tyr
 {
 
-template<typename FeatureTypeTag, typename C>
-class View<Index<runir::kr::gp::Feature<runir::kr::DlTag, FeatureTypeTag>>, C>
+template<typename FeatureTag, typename C>
+class View<Index<runir::kr::gp::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::gp::Feature<runir::kr::DlTag, FeatureTypeTag>> m_handle;
+    Index<runir::kr::gp::ConcreteFeature<runir::kr::DlTag, FeatureTag>> m_handle;
 
 public:
-    View(Index<runir::kr::gp::Feature<runir::kr::DlTag, FeatureTypeTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::gp::ConcreteFeature<runir::kr::DlTag, FeatureTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

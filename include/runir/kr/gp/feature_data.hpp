@@ -14,11 +14,11 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::kr::gp::FeatureTag<runir::kr::gp::dl::BooleanFeatureTag>>
+struct Data<runir::kr::gp::Feature<runir::kr::gp::dl::BooleanFeature>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::gp::Feature<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeatureTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::gp::ConcreteFeature<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature>>>;
 
-    Index<runir::kr::gp::FeatureTag<runir::kr::gp::dl::BooleanFeatureTag>> index;
+    Index<runir::kr::gp::Feature<runir::kr::gp::dl::BooleanFeature>> index;
     Variant value;
 
     Data() = default;
@@ -35,11 +35,11 @@ struct Data<runir::kr::gp::FeatureTag<runir::kr::gp::dl::BooleanFeatureTag>>
 };
 
 template<>
-struct Data<runir::kr::gp::FeatureTag<runir::kr::gp::dl::NumericalFeatureTag>>
+struct Data<runir::kr::gp::Feature<runir::kr::gp::dl::NumericalFeature>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::gp::Feature<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeatureTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::gp::ConcreteFeature<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeature>>>;
 
-    Index<runir::kr::gp::FeatureTag<runir::kr::gp::dl::NumericalFeatureTag>> index;
+    Index<runir::kr::gp::Feature<runir::kr::gp::dl::NumericalFeature>> index;
     Variant value;
 
     Data() = default;

@@ -12,14 +12,14 @@ namespace tyr
 {
 
 template<typename C>
-class View<Index<runir::kr::gp::EffectVariantTag>, C>
+class View<Index<runir::kr::gp::EffectVariant>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::gp::EffectVariantTag> m_handle;
+    Index<runir::kr::gp::EffectVariant> m_handle;
 
 public:
-    View(Index<runir::kr::gp::EffectVariantTag> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::gp::EffectVariant> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }
@@ -31,15 +31,15 @@ public:
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
-template<typename FeatureTypeTag, typename ChangeTag, typename C>
-class View<Index<runir::kr::gp::EffectTag<FeatureTypeTag, ChangeTag>>, C>
+template<typename LanguageTag, typename C>
+class View<Index<runir::kr::gp::ConcreteEffectVariant<LanguageTag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::gp::EffectTag<FeatureTypeTag, ChangeTag>> m_handle;
+    Index<runir::kr::gp::ConcreteEffectVariant<LanguageTag>> m_handle;
 
 public:
-    View(Index<runir::kr::gp::EffectTag<FeatureTypeTag, ChangeTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::gp::ConcreteEffectVariant<LanguageTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

@@ -6,47 +6,47 @@
 namespace runir::kr::gp::dl
 {
 
-struct BooleanFeatureTag
+struct BooleanFeature
 {
 };
 
-struct NumericalFeatureTag
+struct NumericalFeature
 {
 };
 
-struct PositiveTag
+struct Positive
 {
 };
 
-struct NegativeTag
+struct Negative
 {
 };
 
-struct EqualZeroTag
+struct EqualZero
 {
 };
 
-struct GreaterZeroTag
+struct GreaterZero
 {
 };
 
-struct BecomesTrueTag
+struct BecomesTrue
 {
 };
 
-struct BecomesFalseTag
+struct BecomesFalse
 {
 };
 
-struct IncreasesTag
+struct Increases
 {
 };
 
-struct DecreasesTag
+struct Decreases
 {
 };
 
-struct UnchangedTag
+struct Unchanged
 {
 };
 

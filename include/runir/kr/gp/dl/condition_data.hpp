@@ -12,14 +12,14 @@
 namespace tyr
 {
 
-template<typename FeatureTypeTag, typename ObservationTag>
-struct Data<runir::kr::gp::Condition<runir::kr::DlTag, FeatureTypeTag, ObservationTag>>
+template<typename FeatureTag, typename ObservationTag>
+struct Data<runir::kr::gp::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>
 {
-    Index<runir::kr::gp::Condition<runir::kr::DlTag, FeatureTypeTag, ObservationTag>> index;
-    Index<runir::kr::gp::FeatureTag<FeatureTypeTag>> feature;
+    Index<runir::kr::gp::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>> index;
+    Index<runir::kr::gp::Feature<FeatureTag>> feature;
 
     Data() = default;
-    Data(Index<runir::kr::gp::FeatureTag<FeatureTypeTag>> feature_) : index(), feature(feature_) {}
+    Data(Index<runir::kr::gp::Feature<FeatureTag>> feature_) : index(), feature(feature_) {}
 
     void clear() noexcept
     {

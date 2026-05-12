@@ -9,10 +9,10 @@
 namespace tyr
 {
 
-template<typename FeatureTypeTag>
-struct Index<runir::kr::gp::FeatureTag<FeatureTypeTag>> : IndexMixin<Index<runir::kr::gp::FeatureTag<FeatureTypeTag>>>
+template<typename FeatureTag>
+struct Index<runir::kr::gp::Feature<FeatureTag>> : IndexMixin<Index<runir::kr::gp::Feature<FeatureTag>>>
 {
-    using Base = IndexMixin<Index<runir::kr::gp::FeatureTag<FeatureTypeTag>>>;
+    using Base = IndexMixin<Index<runir::kr::gp::Feature<FeatureTag>>>;
     using Base::Base;
 };
 

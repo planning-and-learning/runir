@@ -12,10 +12,10 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::kr::gp::PolicyTag>
+struct Data<runir::kr::gp::Policy>
 {
-    Index<runir::kr::gp::PolicyTag> index;
-    IndexList<runir::kr::gp::RuleTag> rules;
+    Index<runir::kr::gp::Policy> index;
+    IndexList<runir::kr::gp::Rule> rules;
 
     void clear() noexcept
     {

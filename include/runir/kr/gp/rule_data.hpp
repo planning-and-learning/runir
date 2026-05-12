@@ -14,8 +14,8 @@
 namespace runir::kr::gp
 {
 
-using ConditionIndexVariant = cista::variant<tyr::Index<ConditionVariantTag>>;
-using EffectIndexVariant = cista::variant<tyr::Index<EffectVariantTag>>;
+using ConditionIndexVariant = cista::variant<tyr::Index<ConditionVariant>>;
+using EffectIndexVariant = cista::variant<tyr::Index<EffectVariant>>;
 
 }  // namespace runir::kr::gp
 
@@ -23,9 +23,9 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::kr::gp::RuleTag>
+struct Data<runir::kr::gp::Rule>
 {
-    Index<runir::kr::gp::RuleTag> index;
+    Index<runir::kr::gp::Rule> index;
     std::vector<runir::kr::gp::ConditionIndexVariant> conditions;
     std::vector<runir::kr::gp::EffectIndexVariant> effects;
 

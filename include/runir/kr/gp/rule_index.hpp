@@ -10,9 +10,9 @@ namespace tyr
 {
 
 template<>
-struct Index<runir::kr::gp::RuleTag> : IndexMixin<Index<runir::kr::gp::RuleTag>>
+struct Index<runir::kr::gp::Rule> : IndexMixin<Index<runir::kr::gp::Rule>>
 {
-    using Base = IndexMixin<Index<runir::kr::gp::RuleTag>>;
+    using Base = IndexMixin<Index<runir::kr::gp::Rule>>;
     using Base::Base;
 };
 

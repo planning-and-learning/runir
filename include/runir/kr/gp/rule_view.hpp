@@ -10,14 +10,14 @@ namespace tyr
 {
 
 template<typename C>
-class View<Index<runir::kr::gp::RuleTag>, C>
+class View<Index<runir::kr::gp::Rule>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::gp::RuleTag> m_handle;
+    Index<runir::kr::gp::Rule> m_handle;
 
 public:
-    View(Index<runir::kr::gp::RuleTag> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::gp::Rule> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

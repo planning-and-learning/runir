@@ -10,23 +10,24 @@ namespace tyr
 {
 
 template<>
-struct Index<runir::kr::gp::EffectVariantTag> : IndexMixin<Index<runir::kr::gp::EffectVariantTag>>
+struct Index<runir::kr::gp::EffectVariant> : IndexMixin<Index<runir::kr::gp::EffectVariant>>
 {
-    using Base = IndexMixin<Index<runir::kr::gp::EffectVariantTag>>;
+    using Base = IndexMixin<Index<runir::kr::gp::EffectVariant>>;
     using Base::Base;
 };
 
-template<typename FeatureTypeTag, typename ChangeTag>
-struct Index<runir::kr::gp::EffectTag<FeatureTypeTag, ChangeTag>> : IndexMixin<Index<runir::kr::gp::EffectTag<FeatureTypeTag, ChangeTag>>>
+template<typename LanguageTag>
+struct Index<runir::kr::gp::ConcreteEffectVariant<LanguageTag>> : IndexMixin<Index<runir::kr::gp::ConcreteEffectVariant<LanguageTag>>>
 {
-    using Base = IndexMixin<Index<runir::kr::gp::EffectTag<FeatureTypeTag, ChangeTag>>>;
+    using Base = IndexMixin<Index<runir::kr::gp::ConcreteEffectVariant<LanguageTag>>>;
     using Base::Base;
 };
 
-template<typename LangTag, typename FeatureTypeTag, typename ChangeTag>
-struct Index<runir::kr::gp::Effect<LangTag, FeatureTypeTag, ChangeTag>> : IndexMixin<Index<runir::kr::gp::Effect<LangTag, FeatureTypeTag, ChangeTag>>>
+template<typename LanguageTag, typename FeatureTag, typename ObservationTag>
+struct Index<runir::kr::gp::ConcreteEffect<LanguageTag, FeatureTag, ObservationTag>> :
+    IndexMixin<Index<runir::kr::gp::ConcreteEffect<LanguageTag, FeatureTag, ObservationTag>>>
 {
-    using Base = IndexMixin<Index<runir::kr::gp::Effect<LangTag, FeatureTypeTag, ChangeTag>>>;
+    using Base = IndexMixin<Index<runir::kr::gp::ConcreteEffect<LanguageTag, FeatureTag, ObservationTag>>>;
     using Base::Base;
 };
 

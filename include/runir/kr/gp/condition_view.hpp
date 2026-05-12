@@ -12,14 +12,14 @@ namespace tyr
 {
 
 template<typename C>
-class View<Index<runir::kr::gp::ConditionVariantTag>, C>
+class View<Index<runir::kr::gp::ConditionVariant>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::gp::ConditionVariantTag> m_handle;
+    Index<runir::kr::gp::ConditionVariant> m_handle;
 
 public:
-    View(Index<runir::kr::gp::ConditionVariantTag> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::gp::ConditionVariant> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }
@@ -31,15 +31,15 @@ public:
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
-template<typename FeatureTypeTag, typename ObservationTag, typename C>
-class View<Index<runir::kr::gp::ConditionTag<FeatureTypeTag, ObservationTag>>, C>
+template<typename LanguageTag, typename C>
+class View<Index<runir::kr::gp::ConcreteConditionVariant<LanguageTag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::gp::ConditionTag<FeatureTypeTag, ObservationTag>> m_handle;
+    Index<runir::kr::gp::ConcreteConditionVariant<LanguageTag>> m_handle;
 
 public:
-    View(Index<runir::kr::gp::ConditionTag<FeatureTypeTag, ObservationTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::gp::ConcreteConditionVariant<LanguageTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }
