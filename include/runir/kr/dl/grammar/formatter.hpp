@@ -164,13 +164,11 @@ void append_rules(std::string& text, Rules rules)
 template<typename View>
 std::string grammar(View view)
 {
-    auto text = std::string("(grammar\n");
-    text += "  (:rules\n";
+    auto text = std::string("(\n");
     append_rules(text, view.template get_derivation_rules<runir::kr::dl::ConceptTag>());
     append_rules(text, view.template get_derivation_rules<runir::kr::dl::RoleTag>());
     append_rules(text, view.template get_derivation_rules<runir::kr::dl::BooleanTag>());
     append_rules(text, view.template get_derivation_rules<runir::kr::dl::NumericalTag>());
-    text += "  )\n";
     text += ")\n";
     return text;
 }

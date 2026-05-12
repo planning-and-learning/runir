@@ -277,8 +277,7 @@ std::string GrammarFactory::create_france_et_al_aaai2021_description(tyr::formal
     auto numerical_heads = std::vector<std::string> {};
 
     auto rule_out = std::stringstream {};
-    rule_out << "(grammar\n";
-    rule_out << "  (:rules\n";
+    rule_out << "(\n";
 
     add_concept_bot(rule_out, primitive_concept_heads, next_concept);
     add_concept_top(rule_out, primitive_concept_heads, next_concept);
@@ -334,7 +333,6 @@ std::string GrammarFactory::create_france_et_al_aaai2021_description(tyr::formal
 
     auto out = std::stringstream {};
     out << rule_out.str();
-    out << "  )\n";
     out << ")\n";
     return out.str();
 }

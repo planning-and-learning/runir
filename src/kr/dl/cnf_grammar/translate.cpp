@@ -42,6 +42,19 @@ struct TranslationContext
 };
 
 template<runir::kr::dl::CategoryTag Category>
+std::string category_prefix()
+{
+    if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+        return "c";
+    else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
+        return "r";
+    else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
+        return "b";
+    else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
+        return "n";
+}
+
+template<runir::kr::dl::CategoryTag Category>
 class Translator
 {
 private:
@@ -57,7 +70,7 @@ private:
         std::string name;
         do
         {
-            name = std::string("<") + Category::name + "_" + std::to_string(next_fresh_index()++) + ">";
+            name = category_prefix<Category>() + "_" + std::to_string(next_fresh_index()++);
         } while (non_terminal_names().contains(name));
 
         non_terminal_names().insert(name);

@@ -178,8 +178,8 @@ const auto numerical_derivation_rule_def = lit("(") >> numerical_non_terminal
                                            > ((lit("(") > (numerical_choice % lit("or")) > lit(")")) | x3::repeat(1)[numerical_choice]) > lit(")");
 
 const auto derivation_rule_variant_def = concept_derivation_rule | role_derivation_rule | boolean_derivation_rule | numerical_derivation_rule;
-const auto grammar_body_def = lit("(") > lit(":rules") > *derivation_rule_variant > lit(")");
-const auto grammar_def = lit("(") > lit("grammar") > grammar_body > lit(")");
+const auto grammar_body_def = *derivation_rule_variant;
+const auto grammar_def = lit("(") > grammar_body > lit(")");
 const auto grammar_root_def = grammar > eoi;
 
 BOOST_SPIRIT_DEFINE(concept_,
