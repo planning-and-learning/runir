@@ -4,6 +4,7 @@
 #include "runir/common/config.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
+#include "runir/kr/dl/semantics/denotation_view.hpp"
 
 #include <fmt/format.h>
 #include <string>
@@ -24,6 +25,61 @@ template<typename View>
 std::string variant(View view)
 {
     return view.apply([](auto arg) { return fmt::format("{}", arg); });
+}
+
+template<typename View>
+void append_set(std::string& text, View view)
+{
+    text += "{";
+
+    auto separator = std::string_view("");
+    for (auto object : view)
+    {
+        text += fmt::format("{}{}", separator, quoted(object.get_name()));
+        separator = ", ";
+    }
+
+    text += "}";
+}
+
+template<typename View>
+void append_relation(std::string& text, View view)
+{
+    text += "{";
+
+    auto separator = std::string_view("");
+    for (auto [source, target] : view)
+    {
+        text += fmt::format("{}({}, {})", separator, quoted(source.get_name()), quoted(target.get_name()));
+        separator = ", ";
+    }
+
+    text += "}";
+}
+
+template<runir::kr::dl::CategoryTag Category, typename C>
+std::string denotation(tyr::View<tyr::Index<runir::kr::dl::semantics::Denotation<Category>>, C> view)
+{
+    if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
+    {
+        return boolean(view.get());
+    }
+    else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
+    {
+        return fmt::format("{}", view.get());
+    }
+    else if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+    {
+        auto text = std::string("concept");
+        append_set(text, view);
+        return text;
+    }
+    else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
+    {
+        auto text = std::string("role");
+        append_relation(text, view);
+        return text;
+    }
 }
 
 template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
@@ -126,6 +182,8 @@ template<runir::kr::dl::NumericalConstructorTag Tag, typename C>
 class View<Index<runir::kr::dl::Numerical<Tag>>, C>;
 template<runir::kr::dl::CategoryTag Category, typename C>
 class View<Index<runir::kr::dl::Constructor<Category>>, C>;
+template<runir::kr::dl::CategoryTag Category, typename C>
+class View<Index<runir::kr::dl::semantics::Denotation<Category>>, C>;
 
 }  // namespace tyr
 
@@ -175,6 +233,16 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::Constructor<Category>>
     {
         const auto text = view.get_variant().apply([](auto arg) { return fmt::format("{}", arg); });
         return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<runir::kr::dl::CategoryTag Category, typename C>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::semantics::Denotation<Category>>, C>> : fmt::formatter<std::string_view>
+{
+    using View = tyr::View<tyr::Index<runir::kr::dl::semantics::Denotation<Category>>, C>;
+    auto format(View view, format_context& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::format::denotation(view), ctx);
     }
 };
 #endif

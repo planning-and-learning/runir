@@ -29,18 +29,18 @@ boolean_feature_type const boolean_feature = "boolean_feature";
 numerical_feature_type const numerical_feature = "numerical_feature";
 feature_type const feature = "feature";
 
-positive_boolean_condition_type const positive_boolean_condition = "positive_boolean_condition";
-negative_boolean_condition_type const negative_boolean_condition = "negative_boolean_condition";
-equal_zero_numerical_condition_type const equal_zero_numerical_condition = "equal_zero_numerical_condition";
-greater_zero_numerical_condition_type const greater_zero_numerical_condition = "greater_zero_numerical_condition";
+positive_condition_type const positive_condition = "positive_condition";
+negative_condition_type const negative_condition = "negative_condition";
+equal_zero_condition_type const equal_zero_condition = "equal_zero_condition";
+greater_zero_condition_type const greater_zero_condition = "greater_zero_condition";
 condition_observation_type const condition_observation = "condition_observation";
 condition_type const condition = "condition";
 
-positive_boolean_effect_type const positive_boolean_effect = "positive_boolean_effect";
-negative_boolean_effect_type const negative_boolean_effect = "negative_boolean_effect";
+positive_effect_type const positive_effect = "positive_effect";
+negative_effect_type const negative_effect = "negative_effect";
 unchanged_effect_type const unchanged_effect = "unchanged_effect";
-increases_numerical_effect_type const increases_numerical_effect = "increases_numerical_effect";
-decreases_numerical_effect_type const decreases_numerical_effect = "decreases_numerical_effect";
+increases_effect_type const increases_effect = "increases_effect";
+decreases_effect_type const decreases_effect = "decreases_effect";
 effect_observation_type const effect_observation = "effect_observation";
 effect_type const effect = "effect";
 
@@ -58,21 +58,19 @@ const auto numerical_feature_def = lit("(") >> lit("numerical") > identifier_par
                                    > dl_parser::numerical_parser() > lit(")");
 const auto feature_def = boolean_feature | numerical_feature;
 
-const auto positive_boolean_condition_def = lit("positive") >> attr(Positive {});
-const auto negative_boolean_condition_def = lit("negative") >> attr(Negative {});
-const auto equal_zero_numerical_condition_def = lit("equal_zero") >> attr(EqualZero {});
-const auto greater_zero_numerical_condition_def = lit("greater_zero") >> attr(GreaterZero {});
-const auto condition_observation_def =
-    positive_boolean_condition | negative_boolean_condition | equal_zero_numerical_condition | greater_zero_numerical_condition;
+const auto positive_condition_def = lit("positive") >> attr(Positive {});
+const auto negative_condition_def = lit("negative") >> attr(Negative {});
+const auto equal_zero_condition_def = lit("equal_zero") >> attr(EqualZero {});
+const auto greater_zero_condition_def = lit("greater_zero") >> attr(GreaterZero {});
+const auto condition_observation_def = positive_condition | negative_condition | equal_zero_condition | greater_zero_condition;
 const auto condition_def = lit("(") >> condition_observation > identifier_parser() > lit(")");
 
-const auto positive_boolean_effect_def = lit("positive") >> attr(Positive {});
-const auto negative_boolean_effect_def = lit("negative") >> attr(Negative {});
+const auto positive_effect_def = lit("positive") >> attr(Positive {});
+const auto negative_effect_def = lit("negative") >> attr(Negative {});
 const auto unchanged_effect_def = lit("unchanged") >> attr(Unchanged {});
-const auto increases_numerical_effect_def = lit("increases") >> attr(Increases {});
-const auto decreases_numerical_effect_def = lit("decreases") >> attr(Decreases {});
-const auto effect_observation_def =
-    positive_boolean_effect | negative_boolean_effect | unchanged_effect | increases_numerical_effect | decreases_numerical_effect;
+const auto increases_effect_def = lit("increases") >> attr(Increases {});
+const auto decreases_effect_def = lit("decreases") >> attr(Decreases {});
+const auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
 const auto effect_def = lit("(") >> effect_observation > identifier_parser() > lit(")");
 
 const auto conditions_section_def = lit("(") > lit(":conditions") > *condition > lit(")");
@@ -85,19 +83,8 @@ const auto policy_def = lit("(") > -lit("policy") > features_section_def > rules
 const auto policy_root_def = policy > eoi;
 
 BOOST_SPIRIT_DEFINE(boolean_feature, numerical_feature, feature)
-BOOST_SPIRIT_DEFINE(positive_boolean_condition,
-                    negative_boolean_condition,
-                    equal_zero_numerical_condition,
-                    greater_zero_numerical_condition,
-                    condition_observation,
-                    condition)
-BOOST_SPIRIT_DEFINE(positive_boolean_effect,
-                    negative_boolean_effect,
-                    unchanged_effect,
-                    increases_numerical_effect,
-                    decreases_numerical_effect,
-                    effect_observation,
-                    effect)
+BOOST_SPIRIT_DEFINE(positive_condition, negative_condition, equal_zero_condition, greater_zero_condition, condition_observation, condition)
+BOOST_SPIRIT_DEFINE(positive_effect, negative_effect, unchanged_effect, increases_effect, decreases_effect, effect_observation, effect)
 BOOST_SPIRIT_DEFINE(rule, policy, policy_root)
 
 struct BooleanFeatureClass : x3::annotate_on_success
@@ -110,16 +97,16 @@ struct FeatureClass : x3::annotate_on_success
 {
 };
 
-struct PositiveBooleanConditionClass : x3::annotate_on_success
+struct PositiveConditionClass : x3::annotate_on_success
 {
 };
-struct NegativeBooleanConditionClass : x3::annotate_on_success
+struct NegativeConditionClass : x3::annotate_on_success
 {
 };
-struct EqualZeroNumericalConditionClass : x3::annotate_on_success
+struct EqualZeroConditionClass : x3::annotate_on_success
 {
 };
-struct GreaterZeroNumericalConditionClass : x3::annotate_on_success
+struct GreaterZeroConditionClass : x3::annotate_on_success
 {
 };
 struct ConditionObservationClass : x3::annotate_on_success
@@ -129,19 +116,19 @@ struct ConditionClass : x3::annotate_on_success
 {
 };
 
-struct PositiveBooleanEffectClass : x3::annotate_on_success
+struct PositiveEffectClass : x3::annotate_on_success
 {
 };
-struct NegativeBooleanEffectClass : x3::annotate_on_success
+struct NegativeEffectClass : x3::annotate_on_success
 {
 };
 struct UnchangedEffectClass : x3::annotate_on_success
 {
 };
-struct IncreasesNumericalEffectClass : x3::annotate_on_success
+struct IncreasesEffectClass : x3::annotate_on_success
 {
 };
-struct DecreasesNumericalEffectClass : x3::annotate_on_success
+struct DecreasesEffectClass : x3::annotate_on_success
 {
 };
 struct EffectObservationClass : x3::annotate_on_success
@@ -165,18 +152,18 @@ boolean_feature_type const& boolean_feature_parser() { return boolean_feature; }
 numerical_feature_type const& numerical_feature_parser() { return numerical_feature; }
 feature_type const& feature_parser() { return feature; }
 
-positive_boolean_condition_type const& positive_boolean_condition_parser() { return positive_boolean_condition; }
-negative_boolean_condition_type const& negative_boolean_condition_parser() { return negative_boolean_condition; }
-equal_zero_numerical_condition_type const& equal_zero_numerical_condition_parser() { return equal_zero_numerical_condition; }
-greater_zero_numerical_condition_type const& greater_zero_numerical_condition_parser() { return greater_zero_numerical_condition; }
+positive_condition_type const& positive_condition_parser() { return positive_condition; }
+negative_condition_type const& negative_condition_parser() { return negative_condition; }
+equal_zero_condition_type const& equal_zero_condition_parser() { return equal_zero_condition; }
+greater_zero_condition_type const& greater_zero_condition_parser() { return greater_zero_condition; }
 condition_observation_type const& condition_observation_parser() { return condition_observation; }
 condition_type const& condition_parser() { return condition; }
 
-positive_boolean_effect_type const& positive_boolean_effect_parser() { return positive_boolean_effect; }
-negative_boolean_effect_type const& negative_boolean_effect_parser() { return negative_boolean_effect; }
+positive_effect_type const& positive_effect_parser() { return positive_effect; }
+negative_effect_type const& negative_effect_parser() { return negative_effect; }
 unchanged_effect_type const& unchanged_effect_parser() { return unchanged_effect; }
-increases_numerical_effect_type const& increases_numerical_effect_parser() { return increases_numerical_effect; }
-decreases_numerical_effect_type const& decreases_numerical_effect_parser() { return decreases_numerical_effect; }
+increases_effect_type const& increases_effect_parser() { return increases_effect; }
+decreases_effect_type const& decreases_effect_parser() { return decreases_effect; }
 effect_observation_type const& effect_observation_parser() { return effect_observation; }
 effect_type const& effect_parser() { return effect; }
 

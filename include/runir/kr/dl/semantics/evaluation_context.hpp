@@ -33,6 +33,12 @@ public:
     const auto& get_denotation_repository() const noexcept { return m_denotation_repository; }
 };
 
+template<tyr::planning::TaskKind Kind>
+const auto& get_repository(const EvaluationContext<Kind>& context) noexcept
+{
+    return context.get_state().get_state_repository()->get_task()->get_repository();
+}
+
 }
 
 #endif

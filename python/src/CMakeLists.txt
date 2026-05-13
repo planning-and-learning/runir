@@ -16,9 +16,21 @@ set(PYRUNIR_NATIVE_CMAKEDIR "${PYRUNIR_NATIVE_LIBDIR}/cmake")
 nanobind_add_module(_pyrunir
     module.cpp
     pyrunir/module.cpp
+    pyrunir/datasets/config.cpp
+    pyrunir/datasets/equivalence_graph.cpp
+    pyrunir/datasets/module.cpp
+    pyrunir/datasets/state_graph.cpp
+    pyrunir/datasets/task_class.cpp
     pyrunir/graphs/module.cpp
     pyrunir/kr/module.cpp
     pyrunir/kr/dl/module.cpp
+    pyrunir/kr/gp/dl/module.cpp
+    pyrunir/kr/gp/dl/parser.cpp
+    pyrunir/kr/gp/dl/policy_factory.cpp
+    pyrunir/kr/gp/indices.cpp
+    pyrunir/kr/gp/module.cpp
+    pyrunir/kr/gp/repository.cpp
+    pyrunir/kr/gp/views.cpp
     pyrunir/kr/dl/semantics/datas.cpp
     pyrunir/kr/dl/semantics/indices.cpp
     pyrunir/kr/dl/semantics/module.cpp
@@ -135,12 +147,15 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/cmake/"
 set(PYRUNIR_PYTHON_FILES
     pyrunir/__init__.py
     pyrunir/__init__.pyi
+    pyrunir/datasets/__init__.py
     pyrunir/graphs/__init__.py
     pyrunir/kr/__init__.py
     pyrunir/kr/dl/__init__.py
     pyrunir/kr/dl/semantics/__init__.py
     pyrunir/kr/dl/grammar/__init__.py
     pyrunir/kr/dl/cnf_grammar/__init__.py
+    pyrunir/kr/gp/__init__.py
+    pyrunir/kr/gp/dl/__init__.py
 )
 
 foreach(python_file IN LISTS PYRUNIR_PYTHON_FILES)

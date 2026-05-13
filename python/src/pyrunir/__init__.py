@@ -10,6 +10,7 @@ import pytyr.planning.ground as _pytyr_planning_ground  # noqa: F401
 import pytyr.planning.lifted as _pytyr_planning_lifted  # noqa: F401
 
 from . import (
+    datasets as datasets,
     graphs as graphs, 
     kr as kr,
 )

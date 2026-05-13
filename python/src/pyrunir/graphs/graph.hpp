@@ -90,6 +90,87 @@ using PyObjectStaticGraph = graphs::StaticGraph<PyObjectProperty, PyObjectProper
 using PyObjectBackwardStaticGraphView = graphs::BackwardStaticGraphView<PyObjectStaticGraph>;
 using PyObjectBidirectionalStaticGraph = graphs::BidirectionalStaticGraph<PyObjectProperty, PyObjectProperty>;
 
+template<typename Graph, typename Range>
+auto make_graph_iterator(const char* name, Range&& range)
+{
+    static_assert(std::ranges::borrowed_range<Range>);
+
+    return nb::make_iterator(nb::type<Graph>(), name, std::ranges::begin(range), std::ranges::end(range));
+}
+
+template<typename Graph>
+auto get_vertex_property(const Graph& graph, graphs::VertexIndex vertex)
+{
+    return graph.get_vertex(vertex).get_property();
+}
+
+template<typename Graph>
+auto get_edge_property(const Graph& graph, graphs::EdgeIndex edge)
+{
+    return graph.get_edge(edge).get_property();
+}
+
+template<typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
+void bind_readable_graph(nb::class_<Graph>& cls, VertexPropertyGetter vertex_property_getter, EdgePropertyGetter edge_property_getter)
+{
+    tyr::add_print(cls);
+
+    cls.def("get_num_vertices", &Graph::get_num_vertices)
+        .def("get_num_edges", &Graph::get_num_edges)
+        .def(
+            "get_vertex_indices",
+            [](const Graph& graph) { return make_graph_iterator<Graph>("vertex index iterator", graph.get_vertex_indices()); },
+            nb::keep_alive<0, 1>())
+        .def(
+            "get_edge_indices",
+            [](const Graph& graph) { return make_graph_iterator<Graph>("edge index iterator", graph.get_edge_indices()); },
+            nb::keep_alive<0, 1>())
+        .def("get_source", &Graph::get_source, "edge"_a)
+        .def("get_target", &Graph::get_target, "edge"_a)
+        .def("get_vertex_property", vertex_property_getter, "vertex"_a)
+        .def("get_edge_property", edge_property_getter, "edge"_a);
+}
+
+template<typename Graph>
+void bind_readable_graph(nb::class_<Graph>& cls)
+{
+    bind_readable_graph(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>);
+}
+
+template<typename Graph>
+void bind_forward_graph(nb::class_<Graph>& cls)
+{
+    cls.def(
+           "get_out_edge_indices",
+           [](const Graph& graph, graphs::VertexIndex vertex)
+           { return make_graph_iterator<Graph>("out edge index iterator", graph.get_out_edge_indices(vertex)); },
+           "vertex"_a,
+           nb::keep_alive<0, 1>())
+        .def("get_out_degree", &Graph::get_out_degree, "vertex"_a);
+}
+
+template<typename Graph>
+void bind_bidirectional_graph(nb::class_<Graph>& cls)
+{
+    cls.def(
+           "get_in_edge_indices",
+           [](const Graph& graph, graphs::VertexIndex vertex)
+           { return make_graph_iterator<Graph>("in edge index iterator", graph.get_in_edge_indices(vertex)); },
+           "vertex"_a,
+           nb::keep_alive<0, 1>())
+        .def("get_in_degree", &Graph::get_in_degree, "vertex"_a);
+}
+
+template<typename Graph>
+void bind_bidirectional_static_graph(nb::class_<Graph>& cls)
+{
+    tyr::add_print(cls);
+
+    cls.def(nb::init<>())
+        .def("get_forward_graph", &Graph::get_forward_graph, nb::rv_policy::reference_internal)
+        .def("get_backward_graph", &Graph::get_backward_graph, nb::rv_policy::reference_internal);
+}
+
 template<typename Graph>
 class PyTraversalVisitor : public graphs::bgl::TraversalVisitor<Graph>
 {
@@ -176,69 +257,22 @@ inline void bind_graph_certificates(nb::module_& m)
     tyr::add_hash(weisfeiler_leman_3_certificate);
 }
 
-template<typename Graph, typename Range>
-auto make_graph_iterator(const char* name, Range&& range)
-{
-    static_assert(std::ranges::borrowed_range<Range>);
-
-    return nb::make_iterator(nb::type<Graph>(), name, std::ranges::begin(range), std::ranges::end(range));
-}
-
 template<typename Graph>
-auto get_vertex_property(const Graph& graph, graphs::VertexIndex vertex)
+auto get_python_vertex_property(const Graph& graph, graphs::VertexIndex vertex)
 {
     return graph.get_vertex(vertex).get_property().value;
 }
 
 template<typename Graph>
-auto get_edge_property(const Graph& graph, graphs::EdgeIndex edge)
+auto get_python_edge_property(const Graph& graph, graphs::EdgeIndex edge)
 {
     return graph.get_edge(edge).get_property().value;
 }
 
 template<typename Graph>
-void bind_basic_graph(nb::class_<Graph>& cls)
+void bind_python_object_graph(nb::class_<Graph>& cls)
 {
-    tyr::add_print(cls);
-
-    cls.def("get_num_vertices", &Graph::get_num_vertices)
-        .def("get_num_edges", &Graph::get_num_edges)
-        .def(
-            "get_vertex_indices",
-            [](const Graph& graph) { return make_graph_iterator<Graph>("vertex index iterator", graph.get_vertex_indices()); },
-            nb::keep_alive<0, 1>())
-        .def(
-            "get_edge_indices",
-            [](const Graph& graph) { return make_graph_iterator<Graph>("edge index iterator", graph.get_edge_indices()); },
-            nb::keep_alive<0, 1>())
-        .def("get_source", &Graph::get_source, "edge"_a)
-        .def("get_target", &Graph::get_target, "edge"_a)
-        .def("get_vertex_property", &get_vertex_property<Graph>, "vertex"_a)
-        .def("get_edge_property", &get_edge_property<Graph>, "edge"_a);
-}
-
-template<typename Graph>
-void bind_forward_graph(nb::class_<Graph>& cls)
-{
-    cls.def(
-           "get_out_edge_indices",
-           [](const Graph& graph, graphs::VertexIndex vertex)
-           { return make_graph_iterator<Graph>("out edge index iterator", graph.get_out_edge_indices(vertex)); },
-           "vertex"_a,
-           nb::keep_alive<0, 1>())
-        .def("get_out_degree", &Graph::get_out_degree, "vertex"_a);
-}
-
-template<typename Graph>
-void bind_bidirectional_graph(nb::class_<Graph>& cls)
-{
-    cls.def(
-           "get_in_edge_indices",
-           [](const Graph& graph, graphs::VertexIndex vertex)
-           { return make_graph_iterator<Graph>("in edge index iterator", graph.get_in_edge_indices(vertex)); },
-           "vertex"_a,
-           nb::keep_alive<0, 1>())
-        .def("get_in_degree", &Graph::get_in_degree, "vertex"_a);
+    bind_readable_graph(cls, &get_python_vertex_property<Graph>, &get_python_edge_property<Graph>);
 }
 
 template<typename Graph>
