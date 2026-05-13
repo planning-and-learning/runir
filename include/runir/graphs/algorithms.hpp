@@ -21,9 +21,21 @@ auto breadth_first_search(const G& graph, const VertexIndexList& sources)
 }
 
 template<IsGraph G>
+auto breadth_first_visit(const G& graph, const VertexIndexList& sources, bgl::TraversalVisitor<G>& visitor)
+{
+    return bgl::breadth_first_visit(graph, sources, visitor);
+}
+
+template<IsGraph G>
 auto depth_first_search(const G& graph, const VertexIndexList& sources)
 {
     return bgl::depth_first_search(graph, sources);
+}
+
+template<IsGraph G>
+auto depth_first_visit(const G& graph, const VertexIndexList& sources, bgl::TraversalVisitor<G>& visitor)
+{
+    return bgl::depth_first_visit(graph, sources, visitor);
 }
 
 template<IsGraph G>

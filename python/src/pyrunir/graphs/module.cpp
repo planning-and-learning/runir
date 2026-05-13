@@ -46,6 +46,10 @@ void bind_module_definitions(nb::module_& m)
         .def("get_backward_graph", &PyObjectBidirectionalStaticGraph::get_backward_graph, nb::rv_policy::reference_internal);
     tyr::add_print(bidirectional_static_graph);
 
+    bind_traversal_visitor<PyObjectDynamicGraph>(m, "DynamicGraphTraversalVisitor");
+    bind_traversal_visitor<PyObjectStaticGraph>(m, "StaticGraphTraversalVisitor");
+    bind_traversal_visitor<PyObjectBackwardStaticGraphView>(m, "BackwardStaticGraphViewTraversalVisitor");
+
     bind_graph_algorithms<PyObjectDynamicGraph>(m);
     bind_graph_algorithms<PyObjectStaticGraph>(m);
     bind_graph_algorithms<PyObjectBackwardStaticGraphView>(m);

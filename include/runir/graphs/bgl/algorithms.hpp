@@ -17,6 +17,49 @@
 namespace runir::graphs::bgl
 {
 
+template<IsGraph G>
+class TraversalVisitor
+{
+public:
+    virtual ~TraversalVisitor() = default;
+
+    virtual void initialize_vertex(VertexIndex vertex) { static_cast<void>(vertex); }
+    virtual void start_vertex(VertexIndex vertex) { static_cast<void>(vertex); }
+    virtual void discover_vertex(VertexIndex vertex) { static_cast<void>(vertex); }
+    virtual void examine_vertex(VertexIndex vertex) { static_cast<void>(vertex); }
+    virtual void examine_edge(EdgeIndex edge) { static_cast<void>(edge); }
+    virtual void tree_edge(EdgeIndex edge) { static_cast<void>(edge); }
+    virtual void non_tree_edge(EdgeIndex edge) { static_cast<void>(edge); }
+    virtual void gray_target(EdgeIndex edge) { static_cast<void>(edge); }
+    virtual void black_target(EdgeIndex edge) { static_cast<void>(edge); }
+    virtual void back_edge(EdgeIndex edge) { static_cast<void>(edge); }
+    virtual void forward_or_cross_edge(EdgeIndex edge) { static_cast<void>(edge); }
+    virtual void finish_vertex(VertexIndex vertex) { static_cast<void>(vertex); }
+};
+
+template<IsGraph G>
+class BoostTraversalVisitor : public boost::default_bfs_visitor, public boost::default_dfs_visitor
+{
+private:
+    TraversalVisitor<G>* m_visitor;
+
+public:
+    explicit BoostTraversalVisitor(TraversalVisitor<G>& visitor) noexcept : m_visitor(&visitor) {}
+
+    void initialize_vertex(VertexIndex vertex, const G&) { m_visitor->initialize_vertex(vertex); }
+    void start_vertex(VertexIndex vertex, const G&) { m_visitor->start_vertex(vertex); }
+    void discover_vertex(VertexIndex vertex, const G&) { m_visitor->discover_vertex(vertex); }
+    void examine_vertex(VertexIndex vertex, const G&) { m_visitor->examine_vertex(vertex); }
+    void examine_edge(EdgeIndex edge, const G&) { m_visitor->examine_edge(edge); }
+    void tree_edge(EdgeIndex edge, const G&) { m_visitor->tree_edge(edge); }
+    void non_tree_edge(EdgeIndex edge, const G&) { m_visitor->non_tree_edge(edge); }
+    void gray_target(EdgeIndex edge, const G&) { m_visitor->gray_target(edge); }
+    void black_target(EdgeIndex edge, const G&) { m_visitor->black_target(edge); }
+    void back_edge(EdgeIndex edge, const G&) { m_visitor->back_edge(edge); }
+    void forward_or_cross_edge(EdgeIndex edge, const G&) { m_visitor->forward_or_cross_edge(edge); }
+    void finish_vertex(VertexIndex vertex, const G&) { m_visitor->finish_vertex(vertex); }
+};
+
 template<typename G>
 inline constexpr bool IsDenseGraphV = IsDenseGraph<std::remove_cvref_t<G>>;
 
@@ -102,6 +145,32 @@ auto strong_components(const G& graph)
 }
 
 template<IsGraph G, typename SourceInputIterator>
+auto breadth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, auto visitor)
+{
+    using Vertex = typename boost::graph_traits<G>::vertex_descriptor;
+
+    auto colors = make_vertex_map_storage(graph, boost::white_color);
+    auto color_map = VertexReadWritePropertyMap<G, boost::default_color_type>(colors);
+    auto buffer = boost::queue<Vertex>();
+
+    boost::breadth_first_search(graph, first, last, buffer, visitor, color_map);
+
+    return colors;
+}
+
+template<IsGraph G, typename SourceInputIterator>
+auto breadth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, TraversalVisitor<G>& visitor)
+{
+    return breadth_first_visit(graph, first, last, BoostTraversalVisitor<G>(visitor));
+}
+
+template<IsGraph G>
+auto breadth_first_visit(const G& graph, const std::vector<VertexIndex>& sources, TraversalVisitor<G>& visitor)
+{
+    return breadth_first_visit(graph, sources.begin(), sources.end(), visitor);
+}
+
+template<IsGraph G, typename SourceInputIterator>
 auto breadth_first_search(const G& graph, SourceInputIterator first, SourceInputIterator last)
 {
     using Vertex = typename boost::graph_traits<G>::vertex_descriptor;
@@ -113,9 +182,6 @@ auto breadth_first_search(const G& graph, SourceInputIterator first, SourceInput
     auto distances = make_vertex_map_storage(graph, infinity);
     for (auto it = first; it != last; ++it)
         distances[*it] = 0;
-
-    auto colors = make_vertex_map_storage(graph, boost::white_color);
-    auto color_map = VertexReadWritePropertyMap<G, boost::default_color_type>(colors);
 
     struct Visitor : boost::bfs_visitor<>
     {
@@ -140,9 +206,8 @@ auto breadth_first_search(const G& graph, SourceInputIterator first, SourceInput
     auto predecessor_map = VertexReadWritePropertyMap<G, Vertex>(predecessors);
     auto distance_map = VertexReadWritePropertyMap<G, Distance>(distances);
     auto visitor = Visitor(predecessor_map, distance_map);
-    auto buffer = boost::queue<Vertex>();
 
-    boost::breadth_first_search(graph, first, last, buffer, visitor, color_map);
+    breadth_first_visit(graph, first, last, visitor);
 
     return std::make_tuple(predecessors, distances);
 }
@@ -154,14 +219,37 @@ auto breadth_first_search(const G& graph, const std::vector<VertexIndex>& source
 }
 
 template<IsGraph G, typename SourceInputIterator>
+auto depth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, auto visitor)
+{
+    auto colors = make_vertex_map_storage(graph, boost::white_color);
+    auto color_map = VertexReadWritePropertyMap<G, boost::default_color_type>(colors);
+
+    for (; first != last; ++first)
+        if (get(color_map, *first) == boost::white_color)
+            boost::depth_first_search(graph, visitor, color_map, *first);
+
+    return colors;
+}
+
+template<IsGraph G, typename SourceInputIterator>
+auto depth_first_visit(const G& graph, SourceInputIterator first, SourceInputIterator last, TraversalVisitor<G>& visitor)
+{
+    return depth_first_visit(graph, first, last, BoostTraversalVisitor<G>(visitor));
+}
+
+template<IsGraph G>
+auto depth_first_visit(const G& graph, const std::vector<VertexIndex>& sources, TraversalVisitor<G>& visitor)
+{
+    return depth_first_visit(graph, sources.begin(), sources.end(), visitor);
+}
+
+template<IsGraph G, typename SourceInputIterator>
 auto depth_first_search(const G& graph, SourceInputIterator first, SourceInputIterator last)
 {
     using Vertex = typename boost::graph_traits<G>::vertex_descriptor;
     using Edge = typename boost::graph_traits<G>::edge_descriptor;
 
     auto predecessors = make_vertex_map_storage(graph, boost::graph_traits<G>::null_vertex());
-    auto colors = make_vertex_map_storage(graph, boost::white_color);
-    auto color_map = VertexReadWritePropertyMap<G, boost::default_color_type>(colors);
 
     struct Visitor : boost::dfs_visitor<>
     {
@@ -175,9 +263,7 @@ auto depth_first_search(const G& graph, SourceInputIterator first, SourceInputIt
     auto predecessor_map = VertexReadWritePropertyMap<G, Vertex>(predecessors);
     auto visitor = Visitor(predecessor_map);
 
-    for (; first != last; ++first)
-        if (get(color_map, *first) == boost::white_color)
-            boost::depth_first_search(graph, visitor, color_map, *first);
+    depth_first_visit(graph, first, last, visitor);
 
     return predecessors;
 }

@@ -8,6 +8,7 @@
 #include <nanobind/stl/array.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/trampoline.h>
 #include <ranges>
 #include <runir/graphs/algorithms.hpp>
 #include <runir/graphs/bidirectional_static_graph.hpp>
@@ -88,6 +89,48 @@ using PyObjectStaticGraphBuilder = graphs::StaticGraphBuilder<PyObjectProperty, 
 using PyObjectStaticGraph = graphs::StaticGraph<PyObjectProperty, PyObjectProperty>;
 using PyObjectBackwardStaticGraphView = graphs::BackwardStaticGraphView<PyObjectStaticGraph>;
 using PyObjectBidirectionalStaticGraph = graphs::BidirectionalStaticGraph<PyObjectProperty, PyObjectProperty>;
+
+template<typename Graph>
+class PyTraversalVisitor : public graphs::bgl::TraversalVisitor<Graph>
+{
+public:
+    NB_TRAMPOLINE(graphs::bgl::TraversalVisitor<Graph>, 12);
+
+    void initialize_vertex(graphs::VertexIndex vertex) override { NB_OVERRIDE(initialize_vertex, vertex); }
+    void start_vertex(graphs::VertexIndex vertex) override { NB_OVERRIDE(start_vertex, vertex); }
+    void discover_vertex(graphs::VertexIndex vertex) override { NB_OVERRIDE(discover_vertex, vertex); }
+    void examine_vertex(graphs::VertexIndex vertex) override { NB_OVERRIDE(examine_vertex, vertex); }
+    void examine_edge(graphs::EdgeIndex edge) override { NB_OVERRIDE(examine_edge, edge); }
+    void tree_edge(graphs::EdgeIndex edge) override { NB_OVERRIDE(tree_edge, edge); }
+    void non_tree_edge(graphs::EdgeIndex edge) override { NB_OVERRIDE(non_tree_edge, edge); }
+    void gray_target(graphs::EdgeIndex edge) override { NB_OVERRIDE(gray_target, edge); }
+    void black_target(graphs::EdgeIndex edge) override { NB_OVERRIDE(black_target, edge); }
+    void back_edge(graphs::EdgeIndex edge) override { NB_OVERRIDE(back_edge, edge); }
+    void forward_or_cross_edge(graphs::EdgeIndex edge) override { NB_OVERRIDE(forward_or_cross_edge, edge); }
+    void finish_vertex(graphs::VertexIndex vertex) override { NB_OVERRIDE(finish_vertex, vertex); }
+};
+
+template<typename Graph>
+void bind_traversal_visitor(nb::module_& m, const char* name)
+{
+    using Visitor = graphs::bgl::TraversalVisitor<Graph>;
+    using PyVisitor = PyTraversalVisitor<Graph>;
+
+    nb::class_<Visitor, PyVisitor>(m, name)
+        .def(nb::init<>())
+        .def("initialize_vertex", &Visitor::initialize_vertex, "vertex"_a)
+        .def("start_vertex", &Visitor::start_vertex, "vertex"_a)
+        .def("discover_vertex", &Visitor::discover_vertex, "vertex"_a)
+        .def("examine_vertex", &Visitor::examine_vertex, "vertex"_a)
+        .def("examine_edge", &Visitor::examine_edge, "edge"_a)
+        .def("tree_edge", &Visitor::tree_edge, "edge"_a)
+        .def("non_tree_edge", &Visitor::non_tree_edge, "edge"_a)
+        .def("gray_target", &Visitor::gray_target, "edge"_a)
+        .def("black_target", &Visitor::black_target, "edge"_a)
+        .def("back_edge", &Visitor::back_edge, "edge"_a)
+        .def("forward_or_cross_edge", &Visitor::forward_or_cross_edge, "edge"_a)
+        .def("finish_vertex", &Visitor::finish_vertex, "vertex"_a);
+}
 
 inline void bind_graph_certificates(nb::module_& m)
 {
@@ -226,7 +269,21 @@ void bind_graph_algorithms(nb::module_& m)
 {
     m.def("strong_components", &graphs::algorithms::strong_components<Graph>, "graph"_a);
     m.def("breadth_first_search", &graphs::algorithms::breadth_first_search<Graph>, "graph"_a, "sources"_a);
+    m.def(
+        "breadth_first_visit",
+        [](const Graph& graph, const graphs::VertexIndexList& sources, graphs::bgl::TraversalVisitor<Graph>& visitor)
+        { static_cast<void>(graphs::algorithms::breadth_first_visit(graph, sources, visitor)); },
+        "graph"_a,
+        "sources"_a,
+        "visitor"_a);
     m.def("depth_first_search", &graphs::algorithms::depth_first_search<Graph>, "graph"_a, "sources"_a);
+    m.def(
+        "depth_first_visit",
+        [](const Graph& graph, const graphs::VertexIndexList& sources, graphs::bgl::TraversalVisitor<Graph>& visitor)
+        { static_cast<void>(graphs::algorithms::depth_first_visit(graph, sources, visitor)); },
+        "graph"_a,
+        "sources"_a,
+        "visitor"_a);
     m.def("topological_sort", &graphs::algorithms::topological_sort<Graph>, "graph"_a);
     m.def("color_refinement_certificate", &graphs::algorithms::color_refinement_certificate<Graph>, "graph"_a);
     m.def("weisfeiler_leman_2_certificate", &graphs::algorithms::weisfeiler_leman_2_certificate<Graph>, "graph"_a);
