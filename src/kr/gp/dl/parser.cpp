@@ -434,7 +434,7 @@ auto make_effect(tyr::Index<Feature<FeatureTag>> feature, Repository& repository
     return intern(repository, data);
 }
 
-auto parse_condition_observation(const gp_ast::PositiveBooleanCondition&,
+auto parse_condition_observation(const Positive&,
                                  const std::string& feature,
                                  Repository& repository,
                                  const BooleanFeatureMap& boolean_features,
@@ -443,7 +443,7 @@ auto parse_condition_observation(const gp_ast::PositiveBooleanCondition&,
     return make_condition<BooleanFeature, Positive>(require_feature(boolean_features, feature), repository);
 }
 
-auto parse_condition_observation(const gp_ast::NegativeBooleanCondition&,
+auto parse_condition_observation(const Negative&,
                                  const std::string& feature,
                                  Repository& repository,
                                  const BooleanFeatureMap& boolean_features,
@@ -452,7 +452,7 @@ auto parse_condition_observation(const gp_ast::NegativeBooleanCondition&,
     return make_condition<BooleanFeature, Negative>(require_feature(boolean_features, feature), repository);
 }
 
-auto parse_condition_observation(const gp_ast::EqualZeroNumericalCondition&,
+auto parse_condition_observation(const EqualZero&,
                                  const std::string& feature,
                                  Repository& repository,
                                  const BooleanFeatureMap&,
@@ -461,7 +461,7 @@ auto parse_condition_observation(const gp_ast::EqualZeroNumericalCondition&,
     return make_condition<NumericalFeature, EqualZero>(require_feature(numerical_features, feature), repository);
 }
 
-auto parse_condition_observation(const gp_ast::GreaterZeroNumericalCondition&,
+auto parse_condition_observation(const GreaterZero&,
                                  const std::string& feature,
                                  Repository& repository,
                                  const BooleanFeatureMap&,
@@ -480,7 +480,7 @@ auto parse_condition(const gp_ast::Condition& node,
                                 node.observation.get());
 }
 
-auto parse_effect_observation(const gp_ast::PositiveBooleanEffect&,
+auto parse_effect_observation(const Positive&,
                               const std::string& feature,
                               Repository& repository,
                               const BooleanFeatureMap& boolean_features,
@@ -489,7 +489,7 @@ auto parse_effect_observation(const gp_ast::PositiveBooleanEffect&,
     return make_effect<BooleanFeature, Positive>(require_feature(boolean_features, feature), repository);
 }
 
-auto parse_effect_observation(const gp_ast::NegativeBooleanEffect&,
+auto parse_effect_observation(const Negative&,
                               const std::string& feature,
                               Repository& repository,
                               const BooleanFeatureMap& boolean_features,
@@ -498,7 +498,7 @@ auto parse_effect_observation(const gp_ast::NegativeBooleanEffect&,
     return make_effect<BooleanFeature, Negative>(require_feature(boolean_features, feature), repository);
 }
 
-auto parse_effect_observation(const gp_ast::UnchangedEffect&,
+auto parse_effect_observation(const Unchanged&,
                               const std::string& feature,
                               Repository& repository,
                               const BooleanFeatureMap& boolean_features,
@@ -517,7 +517,7 @@ auto parse_effect_observation(const gp_ast::UnchangedEffect&,
     throw std::runtime_error("Unknown feature \"" + feature + "\".");
 }
 
-auto parse_effect_observation(const gp_ast::IncreasesNumericalEffect&,
+auto parse_effect_observation(const Increases&,
                               const std::string& feature,
                               Repository& repository,
                               const BooleanFeatureMap&,
@@ -526,7 +526,7 @@ auto parse_effect_observation(const gp_ast::IncreasesNumericalEffect&,
     return make_effect<NumericalFeature, Increases>(require_feature(numerical_features, feature), repository);
 }
 
-auto parse_effect_observation(const gp_ast::DecreasesNumericalEffect&,
+auto parse_effect_observation(const Decreases&,
                               const std::string& feature,
                               Repository& repository,
                               const BooleanFeatureMap&,

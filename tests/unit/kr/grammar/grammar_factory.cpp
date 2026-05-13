@@ -7,6 +7,7 @@
 #include <runir/kr/dl/grammar/formatter.hpp>
 #include <runir/kr/dl/grammar/grammar_factory.hpp>
 #include <runir/kr/dl/grammar/parser.hpp>
+#include <runir/kr/gp/dl/parser.hpp>
 #include <runir/kr/gp/dl/policy_factory.hpp>
 #include <runir/kr/gp/repository.hpp>
 #include <string>
@@ -54,6 +55,50 @@ TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesParse)
         EXPECT_EQ(policy.get_index(), tyr::Index<runir::kr::gp::Policy>(0));
         EXPECT_EQ(repository.template size<runir::kr::gp::Policy>(), 1);
     }
+}
+
+TEST(RunirTests, GeneralPolicyParserParsesConditionsAndEffects)
+{
+    namespace gp = runir::kr::gp;
+    namespace gp_dl = runir::kr::gp::dl;
+    namespace fp = tyr::formalism::planning;
+
+    const auto domain_filepath = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto planning_domain = fp::Parser(domain_filepath).get_domain();
+
+    auto dl_repository_factory = runir::kr::dl::ConstructorRepositoryFactory();
+    auto repository_factory = gp::RepositoryFactory();
+    auto dl_repository = dl_repository_factory.create_shared(planning_domain.get_repository());
+    auto repository = repository_factory.create(dl_repository);
+
+    const auto description = std::string { R"(
+(policy
+  (:features
+    (boolean ready "r" "" (b_nonempty (c_atomic_state "ball")))
+    (numerical count "c" "" (n_count (c_atomic_state "ball")))
+  )
+  (:rules
+    (
+      (:conditions (positive ready) (equal_zero count))
+      (:effects (negative ready) (increases count))
+    )
+    (
+      (:conditions (negative ready) (greater_zero count))
+      (:effects (positive ready) (decreases count) (unchanged count))
+    )
+  )
+)
+)" };
+
+    const auto policy = gp_dl::parse_policy(description, planning_domain.get_domain(), repository);
+
+    EXPECT_EQ(policy.get_index(), tyr::Index<gp::Policy>(0));
+    EXPECT_EQ(repository.template size<gp::Policy>(), 1);
+    EXPECT_EQ(repository.template size<gp::Rule>(), 2);
+    EXPECT_EQ(repository.template size<gp::Feature<gp_dl::BooleanFeature>>(), 1);
+    EXPECT_EQ(repository.template size<gp::Feature<gp_dl::NumericalFeature>>(), 1);
+    EXPECT_EQ(repository.template size<gp::ConditionVariant>(), 4);
+    EXPECT_EQ(repository.template size<gp::EffectVariant>(), 5);
 }
 
 TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
