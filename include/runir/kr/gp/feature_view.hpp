@@ -6,6 +6,8 @@
 #include <tuple>
 #include <tyr/common/types.hpp>
 #include <tyr/common/variant.hpp>
+#include <tyr/planning/declarations.hpp>
+#include <tyr/planning/state_view.hpp>
 
 namespace tyr
 {
@@ -26,6 +28,12 @@ public:
 
     auto get_index() const noexcept { return m_handle; }
     auto get_variant() const noexcept { return make_view(get_data().value, *m_context); }
+
+    template<tyr::planning::TaskKind Kind, typename EvaluationContext>
+    auto evaluate(tyr::planning::StateView<Kind> state, EvaluationContext& context) const
+    {
+        return get_variant().apply([&](auto feature) { return feature.evaluate(state, context); });
+    }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };

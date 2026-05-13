@@ -5,19 +5,10 @@
 #include "runir/kr/gp/effect_index.hpp"
 #include "runir/kr/gp/rule_index.hpp"
 
-#include <cista/containers/variant.h>
 #include <tuple>
 #include <tyr/common/types.hpp>
 #include <tyr/common/types_utils.hpp>
 #include <vector>
-
-namespace runir::kr::gp
-{
-
-using ConditionIndexVariant = cista::variant<tyr::Index<ConditionVariant>>;
-using EffectIndexVariant = cista::variant<tyr::Index<EffectVariant>>;
-
-}  // namespace runir::kr::gp
 
 namespace tyr
 {
@@ -26,8 +17,8 @@ template<>
 struct Data<runir::kr::gp::Rule>
 {
     Index<runir::kr::gp::Rule> index;
-    std::vector<runir::kr::gp::ConditionIndexVariant> conditions;
-    std::vector<runir::kr::gp::EffectIndexVariant> effects;
+    IndexList<runir::kr::gp::ConditionVariant> conditions;
+    IndexList<runir::kr::gp::EffectVariant> effects;
 
     void clear() noexcept
     {

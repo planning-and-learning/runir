@@ -27,6 +27,16 @@ public:
     auto get_index() const noexcept { return m_handle; }
     auto get_rules() const noexcept { return make_view(get_data().rules, *m_context); }
 
+    template<typename EvaluationContext>
+    bool is_compatible_with(EvaluationContext& context) const
+    {
+        for (auto rule : get_rules())
+            if (rule.is_compatible_with(context))
+                return true;
+
+        return false;
+    }
+
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 

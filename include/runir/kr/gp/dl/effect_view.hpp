@@ -2,7 +2,10 @@
 #define RUNIR_KR_GP_DL_EFFECT_VIEW_HPP_
 
 #include "runir/kr/gp/dl/effect_data.hpp"
+#include "runir/kr/gp/dl/evaluation_context.hpp"
+#include "runir/kr/gp/feature_view.hpp"
 
+#include <concepts>
 #include <tuple>
 #include <tyr/common/types.hpp>
 
@@ -29,6 +32,24 @@ public:
 
     auto get_index() const noexcept { return m_handle; }
     auto get_feature() const noexcept { return make_view(get_data().feature, *m_context); }
+
+    template<tyr::planning::TaskKind Kind>
+    bool is_compatible_with(runir::kr::gp::dl::EvaluationContext<Kind>& context) const
+    {
+        const auto source = get_feature().evaluate(context.get_source_context());
+        const auto target = get_feature().evaluate(context.get_target_context());
+
+        if constexpr (std::same_as<FeatureTag, runir::kr::gp::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::gp::dl::BecomesTrue>)
+            return !source && target;
+        else if constexpr (std::same_as<FeatureTag, runir::kr::gp::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::gp::dl::BecomesFalse>)
+            return source && !target;
+        else if constexpr (std::same_as<ObservationTag, runir::kr::gp::dl::Unchanged>)
+            return source == target;
+        else if constexpr (std::same_as<FeatureTag, runir::kr::gp::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::gp::dl::Increases>)
+            return target > source;
+        else if constexpr (std::same_as<FeatureTag, runir::kr::gp::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::gp::dl::Decreases>)
+            return target < source;
+    }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
