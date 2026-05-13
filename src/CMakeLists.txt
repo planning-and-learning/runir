@@ -12,6 +12,7 @@ add_library(core
     kr/gp/dl/parser/parser.cpp
     kr/gp/dl/parser/parser_instantiations.cpp
     kr/gp/dl/policy_factory.cpp
+    kr/gp/policy_executor.cpp
 )
 add_library(runir::core ALIAS core)
 

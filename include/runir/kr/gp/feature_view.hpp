@@ -29,6 +29,12 @@ public:
     auto get_index() const noexcept { return m_handle; }
     auto get_variant() const noexcept { return make_view(get_data().value, *m_context); }
 
+    template<typename EvaluationContext>
+    auto evaluate(EvaluationContext& context) const
+    {
+        return get_variant().apply([&](auto feature) { return feature.evaluate(context); });
+    }
+
     template<tyr::planning::TaskKind Kind, typename EvaluationContext>
     auto evaluate(tyr::planning::StateView<Kind> state, EvaluationContext& context) const
     {

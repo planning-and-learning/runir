@@ -33,7 +33,8 @@ namespace detail
 template<tyr::planning::TaskKind Kind>
 auto num_objects(const EvaluationContext<Kind>& context) noexcept -> uint_t
 {
-    return static_cast<uint_t>(context.get_state().get_state_repository()->get_task()->get_task().get_objects().size());
+    const auto task = context.get_state().get_state_repository()->get_task()->get_task();
+    return static_cast<uint_t>(task.get_domain().get_constants().size() + task.get_objects().size());
 }
 
 template<tyr::planning::TaskKind Kind>
