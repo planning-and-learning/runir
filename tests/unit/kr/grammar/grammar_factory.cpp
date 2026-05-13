@@ -7,6 +7,8 @@
 #include <runir/kr/dl/grammar/formatter.hpp>
 #include <runir/kr/dl/grammar/grammar_factory.hpp>
 #include <runir/kr/dl/grammar/parser.hpp>
+#include <runir/kr/gp/dl/policy_factory.hpp>
+#include <runir/kr/gp/repository.hpp>
 #include <string>
 #include <tyr/common/equal_to.hpp>
 #include <tyr/formalism/planning/parser.hpp>
@@ -19,6 +21,40 @@ std::filesystem::path runir_root() { return std::filesystem::path(RUNIR_ROOT_DIR
 std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "planning-benchmarks"; }
 
 }  // namespace
+
+TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesParse)
+{
+    namespace gp_dl = runir::kr::gp::dl;
+    namespace fp = tyr::formalism::planning;
+
+    struct Case
+    {
+        std::filesystem::path domain;
+        gp_dl::PolicySpecification specification;
+    };
+
+    const auto cases = std::vector<Case> {
+        { benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl", gp_dl::PolicySpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "tests" / "classical" / "blocks_3" / "domain.pddl", gp_dl::PolicySpecification::BLOCKS3OPS_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "tests" / "classical" / "spanner" / "domain.pddl", gp_dl::PolicySpecification::SPANNER_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "tests" / "classical" / "delivery" / "domain.pddl", gp_dl::PolicySpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
+    };
+
+    auto dl_repository_factory = runir::kr::dl::ConstructorRepositoryFactory();
+    auto repository_factory = runir::kr::gp::RepositoryFactory();
+
+    for (const auto& test_case : cases)
+    {
+        const auto planning_domain = fp::Parser(test_case.domain).get_domain();
+        auto dl_repository = dl_repository_factory.create_shared(planning_domain.get_repository());
+        auto repository = repository_factory.create(dl_repository);
+
+        const auto policy = gp_dl::PolicyFactory::create(test_case.specification, planning_domain.get_domain(), repository);
+
+        EXPECT_EQ(policy.get_index(), tyr::Index<runir::kr::gp::Policy>(0));
+        EXPECT_EQ(repository.template size<runir::kr::gp::Policy>(), 1);
+    }
+}
 
 TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
 {

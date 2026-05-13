@@ -48,7 +48,7 @@ auto make_role_builder(EvaluationContext<Kind>& context)
     return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects(context));
 }
 
-auto object_handle(uint_t object) noexcept { return tyr::Index<tyr::formalism::Object>(object); }
+inline auto object_handle(uint_t object) noexcept { return tyr::Index<tyr::formalism::Object>(object); }
 
 template<typename RoleBuilderPtr>
 auto row(const RoleBuilderPtr& role, uint_t object) noexcept

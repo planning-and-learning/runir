@@ -1,5 +1,5 @@
-#ifndef RUNIR_GRAMMAR_PARSER_ERROR_HANDLER_HPP_
-#define RUNIR_GRAMMAR_PARSER_ERROR_HANDLER_HPP_
+#ifndef RUNIR_KR_GP_DL_PARSER_ERROR_HANDLER_HPP_
+#define RUNIR_KR_GP_DL_PARSER_ERROR_HANDLER_HPP_
 
 #include <boost/spirit/home/x3.hpp>
 #include <boost/spirit/home/x3/support/utility/error_reporting.hpp>
@@ -7,7 +7,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace runir::kr::dl::grammar::parser
+namespace runir::kr::gp::dl::parser
 {
 namespace x3 = boost::spirit::x3;
 
@@ -22,7 +22,7 @@ struct ErrorHandlerBase
     std::unordered_map<std::string, std::string> id_map;
 
     template<typename Iterator, typename Exception, typename Context>
-    x3::error_handler_result on_error(Iterator& /*first*/, const Iterator& /*last*/, const Exception& x, const Context& context)
+    x3::error_handler_result on_error(Iterator&, const Iterator&, const Exception& x, const Context& context)
     {
         auto which = std::string(x.which());
         const auto it = id_map.find(which);
@@ -36,6 +36,6 @@ struct ErrorHandlerBase
     }
 };
 
-}
+}  // namespace runir::kr::gp::dl::parser
 
 #endif

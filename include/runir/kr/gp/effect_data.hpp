@@ -38,8 +38,8 @@ template<>
 struct Data<runir::kr::gp::ConcreteEffectVariant<runir::kr::DlTag>>
 {
     using Variant =
-        ::cista::offset::variant<Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature, runir::kr::gp::dl::BecomesTrue>>,
-                                 Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature, runir::kr::gp::dl::BecomesFalse>>,
+        ::cista::offset::variant<Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature, runir::kr::gp::dl::Positive>>,
+                                 Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature, runir::kr::gp::dl::Negative>>,
                                  Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::BooleanFeature, runir::kr::gp::dl::Unchanged>>,
                                  Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeature, runir::kr::gp::dl::Increases>>,
                                  Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, runir::kr::gp::dl::NumericalFeature, runir::kr::gp::dl::Decreases>>,

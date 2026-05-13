@@ -2,7 +2,6 @@
 #define RUNIR_GRAMMAR_AST_AST_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/grammar/ast/declarations.hpp"
 
 #include <boost/optional.hpp>
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>

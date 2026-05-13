@@ -2,6 +2,7 @@
 #define RUNIR_KR_GP_HPP_
 
 #include "runir/kr/declarations.hpp"
+#include "runir/kr/gp/canonicalization.hpp"
 #include "runir/kr/gp/condition.hpp"
 #include "runir/kr/gp/condition_compatibility.hpp"
 #include "runir/kr/gp/condition_data.hpp"
@@ -20,6 +21,8 @@
 #include "runir/kr/gp/dl/feature_data.hpp"
 #include "runir/kr/gp/dl/feature_index.hpp"
 #include "runir/kr/gp/dl/feature_view.hpp"
+#include "runir/kr/gp/dl/parser.hpp"
+#include "runir/kr/gp/dl/policy_factory.hpp"
 #include "runir/kr/gp/effect.hpp"
 #include "runir/kr/gp/effect_compatibility.hpp"
 #include "runir/kr/gp/effect_data.hpp"
@@ -34,6 +37,7 @@
 #include "runir/kr/gp/policy_data.hpp"
 #include "runir/kr/gp/policy_index.hpp"
 #include "runir/kr/gp/policy_view.hpp"
+#include "runir/kr/gp/repository.hpp"
 #include "runir/kr/gp/rule.hpp"
 #include "runir/kr/gp/rule_compatibility.hpp"
 #include "runir/kr/gp/rule_data.hpp"

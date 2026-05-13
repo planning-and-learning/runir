@@ -8,6 +8,10 @@ add_library(core
     kr/dl/grammar/parser.cpp
     kr/dl/grammar/parser/parser.cpp
     kr/dl/grammar/parser/parser_instantiations.cpp
+    kr/gp/dl/parser.cpp
+    kr/gp/dl/parser/parser.cpp
+    kr/gp/dl/parser/parser_instantiations.cpp
+    kr/gp/dl/policy_factory.cpp
 )
 add_library(runir::core ALIAS core)
 

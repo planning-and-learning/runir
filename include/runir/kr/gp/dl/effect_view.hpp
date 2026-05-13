@@ -36,19 +36,23 @@ public:
     template<tyr::planning::TaskKind Kind>
     bool is_compatible_with(runir::kr::gp::dl::EvaluationContext<Kind>& context) const
     {
-        const auto source = get_feature().evaluate(context.get_source_context());
         const auto target = get_feature().evaluate(context.get_target_context());
 
-        if constexpr (std::same_as<FeatureTag, runir::kr::gp::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::gp::dl::BecomesTrue>)
-            return !source && target;
-        else if constexpr (std::same_as<FeatureTag, runir::kr::gp::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::gp::dl::BecomesFalse>)
-            return source && !target;
-        else if constexpr (std::same_as<ObservationTag, runir::kr::gp::dl::Unchanged>)
-            return source == target;
-        else if constexpr (std::same_as<FeatureTag, runir::kr::gp::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::gp::dl::Increases>)
-            return target > source;
-        else if constexpr (std::same_as<FeatureTag, runir::kr::gp::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::gp::dl::Decreases>)
-            return target < source;
+        if constexpr (std::same_as<FeatureTag, runir::kr::gp::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::gp::dl::Positive>)
+            return target;
+        else if constexpr (std::same_as<FeatureTag, runir::kr::gp::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::gp::dl::Negative>)
+            return !target;
+        else
+        {
+            const auto source = get_feature().evaluate(context.get_source_context());
+
+            if constexpr (std::same_as<ObservationTag, runir::kr::gp::dl::Unchanged>)
+                return source == target;
+            else if constexpr (std::same_as<FeatureTag, runir::kr::gp::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::gp::dl::Increases>)
+                return target > source;
+            else if constexpr (std::same_as<FeatureTag, runir::kr::gp::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::gp::dl::Decreases>)
+                return target < source;
+        }
     }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }

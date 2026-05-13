@@ -30,14 +30,6 @@ struct GreaterZero
 {
 };
 
-struct BecomesTrue
-{
-};
-
-struct BecomesFalse
-{
-};
-
 struct Increases
 {
 };

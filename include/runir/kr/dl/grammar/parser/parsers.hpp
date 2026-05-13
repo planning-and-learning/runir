@@ -2,7 +2,6 @@
 #define RUNIR_GRAMMAR_PARSER_PARSERS_HPP_
 
 #include "runir/kr/dl/grammar/ast/ast.hpp"
-#include "runir/kr/dl/grammar/parser/declarations.hpp"
 
 #include <boost/spirit/home/x3.hpp>
 
