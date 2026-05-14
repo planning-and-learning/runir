@@ -20,7 +20,7 @@ Runir is the learning and representation layer for the planning-and-learning eco
 - `runir::datasets`: task classes, per-task search contexts, state graphs, annotated state graphs, object graphs, and equivalence graphs built from policies such as identity or graph-isomorphism reduction.
 - `runir::kr::dl`: description-logic constructors, grammars, CNF grammars, denotations, evaluation, parsing, formatting, and grammar factories.
 - `runir::kr::gp`: rule-based generalized policies over typed features, conditions, effects, policy parsing, policy factories, and policy execution on annotated state graphs.
-- `pyrunir`: Python bindings for the same components, intended for experiments, notebooks, and high-level learning/LLM workflows.
+- `pyrunir`: Python bindings for the same components with stubs.
 
 The native CMake package exports `runir::core` as the aggregate target and component targets such as `runir::graphs`, `runir::datasets`, and `runir::kr`. The Python package is `pyrunir`.
 
