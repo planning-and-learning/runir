@@ -1,4 +1,4 @@
-# Runir
+# Runir: Representations for Generalized Planning in C++ and Python
 
 Runir is designed to address several challenges in the integration of learning and planning based systems:
 
