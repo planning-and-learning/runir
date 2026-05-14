@@ -84,7 +84,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
     static constexpr auto num_bits(runir::uint_t num_objects_) noexcept -> size_t { return num_objects_; }
     static constexpr auto num_blocks(runir::uint_t num_objects_) noexcept -> size_t { return Bitset::num_blocks(num_bits(num_objects_)); }
     static constexpr auto valid_num_blocks(size_t num_blocks_, runir::uint_t num_objects_) noexcept -> bool { return num_blocks_ == num_blocks(num_objects_); }
-    static constexpr void assert_valid_num_blocks(size_t num_blocks_, runir::uint_t num_objects_) noexcept
+    static constexpr void assert_valid_num_blocks([[maybe_unused]] size_t num_blocks_, [[maybe_unused]] runir::uint_t num_objects_) noexcept
     {
         assert(valid_num_blocks(num_blocks_, num_objects_));
     }
@@ -128,7 +128,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
     static constexpr auto num_row_blocks(runir::uint_t num_objects_) noexcept -> size_t { return Bitset::num_blocks(num_objects_); }
     static constexpr auto num_blocks(runir::uint_t num_objects_) noexcept -> size_t { return static_cast<size_t>(num_objects_) * num_row_blocks(num_objects_); }
     static constexpr auto valid_num_blocks(size_t num_blocks_, runir::uint_t num_objects_) noexcept -> bool { return num_blocks_ == num_blocks(num_objects_); }
-    static constexpr void assert_valid_num_blocks(size_t num_blocks_, runir::uint_t num_objects_) noexcept
+    static constexpr void assert_valid_num_blocks([[maybe_unused]] size_t num_blocks_, [[maybe_unused]] runir::uint_t num_objects_) noexcept
     {
         assert(valid_num_blocks(num_blocks_, num_objects_));
     }

@@ -53,6 +53,7 @@ private:
     StateToVertexMap m_state_to_vertex;
     tyr::UnorderedMap<tyr::planning::StateView<Kind>, StateGraphVertexRef> m_pruned_state_to_representative;
     std::vector<graphs::VertexIndex> m_state_vertex_to_equivalence_vertex;
+    tyr::planning::Statistics m_statistics;
 
     auto get_or_create_equivalence_vertex(StateGraphVertexRef representative) -> graphs::VertexIndex
     {
@@ -205,13 +206,19 @@ public:
 
     void on_finish_f_layer(tyr::float_t f_value) override { static_cast<void>(f_value); }
 
-    void on_end_search() override {}
+    void on_end_search() {}
+
+    void on_end_search(tyr::planning::SearchStatus status) { static_cast<void>(status); }
 
     void on_solved(const tyr::planning::Plan<Kind>& plan) override { static_cast<void>(plan); }
 
-    void on_unsolvable() override {}
+    void on_unsolvable() {}
 
-    void on_exhausted() override {}
+    void on_exhausted() {}
+
+    const tyr::planning::Statistics& get_search_statistics() const { return m_statistics; }
+
+    const tyr::planning::Statistics& get_statistics() const { return m_statistics; }
 
     auto release() && { return std::make_unique<StateGraph<Kind>>(std::move(m_state_builder)); }
 };

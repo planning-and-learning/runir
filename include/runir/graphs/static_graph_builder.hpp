@@ -41,8 +41,8 @@ private:
         return static_cast<uint_t>(size);
     }
 
-    void assert_valid_vertex(VertexIndex vertex) const noexcept { assert(vertex < m_vertices.size()); }
-    void assert_valid_edge(EdgeIndex edge) const noexcept { assert(edge < m_edges.size()); }
+    void assert_valid_vertex([[maybe_unused]] VertexIndex vertex) const noexcept { assert(vertex < m_vertices.size()); }
+    void assert_valid_edge([[maybe_unused]] EdgeIndex edge) const noexcept { assert(edge < m_edges.size()); }
 
 public:
     StaticGraphBuilder() = default;

@@ -54,8 +54,8 @@ private:
         return next++;
     }
 
-    void assert_valid_vertex(VertexIndex vertex) const noexcept { assert(m_vertices.contains(vertex)); }
-    void assert_valid_edge(EdgeIndex edge) const noexcept { assert(m_edges.contains(edge)); }
+    void assert_valid_vertex([[maybe_unused]] VertexIndex vertex) const noexcept { assert(m_vertices.contains(vertex)); }
+    void assert_valid_edge([[maybe_unused]] EdgeIndex edge) const noexcept { assert(m_edges.contains(edge)); }
 
 public:
     DynamicGraph() = default;

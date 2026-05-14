@@ -24,7 +24,7 @@ private:
         return *m_graph;
     }
 
-    void assert_valid_vertex(VertexIndex vertex) const noexcept { assert(vertex < get_num_vertices()); }
+    void assert_valid_vertex([[maybe_unused]] VertexIndex vertex) const noexcept { assert(vertex < get_num_vertices()); }
 
     void initialize()
     {

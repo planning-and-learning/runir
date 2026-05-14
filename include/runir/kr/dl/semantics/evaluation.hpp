@@ -169,7 +169,7 @@ auto object_index(tyr::formalism::planning::GroundAtomView<T> atom, size_t posit
 template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
 auto evaluate_atomic_state_concept(tyr::View<tyr::Index<Concept<AtomicStateTag<T>>>, C> constructor, EvaluationContext<Kind>& context)
 {
-    const auto num_objects = detail::num_objects(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
     auto bitset = result->get_bitset();
 
@@ -193,7 +193,7 @@ auto evaluate_atomic_state_concept(tyr::View<tyr::Index<Concept<AtomicStateTag<T
 template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
 auto evaluate_atomic_goal_concept(tyr::View<tyr::Index<Concept<AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Kind>& context)
 {
-    const auto num_objects = detail::num_objects(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
     auto bitset = result->get_bitset();
 
@@ -215,7 +215,7 @@ auto evaluate_atomic_goal_concept(tyr::View<tyr::Index<Concept<AtomicGoalTag<T>>
 template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
 auto evaluate_atomic_state_role(tyr::View<tyr::Index<Role<AtomicStateTag<T>>>, C> constructor, EvaluationContext<Kind>& context)
 {
-    const auto num_objects = detail::num_objects(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
 
     detail::for_each_current_atom<T>(context,
@@ -241,7 +241,7 @@ auto evaluate_atomic_state_role(tyr::View<tyr::Index<Role<AtomicStateTag<T>>>, C
 template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
 auto evaluate_atomic_goal_role(tyr::View<tyr::Index<Role<AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Kind>& context)
 {
-    const auto num_objects = detail::num_objects(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
 
     detail::for_each_goal_atom<T>(context,
@@ -308,7 +308,7 @@ auto evaluate_count(tyr::View<tyr::Index<Constructor<RoleTag>>, C> constructor, 
 template<ConceptConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
 auto evaluate_impl(tyr::View<tyr::Index<Concept<Tag>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace)
 {
-    const auto num_objects = detail::num_objects(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
     auto result_bitset = result->get_bitset();
 
@@ -407,7 +407,7 @@ auto evaluate_impl(tyr::View<tyr::Index<Concept<Tag>>, C> constructor, Evaluatio
 template<RoleConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
 auto evaluate_impl(tyr::View<tyr::Index<Role<Tag>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace)
 {
-    const auto num_objects = detail::num_objects(context);
+    [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
 
     if constexpr (std::same_as<Tag, UniversalTag>)
@@ -557,7 +557,7 @@ auto evaluate_impl(tyr::View<tyr::Index<Numerical<Tag>>, C> constructor, Evaluat
         const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
         const auto role = evaluate_impl(constructor.get_mid(), context, workspace);
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
-        const auto num_objects = detail::num_objects(context);
+        [[maybe_unused]] const auto num_objects = detail::num_objects(context);
 
         result_value = std::numeric_limits<uint_t>::max();
 

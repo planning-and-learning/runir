@@ -2,7 +2,9 @@ import os
 import base64
 import csv
 import hashlib
+import platform
 import shutil
+import subprocess
 import tempfile
 import zipfile
 from pathlib import Path
@@ -46,6 +48,17 @@ def _prepend_env_paths(name: str, paths: list[Path]) -> None:
     if existing:
         entries.append(existing)
     os.environ[name] = os.pathsep.join(entries)
+
+
+def _is_native_library(path: Path) -> bool:
+    name = path.name
+    return ".so" in name or name.endswith(".dylib") or name.endswith(".pyd")
+
+
+def _strip_args() -> list[str]:
+    if platform.system() == "Darwin":
+        return ["-x"]
+    return ["--strip-debug"]
 
 
 def _record_digest(path: Path) -> tuple[str, str]:
@@ -112,6 +125,39 @@ def _fix_wheel_stubs(wheel_path: Path) -> None:
         replacement_path.replace(wheel_path)
 
 
+def _strip_wheel_native_libraries(wheel_path: Path) -> None:
+    if os.environ.get("PYRUNIR_STRIP_WHEEL", "ON").upper() in {"0", "FALSE", "OFF", "NO"}:
+        return
+
+    strip = shutil.which("strip")
+    if strip is None:
+        return
+
+    with tempfile.TemporaryDirectory(prefix="pyrunir-wheel-") as tmp:
+        wheel_root = Path(tmp) / "wheel"
+        with zipfile.ZipFile(wheel_path) as wheel:
+            wheel.extractall(wheel_root)
+
+        for path in wheel_root.rglob("*"):
+            if path.is_file() and _is_native_library(path):
+                subprocess.run(
+                    [strip, *_strip_args(), str(path)],
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+
+        _rewrite_record(wheel_root)
+
+        replacement_path = wheel_path.with_suffix(".tmp")
+        with zipfile.ZipFile(replacement_path, "w", compression=zipfile.ZIP_DEFLATED) as wheel:
+            for path in sorted(wheel_root.rglob("*")):
+                if path.is_file():
+                    wheel.write(path, path.relative_to(wheel_root).as_posix())
+
+        replacement_path.replace(wheel_path)
+
+
 def _prepare_native_build() -> None:
     native_prefixes = _native_prefixes()
     native_library_dirs = _native_library_dirs(native_prefixes)
@@ -144,7 +190,9 @@ def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None):
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     _prepare_native_build()
     wheel_filename = scikit_build.build_wheel(wheel_directory, config_settings, metadata_directory)
-    _fix_wheel_stubs(Path(wheel_directory) / wheel_filename)
+    wheel_path = Path(wheel_directory) / wheel_filename
+    _fix_wheel_stubs(wheel_path)
+    _strip_wheel_native_libraries(wheel_path)
     return wheel_filename
 
 
