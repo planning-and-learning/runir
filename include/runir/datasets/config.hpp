@@ -27,6 +27,12 @@ enum class StateGraphCostMode
     ACTION_COST
 };
 
+enum class EquivalencePolicyMode
+{
+    IDENTITY,
+    GI
+};
+
 }  // namespace runir::datasets
 
 #endif

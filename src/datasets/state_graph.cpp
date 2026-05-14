@@ -17,6 +17,7 @@
 
 #include "runir/datasets/state_graph.hpp"
 
+#include "runir/datasets/equivalence_policies/identity.hpp"
 #include "runir/graphs/bgl/algorithms.hpp"
 
 #include <cassert>
@@ -106,7 +107,7 @@ public:
 
     void on_exhausted() override {}
 
-    auto release() && { return StateGraph<Kind>(std::move(m_builder)); }
+    auto release() && { return std::make_unique<StateGraph<Kind>>(std::move(m_builder)); }
 };
 
 template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
@@ -168,7 +169,7 @@ auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexInde
 }  // namespace
 
 template<tyr::planning::TaskKind Kind>
-auto generate_state_graph(TaskSearchContext<Kind>& context) -> StateGraph<Kind>
+auto generate_state_graph(TaskSearchContext<Kind>& context) -> std::unique_ptr<StateGraph<Kind>>
 {
     auto heuristic = tyr::planning::BlindHeuristic<Kind> {};
     auto event_handler = std::make_shared<StateGraphEventHandler<Kind>>();
@@ -183,7 +184,7 @@ auto generate_state_graph(TaskSearchContext<Kind>& context) -> StateGraph<Kind>
 }
 
 template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
-auto generate_state_graph(TaskSearchContext<Kind>& context, uint_t state_graph_index, Policy& policy) -> StateGraph<Kind>
+auto generate_state_graph(TaskSearchContext<Kind>& context, uint_t state_graph_index, Policy& policy) -> std::unique_ptr<StateGraph<Kind>>
 {
     auto heuristic = tyr::planning::BlindHeuristic<Kind> {};
     auto event_handler = std::make_shared<StateGraphEventHandler<Kind>>();
@@ -198,7 +199,8 @@ auto generate_state_graph(TaskSearchContext<Kind>& context, uint_t state_graph_i
 }
 
 template<tyr::planning::TaskKind Kind>
-auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kind>& graph, StateGraphCostMode cost_mode) -> AnnotatedStateGraph<Kind>
+auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kind>& graph, StateGraphCostMode cost_mode)
+    -> std::unique_ptr<AnnotatedStateGraph<Kind>>
 {
     const auto& forward_graph = graph.get_forward_graph();
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
@@ -239,29 +241,31 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
         builder.add_directed_edge(edge.get_source(), edge.get_target(), edge.get_property());
     }
 
-    return AnnotatedStateGraph<Kind>(std::move(builder));
+    return std::make_unique<AnnotatedStateGraph<Kind>>(std::move(builder));
 }
 
-template auto generate_state_graph<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&) -> StateGraph<tyr::planning::GroundTag>;
+template auto generate_state_graph<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&)
+    -> std::unique_ptr<StateGraph<tyr::planning::GroundTag>>;
 
-template auto generate_state_graph<tyr::planning::LiftedTag>(TaskSearchContext<tyr::planning::LiftedTag>&) -> StateGraph<tyr::planning::LiftedTag>;
+template auto generate_state_graph<tyr::planning::LiftedTag>(TaskSearchContext<tyr::planning::LiftedTag>&)
+    -> std::unique_ptr<StateGraph<tyr::planning::LiftedTag>>;
 
 template auto generate_state_graph<tyr::planning::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::GroundTag>&,
                                                                                                         uint_t,
                                                                                                         EquivalencePolicy<IdentityEquivalenceTag>&)
-    -> StateGraph<tyr::planning::GroundTag>;
+    -> std::unique_ptr<StateGraph<tyr::planning::GroundTag>>;
 
 template auto generate_state_graph<tyr::planning::LiftedTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::LiftedTag>&,
                                                                                                         uint_t,
                                                                                                         EquivalencePolicy<IdentityEquivalenceTag>&)
-    -> StateGraph<tyr::planning::LiftedTag>;
+    -> std::unique_ptr<StateGraph<tyr::planning::LiftedTag>>;
 
 template auto annotate_state_graph<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&,
                                                              const StateGraph<tyr::planning::GroundTag>&,
-                                                             StateGraphCostMode) -> AnnotatedStateGraph<tyr::planning::GroundTag>;
+                                                             StateGraphCostMode) -> std::unique_ptr<AnnotatedStateGraph<tyr::planning::GroundTag>>;
 
 template auto annotate_state_graph<tyr::planning::LiftedTag>(TaskSearchContext<tyr::planning::LiftedTag>&,
                                                              const StateGraph<tyr::planning::LiftedTag>&,
-                                                             StateGraphCostMode) -> AnnotatedStateGraph<tyr::planning::LiftedTag>;
+                                                             StateGraphCostMode) -> std::unique_ptr<AnnotatedStateGraph<tyr::planning::LiftedTag>>;
 
 }  // namespace runir::datasets

@@ -78,8 +78,17 @@ void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const c
     annotated_graph.def(nb::init<const AnnotatedBuilder&>());
     bind_bidirectional_static_graph(annotated_graph);
 
-    m.def((std::string("generate_") + function_prefix + "_state_graph").c_str(), &generate_state_graph<Kind>, "context"_a);
-    m.def((std::string("annotate_") + function_prefix + "_state_graph").c_str(), &annotate_state_graph<Kind>, "context"_a, "graph"_a, "cost_mode"_a);
+    m.def(
+        (std::string("generate_") + function_prefix + "_state_graph").c_str(),
+        [](TaskSearchContext<Kind>& context) { return std::shared_ptr<Graph>(generate_state_graph<Kind>(context)); },
+        "context"_a);
+    m.def(
+        (std::string("annotate_") + function_prefix + "_state_graph").c_str(),
+        [](TaskSearchContext<Kind>& context, const Graph& graph, StateGraphCostMode cost_mode)
+        { return std::shared_ptr<AnnotatedGraph>(annotate_state_graph<Kind>(context, graph, cost_mode)); },
+        "context"_a,
+        "graph"_a,
+        "cost_mode"_a);
 }
 
 }  // namespace

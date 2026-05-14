@@ -62,13 +62,16 @@ struct TaskSearchContext
 };
 
 template<tyr::planning::TaskKind Kind>
+using TaskSearchContextList = std::vector<TaskSearchContext<Kind>>;
+
+template<tyr::planning::TaskKind Kind>
 struct TaskClassSearchContexts
 {
-    std::vector<TaskSearchContext<Kind>> contexts;
+    TaskSearchContextList<Kind> contexts;
 
     TaskClassSearchContexts() = default;
 
-    explicit TaskClassSearchContexts(std::vector<TaskSearchContext<Kind>> contexts_) : contexts(std::move(contexts_)) {}
+    explicit TaskClassSearchContexts(TaskSearchContextList<Kind> contexts_) : contexts(std::move(contexts_)) {}
 
     TaskClassSearchContexts(const TaskClass<Kind>& task_class, tyr::ExecutionContextPtr execution_context)
     {

@@ -28,6 +28,7 @@
 #include "runir/graphs/static_graph_builder.hpp"
 
 #include <limits>
+#include <memory>
 #include <tuple>
 #include <tyr/planning/planning.hpp>
 
@@ -88,13 +89,14 @@ template<tyr::planning::TaskKind Kind>
 using DynamicAnnotatedStateGraph = graphs::DynamicGraph<AnnotatedStateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
 
 template<tyr::planning::TaskKind Kind>
-auto generate_state_graph(TaskSearchContext<Kind>& context) -> StateGraph<Kind>;
+auto generate_state_graph(TaskSearchContext<Kind>& context) -> std::unique_ptr<StateGraph<Kind>>;
 
 template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
-auto generate_state_graph(TaskSearchContext<Kind>& context, uint_t state_graph_index, Policy& policy) -> StateGraph<Kind>;
+auto generate_state_graph(TaskSearchContext<Kind>& context, uint_t state_graph_index, Policy& policy) -> std::unique_ptr<StateGraph<Kind>>;
 
 template<tyr::planning::TaskKind Kind>
-auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kind>& graph, StateGraphCostMode cost_mode) -> AnnotatedStateGraph<Kind>;
+auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kind>& graph, StateGraphCostMode cost_mode)
+    -> std::unique_ptr<AnnotatedStateGraph<Kind>>;
 
 }  // namespace runir::datasets
 

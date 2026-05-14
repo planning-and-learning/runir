@@ -9,6 +9,7 @@ from .._pyrunir.datasets import (
     EquivalenceEdgeLabel,
     EquivalenceGraph,
     EquivalenceGraphBuilder,
+    EquivalencePolicyMode,
     EquivalenceVertexLabel,
     GroundAnnotatedStateGraph,
     GroundAnnotatedStateGraphBuilder,

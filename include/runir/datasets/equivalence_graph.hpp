@@ -20,13 +20,17 @@
 
 #include "runir/common/config.hpp"
 #include "runir/datasets/config.hpp"
+#include "runir/datasets/equivalence_policy.hpp"
+#include "runir/datasets/state_graph.hpp"
+#include "runir/datasets/task_class.hpp"
 #include "runir/graphs/bidirectional_static_graph.hpp"
 #include "runir/graphs/dynamic_graph.hpp"
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 
-#include <limits>
+#include <memory>
 #include <tuple>
+#include <vector>
 
 namespace runir::datasets
 {
@@ -78,6 +82,19 @@ using StaticAnnotatedEquivalenceGraph = graphs::StaticGraph<AnnotatedEquivalence
 using AnnotatedEquivalenceGraph = graphs::BidirectionalStaticGraph<AnnotatedEquivalenceVertexLabel, EquivalenceEdgeLabel>;
 
 using DynamicAnnotatedEquivalenceGraph = graphs::DynamicGraph<AnnotatedEquivalenceVertexLabel, EquivalenceEdgeLabel>;
+
+template<tyr::planning::TaskKind Kind>
+struct EquivalenceGraphConstructionResult
+{
+    std::vector<std::unique_ptr<StateGraph<Kind>>> state_graphs;
+    std::unique_ptr<EquivalenceGraph> graph;
+};
+
+template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, Policy& policy) -> EquivalenceGraphConstructionResult<Kind>;
+
+template<tyr::planning::TaskKind Kind>
+auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, EquivalencePolicyMode policy_mode) -> EquivalenceGraphConstructionResult<Kind>;
 
 }  // namespace runir::datasets
 

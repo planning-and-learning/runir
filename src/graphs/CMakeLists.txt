@@ -46,22 +46,10 @@ if(RUNIR_BUILD_SHARED)
 endif()
 
 install(TARGETS graphs
-    EXPORT runirgraphsTargets
+    EXPORT runirTargets
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT runir
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT runir
     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT runir
     COMPONENT runir
     INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-)
-
-install(EXPORT runirgraphsTargets
-    NAMESPACE runir::
-    FILE "runirgraphsTargets.cmake"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/runir"
-    COMPONENT runir
-)
-
-export(EXPORT runirgraphsTargets
-    NAMESPACE runir::
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/runirgraphsTargets.cmake"
 )

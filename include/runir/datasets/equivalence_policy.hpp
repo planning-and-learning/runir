@@ -28,12 +28,24 @@
 namespace runir::datasets
 {
 
-struct IdentityEquivalenceTag
-{
-};
-
 template<typename Tag>
 struct EquivalencePolicy;
+
+struct StateGraphVertexRef
+{
+    uint_t state_graph_index = 0;
+    graphs::VertexIndex state_vertex_index = 0;
+
+    auto identifying_members() const noexcept { return std::tie(state_graph_index, state_vertex_index); }
+};
+
+struct StateGraphEdgeRef
+{
+    uint_t state_graph_index = 0;
+    graphs::EdgeIndex state_edge_index = 0;
+
+    auto identifying_members() const noexcept { return std::tie(state_graph_index, state_edge_index); }
+};
 
 template<tyr::planning::TaskKind Kind>
 struct StateGraphVertexCandidate
@@ -60,25 +72,8 @@ concept IsEquivalencePolicy =
         requires tyr::planning::TaskKind<Kind>;
         { policy.try_insert(vertex_candidate) } -> std::same_as<bool>;
         { policy.try_insert(transition_candidate) } -> std::same_as<bool>;
+        { policy.get_or_create_representative(vertex_candidate, StateGraphVertexRef {}) } -> std::same_as<StateGraphVertexRef>;
     };
-
-template<>
-struct EquivalencePolicy<IdentityEquivalenceTag>
-{
-    template<tyr::planning::TaskKind Kind>
-    auto try_insert(const StateGraphVertexCandidate<Kind>& candidate) noexcept -> bool
-    {
-        static_cast<void>(candidate);
-        return true;
-    }
-
-    template<tyr::planning::TaskKind Kind>
-    auto try_insert(const StateGraphTransitionCandidate<Kind>& candidate) noexcept -> bool
-    {
-        static_cast<void>(candidate);
-        return true;
-    }
-};
 
 }  // namespace runir::datasets
 
