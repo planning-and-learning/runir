@@ -40,29 +40,8 @@ void bind_view(nb::module_& m, const std::string& name)
 
 void bind_views(nb::module_& m)
 {
-    namespace gpd = runir::kr::gp::dl;
-
-    bind_view<Feature<gpd::BooleanFeature>>(m, "BooleanFeature");
-    bind_view<Feature<gpd::NumericalFeature>>(m, "NumericalFeature");
-    bind_view<ConcreteFeature<runir::kr::DlTag, gpd::BooleanFeature>>(m, "ConcreteBooleanFeature");
-    bind_view<ConcreteFeature<runir::kr::DlTag, gpd::NumericalFeature>>(m, "ConcreteNumericalFeature");
-
     bind_view<ConditionVariant>(m, "ConditionVariant");
-    bind_view<ConcreteConditionVariant<runir::kr::DlTag>>(m, "ConcreteConditionVariant");
-    bind_view<ConcreteCondition<runir::kr::DlTag, gpd::BooleanFeature, gpd::Positive>>(m, "PositiveBooleanCondition");
-    bind_view<ConcreteCondition<runir::kr::DlTag, gpd::BooleanFeature, gpd::Negative>>(m, "NegativeBooleanCondition");
-    bind_view<ConcreteCondition<runir::kr::DlTag, gpd::NumericalFeature, gpd::EqualZero>>(m, "EqualZeroNumericalCondition");
-    bind_view<ConcreteCondition<runir::kr::DlTag, gpd::NumericalFeature, gpd::GreaterZero>>(m, "GreaterZeroNumericalCondition");
-
     bind_view<EffectVariant>(m, "EffectVariant");
-    bind_view<ConcreteEffectVariant<runir::kr::DlTag>>(m, "ConcreteEffectVariant");
-    bind_view<ConcreteEffect<runir::kr::DlTag, gpd::BooleanFeature, gpd::Positive>>(m, "PositiveBooleanEffect");
-    bind_view<ConcreteEffect<runir::kr::DlTag, gpd::BooleanFeature, gpd::Negative>>(m, "NegativeBooleanEffect");
-    bind_view<ConcreteEffect<runir::kr::DlTag, gpd::BooleanFeature, gpd::Unchanged>>(m, "UnchangedBooleanEffect");
-    bind_view<ConcreteEffect<runir::kr::DlTag, gpd::NumericalFeature, gpd::Increases>>(m, "IncreasesNumericalEffect");
-    bind_view<ConcreteEffect<runir::kr::DlTag, gpd::NumericalFeature, gpd::Decreases>>(m, "DecreasesNumericalEffect");
-    bind_view<ConcreteEffect<runir::kr::DlTag, gpd::NumericalFeature, gpd::Unchanged>>(m, "UnchangedNumericalEffect");
-
     bind_view<Rule>(m, "Rule");
     bind_view<Policy>(m, "Policy");
 }

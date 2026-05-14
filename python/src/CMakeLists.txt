@@ -24,9 +24,11 @@ nanobind_add_module(_pyrunir
     pyrunir/graphs/module.cpp
     pyrunir/kr/module.cpp
     pyrunir/kr/dl/module.cpp
+    pyrunir/kr/gp/dl/indices.cpp
     pyrunir/kr/gp/dl/module.cpp
     pyrunir/kr/gp/dl/parser.cpp
     pyrunir/kr/gp/dl/policy_factory.cpp
+    pyrunir/kr/gp/dl/views.cpp
     pyrunir/kr/gp/indices.cpp
     pyrunir/kr/gp/module.cpp
     pyrunir/kr/gp/repository.cpp

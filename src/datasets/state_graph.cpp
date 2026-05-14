@@ -220,7 +220,7 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
     for (auto vertex_index : forward_graph.get_vertex_indices())
     {
         const auto& state = forward_graph.get_vertex(vertex_index).get_property().state;
-        is_goal[vertex_index] = static_goal_satisfied && goal_strategy.is_dynamic_goal_satisfied(state);
+        is_goal[vertex_index] = static_goal_satisfied && goal_strategy.is_dynamic_goal_satisfied(initial_state, state);
         if (is_goal[vertex_index])
             goal_vertices.push_back(vertex_index);
     }

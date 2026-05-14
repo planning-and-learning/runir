@@ -4,6 +4,11 @@
 #include "runir/graphs/bgl/graph_adapters.hpp"
 #include "runir/graphs/bgl/property_maps.hpp"
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
+
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
@@ -398,5 +403,9 @@ auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const tyr::Unordere
 }
 
 }  // namespace runir::graphs::bgl
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #endif
