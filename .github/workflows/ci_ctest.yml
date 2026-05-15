@@ -2,12 +2,11 @@ name: CI Ctest
 
 on:
   push:
-    tags-ignore:
-      - "**"
   pull_request:
 
 jobs:
   build-and-test:
+    if: github.event_name != 'push' || github.ref_type != 'tag'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
