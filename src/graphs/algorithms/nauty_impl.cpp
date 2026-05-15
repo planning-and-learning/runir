@@ -8,7 +8,6 @@
 namespace runir::graphs::nauty::details
 {
 
-#ifdef RUNIR_HAS_NAUTY
 void SparseGraphImpl::initialize_sparse_graph()
 {
     SG_INIT(m_graph);
@@ -21,7 +20,6 @@ void SparseGraphImpl::initialize_sparse_graph()
     m_graph.dlen = m_degrees.size();
     m_graph.elen = m_edges.size();
 }
-#endif
 
 SparseGraphImpl::SparseGraphImpl(std::size_t nde,
                                  std::vector<std::size_t> offsets,
@@ -40,15 +38,10 @@ SparseGraphImpl::SparseGraphImpl(std::size_t nde,
     m_partitions(std::move(partitions)),
     m_orbits(static_cast<std::size_t>(m_num_vertices)),
     m_coloring(std::move(coloring)),
-    m_is_canonical(false)
-#ifdef RUNIR_HAS_NAUTY
-    ,
+    m_is_canonical(false),
     m_graph()
-#endif
 {
-#ifdef RUNIR_HAS_NAUTY
     initialize_sparse_graph();
-#endif
 }
 
 SparseGraphImpl::SparseGraphImpl(const SparseGraphImpl& other) :
@@ -63,15 +56,10 @@ SparseGraphImpl::SparseGraphImpl(const SparseGraphImpl& other) :
     m_coloring(other.m_coloring),
     m_is_canonical(other.m_is_canonical),
     m_permutation(other.m_permutation),
-    m_inverse_permutation(other.m_inverse_permutation)
-#ifdef RUNIR_HAS_NAUTY
-    ,
+    m_inverse_permutation(other.m_inverse_permutation),
     m_graph()
-#endif
 {
-#ifdef RUNIR_HAS_NAUTY
     initialize_sparse_graph();
-#endif
 }
 
 auto SparseGraphImpl::operator=(const SparseGraphImpl& other) -> SparseGraphImpl&
@@ -92,15 +80,51 @@ auto SparseGraphImpl::operator=(const SparseGraphImpl& other) -> SparseGraphImpl
     m_permutation = other.m_permutation;
     m_inverse_permutation = other.m_inverse_permutation;
 
-#ifdef RUNIR_HAS_NAUTY
     initialize_sparse_graph();
-#endif
 
     return *this;
 }
 
-SparseGraphImpl::SparseGraphImpl(SparseGraphImpl&& other) noexcept = default;
-auto SparseGraphImpl::operator=(SparseGraphImpl&& other) noexcept -> SparseGraphImpl& = default;
+SparseGraphImpl::SparseGraphImpl(SparseGraphImpl&& other) noexcept :
+    m_nde(other.m_nde),
+    m_offsets(std::move(other.m_offsets)),
+    m_num_vertices(other.m_num_vertices),
+    m_degrees(std::move(other.m_degrees)),
+    m_edges(std::move(other.m_edges)),
+    m_labels(std::move(other.m_labels)),
+    m_partitions(std::move(other.m_partitions)),
+    m_orbits(std::move(other.m_orbits)),
+    m_coloring(std::move(other.m_coloring)),
+    m_is_canonical(other.m_is_canonical),
+    m_permutation(std::move(other.m_permutation)),
+    m_inverse_permutation(std::move(other.m_inverse_permutation)),
+    m_graph()
+{
+    initialize_sparse_graph();
+}
+
+auto SparseGraphImpl::operator=(SparseGraphImpl&& other) noexcept -> SparseGraphImpl&
+{
+    if (this == &other)
+        return *this;
+
+    m_nde = other.m_nde;
+    m_offsets = std::move(other.m_offsets);
+    m_num_vertices = other.m_num_vertices;
+    m_degrees = std::move(other.m_degrees);
+    m_edges = std::move(other.m_edges);
+    m_labels = std::move(other.m_labels);
+    m_partitions = std::move(other.m_partitions);
+    m_orbits = std::move(other.m_orbits);
+    m_coloring = std::move(other.m_coloring);
+    m_is_canonical = other.m_is_canonical;
+    m_permutation = std::move(other.m_permutation);
+    m_inverse_permutation = std::move(other.m_inverse_permutation);
+
+    initialize_sparse_graph();
+
+    return *this;
+}
 SparseGraphImpl::~SparseGraphImpl() = default;
 
 void SparseGraphImpl::canonize()
@@ -108,9 +132,6 @@ void SparseGraphImpl::canonize()
     if (m_is_canonical)
         return;
 
-#ifndef RUNIR_HAS_NAUTY
-    throw std::runtime_error("runir::graphs::nauty: Nauty support is not available in this build.");
-#else
     static DEFAULTOPTIONS_SPARSEGRAPH(options);
     options.defaultptn = FALSE;
     options.getcanon = TRUE;
@@ -141,7 +162,6 @@ void SparseGraphImpl::canonize()
 
     canonical.m_is_canonical = true;
     *this = std::move(canonical);
-#endif
 }
 
 auto SparseGraphImpl::get_num_directed_edges() const noexcept -> std::size_t { return m_nde; }

@@ -21,19 +21,16 @@ target_link_libraries(graphs
 
 find_path(RUNIR_NAUTY_INCLUDE_DIR
     NAMES nauty.h nausparse.h
+    REQUIRED
 )
 find_library(RUNIR_NAUTY_LIBRARY
     NAMES nauty
+    REQUIRED
 )
 
-if(RUNIR_NAUTY_INCLUDE_DIR AND RUNIR_NAUTY_LIBRARY)
-    message(STATUS "Found nauty: ${RUNIR_NAUTY_LIBRARY}")
-    target_compile_definitions(graphs PRIVATE RUNIR_HAS_NAUTY)
-    target_include_directories(graphs PRIVATE "${RUNIR_NAUTY_INCLUDE_DIR}")
-    target_link_libraries(graphs PRIVATE "${RUNIR_NAUTY_LIBRARY}")
-else()
-    message(STATUS "Nauty not found; runir graph nauty backend will throw at runtime.")
-endif()
+message(STATUS "Found nauty: ${RUNIR_NAUTY_LIBRARY}")
+target_include_directories(graphs PRIVATE "${RUNIR_NAUTY_INCLUDE_DIR}")
+target_link_libraries(graphs PRIVATE "${RUNIR_NAUTY_LIBRARY}")
 
 if(RUNIR_BUILD_SHARED)
     if(APPLE)

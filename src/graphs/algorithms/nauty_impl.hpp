@@ -4,12 +4,9 @@
 #include "runir/common/config.hpp"
 
 #include <cstddef>
-#include <vector>
-
-#ifdef RUNIR_HAS_NAUTY
 #include <nausparse.h>
 #include <nauty.h>
-#endif
+#include <vector>
 
 namespace runir::graphs::nauty::details
 {
@@ -30,11 +27,9 @@ private:
     std::vector<int> m_permutation;
     std::vector<int> m_inverse_permutation;
 
-#ifdef RUNIR_HAS_NAUTY
     sparsegraph m_graph;
 
     void initialize_sparse_graph();
-#endif
 
 public:
     SparseGraphImpl(std::size_t nde,
