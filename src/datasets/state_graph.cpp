@@ -99,17 +99,9 @@ public:
     }
 
     void on_finish_f_layer(tyr::float_t f_value) override { static_cast<void>(f_value); }
-
-    void on_end_search() override {}
-
     void on_end_search(tyr::planning::SearchStatus status) override { static_cast<void>(status); }
 
     void on_solved(const tyr::planning::Plan<Kind>& plan) override { static_cast<void>(plan); }
-
-    void on_unsolvable() override {}
-
-    void on_exhausted() override {}
-
     const tyr::planning::Statistics& get_search_statistics() const override { return m_statistics; }
 
     const tyr::planning::Statistics& get_statistics() const override { return m_statistics; }
