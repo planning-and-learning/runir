@@ -140,9 +140,19 @@ void SparseGraphImpl::canonize()
 
     auto stats = statsblk();
     auto canonical = SparseGraphImpl(*this);
+    auto canonical_graph = sparsegraph {};
+    SG_INIT(canonical_graph);
 
-    sparsenauty(&m_graph, canonical.m_labels.data(), canonical.m_partitions.data(), canonical.m_orbits.data(), &options, &stats, &canonical.m_graph);
-    sortlists_sg(&canonical.m_graph);
+    sparsenauty(&m_graph, canonical.m_labels.data(), canonical.m_partitions.data(), canonical.m_orbits.data(), &options, &stats, &canonical_graph);
+    sortlists_sg(&canonical_graph);
+
+    canonical.m_nde = canonical_graph.nde;
+    canonical.m_num_vertices = canonical_graph.nv;
+    canonical.m_offsets.assign(canonical_graph.v, canonical_graph.v + canonical_graph.nv);
+    canonical.m_degrees.assign(canonical_graph.d, canonical_graph.d + canonical_graph.nv);
+    canonical.m_edges.assign(canonical_graph.e, canonical_graph.e + canonical_graph.nde);
+    SG_FREE(canonical_graph);
+    canonical.initialize_sparse_graph();
 
     auto label_to_index = std::vector<int>(static_cast<std::size_t>(m_num_vertices));
     auto canonical_label_to_index = std::vector<int>(static_cast<std::size_t>(m_num_vertices));
