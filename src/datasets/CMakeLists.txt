@@ -18,12 +18,9 @@ target_include_directories(datasets
 target_link_libraries(datasets
     PUBLIC
         fmt::fmt-header-only
+        runir::graphs
         tyr::core
-    PRIVATE
-        $<TARGET_FILE:graphs>
 )
-
-add_dependencies(datasets graphs)
 
 target_compile_definitions(datasets
     PUBLIC

@@ -5,7 +5,7 @@ function(add_runir_test test_name source_file)
     add_executable(${test_name} ${source_file})
     target_link_libraries(${test_name}
         PRIVATE
-            runir::core
+            ${ARGN}
             Boost::json
             GTest::gtest_main
     )
@@ -17,7 +17,7 @@ function(add_runir_test test_name source_file)
     add_test(NAME ${test_name} COMMAND ${test_name})
 endfunction()
 
-add_runir_test(runir_datasets_equivalence_graph unit/datasets/equivalence_graph.cpp)
-add_runir_test(runir_graphs_color_refinement unit/graphs/algorithms/color_refinement.cpp)
-add_runir_test(runir_kr_gp_policy_executor unit/kr/gp/dl/policy_executor.cpp)
-add_runir_test(runir_kr_grammar_factory unit/kr/grammar/grammar_factory.cpp)
+add_runir_test(runir_datasets_equivalence_graph unit/datasets/equivalence_graph.cpp runir::datasets)
+add_runir_test(runir_graphs_color_refinement unit/graphs/algorithms/color_refinement.cpp runir::graphs)
+add_runir_test(runir_kr_gp_policy_executor unit/kr/gp/dl/policy_executor.cpp runir::datasets runir::kr)
+add_runir_test(runir_kr_grammar_factory unit/kr/grammar/grammar_factory.cpp runir::kr)
