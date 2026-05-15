@@ -66,22 +66,4 @@ jobs:
           PYYGGDRASIL_LIB_DIR="$(python -c 'import pyyggdrasil; print(pyyggdrasil.native_prefix() / "lib")')"
           export DYLD_LIBRARY_PATH="${PYPDDL_LIB_DIR}:${PYTYR_LIB_DIR}:${PYYGGDRASIL_LIB_DIR}:$PWD/../src/graphs:$PWD/../src/datasets:$PWD/../src/kr:${DYLD_LIBRARY_PATH:-}"
           export LD_LIBRARY_PATH="${PYPDDL_LIB_DIR}:${PYTYR_LIB_DIR}:${PYYGGDRASIL_LIB_DIR}:$PWD/../src/graphs:$PWD/../src/datasets:$PWD/../src/kr:${LD_LIBRARY_PATH:-}"
-          if ! GTEST_OUTPUT=xml:test-results/ GTEST_COLOR=1 ctest -V; then
-            if [ "$(uname)" = "Darwin" ]; then
-              for test_binary in ./runir_*; do
-                if [ -x "${test_binary}" ]; then
-                  echo "==== ${test_binary} dylibs ===="
-                  otool -L "${test_binary}" || true
-                  echo "==== ${test_binary} rpaths ===="
-                  otool -l "${test_binary}" | grep -A3 LC_RPATH || true
-                fi
-              done
-              echo "==== lldb backtrace ===="
-              lldb --batch \
-                -o "settings set target.disable-aslr false" \
-                -o "run" \
-                -o "thread backtrace all" \
-                -- ./runir_graphs_color_refinement || true
-            fi
-            exit 1
-          fi
+          GTEST_OUTPUT=xml:test-results/ GTEST_COLOR=1 ctest -V
