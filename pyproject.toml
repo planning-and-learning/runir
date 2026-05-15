@@ -61,10 +61,10 @@ CMAKE_INSTALL_LIBDIR = "lib"
 
 [tool.cibuildwheel]
 container-engine = "docker"
-before-build = "python -m pip install --no-cache-dir pypddl 'pyyggdrasil>=0.0.8' 'pytyr>=0.0.17'"
+before-build = "python -m pip install --no-cache-dir 'pypddl>=1.0.5' 'pyyggdrasil>=0.0.8' 'pytyr>=0.0.17'"
 
 [tool.cibuildwheel.linux]
 repair-wheel-command = "LD_LIBRARY_PATH=$(python -c 'import os, pypddl, pyyggdrasil, pytyr; prefixes = [pypddl.native_prefix(), pyyggdrasil.native_prefix(), pytyr.native_prefix()]; print(os.pathsep.join(str(path) for prefix in prefixes for path in sorted(prefix.glob(\"lib*\")) if path.is_dir()))') auditwheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.macos]
-repair-wheel-command = "DYLD_LIBRARY_PATH=$(python -c 'import os, pypddl, pyyggdrasil, pytyr; prefixes = [pypddl.native_prefix(), pyyggdrasil.native_prefix(), pytyr.native_prefix()]; print(os.pathsep.join(str(path) for prefix in prefixes for path in sorted(prefix.glob(\"lib*\")) if path.is_dir()))') delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
+repair-wheel-command = "delocate-wheel --ignore-missing-dependencies --no-sanitize-rpaths --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
