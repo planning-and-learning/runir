@@ -2,12 +2,12 @@ find_package(Boost REQUIRED COMPONENTS json PATHS ${CMAKE_PREFIX_PATH} NO_DEFAUL
 find_package(GTest CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 
 function(add_runir_test test_name source_file)
-    add_executable(${test_name} ${source_file})
+    add_executable(${test_name} ${source_file} unit/main.cpp)
     target_link_libraries(${test_name}
         PRIVATE
             ${ARGN}
             Boost::json
-            GTest::gtest_main
+            GTest::gtest
     )
     target_compile_definitions(${test_name}
         PRIVATE
