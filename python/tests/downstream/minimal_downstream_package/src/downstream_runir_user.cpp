@@ -11,9 +11,9 @@ namespace
 std::string make_graph_dot()
 {
     auto builder = runir::graphs::StaticGraphBuilder<std::string, std::string>();
-    const auto source = builder.add_vertex("source");
-    const auto target = builder.add_vertex("target");
-    builder.add_directed_edge(source, target, "edge");
+    const auto source = builder.add_vertex(std::string("source"));
+    const auto target = builder.add_vertex(std::string("target"));
+    builder.add_directed_edge(source, target, std::string("edge"));
     return runir::to_string(builder);
 }
 

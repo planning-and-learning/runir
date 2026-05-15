@@ -111,18 +111,22 @@ if(RUNIR_BUILD_SHARED)
     set_property(TARGET graphs PROPERTY INSTALL_RPATH "${PYRUNIR_CORE_RPATH}")
     set_property(TARGET kr PROPERTY INSTALL_RPATH "${PYRUNIR_CORE_RPATH}")
     install(TARGETS core
+            EXPORT pyrunirRunirTargets
             INCLUDES DESTINATION "${PYRUNIR_NATIVE_INCLUDEDIR}")
     install(TARGETS datasets
+            EXPORT pyrunirRunirTargets
             LIBRARY DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
             ARCHIVE DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
             RUNTIME DESTINATION "${PYRUNIR_NATIVE_BINDIR}" COMPONENT pyrunir
             INCLUDES DESTINATION "${PYRUNIR_NATIVE_INCLUDEDIR}")
     install(TARGETS graphs
+            EXPORT pyrunirRunirTargets
             LIBRARY DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
             ARCHIVE DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
             RUNTIME DESTINATION "${PYRUNIR_NATIVE_BINDIR}" COMPONENT pyrunir
             INCLUDES DESTINATION "${PYRUNIR_NATIVE_INCLUDEDIR}")
     install(TARGETS kr
+            EXPORT pyrunirRunirTargets
             LIBRARY DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
             ARCHIVE DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
             RUNTIME DESTINATION "${PYRUNIR_NATIVE_BINDIR}" COMPONENT pyrunir
@@ -141,7 +145,7 @@ install(FILES
         DESTINATION "${PYRUNIR_NATIVE_CMAKEDIR}/runir"
         COMPONENT pyrunir)
 if(RUNIR_BUILD_SHARED)
-    install(EXPORT runirTargets
+    install(EXPORT pyrunirRunirTargets
             NAMESPACE runir::
             FILE "runirTargets.cmake"
             DESTINATION "${PYRUNIR_NATIVE_CMAKEDIR}/runir"

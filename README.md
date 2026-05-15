@@ -26,14 +26,14 @@ The native CMake package exports `runir::core` as the aggregate target and compo
 
 ## Dependencies
 
-- `pytyr >= 0.0.15` for Tyr planning, formalism, search, and C++ headers/libraries.
+- `pytyr >= 0.0.16` for Tyr planning, formalism, search, and C++ headers/libraries.
 - `pypddl >= 1.0.4` through Tyr/PDDL parsing infrastructure.
 - `scikit-build-core` for Python wheel builds.
 
 ## Build C++
 
 ```console
-python -m pip install 'pyyggdrasil>=0.0.8' 'pypddl>=1.0.4' 'pytyr>=0.0.15'
+python -m pip install 'pyyggdrasil>=0.0.8' 'pypddl>=1.0.4' 'pytyr>=0.0.16'
 export CMAKE_PREFIX_PATH="$(python -c 'import os, pypddl, pyyggdrasil, pytyr; print(os.pathsep.join(map(str, [pypddl.native_prefix(), pyyggdrasil.native_prefix(), pytyr.native_prefix()])))')"
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Debug \
