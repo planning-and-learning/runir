@@ -23,8 +23,3 @@ target_compile_definitions(runir_tests
 )
 
 add_test(NAME runir_tests COMMAND runir_tests)
-
-set_tests_properties(runir_tests
-    PROPERTIES
-        ENVIRONMENT "LD_LIBRARY_PATH=$<TARGET_FILE_DIR:TBB::tbb>:$ENV{LD_LIBRARY_PATH};DYLD_LIBRARY_PATH=$<TARGET_FILE_DIR:TBB::tbb>:$ENV{DYLD_LIBRARY_PATH}"
-)
