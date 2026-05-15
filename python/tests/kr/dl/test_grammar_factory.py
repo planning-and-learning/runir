@@ -20,66 +20,62 @@ def test_france_et_al_aaai2021_grammar_factory_for_gripper_domain():
     description = GrammarFactory.create_description(GrammarSpecification.FRANCE_ET_AL_AAAI2021, domain)
     print(description)
 
-    expected = """[start_symbols]
-    concept ::= <concept_start>
-    role ::= <role_start>
-    boolean ::= <boolean_start>
-    numerical ::= <numerical_start>
-[grammar_rules]
-    <concept_bot> ::= @concept_bot
-    <concept_top> ::= @concept_top
-    <concept_nominal_rooma> ::= @concept_nominal "rooma"
-    <concept_nominal_roomb> ::= @concept_nominal "roomb"
-    <concept_atomic_state_object> ::= @concept_atomic_state "object"
-    <concept_atomic_goal_true_object> ::= @concept_atomic_goal "object" true
-    <concept_atomic_goal_false_object> ::= @concept_atomic_goal "object" false
-    <concept_atomic_state_number> ::= @concept_atomic_state "number"
-    <concept_atomic_goal_true_number> ::= @concept_atomic_goal "number" true
-    <concept_atomic_goal_false_number> ::= @concept_atomic_goal "number" false
-    <concept_atomic_state_room> ::= @concept_atomic_state "room"
-    <concept_atomic_goal_true_room> ::= @concept_atomic_goal "room" true
-    <concept_atomic_goal_false_room> ::= @concept_atomic_goal "room" false
-    <concept_atomic_state_ball> ::= @concept_atomic_state "ball"
-    <concept_atomic_goal_true_ball> ::= @concept_atomic_goal "ball" true
-    <concept_atomic_goal_false_ball> ::= @concept_atomic_goal "ball" false
-    <concept_atomic_state_gripper> ::= @concept_atomic_state "gripper"
-    <concept_atomic_goal_true_gripper> ::= @concept_atomic_goal "gripper" true
-    <concept_atomic_goal_false_gripper> ::= @concept_atomic_goal "gripper" false
-    <concept_atomic_state_at-robby> ::= @concept_atomic_state "at-robby"
-    <concept_atomic_goal_true_at-robby> ::= @concept_atomic_goal "at-robby" true
-    <concept_atomic_goal_false_at-robby> ::= @concept_atomic_goal "at-robby" false
-    <role_atomic_state_at> ::= @role_atomic_state "at"
-    <role_atomic_goal_true_at> ::= @role_atomic_goal "at" true
-    <role_atomic_goal_false_at> ::= @role_atomic_goal "at" false
-    <concept_atomic_state_free> ::= @concept_atomic_state "free"
-    <concept_atomic_goal_true_free> ::= @concept_atomic_goal "free" true
-    <concept_atomic_goal_false_free> ::= @concept_atomic_goal "free" false
-    <role_atomic_state_carry> ::= @role_atomic_state "carry"
-    <role_atomic_goal_true_carry> ::= @role_atomic_goal "carry" true
-    <role_atomic_goal_false_carry> ::= @role_atomic_goal "carry" false
-    <concept_intersection> ::= @concept_intersection <concept> <concept>
-    <concept_negation> ::= @concept_negation <concept>
-    <concept_existential_quantification> ::= @concept_existential_quantification <role> <concept>
-    <concept_value_restriction> ::= @concept_value_restriction <role> <concept>
-    <concept_role_value_map_equality> ::= @concept_role_value_map_equality <role> <role>
-    <role_transitive_closure> ::= @role_transitive_closure <role_primitive>
-    <role_inverse> ::= @role_inverse <role_primitive>
-    <boolean_nonempty_concept> ::= @boolean_nonempty <concept>
-    <boolean_nonempty_role> ::= @boolean_nonempty <role>
-    <numerical_count_concept> ::= @numerical_count <concept>
-    <numerical_count_role> ::= @numerical_count <role>
-    <numerical_distance> ::= @numerical_distance <concept> @role_restriction <role_primitive> <concept_primitive> <concept>
-    <numerical_distance> ::= @numerical_distance <concept> <role_primitive> <concept>
-    <concept_primitive> ::= <concept_bot> | <concept_top> | <concept_nominal_rooma> | <concept_nominal_roomb> | <concept_atomic_state_object> | <concept_atomic_goal_true_object> | <concept_atomic_goal_false_object> | <concept_atomic_state_number> | <concept_atomic_goal_true_number> | <concept_atomic_goal_false_number> | <concept_atomic_state_room> | <concept_atomic_goal_true_room> | <concept_atomic_goal_false_room> | <concept_atomic_state_ball> | <concept_atomic_goal_true_ball> | <concept_atomic_goal_false_ball> | <concept_atomic_state_gripper> | <concept_atomic_goal_true_gripper> | <concept_atomic_goal_false_gripper> | <concept_atomic_state_at-robby> | <concept_atomic_goal_true_at-robby> | <concept_atomic_goal_false_at-robby> | <concept_atomic_state_free> | <concept_atomic_goal_true_free> | <concept_atomic_goal_false_free>
-    <concept_start> ::= <concept>
-    <concept> ::= <concept_intersection> | <concept_negation> | <concept_existential_quantification> | <concept_value_restriction> | <concept_role_value_map_equality> | <concept_primitive>
-    <role_primitive> ::= <role_atomic_state_at> | <role_atomic_goal_true_at> | <role_atomic_goal_false_at> | <role_atomic_state_carry> | <role_atomic_goal_true_carry> | <role_atomic_goal_false_carry>
-    <role_start> ::= <role>
-    <role> ::= <role_transitive_closure> | <role_inverse> | <role_primitive>
-    <boolean_start> ::= <boolean>
-    <boolean> ::= <boolean_nonempty_concept> | <boolean_nonempty_role>
-    <numerical_start> ::= <numerical>
-    <numerical> ::= <numerical_count_concept> | <numerical_count_role> | <numerical_distance>
+    expected = """(
+    (c_3 (c_bot))
+    (c_4 (c_top))
+    (c_5 (c_nominal "rooma"))
+    (c_6 (c_nominal "roomb"))
+    (c_7 (c_atomic_state "ball"))
+    (c_8 (c_atomic_goal "ball" true))
+    (c_9 (c_atomic_goal "ball" false))
+    (c_10 (c_atomic_state "gripper"))
+    (c_11 (c_atomic_goal "gripper" true))
+    (c_12 (c_atomic_goal "gripper" false))
+    (c_13 (c_atomic_state "number"))
+    (c_14 (c_atomic_goal "number" true))
+    (c_15 (c_atomic_goal "number" false))
+    (c_16 (c_atomic_state "object"))
+    (c_17 (c_atomic_goal "object" true))
+    (c_18 (c_atomic_goal "object" false))
+    (c_19 (c_atomic_state "room"))
+    (c_20 (c_atomic_goal "room" true))
+    (c_21 (c_atomic_goal "room" false))
+    (r_3 (r_atomic_state "at"))
+    (r_4 (r_atomic_goal "at" true))
+    (r_5 (r_atomic_goal "at" false))
+    (c_22 (c_atomic_state "at-robby"))
+    (c_23 (c_atomic_goal "at-robby" true))
+    (c_24 (c_atomic_goal "at-robby" false))
+    (r_6 (r_atomic_state "carry"))
+    (r_7 (r_atomic_goal "carry" true))
+    (r_8 (r_atomic_goal "carry" false))
+    (c_25 (c_atomic_state "free"))
+    (c_26 (c_atomic_goal "free" true))
+    (c_27 (c_atomic_goal "free" false))
+    (c_28 (c_intersection c_1 c_1))
+    (c_29 (c_negation c_1))
+    (c_30 (c_existential_quantification r_1 c_1))
+    (c_31 (c_value_restriction r_1 c_1))
+    (c_32 (c_role_value_map_equality r_1 r_1))
+    (r_9 (r_transitive_closure r_2))
+    (r_10 (r_inverse r_2))
+    (b_2 (b_nonempty c_1))
+    (b_3 (b_nonempty r_1))
+    (n_2 (n_count c_1))
+    (n_3 (n_count r_1))
+    (n_4 (n_distance c_1 r_restriction r_2 c_2 c_1))
+    (n_4 (n_distance c_1 r_2 c_1))
+    (c_2 (c_3 or c_4 or c_5 or c_6 or c_7 or c_8 or c_9 or c_10 or c_11 or c_12 or c_13 or c_14 or c_15 or c_16 or c_17 or c_18 or c_19 or c_20 or c_21 or c_22 or c_23 or c_24 or c_25 or c_26 or c_27))
+    (c_0 (c_1))
+    (c_1 (c_28 or c_29 or c_30 or c_31 or c_32 or c_2))
+    (r_2 (r_3 or r_4 or r_5 or r_6 or r_7 or r_8))
+    (r_0 (r_1))
+    (r_1 (r_9 or r_10 or r_2))
+    (b_0 (b_1))
+    (b_1 (b_2 or b_3))
+    (n_0 (n_1))
+    (n_1 (n_2 or n_3 or n_4))
+)
 """
 
     assert description == expected
