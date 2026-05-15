@@ -5,12 +5,14 @@
 
 #include <array>
 #include <cmath>
+#include <cstdint>
 
 namespace runir::graphs::weisfeiler_leman
 {
 
 using Color = color_refinement::Color;
 using ColorList = color_refinement::ColorList;
+using BoolList = std::vector<std::uint8_t>;
 using TupleColorAssignmentList = std::vector<std::pair<Color, std::size_t>>;
 
 template<std::size_t K>
@@ -48,7 +50,9 @@ private:
 public:
     Certificate() = default;
 
-    Certificate(RoundSummaryList round_summaries, TupleColorAssignmentList colors) : m_round_summaries(std::move(round_summaries)), m_colors(std::move(colors)) {}
+    Certificate(RoundSummaryList round_summaries, TupleColorAssignmentList colors) : m_round_summaries(std::move(round_summaries)), m_colors(std::move(colors))
+    {
+    }
 
     auto get_round_summaries() const noexcept -> const RoundSummaryList& { return m_round_summaries; }
     auto get_colors() const noexcept -> const TupleColorAssignmentList& { return m_colors; }
@@ -93,14 +97,14 @@ auto hash_to_tuple(std::size_t hash, std::size_t num_vertices) -> VertexTuple<K>
 template<std::size_t K, IsGraph G>
 auto initial_tuple_colors(const G& graph, const VertexIndexList& vertices)
 {
-    using InitialSignature = std::tuple<ColorList, std::vector<bool>, std::vector<bool>>;
+    using InitialSignature = std::tuple<ColorList, BoolList, BoolList>;
 
     const auto n = vertices.size();
     auto vertex_to_dense = tyr::UnorderedMap<VertexIndex, VertexIndex>();
     for (VertexIndex i = 0; i < n; ++i)
         vertex_to_dense.emplace(vertices[i], i);
 
-    auto adjacency = std::vector<std::vector<bool>>(n, std::vector<bool>(n, false));
+    auto adjacency = std::vector<BoolList>(n, BoolList(n, false));
     for (auto vertex : vertices)
         for (auto edge : graph.get_out_edge_indices(vertex))
             adjacency.at(vertex_to_dense.at(vertex)).at(vertex_to_dense.at(graph.get_target(edge))) = true;
@@ -117,15 +121,15 @@ auto initial_tuple_colors(const G& graph, const VertexIndexList& vertices)
         for (auto dense_vertex : tuple)
             vertex_colors.push_back(static_cast<Color>(graph.get_vertex(vertices[dense_vertex]).get_property_index()));
 
-        auto equalities = std::vector<bool>();
-        auto adjacencies = std::vector<bool>();
+        auto equalities = BoolList();
+        auto adjacencies = BoolList();
         equalities.reserve(K * K);
         adjacencies.reserve(K * K);
         for (std::size_t i = 0; i < K; ++i)
         {
             for (std::size_t j = 0; j < K; ++j)
             {
-                equalities.push_back(tuple[i] == tuple[j]);
+                equalities.push_back(static_cast<std::uint8_t>(tuple[i] == tuple[j]));
                 adjacencies.push_back(adjacency.at(tuple[i]).at(tuple[j]));
             }
         }
@@ -184,11 +188,14 @@ auto compute_certificate(const G& graph)
         }
 
         // Canonicalize tuple order based on signature.
-        std::sort(tuple_signatures.begin(), tuple_signatures.end(), [](const auto& lhs, const auto& rhs) {
-            const auto lhs_members = lhs.second.identifying_members();
-            const auto rhs_members = rhs.second.identifying_members();
-            return std::tie(lhs_members, lhs.first) < std::tie(rhs_members, rhs.first);
-        });
+        std::sort(tuple_signatures.begin(),
+                  tuple_signatures.end(),
+                  [](const auto& lhs, const auto& rhs)
+                  {
+                      const auto lhs_members = lhs.second.identifying_members();
+                      const auto rhs_members = rhs.second.identifying_members();
+                      return std::tie(lhs_members, lhs.first) < std::tie(rhs_members, rhs.first);
+                  });
 
         auto round_summary = typename Certificate<K>::RoundSummary();
         for (const auto& [_, signature] : tuple_signatures)
