@@ -11,7 +11,6 @@
 namespace runir::kr::dl::grammar::parser
 {
 namespace x3 = boost::spirit::x3;
-namespace ascii = boost::spirit::x3::ascii;
 
 using x3::eoi;
 using x3::eps;
@@ -20,10 +19,10 @@ using x3::lit;
 using x3::omit;
 using x3::raw;
 
-using ascii::alnum;
-using ascii::alpha;
-using ascii::char_;
-using ascii::digit;
+using x3::ascii::alnum;
+using x3::ascii::alpha;
+using x3::ascii::char_;
+using x3::ascii::digit;
 
 concept_type const concept_ = "concept";
 concept_root_type const concept_root = "concept_root";
@@ -132,7 +131,7 @@ const auto concept_role_value_map_equality_def = with_constructor_parentheses(li
 const auto concept_nominal_def = with_constructor_parentheses(lit(ast::ConceptNominal::keyword) > object_name_string_parser());
 const auto concept_non_terminal_def = concept_non_terminal_string_parser();
 const auto concept_choice_def = concept_non_terminal | concept_;
-const auto concept_derivation_rule_def = lit("(") >> concept_non_terminal
+const auto concept_derivation_rule_def = (lit("(") >> concept_non_terminal)
                                          > ((lit("(") > (concept_choice % lit("or")) > lit(")")) | x3::repeat(1)[concept_choice]) > lit(")");
 
 const auto role_def = role_universal | role_atomic_state | role_atomic_goal | role_intersection | role_union | role_complement | role_inverse | role_composition
@@ -153,7 +152,7 @@ const auto role_restriction_def = with_constructor_parentheses(lit(ast::RoleRest
 const auto role_identity_def = with_constructor_parentheses(lit(ast::RoleIdentity::keyword) > concept_choice);
 const auto role_non_terminal_def = role_non_terminal_string_parser();
 const auto role_choice_def = role_non_terminal | role;
-const auto role_derivation_rule_def = lit("(") >> role_non_terminal > ((lit("(") > (role_choice % lit("or")) > lit(")")) | x3::repeat(1)[role_choice])
+const auto role_derivation_rule_def = (lit("(") >> role_non_terminal) > ((lit("(") > (role_choice % lit("or")) > lit(")")) | x3::repeat(1)[role_choice])
                                       > lit(")");
 
 const auto constructor_or_non_terminal_variant_def = concept_choice | role_choice;
@@ -165,7 +164,7 @@ const auto boolean_atomic_state_def =
 const auto boolean_nonempty_def = with_constructor_parentheses(lit(ast::BooleanNonempty::keyword) > constructor_or_non_terminal_variant);
 const auto boolean_non_terminal_def = boolean_non_terminal_string_parser();
 const auto boolean_choice_def = boolean_non_terminal | boolean;
-const auto boolean_derivation_rule_def = lit("(") >> boolean_non_terminal
+const auto boolean_derivation_rule_def = (lit("(") >> boolean_non_terminal)
                                          > ((lit("(") > (boolean_choice % lit("or")) > lit(")")) | x3::repeat(1)[boolean_choice]) > lit(")");
 
 const auto numerical_def = numerical_count | numerical_distance;
@@ -174,7 +173,7 @@ const auto numerical_count_def = with_constructor_parentheses(lit(ast::Numerical
 const auto numerical_distance_def = with_constructor_parentheses(lit(ast::NumericalDistance::keyword) > concept_choice > role_choice > concept_choice);
 const auto numerical_non_terminal_def = numerical_non_terminal_string_parser();
 const auto numerical_choice_def = numerical_non_terminal | numerical;
-const auto numerical_derivation_rule_def = lit("(") >> numerical_non_terminal
+const auto numerical_derivation_rule_def = (lit("(") >> numerical_non_terminal)
                                            > ((lit("(") > (numerical_choice % lit("or")) > lit(")")) | x3::repeat(1)[numerical_choice]) > lit(")");
 
 const auto derivation_rule_variant_def = concept_derivation_rule | role_derivation_rule | boolean_derivation_rule | numerical_derivation_rule;

@@ -10,8 +10,6 @@
 namespace runir::kr::dl
 {
 
-namespace cnf = runir::kr::dl::cnf_grammar;
-
 namespace
 {
 
@@ -48,48 +46,85 @@ void bind_view(nb::module_& m, const std::string& name)
 
 void bind_cnf_grammar_views(nb::module_& m)
 {
-    bind_view<cnf::Constructor<ConceptTag>, cnf::ConstructorRepository>(m, "Concept");
-    bind_view<cnf::Constructor<RoleTag>, cnf::ConstructorRepository>(m, "Role");
-    bind_view<cnf::Constructor<BooleanTag>, cnf::ConstructorRepository>(m, "Boolean");
-    bind_view<cnf::Constructor<NumericalTag>, cnf::ConstructorRepository>(m, "Numerical");
-    bind_view<cnf::Concept<BotTag>, cnf::ConstructorRepository>(m, "ConceptBot");
-    bind_view<cnf::Concept<TopTag>, cnf::ConstructorRepository>(m, "ConceptTop");
-    bind_view<cnf::Concept<AtomicStateTag<tyr::formalism::StaticTag>>, cnf::ConstructorRepository>(m, "ConceptAtomicStateStatic");
-    bind_view<cnf::Concept<AtomicStateTag<tyr::formalism::FluentTag>>, cnf::ConstructorRepository>(m, "ConceptAtomicStateFluent");
-    bind_view<cnf::Concept<AtomicStateTag<tyr::formalism::DerivedTag>>, cnf::ConstructorRepository>(m, "ConceptAtomicStateDerived");
-    bind_view<cnf::Concept<AtomicGoalTag<tyr::formalism::StaticTag>>, cnf::ConstructorRepository>(m, "ConceptAtomicGoalStatic");
-    bind_view<cnf::Concept<AtomicGoalTag<tyr::formalism::FluentTag>>, cnf::ConstructorRepository>(m, "ConceptAtomicGoalFluent");
-    bind_view<cnf::Concept<AtomicGoalTag<tyr::formalism::DerivedTag>>, cnf::ConstructorRepository>(m, "ConceptAtomicGoalDerived");
-    bind_view<cnf::Concept<IntersectionTag>, cnf::ConstructorRepository>(m, "ConceptIntersection");
-    bind_view<cnf::Concept<UnionTag>, cnf::ConstructorRepository>(m, "ConceptUnion");
-    bind_view<cnf::Concept<NegationTag>, cnf::ConstructorRepository>(m, "ConceptNegation");
-    bind_view<cnf::Concept<ValueRestrictionTag>, cnf::ConstructorRepository>(m, "ConceptValueRestriction");
-    bind_view<cnf::Concept<ExistentialQuantificationTag>, cnf::ConstructorRepository>(m, "ConceptExistentialQuantification");
-    bind_view<cnf::Concept<RoleValueMapContainmentTag>, cnf::ConstructorRepository>(m, "ConceptRoleValueMapContainment");
-    bind_view<cnf::Concept<RoleValueMapEqualityTag>, cnf::ConstructorRepository>(m, "ConceptRoleValueMapEquality");
-    bind_view<cnf::Concept<NominalTag>, cnf::ConstructorRepository>(m, "ConceptNominal");
-    bind_view<cnf::Role<UniversalTag>, cnf::ConstructorRepository>(m, "RoleUniversal");
-    bind_view<cnf::Role<AtomicStateTag<tyr::formalism::StaticTag>>, cnf::ConstructorRepository>(m, "RoleAtomicStateStatic");
-    bind_view<cnf::Role<AtomicStateTag<tyr::formalism::FluentTag>>, cnf::ConstructorRepository>(m, "RoleAtomicStateFluent");
-    bind_view<cnf::Role<AtomicStateTag<tyr::formalism::DerivedTag>>, cnf::ConstructorRepository>(m, "RoleAtomicStateDerived");
-    bind_view<cnf::Role<AtomicGoalTag<tyr::formalism::StaticTag>>, cnf::ConstructorRepository>(m, "RoleAtomicGoalStatic");
-    bind_view<cnf::Role<AtomicGoalTag<tyr::formalism::FluentTag>>, cnf::ConstructorRepository>(m, "RoleAtomicGoalFluent");
-    bind_view<cnf::Role<AtomicGoalTag<tyr::formalism::DerivedTag>>, cnf::ConstructorRepository>(m, "RoleAtomicGoalDerived");
-    bind_view<cnf::Role<IntersectionTag>, cnf::ConstructorRepository>(m, "RoleIntersection");
-    bind_view<cnf::Role<UnionTag>, cnf::ConstructorRepository>(m, "RoleUnion");
-    bind_view<cnf::Role<ComplementTag>, cnf::ConstructorRepository>(m, "RoleComplement");
-    bind_view<cnf::Role<InverseTag>, cnf::ConstructorRepository>(m, "RoleInverse");
-    bind_view<cnf::Role<CompositionTag>, cnf::ConstructorRepository>(m, "RoleComposition");
-    bind_view<cnf::Role<TransitiveClosureTag>, cnf::ConstructorRepository>(m, "RoleTransitiveClosure");
-    bind_view<cnf::Role<ReflexiveTransitiveClosureTag>, cnf::ConstructorRepository>(m, "RoleReflexiveTransitiveClosure");
-    bind_view<cnf::Role<RestrictionTag>, cnf::ConstructorRepository>(m, "RoleRestriction");
-    bind_view<cnf::Role<IdentityTag>, cnf::ConstructorRepository>(m, "RoleIdentity");
-    bind_view<cnf::Boolean<AtomicStateTag<tyr::formalism::StaticTag>>, cnf::ConstructorRepository>(m, "BooleanAtomicStateStatic");
-    bind_view<cnf::Boolean<AtomicStateTag<tyr::formalism::FluentTag>>, cnf::ConstructorRepository>(m, "BooleanAtomicStateFluent");
-    bind_view<cnf::Boolean<AtomicStateTag<tyr::formalism::DerivedTag>>, cnf::ConstructorRepository>(m, "BooleanAtomicStateDerived");
-    bind_view<cnf::Boolean<NonemptyTag>, cnf::ConstructorRepository>(m, "BooleanNonempty");
-    bind_view<cnf::Numerical<CountTag>, cnf::ConstructorRepository>(m, "NumericalCount");
-    bind_view<cnf::Numerical<DistanceTag>, cnf::ConstructorRepository>(m, "NumericalDistance");
+    bind_view<runir::kr::dl::cnf_grammar::Constructor<ConceptTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "Concept");
+    bind_view<runir::kr::dl::cnf_grammar::Constructor<RoleTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "Role");
+    bind_view<runir::kr::dl::cnf_grammar::Constructor<BooleanTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "Boolean");
+    bind_view<runir::kr::dl::cnf_grammar::Constructor<NumericalTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "Numerical");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<BotTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptBot");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<TopTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptTop");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<AtomicStateTag<tyr::formalism::StaticTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptAtomicStateStatic");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<AtomicStateTag<tyr::formalism::FluentTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptAtomicStateFluent");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<AtomicStateTag<tyr::formalism::DerivedTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptAtomicStateDerived");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<AtomicGoalTag<tyr::formalism::StaticTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptAtomicGoalStatic");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<AtomicGoalTag<tyr::formalism::FluentTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptAtomicGoalFluent");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<AtomicGoalTag<tyr::formalism::DerivedTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptAtomicGoalDerived");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<IntersectionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptIntersection");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<UnionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptUnion");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<NegationTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptNegation");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<ValueRestrictionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptValueRestriction");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<ExistentialQuantificationTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptExistentialQuantification");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<RoleValueMapContainmentTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptRoleValueMapContainment");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<RoleValueMapEqualityTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m,
+                                                                                                                               "ConceptRoleValueMapEquality");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<NominalTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptNominal");
+    bind_view<runir::kr::dl::cnf_grammar::Role<UniversalTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "RoleUniversal");
+    bind_view<runir::kr::dl::cnf_grammar::Role<AtomicStateTag<tyr::formalism::StaticTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "RoleAtomicStateStatic");
+    bind_view<runir::kr::dl::cnf_grammar::Role<AtomicStateTag<tyr::formalism::FluentTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "RoleAtomicStateFluent");
+    bind_view<runir::kr::dl::cnf_grammar::Role<AtomicStateTag<tyr::formalism::DerivedTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "RoleAtomicStateDerived");
+    bind_view<runir::kr::dl::cnf_grammar::Role<AtomicGoalTag<tyr::formalism::StaticTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "RoleAtomicGoalStatic");
+    bind_view<runir::kr::dl::cnf_grammar::Role<AtomicGoalTag<tyr::formalism::FluentTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "RoleAtomicGoalFluent");
+    bind_view<runir::kr::dl::cnf_grammar::Role<AtomicGoalTag<tyr::formalism::DerivedTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "RoleAtomicGoalDerived");
+    bind_view<runir::kr::dl::cnf_grammar::Role<IntersectionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "RoleIntersection");
+    bind_view<runir::kr::dl::cnf_grammar::Role<UnionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "RoleUnion");
+    bind_view<runir::kr::dl::cnf_grammar::Role<ComplementTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "RoleComplement");
+    bind_view<runir::kr::dl::cnf_grammar::Role<InverseTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "RoleInverse");
+    bind_view<runir::kr::dl::cnf_grammar::Role<CompositionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "RoleComposition");
+    bind_view<runir::kr::dl::cnf_grammar::Role<TransitiveClosureTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "RoleTransitiveClosure");
+    bind_view<runir::kr::dl::cnf_grammar::Role<ReflexiveTransitiveClosureTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "RoleReflexiveTransitiveClosure");
+    bind_view<runir::kr::dl::cnf_grammar::Role<RestrictionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "RoleRestriction");
+    bind_view<runir::kr::dl::cnf_grammar::Role<IdentityTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "RoleIdentity");
+    bind_view<runir::kr::dl::cnf_grammar::Boolean<AtomicStateTag<tyr::formalism::StaticTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "BooleanAtomicStateStatic");
+    bind_view<runir::kr::dl::cnf_grammar::Boolean<AtomicStateTag<tyr::formalism::FluentTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "BooleanAtomicStateFluent");
+    bind_view<runir::kr::dl::cnf_grammar::Boolean<AtomicStateTag<tyr::formalism::DerivedTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "BooleanAtomicStateDerived");
+    bind_view<runir::kr::dl::cnf_grammar::Boolean<NonemptyTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "BooleanNonempty");
+    bind_view<runir::kr::dl::cnf_grammar::Numerical<CountTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "NumericalCount");
+    bind_view<runir::kr::dl::cnf_grammar::Numerical<DistanceTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "NumericalDistance");
 }
 
 }  // namespace runir::kr::dl

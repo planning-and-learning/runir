@@ -8,23 +8,18 @@
 namespace runir::kr::dl
 {
 
-namespace grammar = runir::kr::dl::grammar;
-namespace fp = tyr::formalism::planning;
-
-using namespace nanobind::literals;
-
 void bind_grammar_constructor_repository(nb::module_& m)
 {
-    auto repository = nb::class_<grammar::ConstructorRepository>(m, "ConstructorRepository");
-    repository.def("clear", &grammar::ConstructorRepository::clear).def("get_index", &grammar::ConstructorRepository::get_index);
+    auto repository = nb::class_<runir::kr::dl::grammar::ConstructorRepository>(m, "ConstructorRepository");
+    repository.def("clear", &runir::kr::dl::grammar::ConstructorRepository::clear).def("get_index", &runir::kr::dl::grammar::ConstructorRepository::get_index);
 
-    auto factory = nb::class_<grammar::ConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");
+    auto factory = nb::class_<runir::kr::dl::grammar::ConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");
     factory.def(nb::init<>())
         .def(
             "create",
-            [](grammar::ConstructorRepositoryFactory& self, fp::PlanningDomain planning_domain)
+            [](runir::kr::dl::grammar::ConstructorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
             { return self.create_shared(planning_domain.get_repository()); },
-            "planning_domain"_a);
+            nb::arg("planning_domain"));
 }
 
 }  // namespace runir::kr::dl

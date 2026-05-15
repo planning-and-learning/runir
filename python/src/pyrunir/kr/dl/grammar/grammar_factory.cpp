@@ -6,19 +6,27 @@
 namespace runir::kr::dl
 {
 
-namespace grammar = runir::kr::dl::grammar;
-
-using namespace nanobind::literals;
-
 void bind_grammar_factory(nb::module_& m)
 {
-    nb::enum_<grammar::GrammarSpecification>(m, "GrammarSpecification").value("FRANCE_ET_AL_AAAI2021", grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021);
+    nb::enum_<runir::kr::dl::grammar::GrammarSpecification>(m, "GrammarSpecification")
+        .value("FRANCE_ET_AL_AAAI2021", runir::kr::dl::grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021);
 
-    nb::class_<grammar::GrammarFactory>(m, "GrammarFactory")
-        .def_static("create", &grammar::GrammarFactory::create, "specification"_a, "domain"_a, "repository"_a, nb::keep_alive<0, 3>())
-        .def_static("create_description", &grammar::GrammarFactory::create_description, "specification"_a, "domain"_a)
-        .def_static("create_france_et_al_aaai2021", &grammar::GrammarFactory::create_france_et_al_aaai2021, "domain"_a, "repository"_a, nb::keep_alive<0, 2>())
-        .def_static("create_france_et_al_aaai2021_description", &grammar::GrammarFactory::create_france_et_al_aaai2021_description, "domain"_a);
+    nb::class_<runir::kr::dl::grammar::GrammarFactory>(m, "GrammarFactory")
+        .def_static("create",
+                    &runir::kr::dl::grammar::GrammarFactory::create,
+                    nb::arg("specification"),
+                    nb::arg("domain"),
+                    nb::arg("repository"),
+                    nb::keep_alive<0, 3>())
+        .def_static("create_description", &runir::kr::dl::grammar::GrammarFactory::create_description, nb::arg("specification"), nb::arg("domain"))
+        .def_static("create_france_et_al_aaai2021",
+                    &runir::kr::dl::grammar::GrammarFactory::create_france_et_al_aaai2021,
+                    nb::arg("domain"),
+                    nb::arg("repository"),
+                    nb::keep_alive<0, 2>())
+        .def_static("create_france_et_al_aaai2021_description",
+                    &runir::kr::dl::grammar::GrammarFactory::create_france_et_al_aaai2021_description,
+                    nb::arg("domain"));
 }
 
 }  // namespace runir::kr::dl

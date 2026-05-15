@@ -13,6 +13,9 @@
 #include <tyr/planning/planning.hpp>
 #include <vector>
 
+namespace runir::tests
+{
+
 namespace
 {
 
@@ -21,17 +24,17 @@ struct EquivalenceGraphFigureCase
     std::string name;
     std::filesystem::path domain_file;
     std::vector<std::filesystem::path> task_files;
-    runir::datasets::EquivalencePolicyMode equivalence_policy;
+    datasets::EquivalencePolicyMode equivalence_policy;
     std::size_t expected_num_vertices = 0;
     std::size_t expected_num_edges = 0;
 };
 
-auto parse_equivalence_policy_mode(std::string_view value) -> runir::datasets::EquivalencePolicyMode
+auto parse_equivalence_policy_mode(std::string_view value) -> datasets::EquivalencePolicyMode
 {
     if (value == "identity")
-        return runir::datasets::EquivalencePolicyMode::IDENTITY;
+        return datasets::EquivalencePolicyMode::IDENTITY;
     if (value == "gi")
-        return runir::datasets::EquivalencePolicyMode::GI;
+        return datasets::EquivalencePolicyMode::GI;
     throw std::runtime_error(fmt::format("Unsupported equivalence policy mode: {}", value));
 }
 
@@ -71,7 +74,6 @@ class EquivalenceGraphTest : public ::testing::TestWithParam<EquivalenceGraphFig
 
 TEST_P(EquivalenceGraphTest, MatchesExpectedProperties)
 {
-    namespace datasets = runir::datasets;
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
@@ -101,3 +103,5 @@ INSTANTIATE_TEST_SUITE_P(RunirDatasets,
                          EquivalenceGraphTest,
                          ::testing::ValuesIn(load_cases()),
                          [](const testing::TestParamInfo<EquivalenceGraphFigureCase>& info) { return info.param.name; });
+
+}  // namespace runir::tests

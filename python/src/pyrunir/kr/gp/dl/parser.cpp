@@ -7,19 +7,15 @@
 namespace runir::kr::gp::dl
 {
 
-namespace fp = tyr::formalism::planning;
-
-using namespace nanobind::literals;
-
 void bind_parser(nb::module_& m)
 {
     m.def(
         "parse_policy",
-        [](const std::string& description, fp::PlanningDomain domain, runir::kr::gp::Repository& repository)
+        [](const std::string& description, tyr::formalism::planning::PlanningDomain domain, runir::kr::gp::Repository& repository)
         { return runir::kr::gp::dl::parse_policy(description, domain.get_domain(), repository); },
-        "description"_a,
-        "domain"_a,
-        "repository"_a);
+        nb::arg("description"),
+        nb::arg("domain"),
+        nb::arg("repository"));
 }
 
 }  // namespace runir::kr::gp::dl

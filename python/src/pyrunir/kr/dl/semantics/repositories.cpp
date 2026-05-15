@@ -8,10 +8,6 @@
 namespace runir::kr::dl
 {
 
-namespace fp = tyr::formalism::planning;
-
-using namespace nanobind::literals;
-
 void bind_semantics_repositories(nb::module_& m)
 {
     auto cls = nb::class_<runir::kr::dl::ConstructorRepository>(m, "ConstructorRepository");
@@ -21,9 +17,9 @@ void bind_semantics_repositories(nb::module_& m)
     factory.def(nb::init<>())
         .def(
             "create",
-            [](runir::kr::dl::ConstructorRepositoryFactory& self, fp::PlanningDomain planning_domain)
+            [](runir::kr::dl::ConstructorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
             { return self.create_shared(planning_domain.get_repository()); },
-            "planning_domain"_a);
+            nb::arg("planning_domain"));
 }
 
 }  // namespace runir::kr::dl

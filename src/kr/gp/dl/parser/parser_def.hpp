@@ -12,8 +12,6 @@
 namespace runir::kr::gp::dl::parser
 {
 namespace x3 = boost::spirit::x3;
-namespace ascii = boost::spirit::x3::ascii;
-namespace dl_parser = runir::kr::dl::grammar::parser;
 
 using x3::attr;
 using x3::eoi;
@@ -21,9 +19,9 @@ using x3::lexeme;
 using x3::lit;
 using x3::raw;
 
-using ascii::alnum;
-using ascii::alpha;
-using ascii::char_;
+using x3::ascii::alnum;
+using x3::ascii::alpha;
+using x3::ascii::char_;
 
 boolean_feature_type const boolean_feature = "boolean_feature";
 numerical_feature_type const numerical_feature = "numerical_feature";
@@ -52,10 +50,10 @@ inline auto identifier_parser() { return raw[lexeme[(alpha | char_('_')) >> *(al
 
 inline auto quoted_string_parser() { return lexeme[lit('"') >> raw[*('\\' >> char_ | (char_ - '"'))] >> lit('"')]; }
 
-const auto boolean_feature_def = lit("(") >> lit("boolean") > identifier_parser() > quoted_string_parser() > quoted_string_parser()
-                                 > dl_parser::boolean_parser() > lit(")");
-const auto numerical_feature_def = lit("(") >> lit("numerical") > identifier_parser() > quoted_string_parser() > quoted_string_parser()
-                                   > dl_parser::numerical_parser() > lit(")");
+const auto boolean_feature_def = (lit("(") >> lit("boolean")) > identifier_parser() > quoted_string_parser() > quoted_string_parser()
+                                 > runir::kr::dl::grammar::parser::boolean_parser() > lit(")");
+const auto numerical_feature_def = (lit("(") >> lit("numerical")) > identifier_parser() > quoted_string_parser() > quoted_string_parser()
+                                   > runir::kr::dl::grammar::parser::numerical_parser() > lit(")");
 const auto feature_def = boolean_feature | numerical_feature;
 
 const auto positive_condition_def = lit("positive") >> attr(Positive {});
@@ -63,7 +61,7 @@ const auto negative_condition_def = lit("negative") >> attr(Negative {});
 const auto equal_zero_condition_def = lit("equal_zero") >> attr(EqualZero {});
 const auto greater_zero_condition_def = lit("greater_zero") >> attr(GreaterZero {});
 const auto condition_observation_def = positive_condition | negative_condition | equal_zero_condition | greater_zero_condition;
-const auto condition_def = lit("(") >> condition_observation > identifier_parser() > lit(")");
+const auto condition_def = (lit("(") >> condition_observation) > identifier_parser() > lit(")");
 
 const auto positive_effect_def = lit("positive") >> attr(Positive {});
 const auto negative_effect_def = lit("negative") >> attr(Negative {});
@@ -71,7 +69,7 @@ const auto unchanged_effect_def = lit("unchanged") >> attr(Unchanged {});
 const auto increases_effect_def = lit("increases") >> attr(Increases {});
 const auto decreases_effect_def = lit("decreases") >> attr(Decreases {});
 const auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
-const auto effect_def = lit("(") >> effect_observation > identifier_parser() > lit(")");
+const auto effect_def = (lit("(") >> effect_observation) > identifier_parser() > lit(")");
 
 const auto conditions_section_def = lit("(") > lit(":conditions") > *condition > lit(")");
 const auto effects_section_def = lit("(") > lit(":effects") > *effect > lit(")");

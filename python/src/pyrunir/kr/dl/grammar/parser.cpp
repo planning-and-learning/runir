@@ -6,10 +6,9 @@
 namespace runir::kr::dl
 {
 
-namespace grammar = runir::kr::dl::grammar;
-
-using namespace nanobind::literals;
-
-void bind_grammar_parser(nb::module_& m) { m.def("parse", &grammar::parse_grammar, "description"_a, "domain"_a, "repository"_a, nb::keep_alive<0, 3>()); }
+void bind_grammar_parser(nb::module_& m)
+{
+    m.def("parse", &runir::kr::dl::grammar::parse_grammar, nb::arg("description"), nb::arg("domain"), nb::arg("repository"), nb::keep_alive<0, 3>());
+}
 
 }  // namespace runir::kr::dl

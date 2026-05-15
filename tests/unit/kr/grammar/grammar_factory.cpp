@@ -14,6 +14,9 @@
 #include <tyr/common/equal_to.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 
+namespace runir::tests
+{
+
 namespace
 {
 
@@ -25,24 +28,23 @@ std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "plann
 
 TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesParse)
 {
-    namespace gp_dl = runir::kr::gp::dl;
     namespace fp = tyr::formalism::planning;
 
     struct Case
     {
         std::filesystem::path domain;
-        gp_dl::PolicySpecification specification;
+        kr::gp::dl::PolicySpecification specification;
     };
 
     const auto cases = std::vector<Case> {
-        { benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl", gp_dl::PolicySpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "tests" / "classical" / "blocks_3" / "domain.pddl", gp_dl::PolicySpecification::BLOCKS3OPS_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "tests" / "classical" / "spanner" / "domain.pddl", gp_dl::PolicySpecification::SPANNER_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "tests" / "classical" / "delivery" / "domain.pddl", gp_dl::PolicySpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl", kr::gp::dl::PolicySpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "tests" / "classical" / "blocks_3" / "domain.pddl", kr::gp::dl::PolicySpecification::BLOCKS3OPS_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "tests" / "classical" / "spanner" / "domain.pddl", kr::gp::dl::PolicySpecification::SPANNER_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "tests" / "classical" / "delivery" / "domain.pddl", kr::gp::dl::PolicySpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
     };
 
-    auto dl_repository_factory = runir::kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = runir::kr::gp::RepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
+    auto repository_factory = kr::gp::RepositoryFactory();
 
     for (const auto& test_case : cases)
     {
@@ -50,24 +52,22 @@ TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesParse)
         auto dl_repository = dl_repository_factory.create_shared(planning_domain.get_repository());
         auto repository = repository_factory.create(dl_repository);
 
-        const auto policy = gp_dl::PolicyFactory::create(test_case.specification, planning_domain.get_domain(), repository);
+        const auto policy = kr::gp::dl::PolicyFactory::create(test_case.specification, planning_domain.get_domain(), repository);
 
-        EXPECT_EQ(policy.get_index(), tyr::Index<runir::kr::gp::Policy>(0));
-        EXPECT_EQ(repository.template size<runir::kr::gp::Policy>(), 1);
+        EXPECT_EQ(policy.get_index(), tyr::Index<kr::gp::Policy>(0));
+        EXPECT_EQ(repository.template size<kr::gp::Policy>(), 1);
     }
 }
 
 TEST(RunirTests, GeneralPolicyParserParsesConditionsAndEffects)
 {
-    namespace gp = runir::kr::gp;
-    namespace gp_dl = runir::kr::gp::dl;
     namespace fp = tyr::formalism::planning;
 
     const auto domain_filepath = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
     const auto planning_domain = fp::Parser(domain_filepath).get_domain();
 
-    auto dl_repository_factory = runir::kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = gp::RepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
+    auto repository_factory = kr::gp::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create_shared(planning_domain.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
@@ -90,20 +90,19 @@ TEST(RunirTests, GeneralPolicyParserParsesConditionsAndEffects)
 )
 )" };
 
-    const auto policy = gp_dl::parse_policy(description, planning_domain.get_domain(), repository);
+    const auto policy = kr::gp::dl::parse_policy(description, planning_domain.get_domain(), repository);
 
-    EXPECT_EQ(policy.get_index(), tyr::Index<gp::Policy>(0));
-    EXPECT_EQ(repository.template size<gp::Policy>(), 1);
-    EXPECT_EQ(repository.template size<gp::Rule>(), 2);
-    EXPECT_EQ(repository.template size<gp::Feature<gp_dl::BooleanFeature>>(), 1);
-    EXPECT_EQ(repository.template size<gp::Feature<gp_dl::NumericalFeature>>(), 1);
-    EXPECT_EQ(repository.template size<gp::ConditionVariant>(), 4);
-    EXPECT_EQ(repository.template size<gp::EffectVariant>(), 5);
+    EXPECT_EQ(policy.get_index(), tyr::Index<kr::gp::Policy>(0));
+    EXPECT_EQ(repository.template size<kr::gp::Policy>(), 1);
+    EXPECT_EQ(repository.template size<kr::gp::Rule>(), 2);
+    EXPECT_EQ(repository.template size<kr::gp::Feature<kr::gp::dl::BooleanFeature>>(), 1);
+    EXPECT_EQ(repository.template size<kr::gp::Feature<kr::gp::dl::NumericalFeature>>(), 1);
+    EXPECT_EQ(repository.template size<kr::gp::ConditionVariant>(), 4);
+    EXPECT_EQ(repository.template size<kr::gp::EffectVariant>(), 5);
 }
 
 TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
 {
-    namespace grammar = runir::kr::dl::grammar;
     namespace fp = tyr::formalism::planning;
 
     const auto domain_filepath = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
@@ -265,31 +264,33 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
 )
 )EXPECTED" };
 
-    auto repository_factory = grammar::ConstructorRepositoryFactory();
+    auto repository_factory = kr::dl::grammar::ConstructorRepositoryFactory();
     auto repository = repository_factory.create(planning_domain.get_repository());
     auto other_repository = repository_factory.create(planning_domain.get_repository());
     EXPECT_EQ(repository.get_index(), 0);
     EXPECT_EQ(other_repository.get_index(), 1);
 
-    const auto grammar_view = grammar::GrammarFactory::create(grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, repository);
+    const auto grammar_view = kr::dl::grammar::GrammarFactory::create(kr::dl::grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, repository);
     const auto formatted = fmt::format("{}", grammar_view);
     std::cout << formatted << std::endl;
     EXPECT_EQ(formatted, expected);
 
-    const auto reparsed_grammar_view = grammar::parse_grammar(formatted, domain, repository);
+    const auto reparsed_grammar_view = kr::dl::grammar::parse_grammar(formatted, domain, repository);
     EXPECT_TRUE(tyr::EqualTo<decltype(grammar_view)> {}(grammar_view, reparsed_grammar_view));
-    EXPECT_EQ(grammar_view.get_context().template size<grammar::GrammarTag>(), 1);
-    EXPECT_EQ(grammar_view.get_index(), tyr::Index<grammar::GrammarTag>(0));
+    EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag>(), 1);
+    EXPECT_EQ(grammar_view.get_index(), tyr::Index<kr::dl::grammar::GrammarTag>(0));
 
-    auto cnf_repository_factory = runir::kr::dl::cnf_grammar::ConstructorRepositoryFactory();
+    auto cnf_repository_factory = kr::dl::cnf_grammar::ConstructorRepositoryFactory();
     auto cnf_repository = cnf_repository_factory.create(planning_domain.get_repository());
-    const auto cnf_grammar_view = runir::kr::dl::cnf_grammar::translate(grammar_view, cnf_repository);
+    const auto cnf_grammar_view = kr::dl::cnf_grammar::translate(grammar_view, cnf_repository);
     const auto cnf_formatted = fmt::format("{}", cnf_grammar_view);
     std::cout << cnf_formatted << std::endl;
     EXPECT_EQ(cnf_formatted, expected_cnf);
 
-    const auto reparsed_cnf_source_grammar_view = grammar::parse_grammar(cnf_formatted, domain, repository);
-    const auto reparsed_cnf_grammar_view = runir::kr::dl::cnf_grammar::translate(reparsed_cnf_source_grammar_view, cnf_repository);
+    const auto reparsed_cnf_source_grammar_view = kr::dl::grammar::parse_grammar(cnf_formatted, domain, repository);
+    const auto reparsed_cnf_grammar_view = kr::dl::cnf_grammar::translate(reparsed_cnf_source_grammar_view, cnf_repository);
     EXPECT_TRUE(tyr::EqualTo<decltype(cnf_grammar_view)> {}(cnf_grammar_view, reparsed_cnf_grammar_view));
-    EXPECT_EQ(grammar_view.get_context().template size<grammar::GrammarTag>(), 2);
+    EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag>(), 2);
 }
+
+}  // namespace runir::tests

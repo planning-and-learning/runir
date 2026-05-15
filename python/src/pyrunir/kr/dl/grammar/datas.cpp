@@ -7,8 +7,6 @@
 namespace runir::kr::dl
 {
 
-namespace grammar = runir::kr::dl::grammar;
-
 namespace
 {
 
@@ -41,48 +39,48 @@ void bind_data(nb::module_& m, const std::string& name)
 
 void bind_grammar_datas(nb::module_& m)
 {
-    bind_data<grammar::Concept<BotTag>>(m, "ConceptBotData");
-    bind_data<grammar::Concept<TopTag>>(m, "ConceptTopData");
-    bind_data<grammar::Concept<AtomicStateTag<tyr::formalism::StaticTag>>>(m, "ConceptAtomicStateStaticData");
-    bind_data<grammar::Concept<AtomicStateTag<tyr::formalism::FluentTag>>>(m, "ConceptAtomicStateFluentData");
-    bind_data<grammar::Concept<AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "ConceptAtomicStateDerivedData");
-    bind_data<grammar::Concept<AtomicGoalTag<tyr::formalism::StaticTag>>>(m, "ConceptAtomicGoalStaticData");
-    bind_data<grammar::Concept<AtomicGoalTag<tyr::formalism::FluentTag>>>(m, "ConceptAtomicGoalFluentData");
-    bind_data<grammar::Concept<AtomicGoalTag<tyr::formalism::DerivedTag>>>(m, "ConceptAtomicGoalDerivedData");
-    bind_data<grammar::Concept<IntersectionTag>>(m, "ConceptIntersectionData");
-    bind_data<grammar::Concept<UnionTag>>(m, "ConceptUnionData");
-    bind_data<grammar::Concept<NegationTag>>(m, "ConceptNegationData");
-    bind_data<grammar::Concept<ValueRestrictionTag>>(m, "ConceptValueRestrictionData");
-    bind_data<grammar::Concept<ExistentialQuantificationTag>>(m, "ConceptExistentialQuantificationData");
-    bind_data<grammar::Concept<RoleValueMapContainmentTag>>(m, "ConceptRoleValueMapContainmentData");
-    bind_data<grammar::Concept<RoleValueMapEqualityTag>>(m, "ConceptRoleValueMapEqualityData");
-    bind_data<grammar::Concept<NominalTag>>(m, "ConceptNominalData");
-    bind_data<grammar::Role<UniversalTag>>(m, "RoleUniversalData");
-    bind_data<grammar::Role<AtomicStateTag<tyr::formalism::StaticTag>>>(m, "RoleAtomicStateStaticData");
-    bind_data<grammar::Role<AtomicStateTag<tyr::formalism::FluentTag>>>(m, "RoleAtomicStateFluentData");
-    bind_data<grammar::Role<AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "RoleAtomicStateDerivedData");
-    bind_data<grammar::Role<AtomicGoalTag<tyr::formalism::StaticTag>>>(m, "RoleAtomicGoalStaticData");
-    bind_data<grammar::Role<AtomicGoalTag<tyr::formalism::FluentTag>>>(m, "RoleAtomicGoalFluentData");
-    bind_data<grammar::Role<AtomicGoalTag<tyr::formalism::DerivedTag>>>(m, "RoleAtomicGoalDerivedData");
-    bind_data<grammar::Role<IntersectionTag>>(m, "RoleIntersectionData");
-    bind_data<grammar::Role<UnionTag>>(m, "RoleUnionData");
-    bind_data<grammar::Role<ComplementTag>>(m, "RoleComplementData");
-    bind_data<grammar::Role<InverseTag>>(m, "RoleInverseData");
-    bind_data<grammar::Role<CompositionTag>>(m, "RoleCompositionData");
-    bind_data<grammar::Role<TransitiveClosureTag>>(m, "RoleTransitiveClosureData");
-    bind_data<grammar::Role<ReflexiveTransitiveClosureTag>>(m, "RoleReflexiveTransitiveClosureData");
-    bind_data<grammar::Role<RestrictionTag>>(m, "RoleRestrictionData");
-    bind_data<grammar::Role<IdentityTag>>(m, "RoleIdentityData");
-    bind_data<grammar::Boolean<AtomicStateTag<tyr::formalism::StaticTag>>>(m, "BooleanAtomicStateStaticData");
-    bind_data<grammar::Boolean<AtomicStateTag<tyr::formalism::FluentTag>>>(m, "BooleanAtomicStateFluentData");
-    bind_data<grammar::Boolean<AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "BooleanAtomicStateDerivedData");
-    bind_data<grammar::Boolean<NonemptyTag>>(m, "BooleanNonemptyData");
-    bind_data<grammar::Numerical<CountTag>>(m, "NumericalCountData");
-    bind_data<grammar::Numerical<DistanceTag>>(m, "NumericalDistanceData");
-    bind_data<grammar::Constructor<ConceptTag>>(m, "ConceptData");
-    bind_data<grammar::Constructor<RoleTag>>(m, "RoleData");
-    bind_data<grammar::Constructor<BooleanTag>>(m, "BooleanData");
-    bind_data<grammar::Constructor<NumericalTag>>(m, "NumericalData");
+    bind_data<runir::kr::dl::grammar::Concept<BotTag>>(m, "ConceptBotData");
+    bind_data<runir::kr::dl::grammar::Concept<TopTag>>(m, "ConceptTopData");
+    bind_data<runir::kr::dl::grammar::Concept<AtomicStateTag<tyr::formalism::StaticTag>>>(m, "ConceptAtomicStateStaticData");
+    bind_data<runir::kr::dl::grammar::Concept<AtomicStateTag<tyr::formalism::FluentTag>>>(m, "ConceptAtomicStateFluentData");
+    bind_data<runir::kr::dl::grammar::Concept<AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "ConceptAtomicStateDerivedData");
+    bind_data<runir::kr::dl::grammar::Concept<AtomicGoalTag<tyr::formalism::StaticTag>>>(m, "ConceptAtomicGoalStaticData");
+    bind_data<runir::kr::dl::grammar::Concept<AtomicGoalTag<tyr::formalism::FluentTag>>>(m, "ConceptAtomicGoalFluentData");
+    bind_data<runir::kr::dl::grammar::Concept<AtomicGoalTag<tyr::formalism::DerivedTag>>>(m, "ConceptAtomicGoalDerivedData");
+    bind_data<runir::kr::dl::grammar::Concept<IntersectionTag>>(m, "ConceptIntersectionData");
+    bind_data<runir::kr::dl::grammar::Concept<UnionTag>>(m, "ConceptUnionData");
+    bind_data<runir::kr::dl::grammar::Concept<NegationTag>>(m, "ConceptNegationData");
+    bind_data<runir::kr::dl::grammar::Concept<ValueRestrictionTag>>(m, "ConceptValueRestrictionData");
+    bind_data<runir::kr::dl::grammar::Concept<ExistentialQuantificationTag>>(m, "ConceptExistentialQuantificationData");
+    bind_data<runir::kr::dl::grammar::Concept<RoleValueMapContainmentTag>>(m, "ConceptRoleValueMapContainmentData");
+    bind_data<runir::kr::dl::grammar::Concept<RoleValueMapEqualityTag>>(m, "ConceptRoleValueMapEqualityData");
+    bind_data<runir::kr::dl::grammar::Concept<NominalTag>>(m, "ConceptNominalData");
+    bind_data<runir::kr::dl::grammar::Role<UniversalTag>>(m, "RoleUniversalData");
+    bind_data<runir::kr::dl::grammar::Role<AtomicStateTag<tyr::formalism::StaticTag>>>(m, "RoleAtomicStateStaticData");
+    bind_data<runir::kr::dl::grammar::Role<AtomicStateTag<tyr::formalism::FluentTag>>>(m, "RoleAtomicStateFluentData");
+    bind_data<runir::kr::dl::grammar::Role<AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "RoleAtomicStateDerivedData");
+    bind_data<runir::kr::dl::grammar::Role<AtomicGoalTag<tyr::formalism::StaticTag>>>(m, "RoleAtomicGoalStaticData");
+    bind_data<runir::kr::dl::grammar::Role<AtomicGoalTag<tyr::formalism::FluentTag>>>(m, "RoleAtomicGoalFluentData");
+    bind_data<runir::kr::dl::grammar::Role<AtomicGoalTag<tyr::formalism::DerivedTag>>>(m, "RoleAtomicGoalDerivedData");
+    bind_data<runir::kr::dl::grammar::Role<IntersectionTag>>(m, "RoleIntersectionData");
+    bind_data<runir::kr::dl::grammar::Role<UnionTag>>(m, "RoleUnionData");
+    bind_data<runir::kr::dl::grammar::Role<ComplementTag>>(m, "RoleComplementData");
+    bind_data<runir::kr::dl::grammar::Role<InverseTag>>(m, "RoleInverseData");
+    bind_data<runir::kr::dl::grammar::Role<CompositionTag>>(m, "RoleCompositionData");
+    bind_data<runir::kr::dl::grammar::Role<TransitiveClosureTag>>(m, "RoleTransitiveClosureData");
+    bind_data<runir::kr::dl::grammar::Role<ReflexiveTransitiveClosureTag>>(m, "RoleReflexiveTransitiveClosureData");
+    bind_data<runir::kr::dl::grammar::Role<RestrictionTag>>(m, "RoleRestrictionData");
+    bind_data<runir::kr::dl::grammar::Role<IdentityTag>>(m, "RoleIdentityData");
+    bind_data<runir::kr::dl::grammar::Boolean<AtomicStateTag<tyr::formalism::StaticTag>>>(m, "BooleanAtomicStateStaticData");
+    bind_data<runir::kr::dl::grammar::Boolean<AtomicStateTag<tyr::formalism::FluentTag>>>(m, "BooleanAtomicStateFluentData");
+    bind_data<runir::kr::dl::grammar::Boolean<AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "BooleanAtomicStateDerivedData");
+    bind_data<runir::kr::dl::grammar::Boolean<NonemptyTag>>(m, "BooleanNonemptyData");
+    bind_data<runir::kr::dl::grammar::Numerical<CountTag>>(m, "NumericalCountData");
+    bind_data<runir::kr::dl::grammar::Numerical<DistanceTag>>(m, "NumericalDistanceData");
+    bind_data<runir::kr::dl::grammar::Constructor<ConceptTag>>(m, "ConceptData");
+    bind_data<runir::kr::dl::grammar::Constructor<RoleTag>>(m, "RoleData");
+    bind_data<runir::kr::dl::grammar::Constructor<BooleanTag>>(m, "BooleanData");
+    bind_data<runir::kr::dl::grammar::Constructor<NumericalTag>>(m, "NumericalData");
 }
 
 }  // namespace runir::kr::dl

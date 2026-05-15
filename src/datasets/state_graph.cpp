@@ -100,19 +100,19 @@ public:
 
     void on_finish_f_layer(tyr::float_t f_value) override { static_cast<void>(f_value); }
 
-    void on_end_search() {}
+    void on_end_search() override {}
 
-    void on_end_search(tyr::planning::SearchStatus status) { static_cast<void>(status); }
+    void on_end_search(tyr::planning::SearchStatus status) override { static_cast<void>(status); }
 
     void on_solved(const tyr::planning::Plan<Kind>& plan) override { static_cast<void>(plan); }
 
-    void on_unsolvable() {}
+    void on_unsolvable() override {}
 
-    void on_exhausted() {}
+    void on_exhausted() override {}
 
-    const tyr::planning::Statistics& get_search_statistics() const { return m_statistics; }
+    const tyr::planning::Statistics& get_search_statistics() const override { return m_statistics; }
 
-    const tyr::planning::Statistics& get_statistics() const { return m_statistics; }
+    const tyr::planning::Statistics& get_statistics() const override { return m_statistics; }
 
     auto release() && { return std::make_unique<StateGraph<Kind>>(std::move(m_builder)); }
 };
@@ -206,8 +206,9 @@ auto generate_state_graph(TaskSearchContext<Kind>& context, uint_t state_graph_i
 }
 
 template<tyr::planning::TaskKind Kind>
-auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kind>& graph, StateGraphCostMode cost_mode)
-    -> std::unique_ptr<AnnotatedStateGraph<Kind>>
+auto annotate_state_graph(TaskSearchContext<Kind>& context,
+                          const StateGraph<Kind>& graph,
+                          StateGraphCostMode cost_mode) -> std::unique_ptr<AnnotatedStateGraph<Kind>>
 {
     const auto& forward_graph = graph.get_forward_graph();
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
@@ -251,11 +252,11 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kin
     return std::make_unique<AnnotatedStateGraph<Kind>>(std::move(builder));
 }
 
-template auto generate_state_graph<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&)
-    -> std::unique_ptr<StateGraph<tyr::planning::GroundTag>>;
+template auto
+generate_state_graph<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&) -> std::unique_ptr<StateGraph<tyr::planning::GroundTag>>;
 
-template auto generate_state_graph<tyr::planning::LiftedTag>(TaskSearchContext<tyr::planning::LiftedTag>&)
-    -> std::unique_ptr<StateGraph<tyr::planning::LiftedTag>>;
+template auto
+generate_state_graph<tyr::planning::LiftedTag>(TaskSearchContext<tyr::planning::LiftedTag>&) -> std::unique_ptr<StateGraph<tyr::planning::LiftedTag>>;
 
 template auto generate_state_graph<tyr::planning::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::GroundTag>&,
                                                                                                         uint_t,

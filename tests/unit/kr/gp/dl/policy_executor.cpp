@@ -9,6 +9,9 @@
 #include <tyr/planning/planning.hpp>
 #include <vector>
 
+namespace runir::tests
+{
+
 namespace
 {
 
@@ -20,8 +23,6 @@ std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "plann
 
 TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesExecuteOnExampleTasks)
 {
-    namespace gp = runir::kr::gp;
-    namespace gp_dl = runir::kr::gp::dl;
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
@@ -29,26 +30,26 @@ TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesExecuteOnExampleTasks)
     {
         std::filesystem::path domain;
         std::filesystem::path task;
-        gp_dl::PolicySpecification specification;
+        kr::gp::dl::PolicySpecification specification;
     };
 
     const auto cases = std::vector<Case> {
         { benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl",
           benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl",
-          gp_dl::PolicySpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
+          kr::gp::dl::PolicySpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
         { benchmark_prefix() / "tests" / "classical" / "blocks_3" / "domain.pddl",
           benchmark_prefix() / "tests" / "classical" / "blocks_3" / "test-1.pddl",
-          gp_dl::PolicySpecification::BLOCKS3OPS_FRANCE_ET_AL_AAAI2021 },
+          kr::gp::dl::PolicySpecification::BLOCKS3OPS_FRANCE_ET_AL_AAAI2021 },
         { benchmark_prefix() / "tests" / "classical" / "spanner" / "domain.pddl",
           benchmark_prefix() / "tests" / "classical" / "spanner" / "test-1.pddl",
-          gp_dl::PolicySpecification::SPANNER_FRANCE_ET_AL_AAAI2021 },
+          kr::gp::dl::PolicySpecification::SPANNER_FRANCE_ET_AL_AAAI2021 },
         { benchmark_prefix() / "tests" / "classical" / "delivery" / "domain.pddl",
           benchmark_prefix() / "tests" / "classical" / "delivery" / "test-1.pddl",
-          gp_dl::PolicySpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
+          kr::gp::dl::PolicySpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
     };
 
-    auto dl_repository_factory = runir::kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = gp::RepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
+    auto repository_factory = kr::gp::RepositoryFactory();
 
     for (const auto& test_case : cases)
     {
@@ -57,15 +58,14 @@ TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesExecuteOnExampleTasks)
         auto execution_context = tyr::ExecutionContext::create(1);
         auto lifted_task = p::Task<p::LiftedTag>(planning_task);
         auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-        auto context = runir::datasets::TaskSearchContext<p::GroundTag>(task, execution_context);
-        const auto state_graph = runir::datasets::generate_state_graph(context);
-        const auto annotated_state_graph =
-            runir::datasets::annotate_state_graph(context, *state_graph, runir::datasets::StateGraphCostMode::UNIT_COST);
+        auto context = datasets::TaskSearchContext<p::GroundTag>(task, execution_context);
+        const auto state_graph = datasets::generate_state_graph(context);
+        const auto annotated_state_graph = datasets::annotate_state_graph(context, *state_graph, datasets::StateGraphCostMode::UNIT_COST);
 
         auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
         auto repository = repository_factory.create(dl_repository);
-        const auto policy = gp_dl::PolicyFactory::create(test_case.specification, task->get_domain().get_domain(), repository);
-        const auto result = gp::execute_policy(*annotated_state_graph, policy);
+        const auto policy = kr::gp::dl::PolicyFactory::create(test_case.specification, task->get_domain().get_domain(), repository);
+        const auto result = kr::gp::execute_policy(*annotated_state_graph, policy);
 
         EXPECT_TRUE(result.is_successful()) << test_case.domain;
         EXPECT_TRUE(result.deadend_transitions.empty()) << test_case.domain;
@@ -74,3 +74,5 @@ TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesExecuteOnExampleTasks)
         EXPECT_GT(result.graph.get_num_vertices(), 0) << test_case.domain;
     }
 }
+
+}  // namespace runir::tests

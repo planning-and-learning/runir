@@ -7,10 +7,6 @@
 namespace runir::kr::gp::dl
 {
 
-namespace fp = tyr::formalism::planning;
-
-using namespace nanobind::literals;
-
 void bind_policy_factory(nb::module_& m)
 {
     nb::enum_<PolicySpecification>(m, "PolicySpecification")
@@ -22,40 +18,40 @@ void bind_policy_factory(nb::module_& m)
     nb::class_<PolicyFactory>(m, "PolicyFactory")
         .def_static(
             "create",
-            [](PolicySpecification specification, fp::PlanningDomain domain, runir::kr::gp::Repository& repository)
+            [](PolicySpecification specification, tyr::formalism::planning::PlanningDomain domain, runir::kr::gp::Repository& repository)
             { return PolicyFactory::create(specification, domain.get_domain(), repository); },
-            "specification"_a,
-            "domain"_a,
-            "repository"_a,
+            nb::arg("specification"),
+            nb::arg("domain"),
+            nb::arg("repository"),
             nb::keep_alive<0, 3>())
-        .def_static("create_description", &PolicyFactory::create_description, "specification"_a)
+        .def_static("create_description", &PolicyFactory::create_description, nb::arg("specification"))
         .def_static(
             "create_gripper_france_et_al_aaai2021",
-            [](fp::PlanningDomain domain, runir::kr::gp::Repository& repository)
+            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::gp::Repository& repository)
             { return PolicyFactory::create_gripper_france_et_al_aaai2021(domain.get_domain(), repository); },
-            "domain"_a,
-            "repository"_a,
+            nb::arg("domain"),
+            nb::arg("repository"),
             nb::keep_alive<0, 2>())
         .def_static(
             "create_blocks3ops_france_et_al_aaai2021",
-            [](fp::PlanningDomain domain, runir::kr::gp::Repository& repository)
+            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::gp::Repository& repository)
             { return PolicyFactory::create_blocks3ops_france_et_al_aaai2021(domain.get_domain(), repository); },
-            "domain"_a,
-            "repository"_a,
+            nb::arg("domain"),
+            nb::arg("repository"),
             nb::keep_alive<0, 2>())
         .def_static(
             "create_spanner_france_et_al_aaai2021",
-            [](fp::PlanningDomain domain, runir::kr::gp::Repository& repository)
+            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::gp::Repository& repository)
             { return PolicyFactory::create_spanner_france_et_al_aaai2021(domain.get_domain(), repository); },
-            "domain"_a,
-            "repository"_a,
+            nb::arg("domain"),
+            nb::arg("repository"),
             nb::keep_alive<0, 2>())
         .def_static(
             "create_delivery_france_et_al_aaai2021",
-            [](fp::PlanningDomain domain, runir::kr::gp::Repository& repository)
+            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::gp::Repository& repository)
             { return PolicyFactory::create_delivery_france_et_al_aaai2021(domain.get_domain(), repository); },
-            "domain"_a,
-            "repository"_a,
+            nb::arg("domain"),
+            nb::arg("repository"),
             nb::keep_alive<0, 2>())
         .def_static("create_gripper_france_et_al_aaai2021_description", &PolicyFactory::create_gripper_france_et_al_aaai2021_description)
         .def_static("create_blocks3ops_france_et_al_aaai2021_description", &PolicyFactory::create_blocks3ops_france_et_al_aaai2021_description)
