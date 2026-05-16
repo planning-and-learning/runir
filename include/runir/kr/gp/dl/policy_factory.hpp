@@ -20,7 +20,11 @@ enum class PolicySpecification
 class PolicyFactory
 {
 public:
+    static PolicyView create_empty(Repository& repository);
+
     static PolicyView create(PolicySpecification specification, tyr::formalism::planning::DomainView domain, Repository& repository);
+
+    static std::string create_empty_description();
 
     static std::string create_description(PolicySpecification specification);
 

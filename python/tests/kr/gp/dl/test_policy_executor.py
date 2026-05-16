@@ -40,6 +40,11 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
 
     dl_repository = ConstructorRepositoryFactory().create(planning_domain)
     policy_repository = PolicyRepositoryFactory().create(dl_repository)
+    empty_policy = PolicyFactory.create_empty(policy_repository)
+    empty_policy_description = str(empty_policy)
+    assert empty_policy_description == str(parse_policy(empty_policy_description, planning_domain, policy_repository))
+    assert syntactic_complexity(empty_policy) == 0
+
     policy = PolicyFactory.create(
         PolicySpecification.GRIPPER_FRANCE_ET_AL_AAAI2021,
         planning_domain,

@@ -1,5 +1,7 @@
 #include "module.hpp"
 
+#include <nanobind/stl/chrono.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <pyrunir/graphs/graph.hpp>
 #include <runir/datasets/formatter.hpp>
@@ -18,31 +20,6 @@ using runir::graphs::bind_readable_graph;
 
 namespace
 {
-
-auto get_search_status_name(tyr::planning::SearchStatus status) -> const char*
-{
-    switch (status)
-    {
-        case tyr::planning::SearchStatus::IN_PROGRESS:
-            return "IN_PROGRESS";
-        case tyr::planning::SearchStatus::OUT_OF_TIME:
-            return "OUT_OF_TIME";
-        case tyr::planning::SearchStatus::OUT_OF_MEMORY:
-            return "OUT_OF_MEMORY";
-        case tyr::planning::SearchStatus::OUT_OF_STATES:
-            return "OUT_OF_STATES";
-        case tyr::planning::SearchStatus::FAILED:
-            return "FAILED";
-        case tyr::planning::SearchStatus::EXHAUSTED:
-            return "EXHAUSTED";
-        case tyr::planning::SearchStatus::SOLVED:
-            return "SOLVED";
-        case tyr::planning::SearchStatus::UNSOLVABLE:
-            return "UNSOLVABLE";
-    }
-
-    return "UNKNOWN";
-}
 
 template<tyr::planning::TaskKind Kind>
 void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const char* function_prefix)
@@ -116,7 +93,7 @@ void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const c
             "graph",
             [](const Result& self) -> const Graph& { return *self.graph; },
             nb::rv_policy::reference_internal)
-        .def_prop_ro("status", [](const Result& self) { return get_search_status_name(self.status); });
+        .def_ro("status", &Result::status);
 
     m.def((std::string("generate_") + function_prefix + "_state_graph").c_str(),
           [](TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& options)

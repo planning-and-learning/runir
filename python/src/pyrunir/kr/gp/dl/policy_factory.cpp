@@ -16,6 +16,8 @@ void bind_policy_factory(nb::module_& m)
         .value("DELIVERY_FRANCE_ET_AL_AAAI2021", PolicySpecification::DELIVERY_FRANCE_ET_AL_AAAI2021);
 
     nb::class_<PolicyFactory>(m, "PolicyFactory")
+        .def_static("create_empty", &PolicyFactory::create_empty, nb::arg("repository"), nb::keep_alive<0, 1>())
+        .def_static("create_empty_description", &PolicyFactory::create_empty_description)
         .def_static(
             "create",
             [](PolicySpecification specification, tyr::formalism::planning::PlanningDomain domain, runir::kr::gp::Repository& repository)

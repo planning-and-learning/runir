@@ -8,9 +8,25 @@
 namespace runir::kr::gp::dl
 {
 
+PolicyView PolicyFactory::create_empty(Repository& repository)
+{
+    auto data = tyr::Data<Policy> {};
+    return repository.get_or_create(data).first;
+}
+
 PolicyView PolicyFactory::create(PolicySpecification specification, tyr::formalism::planning::DomainView domain, Repository& repository)
 {
     return parse_policy(create_description(specification), domain, repository);
+}
+
+std::string PolicyFactory::create_empty_description()
+{
+    return R"(
+(
+  (:features)
+  (:rules)
+)
+)";
 }
 
 std::string PolicyFactory::create_description(PolicySpecification specification)
