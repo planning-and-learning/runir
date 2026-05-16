@@ -39,6 +39,20 @@ concept CategoryTag = std::same_as<T, ConceptTag> || std::same_as<T, RoleTag> ||
 using CategoryTags = tyr::TypeList<ConceptTag, RoleTag, BooleanTag, NumericalTag>;
 
 /**
+ * Truth values
+ */
+
+struct TrueTag
+{
+    static constexpr auto keyword = "true";
+};
+
+struct FalseTag
+{
+    static constexpr auto keyword = "false";
+};
+
+/**
  * Constructor tags
  */
 

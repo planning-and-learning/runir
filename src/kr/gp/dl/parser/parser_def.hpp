@@ -50,24 +50,24 @@ inline auto identifier_parser() { return raw[lexeme[(alpha | char_('_')) >> *(al
 
 inline auto quoted_string_parser() { return lexeme[lit('"') >> raw[*('\\' >> char_ | (char_ - '"'))] >> lit('"')]; }
 
-const auto boolean_feature_def = (lit("(") >> lit("boolean")) > identifier_parser() > quoted_string_parser() > quoted_string_parser()
+const auto boolean_feature_def = (lit("(") >> lit(BooleanFeature::keyword)) > identifier_parser() > quoted_string_parser() > quoted_string_parser()
                                  > runir::kr::dl::grammar::parser::boolean_parser() > lit(")");
-const auto numerical_feature_def = (lit("(") >> lit("numerical")) > identifier_parser() > quoted_string_parser() > quoted_string_parser()
+const auto numerical_feature_def = (lit("(") >> lit(NumericalFeature::keyword)) > identifier_parser() > quoted_string_parser() > quoted_string_parser()
                                    > runir::kr::dl::grammar::parser::numerical_parser() > lit(")");
 const auto feature_def = boolean_feature | numerical_feature;
 
-const auto positive_condition_def = lit("positive") >> attr(Positive {});
-const auto negative_condition_def = lit("negative") >> attr(Negative {});
-const auto equal_zero_condition_def = lit("equal_zero") >> attr(EqualZero {});
-const auto greater_zero_condition_def = lit("greater_zero") >> attr(GreaterZero {});
+const auto positive_condition_def = lit(Positive::keyword) >> attr(Positive {});
+const auto negative_condition_def = lit(Negative::keyword) >> attr(Negative {});
+const auto equal_zero_condition_def = lit(EqualZero::keyword) >> attr(EqualZero {});
+const auto greater_zero_condition_def = lit(GreaterZero::keyword) >> attr(GreaterZero {});
 const auto condition_observation_def = positive_condition | negative_condition | equal_zero_condition | greater_zero_condition;
 const auto condition_def = (lit("(") >> condition_observation) > identifier_parser() > lit(")");
 
-const auto positive_effect_def = lit("positive") >> attr(Positive {});
-const auto negative_effect_def = lit("negative") >> attr(Negative {});
-const auto unchanged_effect_def = lit("unchanged") >> attr(Unchanged {});
-const auto increases_effect_def = lit("increases") >> attr(Increases {});
-const auto decreases_effect_def = lit("decreases") >> attr(Decreases {});
+const auto positive_effect_def = lit(Positive::keyword) >> attr(Positive {});
+const auto negative_effect_def = lit(Negative::keyword) >> attr(Negative {});
+const auto unchanged_effect_def = lit(Unchanged::keyword) >> attr(Unchanged {});
+const auto increases_effect_def = lit(Increases::keyword) >> attr(Increases {});
+const auto decreases_effect_def = lit(Decreases::keyword) >> attr(Decreases {});
 const auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
 const auto effect_def = (lit("(") >> effect_observation) > identifier_parser() > lit(")");
 

@@ -19,7 +19,7 @@ std::string quoted(const String& value)
     return fmt::format("\"{}\"", value.str());
 }
 
-inline std::string boolean(bool value) { return value ? "true" : "false"; }
+inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
 
 template<typename View>
 std::string variant(View view)
@@ -70,13 +70,13 @@ std::string denotation(tyr::View<tyr::Index<runir::kr::dl::semantics::Denotation
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
-        auto text = std::string("concept");
+        auto text = std::string(Category::name);
         append_set(text, view);
         return text;
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
     {
-        auto text = std::string("role");
+        auto text = std::string(Category::name);
         append_relation(text, view);
         return text;
     }

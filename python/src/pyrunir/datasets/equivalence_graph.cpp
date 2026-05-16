@@ -16,6 +16,11 @@ using runir::graphs::bind_readable_graph;
 
 void bind_equivalence_graph(nb::module_& m)
 {
+    nb::class_<EquivalenceGraphGenerationOptions>(m, "EquivalenceGraphGenerationOptions")
+        .def(nb::init<>())
+        .def_rw("state_graph_options", &EquivalenceGraphGenerationOptions::state_graph_options)
+        .def_rw("policy_mode", &EquivalenceGraphGenerationOptions::policy_mode);
+
     auto vertex_label = nb::class_<EquivalenceVertexLabel>(m, "EquivalenceVertexLabel")  //
                             .def(nb::init<>())
                             .def_rw("state_graph_index", &EquivalenceVertexLabel::state_graph_index)

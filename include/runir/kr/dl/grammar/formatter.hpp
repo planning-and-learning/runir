@@ -21,7 +21,7 @@ std::string quoted(const String& value)
     return fmt::format("\"{}\"", value.str());
 }
 
-inline std::string boolean(bool value) { return value ? "true" : "false"; }
+inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
 
 template<typename View>
 std::string variant(View view)

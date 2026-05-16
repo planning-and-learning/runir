@@ -99,11 +99,11 @@ inline auto predicate_name_string_parser()
 
 inline auto object_name_string_parser() { return lexeme[omit[lit('"')]] > raw[lexeme[alpha >> *(alnum | char_('-') | char_('_'))]] > lexeme[omit[lit('"')]]; }
 
-inline auto bool_string_parser()
-{
-    return x3::lexeme[(x3::lit("true") >> x3::attr(true)) | (x3::lit("false") >> x3::attr(false)) | (x3::lit("1") >> x3::attr(true))
-                      | (x3::lit("0") >> x3::attr(false))];
-}
+inline auto true_string_parser() { return x3::lit(runir::kr::dl::TrueTag::keyword) >> x3::attr(true); }
+
+inline auto false_string_parser() { return x3::lit(runir::kr::dl::FalseTag::keyword) >> x3::attr(false); }
+
+inline auto bool_string_parser() { return x3::lexeme[true_string_parser() | false_string_parser()]; }
 
 template<typename Parser>
 auto with_constructor_parentheses(Parser parser)

@@ -19,6 +19,31 @@ using runir::graphs::bind_readable_graph;
 namespace
 {
 
+auto get_search_status_name(tyr::planning::SearchStatus status) -> const char*
+{
+    switch (status)
+    {
+        case tyr::planning::SearchStatus::IN_PROGRESS:
+            return "IN_PROGRESS";
+        case tyr::planning::SearchStatus::OUT_OF_TIME:
+            return "OUT_OF_TIME";
+        case tyr::planning::SearchStatus::OUT_OF_MEMORY:
+            return "OUT_OF_MEMORY";
+        case tyr::planning::SearchStatus::OUT_OF_STATES:
+            return "OUT_OF_STATES";
+        case tyr::planning::SearchStatus::FAILED:
+            return "FAILED";
+        case tyr::planning::SearchStatus::EXHAUSTED:
+            return "EXHAUSTED";
+        case tyr::planning::SearchStatus::SOLVED:
+            return "SOLVED";
+        case tyr::planning::SearchStatus::UNSOLVABLE:
+            return "UNSOLVABLE";
+    }
+
+    return "UNKNOWN";
+}
+
 template<tyr::planning::TaskKind Kind>
 void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const char* function_prefix)
 {
@@ -32,6 +57,8 @@ void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const c
     using StaticAnnotatedGraph = StaticAnnotatedStateGraph<Kind>;
     using BackwardAnnotatedGraph = graphs::BackwardStaticGraphView<StaticAnnotatedGraph>;
     using AnnotatedGraph = AnnotatedStateGraph<Kind>;
+    using DynamicAnnotatedGraph = DynamicAnnotatedStateGraph<Kind>;
+    using Result = StateGraphGenerationResult<Kind>;
 
     nb::class_<VertexLabel>(m, (std::string(class_prefix) + "StateGraphVertexLabel").c_str())  //
         .def_ro("state", &VertexLabel::state);
@@ -78,23 +105,46 @@ void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const c
     annotated_graph.def(nb::init<const AnnotatedBuilder&>());
     bind_bidirectional_static_graph(annotated_graph);
 
-    m.def(
-        (std::string("generate_") + function_prefix + "_state_graph").c_str(),
-        [](TaskSearchContext<Kind>& context) { return std::shared_ptr<Graph>(generate_state_graph<Kind>(context)); },
-        "context"_a);
-    m.def(
-        (std::string("annotate_") + function_prefix + "_state_graph").c_str(),
-        [](TaskSearchContext<Kind>& context, const Graph& graph, StateGraphCostMode cost_mode)
-        { return std::shared_ptr<AnnotatedGraph>(annotate_state_graph<Kind>(context, graph, cost_mode)); },
-        "context"_a,
-        "graph"_a,
-        "cost_mode"_a);
+    auto dynamic_annotated_graph = nb::class_<DynamicAnnotatedGraph>(m, (std::string(class_prefix) + "DynamicAnnotatedStateGraph").c_str());
+    dynamic_annotated_graph.def(nb::init<>()).def("clear", &DynamicAnnotatedGraph::clear);
+    bind_readable_graph(dynamic_annotated_graph);
+    bind_forward_graph(dynamic_annotated_graph);
+    bind_bidirectional_graph(dynamic_annotated_graph);
+
+    nb::class_<Result>(m, (std::string(class_prefix) + "StateGraphGenerationResult").c_str())
+        .def_prop_ro(
+            "graph",
+            [](const Result& self) -> const Graph& { return *self.graph; },
+            nb::rv_policy::reference_internal)
+        .def_prop_ro("status", [](const Result& self) { return get_search_status_name(self.status); });
+
+    m.def((std::string("generate_") + function_prefix + "_state_graph").c_str(),
+          [](TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& options)
+          { return std::shared_ptr<Graph>(generate_state_graph<Kind>(context, options)); },
+          "context"_a,
+          "options"_a = StateGraphGenerationOptions());
+    m.def((std::string("generate_") + function_prefix + "_state_graph_result").c_str(),
+          [](TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& options)
+          { return std::make_shared<Result>(generate_state_graph_result<Kind>(context, options)); },
+          "context"_a,
+          "options"_a = StateGraphGenerationOptions());
+    m.def((std::string("annotate_") + function_prefix + "_state_graph").c_str(),
+          [](TaskSearchContext<Kind>& context, const Graph& graph, StateGraphCostMode cost_mode)
+          { return std::shared_ptr<AnnotatedGraph>(annotate_state_graph<Kind>(context, graph, cost_mode)); },
+          "context"_a,
+          "graph"_a,
+          "cost_mode"_a);
 }
 
 }  // namespace
 
 void bind_state_graph(nb::module_& m)
 {
+    nb::class_<StateGraphGenerationOptions>(m, "StateGraphGenerationOptions")
+        .def(nb::init<>())
+        .def_rw("max_num_states", &StateGraphGenerationOptions::max_num_states)
+        .def_rw("max_time", &StateGraphGenerationOptions::max_time);
+
     auto edge_label = nb::class_<StateGraphEdgeLabel>(m, "StateGraphEdgeLabel")  //
                           .def_ro("action", &StateGraphEdgeLabel::action)
                           .def_ro("cost", &StateGraphEdgeLabel::cost);

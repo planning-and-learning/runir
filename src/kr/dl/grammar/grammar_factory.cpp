@@ -15,6 +15,8 @@ namespace runir::kr::dl::grammar
 namespace
 {
 
+std::string_view boolean_keyword(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
+
 std::string quote(std::string_view value)
 {
     auto result = std::string { "\"" };
@@ -133,7 +135,7 @@ void add_boolean_atomic_state(std::stringstream& out, std::vector<std::string>& 
     {
         const auto head = next_non_terminal<runir::kr::dl::BooleanTag>(next_boolean);
         heads.push_back(head);
-        add_rule(out, head, std::string(ast::BooleanAtomicState::keyword) + " " + quote(predicate_name) + " " + (polarity ? "true" : "false"));
+        add_rule(out, head, std::string(ast::BooleanAtomicState::keyword) + " " + quote(predicate_name) + " " + std::string(boolean_keyword(polarity)));
     }
 }
 
@@ -144,7 +146,7 @@ void add_atomic_goal(std::stringstream& out, std::vector<std::string>& heads, si
     {
         const auto head = next_non_terminal<Category>(next_index);
         heads.push_back(head);
-        add_rule(out, head, std::string(keyword) + " " + quote(predicate_name) + " " + (polarity ? "true" : "false"));
+        add_rule(out, head, std::string(keyword) + " " + quote(predicate_name) + " " + std::string(boolean_keyword(polarity)));
     }
 }
 

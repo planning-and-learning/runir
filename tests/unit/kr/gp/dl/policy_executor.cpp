@@ -65,13 +65,17 @@ TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesExecuteOnExampleTasks)
         auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
         auto repository = repository_factory.create(dl_repository);
         const auto policy = kr::gp::dl::PolicyFactory::create(test_case.specification, task->get_domain().get_domain(), repository);
-        const auto result = kr::gp::execute_policy(*annotated_state_graph, policy);
+        const auto result = kr::gp::prove_solution(*annotated_state_graph, policy);
 
         EXPECT_TRUE(result.is_successful()) << test_case.domain;
         EXPECT_TRUE(result.deadend_transitions.empty()) << test_case.domain;
         EXPECT_TRUE(result.open_states.empty()) << test_case.domain;
         EXPECT_TRUE(result.cycle.empty()) << test_case.domain;
         EXPECT_GT(result.graph.get_num_vertices(), 0) << test_case.domain;
+
+        const auto search_result = kr::gp::find_solution(context, policy);
+        EXPECT_EQ(search_result.status, p::SearchStatus::SOLVED) << test_case.domain;
+        EXPECT_TRUE(search_result.plan) << test_case.domain;
     }
 }
 

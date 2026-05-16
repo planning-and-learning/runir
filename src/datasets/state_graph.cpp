@@ -168,33 +168,58 @@ auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexInde
 }  // namespace
 
 template<tyr::planning::TaskKind Kind>
-auto generate_state_graph(TaskSearchContext<Kind>& context) -> std::unique_ptr<StateGraph<Kind>>
+auto create_astar_options(const StateGraphGenerationOptions& generation_options)
+{
+    auto options = tyr::planning::astar_eager::Options<Kind> {};
+    options.max_num_states = generation_options.max_num_states;
+    options.max_time = generation_options.max_time;
+    return options;
+}
+
+template<tyr::planning::TaskKind Kind>
+auto generate_state_graph_result(TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& generation_options) -> StateGraphGenerationResult<Kind>
 {
     auto heuristic = tyr::planning::BlindHeuristic<Kind> {};
     auto event_handler = std::make_shared<StateGraphEventHandler<Kind>>();
-    auto options = tyr::planning::astar_eager::Options<Kind> {};
+    auto options = create_astar_options<Kind>(generation_options);
     options.event_handler = event_handler;
     options.goal_strategy = tyr::planning::ExhaustiveGoalStrategy<Kind>::create();
     options.pruning_strategy = tyr::planning::PruningStrategy<Kind>::create();
 
-    [[maybe_unused]] const auto result = tyr::planning::astar_eager::find_solution(*context.task, *context.successor_generator, heuristic, options);
+    const auto result = tyr::planning::astar_eager::find_solution(*context.task, *context.successor_generator, heuristic, options);
 
-    return std::move(*event_handler).release();
+    return { std::move(*event_handler).release(), result.status };
+}
+
+template<tyr::planning::TaskKind Kind>
+auto generate_state_graph(TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& generation_options) -> std::unique_ptr<StateGraph<Kind>>
+{
+    return generate_state_graph_result(context, generation_options).graph;
 }
 
 template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
-auto generate_state_graph(TaskSearchContext<Kind>& context, uint_t state_graph_index, Policy& policy) -> std::unique_ptr<StateGraph<Kind>>
+auto generate_state_graph_result(TaskSearchContext<Kind>& context,
+                                 uint_t state_graph_index,
+                                 Policy& policy,
+                                 const StateGraphGenerationOptions& generation_options) -> StateGraphGenerationResult<Kind>
 {
     auto heuristic = tyr::planning::BlindHeuristic<Kind> {};
     auto event_handler = std::make_shared<StateGraphEventHandler<Kind>>();
-    auto options = tyr::planning::astar_eager::Options<Kind> {};
+    auto options = create_astar_options<Kind>(generation_options);
     options.event_handler = event_handler;
     options.goal_strategy = tyr::planning::ExhaustiveGoalStrategy<Kind>::create();
     options.pruning_strategy = std::make_shared<PolicyStateGraphPruningStrategy<Kind, Policy>>(state_graph_index, policy);
 
-    [[maybe_unused]] const auto result = tyr::planning::astar_eager::find_solution(*context.task, *context.successor_generator, heuristic, options);
+    const auto result = tyr::planning::astar_eager::find_solution(*context.task, *context.successor_generator, heuristic, options);
 
-    return std::move(*event_handler).release();
+    return { std::move(*event_handler).release(), result.status };
+}
+
+template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+auto generate_state_graph(TaskSearchContext<Kind>& context, uint_t state_graph_index, Policy& policy, const StateGraphGenerationOptions& generation_options)
+    -> std::unique_ptr<StateGraph<Kind>>
+{
+    return generate_state_graph_result(context, state_graph_index, policy, generation_options).graph;
 }
 
 template<tyr::planning::TaskKind Kind>
@@ -244,20 +269,40 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context,
     return std::make_unique<AnnotatedStateGraph<Kind>>(std::move(builder));
 }
 
-template auto
-generate_state_graph<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&) -> std::unique_ptr<StateGraph<tyr::planning::GroundTag>>;
+template auto generate_state_graph_result<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&,
+                                                                    const StateGraphGenerationOptions&) -> StateGraphGenerationResult<tyr::planning::GroundTag>;
 
-template auto
-generate_state_graph<tyr::planning::LiftedTag>(TaskSearchContext<tyr::planning::LiftedTag>&) -> std::unique_ptr<StateGraph<tyr::planning::LiftedTag>>;
+template auto generate_state_graph_result<tyr::planning::LiftedTag>(TaskSearchContext<tyr::planning::LiftedTag>&,
+                                                                    const StateGraphGenerationOptions&) -> StateGraphGenerationResult<tyr::planning::LiftedTag>;
+
+template auto generate_state_graph<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&,
+                                                             const StateGraphGenerationOptions&) -> std::unique_ptr<StateGraph<tyr::planning::GroundTag>>;
+
+template auto generate_state_graph<tyr::planning::LiftedTag>(TaskSearchContext<tyr::planning::LiftedTag>&,
+                                                             const StateGraphGenerationOptions&) -> std::unique_ptr<StateGraph<tyr::planning::LiftedTag>>;
+
+template auto generate_state_graph_result<tyr::planning::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::GroundTag>&,
+                                                                                                               uint_t,
+                                                                                                               EquivalencePolicy<IdentityEquivalenceTag>&,
+                                                                                                               const StateGraphGenerationOptions&)
+    -> StateGraphGenerationResult<tyr::planning::GroundTag>;
+
+template auto generate_state_graph_result<tyr::planning::LiftedTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::LiftedTag>&,
+                                                                                                               uint_t,
+                                                                                                               EquivalencePolicy<IdentityEquivalenceTag>&,
+                                                                                                               const StateGraphGenerationOptions&)
+    -> StateGraphGenerationResult<tyr::planning::LiftedTag>;
 
 template auto generate_state_graph<tyr::planning::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::GroundTag>&,
                                                                                                         uint_t,
-                                                                                                        EquivalencePolicy<IdentityEquivalenceTag>&)
+                                                                                                        EquivalencePolicy<IdentityEquivalenceTag>&,
+                                                                                                        const StateGraphGenerationOptions&)
     -> std::unique_ptr<StateGraph<tyr::planning::GroundTag>>;
 
 template auto generate_state_graph<tyr::planning::LiftedTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::LiftedTag>&,
                                                                                                         uint_t,
-                                                                                                        EquivalencePolicy<IdentityEquivalenceTag>&)
+                                                                                                        EquivalencePolicy<IdentityEquivalenceTag>&,
+                                                                                                        const StateGraphGenerationOptions&)
     -> std::unique_ptr<StateGraph<tyr::planning::LiftedTag>>;
 
 template auto annotate_state_graph<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&,

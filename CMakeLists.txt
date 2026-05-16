@@ -49,6 +49,11 @@ else()
     add_compile_definitions(RUNIR_ENABLE_FMT_FORMATTERS=0)
 endif()
 
+option(RUNIR_HEADER_INSTANTIATION "Enable template definitions in public headers at higher compile time costs." OFF)
+if(RUNIR_HEADER_INSTANTIATION)
+    add_compile_definitions(RUNIR_HEADER_INSTANTIATION)
+endif()
+
 option(RUNIR_BUILD_EXECUTABLES "Build runir executables." OFF)
 option(RUNIR_BUILD_PYRUNIR "Build pyrunir Python bindings." OFF)
 

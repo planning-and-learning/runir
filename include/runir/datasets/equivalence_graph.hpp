@@ -86,15 +86,28 @@ using DynamicAnnotatedEquivalenceGraph = graphs::DynamicGraph<AnnotatedEquivalen
 template<tyr::planning::TaskKind Kind>
 struct EquivalenceGraphConstructionResult
 {
-    std::vector<std::unique_ptr<StateGraph<Kind>>> state_graphs;
+    std::vector<StateGraphGenerationResult<Kind>> state_graph_results;
     std::unique_ptr<EquivalenceGraph> graph;
 };
 
+struct EquivalenceGraphGenerationOptions
+{
+    StateGraphGenerationOptions state_graph_options;
+    EquivalencePolicyMode policy_mode = EquivalencePolicyMode::IDENTITY;
+};
+
 template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
-auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, Policy& policy) -> EquivalenceGraphConstructionResult<Kind>;
+auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
+                                Policy& policy,
+                                const StateGraphGenerationOptions& state_graph_options = StateGraphGenerationOptions())
+    -> EquivalenceGraphConstructionResult<Kind>;
 
 template<tyr::planning::TaskKind Kind>
 auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, EquivalencePolicyMode policy_mode) -> EquivalenceGraphConstructionResult<Kind>;
+
+template<tyr::planning::TaskKind Kind>
+auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, const EquivalenceGraphGenerationOptions& options = EquivalenceGraphGenerationOptions())
+    -> EquivalenceGraphConstructionResult<Kind>;
 
 }  // namespace runir::datasets
 

@@ -9,6 +9,7 @@
 #include <runir/kr/dl/grammar/parser.hpp>
 #include <runir/kr/gp/dl/parser.hpp>
 #include <runir/kr/gp/dl/policy_factory.hpp>
+#include <runir/kr/gp/formatter.hpp>
 #include <runir/kr/gp/repository.hpp>
 #include <string>
 #include <tyr/common/equal_to.hpp>
@@ -56,6 +57,10 @@ TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesParse)
 
         EXPECT_EQ(policy.get_index(), tyr::Index<kr::gp::Policy>(0));
         EXPECT_EQ(repository.template size<kr::gp::Policy>(), 1);
+
+        const auto formatted = fmt::format("{}", policy);
+        const auto reparsed = kr::gp::dl::parse_policy(formatted, planning_domain.get_domain(), repository);
+        EXPECT_EQ(fmt::format("{}", reparsed), formatted);
     }
 }
 
@@ -99,6 +104,10 @@ TEST(RunirTests, GeneralPolicyParserParsesConditionsAndEffects)
     EXPECT_EQ(repository.template size<kr::gp::Feature<kr::gp::dl::NumericalFeature>>(), 1);
     EXPECT_EQ(repository.template size<kr::gp::ConditionVariant>(), 4);
     EXPECT_EQ(repository.template size<kr::gp::EffectVariant>(), 5);
+
+    const auto formatted = fmt::format("{}", policy);
+    const auto reparsed = kr::gp::dl::parse_policy(formatted, planning_domain.get_domain(), repository);
+    EXPECT_EQ(fmt::format("{}", reparsed), formatted);
 }
 
 TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)

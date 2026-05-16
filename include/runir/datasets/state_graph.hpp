@@ -27,8 +27,10 @@
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 
+#include <chrono>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <tuple>
 #include <tyr/planning/planning.hpp>
 
@@ -88,15 +90,43 @@ using AnnotatedStateGraph = graphs::BidirectionalStaticGraph<AnnotatedStateGraph
 template<tyr::planning::TaskKind Kind>
 using DynamicAnnotatedStateGraph = graphs::DynamicGraph<AnnotatedStateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
 
+struct StateGraphGenerationOptions
+{
+    uint_t max_num_states = std::numeric_limits<uint_t>::max();
+    std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
+};
+
 template<tyr::planning::TaskKind Kind>
-auto generate_state_graph(TaskSearchContext<Kind>& context) -> std::unique_ptr<StateGraph<Kind>>;
+struct StateGraphGenerationResult
+{
+    std::unique_ptr<StateGraph<Kind>> graph;
+    tyr::planning::SearchStatus status = tyr::planning::SearchStatus::IN_PROGRESS;
+};
+
+template<tyr::planning::TaskKind Kind>
+auto generate_state_graph_result(TaskSearchContext<Kind>& context,
+                                 const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> StateGraphGenerationResult<Kind>;
+
+template<tyr::planning::TaskKind Kind>
+auto generate_state_graph(TaskSearchContext<Kind>& context,
+                          const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> std::unique_ptr<StateGraph<Kind>>;
 
 template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
-auto generate_state_graph(TaskSearchContext<Kind>& context, uint_t state_graph_index, Policy& policy) -> std::unique_ptr<StateGraph<Kind>>;
+auto generate_state_graph_result(TaskSearchContext<Kind>& context,
+                                 uint_t state_graph_index,
+                                 Policy& policy,
+                                 const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> StateGraphGenerationResult<Kind>;
+
+template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+auto generate_state_graph(TaskSearchContext<Kind>& context,
+                          uint_t state_graph_index,
+                          Policy& policy,
+                          const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> std::unique_ptr<StateGraph<Kind>>;
 
 template<tyr::planning::TaskKind Kind>
-auto annotate_state_graph(TaskSearchContext<Kind>& context, const StateGraph<Kind>& graph, StateGraphCostMode cost_mode)
-    -> std::unique_ptr<AnnotatedStateGraph<Kind>>;
+auto annotate_state_graph(TaskSearchContext<Kind>& context,
+                          const StateGraph<Kind>& graph,
+                          StateGraphCostMode cost_mode) -> std::unique_ptr<AnnotatedStateGraph<Kind>>;
 
 }  // namespace runir::datasets
 
