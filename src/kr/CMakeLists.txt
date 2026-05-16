@@ -1,4 +1,4 @@
-add_library(kr
+add_library(kr SHARED
     dl/cnf_grammar/generate.cpp
     dl/cnf_grammar/translate.cpp
     dl/grammar/grammar_factory.cpp
@@ -34,15 +34,13 @@ target_compile_definitions(kr
         FMT_HEADER_ONLY
 )
 
-if(RUNIR_BUILD_SHARED)
-    if(APPLE)
-        set(RUNIR_KR_LIBRARY_ORIGIN "@loader_path")
-    elseif(UNIX)
-        set(RUNIR_KR_LIBRARY_ORIGIN "$ORIGIN")
-    endif()
-
-    set_target_properties(kr PROPERTIES INSTALL_RPATH "${RUNIR_KR_LIBRARY_ORIGIN}")
+if(APPLE)
+    set(RUNIR_KR_LIBRARY_ORIGIN "@loader_path")
+elseif(UNIX)
+    set(RUNIR_KR_LIBRARY_ORIGIN "$ORIGIN")
 endif()
+
+set_target_properties(kr PROPERTIES INSTALL_RPATH "${RUNIR_KR_LIBRARY_ORIGIN}")
 
 install(TARGETS kr
     EXPORT runirTargets

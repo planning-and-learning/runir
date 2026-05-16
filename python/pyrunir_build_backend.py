@@ -167,10 +167,8 @@ def _prepare_native_build() -> None:
     _prepend_env_paths("DYLD_LIBRARY_PATH", native_library_dirs)
     _prepend_cmake_args(
         f"-DCMAKE_PREFIX_PATH={';'.join(str(prefix) for prefix in native_prefixes)}",
-        "-DRUNIR_BUILD_SHARED=ON",
         "-DRUNIR_BUILD_PYRUNIR=ON",
         "-DRUNIR_BUILD_TESTS=OFF",
-        "-DRUNIR_LINK_STATIC_DEPENDENCIES=OFF",
         "-DCMAKE_INSTALL_LIBDIR=lib",
     )
 

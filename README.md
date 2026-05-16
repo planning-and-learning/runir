@@ -26,22 +26,50 @@ The native CMake package exports `runir::core` as the aggregate target and compo
 
 ## Dependencies
 
-- `pytyr >= 0.0.17` for Tyr planning, formalism, search, and C++ headers/libraries.
-- `pypddl >= 1.0.5` through Tyr/PDDL parsing infrastructure.
+- `pyyggdrasil >= 0.0.9` for shared third-party native dependencies.
+- `pytyr >= 0.0.18` for Tyr planning, formalism, search, and C++ headers/libraries.
+- `pypddl >= 1.0.6` through Tyr/PDDL parsing infrastructure.
 - `scikit-build-core` for Python wheel builds.
+
+The shared workspace layout and general Python/CMake integration pattern are
+documented in the
+[Planning and Learning build instructions](https://github.com/planning-and-learning/.github/blob/main/profile/README.md#local-development).
 
 ## Build C++
 
+Install Runir's native dependency providers into the active Python environment,
+then configure CMake with their native prefixes:
+
 ```console
-python -m pip install 'pyyggdrasil>=0.0.8' 'pypddl>=1.0.5' 'pytyr>=0.0.17'
-export CMAKE_PREFIX_PATH="$(python -c 'import os, pypddl, pyyggdrasil, pytyr; print(os.pathsep.join(map(str, [pypddl.native_prefix(), pyyggdrasil.native_prefix(), pytyr.native_prefix()])))')"
+python -m pip install 'pyyggdrasil>=0.0.9' 'pypddl>=1.0.6' 'pytyr>=0.0.18'
+
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Debug \
-  -DRUNIR_BUILD_TESTS=ON \
-  -DRUNIR_BUILD_SHARED=ON \
-  -DRUNIR_LINK_STATIC_DEPENDENCIES=OFF
+  -DCMAKE_PREFIX_PATH="$(python -c 'import os, pyyggdrasil, pypddl, pytyr; print(os.pathsep.join(map(str, [pyyggdrasil.native_prefix(), pypddl.native_prefix(), pytyr.native_prefix()])))')"
+
 cmake --build build -j4
+```
+
+CMake options:
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `RUNIR_BUILD_TESTS` | `OFF` | Build Runir tests. |
+| `RUNIR_BUILD_EXECUTABLES` | `OFF` | Build Runir executables. |
+| `RUNIR_BUILD_PYRUNIR` | `OFF` | Build `pyrunir` Python bindings. |
+| `RUNIR_ENABLE_FMT_FORMATTERS` | `ON` | Enable Runir's public `fmt::formatter` specializations. |
+| `RUNIR_HEADER_INSTANTIATION` | `OFF` | Enable template definitions in public headers at higher compile-time cost. |
+
+Run tests from a build configured with `-DRUNIR_BUILD_TESTS=ON`:
+
+```console
 ctest --test-dir build --output-on-failure
+```
+
+Install Runir from a configured build directory with:
+
+```console
+cmake --install build --prefix=<path/to/installation-directory>
 ```
 
 ## Build Python
@@ -50,6 +78,21 @@ ctest --test-dir build --output-on-failure
 python -m pip install .[test]
 pytest python/tests
 ```
+
+## CMake Integration
+
+The Python package `pyrunir` installs Runir's native headers, shared libraries,
+and CMake package config under `pyrunir.native_prefix()`. Downstream CMake
+projects should include the native prefixes of `pyrunir` and its native package
+dependencies in `CMAKE_PREFIX_PATH`:
+
+```console
+cmake -S . -B build \
+  -DCMAKE_PREFIX_PATH="$(python -c 'import os, pyyggdrasil, pypddl, pytyr, pyrunir; print(os.pathsep.join(map(str, [pyyggdrasil.native_prefix(), pypddl.native_prefix(), pytyr.native_prefix(), pyrunir.native_prefix()])))')"
+```
+
+Runir exports the `runir::core` aggregate target and component targets such as
+`runir::graphs`, `runir::datasets`, and `runir::kr`.
 
 ## Intended Workflow
 

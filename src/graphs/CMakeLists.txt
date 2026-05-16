@@ -1,4 +1,4 @@
-add_library(graphs
+add_library(graphs SHARED
     algorithms/nauty.cpp
     algorithms/nauty_impl.cpp
 )
@@ -32,15 +32,13 @@ message(STATUS "Found nauty: ${RUNIR_NAUTY_LIBRARY}")
 target_include_directories(graphs PRIVATE "${RUNIR_NAUTY_INCLUDE_DIR}")
 target_link_libraries(graphs PRIVATE "${RUNIR_NAUTY_LIBRARY}")
 
-if(RUNIR_BUILD_SHARED)
-    if(APPLE)
-        set(RUNIR_GRAPHS_LIBRARY_ORIGIN "@loader_path")
-    elseif(UNIX)
-        set(RUNIR_GRAPHS_LIBRARY_ORIGIN "$ORIGIN")
-    endif()
-
-    set_target_properties(graphs PROPERTIES INSTALL_RPATH "${RUNIR_GRAPHS_LIBRARY_ORIGIN}")
+if(APPLE)
+    set(RUNIR_GRAPHS_LIBRARY_ORIGIN "@loader_path")
+elseif(UNIX)
+    set(RUNIR_GRAPHS_LIBRARY_ORIGIN "$ORIGIN")
 endif()
+
+set_target_properties(graphs PROPERTIES INSTALL_RPATH "${RUNIR_GRAPHS_LIBRARY_ORIGIN}")
 
 install(TARGETS graphs
     EXPORT runirTargets

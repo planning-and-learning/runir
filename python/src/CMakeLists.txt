@@ -67,73 +67,69 @@ elseif(UNIX)
     target_link_libraries(_pyrunir PRIVATE TBB::tbb)
 endif()
 
-if(RUNIR_BUILD_SHARED)
-    if(APPLE)
-        set(PYRUNIR_MODULE_RPATH
-            "@loader_path/native/${CMAKE_INSTALL_LIBDIR}"
-            "@loader_path/../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
-            "@loader_path/../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
-            "@loader_path/../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
-        set(PYRUNIR_CORE_RPATH
-            "@loader_path"
-            "@loader_path/../../../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
-            "@loader_path/../../../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
-            "@loader_path/../../../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
-    elseif(UNIX)
-        set(PYRUNIR_MODULE_RPATH
-            "$ORIGIN/native/${CMAKE_INSTALL_LIBDIR}"
-            "$ORIGIN/../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
-            "$ORIGIN/../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
-            "$ORIGIN/../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
-        set(PYRUNIR_CORE_RPATH
-            "$ORIGIN"
-            "$ORIGIN/../../../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
-            "$ORIGIN/../../../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
-            "$ORIGIN/../../../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
-    endif()
+if(APPLE)
+    set(PYRUNIR_MODULE_RPATH
+        "@loader_path/native/${CMAKE_INSTALL_LIBDIR}"
+        "@loader_path/../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
+        "@loader_path/../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
+        "@loader_path/../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
+    set(PYRUNIR_CORE_RPATH
+        "@loader_path"
+        "@loader_path/../../../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
+        "@loader_path/../../../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
+        "@loader_path/../../../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
+elseif(UNIX)
+    set(PYRUNIR_MODULE_RPATH
+        "$ORIGIN/native/${CMAKE_INSTALL_LIBDIR}"
+        "$ORIGIN/../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
+        "$ORIGIN/../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
+        "$ORIGIN/../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
+    set(PYRUNIR_CORE_RPATH
+        "$ORIGIN"
+        "$ORIGIN/../../../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
+        "$ORIGIN/../../../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
+        "$ORIGIN/../../../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
+endif()
 
-    if(PYRUNIR_MODULE_RPATH)
-        set_target_properties(_pyrunir PROPERTIES
-            BUILD_RPATH "${PYRUNIR_MODULE_RPATH}"
-            INSTALL_RPATH "${PYRUNIR_MODULE_RPATH}")
-    endif()
+if(PYRUNIR_MODULE_RPATH)
+    set_target_properties(_pyrunir PROPERTIES
+        BUILD_RPATH "${PYRUNIR_MODULE_RPATH}"
+        INSTALL_RPATH "${PYRUNIR_MODULE_RPATH}")
 endif()
 
 install(TARGETS _pyrunir DESTINATION "pyrunir" COMPONENT pyrunir)
-if(RUNIR_BUILD_SHARED)
-    set_property(TARGET core PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-        "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
-    set_property(TARGET datasets PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-        "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
-    set_property(TARGET graphs PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-        "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
-    set_property(TARGET kr PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-        "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
-    set_property(TARGET datasets PROPERTY INSTALL_RPATH "${PYRUNIR_CORE_RPATH}")
-    set_property(TARGET graphs PROPERTY INSTALL_RPATH "${PYRUNIR_CORE_RPATH}")
-    set_property(TARGET kr PROPERTY INSTALL_RPATH "${PYRUNIR_CORE_RPATH}")
-    install(TARGETS core
-            EXPORT pyrunirRunirTargets
-            INCLUDES DESTINATION "${PYRUNIR_NATIVE_INCLUDEDIR}")
-    install(TARGETS datasets
-            EXPORT pyrunirRunirTargets
-            LIBRARY DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
-            ARCHIVE DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
-            RUNTIME DESTINATION "${PYRUNIR_NATIVE_BINDIR}" COMPONENT pyrunir
-            INCLUDES DESTINATION "${PYRUNIR_NATIVE_INCLUDEDIR}")
-    install(TARGETS graphs
-            EXPORT pyrunirRunirTargets
-            LIBRARY DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
-            ARCHIVE DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
-            RUNTIME DESTINATION "${PYRUNIR_NATIVE_BINDIR}" COMPONENT pyrunir
-            INCLUDES DESTINATION "${PYRUNIR_NATIVE_INCLUDEDIR}")
-    install(TARGETS kr
-            EXPORT pyrunirRunirTargets
-            LIBRARY DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
-            ARCHIVE DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
-            RUNTIME DESTINATION "${PYRUNIR_NATIVE_BINDIR}" COMPONENT pyrunir
-            INCLUDES DESTINATION "${PYRUNIR_NATIVE_INCLUDEDIR}")
-endif()
+set_property(TARGET core PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+    "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
+set_property(TARGET datasets PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+    "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
+set_property(TARGET graphs PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+    "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
+set_property(TARGET kr PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+    "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
+set_property(TARGET datasets PROPERTY INSTALL_RPATH "${PYRUNIR_CORE_RPATH}")
+set_property(TARGET graphs PROPERTY INSTALL_RPATH "${PYRUNIR_CORE_RPATH}")
+set_property(TARGET kr PROPERTY INSTALL_RPATH "${PYRUNIR_CORE_RPATH}")
+install(TARGETS core
+        EXPORT pyrunirRunirTargets
+        INCLUDES DESTINATION "${PYRUNIR_NATIVE_INCLUDEDIR}")
+install(TARGETS datasets
+        EXPORT pyrunirRunirTargets
+        LIBRARY DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
+        ARCHIVE DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
+        RUNTIME DESTINATION "${PYRUNIR_NATIVE_BINDIR}" COMPONENT pyrunir
+        INCLUDES DESTINATION "${PYRUNIR_NATIVE_INCLUDEDIR}")
+install(TARGETS graphs
+        EXPORT pyrunirRunirTargets
+        LIBRARY DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
+        ARCHIVE DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
+        RUNTIME DESTINATION "${PYRUNIR_NATIVE_BINDIR}" COMPONENT pyrunir
+        INCLUDES DESTINATION "${PYRUNIR_NATIVE_INCLUDEDIR}")
+install(TARGETS kr
+        EXPORT pyrunirRunirTargets
+        LIBRARY DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
+        ARCHIVE DESTINATION "${PYRUNIR_NATIVE_LIBDIR}" COMPONENT pyrunir
+        RUNTIME DESTINATION "${PYRUNIR_NATIVE_BINDIR}" COMPONENT pyrunir
+        INCLUDES DESTINATION "${PYRUNIR_NATIVE_INCLUDEDIR}")
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/runir"
         DESTINATION "${PYRUNIR_NATIVE_INCLUDEDIR}"
         COMPONENT pyrunir)
@@ -146,13 +142,11 @@ install(FILES
             "${CMAKE_BINARY_DIR}/runirConfigVersion.cmake"
         DESTINATION "${PYRUNIR_NATIVE_CMAKEDIR}/runir"
         COMPONENT pyrunir)
-if(RUNIR_BUILD_SHARED)
-    install(EXPORT pyrunirRunirTargets
-            NAMESPACE runir::
-            FILE "runirTargets.cmake"
-            DESTINATION "${PYRUNIR_NATIVE_CMAKEDIR}/runir"
-            COMPONENT pyrunir)
-endif()
+install(EXPORT pyrunirRunirTargets
+        NAMESPACE runir::
+        FILE "runirTargets.cmake"
+        DESTINATION "${PYRUNIR_NATIVE_CMAKEDIR}/runir"
+        COMPONENT pyrunir)
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/cmake/"
         DESTINATION "${PYRUNIR_NATIVE_CMAKEDIR}/runir/cmake"
         COMPONENT pyrunir)

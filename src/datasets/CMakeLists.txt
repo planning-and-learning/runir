@@ -1,4 +1,4 @@
-add_library(datasets
+add_library(datasets SHARED
     equivalence_graph.cpp
     object_graph.cpp
     state_graph.cpp
@@ -27,15 +27,13 @@ target_compile_definitions(datasets
         FMT_HEADER_ONLY
 )
 
-if(RUNIR_BUILD_SHARED)
-    if(APPLE)
-        set(RUNIR_DATASETS_LIBRARY_ORIGIN "@loader_path")
-    elseif(UNIX)
-        set(RUNIR_DATASETS_LIBRARY_ORIGIN "$ORIGIN")
-    endif()
-
-    set_target_properties(datasets PROPERTIES INSTALL_RPATH "${RUNIR_DATASETS_LIBRARY_ORIGIN}")
+if(APPLE)
+    set(RUNIR_DATASETS_LIBRARY_ORIGIN "@loader_path")
+elseif(UNIX)
+    set(RUNIR_DATASETS_LIBRARY_ORIGIN "$ORIGIN")
 endif()
+
+set_target_properties(datasets PROPERTIES INSTALL_RPATH "${RUNIR_DATASETS_LIBRARY_ORIGIN}")
 
 install(TARGETS datasets
     EXPORT runirTargets
