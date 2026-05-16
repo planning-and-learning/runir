@@ -6,9 +6,13 @@
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 
+#include <cstddef>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <string>
 #include <string_view>
+#include <tyr/common/formatter.hpp>
+#include <vector>
 
 namespace runir::kr::dl::semantics::format
 {
@@ -20,42 +24,6 @@ std::string quoted(const String& value)
 }
 
 inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
-
-template<typename View>
-std::string variant(View view)
-{
-    return view.apply([](auto arg) { return fmt::format("{}", arg); });
-}
-
-template<typename View>
-void append_set(std::string& text, View view)
-{
-    text += "{";
-
-    auto separator = std::string_view("");
-    for (auto object : view)
-    {
-        text += fmt::format("{}{}", separator, quoted(object.get_name()));
-        separator = ", ";
-    }
-
-    text += "}";
-}
-
-template<typename View>
-void append_relation(std::string& text, View view)
-{
-    text += "{";
-
-    auto separator = std::string_view("");
-    for (auto [source, target] : view)
-    {
-        text += fmt::format("{}({}, {})", separator, quoted(source.get_name()), quoted(target.get_name()));
-        separator = ", ";
-    }
-
-    text += "}";
-}
 
 template<runir::kr::dl::CategoryTag Category, typename C>
 std::string denotation(tyr::View<tyr::Index<runir::kr::dl::semantics::Denotation<Category>>, C> view)
@@ -70,15 +38,14 @@ std::string denotation(tyr::View<tyr::Index<runir::kr::dl::semantics::Denotation
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
-        auto text = std::string(Category::name);
-        append_set(text, view);
-        return text;
+        return fmt::format("{}{}", Category::name, view.get());
     }
     else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
     {
-        auto text = std::string(Category::name);
-        append_relation(text, view);
-        return text;
+        auto pairs = std::vector<std::string> {};
+        for (auto [source, target] : view)
+            pairs.push_back(fmt::format("({}, {})", source.get_index(), target.get_index()));
+        return fmt::format("{}{{{}}}", Category::name, fmt::join(pairs, ", "));
     }
 }
 
@@ -155,14 +122,14 @@ std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::Boolean<Tag>
                            quoted(view.get_predicate().get_name()),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
-        return fmt::format("@{} {}", runir::kr::dl::grammar::ast::BooleanNonempty::keyword, variant(view.get_arg()));
+        return fmt::format("@{} {}", runir::kr::dl::grammar::ast::BooleanNonempty::keyword, view.get_arg());
 }
 
 template<runir::kr::dl::NumericalConstructorTag Tag, typename C>
 std::string numerical(tyr::View<tyr::Index<runir::kr::dl::Numerical<Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
-        return fmt::format("@{} {}", runir::kr::dl::grammar::ast::NumericalCount::keyword, variant(view.get_arg()));
+        return fmt::format("@{} {}", runir::kr::dl::grammar::ast::NumericalCount::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
         return fmt::format("@{} {} {} {}", runir::kr::dl::grammar::ast::NumericalDistance::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
 }
@@ -188,6 +155,11 @@ class View<Index<runir::kr::dl::semantics::Denotation<Category>>, C>;
 }  // namespace tyr
 
 #if RUNIR_ENABLE_FMT_FORMATTERS
+template<runir::kr::dl::CategoryTag Category, typename C, typename Char>
+struct fmt::range_format_kind<tyr::View<tyr::Index<runir::kr::dl::semantics::Denotation<Category>>, C>, Char, void> : std::false_type
+{
+};
+
 template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
 struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::Concept<Tag>>, C>> : fmt::formatter<std::string_view>
 {
@@ -231,8 +203,7 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::Constructor<Category>>
     using View = tyr::View<tyr::Index<runir::kr::dl::Constructor<Category>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        const auto text = view.get_variant().apply([](auto arg) { return fmt::format("{}", arg); });
-        return fmt::formatter<std::string_view>::format(text, ctx);
+        return fmt::formatter<std::string_view>::format(fmt::format("{}", view.get_variant()), ctx);
     }
 };
 

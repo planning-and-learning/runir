@@ -1,16 +1,48 @@
 #include "module.hpp"
 
+#include <concepts>
 #include <nanobind/stl/string.h>
+#include <runir/kr/dl/semantics/evaluation_context.hpp>
+#include <runir/kr/gp/dl/evaluation_context.hpp>
+#include <runir/kr/gp/dl/syntactic_complexity.hpp>
+#include <runir/kr/gp/formatter.hpp>
 #include <runir/kr/gp/repository.hpp>
+#include <runir/kr/gp/syntactic_complexity.hpp>
 #include <string>
 #include <tyr/common/python/bindings.hpp>
 #include <tyr/common/python/type_casters.hpp>
+#include <tyr/planning/ground_task/state_repository.hpp>
+#include <tyr/planning/ground_task/state_view.hpp>
+#include <tyr/planning/lifted_task/state_repository.hpp>
+#include <tyr/planning/lifted_task/state_view.hpp>
 
 namespace runir::kr::gp::dl
 {
 
+using namespace nanobind::literals;
+
 namespace
 {
+
+template<tyr::planning::TaskKind Kind>
+void bind_evaluation_context(nb::module_& m, const char* name)
+{
+    using Context = runir::kr::gp::dl::EvaluationContext<Kind>;
+
+    nb::class_<Context>(m, name)
+        .def(nb::init<tyr::planning::StateView<Kind>,
+                      tyr::planning::StateView<Kind>,
+                      runir::kr::dl::semantics::Builder&,
+                      runir::kr::dl::semantics::DenotationRepository&>(),
+             nb::arg("source_state"),
+             nb::arg("target_state"),
+             nb::arg("builder"),
+             nb::arg("denotation_repository"),
+             nb::keep_alive<1, 4>(),
+             nb::keep_alive<1, 5>())
+        .def("get_source_state", &Context::get_source_state, nb::rv_policy::reference_internal)
+        .def("get_target_state", &Context::get_target_state, nb::rv_policy::reference_internal);
+}
 
 template<typename T>
 void bind_view(nb::module_& m, const std::string& name)
@@ -18,6 +50,7 @@ void bind_view(nb::module_& m, const std::string& name)
     using View = tyr::View<tyr::Index<T>, Repository>;
 
     auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
+    tyr::add_print(cls);
     tyr::add_hash(cls);
 
     if constexpr (requires(const View& view) { view.get_variant(); })
@@ -28,9 +61,35 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_symbol", [](const View& view) { return std::string(view.get_symbol()); });
     if constexpr (requires(const View& view) { view.get_description(); })
         cls.def("get_description", [](const View& view) { return std::string(view.get_description()); });
+    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::GroundTag>& context) {
+                      view.evaluate(context);
+                  })
+        cls.def("evaluate", [](const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::GroundTag>& context) { return view.evaluate(context); }, "context"_a);
+    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::LiftedTag>& context) {
+                      view.evaluate(context);
+                  })
+        cls.def("evaluate", [](const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::LiftedTag>& context) { return view.evaluate(context); }, "context"_a);
+    if constexpr (requires(const View& view, runir::kr::gp::dl::EvaluationContext<tyr::planning::GroundTag>& context) {
+                      { view.is_compatible_with(context) } -> std::same_as<bool>;
+                  })
+        cls.def("is_compatible_with", [](const View& view, runir::kr::gp::dl::EvaluationContext<tyr::planning::GroundTag>& context) { return view.is_compatible_with(context); }, "context"_a);
+    if constexpr (requires(const View& view, runir::kr::gp::dl::EvaluationContext<tyr::planning::LiftedTag>& context) {
+                      { view.is_compatible_with(context) } -> std::same_as<bool>;
+                  })
+        cls.def("is_compatible_with", [](const View& view, runir::kr::gp::dl::EvaluationContext<tyr::planning::LiftedTag>& context) { return view.is_compatible_with(context); }, "context"_a);
+    if constexpr (requires(const View& view) { runir::kr::gp::syntactic_complexity(view); })
+        cls.def("syntactic_complexity", [](const View& view) { return runir::kr::gp::syntactic_complexity(view); });
+    else if constexpr (requires(const View& view) { runir::kr::gp::dl::syntactic_complexity(view); })
+        cls.def("syntactic_complexity", [](const View& view) { return runir::kr::gp::dl::syntactic_complexity(view); });
 }
 
 }  // namespace
+
+void bind_evaluation_contexts(nb::module_& m)
+{
+    bind_evaluation_context<tyr::planning::GroundTag>(m, "GroundEvaluationContext");
+    bind_evaluation_context<tyr::planning::LiftedTag>(m, "LiftedEvaluationContext");
+}
 
 void bind_views(nb::module_& m)
 {

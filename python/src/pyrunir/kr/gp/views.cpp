@@ -1,14 +1,19 @@
 #include "module.hpp"
 
+#include <concepts>
 #include <nanobind/stl/string.h>
+#include <runir/kr/gp/dl/evaluation_context.hpp>
 #include <runir/kr/gp/formatter.hpp>
 #include <runir/kr/gp/repository.hpp>
+#include <runir/kr/gp/syntactic_complexity.hpp>
 #include <string>
 #include <tyr/common/python/bindings.hpp>
 #include <tyr/common/python/type_casters.hpp>
 
 namespace runir::kr::gp
 {
+
+using namespace nanobind::literals;
 
 namespace
 {
@@ -36,6 +41,16 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_effects", &View::get_effects);
     if constexpr (requires(const View& view) { view.get_rules(); })
         cls.def("get_rules", &View::get_rules);
+    if constexpr (requires(const View& view, runir::kr::gp::dl::EvaluationContext<tyr::planning::GroundTag>& context) {
+                      { view.is_compatible_with(context) } -> std::same_as<bool>;
+                  })
+        cls.def("is_compatible_with", [](const View& view, runir::kr::gp::dl::EvaluationContext<tyr::planning::GroundTag>& context) { return view.is_compatible_with(context); }, "context"_a);
+    if constexpr (requires(const View& view, runir::kr::gp::dl::EvaluationContext<tyr::planning::LiftedTag>& context) {
+                      { view.is_compatible_with(context) } -> std::same_as<bool>;
+                  })
+        cls.def("is_compatible_with", [](const View& view, runir::kr::gp::dl::EvaluationContext<tyr::planning::LiftedTag>& context) { return view.is_compatible_with(context); }, "context"_a);
+    if constexpr (requires(const View& view) { runir::kr::gp::syntactic_complexity(view); })
+        cls.def("syntactic_complexity", [](const View& view) { return runir::kr::gp::syntactic_complexity(view); });
 }
 
 }  // namespace

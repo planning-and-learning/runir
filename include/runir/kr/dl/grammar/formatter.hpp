@@ -10,6 +10,7 @@
 #include <fmt/ranges.h>
 #include <string>
 #include <string_view>
+#include <tyr/common/formatter.hpp>
 #include <vector>
 
 namespace runir::kr::dl::grammar::format
@@ -22,12 +23,6 @@ std::string quoted(const String& value)
 }
 
 inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
-
-template<typename View>
-std::string variant(View view)
-{
-    return view.apply([](auto arg) { return fmt::format("{}", arg); });
-}
 
 template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
 std::string concept_constructor(tyr::View<tyr::Index<Concept<Tag>>, C> view)
@@ -93,14 +88,14 @@ std::string boolean_constructor(tyr::View<tyr::Index<Boolean<Tag>>, C> view)
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {} {}", ast::BooleanAtomicState::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
-        return fmt::format("{} {}", ast::BooleanNonempty::keyword, variant(view.get_arg()));
+        return fmt::format("{} {}", ast::BooleanNonempty::keyword, view.get_arg());
 }
 
 template<runir::kr::dl::NumericalConstructorTag Tag, typename C>
 std::string numerical(tyr::View<tyr::Index<Numerical<Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
-        return fmt::format("{} {}", ast::NumericalCount::keyword, variant(view.get_arg()));
+        return fmt::format("{} {}", ast::NumericalCount::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
         return fmt::format("{} {} {} {}", ast::NumericalDistance::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
 }
@@ -244,8 +239,7 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::grammar::ConstructorOr
     using View = tyr::View<tyr::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        const auto text = view.get_variant().apply([](auto arg) { return fmt::format("{}", arg); });
-        return fmt::formatter<std::string_view>::format(text, ctx);
+        return fmt::formatter<std::string_view>::format(fmt::format("{}", view.get_variant()), ctx);
     }
 };
 

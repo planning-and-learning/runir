@@ -190,35 +190,19 @@ std::string feature(tyr::View<tyr::Index<runir::kr::gp::ConcreteFeature<runir::k
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-void append_condition(std::ostream& os,
-                      tyr::View<tyr::Index<runir::kr::gp::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>,
-                      std::string_view feature_name)
-{
-    os << "(" << ObservationTag::keyword << " " << feature_name << ")";
-}
-
-template<typename FeatureTag, typename ObservationTag, typename C>
-std::string condition(tyr::View<tyr::Index<runir::kr::gp::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view,
+std::string condition(tyr::View<tyr::Index<runir::kr::gp::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>,
                       std::string_view feature_name)
 {
     auto os = std::ostringstream {};
-    append_condition(os, view, feature_name);
+    os << "(" << ObservationTag::keyword << " " << feature_name << ")";
     return os.str();
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-void append_effect(std::ostream& os,
-                   tyr::View<tyr::Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>,
-                   std::string_view feature_name)
-{
-    os << "(" << ObservationTag::keyword << " " << feature_name << ")";
-}
-
-template<typename FeatureTag, typename ObservationTag, typename C>
-std::string effect(tyr::View<tyr::Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view, std::string_view feature_name)
+std::string effect(tyr::View<tyr::Index<runir::kr::gp::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>, std::string_view feature_name)
 {
     auto os = std::ostringstream {};
-    append_effect(os, view, feature_name);
+    os << "(" << ObservationTag::keyword << " " << feature_name << ")";
     return os.str();
 }
 

@@ -1,17 +1,39 @@
 #include "module.hpp"
 
+#include <concepts>
 #include <nanobind/stl/string.h>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
+#include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/dl/semantics/views.hpp>
 #include <tyr/common/python/bindings.hpp>
 #include <tyr/common/python/type_casters.hpp>
+#include <tyr/planning/ground_task/state_repository.hpp>
+#include <tyr/planning/ground_task/state_view.hpp>
+#include <tyr/planning/lifted_task/state_repository.hpp>
+#include <tyr/planning/lifted_task/state_view.hpp>
 
 namespace runir::kr::dl
 {
 
+using namespace nanobind::literals;
+
 namespace
 {
+
+template<CategoryTag Category>
+void bind_denotation_view(nb::module_& m, const std::string& name)
+{
+    using View = tyr::View<tyr::Index<runir::kr::dl::semantics::Denotation<Category>>, runir::kr::dl::semantics::DenotationRepository>;
+
+    auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
+    tyr::add_print(cls);
+    tyr::add_hash(cls);
+
+    if constexpr (std::same_as<Category, BooleanTag> || std::same_as<Category, NumericalTag>)
+        cls.def("get", [](const View& view) { return view.get(); });
+}
 
 template<typename T, typename Repository>
 void bind_view(nb::module_& m, const std::string& name)
@@ -36,12 +58,33 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_polarity", &View::get_polarity);
     if constexpr (requires(const View& view) { view.get_object(); })
         cls.def("get_object", &View::get_object);
+    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::GroundTag>& context) {
+                      runir::kr::dl::semantics::evaluate(view, context);
+                  })
+        cls.def("evaluate",
+                [](const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::GroundTag>& context)
+                { return runir::kr::dl::semantics::evaluate(view, context); },
+                "context"_a);
+    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::LiftedTag>& context) {
+                      runir::kr::dl::semantics::evaluate(view, context);
+                  })
+        cls.def("evaluate",
+                [](const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::LiftedTag>& context)
+                { return runir::kr::dl::semantics::evaluate(view, context); },
+                "context"_a);
+    if constexpr (requires(const View& view) { runir::kr::dl::semantics::syntactic_complexity(view); })
+        cls.def("syntactic_complexity", [](const View& view) { return runir::kr::dl::semantics::syntactic_complexity(view); });
 }
 
 }  // namespace
 
 void bind_semantics_views(nb::module_& m)
 {
+    bind_denotation_view<BooleanTag>(m, "BooleanDenotation");
+    bind_denotation_view<NumericalTag>(m, "NumericalDenotation");
+    bind_denotation_view<ConceptTag>(m, "ConceptDenotation");
+    bind_denotation_view<RoleTag>(m, "RoleDenotation");
+
     bind_view<Constructor<ConceptTag>, ConstructorRepository>(m, "Concept");
     bind_view<Constructor<RoleTag>, ConstructorRepository>(m, "Role");
     bind_view<Constructor<BooleanTag>, ConstructorRepository>(m, "Boolean");
@@ -88,6 +131,11 @@ void bind_semantics_views(nb::module_& m)
 
     bind_view<Numerical<CountTag>, ConstructorRepository>(m, "NumericalCount");
     bind_view<Numerical<DistanceTag>, ConstructorRepository>(m, "NumericalDistance");
+
+    m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<ConceptTag, ConstructorRepository>, "constructor"_a);
+    m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<RoleTag, ConstructorRepository>, "constructor"_a);
+    m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<BooleanTag, ConstructorRepository>, "constructor"_a);
+    m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<NumericalTag, ConstructorRepository>, "constructor"_a);
 }
 
 }  // namespace runir::kr::dl

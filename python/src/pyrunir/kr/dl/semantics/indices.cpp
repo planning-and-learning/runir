@@ -4,6 +4,7 @@
 #include <runir/kr/dl/cnf_grammar/indices.hpp>
 #include <runir/kr/dl/grammar/indices.hpp>
 #include <runir/kr/dl/indices.hpp>
+#include <runir/kr/dl/semantics/denotation_index.hpp>
 #include <tyr/common/python/bindings.hpp>
 
 namespace runir::kr::dl
@@ -11,6 +12,11 @@ namespace runir::kr::dl
 
 void bind_semantics_indices(nb::module_& m)
 {
+    tyr::bind_index<tyr::Index<runir::kr::dl::semantics::Denotation<BooleanTag>>>(m, "BooleanDenotationIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::semantics::Denotation<NumericalTag>>>(m, "NumericalDenotationIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::semantics::Denotation<ConceptTag>>>(m, "ConceptDenotationIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::semantics::Denotation<RoleTag>>>(m, "RoleDenotationIndex");
+
     tyr::bind_index<tyr::Index<Concept<BotTag>>>(m, "ConceptBotIndex");
     tyr::bind_index<tyr::Index<Concept<TopTag>>>(m, "ConceptTopIndex");
     tyr::bind_index<tyr::Index<Concept<AtomicStateTag<tyr::formalism::StaticTag>>>>(m, "ConceptAtomicStateStaticIndex");
