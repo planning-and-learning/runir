@@ -219,8 +219,15 @@ void add_category_rules(std::stringstream& rule_out,
 {
     if (!primitive_heads.empty())
     {
-        heads.push_back(primitive);
-        add_rule(rule_out, primitive, fmt::format("{}", fmt::join(primitive_heads, " or ")));
+        if (primitive.empty())
+        {
+            heads.insert(heads.end(), primitive_heads.begin(), primitive_heads.end());
+        }
+        else
+        {
+            heads.push_back(primitive);
+            add_rule(rule_out, primitive, fmt::format("{}", fmt::join(primitive_heads, " or ")));
+        }
     }
 
     add_rule(rule_out, start, category_symbol);

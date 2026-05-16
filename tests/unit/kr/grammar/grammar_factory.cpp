@@ -304,4 +304,173 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
     EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag>(), 2);
 }
 
+TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryParsesDomainsWithBooleanPrimitivePredicates)
+{
+    namespace fp = tyr::formalism::planning;
+
+    const auto domain_filepath = benchmark_prefix() / "tests" / "classical" / "ferry" / "domain.pddl";
+    const auto planning_domain = fp::Parser(domain_filepath).get_domain();
+    const auto domain = planning_domain.get_domain();
+
+    const auto expected = std::string { R"EXPECTED((
+    (c_3 (c_bot))
+    (c_4 (c_top))
+    (c_5 (c_atomic_state "car"))
+    (c_6 (c_atomic_goal "car" true))
+    (c_7 (c_atomic_goal "car" false))
+    (c_8 (c_atomic_state "location"))
+    (c_9 (c_atomic_goal "location" true))
+    (c_10 (c_atomic_goal "location" false))
+    (c_11 (c_atomic_state "number"))
+    (c_12 (c_atomic_goal "number" true))
+    (c_13 (c_atomic_goal "number" false))
+    (c_14 (c_atomic_state "object"))
+    (c_15 (c_atomic_goal "object" true))
+    (c_16 (c_atomic_goal "object" false))
+    (c_17 (c_atomic_state "at-ferry"))
+    (c_18 (c_atomic_goal "at-ferry" true))
+    (c_19 (c_atomic_goal "at-ferry" false))
+    (c_20 (c_atomic_state "on"))
+    (c_21 (c_atomic_goal "on" true))
+    (c_22 (c_atomic_goal "on" false))
+    (c_23 (c_intersection c_1 c_1))
+    (c_24 (c_negation c_1))
+    (c_25 (c_existential_quantification r_1 c_1))
+    (c_26 (c_value_restriction r_1 c_1))
+    (c_27 (c_role_value_map_equality r_1 r_1))
+    (c_2 (c_3 or c_4 or c_5 or c_6 or c_7 or c_8 or c_9 or c_10 or c_11 or c_12 or c_13 or c_14 or c_15 or c_16 or c_17 or c_18 or c_19 or c_20 or c_21 or c_22))
+    (c_0 (c_1))
+    (c_1 (c_2 or c_23 or c_24 or c_25 or c_26 or c_27))
+    (r_3 (r_atomic_state "at"))
+    (r_4 (r_atomic_goal "at" true))
+    (r_5 (r_atomic_goal "at" false))
+    (r_6 (r_transitive_closure r_2))
+    (r_7 (r_inverse r_2))
+    (r_2 (r_3 or r_4 or r_5))
+    (r_0 (r_1))
+    (r_1 (r_2 or r_6 or r_7))
+    (b_2 (b_atomic_state "empty-ferry" true))
+    (b_3 (b_atomic_state "empty-ferry" false))
+    (b_4 (b_nonempty c_1))
+    (b_5 (b_nonempty r_1))
+    (b_0 (b_1))
+    (b_1 (b_4 or b_5 or b_2 or b_3))
+    (n_2 (n_count c_1))
+    (n_3 (n_count r_1))
+    (n_4 (n_distance c_1 (r_restriction r_2 c_2) c_1))
+    (n_4 (n_distance c_1 r_2 c_1))
+    (n_0 (n_1))
+    (n_1 (n_2 or n_3 or n_4))
+)
+)EXPECTED" };
+    const auto expected_cnf = std::string { R"EXPECTED((
+    (c_3 (c_bot))
+    (c_4 (c_top))
+    (c_5 (c_atomic_state "car"))
+    (c_6 (c_atomic_goal "car" true))
+    (c_7 (c_atomic_goal "car" false))
+    (c_8 (c_atomic_state "location"))
+    (c_9 (c_atomic_goal "location" true))
+    (c_10 (c_atomic_goal "location" false))
+    (c_11 (c_atomic_state "number"))
+    (c_12 (c_atomic_goal "number" true))
+    (c_13 (c_atomic_goal "number" false))
+    (c_14 (c_atomic_state "object"))
+    (c_15 (c_atomic_goal "object" true))
+    (c_16 (c_atomic_goal "object" false))
+    (c_17 (c_atomic_state "at-ferry"))
+    (c_18 (c_atomic_goal "at-ferry" true))
+    (c_19 (c_atomic_goal "at-ferry" false))
+    (c_20 (c_atomic_state "on"))
+    (c_21 (c_atomic_goal "on" true))
+    (c_22 (c_atomic_goal "on" false))
+    (c_23 (c_intersection c_1 c_1))
+    (c_24 (c_negation c_1))
+    (c_25 (c_existential_quantification r_1 c_1))
+    (c_26 (c_value_restriction r_1 c_1))
+    (c_27 (c_role_value_map_equality r_1 r_1))
+    (r_3 (r_atomic_state "at"))
+    (r_4 (r_atomic_goal "at" true))
+    (r_5 (r_atomic_goal "at" false))
+    (r_6 (r_transitive_closure r_2))
+    (r_7 (r_inverse r_2))
+    (r_8 (r_restriction r_2 c_2))
+    (b_2 (b_atomic_state "empty-ferry" true))
+    (b_3 (b_atomic_state "empty-ferry" false))
+    (b_4 (b_nonempty c_1))
+    (b_5 (b_nonempty r_1))
+    (n_2 (n_count c_1))
+    (n_3 (n_count r_1))
+    (n_4 (n_distance c_1 r_8 c_1))
+    (n_4 (n_distance c_1 r_2 c_1))
+    (c_2 (c_3))
+    (c_2 (c_4))
+    (c_2 (c_5))
+    (c_2 (c_6))
+    (c_2 (c_7))
+    (c_2 (c_8))
+    (c_2 (c_9))
+    (c_2 (c_10))
+    (c_2 (c_11))
+    (c_2 (c_12))
+    (c_2 (c_13))
+    (c_2 (c_14))
+    (c_2 (c_15))
+    (c_2 (c_16))
+    (c_2 (c_17))
+    (c_2 (c_18))
+    (c_2 (c_19))
+    (c_2 (c_20))
+    (c_2 (c_21))
+    (c_2 (c_22))
+    (c_0 (c_1))
+    (c_1 (c_2))
+    (c_1 (c_23))
+    (c_1 (c_24))
+    (c_1 (c_25))
+    (c_1 (c_26))
+    (c_1 (c_27))
+    (r_2 (r_3))
+    (r_2 (r_4))
+    (r_2 (r_5))
+    (r_0 (r_1))
+    (r_1 (r_2))
+    (r_1 (r_6))
+    (r_1 (r_7))
+    (b_0 (b_1))
+    (b_1 (b_4))
+    (b_1 (b_5))
+    (b_1 (b_2))
+    (b_1 (b_3))
+    (n_0 (n_1))
+    (n_1 (n_2))
+    (n_1 (n_3))
+    (n_1 (n_4))
+)
+)EXPECTED" };
+
+    auto repository_factory = kr::dl::grammar::ConstructorRepositoryFactory();
+    auto repository = repository_factory.create(planning_domain.get_repository());
+
+    const auto grammar_view = kr::dl::grammar::GrammarFactory::create(kr::dl::grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, repository);
+    const auto formatted = fmt::format("{}", grammar_view);
+    EXPECT_EQ(formatted, expected);
+
+    const auto reparsed_grammar_view = kr::dl::grammar::parse_grammar(formatted, domain, repository);
+    EXPECT_TRUE(tyr::EqualTo<decltype(grammar_view)> {}(grammar_view, reparsed_grammar_view));
+    EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag>(), 1);
+    EXPECT_EQ(grammar_view.get_index(), tyr::Index<kr::dl::grammar::GrammarTag>(0));
+
+    auto cnf_repository_factory = kr::dl::cnf_grammar::ConstructorRepositoryFactory();
+    auto cnf_repository = cnf_repository_factory.create(planning_domain.get_repository());
+    const auto cnf_grammar_view = kr::dl::cnf_grammar::translate(grammar_view, cnf_repository);
+    const auto cnf_formatted = fmt::format("{}", cnf_grammar_view);
+    EXPECT_EQ(cnf_formatted, expected_cnf);
+
+    const auto reparsed_cnf_source_grammar_view = kr::dl::grammar::parse_grammar(cnf_formatted, domain, repository);
+    const auto reparsed_cnf_grammar_view = kr::dl::cnf_grammar::translate(reparsed_cnf_source_grammar_view, cnf_repository);
+    EXPECT_TRUE(tyr::EqualTo<decltype(cnf_grammar_view)> {}(cnf_grammar_view, reparsed_cnf_grammar_view));
+    EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag>(), 2);
+}
+
 }  // namespace runir::tests
