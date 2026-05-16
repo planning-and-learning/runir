@@ -14,6 +14,7 @@ void bind_module_definitions(nb::module_& m)
     bind_views(m);
     bind_repository(m);
     bind_policy_executor(m);
+    bind_syntactic_complexity(m);
 }
 
 }  // namespace runir::kr::gp

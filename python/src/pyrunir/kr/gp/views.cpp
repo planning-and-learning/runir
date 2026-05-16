@@ -1,6 +1,7 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
+#include <runir/kr/gp/formatter.hpp>
 #include <runir/kr/gp/repository.hpp>
 #include <string>
 #include <tyr/common/python/bindings.hpp>
@@ -18,6 +19,7 @@ void bind_view(nb::module_& m, const std::string& name)
     using View = tyr::View<tyr::Index<T>, Repository>;
 
     auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
+    tyr::add_print(cls);
     tyr::add_hash(cls);
 
     if constexpr (requires(const View& view) { view.get_variant(); })

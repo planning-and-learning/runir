@@ -46,5 +46,6 @@
 #include "runir/kr/gp/rule_data.hpp"
 #include "runir/kr/gp/rule_index.hpp"
 #include "runir/kr/gp/rule_view.hpp"
+#include "runir/kr/gp/syntactic_complexity.hpp"
 
 #endif

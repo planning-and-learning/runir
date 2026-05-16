@@ -11,9 +11,10 @@ from pyrunir.kr.gp import (
     PolicyProofStatus,
     find_ground_solution,
     prove_ground_solution,
+    syntactic_complexity,
 )
 from pyrunir.kr.gp import RepositoryFactory as PolicyRepositoryFactory
-from pyrunir.kr.gp.dl import PolicyFactory, PolicySpecification
+from pyrunir.kr.gp.dl import PolicyFactory, PolicySpecification, parse_policy
 from pytyr.common import ExecutionContext
 from pytyr.formalism.planning import Parser, ParserOptions
 from pytyr.planning import SearchStatus
@@ -44,6 +45,10 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
         planning_domain,
         policy_repository,
     )
+    policy_description = str(policy)
+    reparsed_policy = parse_policy(policy_description, planning_domain, policy_repository)
+    assert str(reparsed_policy) == policy_description
+    assert syntactic_complexity(policy) == 16
 
     proof_result = prove_ground_solution(annotated_state_graph, policy)
     assert proof_result.status == PolicyProofStatus.SUCCESS

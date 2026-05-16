@@ -20,6 +20,7 @@ from ..._pyrunir.kr.gp import (
     find_lifted_solution,
     prove_ground_solution,
     prove_lifted_solution,
+    syntactic_complexity,
 )
 
 from . import dl as dl

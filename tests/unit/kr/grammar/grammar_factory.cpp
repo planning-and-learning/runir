@@ -11,6 +11,7 @@
 #include <runir/kr/gp/dl/policy_factory.hpp>
 #include <runir/kr/gp/formatter.hpp>
 #include <runir/kr/gp/repository.hpp>
+#include <runir/kr/gp/syntactic_complexity.hpp>
 #include <string>
 #include <tyr/common/equal_to.hpp>
 #include <tyr/formalism/planning/parser.hpp>
@@ -108,6 +109,7 @@ TEST(RunirTests, GeneralPolicyParserParsesConditionsAndEffects)
     const auto formatted = fmt::format("{}", policy);
     const auto reparsed = kr::gp::dl::parse_policy(formatted, planning_domain.get_domain(), repository);
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
+    EXPECT_EQ(kr::gp::syntactic_complexity(policy), 6);
 }
 
 TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
