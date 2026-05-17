@@ -69,6 +69,11 @@ if(TBB_FOUND)
     message(STATUS "Found TBB: ${TBB_DIR} (found version ${TBB_VERSION})")
 endif()
 
+find_package(Boost REQUIRED COMPONENTS serialization PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+if(Boost_FOUND)
+    message(STATUS "Found Boost: ${Boost_DIR} (found version ${Boost_VERSION})")
+endif()
+
 find_package(tyr 0.0.18 CONFIG REQUIRED COMPONENTS core PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 if(tyr_FOUND)
     message(STATUS "Found tyr: ${tyr_DIR} (found version ${tyr_VERSION})")

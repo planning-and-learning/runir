@@ -1,4 +1,4 @@
-find_package(Boost REQUIRED COMPONENTS json PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+find_package(Boost REQUIRED COMPONENTS json serialization PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 find_package(GTest CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 
 function(add_runir_test test_name source_file)
@@ -7,6 +7,7 @@ function(add_runir_test test_name source_file)
         PRIVATE
             ${ARGN}
             Boost::json
+            Boost::serialization
             GTest::gtest
     )
     target_compile_definitions(${test_name}
@@ -18,6 +19,7 @@ function(add_runir_test test_name source_file)
 endfunction()
 
 add_runir_test(runir_datasets_equivalence_graph unit/datasets/equivalence_graph.cpp runir::datasets)
+add_runir_test(runir_datasets_state_graph_serialization unit/datasets/state_graph_serialization.cpp runir::datasets)
 add_runir_test(runir_graphs_color_refinement unit/graphs/algorithms/color_refinement.cpp runir::graphs)
 add_runir_test(runir_kr_gp_policy_executor unit/kr/gp/dl/policy_executor.cpp runir::datasets runir::kr)
 add_runir_test(runir_kr_grammar_factory unit/kr/grammar/grammar_factory.cpp runir::kr)

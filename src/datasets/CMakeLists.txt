@@ -18,6 +18,7 @@ target_include_directories(datasets
 target_link_libraries(datasets
     PUBLIC
         fmt::fmt-header-only
+        Boost::serialization
         runir::graphs
         tyr::core
 )
