@@ -19,6 +19,7 @@ nanobind_add_module(_pyrunir
     pyrunir/datasets/config.cpp
     pyrunir/datasets/equivalence_graph.cpp
     pyrunir/datasets/module.cpp
+    pyrunir/datasets/serialization.cpp
     pyrunir/datasets/state_graph.cpp
     pyrunir/datasets/task_class.cpp
     pyrunir/graphs/module.cpp
@@ -188,7 +189,8 @@ list(JOIN PYRUNIR_INSTALL_LIBRARY_PATHS ":" PYRUNIR_INSTALL_LIBRARY_PATH)
 if(PYRUNIR_INSTALL_LIBRARY_PATH)
     install(CODE
         "set(ENV{LD_LIBRARY_PATH} \"${PYRUNIR_INSTALL_LIBRARY_PATH}:$ENV{LD_LIBRARY_PATH}\")
-         set(ENV{DYLD_LIBRARY_PATH} \"${PYRUNIR_INSTALL_LIBRARY_PATH}:$ENV{DYLD_LIBRARY_PATH}\")"
+         set(ENV{
+    DYLD_LIBRARY_PATH} \"${PYRUNIR_INSTALL_LIBRARY_PATH}:$ENV{DYLD_LIBRARY_PATH}\")"
         COMPONENT pyrunir)
 endif()
 

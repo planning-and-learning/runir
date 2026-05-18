@@ -23,6 +23,10 @@
 #include "runir/datasets/state_graph.hpp"
 
 #include <algorithm>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -31,6 +35,17 @@ namespace runir::datasets::serialization
 
 namespace detail
 {
+
+inline auto read_task_file(const std::filesystem::path& task_filepath) -> std::string
+{
+    auto file = std::ifstream(task_filepath);
+    if (!file)
+        throw std::runtime_error("Could not open task file: " + task_filepath.string() + ".");
+
+    auto stream = std::ostringstream {};
+    stream << file.rdbuf();
+    return stream.str();
+}
 
 template<typename Table, typename Range, typename Transform>
 auto indexed(const Table& table, Range&& range, Transform&& transform)
@@ -62,11 +77,13 @@ inline void collect(EdgeSerializationContext context, const StateGraphEdgeLabel&
 template<tyr::planning::TaskKind Kind>
 auto save(StateSerializationContext context, tyr::planning::StateView<Kind> state) -> StateArchive
 {
-    return StateArchive { indexed(context.symbols->static_atoms, state.get_static_atoms_view(), [](auto atom) { return archive(atom); }),
-                          indexed(context.symbols->fluent_facts, state.get_fluent_facts_view(), [](auto fact) { return archive(fact); }),
-                          indexed(context.symbols->derived_atoms, state.get_derived_atoms_view(), [](auto atom) { return archive(atom); }),
-                          indexed(context.symbols->static_numeric_values, state.get_static_fterm_values_view(), [](const auto& value) { return archive(value); }),
-                          indexed(context.symbols->fluent_numeric_values, state.get_fluent_fterm_values_view(), [](const auto& value) { return archive(value); }) };
+    return StateArchive {
+        indexed(context.symbols->static_atoms, state.get_static_atoms_view(), [](auto atom) { return archive(atom); }),
+        indexed(context.symbols->fluent_facts, state.get_fluent_facts_view(), [](auto fact) { return archive(fact); }),
+        indexed(context.symbols->derived_atoms, state.get_derived_atoms_view(), [](auto atom) { return archive(atom); }),
+        indexed(context.symbols->static_numeric_values, state.get_static_fterm_values_view(), [](const auto& value) { return archive(value); }),
+        indexed(context.symbols->fluent_numeric_values, state.get_fluent_fterm_values_view(), [](const auto& value) { return archive(value); })
+    };
 }
 
 template<tyr::planning::TaskKind Kind>
@@ -123,21 +140,21 @@ auto save_graph(GraphSerializationContext& context, const Graph& graph)
 }  // namespace detail
 
 template<tyr::planning::TaskKind Kind>
-auto save(std::string problem, const StateGraph<Kind>& graph) -> StateGraphArchive
+auto save(const std::filesystem::path& task_filepath, const StateGraph<Kind>& graph) -> StateGraphArchive
 {
     auto context = GraphSerializationContext {};
     detail::collect(context, graph);
     auto [states, edges] = detail::save_graph<StateArchive>(context, graph);
-    return StateGraphArchive { std::move(problem), context.symbols.release(), std::move(states), std::move(edges) };
+    return StateGraphArchive { detail::read_task_file(task_filepath), context.symbols.release(), std::move(states), std::move(edges) };
 }
 
 template<tyr::planning::TaskKind Kind>
-auto save(std::string problem, const AnnotatedStateGraph<Kind>& graph) -> AnnotatedStateGraphArchive
+auto save(const std::filesystem::path& task_filepath, const AnnotatedStateGraph<Kind>& graph) -> AnnotatedStateGraphArchive
 {
     auto context = GraphSerializationContext {};
     detail::collect(context, graph);
     auto [states, edges] = detail::save_graph<AnnotatedStateArchive>(context, graph);
-    return AnnotatedStateGraphArchive { std::move(problem), context.symbols.release(), std::move(states), std::move(edges) };
+    return AnnotatedStateGraphArchive { detail::read_task_file(task_filepath), context.symbols.release(), std::move(states), std::move(edges) };
 }
 
 }  // namespace runir::datasets::serialization

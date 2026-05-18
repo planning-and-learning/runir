@@ -102,6 +102,7 @@ std::vector<StateGraphSerializationCase> load_cases()
 template<tyr::planning::TaskKind Kind>
 void test_state_graph_serialization(tyr::planning::TaskPtr<Kind> task,
                                     tyr::ExecutionContextPtr execution_context,
+                                    const std::filesystem::path& task_filepath,
                                     const std::string& problem,
                                     tyr::uint_t max_num_states)
 {
@@ -112,8 +113,8 @@ void test_state_graph_serialization(tyr::planning::TaskPtr<Kind> task,
 
     const auto result = datasets::generate_state_graph_result(context, options);
     const auto annotated_graph = datasets::annotate_state_graph(context, *result.graph, datasets::StateGraphCostMode::UNIT_COST);
-    const auto raw_archive = datasets::serialization::save(problem, *result.graph);
-    const auto annotated_archive = datasets::serialization::save(problem, *annotated_graph);
+    const auto raw_archive = datasets::serialization::save(task_filepath, *result.graph);
+    const auto annotated_archive = datasets::serialization::save(task_filepath, *annotated_graph);
     const auto raw_round_tripped = round_trip_archive(raw_archive);
     const auto annotated_round_tripped = round_trip_archive(annotated_archive);
 
@@ -126,15 +127,16 @@ void test_state_graph_serialization(tyr::planning::TaskPtr<Kind> task,
 
     auto raw_context = datasets::TaskSearchContext<Kind>(task, execution_context);
     const auto deserialized_raw_graph = datasets::serialization::deserialize(raw_context, raw_round_tripped);
-    EXPECT_EQ(serialize_archive(raw_round_tripped), serialize_archive(datasets::serialization::save(problem, *deserialized_raw_graph)));
+    EXPECT_EQ(serialize_archive(raw_round_tripped), serialize_archive(datasets::serialization::save(task_filepath, *deserialized_raw_graph)));
 
     auto annotated_context = datasets::TaskSearchContext<Kind>(std::move(task), std::move(execution_context));
     const auto deserialized_annotated_graph = datasets::serialization::deserialize(annotated_context, annotated_round_tripped);
-    EXPECT_EQ(serialize_archive(annotated_round_tripped), serialize_archive(datasets::serialization::save(problem, *deserialized_annotated_graph)));
+    EXPECT_EQ(serialize_archive(annotated_round_tripped), serialize_archive(datasets::serialization::save(task_filepath, *deserialized_annotated_graph)));
 }
 
 void test_ground_state_graph_serialization(const tyr::formalism::planning::PlanningTask& planning_task,
                                            tyr::ExecutionContextPtr execution_context,
+                                           const std::filesystem::path& task_filepath,
                                            const std::string& problem,
                                            tyr::uint_t max_num_states)
 {
@@ -142,18 +144,19 @@ void test_ground_state_graph_serialization(const tyr::formalism::planning::Plann
 
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-    test_state_graph_serialization<p::GroundTag>(std::move(task), std::move(execution_context), problem, max_num_states);
+    test_state_graph_serialization<p::GroundTag>(std::move(task), std::move(execution_context), task_filepath, problem, max_num_states);
 }
 
 void test_lifted_state_graph_serialization(tyr::formalism::planning::PlanningTask planning_task,
                                            tyr::ExecutionContextPtr execution_context,
+                                           const std::filesystem::path& task_filepath,
                                            const std::string& problem,
                                            tyr::uint_t max_num_states)
 {
     namespace p = tyr::planning;
 
     auto task = p::Task<p::LiftedTag>::create(std::move(planning_task));
-    test_state_graph_serialization<p::LiftedTag>(std::move(task), std::move(execution_context), problem, max_num_states);
+    test_state_graph_serialization<p::LiftedTag>(std::move(task), std::move(execution_context), task_filepath, problem, max_num_states);
 }
 
 void test_state_graph_serialization(const StateGraphSerializationCase& test_case, std::string_view task_kind, std::size_t num_threads)
@@ -166,9 +169,9 @@ void test_state_graph_serialization(const StateGraphSerializationCase& test_case
     auto execution_context = tyr::ExecutionContext::create(num_threads);
 
     if (task_kind == "ground")
-        return test_ground_state_graph_serialization(planning_task, execution_context, problem, test_case.max_num_states);
+        return test_ground_state_graph_serialization(planning_task, execution_context, test_case.task_file, problem, test_case.max_num_states);
     if (task_kind == "lifted")
-        return test_lifted_state_graph_serialization(planning_task, execution_context, problem, test_case.max_num_states);
+        return test_lifted_state_graph_serialization(planning_task, execution_context, test_case.task_file, problem, test_case.max_num_states);
 
     throw std::runtime_error(fmt::format("Unsupported task kind: {}", task_kind));
 }
