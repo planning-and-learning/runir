@@ -7,8 +7,8 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <limits>
-#include <runir/datasets/state_graph.hpp>
 #include <runir/datasets/serialization.hpp>
+#include <runir/datasets/state_graph.hpp>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -32,10 +32,7 @@ struct StateGraphSerializationCase
     tyr::uint_t max_num_states = std::numeric_limits<tyr::uint_t>::max();
 };
 
-void PrintTo(const StateGraphSerializationCase& test_case, std::ostream* out)
-{
-    *out << test_case.name;
-}
+void PrintTo(const StateGraphSerializationCase& test_case, std::ostream* out) { *out << test_case.name; }
 
 template<typename Archive>
 std::string serialize_archive(const Archive& archive)
@@ -108,7 +105,7 @@ void test_state_graph_serialization(tyr::planning::TaskPtr<Kind> task,
                                     const std::string& problem,
                                     tyr::uint_t max_num_states)
 {
-    auto context = datasets::TaskSearchContext<Kind>(std::move(task), std::move(execution_context));
+    auto context = datasets::TaskSearchContext<Kind>(task, execution_context);
 
     auto options = datasets::StateGraphGenerationOptions {};
     options.max_num_states = max_num_states;
@@ -126,6 +123,14 @@ void test_state_graph_serialization(tyr::planning::TaskPtr<Kind> task,
     EXPECT_EQ(annotated_round_tripped.problem, problem);
     EXPECT_EQ(serialize_archive(raw_archive), serialize_archive(raw_round_tripped));
     EXPECT_EQ(serialize_archive(annotated_archive), serialize_archive(annotated_round_tripped));
+
+    auto raw_context = datasets::TaskSearchContext<Kind>(task, execution_context);
+    const auto deserialized_raw_graph = datasets::serialization::deserialize(raw_context, raw_round_tripped);
+    EXPECT_EQ(serialize_archive(raw_round_tripped), serialize_archive(datasets::serialization::save(problem, *deserialized_raw_graph)));
+
+    auto annotated_context = datasets::TaskSearchContext<Kind>(std::move(task), std::move(execution_context));
+    const auto deserialized_annotated_graph = datasets::serialization::deserialize(annotated_context, annotated_round_tripped);
+    EXPECT_EQ(serialize_archive(annotated_round_tripped), serialize_archive(datasets::serialization::save(problem, *deserialized_annotated_graph)));
 }
 
 void test_ground_state_graph_serialization(const tyr::formalism::planning::PlanningTask& planning_task,

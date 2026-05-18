@@ -23,10 +23,9 @@
 
 #include <algorithm>
 #include <string>
-#include <vector>
-
 #include <tyr/common/comparators.hpp>
 #include <tyr/formalism/planning/repository.hpp>
+#include <vector>
 
 namespace runir::datasets::serialization
 {
@@ -74,13 +73,12 @@ auto archive(const tyr::formalism::planning::GroundFunctionTermViewValuePair<T>&
 
 inline auto archive(tyr::formalism::planning::GroundActionView action) -> GroundActionArchive
 {
-    return GroundActionArchive { std::string(action.get_action().get_name()), object_names(action.get_row().get_objects()) };
+    return GroundActionArchive { tyr::uint_t(action.get_action().get_index()),
+                                 std::string(action.get_action().get_name()),
+                                 object_names(action.get_row().get_objects()) };
 }
 
-inline auto archive(const StateGraphEdgeLabel& label) -> GroundActionArchive
-{
-    return archive(label.action);
-}
+inline auto archive(const StateGraphEdgeLabel& label) -> GroundActionArchive { return archive(label.action); }
 
 }  // namespace runir::datasets::serialization
 

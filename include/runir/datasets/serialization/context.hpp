@@ -19,15 +19,15 @@
 #define RUNIR_DATASETS_SERIALIZATION_CONTEXT_HPP_
 
 #include "runir/datasets/serialization/archives.hpp"
+#include "runir/datasets/task_class.hpp"
 
 #include <algorithm>
-#include <utility>
-#include <vector>
-
 #include <tyr/common/comparators.hpp>
 #include <tyr/common/declarations.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/planning.hpp>
+#include <utility>
+#include <vector>
 
 namespace runir::datasets::serialization
 {
@@ -77,12 +77,8 @@ struct SymbolTablesBuilder
 
     auto release() const -> SymbolTablesArchive
     {
-        return SymbolTablesArchive { static_atoms.release(),
-                                     fluent_facts.release(),
-                                     derived_atoms.release(),
-                                     static_numeric_values.release(),
-                                     fluent_numeric_values.release(),
-                                     ground_actions.release() };
+        return SymbolTablesArchive { static_atoms.release(),          fluent_facts.release(),          derived_atoms.release(),
+                                     static_numeric_values.release(), fluent_numeric_values.release(), ground_actions.release() };
     }
 };
 
