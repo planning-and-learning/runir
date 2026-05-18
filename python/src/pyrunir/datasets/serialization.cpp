@@ -50,10 +50,8 @@ void bind_serialization_for_kind(nb::module_& m, const char* function_prefix)
     using Context = TaskSearchContext<Kind>;
 
     m.def((std::string("save_") + function_prefix + "_state_graph").c_str(),
-          [](const std::filesystem::path& archive_filepath, const std::filesystem::path& task_filepath, const Graph& graph)
-          { write_archive(archive_filepath, serialization::save(task_filepath, graph)); },
+          [](const std::filesystem::path& archive_filepath, const Graph& graph) { write_archive(archive_filepath, serialization::save(graph)); },
           "archive_filepath"_a,
-          "task_filepath"_a,
           "graph"_a);
 
     m.def((std::string("load_") + function_prefix + "_state_graph").c_str(),
@@ -66,10 +64,8 @@ void bind_serialization_for_kind(nb::module_& m, const char* function_prefix)
           "context"_a);
 
     m.def((std::string("save_") + function_prefix + "_annotated_state_graph").c_str(),
-          [](const std::filesystem::path& archive_filepath, const std::filesystem::path& task_filepath, const AnnotatedGraph& graph)
-          { write_archive(archive_filepath, serialization::save(task_filepath, graph)); },
+          [](const std::filesystem::path& archive_filepath, const AnnotatedGraph& graph) { write_archive(archive_filepath, serialization::save(graph)); },
           "archive_filepath"_a,
-          "task_filepath"_a,
           "graph"_a);
 
     m.def((std::string("load_") + function_prefix + "_annotated_state_graph").c_str(),

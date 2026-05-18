@@ -100,18 +100,6 @@ struct GraphSerializationContext
     auto edge_context() noexcept { return EdgeSerializationContext { &symbols }; }
 };
 
-struct DomainDeserializationContext
-{
-    tyr::formalism::planning::Parser* parser;
-    tyr::ExecutionContextPtr execution_context;
-};
-
-template<tyr::planning::TaskKind Kind>
-struct TaskDeserializationContext
-{
-    TaskSearchContext<Kind> search_context;
-};
-
 }  // namespace runir::datasets::serialization
 
 #endif

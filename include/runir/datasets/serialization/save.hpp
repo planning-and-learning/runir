@@ -23,11 +23,6 @@
 #include "runir/datasets/state_graph.hpp"
 
 #include <algorithm>
-#include <filesystem>
-#include <fstream>
-#include <sstream>
-#include <stdexcept>
-#include <string>
 #include <vector>
 
 namespace runir::datasets::serialization
@@ -35,17 +30,6 @@ namespace runir::datasets::serialization
 
 namespace detail
 {
-
-inline auto read_task_file(const std::filesystem::path& task_filepath) -> std::string
-{
-    auto file = std::ifstream(task_filepath);
-    if (!file)
-        throw std::runtime_error("Could not open task file: " + task_filepath.string() + ".");
-
-    auto stream = std::ostringstream {};
-    stream << file.rdbuf();
-    return stream.str();
-}
 
 template<typename Table, typename Range, typename Transform>
 auto indexed(const Table& table, Range&& range, Transform&& transform)
@@ -140,21 +124,21 @@ auto save_graph(GraphSerializationContext& context, const Graph& graph)
 }  // namespace detail
 
 template<tyr::planning::TaskKind Kind>
-auto save(const std::filesystem::path& task_filepath, const StateGraph<Kind>& graph) -> StateGraphArchive
+auto save(const StateGraph<Kind>& graph) -> StateGraphArchive
 {
     auto context = GraphSerializationContext {};
     detail::collect(context, graph);
     auto [states, edges] = detail::save_graph<StateArchive>(context, graph);
-    return StateGraphArchive { detail::read_task_file(task_filepath), context.symbols.release(), std::move(states), std::move(edges) };
+    return StateGraphArchive { context.symbols.release(), std::move(states), std::move(edges) };
 }
 
 template<tyr::planning::TaskKind Kind>
-auto save(const std::filesystem::path& task_filepath, const AnnotatedStateGraph<Kind>& graph) -> AnnotatedStateGraphArchive
+auto save(const AnnotatedStateGraph<Kind>& graph) -> AnnotatedStateGraphArchive
 {
     auto context = GraphSerializationContext {};
     detail::collect(context, graph);
     auto [states, edges] = detail::save_graph<AnnotatedStateArchive>(context, graph);
-    return AnnotatedStateGraphArchive { detail::read_task_file(task_filepath), context.symbols.release(), std::move(states), std::move(edges) };
+    return AnnotatedStateGraphArchive { context.symbols.release(), std::move(states), std::move(edges) };
 }
 
 }  // namespace runir::datasets::serialization

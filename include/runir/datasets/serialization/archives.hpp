@@ -128,7 +128,6 @@ struct EdgeArchive
 
 struct StateGraphArchive
 {
-    std::string problem;
     SymbolTablesArchive symbols;
     std::vector<StateArchive> states;
     std::vector<EdgeArchive> edges;
@@ -136,7 +135,6 @@ struct StateGraphArchive
 
 struct AnnotatedStateGraphArchive
 {
-    std::string problem;
     SymbolTablesArchive symbols;
     std::vector<AnnotatedStateArchive> states;
     std::vector<EdgeArchive> edges;
@@ -279,7 +277,6 @@ void serialize(Archive& archive, runir::datasets::serialization::EdgeArchive& va
 template<class Archive>
 void serialize(Archive& archive, runir::datasets::serialization::StateGraphArchive& value, const unsigned int)
 {
-    archive& make_nvp("problem", value.problem);
     archive& make_nvp("symbols", value.symbols);
     archive& make_nvp("states", value.states);
     archive& make_nvp("edges", value.edges);
@@ -288,7 +285,6 @@ void serialize(Archive& archive, runir::datasets::serialization::StateGraphArchi
 template<class Archive>
 void serialize(Archive& archive, runir::datasets::serialization::AnnotatedStateGraphArchive& value, const unsigned int)
 {
-    archive& make_nvp("problem", value.problem);
     archive& make_nvp("symbols", value.symbols);
     archive& make_nvp("states", value.states);
     archive& make_nvp("edges", value.edges);

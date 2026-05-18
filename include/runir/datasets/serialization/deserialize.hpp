@@ -24,8 +24,6 @@
 #include "runir/datasets/task_class.hpp"
 
 #include <algorithm>
-#include <concepts>
-#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -34,7 +32,6 @@
 #include <tyr/formalism/binding_data.hpp>
 #include <tyr/formalism/planning/fdr_fact_data.hpp>
 #include <tyr/formalism/planning/fdr_value.hpp>
-#include <tyr/formalism/planning/parser.hpp>
 #include <vector>
 
 namespace runir::datasets::serialization
@@ -234,52 +231,6 @@ inline auto deserialize_edge_label(const EdgeArchive& archive, const ResolvedSym
 }
 
 }  // namespace detail
-
-template<tyr::planning::TaskKind Kind>
-auto deserialize(DomainDeserializationContext context, const StateGraphArchive& archive) -> TaskDeserializationContext<Kind>
-{
-    namespace p = tyr::planning;
-
-    auto planning_task = context.parser->parse_task(archive.problem, std::filesystem::path("<serialized-problem>"));
-
-    if constexpr (std::same_as<Kind, p::GroundTag>)
-    {
-        auto lifted_task = p::Task<p::LiftedTag>(planning_task);
-        auto task = lifted_task.instantiate_ground_task(*context.execution_context).task;
-        return TaskDeserializationContext<p::GroundTag> { TaskSearchContext<p::GroundTag>(std::move(task), std::move(context.execution_context)) };
-    }
-    else if constexpr (std::same_as<Kind, p::LiftedTag>)
-    {
-        auto task = p::Task<p::LiftedTag>::create(std::move(planning_task));
-        return TaskDeserializationContext<p::LiftedTag> { TaskSearchContext<p::LiftedTag>(std::move(task), std::move(context.execution_context)) };
-    }
-}
-
-template<tyr::planning::TaskKind Kind>
-auto deserialize(tyr::formalism::planning::Parser& parser,
-                 const StateGraphArchive& archive,
-                 tyr::ExecutionContextPtr execution_context) -> TaskSearchContext<Kind>
-{
-    auto context = deserialize<Kind>(DomainDeserializationContext { &parser, std::move(execution_context) }, archive);
-    return std::move(context.search_context);
-}
-
-template<tyr::planning::TaskKind Kind>
-auto deserialize(DomainDeserializationContext context, const AnnotatedStateGraphArchive& archive) -> TaskDeserializationContext<Kind>
-{
-    auto state_graph_archive = StateGraphArchive {};
-    state_graph_archive.problem = archive.problem;
-    return deserialize<Kind>(context, state_graph_archive);
-}
-
-template<tyr::planning::TaskKind Kind>
-auto deserialize(tyr::formalism::planning::Parser& parser,
-                 const AnnotatedStateGraphArchive& archive,
-                 tyr::ExecutionContextPtr execution_context) -> TaskSearchContext<Kind>
-{
-    auto context = deserialize<Kind>(DomainDeserializationContext { &parser, std::move(execution_context) }, archive);
-    return std::move(context.search_context);
-}
 
 template<tyr::planning::TaskKind Kind>
 auto deserialize(TaskSearchContext<Kind>& context, const StateGraphArchive& archive) -> std::unique_ptr<StateGraph<Kind>>
