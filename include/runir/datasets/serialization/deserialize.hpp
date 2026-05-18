@@ -27,10 +27,8 @@
 #include <concepts>
 #include <filesystem>
 #include <memory>
-#include <optional>
 #include <stdexcept>
 #include <string>
-#include <type_traits>
 #include <tyr/common/declarations.hpp>
 #include <tyr/common/types.hpp>
 #include <tyr/formalism/binding_data.hpp>
@@ -45,53 +43,6 @@ namespace runir::datasets::serialization
 namespace detail
 {
 
-template<typename T>
-bool equal_archive(const T& lhs, const T& rhs)
-{
-    if constexpr (requires {
-                      lhs.identifying_members();
-                      rhs.identifying_members();
-                  })
-        return lhs.identifying_members() == rhs.identifying_members();
-    else
-        return lhs == rhs;
-}
-
-template<typename Range, typename Archive, typename Converter>
-auto find_matching(Range&& range, const Archive& archive, Converter&& converter, const std::string& what)
-{
-    for (auto element : range)
-    {
-        if (equal_archive(converter(element), archive))
-            return element;
-    }
-
-    throw std::runtime_error("Could not deserialize " + what + ".");
-}
-
-template<typename Range>
-auto find_object(Range&& range, const std::string& name) -> std::optional<tyr::Index<tyr::formalism::Object>>
-{
-    for (auto object : range)
-    {
-        if (object.get_name() == name)
-            return object.get_index();
-    }
-    return std::nullopt;
-}
-
-template<tyr::planning::TaskKind Kind>
-auto get_task_view(const TaskSearchContext<Kind>& context)
-{
-    return context.task->get_task();
-}
-
-template<tyr::planning::TaskKind Kind>
-auto get_domain_view(const TaskSearchContext<Kind>& context)
-{
-    return context.task->get_domain().get_domain();
-}
-
 template<typename Lookup, typename Key>
 auto lookup_required(const Lookup& lookup, const Key& key, const std::string& what)
 {
@@ -104,10 +55,17 @@ auto lookup_required(const Lookup& lookup, const Key& key, const std::string& wh
 template<tyr::planning::TaskKind Kind>
 auto get_object(const TaskSearchContext<Kind>& context, const std::string& name) -> tyr::Index<tyr::formalism::Object>
 {
-    if (auto object = find_object(get_task_view(context).get_objects(), name))
-        return *object;
-    if (auto object = find_object(get_domain_view(context).get_constants(), name))
-        return *object;
+    for (auto object : context.task->get_task().get_objects())
+    {
+        if (object.get_name() == name)
+            return object.get_index();
+    }
+
+    for (auto object : context.task->get_domain().get_domain().get_constants())
+    {
+        if (object.get_name() == name)
+            return object.get_index();
+    }
 
     throw std::runtime_error("Could not deserialize object: " + name + ".");
 }
@@ -121,7 +79,7 @@ template<tyr::planning::TaskKind Kind, tyr::formalism::FactKind T>
 auto make_function_term_value_lookup(const TaskSearchContext<Kind>& context)
 {
     auto result = FunctionTermValueLookup<T> {};
-    for (auto term_value : get_task_view(context).template get_fterm_values<T>())
+    for (auto term_value : context.task->get_task().template get_fterm_values<T>())
         result.emplace(serialization::archive(term_value.get_fterm()),
                        tyr::formalism::planning::GroundFunctionTermViewValuePair<T> { term_value.get_fterm(), term_value.get_value() });
     return result;
@@ -160,16 +118,18 @@ auto deserialize_action_binding(TaskSearchContext<Kind>& context, const GroundAc
 {
     namespace fp = tyr::formalism::planning;
 
-    auto action = std::optional<fp::ActionView> {};
-    for (auto candidate : get_domain_view(context).get_actions())
+    auto action = tyr::Index<fp::Action> {};
+    auto found_action = false;
+    for (auto candidate : context.task->get_domain().get_domain().get_actions())
     {
         if (tyr::uint_t(candidate.get_index()) == archive.action_index && candidate.get_name() == archive.action)
         {
-            action = candidate;
+            action = candidate.get_index();
+            found_action = true;
             break;
         }
     }
-    if (!action)
+    if (!found_action)
         throw std::runtime_error("Could not deserialize action " + archive.action + "/" + std::to_string(archive.action_index) + ".");
 
     auto objects = tyr::IndexList<tyr::formalism::Object> {};
@@ -177,7 +137,7 @@ auto deserialize_action_binding(TaskSearchContext<Kind>& context, const GroundAc
     for (const auto& object : archive.objects)
         objects.push_back(get_object(context, object));
 
-    const auto binding = tyr::Data<tyr::formalism::RelationBinding<fp::Action>>(action->get_index(), objects.size(), std::move(objects));
+    const auto binding = tyr::Data<tyr::formalism::RelationBinding<fp::Action>>(action, objects.size(), std::move(objects));
     return context.task->get_repository()->get_or_create(binding).first;
 }
 
@@ -190,7 +150,7 @@ auto make_ground_action_lookup(TaskSearchContext<Kind>& context, const SymbolTab
     if constexpr (std::same_as<Kind, tyr::planning::GroundTag>)
     {
         auto lookup = tyr::UnorderedMap<GroundActionArchive, tyr::formalism::planning::GroundActionView> {};
-        for (auto action : get_task_view(context).get_ground_actions())
+        for (auto action : context.task->get_task().get_ground_actions())
             lookup.emplace(serialization::archive(action), action);
 
         for (const auto& symbol : symbols.symbols)
@@ -216,7 +176,6 @@ auto make_ground_action_lookup(TaskSearchContext<Kind>& context, const SymbolTab
     return result;
 }
 
-template<tyr::planning::TaskKind Kind>
 struct ResolvedSymbols
 {
     std::vector<tyr::formalism::planning::FDRFactView<tyr::formalism::FluentTag>> fluent_facts;
@@ -225,14 +184,14 @@ struct ResolvedSymbols
 };
 
 template<tyr::planning::TaskKind Kind>
-auto resolve_symbols(TaskSearchContext<Kind>& context, const SymbolTablesArchive& symbols) -> ResolvedSymbols<Kind>
+auto resolve_symbols(TaskSearchContext<Kind>& context, const SymbolTablesArchive& symbols) -> ResolvedSymbols
 {
     namespace f = tyr::formalism;
 
     const auto fluent_facts = make_fdr_fact_lookup(context);
     const auto fluent_numeric_values = make_function_term_value_lookup<Kind, f::FluentTag>(context);
 
-    auto result = ResolvedSymbols<Kind> {};
+    auto result = ResolvedSymbols {};
 
     result.fluent_facts.reserve(symbols.fluent_facts.symbols.size());
     for (const auto& symbol : symbols.fluent_facts.symbols)
@@ -252,7 +211,7 @@ auto resolve_symbols(TaskSearchContext<Kind>& context, const SymbolTablesArchive
 }
 
 template<tyr::planning::TaskKind Kind>
-auto deserialize_state(TaskSearchContext<Kind>& context, const StateArchive& archive, const ResolvedSymbols<Kind>& symbols) -> tyr::planning::StateView<Kind>
+auto deserialize_state(TaskSearchContext<Kind>& context, const StateArchive& archive, const ResolvedSymbols& symbols) -> tyr::planning::StateView<Kind>
 {
     namespace f = tyr::formalism;
 
@@ -269,8 +228,7 @@ auto deserialize_state(TaskSearchContext<Kind>& context, const StateArchive& arc
     return context.state_repository->create_state(fluent_facts, fluent_numeric_values);
 }
 
-template<tyr::planning::TaskKind Kind>
-auto deserialize_edge_label(const EdgeArchive& archive, const ResolvedSymbols<Kind>& symbols) -> StateGraphEdgeLabel
+inline auto deserialize_edge_label(const EdgeArchive& archive, const ResolvedSymbols& symbols) -> StateGraphEdgeLabel
 {
     return StateGraphEdgeLabel { symbols.ground_actions.at(archive.action), archive.cost };
 }
