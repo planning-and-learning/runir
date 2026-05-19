@@ -114,6 +114,14 @@ auto require_object(tyr::formalism::planning::DomainView domain, const std::stri
     throw std::runtime_error("Domain has no constant with name \"" + name + "\".");
 }
 
+auto require_objects(tyr::formalism::planning::DomainView domain, const std::vector<std::string>& names)
+{
+    auto objects = tyr::IndexList<tyr::formalism::Object> {};
+    for (const auto& name : names)
+        objects.push_back(require_object(domain, name));
+    return objects;
+}
+
 auto parse(const ast::ConceptBot&, tyr::formalism::planning::DomainView, ConstructorRepository& repository)
 {
     tyr::Data<Concept<BotTag>> data;
@@ -184,6 +192,48 @@ auto parse(const ast::ConceptExistentialQuantification& node, tyr::formalism::pl
     return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
 }
 
+auto parse(const ast::ConceptAtLeastNumberRestriction& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+{
+    tyr::Data<Concept<AtLeastNumberRestrictionTag>> data(node.n, parse(node.role, domain, repository).get_index());
+    return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
+}
+
+auto parse(const ast::ConceptAtMostNumberRestriction& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+{
+    tyr::Data<Concept<AtMostNumberRestrictionTag>> data(node.n, parse(node.role, domain, repository).get_index());
+    return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
+}
+
+auto parse(const ast::ConceptExactNumberRestriction& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+{
+    tyr::Data<Concept<ExactNumberRestrictionTag>> data(node.n, parse(node.role, domain, repository).get_index());
+    return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
+}
+
+auto parse(const ast::ConceptQualifiedAtLeastNumberRestriction& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+{
+    tyr::Data<Concept<QualifiedAtLeastNumberRestrictionTag>> data(node.n,
+                                                                  parse(node.role, domain, repository).get_index(),
+                                                                  parse(node.concept_, domain, repository).get_index());
+    return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
+}
+
+auto parse(const ast::ConceptQualifiedAtMostNumberRestriction& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+{
+    tyr::Data<Concept<QualifiedAtMostNumberRestrictionTag>> data(node.n,
+                                                                 parse(node.role, domain, repository).get_index(),
+                                                                 parse(node.concept_, domain, repository).get_index());
+    return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
+}
+
+auto parse(const ast::ConceptQualifiedExactNumberRestriction& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+{
+    tyr::Data<Concept<QualifiedExactNumberRestrictionTag>> data(node.n,
+                                                                parse(node.role, domain, repository).get_index(),
+                                                                parse(node.concept_, domain, repository).get_index());
+    return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
+}
+
 auto parse(const ast::ConceptRoleValueMap& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
 {
     tyr::Data<Concept<RoleValueMapTag>> data(parse(node.lhs, domain, repository).get_index(), parse(node.rhs, domain, repository).get_index());
@@ -193,6 +243,18 @@ auto parse(const ast::ConceptRoleValueMap& node, tyr::formalism::planning::Domai
 auto parse(const ast::ConceptAgreement& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
 {
     tyr::Data<Concept<AgreementTag>> data(parse(node.lhs, domain, repository).get_index(), parse(node.rhs, domain, repository).get_index());
+    return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
+}
+
+auto parse(const ast::ConceptRoleFillers& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+{
+    tyr::Data<Concept<RoleFillersTag>> data(parse(node.role, domain, repository).get_index(), require_objects(domain, node.object_names));
+    return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
+}
+
+auto parse(const ast::ConceptOneOf& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+{
+    tyr::Data<Concept<OneOfTag>> data(require_objects(domain, node.object_names));
     return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
 }
 
@@ -300,6 +362,20 @@ auto parse(const ast::BooleanAtomicState& node, tyr::formalism::planning::Domain
                              {
                                  using T = decltype(tag);
                                  tyr::Data<Boolean<AtomicStateTag<T>>> data(predicate, node.polarity);
+                                 return intern_constructor<BooleanTag>(repository, intern(repository, data).get_index());
+                             });
+}
+
+auto parse(const ast::BooleanAtomicGoal& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+{
+    return resolve_predicate(domain,
+                             node.predicate_name,
+                             0,
+                             "BooleanAtomicGoal",
+                             [&](auto tag, auto predicate)
+                             {
+                                 using T = decltype(tag);
+                                 tyr::Data<Boolean<AtomicGoalTag<T>>> data(predicate, node.polarity);
                                  return intern_constructor<BooleanTag>(repository, intern(repository, data).get_index());
                              });
 }

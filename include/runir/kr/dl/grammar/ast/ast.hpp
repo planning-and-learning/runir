@@ -22,8 +22,16 @@ struct ConceptUnion;
 struct ConceptNegation;
 struct ConceptValueRestriction;
 struct ConceptExistentialQuantification;
+struct ConceptAtLeastNumberRestriction;
+struct ConceptAtMostNumberRestriction;
+struct ConceptExactNumberRestriction;
+struct ConceptQualifiedAtLeastNumberRestriction;
+struct ConceptQualifiedAtMostNumberRestriction;
+struct ConceptQualifiedExactNumberRestriction;
 struct ConceptRoleValueMap;
 struct ConceptAgreement;
+struct ConceptRoleFillers;
+struct ConceptOneOf;
 struct ConceptNominal;
 
 struct RoleUniversal;
@@ -40,6 +48,7 @@ struct RoleRestriction;
 struct RoleIdentity;
 
 struct BooleanAtomicState;
+struct BooleanAtomicGoal;
 struct BooleanNonempty;
 
 struct NumericalCount;
@@ -67,8 +76,16 @@ struct Constructor<runir::kr::dl::ConceptTag> :
                 x3::forward_ast<ConceptNegation>,
                 x3::forward_ast<ConceptValueRestriction>,
                 x3::forward_ast<ConceptExistentialQuantification>,
+                x3::forward_ast<ConceptAtLeastNumberRestriction>,
+                x3::forward_ast<ConceptAtMostNumberRestriction>,
+                x3::forward_ast<ConceptExactNumberRestriction>,
+                x3::forward_ast<ConceptQualifiedAtLeastNumberRestriction>,
+                x3::forward_ast<ConceptQualifiedAtMostNumberRestriction>,
+                x3::forward_ast<ConceptQualifiedExactNumberRestriction>,
                 x3::forward_ast<ConceptRoleValueMap>,
                 x3::forward_ast<ConceptAgreement>,
+                x3::forward_ast<ConceptRoleFillers>,
+                x3::forward_ast<ConceptOneOf>,
                 x3::forward_ast<ConceptNominal>>
 {
     using base_type::base_type;
@@ -96,7 +113,9 @@ struct Constructor<runir::kr::dl::RoleTag> :
 };
 
 template<>
-struct Constructor<runir::kr::dl::BooleanTag> : x3::position_tagged, x3::variant<x3::forward_ast<BooleanAtomicState>, x3::forward_ast<BooleanNonempty>>
+struct Constructor<runir::kr::dl::BooleanTag> :
+    x3::position_tagged,
+    x3::variant<x3::forward_ast<BooleanAtomicState>, x3::forward_ast<BooleanAtomicGoal>, x3::forward_ast<BooleanNonempty>>
 {
     using base_type::base_type;
     using base_type::operator=;
@@ -196,6 +215,57 @@ struct ConceptExistentialQuantification : x3::position_tagged
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> rhs;
 };
 
+struct ConceptAtLeastNumberRestriction : x3::position_tagged
+{
+    static constexpr auto keyword = "c_at_least";
+
+    tyr::uint_t n;
+    ConstructorOrNonTerminal<runir::kr::dl::RoleTag> role;
+};
+
+struct ConceptAtMostNumberRestriction : x3::position_tagged
+{
+    static constexpr auto keyword = "c_at_most";
+
+    tyr::uint_t n;
+    ConstructorOrNonTerminal<runir::kr::dl::RoleTag> role;
+};
+
+struct ConceptExactNumberRestriction : x3::position_tagged
+{
+    static constexpr auto keyword = "c_exactly";
+
+    tyr::uint_t n;
+    ConstructorOrNonTerminal<runir::kr::dl::RoleTag> role;
+};
+
+struct ConceptQualifiedAtLeastNumberRestriction : x3::position_tagged
+{
+    static constexpr auto keyword = "c_at_least";
+
+    tyr::uint_t n;
+    ConstructorOrNonTerminal<runir::kr::dl::RoleTag> role;
+    ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> concept_;
+};
+
+struct ConceptQualifiedAtMostNumberRestriction : x3::position_tagged
+{
+    static constexpr auto keyword = "c_at_most";
+
+    tyr::uint_t n;
+    ConstructorOrNonTerminal<runir::kr::dl::RoleTag> role;
+    ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> concept_;
+};
+
+struct ConceptQualifiedExactNumberRestriction : x3::position_tagged
+{
+    static constexpr auto keyword = "c_exactly";
+
+    tyr::uint_t n;
+    ConstructorOrNonTerminal<runir::kr::dl::RoleTag> role;
+    ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> concept_;
+};
+
 struct ConceptRoleValueMap : x3::position_tagged
 {
     static constexpr auto keyword = "c_subset";
@@ -210,6 +280,21 @@ struct ConceptAgreement : x3::position_tagged
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> rhs;
+};
+
+struct ConceptRoleFillers : x3::position_tagged
+{
+    static constexpr auto keyword = "c_fillers";
+
+    ConstructorOrNonTerminal<runir::kr::dl::RoleTag> role;
+    std::vector<std::string> object_names;
+};
+
+struct ConceptOneOf : x3::position_tagged
+{
+    static constexpr auto keyword = "c_one_of";
+
+    std::vector<std::string> object_names;
 };
 
 struct ConceptNominal : x3::position_tagged
@@ -315,6 +400,14 @@ struct ConstructorOrNonTerminalVariant : x3::variant<ConstructorOrNonTerminal<ru
 struct BooleanAtomicState : x3::position_tagged
 {
     static constexpr auto keyword = "b_atomic_state";
+
+    std::string predicate_name;
+    bool polarity;
+};
+
+struct BooleanAtomicGoal : x3::position_tagged
+{
+    static constexpr auto keyword = "b_atomic_goal";
 
     std::string predicate_name;
     bool polarity;

@@ -122,6 +122,15 @@ auto require_object(tyr::formalism::planning::DomainView domain, const std::stri
     throw std::runtime_error("Domain has no constant with name \"" + name + "\".");
 }
 
+auto require_objects(tyr::formalism::planning::DomainView domain, const std::vector<std::string>& names)
+{
+    auto result = tyr::IndexList<tyr::formalism::Object> {};
+    result.reserve(names.size());
+    for (const auto& name : names)
+        result.push_back(require_object(domain, name));
+    return result;
+}
+
 auto parse(const runir::kr::dl::grammar::ast::ConceptBot&, tyr::formalism::planning::DomainView, runir::kr::dl::ConstructorRepository& repository)
 {
     tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BotTag>> data;
@@ -200,6 +209,64 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptExistentialQuantification& 
     return parse_binary_concept<runir::kr::dl::ExistentialQuantificationTag>(node, domain, repository);
 }
 
+template<typename Tag, typename Ast>
+auto parse_number_restriction_concept(const Ast& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository)
+{
+    tyr::Data<runir::kr::dl::Concept<Tag>> data(node.n, parse_constructor_or_non_terminal(node.role, domain, repository).get_index());
+    return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
+}
+
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
+{
+    return parse_number_restriction_concept<runir::kr::dl::AtLeastNumberRestrictionTag>(node, domain, repository);
+}
+
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
+{
+    return parse_number_restriction_concept<runir::kr::dl::AtMostNumberRestrictionTag>(node, domain, repository);
+}
+
+auto parse(const runir::kr::dl::grammar::ast::ConceptExactNumberRestriction& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
+{
+    return parse_number_restriction_concept<runir::kr::dl::ExactNumberRestrictionTag>(node, domain, repository);
+}
+
+template<typename Tag, typename Ast>
+auto parse_qualified_number_restriction_concept(const Ast& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository)
+{
+    tyr::Data<runir::kr::dl::Concept<Tag>> data(node.n,
+                                                parse_constructor_or_non_terminal(node.role, domain, repository).get_index(),
+                                                parse_constructor_or_non_terminal(node.concept_, domain, repository).get_index());
+    return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
+}
+
+auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
+{
+    return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>(node, domain, repository);
+}
+
+auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
+{
+    return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>(node, domain, repository);
+}
+
+auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
+{
+    return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>(node, domain, repository);
+}
+
 auto parse(const runir::kr::dl::grammar::ast::ConceptRoleValueMap& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
@@ -212,6 +279,21 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptAgreement& node,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_binary_concept<runir::kr::dl::AgreementTag>(node, domain, repository);
+}
+
+auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
+{
+    tyr::Data<runir::kr::dl::Concept<runir::kr::dl::RoleFillersTag>> data(parse_constructor_or_non_terminal(node.role, domain, repository).get_index(),
+                                                                          require_objects(domain, node.object_names));
+    return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
+}
+
+auto parse(const runir::kr::dl::grammar::ast::ConceptOneOf& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository)
+{
+    tyr::Data<runir::kr::dl::Concept<runir::kr::dl::OneOfTag>> data(require_objects(domain, node.object_names));
+    return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
 }
 
 auto parse(const runir::kr::dl::grammar::ast::ConceptNegation& node,
@@ -355,6 +437,22 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicState& node,
                              {
                                  using T = decltype(tag);
                                  tyr::Data<runir::kr::dl::Boolean<runir::kr::dl::AtomicStateTag<T>>> data(predicate, node.polarity);
+                                 return intern_constructor<runir::kr::dl::BooleanTag>(repository, intern(repository, data).get_index());
+                             });
+}
+
+auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicGoal& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
+{
+    return resolve_predicate(domain,
+                             node.predicate_name,
+                             0,
+                             "BooleanAtomicGoal",
+                             [&](auto tag, auto predicate)
+                             {
+                                 using T = decltype(tag);
+                                 tyr::Data<runir::kr::dl::Boolean<runir::kr::dl::AtomicGoalTag<T>>> data(predicate, node.polarity);
                                  return intern_constructor<runir::kr::dl::BooleanTag>(repository, intern(repository, data).get_index());
                              });
 }

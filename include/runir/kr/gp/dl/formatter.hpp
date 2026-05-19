@@ -10,10 +10,12 @@
 
 #include <concepts>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace runir::kr::gp::dl::format
 {
@@ -27,6 +29,15 @@ std::string quoted(const String& value)
 inline std::string quoted(std::string_view value) { return fmt::format("\"{}\"", value); }
 
 inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
+
+template<typename Objects>
+std::vector<std::string> quoted_object_names(Objects objects)
+{
+    auto result = std::vector<std::string> {};
+    for (auto object : objects)
+        result.push_back(quoted(object.get_name()));
+    return result;
+}
 
 template<runir::kr::dl::CategoryTag Category, typename C>
 std::string constructor(tyr::View<tyr::Index<runir::kr::dl::Constructor<Category>>, C> view);
@@ -67,10 +78,41 @@ std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::Concept<Tag>
                            runir::kr::dl::grammar::ast::ConceptExistentialQuantification::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_rhs()));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::AtLeastNumberRestrictionTag>)
+        return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction::keyword, view.get_n(), constructor(view.get_role()));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::AtMostNumberRestrictionTag>)
+        return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction::keyword, view.get_n(), constructor(view.get_role()));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::ExactNumberRestrictionTag>)
+        return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptExactNumberRestriction::keyword, view.get_n(), constructor(view.get_role()));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>)
+        return fmt::format("{} {} {} {}",
+                           runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction::keyword,
+                           view.get_n(),
+                           constructor(view.get_role()),
+                           constructor(view.get_concept()));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>)
+        return fmt::format("{} {} {} {}",
+                           runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction::keyword,
+                           view.get_n(),
+                           constructor(view.get_role()),
+                           constructor(view.get_concept()));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::QualifiedExactNumberRestrictionTag>)
+        return fmt::format("{} {} {} {}",
+                           runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction::keyword,
+                           view.get_n(),
+                           constructor(view.get_role()),
+                           constructor(view.get_concept()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapTag>)
         return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptRoleValueMap::keyword, constructor(view.get_lhs()), constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::AgreementTag>)
         return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptAgreement::keyword, constructor(view.get_lhs()), constructor(view.get_rhs()));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleFillersTag>)
+        return fmt::format("{} {} {}",
+                           runir::kr::dl::grammar::ast::ConceptRoleFillers::keyword,
+                           constructor(view.get_role()),
+                           fmt::join(quoted_object_names(view.get_objects()), " "));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::OneOfTag>)
+        return fmt::format("{} {}", runir::kr::dl::grammar::ast::ConceptOneOf::keyword, fmt::join(quoted_object_names(view.get_objects()), " "));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
         return fmt::format("{} {}", runir::kr::dl::grammar::ast::ConceptNominal::keyword, quoted(view.get_object().get_name()));
 }
@@ -113,6 +155,11 @@ std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::Boolean<Tag>
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {} {}",
                            runir::kr::dl::grammar::ast::BooleanAtomicState::keyword,
+                           quoted(view.get_predicate().get_name()),
+                           boolean(view.get_polarity()));
+    else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
+        return fmt::format("{} {} {}",
+                           runir::kr::dl::grammar::ast::BooleanAtomicGoal::keyword,
                            quoted(view.get_predicate().get_name()),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)

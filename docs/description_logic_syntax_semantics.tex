@@ -90,10 +90,6 @@ Existential quantification &
 $\exists R.C$ &
 $\sem{\exists R.C} = \{ a \in \DeltaI \mid \exists b.\,(a,b)\in\sem{R} \land b\in\sem{C} \}$ \\
 
-Limited existential quantification &
-$\exists R.\top$ &
-$\sem{\exists R.\top} = \{ a \in \DeltaI \mid \exists b.\,(a,b)\in\sem{R} \}$ \\
-
 At-least number restriction &
 $\geq n\,R$ &
 $\sem{\geq n\,R} = \{ a \in \DeltaI \mid |\{ b \in \DeltaI \mid (a,b)\in\sem{R} \}| \geq n \}$ \\
@@ -164,7 +160,6 @@ Intersection & \texttt{(c\_and C1 ... Cn)} & $C_1 \sqcap \cdots \sqcap C_n$ \\
 Union & \texttt{(c\_or C1 ... Cn)} & $C_1 \sqcup \cdots \sqcup C_n$ \\
 Negation & \texttt{(c\_not C)} & $\neg C$ \\
 Value restriction & \texttt{(c\_all R C)} & $\forall R.C$ \\
-Limited existential quantification & \texttt{(c\_some R)} & $\exists R.\top$ \\
 Existential quantification & \texttt{(c\_some R C)} & $\exists R.C$ \\
 At-least number restriction & \texttt{(c\_at\_least n R)} & $\geq n\,R$ \\
 At-most number restriction & \texttt{(c\_at\_most n R)} & $\leq n\,R$ \\

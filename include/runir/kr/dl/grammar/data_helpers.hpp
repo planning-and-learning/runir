@@ -27,6 +27,18 @@ using PredicateData = runir::kr::dl::semantics::PredicateData<Self, T>;
 template<typename Self>
 using ObjectData = runir::kr::dl::semantics::ObjectData<Self>;
 
+template<typename Self>
+using NumberRestrictionData = runir::kr::dl::semantics::NumberRestrictionData<Self, ConstructorOrNonTerminal<RoleTag>>;
+
+template<typename Self>
+using QualifiedNumberRestrictionData = runir::kr::dl::semantics::QualifiedNumberRestrictionData<Self, ConstructorOrNonTerminal<RoleTag>, ConstructorOrNonTerminal<ConceptTag>>;
+
+template<typename Self>
+using RoleFillersData = runir::kr::dl::semantics::RoleFillersData<Self, ConstructorOrNonTerminal<RoleTag>>;
+
+template<typename Self>
+using ObjectListData = runir::kr::dl::semantics::ObjectListData<Self>;
+
 }
 
 #endif

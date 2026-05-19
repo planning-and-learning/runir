@@ -214,7 +214,10 @@ template<typename T>
 concept ConceptConstructorTag =
     std::same_as<T, BotTag> || std::same_as<T, TopTag> || is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, IntersectionTag>
     || std::same_as<T, UnionTag> || std::same_as<T, NegationTag> || std::same_as<T, ValueRestrictionTag> || std::same_as<T, ExistentialQuantificationTag>
-    || std::same_as<T, RoleValueMapTag> || std::same_as<T, AgreementTag> || std::same_as<T, NominalTag>;
+    || std::same_as<T, AtLeastNumberRestrictionTag> || std::same_as<T, AtMostNumberRestrictionTag> || std::same_as<T, ExactNumberRestrictionTag>
+    || std::same_as<T, QualifiedAtLeastNumberRestrictionTag> || std::same_as<T, QualifiedAtMostNumberRestrictionTag>
+    || std::same_as<T, QualifiedExactNumberRestrictionTag> || std::same_as<T, RoleValueMapTag> || std::same_as<T, AgreementTag>
+    || std::same_as<T, RoleFillersTag> || std::same_as<T, OneOfTag> || std::same_as<T, NominalTag>;
 
 template<typename T>
 concept RoleConstructorTag =
@@ -241,8 +244,16 @@ using ConceptConstructorTags = tyr::TypeList<BotTag,
                                              NegationTag,
                                              ValueRestrictionTag,
                                              ExistentialQuantificationTag,
+                                             AtLeastNumberRestrictionTag,
+                                             AtMostNumberRestrictionTag,
+                                             ExactNumberRestrictionTag,
+                                             QualifiedAtLeastNumberRestrictionTag,
+                                             QualifiedAtMostNumberRestrictionTag,
+                                             QualifiedExactNumberRestrictionTag,
                                              RoleValueMapTag,
                                              AgreementTag,
+                                             RoleFillersTag,
+                                             OneOfTag,
                                              NominalTag>;
 
 using RoleConstructorTags = tyr::TypeList<UniversalTag,

@@ -219,6 +219,57 @@ public:
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::AtLeastNumberRestrictionTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::AtLeastNumberRestrictionTag>> data(source.get_n(),
+                                                                            translate_child<runir::kr::dl::RoleTag>(source.get_role()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::AtMostNumberRestrictionTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::AtMostNumberRestrictionTag>> data(source.get_n(),
+                                                                           translate_child<runir::kr::dl::RoleTag>(source.get_role()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::ExactNumberRestrictionTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::ExactNumberRestrictionTag>> data(source.get_n(),
+                                                                          translate_child<runir::kr::dl::RoleTag>(source.get_role()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>> data(source.get_n(),
+                                                                                     translate_child<runir::kr::dl::RoleTag>(source.get_role()).get_index(),
+                                                                                     translate_to_non_terminal(source.get_concept()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::QualifiedAtMostNumberRestrictionTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>> data(source.get_n(),
+                                                                                    translate_child<runir::kr::dl::RoleTag>(source.get_role()).get_index(),
+                                                                                    translate_to_non_terminal(source.get_concept()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::QualifiedExactNumberRestrictionTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>> data(source.get_n(),
+                                                                                   translate_child<runir::kr::dl::RoleTag>(source.get_role()).get_index(),
+                                                                                   translate_to_non_terminal(source.get_concept()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
     auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::RoleValueMapTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
@@ -232,6 +283,21 @@ public:
     {
         tyr::Data<Concept<runir::kr::dl::AgreementTag>> data(translate_child<runir::kr::dl::RoleTag>(source.get_lhs()).get_index(),
                                                              translate_child<runir::kr::dl::RoleTag>(source.get_rhs()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::RoleFillersTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::RoleFillersTag>> data(translate_child<runir::kr::dl::RoleTag>(source.get_role()).get_index(),
+                                                               source.get_data().objects);
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::OneOfTag> source)
+        requires std::same_as<Category, runir::kr::dl::ConceptTag>
+    {
+        tyr::Data<Concept<runir::kr::dl::OneOfTag>> data(source.get_data().objects);
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
@@ -337,6 +403,14 @@ public:
         requires std::same_as<Category, runir::kr::dl::BooleanTag>
     {
         tyr::Data<Boolean<runir::kr::dl::AtomicStateTag<T>>> data(source.get_data().predicate, source.get_data().polarity);
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
+    template<tyr::formalism::FactKind T>
+    auto translate_concrete_constructor(runir::kr::dl::grammar::BooleanView<runir::kr::dl::AtomicGoalTag<T>> source)
+        requires std::same_as<Category, runir::kr::dl::BooleanTag>
+    {
+        tyr::Data<Boolean<runir::kr::dl::AtomicGoalTag<T>>> data(source.get_data().predicate, source.get_data().polarity);
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 

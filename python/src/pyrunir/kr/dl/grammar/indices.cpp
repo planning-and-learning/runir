@@ -21,8 +21,16 @@ void bind_grammar_indices(nb::module_& m)
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<NegationTag>>>(m, "ConceptNegationIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<ValueRestrictionTag>>>(m, "ConceptValueRestrictionIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<ExistentialQuantificationTag>>>(m, "ConceptExistentialQuantificationIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<AtLeastNumberRestrictionTag>>>(m, "ConceptAtLeastNumberRestrictionIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<AtMostNumberRestrictionTag>>>(m, "ConceptAtMostNumberRestrictionIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<ExactNumberRestrictionTag>>>(m, "ConceptExactNumberRestrictionIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<QualifiedAtLeastNumberRestrictionTag>>>(m, "ConceptQualifiedAtLeastNumberRestrictionIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<QualifiedAtMostNumberRestrictionTag>>>(m, "ConceptQualifiedAtMostNumberRestrictionIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<QualifiedExactNumberRestrictionTag>>>(m, "ConceptQualifiedExactNumberRestrictionIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<RoleValueMapTag>>>(m, "ConceptRoleValueMapIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<AgreementTag>>>(m, "ConceptAgreementIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<RoleFillersTag>>>(m, "ConceptRoleFillersIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<OneOfTag>>>(m, "ConceptOneOfIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<NominalTag>>>(m, "ConceptNominalIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Role<UniversalTag>>>(m, "RoleUniversalIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Role<AtomicStateTag<tyr::formalism::StaticTag>>>>(m, "RoleAtomicStateStaticIndex");
@@ -43,6 +51,9 @@ void bind_grammar_indices(nb::module_& m)
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Boolean<AtomicStateTag<tyr::formalism::StaticTag>>>>(m, "BooleanAtomicStateStaticIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Boolean<AtomicStateTag<tyr::formalism::FluentTag>>>>(m, "BooleanAtomicStateFluentIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Boolean<AtomicStateTag<tyr::formalism::DerivedTag>>>>(m, "BooleanAtomicStateDerivedIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Boolean<AtomicGoalTag<tyr::formalism::StaticTag>>>>(m, "BooleanAtomicGoalStaticIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Boolean<AtomicGoalTag<tyr::formalism::FluentTag>>>>(m, "BooleanAtomicGoalFluentIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Boolean<AtomicGoalTag<tyr::formalism::DerivedTag>>>>(m, "BooleanAtomicGoalDerivedIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Boolean<NonemptyTag>>>(m, "BooleanNonemptyIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Numerical<CountTag>>>(m, "NumericalCountIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Numerical<DistanceTag>>>(m, "NumericalDistanceIndex");

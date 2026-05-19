@@ -29,13 +29,13 @@ public:
     auto get_index() const noexcept { return m_handle; }
 
     auto get_predicate() const noexcept
-        requires runir::kr::dl::is_atomic_state_tag_v<Tag>
+        requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
     {
         return make_view(get_data().predicate, m_context->get_planning_repository());
     }
 
     auto get_polarity() const noexcept
-        requires runir::kr::dl::is_atomic_state_tag_v<Tag>
+        requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
     {
         return get_data().polarity;
     }

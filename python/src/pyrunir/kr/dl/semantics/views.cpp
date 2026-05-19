@@ -58,6 +58,14 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_polarity", &View::get_polarity);
     if constexpr (requires(const View& view) { view.get_object(); })
         cls.def("get_object", &View::get_object);
+    if constexpr (requires(const View& view) { view.get_objects(); })
+        cls.def("get_objects", &View::get_objects);
+    if constexpr (requires(const View& view) { view.get_n(); })
+        cls.def("get_n", &View::get_n);
+    if constexpr (requires(const View& view) { view.get_role(); })
+        cls.def("get_role", &View::get_role);
+    if constexpr (requires(const View& view) { view.get_concept(); })
+        cls.def("get_concept", &View::get_concept);
     if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::GroundTag>& context) {
                       runir::kr::dl::semantics::evaluate(view, context);
                   })
@@ -105,8 +113,16 @@ void bind_semantics_views(nb::module_& m)
     bind_view<Concept<NegationTag>, ConstructorRepository>(m, "ConceptNegation");
     bind_view<Concept<ValueRestrictionTag>, ConstructorRepository>(m, "ConceptValueRestriction");
     bind_view<Concept<ExistentialQuantificationTag>, ConstructorRepository>(m, "ConceptExistentialQuantification");
+    bind_view<Concept<AtLeastNumberRestrictionTag>, ConstructorRepository>(m, "ConceptAtLeastNumberRestriction");
+    bind_view<Concept<AtMostNumberRestrictionTag>, ConstructorRepository>(m, "ConceptAtMostNumberRestriction");
+    bind_view<Concept<ExactNumberRestrictionTag>, ConstructorRepository>(m, "ConceptExactNumberRestriction");
+    bind_view<Concept<QualifiedAtLeastNumberRestrictionTag>, ConstructorRepository>(m, "ConceptQualifiedAtLeastNumberRestriction");
+    bind_view<Concept<QualifiedAtMostNumberRestrictionTag>, ConstructorRepository>(m, "ConceptQualifiedAtMostNumberRestriction");
+    bind_view<Concept<QualifiedExactNumberRestrictionTag>, ConstructorRepository>(m, "ConceptQualifiedExactNumberRestriction");
     bind_view<Concept<RoleValueMapTag>, ConstructorRepository>(m, "ConceptRoleValueMap");
     bind_view<Concept<AgreementTag>, ConstructorRepository>(m, "ConceptAgreement");
+    bind_view<Concept<RoleFillersTag>, ConstructorRepository>(m, "ConceptRoleFillers");
+    bind_view<Concept<OneOfTag>, ConstructorRepository>(m, "ConceptOneOf");
     bind_view<Concept<NominalTag>, ConstructorRepository>(m, "ConceptNominal");
 
     bind_view<Role<UniversalTag>, ConstructorRepository>(m, "RoleUniversal");
@@ -129,6 +145,9 @@ void bind_semantics_views(nb::module_& m)
     bind_view<Boolean<AtomicStateTag<tyr::formalism::StaticTag>>, ConstructorRepository>(m, "BooleanAtomicStateStatic");
     bind_view<Boolean<AtomicStateTag<tyr::formalism::FluentTag>>, ConstructorRepository>(m, "BooleanAtomicStateFluent");
     bind_view<Boolean<AtomicStateTag<tyr::formalism::DerivedTag>>, ConstructorRepository>(m, "BooleanAtomicStateDerived");
+    bind_view<Boolean<AtomicGoalTag<tyr::formalism::StaticTag>>, ConstructorRepository>(m, "BooleanAtomicGoalStatic");
+    bind_view<Boolean<AtomicGoalTag<tyr::formalism::FluentTag>>, ConstructorRepository>(m, "BooleanAtomicGoalFluent");
+    bind_view<Boolean<AtomicGoalTag<tyr::formalism::DerivedTag>>, ConstructorRepository>(m, "BooleanAtomicGoalDerived");
     bind_view<Boolean<NonemptyTag>, ConstructorRepository>(m, "BooleanNonempty");
 
     bind_view<Numerical<CountTag>, ConstructorRepository>(m, "NumericalCount");

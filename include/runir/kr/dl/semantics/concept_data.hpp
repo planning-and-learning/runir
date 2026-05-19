@@ -95,6 +95,69 @@ struct Data<runir::kr::dl::Concept<runir::kr::dl::ExistentialQuantificationTag>>
 };
 
 template<>
+struct Data<runir::kr::dl::Concept<runir::kr::dl::AtLeastNumberRestrictionTag>> :
+    runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<runir::kr::dl::AtLeastNumberRestrictionTag>, runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>
+{
+    using Base =
+        runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<runir::kr::dl::AtLeastNumberRestrictionTag>, runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::Concept<runir::kr::dl::AtMostNumberRestrictionTag>> :
+    runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<runir::kr::dl::AtMostNumberRestrictionTag>, runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>
+{
+    using Base =
+        runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<runir::kr::dl::AtMostNumberRestrictionTag>, runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::Concept<runir::kr::dl::ExactNumberRestrictionTag>> :
+    runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<runir::kr::dl::ExactNumberRestrictionTag>, runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>
+{
+    using Base =
+        runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<runir::kr::dl::ExactNumberRestrictionTag>, runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::Concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>> :
+    runir::kr::dl::semantics::QualifiedNumberRestrictionData<runir::kr::dl::Concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>,
+                                                             runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
+                                                             runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>
+{
+    using Base = runir::kr::dl::semantics::QualifiedNumberRestrictionData<runir::kr::dl::Concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>,
+                                                                         runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
+                                                                         runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::Concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>> :
+    runir::kr::dl::semantics::QualifiedNumberRestrictionData<runir::kr::dl::Concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>,
+                                                             runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
+                                                             runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>
+{
+    using Base = runir::kr::dl::semantics::QualifiedNumberRestrictionData<runir::kr::dl::Concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>,
+                                                                         runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
+                                                                         runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::Concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>> :
+    runir::kr::dl::semantics::QualifiedNumberRestrictionData<runir::kr::dl::Concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>,
+                                                             runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
+                                                             runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>
+{
+    using Base = runir::kr::dl::semantics::QualifiedNumberRestrictionData<runir::kr::dl::Concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>,
+                                                                         runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
+                                                                         runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>>;
+    using Base::Base;
+};
+
+template<>
 struct Data<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapTag>> :
     runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapTag>,
                                          runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
@@ -115,6 +178,21 @@ struct Data<runir::kr::dl::Concept<runir::kr::dl::AgreementTag>> :
     using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<runir::kr::dl::AgreementTag>,
                                                       runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
                                                       runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::Concept<runir::kr::dl::RoleFillersTag>> :
+    runir::kr::dl::semantics::RoleFillersData<runir::kr::dl::Concept<runir::kr::dl::RoleFillersTag>, runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>
+{
+    using Base = runir::kr::dl::semantics::RoleFillersData<runir::kr::dl::Concept<runir::kr::dl::RoleFillersTag>, runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::Concept<runir::kr::dl::OneOfTag>> : runir::kr::dl::semantics::ObjectListData<runir::kr::dl::Concept<runir::kr::dl::OneOfTag>>
+{
+    using Base = runir::kr::dl::semantics::ObjectListData<runir::kr::dl::Concept<runir::kr::dl::OneOfTag>>;
     using Base::Base;
 };
 

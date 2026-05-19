@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/indices.hpp"
 
+#include <cista/containers/vector.h>
 #include <tuple>
 #include <tyr/common/types.hpp>
 #include <tyr/common/types_utils.hpp>
@@ -128,6 +129,96 @@ struct ObjectData
 
     auto cista_members() const noexcept { return std::tie(index, object); }
     auto identifying_members() const noexcept { return std::tie(object); }
+};
+
+template<typename Self, typename Role>
+struct NumberRestrictionData
+{
+    tyr::Index<Self> index;
+    tyr::uint_t n;
+    tyr::Index<Role> role;
+
+    NumberRestrictionData() = default;
+    NumberRestrictionData(tyr::uint_t n_, tyr::Index<Role> role_) : index(), n(n_), role(std::move(role_)) {}
+
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(n);
+        tyr::clear(role);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, n, role); }
+    auto identifying_members() const noexcept { return std::tie(n, role); }
+};
+
+template<typename Self, typename Role, typename Concept>
+struct QualifiedNumberRestrictionData
+{
+    tyr::Index<Self> index;
+    tyr::uint_t n;
+    tyr::Index<Role> role;
+    tyr::Index<Concept> concept_;
+
+    QualifiedNumberRestrictionData() = default;
+    QualifiedNumberRestrictionData(tyr::uint_t n_, tyr::Index<Role> role_, tyr::Index<Concept> concept__) :
+        index(),
+        n(n_),
+        role(std::move(role_)),
+        concept_(std::move(concept__))
+    {
+    }
+
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(n);
+        tyr::clear(role);
+        tyr::clear(concept_);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, n, role, concept_); }
+    auto identifying_members() const noexcept { return std::tie(n, role, concept_); }
+};
+
+template<typename Self, typename Role>
+struct RoleFillersData
+{
+    tyr::Index<Self> index;
+    tyr::Index<Role> role;
+    tyr::IndexList<tyr::formalism::Object> objects;
+
+    RoleFillersData() = default;
+    RoleFillersData(tyr::Index<Role> role_, tyr::IndexList<tyr::formalism::Object> objects_) : index(), role(std::move(role_)), objects(std::move(objects_)) {}
+
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(role);
+        tyr::clear(objects);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, role, objects); }
+    auto identifying_members() const noexcept { return std::tie(role, objects); }
+};
+
+template<typename Self>
+struct ObjectListData
+{
+    tyr::Index<Self> index;
+    tyr::IndexList<tyr::formalism::Object> objects;
+
+    ObjectListData() = default;
+    explicit ObjectListData(tyr::IndexList<tyr::formalism::Object> objects_) : index(), objects(std::move(objects_)) {}
+
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(objects);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, objects); }
+    auto identifying_members() const noexcept { return std::tie(objects); }
 };
 
 }

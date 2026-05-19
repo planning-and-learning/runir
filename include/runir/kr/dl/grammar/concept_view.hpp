@@ -46,6 +46,37 @@ public:
         return make_view(get_data().object, m_context->get_planning_repository());
     }
 
+    auto get_objects() const noexcept
+        requires(std::same_as<Tag, runir::kr::dl::RoleFillersTag> || std::same_as<Tag, runir::kr::dl::OneOfTag>)
+    {
+        return make_view(get_data().objects, m_context->get_planning_repository());
+    }
+
+    auto get_n() const noexcept
+        requires(std::same_as<Tag, runir::kr::dl::AtLeastNumberRestrictionTag> || std::same_as<Tag, runir::kr::dl::AtMostNumberRestrictionTag>
+                 || std::same_as<Tag, runir::kr::dl::ExactNumberRestrictionTag> || std::same_as<Tag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>
+                 || std::same_as<Tag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>
+                 || std::same_as<Tag, runir::kr::dl::QualifiedExactNumberRestrictionTag>)
+    {
+        return get_data().n;
+    }
+
+    auto get_role() const noexcept
+        requires(std::same_as<Tag, runir::kr::dl::AtLeastNumberRestrictionTag> || std::same_as<Tag, runir::kr::dl::AtMostNumberRestrictionTag>
+                 || std::same_as<Tag, runir::kr::dl::ExactNumberRestrictionTag> || std::same_as<Tag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>
+                 || std::same_as<Tag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>
+                 || std::same_as<Tag, runir::kr::dl::QualifiedExactNumberRestrictionTag> || std::same_as<Tag, runir::kr::dl::RoleFillersTag>)
+    {
+        return make_view(get_data().role, *m_context);
+    }
+
+    auto get_concept() const noexcept
+        requires(std::same_as<Tag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> || std::same_as<Tag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>
+                 || std::same_as<Tag, runir::kr::dl::QualifiedExactNumberRestrictionTag>)
+    {
+        return make_view(get_data().concept_, *m_context);
+    }
+
     auto get_arg() const noexcept
         requires std::same_as<Tag, runir::kr::dl::NegationTag>
     {

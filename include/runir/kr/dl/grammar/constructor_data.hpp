@@ -27,8 +27,16 @@ struct Data<runir::kr::dl::grammar::Constructor<runir::kr::dl::ConceptTag>>
                                              Index<runir::kr::dl::grammar::Concept<runir::kr::dl::NegationTag>>,
                                              Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ValueRestrictionTag>>,
                                              Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExistentialQuantificationTag>>,
+                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::AtLeastNumberRestrictionTag>>,
+                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::AtMostNumberRestrictionTag>>,
+                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExactNumberRestrictionTag>>,
+                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>,
+                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>,
+                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>>,
                                              Index<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapTag>>,
                                              Index<runir::kr::dl::grammar::Concept<runir::kr::dl::AgreementTag>>,
+                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleFillersTag>>,
+                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::OneOfTag>>,
                                              Index<runir::kr::dl::grammar::Concept<runir::kr::dl::NominalTag>>>;
     Index<runir::kr::dl::grammar::Constructor<runir::kr::dl::ConceptTag>> index;
     Variant value;
@@ -81,6 +89,9 @@ struct Data<runir::kr::dl::grammar::Constructor<runir::kr::dl::BooleanTag>>
     using Variant = ::cista::offset::variant<Index<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicStateTag<formalism::StaticTag>>>,
                                              Index<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicStateTag<formalism::FluentTag>>>,
                                              Index<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicStateTag<formalism::DerivedTag>>>,
+                                             Index<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<formalism::StaticTag>>>,
+                                             Index<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<formalism::FluentTag>>>,
+                                             Index<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<formalism::DerivedTag>>>,
                                              Index<runir::kr::dl::grammar::Boolean<runir::kr::dl::NonemptyTag>>>;
     Index<runir::kr::dl::grammar::Constructor<runir::kr::dl::BooleanTag>> index;
     Variant value;

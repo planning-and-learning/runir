@@ -36,6 +36,14 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_polarity", &View::get_polarity);
     if constexpr (requires(const View& view) { view.get_object(); })
         cls.def("get_object", &View::get_object);
+    if constexpr (requires(const View& view) { view.get_objects(); })
+        cls.def("get_objects", &View::get_objects);
+    if constexpr (requires(const View& view) { view.get_n(); })
+        cls.def("get_n", &View::get_n);
+    if constexpr (requires(const View& view) { view.get_role(); })
+        cls.def("get_role", &View::get_role);
+    if constexpr (requires(const View& view) { view.get_concept(); })
+        cls.def("get_concept", &View::get_concept);
     if constexpr (requires(const View& view) { view.get_name(); })
         cls.def("get_name", &View::get_name);
     if constexpr (requires(const View& view) { view.get_variant(); })
@@ -77,8 +85,28 @@ void bind_cnf_grammar_views(nb::module_& m)
     bind_view<runir::kr::dl::cnf_grammar::Concept<ExistentialQuantificationTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
         m,
         "ConceptExistentialQuantification");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<AtLeastNumberRestrictionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptAtLeastNumberRestriction");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<AtMostNumberRestrictionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptAtMostNumberRestriction");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<ExactNumberRestrictionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptExactNumberRestriction");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<QualifiedAtLeastNumberRestrictionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptQualifiedAtLeastNumberRestriction");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<QualifiedAtMostNumberRestrictionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptQualifiedAtMostNumberRestriction");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<QualifiedExactNumberRestrictionTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "ConceptQualifiedExactNumberRestriction");
     bind_view<runir::kr::dl::cnf_grammar::Concept<RoleValueMapTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptRoleValueMap");
     bind_view<runir::kr::dl::cnf_grammar::Concept<AgreementTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptAgreement");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<RoleFillersTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptRoleFillers");
+    bind_view<runir::kr::dl::cnf_grammar::Concept<OneOfTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptOneOf");
     bind_view<runir::kr::dl::cnf_grammar::Concept<NominalTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptNominal");
     bind_view<runir::kr::dl::cnf_grammar::Role<UniversalTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "RoleUniversal");
     bind_view<runir::kr::dl::cnf_grammar::Role<AtomicStateTag<tyr::formalism::StaticTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
@@ -119,6 +147,15 @@ void bind_cnf_grammar_views(nb::module_& m)
     bind_view<runir::kr::dl::cnf_grammar::Boolean<AtomicStateTag<tyr::formalism::DerivedTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
         m,
         "BooleanAtomicStateDerived");
+    bind_view<runir::kr::dl::cnf_grammar::Boolean<AtomicGoalTag<tyr::formalism::StaticTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "BooleanAtomicGoalStatic");
+    bind_view<runir::kr::dl::cnf_grammar::Boolean<AtomicGoalTag<tyr::formalism::FluentTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "BooleanAtomicGoalFluent");
+    bind_view<runir::kr::dl::cnf_grammar::Boolean<AtomicGoalTag<tyr::formalism::DerivedTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(
+        m,
+        "BooleanAtomicGoalDerived");
     bind_view<runir::kr::dl::cnf_grammar::Boolean<NonemptyTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "BooleanNonempty");
     bind_view<runir::kr::dl::cnf_grammar::Numerical<CountTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "NumericalCount");
     bind_view<runir::kr::dl::cnf_grammar::Numerical<DistanceTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "NumericalDistance");

@@ -97,6 +97,54 @@ struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::ExistentialQuantifica
 };
 
 template<>
+struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::AtLeastNumberRestrictionTag>> :
+    runir::kr::dl::grammar::NumberRestrictionData<runir::kr::dl::grammar::Concept<runir::kr::dl::AtLeastNumberRestrictionTag>>
+{
+    using Base = runir::kr::dl::grammar::NumberRestrictionData<runir::kr::dl::grammar::Concept<runir::kr::dl::AtLeastNumberRestrictionTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::AtMostNumberRestrictionTag>> :
+    runir::kr::dl::grammar::NumberRestrictionData<runir::kr::dl::grammar::Concept<runir::kr::dl::AtMostNumberRestrictionTag>>
+{
+    using Base = runir::kr::dl::grammar::NumberRestrictionData<runir::kr::dl::grammar::Concept<runir::kr::dl::AtMostNumberRestrictionTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::ExactNumberRestrictionTag>> :
+    runir::kr::dl::grammar::NumberRestrictionData<runir::kr::dl::grammar::Concept<runir::kr::dl::ExactNumberRestrictionTag>>
+{
+    using Base = runir::kr::dl::grammar::NumberRestrictionData<runir::kr::dl::grammar::Concept<runir::kr::dl::ExactNumberRestrictionTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>> :
+    runir::kr::dl::grammar::QualifiedNumberRestrictionData<runir::kr::dl::grammar::Concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>
+{
+    using Base = runir::kr::dl::grammar::QualifiedNumberRestrictionData<runir::kr::dl::grammar::Concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>> :
+    runir::kr::dl::grammar::QualifiedNumberRestrictionData<runir::kr::dl::grammar::Concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>
+{
+    using Base = runir::kr::dl::grammar::QualifiedNumberRestrictionData<runir::kr::dl::grammar::Concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>> :
+    runir::kr::dl::grammar::QualifiedNumberRestrictionData<runir::kr::dl::grammar::Concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>>
+{
+    using Base = runir::kr::dl::grammar::QualifiedNumberRestrictionData<runir::kr::dl::grammar::Concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>>;
+    using Base::Base;
+};
+
+template<>
 struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapTag>> :
     runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapTag>,
                                        runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
@@ -117,6 +165,22 @@ struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::AgreementTag>> :
     using Base = runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Concept<runir::kr::dl::AgreementTag>,
                                                     runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
                                                     runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleFillersTag>> :
+    runir::kr::dl::grammar::RoleFillersData<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleFillersTag>>
+{
+    using Base = runir::kr::dl::grammar::RoleFillersData<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleFillersTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::OneOfTag>> :
+    runir::kr::dl::grammar::ObjectListData<runir::kr::dl::grammar::Concept<runir::kr::dl::OneOfTag>>
+{
+    using Base = runir::kr::dl::grammar::ObjectListData<runir::kr::dl::grammar::Concept<runir::kr::dl::OneOfTag>>;
     using Base::Base;
 };
 

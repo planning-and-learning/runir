@@ -18,6 +18,7 @@ using x3::lexeme;
 using x3::lit;
 using x3::omit;
 using x3::raw;
+using x3::uint_;
 
 using x3::ascii::alnum;
 using x3::ascii::alpha;
@@ -35,8 +36,16 @@ concept_union_type const concept_union = "concept_union";
 concept_negation_type const concept_negation = "concept_negation";
 concept_value_restriction_type const concept_value_restriction = "concept_value_restriction";
 concept_existential_quantification_type const concept_existential_quantification = "concept_existential_quantification";
+concept_at_least_number_restriction_type const concept_at_least_number_restriction = "concept_at_least_number_restriction";
+concept_at_most_number_restriction_type const concept_at_most_number_restriction = "concept_at_most_number_restriction";
+concept_exact_number_restriction_type const concept_exact_number_restriction = "concept_exact_number_restriction";
+concept_qualified_at_least_number_restriction_type const concept_qualified_at_least_number_restriction = "concept_qualified_at_least_number_restriction";
+concept_qualified_at_most_number_restriction_type const concept_qualified_at_most_number_restriction = "concept_qualified_at_most_number_restriction";
+concept_qualified_exact_number_restriction_type const concept_qualified_exact_number_restriction = "concept_qualified_exact_number_restriction";
 concept_role_value_map_type const concept_role_value_map = "concept_role_value_map";
 concept_agreement_type const concept_agreement = "concept_agreement";
+concept_role_fillers_type const concept_role_fillers = "concept_role_fillers";
+concept_one_of_type const concept_one_of = "concept_one_of";
 concept_nominal_type const concept_nominal = "concept_nominal";
 concept_non_terminal_type const concept_non_terminal = "concept_non_terminal";
 concept_choice_type const concept_choice = "concept_choice";
@@ -65,6 +74,7 @@ constructor_or_non_terminal_variant_type const constructor_or_non_terminal_varia
 boolean_type const boolean = "boolean";
 boolean_root_type const boolean_root = "boolean_root";
 boolean_atomic_state_type const boolean_atomic_state = "boolean_atomic_state";
+boolean_atomic_goal_type const boolean_atomic_goal = "boolean_atomic_goal";
 boolean_nonempty_type const boolean_nonempty = "boolean_nonempty";
 boolean_non_terminal_type const boolean_non_terminal = "boolean_non_terminal";
 boolean_choice_type const boolean_choice = "boolean_choice";
@@ -112,7 +122,10 @@ auto with_constructor_parentheses(Parser parser)
 }
 
 const auto concept__def = concept_bot | concept_top | concept_atomic_state | concept_atomic_goal | concept_intersection | concept_union | concept_negation
-                          | concept_value_restriction | concept_existential_quantification | concept_role_value_map | concept_agreement | concept_nominal;
+                          | concept_value_restriction | concept_existential_quantification | concept_qualified_at_least_number_restriction
+                          | concept_qualified_at_most_number_restriction | concept_qualified_exact_number_restriction | concept_at_least_number_restriction
+                          | concept_at_most_number_restriction | concept_exact_number_restriction | concept_role_value_map | concept_agreement
+                          | concept_role_fillers | concept_one_of | concept_nominal;
 const auto concept_root_def = concept_ > eoi;
 
 const auto concept_bot_def = with_constructor_parentheses(lit(ast::ConceptBot::keyword) >> x3::attr(ast::ConceptBot {}));
@@ -125,8 +138,19 @@ const auto concept_negation_def = with_constructor_parentheses(lit(ast::ConceptN
 const auto concept_value_restriction_def = with_constructor_parentheses(lit(ast::ConceptValueRestriction::keyword) > role_choice > concept_choice);
 const auto concept_existential_quantification_def =
     with_constructor_parentheses(lit(ast::ConceptExistentialQuantification::keyword) > role_choice > concept_choice);
+const auto concept_at_least_number_restriction_def = with_constructor_parentheses(lit(ast::ConceptAtLeastNumberRestriction::keyword) > uint_ > role_choice);
+const auto concept_at_most_number_restriction_def = with_constructor_parentheses(lit(ast::ConceptAtMostNumberRestriction::keyword) > uint_ > role_choice);
+const auto concept_exact_number_restriction_def = with_constructor_parentheses(lit(ast::ConceptExactNumberRestriction::keyword) > uint_ > role_choice);
+const auto concept_qualified_at_least_number_restriction_def =
+    with_constructor_parentheses(lit(ast::ConceptQualifiedAtLeastNumberRestriction::keyword) > uint_ > role_choice > concept_choice);
+const auto concept_qualified_at_most_number_restriction_def =
+    with_constructor_parentheses(lit(ast::ConceptQualifiedAtMostNumberRestriction::keyword) > uint_ > role_choice > concept_choice);
+const auto concept_qualified_exact_number_restriction_def =
+    with_constructor_parentheses(lit(ast::ConceptQualifiedExactNumberRestriction::keyword) > uint_ > role_choice > concept_choice);
 const auto concept_role_value_map_def = with_constructor_parentheses(lit(ast::ConceptRoleValueMap::keyword) > role_choice > role_choice);
 const auto concept_agreement_def = with_constructor_parentheses(lit(ast::ConceptAgreement::keyword) > role_choice > role_choice);
+const auto concept_role_fillers_def = with_constructor_parentheses(lit(ast::ConceptRoleFillers::keyword) > role_choice > +object_name_string_parser());
+const auto concept_one_of_def = with_constructor_parentheses(lit(ast::ConceptOneOf::keyword) > +object_name_string_parser());
 const auto concept_nominal_def = with_constructor_parentheses(lit(ast::ConceptNominal::keyword) > object_name_string_parser());
 const auto concept_non_terminal_def = concept_non_terminal_string_parser();
 const auto concept_choice_def = concept_non_terminal | concept_;
@@ -156,10 +180,11 @@ const auto role_derivation_rule_def = (lit("(") >> role_non_terminal) > ((lit("(
 
 const auto constructor_or_non_terminal_variant_def = concept_choice | role_choice;
 
-const auto boolean_def = boolean_atomic_state | boolean_nonempty;
+const auto boolean_def = boolean_atomic_state | boolean_atomic_goal | boolean_nonempty;
 const auto boolean_root_def = boolean > eoi;
 const auto boolean_atomic_state_def =
     with_constructor_parentheses(lit(ast::BooleanAtomicState::keyword) > predicate_name_string_parser() > bool_string_parser());
+const auto boolean_atomic_goal_def = with_constructor_parentheses(lit(ast::BooleanAtomicGoal::keyword) > predicate_name_string_parser() > bool_string_parser());
 const auto boolean_nonempty_def = with_constructor_parentheses(lit(ast::BooleanNonempty::keyword) > constructor_or_non_terminal_variant);
 const auto boolean_non_terminal_def = boolean_non_terminal_string_parser();
 const auto boolean_choice_def = boolean_non_terminal | boolean;
@@ -191,8 +216,16 @@ BOOST_SPIRIT_DEFINE(concept_,
                     concept_negation,
                     concept_value_restriction,
                     concept_existential_quantification,
+                    concept_at_least_number_restriction,
+                    concept_at_most_number_restriction,
+                    concept_exact_number_restriction,
+                    concept_qualified_at_least_number_restriction,
+                    concept_qualified_at_most_number_restriction,
+                    concept_qualified_exact_number_restriction,
                     concept_role_value_map,
                     concept_agreement,
+                    concept_role_fillers,
+                    concept_one_of,
                     concept_nominal,
                     concept_non_terminal,
                     concept_choice,
@@ -218,7 +251,14 @@ BOOST_SPIRIT_DEFINE(role,
 
 BOOST_SPIRIT_DEFINE(constructor_or_non_terminal_variant)
 
-BOOST_SPIRIT_DEFINE(boolean, boolean_root, boolean_atomic_state, boolean_nonempty, boolean_non_terminal, boolean_choice, boolean_derivation_rule)
+BOOST_SPIRIT_DEFINE(boolean,
+                    boolean_root,
+                    boolean_atomic_state,
+                    boolean_atomic_goal,
+                    boolean_nonempty,
+                    boolean_non_terminal,
+                    boolean_choice,
+                    boolean_derivation_rule)
 
 BOOST_SPIRIT_DEFINE(numerical, numerical_root, numerical_count, numerical_distance, numerical_non_terminal, numerical_choice, numerical_derivation_rule)
 
@@ -360,11 +400,43 @@ struct ConceptExistentialQuantificationClass : x3::annotate_on_success
 {
 };
 
+struct ConceptAtLeastNumberRestrictionClass : x3::annotate_on_success
+{
+};
+
+struct ConceptAtMostNumberRestrictionClass : x3::annotate_on_success
+{
+};
+
+struct ConceptExactNumberRestrictionClass : x3::annotate_on_success
+{
+};
+
+struct ConceptQualifiedAtLeastNumberRestrictionClass : x3::annotate_on_success
+{
+};
+
+struct ConceptQualifiedAtMostNumberRestrictionClass : x3::annotate_on_success
+{
+};
+
+struct ConceptQualifiedExactNumberRestrictionClass : x3::annotate_on_success
+{
+};
+
 struct ConceptRoleValueMapClass : x3::annotate_on_success
 {
 };
 
 struct ConceptAgreementClass : x3::annotate_on_success
+{
+};
+
+struct ConceptRoleFillersClass : x3::annotate_on_success
+{
+};
+
+struct ConceptOneOfClass : x3::annotate_on_success
 {
 };
 
@@ -428,6 +500,10 @@ struct BooleanAtomicStateClass : x3::annotate_on_success
 {
 };
 
+struct BooleanAtomicGoalClass : x3::annotate_on_success
+{
+};
+
 struct BooleanNonemptyClass : x3::annotate_on_success
 {
 };
@@ -467,8 +543,25 @@ concept_union_type const& concept_union_parser() { return concept_union; }
 concept_negation_type const& concept_negation_parser() { return concept_negation; }
 concept_value_restriction_type const& concept_value_restriction_parser() { return concept_value_restriction; }
 concept_existential_quantification_type const& concept_existential_quantification_parser() { return concept_existential_quantification; }
+concept_at_least_number_restriction_type const& concept_at_least_number_restriction_parser() { return concept_at_least_number_restriction; }
+concept_at_most_number_restriction_type const& concept_at_most_number_restriction_parser() { return concept_at_most_number_restriction; }
+concept_exact_number_restriction_type const& concept_exact_number_restriction_parser() { return concept_exact_number_restriction; }
+concept_qualified_at_least_number_restriction_type const& concept_qualified_at_least_number_restriction_parser()
+{
+    return concept_qualified_at_least_number_restriction;
+}
+concept_qualified_at_most_number_restriction_type const& concept_qualified_at_most_number_restriction_parser()
+{
+    return concept_qualified_at_most_number_restriction;
+}
+concept_qualified_exact_number_restriction_type const& concept_qualified_exact_number_restriction_parser()
+{
+    return concept_qualified_exact_number_restriction;
+}
 concept_role_value_map_type const& concept_role_value_map_parser() { return concept_role_value_map; }
 concept_agreement_type const& concept_agreement_parser() { return concept_agreement; }
+concept_role_fillers_type const& concept_role_fillers_parser() { return concept_role_fillers; }
+concept_one_of_type const& concept_one_of_parser() { return concept_one_of; }
 concept_nominal_type const& concept_nominal_parser() { return concept_nominal; }
 concept_non_terminal_type const& concept_non_terminal_parser() { return concept_non_terminal; }
 concept_choice_type const& concept_choice_parser() { return concept_choice; }
@@ -497,6 +590,7 @@ constructor_or_non_terminal_variant_type const& constructor_or_non_terminal_vari
 boolean_type const& boolean_parser() { return boolean; }
 boolean_root_type const& boolean_root_parser() { return boolean_root; }
 boolean_atomic_state_type const& boolean_atomic_state_parser() { return boolean_atomic_state; }
+boolean_atomic_goal_type const& boolean_atomic_goal_parser() { return boolean_atomic_goal; }
 boolean_nonempty_type const& boolean_nonempty_parser() { return boolean_nonempty; }
 boolean_non_terminal_type const& boolean_non_terminal_parser() { return boolean_non_terminal; }
 boolean_choice_type const& boolean_choice_parser() { return boolean_choice; }

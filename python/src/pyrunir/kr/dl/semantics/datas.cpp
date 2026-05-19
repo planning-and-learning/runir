@@ -33,6 +33,14 @@ void bind_data(nb::module_& m, const std::string& name)
         cls.def_rw("polarity", &Data::polarity);
     if constexpr (requires { &Data::object; })
         cls.def_rw("object", &Data::object);
+    if constexpr (requires { &Data::objects; })
+        cls.def_rw("objects", &Data::objects);
+    if constexpr (requires { &Data::n; })
+        cls.def_rw("n", &Data::n);
+    if constexpr (requires { &Data::role; })
+        cls.def_rw("role", &Data::role);
+    if constexpr (requires { &Data::concept_; })
+        cls.def_rw("concept", &Data::concept_);
 }
 
 }  // namespace
@@ -52,8 +60,16 @@ void bind_semantics_datas(nb::module_& m)
     bind_data<Concept<NegationTag>>(m, "ConceptNegationData");
     bind_data<Concept<ValueRestrictionTag>>(m, "ConceptValueRestrictionData");
     bind_data<Concept<ExistentialQuantificationTag>>(m, "ConceptExistentialQuantificationData");
+    bind_data<Concept<AtLeastNumberRestrictionTag>>(m, "ConceptAtLeastNumberRestrictionData");
+    bind_data<Concept<AtMostNumberRestrictionTag>>(m, "ConceptAtMostNumberRestrictionData");
+    bind_data<Concept<ExactNumberRestrictionTag>>(m, "ConceptExactNumberRestrictionData");
+    bind_data<Concept<QualifiedAtLeastNumberRestrictionTag>>(m, "ConceptQualifiedAtLeastNumberRestrictionData");
+    bind_data<Concept<QualifiedAtMostNumberRestrictionTag>>(m, "ConceptQualifiedAtMostNumberRestrictionData");
+    bind_data<Concept<QualifiedExactNumberRestrictionTag>>(m, "ConceptQualifiedExactNumberRestrictionData");
     bind_data<Concept<RoleValueMapTag>>(m, "ConceptRoleValueMapData");
     bind_data<Concept<AgreementTag>>(m, "ConceptAgreementData");
+    bind_data<Concept<RoleFillersTag>>(m, "ConceptRoleFillersData");
+    bind_data<Concept<OneOfTag>>(m, "ConceptOneOfData");
     bind_data<Concept<NominalTag>>(m, "ConceptNominalData");
 
     bind_data<Role<UniversalTag>>(m, "RoleUniversalData");
@@ -76,6 +92,9 @@ void bind_semantics_datas(nb::module_& m)
     bind_data<Boolean<AtomicStateTag<tyr::formalism::StaticTag>>>(m, "BooleanAtomicStateStaticData");
     bind_data<Boolean<AtomicStateTag<tyr::formalism::FluentTag>>>(m, "BooleanAtomicStateFluentData");
     bind_data<Boolean<AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "BooleanAtomicStateDerivedData");
+    bind_data<Boolean<AtomicGoalTag<tyr::formalism::StaticTag>>>(m, "BooleanAtomicGoalStaticData");
+    bind_data<Boolean<AtomicGoalTag<tyr::formalism::FluentTag>>>(m, "BooleanAtomicGoalFluentData");
+    bind_data<Boolean<AtomicGoalTag<tyr::formalism::DerivedTag>>>(m, "BooleanAtomicGoalDerivedData");
     bind_data<Boolean<NonemptyTag>>(m, "BooleanNonemptyData");
 
     bind_data<Numerical<CountTag>>(m, "NumericalCountData");

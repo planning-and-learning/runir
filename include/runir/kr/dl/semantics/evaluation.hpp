@@ -279,6 +279,22 @@ auto evaluate_atomic_state_boolean(tyr::View<tyr::Index<Boolean<AtomicStateTag<T
     return context.get_builder().template get_builder<Denotation<BooleanTag>>(value);
 }
 
+template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_atomic_goal_boolean(tyr::View<tyr::Index<Boolean<AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Kind>& context)
+{
+    bool value = false;
+
+    detail::for_each_goal_atom<T>(context,
+                                  constructor.get_polarity(),
+                                  [&](auto atom)
+                                  {
+                                      if (atom.get_predicate().get_index() == constructor.get_data().predicate)
+                                          value = true;
+                                  });
+
+    return context.get_builder().template get_builder<Denotation<BooleanTag>>(value);
+}
+
 template<tyr::planning::TaskKind Kind, typename C>
 bool evaluate_nonempty(tyr::View<tyr::Index<Constructor<ConceptTag>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace)
 {
@@ -370,6 +386,65 @@ auto evaluate_impl(tyr::View<tyr::Index<Concept<Tag>>, C> constructor, Evaluatio
                 result_bitset.set(object);
         }
     }
+    else if constexpr (std::same_as<Tag, AtLeastNumberRestrictionTag> || std::same_as<Tag, AtMostNumberRestrictionTag>
+                       || std::same_as<Tag, ExactNumberRestrictionTag>)
+    {
+        const auto role = evaluate_impl(constructor.get_role(), context, workspace);
+        for (uint_t object = 0; object < num_objects; ++object)
+        {
+            const auto count = static_cast<uint_t>(detail::row(role, object).count());
+            if constexpr (std::same_as<Tag, AtLeastNumberRestrictionTag>)
+            {
+                if (count >= constructor.get_n())
+                    result_bitset.set(object);
+            }
+            else if constexpr (std::same_as<Tag, AtMostNumberRestrictionTag>)
+            {
+                if (count <= constructor.get_n())
+                    result_bitset.set(object);
+            }
+            else if constexpr (std::same_as<Tag, ExactNumberRestrictionTag>)
+            {
+                if (count == constructor.get_n())
+                    result_bitset.set(object);
+            }
+        }
+    }
+    else if constexpr (std::same_as<Tag, QualifiedAtLeastNumberRestrictionTag> || std::same_as<Tag, QualifiedAtMostNumberRestrictionTag>
+                       || std::same_as<Tag, QualifiedExactNumberRestrictionTag>)
+    {
+        const auto role = evaluate_impl(constructor.get_role(), context, workspace);
+        const auto concept_denotation = evaluate_impl(constructor.get_concept(), context, workspace);
+        const auto concept_bitset = concept_denotation->get_bitset();
+
+        for (uint_t object = 0; object < num_objects; ++object)
+        {
+            auto count = uint_t { 0 };
+            auto row = detail::row(role, object);
+            auto target = row.find_first();
+            while (target != decltype(row)::npos)
+            {
+                if (concept_bitset.test(target))
+                    ++count;
+                target = row.find_next(target);
+            }
+            if constexpr (std::same_as<Tag, QualifiedAtLeastNumberRestrictionTag>)
+            {
+                if (count >= constructor.get_n())
+                    result_bitset.set(object);
+            }
+            else if constexpr (std::same_as<Tag, QualifiedAtMostNumberRestrictionTag>)
+            {
+                if (count <= constructor.get_n())
+                    result_bitset.set(object);
+            }
+            else if constexpr (std::same_as<Tag, QualifiedExactNumberRestrictionTag>)
+            {
+                if (count == constructor.get_n())
+                    result_bitset.set(object);
+            }
+        }
+    }
     else if constexpr (std::same_as<Tag, RoleValueMapTag>)
     {
         const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
@@ -399,6 +474,30 @@ auto evaluate_impl(tyr::View<tyr::Index<Concept<Tag>>, C> constructor, Evaluatio
         const auto object = constructor.get_object().get_index();
         assert(tyr::uint_t(object) < num_objects);
         result_bitset.set(tyr::uint_t(object));
+    }
+    else if constexpr (std::same_as<Tag, RoleFillersTag>)
+    {
+        const auto role = evaluate_impl(constructor.get_role(), context, workspace);
+        for (uint_t object = 0; object < num_objects; ++object)
+        {
+            auto row = detail::row(role, object);
+            auto contains_all_fillers = true;
+            for (auto filler : constructor.get_objects())
+            {
+                if (!row.test(tyr::uint_t(filler.get_index())))
+                {
+                    contains_all_fillers = false;
+                    break;
+                }
+            }
+            if (contains_all_fillers)
+                result_bitset.set(object);
+        }
+    }
+    else if constexpr (std::same_as<Tag, OneOfTag>)
+    {
+        for (auto object : constructor.get_objects())
+            result_bitset.set(tyr::uint_t(object.get_index()));
     }
 
     return result;
@@ -535,6 +634,10 @@ auto evaluate_impl(tyr::View<tyr::Index<Boolean<Tag>>, C> constructor, Evaluatio
     if constexpr (is_atomic_state_tag_v<Tag>)
     {
         return detail::evaluate_atomic_state_boolean(constructor, context);
+    }
+    else if constexpr (is_atomic_goal_tag_v<Tag>)
+    {
+        return detail::evaluate_atomic_goal_boolean(constructor, context);
     }
     else if constexpr (std::same_as<Tag, NonemptyTag>)
     {

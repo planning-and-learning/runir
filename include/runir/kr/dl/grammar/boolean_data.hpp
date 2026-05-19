@@ -16,6 +16,14 @@ struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicStateTag<T>>> :
     using Base::Base;
 };
 
+template<tyr::formalism::FactKind T>
+struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<T>>> :
+    runir::kr::dl::grammar::PredicateData<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<T>>, T>
+{
+    using Base = runir::kr::dl::grammar::PredicateData<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<T>>, T>;
+    using Base::Base;
+};
+
 template<>
 struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::NonemptyTag>>
 {

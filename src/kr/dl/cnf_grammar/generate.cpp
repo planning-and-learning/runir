@@ -438,6 +438,62 @@ private:
                                });
     }
 
+    template<typename Tag>
+    bool generate_number_restriction(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<Tag> constructor)
+    {
+        return generate_unary(lhs,
+                              constructor.get_role(),
+                              [&](auto role)
+                              {
+                                  tyr::Data<runir::kr::dl::Concept<Tag>> data(constructor.get_n(), role);
+                                  return intern_wrapped<runir::kr::dl::ConceptTag>(data);
+                              });
+    }
+
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::AtLeastNumberRestrictionTag> constructor)
+    {
+        return generate_number_restriction(lhs, constructor);
+    }
+
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::AtMostNumberRestrictionTag> constructor)
+    {
+        return generate_number_restriction(lhs, constructor);
+    }
+
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::ExactNumberRestrictionTag> constructor)
+    {
+        return generate_number_restriction(lhs, constructor);
+    }
+
+    template<typename Tag>
+    bool generate_qualified_number_restriction(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<Tag> constructor)
+    {
+        return generate_binary(lhs,
+                               constructor.get_role(),
+                               constructor.get_concept(),
+                               false,
+                               [&](auto role, auto concept_)
+                               {
+                                   tyr::Data<runir::kr::dl::Concept<Tag>> data(constructor.get_n(), role, concept_);
+                                   return intern_wrapped<runir::kr::dl::ConceptTag>(data);
+                               });
+    }
+
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> constructor)
+    {
+        return generate_qualified_number_restriction(lhs, constructor);
+    }
+
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::QualifiedAtMostNumberRestrictionTag> constructor)
+    {
+        return generate_qualified_number_restriction(lhs, constructor);
+    }
+
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::QualifiedExactNumberRestrictionTag> constructor)
+    {
+        return generate_qualified_number_restriction(lhs, constructor);
+    }
+
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::RoleValueMapTag> constructor)
     {
         return generate_binary(lhs,
@@ -462,6 +518,27 @@ private:
                                    tyr::Data<runir::kr::dl::Concept<runir::kr::dl::AgreementTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                });
+    }
+
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::RoleFillersTag> constructor)
+    {
+        return generate_unary(lhs,
+                              constructor.get_role(),
+                              [&](auto role)
+                              {
+                                  tyr::Data<runir::kr::dl::Concept<runir::kr::dl::RoleFillersTag>> data(role, constructor.get_data().objects);
+                                  return intern_wrapped<runir::kr::dl::ConceptTag>(data);
+                              });
+    }
+
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::OneOfTag> constructor)
+    {
+        return generate_nullary(lhs,
+                                [&]()
+                                {
+                                    tyr::Data<runir::kr::dl::Concept<runir::kr::dl::OneOfTag>> data(constructor.get_data().objects);
+                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
+                                });
     }
 
     template<tyr::formalism::FactKind T>
@@ -613,6 +690,18 @@ private:
                                 {
                                     tyr::Data<runir::kr::dl::Boolean<runir::kr::dl::AtomicStateTag<T>>> data(constructor.get_data().predicate,
                                                                                                              constructor.get_data().polarity);
+                                    return intern_wrapped<runir::kr::dl::BooleanTag>(data);
+                                });
+    }
+
+    template<tyr::formalism::FactKind T>
+    bool generate_constructor(NonTerminalView<runir::kr::dl::BooleanTag> lhs, BooleanView<runir::kr::dl::AtomicGoalTag<T>> constructor)
+    {
+        return generate_nullary(lhs,
+                                [&]
+                                {
+                                    tyr::Data<runir::kr::dl::Boolean<runir::kr::dl::AtomicGoalTag<T>>> data(constructor.get_data().predicate,
+                                                                                                            constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::BooleanTag>(data);
                                 });
     }

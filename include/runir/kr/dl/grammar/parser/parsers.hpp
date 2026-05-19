@@ -35,8 +35,16 @@ struct ConceptUnionClass;
 struct ConceptNegationClass;
 struct ConceptValueRestrictionClass;
 struct ConceptExistentialQuantificationClass;
+struct ConceptAtLeastNumberRestrictionClass;
+struct ConceptAtMostNumberRestrictionClass;
+struct ConceptExactNumberRestrictionClass;
+struct ConceptQualifiedAtLeastNumberRestrictionClass;
+struct ConceptQualifiedAtMostNumberRestrictionClass;
+struct ConceptQualifiedExactNumberRestrictionClass;
 struct ConceptRoleValueMapClass;
 struct ConceptAgreementClass;
+struct ConceptRoleFillersClass;
+struct ConceptOneOfClass;
 struct ConceptNominalClass;
 
 struct RoleUniversalClass;
@@ -55,6 +63,7 @@ struct RoleIdentityClass;
 struct ConstructorOrNonTerminalVariantClass;
 
 struct BooleanAtomicStateClass;
+struct BooleanAtomicGoalClass;
 struct BooleanNonemptyClass;
 
 struct NumericalCountClass;
@@ -75,8 +84,17 @@ using concept_union_type = x3::rule<ConceptUnionClass, ast::ConceptUnion>;
 using concept_negation_type = x3::rule<ConceptNegationClass, ast::ConceptNegation>;
 using concept_value_restriction_type = x3::rule<ConceptValueRestrictionClass, ast::ConceptValueRestriction>;
 using concept_existential_quantification_type = x3::rule<ConceptExistentialQuantificationClass, ast::ConceptExistentialQuantification>;
+using concept_at_least_number_restriction_type = x3::rule<ConceptAtLeastNumberRestrictionClass, ast::ConceptAtLeastNumberRestriction>;
+using concept_at_most_number_restriction_type = x3::rule<ConceptAtMostNumberRestrictionClass, ast::ConceptAtMostNumberRestriction>;
+using concept_exact_number_restriction_type = x3::rule<ConceptExactNumberRestrictionClass, ast::ConceptExactNumberRestriction>;
+using concept_qualified_at_least_number_restriction_type =
+    x3::rule<ConceptQualifiedAtLeastNumberRestrictionClass, ast::ConceptQualifiedAtLeastNumberRestriction>;
+using concept_qualified_at_most_number_restriction_type = x3::rule<ConceptQualifiedAtMostNumberRestrictionClass, ast::ConceptQualifiedAtMostNumberRestriction>;
+using concept_qualified_exact_number_restriction_type = x3::rule<ConceptQualifiedExactNumberRestrictionClass, ast::ConceptQualifiedExactNumberRestriction>;
 using concept_role_value_map_type = x3::rule<ConceptRoleValueMapClass, ast::ConceptRoleValueMap>;
 using concept_agreement_type = x3::rule<ConceptAgreementClass, ast::ConceptAgreement>;
+using concept_role_fillers_type = x3::rule<ConceptRoleFillersClass, ast::ConceptRoleFillers>;
+using concept_one_of_type = x3::rule<ConceptOneOfClass, ast::ConceptOneOf>;
 using concept_nominal_type = x3::rule<ConceptNominalClass, ast::ConceptNominal>;
 using concept_non_terminal_type = x3::rule<NonTerminalClass<runir::kr::dl::ConceptTag>, ast::NonTerminal<runir::kr::dl::ConceptTag>>;
 using concept_choice_type = x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::ConceptTag>, ast::ConstructorOrNonTerminal<runir::kr::dl::ConceptTag>>;
@@ -105,6 +123,7 @@ using constructor_or_non_terminal_variant_type = x3::rule<ConstructorOrNonTermin
 using boolean_type = x3::rule<ConstructorClass<runir::kr::dl::BooleanTag>, ast::Constructor<runir::kr::dl::BooleanTag>>;
 using boolean_root_type = x3::rule<ConstructorRootClass<runir::kr::dl::BooleanTag>, ast::Constructor<runir::kr::dl::BooleanTag>>;
 using boolean_atomic_state_type = x3::rule<BooleanAtomicStateClass, ast::BooleanAtomicState>;
+using boolean_atomic_goal_type = x3::rule<BooleanAtomicGoalClass, ast::BooleanAtomicGoal>;
 using boolean_nonempty_type = x3::rule<BooleanNonemptyClass, ast::BooleanNonempty>;
 using boolean_non_terminal_type = x3::rule<NonTerminalClass<runir::kr::dl::BooleanTag>, ast::NonTerminal<runir::kr::dl::BooleanTag>>;
 using boolean_choice_type = x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::BooleanTag>, ast::ConstructorOrNonTerminal<runir::kr::dl::BooleanTag>>;
@@ -135,8 +154,16 @@ BOOST_SPIRIT_DECLARE(concept_type,
                      concept_negation_type,
                      concept_value_restriction_type,
                      concept_existential_quantification_type,
+                     concept_at_least_number_restriction_type,
+                     concept_at_most_number_restriction_type,
+                     concept_exact_number_restriction_type,
+                     concept_qualified_at_least_number_restriction_type,
+                     concept_qualified_at_most_number_restriction_type,
+                     concept_qualified_exact_number_restriction_type,
                      concept_role_value_map_type,
                      concept_agreement_type,
+                     concept_role_fillers_type,
+                     concept_one_of_type,
                      concept_nominal_type,
                      concept_non_terminal_type,
                      concept_choice_type,
@@ -165,6 +192,7 @@ BOOST_SPIRIT_DECLARE(constructor_or_non_terminal_variant_type)
 BOOST_SPIRIT_DECLARE(boolean_type,
                      boolean_root_type,
                      boolean_atomic_state_type,
+                     boolean_atomic_goal_type,
                      boolean_nonempty_type,
                      boolean_non_terminal_type,
                      boolean_choice_type,
@@ -192,8 +220,16 @@ concept_union_type const& concept_union_parser();
 concept_negation_type const& concept_negation_parser();
 concept_value_restriction_type const& concept_value_restriction_parser();
 concept_existential_quantification_type const& concept_existential_quantification_parser();
+concept_at_least_number_restriction_type const& concept_at_least_number_restriction_parser();
+concept_at_most_number_restriction_type const& concept_at_most_number_restriction_parser();
+concept_exact_number_restriction_type const& concept_exact_number_restriction_parser();
+concept_qualified_at_least_number_restriction_type const& concept_qualified_at_least_number_restriction_parser();
+concept_qualified_at_most_number_restriction_type const& concept_qualified_at_most_number_restriction_parser();
+concept_qualified_exact_number_restriction_type const& concept_qualified_exact_number_restriction_parser();
 concept_role_value_map_type const& concept_role_value_map_parser();
 concept_agreement_type const& concept_agreement_parser();
+concept_role_fillers_type const& concept_role_fillers_parser();
+concept_one_of_type const& concept_one_of_parser();
 concept_nominal_type const& concept_nominal_parser();
 concept_non_terminal_type const& concept_non_terminal_parser();
 concept_choice_type const& concept_choice_parser();
@@ -222,6 +258,7 @@ constructor_or_non_terminal_variant_type const& constructor_or_non_terminal_vari
 boolean_type const& boolean_parser();
 boolean_root_type const& boolean_root_parser();
 boolean_atomic_state_type const& boolean_atomic_state_parser();
+boolean_atomic_goal_type const& boolean_atomic_goal_parser();
 boolean_nonempty_type const& boolean_nonempty_parser();
 boolean_non_terminal_type const& boolean_non_terminal_parser();
 boolean_choice_type const& boolean_choice_parser();

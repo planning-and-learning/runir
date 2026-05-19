@@ -30,8 +30,16 @@ void bind_semantics_indices(nb::module_& m)
     tyr::bind_index<tyr::Index<Concept<NegationTag>>>(m, "ConceptNegationIndex");
     tyr::bind_index<tyr::Index<Concept<ValueRestrictionTag>>>(m, "ConceptValueRestrictionIndex");
     tyr::bind_index<tyr::Index<Concept<ExistentialQuantificationTag>>>(m, "ConceptExistentialQuantificationIndex");
+    tyr::bind_index<tyr::Index<Concept<AtLeastNumberRestrictionTag>>>(m, "ConceptAtLeastNumberRestrictionIndex");
+    tyr::bind_index<tyr::Index<Concept<AtMostNumberRestrictionTag>>>(m, "ConceptAtMostNumberRestrictionIndex");
+    tyr::bind_index<tyr::Index<Concept<ExactNumberRestrictionTag>>>(m, "ConceptExactNumberRestrictionIndex");
+    tyr::bind_index<tyr::Index<Concept<QualifiedAtLeastNumberRestrictionTag>>>(m, "ConceptQualifiedAtLeastNumberRestrictionIndex");
+    tyr::bind_index<tyr::Index<Concept<QualifiedAtMostNumberRestrictionTag>>>(m, "ConceptQualifiedAtMostNumberRestrictionIndex");
+    tyr::bind_index<tyr::Index<Concept<QualifiedExactNumberRestrictionTag>>>(m, "ConceptQualifiedExactNumberRestrictionIndex");
     tyr::bind_index<tyr::Index<Concept<RoleValueMapTag>>>(m, "ConceptRoleValueMapIndex");
     tyr::bind_index<tyr::Index<Concept<AgreementTag>>>(m, "ConceptAgreementIndex");
+    tyr::bind_index<tyr::Index<Concept<RoleFillersTag>>>(m, "ConceptRoleFillersIndex");
+    tyr::bind_index<tyr::Index<Concept<OneOfTag>>>(m, "ConceptOneOfIndex");
     tyr::bind_index<tyr::Index<Concept<NominalTag>>>(m, "ConceptNominalIndex");
 
     tyr::bind_index<tyr::Index<Role<UniversalTag>>>(m, "RoleUniversalIndex");
@@ -54,6 +62,9 @@ void bind_semantics_indices(nb::module_& m)
     tyr::bind_index<tyr::Index<Boolean<AtomicStateTag<tyr::formalism::StaticTag>>>>(m, "BooleanAtomicStateStaticIndex");
     tyr::bind_index<tyr::Index<Boolean<AtomicStateTag<tyr::formalism::FluentTag>>>>(m, "BooleanAtomicStateFluentIndex");
     tyr::bind_index<tyr::Index<Boolean<AtomicStateTag<tyr::formalism::DerivedTag>>>>(m, "BooleanAtomicStateDerivedIndex");
+    tyr::bind_index<tyr::Index<Boolean<AtomicGoalTag<tyr::formalism::StaticTag>>>>(m, "BooleanAtomicGoalStaticIndex");
+    tyr::bind_index<tyr::Index<Boolean<AtomicGoalTag<tyr::formalism::FluentTag>>>>(m, "BooleanAtomicGoalFluentIndex");
+    tyr::bind_index<tyr::Index<Boolean<AtomicGoalTag<tyr::formalism::DerivedTag>>>>(m, "BooleanAtomicGoalDerivedIndex");
     tyr::bind_index<tyr::Index<Boolean<NonemptyTag>>>(m, "BooleanNonemptyIndex");
 
     tyr::bind_index<tyr::Index<Numerical<CountTag>>>(m, "NumericalCountIndex");
