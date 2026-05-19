@@ -324,6 +324,7 @@ auto prove_solution(const datasets::TaskSearchContext<Kind>& context, PolicyView
             case tyr::planning::SearchStatus::UNSOLVABLE:
             case tyr::planning::SearchStatus::IN_PROGRESS:
             case tyr::planning::SearchStatus::SOLVED:
+            case tyr::planning::SearchStatus::CYCLE:
                 return finish(PolicyProofStatus::FAILURE);
         }
 
