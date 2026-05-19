@@ -41,6 +41,8 @@ void bind_data(nb::module_& m, const std::string& name)
         cls.def_rw("role", &Data::role);
     if constexpr (requires { &Data::concept_; })
         cls.def_rw("concept", &Data::concept_);
+    if constexpr (requires { &Data::name; })
+        cls.def_rw("name", &Data::name);
 }
 
 }  // namespace
@@ -100,6 +102,10 @@ void bind_cnf_grammar_datas(nb::module_& m)
     bind_data<runir::kr::dl::cnf_grammar::Constructor<RoleTag>>(m, "RoleData");
     bind_data<runir::kr::dl::cnf_grammar::Constructor<BooleanTag>>(m, "BooleanData");
     bind_data<runir::kr::dl::cnf_grammar::Constructor<NumericalTag>>(m, "NumericalData");
+    bind_data<runir::kr::dl::cnf_grammar::NonTerminal<ConceptTag>>(m, "ConceptNonTerminalData");
+    bind_data<runir::kr::dl::cnf_grammar::NonTerminal<RoleTag>>(m, "RoleNonTerminalData");
+    bind_data<runir::kr::dl::cnf_grammar::NonTerminal<BooleanTag>>(m, "BooleanNonTerminalData");
+    bind_data<runir::kr::dl::cnf_grammar::NonTerminal<NumericalTag>>(m, "NumericalNonTerminalData");
 }
 
 }  // namespace runir::kr::dl

@@ -58,6 +58,10 @@ void bind_cnf_grammar_views(nb::module_& m)
     bind_view<runir::kr::dl::cnf_grammar::Constructor<RoleTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "Role");
     bind_view<runir::kr::dl::cnf_grammar::Constructor<BooleanTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "Boolean");
     bind_view<runir::kr::dl::cnf_grammar::Constructor<NumericalTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "Numerical");
+    bind_view<runir::kr::dl::cnf_grammar::NonTerminal<ConceptTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptNonTerminal");
+    bind_view<runir::kr::dl::cnf_grammar::NonTerminal<RoleTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "RoleNonTerminal");
+    bind_view<runir::kr::dl::cnf_grammar::NonTerminal<BooleanTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "BooleanNonTerminal");
+    bind_view<runir::kr::dl::cnf_grammar::NonTerminal<NumericalTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "NumericalNonTerminal");
     bind_view<runir::kr::dl::cnf_grammar::Concept<BotTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptBot");
     bind_view<runir::kr::dl::cnf_grammar::Concept<TopTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>(m, "ConceptTop");
     bind_view<runir::kr::dl::cnf_grammar::Concept<AtomicStateTag<tyr::formalism::StaticTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>(

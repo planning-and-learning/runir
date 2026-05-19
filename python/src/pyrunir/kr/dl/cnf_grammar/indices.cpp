@@ -61,6 +61,11 @@ void bind_cnf_grammar_indices(nb::module_& m)
     tyr::bind_index<tyr::Index<runir::kr::dl::cnf_grammar::Constructor<RoleTag>>>(m, "RoleIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::cnf_grammar::Constructor<BooleanTag>>>(m, "BooleanIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::cnf_grammar::Constructor<NumericalTag>>>(m, "NumericalIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<ConceptTag>>>(m, "ConceptNonTerminalIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<RoleTag>>>(m, "RoleNonTerminalIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<BooleanTag>>>(m, "BooleanNonTerminalIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<NumericalTag>>>(m, "NumericalNonTerminalIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::cnf_grammar::GrammarTag>>(m, "GrammarIndex");
 }
 
 }  // namespace runir::kr::dl

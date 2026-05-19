@@ -58,6 +58,18 @@ void bind_grammar_views(nb::module_& m)
     bind_view<runir::kr::dl::grammar::Constructor<RoleTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "Role");
     bind_view<runir::kr::dl::grammar::Constructor<BooleanTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "Boolean");
     bind_view<runir::kr::dl::grammar::Constructor<NumericalTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "Numerical");
+    bind_view<runir::kr::dl::grammar::NonTerminal<ConceptTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptNonTerminal");
+    bind_view<runir::kr::dl::grammar::NonTerminal<RoleTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleNonTerminal");
+    bind_view<runir::kr::dl::grammar::NonTerminal<BooleanTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "BooleanNonTerminal");
+    bind_view<runir::kr::dl::grammar::NonTerminal<NumericalTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "NumericalNonTerminal");
+    bind_view<runir::kr::dl::grammar::ConstructorOrNonTerminal<ConceptTag>, runir::kr::dl::grammar::ConstructorRepository>(m,
+                                                                                                                           "ConceptConstructorOrNonTerminal");
+    bind_view<runir::kr::dl::grammar::ConstructorOrNonTerminal<RoleTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleConstructorOrNonTerminal");
+    bind_view<runir::kr::dl::grammar::ConstructorOrNonTerminal<BooleanTag>, runir::kr::dl::grammar::ConstructorRepository>(m,
+                                                                                                                           "BooleanConstructorOrNonTerminal");
+    bind_view<runir::kr::dl::grammar::ConstructorOrNonTerminal<NumericalTag>, runir::kr::dl::grammar::ConstructorRepository>(
+        m,
+        "NumericalConstructorOrNonTerminal");
     bind_view<runir::kr::dl::grammar::Concept<BotTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptBot");
     bind_view<runir::kr::dl::grammar::Concept<TopTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptTop");
     bind_view<runir::kr::dl::grammar::Concept<AtomicStateTag<tyr::formalism::StaticTag>>, runir::kr::dl::grammar::ConstructorRepository>(
