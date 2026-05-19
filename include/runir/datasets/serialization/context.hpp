@@ -58,27 +58,20 @@ struct SymbolTableBuilder
 
 struct SymbolTablesBuilder
 {
-    SymbolTableBuilder<AtomArchive<tyr::formalism::StaticTag>> static_atoms;
     SymbolTableBuilder<FDRFactArchive<tyr::formalism::FluentTag>> fluent_facts;
-    SymbolTableBuilder<AtomArchive<tyr::formalism::DerivedTag>> derived_atoms;
-    SymbolTableBuilder<NumericValueArchive<tyr::formalism::StaticTag>> static_numeric_values;
     SymbolTableBuilder<NumericValueArchive<tyr::formalism::FluentTag>> fluent_numeric_values;
     SymbolTableBuilder<GroundActionArchive> ground_actions;
 
     void finalize()
     {
-        static_atoms.finalize();
         fluent_facts.finalize();
-        derived_atoms.finalize();
-        static_numeric_values.finalize();
         fluent_numeric_values.finalize();
         ground_actions.finalize();
     }
 
     auto release() const -> SymbolTablesArchive
     {
-        return SymbolTablesArchive { static_atoms.release(),          fluent_facts.release(),          derived_atoms.release(),
-                                     static_numeric_values.release(), fluent_numeric_values.release(), ground_actions.release() };
+        return SymbolTablesArchive { fluent_facts.release(), fluent_numeric_values.release(), ground_actions.release() };
     }
 };
 

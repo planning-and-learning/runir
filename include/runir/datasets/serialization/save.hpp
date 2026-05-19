@@ -44,14 +44,8 @@ auto indexed(const Table& table, Range&& range, Transform&& transform)
 template<tyr::planning::TaskKind Kind>
 void collect(StateSerializationContext context, tyr::planning::StateView<Kind> state)
 {
-    for (const auto atom : state.get_static_atoms_view())
-        context.symbols->static_atoms.insert(archive(atom));
     for (const auto fact : state.get_fluent_facts_view())
         context.symbols->fluent_facts.insert(archive(fact));
-    for (const auto atom : state.get_derived_atoms_view())
-        context.symbols->derived_atoms.insert(archive(atom));
-    for (const auto& value : state.get_static_fterm_values_view())
-        context.symbols->static_numeric_values.insert(archive(value));
     for (const auto& value : state.get_fluent_fterm_values_view())
         context.symbols->fluent_numeric_values.insert(archive(value));
 }
@@ -62,10 +56,7 @@ template<tyr::planning::TaskKind Kind>
 auto save(StateSerializationContext context, tyr::planning::StateView<Kind> state) -> StateArchive
 {
     return StateArchive {
-        indexed(context.symbols->static_atoms, state.get_static_atoms_view(), [](auto atom) { return archive(atom); }),
         indexed(context.symbols->fluent_facts, state.get_fluent_facts_view(), [](auto fact) { return archive(fact); }),
-        indexed(context.symbols->derived_atoms, state.get_derived_atoms_view(), [](auto atom) { return archive(atom); }),
-        indexed(context.symbols->static_numeric_values, state.get_static_fterm_values_view(), [](const auto& value) { return archive(value); }),
         indexed(context.symbols->fluent_numeric_values, state.get_fluent_fterm_values_view(), [](const auto& value) { return archive(value); })
     };
 }

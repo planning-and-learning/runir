@@ -91,20 +91,14 @@ struct SymbolTableArchive
 
 struct SymbolTablesArchive
 {
-    SymbolTableArchive<AtomArchive<tyr::formalism::StaticTag>> static_atoms;
     SymbolTableArchive<FDRFactArchive<tyr::formalism::FluentTag>> fluent_facts;
-    SymbolTableArchive<AtomArchive<tyr::formalism::DerivedTag>> derived_atoms;
-    SymbolTableArchive<NumericValueArchive<tyr::formalism::StaticTag>> static_numeric_values;
     SymbolTableArchive<NumericValueArchive<tyr::formalism::FluentTag>> fluent_numeric_values;
     SymbolTableArchive<GroundActionArchive> ground_actions;
 };
 
 struct StateArchive
 {
-    std::vector<SymbolIndex> static_atoms;
     std::vector<SymbolIndex> fluent_facts;
-    std::vector<SymbolIndex> derived_atoms;
-    std::vector<SymbolIndex> static_numeric_values;
     std::vector<SymbolIndex> fluent_numeric_values;
 };
 
@@ -236,10 +230,7 @@ void serialize(Archive& archive, runir::datasets::serialization::SymbolTableArch
 template<class Archive>
 void serialize(Archive& archive, runir::datasets::serialization::SymbolTablesArchive& value, const unsigned int)
 {
-    archive& make_nvp("static_atoms", value.static_atoms);
     archive& make_nvp("fluent_facts", value.fluent_facts);
-    archive& make_nvp("derived_atoms", value.derived_atoms);
-    archive& make_nvp("static_numeric_values", value.static_numeric_values);
     archive& make_nvp("fluent_numeric_values", value.fluent_numeric_values);
     archive& make_nvp("ground_actions", value.ground_actions);
 }
@@ -247,10 +238,7 @@ void serialize(Archive& archive, runir::datasets::serialization::SymbolTablesArc
 template<class Archive>
 void serialize(Archive& archive, runir::datasets::serialization::StateArchive& value, const unsigned int)
 {
-    archive& make_nvp("static_atoms", value.static_atoms);
     archive& make_nvp("fluent_facts", value.fluent_facts);
-    archive& make_nvp("derived_atoms", value.derived_atoms);
-    archive& make_nvp("static_numeric_values", value.static_numeric_values);
     archive& make_nvp("fluent_numeric_values", value.fluent_numeric_values);
 }
 
