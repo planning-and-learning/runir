@@ -58,123 +58,130 @@ struct FalseTag
 
 struct BotTag
 {
-    static constexpr auto name = "bot";
 };
 
 struct TopTag
 {
-    static constexpr auto name = "top";
 };
 
 template<tyr::formalism::FactKind T>
 struct AtomicStateTag
 {
     using FactKind = T;
-
-    static constexpr auto name = "atomic_state";
 };
 
 template<tyr::formalism::FactKind T>
 struct AtomicGoalTag
 {
     using FactKind = T;
-
-    static constexpr auto name = "atomic_goal";
 };
 
 struct IntersectionTag
 {
-    static constexpr auto name = "intersection";
 };
 
 struct UnionTag
 {
-    static constexpr auto name = "union";
 };
 
 struct NegationTag
 {
-    static constexpr auto name = "negation";
 };
 
 struct ValueRestrictionTag
 {
-    static constexpr auto name = "value_restriction";
 };
 
 struct ExistentialQuantificationTag
 {
-    static constexpr auto name = "existential_quantification";
 };
 
-struct RoleValueMapContainmentTag
+struct AtLeastNumberRestrictionTag
 {
-    static constexpr auto name = "role_value_map_containment";
 };
 
-struct RoleValueMapEqualityTag
+struct AtMostNumberRestrictionTag
 {
-    static constexpr auto name = "role_value_map_equality";
+};
+
+struct ExactNumberRestrictionTag
+{
+};
+
+struct QualifiedAtLeastNumberRestrictionTag
+{
+};
+
+struct QualifiedAtMostNumberRestrictionTag
+{
+};
+
+struct QualifiedExactNumberRestrictionTag
+{
+};
+
+struct RoleValueMapTag
+{
+};
+
+struct AgreementTag
+{
+};
+
+struct RoleFillersTag
+{
+};
+
+struct OneOfTag
+{
 };
 
 struct NominalTag
 {
-    static constexpr auto name = "nominal";
 };
 
 struct UniversalTag
 {
-    static constexpr auto name = "universal";
 };
 
 struct ComplementTag
 {
-    static constexpr auto name = "complement";
 };
 
 struct InverseTag
 {
-    static constexpr auto name = "inverse";
 };
 
 struct CompositionTag
 {
-    static constexpr auto name = "composition";
 };
 
 struct TransitiveClosureTag
 {
-    static constexpr auto name = "transitive_closure";
 };
 
 struct ReflexiveTransitiveClosureTag
 {
-    static constexpr auto name = "reflexive_transitive_closure";
 };
 
 struct RestrictionTag
 {
-    static constexpr auto name = "restriction";
 };
 
 struct IdentityTag
 {
-    static constexpr auto name = "identity";
 };
 
 struct NonemptyTag
 {
-    static constexpr auto name = "nonempty";
 };
 
 struct CountTag
 {
-    static constexpr auto name = "count";
 };
 
 struct DistanceTag
 {
-    static constexpr auto name = "distance";
 };
 
 template<typename T>
@@ -207,7 +214,7 @@ template<typename T>
 concept ConceptConstructorTag =
     std::same_as<T, BotTag> || std::same_as<T, TopTag> || is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, IntersectionTag>
     || std::same_as<T, UnionTag> || std::same_as<T, NegationTag> || std::same_as<T, ValueRestrictionTag> || std::same_as<T, ExistentialQuantificationTag>
-    || std::same_as<T, RoleValueMapContainmentTag> || std::same_as<T, RoleValueMapEqualityTag> || std::same_as<T, NominalTag>;
+    || std::same_as<T, RoleValueMapTag> || std::same_as<T, AgreementTag> || std::same_as<T, NominalTag>;
 
 template<typename T>
 concept RoleConstructorTag =
@@ -216,7 +223,7 @@ concept RoleConstructorTag =
     || std::same_as<T, ReflexiveTransitiveClosureTag> || std::same_as<T, RestrictionTag> || std::same_as<T, IdentityTag>;
 
 template<typename T>
-concept BooleanConstructorTag = is_atomic_state_tag_v<T> || std::same_as<T, NonemptyTag>;
+concept BooleanConstructorTag = is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, NonemptyTag>;
 
 template<typename T>
 concept NumericalConstructorTag = std::same_as<T, CountTag> || std::same_as<T, DistanceTag>;
@@ -234,8 +241,8 @@ using ConceptConstructorTags = tyr::TypeList<BotTag,
                                              NegationTag,
                                              ValueRestrictionTag,
                                              ExistentialQuantificationTag,
-                                             RoleValueMapContainmentTag,
-                                             RoleValueMapEqualityTag,
+                                             RoleValueMapTag,
+                                             AgreementTag,
                                              NominalTag>;
 
 using RoleConstructorTags = tyr::TypeList<UniversalTag,
@@ -255,8 +262,13 @@ using RoleConstructorTags = tyr::TypeList<UniversalTag,
                                           RestrictionTag,
                                           IdentityTag>;
 
-using BooleanConstructorTags = tyr::
-    TypeList<AtomicStateTag<tyr::formalism::StaticTag>, AtomicStateTag<tyr::formalism::FluentTag>, AtomicStateTag<tyr::formalism::DerivedTag>, NonemptyTag>;
+using BooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
+                                             AtomicStateTag<tyr::formalism::FluentTag>,
+                                             AtomicStateTag<tyr::formalism::DerivedTag>,
+                                             AtomicGoalTag<tyr::formalism::StaticTag>,
+                                             AtomicGoalTag<tyr::formalism::FluentTag>,
+                                             AtomicGoalTag<tyr::formalism::DerivedTag>,
+                                             NonemptyTag>;
 
 using NumericalConstructorTags = tyr::TypeList<CountTag, DistanceTag>;
 

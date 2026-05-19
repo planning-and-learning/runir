@@ -27,8 +27,8 @@ struct Data<runir::kr::dl::grammar::Constructor<runir::kr::dl::ConceptTag>>
                                              Index<runir::kr::dl::grammar::Concept<runir::kr::dl::NegationTag>>,
                                              Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ValueRestrictionTag>>,
                                              Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExistentialQuantificationTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapContainmentTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapEqualityTag>>,
+                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapTag>>,
+                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::AgreementTag>>,
                                              Index<runir::kr::dl::grammar::Concept<runir::kr::dl::NominalTag>>>;
     Index<runir::kr::dl::grammar::Constructor<runir::kr::dl::ConceptTag>> index;
     Variant value;

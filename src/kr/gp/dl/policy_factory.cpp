@@ -71,9 +71,9 @@ std::string PolicyFactory::create_gripper_france_et_al_aaai2021_description()
     return R"(
 (
   (:features
-    (boolean r_b "r_b" "" (b_nonempty (c_existential_quantification (r_atomic_goal "at" true) (c_atomic_state "at-robby"))))
-    (numerical c "c" "" (n_count (c_existential_quantification (r_atomic_state "carry") (c_top))))
-    (numerical numerical_b "b" "" (n_count (c_negation (c_role_value_map_equality (r_atomic_state "at") (r_atomic_goal "at" true)))))
+    (boolean r_b "r_b" "" (b_nonempty (c_some (r_atomic_goal "at" true) (c_atomic_state "at-robby"))))
+    (numerical c "c" "" (n_count (c_some (r_atomic_state "carry") (c_top))))
+    (numerical numerical_b "b" "" (n_count (c_not (c_same_as (r_atomic_state "at") (r_atomic_goal "at" true)))))
   )
   (:rules
     (
@@ -103,8 +103,8 @@ std::string PolicyFactory::create_blocks3ops_france_et_al_aaai2021_description()
 (
   (:features
     (numerical c "c" "" (n_count (c_atomic_state "clear")))
-    (numerical t "t" "" (n_count (c_negation (c_role_value_map_equality (r_atomic_state "on") (r_atomic_goal "on" true)))))
-    (numerical bwp "bwp" "" (n_count (c_value_restriction (r_transitive_closure (r_atomic_state "on")) (c_role_value_map_equality (r_atomic_state "on") (r_atomic_goal "on" true)))))
+    (numerical t "t" "" (n_count (c_not (c_same_as (r_atomic_state "on") (r_atomic_goal "on" true)))))
+    (numerical bwp "bwp" "" (n_count (c_all (r_transitive_closure (r_atomic_state "on")) (c_same_as (r_atomic_state "on") (r_atomic_goal "on" true)))))
   )
   (:rules
     (
@@ -133,9 +133,9 @@ std::string PolicyFactory::create_spanner_france_et_al_aaai2021_description()
     return R"(
 (
   (:features
-    (boolean e "e" "" (b_nonempty (c_existential_quantification (r_atomic_state "at") (c_value_restriction (r_inverse (r_atomic_state "at")) (c_atomic_state "man")))))
-    (numerical h "h" "" (n_count (c_existential_quantification (r_atomic_state "at") (c_top))))
-    (numerical n "n" "" (n_count (c_intersection (c_negation (c_atomic_state "tightened")) (c_atomic_goal "tightened" true))))
+    (boolean e "e" "" (b_nonempty (c_some (r_atomic_state "at") (c_all (r_inverse (r_atomic_state "at")) (c_atomic_state "man")))))
+    (numerical h "h" "" (n_count (c_some (r_atomic_state "at") (c_top))))
+    (numerical n "n" "" (n_count (c_and (c_not (c_atomic_state "tightened")) (c_atomic_goal "tightened" true))))
   )
   (:rules
     (
@@ -161,10 +161,10 @@ std::string PolicyFactory::create_delivery_france_et_al_aaai2021_description()
 (
   (:features
     (boolean not_H "not_H" "" (b_nonempty (c_atomic_state "empty")))
-    (numerical u "u" "" (n_count (c_negation (c_role_value_map_equality (r_atomic_goal "at" true) (r_atomic_state "at")))))
-    (numerical t "t" "" (n_distance (c_existential_quantification (r_inverse (r_atomic_state "at")) (c_atomic_state "truck")) (r_atomic_state "adjacent") (c_existential_quantification (r_inverse (r_atomic_goal "at" true)) (c_top))))
-    (numerical p "p" "" (n_distance (c_existential_quantification (r_inverse (r_atomic_state "at")) (c_atomic_state "truck")) (r_atomic_state "adjacent") (c_intersection (c_existential_quantification (r_inverse (r_atomic_state "at")) (c_atomic_state "package")) (c_value_restriction (r_inverse (r_atomic_goal "at" true)) (c_bot)))))
-    (numerical x "x" "" (n_distance (c_existential_quantification (r_inverse (r_atomic_state "at")) (c_atomic_state "empty")) (r_atomic_state "adjacent") (c_existential_quantification (r_inverse (r_atomic_state "at")) (c_intersection (c_atomic_state "package") (c_negation (c_role_value_map_equality (r_atomic_state "at") (r_atomic_goal "at" true)))))))
+    (numerical u "u" "" (n_count (c_not (c_same_as (r_atomic_goal "at" true) (r_atomic_state "at")))))
+    (numerical t "t" "" (n_distance (c_some (r_inverse (r_atomic_state "at")) (c_atomic_state "truck")) (r_atomic_state "adjacent") (c_some (r_inverse (r_atomic_goal "at" true)) (c_top))))
+    (numerical p "p" "" (n_distance (c_some (r_inverse (r_atomic_state "at")) (c_atomic_state "truck")) (r_atomic_state "adjacent") (c_and (c_some (r_inverse (r_atomic_state "at")) (c_atomic_state "package")) (c_all (r_inverse (r_atomic_goal "at" true)) (c_bot)))))
+    (numerical x "x" "" (n_distance (c_some (r_inverse (r_atomic_state "at")) (c_atomic_state "empty")) (r_atomic_state "adjacent") (c_some (r_inverse (r_atomic_state "at")) (c_and (c_atomic_state "package") (c_not (c_same_as (r_atomic_state "at") (r_atomic_goal "at" true)))))))
   )
   (:rules
     (

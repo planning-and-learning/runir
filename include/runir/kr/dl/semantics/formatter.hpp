@@ -73,10 +73,10 @@ std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::Concept<Tag>
         return fmt::format("@{} {} {}", runir::kr::dl::grammar::ast::ConceptValueRestriction::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::ExistentialQuantificationTag>)
         return fmt::format("@{} {} {}", runir::kr::dl::grammar::ast::ConceptExistentialQuantification::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapContainmentTag>)
-        return fmt::format("@{} {} {}", runir::kr::dl::grammar::ast::ConceptRoleValueMapContainment::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapEqualityTag>)
-        return fmt::format("@{} {} {}", runir::kr::dl::grammar::ast::ConceptRoleValueMapEquality::keyword, view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapTag>)
+        return fmt::format("@{} {} {}", runir::kr::dl::grammar::ast::ConceptRoleValueMap::keyword, view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::AgreementTag>)
+        return fmt::format("@{} {} {}", runir::kr::dl::grammar::ast::ConceptAgreement::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
         return fmt::format("@{} {}", runir::kr::dl::grammar::ast::ConceptNominal::keyword, quoted(view.get_object().get_name()));
 }
@@ -201,10 +201,7 @@ template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::Constructor<Category>>, C>> : fmt::formatter<std::string_view>
 {
     using View = tyr::View<tyr::Index<runir::kr::dl::Constructor<Category>>, C>;
-    auto format(View view, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(fmt::format("{}", view.get_variant()), ctx);
-    }
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(fmt::format("{}", view.get_variant()), ctx); }
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>

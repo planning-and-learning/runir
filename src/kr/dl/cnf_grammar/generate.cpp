@@ -438,7 +438,7 @@ private:
                                });
     }
 
-    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::RoleValueMapContainmentTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::RoleValueMapTag> constructor)
     {
         return generate_binary(lhs,
                                constructor.get_lhs(),
@@ -446,12 +446,12 @@ private:
                                false,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapContainmentTag>> data(child_lhs, child_rhs);
+                                   tyr::Data<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                });
     }
 
-    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::RoleValueMapEqualityTag> constructor)
+    bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::AgreementTag> constructor)
     {
         return generate_binary(lhs,
                                constructor.get_lhs(),
@@ -459,7 +459,7 @@ private:
                                true,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapEqualityTag>> data(child_lhs, child_rhs);
+                                   tyr::Data<runir::kr::dl::Concept<runir::kr::dl::AgreementTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                });
     }

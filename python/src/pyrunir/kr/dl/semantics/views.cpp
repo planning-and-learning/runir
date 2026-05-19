@@ -61,17 +61,19 @@ void bind_view(nb::module_& m, const std::string& name)
     if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::GroundTag>& context) {
                       runir::kr::dl::semantics::evaluate(view, context);
                   })
-        cls.def("evaluate",
-                [](const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::GroundTag>& context)
-                { return runir::kr::dl::semantics::evaluate(view, context); },
-                "context"_a);
+        cls.def(
+            "evaluate",
+            [](const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::GroundTag>& context)
+            { return runir::kr::dl::semantics::evaluate(view, context); },
+            "context"_a);
     if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::LiftedTag>& context) {
                       runir::kr::dl::semantics::evaluate(view, context);
                   })
-        cls.def("evaluate",
-                [](const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::LiftedTag>& context)
-                { return runir::kr::dl::semantics::evaluate(view, context); },
-                "context"_a);
+        cls.def(
+            "evaluate",
+            [](const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::LiftedTag>& context)
+            { return runir::kr::dl::semantics::evaluate(view, context); },
+            "context"_a);
     if constexpr (requires(const View& view) { runir::kr::dl::semantics::syntactic_complexity(view); })
         cls.def("syntactic_complexity", [](const View& view) { return runir::kr::dl::semantics::syntactic_complexity(view); });
 }
@@ -103,8 +105,8 @@ void bind_semantics_views(nb::module_& m)
     bind_view<Concept<NegationTag>, ConstructorRepository>(m, "ConceptNegation");
     bind_view<Concept<ValueRestrictionTag>, ConstructorRepository>(m, "ConceptValueRestriction");
     bind_view<Concept<ExistentialQuantificationTag>, ConstructorRepository>(m, "ConceptExistentialQuantification");
-    bind_view<Concept<RoleValueMapContainmentTag>, ConstructorRepository>(m, "ConceptRoleValueMapContainment");
-    bind_view<Concept<RoleValueMapEqualityTag>, ConstructorRepository>(m, "ConceptRoleValueMapEquality");
+    bind_view<Concept<RoleValueMapTag>, ConstructorRepository>(m, "ConceptRoleValueMap");
+    bind_view<Concept<AgreementTag>, ConstructorRepository>(m, "ConceptAgreement");
     bind_view<Concept<NominalTag>, ConstructorRepository>(m, "ConceptNominal");
 
     bind_view<Role<UniversalTag>, ConstructorRepository>(m, "RoleUniversal");

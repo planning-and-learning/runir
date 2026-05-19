@@ -35,7 +35,7 @@ std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::Concept<Tag
         return 1 + syntactic_complexity(view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag> || std::same_as<Tag, runir::kr::dl::UnionTag>
                        || std::same_as<Tag, runir::kr::dl::ValueRestrictionTag> || std::same_as<Tag, runir::kr::dl::ExistentialQuantificationTag>
-                       || std::same_as<Tag, runir::kr::dl::RoleValueMapContainmentTag> || std::same_as<Tag, runir::kr::dl::RoleValueMapEqualityTag>)
+                       || std::same_as<Tag, runir::kr::dl::RoleValueMapTag> || std::same_as<Tag, runir::kr::dl::AgreementTag>)
         return 1 + syntactic_complexity(view.get_lhs()) + syntactic_complexity(view.get_rhs());
     else
         return 1;

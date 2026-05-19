@@ -370,7 +370,7 @@ auto evaluate_impl(tyr::View<tyr::Index<Concept<Tag>>, C> constructor, Evaluatio
                 result_bitset.set(object);
         }
     }
-    else if constexpr (std::same_as<Tag, RoleValueMapContainmentTag>)
+    else if constexpr (std::same_as<Tag, RoleValueMapTag>)
     {
         const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
@@ -382,7 +382,7 @@ auto evaluate_impl(tyr::View<tyr::Index<Concept<Tag>>, C> constructor, Evaluatio
                 result_bitset.reset(object);
         }
     }
-    else if constexpr (std::same_as<Tag, RoleValueMapEqualityTag>)
+    else if constexpr (std::same_as<Tag, AgreementTag>)
     {
         const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);

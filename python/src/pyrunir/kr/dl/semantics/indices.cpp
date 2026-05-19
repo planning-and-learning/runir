@@ -30,8 +30,8 @@ void bind_semantics_indices(nb::module_& m)
     tyr::bind_index<tyr::Index<Concept<NegationTag>>>(m, "ConceptNegationIndex");
     tyr::bind_index<tyr::Index<Concept<ValueRestrictionTag>>>(m, "ConceptValueRestrictionIndex");
     tyr::bind_index<tyr::Index<Concept<ExistentialQuantificationTag>>>(m, "ConceptExistentialQuantificationIndex");
-    tyr::bind_index<tyr::Index<Concept<RoleValueMapContainmentTag>>>(m, "ConceptRoleValueMapContainmentIndex");
-    tyr::bind_index<tyr::Index<Concept<RoleValueMapEqualityTag>>>(m, "ConceptRoleValueMapEqualityIndex");
+    tyr::bind_index<tyr::Index<Concept<RoleValueMapTag>>>(m, "ConceptRoleValueMapIndex");
+    tyr::bind_index<tyr::Index<Concept<AgreementTag>>>(m, "ConceptAgreementIndex");
     tyr::bind_index<tyr::Index<Concept<NominalTag>>>(m, "ConceptNominalIndex");
 
     tyr::bind_index<tyr::Index<Role<UniversalTag>>>(m, "RoleUniversalIndex");

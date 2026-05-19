@@ -21,8 +21,8 @@ void bind_grammar_indices(nb::module_& m)
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<NegationTag>>>(m, "ConceptNegationIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<ValueRestrictionTag>>>(m, "ConceptValueRestrictionIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<ExistentialQuantificationTag>>>(m, "ConceptExistentialQuantificationIndex");
-    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<RoleValueMapContainmentTag>>>(m, "ConceptRoleValueMapContainmentIndex");
-    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<RoleValueMapEqualityTag>>>(m, "ConceptRoleValueMapEqualityIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<RoleValueMapTag>>>(m, "ConceptRoleValueMapIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<AgreementTag>>>(m, "ConceptAgreementIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Concept<NominalTag>>>(m, "ConceptNominalIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Role<UniversalTag>>>(m, "RoleUniversalIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Role<AtomicStateTag<tyr::formalism::StaticTag>>>>(m, "RoleAtomicStateStaticIndex");

@@ -97,24 +97,24 @@ struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::ExistentialQuantifica
 };
 
 template<>
-struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapContainmentTag>> :
-    runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapContainmentTag>,
+struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapTag>> :
+    runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapTag>,
                                        runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
                                        runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>
 {
-    using Base = runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapContainmentTag>,
+    using Base = runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapTag>,
                                                     runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
                                                     runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>;
     using Base::Base;
 };
 
 template<>
-struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapEqualityTag>> :
-    runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapEqualityTag>,
+struct Data<runir::kr::dl::grammar::Concept<runir::kr::dl::AgreementTag>> :
+    runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Concept<runir::kr::dl::AgreementTag>,
                                        runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
                                        runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>
 {
-    using Base = runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Concept<runir::kr::dl::RoleValueMapEqualityTag>,
+    using Base = runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Concept<runir::kr::dl::AgreementTag>,
                                                     runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
                                                     runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>;
     using Base::Base;

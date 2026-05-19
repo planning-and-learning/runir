@@ -79,11 +79,11 @@ void add_concept_value_restriction(std::stringstream& out,
     add_rule(out, head, std::string(ast::ConceptValueRestriction::keyword) + " " + role + " " + concept_);
 }
 
-void add_concept_role_value_map_equality(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept, const std::string& role)
+void add_concept_agreement(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept, const std::string& role)
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::ConceptRoleValueMapEquality::keyword) + " " + role + " " + role);
+    add_rule(out, head, std::string(ast::ConceptAgreement::keyword) + " " + role + " " + role);
 }
 
 void add_concept_bot(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept)
@@ -323,7 +323,7 @@ std::string GrammarFactory::create_france_et_al_aaai2021_description(tyr::formal
     add_concept_negation(rule_out, concept_heads, next_concept, concept_);
     add_concept_existential_quantification(rule_out, concept_heads, next_concept, role, concept_);
     add_concept_value_restriction(rule_out, concept_heads, next_concept, role, concept_);
-    add_concept_role_value_map_equality(rule_out, concept_heads, next_concept, role);
+    add_concept_agreement(rule_out, concept_heads, next_concept, role);
 
     add_role_transitive_closure(rule_out, role_heads, next_role, role_primitive);
     add_role_inverse(rule_out, role_heads, next_role, role_primitive);

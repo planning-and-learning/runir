@@ -22,8 +22,8 @@ struct ConceptUnion;
 struct ConceptNegation;
 struct ConceptValueRestriction;
 struct ConceptExistentialQuantification;
-struct ConceptRoleValueMapContainment;
-struct ConceptRoleValueMapEquality;
+struct ConceptRoleValueMap;
+struct ConceptAgreement;
 struct ConceptNominal;
 
 struct RoleUniversal;
@@ -67,8 +67,8 @@ struct Constructor<runir::kr::dl::ConceptTag> :
                 x3::forward_ast<ConceptNegation>,
                 x3::forward_ast<ConceptValueRestriction>,
                 x3::forward_ast<ConceptExistentialQuantification>,
-                x3::forward_ast<ConceptRoleValueMapContainment>,
-                x3::forward_ast<ConceptRoleValueMapEquality>,
+                x3::forward_ast<ConceptRoleValueMap>,
+                x3::forward_ast<ConceptAgreement>,
                 x3::forward_ast<ConceptNominal>>
 {
     using base_type::base_type;
@@ -159,7 +159,7 @@ struct ConceptAtomicGoal : x3::position_tagged
 
 struct ConceptIntersection : x3::position_tagged
 {
-    static constexpr auto keyword = "c_intersection";
+    static constexpr auto keyword = "c_and";
 
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> rhs;
@@ -167,7 +167,7 @@ struct ConceptIntersection : x3::position_tagged
 
 struct ConceptUnion : x3::position_tagged
 {
-    static constexpr auto keyword = "c_union";
+    static constexpr auto keyword = "c_or";
 
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> rhs;
@@ -175,14 +175,14 @@ struct ConceptUnion : x3::position_tagged
 
 struct ConceptNegation : x3::position_tagged
 {
-    static constexpr auto keyword = "c_negation";
+    static constexpr auto keyword = "c_not";
 
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> arg;
 };
 
 struct ConceptValueRestriction : x3::position_tagged
 {
-    static constexpr auto keyword = "c_value_restriction";
+    static constexpr auto keyword = "c_all";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> rhs;
@@ -190,23 +190,23 @@ struct ConceptValueRestriction : x3::position_tagged
 
 struct ConceptExistentialQuantification : x3::position_tagged
 {
-    static constexpr auto keyword = "c_existential_quantification";
+    static constexpr auto keyword = "c_some";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> rhs;
 };
 
-struct ConceptRoleValueMapContainment : x3::position_tagged
+struct ConceptRoleValueMap : x3::position_tagged
 {
-    static constexpr auto keyword = "c_role_value_map_containment";
+    static constexpr auto keyword = "c_subset";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> rhs;
 };
 
-struct ConceptRoleValueMapEquality : x3::position_tagged
+struct ConceptAgreement : x3::position_tagged
 {
-    static constexpr auto keyword = "c_role_value_map_equality";
+    static constexpr auto keyword = "c_same_as";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> rhs;
@@ -241,7 +241,7 @@ struct RoleAtomicGoal : x3::position_tagged
 
 struct RoleIntersection : x3::position_tagged
 {
-    static constexpr auto keyword = "r_intersection";
+    static constexpr auto keyword = "r_and";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> rhs;
@@ -249,7 +249,7 @@ struct RoleIntersection : x3::position_tagged
 
 struct RoleUnion : x3::position_tagged
 {
-    static constexpr auto keyword = "r_union";
+    static constexpr auto keyword = "r_or";
 
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> rhs;

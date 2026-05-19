@@ -95,24 +95,24 @@ struct Data<runir::kr::dl::Concept<runir::kr::dl::ExistentialQuantificationTag>>
 };
 
 template<>
-struct Data<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapContainmentTag>> :
-    runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapContainmentTag>,
+struct Data<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapTag>> :
+    runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapTag>,
                                          runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
                                          runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>
 {
-    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapContainmentTag>,
+    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapTag>,
                                                       runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
                                                       runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>;
     using Base::Base;
 };
 
 template<>
-struct Data<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapEqualityTag>> :
-    runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapEqualityTag>,
+struct Data<runir::kr::dl::Concept<runir::kr::dl::AgreementTag>> :
+    runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<runir::kr::dl::AgreementTag>,
                                          runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
                                          runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>
 {
-    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<runir::kr::dl::RoleValueMapEqualityTag>,
+    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<runir::kr::dl::AgreementTag>,
                                                       runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
                                                       runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>;
     using Base::Base;

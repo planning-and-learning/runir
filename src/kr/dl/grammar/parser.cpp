@@ -184,15 +184,15 @@ auto parse(const ast::ConceptExistentialQuantification& node, tyr::formalism::pl
     return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const ast::ConceptRoleValueMapContainment& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+auto parse(const ast::ConceptRoleValueMap& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
 {
-    tyr::Data<Concept<RoleValueMapContainmentTag>> data(parse(node.lhs, domain, repository).get_index(), parse(node.rhs, domain, repository).get_index());
+    tyr::Data<Concept<RoleValueMapTag>> data(parse(node.lhs, domain, repository).get_index(), parse(node.rhs, domain, repository).get_index());
     return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const ast::ConceptRoleValueMapEquality& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+auto parse(const ast::ConceptAgreement& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
 {
-    tyr::Data<Concept<RoleValueMapEqualityTag>> data(parse(node.lhs, domain, repository).get_index(), parse(node.rhs, domain, repository).get_index());
+    tyr::Data<Concept<AgreementTag>> data(parse(node.lhs, domain, repository).get_index(), parse(node.rhs, domain, repository).get_index());
     return intern_constructor<ConceptTag>(repository, intern(repository, data).get_index());
 }
 

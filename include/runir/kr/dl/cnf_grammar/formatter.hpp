@@ -48,10 +48,10 @@ std::string concept_constructor(tyr::View<tyr::Index<Concept<Tag>>, C> view)
         return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptValueRestriction::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::ExistentialQuantificationTag>)
         return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptExistentialQuantification::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapContainmentTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptRoleValueMapContainment::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapEqualityTag>)
-        return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptRoleValueMapEquality::keyword, view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapTag>)
+        return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptRoleValueMap::keyword, view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::AgreementTag>)
+        return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptAgreement::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
         return fmt::format("{} {}", runir::kr::dl::grammar::ast::ConceptNominal::keyword, quoted(view.get_object().get_name()));
 }

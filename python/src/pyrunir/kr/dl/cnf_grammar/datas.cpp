@@ -52,8 +52,8 @@ void bind_cnf_grammar_datas(nb::module_& m)
     bind_data<runir::kr::dl::cnf_grammar::Concept<NegationTag>>(m, "ConceptNegationData");
     bind_data<runir::kr::dl::cnf_grammar::Concept<ValueRestrictionTag>>(m, "ConceptValueRestrictionData");
     bind_data<runir::kr::dl::cnf_grammar::Concept<ExistentialQuantificationTag>>(m, "ConceptExistentialQuantificationData");
-    bind_data<runir::kr::dl::cnf_grammar::Concept<RoleValueMapContainmentTag>>(m, "ConceptRoleValueMapContainmentData");
-    bind_data<runir::kr::dl::cnf_grammar::Concept<RoleValueMapEqualityTag>>(m, "ConceptRoleValueMapEqualityData");
+    bind_data<runir::kr::dl::cnf_grammar::Concept<RoleValueMapTag>>(m, "ConceptRoleValueMapData");
+    bind_data<runir::kr::dl::cnf_grammar::Concept<AgreementTag>>(m, "ConceptAgreementData");
     bind_data<runir::kr::dl::cnf_grammar::Concept<NominalTag>>(m, "ConceptNominalData");
     bind_data<runir::kr::dl::cnf_grammar::Role<UniversalTag>>(m, "RoleUniversalData");
     bind_data<runir::kr::dl::cnf_grammar::Role<AtomicStateTag<tyr::formalism::StaticTag>>>(m, "RoleAtomicStateStaticData");

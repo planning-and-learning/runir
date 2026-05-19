@@ -97,24 +97,24 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::ExistentialQuanti
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapContainmentTag>> :
-    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapContainmentTag>,
+struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapTag>> :
+    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapTag>,
                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapContainmentTag>,
+    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapTag>,
                                                         runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
                                                         runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>;
     using Base::Base;
 };
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapEqualityTag>> :
-    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapEqualityTag>,
+struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AgreementTag>> :
+    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AgreementTag>,
                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::RoleValueMapEqualityTag>,
+    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<runir::kr::dl::AgreementTag>,
                                                         runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
                                                         runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>;
     using Base::Base;

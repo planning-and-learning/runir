@@ -35,8 +35,8 @@ concept_union_type const concept_union = "concept_union";
 concept_negation_type const concept_negation = "concept_negation";
 concept_value_restriction_type const concept_value_restriction = "concept_value_restriction";
 concept_existential_quantification_type const concept_existential_quantification = "concept_existential_quantification";
-concept_role_value_map_containment_type const concept_role_value_map_containment = "concept_role_value_map_containment";
-concept_role_value_map_equality_type const concept_role_value_map_equality = "concept_role_value_map_equality";
+concept_role_value_map_type const concept_role_value_map = "concept_role_value_map";
+concept_agreement_type const concept_agreement = "concept_agreement";
 concept_nominal_type const concept_nominal = "concept_nominal";
 concept_non_terminal_type const concept_non_terminal = "concept_non_terminal";
 concept_choice_type const concept_choice = "concept_choice";
@@ -112,8 +112,7 @@ auto with_constructor_parentheses(Parser parser)
 }
 
 const auto concept__def = concept_bot | concept_top | concept_atomic_state | concept_atomic_goal | concept_intersection | concept_union | concept_negation
-                          | concept_value_restriction | concept_existential_quantification | concept_role_value_map_containment
-                          | concept_role_value_map_equality | concept_nominal;
+                          | concept_value_restriction | concept_existential_quantification | concept_role_value_map | concept_agreement | concept_nominal;
 const auto concept_root_def = concept_ > eoi;
 
 const auto concept_bot_def = with_constructor_parentheses(lit(ast::ConceptBot::keyword) >> x3::attr(ast::ConceptBot {}));
@@ -126,8 +125,8 @@ const auto concept_negation_def = with_constructor_parentheses(lit(ast::ConceptN
 const auto concept_value_restriction_def = with_constructor_parentheses(lit(ast::ConceptValueRestriction::keyword) > role_choice > concept_choice);
 const auto concept_existential_quantification_def =
     with_constructor_parentheses(lit(ast::ConceptExistentialQuantification::keyword) > role_choice > concept_choice);
-const auto concept_role_value_map_containment_def = with_constructor_parentheses(lit(ast::ConceptRoleValueMapContainment::keyword) > role_choice > role_choice);
-const auto concept_role_value_map_equality_def = with_constructor_parentheses(lit(ast::ConceptRoleValueMapEquality::keyword) > role_choice > role_choice);
+const auto concept_role_value_map_def = with_constructor_parentheses(lit(ast::ConceptRoleValueMap::keyword) > role_choice > role_choice);
+const auto concept_agreement_def = with_constructor_parentheses(lit(ast::ConceptAgreement::keyword) > role_choice > role_choice);
 const auto concept_nominal_def = with_constructor_parentheses(lit(ast::ConceptNominal::keyword) > object_name_string_parser());
 const auto concept_non_terminal_def = concept_non_terminal_string_parser();
 const auto concept_choice_def = concept_non_terminal | concept_;
@@ -192,8 +191,8 @@ BOOST_SPIRIT_DEFINE(concept_,
                     concept_negation,
                     concept_value_restriction,
                     concept_existential_quantification,
-                    concept_role_value_map_containment,
-                    concept_role_value_map_equality,
+                    concept_role_value_map,
+                    concept_agreement,
                     concept_nominal,
                     concept_non_terminal,
                     concept_choice,
@@ -361,11 +360,11 @@ struct ConceptExistentialQuantificationClass : x3::annotate_on_success
 {
 };
 
-struct ConceptRoleValueMapContainmentClass : x3::annotate_on_success
+struct ConceptRoleValueMapClass : x3::annotate_on_success
 {
 };
 
-struct ConceptRoleValueMapEqualityClass : x3::annotate_on_success
+struct ConceptAgreementClass : x3::annotate_on_success
 {
 };
 
@@ -468,8 +467,8 @@ concept_union_type const& concept_union_parser() { return concept_union; }
 concept_negation_type const& concept_negation_parser() { return concept_negation; }
 concept_value_restriction_type const& concept_value_restriction_parser() { return concept_value_restriction; }
 concept_existential_quantification_type const& concept_existential_quantification_parser() { return concept_existential_quantification; }
-concept_role_value_map_containment_type const& concept_role_value_map_containment_parser() { return concept_role_value_map_containment; }
-concept_role_value_map_equality_type const& concept_role_value_map_equality_parser() { return concept_role_value_map_equality; }
+concept_role_value_map_type const& concept_role_value_map_parser() { return concept_role_value_map; }
+concept_agreement_type const& concept_agreement_parser() { return concept_agreement; }
 concept_nominal_type const& concept_nominal_parser() { return concept_nominal; }
 concept_non_terminal_type const& concept_non_terminal_parser() { return concept_non_terminal; }
 concept_choice_type const& concept_choice_parser() { return concept_choice; }

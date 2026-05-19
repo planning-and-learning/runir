@@ -76,8 +76,8 @@ void bind_grammar_views(nb::module_& m)
     bind_view<runir::kr::dl::grammar::Concept<ValueRestrictionTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptValueRestriction");
     bind_view<runir::kr::dl::grammar::Concept<ExistentialQuantificationTag>, runir::kr::dl::grammar::ConstructorRepository>(m,
                                                                                                                             "ConceptExistentialQuantification");
-    bind_view<runir::kr::dl::grammar::Concept<RoleValueMapContainmentTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptRoleValueMapContainment");
-    bind_view<runir::kr::dl::grammar::Concept<RoleValueMapEqualityTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptRoleValueMapEquality");
+    bind_view<runir::kr::dl::grammar::Concept<RoleValueMapTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptRoleValueMap");
+    bind_view<runir::kr::dl::grammar::Concept<AgreementTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptAgreement");
     bind_view<runir::kr::dl::grammar::Concept<NominalTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptNominal");
     bind_view<runir::kr::dl::grammar::Role<UniversalTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleUniversal");
     bind_view<runir::kr::dl::grammar::Role<AtomicStateTag<tyr::formalism::StaticTag>>, runir::kr::dl::grammar::ConstructorRepository>(m,

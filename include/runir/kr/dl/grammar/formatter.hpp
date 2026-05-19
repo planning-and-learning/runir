@@ -45,10 +45,10 @@ std::string concept_constructor(tyr::View<tyr::Index<Concept<Tag>>, C> view)
         return fmt::format("{} {} {}", ast::ConceptValueRestriction::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::ExistentialQuantificationTag>)
         return fmt::format("{} {} {}", ast::ConceptExistentialQuantification::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapContainmentTag>)
-        return fmt::format("{} {} {}", ast::ConceptRoleValueMapContainment::keyword, view.get_lhs(), view.get_rhs());
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapEqualityTag>)
-        return fmt::format("{} {} {}", ast::ConceptRoleValueMapEquality::keyword, view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapTag>)
+        return fmt::format("{} {} {}", ast::ConceptRoleValueMap::keyword, view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::AgreementTag>)
+        return fmt::format("{} {} {}", ast::ConceptAgreement::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
         return fmt::format("{} {}", ast::ConceptNominal::keyword, quoted(view.get_object().get_name()));
 }
@@ -237,10 +237,7 @@ template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>>, C>> : fmt::formatter<std::string_view>
 {
     using View = tyr::View<tyr::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>>, C>;
-    auto format(View view, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(fmt::format("{}", view.get_variant()), ctx);
-    }
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(fmt::format("{}", view.get_variant()), ctx); }
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>

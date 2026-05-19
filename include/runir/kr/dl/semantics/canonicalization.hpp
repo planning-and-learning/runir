@@ -18,7 +18,7 @@ inline bool is_canonical(const tyr::Data<Concept<IntersectionTag>>& data) noexce
 
 inline bool is_canonical(const tyr::Data<Concept<UnionTag>>& data) noexcept { return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs); }
 
-inline bool is_canonical(const tyr::Data<Concept<RoleValueMapEqualityTag>>& data) noexcept { return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs); }
+inline bool is_canonical(const tyr::Data<Concept<AgreementTag>>& data) noexcept { return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs); }
 
 inline bool is_canonical(const tyr::Data<Role<IntersectionTag>>& data) noexcept { return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs); }
 
@@ -28,7 +28,7 @@ inline void canonicalize(tyr::Data<Concept<IntersectionTag>>& data) noexcept { c
 
 inline void canonicalize(tyr::Data<Concept<UnionTag>>& data) noexcept { canonicalize_commutative_binary(data); }
 
-inline void canonicalize(tyr::Data<Concept<RoleValueMapEqualityTag>>& data) noexcept { canonicalize_commutative_binary(data); }
+inline void canonicalize(tyr::Data<Concept<AgreementTag>>& data) noexcept { canonicalize_commutative_binary(data); }
 
 inline void canonicalize(tyr::Data<Role<IntersectionTag>>& data) noexcept { canonicalize_commutative_binary(data); }
 

@@ -219,19 +219,19 @@ public:
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::RoleValueMapContainmentTag> source)
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::RoleValueMapTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        tyr::Data<Concept<runir::kr::dl::RoleValueMapContainmentTag>> data(translate_child<runir::kr::dl::RoleTag>(source.get_lhs()).get_index(),
-                                                                           translate_child<runir::kr::dl::RoleTag>(source.get_rhs()).get_index());
+        tyr::Data<Concept<runir::kr::dl::RoleValueMapTag>> data(translate_child<runir::kr::dl::RoleTag>(source.get_lhs()).get_index(),
+                                                                translate_child<runir::kr::dl::RoleTag>(source.get_rhs()).get_index());
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
-    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::RoleValueMapEqualityTag> source)
+    auto translate_concrete_constructor(runir::kr::dl::grammar::ConceptView<runir::kr::dl::AgreementTag> source)
         requires std::same_as<Category, runir::kr::dl::ConceptTag>
     {
-        tyr::Data<Concept<runir::kr::dl::RoleValueMapEqualityTag>> data(translate_child<runir::kr::dl::RoleTag>(source.get_lhs()).get_index(),
-                                                                        translate_child<runir::kr::dl::RoleTag>(source.get_rhs()).get_index());
+        tyr::Data<Concept<runir::kr::dl::AgreementTag>> data(translate_child<runir::kr::dl::RoleTag>(source.get_lhs()).get_index(),
+                                                             translate_child<runir::kr::dl::RoleTag>(source.get_rhs()).get_index());
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 

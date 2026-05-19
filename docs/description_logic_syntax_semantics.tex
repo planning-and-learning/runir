@@ -1,0 +1,413 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,landscape,margin=0.6in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{hyperref}
+
+\newcommand{\I}{\mathcal{I}}
+\newcommand{\DeltaI}{\Delta^{\I}}
+\newcommand{\sem}[1]{#1^{\I}}
+\newcommand{\Nat}{\mathbb{N}}
+\newenvironment{compacttable}
+  {\begingroup\setlength{\tabcolsep}{3pt}}
+  {\endgroup}
+
+\title{Description Logic Syntax and Semantics}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Preliminaries}
+
+Let $\I$ be an interpretation with non-empty domain $\DeltaI$.
+Each atomic concept $A$ is interpreted as a set
+$\sem{A} \subseteq \DeltaI$, each atomic role $R$ as a binary relation
+$\sem{R} \subseteq \DeltaI \times \DeltaI$, and each individual name $a$
+as an element $a^{\I} \in \DeltaI$.
+
+Concept descriptions denote subsets of $\DeltaI$. Role descriptions denote
+binary relations over $\DeltaI$.
+For planning states, let $s$ denote the set of atoms true in the current state,
+and let $\gamma$ denote the set of goal literals.
+
+\section{Concept Constructors}
+
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.20\textwidth}
+                  >{\centering\arraybackslash}p{0.15\textwidth}
+                  >{\raggedright\arraybackslash}p{0.61\textwidth}}
+\toprule
+Name & Syntax & Semantics \\
+\midrule
+\endhead
+
+Top &
+$\top$ &
+$\sem{\top} = \DeltaI$ \\
+
+Bottom &
+$\bot$ &
+$\sem{\bot} = \emptyset$ \\
+
+Positive atomic state concept &
+$P$ &
+$\sem{P} = \{ a \in \DeltaI \mid P(a) \in s \}$ \\
+
+Negative atomic state concept &
+$\neg P$ &
+$\sem{\neg P} = \DeltaI \setminus \sem{P}$ \\
+
+Positive atomic goal concept &
+$G$ &
+$\sem{G} = \{ a \in \DeltaI \mid G(a) \in \gamma \}$ \\
+
+Negative atomic goal concept &
+$\neg G$ &
+$\sem{\neg G} = \{ a \in \DeltaI \mid \neg G(a) \in \gamma \}$ \\
+
+Intersection &
+$C \sqcap D$ &
+$\sem{C \sqcap D} = \sem{C} \cap \sem{D}$ \\
+
+Union &
+$C \sqcup D$ &
+$\sem{C \sqcup D} = \sem{C} \cup \sem{D}$ \\
+
+Negation &
+$\neg C$ &
+$\sem{\neg C} = \DeltaI \setminus \sem{C}$ \\
+
+Value restriction &
+$\forall R.C$ &
+$\sem{\forall R.C} = \{ a \in \DeltaI \mid \forall b.\,(a,b)\in\sem{R} \Rightarrow b\in\sem{C} \}$ \\
+
+Existential quantification &
+$\exists R.C$ &
+$\sem{\exists R.C} = \{ a \in \DeltaI \mid \exists b.\,(a,b)\in\sem{R} \land b\in\sem{C} \}$ \\
+
+Limited existential quantification &
+$\exists R.\top$ &
+$\sem{\exists R.\top} = \{ a \in \DeltaI \mid \exists b.\,(a,b)\in\sem{R} \}$ \\
+
+At-least number restriction &
+$\geq n\,R$ &
+$\sem{\geq n\,R} = \{ a \in \DeltaI \mid |\{ b \in \DeltaI \mid (a,b)\in\sem{R} \}| \geq n \}$ \\
+
+At-most number restriction &
+$\leq n\,R$ &
+$\sem{\leq n\,R} = \{ a \in \DeltaI \mid |\{ b \in \DeltaI \mid (a,b)\in\sem{R} \}| \leq n \}$ \\
+
+Exact number restriction &
+$= n\,R$ &
+$\sem{= n\,R} = \{ a \in \DeltaI \mid |\{ b \in \DeltaI \mid (a,b)\in\sem{R} \}| = n \}$ \\
+
+Qualified at-least number restriction &
+$\geq n\,R.C$ &
+$\sem{\geq n\,R.C} = \{ a \in \DeltaI \mid |\{ b \in \DeltaI \mid (a,b)\in\sem{R} \land b\in\sem{C} \}| \geq n \}$ \\
+
+Qualified at-most number restriction &
+$\leq n\,R.C$ &
+$\sem{\leq n\,R.C} = \{ a \in \DeltaI \mid |\{ b \in \DeltaI \mid (a,b)\in\sem{R} \land b\in\sem{C} \}| \leq n \}$ \\
+
+Qualified exact number restriction &
+$= n\,R.C$ &
+$\sem{= n\,R.C} = \{ a \in \DeltaI \mid |\{ b \in \DeltaI \mid (a,b)\in\sem{R} \land b\in\sem{C} \}| = n \}$ \\
+
+Role-value map inclusion &
+$R \subseteq S$ &
+$\sem{R \subseteq S} = \{ a \in \DeltaI \mid \forall b.\,(a,b)\in\sem{R} \Rightarrow (a,b)\in\sem{S} \}$ \\
+
+Role-value map equality &
+$R = S$ &
+$\sem{R = S} = \{ a \in \DeltaI \mid \forall b.\,(a,b)\in\sem{R} \Leftrightarrow (a,b)\in\sem{S} \}$ \\
+
+Agreement &
+$u_1 \doteq u_2$ &
+$\sem{u_1 \doteq u_2} = \{ a \in \DeltaI \mid \exists b \in \DeltaI.\,\sem{u_1}(a)=b=\sem{u_2}(a) \}$ \\
+
+Disagreement &
+$u_1 \not\doteq u_2$ &
+$\sem{u_1 \not\doteq u_2} = \{ a \in \DeltaI \mid \exists b_1,b_2 \in \DeltaI.\,\sem{u_1}(a)=b_1 \neq b_2 =\sem{u_2}(a) \}$ \\
+
+Nominal &
+$I$ &
+$\sem{I} \subseteq \DeltaI$ and $|\sem{I}|=1$ \\
+
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+Here $n \in \Nat$. The expressions $u_1,u_2$ denote chains of functional
+roles, also called features. If $u=f_1\cdots f_m$, then $\sem{u}$ is the
+composition of the partial functions interpreting the features.
+
+\section{Concrete Syntax for Concept Constructors}
+
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
+                  >{\raggedright\arraybackslash}p{0.50\textwidth}
+                  >{\raggedright\arraybackslash}p{0.22\textwidth}}
+\toprule
+Name & Concrete syntax & Abstract syntax \\
+\midrule
+\endhead
+Top & \texttt{c\_top} & $\top$ \\
+Bottom & \texttt{c\_bot} & $\bot$ \\
+Atomic state concept & \texttt{(c\_atomic\_state "p" polarity)} & $P$ or $\neg P$ \\
+Atomic goal concept & \texttt{(c\_atomic\_goal "p" polarity)} & $G$ or $\neg G$ \\
+Intersection & \texttt{(c\_and C1 ... Cn)} & $C_1 \sqcap \cdots \sqcap C_n$ \\
+Union & \texttt{(c\_or C1 ... Cn)} & $C_1 \sqcup \cdots \sqcup C_n$ \\
+Negation & \texttt{(c\_not C)} & $\neg C$ \\
+Value restriction & \texttt{(c\_all R C)} & $\forall R.C$ \\
+Limited existential quantification & \texttt{(c\_some R)} & $\exists R.\top$ \\
+Existential quantification & \texttt{(c\_some R C)} & $\exists R.C$ \\
+At-least number restriction & \texttt{(c\_at\_least n R)} & $\geq n\,R$ \\
+At-most number restriction & \texttt{(c\_at\_most n R)} & $\leq n\,R$ \\
+Exact number restriction & \texttt{(c\_exactly n R)} & $= n\,R$ \\
+Qualified at-least restriction & \texttt{(c\_at\_least n R C)} & $\geq n\,R.C$ \\
+Qualified at-most restriction & \texttt{(c\_at\_most n R C)} & $\leq n\,R.C$ \\
+Qualified exact restriction & \texttt{(c\_exactly n R C)} & $= n\,R.C$ \\
+Same-as / agreement & \texttt{(c\_same\_as u1 u2)} & $u_1 \doteq u_2$ \\
+Role-value map & \texttt{(c\_subset R1 R2)} & $R_1 \subseteq R_2$ \\
+Role fillers & \texttt{(c\_fillers R I1 ... In)} & $\exists R.I_1 \sqcap \cdots \sqcap \exists R.I_n$ \\
+One-of & \texttt{(c\_one\_of I1 ... In)} & $I_1 \sqcup \cdots \sqcup I_n$ \\
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+\section{Restrictions on Role Interpretations}
+
+\paragraph{Functional roles.}
+A feature $f$ is interpreted as a functional binary relation:
+\[
+  \forall a,b,c.\,
+  (a,b)\in\sem{f} \land (a,c)\in\sem{f}
+  \Rightarrow b=c.
+\]
+Equivalently, features may be viewed as partial functions.
+
+\paragraph{Transitive roles.}
+A transitive role $R$ is interpreted as a transitive binary relation:
+\[
+  \forall a,b,c.\,
+  (a,b)\in\sem{R} \land (b,c)\in\sem{R}
+  \Rightarrow (a,c)\in\sem{R}.
+\]
+
+\section{Role Constructors}
+
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.20\textwidth}
+                  >{\centering\arraybackslash}p{0.15\textwidth}
+                  >{\raggedright\arraybackslash}p{0.61\textwidth}}
+\toprule
+Name & Syntax & Semantics \\
+\midrule
+\endhead
+
+Universal role &
+$U$ &
+$\sem{U} = \DeltaI \times \DeltaI$ \\
+
+Positive atomic state role &
+$P$ &
+$\sem{P} = \{ (a,b) \in \DeltaI \times \DeltaI \mid P(a,b) \in s \}$ \\
+
+Negative atomic state role &
+$\neg P$ &
+$\sem{\neg P} = (\DeltaI \times \DeltaI) \setminus \sem{P}$ \\
+
+Positive atomic goal role &
+$G$ &
+$\sem{G} = \{ (a,b) \in \DeltaI \times \DeltaI \mid G(a,b) \in \gamma \}$ \\
+
+Negative atomic goal role &
+$\neg G$ &
+$\sem{\neg G} = \{ (a,b) \in \DeltaI \times \DeltaI \mid \neg G(a,b) \in \gamma \}$ \\
+
+Intersection &
+$R \sqcap S$ &
+$\sem{R \sqcap S} = \sem{R} \cap \sem{S}$ \\
+
+Union &
+$R \sqcup S$ &
+$\sem{R \sqcup S} = \sem{R} \cup \sem{S}$ \\
+
+Complement &
+$\neg R$ &
+$\sem{\neg R} = (\DeltaI \times \DeltaI) \setminus \sem{R}$ \\
+
+Inverse &
+$R^{-}$ &
+$\left(R^{-}\right)^{\I} = \{(b,a)\in\DeltaI\times\DeltaI \mid (a,b)\in\sem{R}\}$ \\
+
+Composition &
+$R \circ S$ &
+$\sem{R \circ S} = \{(a,c) \mid \exists b.\,(a,b)\in\sem{R} \land (b,c)\in\sem{S}\}$ \\
+
+Transitive closure &
+$R^{+}$ &
+$\left(R^{+}\right)^{\I} = \bigcup_{n\geq 1}(\sem{R})^n$ \\
+
+Reflexive-transitive closure &
+$R^{*}$ &
+$\left(R^{*}\right)^{\I} = \bigcup_{n\geq 0}(\sem{R})^n$ \\
+
+Role restriction &
+$R|C$ &
+$\sem{R|C} = \sem{R} \cap (\DeltaI \times \sem{C})$ \\
+
+Identity &
+$\mathrm{id}(C)$ &
+$\sem{\mathrm{id}(C)} = \{(d,d) \mid d\in\sem{C}\}$ \\
+
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+The iterated composition $(\sem{R})^n$ is defined by
+\[
+  (\sem{R})^0 = \{(d,d) \mid d\in\DeltaI\},
+  \qquad
+  (\sem{R})^{n+1} = (\sem{R})^n \circ \sem{R}.
+\]
+
+\section{Concrete Syntax for Role Constructors}
+
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
+                  >{\raggedright\arraybackslash}p{0.50\textwidth}
+                  >{\raggedright\arraybackslash}p{0.22\textwidth}}
+\toprule
+Name & Concrete syntax & Abstract syntax \\
+\midrule
+\endhead
+Universal role & \texttt{r\_universal} & $U$ \\
+Atomic state role & \texttt{(r\_atomic\_state "p" polarity)} & $P$ or $\neg P$ \\
+Atomic goal role & \texttt{(r\_atomic\_goal "p" polarity)} & $G$ or $\neg G$ \\
+Intersection & \texttt{(r\_and R1 ... Rn)} & $R_1 \sqcap \cdots \sqcap R_n$ \\
+Union & \texttt{(r\_or R1 ... Rn)} & $R_1 \sqcup \cdots \sqcup R_n$ \\
+Complement & \texttt{(r\_complement R)} & $\neg R$ \\
+Inverse & \texttt{(r\_inverse R)} & $R^{-}$ \\
+Composition & \texttt{(r\_composition R1 ... Rn)} & $R_1 \circ \cdots \circ R_n$ \\
+Transitive closure & \texttt{(r\_transitive\_closure R)} & $R^{+}$ \\
+Reflexive-transitive closure & \texttt{(r\_reflexive\_transitive\_closure R)} & $R^{*}$ \\
+Role restriction & \texttt{(r\_restriction R C)} & $R|C$ \\
+Identity & \texttt{(r\_identity C)} & $\mathrm{id}(C)$ \\
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+\section{Boolean Constructors}
+
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
+                  >{\centering\arraybackslash}p{0.22\textwidth}
+                  >{\raggedright\arraybackslash}p{0.50\textwidth}}
+\toprule
+Name & Syntax & Semantics \\
+\midrule
+\endhead
+
+Positive atomic state predicate &
+$\mathrm{holds}(p)$ &
+$\mathrm{true}$ iff there exists an atom $p() \in s$ \\
+
+Negative atomic state predicate &
+$\neg\mathrm{holds}(p)$ &
+$\mathrm{true}$ iff no current atom with predicate $p$ is true in the state \\
+
+Positive atomic goal predicate &
+$\mathrm{goal}(p)$ &
+$\mathrm{true}$ iff $p() \in \gamma$ \\
+
+Negative atomic goal predicate &
+$\neg\mathrm{goal}(p)$ &
+$\mathrm{true}$ iff $\neg p() \in \gamma$ \\
+
+Non-empty concept &
+$C \neq \emptyset$ &
+$\mathrm{true}$ iff $\sem{C} \neq \emptyset$ \\
+
+Non-empty role &
+$R \neq \emptyset$ &
+$\mathrm{true}$ iff $\sem{R} \neq \emptyset$ \\
+
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+\section{Concrete Syntax for Boolean Constructors}
+
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
+                  >{\raggedright\arraybackslash}p{0.50\textwidth}
+                  >{\raggedright\arraybackslash}p{0.22\textwidth}}
+\toprule
+Name & Concrete syntax & Abstract syntax \\
+\midrule
+\endhead
+Atomic state predicate & \texttt{(b\_atomic\_state "p" polarity)} & $\mathrm{holds}(p)$ or $\neg\mathrm{holds}(p)$ \\
+Atomic goal predicate & \texttt{(b\_atomic\_goal "p" polarity)} & $\mathrm{goal}(p)$ or $\neg\mathrm{goal}(p)$ \\
+Non-empty concept & \texttt{(b\_nonempty C)} & $C \neq \emptyset$ \\
+Non-empty role & \texttt{(b\_nonempty R)} & $R \neq \emptyset$ \\
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+\section{Numerical Constructors}
+
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
+                  >{\centering\arraybackslash}p{0.22\textwidth}
+                  >{\raggedright\arraybackslash}p{0.50\textwidth}}
+\toprule
+Name & Syntax & Semantics \\
+\midrule
+\endhead
+
+Concept count &
+$|C|$ &
+$|\sem{C}|$ \\
+
+Role count &
+$|R|$ &
+$|\sem{R}|$ \\
+
+Role distance &
+$d_R(C,D)$ &
+$\min\{n \in \Nat \mid \sem{C} \times \sem{D} \cap (\sem{R})^n \neq \emptyset\}$, or $\infty$ if empty \\
+
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+\section{Concrete Syntax for Numerical Constructors}
+
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
+                  >{\raggedright\arraybackslash}p{0.50\textwidth}
+                  >{\raggedright\arraybackslash}p{0.22\textwidth}}
+\toprule
+Name & Concrete syntax & Abstract syntax \\
+\midrule
+\endhead
+Concept count & \texttt{(n\_count C)} & $|C|$ \\
+Role count & \texttt{(n\_count R)} & $|R|$ \\
+Role distance & \texttt{(n\_distance C R D)} & $d_R(C,D)$ \\
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+\section*{Source}
+
+This document summarizes Appendix~1, Section~A1.2 of
+\emph{The Description Logic Handbook}, edited by Franz Baader,
+Deborah L. McGuinness, Daniele Nardi, and Peter F. Patel-Schneider.
+
+\end{document}

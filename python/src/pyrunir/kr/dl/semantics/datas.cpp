@@ -52,8 +52,8 @@ void bind_semantics_datas(nb::module_& m)
     bind_data<Concept<NegationTag>>(m, "ConceptNegationData");
     bind_data<Concept<ValueRestrictionTag>>(m, "ConceptValueRestrictionData");
     bind_data<Concept<ExistentialQuantificationTag>>(m, "ConceptExistentialQuantificationData");
-    bind_data<Concept<RoleValueMapContainmentTag>>(m, "ConceptRoleValueMapContainmentData");
-    bind_data<Concept<RoleValueMapEqualityTag>>(m, "ConceptRoleValueMapEqualityData");
+    bind_data<Concept<RoleValueMapTag>>(m, "ConceptRoleValueMapData");
+    bind_data<Concept<AgreementTag>>(m, "ConceptAgreementData");
     bind_data<Concept<NominalTag>>(m, "ConceptNominalData");
 
     bind_data<Role<UniversalTag>>(m, "RoleUniversalData");

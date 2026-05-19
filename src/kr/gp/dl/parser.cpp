@@ -200,18 +200,18 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptExistentialQuantification& 
     return parse_binary_concept<runir::kr::dl::ExistentialQuantificationTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptRoleValueMapContainment& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptRoleValueMap& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
-    return parse_binary_concept<runir::kr::dl::RoleValueMapContainmentTag>(node, domain, repository);
+    return parse_binary_concept<runir::kr::dl::RoleValueMapTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptRoleValueMapEquality& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptAgreement& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
-    return parse_binary_concept<runir::kr::dl::RoleValueMapEqualityTag>(node, domain, repository);
+    return parse_binary_concept<runir::kr::dl::AgreementTag>(node, domain, repository);
 }
 
 auto parse(const runir::kr::dl::grammar::ast::ConceptNegation& node,

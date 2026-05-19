@@ -55,7 +55,7 @@ public:
     auto get_lhs() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::IntersectionTag> || std::same_as<Tag, runir::kr::dl::UnionTag>
                  || std::same_as<Tag, runir::kr::dl::ValueRestrictionTag> || std::same_as<Tag, runir::kr::dl::ExistentialQuantificationTag>
-                 || std::same_as<Tag, runir::kr::dl::RoleValueMapContainmentTag> || std::same_as<Tag, runir::kr::dl::RoleValueMapEqualityTag>)
+                 || std::same_as<Tag, runir::kr::dl::RoleValueMapTag> || std::same_as<Tag, runir::kr::dl::AgreementTag>)
     {
         return make_view(get_data().lhs, *m_context);
     }
@@ -63,7 +63,7 @@ public:
     auto get_rhs() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::IntersectionTag> || std::same_as<Tag, runir::kr::dl::UnionTag>
                  || std::same_as<Tag, runir::kr::dl::ValueRestrictionTag> || std::same_as<Tag, runir::kr::dl::ExistentialQuantificationTag>
-                 || std::same_as<Tag, runir::kr::dl::RoleValueMapContainmentTag> || std::same_as<Tag, runir::kr::dl::RoleValueMapEqualityTag>)
+                 || std::same_as<Tag, runir::kr::dl::RoleValueMapTag> || std::same_as<Tag, runir::kr::dl::AgreementTag>)
     {
         return make_view(get_data().rhs, *m_context);
     }

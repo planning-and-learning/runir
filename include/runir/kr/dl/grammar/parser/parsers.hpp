@@ -35,8 +35,8 @@ struct ConceptUnionClass;
 struct ConceptNegationClass;
 struct ConceptValueRestrictionClass;
 struct ConceptExistentialQuantificationClass;
-struct ConceptRoleValueMapContainmentClass;
-struct ConceptRoleValueMapEqualityClass;
+struct ConceptRoleValueMapClass;
+struct ConceptAgreementClass;
 struct ConceptNominalClass;
 
 struct RoleUniversalClass;
@@ -75,8 +75,8 @@ using concept_union_type = x3::rule<ConceptUnionClass, ast::ConceptUnion>;
 using concept_negation_type = x3::rule<ConceptNegationClass, ast::ConceptNegation>;
 using concept_value_restriction_type = x3::rule<ConceptValueRestrictionClass, ast::ConceptValueRestriction>;
 using concept_existential_quantification_type = x3::rule<ConceptExistentialQuantificationClass, ast::ConceptExistentialQuantification>;
-using concept_role_value_map_containment_type = x3::rule<ConceptRoleValueMapContainmentClass, ast::ConceptRoleValueMapContainment>;
-using concept_role_value_map_equality_type = x3::rule<ConceptRoleValueMapEqualityClass, ast::ConceptRoleValueMapEquality>;
+using concept_role_value_map_type = x3::rule<ConceptRoleValueMapClass, ast::ConceptRoleValueMap>;
+using concept_agreement_type = x3::rule<ConceptAgreementClass, ast::ConceptAgreement>;
 using concept_nominal_type = x3::rule<ConceptNominalClass, ast::ConceptNominal>;
 using concept_non_terminal_type = x3::rule<NonTerminalClass<runir::kr::dl::ConceptTag>, ast::NonTerminal<runir::kr::dl::ConceptTag>>;
 using concept_choice_type = x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::ConceptTag>, ast::ConstructorOrNonTerminal<runir::kr::dl::ConceptTag>>;
@@ -135,8 +135,8 @@ BOOST_SPIRIT_DECLARE(concept_type,
                      concept_negation_type,
                      concept_value_restriction_type,
                      concept_existential_quantification_type,
-                     concept_role_value_map_containment_type,
-                     concept_role_value_map_equality_type,
+                     concept_role_value_map_type,
+                     concept_agreement_type,
                      concept_nominal_type,
                      concept_non_terminal_type,
                      concept_choice_type,
@@ -192,8 +192,8 @@ concept_union_type const& concept_union_parser();
 concept_negation_type const& concept_negation_parser();
 concept_value_restriction_type const& concept_value_restriction_parser();
 concept_existential_quantification_type const& concept_existential_quantification_parser();
-concept_role_value_map_containment_type const& concept_role_value_map_containment_parser();
-concept_role_value_map_equality_type const& concept_role_value_map_equality_parser();
+concept_role_value_map_type const& concept_role_value_map_parser();
+concept_agreement_type const& concept_agreement_parser();
 concept_nominal_type const& concept_nominal_parser();
 concept_non_terminal_type const& concept_non_terminal_parser();
 concept_choice_type const& concept_choice_parser();

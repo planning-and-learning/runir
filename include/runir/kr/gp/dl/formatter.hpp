@@ -67,16 +67,10 @@ std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::Concept<Tag>
                            runir::kr::dl::grammar::ast::ConceptExistentialQuantification::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_rhs()));
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapContainmentTag>)
-        return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptRoleValueMapContainment::keyword,
-                           constructor(view.get_lhs()),
-                           constructor(view.get_rhs()));
-    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapEqualityTag>)
-        return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptRoleValueMapEquality::keyword,
-                           constructor(view.get_lhs()),
-                           constructor(view.get_rhs()));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapTag>)
+        return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptRoleValueMap::keyword, constructor(view.get_lhs()), constructor(view.get_rhs()));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::AgreementTag>)
+        return fmt::format("{} {} {}", runir::kr::dl::grammar::ast::ConceptAgreement::keyword, constructor(view.get_lhs()), constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
         return fmt::format("{} {}", runir::kr::dl::grammar::ast::ConceptNominal::keyword, quoted(view.get_object().get_name()));
 }
@@ -190,8 +184,7 @@ std::string feature(tyr::View<tyr::Index<runir::kr::gp::ConcreteFeature<runir::k
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string condition(tyr::View<tyr::Index<runir::kr::gp::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>,
-                      std::string_view feature_name)
+std::string condition(tyr::View<tyr::Index<runir::kr::gp::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>, std::string_view feature_name)
 {
     auto os = std::ostringstream {};
     os << "(" << ObservationTag::keyword << " " << feature_name << ")";
