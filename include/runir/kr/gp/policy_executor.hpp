@@ -8,6 +8,8 @@
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/planning.hpp>
 
+#include <memory>
+
 namespace runir::kr::gp
 {
 
@@ -23,7 +25,8 @@ template<tyr::planning::TaskKind Kind>
 struct PolicyProofResults
 {
     PolicyProofStatus status = PolicyProofStatus::SUCCESS;
-    runir::datasets::StaticAnnotatedStateGraph<Kind> graph;
+    runir::datasets::TaskSearchContext<Kind> context;
+    std::shared_ptr<runir::datasets::StaticAnnotatedStateGraph<Kind>> graph;
     runir::graphs::EdgeIndexList deadend_transitions;
     runir::graphs::VertexIndexList open_states;
     runir::graphs::VertexIndexList cycle;

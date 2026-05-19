@@ -230,6 +230,7 @@ template<tyr::planning::TaskKind Kind>
 auto prove_solution(const datasets::TaskSearchContext<Kind>& context, PolicyView policy, const PolicySearchOptions<Kind>& options) -> PolicyProofResults<Kind>
 {
     auto result = PolicyProofResults<Kind> {};
+    result.context = context;
     auto builder = datasets::AnnotatedStateGraphBuilder<Kind> {};
     auto state_to_vertex = tyr::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
     auto vertex_to_node = tyr::UnorderedMap<graphs::VertexIndex, tyr::planning::Node<Kind>> {};
@@ -276,7 +277,7 @@ auto prove_solution(const datasets::TaskSearchContext<Kind>& context, PolicyView
     auto finish = [&](PolicyProofStatus status)
     {
         result.status = status;
-        result.graph = datasets::StaticAnnotatedStateGraph<Kind>(std::move(builder));
+        result.graph = std::make_shared<datasets::StaticAnnotatedStateGraph<Kind>>(std::move(builder));
         return std::move(result);
     };
 
@@ -330,8 +331,8 @@ auto prove_solution(const datasets::TaskSearchContext<Kind>& context, PolicyView
             result.open_states.push_back(source);
     }
 
-    auto graph = datasets::StaticAnnotatedStateGraph<Kind>(std::move(builder));
-    result.cycle = detail::find_cycle(graph);
+    auto graph = std::make_shared<datasets::StaticAnnotatedStateGraph<Kind>>(std::move(builder));
+    result.cycle = detail::find_cycle(*graph);
     result.graph = std::move(graph);
 
     if (!result.open_states.empty() || !result.cycle.empty())

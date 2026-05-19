@@ -230,8 +230,8 @@ std::string policy_proof_results(const runir::kr::gp::PolicyProofResults<Kind>& 
 {
     return fmt::format("PolicyProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_transitions={}, open_states={}, cycle={})",
                        policy_proof_status(result.status),
-                       result.graph.get_num_vertices(),
-                       result.graph.get_num_edges(),
+                       result.graph ? result.graph->get_num_vertices() : 0,
+                       result.graph ? result.graph->get_num_edges() : 0,
                        result.deadend_transitions.size(),
                        result.open_states.size(),
                        result.cycle.size());

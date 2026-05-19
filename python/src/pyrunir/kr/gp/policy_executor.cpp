@@ -1,5 +1,6 @@
 #include "module.hpp"
 
+#include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/vector.h>
 #include <runir/datasets/state_graph.hpp>
 #include <runir/kr/gp/policy_executor.hpp>

@@ -83,6 +83,7 @@ void bind_serialization_for_kind(nb::module_& m, const char* function_prefix)
 void bind_serialization(nb::module_& m)
 {
     bind_serialization_for_kind<tyr::planning::GroundTag>(m, "ground");
+    bind_serialization_for_kind<tyr::planning::LiftedTag>(m, "lifted");
 }
 
 }  // namespace runir::datasets

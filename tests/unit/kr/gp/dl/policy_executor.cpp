@@ -68,7 +68,7 @@ TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesExecuteOnExampleTasks)
         EXPECT_TRUE(result.deadend_transitions.empty()) << test_case.domain;
         EXPECT_TRUE(result.open_states.empty()) << test_case.domain;
         EXPECT_TRUE(result.cycle.empty()) << test_case.domain;
-        EXPECT_GT(result.graph.get_num_vertices(), 0) << test_case.domain;
+        EXPECT_GT(result.graph->get_num_vertices(), 0) << test_case.domain;
 
         const auto search_result = kr::gp::find_solution(context, policy);
         EXPECT_EQ(search_result.status, p::SearchStatus::SOLVED) << test_case.domain;
