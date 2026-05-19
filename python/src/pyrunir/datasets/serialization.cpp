@@ -1,7 +1,7 @@
 #include "module.hpp"
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -21,23 +21,23 @@ namespace
 template<typename Archive>
 void write_archive(const std::filesystem::path& archive_filepath, Archive archive)
 {
-    auto file = std::ofstream(archive_filepath);
+    auto file = std::ofstream(archive_filepath, std::ios::binary);
     if (!file)
         throw std::runtime_error("Could not open archive file for writing: " + archive_filepath.string() + ".");
 
-    auto out = boost::archive::text_oarchive(file);
+    auto out = boost::archive::binary_oarchive(file);
     out << archive;
 }
 
 template<typename Archive>
 auto read_archive(const std::filesystem::path& archive_filepath) -> Archive
 {
-    auto file = std::ifstream(archive_filepath);
+    auto file = std::ifstream(archive_filepath, std::ios::binary);
     if (!file)
         throw std::runtime_error("Could not open archive file for reading: " + archive_filepath.string() + ".");
 
     auto archive = Archive {};
-    auto in = boost::archive::text_iarchive(file);
+    auto in = boost::archive::binary_iarchive(file);
     in >> archive;
     return archive;
 }
@@ -83,7 +83,6 @@ void bind_serialization_for_kind(nb::module_& m, const char* function_prefix)
 void bind_serialization(nb::module_& m)
 {
     bind_serialization_for_kind<tyr::planning::GroundTag>(m, "ground");
-    bind_serialization_for_kind<tyr::planning::LiftedTag>(m, "lifted");
 }
 
 }  // namespace runir::datasets

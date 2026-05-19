@@ -7,7 +7,12 @@
 #include "runir/kr/gp/dl/evaluation_context.hpp"
 #include "runir/kr/gp/policy_executor.hpp"
 
+#include <tyr/planning/algorithms/brfs/event_handler.hpp>
+#include <tyr/planning/algorithms/iw.hpp>
+
 #include <algorithm>
+#include <chrono>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -17,41 +22,10 @@ namespace runir::kr::gp
 namespace detail
 {
 
-template<tyr::planning::TaskKind Kind>
-using AnnotatedStateGraphView = typename datasets::AnnotatedStateGraph<Kind>::ForwardGraphType;
-
-template<tyr::planning::TaskKind Kind>
-auto find_initial_vertex(const AnnotatedStateGraphView<Kind>& graph) -> graphs::VertexIndex
-{
-    for (auto vertex : graph.get_vertex_indices())
-        if (graph.get_vertex(vertex).get_property().is_initial)
-            return vertex;
-
-    throw std::runtime_error("Cannot execute policy on state graph without an initial state.");
-}
-
-template<tyr::planning::TaskKind Kind>
-auto is_policy_compatible_transition(PolicyView policy,
-                                     const AnnotatedStateGraphView<Kind>& graph,
-                                     graphs::EdgeIndex edge,
-                                     kr::dl::semantics::Builder& dl_builder,
-                                     kr::dl::semantics::DenotationRepository& dl_denotation_repository) -> bool
-{
-    const auto source = graph.get_source(edge);
-    const auto target = graph.get_target(edge);
-    auto context = dl::EvaluationContext(graph.get_vertex(source).get_property().state,
-                                         graph.get_vertex(target).get_property().state,
-                                         dl_builder,
-                                         dl_denotation_repository);
-
-    return policy.is_compatible_with(context);
-}
-
-template<tyr::planning::TaskKind Kind>
-class CycleVisitor : public graphs::bgl::TraversalVisitor<datasets::DynamicAnnotatedStateGraph<Kind>>
+template<typename Graph>
+class CycleVisitor : public graphs::bgl::TraversalVisitor<Graph>
 {
 private:
-    using Graph = datasets::DynamicAnnotatedStateGraph<Kind>;
 
     const Graph& m_graph;
     tyr::UnorderedMap<graphs::VertexIndex, graphs::VertexIndex> m_parent;
@@ -80,10 +54,10 @@ public:
     auto get_cycle() const -> const graphs::VertexIndexList& { return m_cycle; }
 };
 
-template<tyr::planning::TaskKind Kind>
-auto find_cycle(const datasets::DynamicAnnotatedStateGraph<Kind>& graph) -> graphs::VertexIndexList
+template<typename Graph>
+auto find_cycle(const Graph& graph) -> graphs::VertexIndexList
 {
-    auto visitor = CycleVisitor<Kind>(graph);
+    auto visitor = CycleVisitor<Graph>(graph);
     auto sources = graphs::VertexIndexList {};
     sources.reserve(graph.get_num_vertices());
     for (auto vertex : graph.get_vertex_indices())
@@ -92,6 +66,26 @@ auto find_cycle(const datasets::DynamicAnnotatedStateGraph<Kind>& graph) -> grap
     graphs::algorithms::depth_first_visit(graph, sources, visitor);
     return visitor.get_cycle();
 }
+
+template<tyr::planning::TaskKind Kind>
+class NeverGoalStrategy : public tyr::planning::GoalStrategy<Kind>
+{
+public:
+    bool is_static_goal_satisfied(const tyr::planning::Task<Kind>& task) override
+    {
+        static_cast<void>(task);
+        return true;
+    }
+
+    bool is_dynamic_goal_satisfied(const tyr::planning::StateView<Kind>& seed_state, const tyr::planning::StateView<Kind>& state) override
+    {
+        static_cast<void>(seed_state);
+        static_cast<void>(state);
+        return false;
+    }
+};
+
+
 
 }  // namespace detail
 
@@ -129,40 +123,164 @@ public:
     }
 };
 
-template<tyr::planning::TaskKind Kind>
-auto prove_solution(const datasets::AnnotatedStateGraph<Kind>& graph, PolicyView policy) -> PolicyProofResults<Kind>
+namespace detail
 {
-    const auto& forward_graph = graph.get_forward_graph();
-    const auto initial_vertex = detail::find_initial_vertex<Kind>(forward_graph);
 
-    auto result = PolicyProofResults<Kind> {};
-    auto original_to_execution_vertex = tyr::UnorderedMap<graphs::VertexIndex, graphs::VertexIndex> {};
-    auto execution_to_original_vertex = graphs::VertexIndexList {};
+template<tyr::planning::TaskKind Kind, typename GetOrCreateVertex>
+class PolicyProofEventHandler : public tyr::planning::brfs::EventHandler<Kind>
+{
+private:
+    graphs::VertexIndex m_source;
+    tyr::planning::Node<Kind> m_source_node;
+    PolicyGoalStrategy<Kind>& m_policy_goal_strategy;
+    datasets::AnnotatedStateGraphBuilder<Kind>& m_builder;
+    tyr::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>& m_policy_edges;
+    graphs::VertexIndexList& m_open;
+    const tyr::UnorderedSet<graphs::VertexIndex>& m_explored;
+    GetOrCreateVertex& m_get_or_create_vertex;
+    tyr::planning::Statistics m_statistics;
+    bool m_found_compatible_transition = false;
 
-    auto get_or_create_execution_vertex = [&](graphs::VertexIndex vertex)
+public:
+    PolicyProofEventHandler(graphs::VertexIndex source,
+                            tyr::planning::Node<Kind> source_node,
+                            PolicyGoalStrategy<Kind>& policy_goal_strategy,
+                            datasets::AnnotatedStateGraphBuilder<Kind>& builder,
+                            tyr::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>& policy_edges,
+                            graphs::VertexIndexList& open,
+                            const tyr::UnorderedSet<graphs::VertexIndex>& explored,
+                            GetOrCreateVertex& get_or_create_vertex) :
+        m_source(source),
+        m_source_node(std::move(source_node)),
+        m_policy_goal_strategy(policy_goal_strategy),
+        m_builder(builder),
+        m_policy_edges(policy_edges),
+        m_open(open),
+        m_explored(explored),
+        m_get_or_create_vertex(get_or_create_vertex),
+        m_statistics()
     {
-        const auto it = original_to_execution_vertex.find(vertex);
-        if (it != original_to_execution_vertex.end())
-            return it->second;
+    }
 
-        const auto execution_vertex = result.graph.add_vertex(forward_graph.get_vertex(vertex).get_property());
-        original_to_execution_vertex.emplace(vertex, execution_vertex);
+    bool found_compatible_transition() const noexcept { return m_found_compatible_transition; }
 
-        if (execution_to_original_vertex.size() <= execution_vertex)
-            execution_to_original_vertex.resize(execution_vertex + 1);
-        execution_to_original_vertex[execution_vertex] = vertex;
+    void on_expand_node(const tyr::planning::Node<Kind>& node) override
+    {
+        static_cast<void>(node);
+        m_statistics.increment_num_expanded();
+    }
 
-        return execution_vertex;
+    void on_expand_goal_node(const tyr::planning::Node<Kind>& node) override { static_cast<void>(node); }
+
+    void on_generate_node(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
+    {
+        static_cast<void>(source_node);
+        m_statistics.increment_num_generated();
+
+        if (!m_policy_goal_strategy.is_dynamic_goal_satisfied(m_source_node.get_state(), labeled_succ_node.node.get_state()))
+            return;
+
+        m_found_compatible_transition = true;
+
+        const auto target = m_get_or_create_vertex(labeled_succ_node.node);
+        if (m_policy_edges.insert({ m_source, target }).second)
+            m_builder.add_directed_edge(m_source, target, datasets::StateGraphEdgeLabel { labeled_succ_node.label, labeled_succ_node.node.get_metric() });
+
+        if (!m_explored.contains(target))
+            m_open.push_back(target);
+    }
+
+    void on_prune_node(const tyr::planning::Node<Kind>& node) override
+    {
+        static_cast<void>(node);
+        m_statistics.increment_num_pruned();
+    }
+
+    void on_prune_node(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
+    {
+        static_cast<void>(source_node);
+        static_cast<void>(labeled_succ_node);
+        m_statistics.increment_num_pruned();
+    }
+
+    void on_start_search(const tyr::planning::Node<Kind>& node) override
+    {
+        static_cast<void>(node);
+        m_statistics = tyr::planning::Statistics();
+        m_statistics.set_search_start_time_point(std::chrono::high_resolution_clock::now());
+    }
+
+    void on_finish_layer(uint_t layer) override { static_cast<void>(layer); }
+
+    void on_end_search(tyr::planning::SearchStatus status) override
+    {
+        static_cast<void>(status);
+        m_statistics.set_search_end_time_point(std::chrono::high_resolution_clock::now());
+    }
+
+    void on_solved(const tyr::planning::Plan<Kind>& plan) override { static_cast<void>(plan); }
+
+    const tyr::planning::Statistics& get_search_statistics() const override { return m_statistics; }
+    const tyr::planning::Statistics& get_statistics() const override { return m_statistics; }
+};
+
+}  // namespace detail
+
+template<tyr::planning::TaskKind Kind>
+auto prove_solution(const datasets::TaskSearchContext<Kind>& context, PolicyView policy, const PolicySearchOptions<Kind>& options) -> PolicyProofResults<Kind>
+{
+    auto result = PolicyProofResults<Kind> {};
+    auto builder = datasets::AnnotatedStateGraphBuilder<Kind> {};
+    auto state_to_vertex = tyr::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
+    auto vertex_to_node = tyr::UnorderedMap<graphs::VertexIndex, tyr::planning::Node<Kind>> {};
+    auto policy_edges = tyr::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>> {};
+    auto task_goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
+    auto policy_goal_strategy = PolicyGoalStrategy<Kind>(policy);
+    const auto static_goal_satisfied = task_goal_strategy.is_static_goal_satisfied(*context.task);
+    const auto initial_node = context.successor_generator->get_initial_node();
+    const auto initial_state = initial_node.get_state();
+
+    auto is_task_goal = [&](const tyr::planning::StateView<Kind>& state)
+    {
+        return static_goal_satisfied && task_goal_strategy.is_dynamic_goal_satisfied(initial_state, state);
     };
 
-    auto dl_builder = kr::dl::semantics::Builder();
-    auto dl_denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
-    auto dl_denotation_repository = dl_denotation_repository_factory.create();
+    auto make_label = [&](const tyr::planning::StateView<Kind>& state)
+    {
+        const auto goal = is_task_goal(state);
+        return datasets::AnnotatedStateGraphVertexLabel<Kind> { state,
+                                                                goal ? tyr::float_t(0) : std::numeric_limits<tyr::float_t>::infinity(),
+                                                                tyr::EqualTo<tyr::planning::StateView<Kind>> {}(state, initial_state),
+                                                                goal,
+                                                                true,
+                                                                false };
+    };
+
+    auto get_or_create_vertex = [&](const tyr::planning::Node<Kind>& node)
+    {
+        const auto state = node.get_state();
+        if (const auto it = state_to_vertex.find(state); it != state_to_vertex.end())
+            return it->second;
+
+        const auto vertex = builder.add_vertex(make_label(state));
+        state_to_vertex.emplace(state, vertex);
+        vertex_to_node.emplace(vertex, node);
+
+        return vertex;
+    };
+
+
     auto open = graphs::VertexIndexList {};
     auto explored = tyr::UnorderedSet<graphs::VertexIndex> {};
 
-    open.push_back(initial_vertex);
-    get_or_create_execution_vertex(initial_vertex);
+    auto finish = [&](PolicyProofStatus status)
+    {
+        result.status = status;
+        result.graph = datasets::StaticAnnotatedStateGraph<Kind>(std::move(builder));
+        return std::move(result);
+    };
+
+    open.push_back(get_or_create_vertex(initial_node));
 
     while (!open.empty())
     {
@@ -172,43 +290,58 @@ auto prove_solution(const datasets::AnnotatedStateGraph<Kind>& graph, PolicyView
         if (!explored.insert(source).second)
             continue;
 
-        auto has_compatible_transition = false;
-        for (auto edge : forward_graph.get_out_edge_indices(source))
+        const auto source_node = vertex_to_node.at(source);
+        const auto& source_label = builder.get_vertex(source).get_property();
+        if (source_label.is_goal)
+            continue;
+
+        auto brfs_solver = tyr::planning::brfs::Solver<Kind> { context.task, context.successor_generator, options.brfs_options };
+        auto iw_options = options.iw_options;
+        auto event_handler = std::make_shared<detail::PolicyProofEventHandler<Kind, decltype(get_or_create_vertex)>>(source,
+                                                                                                                     source_node,
+                                                                                                                     policy_goal_strategy,
+                                                                                                                     builder,
+                                                                                                                     policy_edges,
+                                                                                                                     open,
+                                                                                                                     explored,
+                                                                                                                     get_or_create_vertex);
+        brfs_solver.options.event_handler = event_handler;
+        iw_options.start_node = source_node;
+        iw_options.goal_strategy = std::make_shared<detail::NeverGoalStrategy<Kind>>();
+
+        const auto search_result = tyr::planning::iw::find_solution(brfs_solver, options.max_arity, iw_options);
+        switch (search_result.status)
         {
-            if (!detail::is_policy_compatible_transition<Kind>(policy, forward_graph, edge, dl_builder, dl_denotation_repository))
-                continue;
-
-            has_compatible_transition = true;
-
-            const auto target = forward_graph.get_target(edge);
-            const auto execution_source = get_or_create_execution_vertex(source);
-            const auto execution_target = get_or_create_execution_vertex(target);
-            result.graph.add_directed_edge(execution_source, execution_target, forward_graph.get_edge(edge).get_property());
-
-            const auto& source_label = forward_graph.get_vertex(source).get_property();
-            const auto& target_label = forward_graph.get_vertex(target).get_property();
-            if (source_label.is_alive && target_label.is_unsolvable)
-            {
-                result.deadend_transitions.push_back(edge);
-                continue;
-            }
-
-            if (!explored.contains(target))
-                open.push_back(target);
+            case tyr::planning::SearchStatus::EXHAUSTED:
+                break;
+            case tyr::planning::SearchStatus::OUT_OF_TIME:
+                return finish(PolicyProofStatus::OUT_OF_TIME);
+            case tyr::planning::SearchStatus::OUT_OF_STATES:
+            case tyr::planning::SearchStatus::OUT_OF_MEMORY:
+                return finish(PolicyProofStatus::OUT_OF_STATES);
+            case tyr::planning::SearchStatus::FAILED:
+            case tyr::planning::SearchStatus::UNSOLVABLE:
+            case tyr::planning::SearchStatus::IN_PROGRESS:
+            case tyr::planning::SearchStatus::SOLVED:
+                return finish(PolicyProofStatus::FAILURE);
         }
 
-        const auto& label = forward_graph.get_vertex(source).get_property();
-        if (!has_compatible_transition && label.is_alive && !label.is_goal)
+        if (!event_handler->found_compatible_transition())
             result.open_states.push_back(source);
     }
 
-    for (auto vertex : detail::find_cycle(result.graph))
-        result.cycle.push_back(execution_to_original_vertex.at(vertex));
+    auto graph = datasets::StaticAnnotatedStateGraph<Kind>(std::move(builder));
+    result.cycle = detail::find_cycle(graph);
+    result.graph = std::move(graph);
 
-    if (!result.deadend_transitions.empty() || !result.open_states.empty() || !result.cycle.empty())
+    if (!result.open_states.empty() || !result.cycle.empty())
+    {
         result.status = PolicyProofStatus::FAILURE;
+        return std::move(result);
+    }
 
-    return result;
+    result.status = PolicyProofStatus::SUCCESS;
+    return std::move(result);
 }
 
 template<tyr::planning::TaskKind Kind>

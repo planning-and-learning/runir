@@ -2,9 +2,6 @@ from pathlib import Path
 
 from pyrunir.datasets import (
     GroundTaskSearchContext,
-    StateGraphCostMode,
-    annotate_ground_state_graph,
-    generate_ground_state_graph,
 )
 from pyrunir.kr.dl.semantics import (
     Builder,
@@ -48,9 +45,6 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
     ground_task = lifted_task.instantiate_ground_task(execution_context, GroundTaskInstantiationOptions()).task
     search_context = GroundTaskSearchContext(ground_task, execution_context)
 
-    state_graph = generate_ground_state_graph(search_context)
-    annotated_state_graph = annotate_ground_state_graph(search_context, state_graph, StateGraphCostMode.UNIT_COST)
-
     dl_repository = ConstructorRepositoryFactory().create(planning_domain)
     policy_repository = PolicyRepositoryFactory().create(dl_repository)
     empty_policy = PolicyFactory.create_empty(policy_repository)
@@ -68,14 +62,14 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
     assert str(reparsed_policy) == policy_description
     assert syntactic_complexity(policy) == 16
 
-    graph = state_graph.get_forward_graph()
-    edge = next(iter(graph.get_edge_indices()))
-    source_label = graph.get_vertex_property(graph.get_source(edge))
-    target_label = graph.get_vertex_property(graph.get_target(edge))
+    initial_node = search_context.successor_generator.get_initial_node()
+    labeled_successor = search_context.successor_generator.get_labeled_successor_nodes(initial_node)[0]
+    source_state = initial_node.get_state()
+    target_state = labeled_successor.node.get_state()
     dl_builder = Builder()
     dl_denotation_repository = DenotationRepositoryFactory().create()
-    evaluation_context = GroundEvaluationContext(source_label.state, target_label.state, dl_builder, dl_denotation_repository)
-    dl_evaluation_context = GroundDLEvaluationContext(source_label.state, dl_builder, dl_denotation_repository)
+    evaluation_context = GroundEvaluationContext(source_state, target_state, dl_builder, dl_denotation_repository)
+    dl_evaluation_context = GroundDLEvaluationContext(source_state, dl_builder, dl_denotation_repository)
     assert LiftedEvaluationContext is not None
     assert LiftedDLEvaluationContext is not None
 
@@ -109,7 +103,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
         assert str(view)
         assert isinstance(hash(view), int)
 
-    proof_result = prove_ground_solution(annotated_state_graph, policy)
+    proof_result = prove_ground_solution(search_context, policy)
     assert proof_result.status == PolicyProofStatus.SUCCESS
     assert proof_result.is_successful()
     assert proof_result.deadend_transitions == []

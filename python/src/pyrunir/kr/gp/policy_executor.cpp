@@ -45,15 +45,28 @@ void bind_policy_search_options(nb::module_& m, const char* name)
 
 void bind_policy_executor(nb::module_& m)
 {
-    nb::enum_<PolicyProofStatus>(m, "PolicyProofStatus").value("SUCCESS", PolicyProofStatus::SUCCESS).value("FAILURE", PolicyProofStatus::FAILURE);
+    nb::enum_<PolicyProofStatus>(m, "PolicyProofStatus").value("SUCCESS", PolicyProofStatus::SUCCESS)
+        .value("FAILURE", PolicyProofStatus::FAILURE)
+        .value("OUT_OF_TIME", PolicyProofStatus::OUT_OF_TIME)
+        .value("OUT_OF_STATES", PolicyProofStatus::OUT_OF_STATES);
 
     bind_policy_proof_results<tyr::planning::GroundTag>(m, "GroundPolicyProofResults");
     bind_policy_proof_results<tyr::planning::LiftedTag>(m, "LiftedPolicyProofResults");
     bind_policy_search_options<tyr::planning::GroundTag>(m, "GroundPolicySearchOptions");
     bind_policy_search_options<tyr::planning::LiftedTag>(m, "LiftedPolicySearchOptions");
 
-    m.def("prove_ground_solution", &prove_solution<tyr::planning::GroundTag>, "graph"_a, "policy"_a);
-    m.def("prove_lifted_solution", &prove_solution<tyr::planning::LiftedTag>, "graph"_a, "policy"_a);
+    m.def("prove_ground_solution",
+          &prove_solution<tyr::planning::GroundTag>,
+          nb::call_guard<nb::gil_scoped_release>(),
+          "context"_a,
+          "policy"_a,
+          "options"_a = PolicySearchOptions<tyr::planning::GroundTag>());
+    m.def("prove_lifted_solution",
+          &prove_solution<tyr::planning::LiftedTag>,
+          nb::call_guard<nb::gil_scoped_release>(),
+          "context"_a,
+          "policy"_a,
+          "options"_a = PolicySearchOptions<tyr::planning::LiftedTag>());
     m.def("find_ground_solution",
           &find_solution<tyr::planning::GroundTag>,
           nb::call_guard<nb::gil_scoped_release>(),

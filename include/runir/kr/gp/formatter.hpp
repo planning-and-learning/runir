@@ -217,6 +217,10 @@ inline std::string policy_proof_status(runir::kr::gp::PolicyProofStatus status)
             return "success";
         case runir::kr::gp::PolicyProofStatus::FAILURE:
             return "failure";
+        case runir::kr::gp::PolicyProofStatus::OUT_OF_TIME:
+            return "out_of_time";
+        case runir::kr::gp::PolicyProofStatus::OUT_OF_STATES:
+            return "out_of_states";
     }
     return "unknown";
 }

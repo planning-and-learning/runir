@@ -59,13 +59,10 @@ TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesExecuteOnExampleTasks)
         auto lifted_task = p::Task<p::LiftedTag>(planning_task);
         auto task = lifted_task.instantiate_ground_task(*execution_context).task;
         auto context = datasets::TaskSearchContext<p::GroundTag>(task, execution_context);
-        const auto state_graph = datasets::generate_state_graph(context);
-        const auto annotated_state_graph = datasets::annotate_state_graph(context, *state_graph, datasets::StateGraphCostMode::UNIT_COST);
-
         auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
         auto repository = repository_factory.create(dl_repository);
         const auto policy = kr::gp::dl::PolicyFactory::create(test_case.specification, task->get_domain().get_domain(), repository);
-        const auto result = kr::gp::prove_solution(*annotated_state_graph, policy);
+        const auto result = kr::gp::prove_solution(context, policy);
 
         EXPECT_TRUE(result.is_successful()) << test_case.domain;
         EXPECT_TRUE(result.deadend_transitions.empty()) << test_case.domain;
