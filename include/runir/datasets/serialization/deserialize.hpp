@@ -27,6 +27,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <tyr/common/declarations.hpp>
 #include <tyr/common/types.hpp>
 #include <tyr/formalism/binding_data.hpp>
@@ -49,22 +50,40 @@ auto lookup_required(const Lookup& lookup, const Key& key, const std::string& wh
     return it->second;
 }
 
-template<tyr::planning::TaskKind Kind>
-auto get_object(const TaskSearchContext<Kind>& context, const std::string& name) -> tyr::Index<tyr::formalism::Object>
+struct ActionSymbolView
 {
+    tyr::uint_t action_index = 0;
+    std::string_view action;
+
+    auto identifying_members() const noexcept { return std::tie(action_index, action); }
+};
+
+struct DeserializationLookups
+{
+    tyr::UnorderedMap<std::string_view, tyr::Index<tyr::formalism::Object>> objects_by_name;
+    tyr::UnorderedMap<ActionSymbolView, tyr::Index<tyr::formalism::planning::Action>> actions_by_symbol;
+};
+
+template<tyr::planning::TaskKind Kind>
+auto make_deserialization_lookups(const TaskSearchContext<Kind>& context) -> DeserializationLookups
+{
+    auto result = DeserializationLookups {};
+
     for (auto object : context.task->get_task().get_objects())
-    {
-        if (object.get_name() == name)
-            return object.get_index();
-    }
+        result.objects_by_name.try_emplace(object.get_name(), object.get_index());
 
     for (auto object : context.task->get_domain().get_domain().get_constants())
-    {
-        if (object.get_name() == name)
-            return object.get_index();
-    }
+        result.objects_by_name.try_emplace(object.get_name(), object.get_index());
 
-    throw std::runtime_error("Could not deserialize object: " + name + ".");
+    for (auto action : context.task->get_domain().get_domain().get_actions())
+        result.actions_by_symbol.try_emplace(ActionSymbolView { tyr::uint_t(action.get_index()), action.get_name() }, action.get_index());
+
+    return result;
+}
+
+inline auto get_object(const DeserializationLookups& lookups, const std::string& name) -> tyr::Index<tyr::formalism::Object>
+{
+    return lookup_required(lookups.objects_by_name, std::string_view(name), "object " + name);
 }
 
 template<tyr::formalism::FactKind T>
@@ -111,28 +130,20 @@ auto make_fdr_fact_lookup(const TaskSearchContext<Kind>& context)
 }
 
 template<tyr::planning::TaskKind Kind>
-auto deserialize_action_binding(TaskSearchContext<Kind>& context, const GroundActionArchive& archive) -> tyr::formalism::planning::ActionBindingView
+auto deserialize_action_binding(TaskSearchContext<Kind>& context,
+                                const DeserializationLookups& lookups,
+                                const GroundActionArchive& archive) -> tyr::formalism::planning::ActionBindingView
 {
     namespace fp = tyr::formalism::planning;
 
-    auto action = tyr::Index<fp::Action> {};
-    auto found_action = false;
-    for (auto candidate : context.task->get_domain().get_domain().get_actions())
-    {
-        if (tyr::uint_t(candidate.get_index()) == archive.action_index && candidate.get_name() == archive.action)
-        {
-            action = candidate.get_index();
-            found_action = true;
-            break;
-        }
-    }
-    if (!found_action)
-        throw std::runtime_error("Could not deserialize action " + archive.action + "/" + std::to_string(archive.action_index) + ".");
+    const auto action = lookup_required(lookups.actions_by_symbol,
+                                        ActionSymbolView { archive.action_index, std::string_view(archive.action) },
+                                        "action " + archive.action + "/" + std::to_string(archive.action_index));
 
     auto objects = tyr::IndexList<tyr::formalism::Object> {};
     objects.reserve(archive.objects.size());
     for (const auto& object : archive.objects)
-        objects.push_back(get_object(context, object));
+        objects.push_back(get_object(lookups, object));
 
     const auto binding = tyr::Data<tyr::formalism::RelationBinding<fp::Action>>(action, objects.size(), std::move(objects));
     return context.task->get_repository()->get_or_create(binding).first;
@@ -155,11 +166,13 @@ auto make_ground_action_lookup(TaskSearchContext<Kind>& context, const SymbolTab
     }
     else
     {
+        const auto lookups = make_deserialization_lookups(context);
+
         for (const auto& symbol : symbols.symbols)
         {
             try
             {
-                const auto binding = deserialize_action_binding(context, symbol);
+                const auto binding = deserialize_action_binding(context, lookups, symbol);
                 result.push_back(context.successor_generator->get_ground_action(binding));
             }
             catch (const std::exception& error)
