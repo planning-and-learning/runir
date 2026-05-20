@@ -19,7 +19,6 @@ nanobind_add_module(_pyrunir
     pyrunir/datasets/config.cpp
     pyrunir/datasets/equivalence_graph.cpp
     pyrunir/datasets/module.cpp
-    pyrunir/datasets/serialization.cpp
     pyrunir/datasets/state_graph.cpp
     pyrunir/datasets/task_class.cpp
     pyrunir/graphs/module.cpp

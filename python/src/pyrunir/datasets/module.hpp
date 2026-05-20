@@ -13,7 +13,6 @@ void bind_config(nb::module_& m);
 void bind_task_class(nb::module_& m);
 void bind_state_graph(nb::module_& m);
 void bind_equivalence_graph(nb::module_& m);
-void bind_serialization(nb::module_& m);
 
 }  // namespace runir::datasets
 
