@@ -69,6 +69,9 @@ std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::Numerical<T
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return 1 + view.get_arg().apply([](auto child) { return syntactic_complexity(child); });
+    else if constexpr (std::same_as<Tag, runir::kr::dl::SumPairDistanceTag>)
+        return 1 + syntactic_complexity(view.get_objects()) + syntactic_complexity(view.get_start_role()) + syntactic_complexity(view.get_traverse_role())
+               + syntactic_complexity(view.get_target_role());
     else
         return 1 + syntactic_complexity(view.get_lhs()) + syntactic_complexity(view.get_mid()) + syntactic_complexity(view.get_rhs());
 }

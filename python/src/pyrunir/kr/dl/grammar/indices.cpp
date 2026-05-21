@@ -57,6 +57,7 @@ void bind_grammar_indices(nb::module_& m)
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Boolean<NonemptyTag>>>(m, "BooleanNonemptyIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Numerical<CountTag>>>(m, "NumericalCountIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Numerical<DistanceTag>>>(m, "NumericalDistanceIndex");
+    tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Numerical<SumPairDistanceTag>>>(m, "NumericalSumPairDistanceIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Constructor<ConceptTag>>>(m, "ConceptIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Constructor<RoleTag>>>(m, "RoleIndex");
     tyr::bind_index<tyr::Index<runir::kr::dl::grammar::Constructor<BooleanTag>>>(m, "BooleanIndex");

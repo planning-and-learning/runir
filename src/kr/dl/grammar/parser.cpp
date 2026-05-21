@@ -408,6 +408,15 @@ auto parse(const ast::NumericalDistance& node, tyr::formalism::planning::DomainV
     return intern_constructor<NumericalTag>(repository, intern(repository, data).get_index());
 }
 
+auto parse(const ast::NumericalSumPairDistance& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+{
+    tyr::Data<Numerical<SumPairDistanceTag>> data(parse(node.objects, domain, repository).get_index(),
+                                                  parse(node.start_role, domain, repository).get_index(),
+                                                  parse(node.traverse_role, domain, repository).get_index(),
+                                                  parse(node.target_role, domain, repository).get_index());
+    return intern_constructor<NumericalTag>(repository, intern(repository, data).get_index());
+}
+
 template<runir::kr::dl::CategoryTag Category>
 auto parse(const ast::Constructor<Category>& node, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
 {

@@ -457,6 +457,16 @@ public:
         return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
     }
 
+    auto translate_concrete_constructor(runir::kr::dl::grammar::NumericalView<runir::kr::dl::SumPairDistanceTag> source)
+        requires std::same_as<Category, runir::kr::dl::NumericalTag>
+    {
+        tyr::Data<Numerical<runir::kr::dl::SumPairDistanceTag>> data(translate_child<runir::kr::dl::ConceptTag>(source.get_objects()).get_index(),
+                                                                     translate_child<runir::kr::dl::RoleTag>(source.get_start_role()).get_index(),
+                                                                     translate_child<runir::kr::dl::RoleTag>(source.get_traverse_role()).get_index(),
+                                                                     translate_child<runir::kr::dl::RoleTag>(source.get_target_role()).get_index());
+        return intern_constructor<Category>(repository(), intern(repository(), data).get_index());
+    }
+
     template<runir::kr::dl::CategoryTag ChildCategory>
     auto translate_child(runir::kr::dl::grammar::ConstructorOrNonTerminalView<ChildCategory> source)
     {

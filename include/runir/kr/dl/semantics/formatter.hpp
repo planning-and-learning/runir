@@ -162,6 +162,12 @@ std::string numerical(tyr::View<tyr::Index<runir::kr::dl::Numerical<Tag>>, C> vi
         return fmt::format("@{} {}", runir::kr::dl::grammar::ast::NumericalCount::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
         return fmt::format("@{} {} {} {}", runir::kr::dl::grammar::ast::NumericalDistance::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::SumPairDistanceTag>)
+        return fmt::format("@n_sum_pair_distance {} {} {} {}",
+                           view.get_objects(),
+                           view.get_start_role(),
+                           view.get_traverse_role(),
+                           view.get_target_role());
 }
 
 }  // namespace runir::kr::dl::semantics::format

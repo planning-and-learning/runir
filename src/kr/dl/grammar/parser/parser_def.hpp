@@ -84,6 +84,7 @@ numerical_type const numerical = "numerical";
 numerical_root_type const numerical_root = "numerical_root";
 numerical_count_type const numerical_count = "numerical_count";
 numerical_distance_type const numerical_distance = "numerical_distance";
+numerical_sum_pair_distance_type const numerical_sum_pair_distance = "numerical_sum_pair_distance";
 numerical_non_terminal_type const numerical_non_terminal = "numerical_non_terminal";
 numerical_choice_type const numerical_choice = "numerical_choice";
 numerical_derivation_rule_type const numerical_derivation_rule = "numerical_derivation_rule";
@@ -191,10 +192,12 @@ const auto boolean_choice_def = boolean_non_terminal | boolean;
 const auto boolean_derivation_rule_def = (lit("(") >> boolean_non_terminal)
                                          > ((lit("(") > (boolean_choice % lit("or")) > lit(")")) | x3::repeat(1)[boolean_choice]) > lit(")");
 
-const auto numerical_def = numerical_count | numerical_distance;
+const auto numerical_def = numerical_count | numerical_sum_pair_distance | numerical_distance;
 const auto numerical_root_def = numerical > eoi;
 const auto numerical_count_def = with_constructor_parentheses(lit(ast::NumericalCount::keyword) > constructor_or_non_terminal_variant);
 const auto numerical_distance_def = with_constructor_parentheses(lit(ast::NumericalDistance::keyword) > concept_choice > role_choice > concept_choice);
+const auto numerical_sum_pair_distance_def = with_constructor_parentheses(
+    lit(ast::NumericalSumPairDistance::keyword) > concept_choice > role_choice > role_choice > role_choice);
 const auto numerical_non_terminal_def = numerical_non_terminal_string_parser();
 const auto numerical_choice_def = numerical_non_terminal | numerical;
 const auto numerical_derivation_rule_def = (lit("(") >> numerical_non_terminal)
@@ -260,7 +263,14 @@ BOOST_SPIRIT_DEFINE(boolean,
                     boolean_choice,
                     boolean_derivation_rule)
 
-BOOST_SPIRIT_DEFINE(numerical, numerical_root, numerical_count, numerical_distance, numerical_non_terminal, numerical_choice, numerical_derivation_rule)
+BOOST_SPIRIT_DEFINE(numerical,
+                    numerical_root,
+                    numerical_count,
+                    numerical_distance,
+                    numerical_sum_pair_distance,
+                    numerical_non_terminal,
+                    numerical_choice,
+                    numerical_derivation_rule)
 
 BOOST_SPIRIT_DEFINE(derivation_rule_variant, grammar_body, grammar, grammar_root)
 
@@ -516,6 +526,10 @@ struct NumericalDistanceClass : x3::annotate_on_success
 {
 };
 
+struct NumericalSumPairDistanceClass : x3::annotate_on_success
+{
+};
+
 struct DerivationRuleVariantClass : x3::annotate_on_success
 {
 };
@@ -600,6 +614,7 @@ numerical_type const& numerical_parser() { return numerical; }
 numerical_root_type const& numerical_root_parser() { return numerical_root; }
 numerical_count_type const& numerical_count_parser() { return numerical_count; }
 numerical_distance_type const& numerical_distance_parser() { return numerical_distance; }
+numerical_sum_pair_distance_type const& numerical_sum_pair_distance_parser() { return numerical_sum_pair_distance; }
 numerical_non_terminal_type const& numerical_non_terminal_parser() { return numerical_non_terminal; }
 numerical_choice_type const& numerical_choice_parser() { return numerical_choice; }
 numerical_derivation_rule_type const& numerical_derivation_rule_parser() { return numerical_derivation_rule; }

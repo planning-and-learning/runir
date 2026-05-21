@@ -50,6 +50,7 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::BooleanNonempty, arg)
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::NumericalCount, arg)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::NumericalDistance, lhs, mid, rhs)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::NumericalSumPairDistance, objects, start_role, traverse_role, target_role)
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::Grammar, rules)
 

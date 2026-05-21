@@ -69,6 +69,7 @@ void bind_semantics_indices(nb::module_& m)
 
     tyr::bind_index<tyr::Index<Numerical<CountTag>>>(m, "NumericalCountIndex");
     tyr::bind_index<tyr::Index<Numerical<DistanceTag>>>(m, "NumericalDistanceIndex");
+    tyr::bind_index<tyr::Index<Numerical<SumPairDistanceTag>>>(m, "NumericalSumPairDistanceIndex");
 
     tyr::bind_index<tyr::Index<Constructor<ConceptTag>>>(m, "ConceptIndex");
     tyr::bind_index<tyr::Index<Constructor<RoleTag>>>(m, "RoleIndex");

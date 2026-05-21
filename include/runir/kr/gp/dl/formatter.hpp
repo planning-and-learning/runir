@@ -177,6 +177,13 @@ std::string numerical(tyr::View<tyr::Index<runir::kr::dl::Numerical<Tag>>, C> vi
                            constructor(view.get_lhs()),
                            constructor(view.get_mid()),
                            constructor(view.get_rhs()));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::SumPairDistanceTag>)
+        return fmt::format("{} {} {} {} {}",
+                           runir::kr::dl::grammar::ast::NumericalSumPairDistance::keyword,
+                           constructor(view.get_objects()),
+                           constructor(view.get_start_role()),
+                           constructor(view.get_traverse_role()),
+                           constructor(view.get_target_role()));
 }
 
 template<runir::kr::dl::ConceptConstructorTag Tag, typename C>

@@ -184,6 +184,10 @@ struct DistanceTag
 {
 };
 
+struct SumPairDistanceTag
+{
+};
+
 template<typename T>
 struct IsAtomicStateTag : std::false_type
 {
@@ -229,7 +233,7 @@ template<typename T>
 concept BooleanConstructorTag = is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, NonemptyTag>;
 
 template<typename T>
-concept NumericalConstructorTag = std::same_as<T, CountTag> || std::same_as<T, DistanceTag>;
+concept NumericalConstructorTag = std::same_as<T, CountTag> || std::same_as<T, DistanceTag> || std::same_as<T, SumPairDistanceTag>;
 
 using ConceptConstructorTags = tyr::TypeList<BotTag,
                                              TopTag,
@@ -281,7 +285,7 @@ using BooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::Stat
                                              AtomicGoalTag<tyr::formalism::DerivedTag>,
                                              NonemptyTag>;
 
-using NumericalConstructorTags = tyr::TypeList<CountTag, DistanceTag>;
+using NumericalConstructorTags = tyr::TypeList<CountTag, DistanceTag, SumPairDistanceTag>;
 
 }
 

@@ -51,6 +51,30 @@ public:
         return make_view(get_data().rhs, *m_context);
     }
 
+    auto get_objects() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::SumPairDistanceTag>
+    {
+        return make_view(get_data().arg0, *m_context);
+    }
+
+    auto get_start_role() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::SumPairDistanceTag>
+    {
+        return make_view(get_data().arg1, *m_context);
+    }
+
+    auto get_traverse_role() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::SumPairDistanceTag>
+    {
+        return make_view(get_data().arg2, *m_context);
+    }
+
+    auto get_target_role() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::SumPairDistanceTag>
+    {
+        return make_view(get_data().arg3, *m_context);
+    }
+
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 

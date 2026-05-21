@@ -125,6 +125,13 @@ std::string numerical(tyr::View<tyr::Index<Numerical<Tag>>, C> view)
         return fmt::format("{} {}", ast::NumericalCount::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
         return fmt::format("{} {} {} {}", ast::NumericalDistance::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::SumPairDistanceTag>)
+        return fmt::format("{} {} {} {} {}",
+                           ast::NumericalSumPairDistance::keyword,
+                           view.get_objects(),
+                           view.get_start_role(),
+                           view.get_traverse_role(),
+                           view.get_target_role());
 }
 
 template<runir::kr::dl::ConceptConstructorTag Tag, typename C>

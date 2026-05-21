@@ -46,6 +46,22 @@ struct Data<runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>> :
     using Base::Base;
 };
 
+template<>
+struct Data<runir::kr::dl::Numerical<runir::kr::dl::SumPairDistanceTag>> :
+    runir::kr::dl::semantics::QuaternaryData<runir::kr::dl::Numerical<runir::kr::dl::SumPairDistanceTag>,
+                                             runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>,
+                                             runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
+                                             runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
+                                             runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>
+{
+    using Base = runir::kr::dl::semantics::QuaternaryData<runir::kr::dl::Numerical<runir::kr::dl::SumPairDistanceTag>,
+                                                          runir::kr::dl::Constructor<runir::kr::dl::ConceptTag>,
+                                                          runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
+                                                          runir::kr::dl::Constructor<runir::kr::dl::RoleTag>,
+                                                          runir::kr::dl::Constructor<runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
 static_assert(!uses_trivial_storage_v<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>);
 
 }

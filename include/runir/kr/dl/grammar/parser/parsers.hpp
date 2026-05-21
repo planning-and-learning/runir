@@ -68,6 +68,7 @@ struct BooleanNonemptyClass;
 
 struct NumericalCountClass;
 struct NumericalDistanceClass;
+struct NumericalSumPairDistanceClass;
 
 struct GrammarBodyClass;
 struct GrammarClass;
@@ -133,6 +134,7 @@ using numerical_type = x3::rule<ConstructorClass<runir::kr::dl::NumericalTag>, a
 using numerical_root_type = x3::rule<ConstructorRootClass<runir::kr::dl::NumericalTag>, ast::Constructor<runir::kr::dl::NumericalTag>>;
 using numerical_count_type = x3::rule<NumericalCountClass, ast::NumericalCount>;
 using numerical_distance_type = x3::rule<NumericalDistanceClass, ast::NumericalDistance>;
+using numerical_sum_pair_distance_type = x3::rule<NumericalSumPairDistanceClass, ast::NumericalSumPairDistance>;
 using numerical_non_terminal_type = x3::rule<NonTerminalClass<runir::kr::dl::NumericalTag>, ast::NonTerminal<runir::kr::dl::NumericalTag>>;
 using numerical_choice_type = x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::NumericalTag>, ast::ConstructorOrNonTerminal<runir::kr::dl::NumericalTag>>;
 using numerical_derivation_rule_type = x3::rule<DerivationRuleClass<runir::kr::dl::NumericalTag>, ast::DerivationRule<runir::kr::dl::NumericalTag>>;
@@ -202,6 +204,7 @@ BOOST_SPIRIT_DECLARE(numerical_type,
                      numerical_root_type,
                      numerical_count_type,
                      numerical_distance_type,
+                     numerical_sum_pair_distance_type,
                      numerical_non_terminal_type,
                      numerical_choice_type,
                      numerical_derivation_rule_type)
@@ -268,6 +271,7 @@ numerical_type const& numerical_parser();
 numerical_root_type const& numerical_root_parser();
 numerical_count_type const& numerical_count_parser();
 numerical_distance_type const& numerical_distance_parser();
+numerical_sum_pair_distance_type const& numerical_sum_pair_distance_parser();
 numerical_non_terminal_type const& numerical_non_terminal_parser();
 numerical_choice_type const& numerical_choice_parser();
 numerical_derivation_rule_type const& numerical_derivation_rule_parser();

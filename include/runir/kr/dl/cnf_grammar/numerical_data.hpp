@@ -44,6 +44,22 @@ struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::DistanceTag>> :
     using Base::Base;
 };
 
+template<>
+struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::SumPairDistanceTag>> :
+    runir::kr::dl::cnf_grammar::QuaternaryData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::SumPairDistanceTag>,
+                                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>,
+                                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
+                                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
+                                               runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>
+{
+    using Base = runir::kr::dl::cnf_grammar::QuaternaryData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::SumPairDistanceTag>,
+                                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>,
+                                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
+                                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
+                                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
 }  // namespace tyr
 
 #endif

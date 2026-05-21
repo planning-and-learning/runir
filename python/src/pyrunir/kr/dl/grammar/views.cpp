@@ -156,6 +156,7 @@ void bind_grammar_views(nb::module_& m)
     bind_view<runir::kr::dl::grammar::Boolean<NonemptyTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "BooleanNonempty");
     bind_view<runir::kr::dl::grammar::Numerical<CountTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "NumericalCount");
     bind_view<runir::kr::dl::grammar::Numerical<DistanceTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "NumericalDistance");
+    bind_view<runir::kr::dl::grammar::Numerical<SumPairDistanceTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "NumericalSumPairDistance");
 }
 
 }  // namespace runir::kr::dl

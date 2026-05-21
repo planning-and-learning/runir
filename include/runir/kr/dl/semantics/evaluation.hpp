@@ -716,6 +716,98 @@ auto evaluate_impl(tyr::View<tyr::Index<Numerical<Tag>>, C> constructor, Evaluat
             }
         }
     }
+    else if constexpr (std::same_as<Tag, SumPairDistanceTag>)
+    {
+        // For each object o in `objects`, let s = start_role(o) and t = target_role(o).
+        // Compute the shortest distance from any vertex in s to any vertex in t via traverse_role.
+        // Sum the per-object distances (treating ∞ as a saturating sentinel) to produce the result.
+        const auto objects = evaluate_impl(constructor.get_objects(), context, workspace);
+        const auto start_role = evaluate_impl(constructor.get_start_role(), context, workspace);
+        const auto traverse_role = evaluate_impl(constructor.get_traverse_role(), context, workspace);
+        const auto target_role = evaluate_impl(constructor.get_target_role(), context, workspace);
+        const auto num_objects_ = detail::num_objects(context);
+
+        const auto objects_bitset = objects->get_bitset();
+
+        uint_t total = 0;
+        bool saturated = false;
+
+        for (auto object_index = objects_bitset.find_first(); object_index != decltype(objects_bitset)::npos;
+             object_index = objects_bitset.find_next(object_index))
+        {
+            const auto start_bitset = detail::row(start_role, object_index);
+            const auto target_bitset = detail::row(target_role, object_index);
+
+            if (!start_bitset.any() || !target_bitset.any())
+            {
+                // No start or no target for this object: contribute the saturation sentinel.
+                saturated = true;
+                continue;
+            }
+
+            uint_t per_object = std::numeric_limits<uint_t>::max();
+
+            if (start_bitset.intersects(target_bitset))
+            {
+                per_object = 0;
+            }
+            else
+            {
+                workspace.prepare_distance(num_objects_);
+                auto& queue = workspace.get_distance_queue();
+                auto& distances = workspace.get_distance_values();
+                size_t queue_pos = 0;
+
+                for (auto v = start_bitset.find_first(); v != decltype(start_bitset)::npos; v = start_bitset.find_next(v))
+                {
+                    queue.push_back(static_cast<uint_t>(v));
+                    distances[v] = 0;
+                }
+
+                while (queue_pos < queue.size())
+                {
+                    const auto source = queue[queue_pos++];
+                    const auto source_distance = distances[source];
+
+                    const auto row = detail::row(traverse_role, source);
+                    bool found = false;
+                    for (auto target = row.find_first(); target != decltype(row)::npos; target = row.find_next(target))
+                    {
+                        const auto new_distance = source_distance + 1;
+                        auto& target_distance = distances[target];
+                        if (new_distance < target_distance)
+                        {
+                            target_distance = new_distance;
+                            queue.push_back(static_cast<uint_t>(target));
+                        }
+                        if (target_bitset[target])
+                        {
+                            per_object = target_distance;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found)
+                        break;
+                }
+            }
+
+            if (per_object == std::numeric_limits<uint_t>::max())
+            {
+                saturated = true;
+            }
+            else
+            {
+                // Saturating add: if total would overflow uint_t, mark saturated and stop.
+                if (total > std::numeric_limits<uint_t>::max() - per_object)
+                    saturated = true;
+                else
+                    total += per_object;
+            }
+        }
+
+        result_value = saturated ? std::numeric_limits<uint_t>::max() : total;
+    }
 
     auto result = context.get_builder().template get_builder<Denotation<NumericalTag>>(result_value);
     return result;

@@ -53,6 +53,7 @@ struct BooleanNonempty;
 
 struct NumericalCount;
 struct NumericalDistance;
+struct NumericalSumPairDistance;
 
 struct ConstructorOrNonTerminalVariant;
 struct DerivationRuleVariant;
@@ -122,7 +123,9 @@ struct Constructor<runir::kr::dl::BooleanTag> :
 };
 
 template<>
-struct Constructor<runir::kr::dl::NumericalTag> : x3::position_tagged, x3::variant<x3::forward_ast<NumericalCount>, x3::forward_ast<NumericalDistance>>
+struct Constructor<runir::kr::dl::NumericalTag> :
+    x3::position_tagged,
+    x3::variant<x3::forward_ast<NumericalCount>, x3::forward_ast<NumericalDistance>, x3::forward_ast<NumericalSumPairDistance>>
 {
     using base_type::base_type;
     using base_type::operator=;
@@ -434,6 +437,16 @@ struct NumericalDistance : x3::position_tagged
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> lhs;
     ConstructorOrNonTerminal<runir::kr::dl::RoleTag> mid;
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> rhs;
+};
+
+struct NumericalSumPairDistance : x3::position_tagged
+{
+    static constexpr auto keyword = "n_sum_pair_distance";
+
+    ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> objects;
+    ConstructorOrNonTerminal<runir::kr::dl::RoleTag> start_role;
+    ConstructorOrNonTerminal<runir::kr::dl::RoleTag> traverse_role;
+    ConstructorOrNonTerminal<runir::kr::dl::RoleTag> target_role;
 };
 
 struct DerivationRuleVariant :

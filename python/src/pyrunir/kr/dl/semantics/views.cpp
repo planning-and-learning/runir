@@ -66,6 +66,12 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_role", &View::get_role);
     if constexpr (requires(const View& view) { view.get_concept(); })
         cls.def("get_concept", &View::get_concept);
+    if constexpr (requires(const View& view) { view.get_start_role(); })
+        cls.def("get_start_role", &View::get_start_role);
+    if constexpr (requires(const View& view) { view.get_traverse_role(); })
+        cls.def("get_traverse_role", &View::get_traverse_role);
+    if constexpr (requires(const View& view) { view.get_target_role(); })
+        cls.def("get_target_role", &View::get_target_role);
     if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::GroundTag>& context) {
                       runir::kr::dl::semantics::evaluate(view, context);
                   })
@@ -152,6 +158,7 @@ void bind_semantics_views(nb::module_& m)
 
     bind_view<Numerical<CountTag>, ConstructorRepository>(m, "NumericalCount");
     bind_view<Numerical<DistanceTag>, ConstructorRepository>(m, "NumericalDistance");
+    bind_view<Numerical<SumPairDistanceTag>, ConstructorRepository>(m, "NumericalSumPairDistance");
 
     m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<ConceptTag, ConstructorRepository>, "constructor"_a);
     m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<RoleTag, ConstructorRepository>, "constructor"_a);

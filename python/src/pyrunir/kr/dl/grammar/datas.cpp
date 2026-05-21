@@ -100,6 +100,7 @@ void bind_grammar_datas(nb::module_& m)
     bind_data<runir::kr::dl::grammar::Boolean<NonemptyTag>>(m, "BooleanNonemptyData");
     bind_data<runir::kr::dl::grammar::Numerical<CountTag>>(m, "NumericalCountData");
     bind_data<runir::kr::dl::grammar::Numerical<DistanceTag>>(m, "NumericalDistanceData");
+    bind_data<runir::kr::dl::grammar::Numerical<SumPairDistanceTag>>(m, "NumericalSumPairDistanceData");
     bind_data<runir::kr::dl::grammar::Constructor<ConceptTag>>(m, "ConceptData");
     bind_data<runir::kr::dl::grammar::Constructor<RoleTag>>(m, "RoleData");
     bind_data<runir::kr::dl::grammar::Constructor<BooleanTag>>(m, "BooleanData");

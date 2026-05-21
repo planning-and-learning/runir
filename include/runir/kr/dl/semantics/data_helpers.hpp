@@ -90,6 +90,38 @@ struct TernaryData
     auto identifying_members() const noexcept { return std::tie(lhs, mid, rhs); }
 };
 
+template<typename Self, typename A0, typename A1, typename A2, typename A3>
+struct QuaternaryData
+{
+    tyr::Index<Self> index;
+    tyr::Index<A0> arg0;
+    tyr::Index<A1> arg1;
+    tyr::Index<A2> arg2;
+    tyr::Index<A3> arg3;
+
+    QuaternaryData() = default;
+    QuaternaryData(tyr::Index<A0> a0_, tyr::Index<A1> a1_, tyr::Index<A2> a2_, tyr::Index<A3> a3_) :
+        index(),
+        arg0(std::move(a0_)),
+        arg1(std::move(a1_)),
+        arg2(std::move(a2_)),
+        arg3(std::move(a3_))
+    {
+    }
+
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(arg0);
+        tyr::clear(arg1);
+        tyr::clear(arg2);
+        tyr::clear(arg3);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, arg0, arg1, arg2, arg3); }
+    auto identifying_members() const noexcept { return std::tie(arg0, arg1, arg2, arg3); }
+};
+
 template<typename Self, tyr::formalism::FactKind T>
 struct PredicateData
 {

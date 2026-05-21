@@ -99,6 +99,7 @@ void bind_semantics_datas(nb::module_& m)
 
     bind_data<Numerical<CountTag>>(m, "NumericalCountData");
     bind_data<Numerical<DistanceTag>>(m, "NumericalDistanceData");
+    bind_data<Numerical<SumPairDistanceTag>>(m, "NumericalSumPairDistanceData");
 
     bind_data<Constructor<ConceptTag>>(m, "ConceptData");
     bind_data<Constructor<RoleTag>>(m, "RoleData");

@@ -21,6 +21,9 @@ using BinaryData = runir::kr::dl::semantics::BinaryData<Self, Lhs, Rhs>;
 template<typename Self, typename Lhs, typename Mid, typename Rhs>
 using TernaryData = runir::kr::dl::semantics::TernaryData<Self, Lhs, Mid, Rhs>;
 
+template<typename Self, typename A0, typename A1, typename A2, typename A3>
+using QuaternaryData = runir::kr::dl::semantics::QuaternaryData<Self, A0, A1, A2, A3>;
+
 template<typename Self, tyr::formalism::FactKind T>
 using PredicateData = runir::kr::dl::semantics::PredicateData<Self, T>;
 

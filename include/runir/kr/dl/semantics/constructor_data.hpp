@@ -122,7 +122,8 @@ template<>
 struct Data<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>>
 {
     using Variant =
-        ::cista::offset::variant<Index<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>, Index<runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>>>;
+        ::cista::offset::variant<Index<runir::kr::dl::Numerical<runir::kr::dl::CountTag>>, Index<runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>>,
+                                 Index<runir::kr::dl::Numerical<runir::kr::dl::SumPairDistanceTag>>>;
 
     Index<runir::kr::dl::Constructor<runir::kr::dl::NumericalTag>> index;
     Variant value;

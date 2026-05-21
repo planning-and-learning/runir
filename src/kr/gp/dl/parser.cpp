@@ -491,6 +491,18 @@ auto parse(const runir::kr::dl::grammar::ast::NumericalDistance& node,
     return intern_constructor<runir::kr::dl::NumericalTag>(repository, intern(repository, data).get_index());
 }
 
+auto parse(const runir::kr::dl::grammar::ast::NumericalSumPairDistance& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
+{
+    tyr::Data<runir::kr::dl::Numerical<runir::kr::dl::SumPairDistanceTag>> data(
+        parse_constructor_or_non_terminal(node.objects, domain, repository).get_index(),
+        parse_constructor_or_non_terminal(node.start_role, domain, repository).get_index(),
+        parse_constructor_or_non_terminal(node.traverse_role, domain, repository).get_index(),
+        parse_constructor_or_non_terminal(node.target_role, domain, repository).get_index());
+    return intern_constructor<runir::kr::dl::NumericalTag>(repository, intern(repository, data).get_index());
+}
+
 template<runir::kr::dl::CategoryTag Category>
 auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<Category>& node,
                        tyr::formalism::planning::DomainView domain,

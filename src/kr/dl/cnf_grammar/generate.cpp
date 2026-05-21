@@ -306,6 +306,46 @@ private:
         return true;
     }
 
+    template<typename F>
+    bool generate_quaternary(NonTerminalView<runir::kr::dl::NumericalTag> lhs,
+                             NonTerminalView<runir::kr::dl::ConceptTag> objects,
+                             NonTerminalView<runir::kr::dl::RoleTag> start_role,
+                             NonTerminalView<runir::kr::dl::RoleTag> traverse_role,
+                             NonTerminalView<runir::kr::dl::RoleTag> target_role,
+                             F&& make)
+    {
+        if (m_complexity < 5)
+            return true;
+
+        for (size_t i = 1; i < m_complexity - 3; ++i)
+        {
+            for (size_t j = 1; j < m_complexity - i - 2; ++j)
+            {
+                for (size_t k = 1; k < m_complexity - i - j - 1; ++k)
+                {
+                    const auto l = m_complexity - i - j - k - 1;
+                    for (auto a : m_sentences.get(objects, i))
+                    {
+                        for (auto b : m_sentences.get(start_role, j))
+                        {
+                            for (auto c : m_sentences.get(traverse_role, k))
+                            {
+                                for (auto d : m_sentences.get(target_role, l))
+                                {
+                                    maybe_keep(lhs, std::forward<F>(make)(a, b, c, d));
+                                    if (out_of_time())
+                                        return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
     template<runir::kr::dl::CategoryTag Category>
     bool generate_rule(DerivationRuleView<Category> rule)
     {
@@ -775,6 +815,20 @@ private:
                                     tyr::Data<runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>> data(child_lhs, child_mid, child_rhs);
                                     return intern_wrapped<runir::kr::dl::NumericalTag>(data);
                                 });
+    }
+
+    bool generate_constructor(NonTerminalView<runir::kr::dl::NumericalTag> lhs, NumericalView<runir::kr::dl::SumPairDistanceTag> constructor)
+    {
+        return generate_quaternary(lhs,
+                                   constructor.get_objects(),
+                                   constructor.get_start_role(),
+                                   constructor.get_traverse_role(),
+                                   constructor.get_target_role(),
+                                   [&](auto a, auto b, auto c, auto d)
+                                   {
+                                       tyr::Data<runir::kr::dl::Numerical<runir::kr::dl::SumPairDistanceTag>> data(a, b, c, d);
+                                       return intern_wrapped<runir::kr::dl::NumericalTag>(data);
+                                   });
     }
 
     template<runir::kr::dl::CategoryTag Category>

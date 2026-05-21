@@ -98,6 +98,7 @@ void bind_cnf_grammar_datas(nb::module_& m)
     bind_data<runir::kr::dl::cnf_grammar::Boolean<NonemptyTag>>(m, "BooleanNonemptyData");
     bind_data<runir::kr::dl::cnf_grammar::Numerical<CountTag>>(m, "NumericalCountData");
     bind_data<runir::kr::dl::cnf_grammar::Numerical<DistanceTag>>(m, "NumericalDistanceData");
+    bind_data<runir::kr::dl::cnf_grammar::Numerical<SumPairDistanceTag>>(m, "NumericalSumPairDistanceData");
     bind_data<runir::kr::dl::cnf_grammar::Constructor<ConceptTag>>(m, "ConceptData");
     bind_data<runir::kr::dl::cnf_grammar::Constructor<RoleTag>>(m, "RoleData");
     bind_data<runir::kr::dl::cnf_grammar::Constructor<BooleanTag>>(m, "BooleanData");
