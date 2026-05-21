@@ -38,9 +38,9 @@ and let $\gamma$ denote the set of goal literals.
 \section{Concept Constructors}
 
 \begin{compacttable}
-\begin{longtable}{>{\raggedright\arraybackslash}p{0.20\textwidth}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.26\textwidth}
                   >{\centering\arraybackslash}p{0.15\textwidth}
-                  >{\raggedright\arraybackslash}p{0.61\textwidth}}
+                  >{\raggedright\arraybackslash}p{0.55\textwidth}}
 \toprule
 Name & Syntax & Semantics \\
 \midrule
@@ -63,12 +63,12 @@ $\neg P$ &
 $\sem{\neg P} = \DeltaI \setminus \sem{P}$ \\
 
 Positive atomic goal concept &
-$G$ &
-$\sem{G} = \{ a \in \DeltaI \mid G(a) \in \gamma \}$ \\
+$G^+$ &
+$\sem{{G^+}} = \{ a \in \DeltaI \mid G(a) \in \gamma \}$ \\
 
 Negative atomic goal concept &
-$\neg G$ &
-$\sem{\neg G} = \{ a \in \DeltaI \mid \neg G(a) \in \gamma \}$ \\
+$G^-$ &
+$\sem{{G^-}} = \{ a \in \DeltaI \mid \neg G(a) \in \gamma \}$ \\
 
 Intersection &
 $C \sqcap D$ &
@@ -144,17 +144,19 @@ object names are interpreted as individual names in $\I$.
 \section{Concrete Syntax for Concept Constructors}
 
 \begin{compacttable}
-\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
-                  >{\raggedright\arraybackslash}p{0.50\textwidth}
-                  >{\raggedright\arraybackslash}p{0.22\textwidth}}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.30\textwidth}
+                  >{\raggedright\arraybackslash}p{0.46\textwidth}
+                  >{\raggedright\arraybackslash}p{0.20\textwidth}}
 \toprule
 Name & Concrete syntax & Abstract syntax \\
 \midrule
 \endhead
 Top & \texttt{c\_top} & $\top$ \\
 Bottom & \texttt{c\_bot} & $\bot$ \\
-Atomic state concept & \texttt{(c\_atomic\_state "p" polarity)} & $P$ or $\neg P$ \\
-Atomic goal concept & \texttt{(c\_atomic\_goal "p" polarity)} & $G$ or $\neg G$ \\
+Positive atomic state concept & \texttt{(c\_atomic\_state "p" true)} & $P$ \\
+Negative atomic state concept & \texttt{(c\_atomic\_state "p" false)} & $\neg P$ \\
+Positive atomic goal concept & \texttt{(c\_atomic\_goal "p" true)} & $G^+$ \\
+Negative atomic goal concept & \texttt{(c\_atomic\_goal "p" false)} & $G^-$ \\
 Intersection & \texttt{(c\_and C1 ... Cn)} & $C_1 \sqcap \cdots \sqcap C_n$ \\
 Union & \texttt{(c\_or C1 ... Cn)} & $C_1 \sqcup \cdots \sqcup C_n$ \\
 Negation & \texttt{(c\_not C)} & $\neg C$ \\
@@ -197,9 +199,9 @@ A transitive role $R$ is interpreted as a transitive binary relation:
 \section{Role Constructors}
 
 \begin{compacttable}
-\begin{longtable}{>{\raggedright\arraybackslash}p{0.20\textwidth}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.26\textwidth}
                   >{\centering\arraybackslash}p{0.15\textwidth}
-                  >{\raggedright\arraybackslash}p{0.61\textwidth}}
+                  >{\raggedright\arraybackslash}p{0.55\textwidth}}
 \toprule
 Name & Syntax & Semantics \\
 \midrule
@@ -218,12 +220,12 @@ $\neg P$ &
 $\sem{\neg P} = (\DeltaI \times \DeltaI) \setminus \sem{P}$ \\
 
 Positive atomic goal role &
-$G$ &
-$\sem{G} = \{ (a,b) \in \DeltaI \times \DeltaI \mid G(a,b) \in \gamma \}$ \\
+$G^+$ &
+$\sem{{G^+}} = \{ (a,b) \in \DeltaI \times \DeltaI \mid G(a,b) \in \gamma \}$ \\
 
 Negative atomic goal role &
-$\neg G$ &
-$\sem{\neg G} = \{ (a,b) \in \DeltaI \times \DeltaI \mid \neg G(a,b) \in \gamma \}$ \\
+$G^-$ &
+$\sem{{G^-}} = \{ (a,b) \in \DeltaI \times \DeltaI \mid \neg G(a,b) \in \gamma \}$ \\
 
 Intersection &
 $R \sqcap S$ &
@@ -275,16 +277,18 @@ The iterated composition $(\sem{R})^n$ is defined by
 \section{Concrete Syntax for Role Constructors}
 
 \begin{compacttable}
-\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
-                  >{\raggedright\arraybackslash}p{0.50\textwidth}
-                  >{\raggedright\arraybackslash}p{0.22\textwidth}}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.30\textwidth}
+                  >{\raggedright\arraybackslash}p{0.46\textwidth}
+                  >{\raggedright\arraybackslash}p{0.20\textwidth}}
 \toprule
 Name & Concrete syntax & Abstract syntax \\
 \midrule
 \endhead
 Universal role & \texttt{r\_universal} & $U$ \\
-Atomic state role & \texttt{(r\_atomic\_state "p" polarity)} & $P$ or $\neg P$ \\
-Atomic goal role & \texttt{(r\_atomic\_goal "p" polarity)} & $G$ or $\neg G$ \\
+Positive atomic state role & \texttt{(r\_atomic\_state "p" true)} & $P$ \\
+Negative atomic state role & \texttt{(r\_atomic\_state "p" false)} & $\neg P$ \\
+Positive atomic goal role & \texttt{(r\_atomic\_goal "p" true)} & $G^+$ \\
+Negative atomic goal role & \texttt{(r\_atomic\_goal "p" false)} & $G^-$ \\
 Intersection & \texttt{(r\_and R1 ... Rn)} & $R_1 \sqcap \cdots \sqcap R_n$ \\
 Union & \texttt{(r\_or R1 ... Rn)} & $R_1 \sqcup \cdots \sqcup R_n$ \\
 Complement & \texttt{(r\_complement R)} & $\neg R$ \\
@@ -301,9 +305,9 @@ Identity & \texttt{(r\_identity C)} & $\mathrm{id}(C)$ \\
 \section{Boolean Constructors}
 
 \begin{compacttable}
-\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
-                  >{\centering\arraybackslash}p{0.22\textwidth}
-                  >{\raggedright\arraybackslash}p{0.50\textwidth}}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.30\textwidth}
+                  >{\centering\arraybackslash}p{0.20\textwidth}
+                  >{\raggedright\arraybackslash}p{0.46\textwidth}}
 \toprule
 Name & Syntax & Semantics \\
 \midrule
@@ -340,15 +344,17 @@ $\mathrm{true}$ iff $\sem{R} \neq \emptyset$ \\
 \section{Concrete Syntax for Boolean Constructors}
 
 \begin{compacttable}
-\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
-                  >{\raggedright\arraybackslash}p{0.50\textwidth}
-                  >{\raggedright\arraybackslash}p{0.22\textwidth}}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.30\textwidth}
+                  >{\raggedright\arraybackslash}p{0.46\textwidth}
+                  >{\raggedright\arraybackslash}p{0.20\textwidth}}
 \toprule
 Name & Concrete syntax & Abstract syntax \\
 \midrule
 \endhead
-Atomic state predicate & \texttt{(b\_atomic\_state "p" polarity)} & $\mathrm{holds}(p)$ or $\neg\mathrm{holds}(p)$ \\
-Atomic goal predicate & \texttt{(b\_atomic\_goal "p" polarity)} & $\mathrm{goal}(p)$ or $\neg\mathrm{goal}(p)$ \\
+Positive atomic state predicate & \texttt{(b\_atomic\_state "p" true)} & $\mathrm{holds}(p)$ \\
+Negative atomic state predicate & \texttt{(b\_atomic\_state "p" false)} & $\neg\mathrm{holds}(p)$ \\
+Positive atomic goal predicate & \texttt{(b\_atomic\_goal "p" true)} & $\mathrm{goal}(p)$ \\
+Negative atomic goal predicate & \texttt{(b\_atomic\_goal "p" false)} & $\neg\mathrm{goal}(p)$ \\
 Non-empty concept & \texttt{(b\_nonempty C)} & $C \neq \emptyset$ \\
 Non-empty role & \texttt{(b\_nonempty R)} & $R \neq \emptyset$ \\
 \bottomrule
@@ -358,9 +364,9 @@ Non-empty role & \texttt{(b\_nonempty R)} & $R \neq \emptyset$ \\
 \section{Numerical Constructors}
 
 \begin{compacttable}
-\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
-                  >{\centering\arraybackslash}p{0.22\textwidth}
-                  >{\raggedright\arraybackslash}p{0.50\textwidth}}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.30\textwidth}
+                  >{\centering\arraybackslash}p{0.20\textwidth}
+                  >{\raggedright\arraybackslash}p{0.46\textwidth}}
 \toprule
 Name & Syntax & Semantics \\
 \midrule
@@ -385,9 +391,9 @@ $\min\{n \in \Nat \mid \sem{C} \times \sem{D} \cap (\sem{R})^n \neq \emptyset\}$
 \section{Concrete Syntax for Numerical Constructors}
 
 \begin{compacttable}
-\begin{longtable}{>{\raggedright\arraybackslash}p{0.24\textwidth}
-                  >{\raggedright\arraybackslash}p{0.50\textwidth}
-                  >{\raggedright\arraybackslash}p{0.22\textwidth}}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.30\textwidth}
+                  >{\raggedright\arraybackslash}p{0.46\textwidth}
+                  >{\raggedright\arraybackslash}p{0.20\textwidth}}
 \toprule
 Name & Concrete syntax & Abstract syntax \\
 \midrule
