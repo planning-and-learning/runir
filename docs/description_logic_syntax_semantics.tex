@@ -118,29 +118,28 @@ Role-value map inclusion &
 $R \subseteq S$ &
 $\sem{R \subseteq S} = \{ a \in \DeltaI \mid \forall b.\,(a,b)\in\sem{R} \Rightarrow (a,b)\in\sem{S} \}$ \\
 
-Role-value map equality &
-$R = S$ &
-$\sem{R = S} = \{ a \in \DeltaI \mid \forall b.\,(a,b)\in\sem{R} \Leftrightarrow (a,b)\in\sem{S} \}$ \\
-
 Agreement &
-$u_1 \doteq u_2$ &
-$\sem{u_1 \doteq u_2} = \{ a \in \DeltaI \mid \exists b \in \DeltaI.\,\sem{u_1}(a)=b=\sem{u_2}(a) \}$ \\
+$R \doteq S$ &
+$\sem{R \doteq S} = \{ a \in \DeltaI \mid \forall b.\,(a,b)\in\sem{R} \Leftrightarrow (a,b)\in\sem{S} \}$ \\
 
-Disagreement &
-$u_1 \not\doteq u_2$ &
-$\sem{u_1 \not\doteq u_2} = \{ a \in \DeltaI \mid \exists b_1,b_2 \in \DeltaI.\,\sem{u_1}(a)=b_1 \neq b_2 =\sem{u_2}(a) \}$ \\
+Role fillers &
+$R:\{a_1,\ldots,a_k\}$ &
+$\sem{R:\{a_1,\ldots,a_k\}} = \{ a \in \DeltaI \mid \{a_1^{\I},\ldots,a_k^{\I}\} \subseteq \{ b \in \DeltaI \mid (a,b)\in\sem{R} \} \}$ \\
+
+One-of &
+$\{a_1,\ldots,a_k\}$ &
+$\sem{\{a_1,\ldots,a_k\}} = \{a_1^{\I},\ldots,a_k^{\I}\}$ \\
 
 Nominal &
-$I$ &
-$\sem{I} \subseteq \DeltaI$ and $|\sem{I}|=1$ \\
+$\{a\}$ &
+$\sem{\{a\}} = \{a^{\I}\}$ \\
 
 \bottomrule
 \end{longtable}
 \end{compacttable}
 
-Here $n \in \Nat$. The expressions $u_1,u_2$ denote chains of functional
-roles, also called features. If $u=f_1\cdots f_m$, then $\sem{u}$ is the
-composition of the partial functions interpreting the features.
+Here $n \in \Nat$. In role fillers and one-of constructors, the listed
+object names are interpreted as individual names in $\I$.
 
 \section{Concrete Syntax for Concept Constructors}
 
@@ -167,10 +166,11 @@ Exact number restriction & \texttt{(c\_exactly n R)} & $= n\,R$ \\
 Qualified at-least restriction & \texttt{(c\_at\_least n R C)} & $\geq n\,R.C$ \\
 Qualified at-most restriction & \texttt{(c\_at\_most n R C)} & $\leq n\,R.C$ \\
 Qualified exact restriction & \texttt{(c\_exactly n R C)} & $= n\,R.C$ \\
-Same-as / agreement & \texttt{(c\_same\_as u1 u2)} & $u_1 \doteq u_2$ \\
+Same-as / agreement & \texttt{(c\_same\_as R1 R2)} & $R_1 \doteq R_2$ \\
 Role-value map & \texttt{(c\_subset R1 R2)} & $R_1 \subseteq R_2$ \\
-Role fillers & \texttt{(c\_fillers R I1 ... In)} & $\exists R.I_1 \sqcap \cdots \sqcap \exists R.I_n$ \\
-One-of & \texttt{(c\_one\_of I1 ... In)} & $I_1 \sqcup \cdots \sqcup I_n$ \\
+Role fillers & \texttt{(c\_fillers R a1 ... an)} & $R:\{a_1,\ldots,a_n\}$ \\
+One-of & \texttt{(c\_one\_of a1 ... an)} & $\{a_1,\ldots,a_n\}$ \\
+Nominal & \texttt{(c\_nominal a)} & $\{a\}$ \\
 \bottomrule
 \end{longtable}
 \end{compacttable}
