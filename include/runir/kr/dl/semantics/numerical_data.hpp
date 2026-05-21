@@ -46,6 +46,8 @@ struct Data<runir::kr::dl::Numerical<runir::kr::dl::DistanceTag>> :
     using Base::Base;
 };
 
+// Args: arg0 = objects concept C, arg1 = start role (object -> start loc),
+//       arg2 = traverse role (loc -> loc), arg3 = target role (object -> target loc).
 template<>
 struct Data<runir::kr::dl::Numerical<runir::kr::dl::SumPairDistanceTag>> :
     runir::kr::dl::semantics::QuaternaryData<runir::kr::dl::Numerical<runir::kr::dl::SumPairDistanceTag>,

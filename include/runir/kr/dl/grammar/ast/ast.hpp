@@ -439,6 +439,8 @@ struct NumericalDistance : x3::position_tagged
     ConstructorOrNonTerminal<runir::kr::dl::ConceptTag> rhs;
 };
 
+// (n_sum_pair_distance C R_start R_traverse R_target)
+// See SumPairDistanceTag in runir/kr/dl/declarations.hpp.
 struct NumericalSumPairDistance : x3::position_tagged
 {
     static constexpr auto keyword = "n_sum_pair_distance";

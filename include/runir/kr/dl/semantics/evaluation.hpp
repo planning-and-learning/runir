@@ -718,9 +718,18 @@ auto evaluate_impl(tyr::View<tyr::Index<Numerical<Tag>>, C> constructor, Evaluat
     }
     else if constexpr (std::same_as<Tag, SumPairDistanceTag>)
     {
-        // For each object o in `objects`, let s = start_role(o) and t = target_role(o).
-        // Compute the shortest distance from any vertex in s to any vertex in t via traverse_role.
-        // Sum the per-object distances (treating ∞ as a saturating sentinel) to produce the result.
+        // Per-object sum of paired BFS distances:
+        //   for each object o in [[objects]],
+        //     let start = [[start_role]](o) and target = [[target_role]](o);
+        //     run BFS via [[traverse_role]] from start to the first vertex in target;
+        //     accumulate the per-object distance into `total`.
+        // If start or target is empty for some o, or no target is reachable from start,
+        // `total` saturates to UINT_MAX (the same "infinity" sentinel that the existing
+        // DistanceTag uses for unreachable pairs).
+        //
+        // The crucial difference vs DistanceTag: start and target are looked up
+        // through the same o on every iteration, so cross-pair pollution
+        // (e.g. driver A standing on driver B's goal) cannot occur.
         const auto objects = evaluate_impl(constructor.get_objects(), context, workspace);
         const auto start_role = evaluate_impl(constructor.get_start_role(), context, workspace);
         const auto traverse_role = evaluate_impl(constructor.get_traverse_role(), context, workspace);

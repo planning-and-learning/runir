@@ -1,0 +1,109 @@
+n_sum_pair_distance
+===================
+
+A new numerical DL constructor for paired, per-object distances.
+
+Concrete syntax
+---------------
+
+    (n_sum_pair_distance C R_start R_traverse R_target)
+
+where C is a concept and R_start, R_traverse, R_target are roles.
+
+Semantics
+---------
+
+Let I be the interpretation. For each c in [[C]]^I:
+
+    let S_c = [[R_start ]]^I(c) = {x | (c, x) ∈ [[R_start ]]^I}
+    let T_c = [[R_target]]^I(c) = {x | (c, x) ∈ [[R_target]]^I}
+    let d_c = min {n | (S_c × T_c) ∩ ([[R_traverse]]^I)^n ≠ ∅}, or ∞ if empty
+
+The feature value is the sum
+
+    [[n_sum_pair_distance C R_start R_traverse R_target]]^I = Σ_{c ∈ [[C]]^I} d_c
+
+with the convention that the sum saturates to the implementation's UINT_MAX
+sentinel as soon as some d_c is ∞ (matching n_distance's existing behaviour
+for unreachable pairs).
+
+Why this exists
+---------------
+
+The existing n_distance(C, R, D) computes
+
+    min {n | ([[C]] × [[D]]) ∩ ([[R]])^n ≠ ∅}
+
+i.e. the minimum over the *full Cartesian product* [[C]] × [[D]]. When C
+and D are derived from the same population of objects (e.g. driver
+locations and driver goals), the cross product also contains pairs that
+mix one object's start with another object's target. A single object
+sitting on someone else's target then collapses the distance to zero,
+even when nobody has actually progressed.
+
+n_sum_pair_distance avoids that by pairing through C: for every object
+c, only the (S_c, T_c) pair is considered. Sum (rather than min) gives
+a strict potential — every single-step move of any object toward its
+own target reduces the value by exactly one — which is what generalised-
+policy proofs rely on for acyclicity.
+
+Typical use
+-----------
+
+driverlog (per-driver path-distance, phase 3):
+
+    (n_sum_pair_distance
+        ; C: misplaced undriving drivers
+        (c_and (c_atomic_state "driver")
+               (c_and (c_not (c_some (r_atomic_state "driving") c_top))
+                      (c_and (c_some (r_atomic_goal "at" true) c_top)
+                             (c_not (c_same_as (r_atomic_state "at")
+                                               (r_atomic_goal "at" true))))))
+        ; R_start: driver -> driver's at-state location
+        (r_atomic_state "at")
+        ; R_traverse: location -> location via path
+        (r_atomic_state "path")
+        ; R_target: driver -> driver's at-goal location
+        (r_atomic_goal "at" true))
+
+Per-truck link distance to own truck-goal, per-package link distance from
+carrier-truck location to package goal, etc. follow the same pattern with
+R_start composed through r_in for the carrier-truck case.
+
+Implementation
+--------------
+
+- declarations.hpp adds SumPairDistanceTag to the NumericalConstructorTag
+  concept and NumericalConstructorTags type list.
+- A 4-argument QuaternaryData helper is added to semantics/data_helpers.hpp
+  and re-exported via cnf_grammar and grammar.
+- Data and View specialisations are defined in semantics, cnf_grammar,
+  and grammar; the Constructor<NumericalTag> variant is extended.
+- Evaluation in semantics/evaluation.hpp loops over the bitset of [[C]],
+  running the same per-source BFS that DistanceTag uses but restricted
+  to that object's R_start and R_target fillers, then accumulates the
+  results into a saturating sum.
+- Syntactic complexity is 1 + sum of child complexities.
+- Grammar AST adds NumericalSumPairDistance with fusion adaption, parser
+  rule (with BOOST_SPIRIT_DEFINE / INSTANTIATE / annotate_on_success
+  class), and a policy-text parse() overload in kr/gp/dl/parser.cpp.
+- cnf_grammar gets translation in translate.cpp and a generate_quaternary
+  helper in generate.cpp.
+- Python bindings expose the new index / data / view in all three
+  grammars; bind_view picks up get_objects / get_start_role /
+  get_traverse_role / get_target_role via the existing requires-based
+  detection scheme.
+
+Open issues / future work
+-------------------------
+
+- canonicalize() for SumPairDistance is the default no-op, so two
+  syntactically distinct but semantically equal SumPairDistance terms
+  are not deduplicated. The constructor has no obvious commutativity
+  to exploit; if symmetries are added later they belong in
+  semantics/canonicalization.hpp.
+- generate_quaternary enumerates a four-way decomposition of the budget
+  and so blows up quickly for high max_syntactic_complexity. Consider a
+  curated grammar that only emits SumPairDistance when the role triple
+  is "interesting" (e.g. R_start and R_target derived from the same
+  predicate).

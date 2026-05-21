@@ -90,6 +90,8 @@ struct TernaryData
     auto identifying_members() const noexcept { return std::tie(lhs, mid, rhs); }
 };
 
+// 4-argument data storage, used by Numerical<SumPairDistanceTag>
+// (concept C, role R_start, role R_traverse, role R_target).
 template<typename Self, typename A0, typename A1, typename A2, typename A3>
 struct QuaternaryData
 {

@@ -306,6 +306,9 @@ private:
         return true;
     }
 
+    // 4-argument feature generator: enumerates concept x role x role x role
+    // sub-sentences whose complexities sum to m_complexity - 1, mirroring
+    // generate_ternary. Used for n_sum_pair_distance.
     template<typename F>
     bool generate_quaternary(NonTerminalView<runir::kr::dl::NumericalTag> lhs,
                              NonTerminalView<runir::kr::dl::ConceptTag> objects,

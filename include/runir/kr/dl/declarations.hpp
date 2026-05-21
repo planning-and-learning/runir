@@ -184,6 +184,14 @@ struct DistanceTag
 {
 };
 
+// Numerical constructor: per-object sum of paired distances.
+//   (n_sum_pair_distance C R_start R_traverse R_target)
+// For each c in [[C]], compute the shortest [[R_traverse]]-distance from
+// [[R_start]](c) to [[R_target]](c) (BFS) and sum the per-object values.
+// Saturates to UINT_MAX if any c has empty start/target or is unreachable.
+// Unlike DistanceTag (min over the full lhs x rhs cross product), this
+// keeps the pairing tied through c, so two objects sharing a goal location
+// can no longer collapse the global distance to zero.
 struct SumPairDistanceTag
 {
 };
