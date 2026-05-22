@@ -12,6 +12,10 @@ struct GpTag
 {
 };
 
+struct MpgTag
+{
+};
+
 }  // namespace runir::kr
 
 #endif
