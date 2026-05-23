@@ -52,8 +52,7 @@ template<runir::kr::dl::FamilyTag Family, typename Tag>
 struct Data<runir::kr::dl::grammar::Concept<Family, Tag>> :
     runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Concept<Family, Tag>, GrammarConceptChoice<Family>, GrammarConceptChoice<Family>>
 {
-    using Base =
-        runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Concept<Family, Tag>, GrammarConceptChoice<Family>, GrammarConceptChoice<Family>>;
+    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Concept<Family, Tag>, GrammarConceptChoice<Family>, GrammarConceptChoice<Family>>;
     using Base::Base;
 };
 
@@ -70,8 +69,7 @@ template<runir::kr::dl::FamilyTag Family, typename Tag>
 struct Data<runir::kr::dl::grammar::Concept<Family, Tag>> :
     runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Concept<Family, Tag>, GrammarRoleChoice<Family>, GrammarConceptChoice<Family>>
 {
-    using Base =
-        runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Concept<Family, Tag>, GrammarRoleChoice<Family>, GrammarConceptChoice<Family>>;
+    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Concept<Family, Tag>, GrammarRoleChoice<Family>, GrammarConceptChoice<Family>>;
     using Base::Base;
 };
 
@@ -110,8 +108,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RoleFillersTag>> :
     runir::kr::dl::semantics::RoleFillersData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RoleFillersTag>, GrammarRoleChoice<Family>>
 {
-    using Base =
-        runir::kr::dl::semantics::RoleFillersData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RoleFillersTag>, GrammarRoleChoice<Family>>;
+    using Base = runir::kr::dl::semantics::RoleFillersData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RoleFillersTag>, GrammarRoleChoice<Family>>;
     using Base::Base;
 };
 
@@ -131,25 +128,15 @@ struct Data<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::NominalTag>> 
     using Base::Base;
 };
 
-
 template<runir::kr::dl::FamilyTag Family>
     requires runir::kr::dl::FamilyConceptConstructorTag<Family, runir::kr::dl::RegisterTag>
-struct Data<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RegisterTag>>
+struct Data<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RegisterTag>> :
+    runir::kr::dl::semantics::RegisterData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RegisterTag>,
+                                           runir::kr::dl::Concept<Family, runir::kr::dl::RegisterIdentifierTag>>
 {
-    Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RegisterTag>> index;
-    Index<runir::kr::dl::RegisterTag> identifier;
-
-    Data() = default;
-    explicit Data(Index<runir::kr::dl::RegisterTag> identifier_) : index(), identifier(identifier_) {}
-
-    void clear() noexcept
-    {
-        tyr::clear(index);
-        tyr::clear(identifier);
-    }
-
-    auto cista_members() const noexcept { return std::tie(index, identifier); }
-    auto identifying_members() const noexcept { return std::tie(identifier); }
+    using Base = runir::kr::dl::semantics::RegisterData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RegisterTag>,
+                                                        runir::kr::dl::Concept<Family, runir::kr::dl::RegisterIdentifierTag>>;
+    using Base::Base;
 };
 
 }  // namespace tyr

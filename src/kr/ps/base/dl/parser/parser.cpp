@@ -11,14 +11,15 @@
 namespace runir::kr::ps::base::dl::parser
 {
 
-ast::Sketch parse_sketch_ast(const std::string& description)
+template<>
+ast::Sketch<runir::kr::BaseFamilyTag> parse_sketch_ast<runir::kr::BaseFamilyTag>(const std::string& description)
 {
     namespace x3 = boost::spirit::x3;
 
     auto first = description.cbegin();
     const auto last = description.cend();
 
-    ast::Sketch result;
+    ast::Sketch<runir::kr::BaseFamilyTag> result;
     std::ostringstream errors;
     error_handler_type error_handler(first, last, errors);
 

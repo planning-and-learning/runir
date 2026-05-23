@@ -10,7 +10,8 @@ template<FamilyTag Family, typename Tag>
     requires FamilyConceptConstructorTag<Family, Tag>
 using FamilyConcept = Concept<Family, Tag>;
 
-template<FamilyTag Family, RoleConstructorTag Tag>
+template<FamilyTag Family, typename Tag>
+    requires FamilyRoleConstructorTag<Family, Tag>
 using FamilyRole = Role<Family, Tag>;
 
 template<FamilyTag Family, BooleanConstructorTag Tag>

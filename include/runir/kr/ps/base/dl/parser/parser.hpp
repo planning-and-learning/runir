@@ -8,7 +8,8 @@
 namespace runir::kr::ps::base::dl::parser
 {
 
-ast::Sketch parse_sketch_ast(const std::string& description);
+template<runir::kr::FamilyTag Family>
+ast::Sketch<Family> parse_sketch_ast(const std::string& description);
 
 }
 

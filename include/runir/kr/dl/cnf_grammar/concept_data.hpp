@@ -1,8 +1,8 @@
 #ifndef RUNIR_CNF_GRAMMAR_CONCEPT_DATA_HPP_
 #define RUNIR_CNF_GRAMMAR_CONCEPT_DATA_HPP_
 
-#include "runir/kr/dl/ext/register_index.hpp"
 #include "runir/kr/dl/cnf_grammar/data_helpers.hpp"
+#include "runir/kr/dl/ext/register_index.hpp"
 
 namespace tyr
 {
@@ -101,7 +101,8 @@ template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtLeastNumberRestrictionTag>> :
     runir::kr::dl::cnf_grammar::NumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtLeastNumberRestrictionTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::NumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtLeastNumberRestrictionTag>>;
+    using Base =
+        runir::kr::dl::cnf_grammar::NumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtLeastNumberRestrictionTag>>;
     using Base::Base;
 };
 
@@ -109,7 +110,8 @@ template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtMostNumberRestrictionTag>> :
     runir::kr::dl::cnf_grammar::NumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtMostNumberRestrictionTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::NumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtMostNumberRestrictionTag>>;
+    using Base =
+        runir::kr::dl::cnf_grammar::NumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtMostNumberRestrictionTag>>;
     using Base::Base;
 };
 
@@ -117,34 +119,38 @@ template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ExactNumberRestrictionTag>> :
     runir::kr::dl::cnf_grammar::NumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ExactNumberRestrictionTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::NumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ExactNumberRestrictionTag>>;
+    using Base =
+        runir::kr::dl::cnf_grammar::NumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ExactNumberRestrictionTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>> :
-    runir::kr::dl::cnf_grammar::QualifiedNumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>
+    runir::kr::dl::cnf_grammar::QualifiedNumberRestrictionData<Family,
+                                                               runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>
 {
-    using Base =
-        runir::kr::dl::cnf_grammar::QualifiedNumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>;
+    using Base = runir::kr::dl::cnf_grammar::
+        QualifiedNumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>> :
-    runir::kr::dl::cnf_grammar::QualifiedNumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>
+    runir::kr::dl::cnf_grammar::QualifiedNumberRestrictionData<Family,
+                                                               runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>
 {
-    using Base =
-        runir::kr::dl::cnf_grammar::QualifiedNumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>;
+    using Base = runir::kr::dl::cnf_grammar::
+        QualifiedNumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedExactNumberRestrictionTag>> :
-    runir::kr::dl::cnf_grammar::QualifiedNumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedExactNumberRestrictionTag>>
+    runir::kr::dl::cnf_grammar::QualifiedNumberRestrictionData<Family,
+                                                               runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedExactNumberRestrictionTag>>
 {
-    using Base =
-        runir::kr::dl::cnf_grammar::QualifiedNumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedExactNumberRestrictionTag>>;
+    using Base = runir::kr::dl::cnf_grammar::
+        QualifiedNumberRestrictionData<Family, runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::QualifiedExactNumberRestrictionTag>>;
     using Base::Base;
 };
 
@@ -196,25 +202,15 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::NominalTa
     using Base::Base;
 };
 
-
 template<runir::kr::dl::FamilyTag Family>
     requires runir::kr::dl::FamilyConceptConstructorTag<Family, runir::kr::dl::RegisterTag>
-struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::RegisterTag>>
+struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::RegisterTag>> :
+    runir::kr::dl::semantics::RegisterData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::RegisterTag>,
+                                           runir::kr::dl::Concept<Family, runir::kr::dl::RegisterIdentifierTag>>
 {
-    Index<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::RegisterTag>> index;
-    Index<runir::kr::dl::RegisterTag> identifier;
-
-    Data() = default;
-    explicit Data(Index<runir::kr::dl::RegisterTag> identifier_) : index(), identifier(identifier_) {}
-
-    void clear() noexcept
-    {
-        tyr::clear(index);
-        tyr::clear(identifier);
-    }
-
-    auto cista_members() const noexcept { return std::tie(index, identifier); }
-    auto identifying_members() const noexcept { return std::tie(identifier); }
+    using Base = runir::kr::dl::semantics::RegisterData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::RegisterTag>,
+                                                        runir::kr::dl::Concept<Family, runir::kr::dl::RegisterIdentifierTag>>;
+    using Base::Base;
 };
 
 }  // namespace tyr

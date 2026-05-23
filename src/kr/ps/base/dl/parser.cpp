@@ -1,5 +1,6 @@
 #include "runir/kr/ps/base/dl/parser.hpp"
 
+#include "runir/kr/ps/base/dl/declarations.hpp"
 #include "runir/kr/ps/base/dl/parser/parser.hpp"
 #include "runir/kr/ps/canonicalization.hpp"
 
@@ -530,7 +531,7 @@ auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<runir::kr:
 using BooleanFeatureMap = std::unordered_map<std::string, tyr::Index<Feature<BooleanFeature>>>;
 using NumericalFeatureMap = std::unordered_map<std::string, tyr::Index<Feature<NumericalFeature>>>;
 
-auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature& node,
+auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr::BaseFamilyTag>& node,
                    tyr::formalism::planning::DomainView domain,
                    Repository& repository,
                    BooleanFeatureMap& boolean_features,
@@ -546,7 +547,7 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature& node,
     boolean_features.emplace(node.name, feature.get_index());
 }
 
-auto parse_feature(const runir::kr::ps::base::dl::ast::NumericalFeature& node,
+auto parse_feature(const runir::kr::ps::base::dl::ast::NumericalFeature<runir::kr::BaseFamilyTag>& node,
                    tyr::formalism::planning::DomainView domain,
                    Repository& repository,
                    BooleanFeatureMap&,
@@ -593,7 +594,7 @@ auto make_effect(tyr::Index<Feature<FeatureTag>> feature, Repository& repository
     return intern(repository, data);
 }
 
-auto parse_condition_observation(const Positive&,
+auto parse_condition_observation(const runir::kr::ps::base::dl::ast::Positive&,
                                  const std::string& feature,
                                  Repository& repository,
                                  const BooleanFeatureMap& boolean_features,
@@ -602,7 +603,7 @@ auto parse_condition_observation(const Positive&,
     return make_condition<BooleanFeature, Positive>(require_feature(boolean_features, feature), repository);
 }
 
-auto parse_condition_observation(const Negative&,
+auto parse_condition_observation(const runir::kr::ps::base::dl::ast::Negative&,
                                  const std::string& feature,
                                  Repository& repository,
                                  const BooleanFeatureMap& boolean_features,
@@ -611,7 +612,7 @@ auto parse_condition_observation(const Negative&,
     return make_condition<BooleanFeature, Negative>(require_feature(boolean_features, feature), repository);
 }
 
-auto parse_condition_observation(const EqualZero&,
+auto parse_condition_observation(const runir::kr::ps::base::dl::ast::EqualZero&,
                                  const std::string& feature,
                                  Repository& repository,
                                  const BooleanFeatureMap&,
@@ -620,7 +621,7 @@ auto parse_condition_observation(const EqualZero&,
     return make_condition<NumericalFeature, EqualZero>(require_feature(numerical_features, feature), repository);
 }
 
-auto parse_condition_observation(const GreaterZero&,
+auto parse_condition_observation(const runir::kr::ps::base::dl::ast::GreaterZero&,
                                  const std::string& feature,
                                  Repository& repository,
                                  const BooleanFeatureMap&,
@@ -629,7 +630,7 @@ auto parse_condition_observation(const GreaterZero&,
     return make_condition<NumericalFeature, GreaterZero>(require_feature(numerical_features, feature), repository);
 }
 
-auto parse_condition(const runir::kr::ps::base::dl::ast::Condition& node,
+auto parse_condition(const runir::kr::ps::base::dl::ast::Condition<runir::kr::BaseFamilyTag>& node,
                      Repository& repository,
                      const BooleanFeatureMap& boolean_features,
                      const NumericalFeatureMap& numerical_features)
@@ -639,7 +640,7 @@ auto parse_condition(const runir::kr::ps::base::dl::ast::Condition& node,
                                 node.observation.get());
 }
 
-auto parse_effect_observation(const Positive&,
+auto parse_effect_observation(const runir::kr::ps::base::dl::ast::Positive&,
                               const std::string& feature,
                               Repository& repository,
                               const BooleanFeatureMap& boolean_features,
@@ -648,7 +649,7 @@ auto parse_effect_observation(const Positive&,
     return make_effect<BooleanFeature, Positive>(require_feature(boolean_features, feature), repository);
 }
 
-auto parse_effect_observation(const Negative&,
+auto parse_effect_observation(const runir::kr::ps::base::dl::ast::Negative&,
                               const std::string& feature,
                               Repository& repository,
                               const BooleanFeatureMap& boolean_features,
@@ -657,7 +658,7 @@ auto parse_effect_observation(const Negative&,
     return make_effect<BooleanFeature, Negative>(require_feature(boolean_features, feature), repository);
 }
 
-auto parse_effect_observation(const Unchanged&,
+auto parse_effect_observation(const runir::kr::ps::base::dl::ast::Unchanged&,
                               const std::string& feature,
                               Repository& repository,
                               const BooleanFeatureMap& boolean_features,
@@ -676,7 +677,7 @@ auto parse_effect_observation(const Unchanged&,
     throw std::runtime_error("Unknown feature \"" + feature + "\".");
 }
 
-auto parse_effect_observation(const Increases&,
+auto parse_effect_observation(const runir::kr::ps::base::dl::ast::Increases&,
                               const std::string& feature,
                               Repository& repository,
                               const BooleanFeatureMap&,
@@ -685,7 +686,7 @@ auto parse_effect_observation(const Increases&,
     return make_effect<NumericalFeature, Increases>(require_feature(numerical_features, feature), repository);
 }
 
-auto parse_effect_observation(const Decreases&,
+auto parse_effect_observation(const runir::kr::ps::base::dl::ast::Decreases&,
                               const std::string& feature,
                               Repository& repository,
                               const BooleanFeatureMap&,
@@ -694,7 +695,7 @@ auto parse_effect_observation(const Decreases&,
     return make_effect<NumericalFeature, Decreases>(require_feature(numerical_features, feature), repository);
 }
 
-auto parse_effect(const runir::kr::ps::base::dl::ast::Effect& node,
+auto parse_effect(const runir::kr::ps::base::dl::ast::Effect<runir::kr::BaseFamilyTag>& node,
                   Repository& repository,
                   const BooleanFeatureMap& boolean_features,
                   const NumericalFeatureMap& numerical_features)
@@ -704,7 +705,7 @@ auto parse_effect(const runir::kr::ps::base::dl::ast::Effect& node,
                                 node.observation.get());
 }
 
-auto parse_rule(const runir::kr::ps::base::dl::ast::Rule& node,
+auto parse_rule(const runir::kr::ps::base::dl::ast::Rule<runir::kr::BaseFamilyTag>& node,
                 Repository& repository,
                 const BooleanFeatureMap& boolean_features,
                 const NumericalFeatureMap& numerical_features)
@@ -727,7 +728,7 @@ auto parse_rule(const runir::kr::ps::base::dl::ast::Rule& node,
 
 SketchView parse_sketch(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
 {
-    const auto ast = parser::parse_sketch_ast(description);
+    const auto ast = parser::parse_sketch_ast<runir::kr::BaseFamilyTag>(description);
 
     auto boolean_features = BooleanFeatureMap {};
     auto numerical_features = NumericalFeatureMap {};

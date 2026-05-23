@@ -5,12 +5,13 @@
 
 #include <boost/fusion/include/adapt_struct.hpp>
 
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::base::dl::ast::BooleanFeature, name, symbol, description, feature)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::base::dl::ast::NumericalFeature, name, symbol, description, feature)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::ConceptFeature)(Family), name, symbol, description, feature)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::BooleanFeature)(Family), name, symbol, description, feature)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::NumericalFeature)(Family), name, symbol, description, feature)
 
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::base::dl::ast::Condition, observation, feature)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::base::dl::ast::Effect, observation, feature)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::base::dl::ast::Rule, conditions, effects)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::base::dl::ast::Sketch, features, rules)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::Condition)(Family), observation, feature)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::Effect)(Family), observation, feature)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::Rule)(Family), conditions, effects)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::Sketch)(Family), features, rules)
 
 #endif

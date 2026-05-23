@@ -3,8 +3,8 @@
 
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/datas.hpp"
 #include "runir/kr/dl/ext/constructor_data.hpp"
+#include "runir/kr/dl/semantics/datas.hpp"
 #include "runir/kr/dl/semantics/views.hpp"
 
 #include <cassert>
@@ -28,7 +28,8 @@ struct RepositoryConstructorFamily
         requires FamilyConceptConstructorTag<Family, Tag>
     using Concept = FamilyConcept<Family, Tag>;
 
-    template<RoleConstructorTag Tag>
+    template<typename Tag>
+        requires FamilyRoleConstructorTag<Family, Tag>
     using Role = FamilyRole<Family, Tag>;
 
     template<BooleanConstructorTag Tag>
@@ -58,10 +59,10 @@ using FamilyConstructorTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Fam
 
 template<FamilyTag Family>
 using FamilyConstructorRepositoryTypes = tyr::ConcatTypeListsT<FamilyConceptTypes<Family>,
-                                                              FamilyRoleTypes<Family>,
-                                                              FamilyBooleanTypes<Family>,
-                                                              FamilyNumericalTypes<Family>,
-                                                              FamilyConstructorTypes<Family>>;
+                                                               FamilyRoleTypes<Family>,
+                                                               FamilyBooleanTypes<Family>,
+                                                               FamilyNumericalTypes<Family>,
+                                                               FamilyConstructorTypes<Family>>;
 
 template<FamilyTag Family>
 using FamilyConstructorSymbolRepository = tyr::ApplyTypeListT<tyr::formalism::SymbolRepository, FamilyConstructorRepositoryTypes<Family>>;
@@ -210,13 +211,16 @@ using ConceptViewList = std::vector<ConceptView<Tag>>;
 template<FamilyTag Family, RoleConstructorTag Tag>
 using FamilyRoleView = tyr::View<tyr::Index<FamilyRole<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
-template<RoleConstructorTag Tag>
+template<typename Tag>
+    requires FamilyRoleConstructorTag<BaseFamilyTag, Tag>
 using RoleView = FamilyRoleView<BaseFamilyTag, Tag>;
 
-template<RoleConstructorTag Tag>
+template<typename Tag>
+    requires FamilyRoleConstructorTag<BaseFamilyTag, Tag>
 using RoleListView = tyr::View<tyr::IndexList<Role<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
 
-template<RoleConstructorTag Tag>
+template<typename Tag>
+    requires FamilyRoleConstructorTag<BaseFamilyTag, Tag>
 using RoleViewList = std::vector<RoleView<Tag>>;
 
 template<FamilyTag Family, BooleanConstructorTag Tag>
@@ -256,10 +260,16 @@ template<CategoryTag Category>
 using ConstructorViewList = std::vector<ConstructorView<Category>>;
 
 template<FamilyTag Family>
-inline const ConstructorRepositoryFor<Family>& get_repository(const ConstructorRepositoryFor<Family>& repository) noexcept { return repository; }
+inline const ConstructorRepositoryFor<Family>& get_repository(const ConstructorRepositoryFor<Family>& repository) noexcept
+{
+    return repository;
+}
 
 template<FamilyTag Family>
-inline ConstructorRepositoryFor<Family>& get_repository(ConstructorRepositoryFor<Family>& repository) noexcept { return repository; }
+inline ConstructorRepositoryFor<Family>& get_repository(ConstructorRepositoryFor<Family>& repository) noexcept
+{
+    return repository;
+}
 
 }
 

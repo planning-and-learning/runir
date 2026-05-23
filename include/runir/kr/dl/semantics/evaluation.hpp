@@ -9,6 +9,7 @@
 
 #include <cassert>
 #include <limits>
+#include <stdexcept>
 #include <type_traits>
 #include <tyr/common/dynamic_bitset.hpp>
 #include <tyr/common/types.hpp>
@@ -25,7 +26,9 @@ namespace runir::kr::dl::semantics
 {
 
 template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace);
+auto evaluate_impl(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace);
 
 namespace detail
 {
@@ -296,32 +299,41 @@ auto evaluate_atomic_goal_boolean(tyr::View<tyr::Index<FamilyBoolean<Family, Ato
 }
 
 template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
-bool evaluate_nonempty(tyr::View<tyr::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
+bool evaluate_nonempty(tyr::View<tyr::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor,
+                       EvaluationContext<Family, Kind>& context,
+                       EvaluationWorkspace& workspace)
 {
     return evaluate_impl(constructor, context, workspace)->get_bitset().any();
 }
 
 template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
-bool evaluate_nonempty(tyr::View<tyr::Index<FamilyConstructor<Family, RoleTag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
+bool evaluate_nonempty(tyr::View<tyr::Index<FamilyConstructor<Family, RoleTag>>, C> constructor,
+                       EvaluationContext<Family, Kind>& context,
+                       EvaluationWorkspace& workspace)
 {
     return detail::role_any(evaluate_impl(constructor, context, workspace));
 }
 
 template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_count(tyr::View<tyr::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace) -> uint_t
+auto evaluate_count(tyr::View<tyr::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor,
+                    EvaluationContext<Family, Kind>& context,
+                    EvaluationWorkspace& workspace) -> uint_t
 {
     return static_cast<uint_t>(evaluate_impl(constructor, context, workspace)->get_bitset().count());
 }
 
 template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_count(tyr::View<tyr::Index<FamilyConstructor<Family, RoleTag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace) -> uint_t
+auto evaluate_count(tyr::View<tyr::Index<FamilyConstructor<Family, RoleTag>>, C> constructor,
+                    EvaluationContext<Family, Kind>& context,
+                    EvaluationWorkspace& workspace) -> uint_t
 {
     return detail::role_count(evaluate_impl(constructor, context, workspace));
 }
 
 }
 
-template<FamilyTag Family, ConceptConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
+    requires FamilyConceptConstructorTag<Family, Tag>
 auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
@@ -499,11 +511,22 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> construc
         for (auto object : constructor.get_objects())
             result_bitset.set(tyr::uint_t(object.get_index()));
     }
+    else if constexpr (std::same_as<Tag, RegisterTag>)
+    {
+        const auto denotation = context.template get<ConceptTag>(constructor.get_identifier());
+        const auto denotation_view = tyr::View<tyr::Index<Denotation<ConceptTag>>, DenotationRepository>(denotation, context.get_denotation_repository());
+        const auto concept_bitset = denotation_view.get();
+        const auto object = concept_bitset.find_first();
+        if (object == decltype(concept_bitset)::npos)
+            throw std::runtime_error("Concept denotation register is empty.");
+        result_bitset.set(object);
+    }
 
     return result;
 }
 
-template<FamilyTag Family, RoleConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
+    requires FamilyRoleConstructorTag<Family, Tag>
 auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
@@ -624,6 +647,22 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor
         for (auto object = bitset.find_first(); object != decltype(bitset)::npos; object = bitset.find_next(object))
             detail::row(result, static_cast<uint_t>(object)).set(object);
     }
+    else if constexpr (std::same_as<Tag, RegisterTag>)
+    {
+        const auto denotation = context.template get<RoleTag>(constructor.get_identifier());
+        const auto denotation_view = tyr::View<tyr::Index<Denotation<RoleTag>>, DenotationRepository>(denotation, context.get_denotation_repository());
+        for (uint_t source = 0; source < num_objects; ++source)
+        {
+            const auto row = denotation_view.get(detail::object_handle(source));
+            const auto target = row.find_first();
+            if (target != decltype(row)::npos)
+            {
+                detail::row(result, source).set(target);
+                return result;
+            }
+        }
+        throw std::runtime_error("Role denotation register is empty.");
+    }
 
     return result;
 }
@@ -722,13 +761,17 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, C> constr
 }
 
 template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
+auto evaluate_impl(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace)
 {
     return constructor.get_variant().apply([&](auto child) { return evaluate_impl(child, context, workspace); });
 }
 
 template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
-auto evaluate(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
+auto evaluate(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor,
+              EvaluationContext<Family, Kind>& context,
+              EvaluationWorkspace& workspace)
 {
     auto result = evaluate_impl(constructor, context, workspace);
     return context.get_denotation_repository().get_or_create(*result).first;

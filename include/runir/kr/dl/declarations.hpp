@@ -4,6 +4,7 @@
 #include "runir/kr/declarations.hpp"
 
 #include <concepts>
+#include <cstddef>
 #include <type_traits>
 #include <tyr/common/type_list.hpp>
 #include <tyr/formalism/declarations.hpp>
@@ -196,6 +197,12 @@ struct RegisterTag
 {
 };
 
+struct RegisterIdentifierTag
+{
+};
+
+inline constexpr size_t num_registers = 4;
+
 template<typename T>
 struct IsAtomicStateTag : std::false_type
 {
@@ -295,9 +302,10 @@ using BooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::Stat
 
 using NumericalConstructorTags = tyr::TypeList<CountTag, DistanceTag>;
 
-
 template<typename Family, typename T>
-concept FamilyConceptConstructorTag = FamilyTag<Family> && (ConceptConstructorTag<T> || (std::same_as<Family, ExtFamilyTag> && std::same_as<T, RegisterTag>));
+concept FamilyConceptConstructorTag =
+    FamilyTag<Family>
+    && (ConceptConstructorTag<T> || std::same_as<T, RegisterIdentifierTag> || (std::same_as<Family, ExtFamilyTag> && std::same_as<T, RegisterTag>) );
 
 template<FamilyTag Family>
 struct FamilyConceptConstructorTags
@@ -315,10 +323,24 @@ template<FamilyTag Family>
 using FamilyConceptConstructorTagsT = typename FamilyConceptConstructorTags<Family>::Type;
 
 template<typename Family, typename T>
-concept FamilyRoleConstructorTag = FamilyTag<Family> && RoleConstructorTag<T>;
+concept FamilyRoleConstructorTag =
+    FamilyTag<Family>
+    && (RoleConstructorTag<T> || std::same_as<T, RegisterIdentifierTag> || (std::same_as<Family, ExtFamilyTag> && std::same_as<T, RegisterTag>) );
 
 template<FamilyTag Family>
-using FamilyRoleConstructorTagsT = RoleConstructorTags;
+struct FamilyRoleConstructorTags
+{
+    using Type = RoleConstructorTags;
+};
+
+template<>
+struct FamilyRoleConstructorTags<ExtFamilyTag>
+{
+    using Type = tyr::ConcatTypeListsT<RoleConstructorTags, tyr::TypeList<RegisterTag>>;
+};
+
+template<FamilyTag Family>
+using FamilyRoleConstructorTagsT = typename FamilyRoleConstructorTags<Family>::Type;
 
 template<typename Family, typename T>
 concept FamilyBooleanConstructorTag = FamilyTag<Family> && BooleanConstructorTag<T>;
@@ -337,7 +359,7 @@ template<FamilyTag Family, typename Tag>
 struct Concept;
 
 template<FamilyTag Family, typename Tag>
-    requires RoleConstructorTag<Tag>
+    requires FamilyRoleConstructorTag<Family, Tag>
 struct Role;
 
 template<FamilyTag Family, typename Tag>
@@ -358,7 +380,8 @@ struct ConstructorFamily
         requires FamilyConceptConstructorTag<Family, Tag>
     using Concept = runir::kr::dl::Concept<Family, Tag>;
 
-    template<RoleConstructorTag Tag>
+    template<typename Tag>
+        requires FamilyRoleConstructorTag<Family, Tag>
     using Role = runir::kr::dl::Role<Family, Tag>;
 
     template<BooleanConstructorTag Tag>

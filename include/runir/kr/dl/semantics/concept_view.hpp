@@ -29,6 +29,12 @@ public:
 
     auto get_index() const noexcept { return m_handle; }
 
+    auto get_identifier() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::RegisterTag>
+    {
+        return get_data().identifier;
+    }
+
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
     {

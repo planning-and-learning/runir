@@ -12,6 +12,9 @@ namespace runir::kr::dl::cnf_grammar
 template<typename Self>
 using NullaryData = runir::kr::dl::semantics::NullaryData<Self>;
 
+template<typename Self, typename Identifier>
+using RegisterData = runir::kr::dl::semantics::RegisterData<Self, Identifier>;
+
 template<typename Self, typename Arg>
 using UnaryData = runir::kr::dl::semantics::UnaryData<Self, Arg>;
 
@@ -31,7 +34,8 @@ template<runir::kr::dl::FamilyTag Family, typename Self>
 using NumberRestrictionData = runir::kr::dl::semantics::NumberRestrictionData<Self, NonTerminal<Family, RoleTag>>;
 
 template<runir::kr::dl::FamilyTag Family, typename Self>
-using QualifiedNumberRestrictionData = runir::kr::dl::semantics::QualifiedNumberRestrictionData<Self, NonTerminal<Family, RoleTag>, NonTerminal<Family, ConceptTag>>;
+using QualifiedNumberRestrictionData =
+    runir::kr::dl::semantics::QualifiedNumberRestrictionData<Self, NonTerminal<Family, RoleTag>, NonTerminal<Family, ConceptTag>>;
 
 template<runir::kr::dl::FamilyTag Family, typename Self>
 using RoleFillersData = runir::kr::dl::semantics::RoleFillersData<Self, NonTerminal<Family, RoleTag>>;

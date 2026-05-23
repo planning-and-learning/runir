@@ -37,8 +37,7 @@ struct Data<runir::kr::dl::Role<Family, runir::kr::dl::AtomicGoalTag<T>>> :
 template<runir::kr::dl::FamilyTag Family, typename Tag>
     requires(std::same_as<Tag, runir::kr::dl::IntersectionTag> || std::same_as<Tag, runir::kr::dl::UnionTag>
              || std::same_as<Tag, runir::kr::dl::CompositionTag>)
-struct Data<runir::kr::dl::Role<Family, Tag>> :
-    runir::kr::dl::semantics::BinaryData<runir::kr::dl::Role<Family, Tag>, DlRole<Family>, DlRole<Family>>
+struct Data<runir::kr::dl::Role<Family, Tag>> : runir::kr::dl::semantics::BinaryData<runir::kr::dl::Role<Family, Tag>, DlRole<Family>, DlRole<Family>>
 {
     using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::Role<Family, Tag>, DlRole<Family>, DlRole<Family>>;
     using Base::Base;
@@ -66,6 +65,17 @@ struct Data<runir::kr::dl::Role<Family, runir::kr::dl::IdentityTag>> :
     runir::kr::dl::semantics::UnaryData<runir::kr::dl::Role<Family, runir::kr::dl::IdentityTag>, DlConcept<Family>>
 {
     using Base = runir::kr::dl::semantics::UnaryData<runir::kr::dl::Role<Family, runir::kr::dl::IdentityTag>, DlConcept<Family>>;
+    using Base::Base;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, runir::kr::dl::RegisterTag>
+struct Data<runir::kr::dl::Role<Family, runir::kr::dl::RegisterTag>> :
+    runir::kr::dl::semantics::RegisterData<runir::kr::dl::Role<Family, runir::kr::dl::RegisterTag>,
+                                           runir::kr::dl::Role<Family, runir::kr::dl::RegisterIdentifierTag>>
+{
+    using Base = runir::kr::dl::semantics::RegisterData<runir::kr::dl::Role<Family, runir::kr::dl::RegisterTag>,
+                                                        runir::kr::dl::Role<Family, runir::kr::dl::RegisterIdentifierTag>>;
     using Base::Base;
 };
 

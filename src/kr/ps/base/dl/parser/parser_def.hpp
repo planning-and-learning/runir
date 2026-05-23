@@ -4,6 +4,7 @@
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
 #include "runir/kr/ps/base/dl/ast/ast_adapted.hpp"
+#include "runir/kr/ps/base/dl/declarations.hpp"
 #include "runir/kr/ps/base/dl/parser/error_handler.hpp"
 #include "runir/kr/ps/base/dl/parser/parsers.hpp"
 
@@ -23,28 +24,28 @@ using x3::ascii::alnum;
 using x3::ascii::alpha;
 using x3::ascii::char_;
 
-boolean_feature_type const boolean_feature = "boolean_feature";
-numerical_feature_type const numerical_feature = "numerical_feature";
-feature_type const feature = "feature";
+base_boolean_feature_type const boolean_feature = "boolean_feature";
+base_numerical_feature_type const numerical_feature = "numerical_feature";
+base_feature_type const feature = "feature";
 
 positive_condition_type const positive_condition = "positive_condition";
 negative_condition_type const negative_condition = "negative_condition";
 equal_zero_condition_type const equal_zero_condition = "equal_zero_condition";
 greater_zero_condition_type const greater_zero_condition = "greater_zero_condition";
-condition_observation_type const condition_observation = "condition_observation";
-condition_type const condition = "condition";
+base_condition_observation_type const condition_observation = "condition_observation";
+base_condition_type const condition = "condition";
 
 positive_effect_type const positive_effect = "positive_effect";
 negative_effect_type const negative_effect = "negative_effect";
 unchanged_effect_type const unchanged_effect = "unchanged_effect";
 increases_effect_type const increases_effect = "increases_effect";
 decreases_effect_type const decreases_effect = "decreases_effect";
-effect_observation_type const effect_observation = "effect_observation";
-effect_type const effect = "effect";
+base_effect_observation_type const effect_observation = "effect_observation";
+base_effect_type const effect = "effect";
 
-rule_type const rule = "rule";
-sketch_type const sketch = "sketch";
-sketch_root_type const sketch_root = "sketch_root";
+base_rule_type const rule = "rule";
+base_sketch_type const sketch = "sketch";
+base_sketch_root_type const sketch_root = "sketch_root";
 
 inline auto identifier_parser() { return raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]]; }
 
@@ -56,18 +57,18 @@ const auto numerical_feature_def = (lit("(") >> lit(NumericalFeature::keyword)) 
                                    > runir::kr::dl::grammar::parser::numerical_parser() > lit(")");
 const auto feature_def = boolean_feature | numerical_feature;
 
-const auto positive_condition_def = lit(Positive::keyword) >> attr(Positive {});
-const auto negative_condition_def = lit(Negative::keyword) >> attr(Negative {});
-const auto equal_zero_condition_def = lit(EqualZero::keyword) >> attr(EqualZero {});
-const auto greater_zero_condition_def = lit(GreaterZero::keyword) >> attr(GreaterZero {});
+const auto positive_condition_def = lit(ast::Positive::keyword) >> attr(ast::Positive {});
+const auto negative_condition_def = lit(ast::Negative::keyword) >> attr(ast::Negative {});
+const auto equal_zero_condition_def = lit(ast::EqualZero::keyword) >> attr(ast::EqualZero {});
+const auto greater_zero_condition_def = lit(ast::GreaterZero::keyword) >> attr(ast::GreaterZero {});
 const auto condition_observation_def = positive_condition | negative_condition | equal_zero_condition | greater_zero_condition;
 const auto condition_def = (lit("(") >> condition_observation) > identifier_parser() > lit(")");
 
-const auto positive_effect_def = lit(Positive::keyword) >> attr(Positive {});
-const auto negative_effect_def = lit(Negative::keyword) >> attr(Negative {});
-const auto unchanged_effect_def = lit(Unchanged::keyword) >> attr(Unchanged {});
-const auto increases_effect_def = lit(Increases::keyword) >> attr(Increases {});
-const auto decreases_effect_def = lit(Decreases::keyword) >> attr(Decreases {});
+const auto positive_effect_def = lit(ast::Positive::keyword) >> attr(ast::Positive {});
+const auto negative_effect_def = lit(ast::Negative::keyword) >> attr(ast::Negative {});
+const auto unchanged_effect_def = lit(ast::Unchanged::keyword) >> attr(ast::Unchanged {});
+const auto increases_effect_def = lit(ast::Increases::keyword) >> attr(ast::Increases {});
+const auto decreases_effect_def = lit(ast::Decreases::keyword) >> attr(ast::Decreases {});
 const auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
 const auto effect_def = (lit("(") >> effect_observation) > identifier_parser() > lit(")");
 
@@ -146,28 +147,28 @@ struct SketchRootClass : ErrorHandlerBase
 {
 };
 
-boolean_feature_type const& boolean_feature_parser() { return boolean_feature; }
-numerical_feature_type const& numerical_feature_parser() { return numerical_feature; }
-feature_type const& feature_parser() { return feature; }
+base_boolean_feature_type const& boolean_feature_parser() { return boolean_feature; }
+base_numerical_feature_type const& numerical_feature_parser() { return numerical_feature; }
+base_feature_type const& feature_parser() { return feature; }
 
 positive_condition_type const& positive_condition_parser() { return positive_condition; }
 negative_condition_type const& negative_condition_parser() { return negative_condition; }
 equal_zero_condition_type const& equal_zero_condition_parser() { return equal_zero_condition; }
 greater_zero_condition_type const& greater_zero_condition_parser() { return greater_zero_condition; }
-condition_observation_type const& condition_observation_parser() { return condition_observation; }
-condition_type const& condition_parser() { return condition; }
+base_condition_observation_type const& condition_observation_parser() { return condition_observation; }
+base_condition_type const& condition_parser() { return condition; }
 
 positive_effect_type const& positive_effect_parser() { return positive_effect; }
 negative_effect_type const& negative_effect_parser() { return negative_effect; }
 unchanged_effect_type const& unchanged_effect_parser() { return unchanged_effect; }
 increases_effect_type const& increases_effect_parser() { return increases_effect; }
 decreases_effect_type const& decreases_effect_parser() { return decreases_effect; }
-effect_observation_type const& effect_observation_parser() { return effect_observation; }
-effect_type const& effect_parser() { return effect; }
+base_effect_observation_type const& effect_observation_parser() { return effect_observation; }
+base_effect_type const& effect_parser() { return effect; }
 
-rule_type const& rule_parser() { return rule; }
-sketch_type const& sketch_parser() { return sketch; }
-sketch_root_type const& sketch_root_parser() { return sketch_root; }
+base_rule_type const& rule_parser() { return rule; }
+base_sketch_type const& sketch_parser() { return sketch; }
+base_sketch_root_type const& sketch_root_parser() { return sketch_root; }
 
 }  // namespace runir::kr::ps::base::dl::parser
 

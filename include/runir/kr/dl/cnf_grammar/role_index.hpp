@@ -9,7 +9,8 @@
 namespace tyr
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 struct Index<runir::kr::dl::cnf_grammar::Role<Family, Tag>> : IndexMixin<Index<runir::kr::dl::cnf_grammar::Role<Family, Tag>>>
 {
     using Base = IndexMixin<Index<runir::kr::dl::cnf_grammar::Role<Family, Tag>>>;

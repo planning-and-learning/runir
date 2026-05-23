@@ -128,6 +128,17 @@ struct Data<runir::kr::dl::cnf_grammar::Role<Family, runir::kr::dl::IdentityTag>
     using Base::Base;
 };
 
+template<runir::kr::dl::FamilyTag Family>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, runir::kr::dl::RegisterTag>
+struct Data<runir::kr::dl::cnf_grammar::Role<Family, runir::kr::dl::RegisterTag>> :
+    runir::kr::dl::cnf_grammar::RegisterData<runir::kr::dl::cnf_grammar::Role<Family, runir::kr::dl::RegisterTag>,
+                                             runir::kr::dl::Role<Family, runir::kr::dl::RegisterIdentifierTag>>
+{
+    using Base = runir::kr::dl::cnf_grammar::RegisterData<runir::kr::dl::cnf_grammar::Role<Family, runir::kr::dl::RegisterTag>,
+                                                          runir::kr::dl::Role<Family, runir::kr::dl::RegisterIdentifierTag>>;
+    using Base::Base;
+};
+
 }  // namespace tyr
 
 #endif
