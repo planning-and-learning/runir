@@ -14,6 +14,41 @@
 #include <tyr/formalism/object_view.hpp>
 #include <utility>
 
+namespace runir::kr::dl::semantics
+{
+
+template<runir::kr::dl::CategoryTag Category, typename C>
+struct DenotationElementType;
+
+template<typename C>
+struct DenotationElementType<runir::kr::dl::BooleanTag, C>
+{
+    using Type = bool;
+};
+
+template<typename C>
+struct DenotationElementType<runir::kr::dl::NumericalTag, C>
+{
+    using Type = runir::uint_t;
+};
+
+template<typename C>
+struct DenotationElementType<runir::kr::dl::ConceptTag, C>
+{
+    using Type = tyr::View<tyr::Index<tyr::formalism::Object>, C>;
+};
+
+template<typename C>
+struct DenotationElementType<runir::kr::dl::RoleTag, C>
+{
+    using Type = std::pair<tyr::View<tyr::Index<tyr::formalism::Object>, C>, tyr::View<tyr::Index<tyr::formalism::Object>, C>>;
+};
+
+template<runir::kr::dl::CategoryTag Category, typename C>
+using DenotationElement = typename DenotationElementType<Category, C>::Type;
+
+}  // namespace runir::kr::dl::semantics
+
 namespace tyr
 {
 
@@ -43,7 +78,10 @@ public:
         ConceptIterator() = default;
         ConceptIterator(const View& view, size_t object) noexcept : m_view(&view), m_object(object) {}
 
-        auto operator*() const noexcept { return make_view(Index<formalism::Object>(static_cast<uint_t>(m_object)), m_view->get_context()); }
+        auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElement<runir::kr::dl::ConceptTag, C>
+        {
+            return make_view(Index<formalism::Object>(static_cast<uint_t>(m_object)), m_view->get_context());
+        }
 
         ConceptIterator& operator++() noexcept
         {
@@ -90,7 +128,7 @@ public:
                 advance_to_next_nonempty_row();
         }
 
-        auto operator*() const noexcept
+        auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElement<runir::kr::dl::RoleTag, C>
         {
             return std::pair(make_view(Index<formalism::Object>(static_cast<uint_t>(m_source)), m_view->get_context()),
                              make_view(Index<formalism::Object>(static_cast<uint_t>(m_target)), m_view->get_context()));

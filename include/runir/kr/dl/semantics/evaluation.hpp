@@ -513,13 +513,8 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> construc
     }
     else if constexpr (std::same_as<Tag, RegisterTag>)
     {
-        const auto denotation = context.template get<ConceptTag>(constructor.get_identifier());
-        const auto denotation_view = tyr::View<tyr::Index<Denotation<ConceptTag>>, DenotationRepository>(denotation, context.get_denotation_repository());
-        const auto concept_bitset = denotation_view.get();
-        const auto object = concept_bitset.find_first();
-        if (object == decltype(concept_bitset)::npos)
-            throw std::runtime_error("Concept denotation register is empty.");
-        result_bitset.set(object);
+        const auto object = context.template get<ConceptTag>(constructor.get_identifier());
+        result_bitset.set(tyr::uint_t(object.get_index()));
     }
 
     return result;
@@ -649,19 +644,8 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor
     }
     else if constexpr (std::same_as<Tag, RegisterTag>)
     {
-        const auto denotation = context.template get<RoleTag>(constructor.get_identifier());
-        const auto denotation_view = tyr::View<tyr::Index<Denotation<RoleTag>>, DenotationRepository>(denotation, context.get_denotation_repository());
-        for (uint_t source = 0; source < num_objects; ++source)
-        {
-            const auto row = denotation_view.get(detail::object_handle(source));
-            const auto target = row.find_first();
-            if (target != decltype(row)::npos)
-            {
-                detail::row(result, source).set(target);
-                return result;
-            }
-        }
-        throw std::runtime_error("Role denotation register is empty.");
+        const auto [source, target] = context.template get<RoleTag>(constructor.get_identifier());
+        detail::row(result, source.get_index()).set(tyr::uint_t(target.get_index()));
     }
 
     return result;

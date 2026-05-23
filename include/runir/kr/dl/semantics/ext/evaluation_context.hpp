@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 namespace runir::kr::dl::semantics
 {
@@ -23,11 +24,13 @@ public:
                                                    Concept<runir::kr::ExtFamilyTag, RegisterIdentifierTag>,
                                                    Role<runir::kr::ExtFamilyTag, RegisterIdentifierTag>>>;
 
-    template<CategoryTag Category>
-    using DenotationIndex = tyr::Index<Denotation<Category>>;
+    using Self = EvaluationContext<runir::kr::ExtFamilyTag, Kind>;
 
     template<CategoryTag Category>
-    using Registers = std::array<std::optional<DenotationIndex<Category>>, runir::kr::dl::num_registers>;
+    using Element = DenotationElement<Category, Self>;
+
+    template<CategoryTag Category>
+    using Registers = std::array<std::optional<Element<Category>>, runir::kr::dl::num_registers>;
 
 private:
     using Base = BaseEvaluationContext<EvaluationContext<runir::kr::ExtFamilyTag, Kind>, Kind>;
@@ -65,9 +68,9 @@ public:
 
     template<CategoryTag Category>
         requires(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
-    void set(Register<Category> reg, DenotationIndex<Category> denotation)
+    void set(Register<Category> reg, Element<Category> element)
     {
-        registers<Category>()[verify_bounds<Category>(reg)] = denotation;
+        registers<Category>()[verify_bounds<Category>(reg)] = std::move(element);
     }
 
     template<CategoryTag Category>
@@ -79,7 +82,7 @@ public:
 
     template<CategoryTag Category>
         requires(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
-    DenotationIndex<Category> get(Register<Category> reg) const
+    Element<Category> get(Register<Category> reg) const
     {
         const auto index = verify_bounds<Category>(reg);
         return verify_set<Category>(index);
@@ -96,7 +99,7 @@ private:
     }
 
     template<CategoryTag Category>
-    DenotationIndex<Category> verify_set(size_t index) const
+    Element<Category> verify_set(size_t index) const
     {
         const auto& register_array = registers<Category>();
         if (!register_array[index])
