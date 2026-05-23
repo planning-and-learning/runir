@@ -2,6 +2,7 @@
 #define RUNIR_KR_DL_EXT_CONSTRUCTOR_DATA_HPP_
 
 #include "runir/kr/dl/ext/concept_data.hpp"
+#include "runir/kr/dl/numerical_data.hpp"
 #include "runir/kr/dl/role_data.hpp"
 
 #include <cista/containers/variant.h>
@@ -82,6 +83,57 @@ struct Data<runir::kr::dl::Constructor<runir::kr::dl::ExtFamilyTag, runir::kr::d
                                              Index<runir::kr::dl::Role<Family, runir::kr::dl::RegisterTag>>>;
 
     Index<runir::kr::dl::Constructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::RoleTag>> index;
+    Variant value;
+
+    Data() = default;
+    explicit Data(Variant value_) : index(), value(std::move(value_)) {}
+
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(value);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, value); }
+    auto identifying_members() const noexcept { return std::tie(value); }
+};
+
+template<>
+struct Data<runir::kr::dl::Constructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::BooleanTag>>
+{
+    using Family = runir::kr::dl::ExtFamilyTag;
+    using Variant = ::cista::offset::variant<Index<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicStateTag<tyr::formalism::StaticTag>>>,
+                                             Index<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicStateTag<tyr::formalism::FluentTag>>>,
+                                             Index<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicStateTag<tyr::formalism::DerivedTag>>>,
+                                             Index<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicGoalTag<tyr::formalism::StaticTag>>>,
+                                             Index<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicGoalTag<tyr::formalism::FluentTag>>>,
+                                             Index<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>>,
+                                             Index<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>>>;
+
+    Index<runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>> index;
+    Variant value;
+
+    Data() = default;
+    explicit Data(Variant value_) : index(), value(std::move(value_)) {}
+
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(value);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, value); }
+    auto identifying_members() const noexcept { return std::tie(value); }
+};
+
+template<>
+struct Data<runir::kr::dl::Constructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::NumericalTag>>
+{
+    using Family = runir::kr::dl::ExtFamilyTag;
+    using Variant = ::cista::offset::variant<Index<runir::kr::dl::Numerical<Family, runir::kr::dl::CountTag>>,
+                                             Index<runir::kr::dl::Numerical<Family, runir::kr::dl::DistanceTag>>>;
+
+    Index<runir::kr::dl::Constructor<Family, runir::kr::dl::NumericalTag>> index;
     Variant value;
 
     Data() = default;

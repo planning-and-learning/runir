@@ -55,18 +55,18 @@ void bind_view(nb::module_& m, const std::string& name)
             "is_compatible_with",
             [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::LiftedTag>& context) { return view.is_compatible_with(context); },
             "context"_a);
-    if constexpr (requires(const View& view) { runir::kr::ps::syntactic_complexity(view); })
-        cls.def("syntactic_complexity", [](const View& view) { return runir::kr::ps::syntactic_complexity(view); });
+    if constexpr (requires(const View& view) { runir::kr::ps::base::syntactic_complexity(view); })
+        cls.def("syntactic_complexity", [](const View& view) { return runir::kr::ps::base::syntactic_complexity(view); });
 }
 
 }  // namespace
 
 void bind_views(nb::module_& m)
 {
-    bind_view<ConditionVariant<runir::kr::BaseFamilyTag>>(m, "ConditionVariant");
-    bind_view<EffectVariant<runir::kr::BaseFamilyTag>>(m, "EffectVariant");
-    bind_view<Rule<runir::kr::BaseFamilyTag>>(m, "Rule");
-    bind_view<Sketch<runir::kr::BaseFamilyTag>>(m, "Sketch");
+    bind_view<ConditionVariant>(m, "ConditionVariant");
+    bind_view<EffectVariant>(m, "EffectVariant");
+    bind_view<Rule>(m, "Rule");
+    bind_view<Sketch>(m, "Sketch");
 }
 
 }  // namespace runir::kr::ps::base

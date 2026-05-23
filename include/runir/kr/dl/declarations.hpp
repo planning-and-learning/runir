@@ -320,6 +320,7 @@ using BooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::Stat
                                              NonemptyTag>;
 
 using NumericalConstructorTags = tyr::TypeList<CountTag, DistanceTag>;
+
 template<FamilyTag Family, ConceptConstructorTag Tag>
 struct Concept;
 

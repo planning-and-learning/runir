@@ -91,8 +91,8 @@ void bind_view(nb::module_& m, const std::string& name)
             "is_compatible_with",
             [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::LiftedTag>& context) { return view.is_compatible_with(context); },
             "context"_a);
-    if constexpr (requires(const View& view) { runir::kr::ps::syntactic_complexity(view); })
-        cls.def("syntactic_complexity", [](const View& view) { return runir::kr::ps::syntactic_complexity(view); });
+    if constexpr (requires(const View& view) { runir::kr::ps::base::syntactic_complexity(view); })
+        cls.def("syntactic_complexity", [](const View& view) { return runir::kr::ps::base::syntactic_complexity(view); });
     else if constexpr (requires(const View& view) { runir::kr::ps::base::dl::syntactic_complexity(view); })
         cls.def("syntactic_complexity", [](const View& view) { return runir::kr::ps::base::dl::syntactic_complexity(view); });
 }
@@ -107,24 +107,24 @@ void bind_evaluation_contexts(nb::module_& m)
 
 void bind_views(nb::module_& m)
 {
-    bind_view<Feature<runir::kr::BaseFamilyTag, BooleanFeature>>(m, "BooleanFeature");
-    bind_view<Feature<runir::kr::BaseFamilyTag, NumericalFeature>>(m, "NumericalFeature");
-    bind_view<ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature>>(m, "ConcreteBooleanFeature");
-    bind_view<ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature>>(m, "ConcreteNumericalFeature");
+    bind_view<runir::kr::ps::base::Feature<BooleanFeature>>(m, "BooleanFeature");
+    bind_view<runir::kr::ps::base::Feature<NumericalFeature>>(m, "NumericalFeature");
+    bind_view<runir::kr::ps::base::ConcreteFeature<runir::kr::DlTag, BooleanFeature>>(m, "ConcreteBooleanFeature");
+    bind_view<runir::kr::ps::base::ConcreteFeature<runir::kr::DlTag, NumericalFeature>>(m, "ConcreteNumericalFeature");
 
-    bind_view<ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>(m, "ConcreteConditionVariant");
-    bind_view<ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature, Positive>>(m, "PositiveBooleanCondition");
-    bind_view<ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature, Negative>>(m, "NegativeBooleanCondition");
-    bind_view<ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature, EqualZero>>(m, "EqualZeroNumericalCondition");
-    bind_view<ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature, GreaterZero>>(m, "GreaterZeroNumericalCondition");
+    bind_view<runir::kr::ps::base::ConcreteConditionVariant<runir::kr::DlTag>>(m, "ConcreteConditionVariant");
+    bind_view<runir::kr::ps::base::ConcreteCondition<runir::kr::DlTag, BooleanFeature, Positive>>(m, "PositiveBooleanCondition");
+    bind_view<runir::kr::ps::base::ConcreteCondition<runir::kr::DlTag, BooleanFeature, Negative>>(m, "NegativeBooleanCondition");
+    bind_view<runir::kr::ps::base::ConcreteCondition<runir::kr::DlTag, NumericalFeature, EqualZero>>(m, "EqualZeroNumericalCondition");
+    bind_view<runir::kr::ps::base::ConcreteCondition<runir::kr::DlTag, NumericalFeature, GreaterZero>>(m, "GreaterZeroNumericalCondition");
 
-    bind_view<ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>(m, "ConcreteEffectVariant");
-    bind_view<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature, Positive>>(m, "PositiveBooleanEffect");
-    bind_view<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature, Negative>>(m, "NegativeBooleanEffect");
-    bind_view<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature, Unchanged>>(m, "UnchangedBooleanEffect");
-    bind_view<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature, Increases>>(m, "IncreasesNumericalEffect");
-    bind_view<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature, Decreases>>(m, "DecreasesNumericalEffect");
-    bind_view<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature, Unchanged>>(m, "UnchangedNumericalEffect");
+    bind_view<runir::kr::ps::base::ConcreteEffectVariant<runir::kr::DlTag>>(m, "ConcreteEffectVariant");
+    bind_view<runir::kr::ps::base::ConcreteEffect<runir::kr::DlTag, BooleanFeature, Positive>>(m, "PositiveBooleanEffect");
+    bind_view<runir::kr::ps::base::ConcreteEffect<runir::kr::DlTag, BooleanFeature, Negative>>(m, "NegativeBooleanEffect");
+    bind_view<runir::kr::ps::base::ConcreteEffect<runir::kr::DlTag, BooleanFeature, Unchanged>>(m, "UnchangedBooleanEffect");
+    bind_view<runir::kr::ps::base::ConcreteEffect<runir::kr::DlTag, NumericalFeature, Increases>>(m, "IncreasesNumericalEffect");
+    bind_view<runir::kr::ps::base::ConcreteEffect<runir::kr::DlTag, NumericalFeature, Decreases>>(m, "DecreasesNumericalEffect");
+    bind_view<runir::kr::ps::base::ConcreteEffect<runir::kr::DlTag, NumericalFeature, Unchanged>>(m, "UnchangedNumericalEffect");
 }
 
 }  // namespace runir::kr::ps::base::dl

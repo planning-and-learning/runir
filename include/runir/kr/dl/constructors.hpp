@@ -6,12 +6,10 @@
 namespace runir::kr::dl
 {
 
-template<FamilyTag Family, typename Tag>
-    requires ConceptConstructorTag<Tag>
+template<FamilyTag Family, ConceptConstructorTag Tag>
 using FamilyConcept = Concept<Family, Tag>;
 
-template<FamilyTag Family, typename Tag>
-    requires RoleConstructorTag<Tag>
+template<FamilyTag Family, RoleConstructorTag Tag>
 using FamilyRole = Role<Family, Tag>;
 
 template<FamilyTag Family, BooleanConstructorTag Tag>
@@ -23,15 +21,13 @@ using FamilyNumerical = Numerical<Family, Tag>;
 template<FamilyTag Family, CategoryTag Category>
 using FamilyConstructor = Constructor<Family, Category>;
 
-template<typename Tag>
-    requires ConceptConstructorTag<Tag>
+template<ConceptConstructorTag Tag>
 using BaseConcept = FamilyConcept<BaseFamilyTag, Tag>;
 
 template<CategoryTag Category>
 using BaseConstructor = FamilyConstructor<BaseFamilyTag, Category>;
 
-template<typename Tag>
-    requires ConceptConstructorTag<Tag>
+template<ConceptConstructorTag Tag>
 using ExtConcept = FamilyConcept<ExtFamilyTag, Tag>;
 
 template<CategoryTag Category>

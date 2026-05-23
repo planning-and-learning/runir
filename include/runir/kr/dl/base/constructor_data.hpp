@@ -39,8 +39,7 @@ struct Data<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::
                                  Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AgreementTag>>,
                                  Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleFillersTag>>,
                                  Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::OneOfTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NominalTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RegisterTag>>>;
+                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NominalTag>>>;
 
     Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ConceptTag>> index;
     Variant value;
@@ -77,8 +76,7 @@ struct Data<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::
                                  Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::TransitiveClosureTag>>,
                                  Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ReflexiveTransitiveClosureTag>>,
                                  Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RestrictionTag>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::IdentityTag>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RegisterTag>>>;
+                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::IdentityTag>>>;
 
     Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleTag>> index;
     Variant value;

@@ -11,19 +11,19 @@ from pyrunir.kr.dl.semantics import (
     LiftedEvaluationContext as LiftedDLEvaluationContext,
     syntactic_complexity as dl_syntactic_complexity,
 )
-from pyrunir.kr.gp import (
-    PolicyProofStatus,
+from pyrunir.kr.ps.base import (
+    SketchProofStatus,
     find_ground_solution,
     prove_ground_solution,
     syntactic_complexity,
 )
-from pyrunir.kr.gp import RepositoryFactory as PolicyRepositoryFactory
-from pyrunir.kr.gp.dl import (
+from pyrunir.kr.ps.base import RepositoryFactory as SketchRepositoryFactory
+from pyrunir.kr.ps.base.dl import (
     GroundEvaluationContext,
     LiftedEvaluationContext,
-    PolicyFactory,
-    PolicySpecification,
-    parse_policy,
+    SketchFactory,
+    SketchSpecification,
+    parse_sketch,
 )
 from pytyr.common import ExecutionContext
 from pytyr.formalism.planning import Parser, ParserOptions
@@ -46,21 +46,21 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
     search_context = GroundTaskSearchContext(ground_task, execution_context)
 
     dl_repository = ConstructorRepositoryFactory().create(planning_domain)
-    policy_repository = PolicyRepositoryFactory().create(dl_repository)
-    empty_policy = PolicyFactory.create_empty(policy_repository)
-    empty_policy_description = str(empty_policy)
-    assert empty_policy_description == str(parse_policy(empty_policy_description, planning_domain, policy_repository))
-    assert syntactic_complexity(empty_policy) == 0
+    sketch_repository = SketchRepositoryFactory().create(dl_repository)
+    empty_sketch = SketchFactory.create_empty(sketch_repository)
+    empty_sketch_description = str(empty_sketch)
+    assert empty_sketch_description == str(parse_sketch(empty_sketch_description, planning_domain, sketch_repository))
+    assert syntactic_complexity(empty_sketch) == 0
 
-    policy = PolicyFactory.create(
-        PolicySpecification.GRIPPER_FRANCE_ET_AL_AAAI2021,
+    sketch = SketchFactory.create(
+        SketchSpecification.GRIPPER_FRANCE_ET_AL_AAAI2021,
         planning_domain,
-        policy_repository,
+        sketch_repository,
     )
-    policy_description = str(policy)
-    reparsed_policy = parse_policy(policy_description, planning_domain, policy_repository)
-    assert str(reparsed_policy) == policy_description
-    assert syntactic_complexity(policy) == 16
+    sketch_description = str(sketch)
+    reparsed_sketch = parse_sketch(sketch_description, planning_domain, sketch_repository)
+    assert str(reparsed_sketch) == sketch_description
+    assert syntactic_complexity(sketch) == 16
 
     initial_node = search_context.successor_generator.get_initial_node()
     labeled_successor = search_context.successor_generator.get_labeled_successor_nodes(initial_node)[0]
@@ -73,8 +73,8 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
     assert LiftedEvaluationContext is not None
     assert LiftedDLEvaluationContext is not None
 
-    assert isinstance(policy.is_compatible_with(evaluation_context), bool)
-    rule = next(iter(policy.get_rules()))
+    assert isinstance(sketch.is_compatible_with(evaluation_context), bool)
+    rule = next(iter(sketch.get_rules()))
     assert isinstance(rule.is_compatible_with(evaluation_context), bool)
     condition = next(iter(rule.get_conditions()))
     assert isinstance(condition.is_compatible_with(evaluation_context), bool)
@@ -87,10 +87,10 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
     assert isinstance(feature.evaluate(dl_evaluation_context), bool)
     assert dl_syntactic_complexity(dl_constructor) == dl_constructor.syntactic_complexity()
     assert feature.syntactic_complexity() == concrete_feature.syntactic_complexity()
-    assert syntactic_complexity(policy) == policy.syntactic_complexity()
+    assert syntactic_complexity(sketch) == sketch.syntactic_complexity()
     assert dl_denotation.get_index() is not None
     for view in (
-        policy,
+        sketch,
         rule,
         condition,
         concrete_condition_variant,
@@ -103,13 +103,13 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
         assert str(view)
         assert isinstance(hash(view), int)
 
-    proof_result = prove_ground_solution(search_context, policy)
-    assert proof_result.status == PolicyProofStatus.SUCCESS
+    proof_result = prove_ground_solution(search_context, sketch)
+    assert proof_result.status == SketchProofStatus.SUCCESS
     assert proof_result.is_successful()
     assert proof_result.deadend_transitions == []
     assert proof_result.open_states == []
     assert proof_result.cycle == []
 
-    search_result = find_ground_solution(search_context, policy)
+    search_result = find_ground_solution(search_context, sketch)
     assert search_result.status == SearchStatus.SOLVED
     assert search_result.plan is not None

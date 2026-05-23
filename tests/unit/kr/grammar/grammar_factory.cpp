@@ -56,8 +56,8 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
 
         const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, planning_domain.get_domain(), repository);
 
-        EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::Sketch>(0));
-        EXPECT_EQ(repository.template size<kr::ps::Sketch>(), 1);
+        EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::base::Sketch>(0));
+        EXPECT_EQ(repository.template size<kr::ps::base::Sketch>(), 1);
 
         const auto formatted = fmt::format("{}", sketch);
         const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), repository);
@@ -98,18 +98,18 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 
     const auto sketch = kr::ps::base::dl::parse_sketch(description, planning_domain.get_domain(), repository);
 
-    EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::Sketch>(0));
-    EXPECT_EQ(repository.template size<kr::ps::Sketch>(), 1);
-    EXPECT_EQ(repository.template size<kr::ps::Rule>(), 2);
-    EXPECT_EQ(repository.template size<kr::ps::Feature<kr::ps::base::dl::BooleanFeature>>(), 1);
-    EXPECT_EQ(repository.template size<kr::ps::Feature<kr::ps::base::dl::NumericalFeature>>(), 1);
-    EXPECT_EQ(repository.template size<kr::ps::ConditionVariant>(), 4);
-    EXPECT_EQ(repository.template size<kr::ps::EffectVariant>(), 5);
+    EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::base::Sketch>(0));
+    EXPECT_EQ(repository.template size<kr::ps::base::Sketch>(), 1);
+    EXPECT_EQ(repository.template size<kr::ps::base::Rule>(), 2);
+    EXPECT_EQ(repository.template size<kr::ps::base::Feature<kr::ps::base::dl::BooleanFeature>>(), 1);
+    EXPECT_EQ(repository.template size<kr::ps::base::Feature<kr::ps::base::dl::NumericalFeature>>(), 1);
+    EXPECT_EQ(repository.template size<kr::ps::base::ConditionVariant>(), 4);
+    EXPECT_EQ(repository.template size<kr::ps::base::EffectVariant>(), 5);
 
     const auto formatted = fmt::format("{}", sketch);
     const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), repository);
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
-    EXPECT_EQ(kr::ps::syntactic_complexity(sketch), 6);
+    EXPECT_EQ(kr::ps::base::syntactic_complexity(sketch), 6);
 }
 
 TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)

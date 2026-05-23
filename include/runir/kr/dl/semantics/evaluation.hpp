@@ -66,6 +66,16 @@ auto row(const RoleBuilderPtr& role, tyr::Index<tyr::formalism::Object> object) 
     return role->get_row_bitset(object);
 }
 
+template<tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<ExtFamilyTag, RegisterTag>>, C> constructor,
+                   EvaluationContext<ExtFamilyTag, Kind>& context,
+                   EvaluationWorkspace& workspace) -> decltype(detail::make_concept_builder(context));
+
+template<tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<ExtFamilyTag, RegisterTag>>, C> constructor,
+                   EvaluationContext<ExtFamilyTag, Kind>& context,
+                   EvaluationWorkspace& workspace) -> decltype(detail::make_role_builder(context));
+
 template<typename RoleBuilderPtr>
 bool role_any(const RoleBuilderPtr& role) noexcept
 {
@@ -513,9 +523,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> construc
     }
     else if constexpr (std::same_as<Tag, RegisterTag>)
     {
-        const auto& object = context.at(constructor.get_identifier());
-        if (object)
-            result_bitset.set(tyr::uint_t(object->get_index()));
+        static_assert(!std::same_as<Tag, RegisterTag>, "Register concept evaluation is defined by the ext semantics evaluator.");
     }
 
     return result;
@@ -645,12 +653,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor
     }
     else if constexpr (std::same_as<Tag, RegisterTag>)
     {
-        const auto& value = context.at(constructor.get_identifier());
-        if (value)
-        {
-            const auto& [source, target] = *value;
-            detail::row(result, source.get_index()).set(tyr::uint_t(target.get_index()));
-        }
+        static_assert(!std::same_as<Tag, RegisterTag>, "Register role evaluation is defined by the ext semantics evaluator.");
     }
 
     return result;

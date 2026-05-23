@@ -1,6 +1,6 @@
 # Import all classes and functions for better IDE support
 
-from ...._pyrunir.kr.ps.base.dl import (
+from ....._pyrunir.kr.ps.base.dl import (
     BooleanFeature,
     BooleanFeatureIndex,
     ConcreteBooleanFeature,

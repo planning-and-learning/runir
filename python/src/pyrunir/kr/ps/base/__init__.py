@@ -1,6 +1,6 @@
 # Import all classes and functions for better IDE support
 
-from ..._pyrunir.kr.ps.base import (
+from ...._pyrunir.kr.ps.base import (
     ConditionVariant,
     ConditionVariantIndex,
     EffectVariant,

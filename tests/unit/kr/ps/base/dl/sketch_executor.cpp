@@ -62,7 +62,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
         auto repository = repository_factory.create(dl_repository);
         const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, task->get_domain().get_domain(), repository);
-        const auto result = kr::ps::prove_solution(context, sketch);
+        const auto result = kr::ps::base::prove_solution(context, sketch);
 
         EXPECT_TRUE(result.is_successful()) << test_case.domain;
         EXPECT_TRUE(result.deadend_transitions.empty()) << test_case.domain;
@@ -70,7 +70,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_TRUE(result.cycle.empty()) << test_case.domain;
         EXPECT_GT(result.graph->get_num_vertices(), 0) << test_case.domain;
 
-        const auto search_result = kr::ps::find_solution(context, sketch);
+        const auto search_result = kr::ps::base::find_solution(context, sketch);
         EXPECT_EQ(search_result.status, p::SearchStatus::SOLVED) << test_case.domain;
         EXPECT_TRUE(search_result.plan) << test_case.domain;
     }
