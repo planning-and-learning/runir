@@ -1,6 +1,8 @@
 #ifndef RUNIR_DECLARATIONS_HPP_
 #define RUNIR_DECLARATIONS_HPP_
 
+#include "runir/kr/declarations.hpp"
+
 #include <concepts>
 #include <type_traits>
 #include <tyr/common/type_list.hpp>
@@ -8,6 +10,12 @@
 
 namespace runir::kr::dl
 {
+
+using BaseFamilyTag = runir::kr::BaseFamilyTag;
+using ExtFamilyTag = runir::kr::ExtFamilyTag;
+
+template<typename T>
+concept FamilyTag = runir::kr::FamilyTag<T>;
 
 /**
  * Categories
@@ -184,6 +192,10 @@ struct DistanceTag
 {
 };
 
+struct RegisterTag
+{
+};
+
 template<typename T>
 struct IsAtomicStateTag : std::false_type
 {
@@ -282,6 +294,82 @@ using BooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::Stat
                                              NonemptyTag>;
 
 using NumericalConstructorTags = tyr::TypeList<CountTag, DistanceTag>;
+
+
+template<typename Family, typename T>
+concept FamilyConceptConstructorTag = FamilyTag<Family> && (ConceptConstructorTag<T> || (std::same_as<Family, ExtFamilyTag> && std::same_as<T, RegisterTag>));
+
+template<FamilyTag Family>
+struct FamilyConceptConstructorTags
+{
+    using Type = ConceptConstructorTags;
+};
+
+template<>
+struct FamilyConceptConstructorTags<ExtFamilyTag>
+{
+    using Type = tyr::ConcatTypeListsT<ConceptConstructorTags, tyr::TypeList<RegisterTag>>;
+};
+
+template<FamilyTag Family>
+using FamilyConceptConstructorTagsT = typename FamilyConceptConstructorTags<Family>::Type;
+
+template<typename Family, typename T>
+concept FamilyRoleConstructorTag = FamilyTag<Family> && RoleConstructorTag<T>;
+
+template<FamilyTag Family>
+using FamilyRoleConstructorTagsT = RoleConstructorTags;
+
+template<typename Family, typename T>
+concept FamilyBooleanConstructorTag = FamilyTag<Family> && BooleanConstructorTag<T>;
+
+template<FamilyTag Family>
+using FamilyBooleanConstructorTagsT = BooleanConstructorTags;
+
+template<typename Family, typename T>
+concept FamilyNumericalConstructorTag = FamilyTag<Family> && NumericalConstructorTag<T>;
+
+template<FamilyTag Family>
+using FamilyNumericalConstructorTagsT = NumericalConstructorTags;
+
+template<FamilyTag Family, typename Tag>
+    requires FamilyConceptConstructorTag<Family, Tag>
+struct Concept;
+
+template<FamilyTag Family, typename Tag>
+    requires RoleConstructorTag<Tag>
+struct Role;
+
+template<FamilyTag Family, typename Tag>
+    requires BooleanConstructorTag<Tag>
+struct Boolean;
+
+template<FamilyTag Family, typename Tag>
+    requires NumericalConstructorTag<Tag>
+struct Numerical;
+
+template<FamilyTag Family, CategoryTag Category>
+struct Constructor;
+
+template<FamilyTag Family>
+struct ConstructorFamily
+{
+    template<typename Tag>
+        requires FamilyConceptConstructorTag<Family, Tag>
+    using Concept = runir::kr::dl::Concept<Family, Tag>;
+
+    template<RoleConstructorTag Tag>
+    using Role = runir::kr::dl::Role<Family, Tag>;
+
+    template<BooleanConstructorTag Tag>
+    using Boolean = runir::kr::dl::Boolean<Family, Tag>;
+
+    template<NumericalConstructorTag Tag>
+    using Numerical = runir::kr::dl::Numerical<Family, Tag>;
+
+    template<CategoryTag Category>
+    using Constructor = runir::kr::dl::Constructor<Family, Category>;
+};
 
 }
 

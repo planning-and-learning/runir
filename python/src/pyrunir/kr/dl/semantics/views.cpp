@@ -66,20 +66,20 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_role", &View::get_role);
     if constexpr (requires(const View& view) { view.get_concept(); })
         cls.def("get_concept", &View::get_concept);
-    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::GroundTag>& context) {
+    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context) {
                       runir::kr::dl::semantics::evaluate(view, context);
                   })
         cls.def(
             "evaluate",
-            [](const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::GroundTag>& context)
+            [](const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context)
             { return runir::kr::dl::semantics::evaluate(view, context); },
             "context"_a);
-    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::LiftedTag>& context) {
+    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context) {
                       runir::kr::dl::semantics::evaluate(view, context);
                   })
         cls.def(
             "evaluate",
-            [](const View& view, runir::kr::dl::semantics::EvaluationContext<tyr::planning::LiftedTag>& context)
+            [](const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context)
             { return runir::kr::dl::semantics::evaluate(view, context); },
             "context"_a);
     if constexpr (requires(const View& view) { runir::kr::dl::semantics::syntactic_complexity(view); })
@@ -153,10 +153,10 @@ void bind_semantics_views(nb::module_& m)
     bind_view<Numerical<CountTag>, ConstructorRepository>(m, "NumericalCount");
     bind_view<Numerical<DistanceTag>, ConstructorRepository>(m, "NumericalDistance");
 
-    m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<ConceptTag, ConstructorRepository>, "constructor"_a);
-    m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<RoleTag, ConstructorRepository>, "constructor"_a);
-    m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<BooleanTag, ConstructorRepository>, "constructor"_a);
-    m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<NumericalTag, ConstructorRepository>, "constructor"_a);
+    m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<BaseFamilyTag, ConceptTag, ConstructorRepository>, "constructor"_a);
+    m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<BaseFamilyTag, RoleTag, ConstructorRepository>, "constructor"_a);
+    m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<BaseFamilyTag, BooleanTag, ConstructorRepository>, "constructor"_a);
+    m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<BaseFamilyTag, NumericalTag, ConstructorRepository>, "constructor"_a);
 }
 
 }  // namespace runir::kr::dl

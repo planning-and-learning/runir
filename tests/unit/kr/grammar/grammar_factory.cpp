@@ -7,11 +7,11 @@
 #include <runir/kr/dl/grammar/formatter.hpp>
 #include <runir/kr/dl/grammar/grammar_factory.hpp>
 #include <runir/kr/dl/grammar/parser.hpp>
-#include <runir/kr/gp/dl/parser.hpp>
-#include <runir/kr/gp/dl/policy_factory.hpp>
-#include <runir/kr/gp/formatter.hpp>
-#include <runir/kr/gp/repository.hpp>
-#include <runir/kr/gp/syntactic_complexity.hpp>
+#include <runir/kr/ps/base/dl/parser.hpp>
+#include <runir/kr/ps/base/dl/sketch_factory.hpp>
+#include <runir/kr/ps/formatter.hpp>
+#include <runir/kr/ps/repository.hpp>
+#include <runir/kr/ps/syntactic_complexity.hpp>
 #include <string>
 #include <tyr/common/equal_to.hpp>
 #include <tyr/formalism/planning/parser.hpp>
@@ -28,25 +28,25 @@ std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "plann
 
 }  // namespace
 
-TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesParse)
+TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
 {
     namespace fp = tyr::formalism::planning;
 
     struct Case
     {
         std::filesystem::path domain;
-        kr::gp::dl::PolicySpecification specification;
+        kr::ps::base::dl::SketchSpecification specification;
     };
 
     const auto cases = std::vector<Case> {
-        { benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl", kr::gp::dl::PolicySpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "tests" / "classical" / "blocks_3" / "domain.pddl", kr::gp::dl::PolicySpecification::BLOCKS3OPS_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "tests" / "classical" / "spanner" / "domain.pddl", kr::gp::dl::PolicySpecification::SPANNER_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "tests" / "classical" / "delivery" / "domain.pddl", kr::gp::dl::PolicySpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl", kr::ps::base::dl::SketchSpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "tests" / "classical" / "blocks_3" / "domain.pddl", kr::ps::base::dl::SketchSpecification::BLOCKS3OPS_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "tests" / "classical" / "spanner" / "domain.pddl", kr::ps::base::dl::SketchSpecification::SPANNER_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "tests" / "classical" / "delivery" / "domain.pddl", kr::ps::base::dl::SketchSpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
     };
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::gp::RepositoryFactory();
+    auto repository_factory = kr::ps::RepositoryFactory();
 
     for (const auto& test_case : cases)
     {
@@ -54,18 +54,18 @@ TEST(RunirTests, FranceEtAlAaai2021PolicyFactoriesParse)
         auto dl_repository = dl_repository_factory.create_shared(planning_domain.get_repository());
         auto repository = repository_factory.create(dl_repository);
 
-        const auto policy = kr::gp::dl::PolicyFactory::create(test_case.specification, planning_domain.get_domain(), repository);
+        const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, planning_domain.get_domain(), repository);
 
-        EXPECT_EQ(policy.get_index(), tyr::Index<kr::gp::Policy>(0));
-        EXPECT_EQ(repository.template size<kr::gp::Policy>(), 1);
+        EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::Sketch>(0));
+        EXPECT_EQ(repository.template size<kr::ps::Sketch>(), 1);
 
-        const auto formatted = fmt::format("{}", policy);
-        const auto reparsed = kr::gp::dl::parse_policy(formatted, planning_domain.get_domain(), repository);
+        const auto formatted = fmt::format("{}", sketch);
+        const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), repository);
         EXPECT_EQ(fmt::format("{}", reparsed), formatted);
     }
 }
 
-TEST(RunirTests, GeneralPolicyParserParsesConditionsAndEffects)
+TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 {
     namespace fp = tyr::formalism::planning;
 
@@ -73,12 +73,12 @@ TEST(RunirTests, GeneralPolicyParserParsesConditionsAndEffects)
     const auto planning_domain = fp::Parser(domain_filepath).get_domain();
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::gp::RepositoryFactory();
+    auto repository_factory = kr::ps::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create_shared(planning_domain.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto description = std::string { R"(
-(policy
+(sketch
   (:features
     (boolean ready "r" "" (b_nonempty (c_atomic_state "ball")))
     (numerical count "c" "" (n_count (c_atomic_state "ball")))
@@ -96,20 +96,20 @@ TEST(RunirTests, GeneralPolicyParserParsesConditionsAndEffects)
 )
 )" };
 
-    const auto policy = kr::gp::dl::parse_policy(description, planning_domain.get_domain(), repository);
+    const auto sketch = kr::ps::base::dl::parse_sketch(description, planning_domain.get_domain(), repository);
 
-    EXPECT_EQ(policy.get_index(), tyr::Index<kr::gp::Policy>(0));
-    EXPECT_EQ(repository.template size<kr::gp::Policy>(), 1);
-    EXPECT_EQ(repository.template size<kr::gp::Rule>(), 2);
-    EXPECT_EQ(repository.template size<kr::gp::Feature<kr::gp::dl::BooleanFeature>>(), 1);
-    EXPECT_EQ(repository.template size<kr::gp::Feature<kr::gp::dl::NumericalFeature>>(), 1);
-    EXPECT_EQ(repository.template size<kr::gp::ConditionVariant>(), 4);
-    EXPECT_EQ(repository.template size<kr::gp::EffectVariant>(), 5);
+    EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::Sketch>(0));
+    EXPECT_EQ(repository.template size<kr::ps::Sketch>(), 1);
+    EXPECT_EQ(repository.template size<kr::ps::Rule>(), 2);
+    EXPECT_EQ(repository.template size<kr::ps::Feature<kr::ps::base::dl::BooleanFeature>>(), 1);
+    EXPECT_EQ(repository.template size<kr::ps::Feature<kr::ps::base::dl::NumericalFeature>>(), 1);
+    EXPECT_EQ(repository.template size<kr::ps::ConditionVariant>(), 4);
+    EXPECT_EQ(repository.template size<kr::ps::EffectVariant>(), 5);
 
-    const auto formatted = fmt::format("{}", policy);
-    const auto reparsed = kr::gp::dl::parse_policy(formatted, planning_domain.get_domain(), repository);
+    const auto formatted = fmt::format("{}", sketch);
+    const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), repository);
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
-    EXPECT_EQ(kr::gp::syntactic_complexity(policy), 6);
+    EXPECT_EQ(kr::ps::syntactic_complexity(sketch), 6);
 }
 
 TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
@@ -288,8 +288,8 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
 
     const auto reparsed_grammar_view = kr::dl::grammar::parse_grammar(formatted, domain, repository);
     EXPECT_TRUE(tyr::EqualTo<decltype(grammar_view)> {}(grammar_view, reparsed_grammar_view));
-    EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag>(), 1);
-    EXPECT_EQ(grammar_view.get_index(), tyr::Index<kr::dl::grammar::GrammarTag>(0));
+    EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::dl::BaseFamilyTag>>(), 1);
+    EXPECT_EQ(grammar_view.get_index(), tyr::Index<kr::dl::grammar::GrammarTag<runir::kr::dl::BaseFamilyTag>>(0));
 
     auto cnf_repository_factory = kr::dl::cnf_grammar::ConstructorRepositoryFactory();
     auto cnf_repository = cnf_repository_factory.create(planning_domain.get_repository());
@@ -301,7 +301,7 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
     const auto reparsed_cnf_source_grammar_view = kr::dl::grammar::parse_grammar(cnf_formatted, domain, repository);
     const auto reparsed_cnf_grammar_view = kr::dl::cnf_grammar::translate(reparsed_cnf_source_grammar_view, cnf_repository);
     EXPECT_TRUE(tyr::EqualTo<decltype(cnf_grammar_view)> {}(cnf_grammar_view, reparsed_cnf_grammar_view));
-    EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag>(), 2);
+    EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::dl::BaseFamilyTag>>(), 2);
 }
 
 TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryParsesDomainsWithBooleanPrimitivePredicates)
@@ -458,8 +458,8 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryParsesDomainsWithBooleanPrimiti
 
     const auto reparsed_grammar_view = kr::dl::grammar::parse_grammar(formatted, domain, repository);
     EXPECT_TRUE(tyr::EqualTo<decltype(grammar_view)> {}(grammar_view, reparsed_grammar_view));
-    EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag>(), 1);
-    EXPECT_EQ(grammar_view.get_index(), tyr::Index<kr::dl::grammar::GrammarTag>(0));
+    EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::dl::BaseFamilyTag>>(), 1);
+    EXPECT_EQ(grammar_view.get_index(), tyr::Index<kr::dl::grammar::GrammarTag<runir::kr::dl::BaseFamilyTag>>(0));
 
     auto cnf_repository_factory = kr::dl::cnf_grammar::ConstructorRepositoryFactory();
     auto cnf_repository = cnf_repository_factory.create(planning_domain.get_repository());
@@ -470,7 +470,7 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryParsesDomainsWithBooleanPrimiti
     const auto reparsed_cnf_source_grammar_view = kr::dl::grammar::parse_grammar(cnf_formatted, domain, repository);
     const auto reparsed_cnf_grammar_view = kr::dl::cnf_grammar::translate(reparsed_cnf_source_grammar_view, cnf_repository);
     EXPECT_TRUE(tyr::EqualTo<decltype(cnf_grammar_view)> {}(cnf_grammar_view, reparsed_cnf_grammar_view));
-    EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag>(), 2);
+    EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::dl::BaseFamilyTag>>(), 2);
 }
 
 }  // namespace runir::tests

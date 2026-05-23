@@ -12,15 +12,15 @@
 namespace tyr
 {
 
-template<runir::kr::dl::BooleanConstructorTag Tag, typename C>
-class View<Index<runir::kr::dl::grammar::Boolean<Tag>>, C>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag, typename C>
+class View<Index<runir::kr::dl::grammar::Boolean<Family, Tag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::dl::grammar::Boolean<Tag>> m_handle;
+    Index<runir::kr::dl::grammar::Boolean<Family, Tag>> m_handle;
 
 public:
-    View(Index<runir::kr::dl::grammar::Boolean<Tag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::dl::grammar::Boolean<Family, Tag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

@@ -5,11 +5,13 @@ add_library(kr SHARED
     dl/grammar/parser.cpp
     dl/grammar/parser/parser.cpp
     dl/grammar/parser/parser_instantiations.cpp
-    gp/dl/parser.cpp
-    gp/dl/parser/parser.cpp
-    gp/dl/parser/parser_instantiations.cpp
-    gp/dl/policy_factory.cpp
-    gp/policy_executor.cpp
+    dl/grammar/parser/base/parser.cpp
+    dl/grammar/parser/base/parser_instantiations.cpp
+    ps/base/dl/parser.cpp
+    ps/base/dl/parser/parser.cpp
+    ps/base/dl/parser/parser_instantiations.cpp
+    ps/base/dl/sketch_factory.cpp
+    ps/sketch_executor.cpp
 )
 add_library(runir::kr ALIAS kr)
 

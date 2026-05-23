@@ -10,15 +10,15 @@
 namespace tyr
 {
 
-template<runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+struct Data<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, Category>>
 {
-    Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>> index;
-    Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> lhs;
-    Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> rhs;
+    Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, Category>> index;
+    Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>> lhs;
+    Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>> rhs;
 
     Data() = default;
-    Data(Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> lhs_, Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> rhs_) :
+    Data(Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>> lhs_, Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>> rhs_) :
         index(),
         lhs(lhs_),
         rhs(rhs_)

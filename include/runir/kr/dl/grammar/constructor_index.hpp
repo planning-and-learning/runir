@@ -1,7 +1,7 @@
 #ifndef RUNIR_GRAMMAR_CONSTRUCTOR_INDEX_HPP_
 #define RUNIR_GRAMMAR_CONSTRUCTOR_INDEX_HPP_
 
-#include "runir/kr/dl/grammar/constructors.hpp"
+#include "runir/kr/dl/grammar/declarations.hpp"
 
 #include <tyr/common/index_mixins.hpp>
 #include <tyr/common/types.hpp>
@@ -9,13 +9,13 @@
 namespace tyr
 {
 
-template<runir::kr::dl::CategoryTag Category>
-struct Index<runir::kr::dl::grammar::Constructor<Category>> : IndexMixin<Index<runir::kr::dl::grammar::Constructor<Category>>>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+struct Index<runir::kr::dl::grammar::Constructor<Family, Category>> : IndexMixin<Index<runir::kr::dl::grammar::Constructor<Family, Category>>>
 {
-    using Base = IndexMixin<Index<runir::kr::dl::grammar::Constructor<Category>>>;
+    using Base = IndexMixin<Index<runir::kr::dl::grammar::Constructor<Family, Category>>>;
     using Base::Base;
 };
 
-}
+}  // namespace tyr
 
 #endif

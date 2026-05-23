@@ -12,27 +12,27 @@
 namespace tyr
 {
 
-template<>
-struct Data<runir::kr::dl::cnf_grammar::GrammarTag>
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::cnf_grammar::Grammar<Family>>
 {
-    using ConceptStart = ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>>;
-    using RoleStart = ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>>;
-    using BooleanStart = ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::BooleanTag>>>;
-    using NumericalStart = ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::NumericalTag>>>;
+    using ConceptStart = ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>>;
+    using RoleStart = ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>>;
+    using BooleanStart = ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>>;
+    using NumericalStart = ::cista::optional<Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>>;
 
-    Index<runir::kr::dl::cnf_grammar::GrammarTag> index;
+    Index<runir::kr::dl::cnf_grammar::Grammar<Family>> index;
     ConceptStart concept_start;
     RoleStart role_start;
     BooleanStart boolean_start;
     NumericalStart numerical_start;
-    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::ConceptTag>> concept_derivation_rules;
-    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::RoleTag>> role_derivation_rules;
-    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::BooleanTag>> boolean_derivation_rules;
-    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<runir::kr::dl::NumericalTag>> numerical_derivation_rules;
-    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::ConceptTag>> concept_substitution_rules;
-    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::RoleTag>> role_substitution_rules;
-    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::BooleanTag>> boolean_substitution_rules;
-    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<runir::kr::dl::NumericalTag>> numerical_substitution_rules;
+    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::ConceptTag>> concept_derivation_rules;
+    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::RoleTag>> role_derivation_rules;
+    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::BooleanTag>> boolean_derivation_rules;
+    IndexList<runir::kr::dl::cnf_grammar::DerivationRule<Family, runir::kr::dl::NumericalTag>> numerical_derivation_rules;
+    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::ConceptTag>> concept_substitution_rules;
+    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::RoleTag>> role_substitution_rules;
+    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::BooleanTag>> boolean_substitution_rules;
+    IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::NumericalTag>> numerical_substitution_rules;
     Index<formalism::planning::Domain> domain;
 
     Data() = default;

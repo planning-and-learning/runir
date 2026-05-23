@@ -9,10 +9,10 @@
 namespace tyr
 {
 
-template<runir::kr::dl::CategoryTag Category>
-struct Index<runir::kr::dl::cnf_grammar::DerivationRule<Category>> : IndexMixin<Index<runir::kr::dl::cnf_grammar::DerivationRule<Category>>>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+struct Index<runir::kr::dl::cnf_grammar::DerivationRule<Family, Category>> : IndexMixin<Index<runir::kr::dl::cnf_grammar::DerivationRule<Family, Category>>>
 {
-    using Base = IndexMixin<Index<runir::kr::dl::cnf_grammar::DerivationRule<Category>>>;
+    using Base = IndexMixin<Index<runir::kr::dl::cnf_grammar::DerivationRule<Family, Category>>>;
     using Base::Base;
 };
 

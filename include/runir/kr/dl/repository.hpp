@@ -4,6 +4,7 @@
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/datas.hpp"
+#include "runir/kr/dl/ext/constructor_data.hpp"
 #include "runir/kr/dl/semantics/views.hpp"
 
 #include <cassert>
@@ -20,44 +21,81 @@
 namespace runir::kr::dl
 {
 
-using ConceptTypes = tyr::MapTypeListT<Concept, ConceptConstructorTags>;
-using RoleTypes = tyr::MapTypeListT<Role, RoleConstructorTags>;
-using BooleanTypes = tyr::MapTypeListT<Boolean, BooleanConstructorTags>;
-using NumericalTypes = tyr::MapTypeListT<Numerical, NumericalConstructorTags>;
-using ConstructorTypes = tyr::MapTypeListT<Constructor, CategoryTags>;
-
-using ConstructorRepositoryTypes = tyr::ConcatTypeListsT<ConceptTypes, RoleTypes, BooleanTypes, NumericalTypes, ConstructorTypes>;
-
-using ConstructorSymbolRepository = tyr::ApplyTypeListT<tyr::formalism::SymbolRepository, ConstructorRepositoryTypes>;
-
-class ConstructorRepository
+template<FamilyTag Family>
+struct RepositoryConstructorFamily
 {
-    friend class ConstructorRepositoryFactory;
+    template<typename Tag>
+        requires FamilyConceptConstructorTag<Family, Tag>
+    using Concept = FamilyConcept<Family, Tag>;
+
+    template<RoleConstructorTag Tag>
+    using Role = FamilyRole<Family, Tag>;
+
+    template<BooleanConstructorTag Tag>
+    using Boolean = FamilyBoolean<Family, Tag>;
+
+    template<NumericalConstructorTag Tag>
+    using Numerical = FamilyNumerical<Family, Tag>;
+
+    template<CategoryTag Category>
+    using Constructor = FamilyConstructor<Family, Category>;
+};
+
+template<FamilyTag Family>
+using FamilyConceptTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Concept, FamilyConceptConstructorTagsT<Family>>;
+
+template<FamilyTag Family>
+using FamilyRoleTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Role, FamilyRoleConstructorTagsT<Family>>;
+
+template<FamilyTag Family>
+using FamilyBooleanTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Boolean, FamilyBooleanConstructorTagsT<Family>>;
+
+template<FamilyTag Family>
+using FamilyNumericalTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Numerical, FamilyNumericalConstructorTagsT<Family>>;
+
+template<FamilyTag Family>
+using FamilyConstructorTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Constructor, CategoryTags>;
+
+template<FamilyTag Family>
+using FamilyConstructorRepositoryTypes = tyr::ConcatTypeListsT<FamilyConceptTypes<Family>,
+                                                              FamilyRoleTypes<Family>,
+                                                              FamilyBooleanTypes<Family>,
+                                                              FamilyNumericalTypes<Family>,
+                                                              FamilyConstructorTypes<Family>>;
+
+template<FamilyTag Family>
+using FamilyConstructorSymbolRepository = tyr::ApplyTypeListT<tyr::formalism::SymbolRepository, FamilyConstructorRepositoryTypes<Family>>;
+
+template<FamilyTag Family>
+class BasicConstructorRepository
+{
+    template<FamilyTag>
+    friend class BasicConstructorRepositoryFactory;
 
 private:
-    ConstructorSymbolRepository m_symbol_repository;
+    FamilyConstructorSymbolRepository<Family> m_symbol_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_planning_repository;
     size_t m_index;
 
     template<typename T>
-    std::optional<tyr::View<tyr::Index<T>, ConstructorRepository>> find_with_hash(const tyr::Data<T>& data, size_t hash) const noexcept
+    std::optional<tyr::View<tyr::Index<T>, BasicConstructorRepository>> find_with_hash(const tyr::Data<T>& data, size_t hash) const noexcept
     {
         if (auto index = m_symbol_repository.template find_local_with_hash<T>(data, hash))
-            return tyr::View<tyr::Index<T>, ConstructorRepository>(*index, *this);
+            return tyr::View<tyr::Index<T>, BasicConstructorRepository>(*index, *this);
         return std::nullopt;
     }
 
     template<typename T>
-    std::pair<tyr::View<tyr::Index<T>, ConstructorRepository>, bool> get_or_create_with_hash(tyr::Data<T>& data, size_t hash)
+    std::pair<tyr::View<tyr::Index<T>, BasicConstructorRepository>, bool> get_or_create_with_hash(tyr::Data<T>& data, size_t hash)
     {
         if (auto index = m_symbol_repository.template find_local_with_hash<T>(data, hash))
-            return { tyr::View<tyr::Index<T>, ConstructorRepository>(*index, *this), false };
+            return { tyr::View<tyr::Index<T>, BasicConstructorRepository>(*index, *this), false };
 
         const auto [index, success] = m_symbol_repository.template get_or_create_local_with_hash<T>(data, hash);
-        return { tyr::View<tyr::Index<T>, ConstructorRepository>(index, *this), success };
+        return { tyr::View<tyr::Index<T>, BasicConstructorRepository>(index, *this), success };
     }
 
-    ConstructorRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
+    BasicConstructorRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
         m_symbol_repository(nullptr),
         m_planning_repository(std::move(planning_repository)),
         m_index(index)
@@ -67,10 +105,10 @@ private:
     }
 
 public:
-    ConstructorRepository(const ConstructorRepository&) = delete;
-    ConstructorRepository& operator=(const ConstructorRepository&) = delete;
-    ConstructorRepository(ConstructorRepository&&) = delete;
-    ConstructorRepository& operator=(ConstructorRepository&&) = delete;
+    BasicConstructorRepository(const BasicConstructorRepository&) = delete;
+    BasicConstructorRepository& operator=(const BasicConstructorRepository&) = delete;
+    BasicConstructorRepository(BasicConstructorRepository&&) = delete;
+    BasicConstructorRepository& operator=(BasicConstructorRepository&&) = delete;
 
     const auto& get_index() const noexcept { return m_index; }
     const auto& get_planning_repository() const noexcept
@@ -83,15 +121,15 @@ public:
     void clear() noexcept { m_symbol_repository.clear(); }
 
     template<typename T>
-    std::optional<tyr::View<tyr::Index<T>, ConstructorRepository>> find(const tyr::Data<T>& data) const noexcept
+    std::optional<tyr::View<tyr::Index<T>, BasicConstructorRepository>> find(const tyr::Data<T>& data) const noexcept
     {
-        return find_with_hash<T>(data, ConstructorSymbolRepository::template hash<T>(data));
+        return find_with_hash<T>(data, FamilyConstructorSymbolRepository<Family>::template hash<T>(data));
     }
 
     template<typename T>
-    std::pair<tyr::View<tyr::Index<T>, ConstructorRepository>, bool> get_or_create(tyr::Data<T>& data)
+    std::pair<tyr::View<tyr::Index<T>, BasicConstructorRepository>, bool> get_or_create(tyr::Data<T>& data)
     {
-        return get_or_create_with_hash<T>(data, ConstructorSymbolRepository::template hash<T>(data));
+        return get_or_create_with_hash<T>(data, FamilyConstructorSymbolRepository<Family>::template hash<T>(data));
     }
 
     template<typename T>
@@ -108,72 +146,120 @@ public:
     }
 
     template<typename T>
-    const ConstructorRepository& get_canonical_context(tyr::Index<T>) const noexcept
+    const BasicConstructorRepository& get_canonical_context(tyr::Index<T>) const noexcept
     {
         return *this;
     }
 };
 
-using ConstructorRepositoryPtr = std::shared_ptr<ConstructorRepository>;
+template<FamilyTag Family>
+using ConstructorRepositoryFor = BasicConstructorRepository<Family>;
 
-class ConstructorRepositoryFactory
+using ConstructorRepository = ConstructorRepositoryFor<BaseFamilyTag>;
+using ExtConstructorRepository = ConstructorRepositoryFor<ExtFamilyTag>;
+
+template<FamilyTag Family>
+using ConstructorRepositoryPtrFor = std::shared_ptr<ConstructorRepositoryFor<Family>>;
+
+using ConstructorRepositoryPtr = ConstructorRepositoryPtrFor<BaseFamilyTag>;
+using ExtConstructorRepositoryPtr = ConstructorRepositoryPtrFor<ExtFamilyTag>;
+
+template<FamilyTag Family>
+class BasicConstructorRepositoryFactory
 {
 private:
     size_t m_next_index;
 
 public:
-    ConstructorRepositoryFactory() : m_next_index(0) {}
+    BasicConstructorRepositoryFactory() : m_next_index(0) {}
 
-    ConstructorRepository create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
+    ConstructorRepositoryFor<Family> create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
     {
-        return ConstructorRepository(m_next_index++, std::move(planning_repository));
+        return ConstructorRepositoryFor<Family>(m_next_index++, std::move(planning_repository));
     }
 
-    ConstructorRepositoryPtr create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
+    ConstructorRepositoryPtrFor<Family> create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
     {
-        return ConstructorRepositoryPtr(new ConstructorRepository(m_next_index++, std::move(planning_repository)));
+        return ConstructorRepositoryPtrFor<Family>(new ConstructorRepositoryFor<Family>(m_next_index++, std::move(planning_repository)));
     }
 };
 
+template<FamilyTag Family>
+using ConstructorRepositoryFactoryFor = BasicConstructorRepositoryFactory<Family>;
+
+using ConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<BaseFamilyTag>;
+using ExtConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<ExtFamilyTag>;
+
 using ConstructorRepositoryFactoryPtr = std::shared_ptr<ConstructorRepositoryFactory>;
+using ExtConstructorRepositoryFactoryPtr = std::shared_ptr<ExtConstructorRepositoryFactory>;
+
+template<FamilyTag Family, typename Tag>
+    requires FamilyConceptConstructorTag<Family, Tag>
+using FamilyConceptView = tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, ConstructorRepositoryFor<Family>>;
+
+template<typename Tag>
+    requires FamilyConceptConstructorTag<BaseFamilyTag, Tag>
+using ConceptView = FamilyConceptView<BaseFamilyTag, Tag>;
 
 template<ConceptConstructorTag Tag>
-using ConceptView = tyr::View<tyr::Index<Concept<Tag>>, ConstructorRepository>;
-template<ConceptConstructorTag Tag>
-using ConceptListView = tyr::View<tyr::IndexList<Concept<Tag>>, ConstructorRepository>;
+using ConceptListView = tyr::View<tyr::IndexList<Concept<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
+
 template<ConceptConstructorTag Tag>
 using ConceptViewList = std::vector<ConceptView<Tag>>;
 
+template<FamilyTag Family, RoleConstructorTag Tag>
+using FamilyRoleView = tyr::View<tyr::Index<FamilyRole<Family, Tag>>, ConstructorRepositoryFor<Family>>;
+
 template<RoleConstructorTag Tag>
-using RoleView = tyr::View<tyr::Index<Role<Tag>>, ConstructorRepository>;
+using RoleView = FamilyRoleView<BaseFamilyTag, Tag>;
+
 template<RoleConstructorTag Tag>
-using RoleListView = tyr::View<tyr::IndexList<Role<Tag>>, ConstructorRepository>;
+using RoleListView = tyr::View<tyr::IndexList<Role<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
+
 template<RoleConstructorTag Tag>
 using RoleViewList = std::vector<RoleView<Tag>>;
 
+template<FamilyTag Family, BooleanConstructorTag Tag>
+using FamilyBooleanView = tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, ConstructorRepositoryFor<Family>>;
+
 template<BooleanConstructorTag Tag>
-using BooleanView = tyr::View<tyr::Index<Boolean<Tag>>, ConstructorRepository>;
+using BooleanView = FamilyBooleanView<BaseFamilyTag, Tag>;
+
 template<BooleanConstructorTag Tag>
-using BooleanListView = tyr::View<tyr::IndexList<Boolean<Tag>>, ConstructorRepository>;
+using BooleanListView = tyr::View<tyr::IndexList<Boolean<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
+
 template<BooleanConstructorTag Tag>
 using BooleanViewList = std::vector<BooleanView<Tag>>;
 
+template<FamilyTag Family, NumericalConstructorTag Tag>
+using FamilyNumericalView = tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, ConstructorRepositoryFor<Family>>;
+
 template<NumericalConstructorTag Tag>
-using NumericalView = tyr::View<tyr::Index<Numerical<Tag>>, ConstructorRepository>;
+using NumericalView = FamilyNumericalView<BaseFamilyTag, Tag>;
+
 template<NumericalConstructorTag Tag>
-using NumericalListView = tyr::View<tyr::IndexList<Numerical<Tag>>, ConstructorRepository>;
+using NumericalListView = tyr::View<tyr::IndexList<Numerical<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
+
 template<NumericalConstructorTag Tag>
 using NumericalViewList = std::vector<NumericalView<Tag>>;
 
+template<FamilyTag Family, CategoryTag Category>
+using FamilyConstructorView = tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, ConstructorRepositoryFor<Family>>;
+
 template<CategoryTag Category>
-using ConstructorView = tyr::View<tyr::Index<Constructor<Category>>, ConstructorRepository>;
+using ConstructorView = FamilyConstructorView<BaseFamilyTag, Category>;
+
 template<CategoryTag Category>
-using ConstructorListView = tyr::View<tyr::IndexList<Constructor<Category>>, ConstructorRepository>;
+using ConstructorListView = tyr::View<tyr::IndexList<Constructor<runir::kr::dl::BaseFamilyTag, Category>>, ConstructorRepository>;
+
 template<CategoryTag Category>
 using ConstructorViewList = std::vector<ConstructorView<Category>>;
 
-inline const ConstructorRepository& get_repository(const ConstructorRepository& repository) noexcept { return repository; }
-inline ConstructorRepository& get_repository(ConstructorRepository& repository) noexcept { return repository; }
+template<FamilyTag Family>
+inline const ConstructorRepositoryFor<Family>& get_repository(const ConstructorRepositoryFor<Family>& repository) noexcept { return repository; }
+
+template<FamilyTag Family>
+inline ConstructorRepositoryFor<Family>& get_repository(ConstructorRepositoryFor<Family>& repository) noexcept { return repository; }
 
 }
 

@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/grammar/boolean_view.hpp"
 #include "runir/kr/dl/grammar/concept_view.hpp"
-#include "runir/kr/dl/grammar/constructor_data.hpp"
+#include "runir/kr/dl/grammar/base/constructor_data.hpp"
 #include "runir/kr/dl/grammar/numerical_view.hpp"
 #include "runir/kr/dl/grammar/role_view.hpp"
 
@@ -14,15 +14,15 @@
 namespace tyr
 {
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-class View<Index<runir::kr::dl::grammar::Constructor<Category>>, C>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+class View<Index<runir::kr::dl::grammar::Constructor<Family, Category>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::dl::grammar::Constructor<Category>> m_handle;
+    Index<runir::kr::dl::grammar::Constructor<Family, Category>> m_handle;
 
 public:
-    View(Index<runir::kr::dl::grammar::Constructor<Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::dl::grammar::Constructor<Family, Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

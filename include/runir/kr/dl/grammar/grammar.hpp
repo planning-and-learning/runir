@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/grammar/canonicalization.hpp"
 #include "runir/kr/dl/grammar/constructor_repository.hpp"
-#include "runir/kr/dl/grammar/constructors.hpp"
+#include "runir/kr/dl/grammar/declarations.hpp"
 #include "runir/kr/dl/grammar/datas.hpp"
 #include "runir/kr/dl/grammar/declarations.hpp"
 #include "runir/kr/dl/grammar/formatter.hpp"

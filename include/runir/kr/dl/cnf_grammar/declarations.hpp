@@ -6,30 +6,34 @@
 namespace runir::kr::dl::cnf_grammar
 {
 
-struct GrammarTag;
+template<runir::kr::dl::FamilyTag Family>
+struct Grammar;
 
-template<runir::kr::dl::ConceptConstructorTag Tag>
+using GrammarTag = Grammar<runir::kr::BaseFamilyTag>;
+
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 struct Concept;
 
-template<runir::kr::dl::RoleConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag>
 struct Role;
 
-template<runir::kr::dl::BooleanConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag>
 struct Boolean;
 
-template<runir::kr::dl::NumericalConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag>
 struct Numerical;
 
-template<runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct Constructor;
 
-template<runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct NonTerminal;
 
-template<runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct DerivationRule;
 
-template<runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct SubstitutionRule;
 
 }

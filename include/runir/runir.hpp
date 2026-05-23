@@ -6,6 +6,6 @@
 #include "runir/graphs/graphs.hpp"
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/dl.hpp"
-#include "runir/kr/gp.hpp"
+#include "runir/kr/ps.hpp"
 
 #endif

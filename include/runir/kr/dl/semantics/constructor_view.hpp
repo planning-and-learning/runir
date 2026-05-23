@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/semantics/boolean_view.hpp"
 #include "runir/kr/dl/semantics/concept_view.hpp"
-#include "runir/kr/dl/semantics/constructor_data.hpp"
+#include "runir/kr/dl/constructor_data.hpp"
 #include "runir/kr/dl/semantics/numerical_view.hpp"
 #include "runir/kr/dl/semantics/role_view.hpp"
 
@@ -14,15 +14,15 @@
 namespace tyr
 {
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-class View<Index<runir::kr::dl::Constructor<Category>>, C>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+class View<Index<runir::kr::dl::FamilyConstructor<Family, Category>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::dl::Constructor<Category>> m_handle;
+    Index<runir::kr::dl::FamilyConstructor<Family, Category>> m_handle;
 
 public:
-    View(Index<runir::kr::dl::Constructor<Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::dl::FamilyConstructor<Family, Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

@@ -2,7 +2,7 @@
 #define RUNIR_SEMANTICS_EVALUATION_HPP_
 
 #include "runir/common/config.hpp"
-#include "runir/kr/dl/semantics/constructors.hpp"
+#include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/semantics/denotations.hpp"
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
@@ -24,27 +24,27 @@
 namespace runir::kr::dl::semantics
 {
 
-template<CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<Constructor<Category>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace);
+template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace);
 
 namespace detail
 {
 
-template<tyr::planning::TaskKind Kind>
-auto num_objects(const EvaluationContext<Kind>& context) noexcept -> uint_t
+template<FamilyTag Family, tyr::planning::TaskKind Kind>
+auto num_objects(const EvaluationContext<Family, Kind>& context) noexcept -> uint_t
 {
     const auto task = context.get_state().get_state_repository()->get_task()->get_task();
     return static_cast<uint_t>(task.get_domain().get_constants().size() + task.get_objects().size());
 }
 
-template<tyr::planning::TaskKind Kind>
-auto make_concept_builder(EvaluationContext<Kind>& context)
+template<FamilyTag Family, tyr::planning::TaskKind Kind>
+auto make_concept_builder(EvaluationContext<Family, Kind>& context)
 {
     return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects(context));
 }
 
-template<tyr::planning::TaskKind Kind>
-auto make_role_builder(EvaluationContext<Kind>& context)
+template<FamilyTag Family, tyr::planning::TaskKind Kind>
+auto make_role_builder(EvaluationContext<Family, Kind>& context)
 {
     return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects(context));
 }
@@ -85,30 +85,30 @@ auto role_count(const RoleBuilderPtr& role) noexcept -> uint_t
     return result;
 }
 
-template<tyr::planning::TaskKind Kind, typename F>
-void for_each_current_atom(EvaluationContext<Kind>& context, std::type_identity<tyr::formalism::StaticTag>, F&& f)
+template<FamilyTag Family, tyr::planning::TaskKind Kind, typename F>
+void for_each_current_atom(EvaluationContext<Family, Kind>& context, std::type_identity<tyr::formalism::StaticTag>, F&& f)
 {
     for (auto atom : context.get_state().get_static_atoms_view())
         std::forward<F>(f)(atom);
 }
 
-template<tyr::planning::TaskKind Kind, typename F>
-void for_each_current_atom(EvaluationContext<Kind>& context, std::type_identity<tyr::formalism::FluentTag>, F&& f)
+template<FamilyTag Family, tyr::planning::TaskKind Kind, typename F>
+void for_each_current_atom(EvaluationContext<Family, Kind>& context, std::type_identity<tyr::formalism::FluentTag>, F&& f)
 {
     for (auto fact : context.get_state().get_fluent_facts_view())
         if (auto atom = fact.get_atom())
             std::forward<F>(f)(*atom);
 }
 
-template<tyr::planning::TaskKind Kind, typename F>
-void for_each_current_atom(EvaluationContext<Kind>& context, std::type_identity<tyr::formalism::DerivedTag>, F&& f)
+template<FamilyTag Family, tyr::planning::TaskKind Kind, typename F>
+void for_each_current_atom(EvaluationContext<Family, Kind>& context, std::type_identity<tyr::formalism::DerivedTag>, F&& f)
 {
     for (auto atom : context.get_state().get_derived_atoms_view())
         std::forward<F>(f)(atom);
 }
 
-template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename F>
-void for_each_current_atom(EvaluationContext<Kind>& context, F&& f)
+template<tyr::formalism::FactKind T, FamilyTag Family, tyr::planning::TaskKind Kind, typename F>
+void for_each_current_atom(EvaluationContext<Family, Kind>& context, F&& f)
 {
     for_each_current_atom(context, std::type_identity<T> {}, std::forward<F>(f));
 }
@@ -153,8 +153,8 @@ void for_each_goal_atom(Goal goal, bool polarity, F&& f)
     }
 }
 
-template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename F>
-void for_each_goal_atom(EvaluationContext<Kind>& context, bool polarity, F&& f)
+template<tyr::formalism::FactKind T, FamilyTag Family, tyr::planning::TaskKind Kind, typename F>
+void for_each_goal_atom(EvaluationContext<Family, Kind>& context, bool polarity, F&& f)
 {
     const auto goal = context.get_state().get_state_repository()->get_task()->get_task().get_goal();
     for_each_goal_atom<T>(goal, polarity, std::forward<F>(f));
@@ -166,8 +166,8 @@ auto object_index(tyr::formalism::planning::GroundAtomView<T> atom, size_t posit
     return atom.get_row().get_objects()[position].get_index();
 }
 
-template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_atomic_state_concept(tyr::View<tyr::Index<Concept<AtomicStateTag<T>>>, C> constructor, EvaluationContext<Kind>& context)
+template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_atomic_state_concept(tyr::View<tyr::Index<FamilyConcept<Family, AtomicStateTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
@@ -190,8 +190,8 @@ auto evaluate_atomic_state_concept(tyr::View<tyr::Index<Concept<AtomicStateTag<T
     return result;
 }
 
-template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_atomic_goal_concept(tyr::View<tyr::Index<Concept<AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Kind>& context)
+template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_atomic_goal_concept(tyr::View<tyr::Index<FamilyConcept<Family, AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
@@ -212,8 +212,8 @@ auto evaluate_atomic_goal_concept(tyr::View<tyr::Index<Concept<AtomicGoalTag<T>>
     return result;
 }
 
-template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_atomic_state_role(tyr::View<tyr::Index<Role<AtomicStateTag<T>>>, C> constructor, EvaluationContext<Kind>& context)
+template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_atomic_state_role(tyr::View<tyr::Index<FamilyRole<Family, AtomicStateTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
@@ -238,8 +238,8 @@ auto evaluate_atomic_state_role(tyr::View<tyr::Index<Role<AtomicStateTag<T>>>, C
     return result;
 }
 
-template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_atomic_goal_role(tyr::View<tyr::Index<Role<AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Kind>& context)
+template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_atomic_goal_role(tyr::View<tyr::Index<FamilyRole<Family, AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
@@ -261,8 +261,8 @@ auto evaluate_atomic_goal_role(tyr::View<tyr::Index<Role<AtomicGoalTag<T>>>, C> 
     return result;
 }
 
-template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_atomic_state_boolean(tyr::View<tyr::Index<Boolean<AtomicStateTag<T>>>, C> constructor, EvaluationContext<Kind>& context)
+template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_atomic_state_boolean(tyr::View<tyr::Index<FamilyBoolean<Family, AtomicStateTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     bool value = false;
 
@@ -279,8 +279,8 @@ auto evaluate_atomic_state_boolean(tyr::View<tyr::Index<Boolean<AtomicStateTag<T
     return context.get_builder().template get_builder<Denotation<BooleanTag>>(value);
 }
 
-template<tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_atomic_goal_boolean(tyr::View<tyr::Index<Boolean<AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Kind>& context)
+template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_atomic_goal_boolean(tyr::View<tyr::Index<FamilyBoolean<Family, AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     bool value = false;
 
@@ -295,34 +295,34 @@ auto evaluate_atomic_goal_boolean(tyr::View<tyr::Index<Boolean<AtomicGoalTag<T>>
     return context.get_builder().template get_builder<Denotation<BooleanTag>>(value);
 }
 
-template<tyr::planning::TaskKind Kind, typename C>
-bool evaluate_nonempty(tyr::View<tyr::Index<Constructor<ConceptTag>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace)
+template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
+bool evaluate_nonempty(tyr::View<tyr::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
 {
     return evaluate_impl(constructor, context, workspace)->get_bitset().any();
 }
 
-template<tyr::planning::TaskKind Kind, typename C>
-bool evaluate_nonempty(tyr::View<tyr::Index<Constructor<RoleTag>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace)
+template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
+bool evaluate_nonempty(tyr::View<tyr::Index<FamilyConstructor<Family, RoleTag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
 {
     return detail::role_any(evaluate_impl(constructor, context, workspace));
 }
 
-template<tyr::planning::TaskKind Kind, typename C>
-auto evaluate_count(tyr::View<tyr::Index<Constructor<ConceptTag>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace) -> uint_t
+template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_count(tyr::View<tyr::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace) -> uint_t
 {
     return static_cast<uint_t>(evaluate_impl(constructor, context, workspace)->get_bitset().count());
 }
 
-template<tyr::planning::TaskKind Kind, typename C>
-auto evaluate_count(tyr::View<tyr::Index<Constructor<RoleTag>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace) -> uint_t
+template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_count(tyr::View<tyr::Index<FamilyConstructor<Family, RoleTag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace) -> uint_t
 {
     return detail::role_count(evaluate_impl(constructor, context, workspace));
 }
 
 }
 
-template<ConceptConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<Concept<Tag>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace)
+template<FamilyTag Family, ConceptConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
@@ -503,8 +503,8 @@ auto evaluate_impl(tyr::View<tyr::Index<Concept<Tag>>, C> constructor, Evaluatio
     return result;
 }
 
-template<RoleConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<Role<Tag>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace)
+template<FamilyTag Family, RoleConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
@@ -628,8 +628,8 @@ auto evaluate_impl(tyr::View<tyr::Index<Role<Tag>>, C> constructor, EvaluationCo
     return result;
 }
 
-template<BooleanConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<Boolean<Tag>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace)
+template<FamilyTag Family, BooleanConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
 {
     if constexpr (is_atomic_state_tag_v<Tag>)
     {
@@ -646,8 +646,8 @@ auto evaluate_impl(tyr::View<tyr::Index<Boolean<Tag>>, C> constructor, Evaluatio
     }
 }
 
-template<NumericalConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<Numerical<Tag>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace)
+template<FamilyTag Family, NumericalConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
 {
     uint_t result_value = 0;
 
@@ -721,21 +721,21 @@ auto evaluate_impl(tyr::View<tyr::Index<Numerical<Tag>>, C> constructor, Evaluat
     return result;
 }
 
-template<CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<Constructor<Category>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace)
+template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
 {
     return constructor.get_variant().apply([&](auto child) { return evaluate_impl(child, context, workspace); });
 }
 
-template<CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
-auto evaluate(tyr::View<tyr::Index<Constructor<Category>>, C> constructor, EvaluationContext<Kind>& context, EvaluationWorkspace& workspace)
+template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
+auto evaluate(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
 {
     auto result = evaluate_impl(constructor, context, workspace);
     return context.get_denotation_repository().get_or_create(*result).first;
 }
 
-template<CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
-auto evaluate(tyr::View<tyr::Index<Constructor<Category>>, C> constructor, EvaluationContext<Kind>& context)
+template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
+auto evaluate(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     auto workspace = EvaluationWorkspace {};
     return evaluate(constructor, context, workspace);

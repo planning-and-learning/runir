@@ -1,7 +1,7 @@
 #ifndef RUNIR_SEMANTICS_ROLE_VIEW_HPP_
 #define RUNIR_SEMANTICS_ROLE_VIEW_HPP_
 
-#include "runir/kr/dl/semantics/role_data.hpp"
+#include "runir/kr/dl/role_data.hpp"
 
 #include <concepts>
 #include <tuple>
@@ -11,15 +11,16 @@
 namespace tyr
 {
 
-template<runir::kr::dl::RoleConstructorTag Tag, typename C>
-class View<Index<runir::kr::dl::Role<Tag>>, C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::RoleConstructorTag<Tag>
+class View<Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::dl::Role<Tag>> m_handle;
+    Index<runir::kr::dl::FamilyRole<Family, Tag>> m_handle;
 
 public:
-    View(Index<runir::kr::dl::Role<Tag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::dl::FamilyRole<Family, Tag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

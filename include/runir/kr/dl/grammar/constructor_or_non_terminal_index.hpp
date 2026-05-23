@@ -9,13 +9,14 @@
 namespace tyr
 {
 
-template<runir::kr::dl::CategoryTag Category>
-struct Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>> : IndexMixin<Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>>>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+struct Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>> :
+    IndexMixin<Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>>>
 {
-    using Base = IndexMixin<Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Category>>>;
+    using Base = IndexMixin<Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>>>;
     using Base::Base;
 };
 
-}
+}  // namespace tyr
 
 #endif

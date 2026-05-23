@@ -24,17 +24,23 @@ nanobind_add_module(_pyrunir
     pyrunir/graphs/module.cpp
     pyrunir/kr/module.cpp
     pyrunir/kr/dl/module.cpp
-    pyrunir/kr/gp/dl/indices.cpp
-    pyrunir/kr/gp/dl/module.cpp
-    pyrunir/kr/gp/dl/parser.cpp
-    pyrunir/kr/gp/dl/policy_factory.cpp
-    pyrunir/kr/gp/dl/views.cpp
-    pyrunir/kr/gp/indices.cpp
-    pyrunir/kr/gp/module.cpp
-    pyrunir/kr/gp/policy_executor.cpp
-    pyrunir/kr/gp/repository.cpp
-    pyrunir/kr/gp/syntactic_complexity.cpp
-    pyrunir/kr/gp/views.cpp
+    pyrunir/kr/dl/base/module.cpp
+    pyrunir/kr/dl/base/parser.cpp
+    pyrunir/kr/dl/ext/datas.cpp
+    pyrunir/kr/dl/ext/indices.cpp
+    pyrunir/kr/dl/ext/module.cpp
+    pyrunir/kr/dl/ext/parser.cpp
+    pyrunir/kr/ps/base/dl/indices.cpp
+    pyrunir/kr/ps/base/dl/module.cpp
+    pyrunir/kr/ps/base/dl/parser.cpp
+    pyrunir/kr/ps/base/dl/sketch_factory.cpp
+    pyrunir/kr/ps/base/dl/views.cpp
+    pyrunir/kr/ps/indices.cpp
+    pyrunir/kr/ps/module.cpp
+    pyrunir/kr/ps/sketch_executor.cpp
+    pyrunir/kr/ps/repository.cpp
+    pyrunir/kr/ps/syntactic_complexity.cpp
+    pyrunir/kr/ps/views.cpp
     pyrunir/kr/dl/semantics/datas.cpp
     pyrunir/kr/dl/semantics/indices.cpp
     pyrunir/kr/dl/semantics/module.cpp
@@ -158,11 +164,14 @@ set(PYRUNIR_PYTHON_FILES
     pyrunir/graphs/__init__.py
     pyrunir/kr/__init__.py
     pyrunir/kr/dl/__init__.py
+    pyrunir/kr/dl/base/__init__.py
+    pyrunir/kr/dl/ext/__init__.py
     pyrunir/kr/dl/semantics/__init__.py
     pyrunir/kr/dl/grammar/__init__.py
     pyrunir/kr/dl/cnf_grammar/__init__.py
-    pyrunir/kr/gp/__init__.py
-    pyrunir/kr/gp/dl/__init__.py
+    pyrunir/kr/ps/__init__.py
+    pyrunir/kr/ps/base/__init__.py
+    pyrunir/kr/ps/base/dl/__init__.py
 )
 
 foreach(python_file IN LISTS PYRUNIR_PYTHON_FILES)

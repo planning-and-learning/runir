@@ -1,34 +1,35 @@
 #ifndef RUNIR_GRAMMAR_GRAMMAR_DATA_HPP_
 #define RUNIR_GRAMMAR_GRAMMAR_DATA_HPP_
 
-#include "runir/kr/dl/grammar/indices.hpp"
+#include "runir/kr/dl/grammar/derivation_rule_data.hpp"
 
 #include <cista/containers/optional.h>
 #include <tuple>
 #include <tyr/common/types.hpp>
 #include <tyr/common/types_utils.hpp>
 #include <tyr/formalism/planning/domain_index.hpp>
+#include <utility>
 
 namespace tyr
 {
 
-template<>
-struct Data<runir::kr::dl::grammar::GrammarTag>
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::grammar::GrammarTag<Family>>
 {
-    using ConceptStart = ::cista::optional<Index<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::ConceptTag>>>;
-    using RoleStart = ::cista::optional<Index<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::RoleTag>>>;
-    using BooleanStart = ::cista::optional<Index<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::BooleanTag>>>;
-    using NumericalStart = ::cista::optional<Index<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::NumericalTag>>>;
+    using ConceptStart = ::cista::optional<Index<runir::kr::dl::grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>>;
+    using RoleStart = ::cista::optional<Index<runir::kr::dl::grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>>;
+    using BooleanStart = ::cista::optional<Index<runir::kr::dl::grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>>;
+    using NumericalStart = ::cista::optional<Index<runir::kr::dl::grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>>;
 
-    Index<runir::kr::dl::grammar::GrammarTag> index;
+    Index<runir::kr::dl::grammar::GrammarTag<Family>> index;
     ConceptStart concept_start;
     RoleStart role_start;
     BooleanStart boolean_start;
     NumericalStart numerical_start;
-    IndexList<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::ConceptTag>> concept_derivation_rules;
-    IndexList<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::RoleTag>> role_derivation_rules;
-    IndexList<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::BooleanTag>> boolean_derivation_rules;
-    IndexList<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::NumericalTag>> numerical_derivation_rules;
+    IndexList<runir::kr::dl::grammar::DerivationRule<Family, runir::kr::dl::ConceptTag>> concept_derivation_rules;
+    IndexList<runir::kr::dl::grammar::DerivationRule<Family, runir::kr::dl::RoleTag>> role_derivation_rules;
+    IndexList<runir::kr::dl::grammar::DerivationRule<Family, runir::kr::dl::BooleanTag>> boolean_derivation_rules;
+    IndexList<runir::kr::dl::grammar::DerivationRule<Family, runir::kr::dl::NumericalTag>> numerical_derivation_rules;
     Index<formalism::planning::Domain> domain;
 
     Data() = default;
@@ -36,10 +37,10 @@ struct Data<runir::kr::dl::grammar::GrammarTag>
          RoleStart role_start_,
          BooleanStart boolean_start_,
          NumericalStart numerical_start_,
-         IndexList<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::ConceptTag>> concept_derivation_rules_,
-         IndexList<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::RoleTag>> role_derivation_rules_,
-         IndexList<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::BooleanTag>> boolean_derivation_rules_,
-         IndexList<runir::kr::dl::grammar::DerivationRule<runir::kr::dl::NumericalTag>> numerical_derivation_rules_,
+         IndexList<runir::kr::dl::grammar::DerivationRule<Family, runir::kr::dl::ConceptTag>> concept_derivation_rules_,
+         IndexList<runir::kr::dl::grammar::DerivationRule<Family, runir::kr::dl::RoleTag>> role_derivation_rules_,
+         IndexList<runir::kr::dl::grammar::DerivationRule<Family, runir::kr::dl::BooleanTag>> boolean_derivation_rules_,
+         IndexList<runir::kr::dl::grammar::DerivationRule<Family, runir::kr::dl::NumericalTag>> numerical_derivation_rules_,
          Index<formalism::planning::Domain> domain_) :
         index(),
         concept_start(concept_start_),

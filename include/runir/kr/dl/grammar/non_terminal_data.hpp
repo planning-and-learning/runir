@@ -8,30 +8,28 @@
 #include <tuple>
 #include <tyr/common/types.hpp>
 #include <tyr/common/types_utils.hpp>
+#include <utility>
 
 namespace tyr
 {
 
-template<runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::dl::grammar::NonTerminal<Category>>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+struct Data<runir::kr::dl::grammar::NonTerminal<Family, Category>>
 {
-    Index<runir::kr::dl::grammar::NonTerminal<Category>> index;
+    Index<runir::kr::dl::grammar::NonTerminal<Family, Category>> index;
     ::cista::offset::string name;
-
     Data() = default;
-    Data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
-    Data(const std::string& name_) : index(), name(name_) {}
-
+    explicit Data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
+    explicit Data(const std::string& name_) : index(), name(name_) {}
     void clear() noexcept
     {
         tyr::clear(index);
         tyr::clear(name);
     }
-
     auto cista_members() const noexcept { return std::tie(index, name); }
     auto identifying_members() const noexcept { return std::tie(name); }
 };
 
-}
+}  // namespace tyr
 
 #endif

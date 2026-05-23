@@ -8,13 +8,13 @@
 namespace tyr
 {
 
-template<>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::CountTag>>
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::CountTag>>
 {
-    using Arg = ::cista::offset::variant<tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>,
-                                         tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>>>;
+    using Arg = ::cista::offset::variant<tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>,
+                                         tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>>;
 
-    Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::CountTag>> index;
+    Index<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::CountTag>> index;
     Arg arg;
 
     Data() = default;
@@ -30,17 +30,17 @@ struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::CountTag>>
     auto identifying_members() const noexcept { return std::tie(arg); }
 };
 
-template<>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::DistanceTag>> :
-    runir::kr::dl::cnf_grammar::TernaryData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::DistanceTag>,
-                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>,
-                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
-                                            runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::DistanceTag>> :
+    runir::kr::dl::cnf_grammar::TernaryData<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::DistanceTag>,
+                                            runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>,
+                                            runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
+                                            runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::TernaryData<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::DistanceTag>,
-                                                         runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>,
-                                                         runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::RoleTag>,
-                                                         runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::dl::ConceptTag>>;
+    using Base = runir::kr::dl::cnf_grammar::TernaryData<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::DistanceTag>,
+                                                         runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>,
+                                                         runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
+                                                         runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>;
     using Base::Base;
 };
 

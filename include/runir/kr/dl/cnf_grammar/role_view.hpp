@@ -11,15 +11,15 @@
 namespace tyr
 {
 
-template<runir::kr::dl::RoleConstructorTag Tag, typename C>
-class View<Index<runir::kr::dl::cnf_grammar::Role<Tag>>, C>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
+class View<Index<runir::kr::dl::cnf_grammar::Role<Family, Tag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::dl::cnf_grammar::Role<Tag>> m_handle;
+    Index<runir::kr::dl::cnf_grammar::Role<Family, Tag>> m_handle;
 
 public:
-    View(Index<runir::kr::dl::cnf_grammar::Role<Tag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::dl::cnf_grammar::Role<Family, Tag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

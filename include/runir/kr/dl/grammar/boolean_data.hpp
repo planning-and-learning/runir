@@ -1,47 +1,47 @@
 #ifndef RUNIR_GRAMMAR_BOOLEAN_DATA_HPP_
 #define RUNIR_GRAMMAR_BOOLEAN_DATA_HPP_
 
-#include "runir/kr/dl/grammar/data_helpers.hpp"
+#include "runir/kr/dl/grammar/role_data.hpp"
 
-#include <tyr/common/variant.hpp>
+#include <cista/containers/variant.h>
+#include <tuple>
+#include <tyr/common/types.hpp>
+#include <tyr/common/types_utils.hpp>
+#include <utility>
 
 namespace tyr
 {
 
-template<tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicStateTag<T>>> :
-    runir::kr::dl::grammar::PredicateData<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicStateTag<T>>, T>
+template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
+struct Data<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>> :
+    runir::kr::dl::semantics::PredicateData<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>, T>
 {
-    using Base = runir::kr::dl::grammar::PredicateData<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicStateTag<T>>, T>;
+    using Base = runir::kr::dl::semantics::PredicateData<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>, T>;
     using Base::Base;
 };
 
-template<tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<T>>> :
-    runir::kr::dl::grammar::PredicateData<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<T>>, T>
+template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
+struct Data<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>> :
+    runir::kr::dl::semantics::PredicateData<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>, T>
 {
-    using Base = runir::kr::dl::grammar::PredicateData<runir::kr::dl::grammar::Boolean<runir::kr::dl::AtomicGoalTag<T>>, T>;
+    using Base = runir::kr::dl::semantics::PredicateData<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>, T>;
     using Base::Base;
 };
 
-template<>
-struct Data<runir::kr::dl::grammar::Boolean<runir::kr::dl::NonemptyTag>>
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::NonemptyTag>>
 {
-    using Arg = ::cista::offset::variant<tyr::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::ConceptTag>>,
-                                         tyr::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>>;
-
-    Index<runir::kr::dl::grammar::Boolean<runir::kr::dl::NonemptyTag>> index;
-    Arg arg;
-
+    using ConstructorVariant = ::cista::offset::variant<Index<GrammarConceptChoice<Family>>, Index<GrammarRoleChoice<Family>>>;
+    using Arg = ConstructorVariant;
+    Index<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::NonemptyTag>> index;
+    ConstructorVariant arg;
     Data() = default;
-    explicit Data(Arg arg_) : index(), arg(std::move(arg_)) {}
-
+    explicit Data(ConstructorVariant arg_) : index(), arg(std::move(arg_)) {}
     void clear() noexcept
     {
         tyr::clear(index);
         tyr::clear(arg);
     }
-
     auto cista_members() const noexcept { return std::tie(index, arg); }
     auto identifying_members() const noexcept { return std::tie(arg); }
 };

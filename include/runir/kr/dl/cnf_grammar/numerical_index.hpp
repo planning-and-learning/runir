@@ -1,7 +1,7 @@
 #ifndef RUNIR_CNF_GRAMMAR_NUMERICAL_INDEX_HPP_
 #define RUNIR_CNF_GRAMMAR_NUMERICAL_INDEX_HPP_
 
-#include "runir/kr/dl/cnf_grammar/constructors.hpp"
+#include "runir/kr/dl/cnf_grammar/declarations.hpp"
 
 #include <tyr/common/index_mixins.hpp>
 #include <tyr/common/types.hpp>
@@ -9,10 +9,10 @@
 namespace tyr
 {
 
-template<runir::kr::dl::NumericalConstructorTag Tag>
-struct Index<runir::kr::dl::cnf_grammar::Numerical<Tag>> : IndexMixin<Index<runir::kr::dl::cnf_grammar::Numerical<Tag>>>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag>
+struct Index<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>> : IndexMixin<Index<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>>>
 {
-    using Base = IndexMixin<Index<runir::kr::dl::cnf_grammar::Numerical<Tag>>>;
+    using Base = IndexMixin<Index<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>>>;
     using Base::Base;
 };
 

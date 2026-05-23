@@ -3,6 +3,8 @@
 
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/cnf_grammar/grammar.hpp"
+#include "runir/kr/dl/cnf_grammar/grammar.hpp"
+#include "runir/kr/dl/cnf_grammar/ext/repository.hpp"
 #include "runir/kr/dl/concept_index.hpp"
 #include "runir/kr/dl/constructor_index.hpp"
 #include "runir/kr/dl/constructors.hpp"
@@ -13,6 +15,8 @@
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotations.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/base/evaluation.hpp"
+#include "runir/kr/dl/semantics/ext/evaluation.hpp"
 #include "runir/kr/dl/semantics/formatter.hpp"
 #include "runir/kr/dl/semantics/views.hpp"
 

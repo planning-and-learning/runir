@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/kr/dl/declarations.hpp"
 
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>
@@ -11,7 +12,7 @@
 namespace runir::kr::dl::semantics
 {
 
-template<tyr::planning::TaskKind Kind>
+template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
 class EvaluationContext
 {
 private:
@@ -33,8 +34,8 @@ public:
     const auto& get_denotation_repository() const noexcept { return m_denotation_repository; }
 };
 
-template<tyr::planning::TaskKind Kind>
-const auto& get_repository(const EvaluationContext<Kind>& context) noexcept
+template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
+const auto& get_repository(const EvaluationContext<Family, Kind>& context) noexcept
 {
     return context.get_state().get_state_repository()->get_task()->get_repository();
 }

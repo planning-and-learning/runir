@@ -9,10 +9,10 @@
 namespace tyr
 {
 
-template<>
-struct Index<runir::kr::dl::cnf_grammar::GrammarTag> : IndexMixin<Index<runir::kr::dl::cnf_grammar::GrammarTag>>
+template<runir::kr::dl::FamilyTag Family>
+struct Index<runir::kr::dl::cnf_grammar::Grammar<Family>> : IndexMixin<Index<runir::kr::dl::cnf_grammar::Grammar<Family>>>
 {
-    using Base = IndexMixin<Index<runir::kr::dl::cnf_grammar::GrammarTag>>;
+    using Base = IndexMixin<Index<runir::kr::dl::cnf_grammar::Grammar<Family>>>;
     using Base::Base;
 };
 

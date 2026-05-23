@@ -33,8 +33,9 @@ std::vector<std::string> quoted_object_names(Objects objects)
     return result;
 }
 
-template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
-std::string concept_constructor(tyr::View<tyr::Index<Concept<Tag>>, C> view)
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+std::string concept_constructor(tyr::View<tyr::Index<Concept<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
         return fmt::format("{}", runir::kr::dl::grammar::ast::ConceptBot::keyword);
@@ -81,8 +82,8 @@ std::string concept_constructor(tyr::View<tyr::Index<Concept<Tag>>, C> view)
         return fmt::format("{} {}", runir::kr::dl::grammar::ast::ConceptNominal::keyword, quoted(view.get_object().get_name()));
 }
 
-template<runir::kr::dl::RoleConstructorTag Tag, typename C>
-std::string role(tyr::View<tyr::Index<Role<Tag>>, C> view)
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
+std::string role(tyr::View<tyr::Index<Role<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
         return fmt::format("{}", runir::kr::dl::grammar::ast::RoleUniversal::keyword);
@@ -113,8 +114,8 @@ std::string role(tyr::View<tyr::Index<Role<Tag>>, C> view)
         return fmt::format("{} {}", runir::kr::dl::grammar::ast::RoleIdentity::keyword, view.get_arg());
 }
 
-template<runir::kr::dl::BooleanConstructorTag Tag, typename C>
-std::string boolean_constructor(tyr::View<tyr::Index<Boolean<Tag>>, C> view)
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag, typename C>
+std::string boolean_constructor(tyr::View<tyr::Index<Boolean<Family, Tag>>, C> view)
 {
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {} {}",
@@ -130,8 +131,8 @@ std::string boolean_constructor(tyr::View<tyr::Index<Boolean<Tag>>, C> view)
         return fmt::format("{} {}", runir::kr::dl::grammar::ast::BooleanNonempty::keyword, view.get_arg());
 }
 
-template<runir::kr::dl::NumericalConstructorTag Tag, typename C>
-std::string numerical(tyr::View<tyr::Index<Numerical<Tag>>, C> view)
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag, typename C>
+std::string numerical(tyr::View<tyr::Index<Numerical<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return fmt::format("{} {}", runir::kr::dl::grammar::ast::NumericalCount::keyword, view.get_arg());
@@ -139,44 +140,45 @@ std::string numerical(tyr::View<tyr::Index<Numerical<Tag>>, C> view)
         return fmt::format("{} {} {} {}", runir::kr::dl::grammar::ast::NumericalDistance::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
 }
 
-template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<Concept<Tag>>, C> view)
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+std::string constructor_body(tyr::View<tyr::Index<Concept<Family, Tag>>, C> view)
 {
     return concept_constructor(view);
 }
 
-template<runir::kr::dl::RoleConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<Role<Tag>>, C> view)
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
+std::string constructor_body(tyr::View<tyr::Index<Role<Family, Tag>>, C> view)
 {
     return role(view);
 }
 
-template<runir::kr::dl::BooleanConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<Boolean<Tag>>, C> view)
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag, typename C>
+std::string constructor_body(tyr::View<tyr::Index<Boolean<Family, Tag>>, C> view)
 {
     return boolean_constructor(view);
 }
 
-template<runir::kr::dl::NumericalConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<Numerical<Tag>>, C> view)
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag, typename C>
+std::string constructor_body(tyr::View<tyr::Index<Numerical<Family, Tag>>, C> view)
 {
     return numerical(view);
 }
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor_body(tyr::View<tyr::Index<Constructor<Category>>, C> view)
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+std::string constructor_body(tyr::View<tyr::Index<Constructor<Family, Category>>, C> view)
 {
     return view.get_variant().apply([](auto arg) { return constructor_body(arg); });
 }
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-std::string rule(tyr::View<tyr::Index<DerivationRule<Category>>, C> view)
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+std::string rule(tyr::View<tyr::Index<DerivationRule<Family, Category>>, C> view)
 {
     return fmt::format("({} ({}))", view.get_lhs(), constructor_body(view.get_rhs()));
 }
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-std::string rule(tyr::View<tyr::Index<SubstitutionRule<Category>>, C> view)
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+std::string rule(tyr::View<tyr::Index<SubstitutionRule<Family, Category>>, C> view)
 {
     return fmt::format("({} ({}))", view.get_lhs(), view.get_rhs());
 }
@@ -207,10 +209,11 @@ std::string grammar(View view)
 }  // namespace runir::kr::dl::cnf_grammar::format
 
 #if RUNIR_ENABLE_FMT_FORMATTERS
-template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Concept<Tag>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Concept<Family, Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Concept<Tag>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Concept<Family, Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::format::concept_constructor(view));
@@ -218,10 +221,10 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Concept<T
     }
 };
 
-template<runir::kr::dl::RoleConstructorTag Tag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Role<Tag>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Role<Family, Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Role<Tag>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Role<Family, Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::format::role(view));
@@ -229,10 +232,10 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Role<Tag>
     }
 };
 
-template<runir::kr::dl::BooleanConstructorTag Tag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Boolean<Tag>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag, typename C>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Boolean<Tag>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::format::boolean_constructor(view));
@@ -240,10 +243,10 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Boolean<T
     }
 };
 
-template<runir::kr::dl::NumericalConstructorTag Tag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Numerical<Tag>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag, typename C>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Numerical<Tag>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::format::numerical(view));
@@ -251,10 +254,10 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Numerical
     }
 };
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Constructor<Category>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Constructor<Family, Category>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Constructor<Category>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Constructor<Family, Category>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = fmt::format("({})", runir::kr::dl::cnf_grammar::format::constructor_body(view));
@@ -262,31 +265,31 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Construct
     }
 };
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(view.get_name().str(), ctx); }
 };
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::DerivationRule<Category>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::DerivationRule<Family, Category>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::DerivationRule<Category>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::DerivationRule<Family, Category>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::format::rule(view), ctx); }
 };
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, Category>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Category>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, Category>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::format::rule(view), ctx); }
 };
 
-template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::GrammarTag>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::dl::FamilyTag Family, typename C>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Grammar<Family>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::GrammarTag>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Grammar<Family>>, C>;
     auto format(View view, format_context& ctx) const
     {
         return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::format::grammar(view), ctx);

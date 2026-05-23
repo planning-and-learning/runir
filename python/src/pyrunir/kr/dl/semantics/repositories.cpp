@@ -21,7 +21,7 @@ namespace
 template<tyr::planning::TaskKind Kind>
 void bind_evaluation_context(nb::module_& m, const char* name)
 {
-    using Context = runir::kr::dl::semantics::EvaluationContext<Kind>;
+    using Context = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, Kind>;
 
     nb::class_<Context>(m, name)
         .def(nb::init<tyr::planning::StateView<Kind>, runir::kr::dl::semantics::Builder&, runir::kr::dl::semantics::DenotationRepository&>(),

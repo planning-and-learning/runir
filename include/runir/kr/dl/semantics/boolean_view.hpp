@@ -1,7 +1,7 @@
 #ifndef RUNIR_SEMANTICS_BOOLEAN_VIEW_HPP_
 #define RUNIR_SEMANTICS_BOOLEAN_VIEW_HPP_
 
-#include "runir/kr/dl/semantics/boolean_data.hpp"
+#include "runir/kr/dl/boolean_data.hpp"
 
 #include <concepts>
 #include <tuple>
@@ -12,15 +12,16 @@
 namespace tyr
 {
 
-template<runir::kr::dl::BooleanConstructorTag Tag, typename C>
-class View<Index<runir::kr::dl::Boolean<Tag>>, C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::BooleanConstructorTag<Tag>
+class View<Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::dl::Boolean<Tag>> m_handle;
+    Index<runir::kr::dl::FamilyBoolean<Family, Tag>> m_handle;
 
 public:
-    View(Index<runir::kr::dl::Boolean<Tag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::dl::FamilyBoolean<Family, Tag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

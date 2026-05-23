@@ -1,130 +1,74 @@
 #ifndef RUNIR_GRAMMAR_ROLE_DATA_HPP_
 #define RUNIR_GRAMMAR_ROLE_DATA_HPP_
 
-#include "runir/kr/dl/grammar/data_helpers.hpp"
+#include "runir/kr/dl/grammar/concept_data.hpp"
+#include "runir/kr/dl/semantics/data_helpers.hpp"
+
+#include <concepts>
+#include <tyr/common/types.hpp>
 
 namespace tyr
 {
 
-template<>
-struct Data<runir::kr::dl::grammar::Role<runir::kr::dl::UniversalTag>> :
-    runir::kr::dl::grammar::NullaryData<runir::kr::dl::grammar::Role<runir::kr::dl::UniversalTag>>
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::grammar::Role<Family, runir::kr::dl::UniversalTag>> :
+    runir::kr::dl::semantics::NullaryData<runir::kr::dl::grammar::Role<Family, runir::kr::dl::UniversalTag>>
 {
-    using Base = runir::kr::dl::grammar::NullaryData<runir::kr::dl::grammar::Role<runir::kr::dl::UniversalTag>>;
+    using Base = runir::kr::dl::semantics::NullaryData<runir::kr::dl::grammar::Role<Family, runir::kr::dl::UniversalTag>>;
     using Base::Base;
 };
 
-template<tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::grammar::Role<runir::kr::dl::AtomicStateTag<T>>> :
-    runir::kr::dl::grammar::PredicateData<runir::kr::dl::grammar::Role<runir::kr::dl::AtomicStateTag<T>>, T>
+template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
+struct Data<runir::kr::dl::grammar::Role<Family, runir::kr::dl::AtomicStateTag<T>>> :
+    runir::kr::dl::semantics::PredicateData<runir::kr::dl::grammar::Role<Family, runir::kr::dl::AtomicStateTag<T>>, T>
 {
-    using Base = runir::kr::dl::grammar::PredicateData<runir::kr::dl::grammar::Role<runir::kr::dl::AtomicStateTag<T>>, T>;
+    using Base = runir::kr::dl::semantics::PredicateData<runir::kr::dl::grammar::Role<Family, runir::kr::dl::AtomicStateTag<T>>, T>;
     using Base::Base;
 };
 
-template<tyr::formalism::FactKind T>
-struct Data<runir::kr::dl::grammar::Role<runir::kr::dl::AtomicGoalTag<T>>> :
-    runir::kr::dl::grammar::PredicateData<runir::kr::dl::grammar::Role<runir::kr::dl::AtomicGoalTag<T>>, T>
+template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
+struct Data<runir::kr::dl::grammar::Role<Family, runir::kr::dl::AtomicGoalTag<T>>> :
+    runir::kr::dl::semantics::PredicateData<runir::kr::dl::grammar::Role<Family, runir::kr::dl::AtomicGoalTag<T>>, T>
 {
-    using Base = runir::kr::dl::grammar::PredicateData<runir::kr::dl::grammar::Role<runir::kr::dl::AtomicGoalTag<T>>, T>;
+    using Base = runir::kr::dl::semantics::PredicateData<runir::kr::dl::grammar::Role<Family, runir::kr::dl::AtomicGoalTag<T>>, T>;
     using Base::Base;
 };
 
-template<>
-struct Data<runir::kr::dl::grammar::Role<runir::kr::dl::IntersectionTag>> :
-    runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Role<runir::kr::dl::IntersectionTag>,
-                                       runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
-                                       runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires(std::same_as<Tag, runir::kr::dl::IntersectionTag> || std::same_as<Tag, runir::kr::dl::UnionTag>
+             || std::same_as<Tag, runir::kr::dl::CompositionTag>)
+struct Data<runir::kr::dl::grammar::Role<Family, Tag>> :
+    runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Role<Family, Tag>, GrammarRoleChoice<Family>, GrammarRoleChoice<Family>>
 {
-    using Base = runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Role<runir::kr::dl::IntersectionTag>,
-                                                    runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
-                                                    runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>;
+    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Role<Family, Tag>, GrammarRoleChoice<Family>, GrammarRoleChoice<Family>>;
     using Base::Base;
 };
 
-template<>
-struct Data<runir::kr::dl::grammar::Role<runir::kr::dl::UnionTag>> :
-    runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Role<runir::kr::dl::UnionTag>,
-                                       runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
-                                       runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires(std::same_as<Tag, runir::kr::dl::ComplementTag> || std::same_as<Tag, runir::kr::dl::InverseTag>
+             || std::same_as<Tag, runir::kr::dl::TransitiveClosureTag> || std::same_as<Tag, runir::kr::dl::ReflexiveTransitiveClosureTag>)
+struct Data<runir::kr::dl::grammar::Role<Family, Tag>> :
+    runir::kr::dl::semantics::UnaryData<runir::kr::dl::grammar::Role<Family, Tag>, GrammarRoleChoice<Family>>
 {
-    using Base = runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Role<runir::kr::dl::UnionTag>,
-                                                    runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
-                                                    runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>;
+    using Base = runir::kr::dl::semantics::UnaryData<runir::kr::dl::grammar::Role<Family, Tag>, GrammarRoleChoice<Family>>;
     using Base::Base;
 };
 
-template<>
-struct Data<runir::kr::dl::grammar::Role<runir::kr::dl::ComplementTag>> :
-    runir::kr::dl::grammar::UnaryData<runir::kr::dl::grammar::Role<runir::kr::dl::ComplementTag>,
-                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::grammar::Role<Family, runir::kr::dl::RestrictionTag>> :
+    runir::kr::dl::semantics::
+        BinaryData<runir::kr::dl::grammar::Role<Family, runir::kr::dl::RestrictionTag>, GrammarRoleChoice<Family>, GrammarConceptChoice<Family>>
 {
-    using Base = runir::kr::dl::grammar::UnaryData<runir::kr::dl::grammar::Role<runir::kr::dl::ComplementTag>,
-                                                   runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>;
+    using Base = runir::kr::dl::semantics::
+        BinaryData<runir::kr::dl::grammar::Role<Family, runir::kr::dl::RestrictionTag>, GrammarRoleChoice<Family>, GrammarConceptChoice<Family>>;
     using Base::Base;
 };
 
-template<>
-struct Data<runir::kr::dl::grammar::Role<runir::kr::dl::InverseTag>> :
-    runir::kr::dl::grammar::UnaryData<runir::kr::dl::grammar::Role<runir::kr::dl::InverseTag>,
-                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::grammar::Role<Family, runir::kr::dl::IdentityTag>> :
+    runir::kr::dl::semantics::UnaryData<runir::kr::dl::grammar::Role<Family, runir::kr::dl::IdentityTag>, GrammarConceptChoice<Family>>
 {
-    using Base = runir::kr::dl::grammar::UnaryData<runir::kr::dl::grammar::Role<runir::kr::dl::InverseTag>,
-                                                   runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>;
-    using Base::Base;
-};
-
-template<>
-struct Data<runir::kr::dl::grammar::Role<runir::kr::dl::CompositionTag>> :
-    runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Role<runir::kr::dl::CompositionTag>,
-                                       runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
-                                       runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>
-{
-    using Base = runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Role<runir::kr::dl::CompositionTag>,
-                                                    runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
-                                                    runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>;
-    using Base::Base;
-};
-
-template<>
-struct Data<runir::kr::dl::grammar::Role<runir::kr::dl::TransitiveClosureTag>> :
-    runir::kr::dl::grammar::UnaryData<runir::kr::dl::grammar::Role<runir::kr::dl::TransitiveClosureTag>,
-                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>
-{
-    using Base = runir::kr::dl::grammar::UnaryData<runir::kr::dl::grammar::Role<runir::kr::dl::TransitiveClosureTag>,
-                                                   runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>;
-    using Base::Base;
-};
-
-template<>
-struct Data<runir::kr::dl::grammar::Role<runir::kr::dl::ReflexiveTransitiveClosureTag>> :
-    runir::kr::dl::grammar::UnaryData<runir::kr::dl::grammar::Role<runir::kr::dl::ReflexiveTransitiveClosureTag>,
-                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>
-{
-    using Base = runir::kr::dl::grammar::UnaryData<runir::kr::dl::grammar::Role<runir::kr::dl::ReflexiveTransitiveClosureTag>,
-                                                   runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>;
-    using Base::Base;
-};
-
-template<>
-struct Data<runir::kr::dl::grammar::Role<runir::kr::dl::RestrictionTag>> :
-    runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Role<runir::kr::dl::RestrictionTag>,
-                                       runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
-                                       runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::ConceptTag>>
-{
-    using Base = runir::kr::dl::grammar::BinaryData<runir::kr::dl::grammar::Role<runir::kr::dl::RestrictionTag>,
-                                                    runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>,
-                                                    runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::ConceptTag>>;
-    using Base::Base;
-};
-
-template<>
-struct Data<runir::kr::dl::grammar::Role<runir::kr::dl::IdentityTag>> :
-    runir::kr::dl::grammar::UnaryData<runir::kr::dl::grammar::Role<runir::kr::dl::IdentityTag>,
-                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::ConceptTag>>
-{
-    using Base = runir::kr::dl::grammar::UnaryData<runir::kr::dl::grammar::Role<runir::kr::dl::IdentityTag>,
-                                                   runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::ConceptTag>>;
+    using Base = runir::kr::dl::semantics::UnaryData<runir::kr::dl::grammar::Role<Family, runir::kr::dl::IdentityTag>, GrammarConceptChoice<Family>>;
     using Base::Base;
 };
 

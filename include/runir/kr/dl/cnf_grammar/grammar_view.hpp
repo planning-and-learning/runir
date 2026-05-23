@@ -13,15 +13,15 @@
 namespace tyr
 {
 
-template<typename C>
-class View<Index<runir::kr::dl::cnf_grammar::GrammarTag>, C>
+template<runir::kr::dl::FamilyTag Family, typename C>
+class View<Index<runir::kr::dl::cnf_grammar::Grammar<Family>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::dl::cnf_grammar::GrammarTag> m_handle;
+    Index<runir::kr::dl::cnf_grammar::Grammar<Family>> m_handle;
 
 public:
-    View(Index<runir::kr::dl::cnf_grammar::GrammarTag> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::dl::cnf_grammar::Grammar<Family>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

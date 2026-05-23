@@ -1,9 +1,9 @@
 #ifndef RUNIR_GRAMMAR_CONSTRUCTOR_REPOSITORY_HPP_
 #define RUNIR_GRAMMAR_CONSTRUCTOR_REPOSITORY_HPP_
 
-#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/canonicalization.hpp"
 #include "runir/kr/dl/grammar/datas.hpp"
+#include "runir/kr/dl/grammar/declarations.hpp"
 #include "runir/kr/dl/grammar/views.hpp"
 
 #include <cassert>
@@ -19,15 +19,15 @@
 namespace runir::kr::dl::grammar
 {
 
-using ConceptTypes = tyr::MapTypeListT<Concept, runir::kr::dl::ConceptConstructorTags>;
-using RoleTypes = tyr::MapTypeListT<Role, runir::kr::dl::RoleConstructorTags>;
-using BooleanTypes = tyr::MapTypeListT<Boolean, runir::kr::dl::BooleanConstructorTags>;
-using NumericalTypes = tyr::MapTypeListT<Numerical, runir::kr::dl::NumericalConstructorTags>;
-using ConstructorTypes = tyr::MapTypeListT<Constructor, runir::kr::dl::CategoryTags>;
-using ConstructorOrNonTerminalTypes = tyr::MapTypeListT<ConstructorOrNonTerminal, runir::kr::dl::CategoryTags>;
-using NonTerminalTypes = tyr::MapTypeListT<NonTerminal, runir::kr::dl::CategoryTags>;
-using DerivationRuleTypes = tyr::MapTypeListT<DerivationRule, runir::kr::dl::CategoryTags>;
-using GrammarTypes = tyr::TypeList<GrammarTag>;
+using ConceptTypes = tyr::MapTypeListSecondT<Concept, runir::kr::dl::BaseFamilyTag, runir::kr::dl::ConceptConstructorTags>;
+using RoleTypes = tyr::MapTypeListSecondT<Role, runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleConstructorTags>;
+using BooleanTypes = tyr::MapTypeListSecondT<Boolean, runir::kr::dl::BaseFamilyTag, runir::kr::dl::BooleanConstructorTags>;
+using NumericalTypes = tyr::MapTypeListSecondT<Numerical, runir::kr::dl::BaseFamilyTag, runir::kr::dl::NumericalConstructorTags>;
+using ConstructorTypes = tyr::MapTypeListSecondT<Constructor, runir::kr::dl::BaseFamilyTag, runir::kr::dl::CategoryTags>;
+using ConstructorOrNonTerminalTypes = tyr::MapTypeListSecondT<ConstructorOrNonTerminal, runir::kr::dl::BaseFamilyTag, runir::kr::dl::CategoryTags>;
+using NonTerminalTypes = tyr::MapTypeListSecondT<NonTerminal, runir::kr::dl::BaseFamilyTag, runir::kr::dl::CategoryTags>;
+using DerivationRuleTypes = tyr::MapTypeListSecondT<DerivationRule, runir::kr::dl::BaseFamilyTag, runir::kr::dl::CategoryTags>;
+using GrammarTypes = tyr::TypeList<GrammarTag<runir::kr::dl::BaseFamilyTag>>;
 
 using ConstructorRepositoryTypes = tyr::ConcatTypeListsT<ConceptTypes,
                                                          RoleTypes,
@@ -149,63 +149,63 @@ public:
 using ConstructorRepositoryFactoryPtr = std::shared_ptr<ConstructorRepositoryFactory>;
 
 template<runir::kr::dl::ConceptConstructorTag Tag>
-using ConceptView = tyr::View<tyr::Index<Concept<Tag>>, ConstructorRepository>;
+using ConceptView = tyr::View<tyr::Index<Concept<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
 template<runir::kr::dl::ConceptConstructorTag Tag>
-using ConceptListView = tyr::View<tyr::IndexList<Concept<Tag>>, ConstructorRepository>;
+using ConceptListView = tyr::View<tyr::IndexList<Concept<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
 template<runir::kr::dl::ConceptConstructorTag Tag>
 using ConceptViewList = std::vector<ConceptView<Tag>>;
 
 template<runir::kr::dl::RoleConstructorTag Tag>
-using RoleView = tyr::View<tyr::Index<Role<Tag>>, ConstructorRepository>;
+using RoleView = tyr::View<tyr::Index<Role<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
 template<runir::kr::dl::RoleConstructorTag Tag>
-using RoleListView = tyr::View<tyr::IndexList<Role<Tag>>, ConstructorRepository>;
+using RoleListView = tyr::View<tyr::IndexList<Role<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
 template<runir::kr::dl::RoleConstructorTag Tag>
 using RoleViewList = std::vector<RoleView<Tag>>;
 
 template<runir::kr::dl::BooleanConstructorTag Tag>
-using BooleanView = tyr::View<tyr::Index<Boolean<Tag>>, ConstructorRepository>;
+using BooleanView = tyr::View<tyr::Index<Boolean<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
 template<runir::kr::dl::BooleanConstructorTag Tag>
-using BooleanListView = tyr::View<tyr::IndexList<Boolean<Tag>>, ConstructorRepository>;
+using BooleanListView = tyr::View<tyr::IndexList<Boolean<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
 template<runir::kr::dl::BooleanConstructorTag Tag>
 using BooleanViewList = std::vector<BooleanView<Tag>>;
 
 template<runir::kr::dl::NumericalConstructorTag Tag>
-using NumericalView = tyr::View<tyr::Index<Numerical<Tag>>, ConstructorRepository>;
+using NumericalView = tyr::View<tyr::Index<Numerical<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
 template<runir::kr::dl::NumericalConstructorTag Tag>
-using NumericalListView = tyr::View<tyr::IndexList<Numerical<Tag>>, ConstructorRepository>;
+using NumericalListView = tyr::View<tyr::IndexList<Numerical<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
 template<runir::kr::dl::NumericalConstructorTag Tag>
 using NumericalViewList = std::vector<NumericalView<Tag>>;
 
 template<runir::kr::dl::CategoryTag Category>
-using ConstructorView = tyr::View<tyr::Index<Constructor<Category>>, ConstructorRepository>;
+using ConstructorView = tyr::View<tyr::Index<Constructor<runir::kr::dl::BaseFamilyTag, Category>>, ConstructorRepository>;
 template<runir::kr::dl::CategoryTag Category>
-using ConstructorListView = tyr::View<tyr::IndexList<Constructor<Category>>, ConstructorRepository>;
+using ConstructorListView = tyr::View<tyr::IndexList<Constructor<runir::kr::dl::BaseFamilyTag, Category>>, ConstructorRepository>;
 template<runir::kr::dl::CategoryTag Category>
 using ConstructorViewList = std::vector<ConstructorView<Category>>;
 
 template<runir::kr::dl::CategoryTag Category>
-using ConstructorOrNonTerminalView = tyr::View<tyr::Index<ConstructorOrNonTerminal<Category>>, ConstructorRepository>;
+using ConstructorOrNonTerminalView = tyr::View<tyr::Index<ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, Category>>, ConstructorRepository>;
 template<runir::kr::dl::CategoryTag Category>
-using ConstructorOrNonTerminalListView = tyr::View<tyr::IndexList<ConstructorOrNonTerminal<Category>>, ConstructorRepository>;
+using ConstructorOrNonTerminalListView = tyr::View<tyr::IndexList<ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, Category>>, ConstructorRepository>;
 template<runir::kr::dl::CategoryTag Category>
 using ConstructorOrNonTerminalViewList = std::vector<ConstructorOrNonTerminalView<Category>>;
 
 template<runir::kr::dl::CategoryTag Category>
-using NonTerminalView = tyr::View<tyr::Index<NonTerminal<Category>>, ConstructorRepository>;
+using NonTerminalView = tyr::View<tyr::Index<NonTerminal<runir::kr::dl::BaseFamilyTag, Category>>, ConstructorRepository>;
 template<runir::kr::dl::CategoryTag Category>
-using NonTerminalListView = tyr::View<tyr::IndexList<NonTerminal<Category>>, ConstructorRepository>;
+using NonTerminalListView = tyr::View<tyr::IndexList<NonTerminal<runir::kr::dl::BaseFamilyTag, Category>>, ConstructorRepository>;
 template<runir::kr::dl::CategoryTag Category>
 using NonTerminalViewList = std::vector<NonTerminalView<Category>>;
 
 template<runir::kr::dl::CategoryTag Category>
-using DerivationRuleView = tyr::View<tyr::Index<DerivationRule<Category>>, ConstructorRepository>;
+using DerivationRuleView = tyr::View<tyr::Index<DerivationRule<runir::kr::dl::BaseFamilyTag, Category>>, ConstructorRepository>;
 template<runir::kr::dl::CategoryTag Category>
-using DerivationRuleListView = tyr::View<tyr::IndexList<DerivationRule<Category>>, ConstructorRepository>;
+using DerivationRuleListView = tyr::View<tyr::IndexList<DerivationRule<runir::kr::dl::BaseFamilyTag, Category>>, ConstructorRepository>;
 template<runir::kr::dl::CategoryTag Category>
 using DerivationRuleViewList = std::vector<DerivationRuleView<Category>>;
 
-using GrammarView = tyr::View<tyr::Index<GrammarTag>, ConstructorRepository>;
-using GrammarListView = tyr::View<tyr::IndexList<GrammarTag>, ConstructorRepository>;
+using GrammarView = tyr::View<tyr::Index<GrammarTag<runir::kr::dl::BaseFamilyTag>>, ConstructorRepository>;
+using GrammarListView = tyr::View<tyr::IndexList<GrammarTag<runir::kr::dl::BaseFamilyTag>>, ConstructorRepository>;
 using GrammarViewList = std::vector<GrammarView>;
 
 inline const ConstructorRepository& get_repository(const ConstructorRepository& repository) noexcept { return repository; }

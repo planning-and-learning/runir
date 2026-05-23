@@ -12,10 +12,10 @@
 namespace tyr
 {
 
-template<runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::dl::cnf_grammar::NonTerminal<Category>>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+struct Data<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>>
 {
-    Index<runir::kr::dl::cnf_grammar::NonTerminal<Category>> index;
+    Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>> index;
     ::cista::offset::string name;
 
     Data() = default;
