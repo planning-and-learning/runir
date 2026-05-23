@@ -1,10 +1,10 @@
 #ifndef RUNIR_SRC_KR_DL_GRAMMAR_PARSER_GENERIC_PARSER_DEF_HPP_
 #define RUNIR_SRC_KR_DL_GRAMMAR_PARSER_GENERIC_PARSER_DEF_HPP_
 
+#include "runir/kr/dl/grammar/parser/ext/ast_adapted.hpp"
 #include "runir/kr/dl/grammar/parser/base/ast_adapted.hpp"
 #include "runir/kr/dl/grammar/parser/base/parsers.hpp"
 #include "runir/kr/dl/grammar/parser/error_handler.hpp"
-#include "runir/kr/dl/grammar/parser/ext/ast_adapted.hpp"
 #include "runir/kr/dl/grammar/parser/ext/parsers.hpp"
 
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
@@ -17,7 +17,7 @@ using x3::lit;
 using x3::uint_;
 
 concept_register_type const concept_register = "concept_register";
-const auto concept_register_def = ((lit("(") >> lit(ast::ConceptRegister::keyword) > uint_ >> lit(")")) | (lit(ast::ConceptRegister::keyword) > uint_));
+const auto concept_register_def = (((lit("(") >> lit(ast::ConceptRegister::keyword)) > uint_ > lit(")")) | (lit(ast::ConceptRegister::keyword) > uint_));
 
 BOOST_SPIRIT_DEFINE(concept_register)
 
