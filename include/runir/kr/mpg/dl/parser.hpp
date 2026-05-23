@@ -8,7 +8,7 @@
 namespace runir::kr::mpg::dl
 {
 
-PolicyView parse_policy(const std::string& description, Repository& repository);
+ModuleView parse_module(const std::string& description, Repository& repository);
 
 }  // namespace runir::kr::mpg::dl
 

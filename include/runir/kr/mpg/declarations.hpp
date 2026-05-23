@@ -12,11 +12,7 @@ struct Register
 {
 };
 
-struct DFA
-{
-};
-
-struct AutomataState
+struct MemoryState
 {
 };
 
@@ -80,15 +76,20 @@ struct CallTag
     static constexpr auto keyword = "call";
 };
 
+struct SketchTag
+{
+    static constexpr auto keyword = "sketch";
+};
+
 template<typename T>
-concept RuleKind = std::same_as<T, LoadTag> || std::same_as<T, DoTag> || std::same_as<T, CallTag>;
+concept RuleKind = std::same_as<T, SketchTag> || std::same_as<T, LoadTag> || std::same_as<T, DoTag> || std::same_as<T, CallTag>;
 
 template<RuleKind Kind>
 struct Rule
 {
 };
 
-struct Policy
+struct RuleVariant
 {
 };
 

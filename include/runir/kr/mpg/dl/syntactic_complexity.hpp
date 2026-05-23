@@ -8,7 +8,7 @@
 namespace runir::kr::mpg::dl
 {
 
-inline std::size_t syntactic_complexity(PolicyView) { return 0; }
+inline std::size_t syntactic_complexity(ModuleView) { return 0; }
 
 }  // namespace runir::kr::mpg::dl
 

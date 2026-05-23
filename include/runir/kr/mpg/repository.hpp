@@ -3,12 +3,10 @@
 
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/gp/repository.hpp"
-#include "runir/kr/mpg/automata_state_data.hpp"
-#include "runir/kr/mpg/automata_state_view.hpp"
+#include "runir/kr/mpg/memory_state_data.hpp"
+#include "runir/kr/mpg/memory_state_view.hpp"
 #include "runir/kr/mpg/condition_data.hpp"
 #include "runir/kr/mpg/condition_view.hpp"
-#include "runir/kr/mpg/dfa_data.hpp"
-#include "runir/kr/mpg/dfa_view.hpp"
 #include "runir/kr/mpg/dl/concept_data.hpp"
 #include "runir/kr/mpg/dl/concept_view.hpp"
 #include "runir/kr/mpg/dl/constructor_data.hpp"
@@ -21,12 +19,12 @@
 #include "runir/kr/mpg/feature_view.hpp"
 #include "runir/kr/mpg/module_data.hpp"
 #include "runir/kr/mpg/module_view.hpp"
-#include "runir/kr/mpg/policy_data.hpp"
-#include "runir/kr/mpg/policy_view.hpp"
 #include "runir/kr/mpg/register_data.hpp"
 #include "runir/kr/mpg/register_view.hpp"
 #include "runir/kr/mpg/rule_data.hpp"
 #include "runir/kr/mpg/rule_view.hpp"
+#include "runir/kr/mpg/rule_variant_data.hpp"
+#include "runir/kr/mpg/rule_variant_view.hpp"
 
 #include <cassert>
 #include <memory>
@@ -39,7 +37,8 @@
 namespace runir::kr::mpg
 {
 
-using RuleTypes = tyr::MapTypeListT<Rule, tyr::TypeList<LoadTag, DoTag, CallTag>>;
+using ConcreteRuleTypes = tyr::MapTypeListT<Rule, tyr::TypeList<SketchTag, LoadTag, DoTag, CallTag>>;
+using RuleTypes = tyr::ConcatTypeListsT<tyr::TypeList<RuleVariant>, ConcreteRuleTypes>;
 using ConstructorTypes = tyr::TypeList<dl::Concept<dl::RegisterTag>,
                                        dl::Constructor<runir::kr::dl::ConceptTag>,
                                        dl::Constructor<runir::kr::dl::RoleTag>,
@@ -53,7 +52,7 @@ using FeatureTypes = tyr::TypeList<Feature<dl::ConceptFeature>,
                                    ConcreteFeature<runir::kr::DlTag, dl::NumericalFeature>>;
 using ConditionTypes = tyr::TypeList<ConditionVariant>;
 using EffectTypes = tyr::TypeList<EffectVariant>;
-using ProgramTypes = tyr::TypeList<Register, AutomataState, DFA, Module, Policy>;
+using ProgramTypes = tyr::TypeList<Register, MemoryState, Module>;
 using RepositoryTypes =
     tyr::ConcatTypeListsT<runir::kr::gp::RepositoryTypes, ConstructorTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ProgramTypes>;
 using SymbolRepository = tyr::ApplyTypeListT<tyr::formalism::SymbolRepository, RepositoryTypes>;
@@ -141,10 +140,9 @@ public:
 using RepositoryFactoryPtr = std::shared_ptr<RepositoryFactory>;
 
 using RegisterView = tyr::View<tyr::Index<Register>, Repository>;
-using AutomataStateView = tyr::View<tyr::Index<AutomataState>, Repository>;
-using DFAView = tyr::View<tyr::Index<DFA>, Repository>;
+using MemoryStateView = tyr::View<tyr::Index<MemoryState>, Repository>;
 using ModuleView = tyr::View<tyr::Index<Module>, Repository>;
-using PolicyView = tyr::View<tyr::Index<Policy>, Repository>;
+using RuleVariantView = tyr::View<tyr::Index<RuleVariant>, Repository>;
 
 template<RuleKind Kind>
 using RuleView = tyr::View<tyr::Index<Rule<Kind>>, Repository>;

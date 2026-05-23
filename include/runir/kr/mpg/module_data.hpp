@@ -1,19 +1,41 @@
 #ifndef RUNIR_KR_MPG_MODULE_DATA_HPP_
 #define RUNIR_KR_MPG_MODULE_DATA_HPP_
 
-#include "runir/kr/gp/rule_index.hpp"
-#include "runir/kr/mpg/automata_state_index.hpp"
-#include "runir/kr/mpg/dfa_index.hpp"
+#include "runir/kr/mpg/memory_state_index.hpp"
 #include "runir/kr/mpg/module_index.hpp"
 #include "runir/kr/mpg/register_index.hpp"
 #include "runir/kr/mpg/rule_data.hpp"
 #include "runir/kr/mpg/rule_index.hpp"
+#include "runir/kr/mpg/rule_variant_index.hpp"
 
 #include <cista/containers/string.h>
+#include <cista/containers/vector.h>
 #include <string>
 #include <tuple>
 #include <tyr/common/types.hpp>
 #include <tyr/common/types_utils.hpp>
+
+namespace runir::kr::mpg
+{
+
+struct MemoryTransition
+{
+    tyr::Index<MemoryState> source;
+    tyr::Index<MemoryState> target;
+    tyr::IndexList<RuleVariant> rules;
+
+    void clear() noexcept
+    {
+        tyr::clear(source);
+        tyr::clear(target);
+        tyr::clear(rules);
+    }
+
+    auto cista_members() const noexcept { return std::tie(source, target, rules); }
+    auto identifying_members() const noexcept { return std::tie(source, target, rules); }
+};
+
+}  // namespace runir::kr::mpg
 
 namespace tyr
 {
@@ -21,16 +43,14 @@ namespace tyr
 template<>
 struct Data<runir::kr::mpg::Module>
 {
+    using RuleGraph = ::cista::offset::vector<runir::kr::mpg::MemoryTransition>;
+
     Index<runir::kr::mpg::Module> index;
     ::cista::offset::string name;
-    Index<runir::kr::mpg::DFA> dfa;
     IndexList<runir::kr::mpg::Register> registers;
-    IndexList<runir::kr::mpg::AutomataState> automata_states;
-    IndexList<runir::kr::gp::Rule> rules;
-    IndexList<runir::kr::mpg::Rule<runir::kr::mpg::LoadTag>> load_rules;
-    IndexList<runir::kr::mpg::Rule<runir::kr::mpg::DoTag>> do_rules;
-    IndexList<runir::kr::mpg::Rule<runir::kr::mpg::CallTag>> call_rules;
-
+    Index<runir::kr::mpg::MemoryState> entry_memory_state;
+    IndexList<runir::kr::mpg::MemoryState> memory_states;
+    RuleGraph memory_transitions;
     Data() = default;
     Data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
     Data(const std::string& name_) : index(), name(name_) {}
@@ -39,17 +59,14 @@ struct Data<runir::kr::mpg::Module>
     {
         tyr::clear(index);
         tyr::clear(name);
-        tyr::clear(dfa);
         tyr::clear(registers);
-        tyr::clear(automata_states);
-        tyr::clear(rules);
-        tyr::clear(load_rules);
-        tyr::clear(do_rules);
-        tyr::clear(call_rules);
+        tyr::clear(entry_memory_state);
+        tyr::clear(memory_states);
+        tyr::clear(memory_transitions);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, name, dfa, registers, automata_states, rules, load_rules, do_rules, call_rules); }
-    auto identifying_members() const noexcept { return std::tie(name, dfa, registers, automata_states, rules, load_rules, do_rules, call_rules); }
+    auto cista_members() const noexcept { return std::tie(index, name, registers, entry_memory_state, memory_states, memory_transitions); }
+    auto identifying_members() const noexcept { return std::tie(name, registers, entry_memory_state, memory_states, memory_transitions); }
 };
 
 }  // namespace tyr

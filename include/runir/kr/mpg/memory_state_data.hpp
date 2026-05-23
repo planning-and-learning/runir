@@ -1,7 +1,7 @@
-#ifndef RUNIR_KR_MPG_AUTOMATA_STATE_DATA_HPP_
-#define RUNIR_KR_MPG_AUTOMATA_STATE_DATA_HPP_
+#ifndef RUNIR_KR_MPG_MEMORY_STATE_DATA_HPP_
+#define RUNIR_KR_MPG_MEMORY_STATE_DATA_HPP_
 
-#include "runir/kr/mpg/automata_state_index.hpp"
+#include "runir/kr/mpg/memory_state_index.hpp"
 
 #include <cista/containers/string.h>
 #include <string>
@@ -13,9 +13,9 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::kr::mpg::AutomataState>
+struct Data<runir::kr::mpg::MemoryState>
 {
-    Index<runir::kr::mpg::AutomataState> index;
+    Index<runir::kr::mpg::MemoryState> index;
     ::cista::offset::string name;
 
     Data() = default;

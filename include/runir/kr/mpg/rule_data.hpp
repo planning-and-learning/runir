@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_MPG_RULE_DATA_HPP_
 #define RUNIR_KR_MPG_RULE_DATA_HPP_
 
-#include "runir/kr/mpg/automata_state_index.hpp"
+#include "runir/kr/mpg/memory_state_index.hpp"
 #include "runir/kr/mpg/condition_index.hpp"
 #include "runir/kr/mpg/effect_index.hpp"
 #include "runir/kr/mpg/rule_index.hpp"
@@ -17,8 +17,8 @@ template<runir::kr::mpg::RuleKind Kind>
 struct Data<runir::kr::mpg::Rule<Kind>>
 {
     Index<runir::kr::mpg::Rule<Kind>> index;
-    Index<runir::kr::mpg::AutomataState> source;
-    Index<runir::kr::mpg::AutomataState> target;
+    Index<runir::kr::mpg::MemoryState> source;
+    Index<runir::kr::mpg::MemoryState> target;
     IndexList<runir::kr::mpg::ConditionVariant> conditions;
     IndexList<runir::kr::mpg::EffectVariant> effects;
 

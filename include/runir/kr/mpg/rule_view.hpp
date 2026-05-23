@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_MPG_RULE_VIEW_HPP_
 #define RUNIR_KR_MPG_RULE_VIEW_HPP_
 
-#include "runir/kr/mpg/automata_state_view.hpp"
+#include "runir/kr/mpg/memory_state_view.hpp"
 #include "runir/kr/mpg/rule_data.hpp"
 
 #include <tuple>
@@ -26,8 +26,8 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
 
     auto get_index() const noexcept { return m_handle; }
-    auto get_source() const noexcept { return View<Index<runir::kr::mpg::AutomataState>, C>(get_data().source, *m_context); }
-    auto get_target() const noexcept { return View<Index<runir::kr::mpg::AutomataState>, C>(get_data().target, *m_context); }
+    auto get_source() const noexcept { return View<Index<runir::kr::mpg::MemoryState>, C>(get_data().source, *m_context); }
+    auto get_target() const noexcept { return View<Index<runir::kr::mpg::MemoryState>, C>(get_data().target, *m_context); }
     auto get_conditions() const noexcept { return make_view(get_data().conditions, *m_context); }
     auto get_effects() const noexcept { return make_view(get_data().effects, *m_context); }
 
