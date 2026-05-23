@@ -9,25 +9,25 @@
 namespace tyr
 {
 
-template<>
-struct Index<runir::kr::ps::EffectVariant> : IndexMixin<Index<runir::kr::ps::EffectVariant>>
+template<runir::kr::FamilyTag Family>
+struct Index<runir::kr::ps::EffectVariant<Family>> : IndexMixin<Index<runir::kr::ps::EffectVariant<Family>>>
 {
-    using Base = IndexMixin<Index<runir::kr::ps::EffectVariant>>;
+    using Base = IndexMixin<Index<runir::kr::ps::EffectVariant<Family>>>;
     using Base::Base;
 };
 
-template<typename LanguageTag>
-struct Index<runir::kr::ps::ConcreteEffectVariant<LanguageTag>> : IndexMixin<Index<runir::kr::ps::ConcreteEffectVariant<LanguageTag>>>
+template<runir::kr::FamilyTag Family, typename LanguageTag>
+struct Index<runir::kr::ps::ConcreteEffectVariant<Family, LanguageTag>> : IndexMixin<Index<runir::kr::ps::ConcreteEffectVariant<Family, LanguageTag>>>
 {
-    using Base = IndexMixin<Index<runir::kr::ps::ConcreteEffectVariant<LanguageTag>>>;
+    using Base = IndexMixin<Index<runir::kr::ps::ConcreteEffectVariant<Family, LanguageTag>>>;
     using Base::Base;
 };
 
-template<typename LanguageTag, typename FeatureTag, typename ObservationTag>
-struct Index<runir::kr::ps::ConcreteEffect<LanguageTag, FeatureTag, ObservationTag>> :
-    IndexMixin<Index<runir::kr::ps::ConcreteEffect<LanguageTag, FeatureTag, ObservationTag>>>
+template<runir::kr::FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
+struct Index<runir::kr::ps::ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>> :
+    IndexMixin<Index<runir::kr::ps::ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>>>
 {
-    using Base = IndexMixin<Index<runir::kr::ps::ConcreteEffect<LanguageTag, FeatureTag, ObservationTag>>>;
+    using Base = IndexMixin<Index<runir::kr::ps::ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>>>;
     using Base::Base;
 };
 

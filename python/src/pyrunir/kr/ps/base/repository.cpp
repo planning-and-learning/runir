@@ -1,10 +1,10 @@
-#include "module.hpp"
+#include "pyrunir/kr/ps/base/module.hpp"
 
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>
-#include <runir/kr/ps/repository.hpp>
+#include <runir/kr/ps/base/repository.hpp>
 
-namespace runir::kr::ps
+namespace runir::kr::ps::base
 {
 
 using namespace nanobind::literals;
@@ -20,4 +20,4 @@ void bind_repository(nb::module_& m)
     factory.def(nb::init<>()).def("create", &RepositoryFactory::create_shared, "dl_repository"_a);
 }
 
-}  // namespace runir::kr::ps
+}  // namespace runir::kr::ps::base

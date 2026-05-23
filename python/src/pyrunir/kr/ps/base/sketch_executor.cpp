@@ -1,13 +1,13 @@
-#include "module.hpp"
+#include "pyrunir/kr/ps/base/module.hpp"
 
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/vector.h>
 #include <runir/datasets/state_graph.hpp>
-#include <runir/kr/ps/sketch_executor.hpp>
+#include <runir/kr/ps/base/sketch_executor.hpp>
 #include <tyr/common/python/type_casters.hpp>
 #include <tyr/planning/declarations.hpp>
 
-namespace runir::kr::ps
+namespace runir::kr::ps::base
 {
 
 using namespace nanobind::literals;
@@ -83,4 +83,4 @@ void bind_sketch_executor(nb::module_& m)
           "options"_a = SketchSearchOptions<tyr::planning::LiftedTag>());
 }
 
-}  // namespace runir::kr::ps
+}  // namespace runir::kr::ps::base

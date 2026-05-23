@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_FEATURE_VIEW_HPP_
 #define RUNIR_KR_PS_FEATURE_VIEW_HPP_
 
-#include "runir/kr/ps/feature_data.hpp"
+#include "runir/kr/ps/feature_index.hpp"
 
 #include <tuple>
 #include <tyr/common/types.hpp>
@@ -12,15 +12,15 @@
 namespace tyr
 {
 
-template<typename FeatureTag, typename C>
-class View<Index<runir::kr::ps::Feature<FeatureTag>>, C>
+template<runir::kr::FamilyTag Family, typename FeatureTag, typename C>
+class View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::Feature<FeatureTag>> m_handle;
+    Index<runir::kr::ps::Feature<Family, FeatureTag>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::Feature<FeatureTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::Feature<Family, FeatureTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

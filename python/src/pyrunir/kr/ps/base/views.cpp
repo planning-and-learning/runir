@@ -1,16 +1,16 @@
-#include "module.hpp"
+#include "pyrunir/kr/ps/base/module.hpp"
 
 #include <concepts>
 #include <nanobind/stl/string.h>
 #include <runir/kr/ps/base/dl/evaluation_context.hpp>
-#include <runir/kr/ps/formatter.hpp>
-#include <runir/kr/ps/repository.hpp>
-#include <runir/kr/ps/syntactic_complexity.hpp>
+#include <runir/kr/ps/base/formatter.hpp>
+#include <runir/kr/ps/base/repository.hpp>
+#include <runir/kr/ps/base/syntactic_complexity.hpp>
 #include <string>
 #include <tyr/common/python/bindings.hpp>
 #include <tyr/common/python/type_casters.hpp>
 
-namespace runir::kr::ps
+namespace runir::kr::ps::base
 {
 
 using namespace nanobind::literals;
@@ -63,10 +63,10 @@ void bind_view(nb::module_& m, const std::string& name)
 
 void bind_views(nb::module_& m)
 {
-    bind_view<ConditionVariant>(m, "ConditionVariant");
-    bind_view<EffectVariant>(m, "EffectVariant");
-    bind_view<Rule>(m, "Rule");
-    bind_view<Sketch>(m, "Sketch");
+    bind_view<ConditionVariant<runir::kr::BaseFamilyTag>>(m, "ConditionVariant");
+    bind_view<EffectVariant<runir::kr::BaseFamilyTag>>(m, "EffectVariant");
+    bind_view<Rule<runir::kr::BaseFamilyTag>>(m, "Rule");
+    bind_view<Sketch<runir::kr::BaseFamilyTag>>(m, "Sketch");
 }
 
-}  // namespace runir::kr::ps
+}  // namespace runir::kr::ps::base

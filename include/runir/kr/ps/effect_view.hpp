@@ -1,8 +1,7 @@
 #ifndef RUNIR_KR_PS_EFFECT_VIEW_HPP_
 #define RUNIR_KR_PS_EFFECT_VIEW_HPP_
 
-#include "runir/kr/ps/base/dl/effect_view.hpp"
-#include "runir/kr/ps/effect_data.hpp"
+#include "runir/kr/ps/effect_index.hpp"
 
 #include <tuple>
 #include <tyr/common/types.hpp>
@@ -11,15 +10,15 @@
 namespace tyr
 {
 
-template<typename C>
-class View<Index<runir::kr::ps::EffectVariant>, C>
+template<runir::kr::FamilyTag Family, typename C>
+class View<Index<runir::kr::ps::EffectVariant<Family>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::EffectVariant> m_handle;
+    Index<runir::kr::ps::EffectVariant<Family>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::EffectVariant> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::EffectVariant<Family>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }
@@ -37,15 +36,15 @@ public:
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
-template<typename LanguageTag, typename C>
-class View<Index<runir::kr::ps::ConcreteEffectVariant<LanguageTag>>, C>
+template<runir::kr::FamilyTag Family, typename LanguageTag, typename C>
+class View<Index<runir::kr::ps::ConcreteEffectVariant<Family, LanguageTag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::ConcreteEffectVariant<LanguageTag>> m_handle;
+    Index<runir::kr::ps::ConcreteEffectVariant<Family, LanguageTag>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::ConcreteEffectVariant<LanguageTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::ConcreteEffectVariant<Family, LanguageTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

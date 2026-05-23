@@ -216,14 +216,17 @@ std::string constructor(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::k
 }
 
 template<typename FeatureTag, typename C>
-void append_feature(std::ostream& os, tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C> view, std::string_view name)
+void append_feature(std::ostream& os,
+                    tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view,
+                    std::string_view name)
 {
     os << "(" << FeatureTag::keyword << " " << name << " " << quoted(view.get_symbol()) << " " << quoted(view.get_description()) << " "
        << constructor(view.get_feature()) << ")";
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C> view, std::string_view name)
+std::string feature(tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view,
+                    std::string_view name)
 {
     auto os = std::ostringstream {};
     append_feature(os, view, name);
@@ -231,7 +234,8 @@ std::string feature(tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::k
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string condition(tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>, std::string_view feature_name)
+std::string condition(tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>,
+                      std::string_view feature_name)
 {
     auto os = std::ostringstream {};
     os << "(" << ObservationTag::keyword << " " << feature_name << ")";
@@ -239,7 +243,8 @@ std::string condition(tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runi
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string effect(tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>, std::string_view feature_name)
+std::string effect(tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>,
+                   std::string_view feature_name)
 {
     auto os = std::ostringstream {};
     os << "(" << ObservationTag::keyword << " " << feature_name << ")";
@@ -247,7 +252,7 @@ std::string effect(tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr:
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C> view)
+std::string feature(tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view)
 {
     return feature(view, fmt::format("f_{}", view.get_index().get_value()));
 }
@@ -256,17 +261,18 @@ std::string feature(tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::k
 
 #if RUNIR_ENABLE_FMT_FORMATTERS
 template<typename FeatureTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C>> :
+    fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::dl::format::feature(view), ctx); }
 };
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>> :
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>> :
     fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = runir::kr::ps::base::dl::format::condition(view, fmt::format("f_{}", view.get_feature().get_index().get_value()));
@@ -275,9 +281,10 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runi
 };
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>> :
+    fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = runir::kr::ps::base::dl::format::effect(view, fmt::format("f_{}", view.get_feature().get_index().get_value()));

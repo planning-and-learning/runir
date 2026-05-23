@@ -1,11 +1,11 @@
-#ifndef RUNIR_KR_PS_SKETCH_EXECUTOR_IMPL_HPP_
-#define RUNIR_KR_PS_SKETCH_EXECUTOR_IMPL_HPP_
+#ifndef RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_IMPL_HPP_
+#define RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_IMPL_HPP_
 
 #include "runir/graphs/algorithms.hpp"
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/base/dl/evaluation_context.hpp"
-#include "runir/kr/ps/sketch_executor.hpp"
+#include "runir/kr/ps/base/sketch_executor.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -16,7 +16,7 @@
 #include <tyr/planning/algorithms/iw.hpp>
 #include <utility>
 
-namespace runir::kr::ps
+namespace runir::kr::ps::base
 {
 namespace detail
 {
@@ -114,7 +114,7 @@ public:
         if (seed_state.get_index() == state.get_index())
             return false;
 
-        auto context = base::dl::EvaluationContext(seed_state, state, m_dl_builder, m_dl_denotation_repository);
+        auto context = dl::EvaluationContext(seed_state, state, m_dl_builder, m_dl_denotation_repository);
         return m_sketch.is_compatible_with(context);
     }
 };
@@ -356,6 +356,6 @@ auto find_solution(const datasets::TaskSearchContext<Kind>& context,
     return tyr::planning::siw::find_solution(iw_solver, siw_options);
 }
 
-}  // namespace runir::kr::ps
+}  // namespace runir::kr::ps::base
 
 #endif

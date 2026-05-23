@@ -6,16 +6,14 @@
 namespace runir::kr::ps
 {
 
-using runir::kr::BaseFamilyTag;
-using runir::kr::ExtFamilyTag;
 using runir::kr::FamilyTag;
 
 // Feature
 
-template<typename FeatureTag>
+template<FamilyTag Family, typename FeatureTag>
 struct Feature;
 
-template<typename LanguageTag, typename FeatureTag>
+template<FamilyTag Family, typename LanguageTag, typename FeatureTag>
 struct ConcreteFeature;
 
 // EvaluationContext
@@ -31,36 +29,40 @@ concept IsEvaluationContext = FamilyTag<Family> && requires(const Context& conte
 
 // Condition
 
+template<FamilyTag Family>
 struct ConditionVariant
 {
 };
 
-template<typename LanguageTag>
+template<FamilyTag Family, typename LanguageTag>
 struct ConcreteConditionVariant;
 
-template<typename LanguageTag, typename FeatureTag, typename ObservationTag>
+template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
 struct ConcreteCondition;
 
 // Effect
 
+template<FamilyTag Family>
 struct EffectVariant
 {
 };
 
-template<typename LanguageTag>
+template<FamilyTag Family, typename LanguageTag>
 struct ConcreteEffectVariant;
 
-template<typename LanguageTag, typename FeatureTag, typename ObservationTag>
+template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
 struct ConcreteEffect;
 
 // Rule
 
+template<FamilyTag Family>
 struct Rule
 {
 };
 
 // Sketch
 
+template<FamilyTag Family>
 struct Sketch
 {
 };

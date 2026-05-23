@@ -20,7 +20,7 @@ void bind_sketch_factory(nb::module_& m)
         .def_static("create_empty_description", &SketchFactory::create_empty_description)
         .def_static(
             "create",
-            [](SketchSpecification specification, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::Repository& repository)
+            [](SketchSpecification specification, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::base::Repository& repository)
             { return SketchFactory::create(specification, domain.get_domain(), repository); },
             nb::arg("specification"),
             nb::arg("domain"),
@@ -29,28 +29,28 @@ void bind_sketch_factory(nb::module_& m)
         .def_static("create_description", &SketchFactory::create_description, nb::arg("specification"))
         .def_static(
             "create_gripper_france_et_al_aaai2021",
-            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::Repository& repository)
+            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::base::Repository& repository)
             { return SketchFactory::create_gripper_france_et_al_aaai2021(domain.get_domain(), repository); },
             nb::arg("domain"),
             nb::arg("repository"),
             nb::keep_alive<0, 2>())
         .def_static(
             "create_blocks3ops_france_et_al_aaai2021",
-            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::Repository& repository)
+            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::base::Repository& repository)
             { return SketchFactory::create_blocks3ops_france_et_al_aaai2021(domain.get_domain(), repository); },
             nb::arg("domain"),
             nb::arg("repository"),
             nb::keep_alive<0, 2>())
         .def_static(
             "create_spanner_france_et_al_aaai2021",
-            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::Repository& repository)
+            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::base::Repository& repository)
             { return SketchFactory::create_spanner_france_et_al_aaai2021(domain.get_domain(), repository); },
             nb::arg("domain"),
             nb::arg("repository"),
             nb::keep_alive<0, 2>())
         .def_static(
             "create_delivery_france_et_al_aaai2021",
-            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::Repository& repository)
+            [](tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::base::Repository& repository)
             { return SketchFactory::create_delivery_france_et_al_aaai2021(domain.get_domain(), repository); },
             nb::arg("domain"),
             nb::arg("repository"),

@@ -1,15 +1,15 @@
-#ifndef RUNIR_KR_PS_SKETCH_EXECUTOR_HPP_
-#define RUNIR_KR_PS_SKETCH_EXECUTOR_HPP_
+#ifndef RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_HPP_
+#define RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_HPP_
 
 #include "runir/datasets/state_graph.hpp"
 #include "runir/datasets/task_class.hpp"
-#include "runir/kr/ps/repository.hpp"
+#include "runir/kr/ps/base/repository.hpp"
 
 #include <memory>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/planning.hpp>
 
-namespace runir::kr::ps
+namespace runir::kr::ps::base
 {
 
 enum class SketchProofStatus
@@ -74,10 +74,10 @@ find_solution<tyr::planning::LiftedTag>(const runir::datasets::TaskSearchContext
                                         const SketchSearchOptions<tyr::planning::LiftedTag>& options) -> tyr::planning::SearchResult<tyr::planning::LiftedTag>;
 #endif
 
-}  // namespace runir::kr::ps
+}  // namespace runir::kr::ps::base
 
 #ifdef RUNIR_HEADER_INSTANTIATION
-#include "runir/kr/ps/sketch_executor_impl.hpp"
+#include "runir/kr/ps/base/sketch_executor_impl.hpp"
 #endif
 
 #endif

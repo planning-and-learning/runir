@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_EXT_REPOSITORY_HPP_
 
 #include "runir/kr/dl/repository.hpp"
+#include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/ext/condition_data.hpp"
 #include "runir/kr/ps/ext/condition_view.hpp"
 #include "runir/kr/ps/ext/dl/feature_data.hpp"
@@ -20,7 +21,6 @@
 #include "runir/kr/ps/ext/rule_variant_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
-#include "runir/kr/ps/repository.hpp"
 
 #include <cassert>
 #include <memory>
@@ -44,8 +44,7 @@ using FeatureTypes = tyr::TypeList<Feature<dl::ConceptFeature>,
 using ConditionTypes = tyr::TypeList<ConditionVariant>;
 using EffectTypes = tyr::TypeList<EffectVariant>;
 using ProgramTypes = tyr::TypeList<Register, MemoryState, Module>;
-using RepositoryTypes =
-    tyr::ConcatTypeListsT<runir::kr::ps::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ProgramTypes>;
+using RepositoryTypes = tyr::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ProgramTypes>;
 using SymbolRepository = tyr::ApplyTypeListT<tyr::formalism::SymbolRepository, RepositoryTypes>;
 
 class Repository

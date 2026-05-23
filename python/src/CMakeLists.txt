@@ -30,17 +30,18 @@ nanobind_add_module(_pyrunir
     pyrunir/kr/dl/ext/indices.cpp
     pyrunir/kr/dl/ext/module.cpp
     pyrunir/kr/dl/ext/parser.cpp
+    pyrunir/kr/ps/base/module.cpp
     pyrunir/kr/ps/base/dl/indices.cpp
     pyrunir/kr/ps/base/dl/module.cpp
     pyrunir/kr/ps/base/dl/parser.cpp
     pyrunir/kr/ps/base/dl/sketch_factory.cpp
     pyrunir/kr/ps/base/dl/views.cpp
-    pyrunir/kr/ps/indices.cpp
+    pyrunir/kr/ps/base/indices.cpp
     pyrunir/kr/ps/module.cpp
-    pyrunir/kr/ps/sketch_executor.cpp
-    pyrunir/kr/ps/repository.cpp
-    pyrunir/kr/ps/syntactic_complexity.cpp
-    pyrunir/kr/ps/views.cpp
+    pyrunir/kr/ps/base/sketch_executor.cpp
+    pyrunir/kr/ps/base/repository.cpp
+    pyrunir/kr/ps/base/syntactic_complexity.cpp
+    pyrunir/kr/ps/base/views.cpp
     pyrunir/kr/dl/semantics/datas.cpp
     pyrunir/kr/dl/semantics/indices.cpp
     pyrunir/kr/dl/semantics/module.cpp

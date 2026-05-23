@@ -10,15 +10,15 @@
 namespace tyr
 {
 
-template<typename C>
-class View<Index<runir::kr::ps::Sketch>, C>
+template<runir::kr::FamilyTag Family, typename C>
+class View<Index<runir::kr::ps::Sketch<Family>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::Sketch> m_handle;
+    Index<runir::kr::ps::Sketch<Family>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::Sketch> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::Sketch<Family>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

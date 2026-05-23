@@ -11,11 +11,11 @@
 namespace tyr
 {
 
-template<>
-struct Data<runir::kr::ps::Sketch>
+template<runir::kr::FamilyTag Family>
+struct Data<runir::kr::ps::Sketch<Family>>
 {
-    Index<runir::kr::ps::Sketch> index;
-    IndexList<runir::kr::ps::Rule> rules;
+    Index<runir::kr::ps::Sketch<Family>> index;
+    IndexList<runir::kr::ps::Rule<Family>> rules;
 
     void clear() noexcept
     {

@@ -9,9 +9,9 @@
 #include <runir/kr/dl/grammar/parser.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
-#include <runir/kr/ps/formatter.hpp>
-#include <runir/kr/ps/repository.hpp>
-#include <runir/kr/ps/syntactic_complexity.hpp>
+#include <runir/kr/ps/base/formatter.hpp>
+#include <runir/kr/ps/base/repository.hpp>
+#include <runir/kr/ps/base/syntactic_complexity.hpp>
 #include <string>
 #include <tyr/common/equal_to.hpp>
 #include <tyr/formalism/planning/parser.hpp>
@@ -46,7 +46,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
     };
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::RepositoryFactory();
+    auto repository_factory = kr::ps::base::RepositoryFactory();
 
     for (const auto& test_case : cases)
     {
@@ -73,7 +73,7 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     const auto planning_domain = fp::Parser(domain_filepath).get_domain();
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::RepositoryFactory();
+    auto repository_factory = kr::ps::base::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create_shared(planning_domain.get_repository());
     auto repository = repository_factory.create(dl_repository);
 

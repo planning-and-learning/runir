@@ -10,22 +10,22 @@ namespace runir::kr::ps
 {
 
 template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
-concept IsEffectVariantView =
-    IsEvaluationContext<Family, LanguageTag, EvaluationContext> && requires(tyr::View<tyr::Index<EffectVariant>, StorageContext> effect, EvaluationContext& context) {
-        { effect.is_compatible_with(context) } -> std::same_as<bool>;
-    };
+concept IsEffectVariantView = IsEvaluationContext<Family, LanguageTag, EvaluationContext>
+                              && requires(tyr::View<tyr::Index<EffectVariant<Family>>, StorageContext> effect, EvaluationContext& context) {
+                                     { effect.is_compatible_with(context) } -> std::same_as<bool>;
+                                 };
 
 template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
 concept IsConcreteEffectVariantView =
     IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-    && requires(tyr::View<tyr::Index<ConcreteEffectVariant<LanguageTag>>, StorageContext> effect, EvaluationContext& context) {
+    && requires(tyr::View<tyr::Index<ConcreteEffectVariant<Family, LanguageTag>>, StorageContext> effect, EvaluationContext& context) {
            { effect.is_compatible_with(context) } -> std::same_as<bool>;
        };
 
 template<typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename EvaluationContext, typename StorageContext>
 concept IsConcreteEffectView =
     IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-    && requires(tyr::View<tyr::Index<ConcreteEffect<LanguageTag, FeatureTag, ObservationTag>>, StorageContext> effect, EvaluationContext& context) {
+    && requires(tyr::View<tyr::Index<ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>>, StorageContext> effect, EvaluationContext& context) {
            { effect.is_compatible_with(context) } -> std::same_as<bool>;
        };
 

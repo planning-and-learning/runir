@@ -10,10 +10,10 @@ namespace runir::kr::ps
 {
 
 template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
-concept IsSketchView =
-    IsEvaluationContext<Family, LanguageTag, EvaluationContext> && requires(tyr::View<tyr::Index<Sketch>, StorageContext> sketch, EvaluationContext& context) {
-        { sketch.is_compatible_with(context) } -> std::same_as<bool>;
-    };
+concept IsSketchView = IsEvaluationContext<Family, LanguageTag, EvaluationContext>
+                       && requires(tyr::View<tyr::Index<Sketch<Family>>, StorageContext> sketch, EvaluationContext& context) {
+                              { sketch.is_compatible_with(context) } -> std::same_as<bool>;
+                          };
 
 }  // namespace runir::kr::ps
 

@@ -11,7 +11,7 @@ void bind_parser(nb::module_& m)
 {
     m.def(
         "parse_sketch",
-        [](const std::string& description, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::Repository& repository)
+        [](const std::string& description, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::base::Repository& repository)
         { return runir::kr::ps::base::dl::parse_sketch(description, domain.get_domain(), repository); },
         nb::arg("description"),
         nb::arg("domain"),

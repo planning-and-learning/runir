@@ -5,9 +5,9 @@
 #include <runir/kr/dl/semantics/evaluation_context.hpp>
 #include <runir/kr/ps/base/dl/evaluation_context.hpp>
 #include <runir/kr/ps/base/dl/syntactic_complexity.hpp>
-#include <runir/kr/ps/formatter.hpp>
+#include <runir/kr/ps/base/formatter.hpp>
+#include <runir/kr/ps/base/syntactic_complexity.hpp>
 #include <runir/kr/ps/repository.hpp>
-#include <runir/kr/ps/syntactic_complexity.hpp>
 #include <string>
 #include <tyr/common/python/bindings.hpp>
 #include <tyr/common/python/type_casters.hpp>
@@ -61,15 +61,21 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_symbol", [](const View& view) { return std::string(view.get_symbol()); });
     if constexpr (requires(const View& view) { view.get_description(); })
         cls.def("get_description", [](const View& view) { return std::string(view.get_description()); });
-    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context) { view.evaluate(context); })
+    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context) {
+                      view.evaluate(context);
+                  })
         cls.def(
             "evaluate",
-            [](const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context) { return view.evaluate(context); },
+            [](const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context)
+            { return view.evaluate(context); },
             "context"_a);
-    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context) { view.evaluate(context); })
+    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context) {
+                      view.evaluate(context);
+                  })
         cls.def(
             "evaluate",
-            [](const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context) { return view.evaluate(context); },
+            [](const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context)
+            { return view.evaluate(context); },
             "context"_a);
     if constexpr (requires(const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::GroundTag>& context) {
                       { view.is_compatible_with(context) } -> std::same_as<bool>;
@@ -101,24 +107,24 @@ void bind_evaluation_contexts(nb::module_& m)
 
 void bind_views(nb::module_& m)
 {
-    bind_view<Feature<BooleanFeature>>(m, "BooleanFeature");
-    bind_view<Feature<NumericalFeature>>(m, "NumericalFeature");
-    bind_view<ConcreteFeature<runir::kr::DlTag, BooleanFeature>>(m, "ConcreteBooleanFeature");
-    bind_view<ConcreteFeature<runir::kr::DlTag, NumericalFeature>>(m, "ConcreteNumericalFeature");
+    bind_view<Feature<runir::kr::BaseFamilyTag, BooleanFeature>>(m, "BooleanFeature");
+    bind_view<Feature<runir::kr::BaseFamilyTag, NumericalFeature>>(m, "NumericalFeature");
+    bind_view<ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature>>(m, "ConcreteBooleanFeature");
+    bind_view<ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature>>(m, "ConcreteNumericalFeature");
 
-    bind_view<ConcreteConditionVariant<runir::kr::DlTag>>(m, "ConcreteConditionVariant");
-    bind_view<ConcreteCondition<runir::kr::DlTag, BooleanFeature, Positive>>(m, "PositiveBooleanCondition");
-    bind_view<ConcreteCondition<runir::kr::DlTag, BooleanFeature, Negative>>(m, "NegativeBooleanCondition");
-    bind_view<ConcreteCondition<runir::kr::DlTag, NumericalFeature, EqualZero>>(m, "EqualZeroNumericalCondition");
-    bind_view<ConcreteCondition<runir::kr::DlTag, NumericalFeature, GreaterZero>>(m, "GreaterZeroNumericalCondition");
+    bind_view<ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>(m, "ConcreteConditionVariant");
+    bind_view<ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature, Positive>>(m, "PositiveBooleanCondition");
+    bind_view<ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature, Negative>>(m, "NegativeBooleanCondition");
+    bind_view<ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature, EqualZero>>(m, "EqualZeroNumericalCondition");
+    bind_view<ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature, GreaterZero>>(m, "GreaterZeroNumericalCondition");
 
-    bind_view<ConcreteEffectVariant<runir::kr::DlTag>>(m, "ConcreteEffectVariant");
-    bind_view<ConcreteEffect<runir::kr::DlTag, BooleanFeature, Positive>>(m, "PositiveBooleanEffect");
-    bind_view<ConcreteEffect<runir::kr::DlTag, BooleanFeature, Negative>>(m, "NegativeBooleanEffect");
-    bind_view<ConcreteEffect<runir::kr::DlTag, BooleanFeature, Unchanged>>(m, "UnchangedBooleanEffect");
-    bind_view<ConcreteEffect<runir::kr::DlTag, NumericalFeature, Increases>>(m, "IncreasesNumericalEffect");
-    bind_view<ConcreteEffect<runir::kr::DlTag, NumericalFeature, Decreases>>(m, "DecreasesNumericalEffect");
-    bind_view<ConcreteEffect<runir::kr::DlTag, NumericalFeature, Unchanged>>(m, "UnchangedNumericalEffect");
+    bind_view<ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>(m, "ConcreteEffectVariant");
+    bind_view<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature, Positive>>(m, "PositiveBooleanEffect");
+    bind_view<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature, Negative>>(m, "NegativeBooleanEffect");
+    bind_view<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature, Unchanged>>(m, "UnchangedBooleanEffect");
+    bind_view<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature, Increases>>(m, "IncreasesNumericalEffect");
+    bind_view<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature, Decreases>>(m, "DecreasesNumericalEffect");
+    bind_view<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature, Unchanged>>(m, "UnchangedNumericalEffect");
 }
 
 }  // namespace runir::kr::ps::base::dl

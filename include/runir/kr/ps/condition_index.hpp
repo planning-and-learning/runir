@@ -9,25 +9,25 @@
 namespace tyr
 {
 
-template<>
-struct Index<runir::kr::ps::ConditionVariant> : IndexMixin<Index<runir::kr::ps::ConditionVariant>>
+template<runir::kr::FamilyTag Family>
+struct Index<runir::kr::ps::ConditionVariant<Family>> : IndexMixin<Index<runir::kr::ps::ConditionVariant<Family>>>
 {
-    using Base = IndexMixin<Index<runir::kr::ps::ConditionVariant>>;
+    using Base = IndexMixin<Index<runir::kr::ps::ConditionVariant<Family>>>;
     using Base::Base;
 };
 
-template<typename LanguageTag>
-struct Index<runir::kr::ps::ConcreteConditionVariant<LanguageTag>> : IndexMixin<Index<runir::kr::ps::ConcreteConditionVariant<LanguageTag>>>
+template<runir::kr::FamilyTag Family, typename LanguageTag>
+struct Index<runir::kr::ps::ConcreteConditionVariant<Family, LanguageTag>> : IndexMixin<Index<runir::kr::ps::ConcreteConditionVariant<Family, LanguageTag>>>
 {
-    using Base = IndexMixin<Index<runir::kr::ps::ConcreteConditionVariant<LanguageTag>>>;
+    using Base = IndexMixin<Index<runir::kr::ps::ConcreteConditionVariant<Family, LanguageTag>>>;
     using Base::Base;
 };
 
-template<typename LanguageTag, typename FeatureTag, typename ObservationTag>
-struct Index<runir::kr::ps::ConcreteCondition<LanguageTag, FeatureTag, ObservationTag>> :
-    IndexMixin<Index<runir::kr::ps::ConcreteCondition<LanguageTag, FeatureTag, ObservationTag>>>
+template<runir::kr::FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
+struct Index<runir::kr::ps::ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>> :
+    IndexMixin<Index<runir::kr::ps::ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>>
 {
-    using Base = IndexMixin<Index<runir::kr::ps::ConcreteCondition<LanguageTag, FeatureTag, ObservationTag>>>;
+    using Base = IndexMixin<Index<runir::kr::ps::ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>>;
     using Base::Base;
 };
 

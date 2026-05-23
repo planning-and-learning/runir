@@ -1,5 +1,5 @@
-#ifndef RUNIR_KR_PS_FEATURE_DATA_HPP_
-#define RUNIR_KR_PS_FEATURE_DATA_HPP_
+#ifndef RUNIR_KR_PS_BASE_FEATURE_DATA_HPP_
+#define RUNIR_KR_PS_BASE_FEATURE_DATA_HPP_
 
 #include "runir/kr/ps/base/dl/declarations.hpp"
 #include "runir/kr/ps/base/dl/feature_index.hpp"
@@ -14,11 +14,12 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::kr::ps::Feature<runir::kr::ps::base::dl::BooleanFeature>>
+struct Data<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::base::dl::BooleanFeature>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::base::dl::BooleanFeature>>>;
+    using Variant =
+        ::cista::offset::variant<Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::base::dl::BooleanFeature>>>;
 
-    Index<runir::kr::ps::Feature<runir::kr::ps::base::dl::BooleanFeature>> index;
+    Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::base::dl::BooleanFeature>> index;
     Variant value;
 
     Data() = default;
@@ -35,11 +36,12 @@ struct Data<runir::kr::ps::Feature<runir::kr::ps::base::dl::BooleanFeature>>
 };
 
 template<>
-struct Data<runir::kr::ps::Feature<runir::kr::ps::base::dl::NumericalFeature>>
+struct Data<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::base::dl::NumericalFeature>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::base::dl::NumericalFeature>>>;
+    using Variant =
+        ::cista::offset::variant<Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::base::dl::NumericalFeature>>>;
 
-    Index<runir::kr::ps::Feature<runir::kr::ps::base::dl::NumericalFeature>> index;
+    Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::base::dl::NumericalFeature>> index;
     Variant value;
 
     Data() = default;

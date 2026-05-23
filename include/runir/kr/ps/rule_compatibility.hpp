@@ -10,10 +10,10 @@ namespace runir::kr::ps
 {
 
 template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
-concept IsRuleView =
-    IsEvaluationContext<Family, LanguageTag, EvaluationContext> && requires(tyr::View<tyr::Index<Rule>, StorageContext> rule, EvaluationContext& context) {
-        { rule.is_compatible_with(context) } -> std::same_as<bool>;
-    };
+concept IsRuleView = IsEvaluationContext<Family, LanguageTag, EvaluationContext>
+                     && requires(tyr::View<tyr::Index<Rule<Family>>, StorageContext> rule, EvaluationContext& context) {
+                            { rule.is_compatible_with(context) } -> std::same_as<bool>;
+                        };
 
 }  // namespace runir::kr::ps
 

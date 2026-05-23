@@ -9,10 +9,10 @@
 namespace tyr
 {
 
-template<>
-struct Index<runir::kr::ps::Rule> : IndexMixin<Index<runir::kr::ps::Rule>>
+template<runir::kr::FamilyTag Family>
+struct Index<runir::kr::ps::Rule<Family>> : IndexMixin<Index<runir::kr::ps::Rule<Family>>>
 {
-    using Base = IndexMixin<Index<runir::kr::ps::Rule>>;
+    using Base = IndexMixin<Index<runir::kr::ps::Rule<Family>>>;
     using Base::Base;
 };
 

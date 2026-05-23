@@ -11,21 +11,22 @@ namespace runir::kr::ps
 
 template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
 concept IsConditionVariantView = IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-                                 && requires(tyr::View<tyr::Index<ConditionVariant>, StorageContext> condition, EvaluationContext& context) {
+                                 && requires(tyr::View<tyr::Index<ConditionVariant<Family>>, StorageContext> condition, EvaluationContext& context) {
                                         { condition.is_compatible_with(context) } -> std::same_as<bool>;
                                     };
 
 template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
 concept IsConcreteConditionVariantView =
     IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-    && requires(tyr::View<tyr::Index<ConcreteConditionVariant<LanguageTag>>, StorageContext> condition, EvaluationContext& context) {
+    && requires(tyr::View<tyr::Index<ConcreteConditionVariant<Family, LanguageTag>>, StorageContext> condition, EvaluationContext& context) {
            { condition.is_compatible_with(context) } -> std::same_as<bool>;
        };
 
 template<typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename EvaluationContext, typename StorageContext>
 concept IsConcreteConditionView =
     IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-    && requires(tyr::View<tyr::Index<ConcreteCondition<LanguageTag, FeatureTag, ObservationTag>>, StorageContext> condition, EvaluationContext& context) {
+    && requires(tyr::View<tyr::Index<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>, StorageContext> condition,
+                EvaluationContext& context) {
            { condition.is_compatible_with(context) } -> std::same_as<bool>;
        };
 

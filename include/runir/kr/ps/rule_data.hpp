@@ -13,12 +13,12 @@
 namespace tyr
 {
 
-template<>
-struct Data<runir::kr::ps::Rule>
+template<runir::kr::FamilyTag Family>
+struct Data<runir::kr::ps::Rule<Family>>
 {
-    Index<runir::kr::ps::Rule> index;
-    IndexList<runir::kr::ps::ConditionVariant> conditions;
-    IndexList<runir::kr::ps::EffectVariant> effects;
+    Index<runir::kr::ps::Rule<Family>> index;
+    IndexList<runir::kr::ps::ConditionVariant<Family>> conditions;
+    IndexList<runir::kr::ps::EffectVariant<Family>> effects;
 
     void clear() noexcept
     {

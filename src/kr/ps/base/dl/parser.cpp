@@ -510,8 +510,8 @@ auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<Category>&
     return boost::apply_visitor([&](const auto& arg) { return parse(unwrap(arg), domain, repository); }, node.get());
 }
 
-using BooleanFeatureMap = std::unordered_map<std::string, tyr::Index<Feature<BooleanFeature>>>;
-using NumericalFeatureMap = std::unordered_map<std::string, tyr::Index<Feature<NumericalFeature>>>;
+using BooleanFeatureMap = std::unordered_map<std::string, tyr::Index<Feature<runir::kr::BaseFamilyTag, BooleanFeature>>>;
+using NumericalFeatureMap = std::unordered_map<std::string, tyr::Index<Feature<runir::kr::BaseFamilyTag, NumericalFeature>>>;
 
 auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature& node,
                    tyr::formalism::planning::DomainView domain,
@@ -519,12 +519,12 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature& node,
                    BooleanFeatureMap& boolean_features,
                    NumericalFeatureMap&)
 {
-    tyr::Data<ConcreteFeature<runir::kr::DlTag, BooleanFeature>> concrete_data(
+    tyr::Data<ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature>> concrete_data(
         parse_constructor(node.feature, domain, repository.get_dl_repository()).get_index(),
         node.symbol,
         node.description);
     auto concrete = intern(repository, concrete_data);
-    tyr::Data<Feature<BooleanFeature>> data(concrete.get_index());
+    tyr::Data<Feature<runir::kr::BaseFamilyTag, BooleanFeature>> data(concrete.get_index());
     auto feature = intern(repository, data);
     boolean_features.emplace(node.name, feature.get_index());
 }
@@ -535,18 +535,18 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::NumericalFeature& node,
                    BooleanFeatureMap&,
                    NumericalFeatureMap& numerical_features)
 {
-    tyr::Data<ConcreteFeature<runir::kr::DlTag, NumericalFeature>> concrete_data(
+    tyr::Data<ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature>> concrete_data(
         parse_constructor(node.feature, domain, repository.get_dl_repository()).get_index(),
         node.symbol,
         node.description);
     auto concrete = intern(repository, concrete_data);
-    tyr::Data<Feature<NumericalFeature>> data(concrete.get_index());
+    tyr::Data<Feature<runir::kr::BaseFamilyTag, NumericalFeature>> data(concrete.get_index());
     auto feature = intern(repository, data);
     numerical_features.emplace(node.name, feature.get_index());
 }
 
 template<typename FeatureTag>
-auto require_feature(const std::unordered_map<std::string, tyr::Index<Feature<FeatureTag>>>& features, const std::string& name)
+auto require_feature(const std::unordered_map<std::string, tyr::Index<Feature<runir::kr::BaseFamilyTag, FeatureTag>>>& features, const std::string& name)
 {
     const auto it = features.find(name);
     if (it == features.end())
@@ -555,24 +555,24 @@ auto require_feature(const std::unordered_map<std::string, tyr::Index<Feature<Fe
 }
 
 template<typename FeatureTag, typename ObservationTag>
-auto make_condition(tyr::Index<Feature<FeatureTag>> feature, Repository& repository)
+auto make_condition(tyr::Index<Feature<runir::kr::BaseFamilyTag, FeatureTag>> feature, Repository& repository)
 {
-    tyr::Data<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
+    tyr::Data<ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
     auto concrete = intern(repository, concrete_data);
-    tyr::Data<ConcreteConditionVariant<runir::kr::DlTag>> variant_data(concrete.get_index());
+    tyr::Data<ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>> variant_data(concrete.get_index());
     auto variant = intern(repository, variant_data);
-    tyr::Data<ConditionVariant> data(variant.get_index());
+    tyr::Data<ConditionVariant<runir::kr::BaseFamilyTag>> data(variant.get_index());
     return intern(repository, data);
 }
 
 template<typename FeatureTag, typename ObservationTag>
-auto make_effect(tyr::Index<Feature<FeatureTag>> feature, Repository& repository)
+auto make_effect(tyr::Index<Feature<runir::kr::BaseFamilyTag, FeatureTag>> feature, Repository& repository)
 {
-    tyr::Data<ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
+    tyr::Data<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
     auto concrete = intern(repository, concrete_data);
-    tyr::Data<ConcreteEffectVariant<runir::kr::DlTag>> variant_data(concrete.get_index());
+    tyr::Data<ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>> variant_data(concrete.get_index());
     auto variant = intern(repository, variant_data);
-    tyr::Data<EffectVariant> data(variant.get_index());
+    tyr::Data<EffectVariant<runir::kr::BaseFamilyTag>> data(variant.get_index());
     return intern(repository, data);
 }
 
@@ -692,15 +692,15 @@ auto parse_rule(const runir::kr::ps::base::dl::ast::Rule& node,
                 const BooleanFeatureMap& boolean_features,
                 const NumericalFeatureMap& numerical_features)
 {
-    auto conditions = tyr::IndexList<ConditionVariant> {};
+    auto conditions = tyr::IndexList<ConditionVariant<runir::kr::BaseFamilyTag>> {};
     for (const auto& condition : node.conditions)
         conditions.push_back(parse_condition(condition, repository, boolean_features, numerical_features).get_index());
 
-    auto effects = tyr::IndexList<EffectVariant> {};
+    auto effects = tyr::IndexList<EffectVariant<runir::kr::BaseFamilyTag>> {};
     for (const auto& effect : node.effects)
         effects.push_back(parse_effect(effect, repository, boolean_features, numerical_features).get_index());
 
-    tyr::Data<Rule> data;
+    tyr::Data<Rule<runir::kr::BaseFamilyTag>> data;
     data.conditions = std::move(conditions);
     data.effects = std::move(effects);
     return intern(repository, data);
@@ -718,11 +718,11 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
     for (const auto& feature : ast.features)
         boost::apply_visitor([&](const auto& arg) { parse_feature(arg, domain, repository, boolean_features, numerical_features); }, feature.get());
 
-    auto rules = tyr::IndexList<Rule> {};
+    auto rules = tyr::IndexList<Rule<runir::kr::BaseFamilyTag>> {};
     for (const auto& rule : ast.rules)
         rules.push_back(parse_rule(rule, repository, boolean_features, numerical_features).get_index());
 
-    tyr::Data<Sketch> data;
+    tyr::Data<Sketch<runir::kr::BaseFamilyTag>> data;
     data.rules = std::move(rules);
     return intern(repository, data);
 }

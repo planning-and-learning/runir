@@ -3,8 +3,8 @@
 #include <runir/datasets/config.hpp>
 #include <runir/datasets/state_graph.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
-#include <runir/kr/ps/repository.hpp>
-#include <runir/kr/ps/sketch_executor.hpp>
+#include <runir/kr/ps/base/repository.hpp>
+#include <runir/kr/ps/base/sketch_executor.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/planning.hpp>
 #include <vector>
@@ -49,7 +49,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
     };
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactory();
-    auto repository_factory = kr::ps::RepositoryFactory();
+    auto repository_factory = kr::ps::base::RepositoryFactory();
 
     for (const auto& test_case : cases)
     {

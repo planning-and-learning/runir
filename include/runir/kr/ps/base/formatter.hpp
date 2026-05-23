@@ -1,13 +1,13 @@
-#ifndef RUNIR_KR_PS_FORMATTER_HPP_
-#define RUNIR_KR_PS_FORMATTER_HPP_
+#ifndef RUNIR_KR_PS_BASE_FORMATTER_HPP_
+#define RUNIR_KR_PS_BASE_FORMATTER_HPP_
 
 #include "runir/common/config.hpp"
-#include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/base/dl/formatter.hpp"
+#include "runir/kr/ps/base/sketch_executor.hpp"
+#include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/ps/rule_view.hpp"
-#include "runir/kr/ps/sketch_executor.hpp"
 #include "runir/kr/ps/sketch_view.hpp"
 
 #include <concepts>
@@ -20,13 +20,13 @@
 #include <tyr/common/iostream.hpp>
 #include <vector>
 
-namespace runir::kr::ps::format
+namespace runir::kr::ps::base::format
 {
 
 template<typename FeatureTag>
 struct NamedFeature
 {
-    tyr::Index<runir::kr::ps::Feature<FeatureTag>> index;
+    tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>> index;
     std::string name;
 };
 
@@ -46,7 +46,7 @@ auto& named_features(FeatureNames& names)
 }
 
 template<typename FeatureTag, typename C>
-std::string get_or_create_name(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::Feature<FeatureTag>>, C> feature)
+std::string get_or_create_name(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C> feature)
 {
     auto& entries = named_features<FeatureTag>(names);
     for (const auto& entry : entries)
@@ -60,33 +60,36 @@ std::string get_or_create_name(FeatureNames& names, tyr::View<tyr::Index<runir::
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-void collect_feature(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition)
+void collect_feature(
+    FeatureNames& names,
+    tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition)
 {
     get_or_create_name(names, condition.get_feature());
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-void collect_feature(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> effect)
+void collect_feature(FeatureNames& names,
+                     tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> effect)
 {
     get_or_create_name(names, effect.get_feature());
 }
 
 template<typename C>
-void collect_features(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ConditionVariant>, C> condition)
+void collect_features(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C> condition)
 {
     condition.get_variant().apply([&](auto concrete_variant)
                                   { concrete_variant.get_variant().apply([&](auto concrete_condition) { collect_feature(names, concrete_condition); }); });
 }
 
 template<typename C>
-void collect_features(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::EffectVariant>, C> effect)
+void collect_features(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C> effect)
 {
     effect.get_variant().apply([&](auto concrete_variant)
                                { concrete_variant.get_variant().apply([&](auto concrete_effect) { collect_feature(names, concrete_effect); }); });
 }
 
 template<typename C>
-FeatureNames collect_features(tyr::View<tyr::Index<runir::kr::ps::Sketch>, C> sketch)
+FeatureNames collect_features(tyr::View<tyr::Index<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>, C> sketch)
 {
     auto names = FeatureNames {};
     for (auto rule : sketch.get_rules())
@@ -100,13 +103,13 @@ FeatureNames collect_features(tyr::View<tyr::Index<runir::kr::ps::Sketch>, C> sk
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(tyr::View<tyr::Index<runir::kr::ps::Feature<FeatureTag>>, C> view, std::string_view name)
+std::string feature(tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C> view, std::string_view name)
 {
     return view.get_variant().apply([&](auto concrete_feature) { return runir::kr::ps::base::dl::format::feature(concrete_feature, name); });
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(tyr::View<tyr::Index<runir::kr::ps::Feature<FeatureTag>>, C> view)
+std::string feature(tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C> view)
 {
     const auto prefix = std::same_as<FeatureTag, runir::kr::ps::base::dl::BooleanFeature> ? "b" : "n";
     return feature(view, fmt::format("{}_{}", prefix, view.get_index().get_value()));
@@ -122,19 +125,21 @@ void append_features(std::ostream& os, const C& context, const FeatureNames& nam
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string condition(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
+std::string condition(FeatureNames& names,
+                      tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
 {
     return runir::kr::ps::base::dl::format::condition(view, get_or_create_name(names, view.get_feature()));
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string effect(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
+std::string effect(FeatureNames& names,
+                   tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
 {
     return runir::kr::ps::base::dl::format::effect(view, get_or_create_name(names, view.get_feature()));
 }
 
 template<typename C>
-std::string condition(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ConditionVariant>, C> view)
+std::string condition(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C> view)
 {
     return view.get_variant().apply(
         [&](auto concrete_variant)
@@ -142,14 +147,14 @@ std::string condition(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::C
 }
 
 template<typename C>
-std::string effect(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::EffectVariant>, C> view)
+std::string effect(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C> view)
 {
     return view.get_variant().apply([&](auto concrete_variant)
                                     { return concrete_variant.get_variant().apply([&](auto concrete_effect) { return effect(names, concrete_effect); }); });
 }
 
 template<typename C>
-void append_rule(std::ostream& os, FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::Rule>, C> view)
+void append_rule(std::ostream& os, FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> view)
 {
     auto conditions = std::vector<std::string> {};
     for (auto item : view.get_conditions())
@@ -169,7 +174,7 @@ void append_rule(std::ostream& os, FeatureNames& names, tyr::View<tyr::Index<run
 }
 
 template<typename C>
-std::string rule(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::Rule>, C> view)
+std::string rule(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> view)
 {
     auto os = std::ostringstream {};
     append_rule(os, names, view);
@@ -177,7 +182,7 @@ std::string rule(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::Rule>,
 }
 
 template<typename C>
-std::string sketch(tyr::View<tyr::Index<runir::kr::ps::Sketch>, C> view)
+std::string sketch(tyr::View<tyr::Index<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>, C> view)
 {
     auto names = collect_features(view);
     auto os = std::ostringstream {};
@@ -209,24 +214,24 @@ std::string sketch(tyr::View<tyr::Index<runir::kr::ps::Sketch>, C> view)
     return os.str();
 }
 
-inline std::string sketch_proof_status(runir::kr::ps::SketchProofStatus status)
+inline std::string sketch_proof_status(runir::kr::ps::base::SketchProofStatus status)
 {
     switch (status)
     {
-        case runir::kr::ps::SketchProofStatus::SUCCESS:
+        case runir::kr::ps::base::SketchProofStatus::SUCCESS:
             return "success";
-        case runir::kr::ps::SketchProofStatus::FAILURE:
+        case runir::kr::ps::base::SketchProofStatus::FAILURE:
             return "failure";
-        case runir::kr::ps::SketchProofStatus::OUT_OF_TIME:
+        case runir::kr::ps::base::SketchProofStatus::OUT_OF_TIME:
             return "out_of_time";
-        case runir::kr::ps::SketchProofStatus::OUT_OF_STATES:
+        case runir::kr::ps::base::SketchProofStatus::OUT_OF_STATES:
             return "out_of_states";
     }
     return "unknown";
 }
 
 template<tyr::planning::TaskKind Kind>
-std::string sketch_proof_results(const runir::kr::ps::SketchProofResults<Kind>& result)
+std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<Kind>& result)
 {
     return fmt::format("SketchProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_transitions={}, open_states={}, cycle={})",
                        sketch_proof_status(result.status),
@@ -237,95 +242,96 @@ std::string sketch_proof_results(const runir::kr::ps::SketchProofResults<Kind>& 
                        result.cycle.size());
 }
 
-}  // namespace runir::kr::ps::format
+}  // namespace runir::kr::ps::base::format
 
 #if RUNIR_ENABLE_FMT_FORMATTERS
 template<typename FeatureTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::Feature<FeatureTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::Feature<FeatureTag>>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::format::feature(view), ctx); }
+    using View = tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C>;
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::format::feature(view), ctx); }
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConditionVariant>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ConditionVariant>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        auto names = runir::kr::ps::format::FeatureNames {};
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::format::condition(names, view), ctx);
+        auto names = runir::kr::ps::base::format::FeatureNames {};
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::base::format::condition(names, view), ctx);
     }
 };
 
 template<typename LanguageTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteConditionVariant<LanguageTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, LanguageTag>>, C>> :
+    fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteConditionVariant<LanguageTag>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, LanguageTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        auto names = runir::kr::ps::format::FeatureNames {};
-        const auto text = view.get_variant().apply([&](auto concrete_condition) { return runir::kr::ps::format::condition(names, concrete_condition); });
+        auto names = runir::kr::ps::base::format::FeatureNames {};
+        const auto text = view.get_variant().apply([&](auto concrete_condition) { return runir::kr::ps::base::format::condition(names, concrete_condition); });
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::EffectVariant>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::EffectVariant>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        auto names = runir::kr::ps::format::FeatureNames {};
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::format::effect(names, view), ctx);
+        auto names = runir::kr::ps::base::format::FeatureNames {};
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::base::format::effect(names, view), ctx);
     }
 };
 
 template<typename LanguageTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteEffectVariant<LanguageTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteEffectVariant<runir::kr::BaseFamilyTag, LanguageTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteEffectVariant<LanguageTag>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteEffectVariant<runir::kr::BaseFamilyTag, LanguageTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        auto names = runir::kr::ps::format::FeatureNames {};
-        const auto text = view.get_variant().apply([&](auto concrete_effect) { return runir::kr::ps::format::effect(names, concrete_effect); });
+        auto names = runir::kr::ps::base::format::FeatureNames {};
+        const auto text = view.get_variant().apply([&](auto concrete_effect) { return runir::kr::ps::base::format::effect(names, concrete_effect); });
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::Rule>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::Rule>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        auto names = runir::kr::ps::format::FeatureNames {};
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::format::rule(names, view), ctx);
+        auto names = runir::kr::ps::base::format::FeatureNames {};
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::base::format::rule(names, view), ctx);
     }
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::Sketch>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::Sketch>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::format::sketch(view), ctx); }
+    using View = tyr::View<tyr::Index<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>, C>;
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::format::sketch(view), ctx); }
 };
 
 template<>
-struct fmt::formatter<runir::kr::ps::SketchProofStatus> : fmt::formatter<std::string_view>
+struct fmt::formatter<runir::kr::ps::base::SketchProofStatus> : fmt::formatter<std::string_view>
 {
-    auto format(runir::kr::ps::SketchProofStatus status, format_context& ctx) const
+    auto format(runir::kr::ps::base::SketchProofStatus status, format_context& ctx) const
     {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::format::sketch_proof_status(status), ctx);
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::base::format::sketch_proof_status(status), ctx);
     }
 };
 
 template<tyr::planning::TaskKind Kind>
-struct fmt::formatter<runir::kr::ps::SketchProofResults<Kind>> : fmt::formatter<std::string_view>
+struct fmt::formatter<runir::kr::ps::base::SketchProofResults<Kind>> : fmt::formatter<std::string_view>
 {
-    auto format(const runir::kr::ps::SketchProofResults<Kind>& result, format_context& ctx) const
+    auto format(const runir::kr::ps::base::SketchProofResults<Kind>& result, format_context& ctx) const
     {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::format::sketch_proof_results(result), ctx);
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::base::format::sketch_proof_results(result), ctx);
     }
 };
 #endif

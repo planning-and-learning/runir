@@ -13,14 +13,14 @@ namespace tyr
 {
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-class View<Index<runir::kr::ps::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>
+class View<Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>> m_handle;
+    Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>> handle, const C& context) noexcept :
+    View(Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>> handle, const C& context) noexcept :
         m_context(&context),
         m_handle(handle)
     {

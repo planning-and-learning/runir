@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_BASE_DL_PARSER_HPP_
 
 #include "runir/kr/ps/base/dl/parser/parser.hpp"
-#include "runir/kr/ps/repository.hpp"
+#include "runir/kr/ps/base/repository.hpp"
 
 #include <string>
 #include <tyr/formalism/planning/repository.hpp>
