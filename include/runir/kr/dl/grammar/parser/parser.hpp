@@ -8,7 +8,8 @@
 namespace runir::kr::dl::grammar::parser
 {
 
-ast::Grammar parse_grammar_ast(const std::string& description);
+template<runir::kr::dl::FamilyTag Family>
+ast::Grammar<Family> parse_grammar_ast(const std::string& description);
 
 }
 

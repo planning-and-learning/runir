@@ -1,6 +1,16 @@
 #ifndef RUNIR_KR_DL_GRAMMAR_PARSER_BASE_AST_HPP_
 #define RUNIR_KR_DL_GRAMMAR_PARSER_BASE_AST_HPP_
 
+#ifndef BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+#define BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+#endif
+#ifndef BOOST_MPL_LIMIT_LIST_SIZE
+#define BOOST_MPL_LIMIT_LIST_SIZE 30
+#endif
+#ifndef BOOST_VARIANT_LIMIT_TYPES
+#define BOOST_VARIANT_LIMIT_TYPES 30
+#endif
+
 #include "runir/kr/dl/declarations.hpp"
 
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>

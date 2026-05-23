@@ -73,75 +73,93 @@ struct GrammarBodyClass;
 struct GrammarClass;
 struct GrammarRootClass;
 
-using concept_type = x3::rule<ConstructorClass<runir::kr::dl::ConceptTag>, ast::Constructor<runir::kr::dl::ConceptTag>>;
-using concept_root_type = x3::rule<ConstructorRootClass<runir::kr::dl::ConceptTag>, ast::Constructor<runir::kr::dl::ConceptTag>>;
-using concept_bot_type = x3::rule<ConceptBotClass, ast::ConceptBot>;
-using concept_top_type = x3::rule<ConceptTopClass, ast::ConceptTop>;
-using concept_atomic_state_type = x3::rule<ConceptAtomicStateClass, ast::ConceptAtomicState>;
-using concept_atomic_goal_type = x3::rule<ConceptAtomicGoalClass, ast::ConceptAtomicGoal>;
-using concept_intersection_type = x3::rule<ConceptIntersectionClass, ast::ConceptIntersection>;
-using concept_union_type = x3::rule<ConceptUnionClass, ast::ConceptUnion>;
-using concept_negation_type = x3::rule<ConceptNegationClass, ast::ConceptNegation>;
-using concept_value_restriction_type = x3::rule<ConceptValueRestrictionClass, ast::ConceptValueRestriction>;
-using concept_existential_quantification_type = x3::rule<ConceptExistentialQuantificationClass, ast::ConceptExistentialQuantification>;
-using concept_at_least_number_restriction_type = x3::rule<ConceptAtLeastNumberRestrictionClass, ast::ConceptAtLeastNumberRestriction>;
-using concept_at_most_number_restriction_type = x3::rule<ConceptAtMostNumberRestrictionClass, ast::ConceptAtMostNumberRestriction>;
-using concept_exact_number_restriction_type = x3::rule<ConceptExactNumberRestrictionClass, ast::ConceptExactNumberRestriction>;
+using concept_type = x3::rule<ConstructorClass<runir::kr::dl::ConceptTag>, ast::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ConceptTag>>;
+using concept_root_type = x3::rule<ConstructorRootClass<runir::kr::dl::ConceptTag>, ast::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ConceptTag>>;
+using concept_bot_type = x3::rule<ConceptBotClass, ast::ConceptBot<runir::kr::dl::BaseFamilyTag>>;
+using concept_top_type = x3::rule<ConceptTopClass, ast::ConceptTop<runir::kr::dl::BaseFamilyTag>>;
+using concept_atomic_state_type = x3::rule<ConceptAtomicStateClass, ast::ConceptAtomicState<runir::kr::dl::BaseFamilyTag>>;
+using concept_atomic_goal_type = x3::rule<ConceptAtomicGoalClass, ast::ConceptAtomicGoal<runir::kr::dl::BaseFamilyTag>>;
+using concept_intersection_type = x3::rule<ConceptIntersectionClass, ast::ConceptIntersection<runir::kr::dl::BaseFamilyTag>>;
+using concept_union_type = x3::rule<ConceptUnionClass, ast::ConceptUnion<runir::kr::dl::BaseFamilyTag>>;
+using concept_negation_type = x3::rule<ConceptNegationClass, ast::ConceptNegation<runir::kr::dl::BaseFamilyTag>>;
+using concept_value_restriction_type = x3::rule<ConceptValueRestrictionClass, ast::ConceptValueRestriction<runir::kr::dl::BaseFamilyTag>>;
+using concept_existential_quantification_type =
+    x3::rule<ConceptExistentialQuantificationClass, ast::ConceptExistentialQuantification<runir::kr::dl::BaseFamilyTag>>;
+using concept_at_least_number_restriction_type =
+    x3::rule<ConceptAtLeastNumberRestrictionClass, ast::ConceptAtLeastNumberRestriction<runir::kr::dl::BaseFamilyTag>>;
+using concept_at_most_number_restriction_type =
+    x3::rule<ConceptAtMostNumberRestrictionClass, ast::ConceptAtMostNumberRestriction<runir::kr::dl::BaseFamilyTag>>;
+using concept_exact_number_restriction_type = x3::rule<ConceptExactNumberRestrictionClass, ast::ConceptExactNumberRestriction<runir::kr::dl::BaseFamilyTag>>;
 using concept_qualified_at_least_number_restriction_type =
-    x3::rule<ConceptQualifiedAtLeastNumberRestrictionClass, ast::ConceptQualifiedAtLeastNumberRestriction>;
-using concept_qualified_at_most_number_restriction_type = x3::rule<ConceptQualifiedAtMostNumberRestrictionClass, ast::ConceptQualifiedAtMostNumberRestriction>;
-using concept_qualified_exact_number_restriction_type = x3::rule<ConceptQualifiedExactNumberRestrictionClass, ast::ConceptQualifiedExactNumberRestriction>;
-using concept_role_value_map_type = x3::rule<ConceptRoleValueMapClass, ast::ConceptRoleValueMap>;
-using concept_agreement_type = x3::rule<ConceptAgreementClass, ast::ConceptAgreement>;
-using concept_role_fillers_type = x3::rule<ConceptRoleFillersClass, ast::ConceptRoleFillers>;
-using concept_one_of_type = x3::rule<ConceptOneOfClass, ast::ConceptOneOf>;
-using concept_nominal_type = x3::rule<ConceptNominalClass, ast::ConceptNominal>;
-using concept_non_terminal_type = x3::rule<NonTerminalClass<runir::kr::dl::ConceptTag>, ast::NonTerminal<runir::kr::dl::ConceptTag>>;
-using concept_choice_type = x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::ConceptTag>, ast::ConstructorOrNonTerminal<runir::kr::dl::ConceptTag>>;
-using concept_derivation_rule_type = x3::rule<DerivationRuleClass<runir::kr::dl::ConceptTag>, ast::DerivationRule<runir::kr::dl::ConceptTag>>;
+    x3::rule<ConceptQualifiedAtLeastNumberRestrictionClass, ast::ConceptQualifiedAtLeastNumberRestriction<runir::kr::dl::BaseFamilyTag>>;
+using concept_qualified_at_most_number_restriction_type =
+    x3::rule<ConceptQualifiedAtMostNumberRestrictionClass, ast::ConceptQualifiedAtMostNumberRestriction<runir::kr::dl::BaseFamilyTag>>;
+using concept_qualified_exact_number_restriction_type =
+    x3::rule<ConceptQualifiedExactNumberRestrictionClass, ast::ConceptQualifiedExactNumberRestriction<runir::kr::dl::BaseFamilyTag>>;
+using concept_role_value_map_type = x3::rule<ConceptRoleValueMapClass, ast::ConceptRoleValueMap<runir::kr::dl::BaseFamilyTag>>;
+using concept_agreement_type = x3::rule<ConceptAgreementClass, ast::ConceptAgreement<runir::kr::dl::BaseFamilyTag>>;
+using concept_role_fillers_type = x3::rule<ConceptRoleFillersClass, ast::ConceptRoleFillers<runir::kr::dl::BaseFamilyTag>>;
+using concept_one_of_type = x3::rule<ConceptOneOfClass, ast::ConceptOneOf<runir::kr::dl::BaseFamilyTag>>;
+using concept_nominal_type = x3::rule<ConceptNominalClass, ast::ConceptNominal<runir::kr::dl::BaseFamilyTag>>;
+using concept_non_terminal_type =
+    x3::rule<NonTerminalClass<runir::kr::dl::ConceptTag>, ast::NonTerminal<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ConceptTag>>;
+using concept_choice_type =
+    x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::ConceptTag>, ast::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ConceptTag>>;
+using concept_derivation_rule_type =
+    x3::rule<DerivationRuleClass<runir::kr::dl::ConceptTag>, ast::DerivationRule<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ConceptTag>>;
 
-using role_type = x3::rule<ConstructorClass<runir::kr::dl::RoleTag>, ast::Constructor<runir::kr::dl::RoleTag>>;
-using role_root_type = x3::rule<ConstructorRootClass<runir::kr::dl::RoleTag>, ast::Constructor<runir::kr::dl::RoleTag>>;
-using role_universal_type = x3::rule<RoleUniversalClass, ast::RoleUniversal>;
-using role_atomic_state_type = x3::rule<RoleAtomicStateClass, ast::RoleAtomicState>;
-using role_atomic_goal_type = x3::rule<RoleAtomicGoalClass, ast::RoleAtomicGoal>;
-using role_intersection_type = x3::rule<RoleIntersectionClass, ast::RoleIntersection>;
-using role_union_type = x3::rule<RoleUnionClass, ast::RoleUnion>;
-using role_complement_type = x3::rule<RoleComplementClass, ast::RoleComplement>;
-using role_inverse_type = x3::rule<RoleInverseClass, ast::RoleInverse>;
-using role_composition_type = x3::rule<RoleCompositionClass, ast::RoleComposition>;
-using role_transitive_closure_type = x3::rule<RoleTransitiveClosureClass, ast::RoleTransitiveClosure>;
-using role_reflexive_transitive_closure_type = x3::rule<RoleReflexiveTransitiveClosureClass, ast::RoleReflexiveTransitiveClosure>;
-using role_restriction_type = x3::rule<RoleRestrictionClass, ast::RoleRestriction>;
-using role_identity_type = x3::rule<RoleIdentityClass, ast::RoleIdentity>;
-using role_non_terminal_type = x3::rule<NonTerminalClass<runir::kr::dl::RoleTag>, ast::NonTerminal<runir::kr::dl::RoleTag>>;
-using role_choice_type = x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::RoleTag>, ast::ConstructorOrNonTerminal<runir::kr::dl::RoleTag>>;
-using role_derivation_rule_type = x3::rule<DerivationRuleClass<runir::kr::dl::RoleTag>, ast::DerivationRule<runir::kr::dl::RoleTag>>;
+using role_type = x3::rule<ConstructorClass<runir::kr::dl::RoleTag>, ast::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleTag>>;
+using role_root_type = x3::rule<ConstructorRootClass<runir::kr::dl::RoleTag>, ast::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleTag>>;
+using role_universal_type = x3::rule<RoleUniversalClass, ast::RoleUniversal<runir::kr::dl::BaseFamilyTag>>;
+using role_atomic_state_type = x3::rule<RoleAtomicStateClass, ast::RoleAtomicState<runir::kr::dl::BaseFamilyTag>>;
+using role_atomic_goal_type = x3::rule<RoleAtomicGoalClass, ast::RoleAtomicGoal<runir::kr::dl::BaseFamilyTag>>;
+using role_intersection_type = x3::rule<RoleIntersectionClass, ast::RoleIntersection<runir::kr::dl::BaseFamilyTag>>;
+using role_union_type = x3::rule<RoleUnionClass, ast::RoleUnion<runir::kr::dl::BaseFamilyTag>>;
+using role_complement_type = x3::rule<RoleComplementClass, ast::RoleComplement<runir::kr::dl::BaseFamilyTag>>;
+using role_inverse_type = x3::rule<RoleInverseClass, ast::RoleInverse<runir::kr::dl::BaseFamilyTag>>;
+using role_composition_type = x3::rule<RoleCompositionClass, ast::RoleComposition<runir::kr::dl::BaseFamilyTag>>;
+using role_transitive_closure_type = x3::rule<RoleTransitiveClosureClass, ast::RoleTransitiveClosure<runir::kr::dl::BaseFamilyTag>>;
+using role_reflexive_transitive_closure_type = x3::rule<RoleReflexiveTransitiveClosureClass, ast::RoleReflexiveTransitiveClosure<runir::kr::dl::BaseFamilyTag>>;
+using role_restriction_type = x3::rule<RoleRestrictionClass, ast::RoleRestriction<runir::kr::dl::BaseFamilyTag>>;
+using role_identity_type = x3::rule<RoleIdentityClass, ast::RoleIdentity<runir::kr::dl::BaseFamilyTag>>;
+using role_non_terminal_type = x3::rule<NonTerminalClass<runir::kr::dl::RoleTag>, ast::NonTerminal<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleTag>>;
+using role_choice_type =
+    x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::RoleTag>, ast::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleTag>>;
+using role_derivation_rule_type =
+    x3::rule<DerivationRuleClass<runir::kr::dl::RoleTag>, ast::DerivationRule<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleTag>>;
 
-using constructor_or_non_terminal_variant_type = x3::rule<ConstructorOrNonTerminalVariantClass, ast::ConstructorOrNonTerminalVariant>;
+using constructor_or_non_terminal_variant_type =
+    x3::rule<ConstructorOrNonTerminalVariantClass, ast::ConstructorOrNonTerminalVariant<runir::kr::dl::BaseFamilyTag>>;
 
-using boolean_type = x3::rule<ConstructorClass<runir::kr::dl::BooleanTag>, ast::Constructor<runir::kr::dl::BooleanTag>>;
-using boolean_root_type = x3::rule<ConstructorRootClass<runir::kr::dl::BooleanTag>, ast::Constructor<runir::kr::dl::BooleanTag>>;
-using boolean_atomic_state_type = x3::rule<BooleanAtomicStateClass, ast::BooleanAtomicState>;
-using boolean_atomic_goal_type = x3::rule<BooleanAtomicGoalClass, ast::BooleanAtomicGoal>;
-using boolean_nonempty_type = x3::rule<BooleanNonemptyClass, ast::BooleanNonempty>;
-using boolean_non_terminal_type = x3::rule<NonTerminalClass<runir::kr::dl::BooleanTag>, ast::NonTerminal<runir::kr::dl::BooleanTag>>;
-using boolean_choice_type = x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::BooleanTag>, ast::ConstructorOrNonTerminal<runir::kr::dl::BooleanTag>>;
-using boolean_derivation_rule_type = x3::rule<DerivationRuleClass<runir::kr::dl::BooleanTag>, ast::DerivationRule<runir::kr::dl::BooleanTag>>;
+using boolean_type = x3::rule<ConstructorClass<runir::kr::dl::BooleanTag>, ast::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::BooleanTag>>;
+using boolean_root_type = x3::rule<ConstructorRootClass<runir::kr::dl::BooleanTag>, ast::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::BooleanTag>>;
+using boolean_atomic_state_type = x3::rule<BooleanAtomicStateClass, ast::BooleanAtomicState<runir::kr::dl::BaseFamilyTag>>;
+using boolean_atomic_goal_type = x3::rule<BooleanAtomicGoalClass, ast::BooleanAtomicGoal<runir::kr::dl::BaseFamilyTag>>;
+using boolean_nonempty_type = x3::rule<BooleanNonemptyClass, ast::BooleanNonempty<runir::kr::dl::BaseFamilyTag>>;
+using boolean_non_terminal_type =
+    x3::rule<NonTerminalClass<runir::kr::dl::BooleanTag>, ast::NonTerminal<runir::kr::dl::BaseFamilyTag, runir::kr::dl::BooleanTag>>;
+using boolean_choice_type =
+    x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::BooleanTag>, ast::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, runir::kr::dl::BooleanTag>>;
+using boolean_derivation_rule_type =
+    x3::rule<DerivationRuleClass<runir::kr::dl::BooleanTag>, ast::DerivationRule<runir::kr::dl::BaseFamilyTag, runir::kr::dl::BooleanTag>>;
 
-using numerical_type = x3::rule<ConstructorClass<runir::kr::dl::NumericalTag>, ast::Constructor<runir::kr::dl::NumericalTag>>;
-using numerical_root_type = x3::rule<ConstructorRootClass<runir::kr::dl::NumericalTag>, ast::Constructor<runir::kr::dl::NumericalTag>>;
-using numerical_count_type = x3::rule<NumericalCountClass, ast::NumericalCount>;
-using numerical_distance_type = x3::rule<NumericalDistanceClass, ast::NumericalDistance>;
-using numerical_non_terminal_type = x3::rule<NonTerminalClass<runir::kr::dl::NumericalTag>, ast::NonTerminal<runir::kr::dl::NumericalTag>>;
-using numerical_choice_type = x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::NumericalTag>, ast::ConstructorOrNonTerminal<runir::kr::dl::NumericalTag>>;
-using numerical_derivation_rule_type = x3::rule<DerivationRuleClass<runir::kr::dl::NumericalTag>, ast::DerivationRule<runir::kr::dl::NumericalTag>>;
+using numerical_type = x3::rule<ConstructorClass<runir::kr::dl::NumericalTag>, ast::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NumericalTag>>;
+using numerical_root_type =
+    x3::rule<ConstructorRootClass<runir::kr::dl::NumericalTag>, ast::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NumericalTag>>;
+using numerical_count_type = x3::rule<NumericalCountClass, ast::NumericalCount<runir::kr::dl::BaseFamilyTag>>;
+using numerical_distance_type = x3::rule<NumericalDistanceClass, ast::NumericalDistance<runir::kr::dl::BaseFamilyTag>>;
+using numerical_non_terminal_type =
+    x3::rule<NonTerminalClass<runir::kr::dl::NumericalTag>, ast::NonTerminal<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NumericalTag>>;
+using numerical_choice_type = x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::NumericalTag>,
+                                       ast::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NumericalTag>>;
+using numerical_derivation_rule_type =
+    x3::rule<DerivationRuleClass<runir::kr::dl::NumericalTag>, ast::DerivationRule<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NumericalTag>>;
 
-using derivation_rule_variant_type = x3::rule<DerivationRuleVariantClass, ast::DerivationRuleVariant>;
+using derivation_rule_variant_type = x3::rule<DerivationRuleVariantClass, ast::DerivationRuleVariant<runir::kr::dl::BaseFamilyTag>>;
 
-using grammar_body_type = x3::rule<GrammarBodyClass, std::vector<ast::DerivationRuleVariant>>;
-using grammar_type = x3::rule<GrammarClass, ast::Grammar>;
-using grammar_root_type = x3::rule<GrammarRootClass, ast::Grammar>;
+using grammar_body_type = x3::rule<GrammarBodyClass, std::vector<ast::DerivationRuleVariant<runir::kr::dl::BaseFamilyTag>>>;
+using grammar_type = x3::rule<GrammarClass, ast::Grammar<runir::kr::dl::BaseFamilyTag>>;
+using grammar_root_type = x3::rule<GrammarRootClass, ast::Grammar<runir::kr::dl::BaseFamilyTag>>;
 
 BOOST_SPIRIT_DECLARE(concept_type,
                      concept_root_type,

@@ -38,94 +38,94 @@ template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
 std::string concept_constructor(tyr::View<tyr::Index<Concept<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
-        return fmt::format("{}", ast::ConceptBot::keyword);
+        return fmt::format("{}", ast::ConceptBot<Family>::keyword);
     else if constexpr (std::same_as<Tag, runir::kr::dl::TopTag>)
-        return fmt::format("{}", ast::ConceptTop::keyword);
+        return fmt::format("{}", ast::ConceptTop<Family>::keyword);
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("{} {}", ast::ConceptAtomicState::keyword, quoted(view.get_predicate().get_name()));
+        return fmt::format("{} {}", ast::ConceptAtomicState<Family>::keyword, quoted(view.get_predicate().get_name()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-        return fmt::format("{} {} {}", ast::ConceptAtomicGoal::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
+        return fmt::format("{} {} {}", ast::ConceptAtomicGoal<Family>::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
-        return fmt::format("{} {} {}", ast::ConceptIntersection::keyword, view.get_lhs(), view.get_rhs());
+        return fmt::format("{} {} {}", ast::ConceptIntersection<Family>::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::UnionTag>)
-        return fmt::format("{} {} {}", ast::ConceptUnion::keyword, view.get_lhs(), view.get_rhs());
+        return fmt::format("{} {} {}", ast::ConceptUnion<Family>::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::NegationTag>)
-        return fmt::format("{} {}", ast::ConceptNegation::keyword, view.get_arg());
+        return fmt::format("{} {}", ast::ConceptNegation<Family>::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::ValueRestrictionTag>)
-        return fmt::format("{} {} {}", ast::ConceptValueRestriction::keyword, view.get_lhs(), view.get_rhs());
+        return fmt::format("{} {} {}", ast::ConceptValueRestriction<Family>::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::ExistentialQuantificationTag>)
-        return fmt::format("{} {} {}", ast::ConceptExistentialQuantification::keyword, view.get_lhs(), view.get_rhs());
+        return fmt::format("{} {} {}", ast::ConceptExistentialQuantification<Family>::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::AtLeastNumberRestrictionTag>)
-        return fmt::format("{} {} {}", ast::ConceptAtLeastNumberRestriction::keyword, view.get_n(), view.get_role());
+        return fmt::format("{} {} {}", ast::ConceptAtLeastNumberRestriction<Family>::keyword, view.get_n(), view.get_role());
     else if constexpr (std::same_as<Tag, runir::kr::dl::AtMostNumberRestrictionTag>)
-        return fmt::format("{} {} {}", ast::ConceptAtMostNumberRestriction::keyword, view.get_n(), view.get_role());
+        return fmt::format("{} {} {}", ast::ConceptAtMostNumberRestriction<Family>::keyword, view.get_n(), view.get_role());
     else if constexpr (std::same_as<Tag, runir::kr::dl::ExactNumberRestrictionTag>)
-        return fmt::format("{} {} {}", ast::ConceptExactNumberRestriction::keyword, view.get_n(), view.get_role());
+        return fmt::format("{} {} {}", ast::ConceptExactNumberRestriction<Family>::keyword, view.get_n(), view.get_role());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>)
-        return fmt::format("{} {} {} {}", ast::ConceptQualifiedAtLeastNumberRestriction::keyword, view.get_n(), view.get_role(), view.get_concept());
+        return fmt::format("{} {} {} {}", ast::ConceptQualifiedAtLeastNumberRestriction<Family>::keyword, view.get_n(), view.get_role(), view.get_concept());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>)
-        return fmt::format("{} {} {} {}", ast::ConceptQualifiedAtMostNumberRestriction::keyword, view.get_n(), view.get_role(), view.get_concept());
+        return fmt::format("{} {} {} {}", ast::ConceptQualifiedAtMostNumberRestriction<Family>::keyword, view.get_n(), view.get_role(), view.get_concept());
     else if constexpr (std::same_as<Tag, runir::kr::dl::QualifiedExactNumberRestrictionTag>)
-        return fmt::format("{} {} {} {}", ast::ConceptQualifiedExactNumberRestriction::keyword, view.get_n(), view.get_role(), view.get_concept());
+        return fmt::format("{} {} {} {}", ast::ConceptQualifiedExactNumberRestriction<Family>::keyword, view.get_n(), view.get_role(), view.get_concept());
     else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapTag>)
-        return fmt::format("{} {} {}", ast::ConceptRoleValueMap::keyword, view.get_lhs(), view.get_rhs());
+        return fmt::format("{} {} {}", ast::ConceptRoleValueMap<Family>::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::AgreementTag>)
-        return fmt::format("{} {} {}", ast::ConceptAgreement::keyword, view.get_lhs(), view.get_rhs());
+        return fmt::format("{} {} {}", ast::ConceptAgreement<Family>::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::RoleFillersTag>)
-        return fmt::format("{} {} {}", ast::ConceptRoleFillers::keyword, view.get_role(), fmt::join(quoted_object_names(view.get_objects()), " "));
+        return fmt::format("{} {} {}", ast::ConceptRoleFillers<Family>::keyword, view.get_role(), fmt::join(quoted_object_names(view.get_objects()), " "));
     else if constexpr (std::same_as<Tag, runir::kr::dl::OneOfTag>)
-        return fmt::format("{} {}", ast::ConceptOneOf::keyword, fmt::join(quoted_object_names(view.get_objects()), " "));
+        return fmt::format("{} {}", ast::ConceptOneOf<Family>::keyword, fmt::join(quoted_object_names(view.get_objects()), " "));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
-        return fmt::format("{} {}", ast::ConceptNominal::keyword, quoted(view.get_object().get_name()));
+        return fmt::format("{} {}", ast::ConceptNominal<Family>::keyword, quoted(view.get_object().get_name()));
 }
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
 std::string role(tyr::View<tyr::Index<Role<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
-        return fmt::format("{}", ast::RoleUniversal::keyword);
+        return fmt::format("{}", ast::RoleUniversal<Family>::keyword);
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("{} {}", ast::RoleAtomicState::keyword, quoted(view.get_predicate().get_name()));
+        return fmt::format("{} {}", ast::RoleAtomicState<Family>::keyword, quoted(view.get_predicate().get_name()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-        return fmt::format("{} {} {}", ast::RoleAtomicGoal::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
+        return fmt::format("{} {} {}", ast::RoleAtomicGoal<Family>::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
-        return fmt::format("{} {} {}", ast::RoleIntersection::keyword, view.get_lhs(), view.get_rhs());
+        return fmt::format("{} {} {}", ast::RoleIntersection<Family>::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::UnionTag>)
-        return fmt::format("{} {} {}", ast::RoleUnion::keyword, view.get_lhs(), view.get_rhs());
+        return fmt::format("{} {} {}", ast::RoleUnion<Family>::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::ComplementTag>)
-        return fmt::format("{} {}", ast::RoleComplement::keyword, view.get_arg());
+        return fmt::format("{} {}", ast::RoleComplement<Family>::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::InverseTag>)
-        return fmt::format("{} {}", ast::RoleInverse::keyword, view.get_arg());
+        return fmt::format("{} {}", ast::RoleInverse<Family>::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::CompositionTag>)
-        return fmt::format("{} {} {}", ast::RoleComposition::keyword, view.get_lhs(), view.get_rhs());
+        return fmt::format("{} {} {}", ast::RoleComposition<Family>::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::TransitiveClosureTag>)
-        return fmt::format("{} {}", ast::RoleTransitiveClosure::keyword, view.get_arg());
+        return fmt::format("{} {}", ast::RoleTransitiveClosure<Family>::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::ReflexiveTransitiveClosureTag>)
-        return fmt::format("{} {}", ast::RoleReflexiveTransitiveClosure::keyword, view.get_arg());
+        return fmt::format("{} {}", ast::RoleReflexiveTransitiveClosure<Family>::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::RestrictionTag>)
-        return fmt::format("{} {} {}", ast::RoleRestriction::keyword, view.get_lhs(), view.get_rhs());
+        return fmt::format("{} {} {}", ast::RoleRestriction<Family>::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::IdentityTag>)
-        return fmt::format("{} {}", ast::RoleIdentity::keyword, view.get_arg());
+        return fmt::format("{} {}", ast::RoleIdentity<Family>::keyword, view.get_arg());
 }
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag, typename C>
 std::string boolean_constructor(tyr::View<tyr::Index<Boolean<Family, Tag>>, C> view)
 {
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("{} {} {}", ast::BooleanAtomicState::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
+        return fmt::format("{} {} {}", ast::BooleanAtomicState<Family>::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-        return fmt::format("{} {} {}", ast::BooleanAtomicGoal::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
+        return fmt::format("{} {} {}", ast::BooleanAtomicGoal<Family>::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
-        return fmt::format("{} {}", ast::BooleanNonempty::keyword, view.get_arg());
+        return fmt::format("{} {}", ast::BooleanNonempty<Family>::keyword, view.get_arg());
 }
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag, typename C>
 std::string numerical(tyr::View<tyr::Index<Numerical<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
-        return fmt::format("{} {}", ast::NumericalCount::keyword, view.get_arg());
+        return fmt::format("{} {}", ast::NumericalCount<Family>::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
-        return fmt::format("{} {} {} {}", ast::NumericalDistance::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
+        return fmt::format("{} {} {} {}", ast::NumericalDistance<Family>::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>

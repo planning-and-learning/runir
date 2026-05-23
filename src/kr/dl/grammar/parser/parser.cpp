@@ -11,14 +11,15 @@
 namespace runir::kr::dl::grammar::parser
 {
 
-ast::Grammar parse_grammar_ast(const std::string& description)
+template<>
+ast::Grammar<runir::kr::dl::BaseFamilyTag> parse_grammar_ast<runir::kr::dl::BaseFamilyTag>(const std::string& description)
 {
     namespace x3 = boost::spirit::x3;
 
     auto first = description.cbegin();
     const auto last = description.cend();
 
-    ast::Grammar result;
+    ast::Grammar<runir::kr::dl::BaseFamilyTag> result;
     std::ostringstream errors;
     error_handler_type error_handler(first, last, errors);
 

@@ -18,7 +18,7 @@ struct BooleanFeature : x3::position_tagged
     std::string name;
     std::string symbol;
     std::string description;
-    runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::BooleanTag> feature;
+    runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::BooleanTag> feature;
 };
 
 struct NumericalFeature : x3::position_tagged
@@ -26,7 +26,7 @@ struct NumericalFeature : x3::position_tagged
     std::string name;
     std::string symbol;
     std::string description;
-    runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::NumericalTag> feature;
+    runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NumericalTag> feature;
 };
 
 struct Feature : x3::position_tagged, x3::variant<BooleanFeature, NumericalFeature>

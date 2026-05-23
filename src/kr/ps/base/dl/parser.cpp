@@ -56,12 +56,12 @@ auto intern_constructor(runir::kr::dl::ConstructorRepository& repository, tyr::I
 }
 
 template<runir::kr::dl::CategoryTag Category>
-auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<Category>& node,
+auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::BaseFamilyTag, Category>& node,
                        tyr::formalism::planning::DomainView domain,
                        runir::kr::dl::ConstructorRepository& repository);
 
 template<runir::kr::dl::CategoryTag Category>
-auto parse_constructor_or_non_terminal(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<Category>& node,
+auto parse_constructor_or_non_terminal(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, Category>& node,
                                        tyr::formalism::planning::DomainView domain,
                                        runir::kr::dl::ConstructorRepository& repository) -> runir::kr::dl::ConstructorView<Category>
 {
@@ -69,7 +69,8 @@ auto parse_constructor_or_non_terminal(const runir::kr::dl::grammar::ast::Constr
         [&](const auto& value) -> runir::kr::dl::ConstructorView<Category>
         {
             const auto& unwrapped = unwrap(value);
-            if constexpr (std::same_as<std::remove_cvref_t<decltype(unwrapped)>, runir::kr::dl::grammar::ast::NonTerminal<Category>>)
+            if constexpr (std::same_as<std::remove_cvref_t<decltype(unwrapped)>,
+                                       runir::kr::dl::grammar::ast::NonTerminal<runir::kr::dl::BaseFamilyTag, Category>>)
                 throw std::runtime_error("General-sketch DL features cannot reference grammar nonterminals.");
             else
                 return parse_constructor(unwrapped, domain, repository);
@@ -131,19 +132,23 @@ auto require_objects(tyr::formalism::planning::DomainView domain, const std::vec
     return result;
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptBot&, tyr::formalism::planning::DomainView, runir::kr::dl::ConstructorRepository& repository)
+auto parse(const runir::kr::dl::grammar::ast::ConceptBot<runir::kr::dl::BaseFamilyTag>&,
+           tyr::formalism::planning::DomainView,
+           runir::kr::dl::ConstructorRepository& repository)
 {
     tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::BotTag>> data;
     return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptTop&, tyr::formalism::planning::DomainView, runir::kr::dl::ConstructorRepository& repository)
+auto parse(const runir::kr::dl::grammar::ast::ConceptTop<runir::kr::dl::BaseFamilyTag>&,
+           tyr::formalism::planning::DomainView,
+           runir::kr::dl::ConstructorRepository& repository)
 {
     tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::TopTag>> data;
     return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicState& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicState<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -159,7 +164,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicState& node,
                              });
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicGoal& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicGoal<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -184,26 +189,28 @@ auto parse_binary_concept(const Ast& node, tyr::formalism::planning::DomainView 
     return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptIntersection& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptIntersection<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_binary_concept<runir::kr::dl::IntersectionTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptUnion& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository)
+auto parse(const runir::kr::dl::grammar::ast::ConceptUnion<runir::kr::dl::BaseFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_binary_concept<runir::kr::dl::UnionTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptValueRestriction& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptValueRestriction<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_binary_concept<runir::kr::dl::ValueRestrictionTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptExistentialQuantification& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptExistentialQuantification<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -218,21 +225,21 @@ auto parse_number_restriction_concept(const Ast& node, tyr::formalism::planning:
     return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_number_restriction_concept<runir::kr::dl::AtLeastNumberRestrictionTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_number_restriction_concept<runir::kr::dl::AtMostNumberRestrictionTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptExactNumberRestriction& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptExactNumberRestriction<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -248,42 +255,42 @@ auto parse_qualified_number_restriction_concept(const Ast& node, tyr::formalism:
     return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_qualified_number_restriction_concept<runir::kr::dl::QualifiedExactNumberRestrictionTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptRoleValueMap& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptRoleValueMap<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_binary_concept<runir::kr::dl::RoleValueMapTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptAgreement& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptAgreement<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_binary_concept<runir::kr::dl::AgreementTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -293,13 +300,15 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers& node,
     return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptOneOf& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository)
+auto parse(const runir::kr::dl::grammar::ast::ConceptOneOf<runir::kr::dl::BaseFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
 {
     tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::OneOfTag>> data(require_objects(domain, node.object_names));
     return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptNegation& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptNegation<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -308,7 +317,7 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptNegation& node,
     return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::ConceptNominal& node,
+auto parse(const runir::kr::dl::grammar::ast::ConceptNominal<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -316,13 +325,15 @@ auto parse(const runir::kr::dl::grammar::ast::ConceptNominal& node,
     return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::RoleUniversal&, tyr::formalism::planning::DomainView, runir::kr::dl::ConstructorRepository& repository)
+auto parse(const runir::kr::dl::grammar::ast::RoleUniversal<runir::kr::dl::BaseFamilyTag>&,
+           tyr::formalism::planning::DomainView,
+           runir::kr::dl::ConstructorRepository& repository)
 {
     tyr::Data<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::UniversalTag>> data;
     return intern_constructor<runir::kr::dl::RoleTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::RoleAtomicState& node,
+auto parse(const runir::kr::dl::grammar::ast::RoleAtomicState<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -338,7 +349,7 @@ auto parse(const runir::kr::dl::grammar::ast::RoleAtomicState& node,
                              });
 }
 
-auto parse(const runir::kr::dl::grammar::ast::RoleAtomicGoal& node,
+auto parse(const runir::kr::dl::grammar::ast::RoleAtomicGoal<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -362,19 +373,21 @@ auto parse_binary_role(const Ast& node, tyr::formalism::planning::DomainView dom
     return intern_constructor<runir::kr::dl::RoleTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::RoleIntersection& node,
+auto parse(const runir::kr::dl::grammar::ast::RoleIntersection<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_binary_role<runir::kr::dl::IntersectionTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::RoleUnion& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository)
+auto parse(const runir::kr::dl::grammar::ast::RoleUnion<runir::kr::dl::BaseFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_binary_role<runir::kr::dl::UnionTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::RoleComposition& node,
+auto parse(const runir::kr::dl::grammar::ast::RoleComposition<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -388,33 +401,35 @@ auto parse_unary_role(const Ast& node, tyr::formalism::planning::DomainView doma
     return intern_constructor<runir::kr::dl::RoleTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::RoleComplement& node,
+auto parse(const runir::kr::dl::grammar::ast::RoleComplement<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_unary_role<runir::kr::dl::ComplementTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::RoleInverse& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository)
+auto parse(const runir::kr::dl::grammar::ast::RoleInverse<runir::kr::dl::BaseFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_unary_role<runir::kr::dl::InverseTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::RoleTransitiveClosure& node,
+auto parse(const runir::kr::dl::grammar::ast::RoleTransitiveClosure<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_unary_role<runir::kr::dl::TransitiveClosureTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::RoleReflexiveTransitiveClosure& node,
+auto parse(const runir::kr::dl::grammar::ast::RoleReflexiveTransitiveClosure<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
     return parse_unary_role<runir::kr::dl::ReflexiveTransitiveClosureTag>(node, domain, repository);
 }
 
-auto parse(const runir::kr::dl::grammar::ast::RoleRestriction& node,
+auto parse(const runir::kr::dl::grammar::ast::RoleRestriction<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -424,14 +439,16 @@ auto parse(const runir::kr::dl::grammar::ast::RoleRestriction& node,
     return intern_constructor<runir::kr::dl::RoleTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::RoleIdentity& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ConstructorRepository& repository)
+auto parse(const runir::kr::dl::grammar::ast::RoleIdentity<runir::kr::dl::BaseFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           runir::kr::dl::ConstructorRepository& repository)
 {
     tyr::Data<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::IdentityTag>> data(
         parse_constructor_or_non_terminal(node.arg, domain, repository).get_index());
     return intern_constructor<runir::kr::dl::RoleTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicState& node,
+auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicState<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -448,7 +465,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicState& node,
                              });
 }
 
-auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicGoal& node,
+auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicGoal<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -465,7 +482,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicGoal& node,
                              });
 }
 
-auto parse(const runir::kr::dl::grammar::ast::BooleanNonempty& node,
+auto parse(const runir::kr::dl::grammar::ast::BooleanNonempty<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -478,7 +495,7 @@ auto parse(const runir::kr::dl::grammar::ast::BooleanNonempty& node,
     return intern_constructor<runir::kr::dl::BooleanTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::NumericalCount& node,
+auto parse(const runir::kr::dl::grammar::ast::NumericalCount<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -491,7 +508,7 @@ auto parse(const runir::kr::dl::grammar::ast::NumericalCount& node,
     return intern_constructor<runir::kr::dl::NumericalTag>(repository, intern(repository, data).get_index());
 }
 
-auto parse(const runir::kr::dl::grammar::ast::NumericalDistance& node,
+auto parse(const runir::kr::dl::grammar::ast::NumericalDistance<runir::kr::dl::BaseFamilyTag>& node,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepository& repository)
 {
@@ -503,15 +520,15 @@ auto parse(const runir::kr::dl::grammar::ast::NumericalDistance& node,
 }
 
 template<runir::kr::dl::CategoryTag Category>
-auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<Category>& node,
+auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<runir::kr::dl::BaseFamilyTag, Category>& node,
                        tyr::formalism::planning::DomainView domain,
                        runir::kr::dl::ConstructorRepository& repository)
 {
     return boost::apply_visitor([&](const auto& arg) { return parse(unwrap(arg), domain, repository); }, node.get());
 }
 
-using BooleanFeatureMap = std::unordered_map<std::string, tyr::Index<Feature<runir::kr::BaseFamilyTag, BooleanFeature>>>;
-using NumericalFeatureMap = std::unordered_map<std::string, tyr::Index<Feature<runir::kr::BaseFamilyTag, NumericalFeature>>>;
+using BooleanFeatureMap = std::unordered_map<std::string, tyr::Index<Feature<BooleanFeature>>>;
+using NumericalFeatureMap = std::unordered_map<std::string, tyr::Index<Feature<NumericalFeature>>>;
 
 auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature& node,
                    tyr::formalism::planning::DomainView domain,
@@ -519,12 +536,12 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature& node,
                    BooleanFeatureMap& boolean_features,
                    NumericalFeatureMap&)
 {
-    tyr::Data<ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, BooleanFeature>> concrete_data(
+    tyr::Data<ConcreteFeature<runir::kr::DlTag, BooleanFeature>> concrete_data(
         parse_constructor(node.feature, domain, repository.get_dl_repository()).get_index(),
         node.symbol,
         node.description);
     auto concrete = intern(repository, concrete_data);
-    tyr::Data<Feature<runir::kr::BaseFamilyTag, BooleanFeature>> data(concrete.get_index());
+    tyr::Data<Feature<BooleanFeature>> data(concrete.get_index());
     auto feature = intern(repository, data);
     boolean_features.emplace(node.name, feature.get_index());
 }
@@ -535,18 +552,18 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::NumericalFeature& node,
                    BooleanFeatureMap&,
                    NumericalFeatureMap& numerical_features)
 {
-    tyr::Data<ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, NumericalFeature>> concrete_data(
+    tyr::Data<ConcreteFeature<runir::kr::DlTag, NumericalFeature>> concrete_data(
         parse_constructor(node.feature, domain, repository.get_dl_repository()).get_index(),
         node.symbol,
         node.description);
     auto concrete = intern(repository, concrete_data);
-    tyr::Data<Feature<runir::kr::BaseFamilyTag, NumericalFeature>> data(concrete.get_index());
+    tyr::Data<Feature<NumericalFeature>> data(concrete.get_index());
     auto feature = intern(repository, data);
     numerical_features.emplace(node.name, feature.get_index());
 }
 
 template<typename FeatureTag>
-auto require_feature(const std::unordered_map<std::string, tyr::Index<Feature<runir::kr::BaseFamilyTag, FeatureTag>>>& features, const std::string& name)
+auto require_feature(const std::unordered_map<std::string, tyr::Index<Feature<FeatureTag>>>& features, const std::string& name)
 {
     const auto it = features.find(name);
     if (it == features.end())
@@ -555,24 +572,24 @@ auto require_feature(const std::unordered_map<std::string, tyr::Index<Feature<ru
 }
 
 template<typename FeatureTag, typename ObservationTag>
-auto make_condition(tyr::Index<Feature<runir::kr::BaseFamilyTag, FeatureTag>> feature, Repository& repository)
+auto make_condition(tyr::Index<Feature<FeatureTag>> feature, Repository& repository)
 {
-    tyr::Data<ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
+    tyr::Data<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
     auto concrete = intern(repository, concrete_data);
-    tyr::Data<ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>> variant_data(concrete.get_index());
+    tyr::Data<ConcreteConditionVariant<runir::kr::DlTag>> variant_data(concrete.get_index());
     auto variant = intern(repository, variant_data);
-    tyr::Data<ConditionVariant<runir::kr::BaseFamilyTag>> data(variant.get_index());
+    tyr::Data<ConditionVariant> data(variant.get_index());
     return intern(repository, data);
 }
 
 template<typename FeatureTag, typename ObservationTag>
-auto make_effect(tyr::Index<Feature<runir::kr::BaseFamilyTag, FeatureTag>> feature, Repository& repository)
+auto make_effect(tyr::Index<Feature<FeatureTag>> feature, Repository& repository)
 {
-    tyr::Data<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
+    tyr::Data<ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
     auto concrete = intern(repository, concrete_data);
-    tyr::Data<ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>> variant_data(concrete.get_index());
+    tyr::Data<ConcreteEffectVariant<runir::kr::DlTag>> variant_data(concrete.get_index());
     auto variant = intern(repository, variant_data);
-    tyr::Data<EffectVariant<runir::kr::BaseFamilyTag>> data(variant.get_index());
+    tyr::Data<EffectVariant> data(variant.get_index());
     return intern(repository, data);
 }
 
@@ -692,15 +709,15 @@ auto parse_rule(const runir::kr::ps::base::dl::ast::Rule& node,
                 const BooleanFeatureMap& boolean_features,
                 const NumericalFeatureMap& numerical_features)
 {
-    auto conditions = tyr::IndexList<ConditionVariant<runir::kr::BaseFamilyTag>> {};
+    auto conditions = tyr::IndexList<ConditionVariant> {};
     for (const auto& condition : node.conditions)
         conditions.push_back(parse_condition(condition, repository, boolean_features, numerical_features).get_index());
 
-    auto effects = tyr::IndexList<EffectVariant<runir::kr::BaseFamilyTag>> {};
+    auto effects = tyr::IndexList<EffectVariant> {};
     for (const auto& effect : node.effects)
         effects.push_back(parse_effect(effect, repository, boolean_features, numerical_features).get_index());
 
-    tyr::Data<Rule<runir::kr::BaseFamilyTag>> data;
+    tyr::Data<Rule> data;
     data.conditions = std::move(conditions);
     data.effects = std::move(effects);
     return intern(repository, data);
@@ -718,11 +735,11 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
     for (const auto& feature : ast.features)
         boost::apply_visitor([&](const auto& arg) { parse_feature(arg, domain, repository, boolean_features, numerical_features); }, feature.get());
 
-    auto rules = tyr::IndexList<Rule<runir::kr::BaseFamilyTag>> {};
+    auto rules = tyr::IndexList<Rule> {};
     for (const auto& rule : ast.rules)
         rules.push_back(parse_rule(rule, repository, boolean_features, numerical_features).get_index());
 
-    tyr::Data<Sketch<runir::kr::BaseFamilyTag>> data;
+    tyr::Data<Sketch> data;
     data.rules = std::move(rules);
     return intern(repository, data);
 }

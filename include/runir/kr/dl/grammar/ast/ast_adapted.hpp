@@ -5,52 +5,99 @@
 
 #include <boost/fusion/include/adapt_struct.hpp>
 
-BOOST_FUSION_ADAPT_TPL_STRUCT((D), (runir::kr::dl::grammar::ast::NonTerminal)(D), (std::string, name))
-BOOST_FUSION_ADAPT_TPL_STRUCT((D),
-                              (runir::kr::dl::grammar::ast::DerivationRule)(D),
-                              (runir::kr::dl::grammar::ast::NonTerminal<D>, lhs)(std::vector<runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<D>>, rhs))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family) (Category), (runir::kr::dl::grammar::ast::NonTerminal)(Family) (Category), (std::string, name))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family) (Category), (runir::kr::dl::grammar::ast::DerivationRule)(Family) (Category), lhs, rhs)
 
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptBot)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptTop)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptAtomicState, predicate_name)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptAtomicGoal, predicate_name, polarity)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptIntersection, lhs, rhs)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptUnion, lhs, rhs)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptNegation, arg)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptValueRestriction, lhs, rhs)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptExistentialQuantification, lhs, rhs)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction, n, role)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction, n, role)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptExactNumberRestriction, n, role)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction, n, role, concept_)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction, n, role, concept_)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction, n, role, concept_)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptRoleValueMap, lhs, rhs)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptAgreement, lhs, rhs)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptRoleFillers, role, object_names)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptOneOf, object_names)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::ConceptNominal, object_name)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptBot)(Family))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptTop)(Family))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptAtomicState)(Family), (std::string, predicate_name))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptAtomicGoal)(Family), (std::string, predicate_name)(bool, polarity))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptIntersection)(Family),
+                              (runir::kr::dl::grammar::ast::ConceptChoice<Family>, lhs)(runir::kr::dl::grammar::ast::ConceptChoice<Family>, rhs))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptUnion)(Family),
+                              (runir::kr::dl::grammar::ast::ConceptChoice<Family>, lhs)(runir::kr::dl::grammar::ast::ConceptChoice<Family>, rhs))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptNegation)(Family), (runir::kr::dl::grammar::ast::ConceptChoice<Family>, arg))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptValueRestriction)(Family),
+                              (runir::kr::dl::grammar::ast::RoleChoice<Family>, lhs)(runir::kr::dl::grammar::ast::ConceptChoice<Family>, rhs))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptExistentialQuantification)(Family),
+                              (runir::kr::dl::grammar::ast::RoleChoice<Family>, lhs)(runir::kr::dl::grammar::ast::ConceptChoice<Family>, rhs))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction)(Family),
+                              (tyr::uint_t, n)(runir::kr::dl::grammar::ast::RoleChoice<Family>, role))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction)(Family),
+                              (tyr::uint_t, n)(runir::kr::dl::grammar::ast::RoleChoice<Family>, role))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptExactNumberRestriction)(Family),
+                              (tyr::uint_t, n)(runir::kr::dl::grammar::ast::RoleChoice<Family>, role))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction)(Family),
+                              (tyr::uint_t, n)(runir::kr::dl::grammar::ast::RoleChoice<Family>, role)(runir::kr::dl::grammar::ast::ConceptChoice<Family>,
+                                                                                                      concept_))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction)(Family),
+                              (tyr::uint_t, n)(runir::kr::dl::grammar::ast::RoleChoice<Family>, role)(runir::kr::dl::grammar::ast::ConceptChoice<Family>,
+                                                                                                      concept_))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction)(Family),
+                              (tyr::uint_t, n)(runir::kr::dl::grammar::ast::RoleChoice<Family>, role)(runir::kr::dl::grammar::ast::ConceptChoice<Family>,
+                                                                                                      concept_))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptRoleValueMap)(Family),
+                              (runir::kr::dl::grammar::ast::RoleChoice<Family>, lhs)(runir::kr::dl::grammar::ast::RoleChoice<Family>, rhs))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptAgreement)(Family),
+                              (runir::kr::dl::grammar::ast::RoleChoice<Family>, lhs)(runir::kr::dl::grammar::ast::RoleChoice<Family>, rhs))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::ConceptRoleFillers)(Family),
+                              (runir::kr::dl::grammar::ast::RoleChoice<Family>, role)(std::vector<std::string>, object_names))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptOneOf)(Family), (std::vector<std::string>, object_names))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptNominal)(Family), (std::string, object_name))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptRegister)(Family), (tyr::uint_t, identifier))
 
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleUniversal)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleAtomicState, predicate_name)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleAtomicGoal, predicate_name, polarity)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleIntersection, lhs, rhs)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleUnion, lhs, rhs)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleComplement, arg)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleInverse, arg)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleComposition, lhs, rhs)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleTransitiveClosure, arg)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleReflexiveTransitiveClosure, arg)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleRestriction, lhs, rhs)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::RoleIdentity, arg)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleUniversal)(Family))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleAtomicState)(Family), (std::string, predicate_name))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleAtomicGoal)(Family), (std::string, predicate_name)(bool, polarity))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::RoleIntersection)(Family),
+                              (runir::kr::dl::grammar::ast::RoleChoice<Family>, lhs)(runir::kr::dl::grammar::ast::RoleChoice<Family>, rhs))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::RoleUnion)(Family),
+                              (runir::kr::dl::grammar::ast::RoleChoice<Family>, lhs)(runir::kr::dl::grammar::ast::RoleChoice<Family>, rhs))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleComplement)(Family), (runir::kr::dl::grammar::ast::RoleChoice<Family>, arg))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleInverse)(Family), (runir::kr::dl::grammar::ast::RoleChoice<Family>, arg))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::RoleComposition)(Family),
+                              (runir::kr::dl::grammar::ast::RoleChoice<Family>, lhs)(runir::kr::dl::grammar::ast::RoleChoice<Family>, rhs))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleTransitiveClosure)(Family), (runir::kr::dl::grammar::ast::RoleChoice<Family>, arg))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::RoleReflexiveTransitiveClosure)(Family),
+                              (runir::kr::dl::grammar::ast::RoleChoice<Family>, arg))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::RoleRestriction)(Family),
+                              (runir::kr::dl::grammar::ast::RoleChoice<Family>, lhs)(runir::kr::dl::grammar::ast::ConceptChoice<Family>, rhs))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleIdentity)(Family), (runir::kr::dl::grammar::ast::ConceptChoice<Family>, arg))
 
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::BooleanAtomicState, predicate_name, polarity)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::BooleanAtomicGoal, predicate_name, polarity)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::BooleanNonempty, arg)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::BooleanAtomicState)(Family), (std::string, predicate_name)(bool, polarity))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::BooleanAtomicGoal)(Family), (std::string, predicate_name)(bool, polarity))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::BooleanNonempty)(Family),
+                              (runir::kr::dl::grammar::ast::ConstructorOrNonTerminalVariant<Family>, arg))
 
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::NumericalCount, arg)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::NumericalDistance, lhs, mid, rhs)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::NumericalCount)(Family),
+                              (runir::kr::dl::grammar::ast::ConstructorOrNonTerminalVariant<Family>, arg))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::NumericalDistance)(Family),
+                              (runir::kr::dl::grammar::ast::ConceptChoice<Family>, lhs)(runir::kr::dl::grammar::ast::RoleChoice<Family>,
+                                                                                        mid)(runir::kr::dl::grammar::ast::ConceptChoice<Family>, rhs))
 
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::dl::grammar::ast::Grammar, rules)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
+                              (runir::kr::dl::grammar::ast::Grammar)(Family),
+                              (std::vector<runir::kr::dl::grammar::ast::DerivationRuleVariant<Family>>, rules))
 
 #endif
