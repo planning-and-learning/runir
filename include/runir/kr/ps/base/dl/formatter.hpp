@@ -40,10 +40,10 @@ std::vector<std::string> quoted_object_names(Objects objects)
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor(tyr::View<tyr::Index<runir::kr::dl::Constructor<Category>>, C> view);
+std::string constructor(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, Category>>, C> view);
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Constructor<Category>>, C> view);
+std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, Category>>, C> view);
 
 template<typename View>
 std::string constructor_variant(View view)
@@ -52,7 +52,7 @@ std::string constructor_variant(View view)
 }
 
 template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
-std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::Concept<Tag>>, C> view)
+std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
         return std::string(runir::kr::dl::grammar::ast::ConceptBot::keyword);
@@ -118,7 +118,7 @@ std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::Concept<Tag>
 }
 
 template<runir::kr::dl::RoleConstructorTag Tag, typename C>
-std::string role(tyr::View<tyr::Index<runir::kr::dl::Role<Tag>>, C> view)
+std::string role(tyr::View<tyr::Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
         return std::string(runir::kr::dl::grammar::ast::RoleUniversal::keyword);
@@ -150,7 +150,7 @@ std::string role(tyr::View<tyr::Index<runir::kr::dl::Role<Tag>>, C> view)
 }
 
 template<runir::kr::dl::BooleanConstructorTag Tag, typename C>
-std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::Boolean<Tag>>, C> view)
+std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
 {
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {} {}",
@@ -167,7 +167,7 @@ std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::Boolean<Tag>
 }
 
 template<runir::kr::dl::NumericalConstructorTag Tag, typename C>
-std::string numerical(tyr::View<tyr::Index<runir::kr::dl::Numerical<Tag>>, C> view)
+std::string numerical(tyr::View<tyr::Index<runir::kr::dl::Numerical<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return fmt::format("{} {}", runir::kr::dl::grammar::ast::NumericalCount::keyword, constructor_variant(view.get_arg()));
@@ -180,37 +180,37 @@ std::string numerical(tyr::View<tyr::Index<runir::kr::dl::Numerical<Tag>>, C> vi
 }
 
 template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Concept<Tag>>, C> view)
+std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
 {
     return concept_constructor(view);
 }
 
 template<runir::kr::dl::RoleConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Role<Tag>>, C> view)
+std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
 {
     return role(view);
 }
 
 template<runir::kr::dl::BooleanConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Boolean<Tag>>, C> view)
+std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
 {
     return boolean_constructor(view);
 }
 
 template<runir::kr::dl::NumericalConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Numerical<Tag>>, C> view)
+std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Numerical<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
 {
     return numerical(view);
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Constructor<Category>>, C> view)
+std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, Category>>, C> view)
 {
     return view.get_variant().apply([](auto arg) { return constructor_body(arg); });
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor(tyr::View<tyr::Index<runir::kr::dl::Constructor<Category>>, C> view)
+std::string constructor(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, Category>>, C> view)
 {
     return fmt::format("({})", constructor_body(view));
 }

@@ -47,63 +47,63 @@ void bind_data(nb::module_& m, const std::string& name)
 
 void bind_semantics_datas(nb::module_& m)
 {
-    bind_data<Concept<BotTag>>(m, "ConceptBotData");
-    bind_data<Concept<TopTag>>(m, "ConceptTopData");
-    bind_data<Concept<AtomicStateTag<tyr::formalism::StaticTag>>>(m, "ConceptAtomicStateStaticData");
-    bind_data<Concept<AtomicStateTag<tyr::formalism::FluentTag>>>(m, "ConceptAtomicStateFluentData");
-    bind_data<Concept<AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "ConceptAtomicStateDerivedData");
-    bind_data<Concept<AtomicGoalTag<tyr::formalism::StaticTag>>>(m, "ConceptAtomicGoalStaticData");
-    bind_data<Concept<AtomicGoalTag<tyr::formalism::FluentTag>>>(m, "ConceptAtomicGoalFluentData");
-    bind_data<Concept<AtomicGoalTag<tyr::formalism::DerivedTag>>>(m, "ConceptAtomicGoalDerivedData");
-    bind_data<Concept<IntersectionTag>>(m, "ConceptIntersectionData");
-    bind_data<Concept<UnionTag>>(m, "ConceptUnionData");
-    bind_data<Concept<NegationTag>>(m, "ConceptNegationData");
-    bind_data<Concept<ValueRestrictionTag>>(m, "ConceptValueRestrictionData");
-    bind_data<Concept<ExistentialQuantificationTag>>(m, "ConceptExistentialQuantificationData");
-    bind_data<Concept<AtLeastNumberRestrictionTag>>(m, "ConceptAtLeastNumberRestrictionData");
-    bind_data<Concept<AtMostNumberRestrictionTag>>(m, "ConceptAtMostNumberRestrictionData");
-    bind_data<Concept<ExactNumberRestrictionTag>>(m, "ConceptExactNumberRestrictionData");
-    bind_data<Concept<QualifiedAtLeastNumberRestrictionTag>>(m, "ConceptQualifiedAtLeastNumberRestrictionData");
-    bind_data<Concept<QualifiedAtMostNumberRestrictionTag>>(m, "ConceptQualifiedAtMostNumberRestrictionData");
-    bind_data<Concept<QualifiedExactNumberRestrictionTag>>(m, "ConceptQualifiedExactNumberRestrictionData");
-    bind_data<Concept<RoleValueMapTag>>(m, "ConceptRoleValueMapData");
-    bind_data<Concept<AgreementTag>>(m, "ConceptAgreementData");
-    bind_data<Concept<RoleFillersTag>>(m, "ConceptRoleFillersData");
-    bind_data<Concept<OneOfTag>>(m, "ConceptOneOfData");
-    bind_data<Concept<NominalTag>>(m, "ConceptNominalData");
+    bind_data<Concept<BaseFamilyTag, BotTag>>(m, "ConceptBotData");
+    bind_data<Concept<BaseFamilyTag, TopTag>>(m, "ConceptTopData");
+    bind_data<Concept<BaseFamilyTag, AtomicStateTag<tyr::formalism::StaticTag>>>(m, "ConceptAtomicStateStaticData");
+    bind_data<Concept<BaseFamilyTag, AtomicStateTag<tyr::formalism::FluentTag>>>(m, "ConceptAtomicStateFluentData");
+    bind_data<Concept<BaseFamilyTag, AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "ConceptAtomicStateDerivedData");
+    bind_data<Concept<BaseFamilyTag, AtomicGoalTag<tyr::formalism::StaticTag>>>(m, "ConceptAtomicGoalStaticData");
+    bind_data<Concept<BaseFamilyTag, AtomicGoalTag<tyr::formalism::FluentTag>>>(m, "ConceptAtomicGoalFluentData");
+    bind_data<Concept<BaseFamilyTag, AtomicGoalTag<tyr::formalism::DerivedTag>>>(m, "ConceptAtomicGoalDerivedData");
+    bind_data<Concept<BaseFamilyTag, IntersectionTag>>(m, "ConceptIntersectionData");
+    bind_data<Concept<BaseFamilyTag, UnionTag>>(m, "ConceptUnionData");
+    bind_data<Concept<BaseFamilyTag, NegationTag>>(m, "ConceptNegationData");
+    bind_data<Concept<BaseFamilyTag, ValueRestrictionTag>>(m, "ConceptValueRestrictionData");
+    bind_data<Concept<BaseFamilyTag, ExistentialQuantificationTag>>(m, "ConceptExistentialQuantificationData");
+    bind_data<Concept<BaseFamilyTag, AtLeastNumberRestrictionTag>>(m, "ConceptAtLeastNumberRestrictionData");
+    bind_data<Concept<BaseFamilyTag, AtMostNumberRestrictionTag>>(m, "ConceptAtMostNumberRestrictionData");
+    bind_data<Concept<BaseFamilyTag, ExactNumberRestrictionTag>>(m, "ConceptExactNumberRestrictionData");
+    bind_data<Concept<BaseFamilyTag, QualifiedAtLeastNumberRestrictionTag>>(m, "ConceptQualifiedAtLeastNumberRestrictionData");
+    bind_data<Concept<BaseFamilyTag, QualifiedAtMostNumberRestrictionTag>>(m, "ConceptQualifiedAtMostNumberRestrictionData");
+    bind_data<Concept<BaseFamilyTag, QualifiedExactNumberRestrictionTag>>(m, "ConceptQualifiedExactNumberRestrictionData");
+    bind_data<Concept<BaseFamilyTag, RoleValueMapTag>>(m, "ConceptRoleValueMapData");
+    bind_data<Concept<BaseFamilyTag, AgreementTag>>(m, "ConceptAgreementData");
+    bind_data<Concept<BaseFamilyTag, RoleFillersTag>>(m, "ConceptRoleFillersData");
+    bind_data<Concept<BaseFamilyTag, OneOfTag>>(m, "ConceptOneOfData");
+    bind_data<Concept<BaseFamilyTag, NominalTag>>(m, "ConceptNominalData");
 
-    bind_data<Role<UniversalTag>>(m, "RoleUniversalData");
-    bind_data<Role<AtomicStateTag<tyr::formalism::StaticTag>>>(m, "RoleAtomicStateStaticData");
-    bind_data<Role<AtomicStateTag<tyr::formalism::FluentTag>>>(m, "RoleAtomicStateFluentData");
-    bind_data<Role<AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "RoleAtomicStateDerivedData");
-    bind_data<Role<AtomicGoalTag<tyr::formalism::StaticTag>>>(m, "RoleAtomicGoalStaticData");
-    bind_data<Role<AtomicGoalTag<tyr::formalism::FluentTag>>>(m, "RoleAtomicGoalFluentData");
-    bind_data<Role<AtomicGoalTag<tyr::formalism::DerivedTag>>>(m, "RoleAtomicGoalDerivedData");
-    bind_data<Role<IntersectionTag>>(m, "RoleIntersectionData");
-    bind_data<Role<UnionTag>>(m, "RoleUnionData");
-    bind_data<Role<ComplementTag>>(m, "RoleComplementData");
-    bind_data<Role<InverseTag>>(m, "RoleInverseData");
-    bind_data<Role<CompositionTag>>(m, "RoleCompositionData");
-    bind_data<Role<TransitiveClosureTag>>(m, "RoleTransitiveClosureData");
-    bind_data<Role<ReflexiveTransitiveClosureTag>>(m, "RoleReflexiveTransitiveClosureData");
-    bind_data<Role<RestrictionTag>>(m, "RoleRestrictionData");
-    bind_data<Role<IdentityTag>>(m, "RoleIdentityData");
+    bind_data<Role<BaseFamilyTag, UniversalTag>>(m, "RoleUniversalData");
+    bind_data<Role<BaseFamilyTag, AtomicStateTag<tyr::formalism::StaticTag>>>(m, "RoleAtomicStateStaticData");
+    bind_data<Role<BaseFamilyTag, AtomicStateTag<tyr::formalism::FluentTag>>>(m, "RoleAtomicStateFluentData");
+    bind_data<Role<BaseFamilyTag, AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "RoleAtomicStateDerivedData");
+    bind_data<Role<BaseFamilyTag, AtomicGoalTag<tyr::formalism::StaticTag>>>(m, "RoleAtomicGoalStaticData");
+    bind_data<Role<BaseFamilyTag, AtomicGoalTag<tyr::formalism::FluentTag>>>(m, "RoleAtomicGoalFluentData");
+    bind_data<Role<BaseFamilyTag, AtomicGoalTag<tyr::formalism::DerivedTag>>>(m, "RoleAtomicGoalDerivedData");
+    bind_data<Role<BaseFamilyTag, IntersectionTag>>(m, "RoleIntersectionData");
+    bind_data<Role<BaseFamilyTag, UnionTag>>(m, "RoleUnionData");
+    bind_data<Role<BaseFamilyTag, ComplementTag>>(m, "RoleComplementData");
+    bind_data<Role<BaseFamilyTag, InverseTag>>(m, "RoleInverseData");
+    bind_data<Role<BaseFamilyTag, CompositionTag>>(m, "RoleCompositionData");
+    bind_data<Role<BaseFamilyTag, TransitiveClosureTag>>(m, "RoleTransitiveClosureData");
+    bind_data<Role<BaseFamilyTag, ReflexiveTransitiveClosureTag>>(m, "RoleReflexiveTransitiveClosureData");
+    bind_data<Role<BaseFamilyTag, RestrictionTag>>(m, "RoleRestrictionData");
+    bind_data<Role<BaseFamilyTag, IdentityTag>>(m, "RoleIdentityData");
 
-    bind_data<Boolean<AtomicStateTag<tyr::formalism::StaticTag>>>(m, "BooleanAtomicStateStaticData");
-    bind_data<Boolean<AtomicStateTag<tyr::formalism::FluentTag>>>(m, "BooleanAtomicStateFluentData");
-    bind_data<Boolean<AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "BooleanAtomicStateDerivedData");
-    bind_data<Boolean<AtomicGoalTag<tyr::formalism::StaticTag>>>(m, "BooleanAtomicGoalStaticData");
-    bind_data<Boolean<AtomicGoalTag<tyr::formalism::FluentTag>>>(m, "BooleanAtomicGoalFluentData");
-    bind_data<Boolean<AtomicGoalTag<tyr::formalism::DerivedTag>>>(m, "BooleanAtomicGoalDerivedData");
-    bind_data<Boolean<NonemptyTag>>(m, "BooleanNonemptyData");
+    bind_data<Boolean<BaseFamilyTag, AtomicStateTag<tyr::formalism::StaticTag>>>(m, "BooleanAtomicStateStaticData");
+    bind_data<Boolean<BaseFamilyTag, AtomicStateTag<tyr::formalism::FluentTag>>>(m, "BooleanAtomicStateFluentData");
+    bind_data<Boolean<BaseFamilyTag, AtomicStateTag<tyr::formalism::DerivedTag>>>(m, "BooleanAtomicStateDerivedData");
+    bind_data<Boolean<BaseFamilyTag, AtomicGoalTag<tyr::formalism::StaticTag>>>(m, "BooleanAtomicGoalStaticData");
+    bind_data<Boolean<BaseFamilyTag, AtomicGoalTag<tyr::formalism::FluentTag>>>(m, "BooleanAtomicGoalFluentData");
+    bind_data<Boolean<BaseFamilyTag, AtomicGoalTag<tyr::formalism::DerivedTag>>>(m, "BooleanAtomicGoalDerivedData");
+    bind_data<Boolean<BaseFamilyTag, NonemptyTag>>(m, "BooleanNonemptyData");
 
-    bind_data<Numerical<CountTag>>(m, "NumericalCountData");
-    bind_data<Numerical<DistanceTag>>(m, "NumericalDistanceData");
+    bind_data<Numerical<BaseFamilyTag, CountTag>>(m, "NumericalCountData");
+    bind_data<Numerical<BaseFamilyTag, DistanceTag>>(m, "NumericalDistanceData");
 
-    bind_data<Constructor<ConceptTag>>(m, "ConceptData");
-    bind_data<Constructor<RoleTag>>(m, "RoleData");
-    bind_data<Constructor<BooleanTag>>(m, "BooleanData");
-    bind_data<Constructor<NumericalTag>>(m, "NumericalData");
+    bind_data<Constructor<BaseFamilyTag, ConceptTag>>(m, "ConceptData");
+    bind_data<Constructor<BaseFamilyTag, RoleTag>>(m, "RoleData");
+    bind_data<Constructor<BaseFamilyTag, BooleanTag>>(m, "BooleanData");
+    bind_data<Constructor<BaseFamilyTag, NumericalTag>>(m, "NumericalData");
 }
 
 }  // namespace runir::kr::dl
