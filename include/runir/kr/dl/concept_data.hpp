@@ -18,6 +18,16 @@ template<runir::kr::dl::FamilyTag Family>
 using DlRole = runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>;
 
 template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::RegisterTag>> :
+    runir::kr::dl::semantics::RegisterData<runir::kr::dl::Concept<Family, runir::kr::dl::RegisterTag>,
+                                           runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>
+{
+    using Base = runir::kr::dl::semantics::RegisterData<runir::kr::dl::Concept<Family, runir::kr::dl::RegisterTag>,
+                                                        runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>;
+    using Base::Base;
+};
+
+template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::BotTag>> :
     runir::kr::dl::semantics::NullaryData<runir::kr::dl::Concept<Family, runir::kr::dl::BotTag>>
 {
@@ -53,8 +63,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::IntersectionTag>> :
     runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<Family, runir::kr::dl::IntersectionTag>, DlConcept<Family>, DlConcept<Family>>
 {
-    using Base =
-        runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<Family, runir::kr::dl::IntersectionTag>, DlConcept<Family>, DlConcept<Family>>;
+    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<Family, runir::kr::dl::IntersectionTag>, DlConcept<Family>, DlConcept<Family>>;
     using Base::Base;
 };
 
@@ -78,8 +87,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::ValueRestrictionTag>> :
     runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<Family, runir::kr::dl::ValueRestrictionTag>, DlRole<Family>, DlConcept<Family>>
 {
-    using Base =
-        runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<Family, runir::kr::dl::ValueRestrictionTag>, DlRole<Family>, DlConcept<Family>>;
+    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<Family, runir::kr::dl::ValueRestrictionTag>, DlRole<Family>, DlConcept<Family>>;
     using Base::Base;
 };
 
@@ -87,8 +95,8 @@ template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::ExistentialQuantificationTag>> :
     runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<Family, runir::kr::dl::ExistentialQuantificationTag>, DlRole<Family>, DlConcept<Family>>
 {
-    using Base = runir::kr::dl::semantics::
-        BinaryData<runir::kr::dl::Concept<Family, runir::kr::dl::ExistentialQuantificationTag>, DlRole<Family>, DlConcept<Family>>;
+    using Base =
+        runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<Family, runir::kr::dl::ExistentialQuantificationTag>, DlRole<Family>, DlConcept<Family>>;
     using Base::Base;
 };
 
@@ -96,8 +104,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::AtLeastNumberRestrictionTag>> :
     runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<Family, runir::kr::dl::AtLeastNumberRestrictionTag>, DlRole<Family>>
 {
-    using Base =
-        runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<Family, runir::kr::dl::AtLeastNumberRestrictionTag>, DlRole<Family>>;
+    using Base = runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<Family, runir::kr::dl::AtLeastNumberRestrictionTag>, DlRole<Family>>;
     using Base::Base;
 };
 
@@ -105,8 +112,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::AtMostNumberRestrictionTag>> :
     runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<Family, runir::kr::dl::AtMostNumberRestrictionTag>, DlRole<Family>>
 {
-    using Base =
-        runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<Family, runir::kr::dl::AtMostNumberRestrictionTag>, DlRole<Family>>;
+    using Base = runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<Family, runir::kr::dl::AtMostNumberRestrictionTag>, DlRole<Family>>;
     using Base::Base;
 };
 
@@ -114,8 +120,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::ExactNumberRestrictionTag>> :
     runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<Family, runir::kr::dl::ExactNumberRestrictionTag>, DlRole<Family>>
 {
-    using Base =
-        runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<Family, runir::kr::dl::ExactNumberRestrictionTag>, DlRole<Family>>;
+    using Base = runir::kr::dl::semantics::NumberRestrictionData<runir::kr::dl::Concept<Family, runir::kr::dl::ExactNumberRestrictionTag>, DlRole<Family>>;
     using Base::Base;
 };
 
@@ -131,8 +136,7 @@ struct Data<runir::kr::dl::Concept<Family, Tag>> :
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
     requires(std::same_as<Tag, runir::kr::dl::RoleValueMapTag> || std::same_as<Tag, runir::kr::dl::AgreementTag>)
-struct Data<runir::kr::dl::Concept<Family, Tag>> :
-    runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<Family, Tag>, DlRole<Family>, DlRole<Family>>
+struct Data<runir::kr::dl::Concept<Family, Tag>> : runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<Family, Tag>, DlRole<Family>, DlRole<Family>>
 {
     using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::Concept<Family, Tag>, DlRole<Family>, DlRole<Family>>;
     using Base::Base;
@@ -161,7 +165,6 @@ struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::NominalTag>> :
     using Base = runir::kr::dl::semantics::ObjectData<runir::kr::dl::Concept<Family, runir::kr::dl::NominalTag>>;
     using Base::Base;
 };
-
 
 }  // namespace tyr
 

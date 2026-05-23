@@ -10,7 +10,7 @@ using FamilyTag = runir::kr::dl::BaseFamilyTag;
 using GrammarTag = runir::kr::dl::cnf_grammar::Grammar<FamilyTag>;
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<FamilyTag, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 using Concept = runir::kr::dl::cnf_grammar::Concept<FamilyTag, Tag>;
 
 template<runir::kr::dl::CategoryTag Category>

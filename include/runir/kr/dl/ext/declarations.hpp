@@ -10,7 +10,7 @@ using FamilyTag = runir::kr::dl::ExtFamilyTag;
 using RegisterTag = runir::kr::dl::RegisterTag;
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<FamilyTag, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 using Concept = runir::kr::dl::Concept<FamilyTag, Tag>;
 
 template<runir::kr::dl::RoleConstructorTag Tag>

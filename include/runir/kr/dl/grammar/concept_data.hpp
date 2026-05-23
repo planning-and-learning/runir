@@ -129,13 +129,12 @@ struct Data<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::NominalTag>> 
 };
 
 template<runir::kr::dl::FamilyTag Family>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, runir::kr::dl::RegisterTag>
 struct Data<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RegisterTag>> :
     runir::kr::dl::semantics::RegisterData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RegisterTag>,
-                                           runir::kr::dl::Concept<Family, runir::kr::dl::RegisterIdentifierTag>>
+                                           runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>
 {
     using Base = runir::kr::dl::semantics::RegisterData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RegisterTag>,
-                                                        runir::kr::dl::Concept<Family, runir::kr::dl::RegisterIdentifierTag>>;
+                                                        runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>;
     using Base::Base;
 };
 

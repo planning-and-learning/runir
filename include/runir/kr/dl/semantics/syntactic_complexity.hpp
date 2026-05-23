@@ -11,7 +11,7 @@ namespace runir::kr::dl::semantics
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C> view);
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
@@ -30,7 +30,7 @@ std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyConst
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::NegationTag>)

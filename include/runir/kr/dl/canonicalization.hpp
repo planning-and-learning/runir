@@ -24,7 +24,7 @@ void canonicalize_commutative_binary(Data& data) noexcept
 }
 
 template<FamilyTag Family, typename Tag>
-    requires FamilyConceptConstructorTag<Family, Tag>
+    requires ConceptConstructorTag<Tag>
 bool is_canonical(const tyr::Data<FamilyConcept<Family, Tag>>&) noexcept
 {
     return true;
@@ -55,7 +55,7 @@ bool is_canonical(const tyr::Data<FamilyConstructor<Family, Category>>&) noexcep
 }
 
 template<FamilyTag Family, typename Tag>
-    requires FamilyConceptConstructorTag<Family, Tag>
+    requires ConceptConstructorTag<Tag>
 void canonicalize(tyr::Data<FamilyConcept<Family, Tag>>&) noexcept
 {
     // Trivially canonical

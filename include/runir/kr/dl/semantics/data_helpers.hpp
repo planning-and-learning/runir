@@ -31,10 +31,10 @@ template<typename Self, typename Identifier>
 struct RegisterData
 {
     tyr::Index<Self> index;
-    tyr::Index<Identifier> identifier;
+    Identifier identifier;
 
     RegisterData() = default;
-    explicit RegisterData(tyr::Index<Identifier> identifier_) : index(), identifier(std::move(identifier_)) {}
+    explicit RegisterData(Identifier identifier_) : index(), identifier(std::move(identifier_)) {}
 
     void clear() noexcept
     {

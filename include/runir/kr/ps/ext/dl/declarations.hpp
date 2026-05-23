@@ -10,7 +10,7 @@ namespace runir::kr::ps::ext::dl
 using RegisterTag = runir::kr::dl::RegisterTag;
 
 template<typename T>
-concept ConceptConstructorTag = runir::kr::dl::FamilyConceptConstructorTag<runir::kr::dl::ExtFamilyTag, T>;
+concept ConceptConstructorTag = runir::kr::dl::ConceptConstructorTag<T>;
 
 template<ConceptConstructorTag Tag>
 struct Concept;

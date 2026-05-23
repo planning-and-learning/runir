@@ -25,11 +25,11 @@ template<FamilyTag Family>
 struct RepositoryConstructorFamily
 {
     template<typename Tag>
-        requires FamilyConceptConstructorTag<Family, Tag>
+        requires ConceptConstructorTag<Tag>
     using Concept = FamilyConcept<Family, Tag>;
 
     template<typename Tag>
-        requires FamilyRoleConstructorTag<Family, Tag>
+        requires RoleConstructorTag<Tag>
     using Role = FamilyRole<Family, Tag>;
 
     template<BooleanConstructorTag Tag>
@@ -43,16 +43,16 @@ struct RepositoryConstructorFamily
 };
 
 template<FamilyTag Family>
-using FamilyConceptTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Concept, FamilyConceptConstructorTagsT<Family>>;
+using FamilyConceptTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Concept, ConceptConstructorTags>;
 
 template<FamilyTag Family>
-using FamilyRoleTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Role, FamilyRoleConstructorTagsT<Family>>;
+using FamilyRoleTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Role, RoleConstructorTags>;
 
 template<FamilyTag Family>
-using FamilyBooleanTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Boolean, FamilyBooleanConstructorTagsT<Family>>;
+using FamilyBooleanTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Boolean, BooleanConstructorTags>;
 
 template<FamilyTag Family>
-using FamilyNumericalTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Numerical, FamilyNumericalConstructorTagsT<Family>>;
+using FamilyNumericalTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Numerical, NumericalConstructorTags>;
 
 template<FamilyTag Family>
 using FamilyConstructorTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Constructor, CategoryTags>;
@@ -195,11 +195,11 @@ using ConstructorRepositoryFactoryPtr = std::shared_ptr<ConstructorRepositoryFac
 using ExtConstructorRepositoryFactoryPtr = std::shared_ptr<ExtConstructorRepositoryFactory>;
 
 template<FamilyTag Family, typename Tag>
-    requires FamilyConceptConstructorTag<Family, Tag>
+    requires ConceptConstructorTag<Tag>
 using FamilyConceptView = tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
 template<typename Tag>
-    requires FamilyConceptConstructorTag<BaseFamilyTag, Tag>
+    requires ConceptConstructorTag<Tag>
 using ConceptView = FamilyConceptView<BaseFamilyTag, Tag>;
 
 template<ConceptConstructorTag Tag>
@@ -212,15 +212,15 @@ template<FamilyTag Family, RoleConstructorTag Tag>
 using FamilyRoleView = tyr::View<tyr::Index<FamilyRole<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
 template<typename Tag>
-    requires FamilyRoleConstructorTag<BaseFamilyTag, Tag>
+    requires RoleConstructorTag<Tag>
 using RoleView = FamilyRoleView<BaseFamilyTag, Tag>;
 
 template<typename Tag>
-    requires FamilyRoleConstructorTag<BaseFamilyTag, Tag>
+    requires RoleConstructorTag<Tag>
 using RoleListView = tyr::View<tyr::IndexList<Role<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
 
 template<typename Tag>
-    requires FamilyRoleConstructorTag<BaseFamilyTag, Tag>
+    requires RoleConstructorTag<Tag>
 using RoleViewList = std::vector<RoleView<Tag>>;
 
 template<FamilyTag Family, BooleanConstructorTag Tag>

@@ -14,7 +14,7 @@ namespace runir::kr::dl::cnf_grammar
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 bool is_canonical(const tyr::Data<Concept<Family, Tag>>&) noexcept
 {
     return true;
@@ -69,7 +69,7 @@ template<runir::kr::dl::FamilyTag Family>
 inline bool is_canonical(const tyr::Data<Role<Family, runir::kr::dl::UnionTag>>& data) noexcept { return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs); }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 void canonicalize(tyr::Data<Concept<Family, Tag>>&) noexcept
 {
     // Trivially canonical

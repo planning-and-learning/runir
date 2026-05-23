@@ -9,7 +9,7 @@ namespace runir::kr::dl::base
 using FamilyTag = runir::kr::dl::BaseFamilyTag;
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<FamilyTag, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 using Concept = runir::kr::dl::Concept<FamilyTag, Tag>;
 
 template<runir::kr::dl::RoleConstructorTag Tag>

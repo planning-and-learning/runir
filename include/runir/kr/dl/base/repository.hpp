@@ -11,16 +11,16 @@ namespace runir::kr::dl::base
 {
 
 template<runir::kr::dl::FamilyTag Family>
-using ConceptTypes = tyr::MapTypeListSecondT<Concept, Family, runir::kr::dl::FamilyConceptConstructorTagsT<Family>>;
+using ConceptTypes = tyr::MapTypeListSecondT<Concept, Family, runir::kr::dl::ConceptConstructorTags>;
 
 template<runir::kr::dl::FamilyTag Family>
-using RoleTypes = tyr::MapTypeListSecondT<Role, Family, runir::kr::dl::FamilyRoleConstructorTagsT<Family>>;
+using RoleTypes = tyr::MapTypeListSecondT<Role, Family, runir::kr::dl::RoleConstructorTags>;
 
 template<runir::kr::dl::FamilyTag Family>
-using BooleanTypes = tyr::MapTypeListSecondT<Boolean, Family, runir::kr::dl::FamilyBooleanConstructorTagsT<Family>>;
+using BooleanTypes = tyr::MapTypeListSecondT<Boolean, Family, runir::kr::dl::BooleanConstructorTags>;
 
 template<runir::kr::dl::FamilyTag Family>
-using NumericalTypes = tyr::MapTypeListSecondT<Numerical, Family, runir::kr::dl::FamilyNumericalConstructorTagsT<Family>>;
+using NumericalTypes = tyr::MapTypeListSecondT<Numerical, Family, runir::kr::dl::NumericalConstructorTags>;
 
 template<runir::kr::dl::FamilyTag Family>
 using ConstructorTypes = tyr::MapTypeListSecondT<Constructor, Family, runir::kr::dl::CategoryTags>;

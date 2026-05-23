@@ -25,7 +25,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct RepositoryConstructorFamily
 {
     template<typename Tag>
-        requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+        requires runir::kr::dl::ConceptConstructorTag<Tag>
     using Concept = runir::kr::dl::cnf_grammar::Concept<Family, Tag>;
 
     template<runir::kr::dl::RoleConstructorTag Tag>
@@ -51,16 +51,16 @@ struct RepositoryConstructorFamily
 };
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyConceptTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Concept, runir::kr::dl::FamilyConceptConstructorTagsT<Family>>;
+using FamilyConceptTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Concept, runir::kr::dl::ConceptConstructorTags>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyRoleTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Role, runir::kr::dl::FamilyRoleConstructorTagsT<Family>>;
+using FamilyRoleTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Role, runir::kr::dl::RoleConstructorTags>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyBooleanTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Boolean, runir::kr::dl::FamilyBooleanConstructorTagsT<Family>>;
+using FamilyBooleanTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Boolean, runir::kr::dl::BooleanConstructorTags>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyNumericalTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Numerical, runir::kr::dl::FamilyNumericalConstructorTagsT<Family>>;
+using FamilyNumericalTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Numerical, runir::kr::dl::NumericalConstructorTags>;
 
 template<runir::kr::dl::FamilyTag Family>
 using FamilyConstructorTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Constructor, runir::kr::dl::CategoryTags>;
@@ -219,7 +219,7 @@ using ConstructorRepositoryFactoryPtr = std::shared_ptr<ConstructorRepositoryFac
 using ExtConstructorRepositoryFactoryPtr = std::shared_ptr<ExtConstructorRepositoryFactory>;
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 using FamilyConceptView = tyr::View<tyr::Index<Concept<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
 template<runir::kr::dl::ConceptConstructorTag Tag>

@@ -34,7 +34,7 @@ std::vector<std::string> quoted_object_names(Objects objects)
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 std::string concept_constructor(tyr::View<tyr::Index<Concept<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
@@ -129,7 +129,7 @@ std::string numerical(tyr::View<tyr::Index<Numerical<Family, Tag>>, C> view)
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 std::string constructor_body(tyr::View<tyr::Index<Concept<Family, Tag>>, C> view)
 {
     return concept_constructor(view);
@@ -201,7 +201,7 @@ std::string grammar(View view)
 
 #if RUNIR_ENABLE_FMT_FORMATTERS
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::grammar::Concept<Family, Tag>>, C>> : fmt::formatter<std::string_view>
 {
     using View = tyr::View<tyr::Index<runir::kr::dl::grammar::Concept<Family, Tag>>, C>;

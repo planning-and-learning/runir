@@ -59,7 +59,7 @@ std::string denotation(tyr::View<tyr::Index<runir::kr::dl::semantics::Denotation
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
@@ -186,7 +186,7 @@ namespace tyr
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 class View<Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C>;
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
 class View<Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>;
@@ -208,7 +208,7 @@ struct fmt::range_format_kind<tyr::View<tyr::Index<runir::kr::dl::semantics::Den
 };
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C>> : fmt::formatter<std::string_view>
 {
     using View = tyr::View<tyr::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C>;

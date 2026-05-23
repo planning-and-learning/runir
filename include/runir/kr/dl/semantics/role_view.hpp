@@ -12,7 +12,7 @@ namespace tyr
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
+    requires runir::kr::dl::RoleConstructorTag<Tag>
 class View<Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>
 {
 private:

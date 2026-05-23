@@ -18,12 +18,6 @@ template<tyr::planning::TaskKind Kind>
 class EvaluationContext<runir::kr::ExtFamilyTag, Kind> : public BaseEvaluationContext<EvaluationContext<runir::kr::ExtFamilyTag, Kind>, Kind>
 {
 public:
-    template<CategoryTag Category>
-        requires(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
-    using Register = tyr::Index<std::conditional_t<std::same_as<Category, ConceptTag>,
-                                                   Concept<runir::kr::ExtFamilyTag, RegisterIdentifierTag>,
-                                                   Role<runir::kr::ExtFamilyTag, RegisterIdentifierTag>>>;
-
     using Self = EvaluationContext<runir::kr::ExtFamilyTag, Kind>;
 
     template<CategoryTag Category>
@@ -66,51 +60,37 @@ public:
             return m_role_registers;
     }
 
-    template<CategoryTag Category>
-        requires(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
-    void set(Register<Category> reg, Element<Category> element)
-    {
-        registers<Category>()[verify_bounds<Category>(reg)] = std::move(element);
-    }
+    auto& at(RegisterIdentifier<ConceptTag> reg) { return registers<ConceptTag>()[verify_bounds(reg)]; }
 
-    template<CategoryTag Category>
-        requires(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
-    void clear(Register<Category> reg)
-    {
-        registers<Category>()[verify_bounds<Category>(reg)].reset();
-    }
+    const auto& at(RegisterIdentifier<ConceptTag> reg) const { return registers<ConceptTag>()[verify_bounds(reg)]; }
 
-    template<CategoryTag Category>
-        requires(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
-    Element<Category> get(Register<Category> reg) const
-    {
-        const auto index = verify_bounds<Category>(reg);
-        return verify_set<Category>(index);
-    }
+    auto& at(RegisterIdentifier<RoleTag> reg) { return registers<RoleTag>()[verify_bounds(reg)]; }
+
+    const auto& at(RegisterIdentifier<RoleTag> reg) const { return registers<RoleTag>()[verify_bounds(reg)]; }
+
+    void set(RegisterIdentifier<ConceptTag> reg, Element<ConceptTag> element) { at(reg) = std::move(element); }
+
+    void set(RegisterIdentifier<RoleTag> reg, Element<RoleTag> element) { at(reg) = std::move(element); }
+
+    void clear(RegisterIdentifier<ConceptTag> reg) { at(reg).reset(); }
+
+    void clear(RegisterIdentifier<RoleTag> reg) { at(reg).reset(); }
 
 private:
-    template<CategoryTag Category>
-    size_t verify_bounds(Register<Category> reg) const
+    size_t verify_bounds(RegisterIdentifier<ConceptTag> reg) const
     {
         const auto index = static_cast<size_t>(tyr::uint_t(reg));
-        if (index >= registers<Category>().size())
-            throw std::out_of_range(make_out_of_range_message<Category>(index));
+        if (index >= registers<ConceptTag>().size())
+            throw std::out_of_range(make_out_of_range_message<ConceptTag>(index));
         return index;
     }
 
-    template<CategoryTag Category>
-    Element<Category> verify_set(size_t index) const
+    size_t verify_bounds(RegisterIdentifier<RoleTag> reg) const
     {
-        const auto& register_array = registers<Category>();
-        if (!register_array[index])
-            throw std::runtime_error(make_unset_message<Category>(index));
-        return *register_array[index];
-    }
-
-    template<CategoryTag Category>
-    static std::string make_unset_message(size_t index)
-    {
-        return std::string(Category::name) + " denotation register " + std::to_string(index) + " is not set.";
+        const auto index = static_cast<size_t>(tyr::uint_t(reg));
+        if (index >= registers<RoleTag>().size())
+            throw std::out_of_range(make_out_of_range_message<RoleTag>(index));
+        return index;
     }
 
     template<CategoryTag Category>

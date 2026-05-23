@@ -10,7 +10,7 @@ namespace tyr
 {
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<runir::kr::dl::cnf_grammar::ext::FamilyTag, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 struct Index<runir::kr::dl::cnf_grammar::ext::Concept<Tag>> : IndexMixin<Index<runir::kr::dl::cnf_grammar::ext::Concept<Tag>>>
 {
     using Base = IndexMixin<Index<runir::kr::dl::cnf_grammar::ext::Concept<Tag>>>;

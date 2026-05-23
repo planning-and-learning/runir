@@ -13,7 +13,7 @@ namespace tyr
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 class View<Index<runir::kr::dl::cnf_grammar::Concept<Family, Tag>>, C>
 {
 private:

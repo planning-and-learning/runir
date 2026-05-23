@@ -69,13 +69,11 @@ struct Data<runir::kr::dl::Role<Family, runir::kr::dl::IdentityTag>> :
 };
 
 template<runir::kr::dl::FamilyTag Family>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, runir::kr::dl::RegisterTag>
 struct Data<runir::kr::dl::Role<Family, runir::kr::dl::RegisterTag>> :
-    runir::kr::dl::semantics::RegisterData<runir::kr::dl::Role<Family, runir::kr::dl::RegisterTag>,
-                                           runir::kr::dl::Role<Family, runir::kr::dl::RegisterIdentifierTag>>
+    runir::kr::dl::semantics::RegisterData<runir::kr::dl::Role<Family, runir::kr::dl::RegisterTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>
 {
     using Base = runir::kr::dl::semantics::RegisterData<runir::kr::dl::Role<Family, runir::kr::dl::RegisterTag>,
-                                                        runir::kr::dl::Role<Family, runir::kr::dl::RegisterIdentifierTag>>;
+                                                        runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>;
     using Base::Base;
 };
 

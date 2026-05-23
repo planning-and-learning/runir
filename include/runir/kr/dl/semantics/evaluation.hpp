@@ -333,7 +333,7 @@ auto evaluate_count(tyr::View<tyr::Index<FamilyConstructor<Family, RoleTag>>, C>
 }
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
-    requires FamilyConceptConstructorTag<Family, Tag>
+    requires ConceptConstructorTag<Tag>
 auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
@@ -513,15 +513,16 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> construc
     }
     else if constexpr (std::same_as<Tag, RegisterTag>)
     {
-        const auto object = context.template get<ConceptTag>(constructor.get_identifier());
-        result_bitset.set(tyr::uint_t(object.get_index()));
+        const auto& object = context.at(constructor.get_identifier());
+        if (object)
+            result_bitset.set(tyr::uint_t(object->get_index()));
     }
 
     return result;
 }
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
-    requires FamilyRoleConstructorTag<Family, Tag>
+    requires RoleConstructorTag<Tag>
 auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
@@ -644,8 +645,12 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor
     }
     else if constexpr (std::same_as<Tag, RegisterTag>)
     {
-        const auto [source, target] = context.template get<RoleTag>(constructor.get_identifier());
-        detail::row(result, source.get_index()).set(tyr::uint_t(target.get_index()));
+        const auto& value = context.at(constructor.get_identifier());
+        if (value)
+        {
+            const auto& [source, target] = *value;
+            detail::row(result, source.get_index()).set(tyr::uint_t(target.get_index()));
+        }
     }
 
     return result;

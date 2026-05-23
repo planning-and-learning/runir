@@ -11,7 +11,7 @@ using FamilyTag = runir::kr::dl::ExtFamilyTag;
 using RegisterTag = runir::kr::dl::RegisterTag;
 
 template<typename Tag>
-    requires runir::kr::dl::FamilyConceptConstructorTag<FamilyTag, Tag>
+    requires runir::kr::dl::ConceptConstructorTag<Tag>
 struct Concept;
 
 template<runir::kr::dl::CategoryTag Category>

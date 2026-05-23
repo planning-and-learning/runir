@@ -5,8 +5,11 @@
 
 #include <concepts>
 #include <cstddef>
+#include <stdexcept>
 #include <type_traits>
+#include <tyr/common/index_mixins.hpp>
 #include <tyr/common/type_list.hpp>
+#include <tyr/common/types.hpp>
 #include <tyr/formalism/declarations.hpp>
 
 namespace runir::kr::dl
@@ -197,11 +200,25 @@ struct RegisterTag
 {
 };
 
-struct RegisterIdentifierTag
-{
-};
-
 inline constexpr size_t num_registers = 4;
+
+template<CategoryTag Category>
+    requires(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
+struct RegisterIdentifier : tyr::IndexMixin<RegisterIdentifier<Category>>
+{
+    using Base = tyr::IndexMixin<RegisterIdentifier<Category>>;
+
+    constexpr RegisterIdentifier() noexcept = default;
+    explicit RegisterIdentifier(tyr::uint_t value) : Base(check_bounds(value)) {}
+
+private:
+    static constexpr tyr::uint_t check_bounds(tyr::uint_t value)
+    {
+        if (value != Base::MAX && value >= num_registers)
+            throw std::out_of_range("Register identifier index is out of range.");
+        return value;
+    }
+};
 
 template<typename T>
 struct IsAtomicStateTag : std::false_type
@@ -236,13 +253,13 @@ concept ConceptConstructorTag =
     || std::same_as<T, AtLeastNumberRestrictionTag> || std::same_as<T, AtMostNumberRestrictionTag> || std::same_as<T, ExactNumberRestrictionTag>
     || std::same_as<T, QualifiedAtLeastNumberRestrictionTag> || std::same_as<T, QualifiedAtMostNumberRestrictionTag>
     || std::same_as<T, QualifiedExactNumberRestrictionTag> || std::same_as<T, RoleValueMapTag> || std::same_as<T, AgreementTag>
-    || std::same_as<T, RoleFillersTag> || std::same_as<T, OneOfTag> || std::same_as<T, NominalTag>;
+    || std::same_as<T, RoleFillersTag> || std::same_as<T, OneOfTag> || std::same_as<T, NominalTag> || std::same_as<T, RegisterTag>;
 
 template<typename T>
 concept RoleConstructorTag =
     std::same_as<T, UniversalTag> || is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, IntersectionTag> || std::same_as<T, UnionTag>
     || std::same_as<T, ComplementTag> || std::same_as<T, InverseTag> || std::same_as<T, CompositionTag> || std::same_as<T, TransitiveClosureTag>
-    || std::same_as<T, ReflexiveTransitiveClosureTag> || std::same_as<T, RestrictionTag> || std::same_as<T, IdentityTag>;
+    || std::same_as<T, ReflexiveTransitiveClosureTag> || std::same_as<T, RestrictionTag> || std::same_as<T, IdentityTag> || std::same_as<T, RegisterTag>;
 
 template<typename T>
 concept BooleanConstructorTag = is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, NonemptyTag>;
@@ -273,7 +290,8 @@ using ConceptConstructorTags = tyr::TypeList<BotTag,
                                              AgreementTag,
                                              RoleFillersTag,
                                              OneOfTag,
-                                             NominalTag>;
+                                             NominalTag,
+                                             RegisterTag>;
 
 using RoleConstructorTags = tyr::TypeList<UniversalTag,
                                           AtomicStateTag<tyr::formalism::StaticTag>,
@@ -290,7 +308,8 @@ using RoleConstructorTags = tyr::TypeList<UniversalTag,
                                           TransitiveClosureTag,
                                           ReflexiveTransitiveClosureTag,
                                           RestrictionTag,
-                                          IdentityTag>;
+                                          IdentityTag,
+                                          RegisterTag>;
 
 using BooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
                                              AtomicStateTag<tyr::formalism::FluentTag>,
@@ -301,73 +320,16 @@ using BooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::Stat
                                              NonemptyTag>;
 
 using NumericalConstructorTags = tyr::TypeList<CountTag, DistanceTag>;
-
-template<typename Family, typename T>
-concept FamilyConceptConstructorTag =
-    FamilyTag<Family>
-    && (ConceptConstructorTag<T> || std::same_as<T, RegisterIdentifierTag> || (std::same_as<Family, ExtFamilyTag> && std::same_as<T, RegisterTag>) );
-
-template<FamilyTag Family>
-struct FamilyConceptConstructorTags
-{
-    using Type = ConceptConstructorTags;
-};
-
-template<>
-struct FamilyConceptConstructorTags<ExtFamilyTag>
-{
-    using Type = tyr::ConcatTypeListsT<ConceptConstructorTags, tyr::TypeList<RegisterTag>>;
-};
-
-template<FamilyTag Family>
-using FamilyConceptConstructorTagsT = typename FamilyConceptConstructorTags<Family>::Type;
-
-template<typename Family, typename T>
-concept FamilyRoleConstructorTag =
-    FamilyTag<Family>
-    && (RoleConstructorTag<T> || std::same_as<T, RegisterIdentifierTag> || (std::same_as<Family, ExtFamilyTag> && std::same_as<T, RegisterTag>) );
-
-template<FamilyTag Family>
-struct FamilyRoleConstructorTags
-{
-    using Type = RoleConstructorTags;
-};
-
-template<>
-struct FamilyRoleConstructorTags<ExtFamilyTag>
-{
-    using Type = tyr::ConcatTypeListsT<RoleConstructorTags, tyr::TypeList<RegisterTag>>;
-};
-
-template<FamilyTag Family>
-using FamilyRoleConstructorTagsT = typename FamilyRoleConstructorTags<Family>::Type;
-
-template<typename Family, typename T>
-concept FamilyBooleanConstructorTag = FamilyTag<Family> && BooleanConstructorTag<T>;
-
-template<FamilyTag Family>
-using FamilyBooleanConstructorTagsT = BooleanConstructorTags;
-
-template<typename Family, typename T>
-concept FamilyNumericalConstructorTag = FamilyTag<Family> && NumericalConstructorTag<T>;
-
-template<FamilyTag Family>
-using FamilyNumericalConstructorTagsT = NumericalConstructorTags;
-
-template<FamilyTag Family, typename Tag>
-    requires FamilyConceptConstructorTag<Family, Tag>
+template<FamilyTag Family, ConceptConstructorTag Tag>
 struct Concept;
 
-template<FamilyTag Family, typename Tag>
-    requires FamilyRoleConstructorTag<Family, Tag>
+template<FamilyTag Family, RoleConstructorTag Tag>
 struct Role;
 
-template<FamilyTag Family, typename Tag>
-    requires BooleanConstructorTag<Tag>
+template<FamilyTag Family, BooleanConstructorTag Tag>
 struct Boolean;
 
-template<FamilyTag Family, typename Tag>
-    requires NumericalConstructorTag<Tag>
+template<FamilyTag Family, NumericalConstructorTag Tag>
 struct Numerical;
 
 template<FamilyTag Family, CategoryTag Category>
@@ -376,12 +338,10 @@ struct Constructor;
 template<FamilyTag Family>
 struct ConstructorFamily
 {
-    template<typename Tag>
-        requires FamilyConceptConstructorTag<Family, Tag>
+    template<ConceptConstructorTag Tag>
     using Concept = runir::kr::dl::Concept<Family, Tag>;
 
-    template<typename Tag>
-        requires FamilyRoleConstructorTag<Family, Tag>
+    template<RoleConstructorTag Tag>
     using Role = runir::kr::dl::Role<Family, Tag>;
 
     template<BooleanConstructorTag Tag>
