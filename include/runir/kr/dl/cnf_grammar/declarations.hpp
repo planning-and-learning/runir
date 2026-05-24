@@ -9,8 +9,6 @@ namespace runir::kr::dl::cnf_grammar
 template<runir::kr::dl::FamilyTag Family>
 struct Grammar;
 
-using GrammarTag = Grammar<runir::kr::BaseFamilyTag>;
-
 template<runir::kr::dl::FamilyTag Family, typename Tag>
     requires runir::kr::dl::ConceptConstructorTag<Tag>
 struct Concept;

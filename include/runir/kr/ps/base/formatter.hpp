@@ -32,16 +32,16 @@ struct NamedFeature
 
 struct FeatureNames
 {
-    std::vector<NamedFeature<runir::kr::ps::base::dl::BooleanFeature>> booleans;
-    std::vector<NamedFeature<runir::kr::ps::base::dl::NumericalFeature>> numericals;
+    std::vector<NamedFeature<runir::kr::ps::dl::BooleanFeature>> booleans;
+    std::vector<NamedFeature<runir::kr::ps::dl::NumericalFeature>> numericals;
 };
 
 template<typename FeatureTag>
 auto& named_features(FeatureNames& names)
 {
-    if constexpr (std::same_as<FeatureTag, runir::kr::ps::base::dl::BooleanFeature>)
+    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
         return names.booleans;
-    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::base::dl::NumericalFeature>)
+    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
         return names.numericals;
 }
 
@@ -53,7 +53,7 @@ std::string get_or_create_name(FeatureNames& names, tyr::View<tyr::Index<runir::
         if (entry.index == feature.get_index())
             return entry.name;
 
-    const auto prefix = std::same_as<FeatureTag, runir::kr::ps::base::dl::BooleanFeature> ? "b" : "n";
+    const auto prefix = std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> ? "b" : "n";
     auto name = fmt::format("{}_{}", prefix, entries.size());
     entries.push_back(NamedFeature<FeatureTag> { feature.get_index(), name });
     return name;
@@ -113,7 +113,7 @@ std::string feature(tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseF
 template<typename FeatureTag, typename C>
 std::string feature(tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C> view)
 {
-    const auto prefix = std::same_as<FeatureTag, runir::kr::ps::base::dl::BooleanFeature> ? "b" : "n";
+    const auto prefix = std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> ? "b" : "n";
     return feature(view, fmt::format("{}_{}", prefix, view.get_index().get_value()));
 }
 

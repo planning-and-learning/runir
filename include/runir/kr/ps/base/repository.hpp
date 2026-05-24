@@ -3,7 +3,6 @@
 
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/ps/base/condition_data.hpp"
-#include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/base/dl/condition_data.hpp"
 #include "runir/kr/ps/base/dl/condition_view.hpp"
 #include "runir/kr/ps/base/dl/effect_data.hpp"
@@ -11,8 +10,8 @@
 #include "runir/kr/ps/base/dl/feature_data.hpp"
 #include "runir/kr/ps/base/dl/feature_view.hpp"
 #include "runir/kr/ps/base/effect_data.hpp"
-#include "runir/kr/ps/base/feature_data.hpp"
 #include "runir/kr/ps/condition_view.hpp"
+#include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/ps/repository.hpp"
@@ -27,38 +26,40 @@
 namespace runir::kr::ps::base
 {
 
-using FeatureTypes = tyr::TypeList<Feature<dl::BooleanFeature>,
-                                   Feature<dl::NumericalFeature>,
-                                   ConcreteFeature<runir::kr::DlTag, dl::BooleanFeature>,
-                                   ConcreteFeature<runir::kr::DlTag, dl::NumericalFeature>>;
+using FeatureTypes = tyr::TypeList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>,
+                                   runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>,
+                                   runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
+                                   runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>;
 
-using ConditionTypes = tyr::TypeList<ConditionVariant,
-                                     ConcreteConditionVariant<runir::kr::DlTag>,
-                                     ConcreteCondition<runir::kr::DlTag, dl::BooleanFeature, dl::Positive>,
-                                     ConcreteCondition<runir::kr::DlTag, dl::BooleanFeature, dl::Negative>,
-                                     ConcreteCondition<runir::kr::DlTag, dl::NumericalFeature, dl::EqualZero>,
-                                     ConcreteCondition<runir::kr::DlTag, dl::NumericalFeature, dl::GreaterZero>>;
+using ConditionTypes = tyr::TypeList<
+    runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>,
+    runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>,
+    runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
+    runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
+    runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>,
+    runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>;
 
-using EffectTypes = tyr::TypeList<EffectVariant,
-                                  ConcreteEffectVariant<runir::kr::DlTag>,
-                                  ConcreteEffect<runir::kr::DlTag, dl::BooleanFeature, dl::Positive>,
-                                  ConcreteEffect<runir::kr::DlTag, dl::BooleanFeature, dl::Negative>,
-                                  ConcreteEffect<runir::kr::DlTag, dl::BooleanFeature, dl::Unchanged>,
-                                  ConcreteEffect<runir::kr::DlTag, dl::NumericalFeature, dl::Increases>,
-                                  ConcreteEffect<runir::kr::DlTag, dl::NumericalFeature, dl::Decreases>,
-                                  ConcreteEffect<runir::kr::DlTag, dl::NumericalFeature, dl::Unchanged>>;
+using EffectTypes =
+    tyr::TypeList<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>,
+                  runir::kr::ps::ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>,
+                  runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
+                  runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
+                  runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>,
+                  runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>,
+                  runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
+                  runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
 
-using SketchTypes = tyr::TypeList<Rule, Sketch>;
+using SketchTypes = tyr::TypeList<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>;
 using RepositoryTypes = tyr::ConcatTypeListsT<FeatureTypes, ConditionTypes, EffectTypes, SketchTypes>;
 using SymbolRepository = tyr::ApplyTypeListT<tyr::formalism::SymbolRepository, RepositoryTypes>;
 
-using Repository = runir::kr::ps::BasicRepository<FamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtr>;
+using Repository = runir::kr::ps::BasicRepository<runir::kr::BaseFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtr>;
 using RepositoryPtr = std::shared_ptr<Repository>;
-using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<FamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtr>;
+using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::BaseFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtr>;
 using RepositoryFactoryPtr = std::shared_ptr<RepositoryFactory>;
 
-using SketchView = tyr::View<tyr::Index<Sketch>, Repository>;
-using RuleView = tyr::View<tyr::Index<Rule>, Repository>;
+using SketchView = tyr::View<tyr::Index<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>, Repository>;
+using RuleView = tyr::View<tyr::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, Repository>;
 
 }  // namespace runir::kr::ps::base
 

@@ -11,7 +11,7 @@ namespace runir::kr::dl
 
 void bind_cnf_grammar_grammar(nb::module_& m)
 {
-    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::GrammarTag>, runir::kr::dl::cnf_grammar::ConstructorRepository>;
+    using View = tyr::View<tyr::Index<runir::kr::dl::cnf_grammar::Grammar<runir::kr::BaseFamilyTag>>, runir::kr::dl::cnf_grammar::ConstructorRepository>;
 
     auto cls = nb::class_<View>(m, "Grammar").def("get_index", &View::get_index);
     tyr::add_print(cls);

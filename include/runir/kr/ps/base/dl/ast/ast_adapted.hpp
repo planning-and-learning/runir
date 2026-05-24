@@ -5,7 +5,7 @@
 
 #include <boost/fusion/include/adapt_struct.hpp>
 
-BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::ConceptFeature)(Family), name, symbol, description, feature)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::Concept)(Family), name, symbol, description, feature)
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::BooleanFeature)(Family), name, symbol, description, feature)
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::NumericalFeature)(Family), name, symbol, description, feature)
 

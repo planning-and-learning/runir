@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_PS_EXT_DL_CONDITION_DATA_HPP_
 #define RUNIR_KR_PS_EXT_DL_CONDITION_DATA_HPP_
 
+#include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/condition_index.hpp"
-#include "runir/kr/ps/ext/dl/declarations.hpp"
 
 #include <tuple>
 #include <tyr/common/types.hpp>

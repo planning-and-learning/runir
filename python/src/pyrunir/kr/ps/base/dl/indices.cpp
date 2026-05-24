@@ -8,25 +8,58 @@ namespace runir::kr::ps::base::dl
 
 void bind_indices(nb::module_& m)
 {
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::Feature<BooleanFeature>>>(m, "BooleanFeatureIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::Feature<NumericalFeature>>>(m, "NumericalFeatureIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteFeature<runir::kr::DlTag, BooleanFeature>>>(m, "ConcreteBooleanFeatureIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteFeature<runir::kr::DlTag, NumericalFeature>>>(m, "ConcreteNumericalFeatureIndex");
+    tyr::bind_index<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>>(m, "BooleanFeatureIndex");
+    tyr::bind_index<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>>(m, "NumericalFeatureIndex");
+    tyr::bind_index<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>>(
+        m,
+        "ConcreteBooleanFeatureIndex");
+    tyr::bind_index<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>>(
+        m,
+        "ConcreteNumericalFeatureIndex");
 
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteConditionVariant<runir::kr::DlTag>>>(m, "ConcreteConditionVariantIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteCondition<runir::kr::DlTag, BooleanFeature, Positive>>>(m, "PositiveBooleanConditionIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteCondition<runir::kr::DlTag, BooleanFeature, Negative>>>(m, "NegativeBooleanConditionIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteCondition<runir::kr::DlTag, NumericalFeature, EqualZero>>>(m, "EqualZeroNumericalConditionIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteCondition<runir::kr::DlTag, NumericalFeature, GreaterZero>>>(m,
-                                                                                                                         "GreaterZeroNumericalConditionIndex");
+    tyr::bind_index<tyr::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>>(m, "ConcreteConditionVariantIndex");
+    tyr::bind_index<tyr::Index<
+        runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>>(
+        m,
+        "PositiveBooleanConditionIndex");
+    tyr::bind_index<tyr::Index<
+        runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>>(
+        m,
+        "NegativeBooleanConditionIndex");
+    tyr::bind_index<tyr::Index<
+        runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>>>(
+        m,
+        "EqualZeroNumericalConditionIndex");
+    tyr::bind_index<tyr::Index<
+        runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>>(
+        m,
+        "GreaterZeroNumericalConditionIndex");
 
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteEffectVariant<runir::kr::DlTag>>>(m, "ConcreteEffectVariantIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteEffect<runir::kr::DlTag, BooleanFeature, Positive>>>(m, "PositiveBooleanEffectIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteEffect<runir::kr::DlTag, BooleanFeature, Negative>>>(m, "NegativeBooleanEffectIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteEffect<runir::kr::DlTag, BooleanFeature, Unchanged>>>(m, "UnchangedBooleanEffectIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteEffect<runir::kr::DlTag, NumericalFeature, Increases>>>(m, "IncreasesNumericalEffectIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteEffect<runir::kr::DlTag, NumericalFeature, Decreases>>>(m, "DecreasesNumericalEffectIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::base::ConcreteEffect<runir::kr::DlTag, NumericalFeature, Unchanged>>>(m, "UnchangedNumericalEffectIndex");
+    tyr::bind_index<tyr::Index<runir::kr::ps::ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>>(m, "ConcreteEffectVariantIndex");
+    tyr::bind_index<
+        tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>>(
+        m,
+        "PositiveBooleanEffectIndex");
+    tyr::bind_index<
+        tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>>(
+        m,
+        "NegativeBooleanEffectIndex");
+    tyr::bind_index<
+        tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>>>(
+        m,
+        "UnchangedBooleanEffectIndex");
+    tyr::bind_index<tyr::Index<
+        runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>>>(
+        m,
+        "IncreasesNumericalEffectIndex");
+    tyr::bind_index<tyr::Index<
+        runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>>>(
+        m,
+        "DecreasesNumericalEffectIndex");
+    tyr::bind_index<tyr::Index<
+        runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>>(
+        m,
+        "UnchangedNumericalEffectIndex");
 }
 
 }  // namespace runir::kr::ps::base::dl

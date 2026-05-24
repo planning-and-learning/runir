@@ -12,6 +12,16 @@
 namespace tyr
 {
 
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> :
+    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Boolean<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
+                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>
+{
+    using Base = runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Boolean<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
+                                                        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>;
+    using Base::Base;
+};
+
 template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
 struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>> :
     runir::kr::dl::semantics::PredicateData<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>, T>

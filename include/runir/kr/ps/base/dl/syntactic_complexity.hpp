@@ -21,8 +21,8 @@ namespace runir::kr::ps::base::dl
 
 struct FeatureSyntacticComplexityContext
 {
-    std::vector<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::base::dl::BooleanFeature>>> booleans;
-    std::vector<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::base::dl::NumericalFeature>>> numericals;
+    std::vector<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>> booleans;
+    std::vector<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>> numericals;
 };
 
 template<typename FeatureTag>
@@ -36,9 +36,9 @@ void insert_unique(std::vector<tyr::Index<runir::kr::ps::Feature<runir::kr::Base
 template<typename FeatureTag, typename C>
 void collect_feature(FeatureSyntacticComplexityContext& context, tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C> feature)
 {
-    if constexpr (std::same_as<FeatureTag, runir::kr::ps::base::dl::BooleanFeature>)
+    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
         insert_unique(context.booleans, feature.get_index());
-    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::base::dl::NumericalFeature>)
+    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
         insert_unique(context.numericals, feature.get_index());
 }
 
@@ -111,13 +111,12 @@ std::size_t syntactic_complexity(const FeatureSyntacticComplexityContext& featur
     auto result = std::size_t { 0 };
     for (auto feature : features.booleans)
     {
-        const auto view = tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::base::dl::BooleanFeature>>, C>(feature, context);
+        const auto view = tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>, C>(feature, context);
         result += tyr::visit([](auto concrete_feature) { return syntactic_complexity(concrete_feature); }, view.get_variant());
     }
     for (auto feature : features.numericals)
     {
-        const auto view =
-            tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::base::dl::NumericalFeature>>, C>(feature, context);
+        const auto view = tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>, C>(feature, context);
         result += tyr::visit([](auto concrete_feature) { return syntactic_complexity(concrete_feature); }, view.get_variant());
     }
     return result;

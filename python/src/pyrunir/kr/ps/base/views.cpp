@@ -63,10 +63,10 @@ void bind_view(nb::module_& m, const std::string& name)
 
 void bind_views(nb::module_& m)
 {
-    bind_view<ConditionVariant>(m, "ConditionVariant");
-    bind_view<EffectVariant>(m, "EffectVariant");
-    bind_view<Rule>(m, "Rule");
-    bind_view<Sketch>(m, "Sketch");
+    bind_view<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>(m, "ConditionVariant");
+    bind_view<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>(m, "EffectVariant");
+    bind_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>(m, "Rule");
+    bind_view<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>(m, "Sketch");
 }
 
 }  // namespace runir::kr::ps::base

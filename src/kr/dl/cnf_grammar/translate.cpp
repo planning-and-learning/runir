@@ -30,7 +30,7 @@ struct TranslationContext
 {
     const runir::kr::dl::grammar::GrammarView& source;
     ConstructorRepository& repository;
-    tyr::Data<GrammarTag> data;
+    tyr::Data<Grammar<runir::kr::BaseFamilyTag>> data;
     std::unordered_set<std::string> non_terminal_names;
     size_t next_fresh_index = 0;
 

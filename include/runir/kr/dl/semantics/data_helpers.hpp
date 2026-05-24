@@ -28,13 +28,13 @@ struct NullaryData
 };
 
 template<typename Self, typename Identifier>
-struct RegisterData
+struct IdentifierData
 {
     tyr::Index<Self> index;
     Identifier identifier;
 
-    RegisterData() = default;
-    explicit RegisterData(Identifier identifier_) : index(), identifier(std::move(identifier_)) {}
+    IdentifierData() = default;
+    explicit IdentifierData(Identifier identifier_) : index(), identifier(std::move(identifier_)) {}
 
     void clear() noexcept
     {
@@ -44,6 +44,20 @@ struct RegisterData
 
     auto cista_members() const noexcept { return std::tie(index, identifier); }
     auto identifying_members() const noexcept { return std::tie(identifier); }
+};
+
+template<typename Self, typename Identifier>
+struct RegisterData : IdentifierData<Self, Identifier>
+{
+    using Base = IdentifierData<Self, Identifier>;
+    using Base::Base;
+};
+
+template<typename Self, typename Identifier>
+struct ArgumentData : IdentifierData<Self, Identifier>
+{
+    using Base = IdentifierData<Self, Identifier>;
+    using Base::Base;
 };
 
 template<typename Self, typename Arg>

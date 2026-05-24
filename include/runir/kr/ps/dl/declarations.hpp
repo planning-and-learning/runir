@@ -1,9 +1,7 @@
-#ifndef RUNIR_KR_PS_BASE_DL_DECLARATIONS_HPP_
-#define RUNIR_KR_PS_BASE_DL_DECLARATIONS_HPP_
+#ifndef RUNIR_KR_PS_DL_DECLARATIONS_HPP_
+#define RUNIR_KR_PS_DL_DECLARATIONS_HPP_
 
-#include "runir/kr/ps/declarations.hpp"
-
-namespace runir::kr::ps::base::dl
+namespace runir::kr::ps::dl
 {
 
 struct BooleanFeature
@@ -51,6 +49,6 @@ struct Unchanged
     static constexpr auto keyword = "unchanged";
 };
 
-}  // namespace runir::kr::ps::base::dl
+}  // namespace runir::kr::ps::dl
 
 #endif

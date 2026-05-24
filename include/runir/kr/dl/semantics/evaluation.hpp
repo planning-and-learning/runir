@@ -65,6 +65,26 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<ExtFamilyTag, RegisterTag>>, 
                    EvaluationContext<ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<RoleTag, ExtFamilyTag, Kind>;
 
+template<tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<ExtFamilyTag, ArgumentTag<ConceptTag>>>, C> constructor,
+                   EvaluationContext<ExtFamilyTag, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<ConceptTag, ExtFamilyTag, Kind>;
+
+template<tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<ExtFamilyTag, ArgumentTag<RoleTag>>>, C> constructor,
+                   EvaluationContext<ExtFamilyTag, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<RoleTag, ExtFamilyTag, Kind>;
+
+template<tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<ExtFamilyTag, ArgumentTag<BooleanTag>>>, C> constructor,
+                   EvaluationContext<ExtFamilyTag, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<BooleanTag, ExtFamilyTag, Kind>;
+
+template<tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<ExtFamilyTag, ArgumentTag<NumericalTag>>>, C> constructor,
+                   EvaluationContext<ExtFamilyTag, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<NumericalTag, ExtFamilyTag, Kind>;
+
 namespace detail
 {
 
@@ -552,6 +572,10 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> construc
     {
         static_assert(!std::same_as<Tag, RegisterTag>, "Register concept evaluation is defined by the ext semantics evaluator.");
     }
+    else if constexpr (std::same_as<Tag, ArgumentTag<ConceptTag>>)
+    {
+        static_assert(!std::same_as<Tag, ArgumentTag<ConceptTag>>, "Argument concept evaluation is defined by the ext semantics evaluator.");
+    }
 
     return result;
 }
@@ -684,6 +708,10 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor
     {
         static_assert(!std::same_as<Tag, RegisterTag>, "Register role evaluation is defined by the ext semantics evaluator.");
     }
+    else if constexpr (std::same_as<Tag, ArgumentTag<RoleTag>>)
+    {
+        static_assert(!std::same_as<Tag, ArgumentTag<RoleTag>>, "Argument role evaluation is defined by the ext semantics evaluator.");
+    }
 
     return result;
 }
@@ -706,6 +734,10 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, C> construc
         const auto result_value = tyr::visit([&](auto arg) { return detail::evaluate_nonempty(arg, context, workspace); }, constructor.get_arg());
         return context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
     }
+    else if constexpr (std::same_as<Tag, ArgumentTag<BooleanTag>>)
+    {
+        static_assert(!std::same_as<Tag, ArgumentTag<BooleanTag>>, "Argument boolean evaluation is defined by the ext semantics evaluator.");
+    }
 }
 
 template<FamilyTag Family, NumericalConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
@@ -718,6 +750,10 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, C> constr
     if constexpr (std::same_as<Tag, CountTag>)
     {
         result_value = tyr::visit([&](auto arg) { return detail::evaluate_count(arg, context, workspace); }, constructor.get_arg());
+    }
+    else if constexpr (std::same_as<Tag, ArgumentTag<NumericalTag>>)
+    {
+        static_assert(!std::same_as<Tag, ArgumentTag<NumericalTag>>, "Argument numerical evaluation is defined by the ext semantics evaluator.");
     }
     else if constexpr (std::same_as<Tag, DistanceTag>)
     {

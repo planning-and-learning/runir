@@ -30,7 +30,7 @@ public:
     auto get_index() const noexcept { return m_handle; }
 
     auto get_identifier() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::RegisterTag>
+        requires(std::same_as<Tag, runir::kr::dl::RegisterTag> || std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>)
     {
         return get_data().identifier;
     }

@@ -57,7 +57,7 @@ struct Unchanged : x3::position_tagged
 };
 
 template<runir::kr::FamilyTag Family>
-struct ConceptFeature : x3::position_tagged
+struct Concept : x3::position_tagged
 {
     std::string name;
     std::string symbol;
@@ -93,9 +93,9 @@ struct Feature : PositionedVariant<BooleanFeature<Family>, NumericalFeature<Fami
 
 template<>
 struct Feature<runir::kr::ExtFamilyTag> :
-    PositionedVariant<ConceptFeature<runir::kr::ExtFamilyTag>, BooleanFeature<runir::kr::ExtFamilyTag>, NumericalFeature<runir::kr::ExtFamilyTag>>
+    PositionedVariant<Concept<runir::kr::ExtFamilyTag>, BooleanFeature<runir::kr::ExtFamilyTag>, NumericalFeature<runir::kr::ExtFamilyTag>>
 {
-    using Base = PositionedVariant<ConceptFeature<runir::kr::ExtFamilyTag>, BooleanFeature<runir::kr::ExtFamilyTag>, NumericalFeature<runir::kr::ExtFamilyTag>>;
+    using Base = PositionedVariant<Concept<runir::kr::ExtFamilyTag>, BooleanFeature<runir::kr::ExtFamilyTag>, NumericalFeature<runir::kr::ExtFamilyTag>>;
     using Base::Base;
     using Base::operator=;
 };
@@ -144,7 +144,7 @@ struct Sketch : x3::position_tagged
     std::vector<Rule<Family>> rules;
 };
 
-using BaseConceptFeature = ConceptFeature<runir::kr::BaseFamilyTag>;
+using BaseConcept = Concept<runir::kr::BaseFamilyTag>;
 using BaseBooleanFeature = BooleanFeature<runir::kr::BaseFamilyTag>;
 using BaseNumericalFeature = NumericalFeature<runir::kr::BaseFamilyTag>;
 using BaseFeature = Feature<runir::kr::BaseFamilyTag>;
@@ -155,7 +155,7 @@ using BaseEffect = Effect<runir::kr::BaseFamilyTag>;
 using BaseRule = Rule<runir::kr::BaseFamilyTag>;
 using BaseSketch = Sketch<runir::kr::BaseFamilyTag>;
 
-using ExtConceptFeature = ConceptFeature<runir::kr::ExtFamilyTag>;
+using ExtConcept = Concept<runir::kr::ExtFamilyTag>;
 using ExtBooleanFeature = BooleanFeature<runir::kr::ExtFamilyTag>;
 using ExtNumericalFeature = NumericalFeature<runir::kr::ExtFamilyTag>;
 using ExtFeature = Feature<runir::kr::ExtFamilyTag>;

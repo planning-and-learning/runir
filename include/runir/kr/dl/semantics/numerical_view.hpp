@@ -28,6 +28,12 @@ public:
 
     auto get_index() const noexcept { return m_handle; }
 
+    auto get_identifier() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>
+    {
+        return get_data().identifier;
+    }
+
     auto get_arg() const noexcept
         requires std::same_as<Tag, runir::kr::dl::CountTag>
     {

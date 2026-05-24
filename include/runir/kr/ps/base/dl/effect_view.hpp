@@ -38,21 +38,19 @@ public:
     {
         const auto target = get_feature().evaluate(context.get_target_context());
 
-        if constexpr (std::same_as<FeatureTag, runir::kr::ps::base::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::base::dl::Positive>)
+        if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Positive>)
             return target;
-        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::base::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::base::dl::Negative>)
+        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Negative>)
             return !target;
         else
         {
             const auto source = get_feature().evaluate(context.get_source_context());
 
-            if constexpr (std::same_as<ObservationTag, runir::kr::ps::base::dl::Unchanged>)
+            if constexpr (std::same_as<ObservationTag, runir::kr::ps::dl::Unchanged>)
                 return source == target;
-            else if constexpr (std::same_as<FeatureTag, runir::kr::ps::base::dl::NumericalFeature>
-                               && std::same_as<ObservationTag, runir::kr::ps::base::dl::Increases>)
+            else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Increases>)
                 return target > source;
-            else if constexpr (std::same_as<FeatureTag, runir::kr::ps::base::dl::NumericalFeature>
-                               && std::same_as<ObservationTag, runir::kr::ps::base::dl::Decreases>)
+            else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Decreases>)
                 return target < source;
         }
     }

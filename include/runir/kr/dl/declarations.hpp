@@ -200,6 +200,11 @@ struct RegisterTag
 {
 };
 
+template<CategoryTag Category>
+struct ArgumentTag
+{
+};
+
 inline constexpr size_t num_registers = 4;
 
 template<CategoryTag Category>
@@ -218,6 +223,13 @@ private:
             throw std::out_of_range("Register identifier index is out of range.");
         return value;
     }
+};
+
+template<CategoryTag Category>
+struct ArgumentIdentifier : tyr::IndexMixin<ArgumentIdentifier<Category>>
+{
+    using Base = tyr::IndexMixin<ArgumentIdentifier<Category>>;
+    using Base::Base;
 };
 
 template<typename T>
@@ -253,19 +265,20 @@ concept ConceptConstructorTag =
     || std::same_as<T, AtLeastNumberRestrictionTag> || std::same_as<T, AtMostNumberRestrictionTag> || std::same_as<T, ExactNumberRestrictionTag>
     || std::same_as<T, QualifiedAtLeastNumberRestrictionTag> || std::same_as<T, QualifiedAtMostNumberRestrictionTag>
     || std::same_as<T, QualifiedExactNumberRestrictionTag> || std::same_as<T, RoleValueMapTag> || std::same_as<T, AgreementTag>
-    || std::same_as<T, RoleFillersTag> || std::same_as<T, OneOfTag> || std::same_as<T, NominalTag> || std::same_as<T, RegisterTag>;
+    || std::same_as<T, RoleFillersTag> || std::same_as<T, OneOfTag> || std::same_as<T, NominalTag> || std::same_as<T, RegisterTag>
+    || std::same_as<T, ArgumentTag<ConceptTag>>;
 
 template<typename T>
-concept RoleConstructorTag =
-    std::same_as<T, UniversalTag> || is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, IntersectionTag> || std::same_as<T, UnionTag>
-    || std::same_as<T, ComplementTag> || std::same_as<T, InverseTag> || std::same_as<T, CompositionTag> || std::same_as<T, TransitiveClosureTag>
-    || std::same_as<T, ReflexiveTransitiveClosureTag> || std::same_as<T, RestrictionTag> || std::same_as<T, IdentityTag> || std::same_as<T, RegisterTag>;
+concept RoleConstructorTag = std::same_as<T, UniversalTag> || is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, IntersectionTag>
+                             || std::same_as<T, UnionTag> || std::same_as<T, ComplementTag> || std::same_as<T, InverseTag> || std::same_as<T, CompositionTag>
+                             || std::same_as<T, TransitiveClosureTag> || std::same_as<T, ReflexiveTransitiveClosureTag> || std::same_as<T, RestrictionTag>
+                             || std::same_as<T, IdentityTag> || std::same_as<T, RegisterTag> || std::same_as<T, ArgumentTag<RoleTag>>;
 
 template<typename T>
-concept BooleanConstructorTag = is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, NonemptyTag>;
+concept BooleanConstructorTag = is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, NonemptyTag> || std::same_as<T, ArgumentTag<BooleanTag>>;
 
 template<typename T>
-concept NumericalConstructorTag = std::same_as<T, CountTag> || std::same_as<T, DistanceTag>;
+concept NumericalConstructorTag = std::same_as<T, CountTag> || std::same_as<T, DistanceTag> || std::same_as<T, ArgumentTag<NumericalTag>>;
 
 using ConceptConstructorTags = tyr::TypeList<BotTag,
                                              TopTag,
@@ -291,7 +304,8 @@ using ConceptConstructorTags = tyr::TypeList<BotTag,
                                              RoleFillersTag,
                                              OneOfTag,
                                              NominalTag,
-                                             RegisterTag>;
+                                             RegisterTag,
+                                             ArgumentTag<ConceptTag>>;
 
 using RoleConstructorTags = tyr::TypeList<UniversalTag,
                                           AtomicStateTag<tyr::formalism::StaticTag>,
@@ -309,7 +323,8 @@ using RoleConstructorTags = tyr::TypeList<UniversalTag,
                                           ReflexiveTransitiveClosureTag,
                                           RestrictionTag,
                                           IdentityTag,
-                                          RegisterTag>;
+                                          RegisterTag,
+                                          ArgumentTag<RoleTag>>;
 
 using BooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
                                              AtomicStateTag<tyr::formalism::FluentTag>,
@@ -317,9 +332,10 @@ using BooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::Stat
                                              AtomicGoalTag<tyr::formalism::StaticTag>,
                                              AtomicGoalTag<tyr::formalism::FluentTag>,
                                              AtomicGoalTag<tyr::formalism::DerivedTag>,
-                                             NonemptyTag>;
+                                             NonemptyTag,
+                                             ArgumentTag<BooleanTag>>;
 
-using NumericalConstructorTags = tyr::TypeList<CountTag, DistanceTag>;
+using NumericalConstructorTags = tyr::TypeList<CountTag, DistanceTag, ArgumentTag<NumericalTag>>;
 
 template<FamilyTag Family, ConceptConstructorTag Tag>
 struct Concept;

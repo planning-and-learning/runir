@@ -56,8 +56,8 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
 
         const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, planning_domain.get_domain(), repository);
 
-        EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::base::Sketch>(0));
-        EXPECT_EQ(repository.template size<kr::ps::base::Sketch>(), 1);
+        EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::Sketch<kr::BaseFamilyTag>>(0));
+        EXPECT_EQ(repository.template size<kr::ps::Sketch<kr::BaseFamilyTag>>(), 1);
 
         const auto formatted = fmt::format("{}", sketch);
         const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), repository);
@@ -98,13 +98,13 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 
     const auto sketch = kr::ps::base::dl::parse_sketch(description, planning_domain.get_domain(), repository);
 
-    EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::base::Sketch>(0));
-    EXPECT_EQ(repository.template size<kr::ps::base::Sketch>(), 1);
-    EXPECT_EQ(repository.template size<kr::ps::base::Rule>(), 2);
-    EXPECT_EQ(repository.template size<kr::ps::base::Feature<kr::ps::base::dl::BooleanFeature>>(), 1);
-    EXPECT_EQ(repository.template size<kr::ps::base::Feature<kr::ps::base::dl::NumericalFeature>>(), 1);
-    EXPECT_EQ(repository.template size<kr::ps::base::ConditionVariant>(), 4);
-    EXPECT_EQ(repository.template size<kr::ps::base::EffectVariant>(), 5);
+    EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::Sketch<kr::BaseFamilyTag>>(0));
+    EXPECT_EQ(repository.template size<kr::ps::Sketch<kr::BaseFamilyTag>>(), 1);
+    EXPECT_EQ(repository.template size<kr::ps::Rule<kr::BaseFamilyTag>>(), 2);
+    EXPECT_EQ((repository.template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::BooleanFeature>>()), 1);
+    EXPECT_EQ((repository.template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::NumericalFeature>>()), 1);
+    EXPECT_EQ(repository.template size<kr::ps::ConditionVariant<kr::BaseFamilyTag>>(), 4);
+    EXPECT_EQ(repository.template size<kr::ps::EffectVariant<kr::BaseFamilyTag>>(), 5);
 
     const auto formatted = fmt::format("{}", sketch);
     const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), repository);

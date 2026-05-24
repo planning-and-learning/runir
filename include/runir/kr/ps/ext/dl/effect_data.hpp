@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DL_EFFECT_DATA_HPP_
 #define RUNIR_KR_PS_EXT_DL_EFFECT_DATA_HPP_
 
-#include "runir/kr/ps/ext/dl/declarations.hpp"
+#include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/effect_index.hpp"
 
 #include <tuple>

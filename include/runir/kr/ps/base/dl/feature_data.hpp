@@ -2,10 +2,11 @@
 #define RUNIR_KR_PS_BASE_DL_FEATURE_DATA_HPP_
 
 #include "runir/kr/dl/constructor_index.hpp"
-#include "runir/kr/ps/base/dl/declarations.hpp"
 #include "runir/kr/ps/base/dl/feature_index.hpp"
+#include "runir/kr/ps/dl/declarations.hpp"
 
 #include <cista/containers/string.h>
+#include <cista/containers/variant.h>
 #include <string>
 #include <tuple>
 #include <tyr/common/types.hpp>
@@ -15,9 +16,53 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::base::dl::BooleanFeature>>
+struct Data<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>
 {
-    Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::base::dl::BooleanFeature>> index;
+    using Variant =
+        ::cista::offset::variant<Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>>;
+
+    Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>> index;
+    Variant value;
+
+    Data() = default;
+    Data(Variant value_) : index(), value(std::move(value_)) {}
+
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(value);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, value); }
+    auto identifying_members() const noexcept { return std::tie(value); }
+};
+
+template<>
+struct Data<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>
+{
+    using Variant =
+        ::cista::offset::variant<Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>>;
+
+    Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>> index;
+    Variant value;
+
+    Data() = default;
+    Data(Variant value_) : index(), value(std::move(value_)) {}
+
+    void clear() noexcept
+    {
+        tyr::clear(index);
+        tyr::clear(value);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, value); }
+    auto identifying_members() const noexcept { return std::tie(value); }
+};
+
+template<>
+struct Data<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>
+{
+    Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>> index;
     Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::BooleanTag>> feature;
     ::cista::offset::string symbol;
     ::cista::offset::string description;
@@ -55,9 +100,9 @@ struct Data<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::
 };
 
 template<>
-struct Data<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::base::dl::NumericalFeature>>
+struct Data<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>
 {
-    Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::base::dl::NumericalFeature>> index;
+    Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>> index;
     Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NumericalTag>> feature;
     ::cista::offset::string symbol;
     ::cista::offset::string description;

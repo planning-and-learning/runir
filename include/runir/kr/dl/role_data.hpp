@@ -11,6 +11,16 @@ namespace tyr
 {
 
 template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::Role<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
+    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Role<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
+                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>
+{
+    using Base = runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Role<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
+                                                        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
+template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Role<Family, runir::kr::dl::UniversalTag>> :
     runir::kr::dl::semantics::NullaryData<runir::kr::dl::Role<Family, runir::kr::dl::UniversalTag>>
 {

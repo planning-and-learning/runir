@@ -4,9 +4,9 @@
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
 #include "runir/kr/ps/base/dl/ast/ast_adapted.hpp"
-#include "runir/kr/ps/base/dl/declarations.hpp"
 #include "runir/kr/ps/base/dl/parser/error_handler.hpp"
 #include "runir/kr/ps/base/dl/parser/parsers.hpp"
+#include "runir/kr/ps/dl/declarations.hpp"
 
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
 
@@ -51,10 +51,10 @@ inline auto identifier_parser() { return raw[lexeme[(alpha | char_('_')) >> *(al
 
 inline auto quoted_string_parser() { return lexeme[lit('"') >> raw[*('\\' >> char_ | (char_ - '"'))] >> lit('"')]; }
 
-const auto boolean_feature_def = (lit("(") >> lit(BooleanFeature::keyword)) > identifier_parser() > quoted_string_parser() > quoted_string_parser()
-                                 > runir::kr::dl::grammar::parser::boolean_parser() > lit(")");
-const auto numerical_feature_def = (lit("(") >> lit(NumericalFeature::keyword)) > identifier_parser() > quoted_string_parser() > quoted_string_parser()
-                                   > runir::kr::dl::grammar::parser::numerical_parser() > lit(")");
+const auto boolean_feature_def = (lit("(") >> lit(runir::kr::ps::dl::BooleanFeature::keyword)) > identifier_parser() > quoted_string_parser()
+                                 > quoted_string_parser() > runir::kr::dl::grammar::parser::boolean_parser() > lit(")");
+const auto numerical_feature_def = (lit("(") >> lit(runir::kr::ps::dl::NumericalFeature::keyword)) > identifier_parser() > quoted_string_parser()
+                                   > quoted_string_parser() > runir::kr::dl::grammar::parser::numerical_parser() > lit(")");
 const auto feature_def = boolean_feature | numerical_feature;
 
 const auto positive_condition_def = lit(ast::Positive::keyword) >> attr(ast::Positive {});

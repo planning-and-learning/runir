@@ -15,32 +15,32 @@ namespace tyr
 template<>
 struct Data<runir::kr::dl::grammar::Constructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ConceptTag>>
 {
-    using Family = runir::kr::dl::ExtFamilyTag;
-    using Variant = ::cista::offset::variant<Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::BotTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::TopTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::AtomicStateTag<tyr::formalism::StaticTag>>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::AtomicStateTag<tyr::formalism::FluentTag>>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::AtomicStateTag<tyr::formalism::DerivedTag>>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::AtomicGoalTag<tyr::formalism::StaticTag>>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::AtomicGoalTag<tyr::formalism::FluentTag>>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::IntersectionTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::UnionTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::NegationTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::ValueRestrictionTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::ExistentialQuantificationTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::AtLeastNumberRestrictionTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::AtMostNumberRestrictionTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::ExactNumberRestrictionTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::QualifiedExactNumberRestrictionTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RoleValueMapTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::AgreementTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RoleFillersTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::OneOfTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::NominalTag>>,
-                                             Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::RegisterTag>>>;
+    using Variant =
+        ::cista::offset::variant<Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::BotTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::TopTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::StaticTag>>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::FluentTag>>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::DerivedTag>>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::StaticTag>>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::FluentTag>>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::IntersectionTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::UnionTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::NegationTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ValueRestrictionTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ExistentialQuantificationTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::AtLeastNumberRestrictionTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::AtMostNumberRestrictionTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ExactNumberRestrictionTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::QualifiedExactNumberRestrictionTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::RoleValueMapTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::AgreementTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::RoleFillersTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::OneOfTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::NominalTag>>,
+                                 Index<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::RegisterTag>>>;
 
     Index<runir::kr::dl::grammar::Constructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ConceptTag>> index;
     Variant value;

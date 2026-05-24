@@ -6,10 +6,8 @@
 namespace runir::kr::dl::semantics::base
 {
 
-using FamilyTag = runir::kr::BaseFamilyTag;
-
 template<tyr::planning::TaskKind Kind>
-using EvaluationContext = runir::kr::dl::semantics::EvaluationContext<FamilyTag, Kind>;
+using EvaluationContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, Kind>;
 
 template<tyr::planning::TaskKind Kind>
 const auto& get_repository(const EvaluationContext<Kind>& context) noexcept
