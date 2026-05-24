@@ -91,15 +91,6 @@ struct Feature : PositionedVariant<BooleanFeature<Family>, NumericalFeature<Fami
     using Base::operator=;
 };
 
-template<>
-struct Feature<runir::kr::ExtFamilyTag> :
-    PositionedVariant<Concept<runir::kr::ExtFamilyTag>, BooleanFeature<runir::kr::ExtFamilyTag>, NumericalFeature<runir::kr::ExtFamilyTag>>
-{
-    using Base = PositionedVariant<Concept<runir::kr::ExtFamilyTag>, BooleanFeature<runir::kr::ExtFamilyTag>, NumericalFeature<runir::kr::ExtFamilyTag>>;
-    using Base::Base;
-    using Base::operator=;
-};
-
 template<runir::kr::FamilyTag Family>
 struct ConditionObservation : PositionedVariant<Positive, Negative, EqualZero, GreaterZero>
 {
@@ -143,28 +134,6 @@ struct Sketch : x3::position_tagged
     std::vector<Feature<Family>> features;
     std::vector<Rule<Family>> rules;
 };
-
-using BaseConcept = Concept<runir::kr::BaseFamilyTag>;
-using BaseBooleanFeature = BooleanFeature<runir::kr::BaseFamilyTag>;
-using BaseNumericalFeature = NumericalFeature<runir::kr::BaseFamilyTag>;
-using BaseFeature = Feature<runir::kr::BaseFamilyTag>;
-using BaseConditionObservation = ConditionObservation<runir::kr::BaseFamilyTag>;
-using BaseCondition = Condition<runir::kr::BaseFamilyTag>;
-using BaseEffectObservation = EffectObservation<runir::kr::BaseFamilyTag>;
-using BaseEffect = Effect<runir::kr::BaseFamilyTag>;
-using BaseRule = Rule<runir::kr::BaseFamilyTag>;
-using BaseSketch = Sketch<runir::kr::BaseFamilyTag>;
-
-using ExtConcept = Concept<runir::kr::ExtFamilyTag>;
-using ExtBooleanFeature = BooleanFeature<runir::kr::ExtFamilyTag>;
-using ExtNumericalFeature = NumericalFeature<runir::kr::ExtFamilyTag>;
-using ExtFeature = Feature<runir::kr::ExtFamilyTag>;
-using ExtConditionObservation = ConditionObservation<runir::kr::ExtFamilyTag>;
-using ExtCondition = Condition<runir::kr::ExtFamilyTag>;
-using ExtEffectObservation = EffectObservation<runir::kr::ExtFamilyTag>;
-using ExtEffect = Effect<runir::kr::ExtFamilyTag>;
-using ExtRule = Rule<runir::kr::ExtFamilyTag>;
-using ExtSketch = Sketch<runir::kr::ExtFamilyTag>;
 
 }  // namespace runir::kr::ps::base::dl::ast
 

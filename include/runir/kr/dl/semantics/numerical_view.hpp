@@ -12,7 +12,7 @@ namespace tyr
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 class View<Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C>
 {
 private:
@@ -27,12 +27,6 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
 
     auto get_index() const noexcept { return m_handle; }
-
-    auto get_identifier() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>
-    {
-        return get_data().identifier;
-    }
 
     auto get_arg() const noexcept
         requires std::same_as<Tag, runir::kr::dl::CountTag>

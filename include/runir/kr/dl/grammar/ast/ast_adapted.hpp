@@ -57,7 +57,6 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::ast::RoleChoice<Family>, role)(std::vector<std::string>, object_names))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptOneOf)(Family), (std::vector<std::string>, object_names))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptNominal)(Family), (std::string, object_name))
-BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptRegister)(Family), (tyr::uint_t, identifier))
 
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleUniversal)(Family))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleAtomicState)(Family), (std::string, predicate_name))

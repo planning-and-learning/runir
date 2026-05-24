@@ -729,7 +729,7 @@ auto parse_rule(const runir::kr::ps::base::dl::ast::Rule<runir::kr::BaseFamilyTa
 
 SketchView parse_sketch(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
 {
-    const auto ast = parser::parse_sketch_ast<runir::kr::BaseFamilyTag>(description);
+    const auto ast = parser::parse_sketch_ast(description);
 
     auto boolean_features = BooleanFeatureMap {};
     auto numerical_features = NumericalFeatureMap {};

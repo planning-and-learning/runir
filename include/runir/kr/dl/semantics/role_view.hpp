@@ -12,7 +12,7 @@ namespace tyr
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 class View<Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>
 {
 private:
@@ -27,12 +27,6 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
 
     auto get_index() const noexcept { return m_handle; }
-
-    auto get_identifier() const noexcept
-        requires(std::same_as<Tag, runir::kr::dl::RegisterTag> || std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>)
-    {
-        return get_data().identifier;
-    }
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)

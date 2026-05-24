@@ -3,7 +3,6 @@
 
 #include "runir/kr/dl/base/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/ext/datas.hpp"
 
 #include <tyr/common/type_list.hpp>
 
@@ -11,16 +10,16 @@ namespace runir::kr::dl::base
 {
 
 template<runir::kr::dl::FamilyTag Family>
-using ConceptTypes = tyr::MapTypeListSecondT<runir::kr::dl::Concept, Family, runir::kr::dl::ConceptConstructorTags>;
+using ConceptTypes = tyr::MapTypeListSecondT<runir::kr::dl::Concept, Family, runir::kr::dl::FamilyConceptConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using RoleTypes = tyr::MapTypeListSecondT<runir::kr::dl::Role, Family, runir::kr::dl::RoleConstructorTags>;
+using RoleTypes = tyr::MapTypeListSecondT<runir::kr::dl::Role, Family, runir::kr::dl::FamilyRoleConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using BooleanTypes = tyr::MapTypeListSecondT<runir::kr::dl::Boolean, Family, runir::kr::dl::BooleanConstructorTags>;
+using BooleanTypes = tyr::MapTypeListSecondT<runir::kr::dl::Boolean, Family, runir::kr::dl::FamilyBooleanConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using NumericalTypes = tyr::MapTypeListSecondT<runir::kr::dl::Numerical, Family, runir::kr::dl::NumericalConstructorTags>;
+using NumericalTypes = tyr::MapTypeListSecondT<runir::kr::dl::Numerical, Family, runir::kr::dl::FamilyNumericalConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
 using ConstructorTypes = tyr::MapTypeListSecondT<runir::kr::dl::Constructor, Family, runir::kr::dl::CategoryTags>;

@@ -1,9 +1,9 @@
 #ifndef RUNIR_GRAMMAR_GRAMMAR_HPP_
 #define RUNIR_GRAMMAR_GRAMMAR_HPP_
 
+#include "runir/kr/dl/grammar/base/repository.hpp"
 #include "runir/kr/dl/grammar/canonicalization.hpp"
 #include "runir/kr/dl/grammar/constructor_repository.hpp"
-#include "runir/kr/dl/grammar/declarations.hpp"
 #include "runir/kr/dl/grammar/datas.hpp"
 #include "runir/kr/dl/grammar/declarations.hpp"
 #include "runir/kr/dl/grammar/formatter.hpp"

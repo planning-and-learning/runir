@@ -18,26 +18,6 @@ template<runir::kr::dl::FamilyTag Family>
 using DlRole = runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>;
 
 template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::RegisterTag>> :
-    runir::kr::dl::semantics::RegisterData<runir::kr::dl::Concept<Family, runir::kr::dl::RegisterTag>,
-                                           runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>
-{
-    using Base = runir::kr::dl::semantics::RegisterData<runir::kr::dl::Concept<Family, runir::kr::dl::RegisterTag>,
-                                                        runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>;
-    using Base::Base;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>> :
-    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Concept<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
-                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>
-{
-    using Base = runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Concept<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
-                                                        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>;
-    using Base::Base;
-};
-
-template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::BotTag>> :
     runir::kr::dl::semantics::NullaryData<runir::kr::dl::Concept<Family, runir::kr::dl::BotTag>>
 {

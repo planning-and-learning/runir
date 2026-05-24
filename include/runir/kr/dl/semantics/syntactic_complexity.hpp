@@ -44,16 +44,19 @@ auto as_view(const T& child, const C& context) noexcept
 }  // namespace detail
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C> view);
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C> view);
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C> view);
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C> view);
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
@@ -63,7 +66,7 @@ std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyConst
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::NegationTag>)
@@ -76,7 +79,8 @@ std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyConce
         return 1;
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::ComplementTag> || std::same_as<Tag, runir::kr::dl::InverseTag>
@@ -90,7 +94,8 @@ std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyRole<
         return 1;
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
@@ -99,7 +104,8 @@ std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyBoole
         return 1;
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)

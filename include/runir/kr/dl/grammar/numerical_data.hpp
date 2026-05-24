@@ -44,16 +44,6 @@ struct Data<runir::kr::dl::grammar::Numerical<Family, runir::kr::dl::DistanceTag
     using Base::Base;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::grammar::Numerical<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
-    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::grammar::Numerical<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
-                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>
-{
-    using Base = runir::kr::dl::semantics::ArgumentData<runir::kr::dl::grammar::Numerical<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
-                                                        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>;
-    using Base::Base;
-};
-
 }  // namespace tyr
 
 #endif

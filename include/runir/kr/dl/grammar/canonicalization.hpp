@@ -11,25 +11,28 @@ namespace runir::kr::dl::grammar::base
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 bool is_canonical(const tyr::Data<Concept<Family, Tag>>&) noexcept
 {
     return true;
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 bool is_canonical(const tyr::Data<Role<Family, Tag>>&) noexcept
 {
     return true;
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 bool is_canonical(const tyr::Data<Boolean<Family, Tag>>&) noexcept
 {
     return true;
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 bool is_canonical(const tyr::Data<Numerical<Family, Tag>>&) noexcept
 {
     return true;
@@ -84,22 +87,25 @@ inline bool is_canonical(const tyr::Data<Role<Family, runir::kr::dl::UnionTag>>&
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 void canonicalize(tyr::Data<Concept<Family, Tag>>&) noexcept
 {
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 void canonicalize(tyr::Data<Role<Family, Tag>>&) noexcept
 {
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 void canonicalize(tyr::Data<Boolean<Family, Tag>>&) noexcept
 {
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 void canonicalize(tyr::Data<Numerical<Family, Tag>>&) noexcept
 {
 }

@@ -1,7 +1,7 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
-#include <runir/kr/dl/grammar/constructor_repository.hpp>
+#include <runir/kr/dl/grammar/base/repository.hpp>
 #include <runir/kr/dl/grammar/formatter.hpp>
 #include <runir/kr/dl/grammar/views.hpp>
 #include <tyr/common/python/bindings.hpp>
@@ -54,108 +54,143 @@ void bind_view(nb::module_& m, const std::string& name)
 
 void bind_grammar_views(nb::module_& m)
 {
-    bind_view<runir::kr::dl::grammar::Constructor<runir::kr::dl::BaseFamilyTag, ConceptTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "Concept");
-    bind_view<runir::kr::dl::grammar::Constructor<runir::kr::dl::BaseFamilyTag, RoleTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "Role");
-    bind_view<runir::kr::dl::grammar::Constructor<runir::kr::dl::BaseFamilyTag, BooleanTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "Boolean");
-    bind_view<runir::kr::dl::grammar::Constructor<runir::kr::dl::BaseFamilyTag, NumericalTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "Numerical");
-    bind_view<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::BaseFamilyTag, ConceptTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptNonTerminal");
-    bind_view<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::BaseFamilyTag, RoleTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleNonTerminal");
-    bind_view<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::BaseFamilyTag, BooleanTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "BooleanNonTerminal");
-    bind_view<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::BaseFamilyTag, NumericalTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "NumericalNonTerminal");
-    bind_view<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, ConceptTag>, runir::kr::dl::grammar::ConstructorRepository>(m,
-                                                                                                                           "ConceptConstructorOrNonTerminal");
-    bind_view<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, RoleTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleConstructorOrNonTerminal");
-    bind_view<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, BooleanTag>, runir::kr::dl::grammar::ConstructorRepository>(m,
-                                                                                                                           "BooleanConstructorOrNonTerminal");
-    bind_view<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, NumericalTag>, runir::kr::dl::grammar::ConstructorRepository>(
+    bind_view<runir::kr::dl::grammar::Constructor<runir::kr::dl::BaseFamilyTag, ConceptTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m, "Concept");
+    bind_view<runir::kr::dl::grammar::Constructor<runir::kr::dl::BaseFamilyTag, RoleTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m, "Role");
+    bind_view<runir::kr::dl::grammar::Constructor<runir::kr::dl::BaseFamilyTag, BooleanTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m, "Boolean");
+    bind_view<runir::kr::dl::grammar::Constructor<runir::kr::dl::BaseFamilyTag, NumericalTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "NumericalConstructorOrNonTerminal");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, BotTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptBot");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, TopTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptTop");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::StaticTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "Numerical");
+    bind_view<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::BaseFamilyTag, ConceptTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "ConceptAtomicStateStatic");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::FluentTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "ConceptNonTerminal");
+    bind_view<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::BaseFamilyTag, RoleTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "ConceptAtomicStateFluent");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::DerivedTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "RoleNonTerminal");
+    bind_view<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::BaseFamilyTag, BooleanTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "ConceptAtomicStateDerived");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::StaticTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "BooleanNonTerminal");
+    bind_view<runir::kr::dl::grammar::NonTerminal<runir::kr::dl::BaseFamilyTag, NumericalTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "ConceptAtomicGoalStatic");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::FluentTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "NumericalNonTerminal");
+    bind_view<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, ConceptTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "ConceptAtomicGoalFluent");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::DerivedTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "ConceptConstructorOrNonTerminal");
+    bind_view<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, RoleTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "ConceptAtomicGoalDerived");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, IntersectionTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptIntersection");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, UnionTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptUnion");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, NegationTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptNegation");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, ValueRestrictionTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptValueRestriction");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, ExistentialQuantificationTag>, runir::kr::dl::grammar::ConstructorRepository>(m,
-                                                                                                                            "ConceptExistentialQuantification");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtLeastNumberRestrictionTag>, runir::kr::dl::grammar::ConstructorRepository>(m,
-                                                                                                                           "ConceptAtLeastNumberRestriction");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtMostNumberRestrictionTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptAtMostNumberRestriction");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, ExactNumberRestrictionTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptExactNumberRestriction");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, QualifiedAtLeastNumberRestrictionTag>, runir::kr::dl::grammar::ConstructorRepository>(
+        "RoleConstructorOrNonTerminal");
+    bind_view<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, BooleanTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "ConceptQualifiedAtLeastNumberRestriction");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, QualifiedAtMostNumberRestrictionTag>, runir::kr::dl::grammar::ConstructorRepository>(
+        "BooleanConstructorOrNonTerminal");
+    bind_view<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::dl::BaseFamilyTag, NumericalTag>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "NumericalConstructorOrNonTerminal");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, BotTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptBot");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, TopTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptTop");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::StaticTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptAtomicStateStatic");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::FluentTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptAtomicStateFluent");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::DerivedTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptAtomicStateDerived");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::StaticTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptAtomicGoalStatic");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::FluentTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptAtomicGoalFluent");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::DerivedTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptAtomicGoalDerived");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, IntersectionTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "ConceptQualifiedAtMostNumberRestriction");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, QualifiedExactNumberRestrictionTag>, runir::kr::dl::grammar::ConstructorRepository>(
+        "ConceptIntersection");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, UnionTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptUnion");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, NegationTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "ConceptQualifiedExactNumberRestriction");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, RoleValueMapTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptRoleValueMap");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AgreementTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptAgreement");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, RoleFillersTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptRoleFillers");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, OneOfTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptOneOf");
-    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, NominalTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "ConceptNominal");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, UniversalTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleUniversal");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::StaticTag>>, runir::kr::dl::grammar::ConstructorRepository>(m,
-                                                                                                                                      "RoleAtomicStateStatic");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::FluentTag>>, runir::kr::dl::grammar::ConstructorRepository>(m,
-                                                                                                                                      "RoleAtomicStateFluent");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::DerivedTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "ConceptNegation");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, ValueRestrictionTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "RoleAtomicStateDerived");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::StaticTag>>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleAtomicGoalStatic");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::FluentTag>>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleAtomicGoalFluent");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::DerivedTag>>, runir::kr::dl::grammar::ConstructorRepository>(m,
-                                                                                                                                      "RoleAtomicGoalDerived");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, IntersectionTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleIntersection");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, UnionTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleUnion");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, ComplementTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleComplement");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, InverseTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleInverse");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, CompositionTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleComposition");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, TransitiveClosureTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleTransitiveClosure");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, ReflexiveTransitiveClosureTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleReflexiveTransitiveClosure");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, RestrictionTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleRestriction");
-    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, IdentityTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "RoleIdentity");
-    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::StaticTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "ConceptValueRestriction");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, ExistentialQuantificationTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "BooleanAtomicStateStatic");
-    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::FluentTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "ConceptExistentialQuantification");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtLeastNumberRestrictionTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "BooleanAtomicStateFluent");
-    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::DerivedTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "ConceptAtLeastNumberRestriction");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AtMostNumberRestrictionTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "BooleanAtomicStateDerived");
-    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::StaticTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "ConceptAtMostNumberRestriction");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, ExactNumberRestrictionTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "BooleanAtomicGoalStatic");
-    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::FluentTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "ConceptExactNumberRestriction");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, QualifiedAtLeastNumberRestrictionTag>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptQualifiedAtLeastNumberRestriction");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, QualifiedAtMostNumberRestrictionTag>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptQualifiedAtMostNumberRestriction");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, QualifiedExactNumberRestrictionTag>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptQualifiedExactNumberRestriction");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, RoleValueMapTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "BooleanAtomicGoalFluent");
-    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::DerivedTag>>, runir::kr::dl::grammar::ConstructorRepository>(
+        "ConceptRoleValueMap");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, AgreementTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
         m,
-        "BooleanAtomicGoalDerived");
-    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, NonemptyTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "BooleanNonempty");
-    bind_view<runir::kr::dl::grammar::Numerical<runir::kr::dl::BaseFamilyTag, CountTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "NumericalCount");
-    bind_view<runir::kr::dl::grammar::Numerical<runir::kr::dl::BaseFamilyTag, DistanceTag>, runir::kr::dl::grammar::ConstructorRepository>(m, "NumericalDistance");
+        "ConceptAgreement");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, RoleFillersTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
+        m,
+        "ConceptRoleFillers");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, OneOfTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m, "ConceptOneOf");
+    bind_view<runir::kr::dl::grammar::Concept<runir::kr::dl::BaseFamilyTag, NominalTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m,
+                                                                                                                                              "ConceptNominal");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, UniversalTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m,
+                                                                                                                                             "RoleUniversal");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::StaticTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "RoleAtomicStateStatic");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::FluentTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "RoleAtomicStateFluent");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::DerivedTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "RoleAtomicStateDerived");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::StaticTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "RoleAtomicGoalStatic");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::FluentTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "RoleAtomicGoalFluent");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::DerivedTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "RoleAtomicGoalDerived");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, IntersectionTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
+        m,
+        "RoleIntersection");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, UnionTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m, "RoleUnion");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, ComplementTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m,
+                                                                                                                                              "RoleComplement");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, InverseTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m, "RoleInverse");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, CompositionTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
+        m,
+        "RoleComposition");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, TransitiveClosureTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
+        m,
+        "RoleTransitiveClosure");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, ReflexiveTransitiveClosureTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
+        m,
+        "RoleReflexiveTransitiveClosure");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, RestrictionTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
+        m,
+        "RoleRestriction");
+    bind_view<runir::kr::dl::grammar::Role<runir::kr::dl::BaseFamilyTag, IdentityTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m, "RoleIdentity");
+    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::StaticTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "BooleanAtomicStateStatic");
+    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::FluentTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "BooleanAtomicStateFluent");
+    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, AtomicStateTag<tyr::formalism::DerivedTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "BooleanAtomicStateDerived");
+    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::StaticTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "BooleanAtomicGoalStatic");
+    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::FluentTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "BooleanAtomicGoalFluent");
+    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, AtomicGoalTag<tyr::formalism::DerivedTag>>,
+              runir::kr::dl::grammar::base::ConstructorRepository>(m, "BooleanAtomicGoalDerived");
+    bind_view<runir::kr::dl::grammar::Boolean<runir::kr::dl::BaseFamilyTag, NonemptyTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
+        m,
+        "BooleanNonempty");
+    bind_view<runir::kr::dl::grammar::Numerical<runir::kr::dl::BaseFamilyTag, CountTag>, runir::kr::dl::grammar::base::ConstructorRepository>(m,
+                                                                                                                                              "NumericalCount");
+    bind_view<runir::kr::dl::grammar::Numerical<runir::kr::dl::BaseFamilyTag, DistanceTag>, runir::kr::dl::grammar::base::ConstructorRepository>(
+        m,
+        "NumericalDistance");
 }
 
 }  // namespace runir::kr::dl

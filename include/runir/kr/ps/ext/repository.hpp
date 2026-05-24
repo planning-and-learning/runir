@@ -1,8 +1,9 @@
 #ifndef RUNIR_KR_PS_EXT_REPOSITORY_HPP_
 #define RUNIR_KR_PS_EXT_REPOSITORY_HPP_
 
-#include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/ext/repository.hpp"
 #include "runir/kr/ps/base/repository.hpp"
+#include "runir/kr/ps/ext/canonicalization.hpp"
 #include "runir/kr/ps/ext/condition_data.hpp"
 #include "runir/kr/ps/ext/condition_view.hpp"
 #include "runir/kr/ps/ext/dl/feature_data.hpp"
@@ -53,10 +54,10 @@ class Repository
 
 private:
     SymbolRepository m_symbol_repository;
-    runir::kr::dl::ExtConstructorRepositoryPtr m_dl_repository;
+    runir::kr::dl::ext::ConstructorRepositoryPtr m_dl_repository;
     size_t m_index;
 
-    Repository(size_t index, runir::kr::dl::ExtConstructorRepositoryPtr dl_repository) :
+    Repository(size_t index, runir::kr::dl::ext::ConstructorRepositoryPtr dl_repository) :
         m_symbol_repository(nullptr),
         m_dl_repository(std::move(dl_repository)),
         m_index(index)
@@ -120,8 +121,8 @@ private:
     size_t m_next_index = 0;
 
 public:
-    Repository create(runir::kr::dl::ExtConstructorRepositoryPtr dl_repository) { return Repository(m_next_index++, std::move(dl_repository)); }
-    RepositoryPtr create_shared(runir::kr::dl::ExtConstructorRepositoryPtr dl_repository)
+    Repository create(runir::kr::dl::ext::ConstructorRepositoryPtr dl_repository) { return Repository(m_next_index++, std::move(dl_repository)); }
+    RepositoryPtr create_shared(runir::kr::dl::ext::ConstructorRepositoryPtr dl_repository)
     {
         return RepositoryPtr(new Repository(m_next_index++, std::move(dl_repository)));
     }

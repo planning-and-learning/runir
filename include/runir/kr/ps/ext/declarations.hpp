@@ -16,6 +16,50 @@ struct MemoryState
 {
 };
 
+// Features
+
+template<typename FeatureTag>
+struct Feature
+{
+};
+
+template<typename LanguageTag, typename FeatureTag>
+struct ConcreteFeature
+{
+};
+
+// Conditions
+
+struct ConditionVariant
+{
+};
+
+template<typename LanguageTag>
+struct ConcreteConditionVariant
+{
+};
+
+template<typename LanguageTag, typename FeatureTag, typename ObservationTag>
+struct ConcreteCondition
+{
+};
+
+// Effects
+
+struct EffectVariant
+{
+};
+
+template<typename LanguageTag>
+struct ConcreteEffectVariant
+{
+};
+
+template<typename LanguageTag, typename FeatureTag, typename ObservationTag>
+struct ConcreteEffect
+{
+};
+
 // Rules
 
 struct SketchTag

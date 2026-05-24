@@ -1,4 +1,5 @@
 #include "module.hpp"
+#include "runir/kr/dl/ext/declarations.hpp"
 
 #include <runir/kr/dl/grammar/ext/indices.hpp>
 #include <tyr/common/python/bindings.hpp>

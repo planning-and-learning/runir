@@ -10,17 +10,19 @@ template<runir::kr::dl::FamilyTag Family>
 struct Grammar;
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 struct Concept;
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::RoleConstructorTag<Tag>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 struct Role;
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 struct Boolean;
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 struct Numerical;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>

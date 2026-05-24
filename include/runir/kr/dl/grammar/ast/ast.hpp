@@ -73,9 +73,6 @@ struct ConceptOneOf;
 template<runir::kr::dl::FamilyTag Family>
 struct ConceptNominal;
 template<runir::kr::dl::FamilyTag Family>
-struct ConceptRegister;
-
-template<runir::kr::dl::FamilyTag Family>
 struct RoleUniversal;
 template<runir::kr::dl::FamilyTag Family>
 struct RoleAtomicState;
@@ -178,55 +175,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag> :
                                    x3::forward_ast<ConceptRoleFillers<Family>>,
                                    x3::forward_ast<ConceptOneOf<Family>>,
                                    x3::forward_ast<ConceptNominal<Family>>>;
-    using Base::Base;
-    using Base::operator=;
-};
-
-template<>
-struct Constructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ConceptTag> :
-    PositionedVariant<x3::forward_ast<ConceptBot<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptTop<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptAtomicState<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptAtomicGoal<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptIntersection<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptUnion<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptNegation<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptValueRestriction<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptExistentialQuantification<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptAtLeastNumberRestriction<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptAtMostNumberRestriction<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptExactNumberRestriction<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptQualifiedAtLeastNumberRestriction<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptQualifiedAtMostNumberRestriction<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptQualifiedExactNumberRestriction<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptRoleValueMap<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptAgreement<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptRoleFillers<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptOneOf<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptNominal<runir::kr::dl::ExtFamilyTag>>,
-                      x3::forward_ast<ConceptRegister<runir::kr::dl::ExtFamilyTag>>>
-{
-    using Base = PositionedVariant<x3::forward_ast<ConceptBot<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptTop<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptAtomicState<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptAtomicGoal<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptIntersection<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptUnion<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptNegation<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptValueRestriction<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptExistentialQuantification<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptAtLeastNumberRestriction<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptAtMostNumberRestriction<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptExactNumberRestriction<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptQualifiedAtLeastNumberRestriction<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptQualifiedAtMostNumberRestriction<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptQualifiedExactNumberRestriction<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptRoleValueMap<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptAgreement<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptRoleFillers<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptOneOf<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptNominal<runir::kr::dl::ExtFamilyTag>>,
-                                   x3::forward_ast<ConceptRegister<runir::kr::dl::ExtFamilyTag>>>;
     using Base::Base;
     using Base::operator=;
 };
@@ -444,13 +392,6 @@ struct ConceptNominal : x3::position_tagged
 {
     static constexpr auto keyword = "c_nominal";
     std::string object_name;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct ConceptRegister : x3::position_tagged
-{
-    static constexpr auto keyword = "c_register";
-    tyr::uint_t identifier;
 };
 
 template<runir::kr::dl::FamilyTag Family>

@@ -67,19 +67,11 @@ struct GenerateResultsFor
     }
 };
 
-using GenerateResults = GenerateResultsFor<runir::kr::dl::BaseFamilyTag>;
-
 template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
 GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
                                     const std::vector<tyr::planning::StateView<Kind>>& states,
                                     runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,
                                     const GenerateOptions& options);
-
-template<tyr::planning::TaskKind Kind>
-GenerateResults generate(GrammarView grammar,
-                         const std::vector<tyr::planning::StateView<Kind>>& states,
-                         runir::kr::dl::ConstructorRepository& output_repository,
-                         const GenerateOptions& options);
 
 }
 

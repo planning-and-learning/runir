@@ -3,7 +3,6 @@
 
 #include "runir/kr/dl/cnf_grammar/canonicalization.hpp"
 #include "runir/kr/dl/cnf_grammar/datas.hpp"
-#include "runir/kr/dl/cnf_grammar/ext/datas.hpp"
 #include "runir/kr/dl/cnf_grammar/declarations.hpp"
 #include "runir/kr/dl/cnf_grammar/views.hpp"
 #include "runir/kr/dl/declarations.hpp"
@@ -25,16 +24,19 @@ template<runir::kr::dl::FamilyTag Family>
 struct RepositoryConstructorFamily
 {
     template<typename Tag>
-        requires runir::kr::dl::ConceptConstructorTag<Tag>
+        requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
     using Concept = runir::kr::dl::cnf_grammar::Concept<Family, Tag>;
 
-    template<runir::kr::dl::RoleConstructorTag Tag>
+    template<typename Tag>
+        requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
     using Role = runir::kr::dl::cnf_grammar::Role<Family, Tag>;
 
-    template<runir::kr::dl::BooleanConstructorTag Tag>
+    template<typename Tag>
+        requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
     using Boolean = runir::kr::dl::cnf_grammar::Boolean<Family, Tag>;
 
-    template<runir::kr::dl::NumericalConstructorTag Tag>
+    template<typename Tag>
+        requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
     using Numerical = runir::kr::dl::cnf_grammar::Numerical<Family, Tag>;
 
     template<runir::kr::dl::CategoryTag Category>
@@ -51,16 +53,16 @@ struct RepositoryConstructorFamily
 };
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyConceptTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Concept, runir::kr::dl::ConceptConstructorTags>;
+using FamilyConceptTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Concept, runir::kr::dl::FamilyConceptConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyRoleTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Role, runir::kr::dl::RoleConstructorTags>;
+using FamilyRoleTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Role, runir::kr::dl::FamilyRoleConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyBooleanTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Boolean, runir::kr::dl::BooleanConstructorTags>;
+using FamilyBooleanTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Boolean, runir::kr::dl::FamilyBooleanConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyNumericalTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Numerical, runir::kr::dl::NumericalConstructorTags>;
+using FamilyNumericalTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Numerical, runir::kr::dl::FamilyNumericalConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
 using FamilyConstructorTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Constructor, runir::kr::dl::CategoryTags>;
@@ -79,14 +81,14 @@ using FamilyGrammarTypes = tyr::TypeList<Grammar<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
 using FamilyConstructorRepositoryTypes = tyr::ConcatTypeListsT<FamilyConceptTypes<Family>,
-                                                              FamilyRoleTypes<Family>,
-                                                              FamilyBooleanTypes<Family>,
-                                                              FamilyNumericalTypes<Family>,
-                                                              FamilyConstructorTypes<Family>,
-                                                              FamilyNonTerminalTypes<Family>,
-                                                              FamilyDerivationRuleTypes<Family>,
-                                                              FamilySubstitutionRuleTypes<Family>,
-                                                              FamilyGrammarTypes<Family>>;
+                                                               FamilyRoleTypes<Family>,
+                                                               FamilyBooleanTypes<Family>,
+                                                               FamilyNumericalTypes<Family>,
+                                                               FamilyConstructorTypes<Family>,
+                                                               FamilyNonTerminalTypes<Family>,
+                                                               FamilyDerivationRuleTypes<Family>,
+                                                               FamilySubstitutionRuleTypes<Family>,
+                                                               FamilyGrammarTypes<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
 using FamilyConstructorSymbolRepository = tyr::ApplyTypeListT<tyr::formalism::SymbolRepository, FamilyConstructorRepositoryTypes<Family>>;
@@ -180,14 +182,8 @@ public:
 template<runir::kr::dl::FamilyTag Family>
 using ConstructorRepositoryFor = BasicConstructorRepository<Family>;
 
-using ConstructorRepository = ConstructorRepositoryFor<runir::kr::BaseFamilyTag>;
-using ExtConstructorRepository = ConstructorRepositoryFor<runir::kr::ExtFamilyTag>;
-
 template<runir::kr::dl::FamilyTag Family>
 using ConstructorRepositoryPtrFor = std::shared_ptr<ConstructorRepositoryFor<Family>>;
-
-using ConstructorRepositoryPtr = ConstructorRepositoryPtrFor<runir::kr::BaseFamilyTag>;
-using ExtConstructorRepositoryPtr = ConstructorRepositoryPtrFor<runir::kr::ExtFamilyTag>;
 
 template<runir::kr::dl::FamilyTag Family>
 class BasicConstructorRepositoryFactory
@@ -212,119 +208,48 @@ public:
 template<runir::kr::dl::FamilyTag Family>
 using ConstructorRepositoryFactoryFor = BasicConstructorRepositoryFactory<Family>;
 
-using ConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::BaseFamilyTag>;
-using ExtConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::ExtFamilyTag>;
-
-using ConstructorRepositoryFactoryPtr = std::shared_ptr<ConstructorRepositoryFactory>;
-using ExtConstructorRepositoryFactoryPtr = std::shared_ptr<ExtConstructorRepositoryFactory>;
-
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 using FamilyConceptView = tyr::View<tyr::Index<Concept<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
-template<runir::kr::dl::ConceptConstructorTag Tag>
-using ConceptView = FamilyConceptView<runir::kr::BaseFamilyTag, Tag>;
-
-template<runir::kr::dl::ConceptConstructorTag Tag>
-using ConceptListView = tyr::View<tyr::IndexList<Concept<runir::kr::BaseFamilyTag, Tag>>, ConstructorRepository>;
-
-template<runir::kr::dl::ConceptConstructorTag Tag>
-using ConceptViewList = std::vector<ConceptView<Tag>>;
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 using FamilyRoleView = tyr::View<tyr::Index<Role<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
-template<runir::kr::dl::RoleConstructorTag Tag>
-using RoleView = FamilyRoleView<runir::kr::BaseFamilyTag, Tag>;
-
-template<runir::kr::dl::RoleConstructorTag Tag>
-using RoleListView = tyr::View<tyr::IndexList<Role<runir::kr::BaseFamilyTag, Tag>>, ConstructorRepository>;
-
-template<runir::kr::dl::RoleConstructorTag Tag>
-using RoleViewList = std::vector<RoleView<Tag>>;
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 using FamilyBooleanView = tyr::View<tyr::Index<Boolean<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
-template<runir::kr::dl::BooleanConstructorTag Tag>
-using BooleanView = FamilyBooleanView<runir::kr::BaseFamilyTag, Tag>;
-
-template<runir::kr::dl::BooleanConstructorTag Tag>
-using BooleanListView = tyr::View<tyr::IndexList<Boolean<runir::kr::BaseFamilyTag, Tag>>, ConstructorRepository>;
-
-template<runir::kr::dl::BooleanConstructorTag Tag>
-using BooleanViewList = std::vector<BooleanView<Tag>>;
-
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 using FamilyNumericalView = tyr::View<tyr::Index<Numerical<Family, Tag>>, ConstructorRepositoryFor<Family>>;
-
-template<runir::kr::dl::NumericalConstructorTag Tag>
-using NumericalView = FamilyNumericalView<runir::kr::BaseFamilyTag, Tag>;
-
-template<runir::kr::dl::NumericalConstructorTag Tag>
-using NumericalListView = tyr::View<tyr::IndexList<Numerical<runir::kr::BaseFamilyTag, Tag>>, ConstructorRepository>;
-
-template<runir::kr::dl::NumericalConstructorTag Tag>
-using NumericalViewList = std::vector<NumericalView<Tag>>;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 using FamilyConstructorView = tyr::View<tyr::Index<Constructor<Family, Category>>, ConstructorRepositoryFor<Family>>;
 
-template<runir::kr::dl::CategoryTag Category>
-using ConstructorView = FamilyConstructorView<runir::kr::BaseFamilyTag, Category>;
-
-template<runir::kr::dl::CategoryTag Category>
-using ConstructorListView = tyr::View<tyr::IndexList<Constructor<runir::kr::BaseFamilyTag, Category>>, ConstructorRepository>;
-
-template<runir::kr::dl::CategoryTag Category>
-using ConstructorViewList = std::vector<ConstructorView<Category>>;
-
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 using FamilyNonTerminalView = tyr::View<tyr::Index<NonTerminal<Family, Category>>, ConstructorRepositoryFor<Family>>;
-
-template<runir::kr::dl::CategoryTag Category>
-using NonTerminalView = FamilyNonTerminalView<runir::kr::BaseFamilyTag, Category>;
-
-template<runir::kr::dl::CategoryTag Category>
-using NonTerminalListView = tyr::View<tyr::IndexList<NonTerminal<runir::kr::BaseFamilyTag, Category>>, ConstructorRepository>;
-
-template<runir::kr::dl::CategoryTag Category>
-using NonTerminalViewList = std::vector<NonTerminalView<Category>>;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 using FamilyDerivationRuleView = tyr::View<tyr::Index<DerivationRule<Family, Category>>, ConstructorRepositoryFor<Family>>;
 
-template<runir::kr::dl::CategoryTag Category>
-using DerivationRuleView = FamilyDerivationRuleView<runir::kr::BaseFamilyTag, Category>;
-
-template<runir::kr::dl::CategoryTag Category>
-using DerivationRuleListView = tyr::View<tyr::IndexList<DerivationRule<runir::kr::BaseFamilyTag, Category>>, ConstructorRepository>;
-
-template<runir::kr::dl::CategoryTag Category>
-using DerivationRuleViewList = std::vector<DerivationRuleView<Category>>;
-
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 using FamilySubstitutionRuleView = tyr::View<tyr::Index<SubstitutionRule<Family, Category>>, ConstructorRepositoryFor<Family>>;
-
-template<runir::kr::dl::CategoryTag Category>
-using SubstitutionRuleView = FamilySubstitutionRuleView<runir::kr::BaseFamilyTag, Category>;
-
-template<runir::kr::dl::CategoryTag Category>
-using SubstitutionRuleListView = tyr::View<tyr::IndexList<SubstitutionRule<runir::kr::BaseFamilyTag, Category>>, ConstructorRepository>;
-
-template<runir::kr::dl::CategoryTag Category>
-using SubstitutionRuleViewList = std::vector<SubstitutionRuleView<Category>>;
 
 template<runir::kr::dl::FamilyTag Family>
 using FamilyGrammarView = tyr::View<tyr::Index<Grammar<Family>>, ConstructorRepositoryFor<Family>>;
 
-using GrammarView = FamilyGrammarView<runir::kr::BaseFamilyTag>;
+template<runir::kr::dl::FamilyTag Family>
+inline const ConstructorRepositoryFor<Family>& get_repository(const ConstructorRepositoryFor<Family>& repository) noexcept
+{
+    return repository;
+}
 
 template<runir::kr::dl::FamilyTag Family>
-inline const ConstructorRepositoryFor<Family>& get_repository(const ConstructorRepositoryFor<Family>& repository) noexcept { return repository; }
-
-template<runir::kr::dl::FamilyTag Family>
-inline ConstructorRepositoryFor<Family>& get_repository(ConstructorRepositoryFor<Family>& repository) noexcept { return repository; }
+inline ConstructorRepositoryFor<Family>& get_repository(ConstructorRepositoryFor<Family>& repository) noexcept
+{
+    return repository;
+}
 
 }
 

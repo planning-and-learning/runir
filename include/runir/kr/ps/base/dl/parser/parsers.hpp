@@ -32,49 +32,28 @@ struct RuleClass;
 struct SketchClass;
 struct SketchRootClass;
 
-template<runir::kr::FamilyTag Family>
-using boolean_feature_type = x3::rule<BooleanFeatureClass, ast::BooleanFeature<Family>>;
-template<runir::kr::FamilyTag Family>
-using numerical_feature_type = x3::rule<NumericalFeatureClass, ast::NumericalFeature<Family>>;
-template<runir::kr::FamilyTag Family>
-using feature_type = x3::rule<FeatureClass, ast::Feature<Family>>;
+using base_boolean_feature_type = x3::rule<BooleanFeatureClass, ast::BooleanFeature<runir::kr::BaseFamilyTag>>;
+using base_numerical_feature_type = x3::rule<NumericalFeatureClass, ast::NumericalFeature<runir::kr::BaseFamilyTag>>;
+using base_feature_type = x3::rule<FeatureClass, ast::Feature<runir::kr::BaseFamilyTag>>;
 
 using positive_condition_type = x3::rule<PositiveConditionClass, ast::Positive>;
 using negative_condition_type = x3::rule<NegativeConditionClass, ast::Negative>;
 using equal_zero_condition_type = x3::rule<EqualZeroConditionClass, ast::EqualZero>;
 using greater_zero_condition_type = x3::rule<GreaterZeroConditionClass, ast::GreaterZero>;
-template<runir::kr::FamilyTag Family>
-using condition_observation_type = x3::rule<ConditionObservationClass, ast::ConditionObservation<Family>>;
-template<runir::kr::FamilyTag Family>
-using condition_type = x3::rule<ConditionClass, ast::Condition<Family>>;
+using base_condition_observation_type = x3::rule<ConditionObservationClass, ast::ConditionObservation<runir::kr::BaseFamilyTag>>;
+using base_condition_type = x3::rule<ConditionClass, ast::Condition<runir::kr::BaseFamilyTag>>;
 
 using positive_effect_type = x3::rule<PositiveEffectClass, ast::Positive>;
 using negative_effect_type = x3::rule<NegativeEffectClass, ast::Negative>;
 using unchanged_effect_type = x3::rule<UnchangedEffectClass, ast::Unchanged>;
 using increases_effect_type = x3::rule<IncreasesEffectClass, ast::Increases>;
 using decreases_effect_type = x3::rule<DecreasesEffectClass, ast::Decreases>;
-template<runir::kr::FamilyTag Family>
-using effect_observation_type = x3::rule<EffectObservationClass, ast::EffectObservation<Family>>;
-template<runir::kr::FamilyTag Family>
-using effect_type = x3::rule<EffectClass, ast::Effect<Family>>;
+using base_effect_observation_type = x3::rule<EffectObservationClass, ast::EffectObservation<runir::kr::BaseFamilyTag>>;
+using base_effect_type = x3::rule<EffectClass, ast::Effect<runir::kr::BaseFamilyTag>>;
 
-template<runir::kr::FamilyTag Family>
-using rule_type = x3::rule<RuleClass, ast::Rule<Family>>;
-template<runir::kr::FamilyTag Family>
-using sketch_type = x3::rule<SketchClass, ast::Sketch<Family>>;
-template<runir::kr::FamilyTag Family>
-using sketch_root_type = x3::rule<SketchRootClass, ast::Sketch<Family>>;
-
-using base_boolean_feature_type = boolean_feature_type<runir::kr::BaseFamilyTag>;
-using base_numerical_feature_type = numerical_feature_type<runir::kr::BaseFamilyTag>;
-using base_feature_type = feature_type<runir::kr::BaseFamilyTag>;
-using base_condition_observation_type = condition_observation_type<runir::kr::BaseFamilyTag>;
-using base_condition_type = condition_type<runir::kr::BaseFamilyTag>;
-using base_effect_observation_type = effect_observation_type<runir::kr::BaseFamilyTag>;
-using base_effect_type = effect_type<runir::kr::BaseFamilyTag>;
-using base_rule_type = rule_type<runir::kr::BaseFamilyTag>;
-using base_sketch_type = sketch_type<runir::kr::BaseFamilyTag>;
-using base_sketch_root_type = sketch_root_type<runir::kr::BaseFamilyTag>;
+using base_rule_type = x3::rule<RuleClass, ast::Rule<runir::kr::BaseFamilyTag>>;
+using base_sketch_type = x3::rule<SketchClass, ast::Sketch<runir::kr::BaseFamilyTag>>;
+using base_sketch_root_type = x3::rule<SketchRootClass, ast::Sketch<runir::kr::BaseFamilyTag>>;
 
 BOOST_SPIRIT_DECLARE(base_boolean_feature_type, base_numerical_feature_type, base_feature_type)
 BOOST_SPIRIT_DECLARE(positive_condition_type,

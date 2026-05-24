@@ -24,25 +24,28 @@ void canonicalize_commutative_binary(Data& data) noexcept
 }
 
 template<FamilyTag Family, typename Tag>
-    requires ConceptConstructorTag<Tag>
+    requires FamilyConceptConstructorTag<Family, Tag>
 bool is_canonical(const tyr::Data<FamilyConcept<Family, Tag>>&) noexcept
 {
     return true;
 }
 
-template<FamilyTag Family, RoleConstructorTag Tag>
+template<FamilyTag Family, typename Tag>
+    requires FamilyRoleConstructorTag<Family, Tag>
 bool is_canonical(const tyr::Data<FamilyRole<Family, Tag>>&) noexcept
 {
     return true;
 }
 
-template<FamilyTag Family, BooleanConstructorTag Tag>
+template<FamilyTag Family, typename Tag>
+    requires FamilyBooleanConstructorTag<Family, Tag>
 bool is_canonical(const tyr::Data<FamilyBoolean<Family, Tag>>&) noexcept
 {
     return true;
 }
 
-template<FamilyTag Family, NumericalConstructorTag Tag>
+template<FamilyTag Family, typename Tag>
+    requires FamilyNumericalConstructorTag<Family, Tag>
 bool is_canonical(const tyr::Data<FamilyNumerical<Family, Tag>>&) noexcept
 {
     return true;
@@ -55,25 +58,28 @@ bool is_canonical(const tyr::Data<FamilyConstructor<Family, Category>>&) noexcep
 }
 
 template<FamilyTag Family, typename Tag>
-    requires ConceptConstructorTag<Tag>
+    requires FamilyConceptConstructorTag<Family, Tag>
 void canonicalize(tyr::Data<FamilyConcept<Family, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<FamilyTag Family, RoleConstructorTag Tag>
+template<FamilyTag Family, typename Tag>
+    requires FamilyRoleConstructorTag<Family, Tag>
 void canonicalize(tyr::Data<FamilyRole<Family, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<FamilyTag Family, BooleanConstructorTag Tag>
+template<FamilyTag Family, typename Tag>
+    requires FamilyBooleanConstructorTag<Family, Tag>
 void canonicalize(tyr::Data<FamilyBoolean<Family, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<FamilyTag Family, NumericalConstructorTag Tag>
+template<FamilyTag Family, typename Tag>
+    requires FamilyNumericalConstructorTag<Family, Tag>
 void canonicalize(tyr::Data<FamilyNumerical<Family, Tag>>&) noexcept
 {
     // Trivially canonical

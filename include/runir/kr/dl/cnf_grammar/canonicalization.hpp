@@ -14,25 +14,28 @@ namespace runir::kr::dl::cnf_grammar
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 bool is_canonical(const tyr::Data<Concept<Family, Tag>>&) noexcept
 {
     return true;
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 bool is_canonical(const tyr::Data<Role<Family, Tag>>&) noexcept
 {
     return true;
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 bool is_canonical(const tyr::Data<Boolean<Family, Tag>>&) noexcept
 {
     return true;
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 bool is_canonical(const tyr::Data<Numerical<Family, Tag>>&) noexcept
 {
     return true;
@@ -57,37 +60,52 @@ inline bool is_canonical(const tyr::Data<Concept<Family, runir::kr::dl::Intersec
 }
 
 template<runir::kr::dl::FamilyTag Family>
-inline bool is_canonical(const tyr::Data<Concept<Family, runir::kr::dl::UnionTag>>& data) noexcept { return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs); }
+inline bool is_canonical(const tyr::Data<Concept<Family, runir::kr::dl::UnionTag>>& data) noexcept
+{
+    return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+}
 
 template<runir::kr::dl::FamilyTag Family>
-inline bool is_canonical(const tyr::Data<Concept<Family, runir::kr::dl::AgreementTag>>& data) noexcept { return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs); }
+inline bool is_canonical(const tyr::Data<Concept<Family, runir::kr::dl::AgreementTag>>& data) noexcept
+{
+    return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+}
 
 template<runir::kr::dl::FamilyTag Family>
-inline bool is_canonical(const tyr::Data<Role<Family, runir::kr::dl::IntersectionTag>>& data) noexcept { return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs); }
+inline bool is_canonical(const tyr::Data<Role<Family, runir::kr::dl::IntersectionTag>>& data) noexcept
+{
+    return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+}
 
 template<runir::kr::dl::FamilyTag Family>
-inline bool is_canonical(const tyr::Data<Role<Family, runir::kr::dl::UnionTag>>& data) noexcept { return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs); }
+inline bool is_canonical(const tyr::Data<Role<Family, runir::kr::dl::UnionTag>>& data) noexcept
+{
+    return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+}
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 void canonicalize(tyr::Data<Concept<Family, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 void canonicalize(tyr::Data<Role<Family, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 void canonicalize(tyr::Data<Boolean<Family, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 void canonicalize(tyr::Data<Numerical<Family, Tag>>&) noexcept
 {
     // Trivially canonical
@@ -106,19 +124,34 @@ void canonicalize(tyr::Data<NonTerminal<Family, Category>>&) noexcept
 }
 
 template<runir::kr::dl::FamilyTag Family>
-inline void canonicalize(tyr::Data<Concept<Family, runir::kr::dl::IntersectionTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
+inline void canonicalize(tyr::Data<Concept<Family, runir::kr::dl::IntersectionTag>>& data) noexcept
+{
+    runir::kr::dl::canonicalize_commutative_binary(data);
+}
 
 template<runir::kr::dl::FamilyTag Family>
-inline void canonicalize(tyr::Data<Concept<Family, runir::kr::dl::UnionTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
+inline void canonicalize(tyr::Data<Concept<Family, runir::kr::dl::UnionTag>>& data) noexcept
+{
+    runir::kr::dl::canonicalize_commutative_binary(data);
+}
 
 template<runir::kr::dl::FamilyTag Family>
-inline void canonicalize(tyr::Data<Concept<Family, runir::kr::dl::AgreementTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
+inline void canonicalize(tyr::Data<Concept<Family, runir::kr::dl::AgreementTag>>& data) noexcept
+{
+    runir::kr::dl::canonicalize_commutative_binary(data);
+}
 
 template<runir::kr::dl::FamilyTag Family>
-inline void canonicalize(tyr::Data<Role<Family, runir::kr::dl::IntersectionTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
+inline void canonicalize(tyr::Data<Role<Family, runir::kr::dl::IntersectionTag>>& data) noexcept
+{
+    runir::kr::dl::canonicalize_commutative_binary(data);
+}
 
 template<runir::kr::dl::FamilyTag Family>
-inline void canonicalize(tyr::Data<Role<Family, runir::kr::dl::UnionTag>>& data) noexcept { runir::kr::dl::canonicalize_commutative_binary(data); }
+inline void canonicalize(tyr::Data<Role<Family, runir::kr::dl::UnionTag>>& data) noexcept
+{
+    runir::kr::dl::canonicalize_commutative_binary(data);
+}
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 inline bool is_canonical(const tyr::Data<DerivationRule<Family, Category>>&) noexcept

@@ -11,8 +11,7 @@
 namespace runir::kr::ps::base::dl::parser
 {
 
-template<>
-ast::Sketch<runir::kr::BaseFamilyTag> parse_sketch_ast<runir::kr::BaseFamilyTag>(const std::string& description)
+ast::Sketch<runir::kr::BaseFamilyTag> parse_sketch_ast(const std::string& description)
 {
     namespace x3 = boost::spirit::x3;
 

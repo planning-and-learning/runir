@@ -9,7 +9,8 @@
 namespace tyr
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 struct Index<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>> : IndexMixin<Index<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>>>
 {
     using Base = IndexMixin<Index<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>>>;

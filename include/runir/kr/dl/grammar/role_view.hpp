@@ -11,7 +11,8 @@
 namespace tyr
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 class View<Index<runir::kr::dl::grammar::Role<Family, Tag>>, C>
 {
 private:

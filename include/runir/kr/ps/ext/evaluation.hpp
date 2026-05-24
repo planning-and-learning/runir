@@ -10,7 +10,7 @@ namespace runir::kr::ps::ext
 {
 
 template<typename FeatureTag, typename C, typename EvaluationContext>
-auto evaluate(tyr::View<tyr::Index<Feature<FeatureTag>>, C> feature, EvaluationContext& context)
+auto evaluate(tyr::View<tyr::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> feature, EvaluationContext& context)
 {
     return tyr::visit([&](auto child) { return evaluate(child, context); }, feature.get_variant());
 }

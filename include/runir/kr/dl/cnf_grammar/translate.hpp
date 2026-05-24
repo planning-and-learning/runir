@@ -2,12 +2,13 @@
 #define RUNIR_CNF_GRAMMAR_TRANSLATE_HPP_
 
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
-#include "runir/kr/dl/grammar/constructor_repository.hpp"
+#include "runir/kr/dl/grammar/base/repository.hpp"
 
 namespace runir::kr::dl::cnf_grammar
 {
 
-GrammarView translate(const runir::kr::dl::grammar::GrammarView& grammar, ConstructorRepository& repository);
+template<runir::kr::dl::FamilyTag Family>
+FamilyGrammarView<Family> translate(const runir::kr::dl::grammar::base::GrammarView& grammar, ConstructorRepositoryFor<Family>& repository);
 
 }
 

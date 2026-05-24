@@ -46,16 +46,6 @@ struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NonemptyT
     auto identifying_members() const noexcept { return std::tie(arg); }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> :
-    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
-                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>
-{
-    using Base = runir::kr::dl::semantics::ArgumentData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
-                                                        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>;
-    using Base::Base;
-};
-
 }  // namespace tyr
 
 #endif

@@ -9,7 +9,8 @@
 namespace tyr
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptConstructorTag Tag>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 struct Index<runir::kr::dl::Concept<Family, Tag>> : IndexMixin<Index<runir::kr::dl::Concept<Family, Tag>>>
 {
     using Base = IndexMixin<Index<runir::kr::dl::Concept<Family, Tag>>>;

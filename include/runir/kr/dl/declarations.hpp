@@ -196,42 +196,6 @@ struct DistanceTag
 {
 };
 
-struct RegisterTag
-{
-};
-
-template<CategoryTag Category>
-struct ArgumentTag
-{
-};
-
-inline constexpr size_t num_registers = 4;
-
-template<CategoryTag Category>
-    requires(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
-struct RegisterIdentifier : tyr::IndexMixin<RegisterIdentifier<Category>>
-{
-    using Base = tyr::IndexMixin<RegisterIdentifier<Category>>;
-
-    constexpr RegisterIdentifier() noexcept = default;
-    explicit RegisterIdentifier(tyr::uint_t value) : Base(check_bounds(value)) {}
-
-private:
-    static constexpr tyr::uint_t check_bounds(tyr::uint_t value)
-    {
-        if (value != Base::MAX && value >= num_registers)
-            throw std::out_of_range("Register identifier index is out of range.");
-        return value;
-    }
-};
-
-template<CategoryTag Category>
-struct ArgumentIdentifier : tyr::IndexMixin<ArgumentIdentifier<Category>>
-{
-    using Base = tyr::IndexMixin<ArgumentIdentifier<Category>>;
-    using Base::Base;
-};
-
 template<typename T>
 struct IsAtomicStateTag : std::false_type
 {
@@ -259,94 +223,185 @@ template<typename T>
 inline constexpr bool is_atomic_goal_tag_v = IsAtomicGoalTag<T>::value;
 
 template<typename T>
-concept ConceptConstructorTag =
+concept BaseConceptConstructorTag =
     std::same_as<T, BotTag> || std::same_as<T, TopTag> || is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, IntersectionTag>
     || std::same_as<T, UnionTag> || std::same_as<T, NegationTag> || std::same_as<T, ValueRestrictionTag> || std::same_as<T, ExistentialQuantificationTag>
     || std::same_as<T, AtLeastNumberRestrictionTag> || std::same_as<T, AtMostNumberRestrictionTag> || std::same_as<T, ExactNumberRestrictionTag>
     || std::same_as<T, QualifiedAtLeastNumberRestrictionTag> || std::same_as<T, QualifiedAtMostNumberRestrictionTag>
     || std::same_as<T, QualifiedExactNumberRestrictionTag> || std::same_as<T, RoleValueMapTag> || std::same_as<T, AgreementTag>
-    || std::same_as<T, RoleFillersTag> || std::same_as<T, OneOfTag> || std::same_as<T, NominalTag> || std::same_as<T, RegisterTag>
-    || std::same_as<T, ArgumentTag<ConceptTag>>;
+    || std::same_as<T, RoleFillersTag> || std::same_as<T, OneOfTag> || std::same_as<T, NominalTag>;
 
 template<typename T>
-concept RoleConstructorTag = std::same_as<T, UniversalTag> || is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, IntersectionTag>
-                             || std::same_as<T, UnionTag> || std::same_as<T, ComplementTag> || std::same_as<T, InverseTag> || std::same_as<T, CompositionTag>
-                             || std::same_as<T, TransitiveClosureTag> || std::same_as<T, ReflexiveTransitiveClosureTag> || std::same_as<T, RestrictionTag>
-                             || std::same_as<T, IdentityTag> || std::same_as<T, RegisterTag> || std::same_as<T, ArgumentTag<RoleTag>>;
+concept BaseRoleConstructorTag =
+    std::same_as<T, UniversalTag> || is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, IntersectionTag> || std::same_as<T, UnionTag>
+    || std::same_as<T, ComplementTag> || std::same_as<T, InverseTag> || std::same_as<T, CompositionTag> || std::same_as<T, TransitiveClosureTag>
+    || std::same_as<T, ReflexiveTransitiveClosureTag> || std::same_as<T, RestrictionTag> || std::same_as<T, IdentityTag>;
 
 template<typename T>
-concept BooleanConstructorTag = is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, NonemptyTag> || std::same_as<T, ArgumentTag<BooleanTag>>;
+concept BaseBooleanConstructorTag = is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, NonemptyTag>;
 
 template<typename T>
-concept NumericalConstructorTag = std::same_as<T, CountTag> || std::same_as<T, DistanceTag> || std::same_as<T, ArgumentTag<NumericalTag>>;
+concept BaseNumericalConstructorTag = std::same_as<T, CountTag> || std::same_as<T, DistanceTag>;
 
-using ConceptConstructorTags = tyr::TypeList<BotTag,
-                                             TopTag,
-                                             AtomicStateTag<tyr::formalism::StaticTag>,
-                                             AtomicStateTag<tyr::formalism::FluentTag>,
-                                             AtomicStateTag<tyr::formalism::DerivedTag>,
-                                             AtomicGoalTag<tyr::formalism::StaticTag>,
-                                             AtomicGoalTag<tyr::formalism::FluentTag>,
-                                             AtomicGoalTag<tyr::formalism::DerivedTag>,
-                                             IntersectionTag,
-                                             UnionTag,
-                                             NegationTag,
-                                             ValueRestrictionTag,
-                                             ExistentialQuantificationTag,
-                                             AtLeastNumberRestrictionTag,
-                                             AtMostNumberRestrictionTag,
-                                             ExactNumberRestrictionTag,
-                                             QualifiedAtLeastNumberRestrictionTag,
-                                             QualifiedAtMostNumberRestrictionTag,
-                                             QualifiedExactNumberRestrictionTag,
-                                             RoleValueMapTag,
-                                             AgreementTag,
-                                             RoleFillersTag,
-                                             OneOfTag,
-                                             NominalTag,
-                                             RegisterTag,
-                                             ArgumentTag<ConceptTag>>;
+using BaseConceptConstructorTags = tyr::TypeList<BotTag,
+                                                 TopTag,
+                                                 AtomicStateTag<tyr::formalism::StaticTag>,
+                                                 AtomicStateTag<tyr::formalism::FluentTag>,
+                                                 AtomicStateTag<tyr::formalism::DerivedTag>,
+                                                 AtomicGoalTag<tyr::formalism::StaticTag>,
+                                                 AtomicGoalTag<tyr::formalism::FluentTag>,
+                                                 AtomicGoalTag<tyr::formalism::DerivedTag>,
+                                                 IntersectionTag,
+                                                 UnionTag,
+                                                 NegationTag,
+                                                 ValueRestrictionTag,
+                                                 ExistentialQuantificationTag,
+                                                 AtLeastNumberRestrictionTag,
+                                                 AtMostNumberRestrictionTag,
+                                                 ExactNumberRestrictionTag,
+                                                 QualifiedAtLeastNumberRestrictionTag,
+                                                 QualifiedAtMostNumberRestrictionTag,
+                                                 QualifiedExactNumberRestrictionTag,
+                                                 RoleValueMapTag,
+                                                 AgreementTag,
+                                                 RoleFillersTag,
+                                                 OneOfTag,
+                                                 NominalTag>;
 
-using RoleConstructorTags = tyr::TypeList<UniversalTag,
-                                          AtomicStateTag<tyr::formalism::StaticTag>,
-                                          AtomicStateTag<tyr::formalism::FluentTag>,
-                                          AtomicStateTag<tyr::formalism::DerivedTag>,
-                                          AtomicGoalTag<tyr::formalism::StaticTag>,
-                                          AtomicGoalTag<tyr::formalism::FluentTag>,
-                                          AtomicGoalTag<tyr::formalism::DerivedTag>,
-                                          IntersectionTag,
-                                          UnionTag,
-                                          ComplementTag,
-                                          InverseTag,
-                                          CompositionTag,
-                                          TransitiveClosureTag,
-                                          ReflexiveTransitiveClosureTag,
-                                          RestrictionTag,
-                                          IdentityTag,
-                                          RegisterTag,
-                                          ArgumentTag<RoleTag>>;
+using BaseRoleConstructorTags = tyr::TypeList<UniversalTag,
+                                              AtomicStateTag<tyr::formalism::StaticTag>,
+                                              AtomicStateTag<tyr::formalism::FluentTag>,
+                                              AtomicStateTag<tyr::formalism::DerivedTag>,
+                                              AtomicGoalTag<tyr::formalism::StaticTag>,
+                                              AtomicGoalTag<tyr::formalism::FluentTag>,
+                                              AtomicGoalTag<tyr::formalism::DerivedTag>,
+                                              IntersectionTag,
+                                              UnionTag,
+                                              ComplementTag,
+                                              InverseTag,
+                                              CompositionTag,
+                                              TransitiveClosureTag,
+                                              ReflexiveTransitiveClosureTag,
+                                              RestrictionTag,
+                                              IdentityTag>;
 
-using BooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
-                                             AtomicStateTag<tyr::formalism::FluentTag>,
-                                             AtomicStateTag<tyr::formalism::DerivedTag>,
-                                             AtomicGoalTag<tyr::formalism::StaticTag>,
-                                             AtomicGoalTag<tyr::formalism::FluentTag>,
-                                             AtomicGoalTag<tyr::formalism::DerivedTag>,
-                                             NonemptyTag,
-                                             ArgumentTag<BooleanTag>>;
+using BaseBooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
+                                                 AtomicStateTag<tyr::formalism::FluentTag>,
+                                                 AtomicStateTag<tyr::formalism::DerivedTag>,
+                                                 AtomicGoalTag<tyr::formalism::StaticTag>,
+                                                 AtomicGoalTag<tyr::formalism::FluentTag>,
+                                                 AtomicGoalTag<tyr::formalism::DerivedTag>,
+                                                 NonemptyTag>;
 
-using NumericalConstructorTags = tyr::TypeList<CountTag, DistanceTag, ArgumentTag<NumericalTag>>;
+using BaseNumericalConstructorTags = tyr::TypeList<CountTag, DistanceTag>;
 
-template<FamilyTag Family, ConceptConstructorTag Tag>
+template<FamilyTag Family, typename T>
+struct IsFamilyConceptConstructorTag : std::false_type
+{
+};
+
+template<FamilyTag Family, typename T>
+struct IsFamilyRoleConstructorTag : std::false_type
+{
+};
+
+template<FamilyTag Family, typename T>
+struct IsFamilyBooleanConstructorTag : std::false_type
+{
+};
+
+template<FamilyTag Family, typename T>
+struct IsFamilyNumericalConstructorTag : std::false_type
+{
+};
+
+template<typename T>
+struct IsFamilyConceptConstructorTag<BaseFamilyTag, T> : std::bool_constant<BaseConceptConstructorTag<T>>
+{
+};
+
+template<typename T>
+struct IsFamilyRoleConstructorTag<BaseFamilyTag, T> : std::bool_constant<BaseRoleConstructorTag<T>>
+{
+};
+
+template<typename T>
+struct IsFamilyBooleanConstructorTag<BaseFamilyTag, T> : std::bool_constant<BaseBooleanConstructorTag<T>>
+{
+};
+
+template<typename T>
+struct IsFamilyNumericalConstructorTag<BaseFamilyTag, T> : std::bool_constant<BaseNumericalConstructorTag<T>>
+{
+};
+
+template<typename Family, typename T>
+concept FamilyConceptConstructorTag = FamilyTag<Family> && IsFamilyConceptConstructorTag<Family, T>::value;
+
+template<typename Family, typename T>
+concept FamilyRoleConstructorTag = FamilyTag<Family> && IsFamilyRoleConstructorTag<Family, T>::value;
+
+template<typename Family, typename T>
+concept FamilyBooleanConstructorTag = FamilyTag<Family> && IsFamilyBooleanConstructorTag<Family, T>::value;
+
+template<typename Family, typename T>
+concept FamilyNumericalConstructorTag = FamilyTag<Family> && IsFamilyNumericalConstructorTag<Family, T>::value;
+
+template<typename T>
+concept ConceptConstructorTag = BaseConceptConstructorTag<T>;
+
+template<typename T>
+concept RoleConstructorTag = BaseRoleConstructorTag<T>;
+
+template<typename T>
+concept BooleanConstructorTag = BaseBooleanConstructorTag<T>;
+
+template<typename T>
+concept NumericalConstructorTag = BaseNumericalConstructorTag<T>;
+
+using ConceptConstructorTags = BaseConceptConstructorTags;
+using RoleConstructorTags = BaseRoleConstructorTags;
+using BooleanConstructorTags = BaseBooleanConstructorTags;
+using NumericalConstructorTags = BaseNumericalConstructorTags;
+
+template<FamilyTag Family>
+struct ConstructorTagLists;
+
+template<>
+struct ConstructorTagLists<BaseFamilyTag>
+{
+    using Concept = BaseConceptConstructorTags;
+    using Role = BaseRoleConstructorTags;
+    using Boolean = BaseBooleanConstructorTags;
+    using Numerical = BaseNumericalConstructorTags;
+};
+
+template<FamilyTag Family>
+using FamilyConceptConstructorTags = typename ConstructorTagLists<Family>::Concept;
+
+template<FamilyTag Family>
+using FamilyRoleConstructorTags = typename ConstructorTagLists<Family>::Role;
+
+template<FamilyTag Family>
+using FamilyBooleanConstructorTags = typename ConstructorTagLists<Family>::Boolean;
+
+template<FamilyTag Family>
+using FamilyNumericalConstructorTags = typename ConstructorTagLists<Family>::Numerical;
+
+template<FamilyTag Family, typename Tag>
+    requires FamilyConceptConstructorTag<Family, Tag>
 struct Concept;
 
-template<FamilyTag Family, RoleConstructorTag Tag>
+template<FamilyTag Family, typename Tag>
+    requires FamilyRoleConstructorTag<Family, Tag>
 struct Role;
 
-template<FamilyTag Family, BooleanConstructorTag Tag>
+template<FamilyTag Family, typename Tag>
+    requires FamilyBooleanConstructorTag<Family, Tag>
 struct Boolean;
 
-template<FamilyTag Family, NumericalConstructorTag Tag>
+template<FamilyTag Family, typename Tag>
+    requires FamilyNumericalConstructorTag<Family, Tag>
 struct Numerical;
 
 template<FamilyTag Family, CategoryTag Category>
@@ -355,16 +410,20 @@ struct Constructor;
 template<FamilyTag Family>
 struct ConstructorFamily
 {
-    template<ConceptConstructorTag Tag>
+    template<typename Tag>
+        requires FamilyConceptConstructorTag<Family, Tag>
     using Concept = runir::kr::dl::Concept<Family, Tag>;
 
-    template<RoleConstructorTag Tag>
+    template<typename Tag>
+        requires FamilyRoleConstructorTag<Family, Tag>
     using Role = runir::kr::dl::Role<Family, Tag>;
 
-    template<BooleanConstructorTag Tag>
+    template<typename Tag>
+        requires FamilyBooleanConstructorTag<Family, Tag>
     using Boolean = runir::kr::dl::Boolean<Family, Tag>;
 
-    template<NumericalConstructorTag Tag>
+    template<typename Tag>
+        requires FamilyNumericalConstructorTag<Family, Tag>
     using Numerical = runir::kr::dl::Numerical<Family, Tag>;
 
     template<CategoryTag Category>

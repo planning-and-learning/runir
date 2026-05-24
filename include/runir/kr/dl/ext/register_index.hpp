@@ -2,6 +2,7 @@
 #define RUNIR_KR_DL_EXT_REGISTER_INDEX_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/ext/declarations.hpp"
 
 #include <tyr/common/index_mixins.hpp>
 #include <tyr/common/types.hpp>

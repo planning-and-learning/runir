@@ -10,7 +10,7 @@ namespace tyr
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::NumericalConstructorTag<Tag>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 struct Index<runir::kr::dl::Numerical<Family, Tag>> : IndexMixin<Index<runir::kr::dl::Numerical<Family, Tag>>>
 {
     using Base = IndexMixin<Index<runir::kr::dl::Numerical<Family, Tag>>>;

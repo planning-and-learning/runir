@@ -1,12 +1,12 @@
 #ifndef RUNIR_GRAMMAR_GRAMMAR_FACTORY_HPP_
 #define RUNIR_GRAMMAR_GRAMMAR_FACTORY_HPP_
 
-#include "runir/kr/dl/grammar/constructor_repository.hpp"
+#include "runir/kr/dl/grammar/base/repository.hpp"
 
 #include <string>
 #include <tyr/formalism/planning/domain_view.hpp>
 
-namespace runir::kr::dl::grammar
+namespace runir::kr::dl::grammar::base
 {
 
 enum class GrammarSpecification
@@ -26,6 +26,6 @@ public:
     static std::string create_france_et_al_aaai2021_description(tyr::formalism::planning::DomainView domain);
 };
 
-}  // namespace runir::kr::dl::grammar
+}  // namespace runir::kr::dl::grammar::base
 
 #endif

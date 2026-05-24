@@ -4,7 +4,7 @@ add_library(kr SHARED
     dl/grammar/grammar_factory.cpp
     dl/grammar/parser.cpp
     dl/grammar/parser/parser.cpp
-    dl/grammar/parser/parser_instantiations.cpp
+    dl/grammar/parser/base/grammar_parser_instantiations.cpp
     dl/grammar/parser/base/parser.cpp
     dl/grammar/parser/base/parser_instantiations.cpp
     dl/grammar/parser/ext/parser.cpp

@@ -12,7 +12,8 @@
 namespace tyr
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 class View<Index<runir::kr::dl::grammar::Boolean<Family, Tag>>, C>
 {
 private:

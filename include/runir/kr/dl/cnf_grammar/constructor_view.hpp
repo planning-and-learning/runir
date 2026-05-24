@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/cnf_grammar/boolean_view.hpp"
 #include "runir/kr/dl/cnf_grammar/concept_view.hpp"
-#include "runir/kr/dl/cnf_grammar/constructor_data.hpp"
+#include "runir/kr/dl/cnf_grammar/constructor_index.hpp"
 #include "runir/kr/dl/cnf_grammar/numerical_view.hpp"
 #include "runir/kr/dl/cnf_grammar/role_view.hpp"
 

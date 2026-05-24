@@ -128,26 +128,6 @@ struct Data<runir::kr::dl::cnf_grammar::Role<Family, runir::kr::dl::IdentityTag>
     using Base::Base;
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::cnf_grammar::Role<Family, runir::kr::dl::RegisterTag>> :
-    runir::kr::dl::cnf_grammar::RegisterData<runir::kr::dl::cnf_grammar::Role<Family, runir::kr::dl::RegisterTag>,
-                                             runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>
-{
-    using Base = runir::kr::dl::cnf_grammar::RegisterData<runir::kr::dl::cnf_grammar::Role<Family, runir::kr::dl::RegisterTag>,
-                                                          runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>;
-    using Base::Base;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::cnf_grammar::Role<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
-    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::cnf_grammar::Role<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
-                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>
-{
-    using Base = runir::kr::dl::semantics::ArgumentData<runir::kr::dl::cnf_grammar::Role<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
-                                                        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>;
-    using Base::Base;
-};
-
 }  // namespace tyr
 
 #endif

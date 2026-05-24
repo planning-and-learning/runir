@@ -10,7 +10,7 @@ namespace tyr
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
-    requires runir::kr::dl::BooleanConstructorTag<Tag>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 struct Index<runir::kr::dl::grammar::Boolean<Family, Tag>> : IndexMixin<Index<runir::kr::dl::grammar::Boolean<Family, Tag>>>
 {
     using Base = IndexMixin<Index<runir::kr::dl::grammar::Boolean<Family, Tag>>>;

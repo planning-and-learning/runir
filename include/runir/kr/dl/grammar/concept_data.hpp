@@ -1,7 +1,6 @@
 #ifndef RUNIR_GRAMMAR_CONCEPT_DATA_HPP_
 #define RUNIR_GRAMMAR_CONCEPT_DATA_HPP_
 
-#include "runir/kr/dl/ext/register_index.hpp"
 #include "runir/kr/dl/grammar/indices.hpp"
 #include "runir/kr/dl/semantics/data_helpers.hpp"
 
@@ -125,26 +124,6 @@ struct Data<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::NominalTag>> 
     runir::kr::dl::semantics::ObjectData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::NominalTag>>
 {
     using Base = runir::kr::dl::semantics::ObjectData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::NominalTag>>;
-    using Base::Base;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RegisterTag>> :
-    runir::kr::dl::semantics::RegisterData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RegisterTag>,
-                                           runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>
-{
-    using Base = runir::kr::dl::semantics::RegisterData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::RegisterTag>,
-                                                        runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>;
-    using Base::Base;
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>> :
-    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
-                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>
-{
-    using Base = runir::kr::dl::semantics::ArgumentData<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
-                                                        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>;
     using Base::Base;
 };
 

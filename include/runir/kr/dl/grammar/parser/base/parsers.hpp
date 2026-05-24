@@ -5,6 +5,7 @@
 #include "runir/kr/dl/grammar/parser/error_handler.hpp"
 
 #include <boost/spirit/home/x3.hpp>
+#include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
 
 namespace runir::kr::dl::grammar::parser::base
 {

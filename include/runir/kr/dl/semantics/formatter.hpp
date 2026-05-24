@@ -59,7 +59,7 @@ std::string denotation(tyr::View<tyr::Index<runir::kr::dl::semantics::Denotation
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
@@ -122,7 +122,8 @@ std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::FamilyConcep
         return fmt::format("@{} {}", runir::kr::dl::grammar::ast::ConceptNominal<Family>::keyword, quoted(view.get_object().get_name()));
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 std::string role(tyr::View<tyr::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
@@ -154,7 +155,8 @@ std::string role(tyr::View<tyr::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C
         return fmt::format("@{} {}", runir::kr::dl::grammar::ast::RoleIdentity<Family>::keyword, view.get_arg());
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C> view)
 {
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
@@ -171,7 +173,8 @@ std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::FamilyBoolea
         return fmt::format("@{} {}", runir::kr::dl::grammar::ast::BooleanNonempty<Family>::keyword, view.get_arg());
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 std::string numerical(tyr::View<tyr::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
@@ -186,13 +189,16 @@ namespace tyr
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 class View<Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C>;
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 class View<Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>;
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 class View<Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C>;
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 class View<Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C>;
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
 class View<Index<runir::kr::dl::FamilyConstructor<Family, Category>>, C>;
@@ -208,7 +214,7 @@ struct fmt::range_format_kind<tyr::View<tyr::Index<runir::kr::dl::semantics::Den
 };
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::ConceptConstructorTag<Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C>> : fmt::formatter<std::string_view>
 {
     using View = tyr::View<tyr::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C>;
@@ -218,14 +224,16 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::FamilyConcept<Family, 
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::RoleConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>> : fmt::formatter<std::string_view>
 {
     using View = tyr::View<tyr::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::format::role(view), ctx); }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::BooleanConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C>> : fmt::formatter<std::string_view>
 {
     using View = tyr::View<tyr::Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C>;
@@ -235,7 +243,8 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::FamilyBoolean<Family, 
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 struct fmt::formatter<tyr::View<tyr::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C>> : fmt::formatter<std::string_view>
 {
     using View = tyr::View<tyr::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C>;

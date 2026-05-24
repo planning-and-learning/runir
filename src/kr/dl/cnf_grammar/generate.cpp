@@ -1,6 +1,8 @@
-#include "runir/kr/dl/cnf_grammar/generate.hpp"
+#include "runir/kr/dl/cnf_grammar/base/generate.hpp"
 
 #include "runir/kr/dl/canonicalization.hpp"
+#include "runir/kr/dl/cnf_grammar/generate.hpp"
+#include "runir/kr/dl/semantics/base/evaluation_context.hpp"
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
@@ -876,6 +878,15 @@ public:
     }
 };
 
+template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
+GenerateResultsFor<Family> generate_impl(FamilyGrammarView<Family> grammar,
+                                         const std::vector<tyr::planning::StateView<Kind>>& states,
+                                         runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,
+                                         const GenerateOptions& options)
+{
+    return Generator<Family, Kind>(grammar, states, output_repository, options).run();
+}
+
 }  // namespace
 
 template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
@@ -884,8 +895,11 @@ GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
                                     runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,
                                     const GenerateOptions& options)
 {
-    return Generator<Family, Kind>(grammar, states, output_repository, options).run();
+    return generate_impl<Family, Kind>(grammar, states, output_repository, options);
 }
+
+namespace base
+{
 
 template<tyr::planning::TaskKind Kind>
 GenerateResults generate(GrammarView grammar,
@@ -893,8 +907,10 @@ GenerateResults generate(GrammarView grammar,
                          runir::kr::dl::ConstructorRepository& output_repository,
                          const GenerateOptions& options)
 {
-    return generate<runir::kr::dl::BaseFamilyTag, Kind>(grammar, states, output_repository, options);
+    return runir::kr::dl::cnf_grammar::generate<runir::kr::dl::BaseFamilyTag, Kind>(grammar, states, output_repository, options);
 }
+
+}  // namespace base
 
 template GenerateResultsFor<runir::kr::dl::BaseFamilyTag>
 generate<runir::kr::dl::BaseFamilyTag, tyr::planning::GroundTag>(FamilyGrammarView<runir::kr::dl::BaseFamilyTag>,
@@ -908,14 +924,14 @@ generate<runir::kr::dl::BaseFamilyTag, tyr::planning::LiftedTag>(FamilyGrammarVi
                                                                  runir::kr::dl::ConstructorRepositoryFor<runir::kr::dl::BaseFamilyTag>&,
                                                                  const GenerateOptions&);
 
-template GenerateResults generate<tyr::planning::GroundTag>(GrammarView,
-                                                            const std::vector<tyr::planning::StateView<tyr::planning::GroundTag>>&,
-                                                            runir::kr::dl::ConstructorRepository&,
-                                                            const GenerateOptions&);
+template base::GenerateResults base::generate<tyr::planning::GroundTag>(base::GrammarView,
+                                                                        const std::vector<tyr::planning::StateView<tyr::planning::GroundTag>>&,
+                                                                        runir::kr::dl::ConstructorRepository&,
+                                                                        const GenerateOptions&);
 
-template GenerateResults generate<tyr::planning::LiftedTag>(GrammarView,
-                                                            const std::vector<tyr::planning::StateView<tyr::planning::LiftedTag>>&,
-                                                            runir::kr::dl::ConstructorRepository&,
-                                                            const GenerateOptions&);
+template base::GenerateResults base::generate<tyr::planning::LiftedTag>(base::GrammarView,
+                                                                        const std::vector<tyr::planning::StateView<tyr::planning::LiftedTag>>&,
+                                                                        runir::kr::dl::ConstructorRepository&,
+                                                                        const GenerateOptions&);
 
 }

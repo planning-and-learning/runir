@@ -13,16 +13,6 @@ namespace tyr
 {
 
 template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Numerical<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
-    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Numerical<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
-                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>
-{
-    using Base = runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Numerical<Family, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
-                                                        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>;
-    using Base::Base;
-};
-
-template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Numerical<Family, runir::kr::dl::CountTag>>
 {
     using ConstructorVariant = ::cista::offset::variant<Index<DlConcept<Family>>, Index<DlRole<Family>>>;

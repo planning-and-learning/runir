@@ -1,7 +1,8 @@
 #ifndef RUNIR_GRAMMAR_CONSTRUCTOR_OR_NON_TERMINAL_DATA_HPP_
 #define RUNIR_GRAMMAR_CONSTRUCTOR_OR_NON_TERMINAL_DATA_HPP_
 
-#include "runir/kr/dl/grammar/constructor_data.hpp"
+#include "runir/kr/dl/grammar/constructor_index.hpp"
+#include "runir/kr/dl/grammar/non_terminal_index.hpp"
 
 #include <cista/containers/variant.h>
 #include <tuple>
@@ -14,8 +15,8 @@ namespace tyr
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct Data<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::dl::grammar::Constructor<Family, Category>>,
-                                             Index<runir::kr::dl::grammar::NonTerminal<Family, Category>>>;
+    using Variant =
+        ::cista::offset::variant<Index<runir::kr::dl::grammar::Constructor<Family, Category>>, Index<runir::kr::dl::grammar::NonTerminal<Family, Category>>>;
     Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>> index;
     Variant value;
     Data() = default;

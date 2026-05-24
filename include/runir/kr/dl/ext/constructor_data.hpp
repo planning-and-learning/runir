@@ -2,6 +2,7 @@
 #define RUNIR_KR_DL_EXT_CONSTRUCTOR_DATA_HPP_
 
 #include "runir/kr/dl/concept_data.hpp"
+#include "runir/kr/dl/ext/declarations.hpp"
 #include "runir/kr/dl/numerical_data.hpp"
 #include "runir/kr/dl/role_data.hpp"
 

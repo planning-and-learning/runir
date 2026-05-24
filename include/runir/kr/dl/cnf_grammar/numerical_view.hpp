@@ -11,7 +11,8 @@
 namespace tyr
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalConstructorTag Tag, typename C>
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 class View<Index<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>>, C>
 {
 private:
