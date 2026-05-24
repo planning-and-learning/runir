@@ -25,10 +25,45 @@
 namespace runir::kr::dl::semantics
 {
 
+template<CategoryTag Category, FamilyTag Family, tyr::planning::TaskKind Kind>
+using EvaluationBuilderT = decltype(std::declval<EvaluationContext<Family, Kind>&>().get_builder().template get_builder<Denotation<Category>>());
+
 template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
 auto evaluate_impl(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
-                   EvaluationWorkspace& workspace);
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<Category, Family, Kind>;
+
+template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
+    requires ConceptConstructorTag<Tag>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<ConceptTag, Family, Kind>;
+
+template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
+    requires RoleConstructorTag<Tag>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<RoleTag, Family, Kind>;
+
+template<FamilyTag Family, BooleanConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<BooleanTag, Family, Kind>;
+
+template<FamilyTag Family, NumericalConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<NumericalTag, Family, Kind>;
+
+template<tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<ExtFamilyTag, RegisterTag>>, C> constructor,
+                   EvaluationContext<ExtFamilyTag, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<ConceptTag, ExtFamilyTag, Kind>;
+
+template<tyr::planning::TaskKind Kind, typename C>
+auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<ExtFamilyTag, RegisterTag>>, C> constructor,
+                   EvaluationContext<ExtFamilyTag, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<RoleTag, ExtFamilyTag, Kind>;
 
 namespace detail
 {
@@ -65,16 +100,6 @@ auto row(const RoleBuilderPtr& role, tyr::Index<tyr::formalism::Object> object) 
 {
     return role->get_row_bitset(object);
 }
-
-template<tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<ExtFamilyTag, RegisterTag>>, C> constructor,
-                   EvaluationContext<ExtFamilyTag, Kind>& context,
-                   EvaluationWorkspace& workspace) -> decltype(detail::make_concept_builder(context));
-
-template<tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<ExtFamilyTag, RegisterTag>>, C> constructor,
-                   EvaluationContext<ExtFamilyTag, Kind>& context,
-                   EvaluationWorkspace& workspace) -> decltype(detail::make_role_builder(context));
 
 template<typename RoleBuilderPtr>
 bool role_any(const RoleBuilderPtr& role) noexcept
@@ -344,7 +369,9 @@ auto evaluate_count(tyr::View<tyr::Index<FamilyConstructor<Family, RoleTag>>, C>
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
     requires ConceptConstructorTag<Tag>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
+auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<ConceptTag, Family, Kind>
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
@@ -531,7 +558,9 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> construc
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
     requires RoleConstructorTag<Tag>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
+auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<RoleTag, Family, Kind>
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
@@ -660,7 +689,9 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor
 }
 
 template<FamilyTag Family, BooleanConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
+auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<BooleanTag, Family, Kind>
 {
     if constexpr (is_atomic_state_tag_v<Tag>)
     {
@@ -678,7 +709,9 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, C> construc
 }
 
 template<FamilyTag Family, NumericalConstructorTag Tag, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, C> constructor, EvaluationContext<Family, Kind>& context, EvaluationWorkspace& workspace)
+auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<NumericalTag, Family, Kind>
 {
     uint_t result_value = 0;
 
@@ -755,7 +788,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, C> constr
 template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
 auto evaluate_impl(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
-                   EvaluationWorkspace& workspace)
+                   EvaluationWorkspace& workspace) -> EvaluationBuilderT<Category, Family, Kind>
 {
     return constructor.get_variant().apply([&](auto child) { return evaluate_impl(child, context, workspace); });
 }

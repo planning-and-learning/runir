@@ -11,7 +11,7 @@ namespace runir::kr::dl::semantics
 template<tyr::planning::TaskKind Kind, typename C>
 auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<ExtFamilyTag, RegisterTag>>, C> constructor,
                    EvaluationContext<ExtFamilyTag, Kind>& context,
-                   EvaluationWorkspace&) -> decltype(detail::make_concept_builder(context))
+                   EvaluationWorkspace&) -> EvaluationBuilderT<ConceptTag, ExtFamilyTag, Kind>
 {
     auto result = detail::make_concept_builder(context);
     auto result_bitset = result->get_bitset();
@@ -26,7 +26,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<ExtFamilyTag, RegisterTag>
 template<tyr::planning::TaskKind Kind, typename C>
 auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<ExtFamilyTag, RegisterTag>>, C> constructor,
                    EvaluationContext<ExtFamilyTag, Kind>& context,
-                   EvaluationWorkspace&) -> decltype(detail::make_role_builder(context))
+                   EvaluationWorkspace&) -> EvaluationBuilderT<RoleTag, ExtFamilyTag, Kind>
 {
     auto result = detail::make_role_builder(context);
 
