@@ -32,7 +32,7 @@ public:
     template<typename EvaluationContext>
     auto evaluate(EvaluationContext& context) const
     {
-        return get_variant().apply([&](auto feature) { return feature.evaluate(context); });
+        return tyr::visit([&](auto feature) { return feature.evaluate(context); }, get_variant());
     }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }

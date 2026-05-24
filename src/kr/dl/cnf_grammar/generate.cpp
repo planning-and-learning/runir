@@ -309,7 +309,7 @@ private:
     template<runir::kr::dl::CategoryTag Category>
     bool generate_rule(DerivationRuleView<Category> rule)
     {
-        return rule.get_rhs().get_variant().apply([&](auto constructor) { return generate_constructor(rule.get_lhs(), constructor); });
+        return tyr::visit([&](auto constructor) { return generate_constructor(rule.get_lhs(), constructor); }, rule.get_rhs().get_variant());
     }
 
     template<runir::kr::dl::CategoryTag Category>
@@ -327,8 +327,9 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<T>>> data(constructor.get_data().predicate,
-                                                                                                             constructor.get_data().polarity);
+                                    tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<T>>> data(
+                                        constructor.get_data().predicate,
+                                        constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                 });
     }
@@ -339,8 +340,9 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<T>>> data(constructor.get_data().predicate,
-                                                                                                            constructor.get_data().polarity);
+                                    tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<T>>> data(
+                                        constructor.get_data().predicate,
+                                        constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                 });
     }
@@ -370,7 +372,8 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NominalTag>> data(constructor.get_data().object);
+                                    tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NominalTag>> data(
+                                        constructor.get_data().object);
                                     return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                 });
     }
@@ -420,7 +423,8 @@ private:
                                false,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ValueRestrictionTag>> data(child_lhs, child_rhs);
+                                   tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ValueRestrictionTag>> data(child_lhs,
+                                                                                                                                            child_rhs);
                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                });
     }
@@ -433,7 +437,8 @@ private:
                                false,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ExistentialQuantificationTag>> data(child_lhs, child_rhs);
+                                   tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ExistentialQuantificationTag>> data(child_lhs,
+                                                                                                                                                     child_rhs);
                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                });
     }
@@ -522,13 +527,14 @@ private:
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::RoleFillersTag> constructor)
     {
-        return generate_unary(lhs,
-                              constructor.get_role(),
-                              [&](auto role)
-                              {
-                                  tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleFillersTag>> data(role, constructor.get_data().objects);
-                                  return intern_wrapped<runir::kr::dl::ConceptTag>(data);
-                              });
+        return generate_unary(
+            lhs,
+            constructor.get_role(),
+            [&](auto role)
+            {
+                tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleFillersTag>> data(role, constructor.get_data().objects);
+                return intern_wrapped<runir::kr::dl::ConceptTag>(data);
+            });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::ConceptTag> lhs, ConceptView<runir::kr::dl::OneOfTag> constructor)
@@ -536,7 +542,8 @@ private:
         return generate_nullary(lhs,
                                 [&]()
                                 {
-                                    tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::OneOfTag>> data(constructor.get_data().objects);
+                                    tyr::Data<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::OneOfTag>> data(
+                                        constructor.get_data().objects);
                                     return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                 });
     }
@@ -547,8 +554,9 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<T>>> data(constructor.get_data().predicate,
-                                                                                                          constructor.get_data().polarity);
+                                    tyr::Data<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<T>>> data(
+                                        constructor.get_data().predicate,
+                                        constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::RoleTag>(data);
                                 });
     }
@@ -559,8 +567,9 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<T>>> data(constructor.get_data().predicate,
-                                                                                                         constructor.get_data().polarity);
+                                    tyr::Data<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<T>>> data(
+                                        constructor.get_data().predicate,
+                                        constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::RoleTag>(data);
                                 });
     }
@@ -688,8 +697,9 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<T>>> data(constructor.get_data().predicate,
-                                                                                                             constructor.get_data().polarity);
+                                    tyr::Data<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<T>>> data(
+                                        constructor.get_data().predicate,
+                                        constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::BooleanTag>(data);
                                 });
     }
@@ -700,15 +710,16 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<T>>> data(constructor.get_data().predicate,
-                                                                                                            constructor.get_data().polarity);
+                                    tyr::Data<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<T>>> data(
+                                        constructor.get_data().predicate,
+                                        constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::BooleanTag>(data);
                                 });
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::BooleanTag> lhs, BooleanView<runir::kr::dl::NonemptyTag> constructor)
     {
-        return constructor.get_arg().apply(
+        return tyr::visit(
             [&](auto arg)
             {
                 using ArgView = std::decay_t<decltype(arg)>;
@@ -732,12 +743,13 @@ private:
                                               return intern_wrapped<runir::kr::dl::BooleanTag>(data);
                                           });
                 }
-            });
+            },
+            constructor.get_arg());
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::NumericalTag> lhs, NumericalView<runir::kr::dl::CountTag> constructor)
     {
-        return constructor.get_arg().apply(
+        return tyr::visit(
             [&](auto arg)
             {
                 using ArgView = std::decay_t<decltype(arg)>;
@@ -761,20 +773,22 @@ private:
                                               return intern_wrapped<runir::kr::dl::NumericalTag>(data);
                                           });
                 }
-            });
+            },
+            constructor.get_arg());
     }
 
     bool generate_constructor(NonTerminalView<runir::kr::dl::NumericalTag> lhs, NumericalView<runir::kr::dl::DistanceTag> constructor)
     {
-        return generate_ternary(lhs,
-                                constructor.get_lhs(),
-                                constructor.get_mid(),
-                                constructor.get_rhs(),
-                                [&](auto child_lhs, auto child_mid, auto child_rhs)
-                                {
-                                    tyr::Data<runir::kr::dl::Numerical<runir::kr::dl::BaseFamilyTag, runir::kr::dl::DistanceTag>> data(child_lhs, child_mid, child_rhs);
-                                    return intern_wrapped<runir::kr::dl::NumericalTag>(data);
-                                });
+        return generate_ternary(
+            lhs,
+            constructor.get_lhs(),
+            constructor.get_mid(),
+            constructor.get_rhs(),
+            [&](auto child_lhs, auto child_mid, auto child_rhs)
+            {
+                tyr::Data<runir::kr::dl::Numerical<runir::kr::dl::BaseFamilyTag, runir::kr::dl::DistanceTag>> data(child_lhs, child_mid, child_rhs);
+                return intern_wrapped<runir::kr::dl::NumericalTag>(data);
+            });
     }
 
     template<runir::kr::dl::CategoryTag Category>

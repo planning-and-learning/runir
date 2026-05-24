@@ -156,7 +156,7 @@ std::string constructor_body(tyr::View<tyr::Index<Numerical<Family, Tag>>, C> vi
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
 std::string constructor_body(tyr::View<tyr::Index<Constructor<Family, Category>>, C> view)
 {
-    return view.get_variant().apply([](auto arg) { return constructor_body(arg); });
+    return tyr::visit([](auto arg) { return constructor_body(arg); }, view.get_variant());
 }
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
@@ -165,14 +165,15 @@ std::string rule(tyr::View<tyr::Index<DerivationRule<Family, Category>>, C> view
     auto rhs = std::vector<std::string> {};
     for (auto symbol : view.get_rhs())
     {
-        rhs.push_back(symbol.get_variant().apply(
+        rhs.push_back(tyr::visit(
             [](auto arg)
             {
                 if constexpr (std::same_as<std::decay_t<decltype(arg)>, tyr::View<tyr::Index<Constructor<Family, Category>>, C>>)
                     return constructor_body(arg);
                 else
                     return fmt::format("{}", arg);
-            }));
+            },
+            symbol.get_variant()));
     }
 
     return fmt::format("({} ({}))", view.get_lhs(), fmt::join(rhs, " or "));

@@ -77,15 +77,17 @@ void collect_feature(FeatureNames& names,
 template<typename C>
 void collect_features(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C> condition)
 {
-    condition.get_variant().apply([&](auto concrete_variant)
-                                  { concrete_variant.get_variant().apply([&](auto concrete_condition) { collect_feature(names, concrete_condition); }); });
+    tyr::visit([&](auto concrete_variant)
+               { tyr::visit([&](auto concrete_condition) { collect_feature(names, concrete_condition); }, concrete_variant.get_variant()); },
+               condition.get_variant());
 }
 
 template<typename C>
 void collect_features(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C> effect)
 {
-    effect.get_variant().apply([&](auto concrete_variant)
-                               { concrete_variant.get_variant().apply([&](auto concrete_effect) { collect_feature(names, concrete_effect); }); });
+    tyr::visit([&](auto concrete_variant)
+               { tyr::visit([&](auto concrete_effect) { collect_feature(names, concrete_effect); }, concrete_variant.get_variant()); },
+               effect.get_variant());
 }
 
 template<typename C>
@@ -105,7 +107,7 @@ FeatureNames collect_features(tyr::View<tyr::Index<runir::kr::ps::Sketch<runir::
 template<typename FeatureTag, typename C>
 std::string feature(tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C> view, std::string_view name)
 {
-    return view.get_variant().apply([&](auto concrete_feature) { return runir::kr::ps::base::dl::format::feature(concrete_feature, name); });
+    return tyr::visit([&](auto concrete_feature) { return runir::kr::ps::base::dl::format::feature(concrete_feature, name); }, view.get_variant());
 }
 
 template<typename FeatureTag, typename C>
@@ -141,16 +143,17 @@ std::string effect(FeatureNames& names,
 template<typename C>
 std::string condition(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C> view)
 {
-    return view.get_variant().apply(
-        [&](auto concrete_variant)
-        { return concrete_variant.get_variant().apply([&](auto concrete_condition) { return condition(names, concrete_condition); }); });
+    return tyr::visit([&](auto concrete_variant)
+                      { return tyr::visit([&](auto concrete_condition) { return condition(names, concrete_condition); }, concrete_variant.get_variant()); },
+                      view.get_variant());
 }
 
 template<typename C>
 std::string effect(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C> view)
 {
-    return view.get_variant().apply([&](auto concrete_variant)
-                                    { return concrete_variant.get_variant().apply([&](auto concrete_effect) { return effect(names, concrete_effect); }); });
+    return tyr::visit([&](auto concrete_variant)
+                      { return tyr::visit([&](auto concrete_effect) { return effect(names, concrete_effect); }, concrete_variant.get_variant()); },
+                      view.get_variant());
 }
 
 template<typename C>
@@ -271,7 +274,8 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteConditionVaria
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::base::format::FeatureNames {};
-        const auto text = view.get_variant().apply([&](auto concrete_condition) { return runir::kr::ps::base::format::condition(names, concrete_condition); });
+        const auto text =
+            tyr::visit([&](auto concrete_condition) { return runir::kr::ps::base::format::condition(names, concrete_condition); }, view.get_variant());
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -294,7 +298,7 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteEffectVariant<
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::base::format::FeatureNames {};
-        const auto text = view.get_variant().apply([&](auto concrete_effect) { return runir::kr::ps::base::format::effect(names, concrete_effect); });
+        const auto text = tyr::visit([&](auto concrete_effect) { return runir::kr::ps::base::format::effect(names, concrete_effect); }, view.get_variant());
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };

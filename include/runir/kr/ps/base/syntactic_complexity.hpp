@@ -14,7 +14,7 @@ namespace runir::kr::ps::base
 template<typename FeatureTag, typename C>
 std::size_t syntactic_complexity(tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C> view)
 {
-    return view.get_variant().apply([](auto feature) { return runir::kr::ps::base::dl::syntactic_complexity(feature); });
+    return tyr::visit([](auto feature) { return runir::kr::ps::base::dl::syntactic_complexity(feature); }, view.get_variant());
 }
 
 template<typename C>

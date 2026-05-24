@@ -48,7 +48,7 @@ std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Constructor<run
 template<typename View>
 std::string constructor_variant(View view)
 {
-    return view.apply([](auto arg) { return constructor(arg); });
+    return tyr::visit([](auto arg) { return constructor(arg); }, view);
 }
 
 template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
@@ -250,7 +250,7 @@ std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Numerical<runir
 template<runir::kr::dl::CategoryTag Category, typename C>
 std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, Category>>, C> view)
 {
-    return view.get_variant().apply([](auto arg) { return constructor_body(arg); });
+    return tyr::visit([](auto arg) { return constructor_body(arg); }, view.get_variant());
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>

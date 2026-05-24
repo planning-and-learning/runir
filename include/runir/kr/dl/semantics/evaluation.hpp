@@ -703,7 +703,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, C> construc
     }
     else if constexpr (std::same_as<Tag, NonemptyTag>)
     {
-        const auto result_value = constructor.get_arg().apply([&](auto arg) { return detail::evaluate_nonempty(arg, context, workspace); });
+        const auto result_value = tyr::visit([&](auto arg) { return detail::evaluate_nonempty(arg, context, workspace); }, constructor.get_arg());
         return context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
     }
 }
@@ -717,7 +717,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, C> constr
 
     if constexpr (std::same_as<Tag, CountTag>)
     {
-        result_value = constructor.get_arg().apply([&](auto arg) { return detail::evaluate_count(arg, context, workspace); });
+        result_value = tyr::visit([&](auto arg) { return detail::evaluate_count(arg, context, workspace); }, constructor.get_arg());
     }
     else if constexpr (std::same_as<Tag, DistanceTag>)
     {
@@ -790,7 +790,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C>
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<Category, Family, Kind>
 {
-    return constructor.get_variant().apply([&](auto child) { return evaluate_impl(child, context, workspace); });
+    return tyr::visit([&](auto child) { return evaluate_impl(child, context, workspace); }, constructor.get_variant());
 }
 
 template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>

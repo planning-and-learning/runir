@@ -183,7 +183,7 @@ std::string constructor_body(tyr::View<tyr::Index<Numerical<Family, Tag>>, C> vi
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
 std::string constructor_body(tyr::View<tyr::Index<Constructor<Family, Category>>, C> view)
 {
-    return view.get_variant().apply([](auto arg) { return constructor_body(arg); });
+    return tyr::visit([](auto arg) { return constructor_body(arg); }, view.get_variant());
 }
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>

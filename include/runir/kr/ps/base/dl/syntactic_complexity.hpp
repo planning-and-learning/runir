@@ -61,26 +61,26 @@ template<typename C>
 void collect_features(FeatureSyntacticComplexityContext& context,
                       tyr::View<tyr::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>, C> condition)
 {
-    condition.get_variant().apply([&](auto concrete_condition) { collect_feature(context, concrete_condition); });
+    tyr::visit([&](auto concrete_condition) { collect_feature(context, concrete_condition); }, condition.get_variant());
 }
 
 template<typename C>
 void collect_features(FeatureSyntacticComplexityContext& context,
                       tyr::View<tyr::Index<runir::kr::ps::ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>, C> effect)
 {
-    effect.get_variant().apply([&](auto concrete_effect) { collect_feature(context, concrete_effect); });
+    tyr::visit([&](auto concrete_effect) { collect_feature(context, concrete_effect); }, effect.get_variant());
 }
 
 template<typename C>
 void collect_features(FeatureSyntacticComplexityContext& context, tyr::View<tyr::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C> condition)
 {
-    condition.get_variant().apply([&](auto concrete_condition) { collect_features(context, concrete_condition); });
+    tyr::visit([&](auto concrete_condition) { collect_features(context, concrete_condition); }, condition.get_variant());
 }
 
 template<typename C>
 void collect_features(FeatureSyntacticComplexityContext& context, tyr::View<tyr::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C> effect)
 {
-    effect.get_variant().apply([&](auto concrete_effect) { collect_features(context, concrete_effect); });
+    tyr::visit([&](auto concrete_effect) { collect_features(context, concrete_effect); }, effect.get_variant());
 }
 
 template<typename C>
@@ -112,13 +112,13 @@ std::size_t syntactic_complexity(const FeatureSyntacticComplexityContext& featur
     for (auto feature : features.booleans)
     {
         const auto view = tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::base::dl::BooleanFeature>>, C>(feature, context);
-        result += view.get_variant().apply([](auto concrete_feature) { return syntactic_complexity(concrete_feature); });
+        result += tyr::visit([](auto concrete_feature) { return syntactic_complexity(concrete_feature); }, view.get_variant());
     }
     for (auto feature : features.numericals)
     {
         const auto view =
             tyr::View<tyr::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::base::dl::NumericalFeature>>, C>(feature, context);
-        result += view.get_variant().apply([](auto concrete_feature) { return syntactic_complexity(concrete_feature); });
+        result += tyr::visit([](auto concrete_feature) { return syntactic_complexity(concrete_feature); }, view.get_variant());
     }
     return result;
 }
