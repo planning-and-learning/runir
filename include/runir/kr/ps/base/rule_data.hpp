@@ -1,9 +1,10 @@
-#ifndef RUNIR_KR_PS_RULE_DATA_HPP_
-#define RUNIR_KR_PS_RULE_DATA_HPP_
+#ifndef RUNIR_KR_PS_BASE_RULE_DATA_HPP_
+#define RUNIR_KR_PS_BASE_RULE_DATA_HPP_
 
+#include "runir/kr/ps/base/declarations.hpp"
+#include "runir/kr/ps/base/rule_index.hpp"
 #include "runir/kr/ps/condition_index.hpp"
 #include "runir/kr/ps/effect_index.hpp"
-#include "runir/kr/ps/rule_index.hpp"
 
 #include <tuple>
 #include <tyr/common/types.hpp>
@@ -13,12 +14,12 @@
 namespace tyr
 {
 
-template<runir::kr::FamilyTag Family>
-struct Data<runir::kr::ps::Rule<Family>>
+template<>
+struct Data<runir::kr::ps::base::Rule>
 {
-    Index<runir::kr::ps::Rule<Family>> index;
-    IndexList<runir::kr::ps::ConditionVariant<Family>> conditions;
-    IndexList<runir::kr::ps::EffectVariant<Family>> effects;
+    Index<runir::kr::ps::base::Rule> index;
+    IndexList<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>> conditions;
+    IndexList<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>> effects;
 
     void clear() noexcept
     {

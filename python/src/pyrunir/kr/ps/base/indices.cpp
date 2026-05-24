@@ -10,8 +10,8 @@ void bind_indices(nb::module_& m)
 {
     tyr::bind_index<tyr::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>>(m, "ConditionVariantIndex");
     tyr::bind_index<tyr::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>>(m, "EffectVariantIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>>(m, "RuleIndex");
-    tyr::bind_index<tyr::Index<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>>(m, "SketchIndex");
+    tyr::bind_index<tyr::Index<runir::kr::ps::base::Rule>>(m, "RuleIndex");
+    tyr::bind_index<tyr::Index<runir::kr::ps::base::Sketch>>(m, "SketchIndex");
 }
 
 }  // namespace runir::kr::ps::base

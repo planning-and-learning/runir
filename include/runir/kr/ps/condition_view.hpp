@@ -27,12 +27,6 @@ public:
     auto get_index() const noexcept { return m_handle; }
     auto get_variant() const noexcept { return make_view(get_data().value, *m_context); }
 
-    template<typename EvaluationContext>
-    bool is_compatible_with(EvaluationContext& context) const
-    {
-        return tyr::visit([&](auto condition) { return condition.is_compatible_with(context); }, get_variant());
-    }
-
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
@@ -52,13 +46,6 @@ public:
 
     auto get_index() const noexcept { return m_handle; }
     auto get_variant() const noexcept { return make_view(get_data().value, *m_context); }
-
-    template<typename EvaluationContext>
-    bool is_compatible_with(EvaluationContext& context) const
-        requires runir::kr::ps::IsEvaluationContext<typename EvaluationContext::Family, LanguageTag, EvaluationContext>
-    {
-        return tyr::visit([&](auto condition) { return condition.is_compatible_with(context); }, get_variant());
-    }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };

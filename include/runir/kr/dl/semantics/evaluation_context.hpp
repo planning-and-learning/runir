@@ -36,17 +36,7 @@ public:
 };
 
 template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
-class EvaluationContext : public BaseEvaluationContext<EvaluationContext<Family, Kind>, Kind>
-{
-private:
-    using Base = BaseEvaluationContext<EvaluationContext<Family, Kind>, Kind>;
-
-public:
-    EvaluationContext(tyr::planning::StateView<Kind> state, Builder& builder, DenotationRepository& denotation_repository) noexcept :
-        Base(std::move(state), builder, denotation_repository)
-    {
-    }
-};
+class EvaluationContext;
 
 template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
 const auto& get_repository(const EvaluationContext<Family, Kind>& context) noexcept

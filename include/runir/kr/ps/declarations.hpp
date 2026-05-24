@@ -53,20 +53,6 @@ struct ConcreteEffectVariant;
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
 struct ConcreteEffect;
 
-// Rule
-
-template<FamilyTag Family>
-struct Rule
-{
-};
-
-// Sketch
-
-template<FamilyTag Family>
-struct Sketch
-{
-};
-
 }  // namespace runir::kr::ps
 
 #endif

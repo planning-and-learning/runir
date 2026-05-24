@@ -1,7 +1,7 @@
 #include "runir/kr/ps/base/dl/parser.hpp"
 
+#include "runir/kr/ps/base/canonicalization.hpp"
 #include "runir/kr/ps/base/dl/parser/parser.hpp"
-#include "runir/kr/ps/canonicalization.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
@@ -719,7 +719,7 @@ auto parse_rule(const runir::kr::ps::base::dl::ast::Rule<runir::kr::BaseFamilyTa
     for (const auto& effect : node.effects)
         effects.push_back(parse_effect(effect, repository, boolean_features, numerical_features).get_index());
 
-    tyr::Data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> data;
+    tyr::Data<runir::kr::ps::base::Rule> data;
     data.conditions = std::move(conditions);
     data.effects = std::move(effects);
     return intern(repository, data);
@@ -737,11 +737,11 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
     for (const auto& feature : ast.features)
         boost::apply_visitor([&](const auto& arg) { parse_feature(arg, domain, repository, boolean_features, numerical_features); }, feature.get());
 
-    auto rules = tyr::IndexList<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> {};
+    auto rules = tyr::IndexList<runir::kr::ps::base::Rule> {};
     for (const auto& rule : ast.rules)
         rules.push_back(parse_rule(rule, repository, boolean_features, numerical_features).get_index());
 
-    tyr::Data<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>> data;
+    tyr::Data<runir::kr::ps::base::Sketch> data;
     data.rules = std::move(rules);
     return intern(repository, data);
 }

@@ -1,8 +1,9 @@
-#ifndef RUNIR_KR_PS_SKETCH_DATA_HPP_
-#define RUNIR_KR_PS_SKETCH_DATA_HPP_
+#ifndef RUNIR_KR_PS_BASE_SKETCH_DATA_HPP_
+#define RUNIR_KR_PS_BASE_SKETCH_DATA_HPP_
 
-#include "runir/kr/ps/rule_index.hpp"
-#include "runir/kr/ps/sketch_index.hpp"
+#include "runir/kr/ps/base/declarations.hpp"
+#include "runir/kr/ps/base/rule_index.hpp"
+#include "runir/kr/ps/base/sketch_index.hpp"
 
 #include <tuple>
 #include <tyr/common/types.hpp>
@@ -11,11 +12,11 @@
 namespace tyr
 {
 
-template<runir::kr::FamilyTag Family>
-struct Data<runir::kr::ps::Sketch<Family>>
+template<>
+struct Data<runir::kr::ps::base::Sketch>
 {
-    Index<runir::kr::ps::Sketch<Family>> index;
-    IndexList<runir::kr::ps::Rule<Family>> rules;
+    Index<runir::kr::ps::base::Sketch> index;
+    IndexList<runir::kr::ps::base::Rule> rules;
 
     void clear() noexcept
     {

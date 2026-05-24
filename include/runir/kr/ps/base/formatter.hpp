@@ -3,12 +3,12 @@
 
 #include "runir/common/config.hpp"
 #include "runir/kr/ps/base/dl/formatter.hpp"
+#include "runir/kr/ps/base/rule_view.hpp"
 #include "runir/kr/ps/base/sketch_executor.hpp"
+#include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
-#include "runir/kr/ps/rule_view.hpp"
-#include "runir/kr/ps/sketch_view.hpp"
 
 #include <concepts>
 #include <fmt/format.h>
@@ -91,7 +91,7 @@ void collect_features(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::E
 }
 
 template<typename C>
-FeatureNames collect_features(tyr::View<tyr::Index<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>, C> sketch)
+FeatureNames collect_features(tyr::View<tyr::Index<runir::kr::ps::base::Sketch>, C> sketch)
 {
     auto names = FeatureNames {};
     for (auto rule : sketch.get_rules())
@@ -157,7 +157,7 @@ std::string effect(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::Effe
 }
 
 template<typename C>
-void append_rule(std::ostream& os, FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> view)
+void append_rule(std::ostream& os, FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::base::Rule>, C> view)
 {
     auto conditions = std::vector<std::string> {};
     for (auto item : view.get_conditions())
@@ -177,7 +177,7 @@ void append_rule(std::ostream& os, FeatureNames& names, tyr::View<tyr::Index<run
 }
 
 template<typename C>
-std::string rule(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> view)
+std::string rule(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::base::Rule>, C> view)
 {
     auto os = std::ostringstream {};
     append_rule(os, names, view);
@@ -185,7 +185,7 @@ std::string rule(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::Rule<r
 }
 
 template<typename C>
-std::string sketch(tyr::View<tyr::Index<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>, C> view)
+std::string sketch(tyr::View<tyr::Index<runir::kr::ps::base::Sketch>, C> view)
 {
     auto names = collect_features(view);
     auto os = std::ostringstream {};
@@ -304,9 +304,9 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteEffectVariant<
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::base::Rule>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::ps::base::Rule>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::base::format::FeatureNames {};
@@ -315,9 +315,9 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::Rule<runir::kr::BaseFa
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::base::Sketch>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>, C>;
+    using View = tyr::View<tyr::Index<runir::kr::ps::base::Sketch>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::format::sketch(view), ctx); }
 };
 

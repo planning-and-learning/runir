@@ -5,10 +5,10 @@
 #include "runir/kr/ps/base/dl/condition_view.hpp"
 #include "runir/kr/ps/base/dl/effect_view.hpp"
 #include "runir/kr/ps/base/dl/feature_view.hpp"
+#include "runir/kr/ps/base/rule_view.hpp"
+#include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/effect_view.hpp"
-#include "runir/kr/ps/rule_view.hpp"
-#include "runir/kr/ps/sketch_view.hpp"
 
 #include <algorithm>
 #include <concepts>
@@ -84,7 +84,7 @@ void collect_features(FeatureSyntacticComplexityContext& context, tyr::View<tyr:
 }
 
 template<typename C>
-void collect_features(FeatureSyntacticComplexityContext& context, tyr::View<tyr::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> rule)
+void collect_features(FeatureSyntacticComplexityContext& context, tyr::View<tyr::Index<runir::kr::ps::base::Rule>, C> rule)
 {
     for (auto condition : rule.get_conditions())
         collect_features(context, condition);
@@ -93,7 +93,7 @@ void collect_features(FeatureSyntacticComplexityContext& context, tyr::View<tyr:
 }
 
 template<typename C>
-void collect_features(FeatureSyntacticComplexityContext& context, tyr::View<tyr::Index<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>, C> sketch)
+void collect_features(FeatureSyntacticComplexityContext& context, tyr::View<tyr::Index<runir::kr::ps::base::Sketch>, C> sketch)
 {
     for (auto rule : sketch.get_rules())
         collect_features(context, rule);

@@ -2,6 +2,7 @@
 
 #include <concepts>
 #include <nanobind/stl/string.h>
+#include <runir/kr/ps/base/compatibility.hpp>
 #include <runir/kr/ps/base/dl/evaluation_context.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
@@ -42,18 +43,18 @@ void bind_view(nb::module_& m, const std::string& name)
     if constexpr (requires(const View& view) { view.get_rules(); })
         cls.def("get_rules", &View::get_rules);
     if constexpr (requires(const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::GroundTag>& context) {
-                      { view.is_compatible_with(context) } -> std::same_as<bool>;
+                      { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
         cls.def(
             "is_compatible_with",
-            [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::GroundTag>& context) { return view.is_compatible_with(context); },
+            [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::GroundTag>& context) { return is_compatible_with(view, context); },
             "context"_a);
     if constexpr (requires(const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::LiftedTag>& context) {
-                      { view.is_compatible_with(context) } -> std::same_as<bool>;
+                      { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
         cls.def(
             "is_compatible_with",
-            [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::LiftedTag>& context) { return view.is_compatible_with(context); },
+            [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::LiftedTag>& context) { return is_compatible_with(view, context); },
             "context"_a);
     if constexpr (requires(const View& view) { runir::kr::ps::base::syntactic_complexity(view); })
         cls.def("syntactic_complexity", [](const View& view) { return runir::kr::ps::base::syntactic_complexity(view); });
@@ -65,8 +66,8 @@ void bind_views(nb::module_& m)
 {
     bind_view<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>(m, "ConditionVariant");
     bind_view<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>(m, "EffectVariant");
-    bind_view<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>(m, "Rule");
-    bind_view<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>>(m, "Sketch");
+    bind_view<runir::kr::ps::base::Rule>(m, "Rule");
+    bind_view<runir::kr::ps::base::Sketch>(m, "Sketch");
 }
 
 }  // namespace runir::kr::ps::base

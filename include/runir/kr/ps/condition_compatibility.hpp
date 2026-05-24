@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_CONDITION_COMPATIBILITY_HPP_
 #define RUNIR_KR_PS_CONDITION_COMPATIBILITY_HPP_
 
+#include "runir/kr/ps/compatibility.hpp"
 #include "runir/kr/ps/declarations.hpp"
 
 #include <concepts>
@@ -12,14 +13,14 @@ namespace runir::kr::ps
 template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
 concept IsConditionVariantView = IsEvaluationContext<Family, LanguageTag, EvaluationContext>
                                  && requires(tyr::View<tyr::Index<ConditionVariant<Family>>, StorageContext> condition, EvaluationContext& context) {
-                                        { condition.is_compatible_with(context) } -> std::same_as<bool>;
+                                        { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
                                     };
 
 template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
 concept IsConcreteConditionVariantView =
     IsEvaluationContext<Family, LanguageTag, EvaluationContext>
     && requires(tyr::View<tyr::Index<ConcreteConditionVariant<Family, LanguageTag>>, StorageContext> condition, EvaluationContext& context) {
-           { condition.is_compatible_with(context) } -> std::same_as<bool>;
+           { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
        };
 
 template<typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename EvaluationContext, typename StorageContext>
@@ -27,7 +28,7 @@ concept IsConcreteConditionView =
     IsEvaluationContext<Family, LanguageTag, EvaluationContext>
     && requires(tyr::View<tyr::Index<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>, StorageContext> condition,
                 EvaluationContext& context) {
-           { condition.is_compatible_with(context) } -> std::same_as<bool>;
+           { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
        };
 
 }  // namespace runir::kr::ps

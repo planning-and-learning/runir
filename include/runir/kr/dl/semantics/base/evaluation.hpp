@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_BASE_EVALUATION_HPP_
 #define RUNIR_KR_DL_SEMANTICS_BASE_EVALUATION_HPP_
 
+#include "runir/kr/dl/semantics/base/evaluation_context.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 
 namespace runir::kr::dl::semantics::base

@@ -16,50 +16,12 @@ struct MemoryState
 {
 };
 
-// Feature
-
-template<typename FeatureTag>
-struct Feature;
-
-template<typename LanguageTag, typename FeatureTag>
-struct ConcreteFeature;
-
-// EvaluationContext
-
-template<FamilyTag Family, typename LanguageTag>
-struct EvaluationContext;
-
-template<typename Family, typename LanguageTag, typename Context>
-concept IsEvaluationContext = FamilyTag<Family> && requires(const Context& context) {
-    context.get_source_state();
-    context.get_target_state();
-};
-
-// Condition
-
-struct ConditionVariant
-{
-};
-
-template<typename LanguageTag>
-struct ConcreteConditionVariant;
-
-template<typename LanguageTag, typename FeatureTag, typename ObservationTag>
-struct ConcreteCondition;
-
-// Effect
-
-struct EffectVariant
-{
-};
-
-template<typename LanguageTag>
-struct ConcreteEffectVariant;
-
-template<typename LanguageTag, typename FeatureTag, typename ObservationTag>
-struct ConcreteEffect;
-
 // Rules
+
+struct SketchTag
+{
+    static constexpr auto keyword = "sketch";
+};
 
 struct LoadTag
 {
@@ -77,7 +39,7 @@ struct CallTag
 };
 
 template<typename T>
-concept RuleKind = std::same_as<T, LoadTag> || std::same_as<T, DoTag> || std::same_as<T, CallTag>;
+concept RuleKind = std::same_as<T, LoadTag> || std::same_as<T, SketchTag> || std::same_as<T, DoTag> || std::same_as<T, CallTag>;
 
 template<RuleKind Kind>
 struct Rule

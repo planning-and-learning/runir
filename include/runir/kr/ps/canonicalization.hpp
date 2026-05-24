@@ -56,18 +56,6 @@ bool is_canonical(const tyr::Data<ConcreteEffect<Family, LanguageTag, FeatureTag
     return true;
 }
 
-template<FamilyTag Family>
-inline bool is_canonical(const tyr::Data<Rule<Family>>& data) noexcept
-{
-    return tyr::is_canonical(data.conditions) && tyr::is_canonical(data.effects);
-}
-
-template<FamilyTag Family>
-inline bool is_canonical(const tyr::Data<Sketch<Family>>& data) noexcept
-{
-    return tyr::is_canonical(data.rules);
-}
-
 template<FamilyTag Family, typename T>
 void canonicalize(tyr::Data<Feature<Family, T>>&) noexcept
 {
@@ -106,19 +94,6 @@ void canonicalize(tyr::Data<ConcreteEffectVariant<Family, LanguageTag>>&) noexce
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
 void canonicalize(tyr::Data<ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>>&) noexcept
 {
-}
-
-template<FamilyTag Family>
-inline void canonicalize(tyr::Data<Rule<Family>>& data)
-{
-    tyr::canonicalize(data.conditions);
-    tyr::canonicalize(data.effects);
-}
-
-template<FamilyTag Family>
-inline void canonicalize(tyr::Data<Sketch<Family>>& data)
-{
-    tyr::canonicalize(data.rules);
 }
 
 }  // namespace runir::kr::ps

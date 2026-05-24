@@ -4,6 +4,7 @@
 #include "runir/graphs/algorithms.hpp"
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/kr/ps/base/compatibility.hpp"
 #include "runir/kr/ps/base/dl/evaluation_context.hpp"
 #include "runir/kr/ps/base/sketch_executor.hpp"
 
@@ -115,7 +116,7 @@ public:
             return false;
 
         auto context = dl::EvaluationContext(seed_state, state, m_dl_builder, m_dl_denotation_repository);
-        return m_sketch.is_compatible_with(context);
+        return runir::kr::ps::base::is_compatible_with(m_sketch, context);
     }
 };
 

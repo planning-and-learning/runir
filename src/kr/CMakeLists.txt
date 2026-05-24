@@ -7,6 +7,8 @@ add_library(kr SHARED
     dl/grammar/parser/parser_instantiations.cpp
     dl/grammar/parser/base/parser.cpp
     dl/grammar/parser/base/parser_instantiations.cpp
+    dl/grammar/parser/ext/parser.cpp
+    dl/grammar/parser/ext/parser_instantiations.cpp
     ps/base/dl/parser.cpp
     ps/base/dl/parser/parser.cpp
     ps/base/dl/parser/parser_instantiations.cpp

@@ -3,6 +3,8 @@
 #include <concepts>
 #include <nanobind/stl/string.h>
 #include <runir/kr/dl/semantics/evaluation_context.hpp>
+#include <runir/kr/ps/base/dl/compatibility.hpp>
+#include <runir/kr/ps/base/dl/evaluation.hpp>
 #include <runir/kr/ps/base/dl/evaluation_context.hpp>
 #include <runir/kr/ps/base/dl/syntactic_complexity.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
@@ -62,34 +64,34 @@ void bind_view(nb::module_& m, const std::string& name)
     if constexpr (requires(const View& view) { view.get_description(); })
         cls.def("get_description", [](const View& view) { return std::string(view.get_description()); });
     if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context) {
-                      view.evaluate(context);
+                      evaluate(view, context);
                   })
         cls.def(
             "evaluate",
             [](const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context)
-            { return view.evaluate(context); },
+            { return evaluate(view, context); },
             "context"_a);
     if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context) {
-                      view.evaluate(context);
+                      evaluate(view, context);
                   })
         cls.def(
             "evaluate",
             [](const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context)
-            { return view.evaluate(context); },
+            { return evaluate(view, context); },
             "context"_a);
     if constexpr (requires(const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::GroundTag>& context) {
-                      { view.is_compatible_with(context) } -> std::same_as<bool>;
+                      { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
         cls.def(
             "is_compatible_with",
-            [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::GroundTag>& context) { return view.is_compatible_with(context); },
+            [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::GroundTag>& context) { return is_compatible_with(view, context); },
             "context"_a);
     if constexpr (requires(const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::LiftedTag>& context) {
-                      { view.is_compatible_with(context) } -> std::same_as<bool>;
+                      { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
         cls.def(
             "is_compatible_with",
-            [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::LiftedTag>& context) { return view.is_compatible_with(context); },
+            [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::LiftedTag>& context) { return is_compatible_with(view, context); },
             "context"_a);
     if constexpr (requires(const View& view) { runir::kr::ps::base::syntactic_complexity(view); })
         cls.def("syntactic_complexity", [](const View& view) { return runir::kr::ps::base::syntactic_complexity(view); });

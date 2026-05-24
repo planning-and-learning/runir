@@ -17,6 +17,7 @@ template<>
 struct Data<runir::kr::ps::ext::RuleVariant>
 {
     using Variant = ::cista::offset::variant<Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag>>,
+                                             Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>,
                                              Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>,
                                              Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>>;
 

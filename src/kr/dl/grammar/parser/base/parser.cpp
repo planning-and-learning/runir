@@ -42,21 +42,9 @@ ast::ConceptConstructor<runir::kr::dl::BaseFamilyTag> parse_concept_ast<runir::k
 }
 
 template<>
-ast::ConceptConstructor<runir::kr::dl::ExtFamilyTag> parse_concept_ast<runir::kr::dl::ExtFamilyTag>(const std::string& description)
-{
-    return parse_ast<ast::ConceptConstructor<runir::kr::dl::ExtFamilyTag>>(description, ext_concept_root_parser());
-}
-
-template<>
 ast::RoleConstructor<runir::kr::dl::BaseFamilyTag> parse_role_ast<runir::kr::dl::BaseFamilyTag>(const std::string& description)
 {
     return parse_ast<ast::RoleConstructor<runir::kr::dl::BaseFamilyTag>>(description, base_role_root_parser());
-}
-
-template<>
-ast::RoleConstructor<runir::kr::dl::ExtFamilyTag> parse_role_ast<runir::kr::dl::ExtFamilyTag>(const std::string& description)
-{
-    return parse_ast<ast::RoleConstructor<runir::kr::dl::ExtFamilyTag>>(description, ext_role_root_parser());
 }
 
 }  // namespace runir::kr::dl::grammar::parser::base

@@ -33,7 +33,7 @@
 namespace runir::kr::ps::ext
 {
 
-using ConcreteRuleTypes = tyr::MapTypeListT<Rule, tyr::TypeList<LoadTag, DoTag, CallTag>>;
+using ConcreteRuleTypes = tyr::MapTypeListT<Rule, tyr::TypeList<LoadTag, SketchTag, DoTag, CallTag>>;
 using RuleTypes = tyr::ConcatTypeListsT<tyr::TypeList<RuleVariant>, ConcreteRuleTypes>;
 using FeatureTypes = tyr::TypeList<Feature<runir::kr::dl::ConceptTag>,
                                    Feature<runir::kr::ps::dl::BooleanFeature>,

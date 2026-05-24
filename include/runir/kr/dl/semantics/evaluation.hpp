@@ -3,6 +3,7 @@
 
 #include "runir/common/config.hpp"
 #include "runir/kr/dl/constructors.hpp"
+#include "runir/kr/dl/semantics/base/evaluation_context.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotations.hpp"
 #include "runir/kr/dl/semantics/evaluation_context.hpp"

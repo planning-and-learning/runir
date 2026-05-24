@@ -2,10 +2,11 @@
 
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/base/evaluation_context.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_context.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 #include <tyr/planning/ground_task/state_repository.hpp>
 #include <tyr/planning/ground_task/state_view.hpp>
@@ -39,7 +40,8 @@ void bind_semantics_repositories(nb::module_& m)
 {
     nb::class_<runir::kr::dl::semantics::Builder>(m, "Builder").def(nb::init<>());
 
-    nb::class_<runir::kr::dl::semantics::DenotationRepository>(m, "DenotationRepository").def("get_index", &runir::kr::dl::semantics::DenotationRepository::get_index);
+    nb::class_<runir::kr::dl::semantics::DenotationRepository>(m, "DenotationRepository")
+        .def("get_index", &runir::kr::dl::semantics::DenotationRepository::get_index);
 
     nb::class_<runir::kr::dl::semantics::DenotationRepositoryFactory>(m, "DenotationRepositoryFactory")
         .def(nb::init<>())

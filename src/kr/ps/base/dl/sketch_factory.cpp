@@ -10,7 +10,7 @@ namespace runir::kr::ps::base::dl
 
 SketchView SketchFactory::create_empty(Repository& repository)
 {
-    auto data = tyr::Data<runir::kr::ps::Sketch<runir::kr::BaseFamilyTag>> {};
+    auto data = tyr::Data<runir::kr::ps::base::Sketch> {};
     return repository.get_or_create(data).first;
 }
 

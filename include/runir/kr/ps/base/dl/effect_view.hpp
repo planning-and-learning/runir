@@ -33,28 +33,6 @@ public:
     auto get_index() const noexcept { return m_handle; }
     auto get_feature() const noexcept { return make_view(get_data().feature, *m_context); }
 
-    template<tyr::planning::TaskKind Kind>
-    bool is_compatible_with(runir::kr::ps::base::dl::EvaluationContext<Kind>& context) const
-    {
-        const auto target = get_feature().evaluate(context.get_target_context());
-
-        if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Positive>)
-            return target;
-        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Negative>)
-            return !target;
-        else
-        {
-            const auto source = get_feature().evaluate(context.get_source_context());
-
-            if constexpr (std::same_as<ObservationTag, runir::kr::ps::dl::Unchanged>)
-                return source == target;
-            else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Increases>)
-                return target > source;
-            else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Decreases>)
-                return target < source;
-        }
-    }
-
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 

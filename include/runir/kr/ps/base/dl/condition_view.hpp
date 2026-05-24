@@ -34,21 +34,6 @@ public:
     auto get_index() const noexcept { return m_handle; }
     auto get_feature() const noexcept { return make_view(get_data().feature, *m_context); }
 
-    template<tyr::planning::TaskKind Kind>
-    bool is_compatible_with(runir::kr::ps::base::dl::EvaluationContext<Kind>& context) const
-    {
-        const auto value = get_feature().evaluate(context.get_source_context());
-
-        if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Positive>)
-            return value;
-        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Negative>)
-            return !value;
-        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::EqualZero>)
-            return value == 0;
-        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::GreaterZero>)
-            return value > 0;
-    }
-
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 

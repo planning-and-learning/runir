@@ -43,14 +43,15 @@ enum class GenerateStatus
     OUT_OF_TIME
 };
 
-struct GenerateResults
+template<runir::kr::dl::FamilyTag Family>
+struct GenerateResultsFor
 {
     GenerateStatistics statistics;
     GenerateStatus status = GenerateStatus::COMPLETED;
-    std::vector<runir::kr::dl::ConstructorView<runir::kr::dl::ConceptTag>> concepts;
-    std::vector<runir::kr::dl::ConstructorView<runir::kr::dl::RoleTag>> roles;
-    std::vector<runir::kr::dl::ConstructorView<runir::kr::dl::BooleanTag>> booleans;
-    std::vector<runir::kr::dl::ConstructorView<runir::kr::dl::NumericalTag>> numericals;
+    std::vector<runir::kr::dl::FamilyConstructorView<Family, runir::kr::dl::ConceptTag>> concepts;
+    std::vector<runir::kr::dl::FamilyConstructorView<Family, runir::kr::dl::RoleTag>> roles;
+    std::vector<runir::kr::dl::FamilyConstructorView<Family, runir::kr::dl::BooleanTag>> booleans;
+    std::vector<runir::kr::dl::FamilyConstructorView<Family, runir::kr::dl::NumericalTag>> numericals;
 
     template<runir::kr::dl::CategoryTag Category>
     auto& get_constructors() noexcept
@@ -65,6 +66,14 @@ struct GenerateResults
             return numericals;
     }
 };
+
+using GenerateResults = GenerateResultsFor<runir::kr::dl::BaseFamilyTag>;
+
+template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
+GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
+                                    const std::vector<tyr::planning::StateView<Kind>>& states,
+                                    runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,
+                                    const GenerateOptions& options);
 
 template<tyr::planning::TaskKind Kind>
 GenerateResults generate(GrammarView grammar,
