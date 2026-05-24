@@ -109,6 +109,18 @@ auto make_role_builder(EvaluationContext<Family, Kind>& context)
 
 inline auto object_handle(uint_t object) noexcept { return tyr::Index<tyr::formalism::Object>(object); }
 
+template<typename T, typename C, typename Context>
+decltype(auto) constructor_child_view(const tyr::View<T, C>& child, const Context&) noexcept
+{
+    return child;
+}
+
+template<typename T, typename C>
+auto constructor_child_view(T child, const C& context) noexcept
+{
+    return tyr::make_view(child, context);
+}
+
 template<typename RoleBuilderPtr>
 auto row(const RoleBuilderPtr& role, uint_t object) noexcept
 {
@@ -826,7 +838,8 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C>
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<Category, Family, Kind>
 {
-    return tyr::visit([&](auto child) { return evaluate_impl(child, context, workspace); }, constructor.get_variant());
+    return tyr::visit([&](auto child) { return evaluate_impl(detail::constructor_child_view(child, constructor.get_context()), context, workspace); },
+                      constructor.get_variant());
 }
 
 template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
