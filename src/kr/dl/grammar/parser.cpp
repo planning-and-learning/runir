@@ -1,4 +1,4 @@
-#include "runir/kr/dl/grammar/parser.hpp"
+#include "runir/kr/dl/grammar/base/parser.hpp"
 
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/grammar/canonicalization.hpp"

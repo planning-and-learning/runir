@@ -8,7 +8,6 @@
 #include "runir/kr/dl/cnf_grammar/formatter.hpp"
 #include "runir/kr/dl/cnf_grammar/generate.hpp"
 #include "runir/kr/dl/cnf_grammar/indices.hpp"
-#include "runir/kr/dl/cnf_grammar/translate.hpp"
 #include "runir/kr/dl/cnf_grammar/views.hpp"
 
 #endif

@@ -1,21 +1,43 @@
 #ifndef RUNIR_KR_DL_GRAMMAR_PARSER_EXT_PARSERS_HPP_
 #define RUNIR_KR_DL_GRAMMAR_PARSER_EXT_PARSERS_HPP_
 
-#include "runir/kr/dl/grammar/parser/base/parsers.hpp"
+#include "runir/kr/dl/grammar/parser/error_handler.hpp"
 #include "runir/kr/dl/grammar/parser/ext/ast.hpp"
 
 #include <boost/spirit/home/x3.hpp>
+#include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
 
 namespace runir::kr::dl::grammar::parser::ext
 {
 namespace x3 = boost::spirit::x3;
 
-using ext_concept_type = runir::kr::dl::grammar::parser::base::concept_type<runir::kr::dl::ExtFamilyTag>;
-using ext_concept_root_type = runir::kr::dl::grammar::parser::base::concept_root_type<runir::kr::dl::ExtFamilyTag>;
-using ext_role_type = runir::kr::dl::grammar::parser::base::role_type<runir::kr::dl::ExtFamilyTag>;
-using ext_role_root_type = runir::kr::dl::grammar::parser::base::role_root_type<runir::kr::dl::ExtFamilyTag>;
-using ext_concept_choice_type = runir::kr::dl::grammar::parser::base::concept_choice_type<runir::kr::dl::ExtFamilyTag>;
-using ext_role_choice_type = runir::kr::dl::grammar::parser::base::role_choice_type<runir::kr::dl::ExtFamilyTag>;
+template<runir::kr::dl::CategoryTag Category>
+struct ConstructorClass : x3::annotate_on_success
+{
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct ConstructorRootClass : ErrorHandlerBase
+{
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct ConstructorOrNonTerminalClass : x3::annotate_on_success
+{
+};
+
+using ext_concept_type =
+    x3::rule<ConstructorClass<runir::kr::dl::ConceptTag>, runir::kr::dl::grammar::parser::base::ast::ConceptConstructor<runir::kr::dl::ExtFamilyTag>>;
+using ext_concept_root_type =
+    x3::rule<ConstructorRootClass<runir::kr::dl::ConceptTag>, runir::kr::dl::grammar::parser::base::ast::ConceptConstructor<runir::kr::dl::ExtFamilyTag>>;
+using ext_role_type =
+    x3::rule<ConstructorClass<runir::kr::dl::RoleTag>, runir::kr::dl::grammar::parser::base::ast::RoleConstructor<runir::kr::dl::ExtFamilyTag>>;
+using ext_role_root_type =
+    x3::rule<ConstructorRootClass<runir::kr::dl::RoleTag>, runir::kr::dl::grammar::parser::base::ast::RoleConstructor<runir::kr::dl::ExtFamilyTag>>;
+using ext_concept_choice_type =
+    x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::ConceptTag>, runir::kr::dl::grammar::parser::base::ast::ConceptChoice<runir::kr::dl::ExtFamilyTag>>;
+using ext_role_choice_type =
+    x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::RoleTag>, runir::kr::dl::grammar::parser::base::ast::RoleChoice<runir::kr::dl::ExtFamilyTag>>;
 
 struct ConceptRegisterClass;
 struct RoleRegisterClass;

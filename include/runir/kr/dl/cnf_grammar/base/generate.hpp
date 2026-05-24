@@ -3,7 +3,6 @@
 
 #include "runir/kr/dl/cnf_grammar/base/repository.hpp"
 #include "runir/kr/dl/cnf_grammar/generate.hpp"
-#include "runir/kr/dl/repository.hpp"
 
 namespace runir::kr::dl::cnf_grammar::base
 {
@@ -13,7 +12,7 @@ using GenerateResults = runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr
 template<tyr::planning::TaskKind Kind>
 GenerateResults generate(GrammarView grammar,
                          const std::vector<tyr::planning::StateView<Kind>>& states,
-                         runir::kr::dl::ConstructorRepository& output_repository,
+                         ConstructorRepository& output_repository,
                          const GenerateOptions& options);
 
 }  // namespace runir::kr::dl::cnf_grammar::base

@@ -1,7 +1,7 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
-#include <runir/kr/dl/grammar/grammar_factory.hpp>
+#include <runir/kr/dl/grammar/base/grammar_factory.hpp>
 
 namespace runir::kr::dl
 {

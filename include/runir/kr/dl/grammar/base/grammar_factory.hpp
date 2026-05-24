@@ -1,6 +1,7 @@
-#ifndef RUNIR_GRAMMAR_GRAMMAR_FACTORY_HPP_
-#define RUNIR_GRAMMAR_GRAMMAR_FACTORY_HPP_
+#ifndef RUNIR_KR_DL_GRAMMAR_BASE_GRAMMAR_FACTORY_HPP_
+#define RUNIR_KR_DL_GRAMMAR_BASE_GRAMMAR_FACTORY_HPP_
 
+#include "runir/kr/dl/grammar/base/parser.hpp"
 #include "runir/kr/dl/grammar/base/repository.hpp"
 
 #include <string>

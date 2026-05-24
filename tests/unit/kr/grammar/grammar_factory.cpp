@@ -4,9 +4,9 @@
 #include <iostream>
 #include <runir/kr/dl/cnf_grammar/base/translate.hpp>
 #include <runir/kr/dl/cnf_grammar/formatter.hpp>
+#include <runir/kr/dl/grammar/base/grammar_factory.hpp>
+#include <runir/kr/dl/grammar/base/parser.hpp>
 #include <runir/kr/dl/grammar/formatter.hpp>
-#include <runir/kr/dl/grammar/grammar_factory.hpp>
-#include <runir/kr/dl/grammar/parser.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/formatter.hpp>

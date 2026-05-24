@@ -1,8 +1,8 @@
-#include "runir/kr/dl/grammar/grammar_factory.hpp"
+#include "runir/kr/dl/grammar/base/grammar_factory.hpp"
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
-#include "runir/kr/dl/grammar/parser.hpp"
+#include "runir/kr/dl/grammar/base/parser.hpp"
 
 #include <fmt/ranges.h>
 #include <sstream>

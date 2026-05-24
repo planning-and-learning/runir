@@ -1,5 +1,5 @@
-#ifndef RUNIR_GRAMMAR_PARSER_HPP_
-#define RUNIR_GRAMMAR_PARSER_HPP_
+#ifndef RUNIR_KR_DL_GRAMMAR_BASE_PARSER_HPP_
+#define RUNIR_KR_DL_GRAMMAR_BASE_PARSER_HPP_
 
 #include "runir/kr/dl/grammar/base/repository.hpp"
 

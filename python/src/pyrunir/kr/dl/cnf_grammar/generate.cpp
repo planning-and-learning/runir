@@ -4,7 +4,6 @@
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/vector.h>
 #include <runir/kr/dl/cnf_grammar/base/generate.hpp>
-#include <runir/kr/dl/repository.hpp>
 #include <tyr/planning/ground_task/state_view.hpp>
 #include <tyr/planning/lifted_task/state_view.hpp>
 
@@ -17,7 +16,7 @@ namespace
 template<tyr::planning::TaskKind Kind>
 auto generate(runir::kr::dl::cnf_grammar::base::GrammarView grammar,
               const std::vector<tyr::planning::StateView<Kind>>& states,
-              runir::kr::dl::ConstructorRepository& output_repository,
+              runir::kr::dl::cnf_grammar::base::ConstructorRepository& output_repository,
               const runir::kr::dl::cnf_grammar::GenerateOptions& options)
 {
     return runir::kr::dl::cnf_grammar::base::generate<Kind>(grammar, states, output_repository, options);

@@ -1,7 +1,7 @@
 #include "runir/kr/dl/cnf_grammar/base/translate.hpp"
 
 #include "runir/kr/dl/cnf_grammar/canonicalization.hpp"
-#include "runir/kr/dl/cnf_grammar/translate.hpp"
+#include "runir/kr/dl/cnf_grammar/ext/repository.hpp"
 
 #include <cassert>
 #include <concepts>
@@ -504,23 +504,26 @@ auto translate_impl(const runir::kr::dl::grammar::base::GrammarView& grammar, Co
 
 }  // namespace
 
+namespace base
+{
+
 template<runir::kr::dl::FamilyTag Family>
 FamilyGrammarView<Family> translate(const runir::kr::dl::grammar::base::GrammarView& grammar, ConstructorRepositoryFor<Family>& repository)
 {
     return translate_impl<Family>(grammar, repository);
 }
 
-namespace base
-{
-
 GrammarView translate(const runir::kr::dl::grammar::base::GrammarView& grammar, ConstructorRepository& repository)
 {
-    return runir::kr::dl::cnf_grammar::translate<runir::kr::BaseFamilyTag>(grammar, repository);
+    return translate<runir::kr::BaseFamilyTag>(grammar, repository);
 }
-
-}  // namespace base
 
 template FamilyGrammarView<runir::kr::BaseFamilyTag> translate<runir::kr::BaseFamilyTag>(const runir::kr::dl::grammar::base::GrammarView&,
                                                                                          ConstructorRepositoryFor<runir::kr::BaseFamilyTag>&);
+
+template FamilyGrammarView<runir::kr::ExtFamilyTag> translate<runir::kr::ExtFamilyTag>(const runir::kr::dl::grammar::base::GrammarView&,
+                                                                                       ConstructorRepositoryFor<runir::kr::ExtFamilyTag>&);
+
+}  // namespace base
 
 }  // namespace runir::kr::dl::cnf_grammar

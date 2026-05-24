@@ -39,7 +39,9 @@ decltype(auto) unwrap(const T& value) noexcept
 template<typename T, typename Repository>
 auto intern(Repository& repository, tyr::Data<T>& data)
 {
-    if constexpr (requires { runir::kr::ps::canonicalize(data); })
+    if constexpr (requires { runir::kr::ps::base::canonicalize(data); })
+        runir::kr::ps::base::canonicalize(data);
+    else if constexpr (requires { runir::kr::ps::canonicalize(data); })
         runir::kr::ps::canonicalize(data);
     else if constexpr (requires { runir::kr::dl::canonicalize(data); })
         runir::kr::dl::canonicalize(data);

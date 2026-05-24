@@ -115,7 +115,7 @@ public:
         if (seed_state.get_index() == state.get_index())
             return false;
 
-        auto context = dl::EvaluationContext(seed_state, state, m_dl_builder, m_dl_denotation_repository);
+        auto context = dl::EvaluationContext<Kind>(seed_state, state, m_dl_builder, m_dl_denotation_repository);
         return runir::kr::ps::base::is_compatible_with(m_sketch, context);
     }
 };
