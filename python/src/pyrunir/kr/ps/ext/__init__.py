@@ -24,6 +24,8 @@ from ...._pyrunir.kr.ps.ext import (
     Module,
     ModuleExecutionStatus,
     ModuleIndex,
+    ModuleProgram,
+    ModuleProgramIndex,
     ModuleSpecification,
     ModuleFactory,
     NumericalArgument,
@@ -65,6 +67,7 @@ from ...._pyrunir.kr.ps.ext import (
     MemoryStateData,
     MemoryTransition,
     ModuleData,
+    ModuleProgramData,
     NumericalArgumentData,
     NumericalFeatureData,
     RegisterData,
@@ -74,5 +77,6 @@ from ...._pyrunir.kr.ps.ext import (
     execute_ground_solution,
     execute_lifted_solution,
     parse_module,
+    parse_module_program,
     parse_modules,
 )

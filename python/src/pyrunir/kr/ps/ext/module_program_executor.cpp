@@ -3,7 +3,7 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/vector.h>
 #include <runir/datasets/task_class.hpp>
-#include <runir/kr/ps/ext/sketch_executor.hpp>
+#include <runir/kr/ps/ext/module_program_executor.hpp>
 #include <tyr/common/python/type_casters.hpp>
 #include <tyr/planning/declarations.hpp>
 
@@ -85,6 +85,15 @@ void bind_sketch_executor(nb::module_& m)
         "modules"_a,
         "options"_a = ModuleExecutionOptions<tyr::planning::GroundTag>());
     m.def(
+        "execute_ground_solution",
+        [](const runir::datasets::TaskSearchContext<tyr::planning::GroundTag>& context,
+           ModuleProgramView program,
+           const ModuleExecutionOptions<tyr::planning::GroundTag>& options) { return execute_solution(context, program, options); },
+        nb::call_guard<nb::gil_scoped_release>(),
+        "context"_a,
+        "program"_a,
+        "options"_a = ModuleExecutionOptions<tyr::planning::GroundTag>());
+    m.def(
         "execute_lifted_solution",
         [](const runir::datasets::TaskSearchContext<tyr::planning::LiftedTag>& context,
            ModuleView entry_module,
@@ -103,6 +112,15 @@ void bind_sketch_executor(nb::module_& m)
         "context"_a,
         "entry_module"_a,
         "modules"_a,
+        "options"_a = ModuleExecutionOptions<tyr::planning::LiftedTag>());
+    m.def(
+        "execute_lifted_solution",
+        [](const runir::datasets::TaskSearchContext<tyr::planning::LiftedTag>& context,
+           ModuleProgramView program,
+           const ModuleExecutionOptions<tyr::planning::LiftedTag>& options) { return execute_solution(context, program, options); },
+        nb::call_guard<nb::gil_scoped_release>(),
+        "context"_a,
+        "program"_a,
         "options"_a = ModuleExecutionOptions<tyr::planning::LiftedTag>());
 }
 

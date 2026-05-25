@@ -1,56 +1,27 @@
-#ifndef RUNIR_KR_PS_EXT_SKETCH_EXECUTOR_HPP_
-#define RUNIR_KR_PS_EXT_SKETCH_EXECUTOR_HPP_
+#ifndef RUNIR_KR_PS_EXT_MODULE_PROGRAM_EXECUTOR_IMPL_HPP_
+#define RUNIR_KR_PS_EXT_MODULE_PROGRAM_EXECUTOR_IMPL_HPP_
 
-#include "runir/datasets/task_class.hpp"
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/execution.hpp"
-#include "runir/kr/ps/ext/module_view.hpp"
+#include "runir/kr/ps/ext/module_program_executor.hpp"
 
-#include <cstddef>
 #include <memory>
-#include <tyr/planning/algorithms/brfs.hpp>
-#include <tyr/planning/algorithms/iw.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
-#include <tyr/planning/declarations.hpp>
 #include <tyr/planning/successor_generator.hpp>
-#include <vector>
 
 namespace runir::kr::ps::ext
 {
 
-enum class ModuleExecutionStatus
-{
-    SUCCESS,
-    FAILURE,
-    NO_APPLICABLE_ACTION,
-    MALFORMED_CALL,
-    SEARCH_FAILURE,
-    OUT_OF_TIME,
-    OUT_OF_STATES,
-    LOAD_LIMIT_REACHED,
-    STEP_LIMIT_REACHED,
-};
-
 template<tyr::planning::TaskKind Kind>
-struct ModuleExecutionOptions
-{
-    tyr::planning::brfs::Options<Kind> brfs_options;
-    tyr::planning::iw::Options<Kind> iw_options;
-    tyr::uint_t max_arity = 0;
-    std::size_t max_load_steps = 1024;
-    std::size_t max_steps = 1024;
-};
-
-template<tyr::planning::TaskKind Kind>
-class SketchTransitionGoalStrategy : public tyr::planning::GoalStrategy<Kind>
+class ModuleProgramTransitionGoalStrategy : public tyr::planning::GoalStrategy<Kind>
 {
 private:
     EvaluationContext<Kind>& m_context;
 
 public:
-    explicit SketchTransitionGoalStrategy(EvaluationContext<Kind>& context) : m_context(context) {}
+    explicit ModuleProgramTransitionGoalStrategy(EvaluationContext<Kind>& context) : m_context(context) {}
 
     bool is_static_goal_satisfied(const tyr::planning::Task<Kind>& task) override
     {
@@ -90,9 +61,9 @@ inline ModuleExecutionStatus translate_search_status(tyr::planning::SearchStatus
 }
 
 template<tyr::planning::TaskKind Kind>
-auto find_sketch_transition_node(const runir::datasets::TaskSearchContext<Kind>& search_context,
-                                 EvaluationContext<Kind>& context,
-                                 const ModuleExecutionOptions<Kind>& options) -> tyr::planning::SearchResult<Kind>
+auto find_module_program_transition_node(const runir::datasets::TaskSearchContext<Kind>& search_context,
+                                         EvaluationContext<Kind>& context,
+                                         const ModuleExecutionOptions<Kind>& options) -> tyr::planning::SearchResult<Kind>
 {
     const auto start_node = search_context.successor_generator->get_node(context.get_state().get_index());
     auto brfs_options = options.brfs_options;
@@ -100,29 +71,16 @@ auto find_sketch_transition_node(const runir::datasets::TaskSearchContext<Kind>&
     auto brfs_solver = tyr::planning::brfs::Solver<Kind> { search_context.task, search_context.successor_generator, brfs_options };
 
     iw_options.start_node = start_node;
-    iw_options.goal_strategy = std::make_shared<SketchTransitionGoalStrategy<Kind>>(context);
+    iw_options.goal_strategy = std::make_shared<ModuleProgramTransitionGoalStrategy<Kind>>(context);
 
     return tyr::planning::iw::find_solution(brfs_solver, options.max_arity, iw_options);
 }
 
 template<tyr::planning::TaskKind Kind>
-struct ModuleExecutionResults
-{
-    ModuleExecutionStatus status = ModuleExecutionStatus::SUCCESS;
-    tyr::planning::StateView<Kind> state;
-    ModuleView module;
-    MemoryStateView memory_state;
-    std::size_t num_steps = 0;
-    std::size_t call_depth = 0;
-
-    bool is_successful() const noexcept { return status == ModuleExecutionStatus::SUCCESS; }
-};
-
-template<tyr::planning::TaskKind Kind>
 auto execute_solution(const runir::datasets::TaskSearchContext<Kind>& search_context,
                       ModuleView entry_module,
                       const std::vector<ModuleView>& modules,
-                      const ModuleExecutionOptions<Kind>& options = ModuleExecutionOptions<Kind>()) -> ModuleExecutionResults<Kind>
+                      const ModuleExecutionOptions<Kind>& options) -> ModuleExecutionResults<Kind>
 {
     auto dl_builder = runir::kr::dl::semantics::Builder();
     auto dl_denotation_repository_factory = runir::kr::dl::semantics::DenotationRepositoryFactory();
@@ -185,7 +143,7 @@ auto execute_solution(const runir::datasets::TaskSearchContext<Kind>& search_con
             if (sketch_status == RuleExecutionStatus::APPLIED)
                 continue;
 
-            const auto search_result = find_sketch_transition_node(search_context, context, options);
+            const auto search_result = find_module_program_transition_node(search_context, context, options);
             if (search_result.status == tyr::planning::SearchStatus::SOLVED && search_result.goal_node)
             {
                 if (const auto rule = find_matching_sketch_rule(context, search_result.goal_node->get_state()))
@@ -225,9 +183,20 @@ auto execute_solution(const runir::datasets::TaskSearchContext<Kind>& search_con
 template<tyr::planning::TaskKind Kind>
 auto execute_solution(const runir::datasets::TaskSearchContext<Kind>& search_context,
                       ModuleView entry_module,
-                      const ModuleExecutionOptions<Kind>& options = ModuleExecutionOptions<Kind>()) -> ModuleExecutionResults<Kind>
+                      const ModuleExecutionOptions<Kind>& options) -> ModuleExecutionResults<Kind>
 {
     return execute_solution(search_context, entry_module, std::vector<ModuleView> { entry_module }, options);
+}
+
+template<tyr::planning::TaskKind Kind>
+auto execute_solution(const runir::datasets::TaskSearchContext<Kind>& search_context,
+                      ModuleProgramView program,
+                      const ModuleExecutionOptions<Kind>& options) -> ModuleExecutionResults<Kind>
+{
+    auto modules = std::vector<ModuleView> {};
+    for (auto module : program.get_modules())
+        modules.push_back(module);
+    return execute_solution(search_context, program.get_entry_module(), modules, options);
 }
 
 }  // namespace runir::kr::ps::ext

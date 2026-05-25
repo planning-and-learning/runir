@@ -394,6 +394,21 @@ std::string module(tyr::View<tyr::Index<runir::kr::ps::ext::Module>, C> view)
     return os.str();
 }
 
+template<typename C>
+std::string module_program(tyr::View<tyr::Index<runir::kr::ps::ext::ModuleProgram>, C> view)
+{
+    auto os = std::ostringstream {};
+    os << "(program\n";
+    {
+        tyr::IndentScope scope(os);
+        os << tyr::print_indent << fmt::format("(:entry {})", quoted(view.get_entry_module().get_name())) << "\n";
+        for (auto item : view.get_modules())
+            os << tyr::print_indent << module(item);
+    }
+    os << ")\n";
+    return os.str();
+}
+
 }  // namespace runir::kr::ps::ext::format
 
 #if RUNIR_ENABLE_FMT_FORMATTERS
@@ -511,6 +526,16 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::Module>, C>> : fm
 {
     using View = tyr::View<tyr::Index<runir::kr::ps::ext::Module>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::module(view), ctx); }
+};
+
+template<typename C>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::ModuleProgram>, C>> : fmt::formatter<std::string_view>
+{
+    using View = tyr::View<tyr::Index<runir::kr::ps::ext::ModuleProgram>, C>;
+    auto format(View view, format_context& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::module_program(view), ctx);
+    }
 };
 #endif
 

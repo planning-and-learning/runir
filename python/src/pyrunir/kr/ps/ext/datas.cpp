@@ -61,6 +61,8 @@ void bind_data(nb::module_& m, const std::string& name)
         cls.def_rw("registers", &Data::registers);
     if constexpr (requires { &Data::entry_memory_state; })
         cls.def_rw("entry_memory_state", &Data::entry_memory_state);
+    if constexpr (requires { &Data::entry_module; })
+        cls.def_rw("entry_module", &Data::entry_module);
     if constexpr (requires { &Data::memory_states; })
         cls.def_rw("memory_states", &Data::memory_states);
     if constexpr (requires { &Data::memory_transitions; })
@@ -84,6 +86,7 @@ void bind_datas(nb::module_& m)
     bind_data<Register>(m, "RegisterData");
     bind_data<MemoryState>(m, "MemoryStateData");
     bind_data<Module>(m, "ModuleData");
+    bind_data<ModuleProgram>(m, "ModuleProgramData");
 
     bind_data<Feature<runir::kr::dl::ConceptTag>>(m, "ConceptFeatureData");
     bind_data<Feature<runir::kr::ps::dl::BooleanFeature>>(m, "BooleanFeatureData");

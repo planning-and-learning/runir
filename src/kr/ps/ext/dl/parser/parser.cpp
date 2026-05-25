@@ -395,11 +395,8 @@ void parse_module_section(ast::Module& result, const Node& section)
     }
 }
 
-}  // namespace
-
-ast::Module parse_module_ast(const std::string& description)
+ast::Module parse_module_node(const Node& root)
 {
-    const auto root = Reader(description).read_root();
     if (!root.list || root.children.size() < 2 || atom(root.children[0], "module") != "module")
         fail("Expected module description.");
 
@@ -410,6 +407,49 @@ ast::Module parse_module_ast(const std::string& description)
 
     if (result.entry.empty())
         fail("Module is missing an entry memory state.");
+    return result;
+}
+
+void parse_program_section(ast::ModuleProgram& result, const Node& section)
+{
+    if (!section.list || section.children.empty())
+        fail("Malformed program section.");
+
+    const auto section_head = head(section, "program section");
+    if (section_head == ":entry")
+    {
+        if (section.children.size() != 2)
+            fail("Malformed program entry section.");
+        result.entry = atom(section.children[1], ":entry");
+    }
+    else if (section_head == "module")
+    {
+        result.modules.push_back(parse_module_node(section));
+    }
+    else
+    {
+        fail("Unknown program section: " + section_head + ".");
+    }
+}
+
+}  // namespace
+
+ast::Module parse_module_ast(const std::string& description) { return parse_module_node(Reader(description).read_root()); }
+
+ast::ModuleProgram parse_module_program_ast(const std::string& description)
+{
+    const auto root = Reader(description).read_root();
+    if (!root.list || root.children.empty() || atom(root.children[0], "program") != "program")
+        fail("Expected module program description.");
+
+    auto result = ast::ModuleProgram {};
+    for (std::size_t i = 1; i < root.children.size(); ++i)
+        parse_program_section(result, root.children[i]);
+
+    if (result.entry.empty())
+        fail("Module program is missing an entry module.");
+    if (result.modules.empty())
+        fail("Module program must contain at least one module.");
     return result;
 }
 

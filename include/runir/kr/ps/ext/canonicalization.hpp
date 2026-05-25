@@ -7,6 +7,7 @@
 #include "runir/kr/ps/ext/feature_data.hpp"
 #include "runir/kr/ps/ext/memory_state_data.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
+#include "runir/kr/ps/ext/module_program_data.hpp"
 #include "runir/kr/ps/ext/register_data.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_data.hpp"
@@ -91,6 +92,8 @@ inline bool is_canonical(const tyr::Data<Module>& data) noexcept
            && tyr::is_canonical(data.numerical_arguments) && tyr::is_canonical(data.registers) && tyr::is_canonical(data.memory_states)
            && is_canonical_memory_transitions(data.memory_transitions);
 }
+
+inline bool is_canonical(const tyr::Data<ModuleProgram>&) noexcept { return true; }
 
 template<runir::kr::dl::CategoryTag Category>
 void canonicalize(tyr::Data<Argument<Category>>&) noexcept
@@ -177,6 +180,8 @@ inline void canonicalize(tyr::Data<Module>& data)
     tyr::canonicalize(data.memory_states);
     canonicalize_memory_transitions(data.memory_transitions);
 }
+
+inline void canonicalize(tyr::Data<ModuleProgram>&) noexcept {}
 
 }  // namespace runir::kr::ps::ext
 

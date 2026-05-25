@@ -104,6 +104,10 @@ struct Module
 {
 };
 
+struct ModuleProgram
+{
+};
+
 }  // namespace runir::kr::ps::ext
 
 #endif

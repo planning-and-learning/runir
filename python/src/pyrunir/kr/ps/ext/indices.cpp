@@ -15,6 +15,7 @@ void bind_indices(nb::module_& m)
     tyr::bind_index<tyr::Index<Register>>(m, "RegisterIndex");
     tyr::bind_index<tyr::Index<MemoryState>>(m, "MemoryStateIndex");
     tyr::bind_index<tyr::Index<Module>>(m, "ModuleIndex");
+    tyr::bind_index<tyr::Index<ModuleProgram>>(m, "ModuleProgramIndex");
     tyr::bind_index<tyr::Index<ConditionVariant>>(m, "ConditionVariantIndex");
     tyr::bind_index<tyr::Index<EffectVariant>>(m, "EffectVariantIndex");
     tyr::bind_index<tyr::Index<RuleVariant>>(m, "RuleVariantIndex");

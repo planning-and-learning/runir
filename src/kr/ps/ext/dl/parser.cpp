@@ -1055,10 +1055,8 @@ parse_numerical(const std::string& description, tyr::formalism::planning::Domain
     throw std::runtime_error("Unsupported numerical DL expression \"" + op + "\".");
 }
 
-ModuleView parse_module(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
+ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::DomainView domain, Repository& repository, const ModuleMap& known_modules = {})
 {
-    const auto ast = parser::parse_module_ast(description);
-
     auto memory_states = MemoryStateMap {};
     for (const auto& state : ast.memory_states)
     {
@@ -1095,7 +1093,7 @@ ModuleView parse_module(const std::string& description, tyr::formalism::planning
     for (const auto& feature : ast.features)
         append_feature(repository, feature, domain, concept_features, boolean_features, numerical_features, concept_aliases);
 
-    auto modules = ModuleMap {};
+    auto modules = known_modules;
     if (auto callee = repository.find(data))
         modules.emplace(ast.name, callee->get_index());
 
@@ -1123,12 +1121,80 @@ ModuleView parse_module(const std::string& description, tyr::formalism::planning
     return intern(repository, data);
 }
 
+void validate_module_program(const ast::ModuleProgram& program)
+{
+    auto names = std::unordered_map<std::string, bool> {};
+    for (const auto& module : program.modules)
+    {
+        if (!names.emplace(module.name, true).second)
+            throw std::runtime_error("Duplicate module name "
+                                     " + module.name + "
+                                     " in module program.");
+    }
+
+    if (!names.contains(program.entry))
+        throw std::runtime_error("Module program entry module "
+                                 " + program.entry + "
+                                 " is not declared.");
+
+    for (const auto& module : program.modules)
+    {
+        for (const auto& transition : module.transitions)
+        {
+            for (const auto& rule : transition.rules)
+            {
+                if (rule.kind == ast::RuleKind::CALL && !names.contains(rule.callee))
+                    throw std::runtime_error("Module "
+                                             " + module.name + "
+                                             " calls unknown module "
+                                             " + rule.callee + "
+                                             ".");
+            }
+        }
+    }
+}
+
+ModuleView parse_module(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
+{
+    return lower_module(parser::parse_module_ast(description), domain, repository);
+}
+
+ModuleProgramView parse_module_program(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
+{
+    const auto ast = parser::parse_module_program_ast(description);
+    validate_module_program(ast);
+
+    auto module_views = std::vector<ModuleView> {};
+    module_views.reserve(ast.modules.size());
+    auto module_indices_by_name = ModuleMap {};
+
+    for (const auto& module : ast.modules)
+    {
+        auto view = lower_module(module, domain, repository, module_indices_by_name);
+        module_views.push_back(view);
+        module_indices_by_name.emplace(module.name, view.get_index());
+    }
+
+    auto data = tyr::Data<ModuleProgram> {};
+    data.entry_module = module_indices_by_name.at(ast.entry);
+    for (const auto module : module_views)
+        data.modules.push_back(module.get_index());
+
+    return intern(repository, data);
+}
+
 std::vector<ModuleView> parse_modules(const std::vector<std::string>& descriptions, tyr::formalism::planning::DomainView domain, Repository& repository)
 {
     auto result = std::vector<ModuleView> {};
     result.reserve(descriptions.size());
+    auto modules = ModuleMap {};
     for (const auto& description : descriptions)
-        result.push_back(parse_module(description, domain, repository));
+    {
+        const auto ast = parser::parse_module_ast(description);
+        auto view = lower_module(ast, domain, repository, modules);
+        result.push_back(view);
+        modules.emplace(ast.name, view.get_index());
+    }
     return result;
 }
 

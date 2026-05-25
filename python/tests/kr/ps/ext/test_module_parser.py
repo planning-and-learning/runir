@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 try:
     from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
     from pyrunir.kr.dl import ext as dl_ext
@@ -59,11 +61,59 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     assert [module.get_name() for module in modules] == ["on", "on-table", "tower", "blocks"]
     assert "(module \"blocks\"" in str(modules[3])
 
+    created_modules = ext.ModuleFactory.create_bonet_et_al_icaps2024_modules(planning_domain, repository)
+    assert [module.get_name() for module in created_modules] == ["on", "on-table", "tower", "blocks"]
+    assert ext.ModuleFactory.create(ext.ModuleSpecification.ON_BONET_ET_AL_ICAPS2024, planning_domain, repository).get_name() == "on"
+    assert ext.ModuleFactory.create_on_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "on"
+    assert ext.ModuleFactory.create_on_table_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "on-table"
+    assert ext.ModuleFactory.create_tower_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "tower"
+    assert ext.ModuleFactory.create_blocks_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "blocks"
+
     formatted_on = str(modules[0])
     reparsed_on = ext.parse_module(formatted_on, planning_domain, repository)
 
     assert reparsed_on.get_name() == "on"
     assert str(reparsed_on) == formatted_on
+
+    program = ext.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
+    assert program.get_entry_module().get_name() == "root"
+    assert [module.get_name() for module in program.get_modules()] == ["root", "blocks", "tower", "on-table", "on"]
+
+    formatted_program = str(program)
+    reparsed_program = ext.parse_module_program(formatted_program, planning_domain, repository)
+    assert reparsed_program.get_entry_module().get_name() == "root"
+    assert len(reparsed_program.get_modules()) == 5
+
+
+def test_module_program_parser_rejects_invalid_wiring():
+    planning_domain, repository = _repositories()
+    root = """(module "root"
+      (:arguments)
+      (:registers)
+      (:entry "m0")
+      (:memory "m0")
+      (:features)
+      (:transitions)
+    )"""
+
+    with pytest.raises(RuntimeError):
+        ext.parse_module_program(f'(program (:entry "missing") {root})', planning_domain, repository)
+    with pytest.raises(RuntimeError):
+        ext.parse_module_program(f'(program (:entry "root") {root} {root})', planning_domain, repository)
+    with pytest.raises(RuntimeError):
+        ext.parse_module_program("""(program
+          (:entry "root")
+          (module "root"
+            (:arguments)
+            (:registers)
+            (:entry "m0")
+            (:memory "m0" "m1")
+            (:features)
+            (:transitions
+              ("m0" "m1" (call (:conditions) (:callee "missing") (:arguments)))
+            )
+          )
+        )""", planning_domain, repository)
 
 
 def test_empty_module_factory_uses_ext_repositories():
@@ -81,25 +131,14 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(ground_task)
     repository = ext.RepositoryFactory().create(dl_repository)
 
-    descriptions = ext.ModuleFactory.create_bonet_et_al_icaps2024_descriptions()
-    descriptions.append("""(module "entry"
-      (:arguments)
-      (:registers)
-      (:entry "m0")
-      (:memory "m0" "m1")
-      (:features)
-      (:transitions
-        ("m0" "m1" (call (:conditions) (:callee "blocks") (:arguments (r_atomic_goal "on" true))))
-      )
-    )""")
-    modules = ext.parse_modules(descriptions, planning_domain, repository)
+    program = ext.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
     options = ext.GroundModuleExecutionOptions()
     options.max_arity = 1
     options.max_steps = 1024
     options.max_load_steps = 1024
 
-    result = ext.execute_ground_solution(search_context, modules[-1], modules, options)
+    result = ext.execute_ground_solution(search_context, program, options)
 
     assert result.status == ext.ModuleExecutionStatus.SUCCESS
     assert result.is_successful()

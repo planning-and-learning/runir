@@ -54,8 +54,12 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_registers", &View::get_registers);
     if constexpr (requires(const View& view) { view.get_entry_memory_state(); })
         cls.def("get_entry_memory_state", &View::get_entry_memory_state);
+    if constexpr (requires(const View& view) { view.get_entry_module(); })
+        cls.def("get_entry_module", &View::get_entry_module);
     if constexpr (requires(const View& view) { view.get_memory_states(); })
         cls.def("get_memory_states", &View::get_memory_states);
+    if constexpr (requires(const View& view) { view.get_modules(); })
+        cls.def("get_modules", &View::get_modules);
 }
 
 }  // namespace
@@ -69,6 +73,7 @@ void bind_views(nb::module_& m)
     bind_view<Register>(m, "Register");
     bind_view<MemoryState>(m, "MemoryState");
     bind_view<Module>(m, "Module");
+    bind_view<ModuleProgram>(m, "ModuleProgram");
     bind_view<ConditionVariant>(m, "ConditionVariant");
     bind_view<EffectVariant>(m, "EffectVariant");
     bind_view<RuleVariant>(m, "RuleVariant");

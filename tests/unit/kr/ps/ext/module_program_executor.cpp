@@ -10,8 +10,8 @@
 #include <runir/kr/ps/ext/evaluation_context.hpp>
 #include <runir/kr/ps/ext/execution.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
+#include <runir/kr/ps/ext/module_program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
-#include <runir/kr/ps/ext/sketch_executor.hpp>
 #include <type_traits>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/planning.hpp>
@@ -107,22 +107,31 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
     EXPECT_EQ(module.get_entry_memory_state().get_name(), "m0");
     EXPECT_EQ(module.get_memory_states().size(), 2);
 
+    const auto blocksworld_domain = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "domain.pddl";
+    const auto blocksworld_task_file = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "p-300-4.pddl";
+    const auto blocksworld_task = fp::Parser(blocksworld_domain).parse_task(blocksworld_task_file);
+    auto blocksworld_dl_repository = dl_repository_factory.create_shared(blocksworld_task.get_repository());
+    auto blocksworld_repository = repository_factory.create(blocksworld_dl_repository);
+
     const auto blocks = kr::ps::ext::dl::parse_module(kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024_description(),
-                                                      planning_task.get_domain().get_domain(),
-                                                      repository);
+                                                      blocksworld_task.get_domain().get_domain(),
+                                                      blocksworld_repository);
     EXPECT_EQ(blocks.get_name(), "blocks");
     ASSERT_TRUE(blocks.get_rules(blocks.get_data().memory_transitions[1].source, blocks.get_data().memory_transitions[1].target).has_value());
     auto call_rule = (*blocks.get_rules(blocks.get_data().memory_transitions[1].source, blocks.get_data().memory_transitions[1].target)).front();
+    auto found_call_rule = false;
     tyr::visit(
-        [](auto rule)
+        [&](auto rule)
         {
             using RuleView = std::decay_t<decltype(rule)>;
             if constexpr (std::same_as<RuleView, kr::ps::ext::RuleView<kr::ps::ext::CallTag>>)
+            {
+                found_call_rule = true;
                 EXPECT_EQ(rule.get_callee_name(), "tower");
-            else
-                FAIL() << "Expected call rule.";
+            }
         },
         call_rule.get_variant());
+    EXPECT_TRUE(found_call_rule) << "Expected call rule.";
 }
 
 TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
@@ -165,16 +174,66 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
     ASSERT_EQ(modules[0].get_data().memory_transitions.size(), 1);
     const auto rules = modules[0].get_rules(modules[0].get_data().memory_transitions[0].source, modules[0].get_data().memory_transitions[0].target);
     ASSERT_TRUE(rules.has_value());
+    auto found_call_rule = false;
     tyr::visit(
-        [](auto rule)
+        [&](auto rule)
         {
             using RuleView = std::decay_t<decltype(rule)>;
             if constexpr (std::same_as<RuleView, kr::ps::ext::RuleView<kr::ps::ext::CallTag>>)
+            {
+                found_call_rule = true;
                 EXPECT_EQ(rule.get_callee_name(), "callee");
-            else
-                FAIL() << "Expected call rule.";
+            }
         },
         rules->front().get_variant());
+    EXPECT_TRUE(found_call_rule) << "Expected call rule.";
+}
+
+TEST(RunirTests, ExtModuleProgramParserRejectsInvalidProgramWiring)
+{
+    namespace fp = tyr::formalism::planning;
+
+    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+
+    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto repository_factory = kr::ps::ext::RepositoryFactory();
+    auto dl_repository = dl_repository_factory.create_shared(planning_task.get_repository());
+    auto repository = repository_factory.create(dl_repository);
+
+    const auto root = R"((module "root"
+      (:arguments)
+      (:registers)
+      (:entry "m0")
+      (:memory "m0")
+      (:features)
+      (:transitions)
+    ))";
+
+    EXPECT_THROW(
+        kr::ps::ext::dl::parse_module_program(R"((program (:entry "missing") )" + std::string(root) + ")", planning_task.get_domain().get_domain(), repository),
+        std::runtime_error);
+    EXPECT_THROW(kr::ps::ext::dl::parse_module_program(R"((program (:entry "root") )" + std::string(root) + std::string(root) + ")",
+                                                       planning_task.get_domain().get_domain(),
+                                                       repository),
+                 std::runtime_error);
+    EXPECT_THROW(kr::ps::ext::dl::parse_module_program(R"((program
+      (:entry "root")
+      (module "root"
+        (:arguments)
+        (:registers)
+        (:entry "m0")
+        (:memory "m0" "m1")
+        (:features)
+        (:transitions
+          ("m0" "m1" (call (:conditions) (:callee "missing") (:arguments)))
+        )
+      )
+    ))",
+                                                       planning_task.get_domain().get_domain(),
+                                                       repository),
+                 std::runtime_error);
 }
 
 TEST(RunirTests, ExtModuleParserReadsPaperFactoryDescriptions)
@@ -202,6 +261,12 @@ TEST(RunirTests, ExtModuleParserReadsPaperFactoryDescriptions)
     EXPECT_EQ(blocks.arguments.size(), 1);
     EXPECT_EQ(blocks.transitions.size(), 2);
     EXPECT_EQ(blocks.transitions[1].rules.front().callee, "tower");
+
+    const auto program = kr::ps::ext::dl::parser::parse_module_program_ast(kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program_description());
+    EXPECT_EQ(program.entry, "root");
+    ASSERT_EQ(program.modules.size(), 5);
+    EXPECT_EQ(program.modules[0].name, "root");
+    EXPECT_EQ(program.modules[0].transitions.front().rules.front().callee, "blocks");
 }
 
 TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld)
@@ -225,6 +290,10 @@ TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld
     EXPECT_EQ(modules[1].get_name(), "on-table");
     EXPECT_EQ(modules[2].get_name(), "tower");
     EXPECT_EQ(modules[3].get_name(), "blocks");
+
+    const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), repository);
+    EXPECT_EQ(program.get_entry_module().get_name(), "root");
+    EXPECT_EQ(program.get_modules().size(), 5);
 }
 
 TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
@@ -264,6 +333,12 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
             FAIL() << "Failed to reparse formatted module " << module.get_name() << ": " << err.what() << "\n" << formatted;
         }
     }
+
+    const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), repository);
+    const auto formatted_program = fmt::format("{}", program);
+    const auto reparsed_program = kr::ps::ext::dl::parse_module_program(formatted_program, planning_task.get_domain().get_domain(), repository);
+    EXPECT_EQ(reparsed_program.get_entry_module().get_name(), program.get_entry_module().get_name());
+    EXPECT_EQ(reparsed_program.get_modules().size(), program.get_modules().size());
 }
 
 TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
@@ -284,27 +359,15 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    auto descriptions = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_descriptions();
-    descriptions.push_back(R"((module "entry"
-      (:arguments)
-      (:registers)
-      (:entry "m0")
-      (:memory "m0" "m1")
-      (:features)
-      (:transitions
-        ("m0" "m1" (call (:conditions) (:callee "blocks") (:arguments (r_atomic_goal "on" true))))
-      )
-    ))");
-
-    const auto modules = kr::ps::ext::dl::parse_modules(descriptions, planning_task.get_domain().get_domain(), repository);
-    ASSERT_EQ(modules.size(), 5);
+    const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), repository);
+    ASSERT_EQ(program.get_modules().size(), 5);
 
     auto options = kr::ps::ext::ModuleExecutionOptions<p::GroundTag>();
     options.max_arity = 1;
     options.max_steps = 1024;
     options.max_load_steps = 1024;
 
-    const auto result = kr::ps::ext::execute_solution(search_context, modules.back(), modules, options);
+    const auto result = kr::ps::ext::execute_solution(search_context, program, options);
     EXPECT_EQ(result.status, kr::ps::ext::ModuleExecutionStatus::SUCCESS)
         << "module=" << result.module.get_name() << " memory=" << result.memory_state.get_name() << " steps=" << result.num_steps
         << " call_depth=" << result.call_depth;
@@ -444,8 +507,8 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "p-300-4.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
@@ -479,12 +542,44 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
     EXPECT_NE(blocks_description.find("(module \"blocks\""), std::string::npos);
     EXPECT_NE(blocks_description.find("(:callee \"tower\")"), std::string::npos);
 
+    const auto on = kr::ps::ext::dl::ModuleFactory::create_on_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), repository);
+    const auto on_table = kr::ps::ext::dl::ModuleFactory::create_on_table_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), repository);
+    const auto tower = kr::ps::ext::dl::ModuleFactory::create_tower_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), repository);
+    const auto blocks = kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), repository);
+    EXPECT_EQ(on.get_name(), "on");
+    EXPECT_EQ(on_table.get_name(), "on-table");
+    EXPECT_EQ(tower.get_name(), "tower");
+    EXPECT_EQ(blocks.get_name(), "blocks");
+
+    const auto selected_on = kr::ps::ext::dl::ModuleFactory::create(kr::ps::ext::dl::ModuleSpecification::ON_BONET_ET_AL_ICAPS2024,
+                                                                    planning_task.get_domain().get_domain(),
+                                                                    repository);
+    EXPECT_EQ(selected_on.get_name(), "on");
+
     const auto descriptions = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_descriptions();
     ASSERT_EQ(descriptions.size(), 4);
     EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[0]).name, "on");
     EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[1]).name, "on-table");
     EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[2]).name, "tower");
     EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[3]).name, "blocks");
+
+    const auto modules = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_modules(planning_task.get_domain().get_domain(), repository);
+    ASSERT_EQ(modules.size(), 4);
+    EXPECT_EQ(modules[0].get_name(), "on");
+    EXPECT_EQ(modules[1].get_name(), "on-table");
+    EXPECT_EQ(modules[2].get_name(), "tower");
+    EXPECT_EQ(modules[3].get_name(), "blocks");
+
+    const auto program_description =
+        kr::ps::ext::dl::parser::parse_module_program_ast(kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program_description());
+    EXPECT_EQ(program_description.entry, "root");
+    ASSERT_EQ(program_description.modules.size(), 5);
+    EXPECT_EQ(program_description.modules.front().name, "root");
+
+    const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), repository);
+    EXPECT_EQ(program.get_entry_module().get_name(), "root");
+    ASSERT_EQ(program.get_modules().size(), 5);
+    EXPECT_EQ(program.get_modules()[0].get_name(), "root");
 }
 
 TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)

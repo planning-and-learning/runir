@@ -1,6 +1,7 @@
 #include "runir/kr/ps/ext/dl/module_factory.hpp"
 
 #include "runir/kr/ps/ext/canonicalization.hpp"
+#include "runir/kr/ps/ext/dl/parser.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -19,6 +20,11 @@ ModuleView ModuleFactory::create_empty(Repository& repository)
     data.memory_states.push_back(entry.get_index());
     canonicalize(data);
     return repository.get_or_create(data).first;
+}
+
+ModuleView ModuleFactory::create(ModuleSpecification specification, tyr::formalism::planning::DomainView domain, Repository& repository)
+{
+    return parse_module(create_description(specification), domain, repository);
 }
 
 std::string ModuleFactory::create_empty_description()
@@ -51,6 +57,11 @@ std::string ModuleFactory::create_description(ModuleSpecification specification)
     throw std::runtime_error("Unknown module specification.");
 }
 
+std::vector<ModuleView> ModuleFactory::create_bonet_et_al_icaps2024_modules(tyr::formalism::planning::DomainView domain, Repository& repository)
+{
+    return parse_modules(create_bonet_et_al_icaps2024_descriptions(), domain, repository);
+}
+
 std::vector<std::string> ModuleFactory::create_bonet_et_al_icaps2024_descriptions()
 {
     return {
@@ -59,6 +70,50 @@ std::vector<std::string> ModuleFactory::create_bonet_et_al_icaps2024_description
         create_tower_bonet_et_al_icaps2024_description(),
         create_blocks_bonet_et_al_icaps2024_description(),
     };
+}
+
+std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
+{
+    return std::string(R"((program
+  (:entry "root")
+  (module "root"
+    (:arguments)
+    (:registers)
+    (:entry "m0")
+    (:memory "m0" "m1")
+    (:features)
+    (:transitions
+      ("m0" "m1" (call (:conditions) (:callee "blocks") (:arguments (r_atomic_goal "on" true))))
+    )
+  )
+)") + create_blocks_bonet_et_al_icaps2024_description()
+           + create_tower_bonet_et_al_icaps2024_description() + create_on_table_bonet_et_al_icaps2024_description()
+           + create_on_bonet_et_al_icaps2024_description() + ")\n";
+}
+
+ModuleProgramView ModuleFactory::create_bonet_et_al_icaps2024_program(tyr::formalism::planning::DomainView domain, Repository& repository)
+{
+    return parse_module_program(create_bonet_et_al_icaps2024_program_description(), domain, repository);
+}
+
+ModuleView ModuleFactory::create_on_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository)
+{
+    return parse_module(create_on_bonet_et_al_icaps2024_description(), domain, repository);
+}
+
+ModuleView ModuleFactory::create_on_table_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository)
+{
+    return parse_module(create_on_table_bonet_et_al_icaps2024_description(), domain, repository);
+}
+
+ModuleView ModuleFactory::create_tower_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository)
+{
+    return parse_module(create_tower_bonet_et_al_icaps2024_description(), domain, repository);
+}
+
+ModuleView ModuleFactory::create_blocks_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository)
+{
+    return parse_module(create_blocks_bonet_et_al_icaps2024_description(), domain, repository);
 }
 
 std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
@@ -164,10 +219,10 @@ std::string ModuleFactory::create_blocks_bonet_et_al_icaps2024_description()
   (:entry "m0")
   (:memory "m0" "m1")
   (:features
-    (concept L "L" "lowest misplaced blocks according to O" (c_top))
+    (concept L "L" "lowest misplaced block" (c_and (c_not (c_same_as (r_atomic_state "on") (r_argument 0))) (c_all (r_transitive_closure (r_atomic_state "on")) (c_same_as (r_atomic_state "on") (r_argument 0)))))
   )
   (:transitions
-    ("m0" "m1" (load (:conditions (greater_zero L)) (:concept (c_top)) (:register "r0")))
+    ("m0" "m1" (load (:conditions (greater_zero L)) (:concept L) (:register "r0")))
     ("m1" "m0" (call (:conditions) (:callee "tower") (:arguments (r_argument 0) (c_register 0))))
   )
 )

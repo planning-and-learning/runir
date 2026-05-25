@@ -26,6 +26,8 @@ parse_numerical(const std::string& description, tyr::formalism::planning::Domain
 
 ModuleView parse_module(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository);
 
+ModuleProgramView parse_module_program(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository);
+
 std::vector<ModuleView> parse_modules(const std::vector<std::string>& descriptions, tyr::formalism::planning::DomainView domain, Repository& repository);
 
 }  // namespace runir::kr::ps::ext::dl

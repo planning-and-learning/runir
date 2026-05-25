@@ -100,6 +100,12 @@ struct Module
     std::vector<MemoryTransition> transitions;
 };
 
+struct ModuleProgram
+{
+    std::string entry;
+    std::vector<Module> modules;
+};
+
 }  // namespace runir::kr::ps::ext::dl::ast
 
 #endif

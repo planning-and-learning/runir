@@ -4,11 +4,13 @@
 #include "runir/kr/ps/ext/dl/ast/module_ast.hpp"
 
 #include <string>
+#include <vector>
 
 namespace runir::kr::ps::ext::dl::parser
 {
 
 ast::Module parse_module_ast(const std::string& description);
+ast::ModuleProgram parse_module_program_ast(const std::string& description);
 
 }  // namespace runir::kr::ps::ext::dl::parser
 

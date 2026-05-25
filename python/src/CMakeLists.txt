@@ -49,7 +49,7 @@ nanobind_add_module(_pyrunir
     pyrunir/kr/ps/ext/module_factory.cpp
     pyrunir/kr/ps/ext/parser.cpp
     pyrunir/kr/ps/ext/repository.cpp
-    pyrunir/kr/ps/ext/sketch_executor.cpp
+    pyrunir/kr/ps/ext/module_program_executor.cpp
     pyrunir/kr/ps/ext/views.cpp
     pyrunir/kr/dl/base/semantics/datas.cpp
     pyrunir/kr/dl/base/semantics/indices.cpp

@@ -49,15 +49,16 @@ public:
     auto get_entry_memory_state() const noexcept { return View<Index<runir::kr::ps::ext::MemoryState>, C>(get_data().entry_memory_state, *m_context); }
     auto get_memory_states() const noexcept { return make_view(get_data().memory_states, *m_context); }
     const auto& get_memory_transitions() const noexcept { return get_data().memory_transitions; }
-    auto get_rules(Index<runir::kr::ps::ext::MemoryState> source, Index<runir::kr::ps::ext::MemoryState> target) const
+    auto get_rules(Index<runir::kr::ps::ext::MemoryState> source,
+                   Index<runir::kr::ps::ext::MemoryState> target) const -> std::optional<View<IndexList<runir::kr::ps::ext::RuleVariant>, C>>
     {
         using RuleListView = View<IndexList<runir::kr::ps::ext::RuleVariant>, C>;
         for (const auto& transition : get_data().memory_transitions)
         {
             if (transition.source == source && transition.target == target)
-                return std::optional<RuleListView>(make_view(transition.rules, *m_context));
+                return RuleListView(transition.rules, *m_context);
         }
-        return std::optional<RuleListView>();
+        return std::nullopt;
     }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }

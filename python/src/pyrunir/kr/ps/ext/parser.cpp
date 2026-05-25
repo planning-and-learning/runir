@@ -21,6 +21,14 @@ void bind_parser(nb::module_& m)
         "repository"_a);
 
     m.def(
+        "parse_module_program",
+        [](const std::string& description, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)
+        { return runir::kr::ps::ext::dl::parse_module_program(description, domain.get_domain(), repository); },
+        "description"_a,
+        "domain"_a,
+        "repository"_a);
+
+    m.def(
         "parse_modules",
         [](const std::vector<std::string>& descriptions, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)
         { return runir::kr::ps::ext::dl::parse_modules(descriptions, domain.get_domain(), repository); },
