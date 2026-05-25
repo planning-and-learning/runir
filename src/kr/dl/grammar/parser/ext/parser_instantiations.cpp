@@ -7,6 +7,8 @@ BOOST_SPIRIT_INSTANTIATE(ext_concept_type, runir::kr::dl::grammar::parser::itera
 BOOST_SPIRIT_INSTANTIATE(ext_concept_root_type, runir::kr::dl::grammar::parser::iterator_type, runir::kr::dl::grammar::parser::context_type)
 BOOST_SPIRIT_INSTANTIATE(ext_role_type, runir::kr::dl::grammar::parser::iterator_type, runir::kr::dl::grammar::parser::context_type)
 BOOST_SPIRIT_INSTANTIATE(ext_role_root_type, runir::kr::dl::grammar::parser::iterator_type, runir::kr::dl::grammar::parser::context_type)
+BOOST_SPIRIT_INSTANTIATE(ext_concept_non_terminal_type, runir::kr::dl::grammar::parser::iterator_type, runir::kr::dl::grammar::parser::context_type)
+BOOST_SPIRIT_INSTANTIATE(ext_role_non_terminal_type, runir::kr::dl::grammar::parser::iterator_type, runir::kr::dl::grammar::parser::context_type)
 BOOST_SPIRIT_INSTANTIATE(ext_concept_choice_type, runir::kr::dl::grammar::parser::iterator_type, runir::kr::dl::grammar::parser::context_type)
 BOOST_SPIRIT_INSTANTIATE(ext_role_choice_type, runir::kr::dl::grammar::parser::iterator_type, runir::kr::dl::grammar::parser::context_type)
 

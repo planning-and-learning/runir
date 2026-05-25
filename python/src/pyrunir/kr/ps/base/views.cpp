@@ -42,19 +42,21 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_effects", &View::get_effects);
     if constexpr (requires(const View& view) { view.get_rules(); })
         cls.def("get_rules", &View::get_rules);
-    if constexpr (requires(const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::GroundTag>& context) {
+    if constexpr (requires(const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context) {
                       { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
         cls.def(
             "is_compatible_with",
-            [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::GroundTag>& context) { return is_compatible_with(view, context); },
+            [](const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context)
+            { return is_compatible_with(view, context); },
             "context"_a);
-    if constexpr (requires(const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::LiftedTag>& context) {
+    if constexpr (requires(const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context) {
                       { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
         cls.def(
             "is_compatible_with",
-            [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::LiftedTag>& context) { return is_compatible_with(view, context); },
+            [](const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context)
+            { return is_compatible_with(view, context); },
             "context"_a);
     if constexpr (requires(const View& view) { runir::kr::ps::base::syntactic_complexity(view); })
         cls.def("syntactic_complexity", [](const View& view) { return runir::kr::ps::base::syntactic_complexity(view); });

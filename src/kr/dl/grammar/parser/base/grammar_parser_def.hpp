@@ -129,45 +129,44 @@ const auto concept__def = concept_bot | concept_top | concept_atomic_state | con
                           | concept_role_fillers | concept_one_of | concept_nominal;
 const auto concept_root_def = concept_ > eoi;
 
-const auto concept_bot_def = with_constructor_parentheses(lit(grammar_ast::ConceptBot<runir::kr::dl::BaseFamilyTag>::keyword)
-                                                          >> x3::attr(grammar_ast::ConceptBot<runir::kr::dl::BaseFamilyTag> {}));
-const auto concept_top_def = with_constructor_parentheses(lit(grammar_ast::ConceptTop<runir::kr::dl::BaseFamilyTag>::keyword)
-                                                          >> x3::attr(grammar_ast::ConceptTop<runir::kr::dl::BaseFamilyTag> {}));
+const auto concept_bot_def = with_constructor_parentheses(lit(grammar_ast::ConceptBot<runir::kr::BaseFamilyTag>::keyword)
+                                                          >> x3::attr(grammar_ast::ConceptBot<runir::kr::BaseFamilyTag> {}));
+const auto concept_top_def = with_constructor_parentheses(lit(grammar_ast::ConceptTop<runir::kr::BaseFamilyTag>::keyword)
+                                                          >> x3::attr(grammar_ast::ConceptTop<runir::kr::BaseFamilyTag> {}));
 const auto concept_atomic_state_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptAtomicState<runir::kr::dl::BaseFamilyTag>::keyword) > predicate_name_string_parser());
-const auto concept_atomic_goal_def = with_constructor_parentheses(lit(grammar_ast::ConceptAtomicGoal<runir::kr::dl::BaseFamilyTag>::keyword)
+    with_constructor_parentheses(lit(grammar_ast::ConceptAtomicState<runir::kr::BaseFamilyTag>::keyword) > predicate_name_string_parser());
+const auto concept_atomic_goal_def = with_constructor_parentheses(lit(grammar_ast::ConceptAtomicGoal<runir::kr::BaseFamilyTag>::keyword)
                                                                   > predicate_name_string_parser() > bool_string_parser());
 const auto concept_intersection_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptIntersection<runir::kr::dl::BaseFamilyTag>::keyword) > concept_choice > concept_choice);
+    with_constructor_parentheses(lit(grammar_ast::ConceptIntersection<runir::kr::BaseFamilyTag>::keyword) > concept_choice > concept_choice);
 const auto concept_union_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptUnion<runir::kr::dl::BaseFamilyTag>::keyword) > concept_choice > concept_choice);
-const auto concept_negation_def = with_constructor_parentheses(lit(grammar_ast::ConceptNegation<runir::kr::dl::BaseFamilyTag>::keyword) > concept_choice);
+    with_constructor_parentheses(lit(grammar_ast::ConceptUnion<runir::kr::BaseFamilyTag>::keyword) > concept_choice > concept_choice);
+const auto concept_negation_def = with_constructor_parentheses(lit(grammar_ast::ConceptNegation<runir::kr::BaseFamilyTag>::keyword) > concept_choice);
 const auto concept_value_restriction_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptValueRestriction<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice > concept_choice);
+    with_constructor_parentheses(lit(grammar_ast::ConceptValueRestriction<runir::kr::BaseFamilyTag>::keyword) > role_choice > concept_choice);
 const auto concept_existential_quantification_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptExistentialQuantification<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice > concept_choice);
+    with_constructor_parentheses(lit(grammar_ast::ConceptExistentialQuantification<runir::kr::BaseFamilyTag>::keyword) > role_choice > concept_choice);
 const auto concept_at_least_number_restriction_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptAtLeastNumberRestriction<runir::kr::dl::BaseFamilyTag>::keyword) > uint_ > role_choice);
+    with_constructor_parentheses(lit(grammar_ast::ConceptAtLeastNumberRestriction<runir::kr::BaseFamilyTag>::keyword) > uint_ > role_choice);
 const auto concept_at_most_number_restriction_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptAtMostNumberRestriction<runir::kr::dl::BaseFamilyTag>::keyword) > uint_ > role_choice);
+    with_constructor_parentheses(lit(grammar_ast::ConceptAtMostNumberRestriction<runir::kr::BaseFamilyTag>::keyword) > uint_ > role_choice);
 const auto concept_exact_number_restriction_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptExactNumberRestriction<runir::kr::dl::BaseFamilyTag>::keyword) > uint_ > role_choice);
+    with_constructor_parentheses(lit(grammar_ast::ConceptExactNumberRestriction<runir::kr::BaseFamilyTag>::keyword) > uint_ > role_choice);
 const auto concept_qualified_at_least_number_restriction_def = with_constructor_parentheses(
-    lit(grammar_ast::ConceptQualifiedAtLeastNumberRestriction<runir::kr::dl::BaseFamilyTag>::keyword) > uint_ > role_choice > concept_choice);
+    lit(grammar_ast::ConceptQualifiedAtLeastNumberRestriction<runir::kr::BaseFamilyTag>::keyword) > uint_ > role_choice > concept_choice);
 const auto concept_qualified_at_most_number_restriction_def = with_constructor_parentheses(
-    lit(grammar_ast::ConceptQualifiedAtMostNumberRestriction<runir::kr::dl::BaseFamilyTag>::keyword) > uint_ > role_choice > concept_choice);
+    lit(grammar_ast::ConceptQualifiedAtMostNumberRestriction<runir::kr::BaseFamilyTag>::keyword) > uint_ > role_choice > concept_choice);
 const auto concept_qualified_exact_number_restriction_def = with_constructor_parentheses(
-    lit(grammar_ast::ConceptQualifiedExactNumberRestriction<runir::kr::dl::BaseFamilyTag>::keyword) > uint_ > role_choice > concept_choice);
+    lit(grammar_ast::ConceptQualifiedExactNumberRestriction<runir::kr::BaseFamilyTag>::keyword) > uint_ > role_choice > concept_choice);
 const auto concept_role_value_map_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptRoleValueMap<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice > role_choice);
+    with_constructor_parentheses(lit(grammar_ast::ConceptRoleValueMap<runir::kr::BaseFamilyTag>::keyword) > role_choice > role_choice);
 const auto concept_agreement_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptAgreement<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice > role_choice);
+    with_constructor_parentheses(lit(grammar_ast::ConceptAgreement<runir::kr::BaseFamilyTag>::keyword) > role_choice > role_choice);
 const auto concept_role_fillers_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptRoleFillers<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice > +object_name_string_parser());
-const auto concept_one_of_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptOneOf<runir::kr::dl::BaseFamilyTag>::keyword) > +object_name_string_parser());
+    with_constructor_parentheses(lit(grammar_ast::ConceptRoleFillers<runir::kr::BaseFamilyTag>::keyword) > role_choice > +object_name_string_parser());
+const auto concept_one_of_def = with_constructor_parentheses(lit(grammar_ast::ConceptOneOf<runir::kr::BaseFamilyTag>::keyword) > +object_name_string_parser());
 const auto concept_nominal_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptNominal<runir::kr::dl::BaseFamilyTag>::keyword) > object_name_string_parser());
+    with_constructor_parentheses(lit(grammar_ast::ConceptNominal<runir::kr::BaseFamilyTag>::keyword) > object_name_string_parser());
 const auto concept_non_terminal_def = concept_non_terminal_string_parser();
 const auto concept_choice_def = concept_non_terminal | concept_;
 const auto concept_derivation_rule_def = (lit("(") >> concept_non_terminal)
@@ -177,26 +176,25 @@ const auto role_def = role_universal | role_atomic_state | role_atomic_goal | ro
                       | role_transitive_closure | role_reflexive_transitive_closure | role_restriction | role_identity;
 const auto role_root_def = role > eoi;
 
-const auto role_universal_def = with_constructor_parentheses(lit(grammar_ast::RoleUniversal<runir::kr::dl::BaseFamilyTag>::keyword)
-                                                             >> x3::attr(grammar_ast::RoleUniversal<runir::kr::dl::BaseFamilyTag> {}));
+const auto role_universal_def = with_constructor_parentheses(lit(grammar_ast::RoleUniversal<runir::kr::BaseFamilyTag>::keyword)
+                                                             >> x3::attr(grammar_ast::RoleUniversal<runir::kr::BaseFamilyTag> {}));
 const auto role_atomic_state_def =
-    with_constructor_parentheses(lit(grammar_ast::RoleAtomicState<runir::kr::dl::BaseFamilyTag>::keyword) > predicate_name_string_parser());
-const auto role_atomic_goal_def = with_constructor_parentheses(lit(grammar_ast::RoleAtomicGoal<runir::kr::dl::BaseFamilyTag>::keyword)
-                                                               > predicate_name_string_parser() > bool_string_parser());
+    with_constructor_parentheses(lit(grammar_ast::RoleAtomicState<runir::kr::BaseFamilyTag>::keyword) > predicate_name_string_parser());
+const auto role_atomic_goal_def =
+    with_constructor_parentheses(lit(grammar_ast::RoleAtomicGoal<runir::kr::BaseFamilyTag>::keyword) > predicate_name_string_parser() > bool_string_parser());
 const auto role_intersection_def =
-    with_constructor_parentheses(lit(grammar_ast::RoleIntersection<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice > role_choice);
-const auto role_union_def = with_constructor_parentheses(lit(grammar_ast::RoleUnion<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice > role_choice);
-const auto role_complement_def = with_constructor_parentheses(lit(grammar_ast::RoleComplement<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice);
-const auto role_inverse_def = with_constructor_parentheses(lit(grammar_ast::RoleInverse<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice);
+    with_constructor_parentheses(lit(grammar_ast::RoleIntersection<runir::kr::BaseFamilyTag>::keyword) > role_choice > role_choice);
+const auto role_union_def = with_constructor_parentheses(lit(grammar_ast::RoleUnion<runir::kr::BaseFamilyTag>::keyword) > role_choice > role_choice);
+const auto role_complement_def = with_constructor_parentheses(lit(grammar_ast::RoleComplement<runir::kr::BaseFamilyTag>::keyword) > role_choice);
+const auto role_inverse_def = with_constructor_parentheses(lit(grammar_ast::RoleInverse<runir::kr::BaseFamilyTag>::keyword) > role_choice);
 const auto role_composition_def =
-    with_constructor_parentheses(lit(grammar_ast::RoleComposition<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice > role_choice);
-const auto role_transitive_closure_def =
-    with_constructor_parentheses(lit(grammar_ast::RoleTransitiveClosure<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice);
+    with_constructor_parentheses(lit(grammar_ast::RoleComposition<runir::kr::BaseFamilyTag>::keyword) > role_choice > role_choice);
+const auto role_transitive_closure_def = with_constructor_parentheses(lit(grammar_ast::RoleTransitiveClosure<runir::kr::BaseFamilyTag>::keyword) > role_choice);
 const auto role_reflexive_transitive_closure_def =
-    with_constructor_parentheses(lit(grammar_ast::RoleReflexiveTransitiveClosure<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice);
+    with_constructor_parentheses(lit(grammar_ast::RoleReflexiveTransitiveClosure<runir::kr::BaseFamilyTag>::keyword) > role_choice);
 const auto role_restriction_def =
-    with_constructor_parentheses(lit(grammar_ast::RoleRestriction<runir::kr::dl::BaseFamilyTag>::keyword) > role_choice > concept_choice);
-const auto role_identity_def = with_constructor_parentheses(lit(grammar_ast::RoleIdentity<runir::kr::dl::BaseFamilyTag>::keyword) > concept_choice);
+    with_constructor_parentheses(lit(grammar_ast::RoleRestriction<runir::kr::BaseFamilyTag>::keyword) > role_choice > concept_choice);
+const auto role_identity_def = with_constructor_parentheses(lit(grammar_ast::RoleIdentity<runir::kr::BaseFamilyTag>::keyword) > concept_choice);
 const auto role_non_terminal_def = role_non_terminal_string_parser();
 const auto role_choice_def = role_non_terminal | role;
 const auto role_derivation_rule_def = (lit("(") >> role_non_terminal) > ((lit("(") > (role_choice % lit("or")) > lit(")")) | x3::repeat(1)[role_choice])
@@ -206,12 +204,12 @@ const auto constructor_or_non_terminal_variant_def = concept_choice | role_choic
 
 const auto boolean_def = boolean_atomic_state | boolean_atomic_goal | boolean_nonempty;
 const auto boolean_root_def = boolean > eoi;
-const auto boolean_atomic_state_def = with_constructor_parentheses(lit(grammar_ast::BooleanAtomicState<runir::kr::dl::BaseFamilyTag>::keyword)
+const auto boolean_atomic_state_def = with_constructor_parentheses(lit(grammar_ast::BooleanAtomicState<runir::kr::BaseFamilyTag>::keyword)
                                                                    > predicate_name_string_parser() > bool_string_parser());
-const auto boolean_atomic_goal_def = with_constructor_parentheses(lit(grammar_ast::BooleanAtomicGoal<runir::kr::dl::BaseFamilyTag>::keyword)
+const auto boolean_atomic_goal_def = with_constructor_parentheses(lit(grammar_ast::BooleanAtomicGoal<runir::kr::BaseFamilyTag>::keyword)
                                                                   > predicate_name_string_parser() > bool_string_parser());
 const auto boolean_nonempty_def =
-    with_constructor_parentheses(lit(grammar_ast::BooleanNonempty<runir::kr::dl::BaseFamilyTag>::keyword) > constructor_or_non_terminal_variant);
+    with_constructor_parentheses(lit(grammar_ast::BooleanNonempty<runir::kr::BaseFamilyTag>::keyword) > constructor_or_non_terminal_variant);
 const auto boolean_non_terminal_def = boolean_non_terminal_string_parser();
 const auto boolean_choice_def = boolean_non_terminal | boolean;
 const auto boolean_derivation_rule_def = (lit("(") >> boolean_non_terminal)
@@ -220,9 +218,9 @@ const auto boolean_derivation_rule_def = (lit("(") >> boolean_non_terminal)
 const auto numerical_def = numerical_count | numerical_distance;
 const auto numerical_root_def = numerical > eoi;
 const auto numerical_count_def =
-    with_constructor_parentheses(lit(grammar_ast::NumericalCount<runir::kr::dl::BaseFamilyTag>::keyword) > constructor_or_non_terminal_variant);
+    with_constructor_parentheses(lit(grammar_ast::NumericalCount<runir::kr::BaseFamilyTag>::keyword) > constructor_or_non_terminal_variant);
 const auto numerical_distance_def =
-    with_constructor_parentheses(lit(grammar_ast::NumericalDistance<runir::kr::dl::BaseFamilyTag>::keyword) > concept_choice > role_choice > concept_choice);
+    with_constructor_parentheses(lit(grammar_ast::NumericalDistance<runir::kr::BaseFamilyTag>::keyword) > concept_choice > role_choice > concept_choice);
 const auto numerical_non_terminal_def = numerical_non_terminal_string_parser();
 const auto numerical_choice_def = numerical_non_terminal | numerical;
 const auto numerical_derivation_rule_def = (lit("(") >> numerical_non_terminal)

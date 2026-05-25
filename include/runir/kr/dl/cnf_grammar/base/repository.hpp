@@ -1,93 +1,41 @@
 #ifndef RUNIR_KR_DL_CNF_GRAMMAR_BASE_REPOSITORY_HPP_
 #define RUNIR_KR_DL_CNF_GRAMMAR_BASE_REPOSITORY_HPP_
 
+#include "runir/kr/dl/base/declarations.hpp"
 #include "runir/kr/dl/cnf_grammar/base/datas.hpp"
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
-
-#include <memory>
-#include <vector>
 
 namespace runir::kr::dl::cnf_grammar::base
 {
 
-using ConstructorRepository = ConstructorRepositoryFor<runir::kr::BaseFamilyTag>;
-using ConstructorRepositoryPtr = ConstructorRepositoryPtrFor<runir::kr::BaseFamilyTag>;
-using ConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::BaseFamilyTag>;
-using ConstructorRepositoryFactoryPtr = std::shared_ptr<ConstructorRepositoryFactory>;
+using ConstructorRepository = runir::kr::dl::cnf_grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>;
+using ConstructorRepositoryFactory = runir::kr::dl::cnf_grammar::ConstructorRepositoryFactoryFor<runir::kr::BaseFamilyTag>;
 
-template<runir::kr::dl::ConceptConstructorTag Tag>
-using ConceptView = FamilyConceptView<runir::kr::BaseFamilyTag, Tag>;
+template<runir::kr::dl::BaseConceptConstructorTag Tag>
+using ConceptView = runir::kr::dl::cnf_grammar::FamilyConceptView<runir::kr::BaseFamilyTag, Tag>;
 
-template<runir::kr::dl::ConceptConstructorTag Tag>
-using ConceptListView = tyr::View<tyr::IndexList<Concept<runir::kr::BaseFamilyTag, Tag>>, ConstructorRepository>;
+template<runir::kr::dl::BaseRoleConstructorTag Tag>
+using RoleView = runir::kr::dl::cnf_grammar::FamilyRoleView<runir::kr::BaseFamilyTag, Tag>;
 
-template<runir::kr::dl::ConceptConstructorTag Tag>
-using ConceptViewList = std::vector<ConceptView<Tag>>;
+template<runir::kr::dl::BaseBooleanConstructorTag Tag>
+using BooleanView = runir::kr::dl::cnf_grammar::FamilyBooleanView<runir::kr::BaseFamilyTag, Tag>;
 
-template<runir::kr::dl::RoleConstructorTag Tag>
-using RoleView = FamilyRoleView<runir::kr::BaseFamilyTag, Tag>;
-
-template<runir::kr::dl::RoleConstructorTag Tag>
-using RoleListView = tyr::View<tyr::IndexList<Role<runir::kr::BaseFamilyTag, Tag>>, ConstructorRepository>;
-
-template<runir::kr::dl::RoleConstructorTag Tag>
-using RoleViewList = std::vector<RoleView<Tag>>;
-
-template<runir::kr::dl::BooleanConstructorTag Tag>
-using BooleanView = FamilyBooleanView<runir::kr::BaseFamilyTag, Tag>;
-
-template<runir::kr::dl::BooleanConstructorTag Tag>
-using BooleanListView = tyr::View<tyr::IndexList<Boolean<runir::kr::BaseFamilyTag, Tag>>, ConstructorRepository>;
-
-template<runir::kr::dl::BooleanConstructorTag Tag>
-using BooleanViewList = std::vector<BooleanView<Tag>>;
-
-template<runir::kr::dl::NumericalConstructorTag Tag>
-using NumericalView = FamilyNumericalView<runir::kr::BaseFamilyTag, Tag>;
-
-template<runir::kr::dl::NumericalConstructorTag Tag>
-using NumericalListView = tyr::View<tyr::IndexList<Numerical<runir::kr::BaseFamilyTag, Tag>>, ConstructorRepository>;
-
-template<runir::kr::dl::NumericalConstructorTag Tag>
-using NumericalViewList = std::vector<NumericalView<Tag>>;
+template<runir::kr::dl::BaseNumericalConstructorTag Tag>
+using NumericalView = runir::kr::dl::cnf_grammar::FamilyNumericalView<runir::kr::BaseFamilyTag, Tag>;
 
 template<runir::kr::dl::CategoryTag Category>
-using ConstructorView = FamilyConstructorView<runir::kr::BaseFamilyTag, Category>;
+using ConstructorView = runir::kr::dl::cnf_grammar::FamilyConstructorView<runir::kr::BaseFamilyTag, Category>;
 
 template<runir::kr::dl::CategoryTag Category>
-using ConstructorListView = tyr::View<tyr::IndexList<Constructor<runir::kr::BaseFamilyTag, Category>>, ConstructorRepository>;
+using NonTerminalView = runir::kr::dl::cnf_grammar::FamilyNonTerminalView<runir::kr::BaseFamilyTag, Category>;
 
 template<runir::kr::dl::CategoryTag Category>
-using ConstructorViewList = std::vector<ConstructorView<Category>>;
+using DerivationRuleView = runir::kr::dl::cnf_grammar::FamilyDerivationRuleView<runir::kr::BaseFamilyTag, Category>;
 
 template<runir::kr::dl::CategoryTag Category>
-using NonTerminalView = FamilyNonTerminalView<runir::kr::BaseFamilyTag, Category>;
+using SubstitutionRuleView = runir::kr::dl::cnf_grammar::FamilySubstitutionRuleView<runir::kr::BaseFamilyTag, Category>;
 
-template<runir::kr::dl::CategoryTag Category>
-using NonTerminalListView = tyr::View<tyr::IndexList<NonTerminal<runir::kr::BaseFamilyTag, Category>>, ConstructorRepository>;
-
-template<runir::kr::dl::CategoryTag Category>
-using NonTerminalViewList = std::vector<NonTerminalView<Category>>;
-
-template<runir::kr::dl::CategoryTag Category>
-using DerivationRuleView = FamilyDerivationRuleView<runir::kr::BaseFamilyTag, Category>;
-
-template<runir::kr::dl::CategoryTag Category>
-using DerivationRuleListView = tyr::View<tyr::IndexList<DerivationRule<runir::kr::BaseFamilyTag, Category>>, ConstructorRepository>;
-
-template<runir::kr::dl::CategoryTag Category>
-using DerivationRuleViewList = std::vector<DerivationRuleView<Category>>;
-
-template<runir::kr::dl::CategoryTag Category>
-using SubstitutionRuleView = FamilySubstitutionRuleView<runir::kr::BaseFamilyTag, Category>;
-
-template<runir::kr::dl::CategoryTag Category>
-using SubstitutionRuleListView = tyr::View<tyr::IndexList<SubstitutionRule<runir::kr::BaseFamilyTag, Category>>, ConstructorRepository>;
-
-template<runir::kr::dl::CategoryTag Category>
-using SubstitutionRuleViewList = std::vector<SubstitutionRuleView<Category>>;
-
-using GrammarView = FamilyGrammarView<runir::kr::BaseFamilyTag>;
+using GrammarView = runir::kr::dl::cnf_grammar::FamilyGrammarView<runir::kr::BaseFamilyTag>;
 
 }  // namespace runir::kr::dl::cnf_grammar::base
 

@@ -4,7 +4,7 @@ import pytest
 
 def test_python_bindings_expose_submodules():
     assert pyrunir.graphs.DynamicGraph is not None
-    assert pyrunir.kr.dl.grammar.ConstructorRepository is not None
+    assert pyrunir.kr.dl.base.grammar.ConstructorRepository is not None
 
 
 def test_native_prefix_points_to_installed_cmake_package():

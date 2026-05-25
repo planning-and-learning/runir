@@ -3,7 +3,7 @@ from pathlib import Path
 from pyrunir.datasets import (
     GroundTaskSearchContext,
 )
-from pyrunir.kr.dl.semantics import (
+from pyrunir.kr.dl.base.semantics import (
     Builder,
     ConstructorRepositoryFactory,
     DenotationRepositoryFactory,

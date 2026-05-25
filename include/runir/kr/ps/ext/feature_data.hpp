@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_FEATURE_DATA_HPP_
 #define RUNIR_KR_PS_EXT_FEATURE_DATA_HPP_
 
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/dl/feature_index.hpp"
 #include "runir/kr/ps/ext/feature_index.hpp"

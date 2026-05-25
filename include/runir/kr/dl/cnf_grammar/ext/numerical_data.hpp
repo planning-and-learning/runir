@@ -8,13 +8,13 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
+struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
     runir::kr::dl::semantics::ArgumentData<
-        runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
+        runir::kr::dl::cnf_grammar::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
         runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>
 {
     using Base = runir::kr::dl::semantics::ArgumentData<
-        runir::kr::dl::cnf_grammar::Numerical<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
+        runir::kr::dl::cnf_grammar::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
         runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>;
     using Base::Base;
 };

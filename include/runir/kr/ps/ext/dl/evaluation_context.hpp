@@ -30,12 +30,4 @@ public:
 
 }  // namespace runir::kr::ps::dl
 
-namespace runir::kr::ps::ext::dl
-{
-
-template<tyr::planning::TaskKind Kind>
-using EvaluationContext = runir::kr::ps::dl::EvaluationContext<runir::kr::ExtFamilyTag, Kind>;
-
-}  // namespace runir::kr::ps::ext::dl
-
 #endif

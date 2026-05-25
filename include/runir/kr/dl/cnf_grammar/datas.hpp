@@ -1,7 +1,6 @@
 #ifndef RUNIR_CNF_GRAMMAR_DATAS_HPP_
 #define RUNIR_CNF_GRAMMAR_DATAS_HPP_
 
-#include "runir/kr/dl/cnf_grammar/base/constructor_data.hpp"
 #include "runir/kr/dl/cnf_grammar/boolean_data.hpp"
 #include "runir/kr/dl/cnf_grammar/concept_data.hpp"
 #include "runir/kr/dl/cnf_grammar/derivation_rule_data.hpp"

@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_BASE_CONSTRUCTOR_DATA_HPP_
 #define RUNIR_KR_DL_BASE_CONSTRUCTOR_DATA_HPP_
 
+#include "runir/kr/dl/base/declarations.hpp"
 #include "runir/kr/dl/numerical_data.hpp"
 
 #include <cista/containers/variant.h>
@@ -13,35 +14,34 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ConceptTag>>
+struct Data<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, runir::kr::dl::ConceptTag>>
 {
-    using Variant =
-        ::cista::offset::variant<Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::BotTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::TopTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::StaticTag>>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::FluentTag>>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::DerivedTag>>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::StaticTag>>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::FluentTag>>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::IntersectionTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::UnionTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NegationTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ValueRestrictionTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ExistentialQuantificationTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtLeastNumberRestrictionTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtMostNumberRestrictionTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ExactNumberRestrictionTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::QualifiedExactNumberRestrictionTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleValueMapTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AgreementTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleFillersTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::OneOfTag>>,
-                                 Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NominalTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::BotTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::TopTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::StaticTag>>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::FluentTag>>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::DerivedTag>>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::StaticTag>>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::FluentTag>>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::IntersectionTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::UnionTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::NegationTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::ValueRestrictionTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::ExistentialQuantificationTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtLeastNumberRestrictionTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtMostNumberRestrictionTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::ExactNumberRestrictionTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::QualifiedExactNumberRestrictionTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::RoleValueMapTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AgreementTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::RoleFillersTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::OneOfTag>>,
+                                             Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::NominalTag>>>;
 
-    Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ConceptTag>> index;
+    Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, runir::kr::dl::ConceptTag>> index;
     Variant value;
 
     Data() = default;
@@ -58,27 +58,26 @@ struct Data<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::
 };
 
 template<>
-struct Data<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleTag>>
+struct Data<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, runir::kr::dl::RoleTag>>
 {
-    using Variant =
-        ::cista::offset::variant<Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::UniversalTag>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::StaticTag>>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::FluentTag>>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::DerivedTag>>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::StaticTag>>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::FluentTag>>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::IntersectionTag>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::UnionTag>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ComplementTag>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::InverseTag>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::CompositionTag>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::TransitiveClosureTag>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::ReflexiveTransitiveClosureTag>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RestrictionTag>>,
-                                 Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, runir::kr::dl::IdentityTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::UniversalTag>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::StaticTag>>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::FluentTag>>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::DerivedTag>>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::StaticTag>>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::FluentTag>>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::IntersectionTag>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::UnionTag>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::ComplementTag>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::InverseTag>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::CompositionTag>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::TransitiveClosureTag>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::ReflexiveTransitiveClosureTag>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::RestrictionTag>>,
+                                             Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, runir::kr::dl::IdentityTag>>>;
 
-    Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::RoleTag>> index;
+    Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, runir::kr::dl::RoleTag>> index;
     Variant value;
 
     Data() = default;
@@ -95,18 +94,17 @@ struct Data<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::
 };
 
 template<>
-struct Data<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::BooleanTag>>
+struct Data<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>
 {
-    using Variant =
-        ::cista::offset::variant<Index<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::StaticTag>>>,
-                                 Index<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::FluentTag>>>,
-                                 Index<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::DerivedTag>>>,
-                                 Index<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::StaticTag>>>,
-                                 Index<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::FluentTag>>>,
-                                 Index<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>>,
-                                 Index<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NonemptyTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::StaticTag>>>,
+                                             Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::FluentTag>>>,
+                                             Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<tyr::formalism::DerivedTag>>>,
+                                             Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::StaticTag>>>,
+                                             Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::FluentTag>>>,
+                                             Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<tyr::formalism::DerivedTag>>>,
+                                             Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::NonemptyTag>>>;
 
-    Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::BooleanTag>> index;
+    Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>> index;
     Variant value;
 
     Data() = default;
@@ -123,12 +121,12 @@ struct Data<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::
 };
 
 template<>
-struct Data<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NumericalTag>>
+struct Data<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::dl::Numerical<runir::kr::dl::BaseFamilyTag, runir::kr::dl::CountTag>>,
-                                             Index<runir::kr::dl::Numerical<runir::kr::dl::BaseFamilyTag, runir::kr::dl::DistanceTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::dl::Numerical<runir::kr::BaseFamilyTag, runir::kr::dl::CountTag>>,
+                                             Index<runir::kr::dl::Numerical<runir::kr::BaseFamilyTag, runir::kr::dl::DistanceTag>>>;
 
-    Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, runir::kr::dl::NumericalTag>> index;
+    Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>> index;
     Variant value;
 
     Data() = default;

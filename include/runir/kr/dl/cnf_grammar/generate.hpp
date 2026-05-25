@@ -1,5 +1,5 @@
-#ifndef RUNIR_CNF_GRAMMAR_GENERATE_HPP_
-#define RUNIR_CNF_GRAMMAR_GENERATE_HPP_
+#ifndef RUNIR_KR_DL_CNF_GRAMMAR_GENERATE_HPP_
+#define RUNIR_KR_DL_CNF_GRAMMAR_GENERATE_HPP_
 
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
 #include "runir/kr/dl/repository.hpp"
@@ -66,12 +66,6 @@ struct GenerateResultsFor
             return numericals;
     }
 };
-
-template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
-GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
-                                    const std::vector<tyr::planning::StateView<Kind>>& states,
-                                    ConstructorRepositoryFor<Family>& output_repository,
-                                    const GenerateOptions& options);
 
 }
 

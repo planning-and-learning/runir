@@ -8,21 +8,21 @@ namespace tyr
 {
 
 template<>
-struct Data<runir::kr::dl::Role<runir::kr::dl::ExtFamilyTag, runir::kr::dl::RegisterTag>> :
-    runir::kr::dl::semantics::RegisterData<runir::kr::dl::Role<runir::kr::dl::ExtFamilyTag, runir::kr::dl::RegisterTag>,
+struct Data<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>> :
+    runir::kr::dl::semantics::RegisterData<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>,
                                            runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>
 {
-    using Base = runir::kr::dl::semantics::RegisterData<runir::kr::dl::Role<runir::kr::dl::ExtFamilyTag, runir::kr::dl::RegisterTag>,
+    using Base = runir::kr::dl::semantics::RegisterData<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>,
                                                         runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>;
     using Base::Base;
 };
 
 template<>
-struct Data<runir::kr::dl::Role<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
-    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Role<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
+struct Data<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
+    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
                                            runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>
 {
-    using Base = runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Role<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
+    using Base = runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
                                                         runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>;
     using Base::Base;
 };

@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_REPOSITORY_HPP_
 #define RUNIR_KR_PS_BASE_REPOSITORY_HPP_
 
-#include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/base/repository.hpp"
 #include "runir/kr/ps/base/canonicalization.hpp"
 #include "runir/kr/ps/base/condition_data.hpp"
 #include "runir/kr/ps/base/declarations.hpp"
@@ -23,7 +23,6 @@
 #include "runir/kr/ps/repository.hpp"
 
 #include <tyr/common/type_list.hpp>
-#include <tyr/formalism/symbol_repository.hpp>
 
 namespace runir::kr::ps::base
 {
@@ -53,12 +52,8 @@ using EffectTypes =
 
 using SketchTypes = tyr::TypeList<runir::kr::ps::base::Rule, runir::kr::ps::base::Sketch>;
 using RepositoryTypes = tyr::ConcatTypeListsT<FeatureTypes, ConditionTypes, EffectTypes, SketchTypes>;
-using SymbolRepository = tyr::ApplyTypeListT<tyr::formalism::SymbolRepository, RepositoryTypes>;
-
-using Repository = runir::kr::ps::BasicRepository<runir::kr::BaseFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtr>;
-using RepositoryPtr = std::shared_ptr<Repository>;
-using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::BaseFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtr>;
-using RepositoryFactoryPtr = std::shared_ptr<RepositoryFactory>;
+using Repository = runir::kr::ps::BasicRepository<runir::kr::BaseFamilyTag, RepositoryTypes, runir::kr::dl::base::ConstructorRepositoryPtr>;
+using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::BaseFamilyTag, RepositoryTypes, runir::kr::dl::base::ConstructorRepositoryPtr>;
 
 using SketchView = tyr::View<tyr::Index<runir::kr::ps::base::Sketch>, Repository>;
 using RuleView = tyr::View<tyr::Index<runir::kr::ps::base::Rule>, Repository>;

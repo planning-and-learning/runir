@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from pyrunir.kr.dl import cnf_grammar
-from pyrunir.kr.dl.grammar import (
+from pyrunir.kr.dl import base
+from pyrunir.kr.dl.base import cnf_grammar
+from pyrunir.kr.dl.base.grammar import (
     ConstructorRepositoryFactory,
     GrammarFactory,
     GrammarSpecification,
-    parse,
 )
 from pytyr.formalism.planning import Parser, ParserOptions
 
@@ -177,11 +177,11 @@ def test_france_et_al_aaai2021_grammar_factory_for_gripper_domain():
     formatted = str(grammar)
 
     assert formatted == expected
-    assert str(parse(formatted, domain, repository)) == formatted
+    assert str(base.parse_grammar(formatted, domain, repository)) == formatted
 
     cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)
     cnf = cnf_grammar.translate(grammar, cnf_repository)
     cnf_formatted = str(cnf)
 
     assert cnf_formatted == expected_cnf
-    assert str(cnf_grammar.translate(parse(cnf_formatted, domain, repository), cnf_repository)) == cnf_formatted
+    assert str(cnf_grammar.translate(base.parse_grammar(cnf_formatted, domain, repository), cnf_repository)) == cnf_formatted

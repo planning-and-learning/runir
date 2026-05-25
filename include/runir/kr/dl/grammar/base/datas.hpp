@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_GRAMMAR_BASE_DATAS_HPP_
 #define RUNIR_KR_DL_GRAMMAR_BASE_DATAS_HPP_
 
+#include "runir/kr/dl/base/declarations.hpp"
 #include "runir/kr/dl/grammar/base/constructor_data.hpp"
 #include "runir/kr/dl/grammar/boolean_data.hpp"
 #include "runir/kr/dl/grammar/concept_data.hpp"

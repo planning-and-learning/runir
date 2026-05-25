@@ -42,27 +42,26 @@ nanobind_add_module(_pyrunir
     pyrunir/kr/ps/base/repository.cpp
     pyrunir/kr/ps/base/syntactic_complexity.cpp
     pyrunir/kr/ps/base/views.cpp
-    pyrunir/kr/dl/semantics/datas.cpp
-    pyrunir/kr/dl/semantics/indices.cpp
-    pyrunir/kr/dl/semantics/module.cpp
-    pyrunir/kr/dl/semantics/repositories.cpp
-    pyrunir/kr/dl/semantics/views.cpp
-    pyrunir/kr/dl/grammar/constructor_repository.cpp
-    pyrunir/kr/dl/grammar/datas.cpp
-    pyrunir/kr/dl/grammar/grammar.cpp
-    pyrunir/kr/dl/grammar/grammar_factory.cpp
-    pyrunir/kr/dl/grammar/indices.cpp
-    pyrunir/kr/dl/grammar/module.cpp
-    pyrunir/kr/dl/grammar/parser.cpp
-    pyrunir/kr/dl/grammar/views.cpp
-    pyrunir/kr/dl/cnf_grammar/constructor_repository.cpp
-    pyrunir/kr/dl/cnf_grammar/datas.cpp
-    pyrunir/kr/dl/cnf_grammar/generate.cpp
-    pyrunir/kr/dl/cnf_grammar/grammar.cpp
-    pyrunir/kr/dl/cnf_grammar/indices.cpp
-    pyrunir/kr/dl/cnf_grammar/module.cpp
-    pyrunir/kr/dl/cnf_grammar/translate.cpp
-    pyrunir/kr/dl/cnf_grammar/views.cpp
+    pyrunir/kr/dl/base/semantics/datas.cpp
+    pyrunir/kr/dl/base/semantics/indices.cpp
+    pyrunir/kr/dl/base/semantics/module.cpp
+    pyrunir/kr/dl/base/semantics/repositories.cpp
+    pyrunir/kr/dl/base/semantics/views.cpp
+    pyrunir/kr/dl/base/grammar/constructor_repository.cpp
+    pyrunir/kr/dl/base/grammar/datas.cpp
+    pyrunir/kr/dl/base/grammar/grammar.cpp
+    pyrunir/kr/dl/base/grammar/grammar_factory.cpp
+    pyrunir/kr/dl/base/grammar/indices.cpp
+    pyrunir/kr/dl/base/grammar/module.cpp
+    pyrunir/kr/dl/base/grammar/views.cpp
+    pyrunir/kr/dl/base/cnf_grammar/constructor_repository.cpp
+    pyrunir/kr/dl/base/cnf_grammar/datas.cpp
+    pyrunir/kr/dl/base/cnf_grammar/generate.cpp
+    pyrunir/kr/dl/base/cnf_grammar/grammar.cpp
+    pyrunir/kr/dl/base/cnf_grammar/indices.cpp
+    pyrunir/kr/dl/base/cnf_grammar/module.cpp
+    pyrunir/kr/dl/base/cnf_grammar/translate.cpp
+    pyrunir/kr/dl/base/cnf_grammar/views.cpp
 )
 
 target_link_libraries(_pyrunir PRIVATE runir::core)
@@ -167,9 +166,9 @@ set(PYRUNIR_PYTHON_FILES
     pyrunir/kr/dl/__init__.py
     pyrunir/kr/dl/base/__init__.py
     pyrunir/kr/dl/ext/__init__.py
-    pyrunir/kr/dl/semantics/__init__.py
-    pyrunir/kr/dl/grammar/__init__.py
-    pyrunir/kr/dl/cnf_grammar/__init__.py
+    pyrunir/kr/dl/base/semantics/__init__.py
+    pyrunir/kr/dl/base/grammar/__init__.py
+    pyrunir/kr/dl/base/cnf_grammar/__init__.py
     pyrunir/kr/ps/__init__.py
     pyrunir/kr/ps/base/__init__.py
     pyrunir/kr/ps/base/dl/__init__.py

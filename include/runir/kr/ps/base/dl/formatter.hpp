@@ -40,10 +40,10 @@ std::vector<std::string> quoted_object_names(Objects objects)
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, Category>>, C> view);
+std::string constructor(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>, C> view);
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, Category>>, C> view);
+std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>, C> view);
 
 template<typename View>
 std::string constructor_variant(View view)
@@ -51,210 +51,208 @@ std::string constructor_variant(View view)
     return tyr::visit([](auto arg) { return constructor(arg); }, view);
 }
 
-template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
-std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
+template<runir::kr::dl::BaseConceptConstructorTag Tag, typename C>
+std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
-        return std::string(runir::kr::dl::grammar::ast::ConceptBot<runir::kr::dl::BaseFamilyTag>::keyword);
+        return std::string(runir::kr::dl::grammar::ast::ConceptBot<runir::kr::BaseFamilyTag>::keyword);
     else if constexpr (std::same_as<Tag, runir::kr::dl::TopTag>)
-        return std::string(runir::kr::dl::grammar::ast::ConceptTop<runir::kr::dl::BaseFamilyTag>::keyword);
+        return std::string(runir::kr::dl::grammar::ast::ConceptTop<runir::kr::BaseFamilyTag>::keyword);
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {}",
-                           runir::kr::dl::grammar::ast::ConceptAtomicState<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptAtomicState<runir::kr::BaseFamilyTag>::keyword,
                            quoted(view.get_predicate().get_name()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptAtomicGoal<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptAtomicGoal<runir::kr::BaseFamilyTag>::keyword,
                            quoted(view.get_predicate().get_name()),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptIntersection<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptIntersection<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::UnionTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptUnion<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptUnion<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NegationTag>)
-        return fmt::format("{} {}", runir::kr::dl::grammar::ast::ConceptNegation<runir::kr::dl::BaseFamilyTag>::keyword, constructor(view.get_arg()));
+        return fmt::format("{} {}", runir::kr::dl::grammar::ast::ConceptNegation<runir::kr::BaseFamilyTag>::keyword, constructor(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ValueRestrictionTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptValueRestriction<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptValueRestriction<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ExistentialQuantificationTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptExistentialQuantification<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptExistentialQuantification<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::AtLeastNumberRestrictionTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction<runir::kr::BaseFamilyTag>::keyword,
                            view.get_n(),
                            constructor(view.get_role()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::AtMostNumberRestrictionTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction<runir::kr::BaseFamilyTag>::keyword,
                            view.get_n(),
                            constructor(view.get_role()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ExactNumberRestrictionTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptExactNumberRestriction<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptExactNumberRestriction<runir::kr::BaseFamilyTag>::keyword,
                            view.get_n(),
                            constructor(view.get_role()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>)
         return fmt::format("{} {} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction<runir::kr::BaseFamilyTag>::keyword,
                            view.get_n(),
                            constructor(view.get_role()),
                            constructor(view.get_concept()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>)
         return fmt::format("{} {} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction<runir::kr::BaseFamilyTag>::keyword,
                            view.get_n(),
                            constructor(view.get_role()),
                            constructor(view.get_concept()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::QualifiedExactNumberRestrictionTag>)
         return fmt::format("{} {} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction<runir::kr::BaseFamilyTag>::keyword,
                            view.get_n(),
                            constructor(view.get_role()),
                            constructor(view.get_concept()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::RoleValueMapTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptRoleValueMap<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptRoleValueMap<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::AgreementTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptAgreement<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptAgreement<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::RoleFillersTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::ConceptRoleFillers<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptRoleFillers<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_role()),
                            fmt::join(quoted_object_names(view.get_objects()), " "));
     else if constexpr (std::same_as<Tag, runir::kr::dl::OneOfTag>)
         return fmt::format("{} {}",
-                           runir::kr::dl::grammar::ast::ConceptOneOf<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::ConceptOneOf<runir::kr::BaseFamilyTag>::keyword,
                            fmt::join(quoted_object_names(view.get_objects()), " "));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
-        return fmt::format("{} {}", runir::kr::dl::grammar::ast::ConceptNominal<runir::kr::dl::BaseFamilyTag>::keyword, quoted(view.get_object().get_name()));
+        return fmt::format("{} {}", runir::kr::dl::grammar::ast::ConceptNominal<runir::kr::BaseFamilyTag>::keyword, quoted(view.get_object().get_name()));
 }
 
-template<runir::kr::dl::RoleConstructorTag Tag, typename C>
-std::string role(tyr::View<tyr::Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
+template<runir::kr::dl::BaseRoleConstructorTag Tag, typename C>
+std::string role(tyr::View<tyr::Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
-        return std::string(runir::kr::dl::grammar::ast::RoleUniversal<runir::kr::dl::BaseFamilyTag>::keyword);
+        return std::string(runir::kr::dl::grammar::ast::RoleUniversal<runir::kr::BaseFamilyTag>::keyword);
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("{} {}",
-                           runir::kr::dl::grammar::ast::RoleAtomicState<runir::kr::dl::BaseFamilyTag>::keyword,
-                           quoted(view.get_predicate().get_name()));
+        return fmt::format("{} {}", runir::kr::dl::grammar::ast::RoleAtomicState<runir::kr::BaseFamilyTag>::keyword, quoted(view.get_predicate().get_name()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::RoleAtomicGoal<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::RoleAtomicGoal<runir::kr::BaseFamilyTag>::keyword,
                            quoted(view.get_predicate().get_name()),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::RoleIntersection<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::RoleIntersection<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::UnionTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::RoleUnion<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::RoleUnion<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ComplementTag>)
-        return fmt::format("{} {}", runir::kr::dl::grammar::ast::RoleComplement<runir::kr::dl::BaseFamilyTag>::keyword, constructor(view.get_arg()));
+        return fmt::format("{} {}", runir::kr::dl::grammar::ast::RoleComplement<runir::kr::BaseFamilyTag>::keyword, constructor(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::InverseTag>)
-        return fmt::format("{} {}", runir::kr::dl::grammar::ast::RoleInverse<runir::kr::dl::BaseFamilyTag>::keyword, constructor(view.get_arg()));
+        return fmt::format("{} {}", runir::kr::dl::grammar::ast::RoleInverse<runir::kr::BaseFamilyTag>::keyword, constructor(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::CompositionTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::RoleComposition<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::RoleComposition<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::TransitiveClosureTag>)
-        return fmt::format("{} {}", runir::kr::dl::grammar::ast::RoleTransitiveClosure<runir::kr::dl::BaseFamilyTag>::keyword, constructor(view.get_arg()));
+        return fmt::format("{} {}", runir::kr::dl::grammar::ast::RoleTransitiveClosure<runir::kr::BaseFamilyTag>::keyword, constructor(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ReflexiveTransitiveClosureTag>)
         return fmt::format("{} {}",
-                           runir::kr::dl::grammar::ast::RoleReflexiveTransitiveClosure<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::RoleReflexiveTransitiveClosure<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::RestrictionTag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::RoleRestriction<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::RoleRestriction<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IdentityTag>)
-        return fmt::format("{} {}", runir::kr::dl::grammar::ast::RoleIdentity<runir::kr::dl::BaseFamilyTag>::keyword, constructor(view.get_arg()));
+        return fmt::format("{} {}", runir::kr::dl::grammar::ast::RoleIdentity<runir::kr::BaseFamilyTag>::keyword, constructor(view.get_arg()));
 }
 
-template<runir::kr::dl::BooleanConstructorTag Tag, typename C>
-std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
+template<runir::kr::dl::BaseBooleanConstructorTag Tag, typename C>
+std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::BooleanAtomicState<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::BooleanAtomicState<runir::kr::BaseFamilyTag>::keyword,
                            quoted(view.get_predicate().get_name()),
                            boolean(view.get_polarity()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("{} {} {}",
-                           runir::kr::dl::grammar::ast::BooleanAtomicGoal<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::BooleanAtomicGoal<runir::kr::BaseFamilyTag>::keyword,
                            quoted(view.get_predicate().get_name()),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
-        return fmt::format("{} {}", runir::kr::dl::grammar::ast::BooleanNonempty<runir::kr::dl::BaseFamilyTag>::keyword, constructor_variant(view.get_arg()));
+        return fmt::format("{} {}", runir::kr::dl::grammar::ast::BooleanNonempty<runir::kr::BaseFamilyTag>::keyword, constructor_variant(view.get_arg()));
 }
 
-template<runir::kr::dl::NumericalConstructorTag Tag, typename C>
-std::string numerical(tyr::View<tyr::Index<runir::kr::dl::Numerical<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
+template<runir::kr::dl::BaseNumericalConstructorTag Tag, typename C>
+std::string numerical(tyr::View<tyr::Index<runir::kr::dl::Numerical<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
-        return fmt::format("{} {}", runir::kr::dl::grammar::ast::NumericalCount<runir::kr::dl::BaseFamilyTag>::keyword, constructor_variant(view.get_arg()));
+        return fmt::format("{} {}", runir::kr::dl::grammar::ast::NumericalCount<runir::kr::BaseFamilyTag>::keyword, constructor_variant(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
         return fmt::format("{} {} {} {}",
-                           runir::kr::dl::grammar::ast::NumericalDistance<runir::kr::dl::BaseFamilyTag>::keyword,
+                           runir::kr::dl::grammar::ast::NumericalDistance<runir::kr::BaseFamilyTag>::keyword,
                            constructor(view.get_lhs()),
                            constructor(view.get_mid()),
                            constructor(view.get_rhs()));
 }
 
-template<runir::kr::dl::ConceptConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Concept<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
+template<runir::kr::dl::BaseConceptConstructorTag Tag, typename C>
+std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     return concept_constructor(view);
 }
 
-template<runir::kr::dl::RoleConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Role<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
+template<runir::kr::dl::BaseRoleConstructorTag Tag, typename C>
+std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     return role(view);
 }
 
-template<runir::kr::dl::BooleanConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Boolean<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
+template<runir::kr::dl::BaseBooleanConstructorTag Tag, typename C>
+std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     return boolean_constructor(view);
 }
 
-template<runir::kr::dl::NumericalConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Numerical<runir::kr::dl::BaseFamilyTag, Tag>>, C> view)
+template<runir::kr::dl::BaseNumericalConstructorTag Tag, typename C>
+std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Numerical<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     return numerical(view);
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, Category>>, C> view)
+std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>, C> view)
 {
     return tyr::visit([](auto arg) { return constructor_body(arg); }, view.get_variant());
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::dl::BaseFamilyTag, Category>>, C> view)
+std::string constructor(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>, C> view)
 {
     return fmt::format("({})", constructor_body(view));
 }

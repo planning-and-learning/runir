@@ -1,8 +1,8 @@
 #ifndef RUNIR_REPOSITORY_HPP_
 #define RUNIR_REPOSITORY_HPP_
 
-#include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/canonicalization.hpp"
+#include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/datas.hpp"
 #include "runir/kr/dl/semantics/views.hpp"
@@ -158,12 +158,8 @@ public:
 template<FamilyTag Family>
 using ConstructorRepositoryFor = BasicConstructorRepository<Family>;
 
-using ConstructorRepository = ConstructorRepositoryFor<BaseFamilyTag>;
-
 template<FamilyTag Family>
 using ConstructorRepositoryPtrFor = std::shared_ptr<ConstructorRepositoryFor<Family>>;
-
-using ConstructorRepositoryPtr = ConstructorRepositoryPtrFor<BaseFamilyTag>;
 
 template<FamilyTag Family>
 class BasicConstructorRepositoryFactory
@@ -188,77 +184,24 @@ public:
 template<FamilyTag Family>
 using ConstructorRepositoryFactoryFor = BasicConstructorRepositoryFactory<Family>;
 
-using ConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<BaseFamilyTag>;
-
-using ConstructorRepositoryFactoryPtr = std::shared_ptr<ConstructorRepositoryFactory>;
-
 template<FamilyTag Family, typename Tag>
     requires FamilyConceptConstructorTag<Family, Tag>
 using FamilyConceptView = tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, ConstructorRepositoryFor<Family>>;
-
-template<typename Tag>
-    requires ConceptConstructorTag<Tag>
-using ConceptView = FamilyConceptView<BaseFamilyTag, Tag>;
-
-template<ConceptConstructorTag Tag>
-using ConceptListView = tyr::View<tyr::IndexList<Concept<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
-
-template<ConceptConstructorTag Tag>
-using ConceptViewList = std::vector<ConceptView<Tag>>;
 
 template<FamilyTag Family, typename Tag>
     requires FamilyRoleConstructorTag<Family, Tag>
 using FamilyRoleView = tyr::View<tyr::Index<FamilyRole<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
-template<typename Tag>
-    requires RoleConstructorTag<Tag>
-using RoleView = FamilyRoleView<BaseFamilyTag, Tag>;
-
-template<typename Tag>
-    requires RoleConstructorTag<Tag>
-using RoleListView = tyr::View<tyr::IndexList<Role<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
-
-template<typename Tag>
-    requires RoleConstructorTag<Tag>
-using RoleViewList = std::vector<RoleView<Tag>>;
-
 template<FamilyTag Family, typename Tag>
     requires FamilyBooleanConstructorTag<Family, Tag>
 using FamilyBooleanView = tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, ConstructorRepositoryFor<Family>>;
-
-template<BooleanConstructorTag Tag>
-using BooleanView = FamilyBooleanView<BaseFamilyTag, Tag>;
-
-template<BooleanConstructorTag Tag>
-using BooleanListView = tyr::View<tyr::IndexList<Boolean<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
-
-template<BooleanConstructorTag Tag>
-using BooleanViewList = std::vector<BooleanView<Tag>>;
 
 template<FamilyTag Family, typename Tag>
     requires FamilyNumericalConstructorTag<Family, Tag>
 using FamilyNumericalView = tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
-template<NumericalConstructorTag Tag>
-using NumericalView = FamilyNumericalView<BaseFamilyTag, Tag>;
-
-template<NumericalConstructorTag Tag>
-using NumericalListView = tyr::View<tyr::IndexList<Numerical<runir::kr::dl::BaseFamilyTag, Tag>>, ConstructorRepository>;
-
-template<NumericalConstructorTag Tag>
-using NumericalViewList = std::vector<NumericalView<Tag>>;
-
 template<FamilyTag Family, CategoryTag Category>
 using FamilyConstructorView = tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, ConstructorRepositoryFor<Family>>;
-
-template<CategoryTag Category>
-using ConstructorView = FamilyConstructorView<BaseFamilyTag, Category>;
-
-template<CategoryTag Category>
-using ConstructorListView = tyr::View<tyr::IndexList<Constructor<runir::kr::dl::BaseFamilyTag, Category>>, ConstructorRepository>;
-
-template<CategoryTag Category>
-using ConstructorViewList = std::vector<ConstructorView<Category>>;
 
 template<FamilyTag Family>
 inline const ConstructorRepositoryFor<Family>& get_repository(const ConstructorRepositoryFor<Family>& repository) noexcept

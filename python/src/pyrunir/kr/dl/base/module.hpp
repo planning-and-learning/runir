@@ -8,6 +8,9 @@ namespace runir::kr::dl::base
 
 void bind_module_definitions(nb::module_& m);
 void bind_parser(nb::module_& m);
+void bind_grammar_module_definitions(nb::module_& m);
+void bind_cnf_grammar_module_definitions(nb::module_& m);
+void bind_semantics_module_definitions(nb::module_& m);
 
 }  // namespace runir::kr::dl::base
 

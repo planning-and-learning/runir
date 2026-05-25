@@ -14,7 +14,7 @@ namespace runir::kr::ps
 
 template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
 bool is_compatible_with(tyr::View<tyr::Index<ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
-                        runir::kr::ps::base::dl::EvaluationContext<Kind>& context)
+                        runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, Kind>& context)
 {
     const auto value = evaluate(condition.get_feature(), context.get_source_context());
 
@@ -30,7 +30,7 @@ bool is_compatible_with(tyr::View<tyr::Index<ConcreteCondition<runir::kr::BaseFa
 
 template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
 bool is_compatible_with(tyr::View<tyr::Index<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> effect,
-                        runir::kr::ps::base::dl::EvaluationContext<Kind>& context)
+                        runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, Kind>& context)
 {
     const auto target = evaluate(effect.get_feature(), context.get_target_context());
 

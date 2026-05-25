@@ -15,9 +15,6 @@
 namespace runir::kr::dl
 {
 
-using BaseFamilyTag = runir::kr::BaseFamilyTag;
-using ExtFamilyTag = runir::kr::ExtFamilyTag;
-
 template<typename T>
 concept FamilyTag = runir::kr::FamilyTag<T>;
 
@@ -315,26 +312,6 @@ struct IsFamilyNumericalConstructorTag : std::false_type
 {
 };
 
-template<typename T>
-struct IsFamilyConceptConstructorTag<BaseFamilyTag, T> : std::bool_constant<BaseConceptConstructorTag<T>>
-{
-};
-
-template<typename T>
-struct IsFamilyRoleConstructorTag<BaseFamilyTag, T> : std::bool_constant<BaseRoleConstructorTag<T>>
-{
-};
-
-template<typename T>
-struct IsFamilyBooleanConstructorTag<BaseFamilyTag, T> : std::bool_constant<BaseBooleanConstructorTag<T>>
-{
-};
-
-template<typename T>
-struct IsFamilyNumericalConstructorTag<BaseFamilyTag, T> : std::bool_constant<BaseNumericalConstructorTag<T>>
-{
-};
-
 template<typename Family, typename T>
 concept FamilyConceptConstructorTag = FamilyTag<Family> && IsFamilyConceptConstructorTag<Family, T>::value;
 
@@ -347,34 +324,8 @@ concept FamilyBooleanConstructorTag = FamilyTag<Family> && IsFamilyBooleanConstr
 template<typename Family, typename T>
 concept FamilyNumericalConstructorTag = FamilyTag<Family> && IsFamilyNumericalConstructorTag<Family, T>::value;
 
-template<typename T>
-concept ConceptConstructorTag = BaseConceptConstructorTag<T>;
-
-template<typename T>
-concept RoleConstructorTag = BaseRoleConstructorTag<T>;
-
-template<typename T>
-concept BooleanConstructorTag = BaseBooleanConstructorTag<T>;
-
-template<typename T>
-concept NumericalConstructorTag = BaseNumericalConstructorTag<T>;
-
-using ConceptConstructorTags = BaseConceptConstructorTags;
-using RoleConstructorTags = BaseRoleConstructorTags;
-using BooleanConstructorTags = BaseBooleanConstructorTags;
-using NumericalConstructorTags = BaseNumericalConstructorTags;
-
 template<FamilyTag Family>
 struct ConstructorTagLists;
-
-template<>
-struct ConstructorTagLists<BaseFamilyTag>
-{
-    using Concept = BaseConceptConstructorTags;
-    using Role = BaseRoleConstructorTags;
-    using Boolean = BaseBooleanConstructorTags;
-    using Numerical = BaseNumericalConstructorTags;
-};
 
 template<FamilyTag Family>
 using FamilyConceptConstructorTags = typename ConstructorTagLists<Family>::Concept;

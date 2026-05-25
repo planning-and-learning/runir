@@ -9,7 +9,7 @@ namespace runir::kr::dl::ext
 
 void bind_datas(nb::module_& m)
 {
-    using Data = tyr::Data<runir::kr::dl::grammar::Concept<runir::kr::dl::ExtFamilyTag, runir::kr::dl::RegisterTag>>;
+    using Data = tyr::Data<runir::kr::dl::grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>>;
     nb::class_<Data>(m, "ConceptRegisterData").def(nb::init<>()).def_rw("index", &Data::index).def_rw("identifier", &Data::identifier);
 }
 

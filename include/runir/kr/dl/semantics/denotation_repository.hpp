@@ -233,8 +233,6 @@ public:
     DenotationRepositoryPtr create_shared() { return DenotationRepositoryPtr(new DenotationRepository(m_next_index++)); }
 };
 
-using DenotationRepositoryFactoryPtr = std::shared_ptr<DenotationRepositoryFactory>;
-
 inline const DenotationRepository& get_denotation_repository(const DenotationRepository& repository) noexcept { return repository; }
 
 inline const DenotationRepository::VectorRepository& get_denotation_vector_repository(const DenotationRepository& repository) noexcept

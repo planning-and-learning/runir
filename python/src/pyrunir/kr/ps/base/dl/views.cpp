@@ -29,7 +29,7 @@ namespace
 template<tyr::planning::TaskKind Kind>
 void bind_evaluation_context(nb::module_& m, const char* name)
 {
-    using Context = runir::kr::ps::base::dl::EvaluationContext<Kind>;
+    using Context = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, Kind>;
 
     nb::class_<Context>(m, name)
         .def(nb::init<tyr::planning::StateView<Kind>,
@@ -79,19 +79,21 @@ void bind_view(nb::module_& m, const std::string& name)
             [](const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context)
             { return evaluate(view, context); },
             "context"_a);
-    if constexpr (requires(const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::GroundTag>& context) {
+    if constexpr (requires(const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context) {
                       { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
         cls.def(
             "is_compatible_with",
-            [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::GroundTag>& context) { return is_compatible_with(view, context); },
+            [](const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context)
+            { return is_compatible_with(view, context); },
             "context"_a);
-    if constexpr (requires(const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::LiftedTag>& context) {
+    if constexpr (requires(const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context) {
                       { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
         cls.def(
             "is_compatible_with",
-            [](const View& view, runir::kr::ps::base::dl::EvaluationContext<tyr::planning::LiftedTag>& context) { return is_compatible_with(view, context); },
+            [](const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context)
+            { return is_compatible_with(view, context); },
             "context"_a);
     if constexpr (requires(const View& view) { runir::kr::ps::base::syntactic_complexity(view); })
         cls.def("syntactic_complexity", [](const View& view) { return runir::kr::ps::base::syntactic_complexity(view); });

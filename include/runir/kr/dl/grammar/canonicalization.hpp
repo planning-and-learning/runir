@@ -7,7 +7,7 @@
 
 #include <tyr/common/canonicalization.hpp>
 
-namespace runir::kr::dl::grammar::base
+namespace runir::kr::dl::grammar
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>
@@ -182,14 +182,6 @@ inline void canonicalize(tyr::Data<GrammarTag<Family>>& data)
     tyr::canonicalize(data.boolean_derivation_rules);
     tyr::canonicalize(data.numerical_derivation_rules);
 }
-
-}  // namespace runir::kr::dl::grammar::base
-
-namespace runir::kr::dl::grammar
-{
-
-using base::canonicalize;
-using base::is_canonical;
 
 }  // namespace runir::kr::dl::grammar
 

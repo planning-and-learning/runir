@@ -60,22 +60,22 @@ template<typename T>
 concept ExtNumericalConstructorTag = BaseNumericalConstructorTag<T> || std::same_as<T, ArgumentTag<NumericalTag>>;
 
 template<typename T>
-struct IsFamilyConceptConstructorTag<ExtFamilyTag, T> : std::bool_constant<ExtConceptConstructorTag<T>>
+struct IsFamilyConceptConstructorTag<runir::kr::ExtFamilyTag, T> : std::bool_constant<ExtConceptConstructorTag<T>>
 {
 };
 
 template<typename T>
-struct IsFamilyRoleConstructorTag<ExtFamilyTag, T> : std::bool_constant<ExtRoleConstructorTag<T>>
+struct IsFamilyRoleConstructorTag<runir::kr::ExtFamilyTag, T> : std::bool_constant<ExtRoleConstructorTag<T>>
 {
 };
 
 template<typename T>
-struct IsFamilyBooleanConstructorTag<ExtFamilyTag, T> : std::bool_constant<ExtBooleanConstructorTag<T>>
+struct IsFamilyBooleanConstructorTag<runir::kr::ExtFamilyTag, T> : std::bool_constant<ExtBooleanConstructorTag<T>>
 {
 };
 
 template<typename T>
-struct IsFamilyNumericalConstructorTag<ExtFamilyTag, T> : std::bool_constant<ExtNumericalConstructorTag<T>>
+struct IsFamilyNumericalConstructorTag<runir::kr::ExtFamilyTag, T> : std::bool_constant<ExtNumericalConstructorTag<T>>
 {
 };
 
@@ -85,7 +85,7 @@ using ExtBooleanConstructorTags = tyr::ConcatTypeListsT<BaseBooleanConstructorTa
 using ExtNumericalConstructorTags = tyr::ConcatTypeListsT<BaseNumericalConstructorTags, tyr::TypeList<ArgumentTag<NumericalTag>>>;
 
 template<>
-struct ConstructorTagLists<ExtFamilyTag>
+struct ConstructorTagLists<runir::kr::ExtFamilyTag>
 {
     using Concept = ExtConceptConstructorTags;
     using Role = ExtRoleConstructorTags;

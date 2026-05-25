@@ -35,14 +35,14 @@ Ast parse_ast(const std::string& description, const Parser& parser)
 }
 }  // namespace
 
-runir::kr::dl::grammar::parser::base::ast::ConceptConstructor<runir::kr::dl::ExtFamilyTag> parse_concept_ast(const std::string& description)
+runir::kr::dl::grammar::parser::base::ast::ConceptConstructor<runir::kr::ExtFamilyTag> parse_concept_ast(const std::string& description)
 {
-    return parse_ast<runir::kr::dl::grammar::parser::base::ast::ConceptConstructor<runir::kr::dl::ExtFamilyTag>>(description, ext_concept_root_parser());
+    return parse_ast<runir::kr::dl::grammar::parser::base::ast::ConceptConstructor<runir::kr::ExtFamilyTag>>(description, ext_concept_root_parser());
 }
 
-runir::kr::dl::grammar::parser::base::ast::RoleConstructor<runir::kr::dl::ExtFamilyTag> parse_role_ast(const std::string& description)
+runir::kr::dl::grammar::parser::base::ast::RoleConstructor<runir::kr::ExtFamilyTag> parse_role_ast(const std::string& description)
 {
-    return parse_ast<runir::kr::dl::grammar::parser::base::ast::RoleConstructor<runir::kr::dl::ExtFamilyTag>>(description, ext_role_root_parser());
+    return parse_ast<runir::kr::dl::grammar::parser::base::ast::RoleConstructor<runir::kr::ExtFamilyTag>>(description, ext_role_root_parser());
 }
 
 }  // namespace runir::kr::dl::grammar::parser::ext

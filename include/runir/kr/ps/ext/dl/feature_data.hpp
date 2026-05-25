@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/constructor_index.hpp"
 #include "runir/kr/dl/constructors.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/dl/feature_index.hpp"
 
@@ -20,12 +21,12 @@ template<>
 struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>>
 {
     Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>> index;
-    Index<runir::kr::dl::FamilyConstructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ConceptTag>> feature;
+    Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> feature;
     ::cista::offset::string symbol;
     ::cista::offset::string description;
 
     Data() = default;
-    Data(Index<runir::kr::dl::FamilyConstructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ConceptTag>> feature_,
+    Data(Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> feature_,
          ::cista::offset::string symbol_,
          ::cista::offset::string description_) :
         index(),
@@ -34,7 +35,7 @@ struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl:
         description(std::move(description_))
     {
     }
-    Data(Index<runir::kr::dl::FamilyConstructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::ConceptTag>> feature_,
+    Data(Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> feature_,
          const std::string& symbol_,
          const std::string& description_) :
         index(),
@@ -60,12 +61,12 @@ template<>
 struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>
 {
     Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>> index;
-    Index<runir::kr::dl::FamilyConstructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::BooleanTag>> feature;
+    Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>> feature;
     ::cista::offset::string symbol;
     ::cista::offset::string description;
 
     Data() = default;
-    Data(Index<runir::kr::dl::FamilyConstructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::BooleanTag>> feature_,
+    Data(Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>> feature_,
          ::cista::offset::string symbol_,
          ::cista::offset::string description_) :
         index(),
@@ -74,7 +75,7 @@ struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps:
         description(std::move(description_))
     {
     }
-    Data(Index<runir::kr::dl::FamilyConstructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::BooleanTag>> feature_,
+    Data(Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>> feature_,
          const std::string& symbol_,
          const std::string& description_) :
         index(),
@@ -100,12 +101,12 @@ template<>
 struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>
 {
     Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>> index;
-    Index<runir::kr::dl::FamilyConstructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::NumericalTag>> feature;
+    Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>> feature;
     ::cista::offset::string symbol;
     ::cista::offset::string description;
 
     Data() = default;
-    Data(Index<runir::kr::dl::FamilyConstructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::NumericalTag>> feature_,
+    Data(Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>> feature_,
          ::cista::offset::string symbol_,
          ::cista::offset::string description_) :
         index(),
@@ -114,7 +115,7 @@ struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps:
         description(std::move(description_))
     {
     }
-    Data(Index<runir::kr::dl::FamilyConstructor<runir::kr::dl::ExtFamilyTag, runir::kr::dl::NumericalTag>> feature_,
+    Data(Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>> feature_,
          const std::string& symbol_,
          const std::string& description_) :
         index(),
