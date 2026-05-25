@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_EXT_DL_FORMATTER_HPP_
 
 #include "runir/common/config.hpp"
+#include "runir/kr/dl/constructors.hpp"
+#include "runir/kr/dl/ext/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/grammar/parser/ext/ast.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"

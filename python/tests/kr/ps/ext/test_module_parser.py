@@ -133,16 +133,25 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
 
     program = ext.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
-    options = ext.GroundModuleExecutionOptions()
-    options.max_arity = 1
-    options.max_steps = 1024
-    options.max_load_steps = 1024
+    search_options = ext.GroundModuleProgramSearchOptions()
+    search_options.max_arity = 1
+    search_options.max_steps = 1024
+    search_options.max_load_steps = 1024
 
-    result = ext.execute_ground_solution(search_context, program, options)
+    search_result = ext.find_ground_solution(search_context, program, search_options)
+    assert search_result.status.name == "SOLVED"
+    assert search_result.goal_node is not None
+    assert search_result.plan is not None
+    assert search_result.plan.get_length() == 4
 
-    assert result.status == ext.ModuleExecutionStatus.SUCCESS
-    assert result.is_successful()
-    assert result.num_steps > 0
+    proof = ext.prove_ground_solution(search_context, program, search_options)
+    assert proof.status == ext.ModuleProgramProofStatus.SUCCESS
+    assert proof.is_successful()
+    assert proof.graph.get_num_vertices() == 16
+    assert proof.graph.get_num_edges() == 15
+    assert len(proof.deadend_transitions) == 0
+    assert len(proof.open_states) == 0
+    assert len(proof.cycle) == 0
 
 
 def test_executor_reports_structured_failure_statuses_from_python():
@@ -150,68 +159,93 @@ def test_executor_reports_structured_failure_statuses_from_python():
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(ground_task)
     repository = ext.RepositoryFactory().create(dl_repository)
 
-    empty_module = ext.parse_module("""(module "empty"
-      (:arguments)
-      (:registers)
-      (:entry "source")
-      (:memory "source")
-      (:features)
-      (:transitions)
+    empty_program = ext.parse_module_program("""(program
+      (:entry "empty")
+      (module "empty"
+        (:arguments)
+        (:registers)
+        (:entry "source")
+        (:memory "source")
+        (:features)
+        (:transitions)
+      )
     )""", planning_domain, repository)
-    options = ext.GroundModuleExecutionOptions()
+    options = ext.GroundModuleProgramSearchOptions()
     options.max_steps = 0
-    assert ext.execute_ground_solution(search_context, empty_module, options).status == ext.ModuleExecutionStatus.STEP_LIMIT_REACHED
+    empty_proof = ext.prove_ground_solution(search_context, empty_program, options)
+    assert empty_proof.status == ext.ModuleProgramProofStatus.FAILURE
+    assert empty_proof.graph.get_num_vertices() == 1
+    assert empty_proof.graph.get_num_edges() == 1
+    assert len(empty_proof.deadend_transitions) > 0
+    assert len(empty_proof.cycle) > 0
 
-    load_loop = ext.parse_module("""(module "load-loop"
-      (:arguments)
-      (:registers
-        (concept "x" 0)
-      )
-      (:entry "source")
-      (:memory "source")
-      (:features)
-      (:transitions
-        ("source" "source" (load (:conditions) (:concept (c_top)) (:register "x")))
+    load_loop = ext.parse_module_program("""(program
+      (:entry "load-loop")
+      (module "load-loop"
+        (:arguments)
+        (:registers
+          (concept "x" 0)
+        )
+        (:entry "source")
+        (:memory "source")
+        (:features)
+        (:transitions
+          ("source" "source" (load (:conditions) (:concept (c_top)) (:register "x")))
+        )
       )
     )""", planning_domain, repository)
-    options = ext.GroundModuleExecutionOptions()
+    options = ext.GroundModuleProgramSearchOptions()
     options.max_load_steps = 1
-    assert ext.execute_ground_solution(search_context, load_loop, options).status == ext.ModuleExecutionStatus.LOAD_LIMIT_REACHED
+    load_proof = ext.prove_ground_solution(search_context, load_loop, options)
+    assert load_proof.status == ext.ModuleProgramProofStatus.FAILURE
+    assert len(load_proof.deadend_transitions) > 0
 
-    caller = """(module "caller"
-      (:arguments)
-      (:registers)
-      (:entry "source")
-      (:memory "source" "target")
-      (:features)
-      (:transitions
-        ("source" "target" (call (:conditions) (:callee "callee") (:arguments)))
+    caller_program = ext.parse_module_program("""(program
+      (:entry "caller")
+      (module "caller"
+        (:arguments)
+        (:registers)
+        (:entry "source")
+        (:memory "source" "target")
+        (:features)
+        (:transitions
+          ("source" "target" (call (:conditions) (:callee "callee") (:arguments)))
+        )
       )
-    )"""
-    callee = """(module "callee"
-      (:arguments
-        (concept "x" 0)
-      )
-      (:registers)
-      (:entry "target")
-      (:memory "target")
-      (:features)
-      (:transitions)
-    )"""
-    modules = ext.parse_modules([caller, callee], planning_domain, repository)
-    assert ext.execute_ground_solution(search_context, modules[0], modules).status == ext.ModuleExecutionStatus.MALFORMED_CALL
-
-    no_action = ext.parse_module("""(module "no-action"
-      (:arguments)
-      (:registers)
-      (:entry "source")
-      (:memory "source" "target")
-      (:features)
-      (:transitions
-        ("source" "target" (do (:conditions) (:action "missing-action") (:arguments)))
+      (module "callee"
+        (:arguments
+          (concept "x" 0)
+        )
+        (:registers)
+        (:entry "target")
+        (:memory "target")
+        (:features)
+        (:transitions)
       )
     )""", planning_domain, repository)
-    assert ext.execute_ground_solution(search_context, no_action).status == ext.ModuleExecutionStatus.NO_APPLICABLE_ACTION
+    caller_proof = ext.prove_ground_solution(search_context, caller_program)
+    assert caller_proof.status == ext.ModuleProgramProofStatus.FAILURE
+    assert len(caller_proof.deadend_transitions) > 0
+
+    no_action = ext.parse_module_program("""(program
+      (:entry "no-action")
+      (module "no-action"
+        (:arguments)
+        (:registers)
+        (:entry "source")
+        (:memory "source" "target")
+        (:features)
+        (:transitions
+          ("source" "target" (do (:conditions) (:action "missing-action") (:arguments)))
+        )
+      )
+    )""", planning_domain, repository)
+    no_action_proof = ext.prove_ground_solution(search_context, no_action)
+    assert no_action_proof.status == ext.ModuleProgramProofStatus.FAILURE
+    assert no_action_proof.graph.get_num_vertices() == 1
+    assert no_action_proof.graph.get_num_edges() == 1
+    assert len(no_action_proof.deadend_transitions) > 0
+    assert len(no_action_proof.open_states) > 0
 
 
 def test_lifted_executor_binding_reports_step_limit():
@@ -222,18 +256,21 @@ def test_lifted_executor_binding_reports_step_limit():
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(lifted_task)
     repository = ext.RepositoryFactory().create(dl_repository)
 
-    module = ext.parse_module("""(module "empty"
-      (:arguments)
-      (:registers)
-      (:entry "source")
-      (:memory "source")
-      (:features)
-      (:transitions)
+    program = ext.parse_module_program("""(program
+      (:entry "empty")
+      (module "empty"
+        (:arguments)
+        (:registers)
+        (:entry "source")
+        (:memory "source")
+        (:features)
+        (:transitions)
+      )
     )""", planning_domain, repository)
-    options = ext.LiftedModuleExecutionOptions()
+    options = ext.LiftedModuleProgramSearchOptions()
     options.max_steps = 0
 
-    result = ext.execute_lifted_solution(search_context, module, options)
+    result = ext.prove_lifted_solution(search_context, program, options)
 
-    assert result.status == ext.ModuleExecutionStatus.STEP_LIMIT_REACHED
+    assert result.status == ext.ModuleProgramProofStatus.FAILURE
     assert not result.is_successful()

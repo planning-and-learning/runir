@@ -76,8 +76,6 @@ find_solution<tyr::planning::LiftedTag>(const runir::datasets::TaskSearchContext
 
 }  // namespace runir::kr::ps::base
 
-#ifdef RUNIR_HEADER_INSTANTIATION
 #include "runir/kr/ps/base/sketch_executor_impl.hpp"
-#endif
 
 #endif

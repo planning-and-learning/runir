@@ -17,6 +17,7 @@ add_library(kr SHARED
     ps/ext/dl/module_factory.cpp
     ps/ext/dl/parser/parser.cpp
     ps/ext/dl/parser.cpp
+    ps/ext/module_program_executor.cpp
 )
 add_library(runir::kr ALIAS kr)
 

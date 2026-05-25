@@ -43,6 +43,16 @@ auto create_module(kr::ps::ext::Repository& repository,
     return repository.get_or_create(data).first;
 }
 
+auto create_module_program(kr::ps::ext::Repository& repository, kr::ps::ext::ModuleView entry, std::initializer_list<kr::ps::ext::ModuleView> modules)
+{
+    auto data = tyr::Data<kr::ps::ext::ModuleProgram>();
+    data.entry_module = entry.get_index();
+    for (auto module : modules)
+        data.modules.push_back(module.get_index());
+    kr::ps::ext::canonicalize(data);
+    return repository.get_or_create(data).first;
+}
+
 auto create_register(kr::ps::ext::Repository& repository, const std::string& name, tyr::uint_t identifier)
 {
     auto data = tyr::Data<kr::ps::ext::Register>(name, kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(identifier));
@@ -362,15 +372,25 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), repository);
     ASSERT_EQ(program.get_modules().size(), 5);
 
-    auto options = kr::ps::ext::ModuleExecutionOptions<p::GroundTag>();
-    options.max_arity = 1;
-    options.max_steps = 1024;
-    options.max_load_steps = 1024;
+    auto search_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
+    search_options.max_arity = 1;
+    search_options.max_steps = 1024;
+    search_options.max_load_steps = 1024;
 
-    const auto result = kr::ps::ext::execute_solution(search_context, program, options);
-    EXPECT_EQ(result.status, kr::ps::ext::ModuleExecutionStatus::SUCCESS)
-        << "module=" << result.module.get_name() << " memory=" << result.memory_state.get_name() << " steps=" << result.num_steps
-        << " call_depth=" << result.call_depth;
+    const auto search_result = kr::ps::ext::find_solution(search_context, program, search_options);
+    EXPECT_EQ(search_result.status, p::SearchStatus::SOLVED);
+    ASSERT_TRUE(search_result.goal_node.has_value());
+    ASSERT_TRUE(search_result.plan.has_value());
+    EXPECT_EQ(search_result.plan->get_length(), 4);
+
+    const auto proof = kr::ps::ext::prove_solution(search_context, program, search_options);
+    EXPECT_EQ(proof.status, kr::ps::ext::ModuleProgramProofStatus::SUCCESS) << fmt::format("{}", proof);
+    ASSERT_TRUE(proof.graph);
+    EXPECT_EQ(proof.graph->get_num_vertices(), 16);
+    EXPECT_EQ(proof.graph->get_num_edges(), 15);
+    EXPECT_TRUE(proof.deadend_transitions.empty());
+    EXPECT_TRUE(proof.open_states.empty());
+    EXPECT_TRUE(proof.cycle.empty());
 }
 
 TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
@@ -1001,10 +1021,18 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     const auto target = create_memory_state(repository, "target");
     const auto top_concept = create_top_concept(*dl_repository);
 
-    auto options = kr::ps::ext::ModuleExecutionOptions<p::GroundTag>();
-    options.max_steps = 0;
     const auto empty_module = create_module(repository, "empty", source, { source });
-    EXPECT_EQ(kr::ps::ext::execute_solution(search_context, empty_module, options).status, kr::ps::ext::ModuleExecutionStatus::STEP_LIMIT_REACHED);
+
+    auto proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
+    proof_options.max_steps = 0;
+    const auto empty_program = create_module_program(repository, empty_module, { empty_module });
+    const auto empty_proof = kr::ps::ext::prove_solution(search_context, empty_program, proof_options);
+    EXPECT_EQ(empty_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
+    ASSERT_TRUE(empty_proof.graph);
+    EXPECT_EQ(empty_proof.graph->get_num_vertices(), 1);
+    EXPECT_EQ(empty_proof.graph->get_num_edges(), 1);
+    EXPECT_FALSE(empty_proof.deadend_transitions.empty());
+    EXPECT_FALSE(empty_proof.cycle.empty());
 
     auto load_data = tyr::Data<kr::ps::ext::Rule<kr::ps::ext::LoadTag>>();
     load_data.source = source.get_index();
@@ -1026,9 +1054,13 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     load_module_data.memory_transitions.push_back(load_transition);
     kr::ps::ext::canonicalize(load_module_data);
     const auto load_module = repository.get_or_create(load_module_data).first;
-    options = kr::ps::ext::ModuleExecutionOptions<p::GroundTag>();
-    options.max_load_steps = 1;
-    EXPECT_EQ(kr::ps::ext::execute_solution(search_context, load_module, options).status, kr::ps::ext::ModuleExecutionStatus::LOAD_LIMIT_REACHED);
+    auto load_proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
+    load_proof_options.max_load_steps = 1;
+    const auto load_program = create_module_program(repository, load_module, { load_module });
+    const auto load_proof = kr::ps::ext::prove_solution(search_context, load_program, load_proof_options);
+    EXPECT_EQ(load_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
+    ASSERT_TRUE(load_proof.graph);
+    EXPECT_FALSE(load_proof.deadend_transitions.empty());
 
     auto concept_arg_data = tyr::Data<kr::ps::ext::Argument<kr::dl::ConceptTag>>(std::string("x"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0));
     const auto concept_arg = repository.get_or_create(concept_arg_data).first;
@@ -1057,8 +1089,11 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     caller_data.memory_transitions.push_back(call_transition);
     kr::ps::ext::canonicalize(caller_data);
     const auto caller = repository.get_or_create(caller_data).first;
-    EXPECT_EQ(kr::ps::ext::execute_solution(search_context, caller, std::vector<kr::ps::ext::ModuleView> { caller, callee }).status,
-              kr::ps::ext::ModuleExecutionStatus::MALFORMED_CALL);
+    const auto caller_program = create_module_program(repository, caller, { caller, callee });
+    const auto caller_proof = kr::ps::ext::prove_solution(search_context, caller_program);
+    EXPECT_EQ(caller_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
+    ASSERT_TRUE(caller_proof.graph);
+    EXPECT_FALSE(caller_proof.deadend_transitions.empty());
 
     auto do_data = tyr::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("missing-action"));
     do_data.source = source.get_index();
@@ -1078,7 +1113,15 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     do_module_data.memory_transitions.push_back(do_transition);
     kr::ps::ext::canonicalize(do_module_data);
     const auto do_module = repository.get_or_create(do_module_data).first;
-    EXPECT_EQ(kr::ps::ext::execute_solution(search_context, do_module).status, kr::ps::ext::ModuleExecutionStatus::NO_APPLICABLE_ACTION);
+
+    const auto do_program = create_module_program(repository, do_module, { do_module });
+    const auto do_proof = kr::ps::ext::prove_solution(search_context, do_program);
+    EXPECT_EQ(do_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
+    ASSERT_TRUE(do_proof.graph);
+    EXPECT_EQ(do_proof.graph->get_num_vertices(), 1);
+    EXPECT_EQ(do_proof.graph->get_num_edges(), 1);
+    EXPECT_FALSE(do_proof.deadend_transitions.empty());
+    EXPECT_FALSE(do_proof.open_states.empty());
 }
 
 }  // namespace runir::tests

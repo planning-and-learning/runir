@@ -3,6 +3,7 @@
 
 #include "runir/common/config.hpp"
 #include "runir/kr/ps/ext/dl/formatter.hpp"
+#include "runir/kr/ps/ext/module_program_executor.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
 #include "runir/kr/ps/ext/views.hpp"
@@ -409,6 +410,34 @@ std::string module_program(tyr::View<tyr::Index<runir::kr::ps::ext::ModuleProgra
     return os.str();
 }
 
+inline std::string module_program_proof_status(runir::kr::ps::ext::ModuleProgramProofStatus status)
+{
+    switch (status)
+    {
+        case runir::kr::ps::ext::ModuleProgramProofStatus::SUCCESS:
+            return "success";
+        case runir::kr::ps::ext::ModuleProgramProofStatus::FAILURE:
+            return "failure";
+        case runir::kr::ps::ext::ModuleProgramProofStatus::OUT_OF_TIME:
+            return "out_of_time";
+        case runir::kr::ps::ext::ModuleProgramProofStatus::OUT_OF_STATES:
+            return "out_of_states";
+    }
+    return "unknown";
+}
+
+template<tyr::planning::TaskKind Kind>
+std::string module_program_proof_results(const runir::kr::ps::ext::ModuleProgramProofResults<Kind>& result)
+{
+    return fmt::format("ModuleProgramProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_transitions={}, open_states={}, cycle={})",
+                       module_program_proof_status(result.status),
+                       result.graph ? result.graph->get_num_vertices() : 0,
+                       result.graph ? result.graph->get_num_edges() : 0,
+                       result.deadend_transitions.size(),
+                       result.open_states.size(),
+                       result.cycle.size());
+}
+
 }  // namespace runir::kr::ps::ext::format
 
 #if RUNIR_ENABLE_FMT_FORMATTERS
@@ -537,6 +566,47 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::ModuleProgram>, C
         return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::module_program(view), ctx);
     }
 };
+
+#if RUNIR_ENABLE_FMT_FORMATTERS
+template<tyr::planning::TaskKind Kind>
+struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>> : fmt::formatter<std::string_view>
+{
+    auto format(const runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>& label, format_context& ctx) const
+    {
+        const auto text = fmt::format("state={} module={} memory={} depth={} initial={} goal={} alive={} unsolvable={}",
+                                      tyr::uint_t(label.state.get_index()),
+                                      tyr::uint_t(label.module_.get_index()),
+                                      tyr::uint_t(label.memory_state.get_index()),
+                                      label.call_depth,
+                                      label.is_initial,
+                                      label.is_goal,
+                                      label.is_alive,
+                                      label.is_unsolvable);
+        return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofEdgeLabel> : fmt::formatter<std::string_view>
+{
+    auto format(const runir::kr::ps::ext::ModuleProgramProofEdgeLabel& label, format_context& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(label.action ? fmt::format("cost={} action={}", label.cost, tyr::uint_t(*label.action)) :
+                                                                       fmt::format("cost={}", label.cost),
+                                                        ctx);
+    }
+};
+#endif
+
+template<tyr::planning::TaskKind Kind>
+struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofResults<Kind>> : fmt::formatter<std::string_view>
+{
+    auto format(const runir::kr::ps::ext::ModuleProgramProofResults<Kind>& result, format_context& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::module_program_proof_results(result), ctx);
+    }
+};
+
 #endif
 
 #endif
