@@ -30,6 +30,13 @@ protected:
     {
     }
 
+    BaseEvaluationContext(runir::kr::dl::semantics::EvaluationContext<Family_, Kind> source_context,
+                          runir::kr::dl::semantics::EvaluationContext<Family_, Kind> target_context) noexcept :
+        m_source_context(std::move(source_context)),
+        m_target_context(std::move(target_context))
+    {
+    }
+
 public:
     using Family = Family_;
 

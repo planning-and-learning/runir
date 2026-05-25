@@ -1,0 +1,1135 @@
+#include "runir/kr/ps/ext/dl/parser.hpp"
+
+#include "runir/kr/dl/canonicalization.hpp"
+#include "runir/kr/dl/grammar/parser/ext/parser.hpp"
+#include "runir/kr/ps/ext/canonicalization.hpp"
+
+#include <boost/spirit/home/x3/support/ast/variant.hpp>
+#include <boost/variant/apply_visitor.hpp>
+#include <cctype>
+#include <optional>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+namespace runir::kr::ps::ext::dl
+{
+namespace
+{
+namespace dl_ = runir::kr::dl;
+namespace dl_ast = runir::kr::dl::grammar::parser::base::ast;
+namespace dl_ext_ast = runir::kr::dl::grammar::parser::ext::ast;
+
+template<typename T>
+struct IsForwardAst : std::false_type
+{
+};
+
+template<typename T>
+struct IsForwardAst<boost::spirit::x3::forward_ast<T>> : std::true_type
+{
+};
+
+template<typename T>
+decltype(auto) unwrap(const T& value) noexcept
+{
+    if constexpr (IsForwardAst<T>::value)
+        return value.get();
+    else
+        return (value);
+}
+
+template<typename T>
+auto intern(Repository& repository, tyr::Data<T>& data)
+{
+    if constexpr (requires { runir::kr::ps::ext::canonicalize(data); })
+        runir::kr::ps::ext::canonicalize(data);
+    return repository.get_or_create(data).first;
+}
+
+template<typename T>
+auto intern_dl(runir::kr::dl::ext::ConstructorRepository& repository, tyr::Data<T>& data)
+{
+    if constexpr (requires { runir::kr::dl::canonicalize(data); })
+        runir::kr::dl::canonicalize(data);
+    return repository.get_or_create(data).first;
+}
+
+template<dl_::CategoryTag Category, typename T>
+auto intern_constructor(runir::kr::dl::ext::ConstructorRepository& repository, tyr::Index<T> index)
+{
+    tyr::Data<dl_::Constructor<runir::kr::ExtFamilyTag, Category>> data(index);
+    return intern_dl(repository, data);
+}
+
+template<dl_::CategoryTag Category>
+auto parse_constructor(const dl_ast::Constructor<runir::kr::ExtFamilyTag, Category>& node,
+                       tyr::formalism::planning::DomainView domain,
+                       runir::kr::dl::ext::ConstructorRepository& repository) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>;
+
+template<dl_::CategoryTag Category>
+auto parse_choice(const dl_ast::ConstructorOrNonTerminal<runir::kr::ExtFamilyTag, Category>& node,
+                  tyr::formalism::planning::DomainView domain,
+                  runir::kr::dl::ext::ConstructorRepository& repository) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
+{
+    return boost::apply_visitor(
+        [&](const auto& value) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
+        {
+            const auto& unwrapped = unwrap(value);
+            if constexpr (std::same_as<std::remove_cvref_t<decltype(unwrapped)>, dl_ast::NonTerminal<runir::kr::ExtFamilyTag, Category>>)
+                throw std::runtime_error("Ext module DL expressions cannot reference grammar nonterminals.");
+            else
+                return parse_constructor(unwrapped, domain, repository);
+        },
+        node.get());
+}
+
+template<tyr::formalism::FactKind T>
+auto find_predicate(tyr::formalism::planning::DomainView domain, const std::string& name)
+{
+    for (auto predicate : domain.template get_predicates<T>())
+        if (predicate.get_name() == name)
+            return std::optional(predicate);
+    return std::optional<tyr::formalism::planning::PredicateView<T>> {};
+}
+
+template<tyr::formalism::FactKind T>
+auto require_predicate(tyr::formalism::planning::DomainView domain, const std::string& name, size_t arity, const char* constructor_name)
+{
+    auto predicate = find_predicate<T>(domain, name);
+    if (!predicate)
+        return std::optional<tyr::Index<tyr::formalism::Predicate<T>>> {};
+
+    if (predicate->get_arity() != arity)
+        throw std::runtime_error(std::string("Cannot construct ") + constructor_name + " from predicates with arity != " + std::to_string(arity) + ".");
+
+    return std::optional(predicate->get_index());
+}
+
+template<typename Make>
+auto resolve_predicate(tyr::formalism::planning::DomainView domain, const std::string& name, size_t arity, const char* constructor_name, Make&& make)
+{
+    if (auto predicate = require_predicate<tyr::formalism::StaticTag>(domain, name, arity, constructor_name))
+        return make(tyr::formalism::StaticTag {}, *predicate);
+    if (auto predicate = require_predicate<tyr::formalism::FluentTag>(domain, name, arity, constructor_name))
+        return make(tyr::formalism::FluentTag {}, *predicate);
+    if (auto predicate = require_predicate<tyr::formalism::DerivedTag>(domain, name, arity, constructor_name))
+        return make(tyr::formalism::DerivedTag {}, *predicate);
+
+    throw std::runtime_error("Predicate \"" + name + "\" is not part of the given domain.");
+}
+
+auto require_object(tyr::formalism::planning::DomainView domain, const std::string& name)
+{
+    for (auto object : domain.get_constants())
+        if (object.get_name() == name)
+            return object.get_index();
+    throw std::runtime_error("Domain has no constant with name \"" + name + "\".");
+}
+
+auto require_objects(tyr::formalism::planning::DomainView domain, const std::vector<std::string>& names)
+{
+    auto result = tyr::IndexList<tyr::formalism::Object> {};
+    result.reserve(names.size());
+    for (const auto& name : names)
+        result.push_back(require_object(domain, name));
+    return result;
+}
+
+auto parse_dl(const dl_ast::ConceptBot&, tyr::formalism::planning::DomainView, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::BotTag>> data;
+    return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ast::ConceptTop&, tyr::formalism::planning::DomainView, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::TopTag>> data;
+    return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ast::ConceptAtomicState& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return resolve_predicate(domain,
+                             node.predicate_name,
+                             1,
+                             "ConceptAtomicState",
+                             [&](auto tag, auto predicate)
+                             {
+                                 using T = decltype(tag);
+                                 tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::AtomicStateTag<T>>> data(predicate);
+                                 return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+                             });
+}
+
+auto parse_dl(const dl_ast::ConceptAtomicGoal& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return resolve_predicate(domain,
+                             node.predicate_name,
+                             1,
+                             "ConceptAtomicGoal",
+                             [&](auto tag, auto predicate)
+                             {
+                                 using T = decltype(tag);
+                                 tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::AtomicGoalTag<T>>> data(predicate, node.polarity);
+                                 return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+                             });
+}
+
+template<typename Tag, typename Ast>
+auto parse_binary_concept(const Ast& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, Tag>> data(parse_choice(node.lhs, domain, repository).get_index(),
+                                                               parse_choice(node.rhs, domain, repository).get_index());
+    return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ast::ConceptIntersection<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_binary_concept<dl_::IntersectionTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::ConceptUnion<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_binary_concept<dl_::UnionTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::ConceptValueRestriction<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_binary_concept<dl_::ValueRestrictionTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::ConceptExistentialQuantification<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_binary_concept<dl_::ExistentialQuantificationTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::ConceptNegation<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::NegationTag>> data(parse_choice(node.arg, domain, repository).get_index());
+    return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+}
+
+template<typename Tag, typename Ast>
+auto parse_number_restriction(const Ast& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, Tag>> data(node.n, parse_choice(node.role, domain, repository).get_index());
+    return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ast::ConceptAtLeastNumberRestriction<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_number_restriction<dl_::AtLeastNumberRestrictionTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::ConceptAtMostNumberRestriction<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_number_restriction<dl_::AtMostNumberRestrictionTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::ConceptExactNumberRestriction<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_number_restriction<dl_::ExactNumberRestrictionTag>(node, domain, repository);
+}
+
+template<typename Tag, typename Ast>
+auto parse_qualified_number_restriction(const Ast& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, Tag>> data(node.n,
+                                                               parse_choice(node.role, domain, repository).get_index(),
+                                                               parse_choice(node.concept_, domain, repository).get_index());
+    return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ast::ConceptQualifiedAtLeastNumberRestriction<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_qualified_number_restriction<dl_::QualifiedAtLeastNumberRestrictionTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::ConceptQualifiedAtMostNumberRestriction<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_qualified_number_restriction<dl_::QualifiedAtMostNumberRestrictionTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::ConceptQualifiedExactNumberRestriction<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_qualified_number_restriction<dl_::QualifiedExactNumberRestrictionTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::ConceptRoleValueMap<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_binary_concept<dl_::RoleValueMapTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::ConceptAgreement<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_binary_concept<dl_::AgreementTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::ConceptRoleFillers<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::RoleFillersTag>> data(parse_choice(node.role, domain, repository).get_index(),
+                                                                               require_objects(domain, node.object_names));
+    return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ast::ConceptOneOf& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::OneOfTag>> data(require_objects(domain, node.object_names));
+    return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ast::ConceptNominal& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::NominalTag>> data(require_object(domain, node.object_name));
+    return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ext_ast::ConceptRegister& node, tyr::formalism::planning::DomainView, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::RegisterTag>> data(dl_::RegisterIdentifier<dl_::ConceptTag>(node.identifier));
+    return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ext_ast::Argument<dl_::ConceptTag>& node, tyr::formalism::planning::DomainView, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::ConceptTag>>> data(dl_::ArgumentIdentifier<dl_::ConceptTag>(node.identifier));
+    return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ast::RoleUniversal&, tyr::formalism::planning::DomainView, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::UniversalTag>> data;
+    return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ast::RoleAtomicState& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return resolve_predicate(domain,
+                             node.predicate_name,
+                             2,
+                             "RoleAtomicState",
+                             [&](auto tag, auto predicate)
+                             {
+                                 using T = decltype(tag);
+                                 tyr::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::AtomicStateTag<T>>> data(predicate);
+                                 return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
+                             });
+}
+
+auto parse_dl(const dl_ast::RoleAtomicGoal& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return resolve_predicate(domain,
+                             node.predicate_name,
+                             2,
+                             "RoleAtomicGoal",
+                             [&](auto tag, auto predicate)
+                             {
+                                 using T = decltype(tag);
+                                 tyr::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::AtomicGoalTag<T>>> data(predicate, node.polarity);
+                                 return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
+                             });
+}
+
+template<typename Tag, typename Ast>
+auto parse_binary_role(const Ast& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Role<runir::kr::ExtFamilyTag, Tag>> data(parse_choice(node.lhs, domain, repository).get_index(),
+                                                            parse_choice(node.rhs, domain, repository).get_index());
+    return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ast::RoleIntersection<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_binary_role<dl_::IntersectionTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::RoleUnion<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_binary_role<dl_::UnionTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::RoleComposition<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_binary_role<dl_::CompositionTag>(node, domain, repository);
+}
+
+template<typename Tag, typename Ast>
+auto parse_unary_role(const Ast& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Role<runir::kr::ExtFamilyTag, Tag>> data(parse_choice(node.arg, domain, repository).get_index());
+    return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ast::RoleComplement<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_unary_role<dl_::ComplementTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::RoleInverse<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_unary_role<dl_::InverseTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::RoleTransitiveClosure<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_unary_role<dl_::TransitiveClosureTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::RoleReflexiveTransitiveClosure<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_unary_role<dl_::ReflexiveTransitiveClosureTag>(node, domain, repository);
+}
+
+auto parse_dl(const dl_ast::RoleRestriction<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::RestrictionTag>> data(parse_choice(node.lhs, domain, repository).get_index(),
+                                                                            parse_choice(node.rhs, domain, repository).get_index());
+    return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ast::RoleIdentity<runir::kr::ExtFamilyTag>& node,
+              tyr::formalism::planning::DomainView domain,
+              runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::IdentityTag>> data(parse_choice(node.arg, domain, repository).get_index());
+    return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ext_ast::RoleRegister& node, tyr::formalism::planning::DomainView, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::RegisterTag>> data(dl_::RegisterIdentifier<dl_::RoleTag>(node.identifier));
+    return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
+}
+
+auto parse_dl(const dl_ext_ast::Argument<dl_::RoleTag>& node, tyr::formalism::planning::DomainView, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    tyr::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::RoleTag>>> data(dl_::ArgumentIdentifier<dl_::RoleTag>(node.identifier));
+    return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
+}
+
+template<dl_::CategoryTag Category>
+auto parse_constructor(const dl_ast::Constructor<runir::kr::ExtFamilyTag, Category>& node,
+                       tyr::formalism::planning::DomainView domain,
+                       runir::kr::dl::ext::ConstructorRepository& repository) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
+{
+    return boost::apply_visitor([&](const auto& arg) { return parse_dl(unwrap(arg), domain, repository); }, node.get());
+}
+
+template<runir::kr::dl::CategoryTag Category>
+auto intern_argument(Repository& repository, const ast::Argument& argument)
+{
+    auto data = tyr::Data<Argument<Category>>(argument.name, runir::kr::dl::ArgumentIdentifier<Category>(argument.identifier));
+    return intern(repository, data);
+}
+
+using ConceptFeatureMap = std::unordered_map<std::string, tyr::Index<runir::kr::ps::ext::Feature<runir::kr::dl::ConceptTag>>>;
+using BooleanFeatureMap = std::unordered_map<std::string, tyr::Index<runir::kr::ps::ext::Feature<runir::kr::ps::dl::BooleanFeature>>>;
+using NumericalFeatureMap = std::unordered_map<std::string, tyr::Index<runir::kr::ps::ext::Feature<runir::kr::ps::dl::NumericalFeature>>>;
+using ConceptAliasMap = std::unordered_map<std::string, tyr::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>;
+using MemoryStateMap = std::unordered_map<std::string, tyr::Index<MemoryState>>;
+using RegisterMap = std::unordered_map<std::string, tyr::Index<Register>>;
+using ModuleMap = std::unordered_map<std::string, tyr::Index<Module>>;
+
+void append_argument(Repository& repository, tyr::Data<Module>& data, const ast::Argument& argument)
+{
+    switch (argument.kind)
+    {
+        case ast::ArgumentKind::CONCEPT:
+            data.concept_arguments.push_back(intern_argument<runir::kr::dl::ConceptTag>(repository, argument).get_index());
+            break;
+        case ast::ArgumentKind::ROLE:
+            data.role_arguments.push_back(intern_argument<runir::kr::dl::RoleTag>(repository, argument).get_index());
+            break;
+        case ast::ArgumentKind::BOOLEAN:
+            data.boolean_arguments.push_back(intern_argument<runir::kr::dl::BooleanTag>(repository, argument).get_index());
+            break;
+        case ast::ArgumentKind::NUMERICAL:
+            data.numerical_arguments.push_back(intern_argument<runir::kr::dl::NumericalTag>(repository, argument).get_index());
+            break;
+    }
+}
+
+template<typename FeatureTag, typename ConcreteFeatureTag>
+auto intern_dl_feature(Repository& repository,
+                       tyr::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, ConcreteFeatureTag>> constructor,
+                       const ast::Feature& feature)
+{
+    tyr::Data<ConcreteFeature<runir::kr::DlTag, FeatureTag>> concrete_data(constructor, feature.symbol, feature.description);
+    const auto concrete = intern(repository, concrete_data);
+    tyr::Data<Feature<FeatureTag>> feature_data(concrete.get_index());
+    return intern(repository, feature_data);
+}
+
+void append_feature(Repository& repository,
+                    const ast::Feature& feature,
+                    tyr::formalism::planning::DomainView domain,
+                    ConceptFeatureMap& concept_features,
+                    BooleanFeatureMap& boolean_features,
+                    NumericalFeatureMap& numerical_features,
+                    ConceptAliasMap& concept_aliases)
+{
+    switch (feature.kind)
+    {
+        case ast::FeatureKind::CONCEPT:
+        {
+            const auto constructor = parse_concept(feature.expression, domain, repository.get_dl_repository());
+            const auto view = intern_dl_feature<runir::kr::dl::ConceptTag>(repository, constructor.get_index(), feature);
+            concept_features.emplace(feature.name, view.get_index());
+            concept_aliases.emplace(feature.name, constructor.get_index());
+            break;
+        }
+        case ast::FeatureKind::BOOLEAN:
+        {
+            const auto constructor = parse_boolean(feature.expression, domain, repository.get_dl_repository());
+            const auto view = intern_dl_feature<runir::kr::ps::dl::BooleanFeature>(repository, constructor.get_index(), feature);
+            boolean_features.emplace(feature.name, view.get_index());
+            break;
+        }
+        case ast::FeatureKind::NUMERICAL:
+        {
+            const auto constructor = parse_numerical(feature.expression, domain, repository.get_dl_repository());
+            const auto view = intern_dl_feature<runir::kr::ps::dl::NumericalFeature>(repository, constructor.get_index(), feature);
+            numerical_features.emplace(feature.name, view.get_index());
+            break;
+        }
+    }
+}
+
+template<typename FeatureTag>
+auto require_feature(const std::unordered_map<std::string, tyr::Index<Feature<FeatureTag>>>& features, const std::string& name)
+{
+    const auto it = features.find(name);
+    if (it == features.end())
+        throw std::runtime_error("Unknown feature \"" + name + "\".");
+    return it->second;
+}
+
+template<typename FeatureTag, typename ObservationTag>
+auto make_condition(Repository& repository, tyr::Index<Feature<FeatureTag>> feature)
+{
+    tyr::Data<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
+    const auto concrete = intern(repository, concrete_data);
+    tyr::Data<ConcreteConditionVariant<runir::kr::DlTag>> concrete_variant_data(concrete.get_index());
+    const auto concrete_variant = intern(repository, concrete_variant_data);
+    tyr::Data<ConditionVariant> variant_data(concrete_variant.get_index());
+    return intern(repository, variant_data);
+}
+
+template<typename FeatureTag, typename ObservationTag>
+auto make_effect(Repository& repository, tyr::Index<Feature<FeatureTag>> feature)
+{
+    tyr::Data<ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
+    const auto concrete = intern(repository, concrete_data);
+    tyr::Data<ConcreteEffectVariant<runir::kr::DlTag>> concrete_variant_data(concrete.get_index());
+    const auto concrete_variant = intern(repository, concrete_variant_data);
+    tyr::Data<EffectVariant> variant_data(concrete_variant.get_index());
+    return intern(repository, variant_data);
+}
+
+auto parse_condition(Repository& repository,
+                     const ast::Observation& observation,
+                     const ConceptFeatureMap& concept_features,
+                     const BooleanFeatureMap& boolean_features,
+                     const NumericalFeatureMap& numerical_features)
+{
+    switch (observation.kind)
+    {
+        case ast::ObservationKind::POSITIVE:
+            return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(repository,
+                                                                                                  require_feature(boolean_features, observation.feature));
+        case ast::ObservationKind::NEGATIVE:
+            return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(repository,
+                                                                                                  require_feature(boolean_features, observation.feature));
+        case ast::ObservationKind::EQUAL_ZERO:
+            if (concept_features.contains(observation.feature))
+                return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>(repository,
+                                                                                               require_feature(concept_features, observation.feature));
+            return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>(repository,
+                                                                                                     require_feature(numerical_features, observation.feature));
+        case ast::ObservationKind::GREATER_ZERO:
+            if (concept_features.contains(observation.feature))
+                return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>(repository,
+                                                                                                 require_feature(concept_features, observation.feature));
+            return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>(
+                repository,
+                require_feature(numerical_features, observation.feature));
+        case ast::ObservationKind::UNCHANGED:
+        case ast::ObservationKind::INCREASES:
+        case ast::ObservationKind::DECREASES:
+            throw std::runtime_error("Effect observations are not valid rule conditions.");
+    }
+    throw std::runtime_error("Unknown condition observation kind.");
+}
+
+auto parse_effect(Repository& repository,
+                  const ast::Observation& observation,
+                  const ConceptFeatureMap& concept_features,
+                  const BooleanFeatureMap& boolean_features,
+                  const NumericalFeatureMap& numerical_features)
+{
+    switch (observation.kind)
+    {
+        case ast::ObservationKind::POSITIVE:
+            return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(repository,
+                                                                                               require_feature(boolean_features, observation.feature));
+        case ast::ObservationKind::NEGATIVE:
+            return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(repository,
+                                                                                               require_feature(boolean_features, observation.feature));
+        case ast::ObservationKind::UNCHANGED:
+            if (concept_features.contains(observation.feature))
+                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>(repository, require_feature(concept_features, observation.feature));
+            if (boolean_features.contains(observation.feature))
+                return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>(repository,
+                                                                                                    require_feature(boolean_features, observation.feature));
+            return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>(repository,
+                                                                                                  require_feature(numerical_features, observation.feature));
+        case ast::ObservationKind::INCREASES:
+            if (concept_features.contains(observation.feature))
+                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>(repository, require_feature(concept_features, observation.feature));
+            return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>(repository,
+                                                                                                  require_feature(numerical_features, observation.feature));
+        case ast::ObservationKind::DECREASES:
+            if (concept_features.contains(observation.feature))
+                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>(repository, require_feature(concept_features, observation.feature));
+            return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>(repository,
+                                                                                                  require_feature(numerical_features, observation.feature));
+        case ast::ObservationKind::EQUAL_ZERO:
+        case ast::ObservationKind::GREATER_ZERO:
+            throw std::runtime_error("Condition observations are not valid rule effects.");
+    }
+    throw std::runtime_error("Unknown effect observation kind.");
+}
+
+auto parse_conditions(Repository& repository,
+                      const std::vector<ast::Observation>& observations,
+                      const ConceptFeatureMap& concept_features,
+                      const BooleanFeatureMap& boolean_features,
+                      const NumericalFeatureMap& numerical_features)
+{
+    auto result = tyr::IndexList<ConditionVariant> {};
+    result.reserve(observations.size());
+    for (const auto& observation : observations)
+        result.push_back(parse_condition(repository, observation, concept_features, boolean_features, numerical_features).get_index());
+    return result;
+}
+
+auto parse_effects(Repository& repository,
+                   const std::vector<ast::Observation>& observations,
+                   const ConceptFeatureMap& concept_features,
+                   const BooleanFeatureMap& boolean_features,
+                   const NumericalFeatureMap& numerical_features)
+{
+    auto result = tyr::IndexList<EffectVariant> {};
+    result.reserve(observations.size());
+    for (const auto& observation : observations)
+        result.push_back(parse_effect(repository, observation, concept_features, boolean_features, numerical_features).get_index());
+    return result;
+}
+
+std::string trim_copy(std::string value)
+{
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())))
+        value.erase(value.begin());
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back())))
+        value.pop_back();
+    return value;
+}
+
+bool starts_with_expression(const std::string& value)
+{
+    const auto trimmed = trim_copy(value);
+    return !trimmed.empty() && trimmed.front() == '(';
+}
+
+auto parse_concept_argument(Repository& repository,
+                            const std::string& expression,
+                            tyr::formalism::planning::DomainView domain,
+                            const ConceptAliasMap& concept_aliases)
+{
+    if (starts_with_expression(expression))
+        return parse_concept(expression, domain, repository.get_dl_repository()).get_index();
+
+    const auto it = concept_aliases.find(expression);
+    if (it == concept_aliases.end())
+        throw std::runtime_error("Unknown concept expression or feature alias \"" + expression + "\".");
+    return it->second;
+}
+
+auto parse_call_argument(Repository& repository,
+                         const std::string& expression,
+                         tyr::formalism::planning::DomainView domain,
+                         const ConceptAliasMap& concept_aliases) -> CallArgument
+{
+    const auto trimmed = trim_copy(expression);
+    if (trimmed.starts_with("(r_"))
+        return parse_role(trimmed, domain, repository.get_dl_repository()).get_index();
+    return parse_concept_argument(repository, trimmed, domain, concept_aliases);
+}
+
+struct SExpr
+{
+    std::string atom;
+    std::vector<SExpr> list;
+
+    bool is_atom() const noexcept { return list.empty(); }
+};
+
+std::vector<std::string> tokenize_expression(const std::string& text)
+{
+    auto tokens = std::vector<std::string> {};
+    for (size_t i = 0; i < text.size();)
+    {
+        if (std::isspace(static_cast<unsigned char>(text[i])))
+        {
+            ++i;
+        }
+        else if (text[i] == '(' || text[i] == ')')
+        {
+            tokens.emplace_back(1, text[i++]);
+        }
+        else if (text[i] == '"')
+        {
+            const auto start = i++;
+            while (i < text.size() && text[i] != '"')
+                ++i;
+            if (i == text.size())
+                throw std::runtime_error("Unterminated string in DL expression.");
+            ++i;
+            tokens.push_back(text.substr(start, i - start));
+        }
+        else
+        {
+            const auto start = i;
+            while (i < text.size() && !std::isspace(static_cast<unsigned char>(text[i])) && text[i] != '(' && text[i] != ')')
+                ++i;
+            tokens.push_back(text.substr(start, i - start));
+        }
+    }
+    return tokens;
+}
+
+SExpr parse_expression_tokens(const std::vector<std::string>& tokens, size_t& pos)
+{
+    if (pos >= tokens.size())
+        throw std::runtime_error("Unexpected end of DL expression.");
+
+    if (tokens[pos] != "(")
+        return SExpr { tokens[pos++], {} };
+
+    ++pos;
+    auto result = SExpr {};
+    while (pos < tokens.size() && tokens[pos] != ")")
+        result.list.push_back(parse_expression_tokens(tokens, pos));
+
+    if (pos >= tokens.size())
+        throw std::runtime_error("Unclosed list in DL expression.");
+    ++pos;
+
+    if (result.list.empty())
+        throw std::runtime_error("Empty list in DL expression.");
+    return result;
+}
+
+SExpr parse_expression(const std::string& text)
+{
+    const auto tokens = tokenize_expression(text);
+    size_t pos = 0;
+    auto result = parse_expression_tokens(tokens, pos);
+    if (pos != tokens.size())
+        throw std::runtime_error("Trailing tokens in DL expression.");
+    return result;
+}
+
+std::string format_expression(const SExpr& expr)
+{
+    if (expr.is_atom())
+        return expr.atom;
+
+    auto out = std::ostringstream {};
+    out << '(';
+    for (size_t i = 0; i < expr.list.size(); ++i)
+    {
+        if (i != 0)
+            out << ' ';
+        out << format_expression(expr.list[i]);
+    }
+    out << ')';
+    return out.str();
+}
+
+const std::string& require_atom(const SExpr& expr, const char* context)
+{
+    if (!expr.is_atom())
+        throw std::runtime_error(std::string("Expected atom in ") + context + ".");
+    return expr.atom;
+}
+
+std::string unquote(std::string value)
+{
+    if (value.size() >= 2 && value.front() == '"' && value.back() == '"')
+        return value.substr(1, value.size() - 2);
+    return value;
+}
+
+bool parse_truth_atom(const SExpr& expr)
+{
+    const auto& value = require_atom(expr, "truth value");
+    if (value == runir::kr::dl::TrueTag::keyword)
+        return true;
+    if (value == runir::kr::dl::FalseTag::keyword)
+        return false;
+    throw std::runtime_error("Expected true or false truth value.");
+}
+
+tyr::uint_t parse_uint_atom(const SExpr& expr, const char* context)
+{
+    const auto& value = require_atom(expr, context);
+    return static_cast<tyr::uint_t>(std::stoull(value));
+}
+
+const std::string& expression_operator(const SExpr& expr)
+{
+    if (expr.is_atom() || expr.list.empty())
+        throw std::runtime_error("Expected constructor expression list.");
+    return require_atom(expr.list.front(), "constructor operator");
+}
+
+template<typename Variant>
+Variant parse_constructor_variant_child(runir::kr::dl::ext::ConstructorRepository& repository, const SExpr& expr, tyr::formalism::planning::DomainView domain)
+{
+    const auto text = format_expression(expr);
+    const auto op = expression_operator(expr);
+    if (op.starts_with("r_"))
+        return parse_role(text, domain, repository).get_index();
+    return parse_concept(text, domain, repository).get_index();
+}
+
+template<typename RuleTag>
+auto intern_rule_variant(Repository& repository, tyr::Data<Rule<RuleTag>>& data)
+{
+    const auto rule = intern(repository, data);
+    tyr::Data<RuleVariant> variant_data(rule.get_index());
+    return intern(repository, variant_data);
+}
+
+auto require_memory_state(const MemoryStateMap& memory_states, const std::string& name)
+{
+    const auto it = memory_states.find(name);
+    if (it == memory_states.end())
+        throw std::runtime_error("Unknown memory state \"" + name + "\".");
+    return it->second;
+}
+
+auto require_register(const RegisterMap& registers, const std::string& name)
+{
+    const auto it = registers.find(name);
+    if (it == registers.end())
+        throw std::runtime_error("Unknown register \"" + name + "\".");
+    return it->second;
+}
+
+auto find_module(const ModuleMap& modules, const std::string& name)
+{
+    const auto it = modules.find(name);
+    return it == modules.end() ? std::optional<tyr::Index<Module>> {} : std::optional(it->second);
+}
+
+auto parse_rule(Repository& repository,
+                const ast::Rule& rule,
+                tyr::Index<MemoryState> source,
+                tyr::Index<MemoryState> target,
+                tyr::formalism::planning::DomainView domain,
+                const RegisterMap& registers,
+                const ModuleMap& modules,
+                const ConceptFeatureMap& concept_features,
+                const BooleanFeatureMap& boolean_features,
+                const NumericalFeatureMap& numerical_features,
+                const ConceptAliasMap& concept_aliases)
+{
+    const auto conditions = parse_conditions(repository, rule.conditions, concept_features, boolean_features, numerical_features);
+
+    switch (rule.kind)
+    {
+        case ast::RuleKind::LOAD:
+        {
+            tyr::Data<Rule<LoadTag>> data;
+            data.source = source;
+            data.target = target;
+            data.conditions = conditions;
+            data.load_concept = parse_concept_argument(repository, rule.concept_expression, domain, concept_aliases);
+            data.reg = require_register(registers, rule.reg);
+            return intern_rule_variant(repository, data);
+        }
+        case ast::RuleKind::SKETCH:
+        {
+            tyr::Data<Rule<SketchTag>> data;
+            data.source = source;
+            data.target = target;
+            data.conditions = conditions;
+            data.effects = parse_effects(repository, rule.effects, concept_features, boolean_features, numerical_features);
+            return intern_rule_variant(repository, data);
+        }
+        case ast::RuleKind::DO:
+        {
+            tyr::Data<Rule<DoTag>> data(rule.action);
+            data.source = source;
+            data.target = target;
+            data.conditions = conditions;
+            for (const auto& argument : rule.arguments)
+                data.arguments.push_back(parse_concept_argument(repository, argument, domain, concept_aliases));
+            return intern_rule_variant(repository, data);
+        }
+        case ast::RuleKind::CALL:
+        {
+            tyr::Data<Rule<CallTag>> data;
+            data.source = source;
+            data.target = target;
+            data.conditions = conditions;
+            data.callee_name = rule.callee;
+            if (const auto callee = find_module(modules, rule.callee))
+                data.callee = *callee;
+            for (const auto& argument : rule.arguments)
+                data.arguments.push_back(parse_call_argument(repository, argument, domain, concept_aliases));
+            return intern_rule_variant(repository, data);
+        }
+    }
+    throw std::runtime_error("Unknown rule kind.");
+}
+
+}  // namespace
+
+runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>
+parse_concept(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_constructor(runir::kr::dl::grammar::parser::ext::parse_concept_ast(description), domain, repository);
+}
+
+runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>
+parse_role(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    return parse_constructor(runir::kr::dl::grammar::parser::ext::parse_role_ast(description), domain, repository);
+}
+
+runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>
+parse_boolean(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    const auto expr = parse_expression(description);
+    const auto& op = expression_operator(expr);
+
+    if (op == "b_argument")
+    {
+        if (expr.list.size() != 2)
+            throw std::runtime_error("b_argument expects one identifier.");
+        tyr::Data<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> data(
+            runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>(parse_uint_atom(expr.list[1], "boolean argument identifier")));
+        return intern_constructor<runir::kr::dl::BooleanTag>(repository, intern_dl(repository, data).get_index());
+    }
+
+    if (op == "b_nonempty")
+    {
+        if (expr.list.size() != 2)
+            throw std::runtime_error("b_nonempty expects one concept or role argument.");
+        using Data = tyr::Data<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::NonemptyTag>>;
+        Data data(parse_constructor_variant_child<typename Data::ConstructorVariant>(repository, expr.list[1], domain));
+        return intern_constructor<runir::kr::dl::BooleanTag>(repository, intern_dl(repository, data).get_index());
+    }
+
+    if (op == "b_atomic_state" || op == "b_atomic_goal")
+    {
+        if (expr.list.size() != 3)
+            throw std::runtime_error(op + " expects a predicate name and polarity.");
+        const auto predicate_name = unquote(require_atom(expr.list[1], "boolean predicate name"));
+        const auto polarity = parse_truth_atom(expr.list[2]);
+        if (op == "b_atomic_state")
+        {
+            return resolve_predicate(domain,
+                                     predicate_name,
+                                     0,
+                                     "BooleanAtomicState",
+                                     [&](auto tag, auto predicate)
+                                     {
+                                         using T = decltype(tag);
+                                         tyr::Data<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::AtomicStateTag<T>>> data(predicate, polarity);
+                                         return intern_constructor<runir::kr::dl::BooleanTag>(repository, intern_dl(repository, data).get_index());
+                                     });
+        }
+        return resolve_predicate(domain,
+                                 predicate_name,
+                                 0,
+                                 "BooleanAtomicGoal",
+                                 [&](auto tag, auto predicate)
+                                 {
+                                     using T = decltype(tag);
+                                     tyr::Data<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::AtomicGoalTag<T>>> data(predicate, polarity);
+                                     return intern_constructor<runir::kr::dl::BooleanTag>(repository, intern_dl(repository, data).get_index());
+                                 });
+    }
+
+    throw std::runtime_error("Unsupported boolean DL expression \"" + op + "\".");
+}
+
+runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>
+parse_numerical(const std::string& description, tyr::formalism::planning::DomainView domain, runir::kr::dl::ext::ConstructorRepository& repository)
+{
+    const auto expr = parse_expression(description);
+    const auto& op = expression_operator(expr);
+
+    if (op == "n_argument")
+    {
+        if (expr.list.size() != 2)
+            throw std::runtime_error("n_argument expects one identifier.");
+        tyr::Data<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> data(
+            runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>(parse_uint_atom(expr.list[1], "numerical argument identifier")));
+        return intern_constructor<runir::kr::dl::NumericalTag>(repository, intern_dl(repository, data).get_index());
+    }
+
+    if (op == "n_count")
+    {
+        if (expr.list.size() != 2)
+            throw std::runtime_error("n_count expects one concept or role argument.");
+        using Data = tyr::Data<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::CountTag>>;
+        Data data(parse_constructor_variant_child<typename Data::ConstructorVariant>(repository, expr.list[1], domain));
+        return intern_constructor<runir::kr::dl::NumericalTag>(repository, intern_dl(repository, data).get_index());
+    }
+
+    if (op == "n_distance")
+    {
+        if (expr.list.size() != 4)
+            throw std::runtime_error("n_distance expects concept, role, and concept arguments.");
+        tyr::Data<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::DistanceTag>> data(
+            parse_concept(format_expression(expr.list[1]), domain, repository).get_index(),
+            parse_role(format_expression(expr.list[2]), domain, repository).get_index(),
+            parse_concept(format_expression(expr.list[3]), domain, repository).get_index());
+        return intern_constructor<runir::kr::dl::NumericalTag>(repository, intern_dl(repository, data).get_index());
+    }
+
+    throw std::runtime_error("Unsupported numerical DL expression \"" + op + "\".");
+}
+
+ModuleView parse_module(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
+{
+    const auto ast = parser::parse_module_ast(description);
+
+    auto memory_states = MemoryStateMap {};
+    for (const auto& state : ast.memory_states)
+    {
+        auto state_data = tyr::Data<MemoryState>(state);
+        memory_states.emplace(state, intern(repository, state_data).get_index());
+    }
+
+    const auto entry = memory_states.find(ast.entry);
+    if (entry == memory_states.end())
+        throw std::runtime_error("Module entry memory state is not declared in :memory.");
+
+    auto data = tyr::Data<Module>(ast.name);
+    data.entry_memory_state = entry->second;
+
+    for (const auto& argument : ast.arguments)
+        append_argument(repository, data, argument);
+
+    auto registers = RegisterMap {};
+    for (const auto& reg : ast.registers)
+    {
+        auto reg_data = tyr::Data<Register>(reg.name, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>(reg.identifier));
+        const auto view = intern(repository, reg_data);
+        data.registers.push_back(view.get_index());
+        registers.emplace(reg.name, view.get_index());
+    }
+
+    for (const auto& state : ast.memory_states)
+        data.memory_states.push_back(memory_states.at(state));
+
+    auto concept_features = ConceptFeatureMap {};
+    auto boolean_features = BooleanFeatureMap {};
+    auto numerical_features = NumericalFeatureMap {};
+    auto concept_aliases = ConceptAliasMap {};
+    for (const auto& feature : ast.features)
+        append_feature(repository, feature, domain, concept_features, boolean_features, numerical_features, concept_aliases);
+
+    auto modules = ModuleMap {};
+    if (auto callee = repository.find(data))
+        modules.emplace(ast.name, callee->get_index());
+
+    for (const auto& transition : ast.transitions)
+    {
+        auto parsed_transition = MemoryTransition {};
+        parsed_transition.source = require_memory_state(memory_states, transition.source);
+        parsed_transition.target = require_memory_state(memory_states, transition.target);
+        for (const auto& rule : transition.rules)
+            parsed_transition.rules.push_back(parse_rule(repository,
+                                                         rule,
+                                                         parsed_transition.source,
+                                                         parsed_transition.target,
+                                                         domain,
+                                                         registers,
+                                                         modules,
+                                                         concept_features,
+                                                         boolean_features,
+                                                         numerical_features,
+                                                         concept_aliases)
+                                                  .get_index());
+        data.memory_transitions.push_back(std::move(parsed_transition));
+    }
+
+    return intern(repository, data);
+}
+
+std::vector<ModuleView> parse_modules(const std::vector<std::string>& descriptions, tyr::formalism::planning::DomainView domain, Repository& repository)
+{
+    auto result = std::vector<ModuleView> {};
+    result.reserve(descriptions.size());
+    for (const auto& description : descriptions)
+        result.push_back(parse_module(description, domain, repository));
+    return result;
+}
+
+}  // namespace runir::kr::ps::ext::dl

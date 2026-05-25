@@ -3,9 +3,13 @@
 
 #include "runir/kr/dl/ext/repository.hpp"
 #include "runir/kr/ps/base/repository.hpp"
+#include "runir/kr/ps/ext/argument_data.hpp"
+#include "runir/kr/ps/ext/argument_view.hpp"
 #include "runir/kr/ps/ext/canonicalization.hpp"
 #include "runir/kr/ps/ext/condition_data.hpp"
 #include "runir/kr/ps/ext/condition_view.hpp"
+#include "runir/kr/ps/ext/dl/condition_view.hpp"
+#include "runir/kr/ps/ext/dl/effect_view.hpp"
 #include "runir/kr/ps/ext/dl/feature_data.hpp"
 #include "runir/kr/ps/ext/dl/feature_view.hpp"
 #include "runir/kr/ps/ext/effect_data.hpp"
@@ -36,10 +40,30 @@ using FeatureTypes = tyr::TypeList<Feature<runir::kr::dl::ConceptTag>,
                                    ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>,
                                    ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
                                    ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>;
-using ConditionTypes = tyr::TypeList<ConditionVariant>;
-using EffectTypes = tyr::TypeList<EffectVariant>;
+using ConditionTypes = tyr::TypeList<ConditionVariant,
+                                     ConcreteConditionVariant<runir::kr::DlTag>,
+                                     ConcreteCondition<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>,
+                                     ConcreteCondition<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>,
+                                     ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
+                                     ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
+                                     ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>,
+                                     ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>;
+using EffectTypes = tyr::TypeList<EffectVariant,
+                                  ConcreteEffectVariant<runir::kr::DlTag>,
+                                  ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>,
+                                  ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>,
+                                  ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>,
+                                  ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
+                                  ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
+                                  ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>,
+                                  ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>,
+                                  ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
+                                  ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
+using ArgumentTypes = tyr::
+    TypeList<Argument<runir::kr::dl::ConceptTag>, Argument<runir::kr::dl::RoleTag>, Argument<runir::kr::dl::BooleanTag>, Argument<runir::kr::dl::NumericalTag>>;
 using ProgramTypes = tyr::TypeList<Register, MemoryState, Module>;
-using RepositoryTypes = tyr::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ProgramTypes>;
+using RepositoryTypes =
+    tyr::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ArgumentTypes, ProgramTypes>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ext::ConstructorRepositoryPtr>;
 using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ext::ConstructorRepositoryPtr>;
 

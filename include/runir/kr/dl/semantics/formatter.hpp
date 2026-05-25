@@ -2,6 +2,7 @@
 #define RUNIR_SEMANTICS_FORMATTER_HPP_
 
 #include "runir/common/config.hpp"
+#include "runir/kr/dl/ext/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
@@ -12,6 +13,7 @@
 #include <string>
 #include <string_view>
 #include <tyr/common/formatter.hpp>
+#include <tyr/common/types.hpp>
 #include <vector>
 
 namespace runir::kr::dl::semantics::format
@@ -32,6 +34,18 @@ std::vector<std::string> quoted_object_names(Objects objects)
     for (auto object : objects)
         result.push_back(quoted(object.get_name()));
     return result;
+}
+
+template<runir::kr::dl::CategoryTag Category>
+std::string argument_identifier(runir::kr::dl::ArgumentIdentifier<Category> identifier)
+{
+    return fmt::format("@argument {}", tyr::uint_t(identifier));
+}
+
+template<runir::kr::dl::CategoryTag Category>
+std::string register_identifier(runir::kr::dl::RegisterIdentifier<Category> identifier)
+{
+    return fmt::format("@register {}", tyr::uint_t(identifier));
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
@@ -120,6 +134,10 @@ std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::FamilyConcep
         return fmt::format("@{} {}", runir::kr::dl::grammar::ast::ConceptOneOf<Family>::keyword, fmt::join(quoted_object_names(view.get_objects()), " "));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
         return fmt::format("@{} {}", runir::kr::dl::grammar::ast::ConceptNominal<Family>::keyword, quoted(view.get_object().get_name()));
+    else if constexpr (std::same_as<Tag, runir::kr::dl::RegisterTag>)
+        return register_identifier(view.get_data().identifier);
+    else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>)
+        return argument_identifier(view.get_data().identifier);
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
@@ -153,6 +171,10 @@ std::string role(tyr::View<tyr::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C
         return fmt::format("@{} {} {}", runir::kr::dl::grammar::ast::RoleRestriction<Family>::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::IdentityTag>)
         return fmt::format("@{} {}", runir::kr::dl::grammar::ast::RoleIdentity<Family>::keyword, view.get_arg());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::RegisterTag>)
+        return register_identifier(view.get_data().identifier);
+    else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>)
+        return argument_identifier(view.get_data().identifier);
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
@@ -171,6 +193,8 @@ std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::FamilyBoolea
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return fmt::format("@{} {}", runir::kr::dl::grammar::ast::BooleanNonempty<Family>::keyword, view.get_arg());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>)
+        return argument_identifier(view.get_data().identifier);
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
@@ -181,6 +205,8 @@ std::string numerical(tyr::View<tyr::Index<runir::kr::dl::FamilyNumerical<Family
         return fmt::format("@{} {}", runir::kr::dl::grammar::ast::NumericalCount<Family>::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
         return fmt::format("@{} {} {} {}", runir::kr::dl::grammar::ast::NumericalDistance<Family>::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>)
+        return argument_identifier(view.get_data().identifier);
 }
 
 }  // namespace runir::kr::dl::semantics::format

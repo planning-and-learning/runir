@@ -30,6 +30,7 @@ nanobind_add_module(_pyrunir
     pyrunir/kr/dl/ext/indices.cpp
     pyrunir/kr/dl/ext/module.cpp
     pyrunir/kr/dl/ext/parser.cpp
+    pyrunir/kr/dl/ext/repository.cpp
     pyrunir/kr/ps/base/module.cpp
     pyrunir/kr/ps/base/dl/indices.cpp
     pyrunir/kr/ps/base/dl/module.cpp
@@ -42,6 +43,14 @@ nanobind_add_module(_pyrunir
     pyrunir/kr/ps/base/repository.cpp
     pyrunir/kr/ps/base/syntactic_complexity.cpp
     pyrunir/kr/ps/base/views.cpp
+    pyrunir/kr/ps/ext/datas.cpp
+    pyrunir/kr/ps/ext/indices.cpp
+    pyrunir/kr/ps/ext/module.cpp
+    pyrunir/kr/ps/ext/module_factory.cpp
+    pyrunir/kr/ps/ext/parser.cpp
+    pyrunir/kr/ps/ext/repository.cpp
+    pyrunir/kr/ps/ext/sketch_executor.cpp
+    pyrunir/kr/ps/ext/views.cpp
     pyrunir/kr/dl/base/semantics/datas.cpp
     pyrunir/kr/dl/base/semantics/indices.cpp
     pyrunir/kr/dl/base/semantics/module.cpp
@@ -171,6 +180,7 @@ set(PYRUNIR_PYTHON_FILES
     pyrunir/kr/dl/base/cnf_grammar/__init__.py
     pyrunir/kr/ps/__init__.py
     pyrunir/kr/ps/base/__init__.py
+    pyrunir/kr/ps/ext/__init__.py
     pyrunir/kr/ps/base/dl/__init__.py
 )
 

@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_EXT_DECLARATIONS_HPP_
 
 #include "runir/kr/declarations.hpp"
+#include "runir/kr/dl/declarations.hpp"
 
 #include <concepts>
 
@@ -13,6 +14,11 @@ struct Register
 };
 
 struct MemoryState
+{
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct Argument
 {
 };
 

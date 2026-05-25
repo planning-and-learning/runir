@@ -1,0 +1,35 @@
+#ifndef RUNIR_KR_PS_EXT_ARGUMENT_VIEW_HPP_
+#define RUNIR_KR_PS_EXT_ARGUMENT_VIEW_HPP_
+
+#include "runir/kr/ps/ext/argument_data.hpp"
+
+#include <tuple>
+#include <tyr/common/types.hpp>
+
+namespace tyr
+{
+
+template<runir::kr::dl::CategoryTag Category, typename C>
+class View<Index<runir::kr::ps::ext::Argument<Category>>, C>
+{
+private:
+    const C* m_context;
+    Index<runir::kr::ps::ext::Argument<Category>> m_handle;
+
+public:
+    View(Index<runir::kr::ps::ext::Argument<Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+
+    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
+    const auto& get_context() const noexcept { return *m_context; }
+    const auto& get_handle() const noexcept { return m_handle; }
+
+    auto get_index() const noexcept { return m_handle; }
+    const auto& get_name() const noexcept { return get_data().name; }
+    auto get_identifier() const noexcept { return get_data().identifier; }
+
+    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+};
+
+}  // namespace tyr
+
+#endif

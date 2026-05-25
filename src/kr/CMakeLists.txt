@@ -14,6 +14,9 @@ add_library(kr SHARED
     ps/base/dl/parser/parser_instantiations.cpp
     ps/base/dl/sketch_factory.cpp
     ps/base/sketch_executor.cpp
+    ps/ext/dl/module_factory.cpp
+    ps/ext/dl/parser/parser.cpp
+    ps/ext/dl/parser.cpp
 )
 add_library(runir::kr ALIAS kr)
 

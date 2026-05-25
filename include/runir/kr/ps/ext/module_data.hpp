@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_MODULE_DATA_HPP_
 #define RUNIR_KR_PS_EXT_MODULE_DATA_HPP_
 
+#include "runir/kr/ps/ext/argument_index.hpp"
 #include "runir/kr/ps/ext/memory_state_index.hpp"
 #include "runir/kr/ps/ext/module_index.hpp"
 #include "runir/kr/ps/ext/register_index.hpp"
@@ -47,6 +48,10 @@ struct Data<runir::kr::ps::ext::Module>
 
     Index<runir::kr::ps::ext::Module> index;
     ::cista::offset::string name;
+    IndexList<runir::kr::ps::ext::Argument<runir::kr::dl::ConceptTag>> concept_arguments;
+    IndexList<runir::kr::ps::ext::Argument<runir::kr::dl::RoleTag>> role_arguments;
+    IndexList<runir::kr::ps::ext::Argument<runir::kr::dl::BooleanTag>> boolean_arguments;
+    IndexList<runir::kr::ps::ext::Argument<runir::kr::dl::NumericalTag>> numerical_arguments;
     IndexList<runir::kr::ps::ext::Register> registers;
     Index<runir::kr::ps::ext::MemoryState> entry_memory_state;
     IndexList<runir::kr::ps::ext::MemoryState> memory_states;
@@ -59,14 +64,41 @@ struct Data<runir::kr::ps::ext::Module>
     {
         tyr::clear(index);
         tyr::clear(name);
+        tyr::clear(concept_arguments);
+        tyr::clear(role_arguments);
+        tyr::clear(boolean_arguments);
+        tyr::clear(numerical_arguments);
         tyr::clear(registers);
         tyr::clear(entry_memory_state);
         tyr::clear(memory_states);
         tyr::clear(memory_transitions);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, name, registers, entry_memory_state, memory_states, memory_transitions); }
-    auto identifying_members() const noexcept { return std::tie(name, registers, entry_memory_state, memory_states, memory_transitions); }
+    auto cista_members() const noexcept
+    {
+        return std::tie(index,
+                        name,
+                        concept_arguments,
+                        role_arguments,
+                        boolean_arguments,
+                        numerical_arguments,
+                        registers,
+                        entry_memory_state,
+                        memory_states,
+                        memory_transitions);
+    }
+    auto identifying_members() const noexcept
+    {
+        return std::tie(name,
+                        concept_arguments,
+                        role_arguments,
+                        boolean_arguments,
+                        numerical_arguments,
+                        registers,
+                        entry_memory_state,
+                        memory_states,
+                        memory_transitions);
+    }
 };
 
 }  // namespace tyr

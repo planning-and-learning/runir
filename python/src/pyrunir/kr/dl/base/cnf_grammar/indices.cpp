@@ -1,6 +1,6 @@
 #include "module.hpp"
 
-#include <runir/kr/dl/cnf_grammar/indices.hpp>
+#include <runir/kr/dl/cnf_grammar/base/indices.hpp>
 #include <tyr/common/python/bindings.hpp>
 
 namespace runir::kr::dl::base
