@@ -29,7 +29,7 @@ public:
     using Registers = std::array<std::optional<Element<Category>>, runir::kr::dl::num_registers>;
 
     template<CategoryTag Category>
-    using Argument = tyr::Index<Denotation<Category>>;
+    using Argument = tyr::View<tyr::Index<Denotation<Category>>, DenotationRepository>;
 
     template<CategoryTag Category>
     using Arguments = std::vector<Argument<Category>>;

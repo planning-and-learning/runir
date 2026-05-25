@@ -14,10 +14,9 @@ namespace detail
 
 template<CategoryTag Category, tyr::planning::TaskKind Kind>
 auto copy_argument_denotation(EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
-                              tyr::Index<Denotation<Category>> denotation) -> EvaluationBuilderT<Category, runir::kr::ExtFamilyTag, Kind>
+                              const tyr::View<tyr::Index<Denotation<Category>>, DenotationRepository>& view)
+    -> EvaluationBuilderT<Category, runir::kr::ExtFamilyTag, Kind>
 {
-    const auto view = tyr::make_view(denotation, context.get_denotation_repository());
-
     if constexpr (std::same_as<Category, BooleanTag> || std::same_as<Category, NumericalTag>)
     {
         return context.get_builder().template get_builder<Denotation<Category>>(view.get());

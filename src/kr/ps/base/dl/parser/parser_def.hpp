@@ -52,9 +52,9 @@ inline auto identifier_parser() { return raw[lexeme[(alpha | char_('_')) >> *(al
 inline auto quoted_string_parser() { return lexeme[lit('"') >> raw[*('\\' >> char_ | (char_ - '"'))] >> lit('"')]; }
 
 const auto boolean_feature_def = (lit("(") >> lit(runir::kr::ps::dl::BooleanFeature::keyword)) > identifier_parser() > quoted_string_parser()
-                                 > quoted_string_parser() > runir::kr::dl::grammar::parser::boolean_parser() > lit(")");
+                                 > quoted_string_parser() > runir::kr::dl::grammar::parser::base::grammar::boolean_parser() > lit(")");
 const auto numerical_feature_def = (lit("(") >> lit(runir::kr::ps::dl::NumericalFeature::keyword)) > identifier_parser() > quoted_string_parser()
-                                   > quoted_string_parser() > runir::kr::dl::grammar::parser::numerical_parser() > lit(")");
+                                   > quoted_string_parser() > runir::kr::dl::grammar::parser::base::grammar::numerical_parser() > lit(")");
 const auto feature_def = boolean_feature | numerical_feature;
 
 const auto positive_condition_def = lit(ast::Positive::keyword) >> attr(ast::Positive {});
