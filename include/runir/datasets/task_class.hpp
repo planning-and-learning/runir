@@ -18,8 +18,10 @@
 #ifndef RUNIR_DATASETS_TASK_CLASS_HPP_
 #define RUNIR_DATASETS_TASK_CLASS_HPP_
 
+#include <concepts>
 #include <memory>
 #include <tuple>
+#include <type_traits>
 #include <tyr/planning/planning.hpp>
 #include <utility>
 #include <vector>
@@ -43,9 +45,9 @@ struct TaskSearchContext
     tyr::planning::AxiomEvaluatorFactory<Kind> axiom_evaluator_factory;
     tyr::planning::StateRepositoryFactory<Kind> state_repository_factory;
     tyr::planning::SuccessorGeneratorFactory<Kind> successor_generator_factory;
-    tyr::planning::SuccessorGeneratorPtr<Kind> successor_generator;
-    tyr::planning::StateRepositoryPtr<Kind> state_repository;
     tyr::planning::AxiomEvaluatorPtr<Kind> axiom_evaluator;
+    tyr::planning::StateRepositoryPtr<Kind> state_repository;
+    tyr::planning::SuccessorGeneratorPtr<Kind> successor_generator;
 
     TaskSearchContext() = default;
 
@@ -55,20 +57,15 @@ struct TaskSearchContext
         axiom_evaluator_factory(),
         state_repository_factory(),
         successor_generator_factory(),
-        successor_generator(),
-        state_repository(),
         axiom_evaluator(axiom_evaluator_factory.create(task, execution_context))
+        state_repository(state_repository_factory.create(task, axiom_evaluator)),
+        successor_generator(successor_generator_factory.create(task, execution_context, state_repository)),
     {
-        state_repository = state_repository_factory.create(task, axiom_evaluator);
-        successor_generator = successor_generator_factory.create(task, execution_context, state_repository);
     }
 };
 
 template<tyr::planning::TaskKind Kind>
 using TaskSearchContextPtr = std::shared_ptr<TaskSearchContext<Kind>>;
-
-template<tyr::planning::TaskKind Kind>
-using ConstTaskSearchContextPtr = std::shared_ptr<const TaskSearchContext<Kind>>;
 
 template<tyr::planning::TaskKind Kind>
 using TaskSearchContextList = std::vector<TaskSearchContext<Kind>>;

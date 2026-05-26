@@ -99,7 +99,7 @@ public:
         m_initial_state(initial_node.get_state()),
         m_static_goal_satisfied(m_task_goal_strategy.is_static_goal_satisfied(*search_context.task))
     {
-        m_result.context_owner = std::shared_ptr<const runir::datasets::TaskSearchContext<Kind>>(&search_context, [](const runir::datasets::TaskSearchContext<Kind>*) {});
+        m_result.context_owner = search_context;
         m_result.repository_owner = std::move(repository_owner);
     }
 

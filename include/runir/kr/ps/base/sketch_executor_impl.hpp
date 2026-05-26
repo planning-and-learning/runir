@@ -227,7 +227,7 @@ template<tyr::planning::TaskKind Kind>
 auto prove_solution(const datasets::TaskSearchContext<Kind>& context, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
     auto result = SketchProofResults<Kind> {};
-    result.context_owner = std::shared_ptr<const datasets::TaskSearchContext<Kind>>(&context, [](const datasets::TaskSearchContext<Kind>*) {});
+    result.context_owner = context;
     auto builder = datasets::AnnotatedStateGraphBuilder<Kind> {};
     auto state_to_vertex = tyr::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
     auto vertex_to_node = tyr::UnorderedMap<graphs::VertexIndex, tyr::planning::Node<Kind>> {};
