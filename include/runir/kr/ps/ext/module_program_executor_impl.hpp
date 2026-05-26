@@ -51,7 +51,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
 {
     auto execution_state = detail::ModuleProgramExecutionState<Kind>(search_context, program);
     auto& context = execution_state.get_context();
-    auto proof = detail::ModuleProgramProofBuilder<Kind>(search_context, execution_state.get_initial_node());
+    auto proof = detail::ModuleProgramProofBuilder<Kind>(search_context, execution_state.get_initial_node(), context.get_repository_owner());
     const auto internal_options = detail::execution_options(options);
 
     auto current_vertex = proof.get_or_create_vertex(context, true, true, false).first;
@@ -141,7 +141,7 @@ auto execute_solution(const runir::datasets::TaskSearchContext<Kind>& search_con
 
     auto finish = [&](ModuleProgramOutcome status)
     {
-        return ModuleExecutionResults<Kind> { status,       context.get_state(), context.get_module(),           context.get_memory_state(),
+        return ModuleExecutionResults<Kind> { status,       context.get_state(), context.get_module(), context.get_memory_state(), context.get_repository_owner(),
                                               std::nullopt, num_steps,           context.get_call_stack().size() };
     };
 

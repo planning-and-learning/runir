@@ -22,6 +22,7 @@
 #include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/ps/repository.hpp"
 
+#include <memory>
 #include <tyr/common/type_list.hpp>
 
 namespace runir::kr::ps::base
@@ -53,6 +54,8 @@ using EffectTypes =
 using SketchTypes = tyr::TypeList<runir::kr::ps::base::Rule, runir::kr::ps::base::Sketch>;
 using RepositoryTypes = tyr::ConcatTypeListsT<FeatureTypes, ConditionTypes, EffectTypes, SketchTypes>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::BaseFamilyTag, RepositoryTypes, runir::kr::dl::base::ConstructorRepositoryPtr>;
+using RepositoryPtr = std::shared_ptr<Repository>;
+using ConstRepositoryPtr = std::shared_ptr<const Repository>;
 using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::BaseFamilyTag, RepositoryTypes, runir::kr::dl::base::ConstructorRepositoryPtr>;
 
 using SketchView = tyr::View<tyr::Index<runir::kr::ps::base::Sketch>, Repository>;

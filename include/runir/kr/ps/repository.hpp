@@ -16,12 +16,14 @@ namespace runir::kr::ps
 {
 
 template<FamilyTag Family, typename RepositoryTypes, typename DlRepositoryPtr>
-class BasicRepository
+class BasicRepository : public std::enable_shared_from_this<BasicRepository<Family, RepositoryTypes, DlRepositoryPtr>>
 {
     template<FamilyTag, typename, typename>
     friend class BasicRepositoryFactory;
 
 private:
+    using Self = BasicRepository<Family, RepositoryTypes, DlRepositoryPtr>;
+
     tyr::ApplyTypeListT<tyr::formalism::SymbolRepository, RepositoryTypes> m_symbol_repository;
     DlRepositoryPtr m_dl_repository;
     size_t m_index;
@@ -39,6 +41,28 @@ public:
     BasicRepository& operator=(BasicRepository&&) = delete;
 
     const auto& get_index() const noexcept { return m_index; }
+    std::shared_ptr<const Self> get_shared_ptr() const noexcept
+    {
+        try
+        {
+            return this->shared_from_this();
+        }
+        catch (const std::bad_weak_ptr&)
+        {
+            return {};
+        }
+    }
+    std::shared_ptr<Self> get_shared_ptr() noexcept
+    {
+        try
+        {
+            return this->shared_from_this();
+        }
+        catch (const std::bad_weak_ptr&)
+        {
+            return {};
+        }
+    }
     auto& get_dl_repository() noexcept { return *m_dl_repository; }
     const auto& get_dl_repository() const noexcept { return *m_dl_repository; }
     const auto& get_dl_repository_ptr() const noexcept { return m_dl_repository; }

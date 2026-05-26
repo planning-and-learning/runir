@@ -42,6 +42,7 @@ struct ModuleProgramProofResults
 {
     ModuleProgramProofStatus status = ModuleProgramProofStatus::SUCCESS;
     runir::datasets::TaskSearchContext<Kind> context;
+    ConstRepositoryPtr repository_owner;
     std::shared_ptr<ModuleProgramProofGraph<Kind>> graph;
     runir::graphs::EdgeIndexList deadend_transitions;
     runir::graphs::VertexIndexList open_states;

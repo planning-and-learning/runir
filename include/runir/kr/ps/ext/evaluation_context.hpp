@@ -9,6 +9,7 @@
 #include "runir/kr/ps/ext/repository.hpp"
 
 #include <array>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -63,6 +64,7 @@ private:
     Arguments<runir::kr::dl::NumericalTag> m_numerical_arguments;
     runir::kr::dl::semantics::Builder* m_dl_builder;
     runir::kr::dl::semantics::DenotationRepository* m_dl_denotation_repository;
+    ConstRepositoryPtr m_repository_owner;
     std::vector<ModuleView> m_modules;
     std::vector<CallFrame> m_call_stack;
 
@@ -75,7 +77,8 @@ public:
                       Arguments<runir::kr::dl::RoleTag> role_arguments = {},
                       Arguments<runir::kr::dl::BooleanTag> boolean_arguments = {},
                       Arguments<runir::kr::dl::NumericalTag> numerical_arguments = {},
-                      std::vector<ModuleView> modules = {}) noexcept :
+                      std::vector<ModuleView> modules = {},
+                      ConstRepositoryPtr repository_owner = {}) noexcept :
         m_state(std::move(state)),
         m_module(module),
         m_memory_state(module.get_entry_memory_state()),
@@ -87,9 +90,13 @@ public:
         m_numerical_arguments(std::move(numerical_arguments)),
         m_dl_builder(&dl_builder),
         m_dl_denotation_repository(&dl_denotation_repository),
+        m_repository_owner(std::move(repository_owner)),
         m_modules(std::move(modules)),
         m_call_stack()
     {
+        if (!m_repository_owner)
+            m_repository_owner = m_module.get_context().get_shared_ptr();
+
         auto contains_entry = false;
         for (auto module : m_modules)
             contains_entry |= module.get_index() == m_module.get_index();
@@ -101,6 +108,7 @@ public:
     auto get_module() const noexcept { return m_module; }
     auto get_memory_state() const noexcept { return m_memory_state; }
     const auto& get_modules() const noexcept { return m_modules; }
+    const auto& get_repository_owner() const noexcept { return m_repository_owner; }
     const auto& get_call_stack() const noexcept { return m_call_stack; }
     bool has_caller() const noexcept { return !m_call_stack.empty(); }
     auto& get_repository() const noexcept { return m_module.get_context(); }

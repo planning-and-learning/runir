@@ -12,6 +12,7 @@
 #include <optional>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <unordered_map>
+#include <utility>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -76,6 +77,7 @@ private:
         auto label = ModuleProgramProofVertexLabel<Kind> { context.get_state(),
                                                            context.get_module(),
                                                            context.get_memory_state(),
+                                                           context.get_repository_owner(),
                                                            context.get_call_stack().size(),
                                                            is_goal(context.get_state()) ? tyr::float_t(0) : std::numeric_limits<tyr::float_t>::infinity() };
 
@@ -87,7 +89,9 @@ private:
     }
 
 public:
-    ModuleProgramProofBuilder(const runir::datasets::TaskSearchContext<Kind>& search_context, const tyr::planning::Node<Kind>& initial_node) :
+    ModuleProgramProofBuilder(const runir::datasets::TaskSearchContext<Kind>& search_context,
+                              const tyr::planning::Node<Kind>& initial_node,
+                              ConstRepositoryPtr repository_owner = {}) :
         m_result(),
         m_builder(),
         m_configuration_to_vertex(),
@@ -96,6 +100,7 @@ public:
         m_static_goal_satisfied(m_task_goal_strategy.is_static_goal_satisfied(*search_context.task))
     {
         m_result.context = search_context;
+        m_result.repository_owner = std::move(repository_owner);
     }
 
     bool is_goal(const tyr::planning::StateView<Kind>& state)

@@ -44,6 +44,7 @@ struct ModuleExecutionResults
     tyr::planning::StateView<Kind> state;
     ModuleView module;
     MemoryStateView memory_state;
+    ConstRepositoryPtr repository_owner;
     std::optional<tyr::planning::Plan<Kind>> plan = std::nullopt;
     std::size_t num_steps = 0;
     std::size_t call_depth = 0;

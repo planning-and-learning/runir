@@ -2,6 +2,8 @@
 #define RUNIR_KR_PS_EXT_DETAIL_TRANSITION_SEARCH_HPP_
 
 #include "runir/datasets/task_class.hpp"
+#include "runir/kr/dl/semantics/builder.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/execution.hpp"
@@ -17,10 +19,31 @@ template<tyr::planning::TaskKind Kind>
 class ModuleProgramTransitionGoalStrategy : public tyr::planning::GoalStrategy<Kind>
 {
 private:
-    EvaluationContext<Kind>& m_context;
+    runir::kr::dl::semantics::Builder m_dl_builder;
+    runir::kr::dl::semantics::DenotationRepositoryFactory m_dl_denotation_repository_factory;
+    runir::kr::dl::semantics::DenotationRepository m_dl_denotation_repository;
+    EvaluationContext<Kind> m_context;
 
 public:
-    explicit ModuleProgramTransitionGoalStrategy(EvaluationContext<Kind>& context) : m_context(context) {}
+    explicit ModuleProgramTransitionGoalStrategy(const EvaluationContext<Kind>& context) :
+        m_dl_builder(),
+        m_dl_denotation_repository_factory(),
+        m_dl_denotation_repository(m_dl_denotation_repository_factory.create()),
+        m_context(context.get_state(),
+                  context.get_module(),
+                  m_dl_builder,
+                  m_dl_denotation_repository,
+                  context.template arguments<runir::kr::dl::ConceptTag>(),
+                  context.template arguments<runir::kr::dl::RoleTag>(),
+                  context.template arguments<runir::kr::dl::BooleanTag>(),
+                  context.template arguments<runir::kr::dl::NumericalTag>(),
+                  context.get_modules(),
+                  context.get_repository_owner())
+    {
+        m_context.set_memory_state(context.get_memory_state());
+        m_context.concept_registers() = context.concept_registers();
+        m_context.role_registers() = context.role_registers();
+    }
 
     bool is_static_goal_satisfied(const tyr::planning::Task<Kind>& task) override
     {

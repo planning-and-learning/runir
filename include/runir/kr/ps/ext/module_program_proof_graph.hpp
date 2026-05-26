@@ -25,6 +25,7 @@ struct ModuleProgramProofVertexLabel
     tyr::planning::StateView<Kind> state;
     ModuleView module_;
     MemoryStateView memory_state;
+    ConstRepositoryPtr repository_owner;
     std::size_t call_depth = 0;
     tyr::float_t goal_distance = std::numeric_limits<tyr::float_t>::infinity();
     bool is_initial = false;
@@ -35,11 +36,13 @@ struct ModuleProgramProofVertexLabel
     ModuleProgramProofVertexLabel(tyr::planning::StateView<Kind> state_,
                                   ModuleView module__,
                                   MemoryStateView memory_state_,
+                                  ConstRepositoryPtr repository_owner_,
                                   std::size_t call_depth_,
                                   tyr::float_t goal_distance_) noexcept :
         state(std::move(state_)),
         module_(module__),
         memory_state(memory_state_),
+        repository_owner(std::move(repository_owner_)),
         call_depth(call_depth_),
         goal_distance(goal_distance_)
     {

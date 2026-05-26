@@ -29,6 +29,7 @@
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
 
+#include <memory>
 #include <tyr/common/type_list.hpp>
 
 namespace runir::kr::ps::ext
@@ -67,6 +68,8 @@ using ProgramTypes = tyr::TypeList<Register, MemoryState, Module, ModuleProgram>
 using RepositoryTypes =
     tyr::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ArgumentTypes, ProgramTypes>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ext::ConstructorRepositoryPtr>;
+using RepositoryPtr = std::shared_ptr<Repository>;
+using ConstRepositoryPtr = std::shared_ptr<const Repository>;
 using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ext::ConstructorRepositoryPtr>;
 
 using RegisterView = tyr::View<tyr::Index<Register>, Repository>;
