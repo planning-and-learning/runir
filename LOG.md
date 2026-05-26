@@ -10,3 +10,4 @@
 - Simplified module proof edge labels to view/value data: optional `StateGraphEdgeLabel` plus optional `RuleVariantView`.
 - Removed borrowed-reference proof/search APIs for sketch and module executors; `TaskSearchContextPtr` is now the only public entry-point type, so Python and C++ callers share the same ownership boundary.
 - Moved no parser validation yet; this remains the next item after restoring a clean build and lifted teardown test.
+- Removed direct `TBB::tbb` linkage from runir/`_pyrunir` when consuming installed `pytyr`; `libtyr_core` already carries pytyr's bundled TBB, and loading pyyggdrasil TBB alongside it causes lifted datalog workspace teardown crashes.

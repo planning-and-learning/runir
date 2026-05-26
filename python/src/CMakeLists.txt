@@ -76,13 +76,6 @@ nanobind_add_module(_pyrunir
 target_link_libraries(_pyrunir PRIVATE runir::core)
 target_include_directories(_pyrunir PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 if(APPLE)
-    target_link_libraries(_pyrunir PRIVATE TBB::tbb)
-elseif(UNIX)
-    target_link_options(_pyrunir PRIVATE "LINKER:--no-as-needed")
-    target_link_libraries(_pyrunir PRIVATE TBB::tbb)
-endif()
-
-if(APPLE)
     set(PYRUNIR_MODULE_RPATH
         "@loader_path/native/${CMAKE_INSTALL_LIBDIR}"
         "@loader_path/../pypddl/native/${CMAKE_INSTALL_LIBDIR}"

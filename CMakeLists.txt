@@ -74,6 +74,14 @@ if(tyr_FOUND)
     message(STATUS "Found tyr: ${tyr_DIR} (found version ${tyr_VERSION})")
 endif()
 
+if(TARGET tyr::core)
+    get_target_property(RUNIR_TYR_CORE_LINK_LIBRARIES tyr::core INTERFACE_LINK_LIBRARIES)
+    if(RUNIR_TYR_CORE_LINK_LIBRARIES)
+        list(REMOVE_ITEM RUNIR_TYR_CORE_LINK_LIBRARIES TBB::tbb)
+        set_target_properties(tyr::core PROPERTIES INTERFACE_LINK_LIBRARIES "${RUNIR_TYR_CORE_LINK_LIBRARIES}")
+    endif()
+endif()
+
 add_subdirectory(src)
 
 if(RUNIR_BUILD_EXECUTABLES)
