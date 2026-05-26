@@ -41,7 +41,7 @@ template<tyr::planning::TaskKind Kind>
 struct ModuleProgramProofResults
 {
     ModuleProgramProofStatus status = ModuleProgramProofStatus::SUCCESS;
-    runir::datasets::TaskSearchContext<Kind> context;
+    runir::datasets::ConstTaskSearchContextPtr<Kind> context_owner;
     ConstRepositoryPtr repository_owner;
     std::shared_ptr<ModuleProgramProofGraph<Kind>> graph;
     runir::graphs::EdgeIndexList deadend_transitions;

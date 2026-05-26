@@ -24,7 +24,7 @@ template<tyr::planning::TaskKind Kind>
 struct SketchProofResults
 {
     SketchProofStatus status = SketchProofStatus::SUCCESS;
-    runir::datasets::TaskSearchContext<Kind> context;
+    runir::datasets::ConstTaskSearchContextPtr<Kind> context_owner;
     std::shared_ptr<runir::datasets::StaticAnnotatedStateGraph<Kind>> graph;
     runir::graphs::EdgeIndexList deadend_transitions;
     runir::graphs::VertexIndexList open_states;
