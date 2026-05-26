@@ -1,3 +1,9 @@
+# List of Requirements:
+- Do not recompile after every single code change.
+- Use 2 cores for compilation.
+
+# List of Goals:
+
 1. Read and continue keeping track of recent changes in LOG.md
 2. Move as much error checking as possible from the module execution into the module parser.
 In the parser, we also want to pinpoint to illformed inputs using the boost spirit x3 error handler positions.
