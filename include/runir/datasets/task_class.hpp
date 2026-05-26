@@ -68,9 +68,6 @@ template<tyr::planning::TaskKind Kind>
 using TaskSearchContextPtr = std::shared_ptr<TaskSearchContext<Kind>>;
 
 template<tyr::planning::TaskKind Kind>
-using ConstTaskSearchContextPtr = std::shared_ptr<const TaskSearchContext<Kind>>;
-
-template<tyr::planning::TaskKind Kind>
 using TaskSearchContextList = std::vector<TaskSearchContext<Kind>>;
 
 template<tyr::planning::TaskKind Kind>

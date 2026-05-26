@@ -41,8 +41,8 @@ template<tyr::planning::TaskKind Kind>
 struct ModuleProgramProofResults
 {
     ModuleProgramProofStatus status = ModuleProgramProofStatus::SUCCESS;
-    runir::datasets::ConstTaskSearchContextPtr<Kind> context_owner;
-    ConstRepositoryPtr repository_owner;
+    runir::datasets::TaskSearchContextPtr<Kind> context_owner;
+    RepositoryPtr repository_owner;
     std::shared_ptr<ModuleProgramProofGraph<Kind>> graph;
     runir::graphs::EdgeIndexList deadend_transitions;
     runir::graphs::VertexIndexList open_states;
@@ -52,36 +52,14 @@ struct ModuleProgramProofResults
 };
 
 template<tyr::planning::TaskKind Kind>
-auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& context,
+auto prove_solution(runir::datasets::TaskSearchContextPtr<Kind> context,
                     ModuleProgramView program,
                     const ModuleProgramSearchOptions<Kind>& options = ModuleProgramSearchOptions<Kind>()) -> ModuleProgramProofResults<Kind>;
 
 template<tyr::planning::TaskKind Kind>
-auto find_solution(const runir::datasets::TaskSearchContext<Kind>& context,
+auto find_solution(runir::datasets::TaskSearchContextPtr<Kind> context,
                    ModuleProgramView program,
                    const ModuleProgramSearchOptions<Kind>& options = ModuleProgramSearchOptions<Kind>()) -> tyr::planning::SearchResult<Kind>;
-
-#ifndef RUNIR_HEADER_INSTANTIATION
-extern template auto prove_solution<tyr::planning::GroundTag>(const runir::datasets::TaskSearchContext<tyr::planning::GroundTag>& context,
-                                                              ModuleProgramView program,
-                                                              const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options)
-    -> ModuleProgramProofResults<tyr::planning::GroundTag>;
-
-extern template auto prove_solution<tyr::planning::LiftedTag>(const runir::datasets::TaskSearchContext<tyr::planning::LiftedTag>& context,
-                                                              ModuleProgramView program,
-                                                              const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options)
-    -> ModuleProgramProofResults<tyr::planning::LiftedTag>;
-
-extern template auto find_solution<tyr::planning::GroundTag>(const runir::datasets::TaskSearchContext<tyr::planning::GroundTag>& context,
-                                                             ModuleProgramView program,
-                                                             const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options)
-    -> tyr::planning::SearchResult<tyr::planning::GroundTag>;
-
-extern template auto find_solution<tyr::planning::LiftedTag>(const runir::datasets::TaskSearchContext<tyr::planning::LiftedTag>& context,
-                                                             ModuleProgramView program,
-                                                             const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options)
-    -> tyr::planning::SearchResult<tyr::planning::LiftedTag>;
-#endif
 
 }  // namespace runir::kr::ps::ext
 

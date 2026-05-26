@@ -5,22 +5,22 @@ namespace runir::kr::ps::base
 {
 
 template auto
-prove_solution<tyr::planning::GroundTag>(const datasets::TaskSearchContext<tyr::planning::GroundTag>& context,
+prove_solution<tyr::planning::GroundTag>(datasets::TaskSearchContextPtr<tyr::planning::GroundTag> context,
                                          SketchView sketch,
                                          const SketchSearchOptions<tyr::planning::GroundTag>& options) -> SketchProofResults<tyr::planning::GroundTag>;
 
 template auto
-prove_solution<tyr::planning::LiftedTag>(const datasets::TaskSearchContext<tyr::planning::LiftedTag>& context,
+prove_solution<tyr::planning::LiftedTag>(datasets::TaskSearchContextPtr<tyr::planning::LiftedTag> context,
                                          SketchView sketch,
                                          const SketchSearchOptions<tyr::planning::LiftedTag>& options) -> SketchProofResults<tyr::planning::LiftedTag>;
 
 template auto
-find_solution<tyr::planning::GroundTag>(const datasets::TaskSearchContext<tyr::planning::GroundTag>& context,
+find_solution<tyr::planning::GroundTag>(datasets::TaskSearchContextPtr<tyr::planning::GroundTag> context,
                                         SketchView sketch,
                                         const SketchSearchOptions<tyr::planning::GroundTag>& options) -> tyr::planning::SearchResult<tyr::planning::GroundTag>;
 
 template auto
-find_solution<tyr::planning::LiftedTag>(const datasets::TaskSearchContext<tyr::planning::LiftedTag>& context,
+find_solution<tyr::planning::LiftedTag>(datasets::TaskSearchContextPtr<tyr::planning::LiftedTag> context,
                                         SketchView sketch,
                                         const SketchSearchOptions<tyr::planning::LiftedTag>& options) -> tyr::planning::SearchResult<tyr::planning::LiftedTag>;
 

@@ -64,7 +64,7 @@ private:
     Arguments<runir::kr::dl::NumericalTag> m_numerical_arguments;
     runir::kr::dl::semantics::Builder* m_dl_builder;
     runir::kr::dl::semantics::DenotationRepository* m_dl_denotation_repository;
-    ConstRepositoryPtr m_repository_owner;
+    RepositoryPtr m_repository_owner;
     std::vector<ModuleView> m_modules;
     std::vector<CallFrame> m_call_stack;
 
@@ -78,7 +78,7 @@ public:
                       Arguments<runir::kr::dl::BooleanTag> boolean_arguments = {},
                       Arguments<runir::kr::dl::NumericalTag> numerical_arguments = {},
                       std::vector<ModuleView> modules = {},
-                      ConstRepositoryPtr repository_owner = {}) noexcept :
+                      RepositoryPtr repository_owner = {}) noexcept :
         m_state(std::move(state)),
         m_module(module),
         m_memory_state(module.get_entry_memory_state()),
@@ -95,7 +95,7 @@ public:
         m_call_stack()
     {
         if (!m_repository_owner)
-            m_repository_owner = m_module.get_context().get_shared_ptr();
+            m_repository_owner = std::const_pointer_cast<Repository>(m_module.get_context().get_shared_ptr());
 
         auto contains_entry = false;
         for (auto module : m_modules)

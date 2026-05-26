@@ -28,10 +28,11 @@ auto execute_solution(const runir::datasets::TaskSearchContext<Kind>& search_con
 }  // namespace detail
 
 template<tyr::planning::TaskKind Kind>
-auto find_solution(const runir::datasets::TaskSearchContext<Kind>& context,
+auto find_solution(runir::datasets::TaskSearchContextPtr<Kind> context_owner,
                    ModuleProgramView program,
                    const ModuleProgramSearchOptions<Kind>& options) -> tyr::planning::SearchResult<Kind>
 {
+    const auto& context = *context_owner;
     const auto execution = detail::execute_solution(context, program, detail::execution_options(options));
 
     auto result = tyr::planning::SearchResult<Kind> {};
@@ -45,13 +46,14 @@ auto find_solution(const runir::datasets::TaskSearchContext<Kind>& context,
 }
 
 template<tyr::planning::TaskKind Kind>
-auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_context,
+auto prove_solution(runir::datasets::TaskSearchContextPtr<Kind> context_owner,
                     ModuleProgramView program,
                     const ModuleProgramSearchOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
 {
+    const auto& search_context = *context_owner;
     auto execution_state = detail::ModuleProgramExecutionState<Kind>(search_context, program);
     auto& context = execution_state.get_context();
-    auto proof = detail::ModuleProgramProofBuilder<Kind>(search_context, execution_state.get_initial_node(), context.get_repository_owner());
+    auto proof = detail::ModuleProgramProofBuilder<Kind>(search_context, execution_state.get_initial_node(), context_owner, context.get_repository_owner());
     const auto internal_options = detail::execution_options(options);
 
     auto current_vertex = proof.get_or_create_vertex(context, true, true, false).first;
@@ -70,7 +72,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
 
             const auto terminal = load_status != LoadExecutionStatus::APPLIED;
             const auto [target, created] = proof.get_or_create_vertex(context, false, !terminal, terminal);
-            const auto edge = proof.add_edge(load_source, target, std::nullopt, 0);
+            const auto edge = proof.add_edge(load_source, target, std::nullopt);
             current_vertex = target;
 
             if (load_status == LoadExecutionStatus::EMPTY_DENOTATION)
@@ -96,7 +98,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
         if (step_result.status == detail::ModuleProgramOutcome::APPLIED || step_result.status == detail::ModuleProgramOutcome::RESTORED_CALLER)
         {
             const auto [target, created] = proof.get_or_create_vertex(context, false, true, false);
-            proof.add_edge(source_vertex, target, step_result.action, step_result.cost, step_result.rule);
+            proof.add_edge(source_vertex, target, step_result.state_transition, step_result.rule);
             if (!created)
             {
                 proof.set_two_vertex_cycle(target, source_vertex);
@@ -113,7 +115,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
 
         const auto [target, created] = proof.get_or_create_vertex(context, false, false, true);
         static_cast<void>(created);
-        const auto edge = proof.add_edge(source_vertex, target, std::nullopt, 0);
+        const auto edge = proof.add_edge(source_vertex, target, std::nullopt);
         proof.add_deadend_transition(edge);
         proof.add_open_state(target);
         return proof.finish(detail::translate_proof_status(step_result.status));

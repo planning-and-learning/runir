@@ -240,10 +240,11 @@ public:
 }  // namespace detail
 
 template<tyr::planning::TaskKind Kind>
-auto prove_solution(const datasets::TaskSearchContext<Kind>& context, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
+auto prove_solution(datasets::TaskSearchContextPtr<Kind> context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
+    const auto& context = *context_owner;
     auto result = SketchProofResults<Kind> {};
-    result.context_owner = datasets::ConstTaskSearchContextPtr<Kind>(&context, [](const datasets::TaskSearchContext<Kind>*) {});
+    result.context_owner = context_owner;
     auto builder = SketchProofGraphBuilder<Kind> {};
     auto state_to_vertex = tyr::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
     auto vertex_to_node = tyr::UnorderedMap<graphs::VertexIndex, tyr::planning::Node<Kind>> {};
@@ -357,10 +358,11 @@ auto prove_solution(const datasets::TaskSearchContext<Kind>& context, SketchView
 }
 
 template<tyr::planning::TaskKind Kind>
-auto find_solution(const datasets::TaskSearchContext<Kind>& context,
+auto find_solution(datasets::TaskSearchContextPtr<Kind> context_owner,
                    SketchView sketch,
                    const SketchSearchOptions<Kind>& options) -> tyr::planning::SearchResult<Kind>
 {
+    const auto& context = *context_owner;
     auto brfs_solver = tyr::planning::brfs::Solver<Kind> { context.task, context.successor_generator, options.brfs_options };
     auto iw_solver = tyr::planning::iw::Solver<Kind> { std::move(brfs_solver), options.max_arity, options.iw_options };
     auto siw_options = options.siw_options;

@@ -5,6 +5,9 @@
 #include <runir/datasets/task_class.hpp>
 #include <tyr/common/python/type_casters.hpp>
 
+#include <memory>
+#include <utility>
+
 namespace runir::datasets
 {
 
@@ -25,8 +28,11 @@ void bind_task_class_for_kind(nb::module_& m, const char* prefix)
         .def_rw("tasks", &TaskClassT::tasks);
 
     nb::class_<TaskSearchContextT>(m, (std::string(prefix) + "TaskSearchContext").c_str())  //
-        .def(nb::init<>())
-        .def(nb::init<tyr::planning::TaskPtr<Kind>, tyr::ExecutionContextPtr>(), "task"_a, "execution_context"_a)
+        .def(nb::new_([]() { return std::make_shared<TaskSearchContextT>(); }))
+        .def(nb::new_([](tyr::planning::TaskPtr<Kind> task, tyr::ExecutionContextPtr execution_context)
+             { return std::make_shared<TaskSearchContextT>(std::move(task), std::move(execution_context)); }),
+             "task"_a,
+             "execution_context"_a)
         .def_rw("task", &TaskSearchContextT::task)
         .def_rw("execution_context", &TaskSearchContextT::execution_context)
         .def_rw("axiom_evaluator", &TaskSearchContextT::axiom_evaluator)

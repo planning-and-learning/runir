@@ -58,25 +58,25 @@ void bind_sketch_executor(nb::module_& m)
     bind_sketch_search_options<tyr::planning::LiftedTag>(m, "LiftedSketchSearchOptions");
 
     m.def("prove_ground_solution",
-          &prove_solution<tyr::planning::GroundTag>,
+          [](runir::datasets::TaskSearchContextPtr<tyr::planning::GroundTag> context, SketchView sketch, const SketchSearchOptions<tyr::planning::GroundTag>& options) { return prove_solution(std::move(context), sketch, options); },
           nb::call_guard<nb::gil_scoped_release>(),
           "context"_a,
           "sketch"_a,
           "options"_a = SketchSearchOptions<tyr::planning::GroundTag>());
     m.def("prove_lifted_solution",
-          &prove_solution<tyr::planning::LiftedTag>,
+          [](runir::datasets::TaskSearchContextPtr<tyr::planning::LiftedTag> context, SketchView sketch, const SketchSearchOptions<tyr::planning::LiftedTag>& options) { return prove_solution(std::move(context), sketch, options); },
           nb::call_guard<nb::gil_scoped_release>(),
           "context"_a,
           "sketch"_a,
           "options"_a = SketchSearchOptions<tyr::planning::LiftedTag>());
     m.def("find_ground_solution",
-          &find_solution<tyr::planning::GroundTag>,
+          [](runir::datasets::TaskSearchContextPtr<tyr::planning::GroundTag> context, SketchView sketch, const SketchSearchOptions<tyr::planning::GroundTag>& options) { return find_solution(std::move(context), sketch, options); },
           nb::call_guard<nb::gil_scoped_release>(),
           "context"_a,
           "sketch"_a,
           "options"_a = SketchSearchOptions<tyr::planning::GroundTag>());
     m.def("find_lifted_solution",
-          &find_solution<tyr::planning::LiftedTag>,
+          [](runir::datasets::TaskSearchContextPtr<tyr::planning::LiftedTag> context, SketchView sketch, const SketchSearchOptions<tyr::planning::LiftedTag>& options) { return find_solution(std::move(context), sketch, options); },
           nb::call_guard<nb::gil_scoped_release>(),
           "context"_a,
           "sketch"_a,

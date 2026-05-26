@@ -76,25 +76,25 @@ void bind_module_program_executor(nb::module_& m)
     bind_module_program_proof_types<tyr::planning::LiftedTag>(m, "Lifted");
 
     m.def("prove_ground_solution",
-          &prove_solution<tyr::planning::GroundTag>,
+          [](runir::datasets::TaskSearchContextPtr<tyr::planning::GroundTag> context, ModuleProgramView program, const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options) { return prove_solution(std::move(context), program, options); },
           nb::call_guard<nb::gil_scoped_release>(),
           "context"_a,
           "program"_a,
           "options"_a = ModuleProgramSearchOptions<tyr::planning::GroundTag>());
     m.def("prove_lifted_solution",
-          &prove_solution<tyr::planning::LiftedTag>,
+          [](runir::datasets::TaskSearchContextPtr<tyr::planning::LiftedTag> context, ModuleProgramView program, const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options) { return prove_solution(std::move(context), program, options); },
           nb::call_guard<nb::gil_scoped_release>(),
           "context"_a,
           "program"_a,
           "options"_a = ModuleProgramSearchOptions<tyr::planning::LiftedTag>());
     m.def("find_ground_solution",
-          &find_solution<tyr::planning::GroundTag>,
+          [](runir::datasets::TaskSearchContextPtr<tyr::planning::GroundTag> context, ModuleProgramView program, const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options) { return find_solution(std::move(context), program, options); },
           nb::call_guard<nb::gil_scoped_release>(),
           "context"_a,
           "program"_a,
           "options"_a = ModuleProgramSearchOptions<tyr::planning::GroundTag>());
     m.def("find_lifted_solution",
-          &find_solution<tyr::planning::LiftedTag>,
+          [](runir::datasets::TaskSearchContextPtr<tyr::planning::LiftedTag> context, ModuleProgramView program, const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options) { return find_solution(std::move(context), program, options); },
           nb::call_guard<nb::gil_scoped_release>(),
           "context"_a,
           "program"_a,

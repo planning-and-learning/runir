@@ -3,8 +3,10 @@
 ## 2026-05-26
 
 - Fixed the current `TaskSearchContext` constructor syntax before continuing proof-graph work.
-- Added `SketchProofGraph` with edge labels containing both the concrete state transition and the compatible sketch rule.
-- Added typed memory-state wrappers (`MemoryState<InternalMemoryTag>`, `MemoryState<ExternalMemoryTag>`, `MemoryStateVariant`) so later execution code can separate Bonet-style internal and external memory explicitly.
-- Added `ExtendedState` for module proof vertices, recording the annotated planning state, memory state variant, concept/role register contents, module, call depth, and repository owner.
-- Extended module proof edges with optional applied-rule labels while preserving existing action/cost fields for current bindings.
-- Moved no parser validation yet; this remains the next item after restoring a clean build.
+- Removed the temporary const pointer aliases from this work: task search contexts now use only `TaskSearchContextPtr`, and planning-sketch repositories now use only `RepositoryPtr`.
+- Added `SketchProofGraph` with `AnnotatedStateGraphVertexLabel` vertices and edge labels containing the concrete `StateGraphEdgeLabel` plus the compatible `RuleView`.
+- Added concrete typed memory-state wrappers (`InternalMemoryState`, `ExternalMemoryState`) and `MemoryStateVariant` to make the internal/external memory partition explicit without colliding with the repository entity `MemoryState`.
+- Added `ExtendedState` for module proof vertices. It contains only annotated planning state, typed memory state, and fixed-size concept/role register arrays; module/control ownership data stays outside it.
+- Simplified module proof edge labels to view/value data: optional `StateGraphEdgeLabel` plus optional `RuleVariantView`.
+- Removed borrowed-reference proof/search APIs for sketch and module executors; `TaskSearchContextPtr` is now the only public entry-point type, so Python and C++ callers share the same ownership boundary.
+- Moved no parser validation yet; this remains the next item after restoring a clean build and lifted teardown test.

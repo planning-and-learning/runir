@@ -91,7 +91,8 @@ private:
 public:
     ModuleProgramProofBuilder(const runir::datasets::TaskSearchContext<Kind>& search_context,
                               const tyr::planning::Node<Kind>& initial_node,
-                              ConstRepositoryPtr repository_owner = {}) :
+                              runir::datasets::TaskSearchContextPtr<Kind> context_owner = {},
+                              RepositoryPtr repository_owner = {}) :
         m_result(),
         m_builder(),
         m_configuration_to_vertex(),
@@ -99,7 +100,7 @@ public:
         m_initial_state(initial_node.get_state()),
         m_static_goal_satisfied(m_task_goal_strategy.is_static_goal_satisfied(*search_context.task))
     {
-        m_result.context_owner = datasets::ConstTaskSearchContextPtr<Kind>(&search_context, [](const datasets::TaskSearchContext<Kind>*) {});
+        m_result.context_owner = std::move(context_owner);
         m_result.repository_owner = std::move(repository_owner);
     }
 
@@ -122,11 +123,12 @@ public:
 
     graphs::EdgeIndex add_edge(graphs::VertexIndex source,
                                graphs::VertexIndex target,
-                               std::optional<tyr::Index<tyr::formalism::planning::GroundAction>> action,
-                               tyr::float_t cost,
+                               std::optional<datasets::StateGraphEdgeLabel> state_transition,
                                std::optional<RuleVariantView> rule = std::nullopt)
     {
-        return m_builder.add_directed_edge(source, target, ModuleProgramProofEdgeLabel { rule });
+        auto label = ModuleProgramProofEdgeLabel { rule };
+        label.state_transition = state_transition;
+        return m_builder.add_directed_edge(source, target, std::move(label));
     }
 
     void set_two_vertex_cycle(graphs::VertexIndex target, graphs::VertexIndex source) { m_result.cycle = graphs::VertexIndexList { target, source, target }; }
