@@ -197,8 +197,7 @@ bool sketch_rule_matches_state(tyr::View<tyr::Index<Rule<SketchTag>>, C> rule,
 }
 
 template<tyr::planning::TaskKind Kind>
-std::optional<tyr::View<tyr::Index<Rule<SketchTag>>, Repository>> find_matching_sketch_rule(EvaluationContext<Kind>& context,
-                                                                                            const tyr::planning::StateView<Kind>& target_state)
+std::optional<RuleVariantView> find_matching_sketch_rule_variant(EvaluationContext<Kind>& context, const tyr::planning::StateView<Kind>& target_state)
 {
     const auto module = context.get_module();
     for (const auto& transition : module.get_memory_transitions())
@@ -208,24 +207,42 @@ std::optional<tyr::View<tyr::Index<Rule<SketchTag>>, Repository>> find_matching_
 
         for (auto rule : tyr::make_view(transition.rules, context.get_repository()))
         {
-            const auto result = tyr::visit(
-                [&](auto concrete_rule) -> std::optional<tyr::View<tyr::Index<Rule<SketchTag>>, Repository>>
+            const auto matches = tyr::visit(
+                [&](auto concrete_rule)
                 {
                     using RuleView = std::decay_t<decltype(concrete_rule)>;
                     if constexpr (std::same_as<RuleView, tyr::View<tyr::Index<Rule<SketchTag>>, Repository>>)
-                    {
-                        if (sketch_rule_matches_state(concrete_rule, context, target_state))
-                            return concrete_rule;
-                    }
-                    return std::nullopt;
+                        return sketch_rule_matches_state(concrete_rule, context, target_state);
+                    else
+                        return false;
                 },
                 rule.get_variant());
-            if (result)
-                return result;
+            if (matches)
+                return rule;
         }
     }
 
     return std::nullopt;
+}
+
+template<tyr::planning::TaskKind Kind>
+std::optional<tyr::View<tyr::Index<Rule<SketchTag>>, Repository>> find_matching_sketch_rule(EvaluationContext<Kind>& context,
+                                                                                            const tyr::planning::StateView<Kind>& target_state)
+{
+    const auto rule_variant = find_matching_sketch_rule_variant(context, target_state);
+    if (!rule_variant)
+        return std::nullopt;
+
+    return tyr::visit(
+        [](auto concrete_rule) -> std::optional<tyr::View<tyr::Index<Rule<SketchTag>>, Repository>>
+        {
+            using RuleView = std::decay_t<decltype(concrete_rule)>;
+            if constexpr (std::same_as<RuleView, tyr::View<tyr::Index<Rule<SketchTag>>, Repository>>)
+                return concrete_rule;
+            else
+                return std::nullopt;
+        },
+        rule_variant->get_variant());
 }
 
 template<typename C, tyr::planning::TaskKind Kind>
@@ -244,6 +261,37 @@ std::optional<tyr::planning::LabeledNode<Kind>> select_sketch_successor(tyr::Vie
     for (const auto& successor : successors)
         if (sketch_rule_matches_successor(rule, context, successor))
             return successor;
+
+    return std::nullopt;
+}
+
+template<tyr::planning::TaskKind Kind>
+std::optional<RuleVariantView> find_applicable_sketch_rule(EvaluationContext<Kind>& context,
+                                                           const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
+{
+    const auto module = context.get_module();
+    for (const auto& transition : module.get_memory_transitions())
+    {
+        if (transition.source != context.get_memory_state().get_index())
+            continue;
+
+        for (auto rule : tyr::make_view(transition.rules, context.get_repository()))
+        {
+            const auto applicable = tyr::visit(
+                [&](auto concrete_rule)
+                {
+                    using RuleView = std::decay_t<decltype(concrete_rule)>;
+                    if constexpr (std::same_as<RuleView, tyr::View<tyr::Index<Rule<SketchTag>>, Repository>>)
+                        return (concrete_rule.get_effects().empty() && conditions_are_compatible(concrete_rule, context))
+                               || select_sketch_successor(concrete_rule, context, successors).has_value();
+                    else
+                        return false;
+                },
+                rule.get_variant());
+            if (applicable)
+                return rule;
+        }
+    }
 
     return std::nullopt;
 }

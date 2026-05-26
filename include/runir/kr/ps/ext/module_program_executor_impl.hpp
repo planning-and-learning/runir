@@ -96,7 +96,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
         if (step_result.status == detail::ModuleProgramOutcome::APPLIED || step_result.status == detail::ModuleProgramOutcome::RESTORED_CALLER)
         {
             const auto [target, created] = proof.get_or_create_vertex(context, false, true, false);
-            proof.add_edge(source_vertex, target, step_result.action, step_result.cost);
+            proof.add_edge(source_vertex, target, step_result.action, step_result.cost, step_result.rule);
             if (!created)
             {
                 proof.set_two_vertex_cycle(target, source_vertex);

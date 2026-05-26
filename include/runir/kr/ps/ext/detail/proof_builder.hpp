@@ -74,18 +74,18 @@ private:
 
     ModuleProgramProofVertexLabel<Kind> make_vertex_label(const EvaluationContext<Kind>& context, bool is_initial, bool is_alive, bool is_unsolvable)
     {
-        auto label = ModuleProgramProofVertexLabel<Kind> { context.get_state(),
-                                                           context.get_module(),
-                                                           context.get_memory_state(),
-                                                           context.get_repository_owner(),
-                                                           context.get_call_stack().size(),
-                                                           is_goal(context.get_state()) ? tyr::float_t(0) : std::numeric_limits<tyr::float_t>::infinity() };
-
-        label.is_initial = is_initial;
-        label.is_goal = is_goal(context.get_state());
-        label.is_alive = is_alive;
-        label.is_unsolvable = is_unsolvable;
-        return label;
+        auto annotated = datasets::AnnotatedStateGraphVertexLabel<Kind> { context.get_state(),
+                                                                           is_goal(context.get_state()) ? tyr::float_t(0)
+                                                                                                        : std::numeric_limits<tyr::float_t>::infinity(),
+                                                                           is_initial,
+                                                                           is_goal(context.get_state()),
+                                                                           is_alive,
+                                                                           is_unsolvable };
+        auto extended = ExtendedState<Kind> { annotated,
+                                             ExternalMemoryState(context.get_memory_state()),
+                                             context.concept_registers(),
+                                             context.role_registers() };
+        return ModuleProgramProofVertexLabel<Kind> { std::move(extended), context.get_module() };
     }
 
 public:
@@ -99,7 +99,7 @@ public:
         m_initial_state(initial_node.get_state()),
         m_static_goal_satisfied(m_task_goal_strategy.is_static_goal_satisfied(*search_context.task))
     {
-        m_result.context_owner = search_context;
+        m_result.context_owner = datasets::ConstTaskSearchContextPtr<Kind>(&search_context, [](const datasets::TaskSearchContext<Kind>*) {});
         m_result.repository_owner = std::move(repository_owner);
     }
 
@@ -123,9 +123,10 @@ public:
     graphs::EdgeIndex add_edge(graphs::VertexIndex source,
                                graphs::VertexIndex target,
                                std::optional<tyr::Index<tyr::formalism::planning::GroundAction>> action,
-                               tyr::float_t cost)
+                               tyr::float_t cost,
+                               std::optional<RuleVariantView> rule = std::nullopt)
     {
-        return m_builder.add_directed_edge(source, target, ModuleProgramProofEdgeLabel { action, cost });
+        return m_builder.add_directed_edge(source, target, ModuleProgramProofEdgeLabel { rule });
     }
 
     void set_two_vertex_cycle(graphs::VertexIndex target, graphs::VertexIndex source) { m_result.cycle = graphs::VertexIndexList { target, source, target }; }

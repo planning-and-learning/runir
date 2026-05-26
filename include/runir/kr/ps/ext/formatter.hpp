@@ -573,15 +573,14 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>> :
 {
     auto format(const runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>& label, format_context& ctx) const
     {
-        const auto text = fmt::format("state={} module={} memory={} depth={} initial={} goal={} alive={} unsolvable={}",
-                                      tyr::uint_t(label.state.get_index()),
+        const auto& state = label.extended_state.annotated_state;
+        const auto text = fmt::format("state={} module={} initial={} goal={} alive={} unsolvable={}",
+                                      tyr::uint_t(state.state.get_index()),
                                       tyr::uint_t(label.module_.get_index()),
-                                      tyr::uint_t(label.memory_state.get_index()),
-                                      label.call_depth,
-                                      label.is_initial,
-                                      label.is_goal,
-                                      label.is_alive,
-                                      label.is_unsolvable);
+                                      state.is_initial,
+                                      state.is_goal,
+                                      state.is_alive,
+                                      state.is_unsolvable);
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -591,8 +590,8 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofEdgeLabel> : fmt::fo
 {
     auto format(const runir::kr::ps::ext::ModuleProgramProofEdgeLabel& label, format_context& ctx) const
     {
-        return fmt::formatter<std::string_view>::format(label.action ? fmt::format("cost={} action={}", label.cost, tyr::uint_t(*label.action)) :
-                                                                       fmt::format("cost={}", label.cost),
+        return fmt::formatter<std::string_view>::format(label.rule ? fmt::format("rule={}", tyr::uint_t(label.rule->get_index())) :
+                                                                     std::string("rule=<none>"),
                                                         ctx);
     }
 };

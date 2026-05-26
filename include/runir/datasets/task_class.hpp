@@ -57,15 +57,18 @@ struct TaskSearchContext
         axiom_evaluator_factory(),
         state_repository_factory(),
         successor_generator_factory(),
-        axiom_evaluator(axiom_evaluator_factory.create(task, execution_context))
+        axiom_evaluator(axiom_evaluator_factory.create(task, execution_context)),
         state_repository(state_repository_factory.create(task, axiom_evaluator)),
-        successor_generator(successor_generator_factory.create(task, execution_context, state_repository)),
+        successor_generator(successor_generator_factory.create(task, execution_context, state_repository))
     {
     }
 };
 
 template<tyr::planning::TaskKind Kind>
 using TaskSearchContextPtr = std::shared_ptr<TaskSearchContext<Kind>>;
+
+template<tyr::planning::TaskKind Kind>
+using ConstTaskSearchContextPtr = std::shared_ptr<const TaskSearchContext<Kind>>;
 
 template<tyr::planning::TaskKind Kind>
 using TaskSearchContextList = std::vector<TaskSearchContext<Kind>>;

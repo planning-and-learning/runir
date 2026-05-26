@@ -405,6 +405,38 @@ Role distance & \texttt{(n\_distance C R D)} & $d_R(C,D)$ \\
 \end{longtable}
 \end{compacttable}
 
+
+\section{Module Programs}
+
+A module program state is an extended state
+\[
+  x = (\bar{s}, m, \mu, \rho_C, \rho_R)
+\]
+where $\bar{s}$ is an annotated planning state, $m$ is the current module,
+$\mu$ is a typed memory state, and $\rho_C,\rho_R$ are the concept and role
+register valuations.  The implementation keeps memory as
+$\mu \in M_{\mathit{int}} \uplus M_{\mathit{ext}}$ so internal control states
+and externally visible module states are not conflated.
+
+A proof edge records the transition that changed the planning state and the
+rule that justified the transition.  For sketch proofs the edge label is
+$(e,r)$ with a state-graph edge $e$ and a sketch rule $r$.  For module-program
+proofs the corresponding label is $(e,r_v)$ where $r_v$ is a rule variant
+(load, do, sketch, or call).  Edges that only expose control failure or an open
+state may omit $e$ or $r_v$ until the parser/executor rejects the corresponding
+ill-formed program earlier.
+
+The intended small-step relation has the form
+\[
+  (\bar{s},m,\mu,\rho_C,\rho_R) \xrightarrow{r_v,e}
+  (\bar{s}',m',\mu',\rho'_C,\rho'_R).
+\]
+Load rules update registers and internal memory, do and sketch rules may change
+$\bar{s}$ through a planning transition, and call rules push the caller frame
+before entering the callee module.  A proof succeeds when the initial extended
+state reaches a goal-annotated state and the constructed proof graph has no
+open states and no directed cycle.
+
 \section*{Source}
 
 This document summarizes Appendix~1, Section~A1.2 of

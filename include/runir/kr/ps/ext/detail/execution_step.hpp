@@ -56,6 +56,7 @@ struct ModuleStepResult
     ModuleProgramOutcome status = ModuleProgramOutcome::FAILURE;
     tyr::float_t cost = 0;
     std::optional<tyr::Index<tyr::formalism::planning::GroundAction>> action = std::nullopt;
+    std::optional<RuleVariantView> rule = std::nullopt;
     tyr::planning::LabeledNodeList<Kind> plan_suffix;
 };
 
@@ -175,25 +176,36 @@ ModuleStepResult<Kind> execute_next_control_step(const runir::datasets::TaskSear
     const auto source_state = context.get_state();
     const auto node = search_context.successor_generator->get_node(context.get_state().get_index());
     const auto successors = search_context.successor_generator->get_labeled_successor_nodes(node);
+    const auto immediate_rule = find_applicable_immediate_external_rule(context);
     const auto rule_status = execute_next_immediate_external_rule(context, successors);
 
     if (rule_status == RuleExecutionStatus::APPLIED)
-        return make_applied_step(source_state, context.get_state(), successors);
+    {
+        auto result = make_applied_step(source_state, context.get_state(), successors);
+        result.rule = immediate_rule;
+        return result;
+    }
 
     if (rule_status == RuleExecutionStatus::NO_APPLICABLE_ACTION && context.restore_caller())
         return make_terminal_step<Kind>(ModuleProgramOutcome::RESTORED_CALLER);
 
     if (rule_status == RuleExecutionStatus::NO_APPLICABLE_RULE)
     {
+        const auto sketch_rule = find_applicable_sketch_rule(context, successors);
         const auto sketch_status = execute_next_sketch_rule(context, successors);
         if (sketch_status == RuleExecutionStatus::APPLIED)
-            return make_applied_step(source_state, context.get_state(), successors);
+        {
+            auto result = make_applied_step(source_state, context.get_state(), successors);
+            result.rule = sketch_rule;
+            return result;
+        }
 
         const auto search_result = find_module_program_transition_node(search_context, context, options);
         if (search_result.status == tyr::planning::SearchStatus::SOLVED && search_result.goal_node)
         {
             if (const auto rule = find_matching_sketch_rule(context, search_result.goal_node->get_state()))
             {
+                auto rule_variant = find_matching_sketch_rule_variant(context, search_result.goal_node->get_state());
                 context.set_state(search_result.goal_node->get_state());
                 context.set_memory_state(rule->get_target());
 
@@ -201,6 +213,7 @@ ModuleStepResult<Kind> execute_next_control_step(const runir::datasets::TaskSear
                 result.status = ModuleProgramOutcome::APPLIED;
                 result.cost = search_result.plan ? static_cast<tyr::float_t>(search_result.plan->get_length()) : tyr::float_t(1);
                 result.action = first_plan_action(search_result);
+                result.rule = rule_variant;
                 append_plan_suffix(result.plan_suffix, search_result);
                 return result;
             }

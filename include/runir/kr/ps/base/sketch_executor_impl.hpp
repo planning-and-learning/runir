@@ -12,6 +12,7 @@
 #include <chrono>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <tyr/planning/algorithms/brfs/event_handler.hpp>
 #include <tyr/planning/algorithms/iw.hpp>
@@ -110,13 +111,24 @@ public:
         return true;
     }
 
-    bool is_dynamic_goal_satisfied(const tyr::planning::StateView<Kind>& seed_state, const tyr::planning::StateView<Kind>& state) override
+    SketchView get_sketch() const noexcept { return m_sketch; }
+
+    auto find_compatible_rule(const tyr::planning::StateView<Kind>& seed_state, const tyr::planning::StateView<Kind>& state) -> std::optional<RuleView>
     {
         if (seed_state.get_index() == state.get_index())
-            return false;
+            return std::nullopt;
 
         auto context = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, Kind>(seed_state, state, m_dl_builder, m_dl_denotation_repository);
-        return runir::kr::ps::base::is_compatible_with(m_sketch, context);
+        for (auto rule : m_sketch.get_rules())
+            if (runir::kr::ps::base::is_compatible_with(rule, context))
+                return rule;
+
+        return std::nullopt;
+    }
+
+    bool is_dynamic_goal_satisfied(const tyr::planning::StateView<Kind>& seed_state, const tyr::planning::StateView<Kind>& state) override
+    {
+        return find_compatible_rule(seed_state, state).has_value();
     }
 };
 
@@ -130,7 +142,7 @@ private:
     graphs::VertexIndex m_source;
     tyr::planning::Node<Kind> m_source_node;
     SketchGoalStrategy<Kind>& m_sketch_goal_strategy;
-    datasets::AnnotatedStateGraphBuilder<Kind>& m_builder;
+    SketchProofGraphBuilder<Kind>& m_builder;
     tyr::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>& m_sketch_edges;
     graphs::VertexIndexList& m_open;
     const tyr::UnorderedSet<graphs::VertexIndex>& m_explored;
@@ -142,7 +154,7 @@ public:
     SketchProofEventHandler(graphs::VertexIndex source,
                             tyr::planning::Node<Kind> source_node,
                             SketchGoalStrategy<Kind>& sketch_goal_strategy,
-                            datasets::AnnotatedStateGraphBuilder<Kind>& builder,
+                            SketchProofGraphBuilder<Kind>& builder,
                             tyr::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>& sketch_edges,
                             graphs::VertexIndexList& open,
                             const tyr::UnorderedSet<graphs::VertexIndex>& explored,
@@ -174,14 +186,18 @@ public:
         static_cast<void>(source_node);
         m_statistics.increment_num_generated();
 
-        if (!m_sketch_goal_strategy.is_dynamic_goal_satisfied(m_source_node.get_state(), labeled_succ_node.node.get_state()))
+        auto rule = m_sketch_goal_strategy.find_compatible_rule(m_source_node.get_state(), labeled_succ_node.node.get_state());
+        if (!rule)
             return;
 
         m_found_compatible_transition = true;
 
         const auto target = m_get_or_create_vertex(labeled_succ_node.node);
         if (m_sketch_edges.insert({ m_source, target }).second)
-            m_builder.add_directed_edge(m_source, target, datasets::StateGraphEdgeLabel { labeled_succ_node.label, labeled_succ_node.node.get_metric() });
+            m_builder.add_directed_edge(m_source,
+                                        target,
+                                        SketchProofEdgeLabel { datasets::StateGraphEdgeLabel { labeled_succ_node.label, labeled_succ_node.node.get_metric() },
+                                                               *rule });
 
         if (!m_explored.contains(target))
             m_open.push_back(target);
@@ -227,8 +243,8 @@ template<tyr::planning::TaskKind Kind>
 auto prove_solution(const datasets::TaskSearchContext<Kind>& context, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
     auto result = SketchProofResults<Kind> {};
-    result.context_owner = context;
-    auto builder = datasets::AnnotatedStateGraphBuilder<Kind> {};
+    result.context_owner = datasets::ConstTaskSearchContextPtr<Kind>(&context, [](const datasets::TaskSearchContext<Kind>*) {});
+    auto builder = SketchProofGraphBuilder<Kind> {};
     auto state_to_vertex = tyr::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
     auto vertex_to_node = tyr::UnorderedMap<graphs::VertexIndex, tyr::planning::Node<Kind>> {};
     auto sketch_edges = tyr::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>> {};
@@ -271,7 +287,7 @@ auto prove_solution(const datasets::TaskSearchContext<Kind>& context, SketchView
     auto finish = [&](SketchProofStatus status)
     {
         result.status = status;
-        result.graph = std::make_shared<datasets::StaticAnnotatedStateGraph<Kind>>(std::move(builder));
+        result.graph = std::make_shared<SketchProofGraph<Kind>>(std::move(builder));
         return std::move(result);
     };
 
@@ -326,7 +342,7 @@ auto prove_solution(const datasets::TaskSearchContext<Kind>& context, SketchView
             result.open_states.push_back(source);
     }
 
-    auto graph = std::make_shared<datasets::StaticAnnotatedStateGraph<Kind>>(std::move(builder));
+    auto graph = std::make_shared<SketchProofGraph<Kind>>(std::move(builder));
     result.cycle = detail::find_cycle(*graph);
     result.graph = std::move(graph);
 

@@ -29,15 +29,13 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
     using Options = ModuleProgramSearchOptions<Kind>;
 
     nb::class_<VertexLabel>(m, (std::string(prefix) + "ModuleProgramProofVertexLabel").c_str())
-        .def_ro("state", &VertexLabel::state)
-        .def_ro("module_", &VertexLabel::module_)
-        .def_ro("memory_state", &VertexLabel::memory_state)
-        .def_ro("call_depth", &VertexLabel::call_depth)
-        .def_ro("goal_distance", &VertexLabel::goal_distance)
-        .def_ro("is_initial", &VertexLabel::is_initial)
-        .def_ro("is_goal", &VertexLabel::is_goal)
-        .def_ro("is_alive", &VertexLabel::is_alive)
-        .def_ro("is_unsolvable", &VertexLabel::is_unsolvable);
+        .def_prop_ro("state", [](const VertexLabel& label) { return label.extended_state.annotated_state.state; })
+        .def_prop_ro("module_", [](const VertexLabel& label) { return label.module_; })
+        .def_prop_ro("goal_distance", [](const VertexLabel& label) { return label.extended_state.annotated_state.goal_distance; })
+        .def_prop_ro("is_initial", [](const VertexLabel& label) { return label.extended_state.annotated_state.is_initial; })
+        .def_prop_ro("is_goal", [](const VertexLabel& label) { return label.extended_state.annotated_state.is_goal; })
+        .def_prop_ro("is_alive", [](const VertexLabel& label) { return label.extended_state.annotated_state.is_alive; })
+        .def_prop_ro("is_unsolvable", [](const VertexLabel& label) { return label.extended_state.annotated_state.is_unsolvable; });
 
     auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ModuleProgramProofGraph").c_str());
     graph.def(nb::init<>());
@@ -65,8 +63,8 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
 void bind_module_program_executor(nb::module_& m)
 {
     nb::class_<ModuleProgramProofEdgeLabel>(m, "ModuleProgramProofEdgeLabel")
-        .def_ro("action", &ModuleProgramProofEdgeLabel::action)
-        .def_ro("cost", &ModuleProgramProofEdgeLabel::cost);
+        .def_ro("state_transition", &ModuleProgramProofEdgeLabel::state_transition)
+        .def_ro("rule", &ModuleProgramProofEdgeLabel::rule);
 
     nb::enum_<ModuleProgramProofStatus>(m, "ModuleProgramProofStatus")
         .value("SUCCESS", ModuleProgramProofStatus::SUCCESS)

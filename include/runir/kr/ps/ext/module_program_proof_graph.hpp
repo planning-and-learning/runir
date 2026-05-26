@@ -2,15 +2,20 @@
 #define RUNIR_KR_PS_EXT_MODULE_PROGRAM_PROOF_GRAPH_HPP_
 
 #include "runir/graphs/static_graph.hpp"
+#include "runir/datasets/state_graph.hpp"
+#include "runir/kr/dl/ext/declarations.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
-#include "runir/kr/ps/ext/memory_state_view.hpp"
+#include "runir/kr/ps/ext/memory_state.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
+#include "runir/kr/ps/ext/rule_variant_view.hpp"
 
+#include <array>
 #include <cstddef>
 #include <limits>
 #include <optional>
 #include <tuple>
+#include <tyr/formalism/object_index.hpp>
 #include <tyr/formalism/planning/ground_action_index.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>
@@ -20,46 +25,47 @@ namespace runir::kr::ps::ext
 {
 
 template<tyr::planning::TaskKind Kind>
-struct ModuleProgramProofVertexLabel
+struct ExtendedState
 {
-    tyr::planning::StateView<Kind> state;
-    ModuleView module_;
-    MemoryStateView memory_state;
-    ConstRepositoryPtr repository_owner;
-    std::size_t call_depth = 0;
-    tyr::float_t goal_distance = std::numeric_limits<tyr::float_t>::infinity();
-    bool is_initial = false;
-    bool is_goal = false;
-    bool is_alive = false;
-    bool is_unsolvable = false;
+    using ConceptRegisterValue = std::optional<tyr::Index<tyr::formalism::Object>>;
+    using RoleRegisterValue = std::optional<std::pair<tyr::Index<tyr::formalism::Object>, tyr::Index<tyr::formalism::Object>>>;
+    using ConceptRegisters = std::array<ConceptRegisterValue, runir::kr::dl::num_registers>;
+    using RoleRegisters = std::array<RoleRegisterValue, runir::kr::dl::num_registers>;
 
-    ModuleProgramProofVertexLabel(tyr::planning::StateView<Kind> state_,
-                                  ModuleView module__,
-                                  MemoryStateView memory_state_,
-                                  ConstRepositoryPtr repository_owner_,
-                                  std::size_t call_depth_,
-                                  tyr::float_t goal_distance_) noexcept :
-        state(std::move(state_)),
-        module_(module__),
-        memory_state(memory_state_),
-        repository_owner(std::move(repository_owner_)),
-        call_depth(call_depth_),
-        goal_distance(goal_distance_)
-    {
-    }
+    runir::datasets::AnnotatedStateGraphVertexLabel<Kind> annotated_state;
+    MemoryStateVariant memory_state;
+    ConceptRegisters concept_registers;
+    RoleRegisters role_registers;
 
     auto identifying_members() const noexcept
     {
-        return std::tie(state, module_, memory_state, call_depth, goal_distance, is_initial, is_goal, is_alive, is_unsolvable);
+        return std::tie(annotated_state, memory_state, concept_registers, role_registers);
     }
+};
+
+template<tyr::planning::TaskKind Kind>
+struct ModuleProgramProofVertexLabel
+{
+    ExtendedState<Kind> extended_state;
+    ModuleView module_;
+
+    ModuleProgramProofVertexLabel(ExtendedState<Kind> extended_state_, ModuleView module__) noexcept :
+        extended_state(std::move(extended_state_)),
+        module_(module__)
+    {
+    }
+
+    auto identifying_members() const noexcept { return std::tie(extended_state, module_); }
 };
 
 struct ModuleProgramProofEdgeLabel
 {
-    std::optional<tyr::Index<tyr::formalism::planning::GroundAction>> action = std::nullopt;
-    tyr::float_t cost = 0;
+    std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
+    std::optional<RuleVariantView> rule = std::nullopt;
 
-    auto identifying_members() const noexcept { return std::tie(action, cost); }
+    explicit ModuleProgramProofEdgeLabel(std::optional<RuleVariantView> rule_) noexcept : rule(rule_) {}
+
+    auto identifying_members() const noexcept { return std::tie(state_transition, rule); }
 };
 
 template<tyr::planning::TaskKind Kind>
