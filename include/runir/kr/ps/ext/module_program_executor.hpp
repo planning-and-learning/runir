@@ -35,8 +35,6 @@ struct ModuleProgramSearchOptions
     tyr::planning::iw::Options<Kind> iw_options;
     tyr::planning::siw::Options<Kind> siw_options;
     tyr::uint_t max_arity = 0;
-    std::size_t max_load_steps = 1024;
-    std::size_t max_steps = 1024;
 };
 
 template<tyr::planning::TaskKind Kind>

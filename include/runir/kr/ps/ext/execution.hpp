@@ -35,8 +35,7 @@ enum class LoadExecutionStatus
 {
     STABLE,
     APPLIED,
-    EMPTY_DENOTATION,
-    LOAD_LIMIT_REACHED
+    EMPTY_DENOTATION
 };
 
 template<typename C, tyr::planning::TaskKind Kind>
@@ -117,19 +116,6 @@ LoadExecutionStatus execute_next_load(EvaluationContext<Kind>& context)
     }
 
     return LoadExecutionStatus::STABLE;
-}
-
-template<tyr::planning::TaskKind Kind>
-LoadExecutionStatus execute_loads(EvaluationContext<Kind>& context, std::size_t max_load_steps)
-{
-    for (std::size_t step = 0; step < max_load_steps; ++step)
-    {
-        const auto status = execute_next_load(context);
-        if (status != LoadExecutionStatus::APPLIED)
-            return status;
-    }
-
-    return LoadExecutionStatus::LOAD_LIMIT_REACHED;
 }
 
 template<typename C, tyr::planning::TaskKind Kind>

@@ -135,8 +135,6 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
 
     search_options = ext.GroundModuleProgramSearchOptions()
     search_options.max_arity = 1
-    search_options.max_steps = 1024
-    search_options.max_load_steps = 1024
 
     search_result = ext.find_ground_solution(search_context, program, search_options)
     assert search_result.status.name == "SOLVED"
@@ -171,7 +169,6 @@ def test_executor_reports_structured_failure_statuses_from_python():
       )
     )""", planning_domain, repository)
     options = ext.GroundModuleProgramSearchOptions()
-    options.max_steps = 0
     empty_proof = ext.prove_ground_solution(search_context, empty_program, options)
     assert empty_proof.status == ext.ModuleProgramProofStatus.FAILURE
     assert empty_proof.graph.get_num_vertices() == 1
@@ -195,10 +192,10 @@ def test_executor_reports_structured_failure_statuses_from_python():
       )
     )""", planning_domain, repository)
     options = ext.GroundModuleProgramSearchOptions()
-    options.max_load_steps = 1
     load_proof = ext.prove_ground_solution(search_context, load_loop, options)
     assert load_proof.status == ext.ModuleProgramProofStatus.FAILURE
-    assert len(load_proof.deadend_transitions) > 0
+    assert len(load_proof.deadend_transitions) == 0
+    assert len(load_proof.cycle) > 0
 
     caller_program = ext.parse_module_program("""(program
       (:entry "caller")
@@ -248,7 +245,7 @@ def test_executor_reports_structured_failure_statuses_from_python():
     assert len(no_action_proof.open_states) > 0
 
 
-def test_lifted_executor_binding_reports_step_limit():
+def test_lifted_executor_binding_reports_failure_status():
     planning_task, planning_domain = _planning_task_and_domain()
     execution_context = ExecutionContext(1)
     lifted_task = Task(planning_task)
@@ -268,7 +265,6 @@ def test_lifted_executor_binding_reports_step_limit():
       )
     )""", planning_domain, repository)
     options = ext.LiftedModuleProgramSearchOptions()
-    options.max_steps = 0
 
     result = ext.prove_lifted_solution(search_context, program, options)
 

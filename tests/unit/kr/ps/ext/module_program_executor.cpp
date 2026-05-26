@@ -374,8 +374,6 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
 
     auto search_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
     search_options.max_arity = 1;
-    search_options.max_steps = 1024;
-    search_options.max_load_steps = 1024;
 
     const auto search_result = kr::ps::ext::find_solution(search_context, program, search_options);
     EXPECT_EQ(search_result.status, p::SearchStatus::SOLVED);
@@ -712,7 +710,8 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
                                                                 denotation_repository);
     const auto initial_state = context.get_state().get_index();
 
-    EXPECT_EQ(kr::ps::ext::execute_loads(context, 4), kr::ps::ext::LoadExecutionStatus::STABLE);
+    EXPECT_EQ(kr::ps::ext::execute_next_load(context), kr::ps::ext::LoadExecutionStatus::APPLIED);
+    EXPECT_EQ(kr::ps::ext::execute_next_load(context), kr::ps::ext::LoadExecutionStatus::STABLE);
     EXPECT_EQ(context.get_state().get_index(), initial_state);
     EXPECT_EQ(context.get_memory_state().get_index(), target.get_index());
     ASSERT_TRUE(context.concept_registers()[0]);
@@ -1024,7 +1023,6 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     const auto empty_module = create_module(repository, "empty", source, { source });
 
     auto proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
-    proof_options.max_steps = 0;
     const auto empty_program = create_module_program(repository, empty_module, { empty_module });
     const auto empty_proof = kr::ps::ext::prove_solution(search_context, empty_program, proof_options);
     EXPECT_EQ(empty_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
@@ -1055,12 +1053,12 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     kr::ps::ext::canonicalize(load_module_data);
     const auto load_module = repository.get_or_create(load_module_data).first;
     auto load_proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
-    load_proof_options.max_load_steps = 1;
     const auto load_program = create_module_program(repository, load_module, { load_module });
     const auto load_proof = kr::ps::ext::prove_solution(search_context, load_program, load_proof_options);
     EXPECT_EQ(load_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(load_proof.graph);
-    EXPECT_FALSE(load_proof.deadend_transitions.empty());
+    EXPECT_TRUE(load_proof.deadend_transitions.empty());
+    EXPECT_FALSE(load_proof.cycle.empty());
 
     auto concept_arg_data = tyr::Data<kr::ps::ext::Argument<kr::dl::ConceptTag>>(std::string("x"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0));
     const auto concept_arg = repository.get_or_create(concept_arg_data).first;

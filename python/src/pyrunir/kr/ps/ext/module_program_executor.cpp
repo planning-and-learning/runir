@@ -57,9 +57,7 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
         .def_rw("brfs_options", &Options::brfs_options)
         .def_rw("iw_options", &Options::iw_options)
         .def_rw("siw_options", &Options::siw_options)
-        .def_rw("max_arity", &Options::max_arity)
-        .def_rw("max_load_steps", &Options::max_load_steps)
-        .def_rw("max_steps", &Options::max_steps);
+        .def_rw("max_arity", &Options::max_arity);
 }
 
 }  // namespace
