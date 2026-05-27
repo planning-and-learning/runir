@@ -49,6 +49,14 @@ struct TaskSearchContext
     tyr::planning::StateRepositoryPtr<Kind> state_repository;
     tyr::planning::SuccessorGeneratorPtr<Kind> successor_generator;
 
+    static std::shared_ptr<TaskSearchContext> create() { return std::shared_ptr<TaskSearchContext>(new TaskSearchContext()); }
+
+    static std::shared_ptr<TaskSearchContext> create(tyr::planning::TaskPtr<Kind> task, tyr::ExecutionContextPtr execution_context)
+    {
+        return std::shared_ptr<TaskSearchContext>(new TaskSearchContext(std::move(task), std::move(execution_context)));
+    }
+
+private:
     TaskSearchContext() = default;
 
     TaskSearchContext(tyr::planning::TaskPtr<Kind> task_, tyr::ExecutionContextPtr execution_context_) :
@@ -68,7 +76,7 @@ template<tyr::planning::TaskKind Kind>
 using TaskSearchContextPtr = std::shared_ptr<TaskSearchContext<Kind>>;
 
 template<tyr::planning::TaskKind Kind>
-using TaskSearchContextList = std::vector<TaskSearchContext<Kind>>;
+using TaskSearchContextList = std::vector<TaskSearchContextPtr<Kind>>;
 
 template<tyr::planning::TaskKind Kind>
 struct TaskClassSearchContexts
@@ -83,7 +91,7 @@ struct TaskClassSearchContexts
     {
         contexts.reserve(task_class.tasks.size());
         for (const auto& task : task_class.tasks)
-            contexts.emplace_back(task, execution_context);
+            contexts.push_back(TaskSearchContext<Kind>::create(task, execution_context));
     }
 };
 

@@ -58,7 +58,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         auto execution_context = tyr::ExecutionContext::create(1);
         auto lifted_task = p::Task<p::LiftedTag>(planning_task);
         auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-        auto context = datasets::TaskSearchContext<p::GroundTag>(task, execution_context);
+        auto context = datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
         auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
         auto repository = repository_factory.create(dl_repository);
         const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, task->get_domain().get_domain(), repository);

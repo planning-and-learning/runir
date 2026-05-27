@@ -362,7 +362,7 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     auto execution_context = tyr::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>(task, execution_context);
+    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -611,7 +611,7 @@ TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)
     auto execution_context = tyr::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>(task, execution_context);
+    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -660,7 +660,7 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     auto execution_context = tyr::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>(task, execution_context);
+    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -729,7 +729,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     auto execution_context = tyr::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>(task, execution_context);
+    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -827,7 +827,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     auto execution_context = tyr::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>(task, execution_context);
+    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -876,7 +876,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     auto execution_context = tyr::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>(task, execution_context);
+    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -929,7 +929,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     auto execution_context = tyr::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>(task, execution_context);
+    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -1009,7 +1009,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     auto execution_context = tyr::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>(task, execution_context);
+    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
