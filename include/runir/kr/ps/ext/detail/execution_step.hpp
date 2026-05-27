@@ -5,10 +5,9 @@
 #include "runir/datasets/task_class.hpp"
 #include "runir/kr/ps/ext/detail/plan_trace.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
-#include "runir/kr/ps/ext/execution.hpp"
+#include "runir/kr/ps/ext/detail/execution.hpp"
 #include "runir/kr/ps/ext/module_program_executor.hpp"
 
-#include <cstddef>
 #include <optional>
 #include <tyr/planning/node.hpp>
 #include <vector>
@@ -43,21 +42,14 @@ struct ModuleExecutionResults
 {
     ModuleProgramOutcome status = ModuleProgramOutcome::SUCCESS;
     tyr::planning::StateView<Kind> state;
-    ModuleView module;
-    MemoryStateView memory_state;
-    RepositoryPtr repository_owner;
     std::optional<tyr::planning::Plan<Kind>> plan = std::nullopt;
-    std::size_t num_steps = 0;
-    std::size_t call_depth = 0;
 };
 
 template<tyr::planning::TaskKind Kind>
 struct ModuleStepResult
 {
     ModuleProgramOutcome status = ModuleProgramOutcome::FAILURE;
-    tyr::float_t cost = 0;
     std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
-    std::optional<tyr::Index<tyr::formalism::planning::GroundAction>> action = std::nullopt;
     std::optional<RuleVariantView> rule = std::nullopt;
     tyr::planning::LabeledNodeList<Kind> plan_suffix;
 };
@@ -156,11 +148,10 @@ ModuleStepResult<Kind> make_applied_step(const tyr::planning::StateView<Kind>& s
 {
     auto result = ModuleStepResult<Kind> {};
     result.status = ModuleProgramOutcome::APPLIED;
-    result.action = find_transition_action(source_state, target_state, successors);
-    result.cost = source_state.get_index() == target_state.get_index() ? tyr::float_t(0) : tyr::float_t(1);
+    const auto cost = source_state.get_index() == target_state.get_index() ? tyr::float_t(0) : tyr::float_t(1);
     append_single_step_plan(result.plan_suffix, source_state, target_state, successors);
     if (!result.plan_suffix.empty())
-        result.state_transition = datasets::StateGraphEdgeLabel { result.plan_suffix.front().label, result.cost };
+        result.state_transition = datasets::StateGraphEdgeLabel { result.plan_suffix.front().label, cost };
     return result;
 }
 
@@ -215,12 +206,11 @@ ModuleStepResult<Kind> execute_next_control_step(const runir::datasets::TaskSear
 
                 auto result = ModuleStepResult<Kind> {};
                 result.status = ModuleProgramOutcome::APPLIED;
-                result.cost = search_result.plan ? static_cast<tyr::float_t>(search_result.plan->get_length()) : tyr::float_t(1);
-                result.action = first_plan_action(search_result);
+                const auto cost = search_result.plan ? static_cast<tyr::float_t>(search_result.plan->get_length()) : tyr::float_t(1);
                 result.rule = rule_variant;
                 append_plan_suffix(result.plan_suffix, search_result);
                 if (!result.plan_suffix.empty())
-                    result.state_transition = datasets::StateGraphEdgeLabel { result.plan_suffix.front().label, result.cost };
+                    result.state_transition = datasets::StateGraphEdgeLabel { result.plan_suffix.front().label, cost };
                 return result;
             }
         }

@@ -80,22 +80,26 @@ if(APPLE)
         "@loader_path/native/${CMAKE_INSTALL_LIBDIR}"
         "@loader_path/../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
         "@loader_path/../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
+        "@loader_path/../pytyr.libs"
         "@loader_path/../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
     set(PYRUNIR_CORE_RPATH
         "@loader_path"
         "@loader_path/../../../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
         "@loader_path/../../../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
+        "@loader_path/../../../pytyr.libs"
         "@loader_path/../../../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
 elseif(UNIX)
     set(PYRUNIR_MODULE_RPATH
         "$ORIGIN/native/${CMAKE_INSTALL_LIBDIR}"
         "$ORIGIN/../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
         "$ORIGIN/../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
+        "$ORIGIN/../pytyr.libs"
         "$ORIGIN/../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
     set(PYRUNIR_CORE_RPATH
         "$ORIGIN"
         "$ORIGIN/../../../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
         "$ORIGIN/../../../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
+        "$ORIGIN/../../../pytyr.libs"
         "$ORIGIN/../../../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
 endif()
 

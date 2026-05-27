@@ -6,7 +6,7 @@
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
-#include "runir/kr/ps/ext/execution.hpp"
+#include "runir/kr/ps/ext/detail/execution.hpp"
 
 #include <memory>
 #include <tyr/planning/algorithms/strategies/goal.hpp>

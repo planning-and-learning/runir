@@ -16,7 +16,6 @@
 #include <optional>
 #include <tuple>
 #include <tyr/formalism/object_index.hpp>
-#include <tyr/formalism/planning/ground_action_index.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>
 #include <utility>
@@ -63,7 +62,11 @@ struct ModuleProgramProofEdgeLabel
     std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
     std::optional<RuleVariantView> rule = std::nullopt;
 
-    explicit ModuleProgramProofEdgeLabel(std::optional<RuleVariantView> rule_) noexcept : rule(rule_) {}
+    ModuleProgramProofEdgeLabel(std::optional<datasets::StateGraphEdgeLabel> state_transition_, std::optional<RuleVariantView> rule_) noexcept :
+        state_transition(std::move(state_transition_)),
+        rule(rule_)
+    {
+    }
 
     auto identifying_members() const noexcept { return std::tie(state_transition, rule); }
 };

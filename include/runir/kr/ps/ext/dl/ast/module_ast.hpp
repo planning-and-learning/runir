@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DL_AST_MODULE_AST_HPP_
 #define RUNIR_KR_PS_EXT_DL_AST_MODULE_AST_HPP_
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -44,6 +45,8 @@ enum class RuleKind
 
 struct Argument
 {
+    std::size_t source_offset = 0;
+    std::size_t name_offset = 0;
     ArgumentKind kind;
     std::string name;
     std::uint64_t identifier = 0;
@@ -51,12 +54,17 @@ struct Argument
 
 struct Register
 {
+    std::size_t source_offset = 0;
+    std::size_t name_offset = 0;
     std::string name;
     std::uint64_t identifier = 0;
 };
 
 struct Feature
 {
+    std::size_t source_offset = 0;
+    std::size_t name_offset = 0;
+    std::size_t expression_offset = 0;
     FeatureKind kind;
     std::string name;
     std::string symbol;
@@ -66,24 +74,46 @@ struct Feature
 
 struct Observation
 {
+    std::size_t source_offset = 0;
+    std::size_t feature_offset = 0;
     ObservationKind kind;
     std::string feature;
+};
+
+struct Expression
+{
+    std::size_t source_offset = 0;
+    std::string text;
+};
+
+struct NamedValue
+{
+    std::size_t source_offset = 0;
+    std::string value;
 };
 
 struct Rule
 {
     RuleKind kind;
+    std::size_t source_offset = 0;
+    std::size_t concept_expression_offset = 0;
+    std::size_t register_offset = 0;
+    std::size_t action_offset = 0;
+    std::size_t callee_offset = 0;
     std::vector<Observation> conditions;
     std::vector<Observation> effects;
     std::string concept_expression;
     std::string reg;
     std::string action;
     std::string callee;
-    std::vector<std::string> arguments;
+    std::vector<Expression> arguments;
 };
 
 struct MemoryTransition
 {
+    std::size_t source_offset = 0;
+    std::size_t source_name_offset = 0;
+    std::size_t target_name_offset = 0;
     std::string source;
     std::string target;
     std::vector<Rule> rules;
@@ -91,17 +121,21 @@ struct MemoryTransition
 
 struct Module
 {
+    std::size_t source_offset = 0;
     std::string name;
     std::vector<Argument> arguments;
     std::vector<Register> registers;
+    std::size_t entry_offset = 0;
     std::string entry;
-    std::vector<std::string> memory_states;
+    std::vector<NamedValue> memory_states;
     std::vector<Feature> features;
     std::vector<MemoryTransition> transitions;
 };
 
 struct ModuleProgram
 {
+    std::size_t source_offset = 0;
+    std::size_t entry_offset = 0;
     std::string entry;
     std::vector<Module> modules;
 };

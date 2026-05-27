@@ -710,8 +710,8 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
                                                                 denotation_repository);
     const auto initial_state = context.get_state().get_index();
 
-    EXPECT_EQ(kr::ps::ext::execute_next_load(context), kr::ps::ext::LoadExecutionStatus::APPLIED);
-    EXPECT_EQ(kr::ps::ext::execute_next_load(context), kr::ps::ext::LoadExecutionStatus::STABLE);
+    EXPECT_EQ(kr::ps::ext::detail::execute_next_load(context), kr::ps::ext::detail::LoadExecutionStatus::APPLIED);
+    EXPECT_EQ(kr::ps::ext::detail::execute_next_load(context), kr::ps::ext::detail::LoadExecutionStatus::STABLE);
     EXPECT_EQ(context.get_state().get_index(), initial_state);
     EXPECT_EQ(context.get_memory_state().get_index(), target.get_index());
     ASSERT_TRUE(context.concept_registers()[0]);
@@ -788,7 +788,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
                                                                 builder,
                                                                 denotation_repository);
 
-    EXPECT_EQ(kr::ps::ext::execute_call(call, context), kr::ps::ext::RuleExecutionStatus::APPLIED);
+    EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_module().get_index(), callee.get_index());
     EXPECT_EQ(context.get_memory_state().get_index(), callee_entry.get_index());
     ASSERT_EQ(context.arguments<kr::dl::ConceptTag>().size(), 1);
@@ -860,7 +860,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
                                                                 {},
                                                                 std::vector<kr::ps::ext::ModuleView> { caller, callee });
 
-    EXPECT_EQ(kr::ps::ext::execute_call(call, context), kr::ps::ext::RuleExecutionStatus::APPLIED);
+    EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_module().get_index(), callee.get_index());
     EXPECT_EQ(context.get_memory_state().get_index(), callee_entry.get_index());
 }
@@ -912,7 +912,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     ASSERT_TRUE(selected);
     EXPECT_EQ(selected->label.get_action().get_name(), "pick");
 
-    EXPECT_EQ(kr::ps::ext::execute_do(rule, context, successors), kr::ps::ext::RuleExecutionStatus::APPLIED);
+    EXPECT_EQ(kr::ps::ext::detail::execute_do(rule, context, successors), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_memory_state().get_index(), target.get_index());
     EXPECT_NE(context.get_state().get_index(), initial_state);
     EXPECT_EQ(context.get_state().get_index(), selected->node.get_state().get_index());
@@ -994,7 +994,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     const auto initial_node = search_context.successor_generator->get_initial_node();
     const auto successors = search_context.successor_generator->get_labeled_successor_nodes(initial_node);
 
-    EXPECT_EQ(kr::ps::ext::execute_next_immediate_external_rule(context, successors), kr::ps::ext::RuleExecutionStatus::APPLIED);
+    EXPECT_EQ(kr::ps::ext::detail::execute_next_immediate_external_rule(context, successors), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_memory_state().get_index(), move_target.get_index());
 }
 

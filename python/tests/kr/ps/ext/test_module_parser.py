@@ -85,6 +85,13 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     assert len(reparsed_program.get_modules()) == 5
 
 
+def test_module_program_parser_reports_x3_syntax_position():
+    planning_domain, repository = _repositories()
+
+    with pytest.raises(RuntimeError, match="Error! Expecting:.*here"):
+        ext.parse_module_program('(program (:entry "root")', planning_domain, repository)
+
+
 def test_module_program_parser_rejects_invalid_wiring():
     planning_domain, repository = _repositories()
     root = """(module "root"
@@ -111,6 +118,79 @@ def test_module_program_parser_rejects_invalid_wiring():
             (:features)
             (:transitions
               ("m0" "m1" (call (:conditions) (:callee "missing") (:arguments)))
+            )
+          )
+        )""", planning_domain, repository)
+
+    with pytest.raises(RuntimeError, match="argument signature.*offset"):
+        ext.parse_module_program("""(program
+          (:entry "caller")
+          (module "caller"
+            (:arguments)
+            (:registers)
+            (:entry "source")
+            (:memory "source" "target")
+            (:features)
+            (:transitions
+              ("source" "target" (call (:conditions) (:callee "callee") (:arguments)))
+            )
+          )
+          (module "callee"
+            (:arguments
+              (concept "x" 0)
+            )
+            (:registers)
+            (:entry "target")
+            (:memory "target")
+            (:features)
+            (:transitions)
+          )
+        )""", planning_domain, repository)
+
+    with pytest.raises(RuntimeError, match=r'entry module "missing" is not declared.*offset'):
+        ext.parse_module_program(f'(program (:entry "missing") {root})', planning_domain, repository)
+
+    with pytest.raises(RuntimeError, match=r'Unknown memory state "missing".*offset'):
+        ext.parse_module_program("""(program
+          (:entry "bad-memory")
+          (module "bad-memory"
+            (:arguments)
+            (:registers)
+            (:entry "m0")
+            (:memory "m0")
+            (:features)
+            (:transitions
+              ("m0" "missing" (sketch (:conditions) (:effects)))
+            )
+          )
+        )""", planning_domain, repository)
+
+    with pytest.raises(RuntimeError, match=r'Unknown register "missing".*offset'):
+        ext.parse_module_program("""(program
+          (:entry "bad-register")
+          (module "bad-register"
+            (:arguments)
+            (:registers)
+            (:entry "m0")
+            (:memory "m0" "m1")
+            (:features)
+            (:transitions
+              ("m0" "m1" (load (:conditions) (:concept (c_top)) (:register "missing")))
+            )
+          )
+        )""", planning_domain, repository)
+
+    with pytest.raises(RuntimeError, match=r'Unknown feature "missing".*offset'):
+        ext.parse_module_program("""(program
+          (:entry "bad-feature")
+          (module "bad-feature"
+            (:arguments)
+            (:registers)
+            (:entry "m0")
+            (:memory "m0" "m1")
+            (:features)
+            (:transitions
+              ("m0" "m1" (sketch (:conditions (greater_zero missing)) (:effects)))
             )
           )
         )""", planning_domain, repository)
@@ -197,32 +277,6 @@ def test_executor_reports_structured_failure_statuses_from_python():
     assert len(load_proof.deadend_transitions) == 0
     assert len(load_proof.cycle) > 0
 
-    caller_program = ext.parse_module_program("""(program
-      (:entry "caller")
-      (module "caller"
-        (:arguments)
-        (:registers)
-        (:entry "source")
-        (:memory "source" "target")
-        (:features)
-        (:transitions
-          ("source" "target" (call (:conditions) (:callee "callee") (:arguments)))
-        )
-      )
-      (module "callee"
-        (:arguments
-          (concept "x" 0)
-        )
-        (:registers)
-        (:entry "target")
-        (:memory "target")
-        (:features)
-        (:transitions)
-      )
-    )""", planning_domain, repository)
-    caller_proof = ext.prove_ground_solution(search_context, caller_program)
-    assert caller_proof.status == ext.ModuleProgramProofStatus.FAILURE
-    assert len(caller_proof.deadend_transitions) > 0
 
     no_action = ext.parse_module_program("""(program
       (:entry "no-action")

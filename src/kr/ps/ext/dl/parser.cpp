@@ -479,6 +479,51 @@ using MemoryStateMap = std::unordered_map<std::string, tyr::Index<MemoryState>>;
 using RegisterMap = std::unordered_map<std::string, tyr::Index<Register>>;
 using ModuleMap = std::unordered_map<std::string, tyr::Index<Module>>;
 
+struct SignatureCounts
+{
+    std::size_t concepts = 0;
+    std::size_t roles = 0;
+    std::size_t booleans = 0;
+    std::size_t numericals = 0;
+
+    bool operator==(const SignatureCounts&) const noexcept = default;
+};
+
+std::string signature_text(const SignatureCounts& counts)
+{
+    return "concept=" + std::to_string(counts.concepts) + ", role=" + std::to_string(counts.roles) + ", boolean=" + std::to_string(counts.booleans)
+           + ", numerical=" + std::to_string(counts.numericals);
+}
+
+[[noreturn]] void fail_at(const std::string& message, std::size_t offset)
+{
+    throw std::runtime_error(message + " at offset " + std::to_string(offset) + ".");
+}
+
+SignatureCounts signature_counts(const ast::Module& module)
+{
+    auto result = SignatureCounts {};
+    for (const auto& argument : module.arguments)
+    {
+        switch (argument.kind)
+        {
+            case ast::ArgumentKind::CONCEPT:
+                ++result.concepts;
+                break;
+            case ast::ArgumentKind::ROLE:
+                ++result.roles;
+                break;
+            case ast::ArgumentKind::BOOLEAN:
+                ++result.booleans;
+                break;
+            case ast::ArgumentKind::NUMERICAL:
+                ++result.numericals;
+                break;
+        }
+    }
+    return result;
+}
+
 void append_argument(Repository& repository, tyr::Data<Module>& data, const ast::Argument& argument)
 {
     switch (argument.kind)
@@ -517,39 +562,48 @@ void append_feature(Repository& repository,
                     NumericalFeatureMap& numerical_features,
                     ConceptAliasMap& concept_aliases)
 {
-    switch (feature.kind)
+    try
     {
-        case ast::FeatureKind::CONCEPT:
+        switch (feature.kind)
         {
-            const auto constructor = parse_concept(feature.expression, domain, repository.get_dl_repository());
-            const auto view = intern_dl_feature<runir::kr::dl::ConceptTag>(repository, constructor.get_index(), feature);
-            concept_features.emplace(feature.name, view.get_index());
-            concept_aliases.emplace(feature.name, constructor.get_index());
-            break;
+            case ast::FeatureKind::CONCEPT:
+            {
+                const auto constructor = parse_concept(feature.expression, domain, repository.get_dl_repository());
+                const auto view = intern_dl_feature<runir::kr::dl::ConceptTag>(repository, constructor.get_index(), feature);
+                if (!concept_features.emplace(feature.name, view.get_index()).second || !concept_aliases.emplace(feature.name, constructor.get_index()).second)
+                    fail_at("Duplicate feature name \"" + feature.name + "\".", feature.name_offset);
+                break;
+            }
+            case ast::FeatureKind::BOOLEAN:
+            {
+                const auto constructor = parse_boolean(feature.expression, domain, repository.get_dl_repository());
+                const auto view = intern_dl_feature<runir::kr::ps::dl::BooleanFeature>(repository, constructor.get_index(), feature);
+                if (!boolean_features.emplace(feature.name, view.get_index()).second)
+                    fail_at("Duplicate feature name \"" + feature.name + "\".", feature.name_offset);
+                break;
+            }
+            case ast::FeatureKind::NUMERICAL:
+            {
+                const auto constructor = parse_numerical(feature.expression, domain, repository.get_dl_repository());
+                const auto view = intern_dl_feature<runir::kr::ps::dl::NumericalFeature>(repository, constructor.get_index(), feature);
+                if (!numerical_features.emplace(feature.name, view.get_index()).second)
+                    fail_at("Duplicate feature name \"" + feature.name + "\".", feature.name_offset);
+                break;
+            }
         }
-        case ast::FeatureKind::BOOLEAN:
-        {
-            const auto constructor = parse_boolean(feature.expression, domain, repository.get_dl_repository());
-            const auto view = intern_dl_feature<runir::kr::ps::dl::BooleanFeature>(repository, constructor.get_index(), feature);
-            boolean_features.emplace(feature.name, view.get_index());
-            break;
-        }
-        case ast::FeatureKind::NUMERICAL:
-        {
-            const auto constructor = parse_numerical(feature.expression, domain, repository.get_dl_repository());
-            const auto view = intern_dl_feature<runir::kr::ps::dl::NumericalFeature>(repository, constructor.get_index(), feature);
-            numerical_features.emplace(feature.name, view.get_index());
-            break;
-        }
+    }
+    catch (const std::exception& e)
+    {
+        fail_at("Invalid feature \"" + feature.name + "\": " + e.what(), feature.expression_offset);
     }
 }
 
 template<typename FeatureTag>
-auto require_feature(const std::unordered_map<std::string, tyr::Index<Feature<FeatureTag>>>& features, const std::string& name)
+auto require_feature(const std::unordered_map<std::string, tyr::Index<Feature<FeatureTag>>>& features, const std::string& name, std::size_t offset)
 {
     const auto it = features.find(name);
     if (it == features.end())
-        throw std::runtime_error("Unknown feature \"" + name + "\".");
+        fail_at("Unknown feature \"" + name + "\".", offset);
     return it->second;
 }
 
@@ -585,29 +639,29 @@ auto parse_condition(Repository& repository,
     {
         case ast::ObservationKind::POSITIVE:
             return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(repository,
-                                                                                                  require_feature(boolean_features, observation.feature));
+                                                                                                  require_feature(boolean_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::NEGATIVE:
             return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(repository,
-                                                                                                  require_feature(boolean_features, observation.feature));
+                                                                                                  require_feature(boolean_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::EQUAL_ZERO:
             if (concept_features.contains(observation.feature))
                 return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>(repository,
-                                                                                               require_feature(concept_features, observation.feature));
+                                                                                               require_feature(concept_features, observation.feature, observation.feature_offset));
             return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>(repository,
-                                                                                                     require_feature(numerical_features, observation.feature));
+                                                                                                     require_feature(numerical_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::GREATER_ZERO:
             if (concept_features.contains(observation.feature))
                 return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>(repository,
-                                                                                                 require_feature(concept_features, observation.feature));
+                                                                                                 require_feature(concept_features, observation.feature, observation.feature_offset));
             return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>(
                 repository,
-                require_feature(numerical_features, observation.feature));
+                require_feature(numerical_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::UNCHANGED:
         case ast::ObservationKind::INCREASES:
         case ast::ObservationKind::DECREASES:
-            throw std::runtime_error("Effect observations are not valid rule conditions.");
+            fail_at("Effect observations are not valid rule conditions.", observation.source_offset);
     }
-    throw std::runtime_error("Unknown condition observation kind.");
+    fail_at("Unknown condition observation kind.", observation.source_offset);
 }
 
 auto parse_effect(Repository& repository,
@@ -620,33 +674,33 @@ auto parse_effect(Repository& repository,
     {
         case ast::ObservationKind::POSITIVE:
             return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(repository,
-                                                                                               require_feature(boolean_features, observation.feature));
+                                                                                               require_feature(boolean_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::NEGATIVE:
             return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(repository,
-                                                                                               require_feature(boolean_features, observation.feature));
+                                                                                               require_feature(boolean_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::UNCHANGED:
             if (concept_features.contains(observation.feature))
-                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>(repository, require_feature(concept_features, observation.feature));
+                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>(repository, require_feature(concept_features, observation.feature, observation.feature_offset));
             if (boolean_features.contains(observation.feature))
                 return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>(repository,
-                                                                                                    require_feature(boolean_features, observation.feature));
+                                                                                                    require_feature(boolean_features, observation.feature, observation.feature_offset));
             return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>(repository,
-                                                                                                  require_feature(numerical_features, observation.feature));
+                                                                                                  require_feature(numerical_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::INCREASES:
             if (concept_features.contains(observation.feature))
-                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>(repository, require_feature(concept_features, observation.feature));
+                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>(repository, require_feature(concept_features, observation.feature, observation.feature_offset));
             return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>(repository,
-                                                                                                  require_feature(numerical_features, observation.feature));
+                                                                                                  require_feature(numerical_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::DECREASES:
             if (concept_features.contains(observation.feature))
-                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>(repository, require_feature(concept_features, observation.feature));
+                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>(repository, require_feature(concept_features, observation.feature, observation.feature_offset));
             return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>(repository,
-                                                                                                  require_feature(numerical_features, observation.feature));
+                                                                                                  require_feature(numerical_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::EQUAL_ZERO:
         case ast::ObservationKind::GREATER_ZERO:
-            throw std::runtime_error("Condition observations are not valid rule effects.");
+            fail_at("Condition observations are not valid rule effects.", observation.source_offset);
     }
-    throw std::runtime_error("Unknown effect observation kind.");
+    fail_at("Unknown effect observation kind.", observation.source_offset);
 }
 
 auto parse_conditions(Repository& repository,
@@ -692,27 +746,64 @@ bool starts_with_expression(const std::string& value)
 
 auto parse_concept_argument(Repository& repository,
                             const std::string& expression,
+                            std::size_t offset,
                             tyr::formalism::planning::DomainView domain,
                             const ConceptAliasMap& concept_aliases)
 {
-    if (starts_with_expression(expression))
-        return parse_concept(expression, domain, repository.get_dl_repository()).get_index();
+    try
+    {
+        if (starts_with_expression(expression))
+            return parse_concept(expression, domain, repository.get_dl_repository()).get_index();
 
-    const auto it = concept_aliases.find(expression);
-    if (it == concept_aliases.end())
-        throw std::runtime_error("Unknown concept expression or feature alias \"" + expression + "\".");
-    return it->second;
+        const auto it = concept_aliases.find(expression);
+        if (it == concept_aliases.end())
+            fail_at("Unknown concept expression or feature alias \"" + expression + "\".", offset);
+        return it->second;
+    }
+    catch (const std::exception& e)
+    {
+        fail_at(e.what(), offset);
+    }
 }
 
 auto parse_call_argument(Repository& repository,
-                         const std::string& expression,
+                         const ast::Expression& expression,
                          tyr::formalism::planning::DomainView domain,
                          const ConceptAliasMap& concept_aliases) -> CallArgument
 {
-    const auto trimmed = trim_copy(expression);
-    if (trimmed.starts_with("(r_"))
-        return parse_role(trimmed, domain, repository.get_dl_repository()).get_index();
-    return parse_concept_argument(repository, trimmed, domain, concept_aliases);
+    const auto trimmed = trim_copy(expression.text);
+    try
+    {
+        if (trimmed.starts_with("(r_"))
+            return parse_role(trimmed, domain, repository.get_dl_repository()).get_index();
+        if (trimmed.starts_with("(b_"))
+            return parse_boolean(trimmed, domain, repository.get_dl_repository()).get_index();
+        if (trimmed.starts_with("(n_"))
+            return parse_numerical(trimmed, domain, repository.get_dl_repository()).get_index();
+        return parse_concept_argument(repository, trimmed, expression.source_offset, domain, concept_aliases);
+    }
+    catch (const std::exception& e)
+    {
+        fail_at(e.what(), expression.source_offset);
+    }
+}
+
+SignatureCounts call_argument_signature_counts(const ast::Rule& rule)
+{
+    auto result = SignatureCounts {};
+    for (const auto& argument : rule.arguments)
+    {
+        const auto trimmed = trim_copy(argument.text);
+        if (trimmed.starts_with("(r_"))
+            ++result.roles;
+        else if (trimmed.starts_with("(b_"))
+            ++result.booleans;
+        else if (trimmed.starts_with("(n_"))
+            ++result.numericals;
+        else
+            ++result.concepts;
+    }
+    return result;
 }
 
 struct SExpr
@@ -861,19 +952,19 @@ auto intern_rule_variant(Repository& repository, tyr::Data<Rule<RuleTag>>& data)
     return intern(repository, variant_data);
 }
 
-auto require_memory_state(const MemoryStateMap& memory_states, const std::string& name)
+auto require_memory_state(const MemoryStateMap& memory_states, const std::string& name, std::size_t offset)
 {
     const auto it = memory_states.find(name);
     if (it == memory_states.end())
-        throw std::runtime_error("Unknown memory state \"" + name + "\".");
+        fail_at("Unknown memory state \"" + name + "\".", offset);
     return it->second;
 }
 
-auto require_register(const RegisterMap& registers, const std::string& name)
+auto require_register(const RegisterMap& registers, const std::string& name, std::size_t offset)
 {
     const auto it = registers.find(name);
     if (it == registers.end())
-        throw std::runtime_error("Unknown register \"" + name + "\".");
+        fail_at("Unknown register \"" + name + "\".", offset);
     return it->second;
 }
 
@@ -905,8 +996,8 @@ auto parse_rule(Repository& repository,
             data.source = source;
             data.target = target;
             data.conditions = conditions;
-            data.load_concept = parse_concept_argument(repository, rule.concept_expression, domain, concept_aliases);
-            data.reg = require_register(registers, rule.reg);
+            data.load_concept = parse_concept_argument(repository, rule.concept_expression, rule.concept_expression_offset, domain, concept_aliases);
+            data.reg = require_register(registers, rule.reg, rule.register_offset);
             return intern_rule_variant(repository, data);
         }
         case ast::RuleKind::SKETCH:
@@ -925,7 +1016,7 @@ auto parse_rule(Repository& repository,
             data.target = target;
             data.conditions = conditions;
             for (const auto& argument : rule.arguments)
-                data.arguments.push_back(parse_concept_argument(repository, argument, domain, concept_aliases));
+                data.arguments.push_back(parse_concept_argument(repository, argument.text, argument.source_offset, domain, concept_aliases));
             return intern_rule_variant(repository, data);
         }
         case ast::RuleKind::CALL:
@@ -1060,13 +1151,14 @@ ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::Domain
     auto memory_states = MemoryStateMap {};
     for (const auto& state : ast.memory_states)
     {
-        auto state_data = tyr::Data<MemoryState>(state);
-        memory_states.emplace(state, intern(repository, state_data).get_index());
+        auto state_data = tyr::Data<MemoryState>(state.value);
+        if (!memory_states.emplace(state.value, intern(repository, state_data).get_index()).second)
+            fail_at("Duplicate memory state \"" + state.value + "\".", state.source_offset);
     }
 
     const auto entry = memory_states.find(ast.entry);
     if (entry == memory_states.end())
-        throw std::runtime_error("Module entry memory state is not declared in :memory.");
+        fail_at("Module entry memory state \"" + ast.entry + "\" is not declared in :memory.", ast.entry_offset);
 
     auto data = tyr::Data<Module>(ast.name);
     data.entry_memory_state = entry->second;
@@ -1080,11 +1172,12 @@ ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::Domain
         auto reg_data = tyr::Data<Register>(reg.name, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>(reg.identifier));
         const auto view = intern(repository, reg_data);
         data.registers.push_back(view.get_index());
-        registers.emplace(reg.name, view.get_index());
+        if (!registers.emplace(reg.name, view.get_index()).second)
+            fail_at("Duplicate register name \"" + reg.name + "\".", reg.name_offset);
     }
 
     for (const auto& state : ast.memory_states)
-        data.memory_states.push_back(memory_states.at(state));
+        data.memory_states.push_back(memory_states.at(state.value));
 
     auto concept_features = ConceptFeatureMap {};
     auto boolean_features = BooleanFeatureMap {};
@@ -1100,8 +1193,8 @@ ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::Domain
     for (const auto& transition : ast.transitions)
     {
         auto parsed_transition = MemoryTransition {};
-        parsed_transition.source = require_memory_state(memory_states, transition.source);
-        parsed_transition.target = require_memory_state(memory_states, transition.target);
+        parsed_transition.source = require_memory_state(memory_states, transition.source, transition.source_name_offset);
+        parsed_transition.target = require_memory_state(memory_states, transition.target, transition.target_name_offset);
         for (const auto& rule : transition.rules)
             parsed_transition.rules.push_back(parse_rule(repository,
                                                          rule,
@@ -1123,19 +1216,15 @@ ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::Domain
 
 void validate_module_program(const ast::ModuleProgram& program)
 {
-    auto names = std::unordered_map<std::string, bool> {};
+    auto signatures_by_name = std::unordered_map<std::string, SignatureCounts> {};
     for (const auto& module : program.modules)
     {
-        if (!names.emplace(module.name, true).second)
-            throw std::runtime_error("Duplicate module name "
-                                     " + module.name + "
-                                     " in module program.");
+        if (!signatures_by_name.emplace(module.name, signature_counts(module)).second)
+            fail_at("Duplicate module name \"" + module.name + "\" in module program", module.source_offset);
     }
 
-    if (!names.contains(program.entry))
-        throw std::runtime_error("Module program entry module "
-                                 " + program.entry + "
-                                 " is not declared.");
+    if (!signatures_by_name.contains(program.entry))
+        fail_at("Module program entry module \"" + program.entry + "\" is not declared.", program.entry_offset);
 
     for (const auto& module : program.modules)
     {
@@ -1143,12 +1232,18 @@ void validate_module_program(const ast::ModuleProgram& program)
         {
             for (const auto& rule : transition.rules)
             {
-                if (rule.kind == ast::RuleKind::CALL && !names.contains(rule.callee))
-                    throw std::runtime_error("Module "
-                                             " + module.name + "
-                                             " calls unknown module "
-                                             " + rule.callee + "
-                                             ".");
+                if (rule.kind != ast::RuleKind::CALL)
+                    continue;
+
+                const auto callee = signatures_by_name.find(rule.callee);
+                if (callee == signatures_by_name.end())
+                    fail_at("Module \"" + module.name + "\" calls unknown module \"" + rule.callee + "\"", rule.callee_offset);
+
+                const auto actual = call_argument_signature_counts(rule);
+                if (actual != callee->second)
+                    fail_at("Call from module \"" + module.name + "\" to module \"" + rule.callee + "\" has argument signature " + signature_text(actual)
+                                + "; expected " + signature_text(callee->second),
+                            rule.source_offset);
             }
         }
     }
