@@ -100,6 +100,7 @@ struct Rule
     std::size_t register_offset = 0;
     std::size_t action_offset = 0;
     std::size_t callee_offset = 0;
+    std::size_t arguments_offset = 0;
     std::vector<Observation> conditions;
     std::vector<Observation> effects;
     std::string concept_expression;

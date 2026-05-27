@@ -17,7 +17,7 @@ void bind_repository(nb::module_& m)
         .def("get_dl_repository", [](Repository& self) -> runir::kr::dl::ext::ConstructorRepository& { return self.get_dl_repository(); });
 
     auto factory = nb::class_<RepositoryFactory>(m, "RepositoryFactory");
-    factory.def(nb::init<>()).def("create", &RepositoryFactory::create_shared, "dl_repository"_a);
+    factory.def(nb::init<>()).def("create", &RepositoryFactory::create, "dl_repository"_a);
 }
 
 }  // namespace runir::kr::ps::ext

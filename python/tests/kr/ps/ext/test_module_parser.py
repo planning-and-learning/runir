@@ -278,25 +278,20 @@ def test_executor_reports_structured_failure_statuses_from_python():
     assert len(load_proof.cycle) > 0
 
 
-    no_action = ext.parse_module_program("""(program
-      (:entry "no-action")
-      (module "no-action"
-        (:arguments)
-        (:registers)
-        (:entry "source")
-        (:memory "source" "target")
-        (:features)
-        (:transitions
-          ("source" "target" (do (:conditions) (:action "missing-action") (:arguments)))
-        )
-      )
-    )""", planning_domain, repository)
-    no_action_proof = ext.prove_ground_solution(search_context, no_action)
-    assert no_action_proof.status == ext.ModuleProgramProofStatus.FAILURE
-    assert no_action_proof.graph.get_num_vertices() == 1
-    assert no_action_proof.graph.get_num_edges() == 1
-    assert len(no_action_proof.deadend_transitions) > 0
-    assert len(no_action_proof.open_states) > 0
+    with pytest.raises(RuntimeError, match=r'Unknown action "missing-action".*offset'):
+        ext.parse_module_program("""(program
+          (:entry "no-action")
+          (module "no-action"
+            (:arguments)
+            (:registers)
+            (:entry "source")
+            (:memory "source" "target")
+            (:features)
+            (:transitions
+              ("source" "target" (do (:conditions) (:action "missing-action") (:arguments)))
+            )
+          )
+        )""", planning_domain, repository)
 
 
 def test_lifted_executor_binding_reports_failure_status():

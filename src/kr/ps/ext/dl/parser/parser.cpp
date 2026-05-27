@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -332,6 +333,42 @@ std::vector<ast::Observation> parse_observation_section(const Node& section, std
     return result;
 }
 
+bool is_allowed_rule_section(ast::RuleKind kind, std::string_view name)
+{
+    if (name == ":conditions")
+        return true;
+
+    switch (kind)
+    {
+        case ast::RuleKind::LOAD:
+            return name == ":concept" || name == ":register";
+        case ast::RuleKind::SKETCH:
+            return name == ":effects";
+        case ast::RuleKind::DO:
+            return name == ":action" || name == ":arguments";
+        case ast::RuleKind::CALL:
+            return name == ":callee" || name == ":arguments";
+    }
+    return false;
+}
+
+void validate_rule_sections(const Node& rule, ast::RuleKind kind)
+{
+    auto seen = std::unordered_set<std::string> {};
+    for (std::size_t i = 1; i < rule.children.size(); ++i)
+    {
+        const auto& section = rule.children[i];
+        if (!section.list || section.children.empty())
+            fail_at("Malformed rule section.", section.source_offset);
+
+        const auto name = atom(section.children[0], "rule section");
+        if (!is_allowed_rule_section(kind, name))
+            fail_at("Rule section " + name + " is not valid for this rule kind.", section.source_offset);
+        if (!seen.emplace(name).second)
+            fail_at("Duplicate rule section " + name + ".", section.source_offset);
+    }
+}
+
 const Node* find_section(const Node& rule, std::string_view name)
 {
     for (std::size_t i = 1; i < rule.children.size(); ++i)
@@ -371,6 +408,7 @@ ast::Rule parse_rule(const Node& node)
     auto result = ast::Rule {};
     result.source_offset = node.source_offset;
     result.kind = parse_rule_kind(node.children[0]);
+    validate_rule_sections(node, result.kind);
     result.conditions = parse_observation_section(require_section(node, ":conditions"), ":conditions");
 
     switch (result.kind)
@@ -396,6 +434,7 @@ ast::Rule parse_rule(const Node& node)
                 result.action = atom(action, ":action");
                 result.action_offset = action.atom_offset;
             }
+            result.arguments_offset = require_section(node, ":arguments").source_offset;
             result.arguments = parse_expression_list_section(node, ":arguments");
             break;
         case ast::RuleKind::CALL:
@@ -403,6 +442,7 @@ ast::Rule parse_rule(const Node& node)
             const auto& callee = require_single_value_section_value(node, ":callee");
             result.callee = atom(callee, ":callee");
             result.callee_offset = callee.atom_offset;
+            result.arguments_offset = require_section(node, ":arguments").source_offset;
             result.arguments = parse_expression_list_section(node, ":arguments");
             break;
         }
@@ -454,21 +494,41 @@ ast::MemoryTransition parse_transition(const Node& node)
     return result;
 }
 
-void parse_module_section(ast::Module& result, const Node& section)
+struct ModuleSectionPresence
+{
+    bool arguments = false;
+    bool registers = false;
+    bool entry = false;
+    bool memory = false;
+    bool features = false;
+    bool transitions = false;
+};
+
+void require_new_section(bool& seen, std::string_view name, std::size_t offset)
+{
+    if (seen)
+        fail_at("Duplicate module section " + std::string(name) + ".", offset);
+    seen = true;
+}
+
+void parse_module_section(ast::Module& result, const Node& section, ModuleSectionPresence& presence)
 {
     const auto name = head(section, "module section");
     if (name == ":arguments")
     {
+        require_new_section(presence.arguments, name, section.source_offset);
         for (std::size_t i = 1; i < section.children.size(); ++i)
             result.arguments.push_back(parse_argument(section.children[i]));
     }
     else if (name == ":registers")
     {
+        require_new_section(presence.registers, name, section.source_offset);
         for (std::size_t i = 1; i < section.children.size(); ++i)
             result.registers.push_back(parse_register(section.children[i]));
     }
     else if (name == ":entry")
     {
+        require_new_section(presence.entry, name, section.source_offset);
         if (section.children.size() != 2)
             fail_at("Malformed entry section.", section.source_offset);
         result.entry = atom(section.children[1], ":entry");
@@ -476,16 +536,21 @@ void parse_module_section(ast::Module& result, const Node& section)
     }
     else if (name == ":memory")
     {
+        require_new_section(presence.memory, name, section.source_offset);
+        if (section.children.size() < 2)
+            fail_at("Module :memory section must declare at least one memory state.", section.source_offset);
         for (std::size_t i = 1; i < section.children.size(); ++i)
             result.memory_states.push_back(ast::NamedValue { section.children[i].atom_offset, atom(section.children[i], ":memory") });
     }
     else if (name == ":features")
     {
+        require_new_section(presence.features, name, section.source_offset);
         for (std::size_t i = 1; i < section.children.size(); ++i)
             result.features.push_back(parse_feature(section.children[i]));
     }
     else if (name == ":transitions")
     {
+        require_new_section(presence.transitions, name, section.source_offset);
         for (std::size_t i = 1; i < section.children.size(); ++i)
             result.transitions.push_back(parse_transition(section.children[i]));
     }
@@ -493,6 +558,12 @@ void parse_module_section(ast::Module& result, const Node& section)
     {
         fail_at("Unknown module section: " + name + ".", section.source_offset);
     }
+}
+
+void require_module_section(bool seen, std::string_view name, std::size_t offset)
+{
+    if (!seen)
+        fail_at("Module is missing section " + std::string(name) + ".", offset);
 }
 
 ast::Module parse_module_node(const Node& root)
@@ -503,11 +574,16 @@ ast::Module parse_module_node(const Node& root)
     auto result = ast::Module {};
     result.source_offset = root.source_offset;
     result.name = atom(root.children[1], "module name");
+    auto presence = ModuleSectionPresence {};
     for (std::size_t i = 2; i < root.children.size(); ++i)
-        parse_module_section(result, root.children[i]);
+        parse_module_section(result, root.children[i], presence);
 
-    if (result.entry.empty())
-        fail_at("Module is missing an entry memory state.", root.source_offset);
+    require_module_section(presence.arguments, ":arguments", root.source_offset);
+    require_module_section(presence.registers, ":registers", root.source_offset);
+    require_module_section(presence.entry, ":entry", root.source_offset);
+    require_module_section(presence.memory, ":memory", root.source_offset);
+    require_module_section(presence.features, ":features", root.source_offset);
+    require_module_section(presence.transitions, ":transitions", root.source_offset);
     return result;
 }
 
@@ -519,6 +595,8 @@ void parse_program_section(ast::ModuleProgram& result, const Node& section)
     const auto section_head = head(section, "program section");
     if (section_head == ":entry")
     {
+        if (!result.entry.empty())
+            fail_at("Duplicate program entry section.", section.source_offset);
         if (section.children.size() != 2)
             fail_at("Malformed program entry section.", section.source_offset);
         result.entry = atom(section.children[1], ":entry");

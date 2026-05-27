@@ -8,13 +8,14 @@
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/evaluation.hpp>
 #include <runir/kr/ps/ext/evaluation_context.hpp>
-#include <runir/kr/ps/ext/execution.hpp>
+#include <runir/kr/ps/ext/detail/execution.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/module_program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <type_traits>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/planning.hpp>
+#include <variant>
 #include <vector>
 
 namespace runir::tests
@@ -88,7 +89,7 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(planning_task.get_repository());
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto description = R"((module "entry"
@@ -120,7 +121,7 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
     const auto blocksworld_domain = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "domain.pddl";
     const auto blocksworld_task_file = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "p-300-4.pddl";
     const auto blocksworld_task = fp::Parser(blocksworld_domain).parse_task(blocksworld_task_file);
-    auto blocksworld_dl_repository = dl_repository_factory.create_shared(blocksworld_task.get_repository());
+    auto blocksworld_dl_repository = dl_repository_factory.create(blocksworld_task.get_repository());
     auto blocksworld_repository = repository_factory.create(blocksworld_dl_repository);
 
     const auto blocks = kr::ps::ext::dl::parse_module(kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024_description(),
@@ -154,7 +155,7 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(planning_task.get_repository());
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto caller_description = R"((module "caller"
@@ -199,6 +200,255 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
     EXPECT_TRUE(found_call_rule) << "Expected call rule.";
 }
 
+TEST(RunirTests, ExtModuleParserRejectsInvalidModuleSets)
+{
+    namespace fp = tyr::formalism::planning;
+
+    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+
+    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto repository_factory = kr::ps::ext::RepositoryFactory();
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
+    auto repository = repository_factory.create(dl_repository);
+
+    const auto caller_with_argument = R"((module "caller"
+      (:arguments)
+      (:registers)
+      (:entry "m0")
+      (:memory "m0" "m1")
+      (:features)
+      (:transitions
+        ("m0" "m1" (call (:conditions) (:callee "callee") (:arguments (c_top))))
+      )
+    ))";
+    const auto callee_without_arguments = R"((module "callee"
+      (:arguments)
+      (:registers)
+      (:entry "m0")
+      (:memory "m0")
+      (:features)
+      (:transitions)
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_modules({ caller_with_argument, callee_without_arguments }, planning_task.get_domain().get_domain(), *repository),
+                 std::runtime_error);
+
+    const auto duplicate_callee = R"((module "callee"
+      (:arguments)
+      (:registers)
+      (:entry "m0")
+      (:memory "m0")
+      (:features)
+      (:transitions)
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_modules({ callee_without_arguments, duplicate_callee }, planning_task.get_domain().get_domain(), *repository),
+                 std::runtime_error);
+}
+
+TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
+{
+    namespace fp = tyr::formalism::planning;
+
+    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+
+    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto repository_factory = kr::ps::ext::RepositoryFactory();
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
+    auto repository = repository_factory.create(dl_repository);
+
+    const auto unknown_action = R"((module "entry"
+      (:arguments)
+      (:registers)
+      (:entry "m0")
+      (:memory "m0" "m1")
+      (:features)
+      (:transitions
+        ("m0" "m1" (do (:conditions) (:action "missing-action") (:arguments)))
+      )
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(unknown_action, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+
+    const auto wrong_arity = std::string(R"((module "entry"
+      (:arguments)
+      (:registers)
+      (:entry "m0")
+      (:memory "m0" "m1")
+      (:features)
+      (:transitions
+        ("m0" "m1" (do (:conditions) (:action "move") (:arguments)))
+      )
+    ))");
+    try
+    {
+        [[maybe_unused]] const auto module = kr::ps::ext::dl::parse_module(wrong_arity, planning_task.get_domain().get_domain(), *repository);
+        FAIL() << "Expected wrong do-action arity to be rejected.";
+    }
+    catch (const std::runtime_error& err)
+    {
+        const auto expected_offset = wrong_arity.find("(:arguments)))");
+        ASSERT_NE(expected_offset, std::string::npos);
+        EXPECT_NE(std::string(err.what()).find("offset " + std::to_string(expected_offset)), std::string::npos) << err.what();
+    }
+}
+
+TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
+{
+    namespace fp = tyr::formalism::planning;
+
+    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+
+    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto repository_factory = kr::ps::ext::RepositoryFactory();
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
+    auto repository = repository_factory.create(dl_repository);
+
+    const auto missing_transitions = R"((module "entry"
+      (:arguments)
+      (:registers)
+      (:entry "m0")
+      (:memory "m0")
+      (:features)
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(missing_transitions, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+
+    const auto duplicate_memory = R"((module "entry"
+      (:arguments)
+      (:registers)
+      (:entry "m0")
+      (:memory "m0")
+      (:memory "m1")
+      (:features)
+      (:transitions)
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(duplicate_memory, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+
+    const auto empty_memory = R"((module "entry"
+      (:arguments)
+      (:registers)
+      (:entry "m0")
+      (:memory)
+      (:features)
+      (:transitions)
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(empty_memory, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+
+    const auto out_of_range_register = R"((module "entry"
+      (:arguments)
+      (:registers (concept "x" 4))
+      (:entry "m0")
+      (:memory "m0")
+      (:features)
+      (:transitions)
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(out_of_range_register, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+
+    const auto duplicate_register_identifier = R"((module "entry"
+      (:arguments)
+      (:registers (concept "x" 0) (concept "y" 0))
+      (:entry "m0")
+      (:memory "m0")
+      (:features)
+      (:transitions)
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(duplicate_register_identifier, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+
+    const auto duplicate_argument_identifier = R"((module "entry"
+      (:arguments (concept "x" 0) (concept "y" 0))
+      (:registers)
+      (:entry "m0")
+      (:memory "m0")
+      (:features)
+      (:transitions)
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(duplicate_argument_identifier, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+
+    const auto out_of_range_argument = R"((module "entry"
+      (:arguments (concept "x" 1))
+      (:registers)
+      (:entry "m0")
+      (:memory "m0")
+      (:features)
+      (:transitions)
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(out_of_range_argument, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+
+    const auto out_of_range_expression_argument = std::string(R"((module "entry"
+      (:arguments)
+      (:registers)
+      (:entry "m0")
+      (:memory "m0")
+      (:features
+        (concept X "X" "bad argument" (c_argument 0))
+      )
+      (:transitions)
+    ))");
+    try
+    {
+        [[maybe_unused]] const auto module = kr::ps::ext::dl::parse_module(out_of_range_expression_argument, planning_task.get_domain().get_domain(), *repository);
+        FAIL() << "Expected out-of-range expression argument to be rejected.";
+    }
+    catch (const std::runtime_error& err)
+    {
+        const auto expected_offset = out_of_range_expression_argument.find("(c_argument 0)");
+        ASSERT_NE(expected_offset, std::string::npos);
+        EXPECT_NE(std::string(err.what()).find("offset " + std::to_string(expected_offset)), std::string::npos) << err.what();
+    }
+
+    const auto undeclared_expression_register = R"((module "entry"
+      (:arguments)
+      (:registers (concept "x" 0))
+      (:entry "m0")
+      (:memory "m0")
+      (:features
+        (concept X "X" "bad register" (c_register 1))
+      )
+      (:transitions)
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(undeclared_expression_register, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+
+    const auto duplicate_rule_section = R"((module "entry"
+      (:arguments)
+      (:registers (concept "x" 0))
+      (:entry "m0")
+      (:memory "m0" "m1")
+      (:features)
+      (:transitions
+        ("m0" "m1" (load (:conditions) (:conditions) (:concept (c_top)) (:register "x")))
+      )
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(duplicate_rule_section, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+
+    const auto invalid_rule_section = R"((module "entry"
+      (:arguments)
+      (:registers (concept "x" 0))
+      (:entry "m0")
+      (:memory "m0" "m1")
+      (:features)
+      (:transitions
+        ("m0" "m1" (load (:conditions) (:concept (c_top)) (:register "x") (:action "move")))
+      )
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(invalid_rule_section, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+
+    const auto root = R"((module "root"
+      (:arguments)
+      (:registers)
+      (:entry "m0")
+      (:memory "m0")
+      (:features)
+      (:transitions)
+    ))";
+    EXPECT_THROW(kr::ps::ext::dl::parse_module_program(R"((program (:entry "root") (:entry "root") )" + std::string(root) + ")",
+                                                       planning_task.get_domain().get_domain(),
+                                                       *repository),
+                 std::runtime_error);
+}
+
 TEST(RunirTests, ExtModuleProgramParserRejectsInvalidProgramWiring)
 {
     namespace fp = tyr::formalism::planning;
@@ -209,7 +459,7 @@ TEST(RunirTests, ExtModuleProgramParserRejectsInvalidProgramWiring)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(planning_task.get_repository());
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto root = R"((module "root"
@@ -289,7 +539,7 @@ TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(planning_task.get_repository());
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto modules = kr::ps::ext::dl::parse_modules(kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_descriptions(),
@@ -316,7 +566,7 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(planning_task.get_repository());
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto modules = kr::ps::ext::dl::parse_modules(kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_descriptions(),
@@ -366,7 +616,7 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
+    auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), *repository);
@@ -386,6 +636,18 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     ASSERT_TRUE(proof.graph);
     EXPECT_EQ(proof.graph->get_num_vertices(), 16);
     EXPECT_EQ(proof.graph->get_num_edges(), 15);
+
+    auto has_internal_memory_state = false;
+    auto has_external_memory_state = false;
+    for (const auto vertex : proof.graph->get_vertex_indices())
+    {
+        const auto& memory_state = proof.graph->get_vertex(vertex).get_property().extended_state.memory_state;
+        has_internal_memory_state |= std::holds_alternative<kr::ps::ext::InternalMemoryState>(memory_state);
+        has_external_memory_state |= std::holds_alternative<kr::ps::ext::ExternalMemoryState>(memory_state);
+    }
+    EXPECT_TRUE(has_internal_memory_state);
+    EXPECT_TRUE(has_external_memory_state);
+
     EXPECT_TRUE(proof.deadend_transitions.empty());
     EXPECT_TRUE(proof.open_states.empty());
     EXPECT_TRUE(proof.cycle.empty());
@@ -401,7 +663,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(planning_task.get_repository());
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto description = R"((module "entry"
@@ -421,7 +683,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
       (:transitions
         ("m0" "m1" (load (:conditions (greater_zero B)) (:concept B) (:register "r0")))
         ("m1" "m1" (sketch (:conditions (positive H) (greater_zero N)) (:effects (unchanged B))))
-        ("m1" "m2" (do (:conditions) (:action "pickup") (:arguments (c_register 0))))
+        ("m1" "m2" (do (:conditions) (:action "pick") (:arguments (c_register 0) (c_top) (c_top))))
       )
     ))";
 
@@ -456,7 +718,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
             using View = std::decay_t<decltype(rule)>;
             using Expected = tyr::View<tyr::Index<kr::ps::ext::Rule<kr::ps::ext::DoTag>>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
-                return rule.get_action_name() == "pickup" && rule.get_action_arguments().size() == 1;
+                return rule.get_action_name() == "pick" && rule.get_action_arguments().size() == 3;
             else
                 return false;
         },
@@ -472,7 +734,7 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(planning_task.get_repository());
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
 
     const auto concept_argument = kr::ps::ext::dl::parse_concept("(c_argument 0)", planning_task.get_domain().get_domain(), *dl_repository);
     EXPECT_TRUE(tyr::visit(
@@ -531,7 +793,7 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(planning_task.get_repository());
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto empty = kr::ps::ext::dl::ModuleFactory::create_empty(*repository);
@@ -615,7 +877,7 @@ TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
+    auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto caller_entry = create_memory_state(*repository, "caller_entry");
@@ -664,7 +926,7 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
+    auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto source = create_memory_state(*repository, "source");
@@ -733,7 +995,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
+    auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto caller_entry = create_memory_state(*repository, "caller_entry");
@@ -831,7 +1093,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
+    auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto caller_entry = create_memory_state(*repository, "caller_entry");
@@ -880,7 +1142,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
+    auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto source = create_memory_state(*repository, "source");
@@ -933,7 +1195,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
+    auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto source = create_memory_state(*repository, "source");
@@ -1013,7 +1275,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
 
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
-    auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
+    auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
     const auto source = create_memory_state(*repository, "source");

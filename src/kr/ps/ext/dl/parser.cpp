@@ -7,12 +7,14 @@
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <boost/variant/apply_visitor.hpp>
 #include <cctype>
+#include <cstdint>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -524,6 +526,75 @@ SignatureCounts signature_counts(const ast::Module& module)
     return result;
 }
 
+std::size_t argument_count(const SignatureCounts& counts, ast::ArgumentKind kind)
+{
+    switch (kind)
+    {
+        case ast::ArgumentKind::CONCEPT:
+            return counts.concepts;
+        case ast::ArgumentKind::ROLE:
+            return counts.roles;
+        case ast::ArgumentKind::BOOLEAN:
+            return counts.booleans;
+        case ast::ArgumentKind::NUMERICAL:
+            return counts.numericals;
+    }
+    return 0;
+}
+
+const char* argument_kind_name(ast::ArgumentKind kind)
+{
+    switch (kind)
+    {
+        case ast::ArgumentKind::CONCEPT:
+            return "concept";
+        case ast::ArgumentKind::ROLE:
+            return "role";
+        case ast::ArgumentKind::BOOLEAN:
+            return "boolean";
+        case ast::ArgumentKind::NUMERICAL:
+            return "numerical";
+    }
+    return "unknown";
+}
+
+void validate_module_declarations(const ast::Module& module)
+{
+    const auto counts = signature_counts(module);
+    auto concept_arguments = std::unordered_set<std::uint64_t> {};
+    auto role_arguments = std::unordered_set<std::uint64_t> {};
+    auto boolean_arguments = std::unordered_set<std::uint64_t> {};
+    auto numerical_arguments = std::unordered_set<std::uint64_t> {};
+
+    for (const auto& argument : module.arguments)
+    {
+        const auto max_identifier = argument_count(counts, argument.kind);
+        if (argument.identifier >= max_identifier)
+            fail_at(std::string(argument_kind_name(argument.kind)) + " argument identifier " + std::to_string(argument.identifier)
+                        + " is out of range; declared arguments of this kind: " + std::to_string(max_identifier) + ".",
+                    argument.source_offset);
+
+        auto& seen = argument.kind == ast::ArgumentKind::CONCEPT     ? concept_arguments
+                   : argument.kind == ast::ArgumentKind::ROLE        ? role_arguments
+                   : argument.kind == ast::ArgumentKind::BOOLEAN     ? boolean_arguments
+                                                                      : numerical_arguments;
+        if (!seen.emplace(argument.identifier).second)
+            fail_at(std::string("Duplicate ") + argument_kind_name(argument.kind) + " argument identifier " + std::to_string(argument.identifier) + ".",
+                    argument.source_offset);
+    }
+
+    auto register_identifiers = std::unordered_set<std::uint64_t> {};
+    for (const auto& reg : module.registers)
+    {
+        if (reg.identifier >= runir::kr::dl::num_registers)
+            fail_at("Register identifier " + std::to_string(reg.identifier) + " is out of range; max registers is "
+                        + std::to_string(runir::kr::dl::num_registers) + ".",
+                    reg.source_offset);
+        if (!register_identifiers.emplace(reg.identifier).second)
+            fail_at("Duplicate register identifier " + std::to_string(reg.identifier) + ".", reg.source_offset);
+    }
+}
+
 void append_argument(Repository& repository, tyr::Data<Module>& data, const ast::Argument& argument)
 {
     switch (argument.kind)
@@ -808,15 +879,22 @@ SignatureCounts call_argument_signature_counts(const ast::Rule& rule)
 
 struct SExpr
 {
+    std::size_t source_offset = 0;
     std::string atom;
     std::vector<SExpr> list;
 
     bool is_atom() const noexcept { return list.empty(); }
 };
 
-std::vector<std::string> tokenize_expression(const std::string& text)
+struct ExpressionToken
 {
-    auto tokens = std::vector<std::string> {};
+    std::size_t source_offset = 0;
+    std::string text;
+};
+
+std::vector<ExpressionToken> tokenize_expression(const std::string& text)
+{
+    auto tokens = std::vector<ExpressionToken> {};
     for (size_t i = 0; i < text.size();)
     {
         if (std::isspace(static_cast<unsigned char>(text[i])))
@@ -825,7 +903,7 @@ std::vector<std::string> tokenize_expression(const std::string& text)
         }
         else if (text[i] == '(' || text[i] == ')')
         {
-            tokens.emplace_back(1, text[i++]);
+            tokens.push_back(ExpressionToken { i, std::string(1, text[i++]) });
         }
         else if (text[i] == '"')
         {
@@ -835,30 +913,31 @@ std::vector<std::string> tokenize_expression(const std::string& text)
             if (i == text.size())
                 throw std::runtime_error("Unterminated string in DL expression.");
             ++i;
-            tokens.push_back(text.substr(start, i - start));
+            tokens.push_back(ExpressionToken { start, text.substr(start, i - start) });
         }
         else
         {
             const auto start = i;
             while (i < text.size() && !std::isspace(static_cast<unsigned char>(text[i])) && text[i] != '(' && text[i] != ')')
                 ++i;
-            tokens.push_back(text.substr(start, i - start));
+            tokens.push_back(ExpressionToken { start, text.substr(start, i - start) });
         }
     }
     return tokens;
 }
 
-SExpr parse_expression_tokens(const std::vector<std::string>& tokens, size_t& pos)
+SExpr parse_expression_tokens(const std::vector<ExpressionToken>& tokens, size_t& pos)
 {
     if (pos >= tokens.size())
         throw std::runtime_error("Unexpected end of DL expression.");
 
-    if (tokens[pos] != "(")
-        return SExpr { tokens[pos++], {} };
+    const auto source_offset = tokens[pos].source_offset;
+    if (tokens[pos].text != "(")
+        return SExpr { source_offset, tokens[pos++].text, {} };
 
     ++pos;
-    auto result = SExpr {};
-    while (pos < tokens.size() && tokens[pos] != ")")
+    auto result = SExpr { source_offset, {}, {} };
+    while (pos < tokens.size() && tokens[pos].text != ")")
         result.list.push_back(parse_expression_tokens(tokens, pos));
 
     if (pos >= tokens.size())
@@ -921,10 +1000,152 @@ bool parse_truth_atom(const SExpr& expr)
     throw std::runtime_error("Expected true or false truth value.");
 }
 
+const std::string& expression_operator(const SExpr& expr);
+
 tyr::uint_t parse_uint_atom(const SExpr& expr, const char* context)
 {
     const auto& value = require_atom(expr, context);
     return static_cast<tyr::uint_t>(std::stoull(value));
+}
+
+tyr::uint_t parse_uint_atom_at(const SExpr& expr, std::size_t base_offset, const char* context)
+{
+    if (!expr.is_atom())
+        fail_at(std::string("Expected atom in ") + context + ".", base_offset + expr.source_offset);
+
+    try
+    {
+        std::size_t parsed = 0;
+        const auto value = std::stoull(expr.atom, &parsed);
+        if (parsed != expr.atom.size())
+            fail_at(std::string("Expected unsigned integer in ") + context + ".", base_offset + expr.source_offset);
+        return static_cast<tyr::uint_t>(value);
+    }
+    catch (const std::invalid_argument&)
+    {
+        fail_at(std::string("Expected unsigned integer in ") + context + ".", base_offset + expr.source_offset);
+    }
+    catch (const std::out_of_range&)
+    {
+        fail_at(std::string("Unsigned integer in ") + context + " is out of range.", base_offset + expr.source_offset);
+    }
+}
+
+void validate_argument_reference_at(tyr::uint_t identifier, std::size_t count, const char* kind, std::size_t offset)
+{
+    if (identifier >= count)
+        fail_at(std::string(kind) + " argument reference " + std::to_string(identifier)
+                    + " is out of range; declared arguments of this kind: " + std::to_string(count) + ".",
+                offset);
+}
+
+void validate_register_reference_at(tyr::uint_t identifier, const std::unordered_set<std::uint64_t>& concept_registers, const char* kind, std::size_t offset)
+{
+    if (identifier >= runir::kr::dl::num_registers)
+        fail_at(std::string(kind) + " register reference " + std::to_string(identifier) + " is out of range; max registers is "
+                    + std::to_string(runir::kr::dl::num_registers) + ".",
+                offset);
+    if (!concept_registers.contains(identifier))
+        fail_at(std::string(kind) + " register reference " + std::to_string(identifier) + " is not declared by the module.", offset);
+}
+
+void validate_expression_references(const SExpr& expr,
+                                     std::size_t base_offset,
+                                     const SignatureCounts& signature,
+                                     const std::unordered_set<std::uint64_t>& concept_registers)
+{
+    if (expr.is_atom())
+        return;
+
+    const auto fail_here = [&](const std::string& message) { fail_at(message, base_offset + expr.source_offset); };
+    const auto& op = expression_operator(expr);
+    if (op == "c_argument")
+    {
+        if (expr.list.size() != 2)
+            fail_here("c_argument expects one identifier.");
+        const auto identifier = parse_uint_atom_at(expr.list[1], base_offset, "concept argument identifier");
+        validate_argument_reference_at(identifier, signature.concepts, "Concept", base_offset + expr.source_offset);
+    }
+    else if (op == "r_argument")
+    {
+        if (expr.list.size() != 2)
+            fail_here("r_argument expects one identifier.");
+        const auto identifier = parse_uint_atom_at(expr.list[1], base_offset, "role argument identifier");
+        validate_argument_reference_at(identifier, signature.roles, "Role", base_offset + expr.source_offset);
+    }
+    else if (op == "b_argument")
+    {
+        if (expr.list.size() != 2)
+            fail_here("b_argument expects one identifier.");
+        const auto identifier = parse_uint_atom_at(expr.list[1], base_offset, "boolean argument identifier");
+        validate_argument_reference_at(identifier, signature.booleans, "Boolean", base_offset + expr.source_offset);
+    }
+    else if (op == "n_argument")
+    {
+        if (expr.list.size() != 2)
+            fail_here("n_argument expects one identifier.");
+        const auto identifier = parse_uint_atom_at(expr.list[1], base_offset, "numerical argument identifier");
+        validate_argument_reference_at(identifier, signature.numericals, "Numerical", base_offset + expr.source_offset);
+    }
+    else if (op == "c_register")
+    {
+        if (expr.list.size() != 2)
+            fail_here("c_register expects one identifier.");
+        const auto identifier = parse_uint_atom_at(expr.list[1], base_offset, "concept register identifier");
+        validate_register_reference_at(identifier, concept_registers, "Concept", base_offset + expr.source_offset);
+    }
+    else if (op == "r_register")
+    {
+        if (expr.list.size() != 2)
+            fail_here("r_register expects one identifier.");
+        const auto identifier = parse_uint_atom_at(expr.list[1], base_offset, "role register identifier");
+        validate_register_reference_at(identifier, concept_registers, "Role", base_offset + expr.source_offset);
+    }
+
+    for (std::size_t i = 1; i < expr.list.size(); ++i)
+        validate_expression_references(expr.list[i], base_offset, signature, concept_registers);
+}
+
+void validate_expression_references(const std::string& expression,
+                                    std::size_t offset,
+                                    const SignatureCounts& signature,
+                                    const std::unordered_set<std::uint64_t>& concept_registers)
+{
+    if (!starts_with_expression(expression))
+        return;
+
+    auto expr = SExpr {};
+    try
+    {
+        expr = parse_expression(expression);
+    }
+    catch (const std::exception& e)
+    {
+        fail_at(e.what(), offset);
+    }
+    validate_expression_references(expr, offset, signature, concept_registers);
+}
+
+void validate_module_expression_references(const ast::Module& module)
+{
+    const auto signature = signature_counts(module);
+    auto concept_registers = std::unordered_set<std::uint64_t> {};
+    for (const auto& reg : module.registers)
+        concept_registers.insert(reg.identifier);
+
+    for (const auto& feature : module.features)
+        validate_expression_references(feature.expression, feature.expression_offset, signature, concept_registers);
+
+    for (const auto& transition : module.transitions)
+    {
+        for (const auto& rule : transition.rules)
+        {
+            if (rule.kind == ast::RuleKind::LOAD)
+                validate_expression_references(rule.concept_expression, rule.concept_expression_offset, signature, concept_registers);
+            for (const auto& argument : rule.arguments)
+                validate_expression_references(argument.text, argument.source_offset, signature, concept_registers);
+        }
+    }
 }
 
 const std::string& expression_operator(const SExpr& expr)
@@ -974,6 +1195,26 @@ auto find_module(const ModuleMap& modules, const std::string& name)
     return it == modules.end() ? std::optional<tyr::Index<Module>> {} : std::optional(it->second);
 }
 
+auto find_action_arity(tyr::formalism::planning::DomainView domain, const std::string& name)
+{
+    for (const auto action : domain.get_actions())
+        if (action.get_name() == name)
+            return std::optional<tyr::uint_t>(action.get_original_arity());
+    return std::optional<tyr::uint_t> {};
+}
+
+void validate_do_action(tyr::formalism::planning::DomainView domain, const ast::Rule& rule)
+{
+    const auto arity = find_action_arity(domain, rule.action);
+    if (!arity)
+        fail_at("Unknown action \"" + rule.action + "\".", rule.action_offset);
+
+    if (rule.arguments.size() != *arity)
+        fail_at("Do rule for action \"" + rule.action + "\" has " + std::to_string(rule.arguments.size()) + " arguments; expected "
+                    + std::to_string(*arity) + ".",
+                rule.arguments_offset);
+}
+
 auto parse_rule(Repository& repository,
                 const ast::Rule& rule,
                 tyr::Index<MemoryState> source,
@@ -1011,6 +1252,7 @@ auto parse_rule(Repository& repository,
         }
         case ast::RuleKind::DO:
         {
+            validate_do_action(domain, rule);
             tyr::Data<Rule<DoTag>> data(rule.action);
             data.source = source;
             data.target = target;
@@ -1148,6 +1390,9 @@ parse_numerical(const std::string& description, tyr::formalism::planning::Domain
 
 ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::DomainView domain, Repository& repository, const ModuleMap& known_modules = {})
 {
+    validate_module_declarations(ast);
+    validate_module_expression_references(ast);
+
     auto memory_states = MemoryStateMap {};
     for (const auto& state : ast.memory_states)
     {
@@ -1214,19 +1459,16 @@ ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::Domain
     return intern(repository, data);
 }
 
-void validate_module_program(const ast::ModuleProgram& program)
+void validate_module_set(const std::vector<ast::Module>& modules)
 {
     auto signatures_by_name = std::unordered_map<std::string, SignatureCounts> {};
-    for (const auto& module : program.modules)
+    for (const auto& module : modules)
     {
         if (!signatures_by_name.emplace(module.name, signature_counts(module)).second)
-            fail_at("Duplicate module name \"" + module.name + "\" in module program", module.source_offset);
+            fail_at("Duplicate module name \"" + module.name + "\" in module set", module.source_offset);
     }
 
-    if (!signatures_by_name.contains(program.entry))
-        fail_at("Module program entry module \"" + program.entry + "\" is not declared.", program.entry_offset);
-
-    for (const auto& module : program.modules)
+    for (const auto& module : modules)
     {
         for (const auto& transition : module.transitions)
         {
@@ -1247,6 +1489,18 @@ void validate_module_program(const ast::ModuleProgram& program)
             }
         }
     }
+}
+
+void validate_module_program(const ast::ModuleProgram& program)
+{
+    validate_module_set(program.modules);
+
+    auto module_names = std::unordered_map<std::string, std::size_t> {};
+    for (const auto& module : program.modules)
+        module_names.emplace(module.name, module.source_offset);
+
+    if (!module_names.contains(program.entry))
+        fail_at("Module program entry module \"" + program.entry + "\" is not declared.", program.entry_offset);
 }
 
 ModuleView parse_module(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
@@ -1280,12 +1534,18 @@ ModuleProgramView parse_module_program(const std::string& description, tyr::form
 
 std::vector<ModuleView> parse_modules(const std::vector<std::string>& descriptions, tyr::formalism::planning::DomainView domain, Repository& repository)
 {
-    auto result = std::vector<ModuleView> {};
-    result.reserve(descriptions.size());
-    auto modules = ModuleMap {};
+    auto asts = std::vector<ast::Module> {};
+    asts.reserve(descriptions.size());
     for (const auto& description : descriptions)
+        asts.push_back(parser::parse_module_ast(description));
+
+    validate_module_set(asts);
+
+    auto result = std::vector<ModuleView> {};
+    result.reserve(asts.size());
+    auto modules = ModuleMap {};
+    for (const auto& ast : asts)
     {
-        const auto ast = parser::parse_module_ast(description);
         auto view = lower_module(ast, domain, repository, modules);
         result.push_back(view);
         modules.emplace(ast.name, view.get_index());

@@ -161,12 +161,7 @@ private:
 public:
     BasicConstructorRepositoryFactory() : m_next_index(0) {}
 
-    ConstructorRepositoryFor<Family> create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
-    {
-        return ConstructorRepositoryFor<Family>(m_next_index++, std::move(planning_repository));
-    }
-
-    ConstructorRepositoryPtrFor<Family> create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
+    ConstructorRepositoryPtrFor<Family> create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
     {
         return ConstructorRepositoryPtrFor<Family>(new ConstructorRepositoryFor<Family>(m_next_index++, std::move(planning_repository)));
     }

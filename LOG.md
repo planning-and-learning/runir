@@ -19,3 +19,23 @@
 - Added an x3-backed S-expression syntax preflight for module parser inputs so malformed parentheses/quotes report through Boost Spirit x3 error-handler positions before structural validation.
 - Moved the module-program proof search loop into `kr/ps/ext/detail/proof_search.hpp`, leaving public `prove_solution` as a thin paper-level wrapper around detail execution/proof machinery.
 - Made `TaskSearchContext` construction factory-only via `TaskSearchContext::create(...)`, changed `TaskSearchContextList` to hold shared pointers, and updated C++/Python call sites to pass shared context owners.
+- Changed planning-sketch repository factories so `create(...)` returns `std::shared_ptr<Repository>` directly, removed the `create_shared` alias, and updated C++/Python call sites to keep repository ownership explicit.
+- Moved static `do` action validation into module lowering: unknown action names and action arity mismatches now fail in the parser/lowering path with source offsets instead of surfacing as execution-time no-action failures.
+- Shared module-set validation between `parse_module_program(...)` and `parse_modules(...)`, so duplicate module names, unknown callees, and call signature mismatches are rejected before lowering with source offsets.
+
+## 2026-05-27
+
+- Labeled module-program proof vertices with explicit internal/external memory-state variants, keyed proof configurations by the variant kind, and covered the successful paper-module proof graph with assertions for both memory-state kinds.
+- Tightened module parser structural validation: modules now reject missing or duplicate required sections, empty `:memory`, and duplicate program `:entry` sections with source-offset diagnostics before lowering/execution.
+- Stopped exporting module execution internals through the public `kr/ps/ext/execution.hpp`; tests that exercise low-level execution now include the `detail` header explicitly.
+- Moved the module-program solution execution loop out of the public executor impl and into `kr/ps/ext/detail/solution_search.hpp`, leaving `find_solution` as a thin public wrapper over detail execution.
+- Shared phase-aware module-program configuration keys between solution and proof search; cycle detection now records internal load states separately from external control states.
+- Added parser validation for rule sections: duplicate sections, malformed section nodes, and sections invalid for a rule kind now fail at the offending section offset instead of being ignored by rule lowering.
+- Moved module declaration identifier validation into lowering: duplicate/out-of-range argument identifiers and duplicate/out-of-range register identifiers now fail with AST source offsets before repository construction or execution.
+- Added module-level expression reference validation before lowering: feature, load, do, and call expressions now reject out-of-range argument references and undeclared/out-of-range register references at the expression source offset.
+- Preserved nested DL expression offsets during module expression validation, so invalid argument/register references now report the offending subexpression or identifier token instead of only the outer expression.
+- Aligned DL constructor repository factories with the shared-ownership API shape: `create(...)` now returns the owning repository pointer directly, and the duplicate `create_shared(...)` alias was removed from base, grammar, and CNF grammar constructor repositories.
+- Rebuilt and smoke-tested the Python extension after the factory ownership cleanup; updated Python module-parser tests so unknown `do` actions are expected to fail in parser/lowering with offsets instead of reaching execution.
+- Carried rule `:arguments` section offsets through the module parser AST so `do` action arity errors now point at the offending arguments section instead of the whole rule.
+- Audited the remaining module executor failure statuses after parser/lowering validation: empty load denotations, no concrete applicable actions, and no state-dependent applicable rules remain runtime outcomes; malformed calls are still guarded in detail execution for manually assembled repository views, while parsed module sets/programs reject unknown callees and signature mismatches before lowering.
+- Re-ran focused verification with two build jobs: `runir_kr_ps_ext_module_program_executor`, `runir_kr_ps_sketch_executor`, and `runir_kr_grammar_factory` all passed; rebuilt the Python extension with `RUNIR_JOBS=2` and reran the focused grammar/module parser Python tests.

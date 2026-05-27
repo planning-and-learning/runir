@@ -20,17 +20,17 @@ void bind_repository(nb::module_& m)
         .def(
             "create",
             [](ConstructorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
-            { return self.create_shared(planning_domain.get_repository()); },
+            { return self.create(planning_domain.get_repository()); },
             nb::arg("planning_domain"))
         .def(
             "create",
             [](ConstructorRepositoryFactory& self, const tyr::planning::Task<tyr::planning::GroundTag>& task)
-            { return self.create_shared(task.get_repository()); },
+            { return self.create(task.get_repository()); },
             nb::arg("ground_task"))
         .def(
             "create",
             [](ConstructorRepositoryFactory& self, const tyr::planning::Task<tyr::planning::LiftedTag>& task)
-            { return self.create_shared(task.get_repository()); },
+            { return self.create(task.get_repository()); },
             nb::arg("lifted_task"));
 }
 

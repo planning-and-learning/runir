@@ -22,7 +22,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
     auto& context = execution_state.get_context();
     auto proof = ModuleProgramProofBuilder<Kind>(search_context, execution_state.get_initial_node(), std::move(context_owner));
 
-    auto current_vertex = proof.get_or_create_vertex(context, true, true, false).first;
+    auto current_vertex = proof.get_or_create_vertex(context, ExternalMemoryState(context.get_memory_state()), true, true, false).first;
 
     while (true)
     {
@@ -37,7 +37,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
                 break;
 
             const auto terminal = load_status != LoadExecutionStatus::APPLIED;
-            const auto [target, created] = proof.get_or_create_vertex(context, false, !terminal, terminal);
+            const auto [target, created] = proof.get_or_create_vertex(context, InternalMemoryState(context.get_memory_state()), false, !terminal, terminal);
             const auto edge = proof.add_edge(load_source, target, std::nullopt);
             current_vertex = target;
 
@@ -63,7 +63,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
 
         if (step_result.status == ModuleProgramOutcome::APPLIED || step_result.status == ModuleProgramOutcome::RESTORED_CALLER)
         {
-            const auto [target, created] = proof.get_or_create_vertex(context, false, true, false);
+            const auto [target, created] = proof.get_or_create_vertex(context, ExternalMemoryState(context.get_memory_state()), false, true, false);
             proof.add_edge(source_vertex, target, step_result.state_transition, step_result.rule);
             if (!created)
             {
@@ -79,7 +79,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
         if (step_result.status == ModuleProgramOutcome::OUT_OF_STATES)
             return proof.finish(ModuleProgramProofStatus::OUT_OF_STATES);
 
-        const auto [target, created] = proof.get_or_create_vertex(context, false, false, true);
+        const auto [target, created] = proof.get_or_create_vertex(context, ExternalMemoryState(context.get_memory_state()), false, false, true);
         static_cast<void>(created);
         const auto edge = proof.add_edge(source_vertex, target, std::nullopt);
         proof.add_deadend_transition(edge);

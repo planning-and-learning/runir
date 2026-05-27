@@ -19,7 +19,7 @@ void bind_grammar_constructor_repository(nb::module_& m)
         .def(
             "create",
             [](runir::kr::dl::grammar::base::ConstructorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
-            { return self.create_shared(planning_domain.get_repository()); },
+            { return self.create(planning_domain.get_repository()); },
             nb::arg("planning_domain"));
 }
 

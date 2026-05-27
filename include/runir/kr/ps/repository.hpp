@@ -115,7 +115,6 @@ public:
     {
         return std::shared_ptr<Repository>(new Repository(m_next_index++, std::move(dl_repository)));
     }
-    std::shared_ptr<Repository> create_shared(DlRepositoryPtr dl_repository) { return create(std::move(dl_repository)); }
 };
 
 template<FamilyTag Family, typename RepositoryTypes, typename DlRepositoryPtr>

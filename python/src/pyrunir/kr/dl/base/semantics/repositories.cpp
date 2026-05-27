@@ -58,7 +58,7 @@ void bind_semantics_repositories(nb::module_& m)
         .def(
             "create",
             [](runir::kr::dl::base::ConstructorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
-            { return self.create_shared(planning_domain.get_repository()); },
+            { return self.create(planning_domain.get_repository()); },
             nb::arg("planning_domain"));
 }
 

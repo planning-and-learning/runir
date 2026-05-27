@@ -1,6 +1,7 @@
 # List of Requirements:
 - Do not recompile after every single code change.
 - Use 2 cores for compilation.
+- Use `std::shared_ptr` only for APIs/results that own or retain lifetime. Non-owning immediate-use APIs may take `T&`/`const T&`. Do not create borrowed `std::shared_ptr` wrappers.
 
 # List of Goals:
 
