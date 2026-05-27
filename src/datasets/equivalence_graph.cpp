@@ -251,7 +251,7 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
 
     for (uint_t state_graph_index = 0; state_graph_index < contexts.size(); ++state_graph_index)
     {
-        auto& context = contexts[state_graph_index];
+        auto& context = *contexts[state_graph_index];
         auto heuristic = tyr::planning::BlindHeuristic<Kind> {};
         auto event_handler = std::make_shared<EquivalenceGraphEventHandler<Kind, Policy>>(state_graph_index,
                                                                                           policy,

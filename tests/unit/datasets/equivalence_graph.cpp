@@ -88,7 +88,7 @@ TEST_P(EquivalenceGraphTest, MatchesExpectedProperties)
         const auto planning_task = parser.parse_task(task_file);
         auto lifted_task = p::Task<p::LiftedTag>(planning_task);
         auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-        contexts.emplace_back(task, execution_context);
+        contexts.push_back(datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context));
     }
 
     const auto result = datasets::generate_equivalence_graph(contexts, param.equivalence_policy);

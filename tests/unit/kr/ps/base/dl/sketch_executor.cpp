@@ -61,7 +61,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         auto context = datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
         auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
         auto repository = repository_factory.create(dl_repository);
-        const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, task->get_domain().get_domain(), repository);
+        const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, task->get_domain().get_domain(), *repository);
         const auto result = kr::ps::base::prove_solution(context, sketch);
 
         EXPECT_TRUE(result.is_successful()) << test_case.domain;

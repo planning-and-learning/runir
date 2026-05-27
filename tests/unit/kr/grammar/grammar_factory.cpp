@@ -54,13 +54,13 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
         auto dl_repository = dl_repository_factory.create_shared(planning_domain.get_repository());
         auto repository = repository_factory.create(dl_repository);
 
-        const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, planning_domain.get_domain(), repository);
+        const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, planning_domain.get_domain(), *repository);
 
         EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::base::Sketch>(0));
-        EXPECT_EQ(repository.template size<kr::ps::base::Sketch>(), 1);
+        EXPECT_EQ(repository->template size<kr::ps::base::Sketch>(), 1);
 
         const auto formatted = fmt::format("{}", sketch);
-        const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), repository);
+        const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository);
         EXPECT_EQ(fmt::format("{}", reparsed), formatted);
     }
 }
@@ -96,18 +96,18 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 )
 )" };
 
-    const auto sketch = kr::ps::base::dl::parse_sketch(description, planning_domain.get_domain(), repository);
+    const auto sketch = kr::ps::base::dl::parse_sketch(description, planning_domain.get_domain(), *repository);
 
     EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::base::Sketch>(0));
-    EXPECT_EQ(repository.template size<kr::ps::base::Sketch>(), 1);
-    EXPECT_EQ(repository.template size<kr::ps::base::Rule>(), 2);
-    EXPECT_EQ((repository.template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::BooleanFeature>>()), 1);
-    EXPECT_EQ((repository.template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::NumericalFeature>>()), 1);
-    EXPECT_EQ(repository.template size<kr::ps::ConditionVariant<kr::BaseFamilyTag>>(), 4);
-    EXPECT_EQ(repository.template size<kr::ps::EffectVariant<kr::BaseFamilyTag>>(), 5);
+    EXPECT_EQ(repository->template size<kr::ps::base::Sketch>(), 1);
+    EXPECT_EQ(repository->template size<kr::ps::base::Rule>(), 2);
+    EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::BooleanFeature>>()), 1);
+    EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::NumericalFeature>>()), 1);
+    EXPECT_EQ(repository->template size<kr::ps::ConditionVariant<kr::BaseFamilyTag>>(), 4);
+    EXPECT_EQ(repository->template size<kr::ps::EffectVariant<kr::BaseFamilyTag>>(), 5);
 
     const auto formatted = fmt::format("{}", sketch);
-    const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), repository);
+    const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository);
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
     EXPECT_EQ(kr::ps::base::syntactic_complexity(sketch), 6);
 }

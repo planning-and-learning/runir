@@ -107,12 +107,12 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
       (:transitions)
     ))";
 
-    const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), repository);
+    const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
     EXPECT_EQ(module.get_name(), "entry");
-    EXPECT_EQ(module.template get_arguments<kr::dl::ConceptTag>().size(), 1);
-    EXPECT_EQ(module.template get_arguments<kr::dl::RoleTag>().size(), 1);
-    EXPECT_EQ(module.template get_arguments<kr::dl::BooleanTag>().size(), 1);
-    EXPECT_EQ(module.template get_arguments<kr::dl::NumericalTag>().size(), 1);
+    EXPECT_EQ(module.get_arguments<kr::dl::ConceptTag>().size(), 1);
+    EXPECT_EQ(module.get_arguments<kr::dl::RoleTag>().size(), 1);
+    EXPECT_EQ(module.get_arguments<kr::dl::BooleanTag>().size(), 1);
+    EXPECT_EQ(module.get_arguments<kr::dl::NumericalTag>().size(), 1);
     EXPECT_EQ(module.get_registers().size(), 1);
     EXPECT_EQ(module.get_entry_memory_state().get_name(), "m0");
     EXPECT_EQ(module.get_memory_states().size(), 2);
@@ -125,7 +125,7 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
 
     const auto blocks = kr::ps::ext::dl::parse_module(kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024_description(),
                                                       blocksworld_task.get_domain().get_domain(),
-                                                      blocksworld_repository);
+                                                      *blocksworld_repository);
     EXPECT_EQ(blocks.get_name(), "blocks");
     ASSERT_TRUE(blocks.get_rules(blocks.get_data().memory_transitions[1].source, blocks.get_data().memory_transitions[1].target).has_value());
     auto call_rule = (*blocks.get_rules(blocks.get_data().memory_transitions[1].source, blocks.get_data().memory_transitions[1].target)).front();
@@ -176,7 +176,7 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
       (:transitions)
     ))";
 
-    const auto modules = kr::ps::ext::dl::parse_modules({ caller_description, callee_description }, planning_task.get_domain().get_domain(), repository);
+    const auto modules = kr::ps::ext::dl::parse_modules({ caller_description, callee_description }, planning_task.get_domain().get_domain(), *repository);
     ASSERT_EQ(modules.size(), 2);
     EXPECT_EQ(modules[0].get_name(), "caller");
     EXPECT_EQ(modules[1].get_name(), "callee");
@@ -222,11 +222,11 @@ TEST(RunirTests, ExtModuleProgramParserRejectsInvalidProgramWiring)
     ))";
 
     EXPECT_THROW(
-        kr::ps::ext::dl::parse_module_program(R"((program (:entry "missing") )" + std::string(root) + ")", planning_task.get_domain().get_domain(), repository),
+        kr::ps::ext::dl::parse_module_program(R"((program (:entry "missing") )" + std::string(root) + ")", planning_task.get_domain().get_domain(), *repository),
         std::runtime_error);
     EXPECT_THROW(kr::ps::ext::dl::parse_module_program(R"((program (:entry "root") )" + std::string(root) + std::string(root) + ")",
                                                        planning_task.get_domain().get_domain(),
-                                                       repository),
+                                                       *repository),
                  std::runtime_error);
     EXPECT_THROW(kr::ps::ext::dl::parse_module_program(R"((program
       (:entry "root")
@@ -242,7 +242,7 @@ TEST(RunirTests, ExtModuleProgramParserRejectsInvalidProgramWiring)
       )
     ))",
                                                        planning_task.get_domain().get_domain(),
-                                                       repository),
+                                                       *repository),
                  std::runtime_error);
 }
 
@@ -256,7 +256,7 @@ TEST(RunirTests, ExtModuleParserReadsPaperFactoryDescriptions)
     EXPECT_EQ(on.transitions.size(), 14);
     EXPECT_EQ(on.transitions.back().rules.front().action, "stack");
     ASSERT_EQ(on.transitions.back().rules.front().arguments.size(), 2);
-    EXPECT_EQ(on.transitions.back().rules.front().arguments[0], "(c_argument 0)");
+    EXPECT_EQ(on.transitions.back().rules.front().arguments[0].text, "(c_argument 0)");
 
     const auto tower = kr::ps::ext::dl::parser::parse_module_ast(kr::ps::ext::dl::ModuleFactory::create_tower_bonet_et_al_icaps2024_description());
     EXPECT_EQ(tower.name, "tower");
@@ -264,7 +264,7 @@ TEST(RunirTests, ExtModuleParserReadsPaperFactoryDescriptions)
     EXPECT_EQ(tower.transitions.size(), 4);
     EXPECT_EQ(tower.transitions[2].rules.front().callee, "on");
     ASSERT_EQ(tower.transitions[2].rules.front().arguments.size(), 2);
-    EXPECT_EQ(tower.transitions[2].rules.front().arguments[1], "(c_some (r_inverse (r_argument 0)) (c_register 0))");
+    EXPECT_EQ(tower.transitions[2].rules.front().arguments[1].text, "(c_some (r_inverse (r_argument 0)) (c_register 0))");
 
     const auto blocks = kr::ps::ext::dl::parser::parse_module_ast(kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024_description());
     EXPECT_EQ(blocks.name, "blocks");
@@ -294,14 +294,14 @@ TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld
 
     const auto modules = kr::ps::ext::dl::parse_modules(kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_descriptions(),
                                                         planning_task.get_domain().get_domain(),
-                                                        repository);
+                                                        *repository);
     ASSERT_EQ(modules.size(), 4);
     EXPECT_EQ(modules[0].get_name(), "on");
     EXPECT_EQ(modules[1].get_name(), "on-table");
     EXPECT_EQ(modules[2].get_name(), "tower");
     EXPECT_EQ(modules[3].get_name(), "blocks");
 
-    const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), repository);
+    const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), *repository);
     EXPECT_EQ(program.get_entry_module().get_name(), "root");
     EXPECT_EQ(program.get_modules().size(), 5);
 }
@@ -321,7 +321,7 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
 
     const auto modules = kr::ps::ext::dl::parse_modules(kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_descriptions(),
                                                         planning_task.get_domain().get_domain(),
-                                                        repository);
+                                                        *repository);
     ASSERT_EQ(modules.size(), 4);
 
     for (const auto module : modules)
@@ -329,14 +329,14 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
         const auto formatted = fmt::format("{}", module);
         try
         {
-            const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), repository);
+            const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), *repository);
             EXPECT_EQ(reparsed.get_name(), module.get_name());
             EXPECT_EQ(reparsed.get_memory_states().size(), module.get_memory_states().size());
             EXPECT_EQ(reparsed.get_memory_transitions().size(), module.get_memory_transitions().size());
-            EXPECT_EQ(reparsed.template get_arguments<kr::dl::ConceptTag>().size(), module.template get_arguments<kr::dl::ConceptTag>().size());
-            EXPECT_EQ(reparsed.template get_arguments<kr::dl::RoleTag>().size(), module.template get_arguments<kr::dl::RoleTag>().size());
-            EXPECT_EQ(reparsed.template get_arguments<kr::dl::BooleanTag>().size(), module.template get_arguments<kr::dl::BooleanTag>().size());
-            EXPECT_EQ(reparsed.template get_arguments<kr::dl::NumericalTag>().size(), module.template get_arguments<kr::dl::NumericalTag>().size());
+            EXPECT_EQ(reparsed.get_arguments<kr::dl::ConceptTag>().size(), module.get_arguments<kr::dl::ConceptTag>().size());
+            EXPECT_EQ(reparsed.get_arguments<kr::dl::RoleTag>().size(), module.get_arguments<kr::dl::RoleTag>().size());
+            EXPECT_EQ(reparsed.get_arguments<kr::dl::BooleanTag>().size(), module.get_arguments<kr::dl::BooleanTag>().size());
+            EXPECT_EQ(reparsed.get_arguments<kr::dl::NumericalTag>().size(), module.get_arguments<kr::dl::NumericalTag>().size());
         }
         catch (const std::exception& err)
         {
@@ -344,9 +344,9 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
         }
     }
 
-    const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), repository);
+    const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), *repository);
     const auto formatted_program = fmt::format("{}", program);
-    const auto reparsed_program = kr::ps::ext::dl::parse_module_program(formatted_program, planning_task.get_domain().get_domain(), repository);
+    const auto reparsed_program = kr::ps::ext::dl::parse_module_program(formatted_program, planning_task.get_domain().get_domain(), *repository);
     EXPECT_EQ(reparsed_program.get_entry_module().get_name(), program.get_entry_module().get_name());
     EXPECT_EQ(reparsed_program.get_modules().size(), program.get_modules().size());
 }
@@ -369,7 +369,7 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), repository);
+    const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), *repository);
     ASSERT_EQ(program.get_modules().size(), 5);
 
     auto search_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
@@ -425,7 +425,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
       )
     ))";
 
-    const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), repository);
+    const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
     ASSERT_EQ(module.get_memory_transitions().size(), 3);
 
     const auto load_rules = module.get_rules(module.get_memory_transitions()[0].source, module.get_memory_transitions()[0].target);
@@ -534,7 +534,7 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
     auto dl_repository = dl_repository_factory.create_shared(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto empty = kr::ps::ext::dl::ModuleFactory::create_empty(repository);
+    const auto empty = kr::ps::ext::dl::ModuleFactory::create_empty(*repository);
     EXPECT_EQ(empty.get_name(), "empty");
     EXPECT_EQ(empty.get_entry_memory_state().get_name(), "m0");
     EXPECT_EQ(empty.get_memory_states().size(), 1);
@@ -560,10 +560,10 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
     EXPECT_NE(blocks_description.find("(module \"blocks\""), std::string::npos);
     EXPECT_NE(blocks_description.find("(:callee \"tower\")"), std::string::npos);
 
-    const auto on = kr::ps::ext::dl::ModuleFactory::create_on_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), repository);
-    const auto on_table = kr::ps::ext::dl::ModuleFactory::create_on_table_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), repository);
-    const auto tower = kr::ps::ext::dl::ModuleFactory::create_tower_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), repository);
-    const auto blocks = kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), repository);
+    const auto on = kr::ps::ext::dl::ModuleFactory::create_on_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), *repository);
+    const auto on_table = kr::ps::ext::dl::ModuleFactory::create_on_table_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), *repository);
+    const auto tower = kr::ps::ext::dl::ModuleFactory::create_tower_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), *repository);
+    const auto blocks = kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), *repository);
     EXPECT_EQ(on.get_name(), "on");
     EXPECT_EQ(on_table.get_name(), "on-table");
     EXPECT_EQ(tower.get_name(), "tower");
@@ -571,7 +571,7 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
 
     const auto selected_on = kr::ps::ext::dl::ModuleFactory::create(kr::ps::ext::dl::ModuleSpecification::ON_BONET_ET_AL_ICAPS2024,
                                                                     planning_task.get_domain().get_domain(),
-                                                                    repository);
+                                                                    *repository);
     EXPECT_EQ(selected_on.get_name(), "on");
 
     const auto descriptions = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_descriptions();
@@ -581,7 +581,7 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
     EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[2]).name, "tower");
     EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[3]).name, "blocks");
 
-    const auto modules = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_modules(planning_task.get_domain().get_domain(), repository);
+    const auto modules = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_modules(planning_task.get_domain().get_domain(), *repository);
     ASSERT_EQ(modules.size(), 4);
     EXPECT_EQ(modules[0].get_name(), "on");
     EXPECT_EQ(modules[1].get_name(), "on-table");
@@ -594,7 +594,7 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
     ASSERT_EQ(program_description.modules.size(), 5);
     EXPECT_EQ(program_description.modules.front().name, "root");
 
-    const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), repository);
+    const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), *repository);
     EXPECT_EQ(program.get_entry_module().get_name(), "root");
     ASSERT_EQ(program.get_modules().size(), 5);
     EXPECT_EQ(program.get_modules()[0].get_name(), "root");
@@ -618,16 +618,16 @@ TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)
     auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto caller_entry = create_memory_state(repository, "caller_entry");
-    const auto caller_return = create_memory_state(repository, "caller_return");
-    const auto callee_entry = create_memory_state(repository, "callee_entry");
-    const auto caller = create_module(repository, "caller", caller_entry, { caller_entry, caller_return });
-    const auto callee = create_module(repository, "callee", callee_entry, { callee_entry });
+    const auto caller_entry = create_memory_state(*repository, "caller_entry");
+    const auto caller_return = create_memory_state(*repository, "caller_return");
+    const auto callee_entry = create_memory_state(*repository, "callee_entry");
+    const auto caller = create_module(*repository, "caller", caller_entry, { caller_entry, caller_return });
+    const auto callee = create_module(*repository, "callee", callee_entry, { callee_entry });
 
     auto builder = kr::dl::semantics::Builder();
     auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
     auto denotation_repository = denotation_repository_factory.create();
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context.successor_generator->get_initial_node().get_state(),
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
                                                                 caller,
                                                                 builder,
                                                                 denotation_repository);
@@ -667,9 +667,9 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto source = create_memory_state(repository, "source");
-    const auto target = create_memory_state(repository, "target");
-    const auto reg = create_register(repository, "x", 0);
+    const auto source = create_memory_state(*repository, "source");
+    const auto target = create_memory_state(*repository, "target");
+    const auto reg = create_register(*repository, "x", 0);
     const auto top_concept = create_top_concept(*dl_repository);
 
     auto load_data = tyr::Data<kr::ps::ext::Rule<kr::ps::ext::LoadTag>>();
@@ -678,10 +678,10 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     load_data.load_concept = top_concept.get_index();
     load_data.reg = reg.get_index();
     kr::ps::ext::canonicalize(load_data);
-    const auto load = repository.get_or_create(load_data).first;
+    const auto load = repository->get_or_create(load_data).first;
 
     auto variant_data = tyr::Data<kr::ps::ext::RuleVariant>(load.get_index());
-    const auto variant = repository.get_or_create(variant_data).first;
+    const auto variant = repository->get_or_create(variant_data).first;
 
     auto module_data = tyr::Data<kr::ps::ext::Module>(std::string("module"));
     module_data.entry_memory_state = source.get_index();
@@ -694,7 +694,7 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     transition.rules.push_back(variant.get_index());
     module_data.memory_transitions.push_back(transition);
     kr::ps::ext::canonicalize(module_data);
-    const auto module = repository.get_or_create(module_data).first;
+    const auto module = repository->get_or_create(module_data).first;
 
     const auto formatted = fmt::format("{}", module);
     EXPECT_NE(formatted.find("(module \"module\""), std::string::npos);
@@ -704,7 +704,7 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     auto builder = kr::dl::semantics::Builder();
     auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
     auto denotation_repository = denotation_repository_factory.create();
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context.successor_generator->get_initial_node().get_state(),
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
                                                                 module,
                                                                 builder,
                                                                 denotation_repository);
@@ -736,19 +736,19 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto caller_entry = create_memory_state(repository, "caller_entry");
-    const auto caller_return = create_memory_state(repository, "caller_return");
-    const auto callee_entry = create_memory_state(repository, "callee_entry");
-    const auto caller = create_module(repository, "caller", caller_entry, { caller_entry, caller_return });
+    const auto caller_entry = create_memory_state(*repository, "caller_entry");
+    const auto caller_return = create_memory_state(*repository, "caller_return");
+    const auto callee_entry = create_memory_state(*repository, "callee_entry");
+    const auto caller = create_module(*repository, "caller", caller_entry, { caller_entry, caller_return });
 
     auto concept_arg_data = tyr::Data<kr::ps::ext::Argument<kr::dl::ConceptTag>>(std::string("x"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0));
-    const auto concept_arg = repository.get_or_create(concept_arg_data).first;
+    const auto concept_arg = repository->get_or_create(concept_arg_data).first;
     auto role_arg_data = tyr::Data<kr::ps::ext::Argument<kr::dl::RoleTag>>(std::string("r"), kr::dl::ArgumentIdentifier<kr::dl::RoleTag>(0));
-    const auto role_arg = repository.get_or_create(role_arg_data).first;
+    const auto role_arg = repository->get_or_create(role_arg_data).first;
     auto boolean_arg_data = tyr::Data<kr::ps::ext::Argument<kr::dl::BooleanTag>>(std::string("b"), kr::dl::ArgumentIdentifier<kr::dl::BooleanTag>(0));
-    const auto boolean_arg = repository.get_or_create(boolean_arg_data).first;
+    const auto boolean_arg = repository->get_or_create(boolean_arg_data).first;
     auto numerical_arg_data = tyr::Data<kr::ps::ext::Argument<kr::dl::NumericalTag>>(std::string("n"), kr::dl::ArgumentIdentifier<kr::dl::NumericalTag>(0));
-    const auto numerical_arg = repository.get_or_create(numerical_arg_data).first;
+    const auto numerical_arg = repository->get_or_create(numerical_arg_data).first;
 
     auto callee_data = tyr::Data<kr::ps::ext::Module>(std::string("callee"));
     callee_data.entry_memory_state = callee_entry.get_index();
@@ -758,7 +758,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     callee_data.boolean_arguments.push_back(boolean_arg.get_index());
     callee_data.numerical_arguments.push_back(numerical_arg.get_index());
     kr::ps::ext::canonicalize(callee_data);
-    const auto callee = repository.get_or_create(callee_data).first;
+    const auto callee = repository->get_or_create(callee_data).first;
 
     const auto top_concept = create_top_concept(*dl_repository);
     const auto universal_role = kr::ps::ext::dl::parse_role("(r_universal)", planning_task.get_domain().get_domain(), *dl_repository);
@@ -778,12 +778,12 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     call_data.arguments.push_back(true_boolean.get_index());
     call_data.arguments.push_back(object_count.get_index());
     kr::ps::ext::canonicalize(call_data);
-    const auto call = repository.get_or_create(call_data).first;
+    const auto call = repository->get_or_create(call_data).first;
 
     auto builder = kr::dl::semantics::Builder();
     auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
     auto denotation_repository = denotation_repository_factory.create();
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context.successor_generator->get_initial_node().get_state(),
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
                                                                 caller,
                                                                 builder,
                                                                 denotation_repository);
@@ -834,23 +834,23 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto caller_entry = create_memory_state(repository, "caller_entry");
-    const auto caller_return = create_memory_state(repository, "caller_return");
-    const auto callee_entry = create_memory_state(repository, "callee_entry");
-    const auto caller = create_module(repository, "caller", caller_entry, { caller_entry, caller_return });
-    const auto callee = create_module(repository, "callee", callee_entry, { callee_entry });
+    const auto caller_entry = create_memory_state(*repository, "caller_entry");
+    const auto caller_return = create_memory_state(*repository, "caller_return");
+    const auto callee_entry = create_memory_state(*repository, "callee_entry");
+    const auto caller = create_module(*repository, "caller", caller_entry, { caller_entry, caller_return });
+    const auto callee = create_module(*repository, "callee", callee_entry, { callee_entry });
 
     auto call_data = tyr::Data<kr::ps::ext::Rule<kr::ps::ext::CallTag>>();
     call_data.source = caller_entry.get_index();
     call_data.target = caller_return.get_index();
     call_data.callee_name = "callee";
     kr::ps::ext::canonicalize(call_data);
-    const auto call = repository.get_or_create(call_data).first;
+    const auto call = repository->get_or_create(call_data).first;
 
     auto builder = kr::dl::semantics::Builder();
     auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
     auto denotation_repository = denotation_repository_factory.create();
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context.successor_generator->get_initial_node().get_state(),
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
                                                                 caller,
                                                                 builder,
                                                                 denotation_repository,
@@ -883,8 +883,8 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto source = create_memory_state(repository, "source");
-    const auto target = create_memory_state(repository, "target");
+    const auto source = create_memory_state(*repository, "source");
+    const auto target = create_memory_state(*repository, "target");
     const auto top_concept = create_top_concept(*dl_repository);
 
     auto do_data = tyr::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("pick"));
@@ -894,21 +894,21 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     do_data.arguments.push_back(top_concept.get_index());
     do_data.arguments.push_back(top_concept.get_index());
     kr::ps::ext::canonicalize(do_data);
-    const auto rule = repository.get_or_create(do_data).first;
+    const auto rule = repository->get_or_create(do_data).first;
 
-    const auto module = create_module(repository, "module", source, { source, target });
+    const auto module = create_module(*repository, "module", source, { source, target });
     auto builder = kr::dl::semantics::Builder();
     auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
     auto denotation_repository = denotation_repository_factory.create();
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context.successor_generator->get_initial_node().get_state(),
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
                                                                 module,
                                                                 builder,
                                                                 denotation_repository);
 
-    const auto initial_node = search_context.successor_generator->get_initial_node();
+    const auto initial_node = search_context->successor_generator->get_initial_node();
     const auto initial_state = context.get_state().get_index();
-    const auto successors = search_context.successor_generator->get_labeled_successor_nodes(initial_node);
-    const auto selected = kr::ps::ext::select_do_successor(rule, context, successors);
+    const auto successors = search_context->successor_generator->get_labeled_successor_nodes(initial_node);
+    const auto selected = kr::ps::ext::detail::select_do_successor(rule, context, successors);
     ASSERT_TRUE(selected);
     EXPECT_EQ(selected->label.get_action().get_name(), "pick");
 
@@ -936,9 +936,9 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto source = create_memory_state(repository, "source");
-    const auto move_target = create_memory_state(repository, "move_target");
-    const auto pick_target = create_memory_state(repository, "pick_target");
+    const auto source = create_memory_state(*repository, "source");
+    const auto move_target = create_memory_state(*repository, "move_target");
+    const auto pick_target = create_memory_state(*repository, "pick_target");
     const auto top_concept = create_top_concept(*dl_repository);
 
     auto move_data = tyr::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("move"));
@@ -947,9 +947,9 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     move_data.arguments.push_back(top_concept.get_index());
     move_data.arguments.push_back(top_concept.get_index());
     kr::ps::ext::canonicalize(move_data);
-    const auto move_rule = repository.get_or_create(move_data).first;
+    const auto move_rule = repository->get_or_create(move_data).first;
     auto move_variant_data = tyr::Data<kr::ps::ext::RuleVariant>(move_rule.get_index());
-    const auto move_variant = repository.get_or_create(move_variant_data).first;
+    const auto move_variant = repository->get_or_create(move_variant_data).first;
 
     auto pick_data = tyr::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("pick"));
     pick_data.source = source.get_index();
@@ -958,9 +958,9 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     pick_data.arguments.push_back(top_concept.get_index());
     pick_data.arguments.push_back(top_concept.get_index());
     kr::ps::ext::canonicalize(pick_data);
-    const auto pick_rule = repository.get_or_create(pick_data).first;
+    const auto pick_rule = repository->get_or_create(pick_data).first;
     auto pick_variant_data = tyr::Data<kr::ps::ext::RuleVariant>(pick_rule.get_index());
-    const auto pick_variant = repository.get_or_create(pick_variant_data).first;
+    const auto pick_variant = repository->get_or_create(pick_variant_data).first;
 
     auto module_data = tyr::Data<kr::ps::ext::Module>(std::string("module"));
     module_data.entry_memory_state = source.get_index();
@@ -981,18 +981,18 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     module_data.memory_transitions.push_back(move_transition);
 
     kr::ps::ext::canonicalize(module_data);
-    const auto module = repository.get_or_create(module_data).first;
+    const auto module = repository->get_or_create(module_data).first;
 
     auto builder = kr::dl::semantics::Builder();
     auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
     auto denotation_repository = denotation_repository_factory.create();
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context.successor_generator->get_initial_node().get_state(),
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
                                                                 module,
                                                                 builder,
                                                                 denotation_repository);
 
-    const auto initial_node = search_context.successor_generator->get_initial_node();
-    const auto successors = search_context.successor_generator->get_labeled_successor_nodes(initial_node);
+    const auto initial_node = search_context->successor_generator->get_initial_node();
+    const auto successors = search_context->successor_generator->get_labeled_successor_nodes(initial_node);
 
     EXPECT_EQ(kr::ps::ext::detail::execute_next_immediate_external_rule(context, successors), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_memory_state().get_index(), move_target.get_index());
@@ -1016,14 +1016,14 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     auto dl_repository = dl_repository_factory.create_shared(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto source = create_memory_state(repository, "source");
-    const auto target = create_memory_state(repository, "target");
+    const auto source = create_memory_state(*repository, "source");
+    const auto target = create_memory_state(*repository, "target");
     const auto top_concept = create_top_concept(*dl_repository);
 
-    const auto empty_module = create_module(repository, "empty", source, { source });
+    const auto empty_module = create_module(*repository, "empty", source, { source });
 
     auto proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
-    const auto empty_program = create_module_program(repository, empty_module, { empty_module });
+    const auto empty_program = create_module_program(*repository, empty_module, { empty_module });
     const auto empty_proof = kr::ps::ext::prove_solution(search_context, empty_program, proof_options);
     EXPECT_EQ(empty_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(empty_proof.graph);
@@ -1036,11 +1036,11 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     load_data.source = source.get_index();
     load_data.target = source.get_index();
     load_data.load_concept = top_concept.get_index();
-    load_data.reg = create_register(repository, "x", 0).get_index();
+    load_data.reg = create_register(*repository, "x", 0).get_index();
     kr::ps::ext::canonicalize(load_data);
-    const auto load = repository.get_or_create(load_data).first;
+    const auto load = repository->get_or_create(load_data).first;
     auto load_variant_data = tyr::Data<kr::ps::ext::RuleVariant>(load.get_index());
-    const auto load_variant = repository.get_or_create(load_variant_data).first;
+    const auto load_variant = repository->get_or_create(load_variant_data).first;
     auto load_module_data = tyr::Data<kr::ps::ext::Module>(std::string("load-loop"));
     load_module_data.entry_memory_state = source.get_index();
     load_module_data.memory_states.push_back(source.get_index());
@@ -1051,9 +1051,9 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     load_transition.rules.push_back(load_variant.get_index());
     load_module_data.memory_transitions.push_back(load_transition);
     kr::ps::ext::canonicalize(load_module_data);
-    const auto load_module = repository.get_or_create(load_module_data).first;
+    const auto load_module = repository->get_or_create(load_module_data).first;
     auto load_proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
-    const auto load_program = create_module_program(repository, load_module, { load_module });
+    const auto load_program = create_module_program(*repository, load_module, { load_module });
     const auto load_proof = kr::ps::ext::prove_solution(search_context, load_program, load_proof_options);
     EXPECT_EQ(load_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(load_proof.graph);
@@ -1061,21 +1061,21 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     EXPECT_FALSE(load_proof.cycle.empty());
 
     auto concept_arg_data = tyr::Data<kr::ps::ext::Argument<kr::dl::ConceptTag>>(std::string("x"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0));
-    const auto concept_arg = repository.get_or_create(concept_arg_data).first;
+    const auto concept_arg = repository->get_or_create(concept_arg_data).first;
     auto callee_data = tyr::Data<kr::ps::ext::Module>(std::string("callee"));
     callee_data.entry_memory_state = target.get_index();
     callee_data.memory_states.push_back(target.get_index());
     callee_data.concept_arguments.push_back(concept_arg.get_index());
     kr::ps::ext::canonicalize(callee_data);
-    const auto callee = repository.get_or_create(callee_data).first;
+    const auto callee = repository->get_or_create(callee_data).first;
     auto call_data = tyr::Data<kr::ps::ext::Rule<kr::ps::ext::CallTag>>();
     call_data.source = source.get_index();
     call_data.target = target.get_index();
     call_data.callee = callee.get_index();
     kr::ps::ext::canonicalize(call_data);
-    const auto call = repository.get_or_create(call_data).first;
+    const auto call = repository->get_or_create(call_data).first;
     auto call_variant_data = tyr::Data<kr::ps::ext::RuleVariant>(call.get_index());
-    const auto call_variant = repository.get_or_create(call_variant_data).first;
+    const auto call_variant = repository->get_or_create(call_variant_data).first;
     auto caller_data = tyr::Data<kr::ps::ext::Module>(std::string("caller"));
     caller_data.entry_memory_state = source.get_index();
     caller_data.memory_states.push_back(source.get_index());
@@ -1086,8 +1086,8 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     call_transition.rules.push_back(call_variant.get_index());
     caller_data.memory_transitions.push_back(call_transition);
     kr::ps::ext::canonicalize(caller_data);
-    const auto caller = repository.get_or_create(caller_data).first;
-    const auto caller_program = create_module_program(repository, caller, { caller, callee });
+    const auto caller = repository->get_or_create(caller_data).first;
+    const auto caller_program = create_module_program(*repository, caller, { caller, callee });
     const auto caller_proof = kr::ps::ext::prove_solution(search_context, caller_program);
     EXPECT_EQ(caller_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(caller_proof.graph);
@@ -1097,9 +1097,9 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     do_data.source = source.get_index();
     do_data.target = target.get_index();
     kr::ps::ext::canonicalize(do_data);
-    const auto do_rule = repository.get_or_create(do_data).first;
+    const auto do_rule = repository->get_or_create(do_data).first;
     auto do_variant_data = tyr::Data<kr::ps::ext::RuleVariant>(do_rule.get_index());
-    const auto do_variant = repository.get_or_create(do_variant_data).first;
+    const auto do_variant = repository->get_or_create(do_variant_data).first;
     auto do_module_data = tyr::Data<kr::ps::ext::Module>(std::string("no-action"));
     do_module_data.entry_memory_state = source.get_index();
     do_module_data.memory_states.push_back(source.get_index());
@@ -1110,9 +1110,9 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     do_transition.rules.push_back(do_variant.get_index());
     do_module_data.memory_transitions.push_back(do_transition);
     kr::ps::ext::canonicalize(do_module_data);
-    const auto do_module = repository.get_or_create(do_module_data).first;
+    const auto do_module = repository->get_or_create(do_module_data).first;
 
-    const auto do_program = create_module_program(repository, do_module, { do_module });
+    const auto do_program = create_module_program(*repository, do_module, { do_module });
     const auto do_proof = kr::ps::ext::prove_solution(search_context, do_program);
     EXPECT_EQ(do_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(do_proof.graph);

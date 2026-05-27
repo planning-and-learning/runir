@@ -18,3 +18,4 @@
 - Extended module parser AST source-offset tracking through module lowering, so missing program entries, memory states, registers, and feature references are rejected with input offsets before execution.
 - Added an x3-backed S-expression syntax preflight for module parser inputs so malformed parentheses/quotes report through Boost Spirit x3 error-handler positions before structural validation.
 - Moved the module-program proof search loop into `kr/ps/ext/detail/proof_search.hpp`, leaving public `prove_solution` as a thin paper-level wrapper around detail execution/proof machinery.
+- Made `TaskSearchContext` construction factory-only via `TaskSearchContext::create(...)`, changed `TaskSearchContextList` to hold shared pointers, and updated C++/Python call sites to pass shared context owners.
