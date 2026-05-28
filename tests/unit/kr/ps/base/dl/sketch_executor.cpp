@@ -70,9 +70,12 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_TRUE(result.cycle.empty()) << test_case.domain;
         EXPECT_GT(result.graph->get_num_vertices(), 0) << test_case.domain;
 
-        const auto search_result = kr::ps::base::find_solution(context, sketch);
-        EXPECT_EQ(search_result.status, p::SearchStatus::SOLVED) << test_case.domain;
-        EXPECT_TRUE(search_result.plan) << test_case.domain;
+        const auto fragment = kr::ps::base::find_solution(context, sketch);
+        EXPECT_TRUE(fragment.is_successful()) << test_case.domain;
+        ASSERT_TRUE(fragment.graph) << test_case.domain;
+        EXPECT_GT(fragment.graph->get_num_vertices(), 0) << test_case.domain;
+        EXPECT_EQ(fragment.graph->get_num_edges() + 1, fragment.graph->get_num_vertices()) << test_case.domain;
+        EXPECT_LE(fragment.graph->get_num_vertices(), result.graph->get_num_vertices()) << test_case.domain;
     }
 }
 

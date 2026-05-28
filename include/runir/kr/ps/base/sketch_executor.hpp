@@ -50,7 +50,7 @@ auto prove_solution(runir::datasets::TaskSearchContextPtr<Kind> context,
 template<tyr::planning::TaskKind Kind>
 auto find_solution(runir::datasets::TaskSearchContextPtr<Kind> context,
                    SketchView sketch,
-                   const SketchSearchOptions<Kind>& options = SketchSearchOptions<Kind>()) -> tyr::planning::SearchResult<Kind>;
+                   const SketchSearchOptions<Kind>& options = SketchSearchOptions<Kind>()) -> SketchProofResults<Kind>;
 
 }  // namespace runir::kr::ps::base
 

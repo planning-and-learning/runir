@@ -626,8 +626,7 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     search_options.max_arity = 1;
 
     const auto search_result = kr::ps::ext::find_solution(search_context, program, search_options);
-    EXPECT_EQ(search_result.status, p::SearchStatus::SOLVED);
-    ASSERT_TRUE(search_result.goal_node.has_value());
+    EXPECT_TRUE(search_result.is_successful());
     ASSERT_TRUE(search_result.plan.has_value());
     EXPECT_EQ(search_result.plan->get_length(), 4);
 

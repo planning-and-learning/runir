@@ -17,12 +17,12 @@ template auto prove_solution<tyr::planning::LiftedTag>(datasets::TaskSearchConte
 template auto find_solution<tyr::planning::GroundTag>(datasets::TaskSearchContextPtr<tyr::planning::GroundTag> context,
                                                       ModuleProgramView program,
                                                       const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options)
-    -> tyr::planning::SearchResult<tyr::planning::GroundTag>;
+    -> ModuleProgramProofResults<tyr::planning::GroundTag>;
 
 template auto find_solution<tyr::planning::LiftedTag>(datasets::TaskSearchContextPtr<tyr::planning::LiftedTag> context,
                                                       ModuleProgramView program,
                                                       const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options)
-    -> tyr::planning::SearchResult<tyr::planning::LiftedTag>;
+    -> ModuleProgramProofResults<tyr::planning::LiftedTag>;
 
 }  // namespace runir::kr::ps::ext
 #endif

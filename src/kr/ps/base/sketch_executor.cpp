@@ -17,12 +17,12 @@ prove_solution<tyr::planning::LiftedTag>(datasets::TaskSearchContextPtr<tyr::pla
 template auto
 find_solution<tyr::planning::GroundTag>(datasets::TaskSearchContextPtr<tyr::planning::GroundTag> context,
                                         SketchView sketch,
-                                        const SketchSearchOptions<tyr::planning::GroundTag>& options) -> tyr::planning::SearchResult<tyr::planning::GroundTag>;
+                                        const SketchSearchOptions<tyr::planning::GroundTag>& options) -> SketchProofResults<tyr::planning::GroundTag>;
 
 template auto
 find_solution<tyr::planning::LiftedTag>(datasets::TaskSearchContextPtr<tyr::planning::LiftedTag> context,
                                         SketchView sketch,
-                                        const SketchSearchOptions<tyr::planning::LiftedTag>& options) -> tyr::planning::SearchResult<tyr::planning::LiftedTag>;
+                                        const SketchSearchOptions<tyr::planning::LiftedTag>& options) -> SketchProofResults<tyr::planning::LiftedTag>;
 
 }  // namespace runir::kr::ps::base
 #endif

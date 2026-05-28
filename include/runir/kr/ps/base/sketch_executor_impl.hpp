@@ -16,6 +16,7 @@
 #include <stdexcept>
 #include <tyr/planning/algorithms/brfs/event_handler.hpp>
 #include <tyr/planning/algorithms/iw.hpp>
+#include <tyr/planning/algorithms/siw.hpp>
 #include <utility>
 
 namespace runir::kr::ps::base
@@ -239,8 +240,12 @@ public:
 
 }  // namespace detail
 
+namespace detail
+{
+
 template<tyr::planning::TaskKind Kind>
-auto prove_solution(datasets::TaskSearchContextPtr<Kind> context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
+auto execute_proof(datasets::TaskSearchContextPtr<Kind> context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options)
+    -> SketchProofResults<Kind>
 {
     const auto& context = *context_owner;
     auto result = SketchProofResults<Kind> {};
@@ -357,12 +362,11 @@ auto prove_solution(datasets::TaskSearchContextPtr<Kind> context_owner, SketchVi
     return std::move(result);
 }
 
+
 template<tyr::planning::TaskKind Kind>
-auto find_solution(datasets::TaskSearchContextPtr<Kind> context_owner,
-                   SketchView sketch,
-                   const SketchSearchOptions<Kind>& options) -> tyr::planning::SearchResult<Kind>
+auto find_siw_solution(const datasets::TaskSearchContext<Kind>& context, SketchView sketch, const SketchSearchOptions<Kind>& options)
+    -> tyr::planning::SearchResult<Kind>
 {
-    const auto& context = *context_owner;
     auto brfs_solver = tyr::planning::brfs::Solver<Kind> { context.task, context.successor_generator, options.brfs_options };
     auto iw_solver = tyr::planning::iw::Solver<Kind> { std::move(brfs_solver), options.max_arity, options.iw_options };
     auto siw_options = options.siw_options;
@@ -373,6 +377,140 @@ auto find_solution(datasets::TaskSearchContextPtr<Kind> context_owner,
         siw_options.goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>::create(*context.task);
 
     return tyr::planning::siw::find_solution(iw_solver, siw_options);
+}
+
+template<tyr::planning::TaskKind Kind>
+auto proof_result_from_siw_solution(datasets::TaskSearchContextPtr<Kind> context_owner,
+                                    SketchView sketch,
+                                    const tyr::planning::SearchResult<Kind>& search_result) -> SketchProofResults<Kind>
+{
+    const auto& context = *context_owner;
+    auto result = SketchProofResults<Kind> {};
+    result.context_owner = std::move(context_owner);
+    auto builder = SketchProofGraphBuilder<Kind> {};
+    auto state_to_vertex = tyr::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
+    auto task_goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
+    auto sketch_goal_strategy = SketchGoalStrategy<Kind>(sketch);
+    const auto initial_node = context.successor_generator->get_initial_node();
+    const auto initial_state = initial_node.get_state();
+    const auto static_goal_satisfied = task_goal_strategy.is_static_goal_satisfied(*context.task);
+
+    auto is_task_goal = [&](const tyr::planning::StateView<Kind>& state)
+    { return static_goal_satisfied && task_goal_strategy.is_dynamic_goal_satisfied(initial_state, state); };
+
+    auto add_vertex = [&](const tyr::planning::StateView<Kind>& state)
+    {
+        const auto goal = is_task_goal(state);
+        const auto vertex = builder.add_vertex(datasets::AnnotatedStateGraphVertexLabel<Kind> { state,
+                                                                                                goal ? tyr::float_t(0)
+                                                                                                     : std::numeric_limits<tyr::float_t>::infinity(),
+                                                                                                tyr::EqualTo<tyr::planning::StateView<Kind>> {}(state,
+                                                                                                                                                 initial_state),
+                                                                                                goal,
+                                                                                                true,
+                                                                                                false });
+        state_to_vertex.emplace(state, vertex);
+        return vertex;
+    };
+
+    auto current_node = initial_node;
+    auto current_vertex = add_vertex(initial_state);
+
+    auto finish = [&](SketchProofStatus status)
+    {
+        result.status = status;
+        auto graph = std::make_shared<SketchProofGraph<Kind>>(std::move(builder));
+        if (result.cycle.empty())
+            result.cycle = detail::find_cycle(*graph);
+        if (result.status == SketchProofStatus::SUCCESS && !result.cycle.empty())
+            result.status = SketchProofStatus::FAILURE;
+        result.graph = std::move(graph);
+        return std::move(result);
+    };
+
+    switch (search_result.status)
+    {
+        case tyr::planning::SearchStatus::SOLVED:
+            break;
+        case tyr::planning::SearchStatus::OUT_OF_TIME:
+            return finish(SketchProofStatus::OUT_OF_TIME);
+        case tyr::planning::SearchStatus::OUT_OF_STATES:
+        case tyr::planning::SearchStatus::OUT_OF_MEMORY:
+            return finish(SketchProofStatus::OUT_OF_STATES);
+        case tyr::planning::SearchStatus::EXHAUSTED:
+        case tyr::planning::SearchStatus::FAILED:
+        case tyr::planning::SearchStatus::UNSOLVABLE:
+        case tyr::planning::SearchStatus::IN_PROGRESS:
+        case tyr::planning::SearchStatus::CYCLE:
+            result.open_states.push_back(current_vertex);
+            return finish(SketchProofStatus::FAILURE);
+    }
+
+    if (!search_result.goal_node || !search_result.plan)
+    {
+        result.open_states.push_back(current_vertex);
+        return finish(SketchProofStatus::FAILURE);
+    }
+
+    const auto& suffix = search_result.plan->get_labeled_succ_nodes();
+    size_t segment_start = 0;
+    for (size_t index = 0; index < suffix.size(); ++index)
+    {
+        const auto& step = suffix[index];
+        const auto target_state = step.node.get_state();
+        const auto rule = sketch_goal_strategy.find_compatible_rule(current_node.get_state(), target_state);
+        if (!rule)
+            continue;
+
+        const auto segment_length = index - segment_start + 1;
+        const auto edge_label = SketchProofEdgeLabel { datasets::StateGraphEdgeLabel { suffix[segment_start].label, static_cast<tyr::float_t>(segment_length) },
+                                                       *rule };
+
+        if (const auto it = state_to_vertex.find(target_state); it != state_to_vertex.end())
+        {
+            builder.add_directed_edge(current_vertex, it->second, edge_label);
+            result.cycle = graphs::VertexIndexList { it->second, current_vertex, it->second };
+            return finish(SketchProofStatus::FAILURE);
+        }
+
+        const auto target_vertex = add_vertex(target_state);
+        builder.add_directed_edge(current_vertex, target_vertex, edge_label);
+        current_node = step.node;
+        current_vertex = target_vertex;
+        segment_start = index + 1;
+    }
+
+    if (!is_task_goal(current_node.get_state()))
+    {
+        result.open_states.push_back(current_vertex);
+        return finish(SketchProofStatus::FAILURE);
+    }
+
+    return finish(SketchProofStatus::SUCCESS);
+}
+
+template<tyr::planning::TaskKind Kind>
+auto execute_greedy_solution(datasets::TaskSearchContextPtr<Kind> context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options)
+    -> SketchProofResults<Kind>
+{
+    const auto search_result = find_siw_solution(*context_owner, sketch, options);
+    return proof_result_from_siw_solution(std::move(context_owner), sketch, search_result);
+}
+
+}  // namespace detail
+
+template<tyr::planning::TaskKind Kind>
+auto prove_solution(datasets::TaskSearchContextPtr<Kind> context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
+{
+    return detail::execute_proof(std::move(context_owner), sketch, options);
+}
+
+template<tyr::planning::TaskKind Kind>
+auto find_solution(datasets::TaskSearchContextPtr<Kind> context_owner,
+                   SketchView sketch,
+                   const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
+{
+    return detail::execute_greedy_solution(std::move(context_owner), sketch, options);
 }
 
 }  // namespace runir::kr::ps::base

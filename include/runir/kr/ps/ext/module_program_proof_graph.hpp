@@ -38,7 +38,7 @@ struct ExtendedState
 
     auto identifying_members() const noexcept
     {
-        return std::tie(annotated_state, memory_state, concept_registers, role_registers);
+        return std::tie(annotated_state.state, memory_state, concept_registers, role_registers);
     }
 };
 

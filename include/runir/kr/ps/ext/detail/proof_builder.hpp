@@ -2,7 +2,6 @@
 #define RUNIR_KR_PS_EXT_DETAIL_PROOF_BUILDER_HPP_
 
 #include "runir/graphs/algorithms.hpp"
-#include "runir/kr/ps/ext/detail/configuration.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/module_program_executor.hpp"
 
@@ -10,9 +9,9 @@
 #include <limits>
 #include <memory>
 #include <optional>
-#include <string>
+#include <tyr/common/equal_to.hpp>
+#include <tyr/common/hash.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
-#include <unordered_map>
 #include <utility>
 
 namespace runir::kr::ps::ext::detail
@@ -68,7 +67,7 @@ class ModuleProgramProofBuilder
 private:
     ModuleProgramProofResults<Kind> m_result;
     ModuleProgramProofGraphBuilder<Kind> m_builder;
-    std::unordered_map<std::string, graphs::VertexIndex> m_configuration_to_vertex;
+    tyr::UnorderedMap<ModuleProgramProofVertexLabel<Kind>, graphs::VertexIndex> m_vertex_to_index;
     tyr::planning::ConjunctiveGoalStrategy<Kind> m_task_goal_strategy;
     tyr::planning::StateView<Kind> m_initial_state;
     bool m_static_goal_satisfied;
@@ -96,7 +95,7 @@ public:
                               runir::datasets::TaskSearchContextPtr<Kind> context_owner = {}) :
         m_result(),
         m_builder(),
-        m_configuration_to_vertex(),
+        m_vertex_to_index(),
         m_task_goal_strategy(*search_context.task),
         m_initial_state(initial_node.get_state()),
         m_static_goal_satisfied(m_task_goal_strategy.is_static_goal_satisfied(*search_context.task))
@@ -115,13 +114,12 @@ public:
                               bool is_alive,
                               bool is_unsolvable)
     {
-        const auto key = module_program_configuration_key(context, memory_state);
-        if (const auto it = m_configuration_to_vertex.find(key); it != m_configuration_to_vertex.end())
+        auto label = make_vertex_label(context, std::move(memory_state), is_initial, is_alive, is_unsolvable);
+        if (const auto it = m_vertex_to_index.find(label); it != m_vertex_to_index.end())
             return std::pair(it->second, false);
 
-        auto label = make_vertex_label(context, std::move(memory_state), is_initial, is_alive, is_unsolvable);
-        const auto vertex = m_builder.add_vertex(std::move(label));
-        m_configuration_to_vertex.emplace(key, vertex);
+        const auto vertex = m_builder.add_vertex(label);
+        m_vertex_to_index.emplace(std::move(label), vertex);
         return std::pair(vertex, true);
     }
 
@@ -137,6 +135,8 @@ public:
 
     void add_deadend_transition(graphs::EdgeIndex edge) { m_result.deadend_transitions.push_back(edge); }
     void add_open_state(graphs::VertexIndex vertex) { m_result.open_states.push_back(vertex); }
+    void set_final_state(tyr::planning::StateView<Kind> state) { m_result.final_state = std::move(state); }
+    void set_plan(tyr::planning::Plan<Kind> plan) { m_result.plan = std::move(plan); }
 
     auto finish(ModuleProgramProofStatus status) -> ModuleProgramProofResults<Kind>
     {

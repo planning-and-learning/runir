@@ -43,6 +43,8 @@ struct ModuleProgramProofResults
     ModuleProgramProofStatus status = ModuleProgramProofStatus::SUCCESS;
     runir::datasets::TaskSearchContextPtr<Kind> context_owner;
     std::shared_ptr<ModuleProgramProofGraph<Kind>> graph;
+    std::optional<tyr::planning::StateView<Kind>> final_state = std::nullopt;
+    std::optional<tyr::planning::Plan<Kind>> plan = std::nullopt;
     runir::graphs::EdgeIndexList deadend_transitions;
     runir::graphs::VertexIndexList open_states;
     runir::graphs::VertexIndexList cycle;
@@ -58,7 +60,7 @@ auto prove_solution(runir::datasets::TaskSearchContextPtr<Kind> context,
 template<tyr::planning::TaskKind Kind>
 auto find_solution(runir::datasets::TaskSearchContextPtr<Kind> context,
                    ModuleProgramView program,
-                   const ModuleProgramSearchOptions<Kind>& options = ModuleProgramSearchOptions<Kind>()) -> tyr::planning::SearchResult<Kind>;
+                   const ModuleProgramSearchOptions<Kind>& options = ModuleProgramSearchOptions<Kind>()) -> ModuleProgramProofResults<Kind>;
 
 }  // namespace runir::kr::ps::ext
 
