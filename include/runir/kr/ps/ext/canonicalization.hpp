@@ -6,6 +6,7 @@
 #include "runir/kr/ps/ext/effect_data.hpp"
 #include "runir/kr/ps/ext/feature_data.hpp"
 #include "runir/kr/ps/ext/memory_state_data.hpp"
+#include "runir/kr/ps/ext/memory_transition_data.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
 #include "runir/kr/ps/ext/module_program_data.hpp"
 #include "runir/kr/ps/ext/register_data.hpp"
@@ -77,20 +78,12 @@ bool is_canonical(const tyr::Data<Rule<Kind>>& data) noexcept
 
 inline bool is_canonical(const tyr::Data<RuleVariant>&) noexcept { return true; }
 
-inline bool is_canonical(const MemoryTransition& transition) noexcept { return tyr::is_canonical(transition.rules); }
-
-template<typename Transitions>
-bool is_canonical_memory_transitions(const Transitions& transitions) noexcept
-{
-    return std::is_sorted(transitions.begin(), transitions.end(), tyr::Less<MemoryTransition> {})
-           && std::all_of(transitions.begin(), transitions.end(), [](const auto& transition) { return is_canonical(transition); });
-}
+inline bool is_canonical(const tyr::Data<MemoryTransition>& transition) noexcept { return tyr::is_canonical(transition.rules); }
 
 inline bool is_canonical(const tyr::Data<Module>& data) noexcept
 {
     return tyr::is_canonical(data.concept_arguments) && tyr::is_canonical(data.role_arguments) && tyr::is_canonical(data.boolean_arguments)
-           && tyr::is_canonical(data.numerical_arguments) && tyr::is_canonical(data.registers) && tyr::is_canonical(data.memory_states)
-           && is_canonical_memory_transitions(data.memory_transitions);
+           && tyr::is_canonical(data.numerical_arguments) && tyr::is_canonical(data.registers) && tyr::is_canonical(data.memory_states);
 }
 
 inline bool is_canonical(const tyr::Data<ModuleProgram>&) noexcept { return true; }
@@ -156,19 +149,7 @@ void canonicalize(tyr::Data<Rule<Kind>>& data)
 
 inline void canonicalize(tyr::Data<RuleVariant>&) noexcept {}
 
-inline void canonicalize(MemoryTransition& transition) { tyr::canonicalize(transition.rules); }
-
-template<typename Transitions>
-void canonicalize_memory_transitions(Transitions& transitions)
-{
-    for (auto& transition : transitions)
-        canonicalize(transition);
-
-    if (!std::is_sorted(transitions.begin(), transitions.end(), tyr::Less<MemoryTransition> {}))
-        std::sort(transitions.begin(), transitions.end(), tyr::Less<MemoryTransition> {});
-
-    transitions.erase(std::unique(transitions.begin(), transitions.end(), tyr::EqualTo<MemoryTransition> {}), transitions.end());
-}
+inline void canonicalize(tyr::Data<MemoryTransition>& transition) { tyr::canonicalize(transition.rules); }
 
 inline void canonicalize(tyr::Data<Module>& data)
 {
@@ -178,7 +159,6 @@ inline void canonicalize(tyr::Data<Module>& data)
     tyr::canonicalize(data.numerical_arguments);
     tyr::canonicalize(data.registers);
     tyr::canonicalize(data.memory_states);
-    canonicalize_memory_transitions(data.memory_transitions);
 }
 
 inline void canonicalize(tyr::Data<ModuleProgram>&) noexcept {}

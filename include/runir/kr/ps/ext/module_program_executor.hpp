@@ -11,10 +11,7 @@
 #include <optional>
 #include <tyr/planning/algorithms/brfs.hpp>
 #include <tyr/planning/algorithms/iw.hpp>
-#include <tyr/planning/algorithms/siw.hpp>
-#include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/successor_generator.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext
@@ -33,7 +30,6 @@ struct ModuleProgramSearchOptions
 {
     tyr::planning::brfs::Options<Kind> brfs_options;
     tyr::planning::iw::Options<Kind> iw_options;
-    tyr::planning::siw::Options<Kind> siw_options;
     tyr::uint_t max_arity = 0;
 };
 

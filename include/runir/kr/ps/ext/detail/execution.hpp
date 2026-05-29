@@ -102,10 +102,10 @@ LoadExecutionStatus execute_next_load(EvaluationContext<Kind>& context)
     const auto module = context.get_module();
     for (const auto& transition : module.get_memory_transitions())
     {
-        if (transition.source != context.get_memory_state().get_index())
+        if (transition.get_source().get_index() != context.get_memory_state().get_index())
             continue;
 
-        for (auto rule : tyr::make_view(transition.rules, context.get_repository()))
+        for (auto rule : transition.get_rules())
         {
             const auto status = execute_load(rule, context);
             if (status == RuleExecutionStatus::APPLIED)
@@ -202,10 +202,10 @@ std::optional<RuleVariantView> find_matching_sketch_rule_variant(EvaluationConte
     const auto module = context.get_module();
     for (const auto& transition : module.get_memory_transitions())
     {
-        if (transition.source != context.get_memory_state().get_index())
+        if (transition.get_source().get_index() != context.get_memory_state().get_index())
             continue;
 
-        for (auto rule : tyr::make_view(transition.rules, context.get_repository()))
+        for (auto rule : transition.get_rules())
         {
             const auto matches = tyr::visit(
                 [&](auto concrete_rule)
@@ -272,10 +272,10 @@ std::optional<RuleVariantView> find_applicable_sketch_rule(EvaluationContext<Kin
     const auto module = context.get_module();
     for (const auto& transition : module.get_memory_transitions())
     {
-        if (transition.source != context.get_memory_state().get_index())
+        if (transition.get_source().get_index() != context.get_memory_state().get_index())
             continue;
 
-        for (auto rule : tyr::make_view(transition.rules, context.get_repository()))
+        for (auto rule : transition.get_rules())
         {
             const auto applicable = tyr::visit(
                 [&](auto concrete_rule)
@@ -325,10 +325,10 @@ RuleExecutionStatus execute_next_sketch_rule(EvaluationContext<Kind>& context, c
     const auto module = context.get_module();
     for (const auto& transition : module.get_memory_transitions())
     {
-        if (transition.source != context.get_memory_state().get_index())
+        if (transition.get_source().get_index() != context.get_memory_state().get_index())
             continue;
 
-        for (auto rule : tyr::make_view(transition.rules, context.get_repository()))
+        for (auto rule : transition.get_rules())
         {
             const auto status = tyr::visit(
                 [&](auto concrete_rule)
@@ -455,10 +455,10 @@ RuleExecutionStatus execute_next_immediate_external_rule(EvaluationContext<Kind>
     const auto module = context.get_module();
     for (const auto& transition : module.get_memory_transitions())
     {
-        if (transition.source != context.get_memory_state().get_index())
+        if (transition.get_source().get_index() != context.get_memory_state().get_index())
             continue;
 
-        for (auto rule : tyr::make_view(transition.rules, context.get_repository()))
+        for (auto rule : transition.get_rules())
         {
             const auto status = execute_immediate_external_rule(rule, context, successors);
             if (status != RuleExecutionStatus::NOT_APPLICABLE)
@@ -485,10 +485,10 @@ std::optional<RuleVariantView> find_applicable_immediate_external_rule(Evaluatio
     const auto module = context.get_module();
     for (const auto& transition : module.get_memory_transitions())
     {
-        if (transition.source != context.get_memory_state().get_index())
+        if (transition.get_source().get_index() != context.get_memory_state().get_index())
             continue;
 
-        for (auto rule : tyr::make_view(transition.rules, context.get_repository()))
+        for (auto rule : transition.get_rules())
         {
             const auto applicable =
                 tyr::visit([&](auto concrete_rule) { return is_applicable_immediate_external_rule(concrete_rule, context); }, rule.get_variant());

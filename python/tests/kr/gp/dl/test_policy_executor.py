@@ -12,6 +12,8 @@ from pyrunir.kr.dl.base.semantics import (
     syntactic_complexity as dl_syntactic_complexity,
 )
 from pyrunir.kr.ps.base import (
+    GroundSketchProofGraph,
+    SketchProofEdgeLabel,
     SketchProofStatus,
     find_ground_solution,
     prove_ground_solution,
@@ -108,6 +110,11 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
     assert proof_result.deadend_transitions == []
     assert proof_result.open_states == []
     assert proof_result.cycle == []
+    assert isinstance(proof_result.graph, GroundSketchProofGraph)
+    assert proof_result.graph.get_num_vertices() > 0
+    if proof_result.graph.get_num_edges() > 0:
+        edge = next(iter(proof_result.graph.get_edge_indices()))
+        assert isinstance(proof_result.graph.get_edge_property(edge), SketchProofEdgeLabel)
 
     search_result = find_ground_solution(search_context, sketch)
     assert search_result.status == SketchProofStatus.SUCCESS

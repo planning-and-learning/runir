@@ -128,8 +128,10 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
                                                       blocksworld_task.get_domain().get_domain(),
                                                       *blocksworld_repository);
     EXPECT_EQ(blocks.get_name(), "blocks");
-    ASSERT_TRUE(blocks.get_rules(blocks.get_data().memory_transitions[1].source, blocks.get_data().memory_transitions[1].target).has_value());
-    auto call_rule = (*blocks.get_rules(blocks.get_data().memory_transitions[1].source, blocks.get_data().memory_transitions[1].target)).front();
+    ASSERT_GT(blocks.get_memory_transitions().size(), 1);
+    const auto block_rules = blocks.get_memory_transitions()[1].get_rules();
+    ASSERT_FALSE(block_rules.empty());
+    auto call_rule = block_rules.front();
     auto found_call_rule = false;
     tyr::visit(
         [&](auto rule)
@@ -183,8 +185,8 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
     EXPECT_EQ(modules[1].get_name(), "callee");
 
     ASSERT_EQ(modules[0].get_data().memory_transitions.size(), 1);
-    const auto rules = modules[0].get_rules(modules[0].get_data().memory_transitions[0].source, modules[0].get_data().memory_transitions[0].target);
-    ASSERT_TRUE(rules.has_value());
+    const auto rules = modules[0].get_memory_transitions()[0].get_rules();
+    ASSERT_FALSE(rules.empty());
     auto found_call_rule = false;
     tyr::visit(
         [&](auto rule)
@@ -196,7 +198,7 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
                 EXPECT_EQ(rule.get_callee_name(), "callee");
             }
         },
-        rules->front().get_variant());
+        rules.front().get_variant());
     EXPECT_TRUE(found_call_rule) << "Expected call rule.";
 }
 
@@ -689,9 +691,8 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
     const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
     ASSERT_EQ(module.get_memory_transitions().size(), 3);
 
-    const auto load_rules = module.get_rules(module.get_memory_transitions()[0].source, module.get_memory_transitions()[0].target);
-    ASSERT_TRUE(load_rules);
-    ASSERT_EQ(load_rules->size(), 1);
+    const auto load_rules = module.get_memory_transitions()[0].get_rules();
+    ASSERT_EQ(load_rules.size(), 1);
     EXPECT_TRUE(tyr::visit(
         [](auto rule)
         {
@@ -702,15 +703,13 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
             else
                 return false;
         },
-        (*load_rules)[0].get_variant()));
+        load_rules[0].get_variant()));
 
-    const auto sketch_rules = module.get_rules(module.get_memory_transitions()[1].source, module.get_memory_transitions()[1].target);
-    ASSERT_TRUE(sketch_rules);
-    ASSERT_EQ(sketch_rules->size(), 1);
+    const auto sketch_rules = module.get_memory_transitions()[1].get_rules();
+    ASSERT_EQ(sketch_rules.size(), 1);
 
-    const auto do_rules = module.get_rules(module.get_memory_transitions()[2].source, module.get_memory_transitions()[2].target);
-    ASSERT_TRUE(do_rules);
-    ASSERT_EQ(do_rules->size(), 1);
+    const auto do_rules = module.get_memory_transitions()[2].get_rules();
+    ASSERT_EQ(do_rules.size(), 1);
     EXPECT_TRUE(tyr::visit(
         [](auto rule)
         {
@@ -721,7 +720,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
             else
                 return false;
         },
-        (*do_rules)[0].get_variant()));
+        do_rules[0].get_variant()));
 }
 
 TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
@@ -949,11 +948,12 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     module_data.memory_states.push_back(source.get_index());
     module_data.memory_states.push_back(target.get_index());
     module_data.registers.push_back(reg.get_index());
-    auto transition = kr::ps::ext::MemoryTransition();
+    auto transition = tyr::Data<kr::ps::ext::MemoryTransition>();
     transition.source = source.get_index();
     transition.target = target.get_index();
     transition.rules.push_back(variant.get_index());
-    module_data.memory_transitions.push_back(transition);
+    kr::ps::ext::canonicalize(transition);
+    module_data.memory_transitions.push_back(repository->get_or_create(transition).first.get_index());
     kr::ps::ext::canonicalize(module_data);
     const auto module = repository->get_or_create(module_data).first;
 
@@ -1229,17 +1229,19 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     module_data.memory_states.push_back(move_target.get_index());
     module_data.memory_states.push_back(pick_target.get_index());
 
-    auto pick_transition = kr::ps::ext::MemoryTransition();
-    pick_transition.source = source.get_index();
-    pick_transition.target = pick_target.get_index();
-    pick_transition.rules.push_back(pick_variant.get_index());
-    module_data.memory_transitions.push_back(pick_transition);
-
-    auto move_transition = kr::ps::ext::MemoryTransition();
+    auto move_transition = tyr::Data<kr::ps::ext::MemoryTransition>();
     move_transition.source = source.get_index();
     move_transition.target = move_target.get_index();
     move_transition.rules.push_back(move_variant.get_index());
-    module_data.memory_transitions.push_back(move_transition);
+    kr::ps::ext::canonicalize(move_transition);
+    module_data.memory_transitions.push_back(repository->get_or_create(move_transition).first.get_index());
+
+    auto pick_transition = tyr::Data<kr::ps::ext::MemoryTransition>();
+    pick_transition.source = source.get_index();
+    pick_transition.target = pick_target.get_index();
+    pick_transition.rules.push_back(pick_variant.get_index());
+    kr::ps::ext::canonicalize(pick_transition);
+    module_data.memory_transitions.push_back(repository->get_or_create(pick_transition).first.get_index());
 
     kr::ps::ext::canonicalize(module_data);
     const auto module = repository->get_or_create(module_data).first;
@@ -1306,11 +1308,12 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     load_module_data.entry_memory_state = source.get_index();
     load_module_data.memory_states.push_back(source.get_index());
     load_module_data.registers.push_back(load_data.reg);
-    auto load_transition = kr::ps::ext::MemoryTransition();
+    auto load_transition = tyr::Data<kr::ps::ext::MemoryTransition>();
     load_transition.source = source.get_index();
     load_transition.target = source.get_index();
     load_transition.rules.push_back(load_variant.get_index());
-    load_module_data.memory_transitions.push_back(load_transition);
+    kr::ps::ext::canonicalize(load_transition);
+    load_module_data.memory_transitions.push_back(repository->get_or_create(load_transition).first.get_index());
     kr::ps::ext::canonicalize(load_module_data);
     const auto load_module = repository->get_or_create(load_module_data).first;
     auto load_proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
@@ -1341,11 +1344,12 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     caller_data.entry_memory_state = source.get_index();
     caller_data.memory_states.push_back(source.get_index());
     caller_data.memory_states.push_back(target.get_index());
-    auto call_transition = kr::ps::ext::MemoryTransition();
+    auto call_transition = tyr::Data<kr::ps::ext::MemoryTransition>();
     call_transition.source = source.get_index();
     call_transition.target = target.get_index();
     call_transition.rules.push_back(call_variant.get_index());
-    caller_data.memory_transitions.push_back(call_transition);
+    kr::ps::ext::canonicalize(call_transition);
+    caller_data.memory_transitions.push_back(repository->get_or_create(call_transition).first.get_index());
     kr::ps::ext::canonicalize(caller_data);
     const auto caller = repository->get_or_create(caller_data).first;
     const auto caller_program = create_module_program(*repository, caller, { caller, callee });
@@ -1365,11 +1369,12 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     do_module_data.entry_memory_state = source.get_index();
     do_module_data.memory_states.push_back(source.get_index());
     do_module_data.memory_states.push_back(target.get_index());
-    auto do_transition = kr::ps::ext::MemoryTransition();
+    auto do_transition = tyr::Data<kr::ps::ext::MemoryTransition>();
     do_transition.source = source.get_index();
     do_transition.target = target.get_index();
     do_transition.rules.push_back(do_variant.get_index());
-    do_module_data.memory_transitions.push_back(do_transition);
+    kr::ps::ext::canonicalize(do_transition);
+    do_module_data.memory_transitions.push_back(repository->get_or_create(do_transition).first.get_index());
     kr::ps::ext::canonicalize(do_module_data);
     const auto do_module = repository->get_or_create(do_module_data).first;
 

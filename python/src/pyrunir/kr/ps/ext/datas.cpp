@@ -73,18 +73,13 @@ void bind_data(nb::module_& m, const std::string& name)
 
 void bind_datas(nb::module_& m)
 {
-    nb::class_<MemoryTransition>(m, "MemoryTransition")
-        .def(nb::init<>())
-        .def_rw("source", &MemoryTransition::source)
-        .def_rw("target", &MemoryTransition::target)
-        .def_rw("rules", &MemoryTransition::rules);
-
     bind_data<Argument<runir::kr::dl::ConceptTag>>(m, "ConceptArgumentData");
     bind_data<Argument<runir::kr::dl::RoleTag>>(m, "RoleArgumentData");
     bind_data<Argument<runir::kr::dl::BooleanTag>>(m, "BooleanArgumentData");
     bind_data<Argument<runir::kr::dl::NumericalTag>>(m, "NumericalArgumentData");
     bind_data<Register>(m, "RegisterData");
     bind_data<MemoryState>(m, "MemoryStateData");
+    bind_data<MemoryTransition>(m, "MemoryTransitionData");
     bind_data<Module>(m, "ModuleData");
     bind_data<ModuleProgram>(m, "ModuleProgramData");
 

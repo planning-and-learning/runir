@@ -1435,9 +1435,11 @@ ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::Domain
     if (auto callee = repository.find(data))
         modules.emplace(ast.name, callee->get_index());
 
+    auto parsed_transitions = tyr::DataList<MemoryTransition> {};
+    parsed_transitions.reserve(ast.transitions.size());
     for (const auto& transition : ast.transitions)
     {
-        auto parsed_transition = MemoryTransition {};
+        auto parsed_transition = tyr::Data<MemoryTransition> {};
         parsed_transition.source = require_memory_state(memory_states, transition.source, transition.source_name_offset);
         parsed_transition.target = require_memory_state(memory_states, transition.target, transition.target_name_offset);
         for (const auto& rule : transition.rules)
@@ -1453,8 +1455,13 @@ ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::Domain
                                                          numerical_features,
                                                          concept_aliases)
                                                   .get_index());
-        data.memory_transitions.push_back(std::move(parsed_transition));
+        canonicalize(parsed_transition);
+        parsed_transitions.push_back(std::move(parsed_transition));
     }
+
+    tyr::canonicalize(parsed_transitions);
+    for (auto& transition : parsed_transitions)
+        data.memory_transitions.push_back(repository.get_or_create(transition).first.get_index());
 
     return intern(repository, data);
 }

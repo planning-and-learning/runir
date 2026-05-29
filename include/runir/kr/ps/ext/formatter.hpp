@@ -129,7 +129,7 @@ FeatureNames collect_features(tyr::View<tyr::Index<runir::kr::ps::ext::Module>, 
 {
     auto names = FeatureNames {};
     for (const auto& transition : view.get_memory_transitions())
-        for (auto rule : tyr::make_view(transition.rules, view.get_context()))
+        for (auto rule : transition.get_rules())
             collect_features(names, rule);
     return names;
 }
@@ -310,6 +310,12 @@ std::string memory_state(tyr::View<tyr::Index<runir::kr::ps::ext::MemoryState>, 
 }
 
 template<typename C>
+std::string memory_transition(tyr::View<tyr::Index<runir::kr::ps::ext::MemoryTransition>, C> view)
+{
+    return fmt::format("{} -> {}", memory_state(view.get_source()), memory_state(view.get_target()));
+}
+
+template<typename C>
 std::string rule(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::RuleVariant>, C> view)
 {
     auto os = std::ostringstream {};
@@ -376,11 +382,11 @@ std::string module(tyr::View<tyr::Index<runir::kr::ps::ext::Module>, C> view)
             {
                 os << tyr::print_indent
                    << fmt::format("({} {}\n",
-                                  memory_state(tyr::make_view(transition.source, view.get_context())),
-                                  memory_state(tyr::make_view(transition.target, view.get_context())));
+                                  memory_state(transition.get_source()),
+                                  memory_state(transition.get_target()));
                 {
                     tyr::IndentScope rule_scope(os);
-                    for (auto item : tyr::make_view(transition.rules, view.get_context()))
+                    for (auto item : transition.get_rules())
                     {
                         append_rule(os, names, item);
                         os << "\n";
@@ -460,6 +466,16 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::MemoryState>, C>>
 {
     using View = tyr::View<tyr::Index<runir::kr::ps::ext::MemoryState>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::memory_state(view), ctx); }
+};
+
+template<typename C>
+struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::MemoryTransition>, C>> : fmt::formatter<std::string_view>
+{
+    using View = tyr::View<tyr::Index<runir::kr::ps::ext::MemoryTransition>, C>;
+    auto format(View view, format_context& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::memory_transition(view), ctx);
+    }
 };
 
 template<typename FeatureTag, typename C>

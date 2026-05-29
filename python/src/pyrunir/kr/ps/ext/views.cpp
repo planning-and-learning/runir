@@ -36,6 +36,8 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_source", &View::get_source);
     if constexpr (requires(const View& view) { view.get_target(); })
         cls.def("get_target", &View::get_target);
+    if constexpr (requires(const View& view) { view.get_rules(); })
+        cls.def("get_rules", &View::get_rules);
     if constexpr (requires(const View& view) { view.get_conditions(); })
         cls.def("get_conditions", &View::get_conditions);
     if constexpr (requires(const View& view) { view.get_effects(); })
@@ -58,6 +60,8 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_entry_module", &View::get_entry_module);
     if constexpr (requires(const View& view) { view.get_memory_states(); })
         cls.def("get_memory_states", &View::get_memory_states);
+    if constexpr (requires(const View& view) { view.get_memory_transitions(); })
+        cls.def("get_memory_transitions", &View::get_memory_transitions);
     if constexpr (requires(const View& view) { view.get_modules(); })
         cls.def("get_modules", &View::get_modules);
 }
@@ -72,6 +76,7 @@ void bind_views(nb::module_& m)
     bind_view<Argument<runir::kr::dl::NumericalTag>>(m, "NumericalArgument");
     bind_view<Register>(m, "Register");
     bind_view<MemoryState>(m, "MemoryState");
+    bind_view<MemoryTransition>(m, "MemoryTransition");
     bind_view<Module>(m, "Module");
     bind_view<ModuleProgram>(m, "ModuleProgram");
     bind_view<ConditionVariant>(m, "ConditionVariant");

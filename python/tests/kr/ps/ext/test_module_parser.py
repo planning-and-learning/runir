@@ -60,6 +60,12 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
 
     assert [module.get_name() for module in modules] == ["on", "on-table", "tower", "blocks"]
     assert "(module \"blocks\"" in str(modules[3])
+    memory_transitions = modules[3].get_memory_transitions()
+    assert len(memory_transitions) > 0
+    first_transition = memory_transitions[0]
+    assert first_transition.get_source() is not None
+    assert first_transition.get_target() is not None
+    assert len(first_transition.get_rules()) > 0
 
     created_modules = ext.ModuleFactory.create_bonet_et_al_icaps2024_modules(planning_domain, repository)
     assert [module.get_name() for module in created_modules] == ["on", "on-table", "tower", "blocks"]
@@ -214,6 +220,7 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     program = ext.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
     search_options = ext.GroundModuleProgramSearchOptions()
+    assert not hasattr(search_options, "siw_options")
     search_options.max_arity = 1
 
     search_result = ext.find_ground_solution(search_context, program, search_options)
@@ -228,6 +235,11 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     assert proof.is_successful()
     assert proof.graph.get_num_vertices() == 16
     assert proof.graph.get_num_edges() == 15
+    vertex = next(iter(proof.graph.get_vertex_indices()))
+    vertex_label = proof.graph.get_vertex_property(vertex)
+    assert vertex_label.memory_state is not None
+    assert len(vertex_label.concept_registers) > 0
+    assert len(vertex_label.role_registers) > 0
     assert len(proof.deadend_transitions) == 0
     assert len(proof.open_states) == 0
     assert len(proof.cycle) == 0

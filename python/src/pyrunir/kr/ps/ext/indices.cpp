@@ -14,6 +14,7 @@ void bind_indices(nb::module_& m)
     tyr::bind_index<tyr::Index<Argument<runir::kr::dl::NumericalTag>>>(m, "NumericalArgumentIndex");
     tyr::bind_index<tyr::Index<Register>>(m, "RegisterIndex");
     tyr::bind_index<tyr::Index<MemoryState>>(m, "MemoryStateIndex");
+    tyr::bind_index<tyr::Index<MemoryTransition>>(m, "MemoryTransitionIndex");
     tyr::bind_index<tyr::Index<Module>>(m, "ModuleIndex");
     tyr::bind_index<tyr::Index<ModuleProgram>>(m, "ModuleProgramIndex");
     tyr::bind_index<tyr::Index<ConditionVariant>>(m, "ConditionVariantIndex");

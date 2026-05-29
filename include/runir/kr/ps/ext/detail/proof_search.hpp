@@ -32,10 +32,10 @@ auto enumerate_load_steps(const EvaluationContext<Kind>& context) -> std::vector
     const auto module = context.get_module();
     for (const auto& transition : module.get_memory_transitions())
     {
-        if (transition.source != context.get_memory_state().get_index())
+        if (transition.get_source().get_index() != context.get_memory_state().get_index())
             continue;
 
-        for (auto rule_variant : tyr::make_view(transition.rules, context.get_repository()))
+        for (auto rule_variant : transition.get_rules())
         {
             tyr::visit(
                 [&](auto rule)
@@ -99,10 +99,10 @@ auto enumerate_immediate_control_steps(const runir::datasets::TaskSearchContext<
 
     for (const auto& transition : module.get_memory_transitions())
     {
-        if (transition.source != context.get_memory_state().get_index())
+        if (transition.get_source().get_index() != context.get_memory_state().get_index())
             continue;
 
-        for (auto rule_variant : tyr::make_view(transition.rules, context.get_repository()))
+        for (auto rule_variant : transition.get_rules())
         {
             tyr::visit(
                 [&](auto rule)
@@ -176,10 +176,10 @@ auto enumerate_sketch_control_steps(const EvaluationContext<Kind>& context, cons
 
     for (const auto& transition : module.get_memory_transitions())
     {
-        if (transition.source != context.get_memory_state().get_index())
+        if (transition.get_source().get_index() != context.get_memory_state().get_index())
             continue;
 
-        for (auto rule_variant : tyr::make_view(transition.rules, context.get_repository()))
+        for (auto rule_variant : transition.get_rules())
         {
             tyr::visit(
                 [&](auto rule)

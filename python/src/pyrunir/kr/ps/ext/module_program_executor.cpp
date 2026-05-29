@@ -1,7 +1,10 @@
 #include "pyrunir/kr/ps/ext/module.hpp"
 
+#include <nanobind/stl/array.h>
 #include <nanobind/stl/optional.h>
+#include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <pyrunir/graphs/graph.hpp>
 #include <runir/datasets/task_class.hpp>
@@ -30,6 +33,9 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
 
     nb::class_<VertexLabel>(m, (std::string(prefix) + "ModuleProgramProofVertexLabel").c_str())
         .def_prop_ro("state", [](const VertexLabel& label) { return label.extended_state.annotated_state.state; })
+        .def_prop_ro("memory_state", [](const VertexLabel& label) { return label.extended_state.memory_state; })
+        .def_prop_ro("concept_registers", [](const VertexLabel& label) { return label.extended_state.concept_registers; })
+        .def_prop_ro("role_registers", [](const VertexLabel& label) { return label.extended_state.role_registers; })
         .def_prop_ro("module_", [](const VertexLabel& label) { return label.module_; })
         .def_prop_ro("goal_distance", [](const VertexLabel& label) { return label.extended_state.annotated_state.goal_distance; })
         .def_prop_ro("is_initial", [](const VertexLabel& label) { return label.extended_state.annotated_state.is_initial; })
@@ -56,7 +62,6 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
         .def(nb::init<>())
         .def_rw("brfs_options", &Options::brfs_options)
         .def_rw("iw_options", &Options::iw_options)
-        .def_rw("siw_options", &Options::siw_options)
         .def_rw("max_arity", &Options::max_arity);
 }
 
@@ -64,6 +69,11 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
 
 void bind_module_program_executor(nb::module_& m)
 {
+    nb::class_<InternalMemoryState>(m, "InternalMemoryState")
+        .def_ro("value", &InternalMemoryState::value);
+    nb::class_<ExternalMemoryState>(m, "ExternalMemoryState")
+        .def_ro("value", &ExternalMemoryState::value);
+
     nb::class_<ModuleProgramProofEdgeLabel>(m, "ModuleProgramProofEdgeLabel")
         .def_ro("state_transition", &ModuleProgramProofEdgeLabel::state_transition)
         .def_ro("rule", &ModuleProgramProofEdgeLabel::rule);

@@ -17,6 +17,10 @@ struct MemoryState
 {
 };
 
+struct MemoryTransition
+{
+};
+
 template<runir::kr::dl::CategoryTag Category>
 struct Argument
 {

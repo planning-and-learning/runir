@@ -3,11 +3,11 @@
 
 #include "runir/kr/ps/ext/argument_view.hpp"
 #include "runir/kr/ps/ext/memory_state_view.hpp"
+#include "runir/kr/ps/ext/memory_transition_view.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 
 #include <concepts>
-#include <optional>
 #include <tuple>
 #include <tyr/common/types.hpp>
 #include <tyr/common/vector.hpp>
@@ -46,20 +46,9 @@ public:
     }
 
     auto get_registers() const noexcept { return make_view(get_data().registers, *m_context); }
-    auto get_entry_memory_state() const noexcept { return View<Index<runir::kr::ps::ext::MemoryState>, C>(get_data().entry_memory_state, *m_context); }
+    auto get_entry_memory_state() const noexcept { return make_view(get_data().entry_memory_state, *m_context); }
     auto get_memory_states() const noexcept { return make_view(get_data().memory_states, *m_context); }
-    const auto& get_memory_transitions() const noexcept { return get_data().memory_transitions; }
-    auto get_rules(Index<runir::kr::ps::ext::MemoryState> source,
-                   Index<runir::kr::ps::ext::MemoryState> target) const -> std::optional<View<IndexList<runir::kr::ps::ext::RuleVariant>, C>>
-    {
-        using RuleListView = View<IndexList<runir::kr::ps::ext::RuleVariant>, C>;
-        for (const auto& transition : get_data().memory_transitions)
-        {
-            if (transition.source == source && transition.target == target)
-                return RuleListView(transition.rules, *m_context);
-        }
-        return std::nullopt;
-    }
+    auto get_memory_transitions() const noexcept { return make_view(get_data().memory_transitions, *m_context); }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
