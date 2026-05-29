@@ -38,14 +38,6 @@ struct ModuleExecutionOptions
 };
 
 template<tyr::planning::TaskKind Kind>
-struct ModuleExecutionResults
-{
-    ModuleProgramOutcome status = ModuleProgramOutcome::SUCCESS;
-    tyr::planning::StateView<Kind> state;
-    std::optional<tyr::planning::Plan<Kind>> plan = std::nullopt;
-};
-
-template<tyr::planning::TaskKind Kind>
 struct ModuleStepResult
 {
     ModuleProgramOutcome status = ModuleProgramOutcome::FAILURE;
@@ -67,53 +59,6 @@ ModuleExecutionOptions<Kind> execution_options(const ModuleProgramSearchOptions<
     result.iw_options = options.iw_options;
     result.max_arity = options.max_arity;
     return result;
-}
-
-inline ModuleProgramOutcome translate_search_status(tyr::planning::SearchStatus status)
-{
-    switch (status)
-    {
-        case tyr::planning::SearchStatus::SOLVED:
-            return ModuleProgramOutcome::SUCCESS;
-        case tyr::planning::SearchStatus::OUT_OF_TIME:
-            return ModuleProgramOutcome::OUT_OF_TIME;
-        case tyr::planning::SearchStatus::OUT_OF_STATES:
-        case tyr::planning::SearchStatus::OUT_OF_MEMORY:
-            return ModuleProgramOutcome::OUT_OF_STATES;
-        case tyr::planning::SearchStatus::FAILED:
-        case tyr::planning::SearchStatus::UNSOLVABLE:
-        case tyr::planning::SearchStatus::IN_PROGRESS:
-        case tyr::planning::SearchStatus::EXHAUSTED:
-        case tyr::planning::SearchStatus::CYCLE:
-            return ModuleProgramOutcome::SEARCH_FAILURE;
-    }
-
-    return ModuleProgramOutcome::SEARCH_FAILURE;
-}
-
-inline tyr::planning::SearchStatus translate_execution_status(ModuleProgramOutcome status)
-{
-    switch (status)
-    {
-        case ModuleProgramOutcome::SUCCESS:
-            return tyr::planning::SearchStatus::SOLVED;
-        case ModuleProgramOutcome::APPLIED:
-        case ModuleProgramOutcome::RESTORED_CALLER:
-            return tyr::planning::SearchStatus::IN_PROGRESS;
-        case ModuleProgramOutcome::OUT_OF_TIME:
-            return tyr::planning::SearchStatus::OUT_OF_TIME;
-        case ModuleProgramOutcome::OUT_OF_STATES:
-            return tyr::planning::SearchStatus::OUT_OF_STATES;
-        case ModuleProgramOutcome::CYCLE:
-            return tyr::planning::SearchStatus::CYCLE;
-        case ModuleProgramOutcome::FAILURE:
-        case ModuleProgramOutcome::NO_APPLICABLE_ACTION:
-        case ModuleProgramOutcome::MALFORMED_CALL:
-        case ModuleProgramOutcome::SEARCH_FAILURE:
-            return tyr::planning::SearchStatus::FAILED;
-    }
-
-    return tyr::planning::SearchStatus::FAILED;
 }
 
 inline ModuleProgramProofStatus translate_proof_status(ModuleProgramOutcome status)

@@ -27,7 +27,6 @@ from pyrunir.kr.ps.base.dl import (
 )
 from pytyr.common import ExecutionContext
 from pytyr.formalism.planning import Parser, ParserOptions
-from pytyr.planning import SearchStatus
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
 
@@ -111,5 +110,8 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
     assert proof_result.cycle == []
 
     search_result = find_ground_solution(search_context, sketch)
-    assert search_result.status == SearchStatus.SOLVED
-    assert search_result.plan is not None
+    assert search_result.status == SketchProofStatus.SUCCESS
+    assert search_result.is_successful()
+    assert search_result.deadend_transitions == []
+    assert search_result.open_states == []
+    assert search_result.cycle == []

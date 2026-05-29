@@ -217,8 +217,9 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     search_options.max_arity = 1
 
     search_result = ext.find_ground_solution(search_context, program, search_options)
-    assert search_result.status.name == "SOLVED"
-    assert search_result.goal_node is not None
+    assert search_result.status == ext.ModuleProgramProofStatus.SUCCESS
+    assert search_result.is_successful()
+    assert search_result.final_state is not None
     assert search_result.plan is not None
     assert search_result.plan.get_length() == 4
 

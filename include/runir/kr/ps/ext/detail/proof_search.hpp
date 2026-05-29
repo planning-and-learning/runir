@@ -13,7 +13,6 @@
 namespace runir::kr::ps::ext::detail
 {
 
-
 template<tyr::planning::TaskKind Kind>
 struct ModuleProofStep
 {
@@ -274,10 +273,10 @@ auto enumerate_control_steps(const runir::datasets::TaskSearchContext<Kind>& sea
 }
 
 template<tyr::planning::TaskKind Kind>
-auto execute_solution_path(const runir::datasets::TaskSearchContext<Kind>& search_context,
-                           runir::datasets::TaskSearchContextPtr<Kind> context_owner,
-                           ModuleProgramView program,
-                           const ModuleExecutionOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
+auto execute_greedy_solution(const runir::datasets::TaskSearchContext<Kind>& search_context,
+                             runir::datasets::TaskSearchContextPtr<Kind> context_owner,
+                             ModuleProgramView program,
+                             const ModuleExecutionOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
 {
     auto execution_state = ModuleProgramExecutionState<Kind>(search_context, program);
     auto& context = execution_state.get_context();
@@ -366,7 +365,7 @@ auto find_solution(const runir::datasets::TaskSearchContext<Kind>& search_contex
                    ModuleProgramView program,
                    const ModuleExecutionOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
 {
-    return execute_solution_path(search_context, std::move(context_owner), program, options);
+    return execute_greedy_solution(search_context, std::move(context_owner), program, options);
 }
 
 template<tyr::planning::TaskKind Kind>
@@ -395,16 +394,12 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
         static_cast<void>(status);
     };
 
-    auto add_successor = [&](graphs::VertexIndex source,
-                             const ModuleProofStep<Kind>& step,
-                             MemoryStateVariant memory_state,
-                             bool internal_phase)
+    auto add_successor = [&](graphs::VertexIndex source, const ModuleProofStep<Kind>& step, MemoryStateVariant memory_state)
     {
         const auto [target, created] = proof.get_or_create_vertex(step.context, std::move(memory_state), false, true, false);
         proof.add_edge(source, target, step.state_transition, step.rule);
         if (created && !proof.is_goal(step.context.get_state()))
             open.emplace_back(step.context, target);
-        static_cast<void>(internal_phase);
     };
 
     while (!open.empty())
@@ -421,7 +416,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
             for (const auto& step : load_steps)
             {
                 if (step.status == ModuleProgramOutcome::APPLIED)
-                    add_successor(source_vertex, step, InternalMemoryState(step.context.get_memory_state()), true);
+                    add_successor(source_vertex, step, InternalMemoryState(step.context.get_memory_state()));
                 else
                     add_terminal(source_vertex, step.context, InternalMemoryState(step.context.get_memory_state()), step.status);
             }
@@ -432,7 +427,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
         for (const auto& step : control_steps)
         {
             if (step.status == ModuleProgramOutcome::APPLIED || step.status == ModuleProgramOutcome::RESTORED_CALLER)
-                add_successor(source_vertex, step, ExternalMemoryState(step.context.get_memory_state()), false);
+                add_successor(source_vertex, step, ExternalMemoryState(step.context.get_memory_state()));
             else if (step.status == ModuleProgramOutcome::OUT_OF_TIME)
                 return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
             else if (step.status == ModuleProgramOutcome::OUT_OF_STATES)
