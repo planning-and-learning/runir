@@ -8,6 +8,7 @@
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/planning.hpp>
 #include <vector>
+#include <yggdrasil/execution/onetbb.hpp>
 
 namespace runir::tests
 {
@@ -55,7 +56,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
     {
         auto parser = fp::Parser(test_case.domain);
         const auto planning_task = parser.parse_task(test_case.task);
-        auto execution_context = tyr::ExecutionContext::create(1);
+        auto execution_context = ygg::ExecutionContext::create(1);
         auto lifted_task = p::Task<p::LiftedTag>(planning_task);
         auto task = lifted_task.instantiate_ground_task(*execution_context).task;
         auto context = datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);

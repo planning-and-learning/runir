@@ -5,28 +5,28 @@
 #include "runir/kr/ps/declarations.hpp"
 
 #include <concepts>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::ps
 {
 
 template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
 concept IsConditionVariantView = IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-                                 && requires(tyr::View<tyr::Index<ConditionVariant<Family>>, StorageContext> condition, EvaluationContext& context) {
+                                 && requires(ygg::View<ygg::Index<ConditionVariant<Family>>, StorageContext> condition, EvaluationContext& context) {
                                         { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
                                     };
 
 template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
 concept IsConcreteConditionVariantView =
     IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-    && requires(tyr::View<tyr::Index<ConcreteConditionVariant<Family, LanguageTag>>, StorageContext> condition, EvaluationContext& context) {
+    && requires(ygg::View<ygg::Index<ConcreteConditionVariant<Family, LanguageTag>>, StorageContext> condition, EvaluationContext& context) {
            { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
        };
 
 template<typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename EvaluationContext, typename StorageContext>
 concept IsConcreteConditionView =
     IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-    && requires(tyr::View<tyr::Index<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>, StorageContext> condition,
+    && requires(ygg::View<ygg::Index<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>, StorageContext> condition,
                 EvaluationContext& context) {
            { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
        };

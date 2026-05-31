@@ -1,7 +1,7 @@
 #ifndef RUNIR_SEMANTICS_EVALUATION_HPP_
 #define RUNIR_SEMANTICS_EVALUATION_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/config.hpp"
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotations.hpp"
@@ -12,8 +12,8 @@
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
-#include <tyr/common/dynamic_bitset.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/containers/dynamic_bitset.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <tyr/formalism/object_index.hpp>
 #include <tyr/formalism/planning/ground_atom_view.hpp>
 #include <tyr/formalism/planning/ground_conjunctive_condition_view.hpp>
@@ -30,31 +30,31 @@ template<CategoryTag Category, FamilyTag Family, tyr::planning::TaskKind Kind>
 using EvaluationBuilderT = decltype(std::declval<EvaluationContext<Family, Kind>&>().get_builder().template get_builder<Denotation<Category>>());
 
 template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<Category, Family, Kind>;
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
     requires FamilyConceptConstructorTag<Family, Tag>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<ConceptTag, Family, Kind>;
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
     requires FamilyRoleConstructorTag<Family, Tag>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<RoleTag, Family, Kind>;
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
     requires FamilyBooleanConstructorTag<Family, Tag>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<BooleanTag, Family, Kind>;
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
     requires FamilyNumericalConstructorTag<Family, Tag>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<NumericalTag, Family, Kind>;
 
@@ -80,7 +80,7 @@ auto make_role_builder(EvaluationContext<Family, Kind>& context)
     return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects(context));
 }
 
-inline auto object_handle(uint_t object) noexcept { return tyr::Index<tyr::formalism::Object>(object); }
+inline auto object_handle(uint_t object) noexcept { return ygg::Index<tyr::formalism::Object>(object); }
 template<typename RoleBuilderPtr>
 auto row(const RoleBuilderPtr& role, uint_t object) noexcept
 {
@@ -88,7 +88,7 @@ auto row(const RoleBuilderPtr& role, uint_t object) noexcept
 }
 
 template<typename RoleBuilderPtr>
-auto row(const RoleBuilderPtr& role, tyr::Index<tyr::formalism::Object> object) noexcept
+auto row(const RoleBuilderPtr& role, ygg::Index<tyr::formalism::Object> object) noexcept
 {
     return role->get_row_bitset(object);
 }
@@ -191,13 +191,13 @@ void for_each_goal_atom(EvaluationContext<Family, Kind>& context, bool polarity,
 }
 
 template<tyr::formalism::FactKind T>
-auto object_index(tyr::formalism::planning::GroundAtomView<T> atom, size_t position) noexcept -> tyr::Index<tyr::formalism::Object>
+auto object_index(tyr::formalism::planning::GroundAtomView<T> atom, size_t position) noexcept -> ygg::Index<tyr::formalism::Object>
 {
     return atom.get_row().get_objects()[position].get_index();
 }
 
 template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_atomic_state_concept(tyr::View<tyr::Index<FamilyConcept<Family, AtomicStateTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
+auto evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<Family, AtomicStateTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
@@ -210,8 +210,8 @@ auto evaluate_atomic_state_concept(tyr::View<tyr::Index<FamilyConcept<Family, At
                                              return;
 
                                          const auto object = detail::object_index(atom, 0);
-                                         assert(tyr::uint_t(object) < num_objects);
-                                         bitset.set(tyr::uint_t(object));
+                                         assert(ygg::uint_t(object) < num_objects);
+                                         bitset.set(ygg::uint_t(object));
                                      });
 
     if (!constructor.get_polarity())
@@ -221,7 +221,7 @@ auto evaluate_atomic_state_concept(tyr::View<tyr::Index<FamilyConcept<Family, At
 }
 
 template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_atomic_goal_concept(tyr::View<tyr::Index<FamilyConcept<Family, AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
+auto evaluate_atomic_goal_concept(ygg::View<ygg::Index<FamilyConcept<Family, AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
@@ -235,15 +235,15 @@ auto evaluate_atomic_goal_concept(tyr::View<tyr::Index<FamilyConcept<Family, Ato
                                           return;
 
                                       const auto object = detail::object_index(atom, 0);
-                                      assert(tyr::uint_t(object) < num_objects);
-                                      bitset.set(tyr::uint_t(object));
+                                      assert(ygg::uint_t(object) < num_objects);
+                                      bitset.set(ygg::uint_t(object));
                                   });
 
     return result;
 }
 
 template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_atomic_state_role(tyr::View<tyr::Index<FamilyRole<Family, AtomicStateTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
+auto evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicStateTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
@@ -256,9 +256,9 @@ auto evaluate_atomic_state_role(tyr::View<tyr::Index<FamilyRole<Family, AtomicSt
 
                                          const auto lhs = detail::object_index(atom, 0);
                                          const auto rhs = detail::object_index(atom, 1);
-                                         assert(tyr::uint_t(lhs) < num_objects);
-                                         assert(tyr::uint_t(rhs) < num_objects);
-                                         detail::row(result, lhs).set(tyr::uint_t(rhs));
+                                         assert(ygg::uint_t(lhs) < num_objects);
+                                         assert(ygg::uint_t(rhs) < num_objects);
+                                         detail::row(result, lhs).set(ygg::uint_t(rhs));
                                      });
 
     if (!constructor.get_polarity())
@@ -269,7 +269,7 @@ auto evaluate_atomic_state_role(tyr::View<tyr::Index<FamilyRole<Family, AtomicSt
 }
 
 template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_atomic_goal_role(tyr::View<tyr::Index<FamilyRole<Family, AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
+auto evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
@@ -283,16 +283,16 @@ auto evaluate_atomic_goal_role(tyr::View<tyr::Index<FamilyRole<Family, AtomicGoa
 
                                       const auto lhs = detail::object_index(atom, 0);
                                       const auto rhs = detail::object_index(atom, 1);
-                                      assert(tyr::uint_t(lhs) < num_objects);
-                                      assert(tyr::uint_t(rhs) < num_objects);
-                                      detail::row(result, lhs).set(tyr::uint_t(rhs));
+                                      assert(ygg::uint_t(lhs) < num_objects);
+                                      assert(ygg::uint_t(rhs) < num_objects);
+                                      detail::row(result, lhs).set(ygg::uint_t(rhs));
                                   });
 
     return result;
 }
 
 template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_atomic_state_boolean(tyr::View<tyr::Index<FamilyBoolean<Family, AtomicStateTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
+auto evaluate_atomic_state_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, AtomicStateTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     bool value = false;
 
@@ -310,7 +310,7 @@ auto evaluate_atomic_state_boolean(tyr::View<tyr::Index<FamilyBoolean<Family, At
 }
 
 template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_atomic_goal_boolean(tyr::View<tyr::Index<FamilyBoolean<Family, AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
+auto evaluate_atomic_goal_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     bool value = false;
 
@@ -326,7 +326,7 @@ auto evaluate_atomic_goal_boolean(tyr::View<tyr::Index<FamilyBoolean<Family, Ato
 }
 
 template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
-bool evaluate_nonempty(tyr::View<tyr::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor,
+bool evaluate_nonempty(ygg::View<ygg::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor,
                        EvaluationContext<Family, Kind>& context,
                        EvaluationWorkspace& workspace)
 {
@@ -334,7 +334,7 @@ bool evaluate_nonempty(tyr::View<tyr::Index<FamilyConstructor<Family, ConceptTag
 }
 
 template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
-bool evaluate_nonempty(tyr::View<tyr::Index<FamilyConstructor<Family, RoleTag>>, C> constructor,
+bool evaluate_nonempty(ygg::View<ygg::Index<FamilyConstructor<Family, RoleTag>>, C> constructor,
                        EvaluationContext<Family, Kind>& context,
                        EvaluationWorkspace& workspace)
 {
@@ -342,7 +342,7 @@ bool evaluate_nonempty(tyr::View<tyr::Index<FamilyConstructor<Family, RoleTag>>,
 }
 
 template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_count(tyr::View<tyr::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor,
+auto evaluate_count(ygg::View<ygg::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor,
                     EvaluationContext<Family, Kind>& context,
                     EvaluationWorkspace& workspace) -> uint_t
 {
@@ -350,7 +350,7 @@ auto evaluate_count(tyr::View<tyr::Index<FamilyConstructor<Family, ConceptTag>>,
 }
 
 template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_count(tyr::View<tyr::Index<FamilyConstructor<Family, RoleTag>>, C> constructor,
+auto evaluate_count(ygg::View<ygg::Index<FamilyConstructor<Family, RoleTag>>, C> constructor,
                     EvaluationContext<Family, Kind>& context,
                     EvaluationWorkspace& workspace) -> uint_t
 {
@@ -361,7 +361,7 @@ auto evaluate_count(tyr::View<tyr::Index<FamilyConstructor<Family, RoleTag>>, C>
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
     requires FamilyConceptConstructorTag<Family, Tag>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<ConceptTag, Family, Kind>
 {
@@ -513,8 +513,8 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> construc
     else if constexpr (std::same_as<Tag, NominalTag>)
     {
         const auto object = constructor.get_object().get_index();
-        assert(tyr::uint_t(object) < num_objects);
-        result_bitset.set(tyr::uint_t(object));
+        assert(ygg::uint_t(object) < num_objects);
+        result_bitset.set(ygg::uint_t(object));
     }
     else if constexpr (std::same_as<Tag, RoleFillersTag>)
     {
@@ -525,7 +525,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> construc
             auto contains_all_fillers = true;
             for (auto filler : constructor.get_objects())
             {
-                if (!row.test(tyr::uint_t(filler.get_index())))
+                if (!row.test(ygg::uint_t(filler.get_index())))
                 {
                     contains_all_fillers = false;
                     break;
@@ -538,7 +538,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> construc
     else if constexpr (std::same_as<Tag, OneOfTag>)
     {
         for (auto object : constructor.get_objects())
-            result_bitset.set(tyr::uint_t(object.get_index()));
+            result_bitset.set(ygg::uint_t(object.get_index()));
     }
 
     return result;
@@ -546,7 +546,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, C> construc
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
     requires FamilyRoleConstructorTag<Family, Tag>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<RoleTag, Family, Kind>
 {
@@ -674,7 +674,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<Family, Tag>>, C> constructor
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
     requires FamilyBooleanConstructorTag<Family, Tag>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<BooleanTag, Family, Kind>
 {
@@ -688,14 +688,14 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, C> construc
     }
     else if constexpr (std::same_as<Tag, NonemptyTag>)
     {
-        const auto result_value = tyr::visit([&](auto arg) { return detail::evaluate_nonempty(arg, context, workspace); }, constructor.get_arg());
+        const auto result_value = ygg::visit([&](auto arg) { return detail::evaluate_nonempty(arg, context, workspace); }, constructor.get_arg());
         return context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
     }
 }
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
     requires FamilyNumericalConstructorTag<Family, Tag>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<NumericalTag, Family, Kind>
 {
@@ -703,7 +703,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, C> constr
 
     if constexpr (std::same_as<Tag, CountTag>)
     {
-        result_value = tyr::visit([&](auto arg) { return detail::evaluate_count(arg, context, workspace); }, constructor.get_arg());
+        result_value = ygg::visit([&](auto arg) { return detail::evaluate_count(arg, context, workspace); }, constructor.get_arg());
     }
     else if constexpr (std::same_as<Tag, DistanceTag>)
     {
@@ -772,15 +772,15 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, C> constr
 }
 
 template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<Category, Family, Kind>
 {
-    return tyr::visit([&](auto child) { return evaluate_impl(child, context, workspace); }, constructor.get_variant());
+    return ygg::visit([&](auto child) { return evaluate_impl(child, context, workspace); }, constructor.get_variant());
 }
 
 template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
-auto evaluate(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor,
+auto evaluate(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> constructor,
               EvaluationContext<Family, Kind>& context,
               EvaluationWorkspace& workspace)
 {
@@ -789,7 +789,7 @@ auto evaluate(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> cons
 }
 
 template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
-auto evaluate(tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, C> constructor, EvaluationContext<Family, Kind>& context)
+auto evaluate(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     auto workspace = EvaluationWorkspace {};
     return evaluate(constructor, context, workspace);

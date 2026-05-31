@@ -4,11 +4,11 @@
 #include "runir/kr/dl/grammar/constructor_or_non_terminal_data.hpp"
 
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 #include <utility>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
@@ -27,14 +27,14 @@ struct Data<runir::kr::dl::grammar::DerivationRule<Family, Category>>
     }
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(lhs);
-        tyr::clear(rhs);
+        ygg::clear(index);
+        ygg::clear(lhs);
+        ygg::clear(rhs);
     }
     auto cista_members() const noexcept { return std::tie(index, lhs, rhs); }
     auto identifying_members() const noexcept { return std::tie(lhs, rhs); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

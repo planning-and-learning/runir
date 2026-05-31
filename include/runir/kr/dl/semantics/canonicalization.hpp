@@ -8,68 +8,68 @@
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 
-#include <tyr/common/comparators.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/semantics/comparators.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::dl
 {
 
 template<FamilyTag Family>
-inline bool is_canonical(const tyr::Data<FamilyConcept<Family, IntersectionTag>>& data) noexcept
+inline bool is_canonical(const ygg::Data<FamilyConcept<Family, IntersectionTag>>& data) noexcept
 {
-    return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
 }
 
 template<FamilyTag Family>
-inline bool is_canonical(const tyr::Data<FamilyConcept<Family, UnionTag>>& data) noexcept
+inline bool is_canonical(const ygg::Data<FamilyConcept<Family, UnionTag>>& data) noexcept
 {
-    return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
 }
 
 template<FamilyTag Family>
-inline bool is_canonical(const tyr::Data<FamilyConcept<Family, AgreementTag>>& data) noexcept
+inline bool is_canonical(const ygg::Data<FamilyConcept<Family, AgreementTag>>& data) noexcept
 {
-    return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
 }
 
 template<FamilyTag Family>
-inline bool is_canonical(const tyr::Data<FamilyRole<Family, IntersectionTag>>& data) noexcept
+inline bool is_canonical(const ygg::Data<FamilyRole<Family, IntersectionTag>>& data) noexcept
 {
-    return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
 }
 
 template<FamilyTag Family>
-inline bool is_canonical(const tyr::Data<FamilyRole<Family, UnionTag>>& data) noexcept
+inline bool is_canonical(const ygg::Data<FamilyRole<Family, UnionTag>>& data) noexcept
 {
-    return !tyr::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
 }
 
 template<FamilyTag Family>
-inline void canonicalize(tyr::Data<FamilyConcept<Family, IntersectionTag>>& data) noexcept
-{
-    canonicalize_commutative_binary(data);
-}
-
-template<FamilyTag Family>
-inline void canonicalize(tyr::Data<FamilyConcept<Family, UnionTag>>& data) noexcept
+inline void canonicalize(ygg::Data<FamilyConcept<Family, IntersectionTag>>& data) noexcept
 {
     canonicalize_commutative_binary(data);
 }
 
 template<FamilyTag Family>
-inline void canonicalize(tyr::Data<FamilyConcept<Family, AgreementTag>>& data) noexcept
+inline void canonicalize(ygg::Data<FamilyConcept<Family, UnionTag>>& data) noexcept
 {
     canonicalize_commutative_binary(data);
 }
 
 template<FamilyTag Family>
-inline void canonicalize(tyr::Data<FamilyRole<Family, IntersectionTag>>& data) noexcept
+inline void canonicalize(ygg::Data<FamilyConcept<Family, AgreementTag>>& data) noexcept
 {
     canonicalize_commutative_binary(data);
 }
 
 template<FamilyTag Family>
-inline void canonicalize(tyr::Data<FamilyRole<Family, UnionTag>>& data) noexcept
+inline void canonicalize(ygg::Data<FamilyRole<Family, IntersectionTag>>& data) noexcept
+{
+    canonicalize_commutative_binary(data);
+}
+
+template<FamilyTag Family>
+inline void canonicalize(ygg::Data<FamilyRole<Family, UnionTag>>& data) noexcept
 {
     canonicalize_commutative_binary(data);
 }
@@ -80,13 +80,13 @@ namespace runir::kr::dl::semantics
 {
 
 template<CategoryTag Category>
-bool is_canonical(const tyr::Data<Denotation<Category>>&) noexcept
+bool is_canonical(const ygg::Data<Denotation<Category>>&) noexcept
 {
     return true;
 }
 
 template<CategoryTag Category>
-void canonicalize(tyr::Data<Denotation<Category>>&) noexcept
+void canonicalize(ygg::Data<Denotation<Category>>&) noexcept
 {
     // Trivially canonical
 }

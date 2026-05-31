@@ -5,10 +5,10 @@
 #include "runir/kr/ps/base/dl/feature_data.hpp"
 
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/variant.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/containers/variant.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<typename FeatureTag, typename C>
@@ -37,6 +37,6 @@ public:
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

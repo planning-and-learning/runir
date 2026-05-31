@@ -4,9 +4,9 @@
 #include "runir/kr/dl/declarations.hpp"
 
 #include <stdexcept>
-#include <tyr/common/index_mixins.hpp>
-#include <tyr/common/type_list.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/ids/index_mixins.hpp>
+#include <yggdrasil/core/type_list.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::dl
 {
@@ -24,15 +24,15 @@ inline constexpr size_t num_registers = 4;
 
 template<CategoryTag Category>
     requires(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
-struct RegisterIdentifier : tyr::IndexMixin<RegisterIdentifier<Category>>
+struct RegisterIdentifier : ygg::IndexMixin<RegisterIdentifier<Category>>
 {
-    using Base = tyr::IndexMixin<RegisterIdentifier<Category>>;
+    using Base = ygg::IndexMixin<RegisterIdentifier<Category>>;
 
     constexpr RegisterIdentifier() noexcept = default;
-    explicit RegisterIdentifier(tyr::uint_t value) : Base(check_bounds(value)) {}
+    explicit RegisterIdentifier(ygg::uint_t value) : Base(check_bounds(value)) {}
 
 private:
-    static constexpr tyr::uint_t check_bounds(tyr::uint_t value)
+    static constexpr ygg::uint_t check_bounds(ygg::uint_t value)
     {
         if (value != Base::MAX && value >= num_registers)
             throw std::out_of_range("Register identifier index is out of range.");
@@ -41,9 +41,9 @@ private:
 };
 
 template<CategoryTag Category>
-struct ArgumentIdentifier : tyr::IndexMixin<ArgumentIdentifier<Category>>
+struct ArgumentIdentifier : ygg::IndexMixin<ArgumentIdentifier<Category>>
 {
-    using Base = tyr::IndexMixin<ArgumentIdentifier<Category>>;
+    using Base = ygg::IndexMixin<ArgumentIdentifier<Category>>;
     using Base::Base;
 };
 
@@ -79,10 +79,10 @@ struct IsFamilyNumericalConstructorTag<runir::kr::ExtFamilyTag, T> : std::bool_c
 {
 };
 
-using ExtConceptConstructorTags = tyr::ConcatTypeListsT<BaseConceptConstructorTags, tyr::TypeList<RegisterTag, ArgumentTag<ConceptTag>>>;
-using ExtRoleConstructorTags = tyr::ConcatTypeListsT<BaseRoleConstructorTags, tyr::TypeList<RegisterTag, ArgumentTag<RoleTag>>>;
-using ExtBooleanConstructorTags = tyr::ConcatTypeListsT<BaseBooleanConstructorTags, tyr::TypeList<ArgumentTag<BooleanTag>>>;
-using ExtNumericalConstructorTags = tyr::ConcatTypeListsT<BaseNumericalConstructorTags, tyr::TypeList<ArgumentTag<NumericalTag>>>;
+using ExtConceptConstructorTags = ygg::ConcatTypeListsT<BaseConceptConstructorTags, ygg::TypeList<RegisterTag, ArgumentTag<ConceptTag>>>;
+using ExtRoleConstructorTags = ygg::ConcatTypeListsT<BaseRoleConstructorTags, ygg::TypeList<RegisterTag, ArgumentTag<RoleTag>>>;
+using ExtBooleanConstructorTags = ygg::ConcatTypeListsT<BaseBooleanConstructorTags, ygg::TypeList<ArgumentTag<BooleanTag>>>;
+using ExtNumericalConstructorTags = ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ygg::TypeList<ArgumentTag<NumericalTag>>>;
 
 template<>
 struct ConstructorTagLists<runir::kr::ExtFamilyTag>

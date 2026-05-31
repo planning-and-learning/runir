@@ -10,21 +10,21 @@ namespace x3 = boost::spirit::x3;
 template<runir::kr::dl::CategoryTag Category>
 struct Argument : x3::position_tagged
 {
-    tyr::uint_t identifier;
+    ygg::uint_t identifier;
 };
 
 struct ConceptRegister : x3::position_tagged
 {
     static constexpr auto keyword = "c_register";
 
-    tyr::uint_t identifier;
+    ygg::uint_t identifier;
 };
 
 struct RoleRegister : x3::position_tagged
 {
     static constexpr auto keyword = "r_register";
 
-    tyr::uint_t identifier;
+    ygg::uint_t identifier;
 };
 
 template<>
@@ -32,7 +32,7 @@ struct Argument<runir::kr::dl::ConceptTag> : x3::position_tagged
 {
     static constexpr auto keyword = "c_argument";
 
-    tyr::uint_t identifier;
+    ygg::uint_t identifier;
 };
 
 template<>
@@ -40,7 +40,7 @@ struct Argument<runir::kr::dl::RoleTag> : x3::position_tagged
 {
     static constexpr auto keyword = "r_argument";
 
-    tyr::uint_t identifier;
+    ygg::uint_t identifier;
 };
 
 template<>
@@ -48,7 +48,7 @@ struct Argument<runir::kr::dl::BooleanTag> : x3::position_tagged
 {
     static constexpr auto keyword = "b_argument";
 
-    tyr::uint_t identifier;
+    ygg::uint_t identifier;
 };
 
 template<>
@@ -56,7 +56,7 @@ struct Argument<runir::kr::dl::NumericalTag> : x3::position_tagged
 {
     static constexpr auto keyword = "n_argument";
 
-    tyr::uint_t identifier;
+    ygg::uint_t identifier;
 };
 
 }  // namespace runir::kr::dl::grammar::parser::ext::ast

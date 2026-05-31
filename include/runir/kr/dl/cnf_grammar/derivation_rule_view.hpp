@@ -6,9 +6,9 @@
 #include "runir/kr/dl/cnf_grammar/non_terminal_view.hpp"
 
 #include <tuple>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
@@ -32,6 +32,6 @@ public:
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

@@ -14,7 +14,7 @@ namespace detail
 
 template<CategoryTag Category, tyr::planning::TaskKind Kind>
 auto copy_argument_denotation(EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
-                              const tyr::View<tyr::Index<Denotation<Category>>, DenotationRepository>& view)
+                              const ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>& view)
     -> EvaluationBuilderT<Category, runir::kr::ExtFamilyTag, Kind>
 {
     if constexpr (std::same_as<Category, BooleanTag> || std::same_as<Category, NumericalTag>)
@@ -31,7 +31,7 @@ auto copy_argument_denotation(EvaluationContext<runir::kr::ExtFamilyTag, Kind>& 
     {
         auto result = make_role_builder(context);
         for (uint_t object = 0; object < result->num_objects; ++object)
-            row(result, object).copy_from(view.get(tyr::Index<tyr::formalism::Object>(object)));
+            row(result, object).copy_from(view.get(ygg::Index<tyr::formalism::Object>(object)));
         return result;
     }
 }
@@ -39,7 +39,7 @@ auto copy_argument_denotation(EvaluationContext<runir::kr::ExtFamilyTag, Kind>& 
 }  // namespace detail
 
 template<tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace&) -> EvaluationBuilderT<ConceptTag, runir::kr::ExtFamilyTag, Kind>
 {
@@ -48,13 +48,13 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<runir::kr::ExtFamilyTag, R
 
     const auto& object = context.at(constructor.get_data().identifier);
     if (object)
-        result_bitset.set(tyr::uint_t(object->get_index()));
+        result_bitset.set(ygg::uint_t(object->get_index()));
 
     return result;
 }
 
 template<tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace&) -> EvaluationBuilderT<RoleTag, runir::kr::ExtFamilyTag, Kind>
 {
@@ -64,14 +64,14 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<runir::kr::ExtFamilyTag, Regi
     if (value)
     {
         const auto& [source, target] = *value;
-        detail::row(result, source.get_index()).set(tyr::uint_t(target.get_index()));
+        detail::row(result, source.get_index()).set(ygg::uint_t(target.get_index()));
     }
 
     return result;
 }
 
 template<tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<runir::kr::ExtFamilyTag, ArgumentTag<ConceptTag>>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, ArgumentTag<ConceptTag>>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace&) -> EvaluationBuilderT<ConceptTag, runir::kr::ExtFamilyTag, Kind>
 {
@@ -79,7 +79,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyConcept<runir::kr::ExtFamilyTag, A
 }
 
 template<tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<runir::kr::ExtFamilyTag, ArgumentTag<RoleTag>>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, ArgumentTag<RoleTag>>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace&) -> EvaluationBuilderT<RoleTag, runir::kr::ExtFamilyTag, Kind>
 {
@@ -87,7 +87,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyRole<runir::kr::ExtFamilyTag, Argu
 }
 
 template<tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<runir::kr::ExtFamilyTag, ArgumentTag<BooleanTag>>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<runir::kr::ExtFamilyTag, ArgumentTag<BooleanTag>>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace&) -> EvaluationBuilderT<BooleanTag, runir::kr::ExtFamilyTag, Kind>
 {
@@ -95,7 +95,7 @@ auto evaluate_impl(tyr::View<tyr::Index<FamilyBoolean<runir::kr::ExtFamilyTag, A
 }
 
 template<tyr::planning::TaskKind Kind, typename C>
-auto evaluate_impl(tyr::View<tyr::Index<FamilyNumerical<runir::kr::ExtFamilyTag, ArgumentTag<NumericalTag>>>, C> constructor,
+auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<runir::kr::ExtFamilyTag, ArgumentTag<NumericalTag>>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace&) -> EvaluationBuilderT<NumericalTag, runir::kr::ExtFamilyTag, Kind>
 {

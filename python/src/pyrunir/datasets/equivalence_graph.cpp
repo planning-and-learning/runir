@@ -3,8 +3,8 @@
 #include <pyrunir/graphs/graph.hpp>
 #include <runir/datasets/equivalence_graph.hpp>
 #include <runir/datasets/formatter.hpp>
-#include <tyr/common/python/bindings.hpp>
-#include <tyr/common/python/type_casters.hpp>
+#include <yggdrasil/python/bindings.hpp>
+#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::datasets
 {
@@ -25,8 +25,8 @@ void bind_equivalence_graph(nb::module_& m)
                             .def(nb::init<>())
                             .def_rw("state_graph_index", &EquivalenceVertexLabel::state_graph_index)
                             .def_rw("state_vertex_index", &EquivalenceVertexLabel::state_vertex_index);
-    tyr::add_print(vertex_label);
-    tyr::add_hash(vertex_label);
+    ygg::add_print(vertex_label);
+    ygg::add_hash(vertex_label);
 
     auto annotated_vertex_label = nb::class_<AnnotatedEquivalenceVertexLabel>(m, "AnnotatedEquivalenceVertexLabel")  //
                                       .def(nb::init<>())
@@ -37,15 +37,15 @@ void bind_equivalence_graph(nb::module_& m)
                                       .def_rw("is_goal", &AnnotatedEquivalenceVertexLabel::is_goal)
                                       .def_rw("is_alive", &AnnotatedEquivalenceVertexLabel::is_alive)
                                       .def_rw("is_unsolvable", &AnnotatedEquivalenceVertexLabel::is_unsolvable);
-    tyr::add_print(annotated_vertex_label);
-    tyr::add_hash(annotated_vertex_label);
+    ygg::add_print(annotated_vertex_label);
+    ygg::add_hash(annotated_vertex_label);
 
     auto edge_label = nb::class_<EquivalenceEdgeLabel>(m, "EquivalenceEdgeLabel")  //
                           .def(nb::init<>())
                           .def_rw("state_graph_index", &EquivalenceEdgeLabel::state_graph_index)
                           .def_rw("state_edge_index", &EquivalenceEdgeLabel::state_edge_index);
-    tyr::add_print(edge_label);
-    tyr::add_hash(edge_label);
+    ygg::add_print(edge_label);
+    ygg::add_hash(edge_label);
 
     auto builder = nb::class_<EquivalenceGraphBuilder>(m, "EquivalenceGraphBuilder");
     builder.def(nb::init<>()).def("clear", &EquivalenceGraphBuilder::clear);

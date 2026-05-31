@@ -2,7 +2,7 @@
 
 #include <nanobind/stl/string.h>
 #include <runir/kr/dl/grammar/base/datas.hpp>
-#include <tyr/common/python/type_casters.hpp>
+#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::dl::base
 {
@@ -13,7 +13,7 @@ namespace
 template<typename T>
 void bind_data(nb::module_& m, const std::string& name)
 {
-    using Data = tyr::Data<T>;
+    using Data = ygg::Data<T>;
 
     auto cls = nb::class_<Data>(m, name.c_str()).def(nb::init<>());
 

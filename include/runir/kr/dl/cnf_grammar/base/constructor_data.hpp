@@ -6,10 +6,10 @@
 
 #include <cista/containers/variant.h>
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -18,12 +18,12 @@ struct Data<runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, ru
     using Variant =
         ::cista::offset::variant<Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::BotTag>>,
                                  Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::TopTag>>,
-                                 Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<formalism::StaticTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<formalism::FluentTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<formalism::DerivedTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<formalism::StaticTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<formalism::FluentTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<formalism::DerivedTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<::tyr::formalism::StaticTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<::tyr::formalism::FluentTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<::tyr::formalism::DerivedTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<::tyr::formalism::StaticTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<::tyr::formalism::FluentTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<::tyr::formalism::DerivedTag>>>,
                                  Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::IntersectionTag>>,
                                  Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::UnionTag>>,
                                  Index<runir::kr::dl::cnf_grammar::Concept<runir::kr::BaseFamilyTag, runir::kr::dl::NegationTag>>,
@@ -49,8 +49,8 @@ struct Data<runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, ru
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
 
     auto cista_members() const noexcept { return std::tie(index, value); }
@@ -62,12 +62,12 @@ struct Data<runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, ru
 {
     using Variant =
         ::cista::offset::variant<Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::UniversalTag>>,
-                                 Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<formalism::StaticTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<formalism::FluentTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<formalism::DerivedTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<formalism::StaticTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<formalism::FluentTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<formalism::DerivedTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<::tyr::formalism::StaticTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<::tyr::formalism::FluentTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<::tyr::formalism::DerivedTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<::tyr::formalism::StaticTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<::tyr::formalism::FluentTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<::tyr::formalism::DerivedTag>>>,
                                  Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::IntersectionTag>>,
                                  Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::UnionTag>>,
                                  Index<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, runir::kr::dl::ComplementTag>>,
@@ -86,8 +86,8 @@ struct Data<runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, ru
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
 
     auto cista_members() const noexcept { return std::tie(index, value); }
@@ -98,12 +98,12 @@ template<>
 struct Data<runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>>
 {
     using Variant =
-        ::cista::offset::variant<Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<formalism::StaticTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<formalism::FluentTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<formalism::DerivedTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<formalism::StaticTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<formalism::FluentTag>>>,
-                                 Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<formalism::DerivedTag>>>,
+        ::cista::offset::variant<Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<::tyr::formalism::StaticTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<::tyr::formalism::FluentTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicStateTag<::tyr::formalism::DerivedTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<::tyr::formalism::StaticTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<::tyr::formalism::FluentTag>>>,
+                                 Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::AtomicGoalTag<::tyr::formalism::DerivedTag>>>,
                                  Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::BaseFamilyTag, runir::kr::dl::NonemptyTag>>>;
 
     Index<runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>> index;
@@ -114,8 +114,8 @@ struct Data<runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, ru
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
 
     auto cista_members() const noexcept { return std::tie(index, value); }
@@ -136,14 +136,14 @@ struct Data<runir::kr::dl::cnf_grammar::Constructor<runir::kr::BaseFamilyTag, ru
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
 
     auto cista_members() const noexcept { return std::tie(index, value); }
     auto identifying_members() const noexcept { return std::tie(value); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

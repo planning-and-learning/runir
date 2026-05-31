@@ -6,8 +6,8 @@
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <string>
-#include <tyr/common/python/bindings.hpp>
-#include <tyr/common/python/type_casters.hpp>
+#include <yggdrasil/python/bindings.hpp>
+#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -20,11 +20,11 @@ namespace
 template<typename T>
 void bind_view(nb::module_& m, const std::string& name)
 {
-    using View = tyr::View<tyr::Index<T>, Repository>;
+    using View = ygg::View<ygg::Index<T>, Repository>;
 
     auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
-    tyr::add_hash(cls);
-    tyr::add_print(cls);
+    ygg::add_hash(cls);
+    ygg::add_print(cls);
 
     if constexpr (requires(const View& view) { view.get_name(); })
         cls.def("get_name", [](const View& view) { return std::string(view.get_name()); });

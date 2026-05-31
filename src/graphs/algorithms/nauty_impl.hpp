@@ -1,7 +1,7 @@
 #ifndef RUNIR_SRC_GRAPHS_ALGORITHMS_NAUTY_IMPL_HPP_
 #define RUNIR_SRC_GRAPHS_ALGORITHMS_NAUTY_IMPL_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/config.hpp"
 
 #include <cstddef>
 #include <nausparse.h>

@@ -9,10 +9,10 @@
 #include <cista/containers/variant.h>
 #include <string>
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -29,8 +29,8 @@ struct Data<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
 
     auto cista_members() const noexcept { return std::tie(index, value); }
@@ -51,8 +51,8 @@ struct Data<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
 
     auto cista_members() const noexcept { return std::tie(index, value); }
@@ -89,10 +89,10 @@ struct Data<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(feature);
-        tyr::clear(symbol);
-        tyr::clear(description);
+        ygg::clear(index);
+        ygg::clear(feature);
+        ygg::clear(symbol);
+        ygg::clear(description);
     }
 
     auto cista_members() const noexcept { return std::tie(index, feature, symbol, description); }
@@ -129,16 +129,16 @@ struct Data<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(feature);
-        tyr::clear(symbol);
-        tyr::clear(description);
+        ygg::clear(index);
+        ygg::clear(feature);
+        ygg::clear(symbol);
+        ygg::clear(description);
     }
 
     auto cista_members() const noexcept { return std::tie(index, feature, symbol, description); }
     auto identifying_members() const noexcept { return std::tie(feature, symbol, description); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

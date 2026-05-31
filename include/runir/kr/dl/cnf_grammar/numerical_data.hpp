@@ -3,16 +3,16 @@
 
 #include "runir/kr/dl/cnf_grammar/data_helpers.hpp"
 
-#include <tyr/common/variant.hpp>
+#include <yggdrasil/containers/variant.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::CountTag>>
 {
-    using Arg = ::cista::offset::variant<tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>,
-                                         tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>>;
+    using Arg = ::cista::offset::variant<ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>,
+                                         ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>>;
 
     Index<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::CountTag>> index;
     Arg arg;
@@ -22,8 +22,8 @@ struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::CountTa
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(arg);
+        ygg::clear(index);
+        ygg::clear(arg);
     }
 
     auto cista_members() const noexcept { return std::tie(index, arg); }
@@ -44,6 +44,6 @@ struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::Distanc
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

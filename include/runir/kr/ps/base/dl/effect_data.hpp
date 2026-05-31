@@ -7,10 +7,10 @@
 
 #include <cista/containers/variant.h>
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -32,8 +32,8 @@ struct Data<runir::kr::ps::ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
 
     auto cista_members() const noexcept { return std::tie(index, value); }
@@ -51,14 +51,14 @@ struct Data<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::D
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(feature);
+        ygg::clear(index);
+        ygg::clear(feature);
     }
 
     auto cista_members() const noexcept { return std::tie(index, feature); }
     auto identifying_members() const noexcept { return std::tie(feature); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

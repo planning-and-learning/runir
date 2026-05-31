@@ -15,7 +15,7 @@
 #include <runir/graphs/dynamic_graph.hpp>
 #include <runir/graphs/formatter.hpp>
 #include <runir/graphs/static_graph.hpp>
-#include <tyr/common/python/bindings.hpp>
+#include <yggdrasil/python/bindings.hpp>
 
 using namespace nanobind::literals;
 
@@ -36,7 +36,7 @@ struct PyObjectProperty
 
 }  // namespace runir::graphs
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -63,7 +63,7 @@ struct EqualTo<runir::graphs::PyObjectProperty>
     }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 namespace fmt
 {
@@ -113,7 +113,7 @@ auto get_edge_property(const Graph& graph, graphs::EdgeIndex edge)
 template<typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
 void bind_readable_graph(nb::class_<Graph>& cls, VertexPropertyGetter vertex_property_getter, EdgePropertyGetter edge_property_getter)
 {
-    tyr::add_print(cls);
+    ygg::add_print(cls);
 
     cls.def("get_num_vertices", &Graph::get_num_vertices)
         .def("get_num_edges", &Graph::get_num_edges)
@@ -164,7 +164,7 @@ void bind_bidirectional_graph(nb::class_<Graph>& cls)
 template<typename Graph>
 void bind_bidirectional_static_graph(nb::class_<Graph>& cls)
 {
-    tyr::add_print(cls);
+    ygg::add_print(cls);
 
     cls.def(nb::init<>())
         .def("get_forward_graph", &Graph::get_forward_graph, nb::rv_policy::reference_internal)
@@ -225,36 +225,36 @@ inline void bind_graph_certificates(nb::module_& m)
                                             .def(nb::init<>())
                                             .def_rw("color", &WeisfeilerLeman2Signature::color)
                                             .def_rw("neighbor_colors", &WeisfeilerLeman2Signature::neighbor_colors);
-    tyr::add_print(weisfeiler_leman_2_signature);
-    tyr::add_hash(weisfeiler_leman_2_signature);
+    ygg::add_print(weisfeiler_leman_2_signature);
+    ygg::add_hash(weisfeiler_leman_2_signature);
 
     auto weisfeiler_leman_3_signature = nb::class_<WeisfeilerLeman3Signature>(m, "WeisfeilerLeman3Signature")  //
                                             .def(nb::init<>())
                                             .def_rw("color", &WeisfeilerLeman3Signature::color)
                                             .def_rw("neighbor_colors", &WeisfeilerLeman3Signature::neighbor_colors);
-    tyr::add_print(weisfeiler_leman_3_signature);
-    tyr::add_hash(weisfeiler_leman_3_signature);
+    ygg::add_print(weisfeiler_leman_3_signature);
+    ygg::add_hash(weisfeiler_leman_3_signature);
 
     auto color_refinement_certificate = nb::class_<ColorRefinementCertificate>(m, "ColorRefinementCertificate")  //
                                             .def(nb::init<>())
                                             .def("get_round_summaries", &ColorRefinementCertificate::get_round_summaries)
                                             .def("get_colors", &ColorRefinementCertificate::get_colors);
-    tyr::add_print(color_refinement_certificate);
-    tyr::add_hash(color_refinement_certificate);
+    ygg::add_print(color_refinement_certificate);
+    ygg::add_hash(color_refinement_certificate);
 
     auto weisfeiler_leman_2_certificate = nb::class_<WeisfeilerLeman2Certificate>(m, "WeisfeilerLeman2Certificate")  //
                                               .def(nb::init<>())
                                               .def("get_round_summaries", &WeisfeilerLeman2Certificate::get_round_summaries)
                                               .def("get_colors", &WeisfeilerLeman2Certificate::get_colors);
-    tyr::add_print(weisfeiler_leman_2_certificate);
-    tyr::add_hash(weisfeiler_leman_2_certificate);
+    ygg::add_print(weisfeiler_leman_2_certificate);
+    ygg::add_hash(weisfeiler_leman_2_certificate);
 
     auto weisfeiler_leman_3_certificate = nb::class_<WeisfeilerLeman3Certificate>(m, "WeisfeilerLeman3Certificate")  //
                                               .def(nb::init<>())
                                               .def("get_round_summaries", &WeisfeilerLeman3Certificate::get_round_summaries)
                                               .def("get_colors", &WeisfeilerLeman3Certificate::get_colors);
-    tyr::add_print(weisfeiler_leman_3_certificate);
-    tyr::add_hash(weisfeiler_leman_3_certificate);
+    ygg::add_print(weisfeiler_leman_3_certificate);
+    ygg::add_hash(weisfeiler_leman_3_certificate);
 }
 
 template<typename Graph>

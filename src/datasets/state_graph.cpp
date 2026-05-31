@@ -38,7 +38,7 @@ class StateGraphEventHandler : public tyr::planning::astar_eager::EventHandler<K
 {
 private:
     StateGraphBuilder<Kind> m_builder;
-    tyr::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> m_state_to_vertex;
+    ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> m_state_to_vertex;
     tyr::planning::Statistics m_statistics;
 
     auto get_or_create_vertex(tyr::planning::Node<Kind> node) -> graphs::VertexIndex
@@ -92,13 +92,13 @@ public:
         record_edge(source_node, labeled_succ_node);
     }
 
-    void on_start_search(const tyr::planning::Node<Kind>& node, tyr::float_t f_value) override
+    void on_start_search(const tyr::planning::Node<Kind>& node, ygg::float_t f_value) override
     {
         static_cast<void>(f_value);
         get_or_create_vertex(node);
     }
 
-    void on_finish_f_layer(tyr::float_t f_value) override { static_cast<void>(f_value); }
+    void on_finish_f_layer(ygg::float_t f_value) override { static_cast<void>(f_value); }
     void on_end_search(tyr::planning::SearchStatus status) override { static_cast<void>(status); }
 
     void on_solved(const tyr::planning::Plan<Kind>& plan) override { static_cast<void>(plan); }
@@ -143,15 +143,15 @@ auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexInde
             const auto [predecessors, distances] = graphs::bgl::breadth_first_search(graph, goal_vertices);
             static_cast<void>(predecessors);
 
-            auto result = std::vector<tyr::float_t>(distances.size(), std::numeric_limits<tyr::float_t>::infinity());
+            auto result = std::vector<ygg::float_t>(distances.size(), std::numeric_limits<ygg::float_t>::infinity());
             for (graphs::VertexIndex vertex = 0; vertex < distances.size(); ++vertex)
                 if (distances[vertex] != std::numeric_limits<uint_t>::max())
-                    result[vertex] = static_cast<tyr::float_t>(distances[vertex]);
+                    result[vertex] = static_cast<ygg::float_t>(distances[vertex]);
             return result;
         }
         case StateGraphCostMode::ACTION_COST:
         {
-            auto weights = std::vector<tyr::float_t>(graph.get_num_edges(), 0);
+            auto weights = std::vector<ygg::float_t>(graph.get_num_edges(), 0);
             for (auto edge : graph.get_edge_indices())
                 weights[edge] = graph.get_edge(edge).get_property().cost;
 
@@ -162,7 +162,7 @@ auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexInde
     }
 
     assert(false);
-    return std::vector<tyr::float_t>(graph.get_num_vertices(), std::numeric_limits<tyr::float_t>::infinity());
+    return std::vector<ygg::float_t>(graph.get_num_vertices(), std::numeric_limits<ygg::float_t>::infinity());
 }
 
 }  // namespace
@@ -249,11 +249,11 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context,
     for (auto vertex_index : forward_graph.get_vertex_indices())
     {
         const auto& state = forward_graph.get_vertex(vertex_index).get_property().state;
-        const auto is_alive = goal_distance[vertex_index] != std::numeric_limits<tyr::float_t>::infinity();
+        const auto is_alive = goal_distance[vertex_index] != std::numeric_limits<ygg::float_t>::infinity();
         [[maybe_unused]] const auto added =
             builder.add_vertex(AnnotatedStateGraphVertexLabel<Kind> { state,
                                                                       goal_distance[vertex_index],
-                                                                      tyr::EqualTo<tyr::planning::StateView<Kind>> {}(state, initial_state),
+                                                                      ygg::EqualTo<tyr::planning::StateView<Kind>> {}(state, initial_state),
                                                                       is_goal[vertex_index],
                                                                       is_alive,
                                                                       !is_alive });

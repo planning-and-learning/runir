@@ -1,14 +1,14 @@
 #ifndef RUNIR_SEMANTICS_DENOTATION_DATA_HPP_
 #define RUNIR_SEMANTICS_DENOTATION_DATA_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/config.hpp"
 #include "runir/kr/dl/semantics/denotation_index.hpp"
 
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -22,8 +22,8 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
 
     auto cista_members() const noexcept { return std::tie(index, value); }
@@ -44,8 +44,8 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
 
     auto cista_members() const noexcept { return std::tie(index, value); }
@@ -67,9 +67,9 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(num_objects);
-        tyr::clear(vec_index);
+        ygg::clear(index);
+        ygg::clear(num_objects);
+        ygg::clear(vec_index);
     }
 
     auto cista_members() const noexcept { return std::tie(index, num_objects, vec_index); }
@@ -88,9 +88,9 @@ struct Data<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(num_objects);
-        tyr::clear(vec_index);
+        ygg::clear(index);
+        ygg::clear(num_objects);
+        ygg::clear(vec_index);
     }
 
     auto cista_members() const noexcept { return std::tie(index, num_objects, vec_index); }

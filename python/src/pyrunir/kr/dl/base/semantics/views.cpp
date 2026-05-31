@@ -9,8 +9,8 @@
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/dl/semantics/views.hpp>
-#include <tyr/common/python/bindings.hpp>
-#include <tyr/common/python/type_casters.hpp>
+#include <yggdrasil/python/bindings.hpp>
+#include <yggdrasil/python/type_casters.hpp>
 #include <tyr/planning/ground_task/state_repository.hpp>
 #include <tyr/planning/ground_task/state_view.hpp>
 #include <tyr/planning/lifted_task/state_repository.hpp>
@@ -27,11 +27,11 @@ namespace
 template<CategoryTag Category>
 void bind_denotation_view(nb::module_& m, const std::string& name)
 {
-    using View = tyr::View<tyr::Index<runir::kr::dl::semantics::Denotation<Category>>, runir::kr::dl::semantics::DenotationRepository>;
+    using View = ygg::View<ygg::Index<runir::kr::dl::semantics::Denotation<Category>>, runir::kr::dl::semantics::DenotationRepository>;
 
     auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
-    tyr::add_print(cls);
-    tyr::add_hash(cls);
+    ygg::add_print(cls);
+    ygg::add_hash(cls);
 
     if constexpr (std::same_as<Category, BooleanTag> || std::same_as<Category, NumericalTag>)
         cls.def("get", [](const View& view) { return view.get(); });
@@ -40,11 +40,11 @@ void bind_denotation_view(nb::module_& m, const std::string& name)
 template<typename T, typename Repository>
 void bind_view(nb::module_& m, const std::string& name)
 {
-    using View = tyr::View<tyr::Index<T>, Repository>;
+    using View = ygg::View<ygg::Index<T>, Repository>;
 
     auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
-    tyr::add_print(cls);
-    tyr::add_hash(cls);
+    ygg::add_print(cls);
+    ygg::add_hash(cls);
 
     if constexpr (requires(const View& view) { view.get_arg(); })
         cls.def("get_arg", &View::get_arg);

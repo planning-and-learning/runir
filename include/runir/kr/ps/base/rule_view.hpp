@@ -7,10 +7,10 @@
 #include "runir/kr/ps/effect_view.hpp"
 
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/vector.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/containers/vector.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<typename C>
@@ -34,6 +34,6 @@ public:
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

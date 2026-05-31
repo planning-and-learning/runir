@@ -6,25 +6,25 @@
 #include "runir/kr/ps/base/sketch_data.hpp"
 #include "runir/kr/ps/canonicalization.hpp"
 
-#include <tyr/common/canonicalization.hpp>
+#include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace runir::kr::ps::base
 {
 
-inline bool is_canonical(const tyr::Data<Rule>& data) noexcept
+inline bool is_canonical(const ygg::Data<Rule>& data) noexcept
 {
-    return tyr::is_canonical(data.conditions) && tyr::is_canonical(data.effects);
+    return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects);
 }
 
-inline bool is_canonical(const tyr::Data<Sketch>& data) noexcept { return tyr::is_canonical(data.rules); }
+inline bool is_canonical(const ygg::Data<Sketch>& data) noexcept { return ygg::is_canonical(data.rules); }
 
-inline void canonicalize(tyr::Data<Rule>& data)
+inline void canonicalize(ygg::Data<Rule>& data)
 {
-    tyr::canonicalize(data.conditions);
-    tyr::canonicalize(data.effects);
+    ygg::canonicalize(data.conditions);
+    ygg::canonicalize(data.effects);
 }
 
-inline void canonicalize(tyr::Data<Sketch>& data) { tyr::canonicalize(data.rules); }
+inline void canonicalize(ygg::Data<Sketch>& data) { ygg::canonicalize(data.rules); }
 
 }  // namespace runir::kr::ps::base
 

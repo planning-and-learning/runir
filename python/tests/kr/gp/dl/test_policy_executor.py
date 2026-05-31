@@ -27,7 +27,7 @@ from pyrunir.kr.ps.base.dl import (
     SketchSpecification,
     parse_sketch,
 )
-from pytyr.common import ExecutionContext
+from pyyggdrasil import ExecutionContext
 from pytyr.formalism.planning import Parser, ParserOptions
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 

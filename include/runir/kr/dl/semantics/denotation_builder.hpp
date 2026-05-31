@@ -1,19 +1,19 @@
 #ifndef RUNIR_SEMANTICS_DENOTATION_BUILDER_HPP_
 #define RUNIR_SEMANTICS_DENOTATION_BUILDER_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/config.hpp"
 #include "runir/kr/dl/semantics/denotation_index.hpp"
 
 #include <cassert>
 #include <cstddef>
-#include <tyr/common/dynamic_bitset.hpp>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/containers/dynamic_bitset.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 #include <tyr/formalism/object_index.hpp>
 #include <utility>
 #include <vector>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -27,7 +27,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
 
     void initialize(bool value_) noexcept
     {
-        tyr::clear(index);
+        ygg::clear(index);
         value = value_;
     }
 
@@ -46,7 +46,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>
 
     void initialize(runir::uint_t value_) noexcept
     {
-        tyr::clear(index);
+        ygg::clear(index);
         value = value_;
     }
 
@@ -59,8 +59,8 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
 {
     using Block = runir::uint_t;
     using Blocks = std::vector<Block>;
-    using Bitset = tyr::BitsetSpan<Block>;
-    using ConstBitset = tyr::BitsetSpan<const Block>;
+    using Bitset = ygg::BitsetSpan<Block>;
+    using ConstBitset = ygg::BitsetSpan<const Block>;
 
     Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> index;
     runir::uint_t num_objects = 0;
@@ -76,7 +76,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
 
     void initialize(runir::uint_t num_objects_)
     {
-        tyr::clear(index);
+        ygg::clear(index);
         num_objects = num_objects_;
         blocks.assign(num_blocks(num_objects), Block { 0 });
     }
@@ -98,8 +98,8 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
 {
     using Block = runir::uint_t;
     using Blocks = std::vector<Block>;
-    using Bitset = tyr::BitsetSpan<Block>;
-    using ConstBitset = tyr::BitsetSpan<const Block>;
+    using Bitset = ygg::BitsetSpan<Block>;
+    using ConstBitset = ygg::BitsetSpan<const Block>;
 
     Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> index;
     runir::uint_t num_objects = 0;
@@ -111,12 +111,12 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
     {
         assert_valid_num_blocks(blocks.size(), num_objects);
         for (runir::uint_t object = 0; object < num_objects; ++object)
-            assert(get_row_bitset(tyr::Index<tyr::formalism::Object>(object)).trailing_bits_zero());
+            assert(get_row_bitset(ygg::Index<tyr::formalism::Object>(object)).trailing_bits_zero());
     }
 
     void initialize(runir::uint_t num_objects_)
     {
-        tyr::clear(index);
+        ygg::clear(index);
         num_objects = num_objects_;
         blocks.assign(num_blocks(num_objects), Block { 0 });
     }
@@ -132,20 +132,20 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
     {
         assert(valid_num_blocks(num_blocks_, num_objects_));
     }
-    static constexpr auto row_block_offset(tyr::Index<tyr::formalism::Object> object, runir::uint_t num_objects_) noexcept -> size_t
+    static constexpr auto row_block_offset(ygg::Index<tyr::formalism::Object> object, runir::uint_t num_objects_) noexcept -> size_t
     {
-        return static_cast<size_t>(tyr::uint_t(object)) * num_row_blocks(num_objects_);
+        return static_cast<size_t>(ygg::uint_t(object)) * num_row_blocks(num_objects_);
     }
 
-    auto get_row_bitset(tyr::Index<tyr::formalism::Object> object) noexcept -> Bitset
+    auto get_row_bitset(ygg::Index<tyr::formalism::Object> object) noexcept -> Bitset
     {
-        assert(tyr::uint_t(object) < num_objects);
+        assert(ygg::uint_t(object) < num_objects);
         return Bitset(blocks.data() + row_block_offset(object, num_objects), num_objects);
     }
 
-    auto get_row_bitset(tyr::Index<tyr::formalism::Object> object) const noexcept -> ConstBitset
+    auto get_row_bitset(ygg::Index<tyr::formalism::Object> object) const noexcept -> ConstBitset
     {
-        assert(tyr::uint_t(object) < num_objects);
+        assert(ygg::uint_t(object) < num_objects);
         return ConstBitset(blocks.data() + row_block_offset(object, num_objects), num_objects);
     }
 };

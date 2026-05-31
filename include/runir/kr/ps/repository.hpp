@@ -7,9 +7,9 @@
 #include <cassert>
 #include <memory>
 #include <optional>
-#include <tyr/common/type_list.hpp>
-#include <tyr/common/types.hpp>
-#include <tyr/formalism/symbol_repository.hpp>
+#include <yggdrasil/core/type_list.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/symbol_repository.hpp>
 #include <utility>
 
 namespace runir::kr::ps
@@ -24,7 +24,7 @@ class BasicRepository : public std::enable_shared_from_this<BasicRepository<Fami
 private:
     using Self = BasicRepository<Family, RepositoryTypes, DlRepositoryPtr>;
 
-    tyr::ApplyTypeListT<tyr::formalism::SymbolRepository, RepositoryTypes> m_symbol_repository;
+    ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, RepositoryTypes> m_symbol_repository;
     DlRepositoryPtr m_dl_repository;
     size_t m_index;
 
@@ -70,22 +70,22 @@ public:
     void clear() noexcept { m_symbol_repository.clear(); }
 
     template<typename T>
-    std::optional<tyr::View<tyr::Index<T>, BasicRepository>> find(const tyr::Data<T>& data) const noexcept
+    std::optional<ygg::View<ygg::Index<T>, BasicRepository>> find(const ygg::Data<T>& data) const noexcept
     {
         if (auto index = m_symbol_repository.template find_local<T>(data))
-            return tyr::View<tyr::Index<T>, BasicRepository>(*index, *this);
+            return ygg::View<ygg::Index<T>, BasicRepository>(*index, *this);
         return std::nullopt;
     }
 
     template<typename T>
-    std::pair<tyr::View<tyr::Index<T>, BasicRepository>, bool> get_or_create(tyr::Data<T>& data)
+    std::pair<ygg::View<ygg::Index<T>, BasicRepository>, bool> get_or_create(ygg::Data<T>& data)
     {
         const auto [index, success] = m_symbol_repository.template get_or_create_local<T>(data);
-        return { tyr::View<tyr::Index<T>, BasicRepository>(index, *this), success };
+        return { ygg::View<ygg::Index<T>, BasicRepository>(index, *this), success };
     }
 
     template<typename T>
-    const tyr::Data<T>& operator[](tyr::Index<T> index) const noexcept
+    const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
     {
         return m_symbol_repository.template at_local<T>(index);
     }
@@ -97,7 +97,7 @@ public:
     }
 
     template<typename T>
-    const BasicRepository& get_canonical_context(tyr::Index<T>) const noexcept
+    const BasicRepository& get_canonical_context(ygg::Index<T>) const noexcept
     {
         return *this;
     }

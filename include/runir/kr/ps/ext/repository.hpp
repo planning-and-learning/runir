@@ -32,20 +32,20 @@
 #include "runir/kr/ps/ext/rule_view.hpp"
 
 #include <memory>
-#include <tyr/common/type_list.hpp>
+#include <yggdrasil/core/type_list.hpp>
 
 namespace runir::kr::ps::ext
 {
 
-using ConcreteRuleTypes = tyr::MapTypeListT<Rule, tyr::TypeList<LoadTag, SketchTag, DoTag, CallTag>>;
-using RuleTypes = tyr::ConcatTypeListsT<tyr::TypeList<RuleVariant>, ConcreteRuleTypes>;
-using FeatureTypes = tyr::TypeList<Feature<runir::kr::dl::ConceptTag>,
+using ConcreteRuleTypes = ygg::MapTypeListT<Rule, ygg::TypeList<LoadTag, SketchTag, DoTag, CallTag>>;
+using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<RuleVariant>, ConcreteRuleTypes>;
+using FeatureTypes = ygg::TypeList<Feature<runir::kr::dl::ConceptTag>,
                                    Feature<runir::kr::ps::dl::BooleanFeature>,
                                    Feature<runir::kr::ps::dl::NumericalFeature>,
                                    ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>,
                                    ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
                                    ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>;
-using ConditionTypes = tyr::TypeList<ConditionVariant,
+using ConditionTypes = ygg::TypeList<ConditionVariant,
                                      ConcreteConditionVariant<runir::kr::DlTag>,
                                      ConcreteCondition<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>,
                                      ConcreteCondition<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>,
@@ -53,7 +53,7 @@ using ConditionTypes = tyr::TypeList<ConditionVariant,
                                      ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
                                      ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>,
                                      ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>;
-using EffectTypes = tyr::TypeList<EffectVariant,
+using EffectTypes = ygg::TypeList<EffectVariant,
                                   ConcreteEffectVariant<runir::kr::DlTag>,
                                   ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>,
                                   ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>,
@@ -64,24 +64,23 @@ using EffectTypes = tyr::TypeList<EffectVariant,
                                   ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>,
                                   ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
                                   ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
-using ArgumentTypes = tyr::
-    TypeList<Argument<runir::kr::dl::ConceptTag>, Argument<runir::kr::dl::RoleTag>, Argument<runir::kr::dl::BooleanTag>, Argument<runir::kr::dl::NumericalTag>>;
-using ProgramTypes = tyr::TypeList<Register, MemoryState, MemoryTransition, Module, ModuleProgram>;
+using ArgumentTypes = ygg::TypeList<Argument<runir::kr::dl::ConceptTag>, Argument<runir::kr::dl::RoleTag>, Argument<runir::kr::dl::BooleanTag>, Argument<runir::kr::dl::NumericalTag>>;
+using ProgramTypes = ygg::TypeList<Register, MemoryState, MemoryTransition, Module, ModuleProgram>;
 using RepositoryTypes =
-    tyr::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ArgumentTypes, ProgramTypes>;
+    ygg::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ArgumentTypes, ProgramTypes>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ext::ConstructorRepositoryPtr>;
 using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ext::ConstructorRepositoryPtr>;
 
-using RegisterView = tyr::View<tyr::Index<Register>, Repository>;
-using MemoryStateView = tyr::View<tyr::Index<MemoryState>, Repository>;
-using MemoryTransitionView = tyr::View<tyr::Index<MemoryTransition>, Repository>;
-using ModuleView = tyr::View<tyr::Index<Module>, Repository>;
-using ModuleProgramView = tyr::View<tyr::Index<ModuleProgram>, Repository>;
-using RuleVariantView = tyr::View<tyr::Index<RuleVariant>, Repository>;
+using RegisterView = ygg::View<ygg::Index<Register>, Repository>;
+using MemoryStateView = ygg::View<ygg::Index<MemoryState>, Repository>;
+using MemoryTransitionView = ygg::View<ygg::Index<MemoryTransition>, Repository>;
+using ModuleView = ygg::View<ygg::Index<Module>, Repository>;
+using ModuleProgramView = ygg::View<ygg::Index<ModuleProgram>, Repository>;
+using RuleVariantView = ygg::View<ygg::Index<RuleVariant>, Repository>;
 
 template<RuleKind Kind>
-using RuleView = tyr::View<tyr::Index<Rule<Kind>>, Repository>;
+using RuleView = ygg::View<ygg::Index<Rule<Kind>>, Repository>;
 
 }  // namespace runir::kr::ps::ext
 

@@ -17,7 +17,7 @@
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <string>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <vector>
 
 namespace runir::kr::dl::grammar::ast
@@ -309,7 +309,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct ConceptAtLeastNumberRestriction : x3::position_tagged
 {
     static constexpr auto keyword = "c_at_least";
-    tyr::uint_t n;
+    ygg::uint_t n;
     RoleChoice<Family> role;
 };
 
@@ -317,7 +317,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct ConceptAtMostNumberRestriction : x3::position_tagged
 {
     static constexpr auto keyword = "c_at_most";
-    tyr::uint_t n;
+    ygg::uint_t n;
     RoleChoice<Family> role;
 };
 
@@ -325,7 +325,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct ConceptExactNumberRestriction : x3::position_tagged
 {
     static constexpr auto keyword = "c_exactly";
-    tyr::uint_t n;
+    ygg::uint_t n;
     RoleChoice<Family> role;
 };
 
@@ -333,7 +333,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct ConceptQualifiedAtLeastNumberRestriction : x3::position_tagged
 {
     static constexpr auto keyword = "c_at_least";
-    tyr::uint_t n;
+    ygg::uint_t n;
     RoleChoice<Family> role;
     ConceptChoice<Family> concept_;
 };
@@ -342,7 +342,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct ConceptQualifiedAtMostNumberRestriction : x3::position_tagged
 {
     static constexpr auto keyword = "c_at_most";
-    tyr::uint_t n;
+    ygg::uint_t n;
     RoleChoice<Family> role;
     ConceptChoice<Family> concept_;
 };
@@ -351,7 +351,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct ConceptQualifiedExactNumberRestriction : x3::position_tagged
 {
     static constexpr auto keyword = "c_exactly";
-    tyr::uint_t n;
+    ygg::uint_t n;
     RoleChoice<Family> role;
     ConceptChoice<Family> concept_;
 };

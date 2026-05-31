@@ -13,7 +13,7 @@
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/syntactic_complexity.hpp>
 #include <string>
-#include <tyr/common/equal_to.hpp>
+#include <yggdrasil/semantics/equal_to.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 
 namespace runir::tests
@@ -56,7 +56,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
 
         const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, planning_domain.get_domain(), *repository);
 
-        EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::base::Sketch>(0));
+        EXPECT_EQ(sketch.get_index(), ygg::Index<kr::ps::base::Sketch>(0));
         EXPECT_EQ(repository->template size<kr::ps::base::Sketch>(), 1);
 
         const auto formatted = fmt::format("{}", sketch);
@@ -98,7 +98,7 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 
     const auto sketch = kr::ps::base::dl::parse_sketch(description, planning_domain.get_domain(), *repository);
 
-    EXPECT_EQ(sketch.get_index(), tyr::Index<kr::ps::base::Sketch>(0));
+    EXPECT_EQ(sketch.get_index(), ygg::Index<kr::ps::base::Sketch>(0));
     EXPECT_EQ(repository->template size<kr::ps::base::Sketch>(), 1);
     EXPECT_EQ(repository->template size<kr::ps::base::Rule>(), 2);
     EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::BooleanFeature>>()), 1);
@@ -288,9 +288,9 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
     EXPECT_EQ(formatted, expected);
 
     const auto reparsed_grammar_view = kr::dl::grammar::base::parse_grammar(formatted, domain, *repository);
-    EXPECT_TRUE(tyr::EqualTo<decltype(grammar_view)> {}(grammar_view, reparsed_grammar_view));
+    EXPECT_TRUE(ygg::EqualTo<decltype(grammar_view)> {}(grammar_view, reparsed_grammar_view));
     EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(), 1);
-    EXPECT_EQ(grammar_view.get_index(), tyr::Index<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(0));
+    EXPECT_EQ(grammar_view.get_index(), ygg::Index<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(0));
 
     auto cnf_repository_factory = kr::dl::cnf_grammar::base::ConstructorRepositoryFactory();
     auto cnf_repository = cnf_repository_factory.create(planning_domain.get_repository());
@@ -301,7 +301,7 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
 
     const auto reparsed_cnf_source_grammar_view = kr::dl::grammar::base::parse_grammar(cnf_formatted, domain, *repository);
     const auto reparsed_cnf_grammar_view = kr::dl::cnf_grammar::base::translate(reparsed_cnf_source_grammar_view, *cnf_repository);
-    EXPECT_TRUE(tyr::EqualTo<decltype(cnf_grammar_view)> {}(cnf_grammar_view, reparsed_cnf_grammar_view));
+    EXPECT_TRUE(ygg::EqualTo<decltype(cnf_grammar_view)> {}(cnf_grammar_view, reparsed_cnf_grammar_view));
     EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(), 2);
 }
 
@@ -459,9 +459,9 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryParsesDomainsWithBooleanPrimiti
     EXPECT_EQ(formatted, expected);
 
     const auto reparsed_grammar_view = kr::dl::grammar::base::parse_grammar(formatted, domain, *repository);
-    EXPECT_TRUE(tyr::EqualTo<decltype(grammar_view)> {}(grammar_view, reparsed_grammar_view));
+    EXPECT_TRUE(ygg::EqualTo<decltype(grammar_view)> {}(grammar_view, reparsed_grammar_view));
     EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(), 1);
-    EXPECT_EQ(grammar_view.get_index(), tyr::Index<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(0));
+    EXPECT_EQ(grammar_view.get_index(), ygg::Index<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(0));
 
     auto cnf_repository_factory = kr::dl::cnf_grammar::base::ConstructorRepositoryFactory();
     auto cnf_repository = cnf_repository_factory.create(planning_domain.get_repository());
@@ -471,7 +471,7 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryParsesDomainsWithBooleanPrimiti
 
     const auto reparsed_cnf_source_grammar_view = kr::dl::grammar::base::parse_grammar(cnf_formatted, domain, *repository);
     const auto reparsed_cnf_grammar_view = kr::dl::cnf_grammar::base::translate(reparsed_cnf_source_grammar_view, *cnf_repository);
-    EXPECT_TRUE(tyr::EqualTo<decltype(cnf_grammar_view)> {}(cnf_grammar_view, reparsed_cnf_grammar_view));
+    EXPECT_TRUE(ygg::EqualTo<decltype(cnf_grammar_view)> {}(cnf_grammar_view, reparsed_cnf_grammar_view));
     EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(), 2);
 }
 

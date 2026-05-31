@@ -3,10 +3,10 @@
 
 #include "runir/kr/dl/declarations.hpp"
 
-#include <tyr/common/index_mixins.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/ids/index_mixins.hpp>
+#include <yggdrasil/core/types.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
@@ -16,6 +16,6 @@ struct Index<runir::kr::dl::Constructor<Family, Category>> : IndexMixin<Index<ru
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

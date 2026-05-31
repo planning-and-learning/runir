@@ -34,7 +34,7 @@ struct ModuleExecutionOptions
 {
     tyr::planning::brfs::Options<Kind> brfs_options;
     tyr::planning::iw::Options<Kind> iw_options;
-    tyr::uint_t max_arity = 0;
+    ygg::uint_t max_arity = 0;
 };
 
 template<tyr::planning::TaskKind Kind>
@@ -93,7 +93,7 @@ ModuleStepResult<Kind> make_applied_step(const tyr::planning::StateView<Kind>& s
 {
     auto result = ModuleStepResult<Kind> {};
     result.status = ModuleProgramOutcome::APPLIED;
-    const auto cost = source_state.get_index() == target_state.get_index() ? tyr::float_t(0) : tyr::float_t(1);
+    const auto cost = source_state.get_index() == target_state.get_index() ? ygg::float_t(0) : ygg::float_t(1);
     append_single_step_plan(result.plan_suffix, source_state, target_state, successors);
     if (!result.plan_suffix.empty())
         result.state_transition = datasets::StateGraphEdgeLabel { result.plan_suffix.front().label, cost };
@@ -151,7 +151,7 @@ ModuleStepResult<Kind> execute_next_control_step(const runir::datasets::TaskSear
 
                 auto result = ModuleStepResult<Kind> {};
                 result.status = ModuleProgramOutcome::APPLIED;
-                const auto cost = search_result.plan ? static_cast<tyr::float_t>(search_result.plan->get_length()) : tyr::float_t(1);
+                const auto cost = search_result.plan ? static_cast<ygg::float_t>(search_result.plan->get_length()) : ygg::float_t(1);
                 result.rule = rule_variant;
                 append_plan_suffix(result.plan_suffix, search_result);
                 if (!result.plan_suffix.empty())

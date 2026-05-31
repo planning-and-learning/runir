@@ -24,7 +24,7 @@
 #include <limits>
 #include <memory>
 #include <stdexcept>
-#include <tyr/common/equal_to.hpp>
+#include <yggdrasil/semantics/equal_to.hpp>
 #include <utility>
 #include <vector>
 
@@ -38,10 +38,10 @@ template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 class EquivalenceGraphEventHandler : public tyr::planning::astar_eager::EventHandler<Kind>
 {
 private:
-    using StateToVertexMap = tyr::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex>;
-    using StateToEquivalenceVertexMap = tyr::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex>;
-    using RepresentativeToVertexMap = tyr::UnorderedMap<EquivalenceVertexLabel, graphs::VertexIndex>;
-    using EquivalenceEdgeSet = tyr::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>;
+    using StateToVertexMap = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex>;
+    using StateToEquivalenceVertexMap = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex>;
+    using RepresentativeToVertexMap = ygg::UnorderedMap<EquivalenceVertexLabel, graphs::VertexIndex>;
+    using EquivalenceEdgeSet = ygg::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>;
 
     uint_t m_state_graph_index;
     Policy* m_policy;
@@ -51,7 +51,7 @@ private:
 
     StateGraphBuilder<Kind> m_state_builder;
     StateToVertexMap m_state_to_vertex;
-    tyr::UnorderedMap<tyr::planning::StateView<Kind>, StateGraphVertexRef> m_pruned_state_to_representative;
+    ygg::UnorderedMap<tyr::planning::StateView<Kind>, StateGraphVertexRef> m_pruned_state_to_representative;
     std::vector<graphs::VertexIndex> m_state_vertex_to_equivalence_vertex;
     tyr::planning::Statistics m_statistics;
 
@@ -156,7 +156,7 @@ public:
         const auto representative =
             m_policy->get_or_create_representative(StateGraphVertexCandidate<Kind> { m_state_graph_index, succ_state }, proposed_representative);
 
-        if (tyr::EqualTo<StateGraphVertexRef> {}(representative, proposed_representative))
+        if (ygg::EqualTo<StateGraphVertexRef> {}(representative, proposed_representative))
         {
             static_cast<void>(get_or_create_state_vertex(succ_state));
             return false;
@@ -195,13 +195,13 @@ public:
         record_edge(source_node, labeled_succ_node);
     }
 
-    void on_start_search(const tyr::planning::Node<Kind>& node, tyr::float_t f_value) override
+    void on_start_search(const tyr::planning::Node<Kind>& node, ygg::float_t f_value) override
     {
         static_cast<void>(f_value);
         get_or_create_state_vertex(node);
     }
 
-    void on_finish_f_layer(tyr::float_t f_value) override { static_cast<void>(f_value); }
+    void on_finish_f_layer(ygg::float_t f_value) override { static_cast<void>(f_value); }
     void on_end_search(tyr::planning::SearchStatus status) override { static_cast<void>(status); }
 
     void on_solved(const tyr::planning::Plan<Kind>& plan) override { static_cast<void>(plan); }
@@ -244,8 +244,8 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
                                 const StateGraphGenerationOptions& state_graph_options) -> EquivalenceGraphConstructionResult<Kind>
 {
     auto equivalence_builder = EquivalenceGraphBuilder {};
-    auto representative_to_vertex = tyr::UnorderedMap<EquivalenceVertexLabel, graphs::VertexIndex> {};
-    auto equivalence_edges = tyr::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>> {};
+    auto representative_to_vertex = ygg::UnorderedMap<EquivalenceVertexLabel, graphs::VertexIndex> {};
+    auto equivalence_edges = ygg::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>> {};
     auto state_graph_results = std::vector<StateGraphGenerationResult<Kind>> {};
     state_graph_results.reserve(contexts.size());
 

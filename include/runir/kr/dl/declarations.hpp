@@ -7,9 +7,9 @@
 #include <cstddef>
 #include <stdexcept>
 #include <type_traits>
-#include <tyr/common/index_mixins.hpp>
-#include <tyr/common/type_list.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/ids/index_mixins.hpp>
+#include <yggdrasil/core/type_list.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <tyr/formalism/declarations.hpp>
 
 namespace runir::kr::dl
@@ -45,7 +45,7 @@ struct NumericalTag
 template<typename T>
 concept CategoryTag = std::same_as<T, ConceptTag> || std::same_as<T, RoleTag> || std::same_as<T, BooleanTag> || std::same_as<T, NumericalTag>;
 
-using CategoryTags = tyr::TypeList<ConceptTag, RoleTag, BooleanTag, NumericalTag>;
+using CategoryTags = ygg::TypeList<ConceptTag, RoleTag, BooleanTag, NumericalTag>;
 
 /**
  * Truth values
@@ -240,7 +240,7 @@ concept BaseBooleanConstructorTag = is_atomic_state_tag_v<T> || is_atomic_goal_t
 template<typename T>
 concept BaseNumericalConstructorTag = std::same_as<T, CountTag> || std::same_as<T, DistanceTag>;
 
-using BaseConceptConstructorTags = tyr::TypeList<BotTag,
+using BaseConceptConstructorTags = ygg::TypeList<BotTag,
                                                  TopTag,
                                                  AtomicStateTag<tyr::formalism::StaticTag>,
                                                  AtomicStateTag<tyr::formalism::FluentTag>,
@@ -265,7 +265,7 @@ using BaseConceptConstructorTags = tyr::TypeList<BotTag,
                                                  OneOfTag,
                                                  NominalTag>;
 
-using BaseRoleConstructorTags = tyr::TypeList<UniversalTag,
+using BaseRoleConstructorTags = ygg::TypeList<UniversalTag,
                                               AtomicStateTag<tyr::formalism::StaticTag>,
                                               AtomicStateTag<tyr::formalism::FluentTag>,
                                               AtomicStateTag<tyr::formalism::DerivedTag>,
@@ -282,7 +282,7 @@ using BaseRoleConstructorTags = tyr::TypeList<UniversalTag,
                                               RestrictionTag,
                                               IdentityTag>;
 
-using BaseBooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
+using BaseBooleanConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
                                                  AtomicStateTag<tyr::formalism::FluentTag>,
                                                  AtomicStateTag<tyr::formalism::DerivedTag>,
                                                  AtomicGoalTag<tyr::formalism::StaticTag>,
@@ -290,7 +290,7 @@ using BaseBooleanConstructorTags = tyr::TypeList<AtomicStateTag<tyr::formalism::
                                                  AtomicGoalTag<tyr::formalism::DerivedTag>,
                                                  NonemptyTag>;
 
-using BaseNumericalConstructorTags = tyr::TypeList<CountTag, DistanceTag>;
+using BaseNumericalConstructorTags = ygg::TypeList<CountTag, DistanceTag>;
 
 template<FamilyTag Family, typename T>
 struct IsFamilyConceptConstructorTag : std::false_type

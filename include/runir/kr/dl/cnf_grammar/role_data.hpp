@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/cnf_grammar/data_helpers.hpp"
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family>
@@ -128,6 +128,6 @@ struct Data<runir::kr::dl::cnf_grammar::Role<Family, runir::kr::dl::IdentityTag>
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

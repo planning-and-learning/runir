@@ -5,11 +5,11 @@
 
 #include <concepts>
 #include <tuple>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/predicate_view.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>

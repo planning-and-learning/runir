@@ -6,14 +6,14 @@
 #include "runir/kr/ps/declarations.hpp"
 
 #include <concepts>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::ps::base
 {
 
 template<typename LanguageTag, typename EvaluationContext, typename StorageContext>
 concept IsRuleView = runir::kr::ps::IsEvaluationContext<runir::kr::BaseFamilyTag, LanguageTag, EvaluationContext>
-                     && requires(tyr::View<tyr::Index<runir::kr::ps::base::Rule>, StorageContext> rule, EvaluationContext& context) {
+                     && requires(ygg::View<ygg::Index<runir::kr::ps::base::Rule>, StorageContext> rule, EvaluationContext& context) {
                             { runir::kr::ps::base::is_compatible_with(rule, context) } -> std::same_as<bool>;
                         };
 

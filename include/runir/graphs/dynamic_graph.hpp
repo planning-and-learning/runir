@@ -22,12 +22,12 @@ public:
     using VertexPropertyType = VP;
     using EdgePropertyType = EP;
     using VertexType = Vertex<DynamicGraph, VP>;
-    using VertexMap = tyr::UnorderedMap<VertexIndex, VertexType>;
+    using VertexMap = ygg::UnorderedMap<VertexIndex, VertexType>;
     using EdgeType = Edge<DynamicGraph, EP>;
-    using EdgeMap = tyr::UnorderedMap<EdgeIndex, EdgeType>;
+    using EdgeMap = ygg::UnorderedMap<EdgeIndex, EdgeType>;
     using VertexPropertyMapType = VertexPropertyMap<VP>;
     using EdgePropertyMapType = EdgePropertyMap<EP>;
-    using AdjacentEdgeMap = tyr::UnorderedMap<VertexIndex, EdgeIndexSet>;
+    using AdjacentEdgeMap = ygg::UnorderedMap<VertexIndex, EdgeIndexSet>;
 
 private:
     VertexMap m_vertices;
@@ -79,7 +79,7 @@ public:
     auto add_vertex(P&& property) -> VertexIndex
     {
         const auto index = next_index(m_next_vertex_index, m_free_vertices);
-        auto [property_index, _] = m_vertex_properties.get_or_create(tyr::Data<VertexProperty<VP>>(std::forward<P>(property)));
+        auto [property_index, _] = m_vertex_properties.get_or_create(ygg::Data<VertexProperty<VP>>(std::forward<P>(property)));
 
         m_vertices.emplace(index, VertexType(index, property_index, *this));
         m_out_edges[index].clear();
@@ -105,7 +105,7 @@ public:
         assert_valid_vertex(target);
 
         const auto index = next_index(m_next_edge_index, m_free_edges);
-        auto [property_index, _] = m_edge_properties.get_or_create(tyr::Data<EdgeProperty<EP>>(std::forward<P>(property)));
+        auto [property_index, _] = m_edge_properties.get_or_create(ygg::Data<EdgeProperty<EP>>(std::forward<P>(property)));
 
         m_edges.emplace(index, EdgeType(index, source, target, property_index, *this));
         m_out_edges.at(source).insert(index);

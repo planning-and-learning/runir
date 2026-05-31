@@ -29,7 +29,7 @@ public:
     using Registers = std::array<std::optional<Element<Category>>, runir::kr::dl::num_registers>;
 
     template<CategoryTag Category>
-    using Argument = tyr::View<tyr::Index<Denotation<Category>>, DenotationRepository>;
+    using Argument = ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>;
 
     template<CategoryTag Category>
     using Arguments = std::vector<Argument<Category>>;
@@ -122,7 +122,7 @@ public:
 private:
     size_t verify_bounds(RegisterIdentifier<ConceptTag> reg) const
     {
-        const auto index = static_cast<size_t>(tyr::uint_t(reg));
+        const auto index = static_cast<size_t>(ygg::uint_t(reg));
         if (index >= registers<ConceptTag>().size())
             throw std::out_of_range(make_out_of_range_message<ConceptTag>(index));
         return index;
@@ -130,7 +130,7 @@ private:
 
     size_t verify_bounds(RegisterIdentifier<RoleTag> reg) const
     {
-        const auto index = static_cast<size_t>(tyr::uint_t(reg));
+        const auto index = static_cast<size_t>(ygg::uint_t(reg));
         if (index >= registers<RoleTag>().size())
             throw std::out_of_range(make_out_of_range_message<RoleTag>(index));
         return index;
@@ -147,7 +147,7 @@ private:
     template<CategoryTag Category>
     size_t verify_argument_bounds(ArgumentIdentifier<Category> arg) const
     {
-        const auto index = static_cast<size_t>(tyr::uint_t(arg));
+        const auto index = static_cast<size_t>(ygg::uint_t(arg));
         if (index >= arguments<Category>().size())
             throw std::out_of_range(make_argument_out_of_range_message<Category>(index));
         return index;

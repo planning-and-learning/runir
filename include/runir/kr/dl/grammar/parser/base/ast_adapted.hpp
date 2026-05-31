@@ -31,24 +31,24 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                                lhs)(runir::kr::dl::grammar::parser::base::ast::ConceptChoice<Family>, rhs))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::parser::base::ast::ConceptAtLeastNumberRestriction)(Family),
-                              (tyr::uint_t, n)(runir::kr::dl::grammar::parser::base::ast::RoleChoice<Family>, role))
+                              (ygg::uint_t, n)(runir::kr::dl::grammar::parser::base::ast::RoleChoice<Family>, role))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::parser::base::ast::ConceptAtMostNumberRestriction)(Family),
-                              (tyr::uint_t, n)(runir::kr::dl::grammar::parser::base::ast::RoleChoice<Family>, role))
+                              (ygg::uint_t, n)(runir::kr::dl::grammar::parser::base::ast::RoleChoice<Family>, role))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::parser::base::ast::ConceptExactNumberRestriction)(Family),
-                              (tyr::uint_t, n)(runir::kr::dl::grammar::parser::base::ast::RoleChoice<Family>, role))
+                              (ygg::uint_t, n)(runir::kr::dl::grammar::parser::base::ast::RoleChoice<Family>, role))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::parser::base::ast::ConceptQualifiedAtLeastNumberRestriction)(Family),
-                              (tyr::uint_t, n)(runir::kr::dl::grammar::parser::base::ast::RoleChoice<Family>,
+                              (ygg::uint_t, n)(runir::kr::dl::grammar::parser::base::ast::RoleChoice<Family>,
                                                role)(runir::kr::dl::grammar::parser::base::ast::ConceptChoice<Family>, concept_))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::parser::base::ast::ConceptQualifiedAtMostNumberRestriction)(Family),
-                              (tyr::uint_t, n)(runir::kr::dl::grammar::parser::base::ast::RoleChoice<Family>,
+                              (ygg::uint_t, n)(runir::kr::dl::grammar::parser::base::ast::RoleChoice<Family>,
                                                role)(runir::kr::dl::grammar::parser::base::ast::ConceptChoice<Family>, concept_))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::parser::base::ast::ConceptQualifiedExactNumberRestriction)(Family),
-                              (tyr::uint_t, n)(runir::kr::dl::grammar::parser::base::ast::RoleChoice<Family>,
+                              (ygg::uint_t, n)(runir::kr::dl::grammar::parser::base::ast::RoleChoice<Family>,
                                                role)(runir::kr::dl::grammar::parser::base::ast::ConceptChoice<Family>, concept_))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::parser::base::ast::ConceptRoleValueMap)(Family),

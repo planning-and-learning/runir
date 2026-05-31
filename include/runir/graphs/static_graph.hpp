@@ -46,7 +46,7 @@ private:
 
         for (const auto& vertex : builder.get_vertices())
         {
-            auto [property_index, _] = m_vertex_properties.get_or_create(tyr::Data<VertexProperty<VP>>(vertex.get_property()));
+            auto [property_index, _] = m_vertex_properties.get_or_create(ygg::Data<VertexProperty<VP>>(vertex.get_property()));
             m_vertices.emplace_back(vertex.get_index(), property_index, *this);
         }
 
@@ -69,7 +69,7 @@ private:
                 if (edge.get_source() != source)
                     continue;
 
-                auto [property_index, _] = m_edge_properties.get_or_create(tyr::Data<EdgeProperty<EP>>(edge.get_property()));
+                auto [property_index, _] = m_edge_properties.get_or_create(ygg::Data<EdgeProperty<EP>>(edge.get_property()));
                 m_edges.emplace_back(index++, edge.get_source(), edge.get_target(), property_index, *this);
             }
         }

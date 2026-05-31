@@ -26,8 +26,8 @@ namespace runir::kr::ps::ext
 template<tyr::planning::TaskKind Kind>
 struct ExtendedState
 {
-    using ConceptRegisterValue = std::optional<tyr::Index<tyr::formalism::Object>>;
-    using RoleRegisterValue = std::optional<std::pair<tyr::Index<tyr::formalism::Object>, tyr::Index<tyr::formalism::Object>>>;
+    using ConceptRegisterValue = std::optional<ygg::Index<tyr::formalism::Object>>;
+    using RoleRegisterValue = std::optional<std::pair<ygg::Index<tyr::formalism::Object>, ygg::Index<tyr::formalism::Object>>>;
     using ConceptRegisters = std::array<ConceptRegisterValue, runir::kr::dl::num_registers>;
     using RoleRegisters = std::array<RoleRegisterValue, runir::kr::dl::num_registers>;
 

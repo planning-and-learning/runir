@@ -6,7 +6,7 @@
 #include "runir/kr/ps/ext/dl/evaluation.hpp"
 
 #include <concepts>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <tyr/planning/declarations.hpp>
 
 namespace runir::kr::ps::ext
@@ -27,7 +27,7 @@ auto observation_count(const Value& value)
 }  // namespace detail
 
 template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
-bool is_compatible_with(tyr::View<tyr::Index<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
+bool is_compatible_with(ygg::View<ygg::Index<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
                         runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {
     const auto value = evaluate(condition.get_feature(), context);
@@ -45,14 +45,14 @@ bool is_compatible_with(tyr::View<tyr::Index<ConcreteCondition<runir::kr::DlTag,
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
-bool is_compatible_with(tyr::View<tyr::Index<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
+bool is_compatible_with(ygg::View<ygg::Index<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
                         runir::kr::ps::dl::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {
     return is_compatible_with(condition, context.get_source_context());
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
-bool is_compatible_with(tyr::View<tyr::Index<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
+bool is_compatible_with(ygg::View<ygg::Index<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
                         runir::kr::ps::ext::EvaluationContext<Kind>& context)
 {
     const auto value = evaluate(condition.get_feature(), context);
@@ -70,7 +70,7 @@ bool is_compatible_with(tyr::View<tyr::Index<ConcreteCondition<runir::kr::DlTag,
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
-bool is_compatible_with(tyr::View<tyr::Index<ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> effect,
+bool is_compatible_with(ygg::View<ygg::Index<ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> effect,
                         runir::kr::ps::dl::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {
     const auto target = evaluate(effect.get_feature(), context.get_target_context());

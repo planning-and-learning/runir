@@ -85,7 +85,7 @@ template<std::unsigned_integral Key, typename Value>
 class SparseReadPropertyMap
 {
 private:
-    std::reference_wrapper<const tyr::UnorderedMap<Key, Value>> m_data;
+    std::reference_wrapper<const ygg::UnorderedMap<Key, Value>> m_data;
 
 public:
     using value_type = Value;
@@ -93,10 +93,10 @@ public:
     using reference = const Value&;
     using category = boost::readable_property_map_tag;
 
-    explicit SparseReadPropertyMap(const tyr::UnorderedMap<Key, Value>& data) noexcept : m_data(data) {}
+    explicit SparseReadPropertyMap(const ygg::UnorderedMap<Key, Value>& data) noexcept : m_data(data) {}
 
     auto get(Key key) const -> const Value& { return m_data.get().at(key); }
-    auto get_data() const noexcept -> const tyr::UnorderedMap<Key, Value>& { return m_data.get(); }
+    auto get_data() const noexcept -> const ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
 };
 
 template<std::unsigned_integral Key, typename Value>
@@ -109,7 +109,7 @@ template<std::unsigned_integral Key, typename Value>
 class SparseReadWritePropertyMap
 {
 private:
-    std::reference_wrapper<tyr::UnorderedMap<Key, Value>> m_data;
+    std::reference_wrapper<ygg::UnorderedMap<Key, Value>> m_data;
 
 public:
     using value_type = Value;
@@ -117,12 +117,12 @@ public:
     using reference = Value&;
     using category = boost::read_write_property_map_tag;
 
-    explicit SparseReadWritePropertyMap(tyr::UnorderedMap<Key, Value>& data) noexcept : m_data(data) {}
+    explicit SparseReadWritePropertyMap(ygg::UnorderedMap<Key, Value>& data) noexcept : m_data(data) {}
 
     auto get(Key key) const -> const Value& { return m_data.get().at(key); }
     void put(Key key, const Value& value) { m_data.get()[key] = value; }
-    auto get_data() noexcept -> tyr::UnorderedMap<Key, Value>& { return m_data.get(); }
-    auto get_data() const noexcept -> const tyr::UnorderedMap<Key, Value>& { return m_data.get(); }
+    auto get_data() noexcept -> ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
+    auto get_data() const noexcept -> const ygg::UnorderedMap<Key, Value>& { return m_data.get(); }
 };
 
 template<std::unsigned_integral Key, typename Value>
@@ -155,14 +155,14 @@ template<std::unsigned_integral Key, typename Value>
 class SparseBasicMatrix
 {
 private:
-    std::reference_wrapper<tyr::UnorderedMap<Key, tyr::UnorderedMap<Key, Value>>> m_data;
+    std::reference_wrapper<ygg::UnorderedMap<Key, ygg::UnorderedMap<Key, Value>>> m_data;
 
 public:
-    explicit SparseBasicMatrix(tyr::UnorderedMap<Key, tyr::UnorderedMap<Key, Value>>& data) noexcept : m_data(data) {}
+    explicit SparseBasicMatrix(ygg::UnorderedMap<Key, ygg::UnorderedMap<Key, Value>>& data) noexcept : m_data(data) {}
 
-    auto operator[](Key key) -> tyr::UnorderedMap<Key, Value>& { return m_data.get()[key]; }
-    auto operator[](Key key) const -> const tyr::UnorderedMap<Key, Value>& { return m_data.get().at(key); }
-    auto get_data() const noexcept -> const tyr::UnorderedMap<Key, tyr::UnorderedMap<Key, Value>>& { return m_data.get(); }
+    auto operator[](Key key) -> ygg::UnorderedMap<Key, Value>& { return m_data.get()[key]; }
+    auto operator[](Key key) const -> const ygg::UnorderedMap<Key, Value>& { return m_data.get().at(key); }
+    auto get_data() const noexcept -> const ygg::UnorderedMap<Key, ygg::UnorderedMap<Key, Value>>& { return m_data.get(); }
 };
 
 }  // namespace runir::graphs::bgl

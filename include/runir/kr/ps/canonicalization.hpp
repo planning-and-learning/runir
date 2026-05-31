@@ -3,96 +3,96 @@
 
 #include "runir/kr/ps/declarations.hpp"
 
-#include <tyr/common/canonicalization.hpp>
+#include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace runir::kr::ps
 {
 
 template<FamilyTag Family, typename T>
-bool is_canonical(const tyr::Data<Feature<Family, T>>&) noexcept
+bool is_canonical(const ygg::Data<Feature<Family, T>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag>
-bool is_canonical(const tyr::Data<ConcreteFeature<Family, LanguageTag, FeatureTag>>&) noexcept
+bool is_canonical(const ygg::Data<ConcreteFeature<Family, LanguageTag, FeatureTag>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family>
-inline bool is_canonical(const tyr::Data<ConditionVariant<Family>>&) noexcept
+inline bool is_canonical(const ygg::Data<ConditionVariant<Family>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family, typename LanguageTag>
-bool is_canonical(const tyr::Data<ConcreteConditionVariant<Family, LanguageTag>>&) noexcept
+bool is_canonical(const ygg::Data<ConcreteConditionVariant<Family, LanguageTag>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
-bool is_canonical(const tyr::Data<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>&) noexcept
+bool is_canonical(const ygg::Data<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family>
-inline bool is_canonical(const tyr::Data<EffectVariant<Family>>&) noexcept
+inline bool is_canonical(const ygg::Data<EffectVariant<Family>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family, typename LanguageTag>
-bool is_canonical(const tyr::Data<ConcreteEffectVariant<Family, LanguageTag>>&) noexcept
+bool is_canonical(const ygg::Data<ConcreteEffectVariant<Family, LanguageTag>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
-bool is_canonical(const tyr::Data<ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>>&) noexcept
+bool is_canonical(const ygg::Data<ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family, typename T>
-void canonicalize(tyr::Data<Feature<Family, T>>&) noexcept
+void canonicalize(ygg::Data<Feature<Family, T>>&) noexcept
 {
 }
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag>
-void canonicalize(tyr::Data<ConcreteFeature<Family, LanguageTag, FeatureTag>>&) noexcept
+void canonicalize(ygg::Data<ConcreteFeature<Family, LanguageTag, FeatureTag>>&) noexcept
 {
 }
 
 template<FamilyTag Family>
-inline void canonicalize(tyr::Data<ConditionVariant<Family>>&) noexcept
+inline void canonicalize(ygg::Data<ConditionVariant<Family>>&) noexcept
 {
 }
 
 template<FamilyTag Family, typename LanguageTag>
-void canonicalize(tyr::Data<ConcreteConditionVariant<Family, LanguageTag>>&) noexcept
+void canonicalize(ygg::Data<ConcreteConditionVariant<Family, LanguageTag>>&) noexcept
 {
 }
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
-void canonicalize(tyr::Data<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>&) noexcept
+void canonicalize(ygg::Data<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>&) noexcept
 {
 }
 
 template<FamilyTag Family>
-inline void canonicalize(tyr::Data<EffectVariant<Family>>&) noexcept
+inline void canonicalize(ygg::Data<EffectVariant<Family>>&) noexcept
 {
 }
 
 template<FamilyTag Family, typename LanguageTag>
-void canonicalize(tyr::Data<ConcreteEffectVariant<Family, LanguageTag>>&) noexcept
+void canonicalize(ygg::Data<ConcreteEffectVariant<Family, LanguageTag>>&) noexcept
 {
 }
 
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
-void canonicalize(tyr::Data<ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>>&) noexcept
+void canonicalize(ygg::Data<ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>>&) noexcept
 {
 }
 

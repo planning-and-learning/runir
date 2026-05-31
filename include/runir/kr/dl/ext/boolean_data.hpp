@@ -4,7 +4,7 @@
 #include "runir/kr/dl/boolean_data.hpp"
 #include "runir/kr/dl/ext/declarations.hpp"
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -17,6 +17,6 @@ struct Data<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::Argum
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

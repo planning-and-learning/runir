@@ -6,10 +6,10 @@
 #include "runir/kr/ps/ext/rule_variant_index.hpp"
 
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -22,16 +22,16 @@ struct Data<runir::kr::ps::ext::MemoryTransition>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(source);
-        tyr::clear(target);
-        tyr::clear(rules);
+        ygg::clear(index);
+        ygg::clear(source);
+        ygg::clear(target);
+        ygg::clear(rules);
     }
 
     auto cista_members() const noexcept { return std::tie(index, source, target, rules); }
     auto identifying_members() const noexcept { return std::tie(source, target, rules); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

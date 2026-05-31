@@ -18,7 +18,7 @@
 #ifndef RUNIR_DATASETS_EQUIVALENCE_GRAPH_HPP_
 #define RUNIR_DATASETS_EQUIVALENCE_GRAPH_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/config.hpp"
 #include "runir/datasets/config.hpp"
 #include "runir/datasets/equivalence_policy.hpp"
 #include "runir/datasets/state_graph.hpp"
@@ -47,7 +47,7 @@ struct AnnotatedEquivalenceVertexLabel
 {
     uint_t state_graph_index = 0;
     graphs::VertexIndex state_vertex_index;
-    tyr::float_t goal_distance = std::numeric_limits<tyr::float_t>::infinity();
+    ygg::float_t goal_distance = std::numeric_limits<ygg::float_t>::infinity();
     bool is_initial = false;
     bool is_goal = false;
     bool is_alive = false;

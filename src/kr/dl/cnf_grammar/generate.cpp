@@ -15,7 +15,7 @@
 #include <map>
 #include <optional>
 #include <type_traits>
-#include <tyr/common/chrono.hpp>
+#include <yggdrasil/core/chrono.hpp>
 #include <tyr/planning/ground_task.hpp>
 #include <tyr/planning/ground_task/state_repository.hpp>
 #include <tyr/planning/ground_task/state_view.hpp>
@@ -31,16 +31,16 @@ namespace
 {
 
 template<runir::kr::dl::FamilyTag Family, typename T>
-auto intern(runir::kr::dl::ConstructorRepositoryFor<Family>& repository, tyr::Data<T>& data)
+auto intern(runir::kr::dl::ConstructorRepositoryFor<Family>& repository, ygg::Data<T>& data)
 {
     runir::kr::dl::canonicalize(data);
     return repository.get_or_create(data).first;
 }
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename T>
-auto intern_constructor(runir::kr::dl::ConstructorRepositoryFor<Family>& repository, tyr::Index<T> index)
+auto intern_constructor(runir::kr::dl::ConstructorRepositoryFor<Family>& repository, ygg::Index<T> index)
 {
-    tyr::Data<runir::kr::dl::Constructor<Family, Category>> data(index);
+    ygg::Data<runir::kr::dl::Constructor<Family, Category>> data(index);
     return intern(repository, data);
 }
 
@@ -49,7 +49,7 @@ class GeneratedSentences
 {
 private:
     template<runir::kr::dl::CategoryTag Category>
-    using ConstructorIndices = std::vector<tyr::Index<runir::kr::dl::Constructor<Family, Category>>>;
+    using ConstructorIndices = std::vector<ygg::Index<runir::kr::dl::Constructor<Family, Category>>>;
 
     template<runir::kr::dl::CategoryTag Category>
     using ConstructorsByComplexity = std::vector<ConstructorIndices<Category>>;
@@ -99,7 +99,7 @@ public:
     template<runir::kr::dl::CategoryTag Category>
     ConstructorIndices<Category>& get(FamilyNonTerminalView<Family, Category> nonterminal, size_t complexity)
     {
-        auto& by_complexity = get_map<Category>()[static_cast<std::uint64_t>(tyr::uint_t(nonterminal.get_index()))];
+        auto& by_complexity = get_map<Category>()[static_cast<std::uint64_t>(ygg::uint_t(nonterminal.get_index()))];
         if (complexity >= by_complexity.size())
             by_complexity.resize(complexity + 1);
         return by_complexity[complexity];
@@ -109,7 +109,7 @@ public:
     const ConstructorIndices<Category>& get(FamilyNonTerminalView<Family, Category> nonterminal, size_t complexity) const
     {
         const auto& map = get_map<Category>();
-        const auto it = map.find(static_cast<std::uint64_t>(tyr::uint_t(nonterminal.get_index())));
+        const auto it = map.find(static_cast<std::uint64_t>(ygg::uint_t(nonterminal.get_index())));
         if (it == map.end() || complexity >= it->second.size())
             return empty_constructors<Category>();
         return it->second[complexity];
@@ -119,10 +119,10 @@ public:
 class Timeout
 {
 private:
-    std::optional<tyr::CountdownWatch> m_stopwatch;
+    std::optional<ygg::CountdownWatch> m_stopwatch;
 
 public:
-    explicit Timeout(const GenerateOptions& options) : m_stopwatch(options.max_time ? std::optional<tyr::CountdownWatch>(*options.max_time) : std::nullopt) {}
+    explicit Timeout(const GenerateOptions& options) : m_stopwatch(options.max_time ? std::optional<ygg::CountdownWatch>(*options.max_time) : std::nullopt) {}
 
     bool has_finished() const { return m_stopwatch && m_stopwatch->has_finished(); }
 };
@@ -190,19 +190,19 @@ private:
     }
 
     template<typename T>
-    auto intern_concrete(tyr::Data<T>& data)
+    auto intern_concrete(ygg::Data<T>& data)
     {
         return intern(m_output_repository, data);
     }
 
     template<runir::kr::dl::CategoryTag Category, typename T>
-    auto intern_wrapped(tyr::Data<T>& data)
+    auto intern_wrapped(ygg::Data<T>& data)
     {
         return intern_constructor<Family, Category>(m_output_repository, intern_concrete(data).get_index());
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    void keep(FamilyNonTerminalView<Family, Category> lhs, tyr::Index<runir::kr::dl::Constructor<Family, Category>> constructor)
+    void keep(FamilyNonTerminalView<Family, Category> lhs, ygg::Index<runir::kr::dl::Constructor<Family, Category>> constructor)
     {
         m_sentences.get(lhs, m_complexity).push_back(constructor);
     }
@@ -316,7 +316,7 @@ private:
     template<runir::kr::dl::CategoryTag Category>
     bool generate_rule(FamilyDerivationRuleView<Family, Category> rule)
     {
-        return tyr::visit([&](auto constructor) { return generate_constructor(rule.get_lhs(), constructor); }, rule.get_rhs().get_variant());
+        return ygg::visit([&](auto constructor) { return generate_constructor(rule.get_lhs(), constructor); }, rule.get_rhs().get_variant());
     }
 
     template<runir::kr::dl::CategoryTag Category>
@@ -335,7 +335,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::AtomicStateTag<T>>> data(constructor.get_data().predicate,
+                                    ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::AtomicStateTag<T>>> data(constructor.get_data().predicate,
                                                                                                                      constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                 });
@@ -348,7 +348,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::AtomicGoalTag<T>>> data(constructor.get_data().predicate,
+                                    ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::AtomicGoalTag<T>>> data(constructor.get_data().predicate,
                                                                                                                     constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                 });
@@ -359,7 +359,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::BotTag>> data;
+                                    ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::BotTag>> data;
                                     return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                 });
     }
@@ -369,7 +369,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::TopTag>> data;
+                                    ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::TopTag>> data;
                                     return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                 });
     }
@@ -379,7 +379,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::NominalTag>> data(constructor.get_data().object);
+                                    ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::NominalTag>> data(constructor.get_data().object);
                                     return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                 });
     }
@@ -393,7 +393,7 @@ private:
                                true,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::IntersectionTag>> data(child_lhs, child_rhs);
+                                   ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::IntersectionTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                });
     }
@@ -406,7 +406,7 @@ private:
                                true,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::UnionTag>> data(child_lhs, child_rhs);
+                                   ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::UnionTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                });
     }
@@ -417,7 +417,7 @@ private:
                               constructor.get_arg(),
                               [&](auto arg)
                               {
-                                  tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::NegationTag>> data(arg);
+                                  ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::NegationTag>> data(arg);
                                   return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                               });
     }
@@ -431,7 +431,7 @@ private:
                                false,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::ValueRestrictionTag>> data(child_lhs, child_rhs);
+                                   ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::ValueRestrictionTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                });
     }
@@ -445,7 +445,7 @@ private:
                                false,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::ExistentialQuantificationTag>> data(child_lhs, child_rhs);
+                                   ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::ExistentialQuantificationTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                });
     }
@@ -457,7 +457,7 @@ private:
                               constructor.get_role(),
                               [&](auto role)
                               {
-                                  tyr::Data<runir::kr::dl::Concept<Family, Tag>> data(constructor.get_n(), role);
+                                  ygg::Data<runir::kr::dl::Concept<Family, Tag>> data(constructor.get_n(), role);
                                   return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                               });
     }
@@ -489,7 +489,7 @@ private:
                                false,
                                [&](auto role, auto concept_)
                                {
-                                   tyr::Data<runir::kr::dl::Concept<Family, Tag>> data(constructor.get_n(), role, concept_);
+                                   ygg::Data<runir::kr::dl::Concept<Family, Tag>> data(constructor.get_n(), role, concept_);
                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                });
     }
@@ -521,7 +521,7 @@ private:
                                false,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::RoleValueMapTag>> data(child_lhs, child_rhs);
+                                   ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::RoleValueMapTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                });
     }
@@ -534,7 +534,7 @@ private:
                                true,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::AgreementTag>> data(child_lhs, child_rhs);
+                                   ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::AgreementTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                });
     }
@@ -546,7 +546,7 @@ private:
                               constructor.get_role(),
                               [&](auto role)
                               {
-                                  tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::RoleFillersTag>> data(role, constructor.get_data().objects);
+                                  ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::RoleFillersTag>> data(role, constructor.get_data().objects);
                                   return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                               });
     }
@@ -556,7 +556,7 @@ private:
         return generate_nullary(lhs,
                                 [&]()
                                 {
-                                    tyr::Data<runir::kr::dl::Concept<Family, runir::kr::dl::OneOfTag>> data(constructor.get_data().objects);
+                                    ygg::Data<runir::kr::dl::Concept<Family, runir::kr::dl::OneOfTag>> data(constructor.get_data().objects);
                                     return intern_wrapped<runir::kr::dl::ConceptTag>(data);
                                 });
     }
@@ -567,7 +567,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Role<Family, runir::kr::dl::AtomicStateTag<T>>> data(constructor.get_data().predicate,
+                                    ygg::Data<runir::kr::dl::Role<Family, runir::kr::dl::AtomicStateTag<T>>> data(constructor.get_data().predicate,
                                                                                                                   constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::RoleTag>(data);
                                 });
@@ -579,7 +579,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Role<Family, runir::kr::dl::AtomicGoalTag<T>>> data(constructor.get_data().predicate,
+                                    ygg::Data<runir::kr::dl::Role<Family, runir::kr::dl::AtomicGoalTag<T>>> data(constructor.get_data().predicate,
                                                                                                                  constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::RoleTag>(data);
                                 });
@@ -590,7 +590,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Role<Family, runir::kr::dl::UniversalTag>> data;
+                                    ygg::Data<runir::kr::dl::Role<Family, runir::kr::dl::UniversalTag>> data;
                                     return intern_wrapped<runir::kr::dl::RoleTag>(data);
                                 });
     }
@@ -603,7 +603,7 @@ private:
                                true,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Role<Family, runir::kr::dl::IntersectionTag>> data(child_lhs, child_rhs);
+                                   ygg::Data<runir::kr::dl::Role<Family, runir::kr::dl::IntersectionTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::RoleTag>(data);
                                });
     }
@@ -616,7 +616,7 @@ private:
                                true,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Role<Family, runir::kr::dl::UnionTag>> data(child_lhs, child_rhs);
+                                   ygg::Data<runir::kr::dl::Role<Family, runir::kr::dl::UnionTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::RoleTag>(data);
                                });
     }
@@ -627,7 +627,7 @@ private:
                               constructor.get_arg(),
                               [&](auto arg)
                               {
-                                  tyr::Data<runir::kr::dl::Role<Family, runir::kr::dl::ComplementTag>> data(arg);
+                                  ygg::Data<runir::kr::dl::Role<Family, runir::kr::dl::ComplementTag>> data(arg);
                                   return intern_wrapped<runir::kr::dl::RoleTag>(data);
                               });
     }
@@ -638,7 +638,7 @@ private:
                               constructor.get_arg(),
                               [&](auto arg)
                               {
-                                  tyr::Data<runir::kr::dl::Role<Family, runir::kr::dl::InverseTag>> data(arg);
+                                  ygg::Data<runir::kr::dl::Role<Family, runir::kr::dl::InverseTag>> data(arg);
                                   return intern_wrapped<runir::kr::dl::RoleTag>(data);
                               });
     }
@@ -651,7 +651,7 @@ private:
                                false,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Role<Family, runir::kr::dl::CompositionTag>> data(child_lhs, child_rhs);
+                                   ygg::Data<runir::kr::dl::Role<Family, runir::kr::dl::CompositionTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::RoleTag>(data);
                                });
     }
@@ -663,7 +663,7 @@ private:
                               constructor.get_arg(),
                               [&](auto arg)
                               {
-                                  tyr::Data<runir::kr::dl::Role<Family, runir::kr::dl::TransitiveClosureTag>> data(arg);
+                                  ygg::Data<runir::kr::dl::Role<Family, runir::kr::dl::TransitiveClosureTag>> data(arg);
                                   return intern_wrapped<runir::kr::dl::RoleTag>(data);
                               });
     }
@@ -675,7 +675,7 @@ private:
                               constructor.get_arg(),
                               [&](auto arg)
                               {
-                                  tyr::Data<runir::kr::dl::Role<Family, runir::kr::dl::ReflexiveTransitiveClosureTag>> data(arg);
+                                  ygg::Data<runir::kr::dl::Role<Family, runir::kr::dl::ReflexiveTransitiveClosureTag>> data(arg);
                                   return intern_wrapped<runir::kr::dl::RoleTag>(data);
                               });
     }
@@ -688,7 +688,7 @@ private:
                                false,
                                [&](auto child_lhs, auto child_rhs)
                                {
-                                   tyr::Data<runir::kr::dl::Role<Family, runir::kr::dl::RestrictionTag>> data(child_lhs, child_rhs);
+                                   ygg::Data<runir::kr::dl::Role<Family, runir::kr::dl::RestrictionTag>> data(child_lhs, child_rhs);
                                    return intern_wrapped<runir::kr::dl::RoleTag>(data);
                                });
     }
@@ -699,7 +699,7 @@ private:
                               constructor.get_arg(),
                               [&](auto arg)
                               {
-                                  tyr::Data<runir::kr::dl::Role<Family, runir::kr::dl::IdentityTag>> data(arg);
+                                  ygg::Data<runir::kr::dl::Role<Family, runir::kr::dl::IdentityTag>> data(arg);
                                   return intern_wrapped<runir::kr::dl::RoleTag>(data);
                               });
     }
@@ -711,7 +711,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>> data(constructor.get_data().predicate,
+                                    ygg::Data<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>> data(constructor.get_data().predicate,
                                                                                                                      constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::BooleanTag>(data);
                                 });
@@ -724,7 +724,7 @@ private:
         return generate_nullary(lhs,
                                 [&]
                                 {
-                                    tyr::Data<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>> data(constructor.get_data().predicate,
+                                    ygg::Data<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>> data(constructor.get_data().predicate,
                                                                                                                     constructor.get_data().polarity);
                                     return intern_wrapped<runir::kr::dl::BooleanTag>(data);
                                 });
@@ -732,7 +732,7 @@ private:
 
     bool generate_constructor(FamilyNonTerminalView<Family, runir::kr::dl::BooleanTag> lhs, FamilyBooleanView<Family, runir::kr::dl::NonemptyTag> constructor)
     {
-        return tyr::visit(
+        return ygg::visit(
             [&](auto arg)
             {
                 using ArgView = std::decay_t<decltype(arg)>;
@@ -742,7 +742,7 @@ private:
                                           arg,
                                           [&](auto child)
                                           {
-                                              tyr::Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>> data(child);
+                                              ygg::Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>> data(child);
                                               return intern_wrapped<runir::kr::dl::BooleanTag>(data);
                                           });
                 }
@@ -752,7 +752,7 @@ private:
                                           arg,
                                           [&](auto child)
                                           {
-                                              tyr::Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>> data(child);
+                                              ygg::Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>> data(child);
                                               return intern_wrapped<runir::kr::dl::BooleanTag>(data);
                                           });
                 }
@@ -762,7 +762,7 @@ private:
 
     bool generate_constructor(FamilyNonTerminalView<Family, runir::kr::dl::NumericalTag> lhs, FamilyNumericalView<Family, runir::kr::dl::CountTag> constructor)
     {
-        return tyr::visit(
+        return ygg::visit(
             [&](auto arg)
             {
                 using ArgView = std::decay_t<decltype(arg)>;
@@ -772,7 +772,7 @@ private:
                                           arg,
                                           [&](auto child)
                                           {
-                                              tyr::Data<runir::kr::dl::Numerical<Family, runir::kr::dl::CountTag>> data(child);
+                                              ygg::Data<runir::kr::dl::Numerical<Family, runir::kr::dl::CountTag>> data(child);
                                               return intern_wrapped<runir::kr::dl::NumericalTag>(data);
                                           });
                 }
@@ -782,7 +782,7 @@ private:
                                           arg,
                                           [&](auto child)
                                           {
-                                              tyr::Data<runir::kr::dl::Numerical<Family, runir::kr::dl::CountTag>> data(child);
+                                              ygg::Data<runir::kr::dl::Numerical<Family, runir::kr::dl::CountTag>> data(child);
                                               return intern_wrapped<runir::kr::dl::NumericalTag>(data);
                                           });
                 }
@@ -799,7 +799,7 @@ private:
                                 constructor.get_rhs(),
                                 [&](auto child_lhs, auto child_mid, auto child_rhs)
                                 {
-                                    tyr::Data<runir::kr::dl::Numerical<Family, runir::kr::dl::DistanceTag>> data(child_lhs, child_mid, child_rhs);
+                                    ygg::Data<runir::kr::dl::Numerical<Family, runir::kr::dl::DistanceTag>> data(child_lhs, child_mid, child_rhs);
                                     return intern_wrapped<runir::kr::dl::NumericalTag>(data);
                                 });
     }

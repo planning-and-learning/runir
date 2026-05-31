@@ -37,11 +37,11 @@ auto enumerate_load_steps(const EvaluationContext<Kind>& context) -> std::vector
 
         for (auto rule_variant : transition.get_rules())
         {
-            tyr::visit(
+            ygg::visit(
                 [&](auto rule)
                 {
                     using RuleView = std::decay_t<decltype(rule)>;
-                    if constexpr (std::same_as<RuleView, tyr::View<tyr::Index<Rule<LoadTag>>, Repository>>)
+                    if constexpr (std::same_as<RuleView, ygg::View<ygg::Index<Rule<LoadTag>>, Repository>>)
                     {
                         if (!has_current_source(rule, context))
                             return;
@@ -82,7 +82,7 @@ auto make_do_step(const EvaluationContext<Kind>& context,
     auto step = ModuleProofStep<Kind>(ModuleProgramOutcome::APPLIED, std::move(target));
     step.rule = rule_variant;
     step.plan_suffix.push_back(successor);
-    const auto cost = source_state.get_index() == successor.node.get_state().get_index() ? tyr::float_t(0) : tyr::float_t(1);
+    const auto cost = source_state.get_index() == successor.node.get_state().get_index() ? ygg::float_t(0) : ygg::float_t(1);
     step.state_transition = datasets::StateGraphEdgeLabel { successor.label, cost };
     return step;
 }
@@ -104,7 +104,7 @@ auto enumerate_immediate_control_steps(const runir::datasets::TaskSearchContext<
 
         for (auto rule_variant : transition.get_rules())
         {
-            tyr::visit(
+            ygg::visit(
                 [&](auto rule)
                 {
                     using RuleViewT = std::decay_t<decltype(rule)>;
@@ -181,7 +181,7 @@ auto enumerate_sketch_control_steps(const EvaluationContext<Kind>& context, cons
 
         for (auto rule_variant : transition.get_rules())
         {
-            tyr::visit(
+            ygg::visit(
                 [&](auto rule)
                 {
                     using RuleViewT = std::decay_t<decltype(rule)>;
@@ -212,7 +212,7 @@ auto enumerate_sketch_control_steps(const EvaluationContext<Kind>& context, cons
                         auto step = ModuleProofStep<Kind>(ModuleProgramOutcome::APPLIED, std::move(target));
                         step.rule = rule_variant;
                         step.plan_suffix.push_back(*successor);
-                        const auto cost = source_state.get_index() == successor->node.get_state().get_index() ? tyr::float_t(0) : tyr::float_t(1);
+                        const auto cost = source_state.get_index() == successor->node.get_state().get_index() ? ygg::float_t(0) : ygg::float_t(1);
                         step.state_transition = datasets::StateGraphEdgeLabel { successor->label, cost };
                         result.push_back(std::move(step));
                     }
@@ -253,7 +253,7 @@ auto enumerate_control_steps(const runir::datasets::TaskSearchContext<Kind>& sea
             append_plan_suffix(step.plan_suffix, search_result);
             if (!step.plan_suffix.empty())
             {
-                const auto cost = search_result.plan ? static_cast<tyr::float_t>(search_result.plan->get_length()) : tyr::float_t(1);
+                const auto cost = search_result.plan ? static_cast<ygg::float_t>(search_result.plan->get_length()) : ygg::float_t(1);
                 step.state_transition = datasets::StateGraphEdgeLabel { step.plan_suffix.front().label, cost };
             }
             return std::vector<ModuleProofStep<Kind>> { std::move(step) };

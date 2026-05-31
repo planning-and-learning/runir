@@ -19,9 +19,9 @@
 
 #include <algorithm>
 #include <cassert>
-#include <tyr/common/comparators.hpp>
-#include <tyr/common/equal_to.hpp>
-#include <tyr/common/declarations.hpp>
+#include <yggdrasil/semantics/comparators.hpp>
+#include <yggdrasil/semantics/equal_to.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <utility>
 
 namespace runir::datasets
@@ -37,9 +37,9 @@ private:
     using ObjectView = tyr::formalism::planning::ObjectView;
     using Edge = std::pair<graphs::VertexIndex, graphs::VertexIndex>;
 
-    tyr::UnorderedMap<ObjectView, graphs::VertexIndex> m_object_to_vertex;
+    ygg::UnorderedMap<ObjectView, graphs::VertexIndex> m_object_to_vertex;
     std::vector<ObjectGraphVertexLabel> m_vertex_labels;
-    tyr::UnorderedSet<Edge> m_edges;
+    ygg::UnorderedSet<Edge> m_edges;
 
     auto get_or_create_vertex(ObjectView object) -> graphs::VertexIndex
     {
@@ -92,8 +92,8 @@ public:
 
         for (auto& label : m_vertex_labels)
         {
-            std::sort(label.labels.begin(), label.labels.end(), tyr::Less<ObjectGraphVertexLabelEntry> {});
-            label.labels.erase(std::unique(label.labels.begin(), label.labels.end(), tyr::EqualTo<ObjectGraphVertexLabelEntry> {}), label.labels.end());
+            std::sort(label.labels.begin(), label.labels.end(), ygg::Less<ObjectGraphVertexLabelEntry> {});
+            label.labels.erase(std::unique(label.labels.begin(), label.labels.end(), ygg::EqualTo<ObjectGraphVertexLabelEntry> {}), label.labels.end());
             builder.add_vertex(std::move(label));
         }
 

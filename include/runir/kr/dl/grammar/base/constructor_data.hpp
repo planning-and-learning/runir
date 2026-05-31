@@ -6,11 +6,11 @@
 
 #include <cista/containers/variant.h>
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 #include <utility>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -47,8 +47,8 @@ struct Data<runir::kr::dl::grammar::Constructor<runir::kr::BaseFamilyTag, runir:
     explicit Data(Variant value_) : index(), value(std::move(value_)) {}
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
     auto cista_members() const noexcept { return std::tie(index, value); }
     auto identifying_members() const noexcept { return std::tie(value); }
@@ -80,8 +80,8 @@ struct Data<runir::kr::dl::grammar::Constructor<runir::kr::BaseFamilyTag, runir:
     explicit Data(Variant value_) : index(), value(std::move(value_)) {}
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
     auto cista_members() const noexcept { return std::tie(index, value); }
     auto identifying_members() const noexcept { return std::tie(value); }
@@ -104,8 +104,8 @@ struct Data<runir::kr::dl::grammar::Constructor<runir::kr::BaseFamilyTag, runir:
     explicit Data(Variant value_) : index(), value(std::move(value_)) {}
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
     auto cista_members() const noexcept { return std::tie(index, value); }
     auto identifying_members() const noexcept { return std::tie(value); }
@@ -122,13 +122,13 @@ struct Data<runir::kr::dl::grammar::Constructor<runir::kr::BaseFamilyTag, runir:
     explicit Data(Variant value_) : index(), value(std::move(value_)) {}
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(value);
+        ygg::clear(index);
+        ygg::clear(value);
     }
     auto cista_members() const noexcept { return std::tie(index, value); }
     auto identifying_members() const noexcept { return std::tie(value); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

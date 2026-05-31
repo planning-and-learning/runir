@@ -14,10 +14,10 @@
 #include <cista/containers/vector.h>
 #include <string>
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -39,16 +39,16 @@ struct Data<runir::kr::ps::ext::Module>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(name);
-        tyr::clear(concept_arguments);
-        tyr::clear(role_arguments);
-        tyr::clear(boolean_arguments);
-        tyr::clear(numerical_arguments);
-        tyr::clear(registers);
-        tyr::clear(entry_memory_state);
-        tyr::clear(memory_states);
-        tyr::clear(memory_transitions);
+        ygg::clear(index);
+        ygg::clear(name);
+        ygg::clear(concept_arguments);
+        ygg::clear(role_arguments);
+        ygg::clear(boolean_arguments);
+        ygg::clear(numerical_arguments);
+        ygg::clear(registers);
+        ygg::clear(entry_memory_state);
+        ygg::clear(memory_states);
+        ygg::clear(memory_transitions);
     }
 
     auto cista_members() const noexcept
@@ -78,6 +78,6 @@ struct Data<runir::kr::ps::ext::Module>
     }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

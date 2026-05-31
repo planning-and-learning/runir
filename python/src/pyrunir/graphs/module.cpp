@@ -5,7 +5,7 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
-#include <tyr/common/python/type_casters.hpp>
+#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::graphs
 {
@@ -44,7 +44,7 @@ void bind_module_definitions(nb::module_& m)
         .def(nb::init<const PyObjectStaticGraphBuilder&>())
         .def("get_forward_graph", &PyObjectBidirectionalStaticGraph::get_forward_graph, nb::rv_policy::reference_internal)
         .def("get_backward_graph", &PyObjectBidirectionalStaticGraph::get_backward_graph, nb::rv_policy::reference_internal);
-    tyr::add_print(bidirectional_static_graph);
+    ygg::add_print(bidirectional_static_graph);
 
     bind_traversal_visitor<PyObjectDynamicGraph>(m, "DynamicGraphTraversalVisitor");
     bind_traversal_visitor<PyObjectStaticGraph>(m, "StaticGraphTraversalVisitor");

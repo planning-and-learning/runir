@@ -30,7 +30,7 @@ struct ModuleProgramSearchOptions
 {
     tyr::planning::brfs::Options<Kind> brfs_options;
     tyr::planning::iw::Options<Kind> iw_options;
-    tyr::uint_t max_arity = 0;
+    ygg::uint_t max_arity = 0;
 };
 
 template<tyr::planning::TaskKind Kind>

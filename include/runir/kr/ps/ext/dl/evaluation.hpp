@@ -6,7 +6,7 @@
 #include "runir/kr/ps/ext/evaluation.hpp"
 #include "runir/kr/ps/ext/feature_view.hpp"
 
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>
 
@@ -14,17 +14,17 @@ namespace runir::kr::ps::ext
 {
 
 template<typename FeatureTag, typename C, tyr::planning::TaskKind Kind>
-auto evaluate(tyr::View<tyr::Index<ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C> feature,
+auto evaluate(ygg::View<ygg::Index<ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C> feature,
               runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {
     return runir::kr::dl::semantics::evaluate(feature.get_feature(), context).get();
 }
 
 template<typename FeatureTag, typename C, tyr::planning::TaskKind Kind>
-auto evaluate(tyr::View<tyr::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> feature,
+auto evaluate(ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> feature,
               runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {
-    return tyr::visit([&](auto child) { return runir::kr::ps::ext::evaluate(child, context); }, feature.get_variant());
+    return ygg::visit([&](auto child) { return runir::kr::ps::ext::evaluate(child, context); }, feature.get_variant());
 }
 
 }  // namespace runir::kr::ps::ext

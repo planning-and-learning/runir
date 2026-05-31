@@ -23,17 +23,17 @@
 #include "runir/kr/ps/repository.hpp"
 
 #include <memory>
-#include <tyr/common/type_list.hpp>
+#include <yggdrasil/core/type_list.hpp>
 
 namespace runir::kr::ps::base
 {
 
-using FeatureTypes = tyr::TypeList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>,
+using FeatureTypes = ygg::TypeList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>,
                                    runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>,
                                    runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
                                    runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>;
 
-using ConditionTypes = tyr::TypeList<
+using ConditionTypes = ygg::TypeList<
     runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>,
     runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>,
     runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
@@ -42,7 +42,7 @@ using ConditionTypes = tyr::TypeList<
     runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>;
 
 using EffectTypes =
-    tyr::TypeList<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>,
+    ygg::TypeList<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>,
                   runir::kr::ps::ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>,
                   runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
                   runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
@@ -51,14 +51,14 @@ using EffectTypes =
                   runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
                   runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
 
-using SketchTypes = tyr::TypeList<runir::kr::ps::base::Rule, runir::kr::ps::base::Sketch>;
-using RepositoryTypes = tyr::ConcatTypeListsT<FeatureTypes, ConditionTypes, EffectTypes, SketchTypes>;
+using SketchTypes = ygg::TypeList<runir::kr::ps::base::Rule, runir::kr::ps::base::Sketch>;
+using RepositoryTypes = ygg::ConcatTypeListsT<FeatureTypes, ConditionTypes, EffectTypes, SketchTypes>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::BaseFamilyTag, RepositoryTypes, runir::kr::dl::base::ConstructorRepositoryPtr>;
 using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::BaseFamilyTag, RepositoryTypes, runir::kr::dl::base::ConstructorRepositoryPtr>;
 
-using SketchView = tyr::View<tyr::Index<runir::kr::ps::base::Sketch>, Repository>;
-using RuleView = tyr::View<tyr::Index<runir::kr::ps::base::Rule>, Repository>;
+using SketchView = ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, Repository>;
+using RuleView = ygg::View<ygg::Index<runir::kr::ps::base::Rule>, Repository>;
 
 }  // namespace runir::kr::ps::base
 

@@ -3,10 +3,10 @@
 
 #include "runir/kr/ps/declarations.hpp"
 
-#include <tyr/common/index_mixins.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/ids/index_mixins.hpp>
+#include <yggdrasil/core/types.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::FamilyTag Family, typename FeatureTag>
@@ -16,6 +16,6 @@ struct Index<runir::kr::ps::Feature<Family, FeatureTag>> : IndexMixin<Index<runi
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

@@ -10,11 +10,11 @@
 #include <cista/containers/string.h>
 #include <string>
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 #include <utility>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -47,10 +47,10 @@ struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl:
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(feature);
-        tyr::clear(symbol);
-        tyr::clear(description);
+        ygg::clear(index);
+        ygg::clear(feature);
+        ygg::clear(symbol);
+        ygg::clear(description);
     }
 
     auto cista_members() const noexcept { return std::tie(index, feature, symbol, description); }
@@ -87,10 +87,10 @@ struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps:
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(feature);
-        tyr::clear(symbol);
-        tyr::clear(description);
+        ygg::clear(index);
+        ygg::clear(feature);
+        ygg::clear(symbol);
+        ygg::clear(description);
     }
 
     auto cista_members() const noexcept { return std::tie(index, feature, symbol, description); }
@@ -127,16 +127,16 @@ struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps:
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(feature);
-        tyr::clear(symbol);
-        tyr::clear(description);
+        ygg::clear(index);
+        ygg::clear(feature);
+        ygg::clear(symbol);
+        ygg::clear(description);
     }
 
     auto cista_members() const noexcept { return std::tie(index, feature, symbol, description); }
     auto identifying_members() const noexcept { return std::tie(feature, symbol, description); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

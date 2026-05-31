@@ -5,9 +5,9 @@
 #include "runir/kr/ps/ext/feature_view.hpp"
 
 #include <tuple>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<typename FeatureTag, typename ObservationTag, typename C>
@@ -34,6 +34,6 @@ public:
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

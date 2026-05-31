@@ -8,8 +8,8 @@
 #include <cassert>
 #include <concepts>
 #include <tuple>
-#include <tyr/common/dynamic_bitset.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/containers/dynamic_bitset.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <tyr/formalism/object_index.hpp>
 #include <tyr/formalism/object_view.hpp>
 #include <utility>
@@ -35,13 +35,13 @@ struct DenotationElementType<runir::kr::dl::NumericalTag, C>
 template<typename C>
 struct DenotationElementType<runir::kr::dl::ConceptTag, C>
 {
-    using Type = tyr::View<tyr::Index<tyr::formalism::Object>, C>;
+    using Type = ygg::View<ygg::Index<tyr::formalism::Object>, C>;
 };
 
 template<typename C>
 struct DenotationElementType<runir::kr::dl::RoleTag, C>
 {
-    using Type = std::pair<tyr::View<tyr::Index<tyr::formalism::Object>, C>, tyr::View<tyr::Index<tyr::formalism::Object>, C>>;
+    using Type = std::pair<ygg::View<ygg::Index<tyr::formalism::Object>, C>, ygg::View<ygg::Index<tyr::formalism::Object>, C>>;
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>
@@ -49,7 +49,7 @@ using DenotationElement = typename DenotationElementType<Category, C>::Type;
 
 }  // namespace runir::kr::dl::semantics
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::CategoryTag Category, typename C>
@@ -80,7 +80,7 @@ public:
 
         auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElement<runir::kr::dl::ConceptTag, C>
         {
-            return make_view(Index<formalism::Object>(static_cast<uint_t>(m_object)), m_view->get_context());
+            return make_view(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_object)), m_view->get_context());
         }
 
         ConceptIterator& operator++() noexcept
@@ -109,7 +109,7 @@ public:
             const auto num_objects = m_view->get_data().num_objects;
             while (m_source < num_objects)
             {
-                const auto row = m_view->get(Index<formalism::Object>(static_cast<uint_t>(m_source)));
+                const auto row = m_view->get(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_source)));
                 m_target = row.find_first();
                 if (m_target != npos)
                     return;
@@ -130,13 +130,13 @@ public:
 
         auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElement<runir::kr::dl::RoleTag, C>
         {
-            return std::pair(make_view(Index<formalism::Object>(static_cast<uint_t>(m_source)), m_view->get_context()),
-                             make_view(Index<formalism::Object>(static_cast<uint_t>(m_target)), m_view->get_context()));
+            return std::pair(make_view(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_source)), m_view->get_context()),
+                             make_view(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_target)), m_view->get_context()));
         }
 
         RoleIterator& operator++() noexcept
         {
-            const auto row = m_view->get(Index<formalism::Object>(static_cast<uint_t>(m_source)));
+            const auto row = m_view->get(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_source)));
             m_target = row.find_next(m_target);
             if (m_target == npos)
             {
@@ -182,7 +182,7 @@ public:
         return Bitset(vector.data(), Layout::num_bits(data.num_objects));
     }
 
-    auto get(Index<formalism::Object> object) const noexcept
+    auto get(Index<::tyr::formalism::Object> object) const noexcept
         requires(std::same_as<Category, runir::kr::dl::RoleTag>)
     {
         using Layout = Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>;

@@ -72,7 +72,7 @@ auto compute_label_permutation(const SparseGraph& source, const SparseGraph& tar
     if (!(source == target))
         throw std::runtime_error("runir::graphs::nauty::compute_label_permutation: graphs have different canonical structure.");
 
-    auto target_label_to_index = tyr::UnorderedMap<int, int>();
+    auto target_label_to_index = ygg::UnorderedMap<int, int>();
     for (int i = 0; i < target.get_num_vertices(); ++i)
         target_label_to_index.emplace(target.get_labels().at(static_cast<std::size_t>(i)), i);
 

@@ -12,10 +12,10 @@ namespace runir::kr::ps::ext::dl
 
 ModuleView ModuleFactory::create_empty(Repository& repository)
 {
-    auto entry_data = tyr::Data<MemoryState>(std::string("m0"));
+    auto entry_data = ygg::Data<MemoryState>(std::string("m0"));
     const auto entry = repository.get_or_create(entry_data).first;
 
-    auto data = tyr::Data<Module>(std::string("empty"));
+    auto data = ygg::Data<Module>(std::string("empty"));
     data.entry_memory_state = entry.get_index();
     data.memory_states.push_back(entry.get_index());
     canonicalize(data);

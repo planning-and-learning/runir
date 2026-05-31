@@ -5,8 +5,8 @@
 #include "runir/kr/dl/declarations.hpp"
 
 #include <type_traits>
-#include <tyr/common/comparators.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/semantics/comparators.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <utility>
 
 namespace runir::kr::dl
@@ -19,74 +19,74 @@ void canonicalize_commutative_binary(Data& data) noexcept
     using Rhs = std::remove_cvref_t<decltype(data.rhs)>;
     static_assert(std::same_as<Lhs, Rhs>);
 
-    if (tyr::Less<Lhs> {}(data.rhs, data.lhs))
+    if (ygg::Less<Lhs> {}(data.rhs, data.lhs))
         std::swap(data.lhs, data.rhs);
 }
 
 template<FamilyTag Family, typename Tag>
     requires FamilyConceptConstructorTag<Family, Tag>
-bool is_canonical(const tyr::Data<FamilyConcept<Family, Tag>>&) noexcept
+bool is_canonical(const ygg::Data<FamilyConcept<Family, Tag>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family, typename Tag>
     requires FamilyRoleConstructorTag<Family, Tag>
-bool is_canonical(const tyr::Data<FamilyRole<Family, Tag>>&) noexcept
+bool is_canonical(const ygg::Data<FamilyRole<Family, Tag>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family, typename Tag>
     requires FamilyBooleanConstructorTag<Family, Tag>
-bool is_canonical(const tyr::Data<FamilyBoolean<Family, Tag>>&) noexcept
+bool is_canonical(const ygg::Data<FamilyBoolean<Family, Tag>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family, typename Tag>
     requires FamilyNumericalConstructorTag<Family, Tag>
-bool is_canonical(const tyr::Data<FamilyNumerical<Family, Tag>>&) noexcept
+bool is_canonical(const ygg::Data<FamilyNumerical<Family, Tag>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family, CategoryTag Category>
-bool is_canonical(const tyr::Data<FamilyConstructor<Family, Category>>&) noexcept
+bool is_canonical(const ygg::Data<FamilyConstructor<Family, Category>>&) noexcept
 {
     return true;
 }
 
 template<FamilyTag Family, typename Tag>
     requires FamilyConceptConstructorTag<Family, Tag>
-void canonicalize(tyr::Data<FamilyConcept<Family, Tag>>&) noexcept
+void canonicalize(ygg::Data<FamilyConcept<Family, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
 template<FamilyTag Family, typename Tag>
     requires FamilyRoleConstructorTag<Family, Tag>
-void canonicalize(tyr::Data<FamilyRole<Family, Tag>>&) noexcept
+void canonicalize(ygg::Data<FamilyRole<Family, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
 template<FamilyTag Family, typename Tag>
     requires FamilyBooleanConstructorTag<Family, Tag>
-void canonicalize(tyr::Data<FamilyBoolean<Family, Tag>>&) noexcept
+void canonicalize(ygg::Data<FamilyBoolean<Family, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
 template<FamilyTag Family, typename Tag>
     requires FamilyNumericalConstructorTag<Family, Tag>
-void canonicalize(tyr::Data<FamilyNumerical<Family, Tag>>&) noexcept
+void canonicalize(ygg::Data<FamilyNumerical<Family, Tag>>&) noexcept
 {
     // Trivially canonical
 }
 
 template<FamilyTag Family, CategoryTag Category>
-void canonicalize(tyr::Data<FamilyConstructor<Family, Category>>&) noexcept
+void canonicalize(ygg::Data<FamilyConstructor<Family, Category>>&) noexcept
 {
     // Trivially canonical
 }

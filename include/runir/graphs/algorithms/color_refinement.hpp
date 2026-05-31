@@ -15,7 +15,7 @@ using ColorList = std::vector<Color>;
 using ColorAssignmentList = std::vector<std::pair<Color, VertexIndex>>;
 
 template<IsGraph G>
-using Coloring = std::conditional_t<IsDenseGraph<G>, ColorList, tyr::UnorderedMap<VertexIndex, Color>>;
+using Coloring = std::conditional_t<IsDenseGraph<G>, ColorList, ygg::UnorderedMap<VertexIndex, Color>>;
 
 template<typename VertexProperty>
 class Certificate
@@ -48,7 +48,7 @@ class SignatureInterner
 {
 private:
     std::vector<std::pair<Signature, Color>> m_data;
-    tyr::UnorderedMap<Signature, Color> m_index;
+    ygg::UnorderedMap<Signature, Color> m_index;
 
 public:
     void clear()

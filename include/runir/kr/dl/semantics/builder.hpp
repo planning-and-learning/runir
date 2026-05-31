@@ -5,7 +5,7 @@
 #include "runir/kr/dl/semantics/denotation_index.hpp"
 
 #include <tuple>
-#include <tyr/common/unique_object_pool.hpp>
+#include <yggdrasil/containers/unique_object_pool.hpp>
 #include <utility>
 
 namespace runir::kr::dl::semantics
@@ -15,8 +15,8 @@ template<typename T>
 class BasicBuilder
 {
 private:
-    using Pooled = tyr::Builder<T>;
-    using Pool = tyr::UniqueObjectPool<Pooled>;
+    using Pooled = ygg::Builder<T>;
+    using Pool = ygg::UniqueObjectPool<Pooled>;
 
     Pool m_pool;
 

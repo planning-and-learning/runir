@@ -21,15 +21,19 @@ def _prepend_cmake_args(*args: str) -> None:
     os.environ["CMAKE_ARGS"] = " ".join([*args, existing]).strip()
 
 
+def _native_prefix(module) -> Path:
+    return module.native_prefix().resolve()
+
+
 def _native_prefixes() -> list[Path]:
     import pypddl
     import pyyggdrasil
     import pytyr
 
     return [
-        pypddl.native_prefix().resolve(),
-        pyyggdrasil.native_prefix().resolve(),
-        pytyr.native_prefix().resolve(),
+        _native_prefix(pypddl),
+        _native_prefix(pyyggdrasil),
+        _native_prefix(pytyr),
     ]
 
 

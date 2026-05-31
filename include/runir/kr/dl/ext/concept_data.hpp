@@ -4,7 +4,7 @@
 #include "runir/kr/dl/concept_data.hpp"
 #include "runir/kr/dl/ext/declarations.hpp"
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -27,6 +27,6 @@ struct Data<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::Argum
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

@@ -1,11 +1,11 @@
-#ifndef RUNIR_COMMON_FORMATTER_HPP_
-#define RUNIR_COMMON_FORMATTER_HPP_
+#ifndef RUNIR_FORMATTER_HPP_
+#define RUNIR_FORMATTER_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/config.hpp"
 
 #include <fmt/format.h>
 #include <string>
-#include <tyr/common/formatter.hpp>
+#include <yggdrasil/formatting/formatter.hpp>
 
 namespace runir
 {

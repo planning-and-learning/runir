@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_DL_FORMATTER_HPP_
 #define RUNIR_KR_PS_BASE_DL_FORMATTER_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/config.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/ps/base/dl/condition_view.hpp"
@@ -40,19 +40,19 @@ std::vector<std::string> quoted_object_names(Objects objects)
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>, C> view);
+std::string constructor(ygg::View<ygg::Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>, C> view);
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>, C> view);
+std::string constructor_body(ygg::View<ygg::Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>, C> view);
 
 template<typename View>
 std::string constructor_variant(View view)
 {
-    return tyr::visit([](auto arg) { return constructor(arg); }, view);
+    return ygg::visit([](auto arg) { return constructor(arg); }, view);
 }
 
 template<runir::kr::dl::BaseConceptConstructorTag Tag, typename C>
-std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, Tag>>, C> view)
+std::string concept_constructor(ygg::View<ygg::Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
         return std::string(runir::kr::dl::grammar::ast::ConceptBot<runir::kr::BaseFamilyTag>::keyword);
@@ -146,7 +146,7 @@ std::string concept_constructor(tyr::View<tyr::Index<runir::kr::dl::Concept<runi
 }
 
 template<runir::kr::dl::BaseRoleConstructorTag Tag, typename C>
-std::string role(tyr::View<tyr::Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, Tag>>, C> view)
+std::string role(ygg::View<ygg::Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
         return std::string(runir::kr::dl::grammar::ast::RoleUniversal<runir::kr::BaseFamilyTag>::keyword);
@@ -192,7 +192,7 @@ std::string role(tyr::View<tyr::Index<runir::kr::dl::Role<runir::kr::BaseFamilyT
 }
 
 template<runir::kr::dl::BaseBooleanConstructorTag Tag, typename C>
-std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, Tag>>, C> view)
+std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {} {}",
@@ -209,7 +209,7 @@ std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::Boolean<runi
 }
 
 template<runir::kr::dl::BaseNumericalConstructorTag Tag, typename C>
-std::string numerical(tyr::View<tyr::Index<runir::kr::dl::Numerical<runir::kr::BaseFamilyTag, Tag>>, C> view)
+std::string numerical(ygg::View<ygg::Index<runir::kr::dl::Numerical<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return fmt::format("{} {}", runir::kr::dl::grammar::ast::NumericalCount<runir::kr::BaseFamilyTag>::keyword, constructor_variant(view.get_arg()));
@@ -222,44 +222,44 @@ std::string numerical(tyr::View<tyr::Index<runir::kr::dl::Numerical<runir::kr::B
 }
 
 template<runir::kr::dl::BaseConceptConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, Tag>>, C> view)
+std::string constructor_body(ygg::View<ygg::Index<runir::kr::dl::Concept<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     return concept_constructor(view);
 }
 
 template<runir::kr::dl::BaseRoleConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, Tag>>, C> view)
+std::string constructor_body(ygg::View<ygg::Index<runir::kr::dl::Role<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     return role(view);
 }
 
 template<runir::kr::dl::BaseBooleanConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, Tag>>, C> view)
+std::string constructor_body(ygg::View<ygg::Index<runir::kr::dl::Boolean<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     return boolean_constructor(view);
 }
 
 template<runir::kr::dl::BaseNumericalConstructorTag Tag, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Numerical<runir::kr::BaseFamilyTag, Tag>>, C> view)
+std::string constructor_body(ygg::View<ygg::Index<runir::kr::dl::Numerical<runir::kr::BaseFamilyTag, Tag>>, C> view)
 {
     return numerical(view);
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor_body(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>, C> view)
+std::string constructor_body(ygg::View<ygg::Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>, C> view)
 {
-    return tyr::visit([](auto arg) { return constructor_body(arg); }, view.get_variant());
+    return ygg::visit([](auto arg) { return constructor_body(arg); }, view.get_variant());
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor(tyr::View<tyr::Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>, C> view)
+std::string constructor(ygg::View<ygg::Index<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>, C> view)
 {
     return fmt::format("({})", constructor_body(view));
 }
 
 template<typename FeatureTag, typename C>
 void append_feature(std::ostream& os,
-                    tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view,
+                    ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view,
                     std::string_view name)
 {
     os << "(" << FeatureTag::keyword << " " << name << " " << quoted(view.get_symbol()) << " " << quoted(view.get_description()) << " "
@@ -267,7 +267,7 @@ void append_feature(std::ostream& os,
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view,
+std::string feature(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view,
                     std::string_view name)
 {
     auto os = std::ostringstream {};
@@ -276,7 +276,7 @@ std::string feature(tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::k
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string condition(tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>,
+std::string condition(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>,
                       std::string_view feature_name)
 {
     auto os = std::ostringstream {};
@@ -285,7 +285,7 @@ std::string condition(tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runi
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string effect(tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>,
+std::string effect(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>,
                    std::string_view feature_name)
 {
     auto os = std::ostringstream {};
@@ -294,7 +294,7 @@ std::string effect(tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr:
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view)
+std::string feature(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view)
 {
     return feature(view, fmt::format("f_{}", view.get_index().get_value()));
 }
@@ -303,18 +303,18 @@ std::string feature(tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::k
 
 #if RUNIR_ENABLE_FMT_FORMATTERS
 template<typename FeatureTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C>> :
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C>> :
     fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::dl::format::feature(view), ctx); }
 };
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>> :
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>> :
     fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = runir::kr::ps::base::dl::format::condition(view, fmt::format("f_{}", view.get_feature().get_index().get_value()));
@@ -323,10 +323,10 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteCondition<runi
 };
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>> :
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>> :
     fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         const auto text = runir::kr::ps::base::dl::format::effect(view, fmt::format("f_{}", view.get_feature().get_index().get_value()));

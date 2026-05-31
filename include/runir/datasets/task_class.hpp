@@ -23,6 +23,7 @@
 #include <tuple>
 #include <type_traits>
 #include <tyr/planning/planning.hpp>
+#include <yggdrasil/execution/onetbb.hpp>
 #include <utility>
 #include <vector>
 
@@ -41,7 +42,7 @@ template<tyr::planning::TaskKind Kind>
 struct TaskSearchContext
 {
     tyr::planning::TaskPtr<Kind> task;
-    tyr::ExecutionContextPtr execution_context;
+    ygg::ExecutionContextPtr execution_context;
     tyr::planning::AxiomEvaluatorFactory<Kind> axiom_evaluator_factory;
     tyr::planning::StateRepositoryFactory<Kind> state_repository_factory;
     tyr::planning::SuccessorGeneratorFactory<Kind> successor_generator_factory;
@@ -51,7 +52,7 @@ struct TaskSearchContext
 
     static std::shared_ptr<TaskSearchContext> create() { return std::shared_ptr<TaskSearchContext>(new TaskSearchContext()); }
 
-    static std::shared_ptr<TaskSearchContext> create(tyr::planning::TaskPtr<Kind> task, tyr::ExecutionContextPtr execution_context)
+    static std::shared_ptr<TaskSearchContext> create(tyr::planning::TaskPtr<Kind> task, ygg::ExecutionContextPtr execution_context)
     {
         return std::shared_ptr<TaskSearchContext>(new TaskSearchContext(std::move(task), std::move(execution_context)));
     }
@@ -59,7 +60,7 @@ struct TaskSearchContext
 private:
     TaskSearchContext() = default;
 
-    TaskSearchContext(tyr::planning::TaskPtr<Kind> task_, tyr::ExecutionContextPtr execution_context_) :
+    TaskSearchContext(tyr::planning::TaskPtr<Kind> task_, ygg::ExecutionContextPtr execution_context_) :
         task(std::move(task_)),
         execution_context(std::move(execution_context_)),
         axiom_evaluator_factory(),
@@ -87,7 +88,7 @@ struct TaskClassSearchContexts
 
     explicit TaskClassSearchContexts(TaskSearchContextList<Kind> contexts_) : contexts(std::move(contexts_)) {}
 
-    TaskClassSearchContexts(const TaskClass<Kind>& task_class, tyr::ExecutionContextPtr execution_context)
+    TaskClassSearchContexts(const TaskClass<Kind>& task_class, ygg::ExecutionContextPtr execution_context)
     {
         contexts.reserve(task_class.tasks.size());
         for (const auto& task : task_class.tasks)

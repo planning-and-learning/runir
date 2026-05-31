@@ -4,7 +4,7 @@
 #include "runir/kr/dl/cnf_grammar/role_data.hpp"
 #include "runir/kr/dl/ext/declarations.hpp"
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -28,6 +28,6 @@ struct Data<runir::kr::dl::cnf_grammar::Role<runir::kr::ExtFamilyTag, runir::kr:
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

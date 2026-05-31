@@ -3,7 +3,7 @@
 #include <runir/kr/ps/ext/datas.hpp>
 #include <runir/kr/ps/ext/dl/feature_data.hpp>
 #include <string>
-#include <tyr/common/python/type_casters.hpp>
+#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -13,7 +13,7 @@ namespace
 template<typename T>
 void bind_data(nb::module_& m, const std::string& name)
 {
-    using Data = tyr::Data<T>;
+    using Data = ygg::Data<T>;
 
     auto cls = nb::class_<Data>(m, name.c_str()).def(nb::init<>());
 

@@ -5,9 +5,9 @@
 #include "runir/kr/dl/semantics/data_helpers.hpp"
 
 #include <concepts>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family>
@@ -127,6 +127,6 @@ struct Data<runir::kr::dl::grammar::Concept<Family, runir::kr::dl::NominalTag>> 
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

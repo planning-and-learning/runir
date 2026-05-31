@@ -3,9 +3,9 @@
 
 #include "runir/kr/dl/cnf_grammar/data_helpers.hpp"
 
-#include <tyr/common/variant.hpp>
+#include <yggdrasil/containers/variant.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
@@ -27,8 +27,8 @@ struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::AtomicGoa
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NonemptyTag>>
 {
-    using Arg = ::cista::offset::variant<tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>,
-                                         tyr::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>>;
+    using Arg = ::cista::offset::variant<ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>,
+                                         ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>>;
 
     Index<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NonemptyTag>> index;
     Arg arg;
@@ -38,14 +38,14 @@ struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NonemptyT
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(arg);
+        ygg::clear(index);
+        ygg::clear(arg);
     }
 
     auto cista_members() const noexcept { return std::tie(index, arg); }
     auto identifying_members() const noexcept { return std::tie(arg); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

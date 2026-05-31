@@ -4,14 +4,15 @@
 #include "runir/graphs/declarations.hpp"
 
 #include <tuple>
-#include <tyr/common/declarations.hpp>
-#include <tyr/common/index_mixins.hpp>
-#include <tyr/common/indexed_hash_set.hpp>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/ids/index_mixins.hpp>
+#include <yggdrasil/semantics/canonicalization.hpp>
+#include <yggdrasil/containers/indexed_hash_set.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 #include <utility>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::graphs::Property P>
@@ -36,7 +37,7 @@ struct Data<runir::graphs::VertexProperty<P>>
     Data() = default;
     explicit Data(P value_) noexcept : value(std::move(value_)) {}
 
-    void clear() noexcept { tyr::clear(value); }
+    void clear() noexcept { ygg::clear(value); }
     auto cista_members() const noexcept { return std::tie(value); }
     auto identifying_members() const noexcept { return std::tie(value); }
 };
@@ -49,12 +50,44 @@ struct Data<runir::graphs::EdgeProperty<P>>
     Data() = default;
     explicit Data(P value_) noexcept : value(std::move(value_)) {}
 
-    void clear() noexcept { tyr::clear(value); }
+    void clear() noexcept { ygg::clear(value); }
     auto cista_members() const noexcept { return std::tie(value); }
     auto identifying_members() const noexcept { return std::tie(value); }
 };
 
-}  // namespace tyr
+template<runir::graphs::Property P>
+bool is_canonical(const Data<runir::graphs::VertexProperty<P>>& data) noexcept
+{
+    if constexpr (Canonicalizable<P>)
+        return ygg::is_canonical(data.value);
+    else
+        return true;
+}
+
+template<runir::graphs::Property P>
+bool is_canonical(const Data<runir::graphs::EdgeProperty<P>>& data) noexcept
+{
+    if constexpr (Canonicalizable<P>)
+        return ygg::is_canonical(data.value);
+    else
+        return true;
+}
+
+template<runir::graphs::Property P>
+void canonicalize(Data<runir::graphs::VertexProperty<P>>& data) noexcept
+{
+    if constexpr (Canonicalizable<P>)
+        ygg::canonicalize(data.value);
+}
+
+template<runir::graphs::Property P>
+void canonicalize(Data<runir::graphs::EdgeProperty<P>>& data) noexcept
+{
+    if constexpr (Canonicalizable<P>)
+        ygg::canonicalize(data.value);
+}
+
+}  // namespace ygg
 
 namespace runir::graphs
 {
@@ -63,11 +96,11 @@ template<typename Tag>
 class PropertyMap
 {
 private:
-    tyr::IndexedHashSet<Tag> m_set;
+    ygg::IndexedHashSet<Tag> m_set;
 
 public:
-    using Index = tyr::Index<Tag>;
-    using Data = tyr::Data<Tag>;
+    using Index = ygg::Index<Tag>;
+    using Data = ygg::Data<Tag>;
 
     PropertyMap() = default;
 

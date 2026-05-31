@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DL_FORMATTER_HPP_
 #define RUNIR_KR_PS_EXT_DL_FORMATTER_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/config.hpp"
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/ext/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
@@ -13,8 +13,8 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <string>
-#include <tyr/common/types.hpp>
-#include <tyr/common/variant.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/containers/variant.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext::dl::format
@@ -43,12 +43,12 @@ std::string expression(T value);
 template<typename Variant>
 std::string variant_expression(const Variant& value)
 {
-    return tyr::visit([](auto child) { return expression(child); }, value);
+    return ygg::visit([](auto child) { return expression(child); }, value);
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
     requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
-std::string concept_expression(tyr::View<tyr::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C> view)
+std::string concept_expression(ygg::View<ygg::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C> view)
 {
     namespace ast = runir::kr::dl::grammar::ast;
     namespace ext_ast = runir::kr::dl::grammar::parser::ext::ast;
@@ -109,14 +109,14 @@ std::string concept_expression(tyr::View<tyr::Index<runir::kr::dl::FamilyConcept
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
         return fmt::format("({} {})", ast::ConceptNominal<Family>::keyword, quoted(view.get_object().get_name()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::RegisterTag>)
-        return fmt::format("({} {})", ext_ast::ConceptRegister::keyword, tyr::uint_t(view.get_data().identifier));
+        return fmt::format("({} {})", ext_ast::ConceptRegister::keyword, ygg::uint_t(view.get_data().identifier));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>)
-        return fmt::format("({} {})", ext_ast::Argument<runir::kr::dl::ConceptTag>::keyword, tyr::uint_t(view.get_data().identifier));
+        return fmt::format("({} {})", ext_ast::Argument<runir::kr::dl::ConceptTag>::keyword, ygg::uint_t(view.get_data().identifier));
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
     requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-std::string role(tyr::View<tyr::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C> view)
+std::string role(ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C> view)
 {
     namespace ast = runir::kr::dl::grammar::ast;
     namespace ext_ast = runir::kr::dl::grammar::parser::ext::ast;
@@ -146,14 +146,14 @@ std::string role(tyr::View<tyr::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C
     else if constexpr (std::same_as<Tag, runir::kr::dl::IdentityTag>)
         return fmt::format("({} {})", ast::RoleIdentity<Family>::keyword, expression(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::RegisterTag>)
-        return fmt::format("({} {})", ext_ast::RoleRegister::keyword, tyr::uint_t(view.get_data().identifier));
+        return fmt::format("({} {})", ext_ast::RoleRegister::keyword, ygg::uint_t(view.get_data().identifier));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>)
-        return fmt::format("({} {})", ext_ast::Argument<runir::kr::dl::RoleTag>::keyword, tyr::uint_t(view.get_data().identifier));
+        return fmt::format("({} {})", ext_ast::Argument<runir::kr::dl::RoleTag>::keyword, ygg::uint_t(view.get_data().identifier));
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
     requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
-std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C> view)
+std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C> view)
 {
     namespace ast = runir::kr::dl::grammar::ast;
     namespace ext_ast = runir::kr::dl::grammar::parser::ext::ast;
@@ -165,12 +165,12 @@ std::string boolean_constructor(tyr::View<tyr::Index<runir::kr::dl::FamilyBoolea
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return fmt::format("({} {})", ast::BooleanNonempty<Family>::keyword, variant_expression(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>)
-        return fmt::format("({} {})", ext_ast::Argument<runir::kr::dl::BooleanTag>::keyword, tyr::uint_t(view.get_data().identifier));
+        return fmt::format("({} {})", ext_ast::Argument<runir::kr::dl::BooleanTag>::keyword, ygg::uint_t(view.get_data().identifier));
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
     requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-std::string numerical(tyr::View<tyr::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C> view)
+std::string numerical(ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C> view)
 {
     namespace ast = runir::kr::dl::grammar::ast;
     namespace ext_ast = runir::kr::dl::grammar::parser::ext::ast;
@@ -184,11 +184,11 @@ std::string numerical(tyr::View<tyr::Index<runir::kr::dl::FamilyNumerical<Family
                            expression(view.get_mid()),
                            expression(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>)
-        return fmt::format("({} {})", ext_ast::Argument<runir::kr::dl::NumericalTag>::keyword, tyr::uint_t(view.get_data().identifier));
+        return fmt::format("({} {})", ext_ast::Argument<runir::kr::dl::NumericalTag>::keyword, ygg::uint_t(view.get_data().identifier));
 }
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-std::string constructor(tyr::View<tyr::Index<runir::kr::dl::FamilyConstructor<Family, Category>>, C> view)
+std::string constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyConstructor<Family, Category>>, C> view)
 {
     return variant_expression(view.get_variant());
 }

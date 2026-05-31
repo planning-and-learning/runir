@@ -15,22 +15,22 @@
 #include <cista/containers/variant.h>
 #include <string>
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 #include <utility>
 
 namespace runir::kr::ps::ext
 {
 
-using ConceptArgument = tyr::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>;
-using RoleArgument = tyr::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>;
-using BooleanArgument = tyr::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>;
-using NumericalArgument = tyr::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>;
+using ConceptArgument = ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>;
+using RoleArgument = ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>;
+using BooleanArgument = ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>;
+using NumericalArgument = ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>;
 using CallArgument = ::cista::offset::variant<ConceptArgument, RoleArgument, BooleanArgument, NumericalArgument>;
 
 }  // namespace runir::kr::ps::ext
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -45,12 +45,12 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag>>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(source);
-        tyr::clear(target);
-        tyr::clear(conditions);
-        tyr::clear(load_concept);
-        tyr::clear(reg);
+        ygg::clear(index);
+        ygg::clear(source);
+        ygg::clear(target);
+        ygg::clear(conditions);
+        ygg::clear(load_concept);
+        ygg::clear(reg);
     }
 
     auto cista_members() const noexcept { return std::tie(index, source, target, conditions, load_concept, reg); }
@@ -68,11 +68,11 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(source);
-        tyr::clear(target);
-        tyr::clear(conditions);
-        tyr::clear(effects);
+        ygg::clear(index);
+        ygg::clear(source);
+        ygg::clear(target);
+        ygg::clear(conditions);
+        ygg::clear(effects);
     }
 
     auto cista_members() const noexcept { return std::tie(index, source, target, conditions, effects); }
@@ -95,12 +95,12 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(source);
-        tyr::clear(target);
-        tyr::clear(conditions);
-        tyr::clear(action_name);
-        tyr::clear(arguments);
+        ygg::clear(index);
+        ygg::clear(source);
+        ygg::clear(target);
+        ygg::clear(conditions);
+        ygg::clear(action_name);
+        ygg::clear(arguments);
     }
 
     auto cista_members() const noexcept { return std::tie(index, source, target, conditions, action_name, arguments); }
@@ -120,19 +120,19 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(source);
-        tyr::clear(target);
-        tyr::clear(conditions);
-        tyr::clear(callee_name);
-        tyr::clear(callee);
-        tyr::clear(arguments);
+        ygg::clear(index);
+        ygg::clear(source);
+        ygg::clear(target);
+        ygg::clear(conditions);
+        ygg::clear(callee_name);
+        ygg::clear(callee);
+        ygg::clear(arguments);
     }
 
     auto cista_members() const noexcept { return std::tie(index, source, target, conditions, callee_name, callee, arguments); }
     auto identifying_members() const noexcept { return std::tie(source, target, conditions, callee_name, callee, arguments); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

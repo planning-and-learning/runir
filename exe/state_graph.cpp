@@ -21,12 +21,13 @@
 #include <runir/runir.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/planning.hpp>
+#include <yggdrasil/execution/onetbb.hpp>
 
 namespace
 {
 
 template<tyr::planning::TaskKind Kind>
-void print_state_graph(tyr::planning::TaskPtr<Kind> task, tyr::ExecutionContextPtr execution_context)
+void print_state_graph(tyr::planning::TaskPtr<Kind> task, ygg::ExecutionContextPtr execution_context)
 {
     auto context = runir::datasets::TaskSearchContext<Kind>(std::move(task), std::move(execution_context));
     const auto graph = runir::datasets::generate_state_graph(context);
@@ -70,7 +71,7 @@ int main(int argc, char** argv)
     auto parser_options = loki::ParserOptions();
     auto parser = tyr::formalism::planning::Parser(domain_filepath, parser_options);
     auto lifted_task = tyr::planning::Task<tyr::planning::LiftedTag>::create(parser.parse_task(problem_filepath));
-    auto execution_context = tyr::ExecutionContext::create(num_worker_threads);
+    auto execution_context = ygg::ExecutionContext::create(num_worker_threads);
 
     if (!instantiate_ground_task)
     {

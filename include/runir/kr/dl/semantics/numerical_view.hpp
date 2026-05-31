@@ -5,10 +5,10 @@
 
 #include <concepts>
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/variant.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/containers/variant.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>

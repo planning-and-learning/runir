@@ -18,7 +18,7 @@
 #ifndef RUNIR_DATASETS_EQUIVALENCE_POLICY_HPP_
 #define RUNIR_DATASETS_EQUIVALENCE_POLICY_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/config.hpp"
 #include "runir/graphs/declarations.hpp"
 
 #include <concepts>

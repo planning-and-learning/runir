@@ -1,17 +1,17 @@
 #ifndef RUNIR_GRAPHS_DECLARATIONS_HPP_
 #define RUNIR_GRAPHS_DECLARATIONS_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/config.hpp"
 
 #include <concepts>
 #include <cstddef>
 #include <ranges>
 #include <tuple>
 #include <type_traits>
-#include <tyr/common/declarations.hpp>
-#include <tyr/common/equal_to.hpp>
-#include <tyr/common/hash.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/semantics/equal_to.hpp>
+#include <yggdrasil/semantics/hash.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <vector>
 
 namespace runir::graphs
@@ -19,11 +19,11 @@ namespace runir::graphs
 
 using VertexIndex = uint_t;
 using VertexIndexList = std::vector<VertexIndex>;
-using VertexIndexSet = tyr::UnorderedSet<VertexIndex>;
+using VertexIndexSet = ygg::UnorderedSet<VertexIndex>;
 
 using EdgeIndex = uint_t;
 using EdgeIndexList = std::vector<EdgeIndex>;
-using EdgeIndexSet = tyr::UnorderedSet<EdgeIndex>;
+using EdgeIndexSet = ygg::UnorderedSet<EdgeIndex>;
 
 using Degree = uint_t;
 using DegreeList = std::vector<Degree>;
@@ -33,8 +33,8 @@ struct SparseIndexRangeTag;
 
 template<typename T>
 concept Property = requires(const T& lhs, const T& rhs) {
-    { tyr::Hash<T> {}(lhs) } -> std::convertible_to<std::size_t>;
-    { tyr::EqualTo<T> {}(lhs, rhs) } -> std::same_as<bool>;
+    { ygg::Hash<T> {}(lhs) } -> std::convertible_to<std::size_t>;
+    { ygg::EqualTo<T> {}(lhs, rhs) } -> std::same_as<bool>;
 };
 
 template<Property VertexProperty, Property EdgeProperty>
@@ -86,10 +86,10 @@ template<Property P>
 struct EdgeProperty;
 
 template<Property P>
-using VertexPropertyIndex = tyr::Index<VertexProperty<P>>;
+using VertexPropertyIndex = ygg::Index<VertexProperty<P>>;
 
 template<Property P>
-using EdgePropertyIndex = tyr::Index<EdgeProperty<P>>;
+using EdgePropertyIndex = ygg::Index<EdgeProperty<P>>;
 
 template<typename Tag>
 class PropertyMap;

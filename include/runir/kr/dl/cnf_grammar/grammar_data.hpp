@@ -5,11 +5,11 @@
 
 #include <cista/containers/optional.h>
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 #include <tyr/formalism/planning/domain_index.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family>
@@ -33,7 +33,7 @@ struct Data<runir::kr::dl::cnf_grammar::Grammar<Family>>
     IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::RoleTag>> role_substitution_rules;
     IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::BooleanTag>> boolean_substitution_rules;
     IndexList<runir::kr::dl::cnf_grammar::SubstitutionRule<Family, runir::kr::dl::NumericalTag>> numerical_substitution_rules;
-    Index<formalism::planning::Domain> domain;
+    Index<::tyr::formalism::planning::Domain> domain;
 
     Data() = default;
 
@@ -117,20 +117,20 @@ struct Data<runir::kr::dl::cnf_grammar::Grammar<Family>>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(concept_start);
-        tyr::clear(role_start);
-        tyr::clear(boolean_start);
-        tyr::clear(numerical_start);
-        tyr::clear(concept_derivation_rules);
-        tyr::clear(role_derivation_rules);
-        tyr::clear(boolean_derivation_rules);
-        tyr::clear(numerical_derivation_rules);
-        tyr::clear(concept_substitution_rules);
-        tyr::clear(role_substitution_rules);
-        tyr::clear(boolean_substitution_rules);
-        tyr::clear(numerical_substitution_rules);
-        tyr::clear(domain);
+        ygg::clear(index);
+        ygg::clear(concept_start);
+        ygg::clear(role_start);
+        ygg::clear(boolean_start);
+        ygg::clear(numerical_start);
+        ygg::clear(concept_derivation_rules);
+        ygg::clear(role_derivation_rules);
+        ygg::clear(boolean_derivation_rules);
+        ygg::clear(numerical_derivation_rules);
+        ygg::clear(concept_substitution_rules);
+        ygg::clear(role_substitution_rules);
+        ygg::clear(boolean_substitution_rules);
+        ygg::clear(numerical_substitution_rules);
+        ygg::clear(domain);
     }
 
     auto cista_members() const noexcept
@@ -169,6 +169,6 @@ struct Data<runir::kr::dl::cnf_grammar::Grammar<Family>>
     }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

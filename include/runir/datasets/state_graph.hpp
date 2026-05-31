@@ -18,7 +18,7 @@
 #ifndef RUNIR_DATASETS_STATE_GRAPH_HPP_
 #define RUNIR_DATASETS_STATE_GRAPH_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/config.hpp"
 #include "runir/datasets/config.hpp"
 #include "runir/datasets/equivalence_policy.hpp"
 #include "runir/datasets/task_class.hpp"
@@ -49,7 +49,7 @@ template<tyr::planning::TaskKind Kind>
 struct AnnotatedStateGraphVertexLabel
 {
     tyr::planning::StateView<Kind> state;
-    tyr::float_t goal_distance = std::numeric_limits<tyr::float_t>::infinity();
+    ygg::float_t goal_distance = std::numeric_limits<ygg::float_t>::infinity();
     bool is_initial = false;
     bool is_goal = false;
     bool is_alive = false;
@@ -61,7 +61,7 @@ struct AnnotatedStateGraphVertexLabel
 struct StateGraphEdgeLabel
 {
     tyr::formalism::planning::GroundActionView action;
-    tyr::float_t cost = 0;
+    ygg::float_t cost = 0;
 
     auto identifying_members() const noexcept { return std::make_tuple(action.get_index(), cost); }
 };

@@ -6,9 +6,9 @@
 
 #include <concepts>
 #include <tuple>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family>
@@ -156,6 +156,6 @@ struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::NominalTag>> :
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

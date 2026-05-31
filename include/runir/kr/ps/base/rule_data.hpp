@@ -7,11 +7,11 @@
 #include "runir/kr/ps/effect_index.hpp"
 
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 #include <vector>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -23,15 +23,15 @@ struct Data<runir::kr::ps::base::Rule>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(conditions);
-        tyr::clear(effects);
+        ygg::clear(index);
+        ygg::clear(conditions);
+        ygg::clear(effects);
     }
 
     auto cista_members() const noexcept { return std::tie(index, conditions, effects); }
     auto identifying_members() const noexcept { return std::tie(conditions, effects); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

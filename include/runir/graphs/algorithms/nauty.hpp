@@ -45,7 +45,7 @@ public:
             vertices.push_back(vertex);
         std::sort(vertices.begin(), vertices.end());
 
-        auto vertex_to_dense = tyr::UnorderedMap<VertexIndex, uint_t>();
+        auto vertex_to_dense = ygg::UnorderedMap<VertexIndex, uint_t>();
         for (uint_t i = 0; i < vertices.size(); ++i)
             vertex_to_dense.emplace(vertices[i], i);
 

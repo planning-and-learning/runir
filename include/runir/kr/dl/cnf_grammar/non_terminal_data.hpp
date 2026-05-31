@@ -6,10 +6,10 @@
 #include <cista/containers/string.h>
 #include <string>
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
@@ -24,8 +24,8 @@ struct Data<runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(name);
+        ygg::clear(index);
+        ygg::clear(name);
     }
 
     auto cista_members() const noexcept { return std::tie(index, name); }

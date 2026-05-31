@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_FORMATTER_HPP_
 #define RUNIR_KR_PS_EXT_FORMATTER_HPP_
 
-#include "runir/common/config.hpp"
+#include "runir/config.hpp"
 #include "runir/kr/ps/ext/dl/formatter.hpp"
 #include "runir/kr/ps/ext/module_program_executor.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
@@ -15,8 +15,8 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <tyr/common/iostream.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/io/iostream.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext::format
@@ -34,7 +34,7 @@ inline std::string quoted(const std::string& value) { return quoted(std::string_
 template<typename FeatureTag>
 struct NamedFeature
 {
-    tyr::Index<runir::kr::ps::ext::Feature<FeatureTag>> index;
+    ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>> index;
     std::string name;
 };
 
@@ -68,7 +68,7 @@ std::string feature_prefix()
 }
 
 template<typename FeatureTag, typename C>
-std::string get_or_create_name(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> feature)
+std::string get_or_create_name(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> feature)
 {
     auto& entries = named_features<FeatureTag>(names);
     for (const auto& entry : entries)
@@ -81,35 +81,35 @@ std::string get_or_create_name(FeatureNames& names, tyr::View<tyr::Index<runir::
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-void collect_feature(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
+void collect_feature(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
 {
     get_or_create_name(names, view.get_feature());
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-void collect_feature(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
+void collect_feature(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
 {
     get_or_create_name(names, view.get_feature());
 }
 
 template<typename C>
-void collect_features(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::ConditionVariant>, C> view)
+void collect_features(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::ConditionVariant>, C> view)
 {
-    tyr::visit([&](auto concrete_variant)
-               { tyr::visit([&](auto concrete_condition) { collect_feature(names, concrete_condition); }, concrete_variant.get_variant()); },
+    ygg::visit([&](auto concrete_variant)
+               { ygg::visit([&](auto concrete_condition) { collect_feature(names, concrete_condition); }, concrete_variant.get_variant()); },
                view.get_variant());
 }
 
 template<typename C>
-void collect_features(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::EffectVariant>, C> view)
+void collect_features(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::EffectVariant>, C> view)
 {
-    tyr::visit([&](auto concrete_variant)
-               { tyr::visit([&](auto concrete_effect) { collect_feature(names, concrete_effect); }, concrete_variant.get_variant()); },
+    ygg::visit([&](auto concrete_variant)
+               { ygg::visit([&](auto concrete_effect) { collect_feature(names, concrete_effect); }, concrete_variant.get_variant()); },
                view.get_variant());
 }
 
 template<typename Kind, typename C>
-void collect_features(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
+void collect_features(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
 {
     for (auto condition : view.get_conditions())
         collect_features(names, condition);
@@ -119,13 +119,13 @@ void collect_features(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::e
 }
 
 template<typename C>
-void collect_features(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::RuleVariant>, C> view)
+void collect_features(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::RuleVariant>, C> view)
 {
-    tyr::visit([&](auto rule) { collect_features(names, rule); }, view.get_variant());
+    ygg::visit([&](auto rule) { collect_features(names, rule); }, view.get_variant());
 }
 
 template<typename C>
-FeatureNames collect_features(tyr::View<tyr::Index<runir::kr::ps::ext::Module>, C> view)
+FeatureNames collect_features(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
 {
     auto names = FeatureNames {};
     for (const auto& transition : view.get_memory_transitions())
@@ -144,7 +144,7 @@ std::string feature_type()
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C> view, std::string_view name)
+std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C> view, std::string_view name)
 {
     return fmt::format("({} {} {} {} {})",
                        feature_type<FeatureTag>(),
@@ -155,13 +155,13 @@ std::string feature(tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteFeature<run
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(tyr::View<tyr::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> view, std::string_view name)
+std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> view, std::string_view name)
 {
-    return tyr::visit([&](auto concrete_feature) { return feature(concrete_feature, name); }, view.get_variant());
+    return ygg::visit([&](auto concrete_feature) { return feature(concrete_feature, name); }, view.get_variant());
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(tyr::View<tyr::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> view)
+std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> view)
 {
     return feature(view, fmt::format("{}_{}", feature_prefix<FeatureTag>(), view.get_index().get_value()));
 }
@@ -170,38 +170,38 @@ template<typename C>
 void append_features(std::ostream& os, const C& context, const FeatureNames& names)
 {
     for (const auto& entry : names.concepts)
-        os << tyr::print_indent << feature(tyr::make_view(entry.index, context), entry.name) << "\n";
+        os << ygg::print_indent << feature(ygg::make_view(entry.index, context), entry.name) << "\n";
     for (const auto& entry : names.booleans)
-        os << tyr::print_indent << feature(tyr::make_view(entry.index, context), entry.name) << "\n";
+        os << ygg::print_indent << feature(ygg::make_view(entry.index, context), entry.name) << "\n";
     for (const auto& entry : names.numericals)
-        os << tyr::print_indent << feature(tyr::make_view(entry.index, context), entry.name) << "\n";
+        os << ygg::print_indent << feature(ygg::make_view(entry.index, context), entry.name) << "\n";
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string condition(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
+std::string condition(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
 {
     return fmt::format("({} {})", ObservationTag::keyword, get_or_create_name(names, view.get_feature()));
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string effect(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
+std::string effect(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
 {
     return fmt::format("({} {})", ObservationTag::keyword, get_or_create_name(names, view.get_feature()));
 }
 
 template<typename C>
-std::string condition(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::ConditionVariant>, C> view)
+std::string condition(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::ConditionVariant>, C> view)
 {
-    return tyr::visit([&](auto concrete_variant)
-                      { return tyr::visit([&](auto concrete_condition) { return condition(names, concrete_condition); }, concrete_variant.get_variant()); },
+    return ygg::visit([&](auto concrete_variant)
+                      { return ygg::visit([&](auto concrete_condition) { return condition(names, concrete_condition); }, concrete_variant.get_variant()); },
                       view.get_variant());
 }
 
 template<typename C>
-std::string effect(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::EffectVariant>, C> view)
+std::string effect(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::EffectVariant>, C> view)
 {
-    return tyr::visit([&](auto concrete_variant)
-                      { return tyr::visit([&](auto concrete_effect) { return effect(names, concrete_effect); }, concrete_variant.get_variant()); },
+    return ygg::visit([&](auto concrete_variant)
+                      { return ygg::visit([&](auto concrete_effect) { return effect(names, concrete_effect); }, concrete_variant.get_variant()); },
                       view.get_variant());
 }
 
@@ -224,7 +224,7 @@ std::vector<std::string> effects(FeatureNames& names, Effects values)
 }
 
 template<typename C>
-std::vector<std::string> action_arguments(tyr::View<tyr::Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>, C> view)
+std::vector<std::string> action_arguments(ygg::View<ygg::Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>, C> view)
 {
     auto result = std::vector<std::string> {};
     for (auto value : view.get_action_arguments())
@@ -233,90 +233,90 @@ std::vector<std::string> action_arguments(tyr::View<tyr::Index<runir::kr::ps::ex
 }
 
 template<typename C>
-std::vector<std::string> call_arguments(tyr::View<tyr::Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>, C> view)
+std::vector<std::string> call_arguments(ygg::View<ygg::Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>, C> view)
 {
     auto result = std::vector<std::string> {};
     for (const auto& value : view.get_call_arguments())
-        result.push_back(tyr::visit([](auto arg) { return runir::kr::ps::ext::dl::format::expression(arg); },
-                                    tyr::make_view(value, view.get_context().get_dl_repository())));
+        result.push_back(ygg::visit([](auto arg) { return runir::kr::ps::ext::dl::format::expression(arg); },
+                                    ygg::make_view(value, view.get_context().get_dl_repository())));
     return result;
 }
 
 template<typename Kind, typename C>
-void append_rule_body(std::ostream& os, FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
+void append_rule_body(std::ostream& os, FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
 {
-    os << tyr::print_indent << fmt::format("(:conditions {})", fmt::join(conditions(names, view.get_conditions()), " ")) << "\n";
+    os << ygg::print_indent << fmt::format("(:conditions {})", fmt::join(conditions(names, view.get_conditions()), " ")) << "\n";
     if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag>)
     {
-        os << tyr::print_indent << fmt::format("(:concept {})", runir::kr::ps::ext::dl::format::expression(view.get_concept())) << "\n";
-        os << tyr::print_indent << fmt::format("(:register {})", quoted(view.get_register().get_name())) << "\n";
+        os << ygg::print_indent << fmt::format("(:concept {})", runir::kr::ps::ext::dl::format::expression(view.get_concept())) << "\n";
+        os << ygg::print_indent << fmt::format("(:register {})", quoted(view.get_register().get_name())) << "\n";
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::SketchTag>)
     {
-        os << tyr::print_indent << fmt::format("(:effects {})", fmt::join(effects(names, view.get_effects()), " ")) << "\n";
+        os << ygg::print_indent << fmt::format("(:effects {})", fmt::join(effects(names, view.get_effects()), " ")) << "\n";
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::DoTag>)
     {
-        os << tyr::print_indent << fmt::format("(:action {})", quoted(view.get_action_name())) << "\n";
-        os << tyr::print_indent << fmt::format("(:arguments {})", fmt::join(action_arguments(view), " ")) << "\n";
+        os << ygg::print_indent << fmt::format("(:action {})", quoted(view.get_action_name())) << "\n";
+        os << ygg::print_indent << fmt::format("(:arguments {})", fmt::join(action_arguments(view), " ")) << "\n";
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::CallTag>)
     {
-        os << tyr::print_indent << fmt::format("(:callee {})", quoted(view.get_callee_name())) << "\n";
-        os << tyr::print_indent << fmt::format("(:arguments {})", fmt::join(call_arguments(view), " ")) << "\n";
+        os << ygg::print_indent << fmt::format("(:callee {})", quoted(view.get_callee_name())) << "\n";
+        os << ygg::print_indent << fmt::format("(:arguments {})", fmt::join(call_arguments(view), " ")) << "\n";
     }
 }
 
 template<typename Kind, typename C>
-void append_rule(std::ostream& os, FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
+void append_rule(std::ostream& os, FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
 {
     if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag>)
-        os << tyr::print_indent << "(load\n";
+        os << ygg::print_indent << "(load\n";
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::SketchTag>)
-        os << tyr::print_indent << "(sketch\n";
+        os << ygg::print_indent << "(sketch\n";
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::DoTag>)
-        os << tyr::print_indent << "(do\n";
+        os << ygg::print_indent << "(do\n";
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::CallTag>)
-        os << tyr::print_indent << "(call\n";
+        os << ygg::print_indent << "(call\n";
     {
-        tyr::IndentScope scope(os);
+        ygg::IndentScope scope(os);
         append_rule_body(os, names, view);
     }
-    os << tyr::print_indent << ")";
+    os << ygg::print_indent << ")";
 }
 
 template<typename C>
-void append_rule(std::ostream& os, FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::RuleVariant>, C> view)
+void append_rule(std::ostream& os, FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::RuleVariant>, C> view)
 {
-    tyr::visit([&](auto rule) { append_rule(os, names, rule); }, view.get_variant());
+    ygg::visit([&](auto rule) { append_rule(os, names, rule); }, view.get_variant());
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-std::string argument(tyr::View<tyr::Index<runir::kr::ps::ext::Argument<Category>>, C> view)
+std::string argument(ygg::View<ygg::Index<runir::kr::ps::ext::Argument<Category>>, C> view)
 {
-    return fmt::format("({} {} {})", Category::name, quoted(view.get_name()), tyr::uint_t(view.get_identifier()));
+    return fmt::format("({} {} {})", Category::name, quoted(view.get_name()), ygg::uint_t(view.get_identifier()));
 }
 
 template<typename C>
-std::string register_(tyr::View<tyr::Index<runir::kr::ps::ext::Register>, C> view)
+std::string register_(ygg::View<ygg::Index<runir::kr::ps::ext::Register>, C> view)
 {
-    return fmt::format("({} {} {})", runir::kr::dl::ConceptTag::name, quoted(view.get_name()), tyr::uint_t(view.get_identifier()));
+    return fmt::format("({} {} {})", runir::kr::dl::ConceptTag::name, quoted(view.get_name()), ygg::uint_t(view.get_identifier()));
 }
 
 template<typename C>
-std::string memory_state(tyr::View<tyr::Index<runir::kr::ps::ext::MemoryState>, C> view)
+std::string memory_state(ygg::View<ygg::Index<runir::kr::ps::ext::MemoryState>, C> view)
 {
     return quoted(view.get_name());
 }
 
 template<typename C>
-std::string memory_transition(tyr::View<tyr::Index<runir::kr::ps::ext::MemoryTransition>, C> view)
+std::string memory_transition(ygg::View<ygg::Index<runir::kr::ps::ext::MemoryTransition>, C> view)
 {
     return fmt::format("{} -> {}", memory_state(view.get_source()), memory_state(view.get_target()));
 }
 
 template<typename C>
-std::string rule(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::RuleVariant>, C> view)
+std::string rule(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::RuleVariant>, C> view)
 {
     auto os = std::ostringstream {};
     append_rule(os, names, view);
@@ -324,38 +324,38 @@ std::string rule(FeatureNames& names, tyr::View<tyr::Index<runir::kr::ps::ext::R
 }
 
 template<typename C>
-std::string module(tyr::View<tyr::Index<runir::kr::ps::ext::Module>, C> view)
+std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
 {
     auto names = collect_features(view);
     auto os = std::ostringstream {};
 
     os << fmt::format("(module {}\n", quoted(view.get_name()));
     {
-        tyr::IndentScope scope(os);
-        os << tyr::print_indent << "(:arguments\n";
+        ygg::IndentScope scope(os);
+        os << ygg::print_indent << "(:arguments\n";
         {
-            tyr::IndentScope argument_scope(os);
+            ygg::IndentScope argument_scope(os);
             for (auto arg : view.template get_arguments<runir::kr::dl::ConceptTag>())
-                os << tyr::print_indent << argument(arg) << "\n";
+                os << ygg::print_indent << argument(arg) << "\n";
             for (auto arg : view.template get_arguments<runir::kr::dl::RoleTag>())
-                os << tyr::print_indent << argument(arg) << "\n";
+                os << ygg::print_indent << argument(arg) << "\n";
             for (auto arg : view.template get_arguments<runir::kr::dl::BooleanTag>())
-                os << tyr::print_indent << argument(arg) << "\n";
+                os << ygg::print_indent << argument(arg) << "\n";
             for (auto arg : view.template get_arguments<runir::kr::dl::NumericalTag>())
-                os << tyr::print_indent << argument(arg) << "\n";
+                os << ygg::print_indent << argument(arg) << "\n";
         }
-        os << tyr::print_indent << ")\n";
+        os << ygg::print_indent << ")\n";
 
-        os << tyr::print_indent << "(:registers\n";
+        os << ygg::print_indent << "(:registers\n";
         {
-            tyr::IndentScope register_scope(os);
+            ygg::IndentScope register_scope(os);
             for (auto reg : view.get_registers())
-                os << tyr::print_indent << register_(reg) << "\n";
+                os << ygg::print_indent << register_(reg) << "\n";
         }
-        os << tyr::print_indent << ")\n";
+        os << ygg::print_indent << ")\n";
 
-        os << tyr::print_indent << fmt::format("(:entry {})", memory_state(view.get_entry_memory_state())) << "\n";
-        os << tyr::print_indent
+        os << ygg::print_indent << fmt::format("(:entry {})", memory_state(view.get_entry_memory_state())) << "\n";
+        os << ygg::print_indent
            << fmt::format("(:memory {})",
                           fmt::join(
                               [&]
@@ -368,49 +368,49 @@ std::string module(tyr::View<tyr::Index<runir::kr::ps::ext::Module>, C> view)
                               " "))
            << "\n";
 
-        os << tyr::print_indent << "(:features\n";
+        os << ygg::print_indent << "(:features\n";
         {
-            tyr::IndentScope feature_scope(os);
+            ygg::IndentScope feature_scope(os);
             append_features(os, view.get_context(), names);
         }
-        os << tyr::print_indent << ")\n";
+        os << ygg::print_indent << ")\n";
 
-        os << tyr::print_indent << "(:transitions\n";
+        os << ygg::print_indent << "(:transitions\n";
         {
-            tyr::IndentScope transition_scope(os);
+            ygg::IndentScope transition_scope(os);
             for (const auto& transition : view.get_memory_transitions())
             {
-                os << tyr::print_indent
+                os << ygg::print_indent
                    << fmt::format("({} {}\n",
                                   memory_state(transition.get_source()),
                                   memory_state(transition.get_target()));
                 {
-                    tyr::IndentScope rule_scope(os);
+                    ygg::IndentScope rule_scope(os);
                     for (auto item : transition.get_rules())
                     {
                         append_rule(os, names, item);
                         os << "\n";
                     }
                 }
-                os << tyr::print_indent << ")\n";
+                os << ygg::print_indent << ")\n";
             }
         }
-        os << tyr::print_indent << ")\n";
+        os << ygg::print_indent << ")\n";
     }
     os << ")\n";
     return os.str();
 }
 
 template<typename C>
-std::string module_program(tyr::View<tyr::Index<runir::kr::ps::ext::ModuleProgram>, C> view)
+std::string module_program(ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgram>, C> view)
 {
     auto os = std::ostringstream {};
     os << "(program\n";
     {
-        tyr::IndentScope scope(os);
-        os << tyr::print_indent << fmt::format("(:entry {})", quoted(view.get_entry_module().get_name())) << "\n";
+        ygg::IndentScope scope(os);
+        os << ygg::print_indent << fmt::format("(:entry {})", quoted(view.get_entry_module().get_name())) << "\n";
         for (auto item : view.get_modules())
-            os << tyr::print_indent << module(item);
+            os << ygg::print_indent << module(item);
     }
     os << ")\n";
     return os.str();
@@ -448,30 +448,30 @@ std::string module_program_proof_results(const runir::kr::ps::ext::ModuleProgram
 
 #if RUNIR_ENABLE_FMT_FORMATTERS
 template<runir::kr::dl::CategoryTag Category, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::Argument<Category>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Argument<Category>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::Argument<Category>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::Argument<Category>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::argument(view), ctx); }
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::Register>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Register>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::Register>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::Register>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::register_(view), ctx); }
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::MemoryState>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::MemoryState>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::MemoryState>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::MemoryState>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::memory_state(view), ctx); }
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::MemoryTransition>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::MemoryTransition>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::MemoryTransition>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::MemoryTransition>, C>;
     auto format(View view, format_context& ctx) const
     {
         return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::memory_transition(view), ctx);
@@ -479,16 +479,16 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::MemoryTransition>
 };
 
 template<typename FeatureTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::feature(view), ctx); }
 };
 
 template<typename FeatureTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::feature(view, fmt::format("f_{}", view.get_index().get_value())), ctx);
@@ -496,9 +496,9 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteFeature<r
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::ConditionVariant>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConditionVariant>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::ConditionVariant>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ConditionVariant>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};
@@ -507,22 +507,22 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::ConditionVariant>
 };
 
 template<typename LanguageTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteConditionVariant<LanguageTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteConditionVariant<LanguageTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteConditionVariant<LanguageTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteConditionVariant<LanguageTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};
         const auto text =
-            tyr::visit([&](auto concrete_condition) { return runir::kr::ps::ext::format::condition(names, concrete_condition); }, view.get_variant());
+            ygg::visit([&](auto concrete_condition) { return runir::kr::ps::ext::format::condition(names, concrete_condition); }, view.get_variant());
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::EffectVariant>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::EffectVariant>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::EffectVariant>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::EffectVariant>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};
@@ -531,21 +531,21 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::EffectVariant>, C
 };
 
 template<typename LanguageTag, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteEffectVariant<LanguageTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffectVariant<LanguageTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::ConcreteEffectVariant<LanguageTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffectVariant<LanguageTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};
-        const auto text = tyr::visit([&](auto concrete_effect) { return runir::kr::ps::ext::format::effect(names, concrete_effect); }, view.get_variant());
+        const auto text = ygg::visit([&](auto concrete_effect) { return runir::kr::ps::ext::format::effect(names, concrete_effect); }, view.get_variant());
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
 
 template<typename Kind, typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::Rule<Kind>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::Rule<Kind>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};
@@ -556,9 +556,9 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::Rule<Kind>>, C>> 
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::RuleVariant>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::RuleVariant>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::RuleVariant>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::RuleVariant>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};
@@ -567,16 +567,16 @@ struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::RuleVariant>, C>>
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::Module>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::Module>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::module(view), ctx); }
 };
 
 template<typename C>
-struct fmt::formatter<tyr::View<tyr::Index<runir::kr::ps::ext::ModuleProgram>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgram>, C>> : fmt::formatter<std::string_view>
 {
-    using View = tyr::View<tyr::Index<runir::kr::ps::ext::ModuleProgram>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgram>, C>;
     auto format(View view, format_context& ctx) const
     {
         return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::module_program(view), ctx);
@@ -591,8 +591,8 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>> :
     {
         const auto& state = label.extended_state.annotated_state;
         const auto text = fmt::format("state={} module={} initial={} goal={} alive={} unsolvable={}",
-                                      tyr::uint_t(state.state.get_index()),
-                                      tyr::uint_t(label.module_.get_index()),
+                                      ygg::uint_t(state.state.get_index()),
+                                      ygg::uint_t(label.module_.get_index()),
                                       state.is_initial,
                                       state.is_goal,
                                       state.is_alive,
@@ -606,7 +606,7 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofEdgeLabel> : fmt::fo
 {
     auto format(const runir::kr::ps::ext::ModuleProgramProofEdgeLabel& label, format_context& ctx) const
     {
-        return fmt::formatter<std::string_view>::format(label.rule ? fmt::format("rule={}", tyr::uint_t(label.rule->get_index())) :
+        return fmt::formatter<std::string_view>::format(label.rule ? fmt::format("rule={}", ygg::uint_t(label.rule->get_index())) :
                                                                      std::string("rule=<none>"),
                                                         ctx);
     }

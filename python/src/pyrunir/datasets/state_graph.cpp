@@ -6,8 +6,8 @@
 #include <pyrunir/graphs/graph.hpp>
 #include <runir/datasets/formatter.hpp>
 #include <runir/datasets/state_graph.hpp>
-#include <tyr/common/python/bindings.hpp>
-#include <tyr/common/python/type_casters.hpp>
+#include <yggdrasil/python/bindings.hpp>
+#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::datasets
 {
@@ -125,8 +125,8 @@ void bind_state_graph(nb::module_& m)
     auto edge_label = nb::class_<StateGraphEdgeLabel>(m, "StateGraphEdgeLabel")  //
                           .def_ro("action", &StateGraphEdgeLabel::action)
                           .def_ro("cost", &StateGraphEdgeLabel::cost);
-    tyr::add_print(edge_label);
-    tyr::add_hash(edge_label);
+    ygg::add_print(edge_label);
+    ygg::add_hash(edge_label);
 
     bind_state_graph_for_kind<tyr::planning::GroundTag>(m, "Ground", "ground");
     bind_state_graph_for_kind<tyr::planning::LiftedTag>(m, "Lifted", "lifted");

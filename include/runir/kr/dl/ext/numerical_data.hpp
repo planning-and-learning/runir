@@ -4,7 +4,7 @@
 #include "runir/kr/dl/ext/declarations.hpp"
 #include "runir/kr/dl/numerical_data.hpp"
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -18,6 +18,6 @@ struct Data<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::Arg
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

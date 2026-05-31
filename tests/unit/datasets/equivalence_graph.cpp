@@ -1,4 +1,4 @@
-#include "tyr/common/json_loader.hpp"
+#include <yggdrasil/serialization/json_loader.hpp>
 
 #include <boost/json.hpp>
 #include <filesystem>
@@ -12,6 +12,7 @@
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/planning.hpp>
 #include <vector>
+#include <yggdrasil/execution/onetbb.hpp>
 
 namespace runir::tests
 {
@@ -41,28 +42,28 @@ auto parse_equivalence_policy_mode(std::string_view value) -> datasets::Equivale
 EquivalenceGraphFigureCase parse_case(const boost::json::object& suite, const boost::json::object& object)
 {
     auto task_files = std::vector<std::filesystem::path> {};
-    for (const auto& task_file : tyr::common::as_array(*object.if_contains("task_files"), "case.task_files"))
-        task_files.push_back(tyr::common::suite_path(suite, std::string(task_file.as_string())));
+    for (const auto& task_file : ygg::common::as_array(*object.if_contains("task_files"), "case.task_files"))
+        task_files.push_back(ygg::common::suite_path(suite, std::string(task_file.as_string())));
 
-    return EquivalenceGraphFigureCase { tyr::common::as_string(object, "name", "case"),
-                                        tyr::common::suite_path(suite, tyr::common::as_string(object, "domain_file", "case")),
+    return EquivalenceGraphFigureCase { ygg::common::as_string(object, "name", "case"),
+                                        ygg::common::suite_path(suite, ygg::common::as_string(object, "domain_file", "case")),
                                         std::move(task_files),
-                                        parse_equivalence_policy_mode(tyr::common::as_string(object, "equivalence_policy", "case")),
-                                        tyr::common::as_size(object, "expected_num_vertices", "case"),
-                                        tyr::common::as_size(object, "expected_num_edges", "case") };
+                                        parse_equivalence_policy_mode(ygg::common::as_string(object, "equivalence_policy", "case")),
+                                        ygg::common::as_size(object, "expected_num_vertices", "case"),
+                                        ygg::common::as_size(object, "expected_num_edges", "case") };
 }
 
 std::vector<EquivalenceGraphFigureCase> load_cases()
 {
-    const auto suite = tyr::common::load_json_file(tyr::common::root_path() / "tests/unit/datasets/equivalence_graph.json");
-    const auto& suite_object = tyr::common::as_object(suite, "suite");
+    const auto suite = ygg::common::load_json_file(ygg::common::root_path() / "tests/unit/datasets/equivalence_graph.json");
+    const auto& suite_object = ygg::common::as_object(suite, "suite");
     const auto* tests_value = suite_object.if_contains("tests");
     if (!tests_value)
         throw std::runtime_error("suite.tests is required.");
 
     auto result = std::vector<EquivalenceGraphFigureCase> {};
-    for (const auto& case_value : tyr::common::as_array(*tests_value, "suite.tests"))
-        result.push_back(parse_case(suite_object, tyr::common::as_object(case_value, "case")));
+    for (const auto& case_value : ygg::common::as_array(*tests_value, "suite.tests"))
+        result.push_back(parse_case(suite_object, ygg::common::as_object(case_value, "case")));
     return result;
 }
 
@@ -79,7 +80,7 @@ TEST_P(EquivalenceGraphTest, MatchesExpectedProperties)
 
     const auto& param = GetParam();
     auto parser = fp::Parser(param.domain_file);
-    auto execution_context = tyr::ExecutionContext::create(1);
+    auto execution_context = ygg::ExecutionContext::create(1);
     auto contexts = datasets::TaskSearchContextList<p::GroundTag> {};
     contexts.reserve(param.task_files.size());
 

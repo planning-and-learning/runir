@@ -15,7 +15,7 @@ except ModuleNotFoundError as exc:
     LiftedTaskSearchContext = _pyrunir.datasets.LiftedTaskSearchContext
     dl_ext = _pyrunir.kr.dl.ext
     ext = _pyrunir.kr.ps.ext
-from pytyr.common import ExecutionContext
+from pyyggdrasil import ExecutionContext
 from pytyr.formalism.planning import Parser, ParserOptions
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 

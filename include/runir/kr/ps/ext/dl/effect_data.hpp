@@ -5,10 +5,10 @@
 #include "runir/kr/ps/ext/effect_index.hpp"
 
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<typename FeatureTag, typename ObservationTag>
@@ -22,14 +22,14 @@ struct Data<runir::kr::ps::ext::ConcreteEffect<runir::kr::DlTag, FeatureTag, Obs
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(feature);
+        ygg::clear(index);
+        ygg::clear(feature);
     }
 
     auto cista_members() const noexcept { return std::tie(index, feature); }
     auto identifying_members() const noexcept { return std::tie(feature); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

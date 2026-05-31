@@ -5,11 +5,11 @@
 
 #include <cista/containers/variant.h>
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 #include <utility>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family>
@@ -23,8 +23,8 @@ struct Data<runir::kr::dl::grammar::Numerical<Family, runir::kr::dl::CountTag>>
     explicit Data(ConstructorVariant arg_) : index(), arg(std::move(arg_)) {}
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(arg);
+        ygg::clear(index);
+        ygg::clear(arg);
     }
     auto cista_members() const noexcept { return std::tie(index, arg); }
     auto identifying_members() const noexcept { return std::tie(arg); }
@@ -44,6 +44,6 @@ struct Data<runir::kr::dl::grammar::Numerical<Family, runir::kr::dl::DistanceTag
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

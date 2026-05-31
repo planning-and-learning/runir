@@ -5,9 +5,9 @@
 #include "runir/datasets/state_graph.hpp"
 #include "runir/graphs/formatter.hpp"
 
+#include <iterator>
 #include <string_view>
 #include <tyr/formalism/planning/formatter.hpp>
-#include <utility>
 
 namespace fmt
 {
@@ -46,7 +46,12 @@ struct formatter<runir::datasets::StateGraphEdgeLabel, char> : formatter<std::st
     template<typename FormatContext>
     auto format(const runir::datasets::StateGraphEdgeLabel& label, FormatContext& ctx) const
     {
-        const auto text = fmt::format("{}\ncost={}", std::make_pair(label.action, tyr::formalism::planning::PlanFormatting()), label.cost);
+        auto text = fmt::format("({}", label.action.get_action().get_name());
+        for (size_t i = 0; i < label.action.get_action().get_original_arity(); ++i)
+        {
+            fmt::format_to(std::back_inserter(text), " {}", label.action.get_row().get_objects()[i].get_name());
+        }
+        fmt::format_to(std::back_inserter(text), ")\ncost={}", label.cost);
         return formatter<std::string_view>::format(text, ctx);
     }
 };

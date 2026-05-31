@@ -29,7 +29,7 @@ class CycleVisitor : public graphs::bgl::TraversalVisitor<Graph>
 {
 private:
     const Graph& m_graph;
-    tyr::UnorderedMap<graphs::VertexIndex, graphs::VertexIndex> m_parent;
+    ygg::UnorderedMap<graphs::VertexIndex, graphs::VertexIndex> m_parent;
     graphs::VertexIndexList m_cycle;
 
 public:
@@ -144,9 +144,9 @@ private:
     tyr::planning::Node<Kind> m_source_node;
     SketchGoalStrategy<Kind>& m_sketch_goal_strategy;
     SketchProofGraphBuilder<Kind>& m_builder;
-    tyr::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>& m_sketch_edges;
+    ygg::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>& m_sketch_edges;
     graphs::VertexIndexList& m_open;
-    const tyr::UnorderedSet<graphs::VertexIndex>& m_explored;
+    const ygg::UnorderedSet<graphs::VertexIndex>& m_explored;
     GetOrCreateVertex& m_get_or_create_vertex;
     tyr::planning::Statistics m_statistics;
     bool m_found_compatible_transition = false;
@@ -156,9 +156,9 @@ public:
                             tyr::planning::Node<Kind> source_node,
                             SketchGoalStrategy<Kind>& sketch_goal_strategy,
                             SketchProofGraphBuilder<Kind>& builder,
-                            tyr::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>& sketch_edges,
+                            ygg::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>& sketch_edges,
                             graphs::VertexIndexList& open,
-                            const tyr::UnorderedSet<graphs::VertexIndex>& explored,
+                            const ygg::UnorderedSet<graphs::VertexIndex>& explored,
                             GetOrCreateVertex& get_or_create_vertex) :
         m_source(source),
         m_source_node(std::move(source_node)),
@@ -251,9 +251,9 @@ auto execute_proof(datasets::TaskSearchContextPtr<Kind> context_owner, SketchVie
     auto result = SketchProofResults<Kind> {};
     result.context_owner = context_owner;
     auto builder = SketchProofGraphBuilder<Kind> {};
-    auto state_to_vertex = tyr::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
-    auto vertex_to_node = tyr::UnorderedMap<graphs::VertexIndex, tyr::planning::Node<Kind>> {};
-    auto sketch_edges = tyr::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>> {};
+    auto state_to_vertex = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
+    auto vertex_to_node = ygg::UnorderedMap<graphs::VertexIndex, tyr::planning::Node<Kind>> {};
+    auto sketch_edges = ygg::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>> {};
     auto task_goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
     auto sketch_goal_strategy = SketchGoalStrategy<Kind>(sketch);
     const auto static_goal_satisfied = task_goal_strategy.is_static_goal_satisfied(*context.task);
@@ -267,8 +267,8 @@ auto execute_proof(datasets::TaskSearchContextPtr<Kind> context_owner, SketchVie
     {
         const auto goal = is_task_goal(state);
         return datasets::AnnotatedStateGraphVertexLabel<Kind> { state,
-                                                                goal ? tyr::float_t(0) : std::numeric_limits<tyr::float_t>::infinity(),
-                                                                tyr::EqualTo<tyr::planning::StateView<Kind>> {}(state, initial_state),
+                                                                goal ? ygg::float_t(0) : std::numeric_limits<ygg::float_t>::infinity(),
+                                                                ygg::EqualTo<tyr::planning::StateView<Kind>> {}(state, initial_state),
                                                                 goal,
                                                                 true,
                                                                 false };
@@ -288,7 +288,7 @@ auto execute_proof(datasets::TaskSearchContextPtr<Kind> context_owner, SketchVie
     };
 
     auto open = graphs::VertexIndexList {};
-    auto explored = tyr::UnorderedSet<graphs::VertexIndex> {};
+    auto explored = ygg::UnorderedSet<graphs::VertexIndex> {};
 
     auto finish = [&](SketchProofStatus status)
     {
@@ -388,7 +388,7 @@ auto proof_result_from_siw_solution(datasets::TaskSearchContextPtr<Kind> context
     auto result = SketchProofResults<Kind> {};
     result.context_owner = std::move(context_owner);
     auto builder = SketchProofGraphBuilder<Kind> {};
-    auto state_to_vertex = tyr::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
+    auto state_to_vertex = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
     auto task_goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
     auto sketch_goal_strategy = SketchGoalStrategy<Kind>(sketch);
     const auto initial_node = context.successor_generator->get_initial_node();
@@ -402,9 +402,9 @@ auto proof_result_from_siw_solution(datasets::TaskSearchContextPtr<Kind> context
     {
         const auto goal = is_task_goal(state);
         const auto vertex = builder.add_vertex(datasets::AnnotatedStateGraphVertexLabel<Kind> { state,
-                                                                                                goal ? tyr::float_t(0)
-                                                                                                     : std::numeric_limits<tyr::float_t>::infinity(),
-                                                                                                tyr::EqualTo<tyr::planning::StateView<Kind>> {}(state,
+                                                                                                goal ? ygg::float_t(0)
+                                                                                                     : std::numeric_limits<ygg::float_t>::infinity(),
+                                                                                                ygg::EqualTo<tyr::planning::StateView<Kind>> {}(state,
                                                                                                                                                  initial_state),
                                                                                                 goal,
                                                                                                 true,
@@ -463,7 +463,7 @@ auto proof_result_from_siw_solution(datasets::TaskSearchContextPtr<Kind> context
             continue;
 
         const auto segment_length = index - segment_start + 1;
-        const auto edge_label = SketchProofEdgeLabel { datasets::StateGraphEdgeLabel { suffix[segment_start].label, static_cast<tyr::float_t>(segment_length) },
+        const auto edge_label = SketchProofEdgeLabel { datasets::StateGraphEdgeLabel { suffix[segment_start].label, static_cast<ygg::float_t>(segment_length) },
                                                        *rule };
 
         if (const auto it = state_to_vertex.find(target_state); it != state_to_vertex.end())

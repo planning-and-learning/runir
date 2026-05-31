@@ -5,12 +5,12 @@
 
 #include <concepts>
 #include <tuple>
-#include <tyr/common/optional.hpp>
-#include <tyr/common/types.hpp>
-#include <tyr/common/vector.hpp>
+#include <yggdrasil/containers/optional.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/containers/vector.hpp>
 #include <tyr/formalism/planning/domain_view.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::FamilyTag Family, typename C>
@@ -59,6 +59,6 @@ public:
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

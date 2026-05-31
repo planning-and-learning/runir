@@ -10,11 +10,11 @@
 #include <cassert>
 #include <memory>
 #include <optional>
-#include <tyr/common/type_list.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/type_list.hpp>
+#include <yggdrasil/core/types.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <tyr/formalism/symbol_repository.hpp>
+#include <yggdrasil/formalism/symbol_repository.hpp>
 #include <utility>
 #include <vector>
 
@@ -45,29 +45,29 @@ struct RepositoryConstructorFamily
 };
 
 template<FamilyTag Family>
-using FamilyConceptTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Concept, FamilyConceptConstructorTags<Family>>;
+using FamilyConceptTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Concept, FamilyConceptConstructorTags<Family>>;
 
 template<FamilyTag Family>
-using FamilyRoleTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Role, FamilyRoleConstructorTags<Family>>;
+using FamilyRoleTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Role, FamilyRoleConstructorTags<Family>>;
 
 template<FamilyTag Family>
-using FamilyBooleanTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Boolean, FamilyBooleanConstructorTags<Family>>;
+using FamilyBooleanTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Boolean, FamilyBooleanConstructorTags<Family>>;
 
 template<FamilyTag Family>
-using FamilyNumericalTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Numerical, FamilyNumericalConstructorTags<Family>>;
+using FamilyNumericalTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Numerical, FamilyNumericalConstructorTags<Family>>;
 
 template<FamilyTag Family>
-using FamilyConstructorTypes = tyr::MapTypeListT<RepositoryConstructorFamily<Family>::template Constructor, CategoryTags>;
+using FamilyConstructorTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Constructor, CategoryTags>;
 
 template<FamilyTag Family>
-using FamilyConstructorRepositoryTypes = tyr::ConcatTypeListsT<FamilyConceptTypes<Family>,
+using FamilyConstructorRepositoryTypes = ygg::ConcatTypeListsT<FamilyConceptTypes<Family>,
                                                                FamilyRoleTypes<Family>,
                                                                FamilyBooleanTypes<Family>,
                                                                FamilyNumericalTypes<Family>,
                                                                FamilyConstructorTypes<Family>>;
 
 template<FamilyTag Family>
-using FamilyConstructorSymbolRepository = tyr::ApplyTypeListT<tyr::formalism::SymbolRepository, FamilyConstructorRepositoryTypes<Family>>;
+using FamilyConstructorSymbolRepository = ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, FamilyConstructorRepositoryTypes<Family>>;
 
 template<FamilyTag Family>
 class BasicConstructorRepository
@@ -81,21 +81,21 @@ private:
     size_t m_index;
 
     template<typename T>
-    std::optional<tyr::View<tyr::Index<T>, BasicConstructorRepository>> find_with_hash(const tyr::Data<T>& data, size_t hash) const noexcept
+    std::optional<ygg::View<ygg::Index<T>, BasicConstructorRepository>> find_with_hash(const ygg::Data<T>& data, size_t hash) const noexcept
     {
         if (auto index = m_symbol_repository.template find_local_with_hash<T>(data, hash))
-            return tyr::View<tyr::Index<T>, BasicConstructorRepository>(*index, *this);
+            return ygg::View<ygg::Index<T>, BasicConstructorRepository>(*index, *this);
         return std::nullopt;
     }
 
     template<typename T>
-    std::pair<tyr::View<tyr::Index<T>, BasicConstructorRepository>, bool> get_or_create_with_hash(tyr::Data<T>& data, size_t hash)
+    std::pair<ygg::View<ygg::Index<T>, BasicConstructorRepository>, bool> get_or_create_with_hash(ygg::Data<T>& data, size_t hash)
     {
         if (auto index = m_symbol_repository.template find_local_with_hash<T>(data, hash))
-            return { tyr::View<tyr::Index<T>, BasicConstructorRepository>(*index, *this), false };
+            return { ygg::View<ygg::Index<T>, BasicConstructorRepository>(*index, *this), false };
 
         const auto [index, success] = m_symbol_repository.template get_or_create_local_with_hash<T>(data, hash);
-        return { tyr::View<tyr::Index<T>, BasicConstructorRepository>(index, *this), success };
+        return { ygg::View<ygg::Index<T>, BasicConstructorRepository>(index, *this), success };
     }
 
     BasicConstructorRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
@@ -124,19 +124,19 @@ public:
     void clear() noexcept { m_symbol_repository.clear(); }
 
     template<typename T>
-    std::optional<tyr::View<tyr::Index<T>, BasicConstructorRepository>> find(const tyr::Data<T>& data) const noexcept
+    std::optional<ygg::View<ygg::Index<T>, BasicConstructorRepository>> find(const ygg::Data<T>& data) const noexcept
     {
         return find_with_hash<T>(data, FamilyConstructorSymbolRepository<Family>::template hash<T>(data));
     }
 
     template<typename T>
-    std::pair<tyr::View<tyr::Index<T>, BasicConstructorRepository>, bool> get_or_create(tyr::Data<T>& data)
+    std::pair<ygg::View<ygg::Index<T>, BasicConstructorRepository>, bool> get_or_create(ygg::Data<T>& data)
     {
         return get_or_create_with_hash<T>(data, FamilyConstructorSymbolRepository<Family>::template hash<T>(data));
     }
 
     template<typename T>
-    const tyr::Data<T>& operator[](tyr::Index<T> index) const noexcept
+    const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
     {
         assert(m_symbol_repository.template is_local<T>(index));
         return m_symbol_repository.template at_local<T>(index);
@@ -149,7 +149,7 @@ public:
     }
 
     template<typename T>
-    const BasicConstructorRepository& get_canonical_context(tyr::Index<T>) const noexcept
+    const BasicConstructorRepository& get_canonical_context(ygg::Index<T>) const noexcept
     {
         return *this;
     }
@@ -181,22 +181,22 @@ using ConstructorRepositoryFactoryFor = BasicConstructorRepositoryFactory<Family
 
 template<FamilyTag Family, typename Tag>
     requires FamilyConceptConstructorTag<Family, Tag>
-using FamilyConceptView = tyr::View<tyr::Index<FamilyConcept<Family, Tag>>, ConstructorRepositoryFor<Family>>;
+using FamilyConceptView = ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
 template<FamilyTag Family, typename Tag>
     requires FamilyRoleConstructorTag<Family, Tag>
-using FamilyRoleView = tyr::View<tyr::Index<FamilyRole<Family, Tag>>, ConstructorRepositoryFor<Family>>;
+using FamilyRoleView = ygg::View<ygg::Index<FamilyRole<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
 template<FamilyTag Family, typename Tag>
     requires FamilyBooleanConstructorTag<Family, Tag>
-using FamilyBooleanView = tyr::View<tyr::Index<FamilyBoolean<Family, Tag>>, ConstructorRepositoryFor<Family>>;
+using FamilyBooleanView = ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
 template<FamilyTag Family, typename Tag>
     requires FamilyNumericalConstructorTag<Family, Tag>
-using FamilyNumericalView = tyr::View<tyr::Index<FamilyNumerical<Family, Tag>>, ConstructorRepositoryFor<Family>>;
+using FamilyNumericalView = ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, ConstructorRepositoryFor<Family>>;
 
 template<FamilyTag Family, CategoryTag Category>
-using FamilyConstructorView = tyr::View<tyr::Index<FamilyConstructor<Family, Category>>, ConstructorRepositoryFor<Family>>;
+using FamilyConstructorView = ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, ConstructorRepositoryFor<Family>>;
 
 template<FamilyTag Family>
 inline const ConstructorRepositoryFor<Family>& get_repository(const ConstructorRepositoryFor<Family>& repository) noexcept

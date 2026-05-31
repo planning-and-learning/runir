@@ -33,7 +33,7 @@ template<>
 struct EquivalencePolicy<GIEquivalenceTag>
 {
 private:
-    tyr::UnorderedMap<graphs::nauty::SparseGraph, StateGraphVertexRef> m_certificate_to_representative;
+    ygg::UnorderedMap<graphs::nauty::SparseGraph, StateGraphVertexRef> m_certificate_to_representative;
 
 public:
     template<tyr::planning::TaskKind Kind>

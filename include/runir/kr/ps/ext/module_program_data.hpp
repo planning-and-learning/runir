@@ -5,10 +5,10 @@
 #include "runir/kr/ps/ext/module_program_index.hpp"
 
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -20,15 +20,15 @@ struct Data<runir::kr::ps::ext::ModuleProgram>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(entry_module);
-        tyr::clear(modules);
+        ygg::clear(index);
+        ygg::clear(entry_module);
+        ygg::clear(modules);
     }
 
     auto cista_members() const noexcept { return std::tie(index, entry_module, modules); }
     auto identifying_members() const noexcept { return std::tie(entry_module, modules); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

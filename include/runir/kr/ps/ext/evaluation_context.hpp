@@ -35,8 +35,8 @@ public:
     template<runir::kr::dl::CategoryTag Category>
     using Arguments = typename DlContext::template Arguments<Category>;
 
-    using ConceptRegisterValue = std::optional<tyr::Index<tyr::formalism::Object>>;
-    using RoleRegisterValue = std::optional<std::pair<tyr::Index<tyr::formalism::Object>, tyr::Index<tyr::formalism::Object>>>;
+    using ConceptRegisterValue = std::optional<ygg::Index<tyr::formalism::Object>>;
+    using RoleRegisterValue = std::optional<std::pair<ygg::Index<tyr::formalism::Object>, ygg::Index<tyr::formalism::Object>>>;
     using ConceptRegisters = std::array<ConceptRegisterValue, runir::kr::dl::num_registers>;
     using RoleRegisters = std::array<RoleRegisterValue, runir::kr::dl::num_registers>;
 
@@ -118,7 +118,7 @@ public:
 
     void set_state(tyr::planning::StateView<Kind> state) noexcept { m_state = std::move(state); }
     void set_memory_state(MemoryStateView memory_state) noexcept { m_memory_state = memory_state; }
-    void set_memory_state(tyr::Index<MemoryState> memory_state) noexcept { m_memory_state = MemoryStateView(memory_state, get_repository()); }
+    void set_memory_state(ygg::Index<MemoryState> memory_state) noexcept { m_memory_state = MemoryStateView(memory_state, get_repository()); }
 
     std::optional<ModuleView> find_module(const std::string& name) const
     {
@@ -204,13 +204,13 @@ public:
     auto& role_registers() noexcept { return m_role_registers; }
     const auto& role_registers() const noexcept { return m_role_registers; }
 
-    void set(runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag> reg, tyr::Index<tyr::formalism::Object> object)
+    void set(runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag> reg, ygg::Index<tyr::formalism::Object> object)
     {
         concept_registers()[verify_bounds(reg)] = object;
     }
 
     void
-    set(runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag> reg, tyr::Index<tyr::formalism::Object> source, tyr::Index<tyr::formalism::Object> target)
+    set(runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag> reg, ygg::Index<tyr::formalism::Object> source, ygg::Index<tyr::formalism::Object> target)
     {
         role_registers()[verify_bounds(reg)] = std::pair(source, target);
     }
@@ -257,7 +257,7 @@ public:
 private:
     size_t verify_bounds(runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag> reg) const
     {
-        const auto index = static_cast<size_t>(tyr::uint_t(reg));
+        const auto index = static_cast<size_t>(ygg::uint_t(reg));
         if (index >= m_concept_registers.size())
             throw std::out_of_range(make_out_of_range_message<runir::kr::dl::ConceptTag>(index));
         return index;
@@ -265,7 +265,7 @@ private:
 
     size_t verify_bounds(runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag> reg) const
     {
-        const auto index = static_cast<size_t>(tyr::uint_t(reg));
+        const auto index = static_cast<size_t>(ygg::uint_t(reg));
         if (index >= m_role_registers.size())
             throw std::out_of_range(make_out_of_range_message<runir::kr::dl::RoleTag>(index));
         return index;
@@ -275,12 +275,12 @@ private:
     {
         for (size_t index = 0; index < m_concept_registers.size(); ++index)
             if (const auto object = m_concept_registers[index])
-                context.set(runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>(static_cast<tyr::uint_t>(index)), tyr::make_view(*object, context));
+                context.set(runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>(static_cast<ygg::uint_t>(index)), ygg::make_view(*object, context));
 
         for (size_t index = 0; index < m_role_registers.size(); ++index)
             if (const auto role = m_role_registers[index])
-                context.set(runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>(static_cast<tyr::uint_t>(index)),
-                            std::pair(tyr::make_view(role->first, context), tyr::make_view(role->second, context)));
+                context.set(runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>(static_cast<ygg::uint_t>(index)),
+                            std::pair(ygg::make_view(role->first, context), ygg::make_view(role->second, context)));
     }
 
     template<runir::kr::dl::CategoryTag Category>

@@ -7,13 +7,13 @@
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/ps/compatibility.hpp"
 
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::ps::base
 {
 
 template<typename C, typename EvaluationContext>
-bool is_compatible_with(tyr::View<tyr::Index<runir::kr::ps::base::Rule>, C> rule, EvaluationContext& context)
+bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::base::Rule>, C> rule, EvaluationContext& context)
 {
     for (auto condition : rule.get_conditions())
         if (!runir::kr::ps::is_compatible_with(condition, context))
@@ -27,7 +27,7 @@ bool is_compatible_with(tyr::View<tyr::Index<runir::kr::ps::base::Rule>, C> rule
 }
 
 template<typename C, typename EvaluationContext>
-bool is_compatible_with(tyr::View<tyr::Index<runir::kr::ps::base::Sketch>, C> sketch, EvaluationContext& context)
+bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> sketch, EvaluationContext& context)
 {
     for (auto rule : sketch.get_rules())
         if (runir::kr::ps::base::is_compatible_with(rule, context))

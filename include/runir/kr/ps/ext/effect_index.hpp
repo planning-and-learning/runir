@@ -3,10 +3,10 @@
 
 #include "runir/kr/ps/ext/declarations.hpp"
 
-#include <tyr/common/index_mixins.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/ids/index_mixins.hpp>
+#include <yggdrasil/core/types.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -31,6 +31,6 @@ struct Index<runir::kr::ps::ext::ConcreteEffect<LanguageTag, FeatureTag, Observa
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

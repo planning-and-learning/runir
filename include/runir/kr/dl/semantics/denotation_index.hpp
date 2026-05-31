@@ -6,11 +6,11 @@
 #include <concepts>
 #include <limits>
 #include <stdexcept>
-#include <tyr/common/config.hpp>
-#include <tyr/common/index_mixins.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/config.hpp>
+#include <yggdrasil/ids/index_mixins.hpp>
+#include <yggdrasil/core/types.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<runir::kr::dl::CategoryTag Category>
@@ -30,11 +30,11 @@ struct IndexCoder
 {
     using value_type = Index;
 
-    static constexpr value_type decode(Block block) noexcept { return value_type(static_cast<tyr::uint_t>(block)); }
+    static constexpr value_type decode(Block block) noexcept { return value_type(static_cast<ygg::uint_t>(block)); }
 
     static constexpr Block encode(value_type value)
     {
-        const auto raw = tyr::uint_t(value);
+        const auto raw = ygg::uint_t(value);
 
         if (raw > std::numeric_limits<Block>::max())
             throw std::out_of_range("IndexCoder: index does not fit into block");

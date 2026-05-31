@@ -4,8 +4,8 @@
 #include <runir/kr/dl/cnf_grammar/base/repository.hpp>
 #include <runir/kr/dl/cnf_grammar/formatter.hpp>
 #include <runir/kr/dl/cnf_grammar/views.hpp>
-#include <tyr/common/python/bindings.hpp>
-#include <tyr/common/python/type_casters.hpp>
+#include <yggdrasil/python/bindings.hpp>
+#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::dl::base
 {
@@ -16,11 +16,11 @@ namespace
 template<typename T, typename Repository>
 void bind_view(nb::module_& m, const std::string& name)
 {
-    using View = tyr::View<tyr::Index<T>, Repository>;
+    using View = ygg::View<ygg::Index<T>, Repository>;
 
     auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
-    tyr::add_print(cls);
-    tyr::add_hash(cls);
+    ygg::add_print(cls);
+    ygg::add_hash(cls);
 
     if constexpr (requires(const View& view) { view.get_arg(); })
         cls.def("get_arg", &View::get_arg);

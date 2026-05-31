@@ -69,10 +69,10 @@ template<typename G>
 inline constexpr bool IsDenseGraphV = IsDenseGraph<std::remove_cvref_t<G>>;
 
 template<typename G, typename Value>
-using VertexMapStorage = std::conditional_t<IsDenseGraphV<G>, std::vector<Value>, tyr::UnorderedMap<VertexIndex, Value>>;
+using VertexMapStorage = std::conditional_t<IsDenseGraphV<G>, std::vector<Value>, ygg::UnorderedMap<VertexIndex, Value>>;
 
 template<typename G, typename Value>
-using EdgeMapStorage = std::conditional_t<IsDenseGraphV<G>, std::vector<Value>, tyr::UnorderedMap<EdgeIndex, Value>>;
+using EdgeMapStorage = std::conditional_t<IsDenseGraphV<G>, std::vector<Value>, ygg::UnorderedMap<EdgeIndex, Value>>;
 
 template<typename G, typename Value>
 using VertexReadWritePropertyMap =
@@ -86,7 +86,7 @@ using VertexIndexPropertyMap = std::conditional_t<IsDenseGraphV<G>, IdentityRead
 
 template<typename G, typename Value>
 using DistanceMatrixStorage =
-    std::conditional_t<IsDenseGraphV<G>, std::vector<std::vector<Value>>, tyr::UnorderedMap<VertexIndex, tyr::UnorderedMap<VertexIndex, Value>>>;
+    std::conditional_t<IsDenseGraphV<G>, std::vector<std::vector<Value>>, ygg::UnorderedMap<VertexIndex, ygg::UnorderedMap<VertexIndex, Value>>>;
 
 template<typename G, typename Value>
 using BasicMatrix = std::conditional_t<IsDenseGraphV<G>, DenseBasicMatrix<VertexIndex, Value>, SparseBasicMatrix<VertexIndex, Value>>;
@@ -101,7 +101,7 @@ auto make_vertex_index_map(const G& graph)
     }
     else
     {
-        auto remap = tyr::UnorderedMap<VertexIndex, VertexIndex>();
+        auto remap = ygg::UnorderedMap<VertexIndex, VertexIndex>();
         VertexIndex index = 0;
         for (auto vertex : graph.get_vertex_indices())
             remap.emplace(vertex, index++);
@@ -360,14 +360,14 @@ auto dijkstra_shortest_paths(const G& graph, const std::vector<Cost>& weights, c
 
 template<IsGraph G, typename Cost, typename SourceInputIterator>
     requires(!IsDenseGraphV<G>)
-auto dijkstra_shortest_paths(const G& graph, const tyr::UnorderedMap<EdgeIndex, Cost>& weights, SourceInputIterator first, SourceInputIterator last)
+auto dijkstra_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights, SourceInputIterator first, SourceInputIterator last)
 {
     return dijkstra_shortest_paths_impl<G, Cost>(graph, weights, first, last);
 }
 
 template<IsGraph G, typename Cost>
     requires(!IsDenseGraphV<G>)
-auto dijkstra_shortest_paths(const G& graph, const tyr::UnorderedMap<EdgeIndex, Cost>& weights, const std::vector<VertexIndex>& sources)
+auto dijkstra_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights, const std::vector<VertexIndex>& sources)
 {
     return dijkstra_shortest_paths(graph, weights, sources.begin(), sources.end());
 }
@@ -397,7 +397,7 @@ auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const std::vector<C
 
 template<IsGraph G, typename Cost>
     requires(!IsDenseGraphV<G>)
-auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const tyr::UnorderedMap<EdgeIndex, Cost>& weights)
+auto floyd_warshall_all_pairs_shortest_paths(const G& graph, const ygg::UnorderedMap<EdgeIndex, Cost>& weights)
 {
     return floyd_warshall_all_pairs_shortest_paths_impl<G, Cost>(graph, weights);
 }

@@ -1,7 +1,7 @@
 #ifndef RUNIR_GRAPHS_FORMATTER_HPP_
 #define RUNIR_GRAPHS_FORMATTER_HPP_
 
-#include "runir/common/formatter.hpp"
+#include "runir/formatter.hpp"
 #include "runir/graphs/algorithms/color_refinement.hpp"
 #include "runir/graphs/algorithms/weisfeiler_leman.hpp"
 #include "runir/graphs/backward_static_graph_view.hpp"
@@ -10,9 +10,11 @@
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 
+#include <fmt/ranges.h>
+
 #include <string>
 #include <string_view>
-#include <tyr/common/formatter.hpp>
+#include <yggdrasil/formatting/formatter.hpp>
 
 namespace runir::graphs::format
 {

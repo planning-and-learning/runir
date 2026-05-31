@@ -7,10 +7,10 @@
 #include <cista/containers/string.h>
 #include <string>
 #include <tuple>
-#include <tyr/common/types.hpp>
-#include <tyr/common/types_utils.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -31,15 +31,15 @@ struct Data<runir::kr::ps::ext::Register>
 
     void clear() noexcept
     {
-        tyr::clear(index);
-        tyr::clear(name);
-        tyr::clear(identifier);
+        ygg::clear(index);
+        ygg::clear(name);
+        ygg::clear(identifier);
     }
 
     auto cista_members() const noexcept { return std::tie(index, name, identifier); }
     auto identifying_members() const noexcept { return std::tie(name, identifier); }
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

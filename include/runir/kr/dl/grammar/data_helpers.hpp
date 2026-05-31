@@ -4,7 +4,7 @@
 #include "runir/kr/dl/grammar/indices.hpp"
 #include "runir/kr/dl/semantics/data_helpers.hpp"
 
-#include <tyr/common/types.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::dl::grammar
 {

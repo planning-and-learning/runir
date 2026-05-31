@@ -9,8 +9,8 @@
 #include <limits>
 #include <memory>
 #include <optional>
-#include <tyr/common/equal_to.hpp>
-#include <tyr/common/hash.hpp>
+#include <yggdrasil/semantics/equal_to.hpp>
+#include <yggdrasil/semantics/hash.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
 
@@ -22,7 +22,7 @@ class CycleVisitor : public graphs::bgl::TraversalVisitor<Graph>
 {
 private:
     const Graph& m_graph;
-    tyr::UnorderedMap<graphs::VertexIndex, graphs::VertexIndex> m_parent;
+    ygg::UnorderedMap<graphs::VertexIndex, graphs::VertexIndex> m_parent;
     graphs::VertexIndexList m_cycle;
 
 public:
@@ -67,7 +67,7 @@ class ModuleProgramProofBuilder
 private:
     ModuleProgramProofResults<Kind> m_result;
     ModuleProgramProofGraphBuilder<Kind> m_builder;
-    tyr::UnorderedMap<ModuleProgramProofVertexLabel<Kind>, graphs::VertexIndex> m_vertex_to_index;
+    ygg::UnorderedMap<ModuleProgramProofVertexLabel<Kind>, graphs::VertexIndex> m_vertex_to_index;
     tyr::planning::ConjunctiveGoalStrategy<Kind> m_task_goal_strategy;
     tyr::planning::StateView<Kind> m_initial_state;
     bool m_static_goal_satisfied;
@@ -79,8 +79,8 @@ private:
                                                           bool is_unsolvable)
     {
         auto annotated = datasets::AnnotatedStateGraphVertexLabel<Kind> { context.get_state(),
-                                                                           is_goal(context.get_state()) ? tyr::float_t(0)
-                                                                                                        : std::numeric_limits<tyr::float_t>::infinity(),
+                                                                           is_goal(context.get_state()) ? ygg::float_t(0)
+                                                                                                        : std::numeric_limits<ygg::float_t>::infinity(),
                                                                            is_initial,
                                                                            is_goal(context.get_state()),
                                                                            is_alive,

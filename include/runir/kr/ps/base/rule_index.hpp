@@ -4,10 +4,10 @@
 #include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/declarations.hpp"
 
-#include <tyr/common/index_mixins.hpp>
-#include <tyr/common/types.hpp>
+#include <yggdrasil/ids/index_mixins.hpp>
+#include <yggdrasil/core/types.hpp>
 
-namespace tyr
+namespace ygg
 {
 
 template<>
@@ -17,6 +17,6 @@ struct Index<runir::kr::ps::base::Rule> : IndexMixin<Index<runir::kr::ps::base::
     using Base::Base;
 };
 
-}  // namespace tyr
+}  // namespace ygg
 
 #endif

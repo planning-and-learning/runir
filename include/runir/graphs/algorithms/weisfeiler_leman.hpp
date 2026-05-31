@@ -100,7 +100,7 @@ auto initial_tuple_colors(const G& graph, const VertexIndexList& vertices)
     using InitialSignature = std::tuple<ColorList, BoolList, BoolList>;
 
     const auto n = vertices.size();
-    auto vertex_to_dense = tyr::UnorderedMap<VertexIndex, VertexIndex>();
+    auto vertex_to_dense = ygg::UnorderedMap<VertexIndex, VertexIndex>();
     for (VertexIndex i = 0; i < n; ++i)
         vertex_to_dense.emplace(vertices[i], i);
 
