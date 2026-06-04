@@ -3,6 +3,7 @@
 
 #include "runir/graphs/declarations.hpp"
 
+#include <concepts>
 #include <tuple>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/ids/index_mixins.hpp>
@@ -14,6 +15,19 @@
 
 namespace ygg
 {
+
+namespace detail
+{
+template<typename T>
+concept HasIsCanonical = requires(const T& value) {
+    { ygg::is_canonical(value) } -> std::same_as<bool>;
+};
+
+template<typename T>
+concept HasCanonicalize = requires(T& value) {
+    ygg::canonicalize(value);
+};
+}
 
 template<runir::graphs::Property P>
 struct Index<runir::graphs::VertexProperty<P>> : IndexMixin<Index<runir::graphs::VertexProperty<P>>>
@@ -58,7 +72,7 @@ struct Data<runir::graphs::EdgeProperty<P>>
 template<runir::graphs::Property P>
 bool is_canonical(const Data<runir::graphs::VertexProperty<P>>& data) noexcept
 {
-    if constexpr (Canonicalizable<P>)
+    if constexpr (detail::HasIsCanonical<P>)
         return ygg::is_canonical(data.value);
     else
         return true;
@@ -67,7 +81,7 @@ bool is_canonical(const Data<runir::graphs::VertexProperty<P>>& data) noexcept
 template<runir::graphs::Property P>
 bool is_canonical(const Data<runir::graphs::EdgeProperty<P>>& data) noexcept
 {
-    if constexpr (Canonicalizable<P>)
+    if constexpr (detail::HasIsCanonical<P>)
         return ygg::is_canonical(data.value);
     else
         return true;
@@ -76,14 +90,14 @@ bool is_canonical(const Data<runir::graphs::EdgeProperty<P>>& data) noexcept
 template<runir::graphs::Property P>
 void canonicalize(Data<runir::graphs::VertexProperty<P>>& data) noexcept
 {
-    if constexpr (Canonicalizable<P>)
+    if constexpr (detail::HasCanonicalize<P>)
         ygg::canonicalize(data.value);
 }
 
 template<runir::graphs::Property P>
 void canonicalize(Data<runir::graphs::EdgeProperty<P>>& data) noexcept
 {
-    if constexpr (Canonicalizable<P>)
+    if constexpr (detail::HasCanonicalize<P>)
         ygg::canonicalize(data.value);
 }
 

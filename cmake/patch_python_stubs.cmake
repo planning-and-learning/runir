@@ -9,8 +9,12 @@ if(EXISTS "${PYRUNIR_STUB_ROOT}")
 
         string(REPLACE "pyrunir._pyrunir." "pyrunir." PYRUNIR_PATCHED_STUB_CONTENT "${PYRUNIR_PATCHED_STUB_CONTENT}")
         string(REPLACE "pytyr._pytyr." "pytyr." PYRUNIR_PATCHED_STUB_CONTENT "${PYRUNIR_PATCHED_STUB_CONTENT}")
+        string(REPLACE "pypddl._pypddl." "pypddl." PYRUNIR_PATCHED_STUB_CONTENT "${PYRUNIR_PATCHED_STUB_CONTENT}")
+        string(REPLACE "pyyggdrasil._pyyggdrasil." "pyyggdrasil." PYRUNIR_PATCHED_STUB_CONTENT "${PYRUNIR_PATCHED_STUB_CONTENT}")
         string(REPLACE "pyrunir._pyrunir" "pyrunir" PYRUNIR_PATCHED_STUB_CONTENT "${PYRUNIR_PATCHED_STUB_CONTENT}")
         string(REPLACE "pytyr._pytyr" "pytyr" PYRUNIR_PATCHED_STUB_CONTENT "${PYRUNIR_PATCHED_STUB_CONTENT}")
+        string(REPLACE "pypddl._pypddl" "pypddl" PYRUNIR_PATCHED_STUB_CONTENT "${PYRUNIR_PATCHED_STUB_CONTENT}")
+        string(REPLACE "pyyggdrasil._pyyggdrasil" "pyyggdrasil" PYRUNIR_PATCHED_STUB_CONTENT "${PYRUNIR_PATCHED_STUB_CONTENT}")
 
         if(NOT PYRUNIR_STUB_CONTENT STREQUAL PYRUNIR_PATCHED_STUB_CONTENT)
             file(WRITE "${PYRUNIR_STUB_FILE}" "${PYRUNIR_PATCHED_STUB_CONTENT}")
