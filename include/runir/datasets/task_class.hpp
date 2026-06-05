@@ -50,6 +50,11 @@ struct TaskSearchContext
     tyr::planning::StateRepositoryPtr<Kind> state_repository;
     tyr::planning::SuccessorGeneratorPtr<Kind> successor_generator;
 
+    TaskSearchContext(const TaskSearchContext&) = delete;
+    TaskSearchContext& operator=(const TaskSearchContext&) = delete;
+    TaskSearchContext(TaskSearchContext&&) = delete;
+    TaskSearchContext& operator=(TaskSearchContext&&) = delete;
+
     static std::shared_ptr<TaskSearchContext> create() { return std::shared_ptr<TaskSearchContext>(new TaskSearchContext()); }
 
     static std::shared_ptr<TaskSearchContext> create(tyr::planning::TaskPtr<Kind> task, ygg::ExecutionContextPtr execution_context)

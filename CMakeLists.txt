@@ -74,22 +74,6 @@ if(tyr_FOUND)
     message(STATUS "Found tyr: ${tyr_DIR} (found version ${tyr_VERSION})")
 endif()
 
-if(TARGET TBB::tbb AND tyr_DIR)
-    get_filename_component(RUNIR_TYR_SITE_PACKAGES "${tyr_DIR}/../../../../../" ABSOLUTE)
-    file(GLOB RUNIR_PYTYR_TBB_LIBS
-        "${RUNIR_TYR_SITE_PACKAGES}/pytyr.libs/libtbb*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
-    if(RUNIR_PYTYR_TBB_LIBS)
-        list(SORT RUNIR_PYTYR_TBB_LIBS)
-        list(GET RUNIR_PYTYR_TBB_LIBS 0 RUNIR_PYTYR_TBB_LIBRARY)
-        set_target_properties(TBB::tbb PROPERTIES
-            IMPORTED_LOCATION "${RUNIR_PYTYR_TBB_LIBRARY}"
-            IMPORTED_LOCATION_RELEASE "${RUNIR_PYTYR_TBB_LIBRARY}"
-            IMPORTED_LOCATION_RELWITHDEBINFO "${RUNIR_PYTYR_TBB_LIBRARY}"
-            IMPORTED_LOCATION_MINSIZEREL "${RUNIR_PYTYR_TBB_LIBRARY}"
-            IMPORTED_LOCATION_DEBUG "${RUNIR_PYTYR_TBB_LIBRARY}")
-        message(STATUS "Using pytyr bundled TBB: ${RUNIR_PYTYR_TBB_LIBRARY}")
-    endif()
-endif()
 
 add_subdirectory(src)
 

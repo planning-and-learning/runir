@@ -96,18 +96,18 @@ void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const c
         .def_ro("status", &Result::status);
 
     m.def((std::string("generate_") + function_prefix + "_state_graph").c_str(),
-          [](TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& options)
-          { return std::shared_ptr<Graph>(generate_state_graph<Kind>(context, options)); },
+          [](TaskSearchContextPtr<Kind> context, const StateGraphGenerationOptions& options)
+          { return std::shared_ptr<Graph>(generate_state_graph<Kind>(*context, options)); },
           "context"_a,
           "options"_a = StateGraphGenerationOptions());
     m.def((std::string("generate_") + function_prefix + "_state_graph_result").c_str(),
-          [](TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& options)
-          { return std::make_shared<Result>(generate_state_graph_result<Kind>(context, options)); },
+          [](TaskSearchContextPtr<Kind> context, const StateGraphGenerationOptions& options)
+          { return std::make_shared<Result>(generate_state_graph_result<Kind>(*context, options)); },
           "context"_a,
           "options"_a = StateGraphGenerationOptions());
     m.def((std::string("annotate_") + function_prefix + "_state_graph").c_str(),
-          [](TaskSearchContext<Kind>& context, const Graph& graph, StateGraphCostMode cost_mode)
-          { return std::shared_ptr<AnnotatedGraph>(annotate_state_graph<Kind>(context, graph, cost_mode)); },
+          [](TaskSearchContextPtr<Kind> context, const Graph& graph, StateGraphCostMode cost_mode)
+          { return std::shared_ptr<AnnotatedGraph>(annotate_state_graph<Kind>(*context, graph, cost_mode)); },
           "context"_a,
           "graph"_a,
           "cost_mode"_a);
