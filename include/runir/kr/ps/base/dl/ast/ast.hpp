@@ -59,7 +59,6 @@ struct Unchanged : x3::position_tagged
 template<runir::kr::FamilyTag Family>
 struct Concept : x3::position_tagged
 {
-    std::string name;
     std::string symbol;
     std::string description;
     runir::kr::dl::grammar::ast::Constructor<Family, runir::kr::dl::ConceptTag> feature;
@@ -68,7 +67,6 @@ struct Concept : x3::position_tagged
 template<runir::kr::FamilyTag Family>
 struct BooleanFeature : x3::position_tagged
 {
-    std::string name;
     std::string symbol;
     std::string description;
     runir::kr::dl::grammar::ast::Constructor<Family, runir::kr::dl::BooleanTag> feature;
@@ -77,7 +75,6 @@ struct BooleanFeature : x3::position_tagged
 template<runir::kr::FamilyTag Family>
 struct NumericalFeature : x3::position_tagged
 {
-    std::string name;
     std::string symbol;
     std::string description;
     runir::kr::dl::grammar::ast::Constructor<Family, runir::kr::dl::NumericalTag> feature;
@@ -124,6 +121,8 @@ struct Effect : x3::position_tagged
 template<runir::kr::FamilyTag Family>
 struct Rule : x3::position_tagged
 {
+    std::string symbol;
+    std::string description;
     std::vector<Condition<Family>> conditions;
     std::vector<Effect<Family>> effects;
 };

@@ -39,6 +39,8 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag>>
     Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag>> index;
     Index<runir::kr::ps::ext::MemoryState> source;
     Index<runir::kr::ps::ext::MemoryState> target;
+    ::cista::offset::string symbol;
+    ::cista::offset::string description;
     IndexList<runir::kr::ps::ext::ConditionVariant> conditions;
     runir::kr::ps::ext::ConceptArgument load_concept;
     Index<runir::kr::ps::ext::Register> reg;
@@ -48,13 +50,15 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag>>
         ygg::clear(index);
         ygg::clear(source);
         ygg::clear(target);
+        ygg::clear(symbol);
+        ygg::clear(description);
         ygg::clear(conditions);
         ygg::clear(load_concept);
         ygg::clear(reg);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, load_concept, reg); }
-    auto identifying_members() const noexcept { return std::tie(source, target, conditions, load_concept, reg); }
+    auto cista_members() const noexcept { return std::tie(index, source, target, symbol, description, conditions, load_concept, reg); }
+    auto identifying_members() const noexcept { return std::tie(source, target, symbol, description, conditions, load_concept, reg); }
 };
 
 template<>
@@ -63,6 +67,8 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
     Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>> index;
     Index<runir::kr::ps::ext::MemoryState> source;
     Index<runir::kr::ps::ext::MemoryState> target;
+    ::cista::offset::string symbol;
+    ::cista::offset::string description;
     IndexList<runir::kr::ps::ext::ConditionVariant> conditions;
     IndexList<runir::kr::ps::ext::EffectVariant> effects;
 
@@ -71,12 +77,14 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
         ygg::clear(index);
         ygg::clear(source);
         ygg::clear(target);
+        ygg::clear(symbol);
+        ygg::clear(description);
         ygg::clear(conditions);
         ygg::clear(effects);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, effects); }
-    auto identifying_members() const noexcept { return std::tie(source, target, conditions, effects); }
+    auto cista_members() const noexcept { return std::tie(index, source, target, symbol, description, conditions, effects); }
+    auto identifying_members() const noexcept { return std::tie(source, target, symbol, description, conditions, effects); }
 };
 
 template<>
@@ -85,6 +93,8 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
     Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>> index;
     Index<runir::kr::ps::ext::MemoryState> source;
     Index<runir::kr::ps::ext::MemoryState> target;
+    ::cista::offset::string symbol;
+    ::cista::offset::string description;
     IndexList<runir::kr::ps::ext::ConditionVariant> conditions;
     ::cista::offset::string action_name;
     IndexList<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> arguments;
@@ -98,13 +108,15 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
         ygg::clear(index);
         ygg::clear(source);
         ygg::clear(target);
+        ygg::clear(symbol);
+        ygg::clear(description);
         ygg::clear(conditions);
         ygg::clear(action_name);
         ygg::clear(arguments);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, action_name, arguments); }
-    auto identifying_members() const noexcept { return std::tie(source, target, conditions, action_name, arguments); }
+    auto cista_members() const noexcept { return std::tie(index, source, target, symbol, description, conditions, action_name, arguments); }
+    auto identifying_members() const noexcept { return std::tie(source, target, symbol, description, conditions, action_name, arguments); }
 };
 
 template<>

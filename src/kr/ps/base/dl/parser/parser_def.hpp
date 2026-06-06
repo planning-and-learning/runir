@@ -51,34 +51,41 @@ inline auto identifier_parser() { return raw[lexeme[(alpha | char_('_')) >> *(al
 
 inline auto quoted_string_parser() { return lexeme[lit('"') >> raw[*('\\' >> char_ | (char_ - '"'))] >> lit('"')]; }
 
-const auto boolean_feature_def = (lit("(") >> lit(runir::kr::ps::dl::BooleanFeature::keyword)) > identifier_parser() > quoted_string_parser()
-                                 > quoted_string_parser() > runir::kr::dl::grammar::parser::base::grammar::boolean_parser() > lit(")");
-const auto numerical_feature_def = (lit("(") >> lit(runir::kr::ps::dl::NumericalFeature::keyword)) > identifier_parser() > quoted_string_parser()
-                                   > quoted_string_parser() > runir::kr::dl::grammar::parser::base::grammar::numerical_parser() > lit(")");
+const auto symbol_value_def = identifier_parser() | attr(std::string {});
+const auto symbol_section_def = lit("(") > lit(":symbol") > symbol_value_def > lit(")");
+const auto description_section_def = lit("(") > lit(":description") > quoted_string_parser() > lit(")");
+const auto boolean_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::base::grammar::boolean_parser() > lit(")");
+const auto numerical_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::base::grammar::numerical_parser() > lit(")");
+
+const auto boolean_feature_def = (lit("(") >> lit(":") >> lit(runir::kr::ps::dl::BooleanFeature::keyword))
+                                 > symbol_section_def > description_section_def > boolean_expression_section_def > lit(")");
+const auto numerical_feature_def = (lit("(") >> lit(":") >> lit(runir::kr::ps::dl::NumericalFeature::keyword))
+                                   > symbol_section_def > description_section_def > numerical_expression_section_def > lit(")");
 const auto feature_def = boolean_feature | numerical_feature;
 
-const auto positive_condition_def = lit(ast::Positive::keyword) >> attr(ast::Positive {});
-const auto negative_condition_def = lit(ast::Negative::keyword) >> attr(ast::Negative {});
-const auto equal_zero_condition_def = lit(ast::EqualZero::keyword) >> attr(ast::EqualZero {});
-const auto greater_zero_condition_def = lit(ast::GreaterZero::keyword) >> attr(ast::GreaterZero {});
+const auto positive_condition_def = (lit(":") >> lit(ast::Positive::keyword)) >> attr(ast::Positive {});
+const auto negative_condition_def = (lit(":") >> lit(ast::Negative::keyword)) >> attr(ast::Negative {});
+const auto equal_zero_condition_def = (lit(":") >> lit(ast::EqualZero::keyword)) >> attr(ast::EqualZero {});
+const auto greater_zero_condition_def = (lit(":") >> lit(ast::GreaterZero::keyword)) >> attr(ast::GreaterZero {});
 const auto condition_observation_def = positive_condition | negative_condition | equal_zero_condition | greater_zero_condition;
 const auto condition_def = (lit("(") >> condition_observation) > identifier_parser() > lit(")");
 
-const auto positive_effect_def = lit(ast::Positive::keyword) >> attr(ast::Positive {});
-const auto negative_effect_def = lit(ast::Negative::keyword) >> attr(ast::Negative {});
-const auto unchanged_effect_def = lit(ast::Unchanged::keyword) >> attr(ast::Unchanged {});
-const auto increases_effect_def = lit(ast::Increases::keyword) >> attr(ast::Increases {});
-const auto decreases_effect_def = lit(ast::Decreases::keyword) >> attr(ast::Decreases {});
+const auto positive_effect_def = (lit(":") >> lit(ast::Positive::keyword)) >> attr(ast::Positive {});
+const auto negative_effect_def = (lit(":") >> lit(ast::Negative::keyword)) >> attr(ast::Negative {});
+const auto unchanged_effect_def = (lit(":") >> lit(ast::Unchanged::keyword)) >> attr(ast::Unchanged {});
+const auto increases_effect_def = (lit(":") >> lit(ast::Increases::keyword)) >> attr(ast::Increases {});
+const auto decreases_effect_def = (lit(":") >> lit(ast::Decreases::keyword)) >> attr(ast::Decreases {});
 const auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
 const auto effect_def = (lit("(") >> effect_observation) > identifier_parser() > lit(")");
 
 const auto conditions_section_def = lit("(") > lit(":conditions") > *condition > lit(")");
 const auto effects_section_def = lit("(") > lit(":effects") > *effect > lit(")");
+const auto rule_expression_section_def = lit("(") > lit(":expression") > conditions_section_def > effects_section_def > lit(")");
 const auto features_section_def = lit("(") > lit(":features") > *feature > lit(")");
 const auto rules_section_def = lit("(") > lit(":rules") > *rule > lit(")");
 
-const auto rule_def = lit("(") > conditions_section_def > effects_section_def > lit(")");
-const auto sketch_def = lit("(") > -lit("sketch") > features_section_def > rules_section_def > lit(")");
+const auto rule_def = (lit("(") >> lit(":rule")) > symbol_section_def > description_section_def > rule_expression_section_def > lit(")");
+const auto sketch_def = (lit("(") >> lit(":sketch")) > features_section_def > rules_section_def > lit(")");
 const auto sketch_root_def = sketch > eoi;
 
 BOOST_SPIRIT_DEFINE(boolean_feature, numerical_feature, feature)

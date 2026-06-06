@@ -78,22 +78,31 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     auto repository = repository_factory.create(dl_repository);
 
     const auto description = std::string { R"(
-(sketch
+(:sketch
   (:features
-    (boolean ready "r" "" (b_nonempty (c_atomic_state "ball")))
-    (numerical count "c" "" (n_count (c_atomic_state "ball")))
-  )
+    (:boolean
+      (:symbol r)
+      (:description "ready feature")
+      (:expression
+        (b_nonempty (c_atomic_state "ball"))))
+    (:numerical
+      (:symbol c)
+      (:description "")
+      (:expression
+        (n_count (c_atomic_state "ball")))))
   (:rules
-    (
-      (:conditions (positive ready) (equal_zero count))
-      (:effects (negative ready) (increases count))
-    )
-    (
-      (:conditions (negative ready) (greater_zero count))
-      (:effects (positive ready) (decreases count) (unchanged count))
-    )
-  )
-)
+    (:rule
+      (:symbol ready-rule)
+      (:description "ready rule")
+      (:expression
+        (:conditions (:positive r) (:equal_zero c))
+        (:effects (:negative r) (:increases c))))
+    (:rule
+      (:symbol)
+      (:description "")
+      (:expression
+        (:conditions (:negative r) (:greater_zero c))
+        (:effects (:positive r) (:decreases c) (:unchanged c))))))
 )" };
 
     const auto sketch = kr::ps::base::dl::parse_sketch(description, planning_domain.get_domain(), *repository);
@@ -106,7 +115,12 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     EXPECT_EQ(repository->template size<kr::ps::ConditionVariant<kr::BaseFamilyTag>>(), 4);
     EXPECT_EQ(repository->template size<kr::ps::EffectVariant<kr::BaseFamilyTag>>(), 5);
 
+    const auto first_rule = sketch.get_rules()[0];
+    EXPECT_EQ(first_rule.get_symbol(), "ready-rule");
+    EXPECT_EQ(first_rule.get_description(), "ready rule");
+
     const auto formatted = fmt::format("{}", sketch);
+    EXPECT_NE(formatted.find("(:expression"), std::string::npos);
     const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository);
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
     EXPECT_EQ(kr::ps::base::syntactic_complexity(sketch), 6);

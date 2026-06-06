@@ -59,6 +59,8 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_variant", &View::get_variant);
     if constexpr (requires(const View& view) { view.get_feature(); })
         cls.def("get_feature", &View::get_feature);
+    if constexpr (requires(const View& view) { view.get_expression(); })
+        cls.def("get_expression", &View::get_expression);
     if constexpr (requires(const View& view) { view.get_symbol(); })
         cls.def("get_symbol", [](const View& view) { return std::string(view.get_symbol()); });
     if constexpr (requires(const View& view) { view.get_description(); })

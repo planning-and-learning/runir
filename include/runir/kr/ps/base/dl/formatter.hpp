@@ -16,6 +16,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::ps::base::dl::format
 {
@@ -27,6 +28,20 @@ std::string quoted(const String& value)
 }
 
 inline std::string quoted(std::string_view value) { return fmt::format("\"{}\"", value); }
+
+template<typename String>
+std::string symbol_section(const String& value)
+{
+    const auto text = std::string(value.str());
+    return text.empty() ? std::string("(:symbol)") : fmt::format("(:symbol {})", text);
+}
+
+inline std::string symbol_section(std::string_view value)
+{
+    return value.empty() ? std::string("(:symbol)") : fmt::format("(:symbol {})", value);
+}
+
+inline std::string symbol_section(const std::string& value) { return symbol_section(std::string_view(value)); }
 
 inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
 
@@ -259,19 +274,24 @@ std::string constructor(ygg::View<ygg::Index<runir::kr::dl::Constructor<runir::k
 
 template<typename FeatureTag, typename C>
 void append_feature(std::ostream& os,
-                    ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view,
-                    std::string_view name)
+                    ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view)
 {
-    os << "(" << FeatureTag::keyword << " " << name << " " << quoted(view.get_symbol()) << " " << quoted(view.get_description()) << " "
-       << constructor(view.get_feature()) << ")";
+    os << "(:" << FeatureTag::keyword << "\n";
+    {
+        ygg::IndentScope scope(os);
+        os << ygg::print_indent << symbol_section(view.get_symbol()) << "\n";
+        os << ygg::print_indent << fmt::format("(:description {})", quoted(view.get_description())) << "\n";
+        os << ygg::print_indent << fmt::format("(:expression {})", constructor(view.get_feature())) << "\n";
+    }
+    os << ygg::print_indent << ")";
 }
 
 template<typename FeatureTag, typename C>
 std::string feature(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view,
-                    std::string_view name)
+                    std::string_view)
 {
     auto os = std::ostringstream {};
-    append_feature(os, view, name);
+    append_feature(os, view);
     return os.str();
 }
 
@@ -280,7 +300,7 @@ std::string condition(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runi
                       std::string_view feature_name)
 {
     auto os = std::ostringstream {};
-    os << "(" << ObservationTag::keyword << " " << feature_name << ")";
+    os << "(:" << ObservationTag::keyword << " " << feature_name << ")";
     return os.str();
 }
 
@@ -289,7 +309,7 @@ std::string effect(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr:
                    std::string_view feature_name)
 {
     auto os = std::ostringstream {};
-    os << "(" << ObservationTag::keyword << " " << feature_name << ")";
+    os << "(:" << ObservationTag::keyword << " " << feature_name << ")";
     return os.str();
 }
 

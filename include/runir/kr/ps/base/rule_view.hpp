@@ -28,6 +28,8 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
 
     auto get_index() const noexcept { return m_handle; }
+    const auto& get_symbol() const noexcept { return get_data().symbol; }
+    const auto& get_description() const noexcept { return get_data().description; }
     auto get_conditions() const noexcept { return make_view(get_data().conditions, *m_context); }
     auto get_effects() const noexcept { return make_view(get_data().effects, *m_context); }
 

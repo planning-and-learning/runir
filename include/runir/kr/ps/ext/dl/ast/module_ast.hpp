@@ -101,6 +101,8 @@ struct Rule
     std::size_t action_offset = 0;
     std::size_t callee_offset = 0;
     std::size_t arguments_offset = 0;
+    std::string symbol;
+    std::string description;
     std::vector<Observation> conditions;
     std::vector<Observation> effects;
     std::string concept_expression;
@@ -117,6 +119,8 @@ struct MemoryTransition
     std::size_t target_name_offset = 0;
     std::string source;
     std::string target;
+    std::string symbol;
+    std::string description;
     std::vector<Rule> rules;
 };
 

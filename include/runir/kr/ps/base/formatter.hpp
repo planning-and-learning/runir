@@ -46,6 +46,12 @@ auto& named_features(FeatureNames& names)
 }
 
 template<typename FeatureTag, typename C>
+std::string feature_symbol(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C> feature)
+{
+    return ygg::visit([](auto concrete_feature) { return std::string(concrete_feature.get_symbol()); }, feature.get_variant());
+}
+
+template<typename FeatureTag, typename C>
 std::string get_or_create_name(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C> feature)
 {
     auto& entries = named_features<FeatureTag>(names);
@@ -53,8 +59,7 @@ std::string get_or_create_name(FeatureNames& names, ygg::View<ygg::Index<runir::
         if (entry.index == feature.get_index())
             return entry.name;
 
-    const auto prefix = std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> ? "b" : "n";
-    auto name = fmt::format("{}_{}", prefix, entries.size());
+    auto name = feature_symbol(feature);
     entries.push_back(NamedFeature<FeatureTag> { feature.get_index(), name });
     return name;
 }
@@ -167,11 +172,18 @@ void append_rule(std::ostream& os, FeatureNames& names, ygg::View<ygg::Index<run
     for (auto item : view.get_effects())
         effects.push_back(effect(names, item));
 
-    os << ygg::print_indent << "(\n";
+    os << ygg::print_indent << "(:rule\n";
     {
         ygg::IndentScope scope(os);
-        os << ygg::print_indent << fmt::format("(:conditions {})", fmt::join(conditions, " ")) << "\n";
-        os << ygg::print_indent << fmt::format("(:effects {})", fmt::join(effects, " ")) << "\n";
+        os << ygg::print_indent << runir::kr::ps::base::dl::format::symbol_section(view.get_symbol()) << "\n";
+        os << ygg::print_indent << fmt::format("(:description {})", runir::kr::ps::base::dl::format::quoted(view.get_description())) << "\n";
+        os << ygg::print_indent << "(:expression\n";
+        {
+            ygg::IndentScope expression_scope(os);
+            os << ygg::print_indent << fmt::format("(:conditions {})", fmt::join(conditions, " ")) << "\n";
+            os << ygg::print_indent << fmt::format("(:effects {})", fmt::join(effects, " ")) << "\n";
+        }
+        os << ygg::print_indent << ")\n";
     }
     os << ygg::print_indent << ")";
 }
@@ -190,7 +202,7 @@ std::string sketch(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> view)
     auto names = collect_features(view);
     auto os = std::ostringstream {};
 
-    os << "(sketch\n";
+    os << "(:sketch\n";
     {
         ygg::IndentScope scope(os);
 

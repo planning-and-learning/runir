@@ -1236,6 +1236,8 @@ auto parse_rule(Repository& repository,
             ygg::Data<Rule<LoadTag>> data;
             data.source = source;
             data.target = target;
+            data.symbol = rule.symbol;
+            data.description = rule.description;
             data.conditions = conditions;
             data.load_concept = parse_concept_argument(repository, rule.concept_expression, rule.concept_expression_offset, domain, concept_aliases);
             data.reg = require_register(registers, rule.reg, rule.register_offset);
@@ -1246,6 +1248,8 @@ auto parse_rule(Repository& repository,
             ygg::Data<Rule<SketchTag>> data;
             data.source = source;
             data.target = target;
+            data.symbol = rule.symbol;
+            data.description = rule.description;
             data.conditions = conditions;
             data.effects = parse_effects(repository, rule.effects, concept_features, boolean_features, numerical_features);
             return intern_rule_variant(repository, data);
@@ -1256,6 +1260,8 @@ auto parse_rule(Repository& repository,
             ygg::Data<Rule<DoTag>> data(rule.action);
             data.source = source;
             data.target = target;
+            data.symbol = rule.symbol;
+            data.description = rule.description;
             data.conditions = conditions;
             for (const auto& argument : rule.arguments)
                 data.arguments.push_back(parse_concept_argument(repository, argument.text, argument.source_offset, domain, concept_aliases));
@@ -1417,7 +1423,7 @@ ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::Domain
         auto reg_data = ygg::Data<Register>(reg.name, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>(reg.identifier));
         const auto view = intern(repository, reg_data);
         data.registers.push_back(view.get_index());
-        if (!registers.emplace(reg.name, view.get_index()).second)
+        if (!registers.emplace(std::to_string(reg.identifier), view.get_index()).second)
             fail_at("Duplicate register name \"" + reg.name + "\".", reg.name_offset);
     }
 
@@ -1442,6 +1448,8 @@ ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::Domain
         auto parsed_transition = ygg::Data<MemoryTransition> {};
         parsed_transition.source = require_memory_state(memory_states, transition.source, transition.source_name_offset);
         parsed_transition.target = require_memory_state(memory_states, transition.target, transition.target_name_offset);
+        parsed_transition.symbol = transition.symbol;
+        parsed_transition.description = transition.description;
         for (const auto& rule : transition.rules)
             parsed_transition.rules.push_back(parse_rule(repository,
                                                          rule,

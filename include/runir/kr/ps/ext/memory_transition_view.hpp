@@ -29,6 +29,8 @@ public:
     auto get_index() const noexcept { return m_handle; }
     auto get_source() const noexcept { return make_view(get_data().source, *m_context); }
     auto get_target() const noexcept { return make_view(get_data().target, *m_context); }
+    const auto& get_symbol() const noexcept { return get_data().symbol; }
+    const auto& get_description() const noexcept { return get_data().description; }
     auto get_rules() const noexcept { return make_view(get_data().rules, *m_context); }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
