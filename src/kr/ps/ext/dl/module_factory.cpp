@@ -93,10 +93,9 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
           (:source-memory m0)
           (:target-memory m1)
           (:call
-            (:expression
-              (:conditions)
-              (:callee "blocks")
-              (:arguments (r_atomic_goal "on" true))))))))
+            (:conditions)
+            (:callee "blocks")
+            (:arguments (r_atomic_goal "on" true)))))))
 )") + create_blocks_bonet_et_al_icaps2024_description()
            + create_tower_bonet_et_al_icaps2024_description() + create_on_table_bonet_et_al_icaps2024_description()
            + create_on_bonet_et_al_icaps2024_description() + ")\n";
@@ -139,36 +138,27 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
   (:entry m0)
   (:memory m0 m1 m2 m3 m4 m5 m6 m7 m8)
   (:features
-    (:concept
-      (:symbol B)
-      (:description "all blocks")
-      (:expression
-        (c_top)))
-    (:concept
-      (:symbol N)
-      (:description "blocks above X or Y")
-      (:expression
-        (c_and (c_not (c_atomic_state "clear")) (c_or (c_argument 0) (c_argument 1)))))
-    (:concept
-      (:symbol T0)
-      (:description "block directly above r0")
-      (:expression
-        (c_some (r_inverse (r_atomic_state "on")) (c_register 0))))
-    (:concept
-      (:symbol T1)
-      (:description "block directly above r1")
-      (:expression
-        (c_some (r_inverse (r_atomic_state "on")) (c_register 1))))
+    (:concept (:symbol B) (:description "all blocks") (:expression (c_top)))
+    (:concept (:symbol N) (:description "blocks above X or Y") (:expression (c_and (c_not (c_atomic_state "clear")) (c_or (c_argument 0) (c_argument 1)))))
+    (:concept (:symbol T0) (:description "block directly above r0") (:expression (c_some (r_inverse (r_atomic_state "on")) (c_register 0))))
+    (:concept (:symbol T1) (:description "block directly above r1") (:expression (c_some (r_inverse (r_atomic_state "on")) (c_register 1))))
     (:boolean
       (:symbol H)
       (:description "holding a block")
       (:expression
-        (b_nonempty (c_atomic_state "holding"))))
+        (b_nonempty
+          (c_atomic_state
+            "holding"))))
     (:boolean
       (:symbol Tx)
       (:description "X is on the table")
       (:expression
-        (b_nonempty (c_and (c_argument 0) (c_atomic_state "on-table"))))))
+        (b_nonempty
+          (c_and
+            (c_argument
+              0)
+            (c_atomic_state
+              "on-table"))))))
   (:rules
     (:rule
       (:symbol)
@@ -177,11 +167,8 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m0)
         (:target-memory m4)
         (:sketch
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:positive H))
-            (:effects)))))
+          (:conditions (:positive H))
+          (:effects))))
     (:rule
       (:symbol)
       (:description "")
@@ -189,11 +176,8 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m0)
         (:target-memory m7)
         (:sketch
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:negative H) (:equal_zero N))
-            (:effects)))))
+          (:conditions (:negative H) (:equal_zero N))
+          (:effects))))
     (:rule
       (:symbol)
       (:description "")
@@ -201,12 +185,9 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m0)
         (:target-memory m1)
         (:load
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:negative H) (:greater_zero N))
-            (:concept (c_and (c_not (c_atomic_state "clear")) (c_or (c_argument 0) (c_argument 1))))
-            (:register 0)))))
+          (:conditions (:negative H) (:greater_zero N))
+          (:concept (c_and (c_not (c_atomic_state "clear")) (c_or (c_argument 0) (c_argument 1))))
+          (:register 0))))
     (:rule
       (:symbol)
       (:description "")
@@ -214,12 +195,9 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m1)
         (:target-memory m2)
         (:load
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:greater_zero T0))
-            (:concept (c_some (r_inverse (r_atomic_state "on")) (c_register 0)))
-            (:register 1)))))
+          (:conditions (:greater_zero T0))
+          (:concept (c_some (r_inverse (r_atomic_state "on")) (c_register 0)))
+          (:register 1))))
     (:rule
       (:symbol)
       (:description "")
@@ -227,12 +205,9 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m2)
         (:target-memory m2)
         (:load
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:greater_zero T1))
-            (:concept (c_some (r_inverse (r_atomic_state "on")) (c_register 1)))
-            (:register 1)))))
+          (:conditions (:greater_zero T1))
+          (:concept (c_some (r_inverse (r_atomic_state "on")) (c_register 1)))
+          (:register 1))))
     (:rule
       (:symbol)
       (:description "")
@@ -240,11 +215,8 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m2)
         (:target-memory m5)
         (:sketch
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:equal_zero T1))
-            (:effects)))))
+          (:conditions (:equal_zero T1))
+          (:effects))))
     (:rule
       (:symbol)
       (:description "")
@@ -252,11 +224,8 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m3)
         (:target-memory m1)
         (:sketch
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:greater_zero T0))
-            (:effects)))))
+          (:conditions (:greater_zero T0))
+          (:effects))))
     (:rule
       (:symbol)
       (:description "")
@@ -264,11 +233,8 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m3)
         (:target-memory m0)
         (:sketch
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:equal_zero T0))
-            (:effects)))))
+          (:conditions (:equal_zero T0))
+          (:effects))))
     (:rule
       (:symbol)
       (:description "")
@@ -276,12 +242,9 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m4)
         (:target-memory m0)
         (:do
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions)
-            (:action "putdown")
-            (:arguments (c_top))))))
+          (:conditions)
+          (:action "putdown")
+          (:arguments (c_top)))))
     (:rule
       (:symbol)
       (:description "")
@@ -289,12 +252,9 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m5)
         (:target-memory m6)
         (:do
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions)
-            (:action "unstack")
-            (:arguments (c_register 1) (c_top))))))
+          (:conditions)
+          (:action "unstack")
+          (:arguments (c_register 1) (c_top)))))
     (:rule
       (:symbol)
       (:description "")
@@ -302,12 +262,9 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m6)
         (:target-memory m3)
         (:do
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions)
-            (:action "putdown")
-            (:arguments (c_register 1))))))
+          (:conditions)
+          (:action "putdown")
+          (:arguments (c_register 1)))))
     (:rule
       (:symbol)
       (:description "")
@@ -315,12 +272,9 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m7)
         (:target-memory m8)
         (:do
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:positive Tx))
-            (:action "pickup")
-            (:arguments (c_argument 0))))))
+          (:conditions (:positive Tx))
+          (:action "pickup")
+          (:arguments (c_argument 0)))))
     (:rule
       (:symbol)
       (:description "")
@@ -328,12 +282,9 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m7)
         (:target-memory m8)
         (:do
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:negative Tx))
-            (:action "unstack")
-            (:arguments (c_argument 0) B)))))
+          (:conditions (:negative Tx))
+          (:action "unstack")
+          (:arguments (c_argument 0) B))))
     (:rule
       (:symbol)
       (:description "")
@@ -341,12 +292,9 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
         (:source-memory m8)
         (:target-memory m8)
         (:do
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions)
-            (:action "stack")
-            (:arguments (c_argument 0) (c_argument 1))))))))
+          (:conditions)
+          (:action "stack")
+          (:arguments (c_argument 0) (c_argument 1)))))))
 )";
 }
 
@@ -364,12 +312,19 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
       (:symbol H)
       (:description "holding a block")
       (:expression
-        (b_nonempty (c_atomic_state "holding"))))
+        (b_nonempty
+          (c_atomic_state
+            "holding"))))
     (:boolean
       (:symbol Tx)
       (:description "X is on the table")
       (:expression
-        (b_nonempty (c_and (c_argument 0) (c_atomic_state "on-table"))))))
+        (b_nonempty
+          (c_and
+            (c_argument
+              0)
+            (c_atomic_state
+              "on-table"))))))
   (:rules
     (:rule
       (:symbol)
@@ -378,11 +333,8 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
         (:source-memory m0)
         (:target-memory m2)
         (:sketch
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:positive Tx))
-            (:effects)))))
+          (:conditions (:positive Tx))
+          (:effects))))
     (:rule
       (:symbol)
       (:description "")
@@ -390,12 +342,9 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
         (:source-memory m0)
         (:target-memory m1)
         (:do
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:negative Tx) (:negative H))
-            (:action "unstack")
-            (:arguments (c_argument 0) (c_top))))))
+          (:conditions (:negative Tx) (:negative H))
+          (:action "unstack")
+          (:arguments (c_argument 0) (c_top)))))
     (:rule
       (:symbol)
       (:description "")
@@ -403,11 +352,8 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
         (:source-memory m0)
         (:target-memory m1)
         (:sketch
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:positive H))
-            (:effects)))))
+          (:conditions (:positive H))
+          (:effects))))
     (:rule
       (:symbol)
       (:description "")
@@ -415,12 +361,9 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
         (:source-memory m1)
         (:target-memory m2)
         (:do
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions)
-            (:action "putdown")
-            (:arguments (c_argument 0))))))))
+          (:conditions)
+          (:action "putdown")
+          (:arguments (c_argument 0)))))))
 )";
 }
 
@@ -435,21 +378,9 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
   (:entry m0)
   (:memory m0 m1 m2 m3)
   (:features
-    (:concept
-      (:symbol X)
-      (:description "current block argument")
-      (:expression
-        (c_argument 0)))
-    (:concept
-      (:symbol M)
-      (:description "block above r0 in target tower O")
-      (:expression
-        (c_some (r_argument 0) (c_register 0))))
-    (:concept
-      (:symbol W)
-      (:description "block below r0 in target tower O")
-      (:expression
-        (c_some (r_inverse (r_argument 0)) (c_register 0)))))
+    (:concept (:symbol X) (:description "current block argument") (:expression (c_argument 0)))
+    (:concept (:symbol M) (:description "block above r0 in target tower O") (:expression (c_some (r_argument 0) (c_register 0))))
+    (:concept (:symbol W) (:description "block below r0 in target tower O") (:expression (c_some (r_inverse (r_argument 0)) (c_register 0)))))
   (:rules
     (:rule
       (:symbol)
@@ -458,12 +389,9 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
         (:source-memory m0)
         (:target-memory m1)
         (:load
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:greater_zero X))
-            (:concept (c_argument 0))
-            (:register 0)))))
+          (:conditions (:greater_zero X))
+          (:concept (c_argument 0))
+          (:register 0))))
     (:rule
       (:symbol)
       (:description "")
@@ -471,10 +399,9 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
         (:source-memory m1)
         (:target-memory m2)
         (:call
-          (:expression
-            (:conditions (:equal_zero W))
-            (:callee "on-table")
-            (:arguments (c_register 0))))))
+          (:conditions (:equal_zero W))
+          (:callee "on-table")
+          (:arguments (c_register 0)))))
     (:rule
       (:symbol)
       (:description "")
@@ -482,10 +409,9 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
         (:source-memory m1)
         (:target-memory m2)
         (:call
-          (:expression
-            (:conditions (:greater_zero W))
-            (:callee "on")
-            (:arguments (c_register 0) (c_some (r_inverse (r_argument 0)) (c_register 0)))))))
+          (:conditions (:greater_zero W))
+          (:callee "on")
+          (:arguments (c_register 0) (c_some (r_inverse (r_argument 0)) (c_register 0))))))
     (:rule
       (:symbol)
       (:description "")
@@ -493,10 +419,9 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
         (:source-memory m2)
         (:target-memory m3)
         (:call
-          (:expression
-            (:conditions (:greater_zero M))
-            (:callee "tower")
-            (:arguments (r_argument 0) (c_some (r_argument 0) (c_register 0)))))))))
+          (:conditions (:greater_zero M))
+          (:callee "tower")
+          (:arguments (r_argument 0) (c_some (r_argument 0) (c_register 0))))))))
 )";
 }
 
@@ -511,11 +436,7 @@ std::string ModuleFactory::create_blocks_bonet_et_al_icaps2024_description()
   (:entry m0)
   (:memory m0 m1)
   (:features
-    (:concept
-      (:symbol L)
-      (:description "lowest misplaced block")
-      (:expression
-        (c_and (c_not (c_same_as (r_atomic_state "on") (r_argument 0))) (c_all (r_transitive_closure (r_atomic_state "on")) (c_same_as (r_atomic_state "on") (r_argument 0)))))))
+    (:concept (:symbol L) (:description "lowest misplaced block") (:expression (c_and (c_not (c_same_as (r_atomic_state "on") (r_argument 0))) (c_all (r_transitive_closure (r_atomic_state "on")) (c_same_as (r_atomic_state "on") (r_argument 0)))))))
   (:rules
     (:rule
       (:symbol)
@@ -524,12 +445,9 @@ std::string ModuleFactory::create_blocks_bonet_et_al_icaps2024_description()
         (:source-memory m0)
         (:target-memory m1)
         (:load
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:greater_zero L))
-            (:concept L)
-            (:register 0)))))
+          (:conditions (:greater_zero L))
+          (:concept L)
+          (:register 0))))
     (:rule
       (:symbol)
       (:description "")
@@ -537,10 +455,9 @@ std::string ModuleFactory::create_blocks_bonet_et_al_icaps2024_description()
         (:source-memory m1)
         (:target-memory m0)
         (:call
-          (:expression
-            (:conditions)
-            (:callee "tower")
-            (:arguments (r_argument 0) (c_register 0))))))))
+          (:conditions)
+          (:callee "tower")
+          (:arguments (r_argument 0) (c_register 0)))))))
 )";
 }
 

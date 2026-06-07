@@ -269,36 +269,26 @@ std::vector<std::string> call_arguments(ygg::View<ygg::Index<runir::kr::ps::ext:
 template<typename Kind, typename C>
 void append_rule_body(std::ostream& os, FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
 {
-    if constexpr (!std::same_as<Kind, runir::kr::ps::ext::CallTag>)
+    os << ygg::print_indent << fmt::format("(:conditions {})", fmt::join(conditions(names, view.get_conditions()), " ")) << "\n";
+    if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag>)
     {
-        os << ygg::print_indent << symbol_section(view.get_symbol()) << "\n";
-        os << ygg::print_indent << fmt::format("(:description {})", quoted(view.get_description())) << "\n";
+        os << ygg::print_indent << fmt::format("(:concept {})", runir::kr::ps::ext::dl::format::expression(view.get_concept())) << "\n";
+        os << ygg::print_indent << fmt::format("(:register {})", ygg::uint_t(view.get_register().get_identifier())) << "\n";
     }
-    os << ygg::print_indent << "(:expression\n";
+    else if constexpr (std::same_as<Kind, runir::kr::ps::ext::SketchTag>)
     {
-        ygg::IndentScope expression_scope(os);
-        os << ygg::print_indent << fmt::format("(:conditions {})", fmt::join(conditions(names, view.get_conditions()), " ")) << "\n";
-        if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag>)
-        {
-            os << ygg::print_indent << fmt::format("(:concept {})", runir::kr::ps::ext::dl::format::expression(view.get_concept())) << "\n";
-            os << ygg::print_indent << fmt::format("(:register {})", ygg::uint_t(view.get_register().get_identifier())) << "\n";
-        }
-        else if constexpr (std::same_as<Kind, runir::kr::ps::ext::SketchTag>)
-        {
-            os << ygg::print_indent << fmt::format("(:effects {})", fmt::join(effects(names, view.get_effects()), " ")) << "\n";
-        }
-        else if constexpr (std::same_as<Kind, runir::kr::ps::ext::DoTag>)
-        {
-            os << ygg::print_indent << fmt::format("(:action {})", quoted(view.get_action_name())) << "\n";
-            os << ygg::print_indent << fmt::format("(:arguments {})", fmt::join(action_arguments(view), " ")) << "\n";
-        }
-        else if constexpr (std::same_as<Kind, runir::kr::ps::ext::CallTag>)
-        {
-            os << ygg::print_indent << fmt::format("(:callee {})", quoted(view.get_callee_name())) << "\n";
-            os << ygg::print_indent << fmt::format("(:arguments {})", fmt::join(call_arguments(view), " ")) << "\n";
-        }
+        os << ygg::print_indent << fmt::format("(:effects {})", fmt::join(effects(names, view.get_effects()), " ")) << "\n";
     }
-    os << ygg::print_indent << ")\n";
+    else if constexpr (std::same_as<Kind, runir::kr::ps::ext::DoTag>)
+    {
+        os << ygg::print_indent << fmt::format("(:action {})", quoted(view.get_action_name())) << "\n";
+        os << ygg::print_indent << fmt::format("(:arguments {})", fmt::join(action_arguments(view), " ")) << "\n";
+    }
+    else if constexpr (std::same_as<Kind, runir::kr::ps::ext::CallTag>)
+    {
+        os << ygg::print_indent << fmt::format("(:callee {})", quoted(view.get_callee_name())) << "\n";
+        os << ygg::print_indent << fmt::format("(:arguments {})", fmt::join(call_arguments(view), " ")) << "\n";
+    }
 }
 
 template<typename Kind, typename C>

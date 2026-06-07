@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 import pytest
 
@@ -86,6 +87,11 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     assert [module.get_name() for module in program.get_modules()] == ["root", "blocks", "tower", "on-table", "on"]
 
     formatted_program = str(program)
+    assert re.search(r"\(:sketch\s+\(:conditions", formatted_program)
+    assert not re.search(r"\(:sketch\s+\(:symbol", formatted_program)
+    assert not re.search(r"\(:sketch\s+\(:expression", formatted_program)
+    assert re.search(r"\(:rule\s+\(:symbol\)\s+\(:description \"\"\)\s+\(:expression\s+\(:source-memory", formatted_program)
+
     reparsed_program = ext.parse_module_program(formatted_program, planning_domain, repository)
     assert reparsed_program.get_entry_module().get_name() == "root"
     assert len(reparsed_program.get_modules()) == 5
@@ -134,10 +140,9 @@ def test_module_program_parser_rejects_invalid_wiring():
           (:source-memory m0)
           (:target-memory m1)
           (:call
-            (:expression
-              (:conditions)
-              (:callee "missing")
-              (:arguments))))))))
+            (:conditions)
+            (:callee "missing")
+            (:arguments)))))))
 """, planning_domain, repository)
 
     with pytest.raises(RuntimeError, match="argument signature.*offset"):
@@ -159,10 +164,9 @@ def test_module_program_parser_rejects_invalid_wiring():
           (:source-memory source)
           (:target-memory target)
           (:call
-            (:expression
-              (:conditions)
-              (:callee "callee")
-              (:arguments)))))))
+            (:conditions)
+            (:callee "callee")
+            (:arguments))))))
   (:module
     "callee"
     (:arguments (:concept "x" 0))
@@ -195,11 +199,8 @@ def test_module_program_parser_rejects_invalid_wiring():
           (:source-memory m0)
           (:target-memory missing)
           (:sketch
-            (:symbol)
-            (:description "")
-            (:expression
-              (:conditions)
-              (:effects))))))))
+            (:conditions)
+            (:effects)))))))
 """, planning_domain, repository)
 
     with pytest.raises(RuntimeError, match=r'Unknown register "1".*offset'):
@@ -221,12 +222,9 @@ def test_module_program_parser_rejects_invalid_wiring():
           (:source-memory m0)
           (:target-memory m1)
           (:load
-            (:symbol)
-            (:description "")
-            (:expression
-              (:conditions)
-              (:concept (c_top))
-              (:register 1))))))))
+            (:conditions)
+            (:concept (c_top))
+            (:register 1)))))))
 """, planning_domain, repository)
 
     with pytest.raises(RuntimeError, match=r'Unknown feature "missing".*offset'):
@@ -248,11 +246,8 @@ def test_module_program_parser_rejects_invalid_wiring():
           (:source-memory m0)
           (:target-memory m1)
           (:sketch
-            (:symbol)
-            (:description "")
-            (:expression
-              (:conditions (:greater_zero missing))
-              (:effects))))))))
+            (:conditions (:greater_zero missing))
+            (:effects)))))))
 """, planning_domain, repository)
 
 
@@ -343,12 +338,9 @@ def test_executor_reports_structured_failure_statuses_from_python():
           (:source-memory source)
           (:target-memory source)
           (:load
-            (:symbol)
-            (:description "")
-            (:expression
-              (:conditions)
-              (:concept (c_top))
-              (:register 0))))))))
+            (:conditions)
+            (:concept (c_top))
+            (:register 0)))))))
 """, planning_domain, repository)
     options = ext.GroundModuleProgramSearchOptions()
     load_proof = ext.prove_ground_solution(search_context, load_loop, options)
@@ -376,12 +368,9 @@ def test_executor_reports_structured_failure_statuses_from_python():
           (:source-memory source)
           (:target-memory target)
           (:do
-            (:symbol)
-            (:description "")
-            (:expression
-              (:conditions)
-              (:action "missing-action")
-              (:arguments))))))))
+            (:conditions)
+            (:action "missing-action")
+            (:arguments)))))))
 """, planning_domain, repository)
 
 

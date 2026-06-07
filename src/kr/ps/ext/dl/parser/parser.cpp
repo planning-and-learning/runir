@@ -333,11 +333,16 @@ std::vector<ast::Observation> parse_observation_section(const Node& section, std
     return result;
 }
 
+bool is_allowed_rule_expression_section(ast::RuleKind kind, std::string_view name);
+
+bool is_rule_metadata_section(std::string_view name)
+{
+    return name == ":symbol" || name == ":description";
+}
+
 bool is_allowed_rule_section(ast::RuleKind kind, std::string_view name)
 {
-    if (kind == ast::RuleKind::CALL)
-        return name == ":expression";
-    return name == ":symbol" || name == ":description" || name == ":expression";
+    return is_rule_metadata_section(name) || name == ":expression" || is_allowed_rule_expression_section(kind, name);
 }
 
 bool is_allowed_rule_expression_section(ast::RuleKind kind, std::string_view name)
@@ -414,9 +419,8 @@ const Node& require_section(const Node& rule, std::string_view name)
 }
 
 
-const Node& require_rule_expression(const Node& rule, ast::RuleKind kind)
+void validate_rule_expression_sections(const Node& expression, ast::RuleKind kind, bool allow_metadata_sections = false)
 {
-    const auto& expression = require_section(rule, ":expression");
     auto seen = std::unordered_set<std::string> {};
     for (std::size_t i = 1; i < expression.children.size(); ++i)
     {
@@ -424,12 +428,47 @@ const Node& require_rule_expression(const Node& rule, ast::RuleKind kind)
         if (!section.list || section.children.empty())
             fail_at("Malformed rule expression section.", section.source_offset);
         const auto name = atom(section.children[0], "rule expression section");
+        if (allow_metadata_sections && is_rule_metadata_section(name))
+            continue;
         if (!is_allowed_rule_expression_section(kind, name))
             fail_at("Rule expression section " + name + " is not valid for this rule kind.", section.source_offset);
         if (!seen.emplace(name).second)
             fail_at("Duplicate rule expression section " + name + ".", section.source_offset);
     }
-    return expression;
+}
+
+const Node& require_rule_expression(const Node& rule, ast::RuleKind kind)
+{
+    if (const auto* expression = find_section(rule, ":expression"))
+    {
+        for (std::size_t i = 1; i < rule.children.size(); ++i)
+        {
+            const auto& section = rule.children[i];
+            const auto name = atom(section.children[0], "rule section");
+            if (!is_rule_metadata_section(name) && name != ":expression")
+                fail_at("Rule must not mix direct expression sections with an :expression wrapper.", section.source_offset);
+        }
+        validate_rule_expression_sections(*expression, kind);
+        return *expression;
+    }
+
+    auto has_expression_section = false;
+    for (std::size_t i = 1; i < rule.children.size(); ++i)
+    {
+        const auto& section = rule.children[i];
+        const auto name = atom(section.children[0], "rule section");
+        if (is_rule_metadata_section(name))
+            continue;
+        has_expression_section = true;
+        if (!is_allowed_rule_expression_section(kind, name))
+            fail_at("Rule expression section " + name + " is not valid for this rule kind.", section.source_offset);
+    }
+
+    if (!has_expression_section)
+        fail_at("Missing rule expression sections.", rule.source_offset);
+
+    validate_rule_expression_sections(rule, kind, true);
+    return rule;
 }
 
 const Node& require_single_value_section_value(const Node& rule, std::string_view name)
