@@ -57,8 +57,55 @@ private:
     void assert_valid_vertex([[maybe_unused]] VertexIndex vertex) const noexcept { assert(m_vertices.contains(vertex)); }
     void assert_valid_edge([[maybe_unused]] EdgeIndex edge) const noexcept { assert(m_edges.contains(edge)); }
 
+    void rebind_parents() noexcept
+    {
+        for (auto& [_, vertex] : m_vertices)
+            vertex = VertexType(vertex.get_index(), vertex.get_property_index(), *this);
+
+        for (auto& [_, edge] : m_edges)
+            edge = EdgeType(edge.get_index(), edge.get_source(), edge.get_target(), edge.get_property_index(), *this);
+    }
+
 public:
     DynamicGraph() = default;
+
+    DynamicGraph(const DynamicGraph&) = delete;
+
+    DynamicGraph(DynamicGraph&& other) :
+        m_vertices(std::move(other.m_vertices)),
+        m_free_vertices(std::move(other.m_free_vertices)),
+        m_next_vertex_index(other.m_next_vertex_index),
+        m_edges(std::move(other.m_edges)),
+        m_free_edges(std::move(other.m_free_edges)),
+        m_next_edge_index(other.m_next_edge_index),
+        m_vertex_properties(std::move(other.m_vertex_properties)),
+        m_edge_properties(std::move(other.m_edge_properties)),
+        m_out_edges(std::move(other.m_out_edges)),
+        m_in_edges(std::move(other.m_in_edges))
+    {
+        rebind_parents();
+    }
+
+    auto operator=(const DynamicGraph&) -> DynamicGraph& = delete;
+
+    auto operator=(DynamicGraph&& other) -> DynamicGraph&
+    {
+        if (this == &other)
+            return *this;
+
+        m_vertices = std::move(other.m_vertices);
+        m_free_vertices = std::move(other.m_free_vertices);
+        m_next_vertex_index = other.m_next_vertex_index;
+        m_edges = std::move(other.m_edges);
+        m_free_edges = std::move(other.m_free_edges);
+        m_next_edge_index = other.m_next_edge_index;
+        m_vertex_properties = std::move(other.m_vertex_properties);
+        m_edge_properties = std::move(other.m_edge_properties);
+        m_out_edges = std::move(other.m_out_edges);
+        m_in_edges = std::move(other.m_in_edges);
+        rebind_parents();
+        return *this;
+    }
 
     void clear() noexcept
     {

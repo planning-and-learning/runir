@@ -29,8 +29,8 @@ namespace
 template<tyr::planning::TaskKind Kind>
 void print_state_graph(tyr::planning::TaskPtr<Kind> task, ygg::ExecutionContextPtr execution_context)
 {
-    auto context = runir::datasets::TaskSearchContext<Kind>(std::move(task), std::move(execution_context));
-    const auto graph = runir::datasets::generate_state_graph(context);
+    auto context = runir::datasets::TaskSearchContext<Kind>::create(std::move(task), std::move(execution_context));
+    const auto graph = runir::datasets::generate_state_graph(*context);
     fmt::print("{}", *graph);
 }
 

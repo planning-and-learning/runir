@@ -2,15 +2,68 @@
 #define RUNIR_DATASETS_FORMATTER_HPP_
 
 #include "runir/datasets/equivalence_graph.hpp"
+#include "runir/datasets/object_graph.hpp"
 #include "runir/datasets/state_graph.hpp"
 #include "runir/graphs/formatter.hpp"
 
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <iterator>
+#include <string>
 #include <string_view>
 #include <tyr/formalism/planning/formatter.hpp>
+#include <variant>
 
 namespace fmt
 {
+
+template<>
+struct formatter<runir::datasets::StateObjectGraphVertexLabelEntry, char> : formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::datasets::StateObjectGraphVertexLabelEntry& entry, FormatContext& ctx) const
+    {
+        const auto text = std::visit([&](const auto& predicate)
+                                     { return fmt::format("state:{}/{}[{}]", predicate.get_name(), predicate.get_arity(), entry.argument_position); },
+                                     entry.predicate);
+        return formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<>
+struct formatter<runir::datasets::GoalObjectGraphVertexLabelEntry, char> : formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::datasets::GoalObjectGraphVertexLabelEntry& entry, FormatContext& ctx) const
+    {
+        const auto text = std::visit([&](const auto& predicate)
+                                     { return fmt::format("goal:{}/{}[{}]", predicate.get_name(), predicate.get_arity(), entry.argument_position); },
+                                     entry.predicate);
+        return formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<>
+struct formatter<runir::datasets::ObjectGraphVertexLabelEntry, char> : formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::datasets::ObjectGraphVertexLabelEntry& entry, FormatContext& ctx) const
+    {
+        const auto text = std::visit([](const auto& alternative) { return fmt::format("{}", alternative); }, entry);
+        return formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<>
+struct formatter<runir::datasets::ObjectGraphVertexLabel, char> : formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::datasets::ObjectGraphVertexLabel& label, FormatContext& ctx) const
+    {
+        const auto text = fmt::format("{}", fmt::join(label.labels, "\n"));
+        return formatter<std::string_view>::format(text, ctx);
+    }
+};
 
 template<tyr::planning::TaskKind Kind>
 struct formatter<runir::datasets::StateGraphVertexLabel<Kind>, char> : formatter<std::string_view>

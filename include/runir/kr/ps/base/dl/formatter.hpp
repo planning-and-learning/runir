@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_BASE_DL_FORMATTER_HPP_
 
 #include "runir/config.hpp"
+#include "runir/formatter.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/ps/base/dl/condition_view.hpp"
@@ -22,24 +23,13 @@ namespace runir::kr::ps::base::dl::format
 {
 
 template<typename String>
-std::string quoted(const String& value)
-{
-    return fmt::format("\"{}\"", value.str());
-}
-
-inline std::string quoted(std::string_view value) { return fmt::format("\"{}\"", value); }
-
-template<typename String>
 std::string symbol_section(const String& value)
 {
     const auto text = std::string(value.str());
     return text.empty() ? std::string("(:symbol)") : fmt::format("(:symbol {})", text);
 }
 
-inline std::string symbol_section(std::string_view value)
-{
-    return value.empty() ? std::string("(:symbol)") : fmt::format("(:symbol {})", value);
-}
+inline std::string symbol_section(std::string_view value) { return value.empty() ? std::string("(:symbol)") : fmt::format("(:symbol {})", value); }
 
 inline std::string symbol_section(const std::string& value) { return symbol_section(std::string_view(value)); }
 
@@ -50,7 +40,7 @@ std::vector<std::string> quoted_object_names(Objects objects)
 {
     auto result = std::vector<std::string> {};
     for (auto object : objects)
-        result.push_back(quoted(object.get_name()));
+        result.push_back(fmt::format("{:?}", std::string(object.get_name().str())));
     return result;
 }
 
@@ -76,11 +66,11 @@ std::string concept_constructor(ygg::View<ygg::Index<runir::kr::dl::Concept<runi
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {}",
                            runir::kr::dl::grammar::ast::ConceptAtomicState<runir::kr::BaseFamilyTag>::keyword,
-                           quoted(view.get_predicate().get_name()));
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("{} {} {}",
                            runir::kr::dl::grammar::ast::ConceptAtomicGoal<runir::kr::BaseFamilyTag>::keyword,
-                           quoted(view.get_predicate().get_name()),
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
         return fmt::format("{} {} {}",
@@ -157,7 +147,9 @@ std::string concept_constructor(ygg::View<ygg::Index<runir::kr::dl::Concept<runi
                            runir::kr::dl::grammar::ast::ConceptOneOf<runir::kr::BaseFamilyTag>::keyword,
                            fmt::join(quoted_object_names(view.get_objects()), " "));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
-        return fmt::format("{} {}", runir::kr::dl::grammar::ast::ConceptNominal<runir::kr::BaseFamilyTag>::keyword, quoted(view.get_object().get_name()));
+        return fmt::format("{} {}",
+                           runir::kr::dl::grammar::ast::ConceptNominal<runir::kr::BaseFamilyTag>::keyword,
+                           fmt::format("{:?}", std::string(view.get_object().get_name().str())));
 }
 
 template<runir::kr::dl::BaseRoleConstructorTag Tag, typename C>
@@ -166,11 +158,13 @@ std::string role(ygg::View<ygg::Index<runir::kr::dl::Role<runir::kr::BaseFamilyT
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
         return std::string(runir::kr::dl::grammar::ast::RoleUniversal<runir::kr::BaseFamilyTag>::keyword);
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("{} {}", runir::kr::dl::grammar::ast::RoleAtomicState<runir::kr::BaseFamilyTag>::keyword, quoted(view.get_predicate().get_name()));
+        return fmt::format("{} {}",
+                           runir::kr::dl::grammar::ast::RoleAtomicState<runir::kr::BaseFamilyTag>::keyword,
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("{} {} {}",
                            runir::kr::dl::grammar::ast::RoleAtomicGoal<runir::kr::BaseFamilyTag>::keyword,
-                           quoted(view.get_predicate().get_name()),
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
         return fmt::format("{} {} {}",
@@ -212,12 +206,12 @@ std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::Boolean<runi
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {} {}",
                            runir::kr::dl::grammar::ast::BooleanAtomicState<runir::kr::BaseFamilyTag>::keyword,
-                           quoted(view.get_predicate().get_name()),
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
                            boolean(view.get_polarity()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("{} {} {}",
                            runir::kr::dl::grammar::ast::BooleanAtomicGoal<runir::kr::BaseFamilyTag>::keyword,
-                           quoted(view.get_predicate().get_name()),
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return fmt::format("{} {}", runir::kr::dl::grammar::ast::BooleanNonempty<runir::kr::BaseFamilyTag>::keyword, constructor_variant(view.get_arg()));
@@ -273,22 +267,20 @@ std::string constructor(ygg::View<ygg::Index<runir::kr::dl::Constructor<runir::k
 }
 
 template<typename FeatureTag, typename C>
-void append_feature(std::ostream& os,
-                    ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view)
+void append_feature(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view)
 {
     os << "(:" << FeatureTag::keyword << "\n";
     {
         ygg::IndentScope scope(os);
         os << ygg::print_indent << symbol_section(view.get_symbol()) << "\n";
-        os << ygg::print_indent << fmt::format("(:description {})", quoted(view.get_description())) << "\n";
+        os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(view.get_description().str()))) << "\n";
         os << ygg::print_indent << fmt::format("(:expression {})", constructor(view.get_feature())) << "\n";
     }
     os << ygg::print_indent << ")";
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view,
-                    std::string_view)
+std::string feature(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view, std::string_view)
 {
     auto os = std::ostringstream {};
     append_feature(os, view);

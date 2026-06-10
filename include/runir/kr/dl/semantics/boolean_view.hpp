@@ -2,12 +2,13 @@
 #define RUNIR_SEMANTICS_BOOLEAN_VIEW_HPP_
 
 #include "runir/kr/dl/boolean_data.hpp"
+#include "runir/kr/dl/constructors.hpp"
 
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/containers/variant.hpp>
 #include <tyr/formalism/predicate_view.hpp>
+#include <yggdrasil/containers/variant.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {

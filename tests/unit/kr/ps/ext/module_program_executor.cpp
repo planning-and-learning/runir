@@ -4,11 +4,11 @@
 #include <runir/datasets/task_class.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/ps/ext/detail/execution.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/evaluation.hpp>
 #include <runir/kr/ps/ext/evaluation_context.hpp>
-#include <runir/kr/ps/ext/detail/execution.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/module_program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
@@ -360,6 +360,19 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
+    const auto expect_parse_error_containing = [&](const auto& module_text, const std::string& expected_fragment)
+    {
+        try
+        {
+            [[maybe_unused]] const auto module = kr::ps::ext::dl::parse_module(module_text, planning_task.get_domain().get_domain(), *repository);
+            FAIL() << "Expected module parser error containing: " << expected_fragment;
+        }
+        catch (const std::runtime_error& err)
+        {
+            EXPECT_NE(std::string(err.what()).find(expected_fragment), std::string::npos) << err.what();
+        }
+    };
+
     const auto missing_transitions = R"(
 (:module
   "entry"
@@ -407,7 +420,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
   (:features)
   (:rules))
 )";
-    EXPECT_THROW(kr::ps::ext::dl::parse_module(out_of_range_register, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+    expect_parse_error_containing(out_of_range_register, "Register identifier 4 is out of range; max registers is");
 
     const auto duplicate_register_identifier = R"(
 (:module
@@ -421,7 +434,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
   (:features)
   (:rules))
 )";
-    EXPECT_THROW(kr::ps::ext::dl::parse_module(duplicate_register_identifier, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+    expect_parse_error_containing(duplicate_register_identifier, "Duplicate register identifier 0.");
 
     const auto duplicate_argument_identifier = R"(
 (:module
@@ -433,7 +446,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
   (:features)
   (:rules))
 )";
-    EXPECT_THROW(kr::ps::ext::dl::parse_module(duplicate_argument_identifier, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+    expect_parse_error_containing(duplicate_argument_identifier, "Duplicate concept argument identifier 0.");
 
     const auto out_of_range_argument = R"(
 (:module
@@ -445,7 +458,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
   (:features)
   (:rules))
 )";
-    EXPECT_THROW(kr::ps::ext::dl::parse_module(out_of_range_argument, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+    expect_parse_error_containing(out_of_range_argument, "concept argument identifier 1 is out of range; declared arguments of this kind: 1.");
 
     const auto out_of_range_expression_argument = std::string(R"(
 (:module
@@ -464,7 +477,8 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
 )");
     try
     {
-        [[maybe_unused]] const auto module = kr::ps::ext::dl::parse_module(out_of_range_expression_argument, planning_task.get_domain().get_domain(), *repository);
+        [[maybe_unused]] const auto module =
+            kr::ps::ext::dl::parse_module(out_of_range_expression_argument, planning_task.get_domain().get_domain(), *repository);
         FAIL() << "Expected out-of-range expression argument to be rejected.";
     }
     catch (const std::runtime_error& err)
@@ -590,12 +604,13 @@ TEST(RunirTests, ExtModuleProgramParserRejectsInvalidProgramWiring)
   (:rules))
 )";
 
-    EXPECT_THROW(
-        kr::ps::ext::dl::parse_module_program(R"(
+    EXPECT_THROW(kr::ps::ext::dl::parse_module_program(R"(
 (:program
   (:entry "missing")
-)" + std::string(root) + ")", planning_task.get_domain().get_domain(), *repository),
-        std::runtime_error);
+)" + std::string(root) + ")",
+                                                       planning_task.get_domain().get_domain(),
+                                                       *repository),
+                 std::runtime_error);
     EXPECT_THROW(kr::ps::ext::dl::parse_module_program(R"(
 (:program
   (:entry "root")
@@ -734,6 +749,43 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
     const auto reparsed_program = kr::ps::ext::dl::parse_module_program(formatted_program, planning_task.get_domain().get_domain(), *repository);
     EXPECT_EQ(reparsed_program.get_entry_module().get_name(), program.get_entry_module().get_name());
     EXPECT_EQ(reparsed_program.get_modules().size(), program.get_modules().size());
+}
+
+TEST(RunirTests, ExtModuleFormatterEscapesQuotedStringContents)
+{
+    namespace fp = tyr::formalism::planning;
+
+    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+
+    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto repository_factory = kr::ps::ext::RepositoryFactory();
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
+    auto repository = repository_factory.create(dl_repository);
+
+    const auto description = R"RUNIR(
+(:module
+  "entry \" and slash \\"
+  (:arguments)
+  (:registers)
+  (:entry m0)
+  (:memory m0)
+  (:features
+    (:concept
+      (:symbol X)
+      (:description "quote \" and slash \\")
+      (:expression (c_top))))
+  (:rules))
+)RUNIR";
+
+    const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
+    const auto formatted = fmt::format("{}", module);
+    EXPECT_NE(formatted.find(R"RUNIR((:module "entry \" and slash \\")RUNIR"), std::string::npos) << formatted;
+
+    const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), *repository);
+    EXPECT_EQ(reparsed.get_name(), module.get_name());
+    EXPECT_EQ(fmt::format("{}", reparsed), formatted);
 }
 
 TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
@@ -880,7 +932,8 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
             using View = std::decay_t<decltype(rule)>;
             using Expected = ygg::View<ygg::Index<kr::ps::ext::Rule<kr::ps::ext::LoadTag>>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
-                return ygg::uint_t(rule.get_register().get_identifier()) == 0 && rule.get_conditions().size() == 1 && rule.get_symbol() == "load-rule" && rule.get_description() == "load description";
+                return ygg::uint_t(rule.get_register().get_identifier()) == 0 && rule.get_conditions().size() == 1 && rule.get_symbol() == "load-rule"
+                       && rule.get_description() == "load description";
             else
                 return false;
         },
@@ -960,6 +1013,18 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
     EXPECT_NO_THROW(kr::ps::ext::dl::parse_role("(r_atomic_state \"at\")", planning_task.get_domain().get_domain(), *dl_repository));
     EXPECT_NO_THROW(kr::ps::ext::dl::parse_boolean("(b_nonempty (c_top))", planning_task.get_domain().get_domain(), *dl_repository));
     EXPECT_NO_THROW(kr::ps::ext::dl::parse_numerical("(n_count (c_top))", planning_task.get_domain().get_domain(), *dl_repository));
+}
+
+TEST(RunirTests, RejectsUnknownModuleFactorySpecification)
+{
+    EXPECT_THROW(
+        try {
+            static_cast<void>(kr::ps::ext::dl::ModuleFactory::create_description(static_cast<kr::ps::ext::dl::ModuleSpecification>(999)));
+        } catch (const std::runtime_error& error) {
+            EXPECT_STREQ(error.what(), "Unknown module specification: 999.");
+            throw;
+        },
+        std::runtime_error);
 }
 
 TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)

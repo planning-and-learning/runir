@@ -28,6 +28,7 @@ void bind_module_definitions(nb::module_& m)
     auto static_graph_builder = nb::class_<PyObjectStaticGraphBuilder>(m, "StaticGraphBuilder");
     static_graph_builder.def(nb::init<>()).def("clear", &PyObjectStaticGraphBuilder::clear);
     bind_python_object_graph(static_graph_builder);
+    bind_materialized_bidirectional_graph(static_graph_builder);
     bind_constructible_graph(static_graph_builder);
 
     auto static_graph = nb::class_<PyObjectStaticGraph>(m, "StaticGraph");
@@ -49,6 +50,11 @@ void bind_module_definitions(nb::module_& m)
     bind_traversal_visitor<PyObjectDynamicGraph>(m, "DynamicGraphTraversalVisitor");
     bind_traversal_visitor<PyObjectStaticGraph>(m, "StaticGraphTraversalVisitor");
     bind_traversal_visitor<PyObjectBackwardStaticGraphView>(m, "BackwardStaticGraphViewTraversalVisitor");
+
+    bind_graph_properties<PyObjectDynamicGraph>(m);
+    bind_graph_properties<PyObjectStaticGraphBuilder>(m);
+    bind_graph_properties<PyObjectStaticGraph>(m);
+    bind_graph_properties<PyObjectBackwardStaticGraphView>(m);
 
     bind_graph_algorithms<PyObjectDynamicGraph>(m);
     bind_graph_algorithms<PyObjectStaticGraph>(m);

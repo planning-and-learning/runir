@@ -1,8 +1,3 @@
-from pathlib import Path
-
-from pyrunir.datasets import (
-    GroundTaskSearchContext,
-)
 from pyrunir.kr.dl.base.semantics import (
     Builder,
     ConstructorRepositoryFactory,
@@ -27,24 +22,11 @@ from pyrunir.kr.ps.base.dl import (
     SketchSpecification,
     parse_sketch,
 )
-from pyyggdrasil import ExecutionContext
-from pytyr.formalism.planning import Parser, ParserOptions
-from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
 
-def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
-    root = Path(__file__).resolve().parents[5]
-    data_dir = root / "data" / "planning-benchmarks" / "tests" / "classical" / "gripper"
-
-    parser_options = ParserOptions()
-    parser = Parser(data_dir / "domain.pddl", parser_options)
-    planning_task = parser.parse_task(data_dir / "test-1.pddl", parser_options)
-    planning_domain = parser.get_domain()
-
-    execution_context = ExecutionContext(1)
-    lifted_task = Task(planning_task)
-    ground_task = lifted_task.instantiate_ground_task(execution_context, GroundTaskInstantiationOptions()).task
-    search_context = GroundTaskSearchContext(ground_task, execution_context)
+def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_search_context, gripper_planning_domain):
+    search_context = ground_gripper_search_context
+    planning_domain = gripper_planning_domain
 
     dl_repository = ConstructorRepositoryFactory().create(planning_domain)
     sketch_repository = SketchRepositoryFactory().create(dl_repository)
@@ -112,8 +94,13 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task():
     assert proof_result.cycle == []
     assert isinstance(proof_result.graph, GroundSketchProofGraph)
     assert proof_result.graph.get_num_vertices() > 0
+    vertex = next(iter(proof_result.graph.get_vertex_indices()))
+    assert isinstance(proof_result.graph.get_successor_indices(vertex), list)
     if proof_result.graph.get_num_edges() > 0:
         edge = next(iter(proof_result.graph.get_edge_indices()))
+        assert proof_result.graph.get_source(edge) in proof_result.graph.get_vertex_indices()
+        assert proof_result.graph.get_target(edge) in proof_result.graph.get_vertex_indices()
+        assert edge in proof_result.graph.get_out_edge_indices(proof_result.graph.get_source(edge))
         assert isinstance(proof_result.graph.get_edge_property(edge), SketchProofEdgeLabel)
 
     search_result = find_ground_solution(search_context, sketch)

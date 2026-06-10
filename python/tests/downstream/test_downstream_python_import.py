@@ -44,7 +44,8 @@ def test_downstream_python_binding_links_installed_runir(tmp_path):
         ],
         check=True,
     )
-    subprocess.run([cmake, "--build", str(build_dir), "-j4"], check=True)
+    build_parallelism = os.environ.get("RUNIR_TEST_BUILD_PARALLELISM", "6")
+    subprocess.run([cmake, "--build", str(build_dir), "--parallel", build_parallelism], check=True)
 
     env = os.environ.copy()
     env["PYTHONPATH"] = str(build_dir) + os.pathsep + env.get("PYTHONPATH", "")

@@ -3,16 +3,16 @@
 
 #include "runir/graphs/algorithms.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
-#include "runir/kr/ps/ext/module_program_executor.hpp"
+#include "runir/kr/ps/ext/module_program_executor_data.hpp"
 
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <optional>
-#include <yggdrasil/semantics/equal_to.hpp>
-#include <yggdrasil/semantics/hash.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
+#include <yggdrasil/semantics/equal_to.hpp>
+#include <yggdrasil/semantics/hash.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -72,19 +72,16 @@ private:
     tyr::planning::StateView<Kind> m_initial_state;
     bool m_static_goal_satisfied;
 
-    ModuleProgramProofVertexLabel<Kind> make_vertex_label(const EvaluationContext<Kind>& context,
-                                                          MemoryStateVariant memory_state,
-                                                          bool is_initial,
-                                                          bool is_alive,
-                                                          bool is_unsolvable)
+    ModuleProgramProofVertexLabel<Kind>
+    make_vertex_label(const EvaluationContext<Kind>& context, MemoryStateVariant memory_state, bool is_initial, bool is_alive, bool is_unsolvable)
     {
-        auto annotated = datasets::AnnotatedStateGraphVertexLabel<Kind> { context.get_state(),
-                                                                           is_goal(context.get_state()) ? ygg::float_t(0)
-                                                                                                        : std::numeric_limits<ygg::float_t>::infinity(),
-                                                                           is_initial,
-                                                                           is_goal(context.get_state()),
-                                                                           is_alive,
-                                                                           is_unsolvable };
+        auto annotated =
+            datasets::AnnotatedStateGraphVertexLabel<Kind> { context.get_state(),
+                                                             is_goal(context.get_state()) ? ygg::float_t(0) : std::numeric_limits<ygg::float_t>::infinity(),
+                                                             is_initial,
+                                                             is_goal(context.get_state()),
+                                                             is_alive,
+                                                             is_unsolvable };
         auto extended = ExtendedState<Kind> { annotated, std::move(memory_state), context.concept_registers(), context.role_registers() };
         return ModuleProgramProofVertexLabel<Kind> { std::move(extended), context.get_module() };
     }
@@ -108,11 +105,7 @@ public:
         return m_static_goal_satisfied && m_task_goal_strategy.is_dynamic_goal_satisfied(m_initial_state, state);
     }
 
-    auto get_or_create_vertex(const EvaluationContext<Kind>& context,
-                              MemoryStateVariant memory_state,
-                              bool is_initial,
-                              bool is_alive,
-                              bool is_unsolvable)
+    auto get_or_create_vertex(const EvaluationContext<Kind>& context, MemoryStateVariant memory_state, bool is_initial, bool is_alive, bool is_unsolvable)
     {
         auto label = make_vertex_label(context, std::move(memory_state), is_initial, is_alive, is_unsolvable);
         if (const auto it = m_vertex_to_index.find(label); it != m_vertex_to_index.end())

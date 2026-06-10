@@ -13,6 +13,7 @@ namespace runir::graphs
 template<IsGraph G>
 auto vertices(const G& graph) -> std::pair<typename boost::graph_traits<G>::vertex_iterator, typename boost::graph_traits<G>::vertex_iterator>
 {
+    static_assert(std::ranges::borrowed_range<decltype(graph.get_vertex_indices())>);
     auto&& range = graph.get_vertex_indices();
     return { std::ranges::begin(range), std::ranges::end(range) };
 }
@@ -39,6 +40,7 @@ template<IsGraph G>
 auto out_edges(typename boost::graph_traits<G>::vertex_descriptor vertex,
                const G& graph) -> std::pair<typename boost::graph_traits<G>::out_edge_iterator, typename boost::graph_traits<G>::out_edge_iterator>
 {
+    static_assert(std::ranges::borrowed_range<decltype(graph.get_out_edge_indices(vertex))>);
     auto&& range = graph.get_out_edge_indices(vertex);
     return { std::ranges::begin(range), std::ranges::end(range) };
 }
@@ -52,6 +54,7 @@ auto out_degree(typename boost::graph_traits<G>::vertex_descriptor vertex, const
 template<IsGraph G>
 auto edges(const G& graph) -> std::pair<typename boost::graph_traits<G>::edge_iterator, typename boost::graph_traits<G>::edge_iterator>
 {
+    static_assert(std::ranges::borrowed_range<decltype(graph.get_edge_indices())>);
     auto&& range = graph.get_edge_indices();
     return { std::ranges::begin(range), std::ranges::end(range) };
 }

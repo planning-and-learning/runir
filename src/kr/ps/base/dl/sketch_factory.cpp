@@ -2,6 +2,7 @@
 
 #include "runir/kr/ps/base/dl/parser.hpp"
 
+#include <fmt/format.h>
 #include <stdexcept>
 #include <string>
 
@@ -42,7 +43,7 @@ std::string SketchFactory::create_description(SketchSpecification specification)
             return create_delivery_france_et_al_aaai2021_description();
     }
 
-    throw std::runtime_error("Unknown sketch specification.");
+    throw std::runtime_error(fmt::format("Unknown sketch specification: {}.", static_cast<int>(specification)));
 }
 
 SketchView SketchFactory::create_gripper_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, Repository& repository)

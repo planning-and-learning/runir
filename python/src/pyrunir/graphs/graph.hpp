@@ -8,19 +8,21 @@
 #include <nanobind/stl/array.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 #include <nanobind/trampoline.h>
 #include <ranges>
 #include <runir/graphs/algorithms.hpp>
 #include <runir/graphs/bidirectional_static_graph.hpp>
 #include <runir/graphs/dynamic_graph.hpp>
 #include <runir/graphs/formatter.hpp>
+#include <runir/graphs/properties.hpp>
 #include <runir/graphs/static_graph.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
-using namespace nanobind::literals;
-
 namespace runir::graphs
 {
+
+using namespace nanobind::literals;
 
 struct PyObjectProperty
 {
@@ -111,10 +113,8 @@ auto get_edge_property(const Graph& graph, graphs::EdgeIndex edge)
 }
 
 template<typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
-void bind_readable_graph(nb::class_<Graph>& cls, VertexPropertyGetter vertex_property_getter, EdgePropertyGetter edge_property_getter)
+void bind_readable_graph_methods(nb::class_<Graph>& cls, VertexPropertyGetter vertex_property_getter, EdgePropertyGetter edge_property_getter)
 {
-    ygg::add_print(cls);
-
     cls.def("get_num_vertices", &Graph::get_num_vertices)
         .def("get_num_edges", &Graph::get_num_edges)
         .def(
@@ -132,9 +132,40 @@ void bind_readable_graph(nb::class_<Graph>& cls, VertexPropertyGetter vertex_pro
 }
 
 template<typename Graph>
+void bind_readable_graph_methods(nb::class_<Graph>& cls)
+{
+    bind_readable_graph_methods(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>);
+}
+
+template<typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
+void bind_readable_graph(nb::class_<Graph>& cls, VertexPropertyGetter vertex_property_getter, EdgePropertyGetter edge_property_getter)
+{
+    ygg::add_print(cls);
+    bind_readable_graph_methods(cls, vertex_property_getter, edge_property_getter);
+}
+
+template<typename Graph>
 void bind_readable_graph(nb::class_<Graph>& cls)
 {
     bind_readable_graph(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>);
+}
+
+template<typename Range>
+auto materialize_vertex_indices(Range&& range) -> graphs::VertexIndexList
+{
+    auto result = graphs::VertexIndexList {};
+    for (auto vertex : range)
+        result.push_back(vertex);
+    return result;
+}
+
+template<typename Range>
+auto materialize_edge_indices(Range&& range) -> graphs::EdgeIndexList
+{
+    auto result = graphs::EdgeIndexList {};
+    for (auto edge : range)
+        result.push_back(edge);
+    return result;
 }
 
 template<typename Graph>
@@ -146,7 +177,11 @@ void bind_forward_graph(nb::class_<Graph>& cls)
            { return make_graph_iterator<Graph>("out edge index iterator", graph.get_out_edge_indices(vertex)); },
            "vertex"_a,
            nb::keep_alive<0, 1>())
-        .def("get_out_degree", &Graph::get_out_degree, "vertex"_a);
+        .def("get_out_degree", &Graph::get_out_degree, "vertex"_a)
+        .def(
+            "get_successor_indices",
+            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_vertex_indices(graph.get_successor_indices(vertex)); },
+            "vertex"_a);
 }
 
 template<typename Graph>
@@ -158,7 +193,34 @@ void bind_bidirectional_graph(nb::class_<Graph>& cls)
            { return make_graph_iterator<Graph>("in edge index iterator", graph.get_in_edge_indices(vertex)); },
            "vertex"_a,
            nb::keep_alive<0, 1>())
-        .def("get_in_degree", &Graph::get_in_degree, "vertex"_a);
+        .def("get_in_degree", &Graph::get_in_degree, "vertex"_a)
+        .def(
+            "get_predecessor_indices",
+            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_vertex_indices(graph.get_predecessor_indices(vertex)); },
+            "vertex"_a);
+}
+
+template<typename Graph>
+void bind_materialized_bidirectional_graph(nb::class_<Graph>& cls)
+{
+    cls.def(
+           "get_out_edge_indices",
+           [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_edge_indices(graph.get_out_edge_indices(vertex)); },
+           "vertex"_a)
+        .def("get_out_degree", &Graph::get_out_degree, "vertex"_a)
+        .def(
+            "get_successor_indices",
+            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_vertex_indices(graph.get_successor_indices(vertex)); },
+            "vertex"_a)
+        .def(
+            "get_in_edge_indices",
+            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_edge_indices(graph.get_in_edge_indices(vertex)); },
+            "vertex"_a)
+        .def("get_in_degree", &Graph::get_in_degree, "vertex"_a)
+        .def(
+            "get_predecessor_indices",
+            [](const Graph& graph, graphs::VertexIndex vertex) { return materialize_vertex_indices(graph.get_predecessor_indices(vertex)); },
+            "vertex"_a);
 }
 
 template<typename Graph>
@@ -276,6 +338,32 @@ void bind_python_object_graph(nb::class_<Graph>& cls)
 }
 
 template<typename Graph>
+void bind_labeled_constructible_graph(nb::class_<Graph>& cls)
+{
+    using VertexProperty = typename Graph::VertexPropertyType;
+    using EdgeProperty = typename Graph::EdgePropertyType;
+
+    cls.def(
+           "add_vertex",
+           [](Graph& graph, const VertexProperty& property) { return graph.add_vertex(property); },
+           "property"_a)
+        .def(
+            "add_directed_edge",
+            [](Graph& graph, graphs::VertexIndex source, graphs::VertexIndex target, const EdgeProperty& property)
+            { return graph.add_directed_edge(source, target, property); },
+            "source"_a,
+            "target"_a,
+            "property"_a)
+        .def(
+            "add_undirected_edge",
+            [](Graph& graph, graphs::VertexIndex lhs, graphs::VertexIndex rhs, const EdgeProperty& property)
+            { return graph.add_undirected_edge(lhs, rhs, property); },
+            "lhs"_a,
+            "rhs"_a,
+            "property"_a);
+}
+
+template<typename Graph>
 void bind_constructible_graph(nb::class_<Graph>& cls)
 {
     cls.def(
@@ -296,6 +384,29 @@ void bind_constructible_graph(nb::class_<Graph>& cls)
             "lhs"_a,
             "rhs"_a,
             "property"_a = nb::none());
+}
+
+template<typename Graph>
+void bind_labeled_dynamic_graph(nb::class_<Graph>& cls)
+{
+    cls.def(nb::init<>()).def("clear", &Graph::clear);
+    bind_readable_graph(cls);
+    bind_forward_graph(cls);
+    bind_bidirectional_graph(cls);
+    bind_labeled_constructible_graph(cls);
+    cls.def("remove_vertex", &Graph::remove_vertex, "vertex"_a)
+        .def("remove_edge", &Graph::remove_edge, "edge"_a)
+        .def("contains_vertex", &Graph::contains_vertex, "vertex"_a)
+        .def("contains_edge", &Graph::contains_edge, "edge"_a);
+}
+
+template<typename Graph>
+void bind_graph_properties(nb::module_& m)
+{
+    m.def("is_loopless", &graphs::is_loopless<Graph>, "graph"_a);
+    m.def("is_multi_graph", &graphs::is_multi_graph<Graph>, "graph"_a);
+    m.def("is_symmetric", &graphs::is_symmetric<Graph>, "graph"_a);
+    m.def("is_simple_undirected", &graphs::is_simple_undirected<Graph>, "graph"_a);
 }
 
 template<typename Graph>

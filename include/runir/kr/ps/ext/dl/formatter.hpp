@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_EXT_DL_FORMATTER_HPP_
 
 #include "runir/config.hpp"
+#include "runir/formatter.hpp"
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/ext/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
@@ -13,18 +14,12 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <string>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/containers/variant.hpp>
 #include <vector>
+#include <yggdrasil/containers/variant.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::ps::ext::dl::format
 {
-
-template<typename String>
-std::string quoted(const String& value)
-{
-    return fmt::format("\"{}\"", value.str());
-}
 
 inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
 
@@ -33,7 +28,7 @@ std::vector<std::string> quoted_object_names(Objects objects)
 {
     auto result = std::vector<std::string> {};
     for (auto object : objects)
-        result.push_back(quoted(object.get_name()));
+        result.push_back(fmt::format("{:?}", std::string(object.get_name().str())));
     return result;
 }
 
@@ -58,9 +53,12 @@ std::string concept_expression(ygg::View<ygg::Index<runir::kr::dl::FamilyConcept
     else if constexpr (std::same_as<Tag, runir::kr::dl::TopTag>)
         return fmt::format("({})", ast::ConceptTop<Family>::keyword);
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("({} {})", ast::ConceptAtomicState<Family>::keyword, quoted(view.get_predicate().get_name()));
+        return fmt::format("({} {})", ast::ConceptAtomicState<Family>::keyword, fmt::format("{:?}", std::string(view.get_predicate().get_name().str())));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-        return fmt::format("({} {} {})", ast::ConceptAtomicGoal<Family>::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
+        return fmt::format("({} {} {})",
+                           ast::ConceptAtomicGoal<Family>::keyword,
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
+                           boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
         return fmt::format("({} {} {})", ast::ConceptIntersection<Family>::keyword, expression(view.get_lhs()), expression(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::UnionTag>)
@@ -107,7 +105,7 @@ std::string concept_expression(ygg::View<ygg::Index<runir::kr::dl::FamilyConcept
     else if constexpr (std::same_as<Tag, runir::kr::dl::OneOfTag>)
         return fmt::format("({} {})", ast::ConceptOneOf<Family>::keyword, fmt::join(quoted_object_names(view.get_objects()), " "));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
-        return fmt::format("({} {})", ast::ConceptNominal<Family>::keyword, quoted(view.get_object().get_name()));
+        return fmt::format("({} {})", ast::ConceptNominal<Family>::keyword, fmt::format("{:?}", std::string(view.get_object().get_name().str())));
     else if constexpr (std::same_as<Tag, runir::kr::dl::RegisterTag>)
         return fmt::format("({} {})", ext_ast::ConceptRegister::keyword, ygg::uint_t(view.get_data().identifier));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>)
@@ -124,9 +122,12 @@ std::string role(ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
         return fmt::format("({})", ast::RoleUniversal<Family>::keyword);
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("({} {})", ast::RoleAtomicState<Family>::keyword, quoted(view.get_predicate().get_name()));
+        return fmt::format("({} {})", ast::RoleAtomicState<Family>::keyword, fmt::format("{:?}", std::string(view.get_predicate().get_name().str())));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-        return fmt::format("({} {} {})", ast::RoleAtomicGoal<Family>::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
+        return fmt::format("({} {} {})",
+                           ast::RoleAtomicGoal<Family>::keyword,
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
+                           boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
         return fmt::format("({} {} {})", ast::RoleIntersection<Family>::keyword, expression(view.get_lhs()), expression(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::UnionTag>)
@@ -159,9 +160,15 @@ std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyBoolea
     namespace ext_ast = runir::kr::dl::grammar::parser::ext::ast;
 
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("({} {} {})", ast::BooleanAtomicState<Family>::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
+        return fmt::format("({} {} {})",
+                           ast::BooleanAtomicState<Family>::keyword,
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
+                           boolean(view.get_polarity()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-        return fmt::format("({} {} {})", ast::BooleanAtomicGoal<Family>::keyword, quoted(view.get_predicate().get_name()), boolean(view.get_polarity()));
+        return fmt::format("({} {} {})",
+                           ast::BooleanAtomicGoal<Family>::keyword,
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
+                           boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return fmt::format("({} {})", ast::BooleanNonempty<Family>::keyword, variant_expression(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>)

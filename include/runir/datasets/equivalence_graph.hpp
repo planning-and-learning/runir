@@ -28,6 +28,7 @@
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 
+#include <limits>
 #include <memory>
 #include <tuple>
 #include <vector>

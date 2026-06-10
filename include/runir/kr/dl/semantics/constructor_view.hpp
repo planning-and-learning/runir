@@ -2,14 +2,15 @@
 #define RUNIR_SEMANTICS_CONSTRUCTOR_VIEW_HPP_
 
 #include "runir/kr/dl/constructor_index.hpp"
+#include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/semantics/boolean_view.hpp"
 #include "runir/kr/dl/semantics/concept_view.hpp"
 #include "runir/kr/dl/semantics/numerical_view.hpp"
 #include "runir/kr/dl/semantics/role_view.hpp"
 
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/containers/variant.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {

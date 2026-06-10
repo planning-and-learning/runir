@@ -8,11 +8,10 @@
 #include <ranges>
 #include <tuple>
 #include <type_traits>
+#include <vector>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/semantics/equal_to.hpp>
 #include <yggdrasil/semantics/hash.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <vector>
 
 namespace runir::graphs
 {

@@ -21,8 +21,10 @@
 #include "runir/graphs/bgl/algorithms.hpp"
 
 #include <cassert>
+#include <fmt/format.h>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -161,8 +163,7 @@ auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexInde
         }
     }
 
-    assert(false);
-    return std::vector<ygg::float_t>(graph.get_num_vertices(), std::numeric_limits<ygg::float_t>::infinity());
+    throw std::runtime_error(fmt::format("Unsupported state graph cost mode: {}.", static_cast<int>(cost_mode)));
 }
 
 }  // namespace

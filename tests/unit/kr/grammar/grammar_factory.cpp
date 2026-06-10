@@ -65,6 +65,32 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
     }
 }
 
+TEST(RunirTests, RejectsUnknownFactorySpecifications)
+{
+    namespace fp = tyr::formalism::planning;
+
+    const auto domain_filepath = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto domain = fp::Parser(domain_filepath).get_domain().get_domain();
+
+    EXPECT_THROW(
+        try {
+            static_cast<void>(kr::ps::base::dl::SketchFactory::create_description(static_cast<kr::ps::base::dl::SketchSpecification>(999)));
+        } catch (const std::runtime_error& error) {
+            EXPECT_STREQ(error.what(), "Unknown sketch specification: 999.");
+            throw;
+        },
+        std::runtime_error);
+
+    EXPECT_THROW(
+        try {
+            static_cast<void>(kr::dl::grammar::base::GrammarFactory::create_description(static_cast<kr::dl::grammar::base::GrammarSpecification>(999), domain));
+        } catch (const std::runtime_error& error) {
+            EXPECT_STREQ(error.what(), "Unknown grammar specification: 999.");
+            throw;
+        },
+        std::runtime_error);
+}
+
 TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 {
     namespace fp = tyr::formalism::planning;

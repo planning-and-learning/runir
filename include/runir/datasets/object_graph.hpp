@@ -31,23 +31,26 @@
 namespace runir::datasets
 {
 
-enum class ObjectGraphPredicateKind
-{
-    STATE_PREDICATE,
-    GOAL_PREDICATE
-};
+using ObjectGraphPredicateVariant =
+    std::variant<tyr::formalism::planning::PredicateView<tyr::formalism::StaticTag>, tyr::formalism::planning::PredicateView<tyr::formalism::FluentTag>>;
 
-using ObjectGraphPredicateVariant = std::variant<tyr::formalism::planning::PredicateView<tyr::formalism::StaticTag>,
-                                                 tyr::formalism::planning::PredicateView<tyr::formalism::FluentTag>>;
-
-struct ObjectGraphVertexLabelEntry
+struct StateObjectGraphVertexLabelEntry
 {
     ObjectGraphPredicateVariant predicate;
     std::size_t argument_position = 0;
-    ObjectGraphPredicateKind kind = ObjectGraphPredicateKind::STATE_PREDICATE;
 
-    auto identifying_members() const noexcept { return std::tie(predicate, argument_position, kind); }
+    auto identifying_members() const noexcept { return std::tie(predicate, argument_position); }
 };
+
+struct GoalObjectGraphVertexLabelEntry
+{
+    ObjectGraphPredicateVariant predicate;
+    std::size_t argument_position = 0;
+
+    auto identifying_members() const noexcept { return std::tie(predicate, argument_position); }
+};
+
+using ObjectGraphVertexLabelEntry = std::variant<StateObjectGraphVertexLabelEntry, GoalObjectGraphVertexLabelEntry>;
 
 struct ObjectGraphVertexLabel
 {

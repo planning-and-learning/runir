@@ -3,10 +3,10 @@
 
 #include "runir/datasets/state_graph.hpp"
 #include "runir/datasets/task_class.hpp"
+#include "runir/kr/ps/ext/detail/execution.hpp"
 #include "runir/kr/ps/ext/detail/plan_trace.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
-#include "runir/kr/ps/ext/detail/execution.hpp"
-#include "runir/kr/ps/ext/module_program_executor.hpp"
+#include "runir/kr/ps/ext/module_program_executor_data.hpp"
 
 #include <optional>
 #include <tyr/planning/node.hpp>

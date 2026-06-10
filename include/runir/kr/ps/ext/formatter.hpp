@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_EXT_FORMATTER_HPP_
 
 #include "runir/config.hpp"
+#include "runir/formatter.hpp"
 #include "runir/kr/ps/ext/dl/formatter.hpp"
 #include "runir/kr/ps/ext/module_program_executor.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
@@ -15,21 +16,12 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <yggdrasil/io/iostream.hpp>
-#include <yggdrasil/core/types.hpp>
 #include <vector>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::ps::ext::format
 {
-
-template<typename String>
-std::string quoted(const String& value)
-{
-    return fmt::format("\"{}\"", value.str());
-}
-
-inline std::string quoted(std::string_view value) { return fmt::format("\"{}\"", value); }
-inline std::string quoted(const std::string& value) { return quoted(std::string_view(value)); }
 
 template<typename String>
 std::string symbol_section(const String& value)
@@ -38,10 +30,7 @@ std::string symbol_section(const String& value)
     return text.empty() ? std::string("(:symbol)") : fmt::format("(:symbol {})", text);
 }
 
-inline std::string symbol_section(std::string_view value)
-{
-    return value.empty() ? std::string("(:symbol)") : fmt::format("(:symbol {})", value);
-}
+inline std::string symbol_section(std::string_view value) { return value.empty() ? std::string("(:symbol)") : fmt::format("(:symbol {})", value); }
 
 inline std::string symbol_section(const std::string& value) { return symbol_section(std::string_view(value)); }
 
@@ -171,7 +160,7 @@ std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<run
     {
         ygg::IndentScope scope(os);
         os << ygg::print_indent << symbol_section(view.get_symbol()) << "\n";
-        os << ygg::print_indent << fmt::format("(:description {})", quoted(view.get_description())) << "\n";
+        os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(view.get_description().str()))) << "\n";
         os << ygg::print_indent << fmt::format("(:expression {})", runir::kr::ps::ext::dl::format::expression(view.get_feature())) << "\n";
     }
     os << ygg::print_indent << ")";
@@ -281,12 +270,12 @@ void append_rule_body(std::ostream& os, FeatureNames& names, ygg::View<ygg::Inde
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::DoTag>)
     {
-        os << ygg::print_indent << fmt::format("(:action {})", quoted(view.get_action_name())) << "\n";
+        os << ygg::print_indent << fmt::format("(:action {})", fmt::format("{:?}", std::string(view.get_action_name().str()))) << "\n";
         os << ygg::print_indent << fmt::format("(:arguments {})", fmt::join(action_arguments(view), " ")) << "\n";
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::CallTag>)
     {
-        os << ygg::print_indent << fmt::format("(:callee {})", quoted(view.get_callee_name())) << "\n";
+        os << ygg::print_indent << fmt::format("(:callee {})", fmt::format("{:?}", view.get_callee_name())) << "\n";
         os << ygg::print_indent << fmt::format("(:arguments {})", fmt::join(call_arguments(view), " ")) << "\n";
     }
 }
@@ -318,7 +307,7 @@ void append_rule(std::ostream& os, FeatureNames& names, ygg::View<ygg::Index<run
 template<runir::kr::dl::CategoryTag Category, typename C>
 std::string argument(ygg::View<ygg::Index<runir::kr::ps::ext::Argument<Category>>, C> view)
 {
-    return fmt::format("(:{} {} {})", Category::name, quoted(view.get_name()), ygg::uint_t(view.get_identifier()));
+    return fmt::format("(:{} {} {})", Category::name, fmt::format("{:?}", std::string(view.get_name().str())), ygg::uint_t(view.get_identifier()));
 }
 
 template<typename C>
@@ -353,7 +342,7 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
     auto names = collect_features(view);
     auto os = std::ostringstream {};
 
-    os << fmt::format("(:module {}\n", quoted(view.get_name()));
+    os << fmt::format("(:module {}\n", fmt::format("{:?}", std::string(view.get_name().str())));
     {
         ygg::IndentScope scope(os);
         os << ygg::print_indent << "(:arguments\n";
@@ -408,7 +397,7 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
                 {
                     ygg::IndentScope transition_scope_inner(os);
                     os << ygg::print_indent << symbol_section(transition.get_symbol()) << "\n";
-                    os << ygg::print_indent << fmt::format("(:description {})", quoted(transition.get_description())) << "\n";
+                    os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(transition.get_description().str()))) << "\n";
                     os << ygg::print_indent << "(:expression\n";
                     {
                         ygg::IndentScope expression_scope(os);
@@ -438,7 +427,7 @@ std::string module_program(ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgra
     os << "(:program\n";
     {
         ygg::IndentScope scope(os);
-        os << ygg::print_indent << fmt::format("(:entry {})", quoted(view.get_entry_module().get_name())) << "\n";
+        os << ygg::print_indent << fmt::format("(:entry {})", fmt::format("{:?}", std::string(view.get_entry_module().get_name().str()))) << "\n";
         for (auto item : view.get_modules())
             os << ygg::print_indent << module(item);
     }
@@ -636,8 +625,7 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofEdgeLabel> : fmt::fo
 {
     auto format(const runir::kr::ps::ext::ModuleProgramProofEdgeLabel& label, format_context& ctx) const
     {
-        return fmt::formatter<std::string_view>::format(label.rule ? fmt::format("rule={}", ygg::uint_t(label.rule->get_index())) :
-                                                                     std::string("rule=<none>"),
+        return fmt::formatter<std::string_view>::format(label.rule ? fmt::format("rule={}", ygg::uint_t(label.rule->get_index())) : std::string("rule=<none>"),
                                                         ctx);
     }
 };

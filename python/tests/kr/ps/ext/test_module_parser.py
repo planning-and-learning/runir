@@ -285,6 +285,11 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     assert proof.graph.get_num_vertices() == 16
     assert proof.graph.get_num_edges() == 15
     vertex = next(iter(proof.graph.get_vertex_indices()))
+    assert isinstance(proof.graph.get_successor_indices(vertex), list)
+    edge = next(iter(proof.graph.get_edge_indices()))
+    assert proof.graph.get_source(edge) in proof.graph.get_vertex_indices()
+    assert proof.graph.get_target(edge) in proof.graph.get_vertex_indices()
+    assert edge in proof.graph.get_out_edge_indices(proof.graph.get_source(edge))
     vertex_label = proof.graph.get_vertex_property(vertex)
     assert vertex_label.memory_state is not None
     assert len(vertex_label.concept_registers) > 0

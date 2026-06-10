@@ -3,6 +3,7 @@
 #include "runir/kr/ps/ext/canonicalization.hpp"
 #include "runir/kr/ps/ext/dl/parser.hpp"
 
+#include <fmt/format.h>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -55,7 +56,7 @@ std::string ModuleFactory::create_description(ModuleSpecification specification)
             return create_blocks_bonet_et_al_icaps2024_description();
     }
 
-    throw std::runtime_error("Unknown module specification.");
+    throw std::runtime_error(fmt::format("Unknown module specification: {}.", static_cast<int>(specification)));
 }
 
 std::vector<ModuleView> ModuleFactory::create_bonet_et_al_icaps2024_modules(tyr::formalism::planning::DomainView domain, Repository& repository)

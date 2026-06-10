@@ -268,7 +268,7 @@ std::string GrammarFactory::create_description(GrammarSpecification specificatio
             return create_france_et_al_aaai2021_description(domain);
     }
 
-    throw std::runtime_error("Unknown grammar specification.");
+    throw std::runtime_error(fmt::format("Unknown grammar specification: {}.", static_cast<int>(specification)));
 }
 
 GrammarView GrammarFactory::create_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)

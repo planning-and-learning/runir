@@ -166,6 +166,7 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/cmake/"
 set(PYRUNIR_PYTHON_FILES
     pyrunir/__init__.py
     pyrunir/__init__.pyi
+    pyrunir/py.typed
     pyrunir/datasets/__init__.py
     pyrunir/graphs/__init__.py
     pyrunir/kr/__init__.py

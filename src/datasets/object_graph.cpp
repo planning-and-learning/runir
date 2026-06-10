@@ -19,10 +19,10 @@
 
 #include <algorithm>
 #include <cassert>
+#include <utility>
+#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/semantics/comparators.hpp>
 #include <yggdrasil/semantics/equal_to.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <utility>
 
 namespace runir::datasets
 {
@@ -66,8 +66,8 @@ private:
 public:
     void add_object(ObjectView object) { static_cast<void>(get_or_create_vertex(object)); }
 
-    template<tyr::formalism::FactKind FactKind>
-    void add_atom(tyr::formalism::planning::GroundAtomView<FactKind> atom, ObjectGraphPredicateKind kind)
+    template<typename LabelEntry, tyr::formalism::FactKind FactKind>
+    void add_atom(tyr::formalism::planning::GroundAtomView<FactKind> atom)
     {
         const auto predicate = ObjectGraphPredicateVariant(atom.get_predicate());
         const auto objects = atom.get_row().get_objects();
@@ -78,7 +78,7 @@ public:
         {
             const auto vertex = get_or_create_vertex(objects[i]);
             vertices.push_back(vertex);
-            m_vertex_labels[vertex].labels.push_back(ObjectGraphVertexLabelEntry { predicate, i, kind });
+            m_vertex_labels[vertex].labels.push_back(LabelEntry { predicate, i });
         }
 
         for (std::size_t i = 0; i < vertices.size(); ++i)
@@ -98,12 +98,7 @@ public:
         }
 
         for (const auto& [source, target] : m_edges)
-        {
-            if (source == target)
-                builder.add_directed_edge(source, target);
-            else
-                builder.add_undirected_edge(source, target);
-        }
+            builder.add_undirected_edge(source, target);
 
         return std::make_unique<ObjectGraph<Kind>>(std::move(builder));
     }
@@ -125,11 +120,11 @@ template<tyr::planning::TaskKind Kind>
 void add_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext<Kind>& context)
 {
     for (auto atom : state.get_static_atoms_view())
-        context.add_atom(atom, ObjectGraphPredicateKind::STATE_PREDICATE);
+        context.template add_atom<StateObjectGraphVertexLabelEntry>(atom);
 
     for (auto fact : state.get_fluent_facts_view())
         if (const auto atom = fact.get_atom())
-            context.add_atom(*atom, ObjectGraphPredicateKind::STATE_PREDICATE);
+            context.template add_atom<StateObjectGraphVertexLabelEntry>(*atom);
 }
 
 template<tyr::planning::TaskKind Kind>
@@ -138,15 +133,15 @@ void add_goal_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructio
     const auto goal = state.get_state_repository()->get_task()->get_task().get_goal();
 
     for (auto literal : goal.template get_literals<tyr::formalism::StaticTag>())
-        context.add_atom(literal.get_atom(), ObjectGraphPredicateKind::GOAL_PREDICATE);
+        context.template add_atom<GoalObjectGraphVertexLabelEntry>(literal.get_atom());
 
     for (auto fact : goal.template get_facts<tyr::formalism::PositiveTag>())
         if (const auto atom = fact.get_atom())
-            context.add_atom(*atom, ObjectGraphPredicateKind::GOAL_PREDICATE);
+            context.template add_atom<GoalObjectGraphVertexLabelEntry>(*atom);
 
     for (auto fact : goal.template get_facts<tyr::formalism::NegativeTag>())
         if (const auto atom = fact.get_atom())
-            context.add_atom(*atom, ObjectGraphPredicateKind::GOAL_PREDICATE);
+            context.template add_atom<GoalObjectGraphVertexLabelEntry>(*atom);
 }
 
 }  // namespace
@@ -161,10 +156,10 @@ auto create_object_graph(tyr::planning::StateView<Kind> state) -> std::unique_pt
     return std::move(context).release();
 }
 
-template auto create_object_graph<tyr::planning::GroundTag>(tyr::planning::StateView<tyr::planning::GroundTag>)
-    -> std::unique_ptr<ObjectGraph<tyr::planning::GroundTag>>;
+template auto
+    create_object_graph<tyr::planning::GroundTag>(tyr::planning::StateView<tyr::planning::GroundTag>) -> std::unique_ptr<ObjectGraph<tyr::planning::GroundTag>>;
 
-template auto create_object_graph<tyr::planning::LiftedTag>(tyr::planning::StateView<tyr::planning::LiftedTag>)
-    -> std::unique_ptr<ObjectGraph<tyr::planning::LiftedTag>>;
+template auto
+    create_object_graph<tyr::planning::LiftedTag>(tyr::planning::StateView<tyr::planning::LiftedTag>) -> std::unique_ptr<ObjectGraph<tyr::planning::LiftedTag>>;
 
 }  // namespace runir::datasets

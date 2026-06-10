@@ -3,6 +3,8 @@
 
 #include "runir/graphs/backward_static_graph_view.hpp"
 
+#include <utility>
+
 namespace runir::graphs
 {
 
@@ -21,6 +23,22 @@ private:
 
 public:
     BidirectionalStaticGraph() : m_forward_graph(), m_backward_graph(m_forward_graph) {}
+
+    BidirectionalStaticGraph(const BidirectionalStaticGraph&) = delete;
+
+    BidirectionalStaticGraph(BidirectionalStaticGraph&& other) : m_forward_graph(std::move(other.m_forward_graph)), m_backward_graph(m_forward_graph) {}
+
+    auto operator=(const BidirectionalStaticGraph&) -> BidirectionalStaticGraph& = delete;
+
+    auto operator=(BidirectionalStaticGraph&& other) -> BidirectionalStaticGraph&
+    {
+        if (this == &other)
+            return *this;
+
+        m_forward_graph = std::move(other.m_forward_graph);
+        m_backward_graph = BackwardGraphType(m_forward_graph);
+        return *this;
+    }
 
     explicit BidirectionalStaticGraph(const StaticGraphBuilder<VP, EP>& builder) : m_forward_graph(builder), m_backward_graph(m_forward_graph) {}
 

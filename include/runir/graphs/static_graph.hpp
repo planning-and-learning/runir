@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <ranges>
+#include <utility>
 #include <vector>
 
 namespace runir::graphs
@@ -34,6 +35,15 @@ private:
     void assert_valid_vertex([[maybe_unused]] VertexIndex vertex) const noexcept { assert(vertex < m_vertices.size()); }
     void assert_valid_edge([[maybe_unused]] EdgeIndex edge) const noexcept { assert(edge < m_edges.size()); }
 
+    void rebind_parents() noexcept
+    {
+        for (auto& vertex : m_vertices)
+            vertex = VertexType(vertex.get_index(), vertex.get_property_index(), *this);
+
+        for (auto& edge : m_edges)
+            edge = EdgeType(edge.get_index(), edge.get_source(), edge.get_target(), edge.get_property_index(), *this);
+    }
+
     void initialize(const StaticGraphBuilder<VP, EP>& builder)
     {
         m_vertices.clear();
@@ -42,7 +52,6 @@ private:
         m_edges.reserve(builder.get_num_edges());
         m_vertex_properties.clear();
         m_edge_properties.clear();
-        m_out_edge_offsets.assign(m_vertices.size() + 1, 0);
 
         for (const auto& vertex : builder.get_vertices())
         {
@@ -79,6 +88,34 @@ private:
 
 public:
     StaticGraph() : m_vertices(), m_edges(), m_out_edge_offsets(1, 0) {}
+
+    StaticGraph(const StaticGraph&) = delete;
+
+    StaticGraph(StaticGraph&& other) :
+        m_vertices(std::move(other.m_vertices)),
+        m_edges(std::move(other.m_edges)),
+        m_vertex_properties(std::move(other.m_vertex_properties)),
+        m_edge_properties(std::move(other.m_edge_properties)),
+        m_out_edge_offsets(std::move(other.m_out_edge_offsets))
+    {
+        rebind_parents();
+    }
+
+    auto operator=(const StaticGraph&) -> StaticGraph& = delete;
+
+    auto operator=(StaticGraph&& other) -> StaticGraph&
+    {
+        if (this == &other)
+            return *this;
+
+        m_vertices = std::move(other.m_vertices);
+        m_edges = std::move(other.m_edges);
+        m_vertex_properties = std::move(other.m_vertex_properties);
+        m_edge_properties = std::move(other.m_edge_properties);
+        m_out_edge_offsets = std::move(other.m_out_edge_offsets);
+        rebind_parents();
+        return *this;
+    }
 
     explicit StaticGraph(const StaticGraphBuilder<VP, EP>& builder) { initialize(builder); }
 

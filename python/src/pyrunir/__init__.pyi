@@ -7,10 +7,9 @@ import pyyggdrasil as pyyggdrasil
 
 from . import (
     datasets as datasets,
-    graphs as graphs, 
+    graphs as graphs,
     kr as kr,
 )
 
-__version__: str
 
 def native_prefix() -> Path: ...

@@ -6,7 +6,7 @@
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/base/compatibility.hpp"
 #include "runir/kr/ps/base/dl/evaluation_context.hpp"
-#include "runir/kr/ps/base/sketch_executor.hpp"
+#include "runir/kr/ps/base/sketch_executor_data.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -195,10 +195,10 @@ public:
 
         const auto target = m_get_or_create_vertex(labeled_succ_node.node);
         if (m_sketch_edges.insert({ m_source, target }).second)
-            m_builder.add_directed_edge(m_source,
-                                        target,
-                                        SketchProofEdgeLabel { datasets::StateGraphEdgeLabel { labeled_succ_node.label, labeled_succ_node.node.get_metric() },
-                                                               *rule });
+            m_builder.add_directed_edge(
+                m_source,
+                target,
+                SketchProofEdgeLabel { datasets::StateGraphEdgeLabel { labeled_succ_node.label, labeled_succ_node.node.get_metric() }, *rule });
 
         if (!m_explored.contains(target))
             m_open.push_back(target);
@@ -244,8 +244,7 @@ namespace detail
 {
 
 template<tyr::planning::TaskKind Kind>
-auto execute_proof(datasets::TaskSearchContextPtr<Kind> context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options)
-    -> SketchProofResults<Kind>
+auto execute_proof(datasets::TaskSearchContextPtr<Kind> context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
     const auto& context = *context_owner;
     auto result = SketchProofResults<Kind> {};
@@ -362,10 +361,10 @@ auto execute_proof(datasets::TaskSearchContextPtr<Kind> context_owner, SketchVie
     return std::move(result);
 }
 
-
 template<tyr::planning::TaskKind Kind>
-auto find_siw_solution(const datasets::TaskSearchContext<Kind>& context, SketchView sketch, const SketchSearchOptions<Kind>& options)
-    -> tyr::planning::SearchResult<Kind>
+auto find_siw_solution(const datasets::TaskSearchContext<Kind>& context,
+                       SketchView sketch,
+                       const SketchSearchOptions<Kind>& options) -> tyr::planning::SearchResult<Kind>
 {
     auto brfs_solver = tyr::planning::brfs::Solver<Kind> { context.task, context.successor_generator, options.brfs_options };
     auto iw_solver = tyr::planning::iw::Solver<Kind> { std::move(brfs_solver), options.max_arity, options.iw_options };
@@ -401,14 +400,13 @@ auto proof_result_from_siw_solution(datasets::TaskSearchContextPtr<Kind> context
     auto add_vertex = [&](const tyr::planning::StateView<Kind>& state)
     {
         const auto goal = is_task_goal(state);
-        const auto vertex = builder.add_vertex(datasets::AnnotatedStateGraphVertexLabel<Kind> { state,
-                                                                                                goal ? ygg::float_t(0)
-                                                                                                     : std::numeric_limits<ygg::float_t>::infinity(),
-                                                                                                ygg::EqualTo<tyr::planning::StateView<Kind>> {}(state,
-                                                                                                                                                 initial_state),
-                                                                                                goal,
-                                                                                                true,
-                                                                                                false });
+        const auto vertex =
+            builder.add_vertex(datasets::AnnotatedStateGraphVertexLabel<Kind> { state,
+                                                                                goal ? ygg::float_t(0) : std::numeric_limits<ygg::float_t>::infinity(),
+                                                                                ygg::EqualTo<tyr::planning::StateView<Kind>> {}(state, initial_state),
+                                                                                goal,
+                                                                                true,
+                                                                                false });
         state_to_vertex.emplace(state, vertex);
         return vertex;
     };
@@ -463,8 +461,8 @@ auto proof_result_from_siw_solution(datasets::TaskSearchContextPtr<Kind> context
             continue;
 
         const auto segment_length = index - segment_start + 1;
-        const auto edge_label = SketchProofEdgeLabel { datasets::StateGraphEdgeLabel { suffix[segment_start].label, static_cast<ygg::float_t>(segment_length) },
-                                                       *rule };
+        const auto edge_label =
+            SketchProofEdgeLabel { datasets::StateGraphEdgeLabel { suffix[segment_start].label, static_cast<ygg::float_t>(segment_length) }, *rule };
 
         if (const auto it = state_to_vertex.find(target_state); it != state_to_vertex.end())
         {
@@ -490,8 +488,9 @@ auto proof_result_from_siw_solution(datasets::TaskSearchContextPtr<Kind> context
 }
 
 template<tyr::planning::TaskKind Kind>
-auto execute_greedy_solution(datasets::TaskSearchContextPtr<Kind> context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options)
-    -> SketchProofResults<Kind>
+auto execute_greedy_solution(datasets::TaskSearchContextPtr<Kind> context_owner,
+                             SketchView sketch,
+                             const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
     const auto search_result = find_siw_solution(*context_owner, sketch, options);
     return proof_result_from_siw_solution(std::move(context_owner), sketch, search_result);
@@ -506,9 +505,7 @@ auto prove_solution(datasets::TaskSearchContextPtr<Kind> context_owner, SketchVi
 }
 
 template<tyr::planning::TaskKind Kind>
-auto find_solution(datasets::TaskSearchContextPtr<Kind> context_owner,
-                   SketchView sketch,
-                   const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
+auto find_solution(datasets::TaskSearchContextPtr<Kind> context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
     return detail::execute_greedy_solution(std::move(context_owner), sketch, options);
 }

@@ -4,7 +4,7 @@
 #include "runir/kr/ps/ext/detail/execution_state.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/proof_builder.hpp"
-#include "runir/kr/ps/ext/module_program_executor.hpp"
+#include "runir/kr/ps/ext/module_program_executor_data.hpp"
 
 #include <optional>
 #include <utility>
@@ -88,8 +88,8 @@ auto make_do_step(const EvaluationContext<Kind>& context,
 }
 
 template<tyr::planning::TaskKind Kind>
-auto enumerate_immediate_control_steps(const runir::datasets::TaskSearchContext<Kind>& search_context, const EvaluationContext<Kind>& context)
-    -> std::vector<ModuleProofStep<Kind>>
+auto enumerate_immediate_control_steps(const runir::datasets::TaskSearchContext<Kind>& search_context,
+                                       const EvaluationContext<Kind>& context) -> std::vector<ModuleProofStep<Kind>>
 {
     auto result = std::vector<ModuleProofStep<Kind>> {};
     const auto source_state = context.get_state();
@@ -167,8 +167,8 @@ auto enumerate_immediate_control_steps(const runir::datasets::TaskSearchContext<
 }
 
 template<tyr::planning::TaskKind Kind>
-auto enumerate_sketch_control_steps(const EvaluationContext<Kind>& context, const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
-    -> std::vector<ModuleProofStep<Kind>>
+auto enumerate_sketch_control_steps(const EvaluationContext<Kind>& context,
+                                    const std::vector<tyr::planning::LabeledNode<Kind>>& successors) -> std::vector<ModuleProofStep<Kind>>
 {
     auto result = std::vector<ModuleProofStep<Kind>> {};
     const auto source_state = context.get_state();
@@ -383,7 +383,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
     const auto initial_vertex = proof.get_or_create_vertex(initial_context, ExternalMemoryState(initial_context.get_memory_state()), true, true, false).first;
     open.emplace_back(initial_context, initial_vertex);
 
-    auto add_terminal = [&](graphs::VertexIndex source, const EvaluationContext<Kind>& context, MemoryStateVariant memory_state, ModuleProgramOutcome status)
+    auto add_terminal = [&](graphs::VertexIndex source, const EvaluationContext<Kind>& context, MemoryStateVariant memory_state)
     {
         const auto [target, created] = proof.get_or_create_vertex(context, std::move(memory_state), false, false, true);
         static_cast<void>(created);
@@ -391,7 +391,6 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
         proof.add_deadend_transition(edge);
         proof.add_open_state(target);
         failed = true;
-        static_cast<void>(status);
     };
 
     auto add_successor = [&](graphs::VertexIndex source, const ModuleProofStep<Kind>& step, MemoryStateVariant memory_state)
@@ -418,7 +417,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
                 if (step.status == ModuleProgramOutcome::APPLIED)
                     add_successor(source_vertex, step, InternalMemoryState(step.context.get_memory_state()));
                 else
-                    add_terminal(source_vertex, step.context, InternalMemoryState(step.context.get_memory_state()), step.status);
+                    add_terminal(source_vertex, step.context, InternalMemoryState(step.context.get_memory_state()));
             }
             continue;
         }
@@ -433,7 +432,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
             else if (step.status == ModuleProgramOutcome::OUT_OF_STATES)
                 return proof.finish(ModuleProgramProofStatus::OUT_OF_STATES);
             else
-                add_terminal(source_vertex, step.context, ExternalMemoryState(step.context.get_memory_state()), step.status);
+                add_terminal(source_vertex, step.context, ExternalMemoryState(step.context.get_memory_state()));
         }
     }
 

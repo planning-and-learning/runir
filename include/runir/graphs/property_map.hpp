@@ -5,13 +5,12 @@
 
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/ids/index_mixins.hpp>
-#include <yggdrasil/semantics/canonicalization.hpp>
+#include <utility>
 #include <yggdrasil/containers/indexed_hash_set.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
-#include <utility>
+#include <yggdrasil/ids/index_mixins.hpp>
+#include <yggdrasil/semantics/canonicalization.hpp>
 
 namespace ygg
 {
@@ -24,9 +23,7 @@ concept HasIsCanonical = requires(const T& value) {
 };
 
 template<typename T>
-concept HasCanonicalize = requires(T& value) {
-    ygg::canonicalize(value);
-};
+concept HasCanonicalize = requires(T& value) { ygg::canonicalize(value); };
 }
 
 template<runir::graphs::Property P>

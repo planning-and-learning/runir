@@ -1,18 +1,15 @@
-#include <yggdrasil/serialization/json_loader.hpp>
+#include "fixtures.hpp"
 
 #include <boost/json.hpp>
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <runir/datasets/config.hpp>
 #include <runir/datasets/equivalence_graph.hpp>
 #include <runir/datasets/formatter.hpp>
 #include <string>
-#include <tyr/formalism/planning/parser.hpp>
-#include <tyr/planning/planning.hpp>
 #include <vector>
-#include <yggdrasil/execution/onetbb.hpp>
+#include <yggdrasil/serialization/json_loader.hpp>
 
 namespace runir::tests
 {
@@ -75,22 +72,8 @@ class EquivalenceGraphTest : public ::testing::TestWithParam<EquivalenceGraphFig
 
 TEST_P(EquivalenceGraphTest, MatchesExpectedProperties)
 {
-    namespace fp = tyr::formalism::planning;
-    namespace p = tyr::planning;
-
     const auto& param = GetParam();
-    auto parser = fp::Parser(param.domain_file);
-    auto execution_context = ygg::ExecutionContext::create(1);
-    auto contexts = datasets::TaskSearchContextList<p::GroundTag> {};
-    contexts.reserve(param.task_files.size());
-
-    for (const auto& task_file : param.task_files)
-    {
-        const auto planning_task = parser.parse_task(task_file);
-        auto lifted_task = p::Task<p::LiftedTag>(planning_task);
-        auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-        contexts.push_back(datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context));
-    }
+    auto contexts = make_ground_contexts(param.domain_file, param.task_files);
 
     const auto result = datasets::generate_equivalence_graph(contexts, param.equivalence_policy);
     const auto figure = fmt::format("{}", *result.graph);
@@ -98,6 +81,43 @@ TEST_P(EquivalenceGraphTest, MatchesExpectedProperties)
     std::cout << "EQUIVALENCE_GRAPH_FIGURE " << param.name << "\n" << figure;
     EXPECT_EQ(result.graph->get_forward_graph().get_num_vertices(), param.expected_num_vertices);
     EXPECT_EQ(result.graph->get_forward_graph().get_num_edges(), param.expected_num_edges);
+    ASSERT_EQ(result.state_graph_results.size(), param.task_files.size());
+    for (const auto& state_graph_result : result.state_graph_results)
+    {
+        ASSERT_NE(state_graph_result.graph, nullptr);
+        EXPECT_GT(state_graph_result.graph->get_forward_graph().get_num_vertices(), 0);
+    }
+}
+
+TEST(EquivalenceGraphTest, RejectsUnsupportedPolicyMode)
+{
+    namespace p = tyr::planning;
+
+    auto contexts = datasets::TaskSearchContextList<p::GroundTag> {};
+
+    EXPECT_THROW(
+        try {
+            static_cast<void>(datasets::generate_equivalence_graph(contexts, static_cast<datasets::EquivalencePolicyMode>(999)));
+        } catch (const std::runtime_error& error) {
+            EXPECT_STREQ(error.what(), "Unsupported equivalence policy mode: 999.");
+            throw;
+        },
+        std::runtime_error);
+}
+
+TEST(EquivalenceGraphTest, RejectsCrossGraphConcreteStateEdge)
+{
+    const auto root = gripper_benchmark_root();
+    auto contexts = make_ground_contexts(root / "domain.pddl", { root / "test-1.pddl", root / "test-1.pddl" });
+
+    EXPECT_THROW(
+        try {
+            static_cast<void>(datasets::generate_equivalence_graph(contexts, datasets::EquivalencePolicyMode::GI));
+        } catch (const std::runtime_error& error) {
+            EXPECT_STREQ(error.what(), "Cannot create a concrete state edge to a representative in a different state graph.");
+            throw;
+        },
+        std::runtime_error);
 }
 
 INSTANTIATE_TEST_SUITE_P(RunirDatasets,

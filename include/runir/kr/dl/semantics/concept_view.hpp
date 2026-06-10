@@ -2,12 +2,13 @@
 #define RUNIR_SEMANTICS_CONCEPT_VIEW_HPP_
 
 #include "runir/kr/dl/concept_data.hpp"
+#include "runir/kr/dl/constructors.hpp"
 
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/predicate_view.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {

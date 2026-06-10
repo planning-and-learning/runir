@@ -1,18 +1,63 @@
 #include "module.hpp"
 
+#include <memory>
+#include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/vector.h>
 #include <pyrunir/graphs/graph.hpp>
 #include <runir/datasets/equivalence_graph.hpp>
 #include <runir/datasets/formatter.hpp>
+#include <stdexcept>
+#include <string>
+#include <utility>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::datasets
 {
 
+using namespace nanobind::literals;
 using runir::graphs::bind_bidirectional_graph;
 using runir::graphs::bind_bidirectional_static_graph;
 using runir::graphs::bind_forward_graph;
+using runir::graphs::bind_labeled_constructible_graph;
+using runir::graphs::bind_labeled_dynamic_graph;
+using runir::graphs::bind_materialized_bidirectional_graph;
 using runir::graphs::bind_readable_graph;
+
+namespace
+{
+
+template<tyr::planning::TaskKind Kind>
+void bind_equivalence_graph_generation_for_kind(nb::module_& m, const char* class_prefix, const char* function_prefix)
+{
+    using Result = EquivalenceGraphConstructionResult<Kind>;
+    using ContextList = TaskSearchContextList<Kind>;
+
+    nb::class_<Result>(m, (std::string(class_prefix) + "EquivalenceGraphConstructionResult").c_str())
+        .def_prop_ro(
+            "graph",
+            [](const Result& self) -> const EquivalenceGraph& { return *self.graph; },
+            nb::rv_policy::reference_internal)
+        .def("get_num_state_graph_results", [](const Result& self) { return self.state_graph_results.size(); })
+        .def(
+            "get_state_graph_result",
+            [](const Result& self, std::size_t index) -> const StateGraphGenerationResult<Kind>&
+            {
+                if (index >= self.state_graph_results.size())
+                    throw std::out_of_range("State graph result index is out of range.");
+                return self.state_graph_results[index];
+            },
+            "index"_a,
+            nb::rv_policy::reference_internal);
+
+    m.def((std::string("generate_") + function_prefix + "_equivalence_graph").c_str(),
+          [](ContextList contexts, const EquivalenceGraphGenerationOptions& options)
+          { return std::make_shared<Result>(generate_equivalence_graph<Kind>(contexts, options)); },
+          "contexts"_a,
+          "options"_a = EquivalenceGraphGenerationOptions());
+}
+
+}  // namespace
 
 void bind_equivalence_graph(nb::module_& m)
 {
@@ -50,6 +95,8 @@ void bind_equivalence_graph(nb::module_& m)
     auto builder = nb::class_<EquivalenceGraphBuilder>(m, "EquivalenceGraphBuilder");
     builder.def(nb::init<>()).def("clear", &EquivalenceGraphBuilder::clear);
     bind_readable_graph(builder);
+    bind_materialized_bidirectional_graph(builder);
+    bind_labeled_constructible_graph(builder);
 
     auto static_graph = nb::class_<StaticEquivalenceGraph>(m, "StaticEquivalenceGraph");
     static_graph.def(nb::init<>()).def(nb::init<const EquivalenceGraphBuilder&>());
@@ -64,9 +111,14 @@ void bind_equivalence_graph(nb::module_& m)
     graph.def(nb::init<const EquivalenceGraphBuilder&>());
     bind_bidirectional_static_graph(graph);
 
+    auto dynamic_graph = nb::class_<DynamicEquivalenceGraph>(m, "DynamicEquivalenceGraph");
+    bind_labeled_dynamic_graph(dynamic_graph);
+
     auto annotated_builder = nb::class_<AnnotatedEquivalenceGraphBuilder>(m, "AnnotatedEquivalenceGraphBuilder");
     annotated_builder.def(nb::init<>()).def("clear", &AnnotatedEquivalenceGraphBuilder::clear);
     bind_readable_graph(annotated_builder);
+    bind_materialized_bidirectional_graph(annotated_builder);
+    bind_labeled_constructible_graph(annotated_builder);
 
     auto static_annotated_graph = nb::class_<StaticAnnotatedEquivalenceGraph>(m, "StaticAnnotatedEquivalenceGraph");
     static_annotated_graph.def(nb::init<>()).def(nb::init<const AnnotatedEquivalenceGraphBuilder&>());
@@ -80,6 +132,12 @@ void bind_equivalence_graph(nb::module_& m)
     auto annotated_graph = nb::class_<AnnotatedEquivalenceGraph>(m, "AnnotatedEquivalenceGraph");
     annotated_graph.def(nb::init<const AnnotatedEquivalenceGraphBuilder&>());
     bind_bidirectional_static_graph(annotated_graph);
+
+    auto dynamic_annotated_graph = nb::class_<DynamicAnnotatedEquivalenceGraph>(m, "DynamicAnnotatedEquivalenceGraph");
+    bind_labeled_dynamic_graph(dynamic_annotated_graph);
+
+    bind_equivalence_graph_generation_for_kind<tyr::planning::GroundTag>(m, "Ground", "ground");
+    bind_equivalence_graph_generation_for_kind<tyr::planning::LiftedTag>(m, "Lifted", "lifted");
 }
 
 }  // namespace runir::datasets

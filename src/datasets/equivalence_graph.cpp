@@ -21,12 +21,13 @@
 #include "runir/datasets/equivalence_policies/identity.hpp"
 
 #include <cassert>
+#include <fmt/format.h>
 #include <limits>
 #include <memory>
 #include <stdexcept>
-#include <yggdrasil/semantics/equal_to.hpp>
 #include <utility>
 #include <vector>
+#include <yggdrasil/semantics/equal_to.hpp>
 
 namespace runir::datasets
 {
@@ -121,7 +122,7 @@ private:
                                                                representative_it->second.state_vertex_index,
                                                                StateGraphEdgeLabel { labeled_succ_node.label, cost });
             else
-                assert(false && "Cannot create a concrete state edge to a representative in a different state graph.");
+                throw std::runtime_error("Cannot create a concrete state edge to a representative in a different state graph.");
         }
 
         const auto target_state = labeled_succ_node.node.get_state();
@@ -296,7 +297,7 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
         }
     }
 
-    throw std::runtime_error("Unsupported equivalence policy mode.");
+    throw std::runtime_error(fmt::format("Unsupported equivalence policy mode: {}.", static_cast<int>(options.policy_mode)));
 }
 
 template auto generate_equivalence_graph<tyr::planning::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContextList<tyr::planning::GroundTag>&,

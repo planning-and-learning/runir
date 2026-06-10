@@ -1,12 +1,13 @@
 #ifndef RUNIR_SEMANTICS_NUMERICAL_VIEW_HPP_
 #define RUNIR_SEMANTICS_NUMERICAL_VIEW_HPP_
 
+#include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/numerical_data.hpp"
 
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/containers/variant.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {

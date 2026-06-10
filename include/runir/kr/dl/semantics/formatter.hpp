@@ -2,6 +2,7 @@
 #define RUNIR_SEMANTICS_FORMATTER_HPP_
 
 #include "runir/config.hpp"
+#include "runir/formatter.hpp"
 #include "runir/kr/dl/ext/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
@@ -12,20 +13,14 @@
 #include <fmt/ranges.h>
 #include <string>
 #include <string_view>
+#include <vector>
+#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>
 #include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 #include <yggdrasil/formatting/formatter.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <vector>
 
 namespace runir::kr::dl::semantics::format
 {
-
-template<typename String>
-std::string quoted(const String& value)
-{
-    return fmt::format("\"{}\"", value.str());
-}
 
 inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
 
@@ -34,7 +29,7 @@ std::vector<std::string> quoted_object_names(Objects objects)
 {
     auto result = std::vector<std::string> {};
     for (auto object : objects)
-        result.push_back(quoted(object.get_name()));
+        result.push_back(fmt::format("{:?}", std::string(object.get_name().str())));
     return result;
 }
 
@@ -83,11 +78,13 @@ std::string concept_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyConcep
     else if constexpr (std::same_as<Tag, runir::kr::dl::TopTag>)
         return fmt::format("@{}", runir::kr::dl::grammar::ast::ConceptTop<Family>::keyword);
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("@{} {}", runir::kr::dl::grammar::ast::ConceptAtomicState<Family>::keyword, quoted(view.get_predicate().get_name()));
+        return fmt::format("@{} {}",
+                           runir::kr::dl::grammar::ast::ConceptAtomicState<Family>::keyword,
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("@{} {} {}",
                            runir::kr::dl::grammar::ast::ConceptAtomicGoal<Family>::keyword,
-                           quoted(view.get_predicate().get_name()),
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
         return fmt::format("@{} {} {}", runir::kr::dl::grammar::ast::ConceptIntersection<Family>::keyword, view.get_lhs(), view.get_rhs());
@@ -135,7 +132,9 @@ std::string concept_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyConcep
     else if constexpr (std::same_as<Tag, runir::kr::dl::OneOfTag>)
         return fmt::format("@{} {}", runir::kr::dl::grammar::ast::ConceptOneOf<Family>::keyword, fmt::join(quoted_object_names(view.get_objects()), " "));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
-        return fmt::format("@{} {}", runir::kr::dl::grammar::ast::ConceptNominal<Family>::keyword, quoted(view.get_object().get_name()));
+        return fmt::format("@{} {}",
+                           runir::kr::dl::grammar::ast::ConceptNominal<Family>::keyword,
+                           fmt::format("{:?}", std::string(view.get_object().get_name().str())));
     else if constexpr (std::same_as<Tag, runir::kr::dl::RegisterTag>)
         return register_identifier(view.get_data().identifier);
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>)
@@ -149,11 +148,13 @@ std::string role(ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
         return fmt::format("@{}", runir::kr::dl::grammar::ast::RoleUniversal<Family>::keyword);
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("@{} {}", runir::kr::dl::grammar::ast::RoleAtomicState<Family>::keyword, quoted(view.get_predicate().get_name()));
+        return fmt::format("@{} {}",
+                           runir::kr::dl::grammar::ast::RoleAtomicState<Family>::keyword,
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("@{} {} {}",
                            runir::kr::dl::grammar::ast::RoleAtomicGoal<Family>::keyword,
-                           quoted(view.get_predicate().get_name()),
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
         return fmt::format("@{} {} {}", runir::kr::dl::grammar::ast::RoleIntersection<Family>::keyword, view.get_lhs(), view.get_rhs());
@@ -186,12 +187,12 @@ std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyBoolea
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("@{} {} {}",
                            runir::kr::dl::grammar::ast::BooleanAtomicState<Family>::keyword,
-                           quoted(view.get_predicate().get_name()),
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
                            boolean(view.get_polarity()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("@{} {} {}",
                            runir::kr::dl::grammar::ast::BooleanAtomicGoal<Family>::keyword,
-                           quoted(view.get_predicate().get_name()),
+                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return fmt::format("@{} {}", runir::kr::dl::grammar::ast::BooleanNonempty<Family>::keyword, view.get_arg());

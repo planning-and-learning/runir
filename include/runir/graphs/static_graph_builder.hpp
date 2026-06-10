@@ -1,6 +1,7 @@
 #ifndef RUNIR_GRAPHS_STATIC_GRAPH_BUILDER_HPP_
 #define RUNIR_GRAPHS_STATIC_GRAPH_BUILDER_HPP_
 
+#include "runir/graphs/declarations.hpp"
 #include "runir/graphs/edge.hpp"
 #include "runir/graphs/property_map.hpp"
 #include "runir/graphs/vertex.hpp"
@@ -32,6 +33,8 @@ public:
 private:
     VertexList m_vertices;
     EdgeList m_edges;
+    std::vector<EdgeIndexList> m_out_edges;
+    std::vector<EdgeIndexList> m_in_edges;
     VertexPropertyMapType m_vertex_properties;
     EdgePropertyMapType m_edge_properties;
 
@@ -44,13 +47,54 @@ private:
     void assert_valid_vertex([[maybe_unused]] VertexIndex vertex) const noexcept { assert(vertex < m_vertices.size()); }
     void assert_valid_edge([[maybe_unused]] EdgeIndex edge) const noexcept { assert(edge < m_edges.size()); }
 
+    void rebind_parents() noexcept
+    {
+        for (auto& vertex : m_vertices)
+            vertex = VertexType(vertex.get_index(), vertex.get_property_index(), *this);
+
+        for (auto& edge : m_edges)
+            edge = EdgeType(edge.get_index(), edge.get_source(), edge.get_target(), edge.get_property_index(), *this);
+    }
+
 public:
     StaticGraphBuilder() = default;
+
+    StaticGraphBuilder(const StaticGraphBuilder&) = delete;
+
+    StaticGraphBuilder(StaticGraphBuilder&& other) :
+        m_vertices(std::move(other.m_vertices)),
+        m_edges(std::move(other.m_edges)),
+        m_out_edges(std::move(other.m_out_edges)),
+        m_in_edges(std::move(other.m_in_edges)),
+        m_vertex_properties(std::move(other.m_vertex_properties)),
+        m_edge_properties(std::move(other.m_edge_properties))
+    {
+        rebind_parents();
+    }
+
+    auto operator=(const StaticGraphBuilder&) -> StaticGraphBuilder& = delete;
+
+    auto operator=(StaticGraphBuilder&& other) -> StaticGraphBuilder&
+    {
+        if (this == &other)
+            return *this;
+
+        m_vertices = std::move(other.m_vertices);
+        m_edges = std::move(other.m_edges);
+        m_out_edges = std::move(other.m_out_edges);
+        m_in_edges = std::move(other.m_in_edges);
+        m_vertex_properties = std::move(other.m_vertex_properties);
+        m_edge_properties = std::move(other.m_edge_properties);
+        rebind_parents();
+        return *this;
+    }
 
     void clear() noexcept
     {
         m_vertices.clear();
         m_edges.clear();
+        m_out_edges.clear();
+        m_in_edges.clear();
         m_vertex_properties.clear();
         m_edge_properties.clear();
     }
@@ -62,6 +106,8 @@ public:
         const auto index = next_index(m_vertices.size());
         auto [property_index, _] = m_vertex_properties.get_or_create(ygg::Data<VertexProperty<VP>>(std::forward<P>(property)));
         m_vertices.emplace_back(index, property_index, *this);
+        m_out_edges.emplace_back();
+        m_in_edges.emplace_back();
         return index;
     }
 
@@ -84,6 +130,8 @@ public:
         const auto index = next_index(m_edges.size());
         auto [property_index, _] = m_edge_properties.get_or_create(ygg::Data<EdgeProperty<EP>>(std::forward<P>(property)));
         m_edges.emplace_back(index, source, target, property_index, *this);
+        m_out_edges[source].push_back(index);
+        m_in_edges[target].push_back(index);
         return index;
     }
 
@@ -144,35 +192,25 @@ public:
     auto get_out_edge_indices(VertexIndex vertex) const noexcept
     {
         assert_valid_vertex(vertex);
-        return get_edge_indices() | std::views::filter([this, vertex](EdgeIndex edge) { return get_source(edge) == vertex; });
+        return std::span<const EdgeIndex>(m_out_edges[vertex]);
     }
 
     auto get_in_edge_indices(VertexIndex vertex) const noexcept
     {
         assert_valid_vertex(vertex);
-        return get_edge_indices() | std::views::filter([this, vertex](EdgeIndex edge) { return get_target(edge) == vertex; });
+        return std::span<const EdgeIndex>(m_in_edges[vertex]);
     }
 
     auto get_out_degree(VertexIndex vertex) const noexcept -> Degree
     {
-        Degree result = 0;
-        for (auto edge : get_out_edge_indices(vertex))
-        {
-            static_cast<void>(edge);
-            ++result;
-        }
-        return result;
+        assert_valid_vertex(vertex);
+        return static_cast<Degree>(m_out_edges[vertex].size());
     }
 
     auto get_in_degree(VertexIndex vertex) const noexcept -> Degree
     {
-        Degree result = 0;
-        for (auto edge : get_in_edge_indices(vertex))
-        {
-            static_cast<void>(edge);
-            ++result;
-        }
-        return result;
+        assert_valid_vertex(vertex);
+        return static_cast<Degree>(m_in_edges[vertex].size());
     }
 
     auto get_out_edges(VertexIndex vertex) const noexcept

@@ -1,12 +1,13 @@
 #ifndef RUNIR_SEMANTICS_ROLE_VIEW_HPP_
 #define RUNIR_SEMANTICS_ROLE_VIEW_HPP_
 
+#include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/role_data.hpp"
 
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <tyr/formalism/predicate_view.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {

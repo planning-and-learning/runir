@@ -17,8 +17,8 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <yggdrasil/io/iostream.hpp>
 #include <vector>
+#include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::ps::base::format
 {
@@ -176,7 +176,7 @@ void append_rule(std::ostream& os, FeatureNames& names, ygg::View<ygg::Index<run
     {
         ygg::IndentScope scope(os);
         os << ygg::print_indent << runir::kr::ps::base::dl::format::symbol_section(view.get_symbol()) << "\n";
-        os << ygg::print_indent << fmt::format("(:description {})", runir::kr::ps::base::dl::format::quoted(view.get_description())) << "\n";
+        os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(view.get_description().str()))) << "\n";
         os << ygg::print_indent << "(:expression\n";
         {
             ygg::IndentScope expression_scope(os);
