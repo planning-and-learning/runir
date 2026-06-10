@@ -16,7 +16,7 @@ except ModuleNotFoundError as exc:
     LiftedTaskSearchContext = _pyrunir.datasets.LiftedTaskSearchContext
     dl_ext = _pyrunir.kr.dl.ext
     ext = _pyrunir.kr.ps.ext
-from pyyggdrasil import ExecutionContext
+from pyyggdrasil.execution import ExecutionContext
 from pytyr.formalism.planning import Parser, ParserOptions
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
@@ -60,7 +60,7 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     modules = ext.parse_modules(descriptions, planning_domain, repository)
 
     assert [module.get_name() for module in modules] == ["on", "on-table", "tower", "blocks"]
-    assert "(:module \"blocks\"" in str(modules[3])
+    assert "(:symbol blocks)" in str(modules[3])
     memory_transitions = modules[3].get_memory_transitions()
     assert len(memory_transitions) > 0
     first_transition = memory_transitions[0]

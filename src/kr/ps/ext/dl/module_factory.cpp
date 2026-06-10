@@ -32,8 +32,9 @@ std::string ModuleFactory::create_empty_description()
 {
     return R"(
 (:module
-  "empty"
+  (:symbol empty)
   (:arguments)
+  (:description "")
   (:registers)
   (:entry m0)
   (:memory m0)
@@ -80,8 +81,9 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
 (:program
   (:entry "root")
   (:module
-    "root"
+    (:symbol root)
     (:arguments)
+    (:description "")
     (:registers)
     (:entry m0)
     (:memory m0 m1)
@@ -131,8 +133,9 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
 {
     return R"(
 (:module
-  "on"
+  (:symbol on)
   (:arguments (:concept "X" 0) (:concept "Y" 1))
+  (:description "")
   (:registers
     (:concept (:symbol 0))
     (:concept (:symbol 1)))
@@ -303,8 +306,9 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
 {
     return R"(
 (:module
-  "on-table"
+  (:symbol on-table)
   (:arguments (:concept "X" 0))
+  (:description "")
   (:registers)
   (:entry m0)
   (:memory m0 m1 m2)
@@ -372,8 +376,9 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
 {
     return R"(
 (:module
-  "tower"
+  (:symbol tower)
   (:arguments (:role "O" 0) (:concept "X" 0))
+  (:description "")
   (:registers
     (:concept (:symbol 0)))
   (:entry m0)
@@ -430,8 +435,9 @@ std::string ModuleFactory::create_blocks_bonet_et_al_icaps2024_description()
 {
     return R"(
 (:module
-  "blocks"
+  (:symbol blocks)
   (:arguments (:role "O" 0))
+  (:description "")
   (:registers
     (:concept (:symbol 0)))
   (:entry m0)

@@ -766,8 +766,9 @@ TEST(RunirTests, ExtModuleFormatterEscapesQuotedStringContents)
 
     const auto description = R"RUNIR(
 (:module
-  "entry \" and slash \\"
+  (:symbol entry)
   (:arguments)
+  (:description "")
   (:registers)
   (:entry m0)
   (:memory m0)
@@ -781,7 +782,8 @@ TEST(RunirTests, ExtModuleFormatterEscapesQuotedStringContents)
 
     const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
     const auto formatted = fmt::format("{}", module);
-    EXPECT_NE(formatted.find(R"RUNIR((:module "entry \" and slash \\")RUNIR"), std::string::npos) << formatted;
+    EXPECT_NE(formatted.find("(:symbol entry)"), std::string::npos) << formatted;
+    EXPECT_NE(formatted.find("(:description \"\")"), std::string::npos) << formatted;
 
     const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), *repository);
     EXPECT_EQ(reparsed.get_name(), module.get_name());
@@ -1046,24 +1048,25 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
     EXPECT_EQ(empty.get_memory_states().size(), 1);
 
     const auto empty_description = kr::ps::ext::dl::ModuleFactory::create_empty_description();
-    EXPECT_NE(empty_description.find("(:module\n  \"empty\""), std::string::npos);
+    EXPECT_NE(empty_description.find("(:module\n  (:symbol empty)\n  (:arguments)\n  (:description \"\")"), std::string::npos);
 
     const auto on_description = kr::ps::ext::dl::ModuleFactory::create_description(kr::ps::ext::dl::ModuleSpecification::ON_BONET_ET_AL_ICAPS2024);
-    EXPECT_NE(on_description.find("(:module\n  \"on\""), std::string::npos);
+    EXPECT_NE(on_description.find("(:module\n  (:symbol on)\n  (:arguments (:concept \"X\" 0) (:concept \"Y\" 1))\n  (:description \"\")"), std::string::npos);
     EXPECT_NE(on_description.find("(:action \"stack\")"), std::string::npos);
     EXPECT_NE(on_description.find("(c_argument 0)"), std::string::npos);
 
     const auto on_table_description = kr::ps::ext::dl::ModuleFactory::create_on_table_bonet_et_al_icaps2024_description();
-    EXPECT_NE(on_table_description.find("(:module\n  \"on-table\""), std::string::npos);
+    EXPECT_NE(on_table_description.find("(:module\n  (:symbol on-table)\n  (:arguments (:concept \"X\" 0))\n  (:description \"\")"), std::string::npos);
     EXPECT_NE(on_table_description.find("(:action \"putdown\")"), std::string::npos);
 
     const auto tower_description = kr::ps::ext::dl::ModuleFactory::create_tower_bonet_et_al_icaps2024_description();
-    EXPECT_NE(tower_description.find("(:module\n  \"tower\""), std::string::npos);
+    EXPECT_NE(tower_description.find("(:module\n  (:symbol tower)\n  (:arguments (:role \"O\" 0) (:concept \"X\" 0))\n  (:description \"\")"),
+              std::string::npos);
     EXPECT_NE(tower_description.find("(:callee \"on\")"), std::string::npos);
     EXPECT_NE(tower_description.find("(r_argument 0)"), std::string::npos);
 
     const auto blocks_description = kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024_description();
-    EXPECT_NE(blocks_description.find("(:module\n  \"blocks\""), std::string::npos);
+    EXPECT_NE(blocks_description.find("(:module\n  (:symbol blocks)\n  (:arguments (:role \"O\" 0))\n  (:description \"\")"), std::string::npos);
     EXPECT_NE(blocks_description.find("(:callee \"tower\")"), std::string::npos);
 
     const auto on = kr::ps::ext::dl::ModuleFactory::create_on_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), *repository);
@@ -1204,7 +1207,7 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     const auto module = repository->get_or_create(module_data).first;
 
     const auto formatted = fmt::format("{}", module);
-    EXPECT_NE(formatted.find("(:module \"module\""), std::string::npos) << formatted;
+    EXPECT_NE(formatted.find("(:symbol module)"), std::string::npos) << formatted;
     EXPECT_NE(formatted.find("(:load"), std::string::npos);
     EXPECT_NE(formatted.find("(:expression"), std::string::npos);
     EXPECT_NE(formatted.find("(:register 0)"), std::string::npos) << formatted;

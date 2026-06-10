@@ -4,11 +4,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml" RUNIR_PROJECT_VERSION_LINE REGEX "^version[ \t]*=" LIMIT_COUNT 1)
-if(NOT RUNIR_PROJECT_VERSION_LINE)
-    message(FATAL_ERROR "Could not read project version from pyproject.toml")
-endif()
-string(REGEX REPLACE "^version[ \t]*=[ \t]*\"([^\"]+)\".*$" "\\1" RUNIR_PROJECT_VERSION "${RUNIR_PROJECT_VERSION_LINE}")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/read_project_version.cmake")
+runir_read_project_version(RUNIR_PROJECT_VERSION "${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml")
 
 project(runir VERSION "${RUNIR_PROJECT_VERSION}" LANGUAGES CXX)
 
@@ -37,9 +34,9 @@ message("Build shared libraries enabled.")
 
 option(RUNIR_ENABLE_FMT_FORMATTERS "Enable Runir's public fmt::formatter specializations." ON)
 if(RUNIR_ENABLE_FMT_FORMATTERS)
-    add_compile_definitions(RUNIR_ENABLE_FMT_FORMATTERS=1)
+    add_compile_definitions(RUNIR_ENABLE_FMT_FORMATTERS=1 TYR_ENABLE_FMT_FORMATTERS=1 LOKI_ENABLE_FMT_FORMATTERS=1 YGG_ENABLE_FMT_FORMATTERS=1)
 else()
-    add_compile_definitions(RUNIR_ENABLE_FMT_FORMATTERS=0)
+    add_compile_definitions(RUNIR_ENABLE_FMT_FORMATTERS=0 TYR_ENABLE_FMT_FORMATTERS=0 LOKI_ENABLE_FMT_FORMATTERS=0 YGG_ENABLE_FMT_FORMATTERS=0)
 endif()
 
 option(RUNIR_HEADER_INSTANTIATION "Enable template definitions in public headers at higher compile time costs." OFF)
@@ -51,12 +48,15 @@ option(RUNIR_BUILD_EXECUTABLES "Build runir executables." OFF)
 option(RUNIR_BUILD_PYRUNIR "Build pyrunir Python bindings." OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-include("configure_yggdrasil")
-include("configure_pypddl")
-include("configure_tyr")
-configure_yggdrasil()
-configure_pypddl()
-configure_tyr()
+include("find_python_native_packages")
+runir_find_python_native_prefix(pyyggdrasil YGGDRASIL_NATIVE_PREFIX)
+runir_find_python_native_prefix(pypddl PYPDDL_NATIVE_PREFIX)
+runir_find_python_native_prefix(pytyr TYR_NATIVE_PREFIX)
+
+find_package(yggdrasil 0.0.14 CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+if(yggdrasil_FOUND)
+    message(STATUS "Found yggdrasil: ${yggdrasil_DIR} (found version ${yggdrasil_VERSION})")
+endif()
 
 find_package(fmt CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 if(fmt_FOUND)
@@ -69,7 +69,7 @@ if(TBB_FOUND)
     message(STATUS "Found TBB: ${TBB_DIR} (found version ${TBB_VERSION})")
 endif()
 
-find_package(tyr 0.0.21 CONFIG REQUIRED COMPONENTS core PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+find_package(tyr 0.0.22 CONFIG REQUIRED COMPONENTS core PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 if(tyr_FOUND)
     message(STATUS "Found tyr: ${tyr_DIR} (found version ${tyr_VERSION})")
 endif()
@@ -108,7 +108,7 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/runirConfigVersion.cmake"
     VERSION ${runir_VERSION}
-    COMPATIBILITY ExactVersion
+    COMPATIBILITY SameMinorVersion
 )
 
 configure_package_config_file("${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in"

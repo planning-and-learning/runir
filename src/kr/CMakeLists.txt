@@ -33,6 +33,7 @@ target_include_directories(kr
 
 target_link_libraries(kr
     PUBLIC
+        yggdrasil::yggdrasil
         fmt::fmt-header-only
         tyr::core
 )

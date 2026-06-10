@@ -16,6 +16,7 @@ target_include_directories(graphs
 
 target_link_libraries(graphs
     PUBLIC
+        yggdrasil::yggdrasil
         tyr::core
 )
 

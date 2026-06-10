@@ -17,6 +17,7 @@ target_include_directories(datasets
 
 target_link_libraries(datasets
     PUBLIC
+        yggdrasil::yggdrasil
         fmt::fmt-header-only
         runir::graphs
         tyr::core

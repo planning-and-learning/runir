@@ -342,9 +342,10 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
     auto names = collect_features(view);
     auto os = std::ostringstream {};
 
-    os << fmt::format("(:module {}\n", fmt::format("{:?}", std::string(view.get_name().str())));
+    os << "(:module\n";
     {
         ygg::IndentScope scope(os);
+        os << ygg::print_indent << symbol_section(view.get_name()) << "\n";
         os << ygg::print_indent << "(:arguments\n";
         {
             ygg::IndentScope argument_scope(os);
@@ -358,6 +359,7 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
                 os << ygg::print_indent << argument(arg) << "\n";
         }
         os << ygg::print_indent << ")\n";
+        os << ygg::print_indent << "(:description \"\")\n";
 
         os << ygg::print_indent << "(:registers\n";
         {

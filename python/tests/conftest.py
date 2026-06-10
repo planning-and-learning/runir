@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from pyrunir.datasets import GroundTaskSearchContext
-from pyyggdrasil import ExecutionContext
+from pyyggdrasil.execution import ExecutionContext
 from pytyr.formalism.planning import Parser, ParserOptions
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 

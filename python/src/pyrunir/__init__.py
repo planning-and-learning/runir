@@ -1,3 +1,4 @@
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 # Load public native dependency packages before this package loads native extensions.
@@ -12,6 +13,25 @@ from . import (
 )
 
 
+def _source_version() -> str:
+    for parent in Path(__file__).resolve().parents:
+        pyproject = parent / "pyproject.toml"
+        if not pyproject.exists():
+            continue
+
+        for line in pyproject.read_text(encoding="utf-8").splitlines():
+            if line.startswith("version"):
+                return line.split("=", maxsplit=1)[1].strip().strip("\"")
+
+    return "0.0.0"
+
+
+try:
+    __version__ = version("pyrunir")
+except PackageNotFoundError:
+    __version__ = _source_version()
+
+
 def native_prefix() -> Path:
     package_dir = Path(__file__).resolve().parent
     native_dir = package_dir / "native"
@@ -21,3 +41,22 @@ def native_prefix() -> Path:
         if (parent / "include" / "runir").is_dir():
             return parent
     return native_dir
+
+
+def cmake_prefix() -> Path:
+    """Return the prefix to put on CMAKE_PREFIX_PATH to find runir via find_package."""
+    return native_prefix()
+
+
+def cmake_dir() -> Path:
+    """Return the directory containing runirConfig.cmake."""
+    prefix = native_prefix()
+    for lib_dir_name in ("lib", "lib64"):
+        candidate = prefix / lib_dir_name / "cmake" / "runir"
+        if (candidate / "runirConfig.cmake").is_file():
+            return candidate
+
+    raise FileNotFoundError(
+        f"runirConfig.cmake not found under {prefix}; "
+        "the installed pyrunir is too old or incomplete."
+    )

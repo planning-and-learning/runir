@@ -737,6 +737,8 @@ ast::MemoryTransition parse_transition(const Node& node)
 
 struct ModuleSectionPresence
 {
+    bool symbol = false;
+    bool description = false;
     bool arguments = false;
     bool registers = false;
     bool entry = false;
@@ -755,7 +757,20 @@ void require_new_section(bool& seen, std::string_view name, std::size_t offset)
 void parse_module_section(ast::Module& result, const Node& section, ModuleSectionPresence& presence)
 {
     const auto name = head(section, "module section");
-    if (name == ":arguments")
+    if (name == ":symbol")
+    {
+        require_new_section(presence.symbol, name, section.source_offset);
+        result.name = parse_symbol_section_value(section, ":symbol");
+        result.source_offset = symbol_section_value_offset(section);
+    }
+    else if (name == ":description")
+    {
+        require_new_section(presence.description, name, section.source_offset);
+        if (section.children.size() != 2)
+            fail_at("Malformed metadata section :description.", section.source_offset);
+        static_cast<void>(atom(section.children[1], ":description"));
+    }
+    else if (name == ":arguments")
     {
         require_new_section(presence.arguments, name, section.source_offset);
         for (std::size_t i = 1; i < section.children.size(); ++i)
@@ -814,11 +829,18 @@ ast::Module parse_module_node(const Node& root)
 
     auto result = ast::Module {};
     result.source_offset = root.source_offset;
-    result.name = atom(root.children[1], "module name");
     auto presence = ModuleSectionPresence {};
-    for (std::size_t i = 2; i < root.children.size(); ++i)
+    auto first_section = std::size_t { 1 };
+    if (!root.children[1].list)
+    {
+        result.name = atom(root.children[1], "module name");
+        first_section = 2;
+    }
+    for (std::size_t i = first_section; i < root.children.size(); ++i)
         parse_module_section(result, root.children[i], presence);
 
+    if (result.name.empty())
+        fail_at("Module is missing section :symbol.", root.source_offset);
     require_module_section(presence.arguments, ":arguments", root.source_offset);
     require_module_section(presence.registers, ":registers", root.source_offset);
     require_module_section(presence.entry, ":entry", root.source_offset);

@@ -1,6 +1,7 @@
 #ifndef RUNIR_DATASETS_FORMATTER_HPP_
 #define RUNIR_DATASETS_FORMATTER_HPP_
 
+#include "runir/config.hpp"
 #include "runir/datasets/equivalence_graph.hpp"
 #include "runir/datasets/object_graph.hpp"
 #include "runir/datasets/state_graph.hpp"
@@ -14,6 +15,7 @@
 #include <tyr/formalism/planning/formatter.hpp>
 #include <variant>
 
+#if RUNIR_ENABLE_FMT_FORMATTERS
 namespace fmt
 {
 
@@ -150,5 +152,6 @@ struct formatter<runir::datasets::EquivalenceEdgeLabel, char> : formatter<std::s
 };
 
 }  // namespace fmt
+#endif
 
 #endif

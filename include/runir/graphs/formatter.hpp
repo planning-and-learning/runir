@@ -1,6 +1,7 @@
 #ifndef RUNIR_GRAPHS_FORMATTER_HPP_
 #define RUNIR_GRAPHS_FORMATTER_HPP_
 
+#include "runir/config.hpp"
 #include "runir/formatter.hpp"
 #include "runir/graphs/algorithms/color_refinement.hpp"
 #include "runir/graphs/algorithms/weisfeiler_leman.hpp"
@@ -74,6 +75,7 @@ auto dot(const G& graph, std::string_view name = "G") -> std::string
 
 }  // namespace runir::graphs::format
 
+#if RUNIR_ENABLE_FMT_FORMATTERS
 namespace fmt
 {
 
@@ -166,5 +168,6 @@ struct formatter<runir::graphs::weisfeiler_leman::Certificate<K>, char>
 };
 
 }  // namespace fmt
+#endif
 
 #endif
