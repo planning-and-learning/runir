@@ -12,6 +12,7 @@ void bind_module_definitions(nb::module_& m)
     bind_module_program_executor(m);
     bind_module_factory(m);
     bind_parser(m);
+    bind_structural_termination(m);
 }
 
 }  // namespace runir::kr::ps::ext

@@ -36,6 +36,7 @@ nanobind_add_module(_pyrunir
     pyrunir/kr/ps/base/dl/module.cpp
     pyrunir/kr/ps/base/dl/parser.cpp
     pyrunir/kr/ps/base/dl/sketch_factory.cpp
+    pyrunir/kr/ps/base/dl/structural_termination.cpp
     pyrunir/kr/ps/base/dl/views.cpp
     pyrunir/kr/ps/base/indices.cpp
     pyrunir/kr/ps/module.cpp
@@ -48,6 +49,7 @@ nanobind_add_module(_pyrunir
     pyrunir/kr/ps/ext/module.cpp
     pyrunir/kr/ps/ext/module_factory.cpp
     pyrunir/kr/ps/ext/parser.cpp
+    pyrunir/kr/ps/ext/structural_termination.cpp
     pyrunir/kr/ps/ext/repository.cpp
     pyrunir/kr/ps/ext/module_program_executor.cpp
     pyrunir/kr/ps/ext/views.cpp
