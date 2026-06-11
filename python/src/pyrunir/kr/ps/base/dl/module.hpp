@@ -14,6 +14,7 @@ void bind_views(nb::module_& m);
 void bind_evaluation_contexts(nb::module_& m);
 void bind_parser(nb::module_& m);
 void bind_sketch_factory(nb::module_& m);
+void bind_structural_termination(nb::module_& m);
 
 }  // namespace runir::kr::ps::base::dl
 

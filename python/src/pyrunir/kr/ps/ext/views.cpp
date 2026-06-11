@@ -80,6 +80,9 @@ void bind_views(nb::module_& m)
     bind_view<Argument<runir::kr::dl::RoleTag>>(m, "RoleArgument");
     bind_view<Argument<runir::kr::dl::BooleanTag>>(m, "BooleanArgument");
     bind_view<Argument<runir::kr::dl::NumericalTag>>(m, "NumericalArgument");
+    bind_view<Feature<runir::kr::dl::ConceptTag>>(m, "ConceptFeature");
+    bind_view<Feature<runir::kr::ps::dl::BooleanFeature>>(m, "BooleanFeature");
+    bind_view<Feature<runir::kr::ps::dl::NumericalFeature>>(m, "NumericalFeature");
     bind_view<Register>(m, "Register");
     bind_view<MemoryState>(m, "MemoryState");
     bind_view<MemoryTransition>(m, "MemoryTransition");

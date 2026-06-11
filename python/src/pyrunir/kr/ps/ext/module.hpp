@@ -16,6 +16,7 @@ void bind_repository(nb::module_& m);
 void bind_module_program_executor(nb::module_& m);
 void bind_module_factory(nb::module_& m);
 void bind_parser(nb::module_& m);
+void bind_structural_termination(nb::module_& m);
 
 }  // namespace runir::kr::ps::ext
 
