@@ -109,31 +109,6 @@ struct PolicyGraphEdgeLabel
     auto identifying_members() const noexcept { return std::tie(rule); }
 };
 
-}  // namespace runir::kr::ps::base::dl
-
-namespace ygg
-{
-
-// Qualified hashing: the generic identifying_members path is ambiguous for
-// tuples containing boost::dynamic_bitset (ADL also finds
-// boost::hash_combine).
-template<>
-struct Hash<runir::kr::ps::base::dl::PolicyGraphVertexLabel>
-{
-    size_t operator()(const runir::kr::ps::base::dl::PolicyGraphVertexLabel& label) const noexcept
-    {
-        auto seed = size_t { 0 };
-        ygg::hash_combine(seed, label.boolean_values);
-        ygg::hash_combine(seed, label.numerical_values);
-        return seed;
-    }
-};
-
-}  // namespace ygg
-
-namespace runir::kr::ps::base::dl
-{
-
 using PolicyGraphBuilder = graphs::StaticGraphBuilder<PolicyGraphVertexLabel, PolicyGraphEdgeLabel>;
 using PolicyGraph = graphs::StaticGraph<PolicyGraphVertexLabel, PolicyGraphEdgeLabel>;
 
