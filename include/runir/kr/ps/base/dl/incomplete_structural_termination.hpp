@@ -6,7 +6,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <cstddef>
-#include <optional>
+#include <variant>
 #include <vector>
 
 #if RUNIR_ENABLE_FMT_FORMATTERS
@@ -53,13 +53,15 @@ enum class IncompleteStructuralTerminationStatus
     UNKNOWN,
 };
 
+using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>, Repository>;
+using NumericalFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>, Repository>;
+
 /// Why one elimination attempt for a surviving rule is blocked.
 struct IncompleteBlockingReason
 {
-    /// Position into the result's boolean (numerical) feature list; exactly
-    /// one of the two is set.
-    std::optional<std::size_t> boolean_position;
-    std::optional<std::size_t> numerical_position;
+    /// The feature whose decrease (numerical) or flip (Boolean) the rule
+    /// performs.
+    std::variant<BooleanFeatureView, NumericalFeatureView> feature;
     /// The remaining rules that oppose the change and survive R3's
     /// marked-complementary-condition check.
     std::vector<RuleView> opposing_rules;
@@ -235,8 +237,7 @@ inline IncompleteStructuralTerminationResult incomplete_structural_termination(S
         {
             if (!changes[rule_position].numerical_decreases.test(position))
                 continue;
-            auto reason = IncompleteBlockingReason {};
-            reason.numerical_position = position;
+            auto reason = IncompleteBlockingReason { NumericalFeatureView(features.numericals[position], sketch.get_context()), {} };
             for (auto other : opposing_rules(rule_position, false, position, false))
                 reason.opposing_rules.push_back(rules[other]);
             surviving.blocking_reasons.push_back(std::move(reason));
@@ -247,8 +248,7 @@ inline IncompleteStructuralTerminationResult incomplete_structural_termination(S
             const auto to_false = changes[rule_position].boolean_to_false.test(position);
             if (!to_true && !to_false)
                 continue;
-            auto reason = IncompleteBlockingReason {};
-            reason.boolean_position = position;
+            auto reason = IncompleteBlockingReason { BooleanFeatureView(features.booleans[position], sketch.get_context()), {} };
             for (auto other : opposing_rules(rule_position, true, position, to_true))
                 reason.opposing_rules.push_back(rules[other]);
             surviving.blocking_reasons.push_back(std::move(reason));
