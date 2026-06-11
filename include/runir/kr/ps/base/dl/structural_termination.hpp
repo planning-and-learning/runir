@@ -12,19 +12,24 @@
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
+#include "runir/kr/ps/dl/structural_termination.hpp"
 
 #include <algorithm>
-#include <cstdint>
+#include <boost/dynamic_bitset.hpp>
+#include <cstddef>
 #include <limits>
 #include <memory>
 #include <stdexcept>
 #include <vector>
+#include <yggdrasil/containers/dynamic_bitset.hpp>
+#include <yggdrasil/containers/dynamic_bitset_hash.hpp>
 #include <yggdrasil/core/types.hpp>
 
 #if RUNIR_ENABLE_FMT_FORMATTERS
 #include <fmt/format.h>
 #include <string>
 #include <string_view>
+#include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 #endif
 
 namespace runir::kr::ps::base::dl
@@ -69,47 +74,65 @@ enum class StructuralTerminationStatus
     NON_TERMINATING,
 };
 
-/// Qualitative change of one numerical feature along a policy graph edge.
-enum class NumericalChange : std::uint8_t
-{
-    UNCONSTRAINED = 0,
-    INCREASES = 1,
-    DECREASES = 2,
-    UNCHANGED = 3,
-};
+using NumericalChange = runir::kr::ps::dl::NumericalChange;
 
 /// Feature valuation; bit i corresponds to position i in the result's
 /// boolean (resp. numerical) feature list. A numerical bit encodes n > 0.
 struct PolicyGraphVertexLabel
 {
-    std::uint32_t boolean_values;
-    std::uint32_t numerical_values;
+    boost::dynamic_bitset<> boolean_values;
+    boost::dynamic_bitset<> numerical_values;
 
-    PolicyGraphVertexLabel(std::uint32_t boolean_values_, std::uint32_t numerical_values_) noexcept :
-        boolean_values(boolean_values_),
-        numerical_values(numerical_values_)
+    PolicyGraphVertexLabel(boost::dynamic_bitset<> boolean_values_, boost::dynamic_bitset<> numerical_values_) noexcept :
+        boolean_values(std::move(boolean_values_)),
+        numerical_values(std::move(numerical_values_))
     {
     }
 
     auto identifying_members() const noexcept { return std::tie(boolean_values, numerical_values); }
 };
 
-/// Rule labeling an edge together with the qualitative numerical changes
-/// (2 bits per numerical feature, NumericalChange encoded).
+/// Rule labeling an edge together with its qualitative numerical changes,
+/// aligned with the result's numerical feature list.
 struct PolicyGraphEdgeLabel
 {
     RuleView rule;
-    std::uint64_t numerical_changes;
+    std::vector<NumericalChange> numerical_changes;
 
-    PolicyGraphEdgeLabel(RuleView rule_, std::uint64_t numerical_changes_) noexcept : rule(rule_), numerical_changes(numerical_changes_) {}
-
-    NumericalChange get_numerical_change(std::size_t position) const noexcept
+    PolicyGraphEdgeLabel(RuleView rule_, std::vector<NumericalChange> numerical_changes_) noexcept :
+        rule(rule_),
+        numerical_changes(std::move(numerical_changes_))
     {
-        return static_cast<NumericalChange>((numerical_changes >> (2 * position)) & std::uint64_t { 3 });
     }
 
-    auto identifying_members() const noexcept { return std::tie(rule, numerical_changes); }
+    // The changes are determined by the rule.
+    auto identifying_members() const noexcept { return std::tie(rule); }
 };
+
+}  // namespace runir::kr::ps::base::dl
+
+namespace ygg
+{
+
+// Qualified hashing: the generic identifying_members path is ambiguous for
+// tuples containing boost::dynamic_bitset (ADL also finds
+// boost::hash_combine).
+template<>
+struct Hash<runir::kr::ps::base::dl::PolicyGraphVertexLabel>
+{
+    size_t operator()(const runir::kr::ps::base::dl::PolicyGraphVertexLabel& label) const noexcept
+    {
+        auto seed = size_t { 0 };
+        ygg::hash_combine(seed, label.boolean_values);
+        ygg::hash_combine(seed, label.numerical_values);
+        return seed;
+    }
+};
+
+}  // namespace ygg
+
+namespace runir::kr::ps::base::dl
+{
 
 using PolicyGraphBuilder = graphs::StaticGraphBuilder<PolicyGraphVertexLabel, PolicyGraphEdgeLabel>;
 using PolicyGraph = graphs::StaticGraph<PolicyGraphVertexLabel, PolicyGraphEdgeLabel>;
@@ -131,15 +154,27 @@ namespace detail
 struct RuleProfile
 {
     // Conditions over the source valuation.
-    std::uint32_t boolean_positive_conditions = 0;
-    std::uint32_t boolean_negative_conditions = 0;
-    std::uint32_t numerical_greater_conditions = 0;
-    std::uint32_t numerical_zero_conditions = 0;
+    boost::dynamic_bitset<> boolean_positive_conditions;
+    boost::dynamic_bitset<> boolean_negative_conditions;
+    boost::dynamic_bitset<> numerical_greater_conditions;
+    boost::dynamic_bitset<> numerical_zero_conditions;
     // Effects.
-    std::uint32_t boolean_positive_effects = 0;
-    std::uint32_t boolean_negative_effects = 0;
-    std::uint32_t boolean_unchanged_effects = 0;
-    std::uint64_t numerical_changes = 0;  // 2 bits per numerical position (NumericalChange).
+    boost::dynamic_bitset<> boolean_positive_effects;
+    boost::dynamic_bitset<> boolean_negative_effects;
+    boost::dynamic_bitset<> boolean_unchanged_effects;
+    std::vector<NumericalChange> numerical_changes;
+
+    RuleProfile(std::size_t num_booleans, std::size_t num_numericals) :
+        boolean_positive_conditions(num_booleans),
+        boolean_negative_conditions(num_booleans),
+        numerical_greater_conditions(num_numericals),
+        numerical_zero_conditions(num_numericals),
+        boolean_positive_effects(num_booleans),
+        boolean_negative_effects(num_booleans),
+        boolean_unchanged_effects(num_booleans),
+        numerical_changes(num_numericals, NumericalChange::UNCONSTRAINED)
+    {
+    }
 };
 
 template<typename FeatureTag>
@@ -158,19 +193,19 @@ void record_condition(const FeatureSyntacticComplexityContext& features,
     namespace psdl = runir::kr::ps::dl;
     if constexpr (std::same_as<FeatureTag, psdl::BooleanFeature>)
     {
-        const auto bit = std::uint32_t { 1 } << feature_position(features.booleans, condition.get_feature().get_index());
+        const auto position = feature_position(features.booleans, condition.get_feature().get_index());
         if constexpr (std::same_as<ObservationTag, psdl::Positive>)
-            profile.boolean_positive_conditions |= bit;
+            profile.boolean_positive_conditions.set(position);
         else if constexpr (std::same_as<ObservationTag, psdl::Negative>)
-            profile.boolean_negative_conditions |= bit;
+            profile.boolean_negative_conditions.set(position);
     }
     else if constexpr (std::same_as<FeatureTag, psdl::NumericalFeature>)
     {
-        const auto bit = std::uint32_t { 1 } << feature_position(features.numericals, condition.get_feature().get_index());
+        const auto position = feature_position(features.numericals, condition.get_feature().get_index());
         if constexpr (std::same_as<ObservationTag, psdl::GreaterZero>)
-            profile.numerical_greater_conditions |= bit;
+            profile.numerical_greater_conditions.set(position);
         else if constexpr (std::same_as<ObservationTag, psdl::EqualZero>)
-            profile.numerical_zero_conditions |= bit;
+            profile.numerical_zero_conditions.set(position);
     }
 }
 
@@ -183,31 +218,29 @@ void record_effect(const FeatureSyntacticComplexityContext& features,
     namespace psdl = runir::kr::ps::dl;
     if constexpr (std::same_as<FeatureTag, psdl::BooleanFeature>)
     {
-        const auto bit = std::uint32_t { 1 } << feature_position(features.booleans, effect.get_feature().get_index());
+        const auto position = feature_position(features.booleans, effect.get_feature().get_index());
         if constexpr (std::same_as<ObservationTag, psdl::Positive>)
-            profile.boolean_positive_effects |= bit;
+            profile.boolean_positive_effects.set(position);
         else if constexpr (std::same_as<ObservationTag, psdl::Negative>)
-            profile.boolean_negative_effects |= bit;
+            profile.boolean_negative_effects.set(position);
         else if constexpr (std::same_as<ObservationTag, psdl::Unchanged>)
-            profile.boolean_unchanged_effects |= bit;
+            profile.boolean_unchanged_effects.set(position);
     }
     else if constexpr (std::same_as<FeatureTag, psdl::NumericalFeature>)
     {
         const auto position = feature_position(features.numericals, effect.get_feature().get_index());
-        auto change = NumericalChange::UNCONSTRAINED;
         if constexpr (std::same_as<ObservationTag, psdl::Increases>)
-            change = NumericalChange::INCREASES;
+            profile.numerical_changes[position] = NumericalChange::INCREASES;
         else if constexpr (std::same_as<ObservationTag, psdl::Decreases>)
-            change = NumericalChange::DECREASES;
+            profile.numerical_changes[position] = NumericalChange::DECREASES;
         else if constexpr (std::same_as<ObservationTag, psdl::Unchanged>)
-            change = NumericalChange::UNCHANGED;
-        profile.numerical_changes |= static_cast<std::uint64_t>(change) << (2 * position);
+            profile.numerical_changes[position] = NumericalChange::UNCHANGED;
     }
 }
 
 inline RuleProfile make_rule_profile(const FeatureSyntacticComplexityContext& features, RuleView rule)
 {
-    auto profile = RuleProfile {};
+    auto profile = RuleProfile(features.booleans.size(), features.numericals.size());
     for (auto condition : rule.get_conditions())
         ygg::visit([&](auto concrete_variant)
                    { ygg::visit([&](auto concrete) { record_condition(features, profile, concrete); }, concrete_variant.get_variant()); },
@@ -221,69 +254,93 @@ inline RuleProfile make_rule_profile(const FeatureSyntacticComplexityContext& fe
 
 struct PolicyEdge
 {
-    std::uint32_t source;
-    std::uint32_t target;
-    std::uint32_t rule_position;
-    std::uint64_t numerical_changes;
+    std::size_t source;
+    std::size_t target;
+    std::size_t rule_position;
     bool alive = true;
 };
 
-/// Enumerate the policy graph edges of one rule. Valuations pack Boolean
-/// bits in the low `num_booleans` bits and numerical (n > 0) bits above.
+/// Vertex ids encode the valuation: Boolean feature i at bit i, numerical
+/// feature j at bit num_booleans + j.
+inline boost::dynamic_bitset<> vertex_booleans(std::size_t vertex, std::size_t num_booleans)
+{
+    auto values = boost::dynamic_bitset<>(num_booleans);
+    for (std::size_t position = 0; position < num_booleans; ++position)
+        values.set(position, (vertex >> position) & std::size_t { 1 });
+    return values;
+}
+
+inline boost::dynamic_bitset<> vertex_numericals(std::size_t vertex, std::size_t num_booleans, std::size_t num_numericals)
+{
+    auto values = boost::dynamic_bitset<>(num_numericals);
+    for (std::size_t position = 0; position < num_numericals; ++position)
+        values.set(position, (vertex >> (num_booleans + position)) & std::size_t { 1 });
+    return values;
+}
+
+inline std::size_t make_vertex(const boost::dynamic_bitset<>& booleans, const boost::dynamic_bitset<>& numericals)
+{
+    auto vertex = std::size_t { 0 };
+    for (std::size_t position = 0; position < booleans.size(); ++position)
+        if (booleans.test(position))
+            vertex |= std::size_t { 1 } << position;
+    for (std::size_t position = 0; position < numericals.size(); ++position)
+        if (numericals.test(position))
+            vertex |= std::size_t { 1 } << (booleans.size() + position);
+    return vertex;
+}
+
+/// Enumerate the policy graph edges of one rule by calling back with
+/// (source vertex, target vertex).
 template<typename Callback>
 void enumerate_rule_edges(const RuleProfile& profile, std::size_t num_booleans, std::size_t num_numericals, Callback&& callback)
 {
-    const auto num_features = num_booleans + num_numericals;
-    const auto num_valuations = std::uint64_t { 1 } << num_features;
+    const auto num_valuations = std::size_t { 1 } << (num_booleans + num_numericals);
 
-    for (std::uint64_t source = 0; source < num_valuations; ++source)
+    for (std::size_t source = 0; source < num_valuations; ++source)
     {
-        const auto source_booleans = static_cast<std::uint32_t>(source) & ((std::uint32_t { 1 } << num_booleans) - 1);
-        const auto source_numericals = static_cast<std::uint32_t>(source >> num_booleans);
+        const auto source_booleans = vertex_booleans(source, num_booleans);
+        const auto source_numericals = vertex_numericals(source, num_booleans, num_numericals);
 
         // Conditions.
-        if ((source_booleans & profile.boolean_positive_conditions) != profile.boolean_positive_conditions)
+        if (!profile.boolean_positive_conditions.is_subset_of(source_booleans))
             continue;
-        if ((~source_booleans & profile.boolean_negative_conditions) != profile.boolean_negative_conditions)
+        if (profile.boolean_negative_conditions.intersects(source_booleans))
             continue;
-        if ((source_numericals & profile.numerical_greater_conditions) != profile.numerical_greater_conditions)
+        if (!profile.numerical_greater_conditions.is_subset_of(source_numericals))
             continue;
-        if ((~source_numericals & profile.numerical_zero_conditions) != profile.numerical_zero_conditions)
+        if (profile.numerical_zero_conditions.intersects(source_numericals))
             continue;
 
-        // Effects: compute forced target bits and the set of free positions.
-        auto forced_booleans = std::uint32_t { 0 };
-        auto fixed_boolean_mask = std::uint32_t { 0 };
-        forced_booleans |= profile.boolean_positive_effects;
-        fixed_boolean_mask |= profile.boolean_positive_effects | profile.boolean_negative_effects | profile.boolean_unchanged_effects;
-        forced_booleans |= profile.boolean_unchanged_effects & source_booleans;
+        // Effects: compute forced target values and the free positions.
+        auto target_booleans = profile.boolean_positive_effects | (profile.boolean_unchanged_effects & source_booleans);
+        const auto fixed_booleans = profile.boolean_positive_effects | profile.boolean_negative_effects | profile.boolean_unchanged_effects;
 
-        auto forced_numericals = std::uint32_t { 0 };
-        auto fixed_numerical_mask = std::uint32_t { 0 };
+        auto target_numericals = boost::dynamic_bitset<>(num_numericals);
+        auto fixed_numericals = boost::dynamic_bitset<>(num_numericals);
         auto decreases_unsatisfiable = false;
         for (std::size_t position = 0; position < num_numericals; ++position)
         {
-            const auto bit = std::uint32_t { 1 } << position;
-            switch (static_cast<NumericalChange>((profile.numerical_changes >> (2 * position)) & std::uint64_t { 3 }))
+            switch (profile.numerical_changes[position])
             {
                 case NumericalChange::INCREASES:
                 {
                     // n' > n >= 0 implies n' > 0.
-                    forced_numericals |= bit;
-                    fixed_numerical_mask |= bit;
+                    target_numericals.set(position);
+                    fixed_numericals.set(position);
                     break;
                 }
                 case NumericalChange::DECREASES:
                 {
                     // n' < n requires n > 0 in the source; the target bit is free.
-                    if (!(source_numericals & bit))
+                    if (!source_numericals.test(position))
                         decreases_unsatisfiable = true;
                     break;
                 }
                 case NumericalChange::UNCHANGED:
                 {
-                    forced_numericals |= source_numericals & bit;
-                    fixed_numerical_mask |= bit;
+                    target_numericals.set(position, source_numericals.test(position));
+                    fixed_numericals.set(position);
                     break;
                 }
                 case NumericalChange::UNCONSTRAINED: break;
@@ -292,28 +349,24 @@ void enumerate_rule_edges(const RuleProfile& profile, std::size_t num_booleans, 
         if (decreases_unsatisfiable)
             continue;
 
-        const auto free_boolean_mask = ~fixed_boolean_mask & ((num_booleans ? (std::uint32_t { 1 } << num_booleans) : 1u) - 1);
-        const auto free_numerical_mask = ~fixed_numerical_mask & ((num_numericals ? (std::uint32_t { 1 } << num_numericals) : 1u) - 1);
+        auto free_positions = std::vector<std::pair<bool, std::size_t>> {};  // (is_boolean, position)
+        for (std::size_t position = 0; position < num_booleans; ++position)
+            if (!fixed_booleans.test(position))
+                free_positions.emplace_back(true, position);
+        for (std::size_t position = 0; position < num_numericals; ++position)
+            if (!fixed_numericals.test(position))
+                free_positions.emplace_back(false, position);
 
-        // Enumerate the free bits via subset enumeration.
-        auto boolean_subset = std::uint32_t { 0 };
-        while (true)
+        // Enumerate all assignments of the free positions.
+        for (std::size_t assignment = 0; assignment < (std::size_t { 1 } << free_positions.size()); ++assignment)
         {
-            auto numerical_subset = std::uint32_t { 0 };
-            while (true)
+            for (std::size_t free = 0; free < free_positions.size(); ++free)
             {
-                const auto target_booleans = forced_booleans | boolean_subset;
-                const auto target_numericals = forced_numericals | numerical_subset;
-                const auto target = static_cast<std::uint64_t>(target_booleans) | (static_cast<std::uint64_t>(target_numericals) << num_booleans);
-                callback(static_cast<std::uint32_t>(source), static_cast<std::uint32_t>(target));
-
-                if (numerical_subset == free_numerical_mask)
-                    break;
-                numerical_subset = (numerical_subset - free_numerical_mask) & free_numerical_mask;
+                const auto [is_boolean, position] = free_positions[free];
+                const auto value = static_cast<bool>((assignment >> free) & std::size_t { 1 });
+                (is_boolean ? target_booleans : target_numericals).set(position, value);
             }
-            if (boolean_subset == free_boolean_mask)
-                break;
-            boolean_subset = (boolean_subset - free_boolean_mask) & free_boolean_mask;
+            callback(source, make_vertex(target_booleans, target_numericals));
         }
     }
 }
@@ -327,7 +380,7 @@ inline StructuralTerminationResult structural_termination(SketchView sketch)
 
     const auto num_booleans = features.booleans.size();
     const auto num_numericals = features.numericals.size();
-    if (num_booleans > 32 || num_numericals > 32 || num_booleans + num_numericals > 16)
+    if (num_booleans + num_numericals > 16)
         throw std::invalid_argument("structural_termination: too many features; the policy graph has 2^|features| vertices.");
 
     auto rules = std::vector<RuleView> {};
@@ -342,17 +395,11 @@ inline StructuralTerminationResult structural_termination(SketchView sketch)
     // Build the policy graph edge list.
     auto edges = std::vector<detail::PolicyEdge> {};
     for (std::size_t rule_position = 0; rule_position < profiles.size(); ++rule_position)
-    {
         detail::enumerate_rule_edges(profiles[rule_position],
                                      num_booleans,
                                      num_numericals,
-                                     [&](std::uint32_t source, std::uint32_t target) {
-                                         edges.push_back(detail::PolicyEdge { source,
-                                                                              target,
-                                                                              static_cast<std::uint32_t>(rule_position),
-                                                                              profiles[rule_position].numerical_changes });
-                                     });
-    }
+                                     [&](std::size_t source, std::size_t target)
+                                     { edges.push_back(detail::PolicyEdge { source, target, rule_position }); });
 
     const auto num_valuations = std::size_t { 1 } << (num_booleans + num_numericals);
 
@@ -370,40 +417,44 @@ inline StructuralTerminationResult structural_termination(SketchView sketch)
             builder.add_vertex();
         for (const auto& edge : edges)
             if (edge.alive)
-                builder.add_directed_edge(edge.source, edge.target);
+                builder.add_directed_edge(static_cast<graphs::VertexIndex>(edge.source), static_cast<graphs::VertexIndex>(edge.target));
         const auto graph = graphs::StaticGraph<> { std::move(builder) };
         const auto [num_components, components] = graphs::algorithms::strong_components(graph);
         for (std::size_t vertex = 0; vertex < num_valuations; ++vertex)
             component_of[vertex] = components[vertex];
 
-        // Per component: which numerical features some surviving intra-component
-        // edge increases or leaves unconstrained, and which Boolean flips occur.
+        // Per component: which numerical features some surviving
+        // intra-component edge increases or leaves unconstrained, and which
+        // Boolean flips occur.
         struct ComponentProfile
         {
-            std::uint32_t numerical_increased_or_unconstrained = 0;
-            std::uint32_t boolean_flipped_to_true = 0;
-            std::uint32_t boolean_flipped_to_false = 0;
-            bool has_intra_edge = false;
-        };
-        auto component_profiles = std::vector<ComponentProfile>(static_cast<std::size_t>(num_components));
+            boost::dynamic_bitset<> numerical_increased_or_unconstrained;
+            boost::dynamic_bitset<> boolean_flipped_to_true;
+            boost::dynamic_bitset<> boolean_flipped_to_false;
 
-        const auto boolean_mask = (num_booleans ? (std::uint32_t { 1 } << num_booleans) : 1u) - 1;
+            ComponentProfile(std::size_t num_booleans, std::size_t num_numericals) :
+                numerical_increased_or_unconstrained(num_numericals),
+                boolean_flipped_to_true(num_booleans),
+                boolean_flipped_to_false(num_booleans)
+            {
+            }
+        };
+        auto component_profiles = std::vector<ComponentProfile>(static_cast<std::size_t>(num_components),
+                                                                ComponentProfile(num_booleans, num_numericals));
+
         for (const auto& edge : edges)
         {
             if (!edge.alive || component_of[edge.source] != component_of[edge.target])
                 continue;
-            auto& profile = component_profiles[component_of[edge.source]];
-            profile.has_intra_edge = true;
+            auto& component = component_profiles[component_of[edge.source]];
+            const auto& changes = profiles[edge.rule_position].numerical_changes;
             for (std::size_t position = 0; position < num_numericals; ++position)
-            {
-                const auto change = static_cast<NumericalChange>((edge.numerical_changes >> (2 * position)) & std::uint64_t { 3 });
-                if (change == NumericalChange::INCREASES || change == NumericalChange::UNCONSTRAINED)
-                    profile.numerical_increased_or_unconstrained |= std::uint32_t { 1 } << position;
-            }
-            const auto source_booleans = edge.source & boolean_mask;
-            const auto target_booleans = edge.target & boolean_mask;
-            profile.boolean_flipped_to_true |= ~source_booleans & target_booleans;
-            profile.boolean_flipped_to_false |= source_booleans & ~target_booleans;
+                if (changes[position] == NumericalChange::INCREASES || changes[position] == NumericalChange::UNCONSTRAINED)
+                    component.numerical_increased_or_unconstrained.set(position);
+            const auto source_booleans = detail::vertex_booleans(edge.source, num_booleans);
+            const auto target_booleans = detail::vertex_booleans(edge.target, num_booleans);
+            component.boolean_flipped_to_true |= target_booleans - source_booleans;
+            component.boolean_flipped_to_false |= source_booleans - target_booleans;
         }
 
         // Remove intra-component edges that decrease a numerical feature that
@@ -414,21 +465,21 @@ inline StructuralTerminationResult structural_termination(SketchView sketch)
         {
             if (!edge.alive || component_of[edge.source] != component_of[edge.target])
                 continue;
-            const auto& profile = component_profiles[component_of[edge.source]];
+            const auto& component = component_profiles[component_of[edge.source]];
 
             auto removable = false;
+            const auto& changes = profiles[edge.rule_position].numerical_changes;
             for (std::size_t position = 0; position < num_numericals && !removable; ++position)
-            {
-                const auto change = static_cast<NumericalChange>((edge.numerical_changes >> (2 * position)) & std::uint64_t { 3 });
-                if (change == NumericalChange::DECREASES && !(profile.numerical_increased_or_unconstrained & (std::uint32_t { 1 } << position)))
+                if (changes[position] == NumericalChange::DECREASES && !component.numerical_increased_or_unconstrained.test(position))
                     removable = true;
-            }
-            const auto source_booleans = edge.source & boolean_mask;
-            const auto target_booleans = edge.target & boolean_mask;
-            if ((source_booleans & ~target_booleans & ~profile.boolean_flipped_to_true) != 0)
-                removable = true;  // flips some p to false; no edge in the component flips p to true
-            if ((~source_booleans & target_booleans & ~profile.boolean_flipped_to_false) != 0)
-                removable = true;  // flips some p to true; no edge in the component flips p to false
+            const auto source_booleans = detail::vertex_booleans(edge.source, num_booleans);
+            const auto target_booleans = detail::vertex_booleans(edge.target, num_booleans);
+            // Flips some p to false that no edge in the component flips to true?
+            if (((source_booleans - target_booleans) - component.boolean_flipped_to_true).any())
+                removable = true;
+            // Flips some p to true that no edge in the component flips to false?
+            if (((target_booleans - source_booleans) - component.boolean_flipped_to_false).any())
+                removable = true;
 
             if (removable)
             {
@@ -458,22 +509,22 @@ inline StructuralTerminationResult structural_termination(SketchView sketch)
     // connected components.
     result.status = StructuralTerminationStatus::NON_TERMINATING;
     auto counterexample_builder = PolicyGraphBuilder {};
-    auto vertex_remap = std::vector<std::uint32_t>(num_valuations, std::numeric_limits<std::uint32_t>::max());
-    const auto boolean_mask = (num_booleans ? (std::uint32_t { 1 } << num_booleans) : 1u) - 1;
-    const auto map_vertex = [&](std::uint32_t valuation)
+    auto vertex_remap = std::vector<std::size_t>(num_valuations, std::numeric_limits<std::size_t>::max());
+    const auto map_vertex = [&](std::size_t vertex)
     {
-        if (vertex_remap[valuation] == std::numeric_limits<std::uint32_t>::max())
-            vertex_remap[valuation] = counterexample_builder.add_vertex(
-                PolicyGraphVertexLabel(valuation & boolean_mask, static_cast<std::uint32_t>(valuation >> num_booleans)));
-        return vertex_remap[valuation];
+        if (vertex_remap[vertex] == std::numeric_limits<std::size_t>::max())
+            vertex_remap[vertex] = counterexample_builder.add_vertex(PolicyGraphVertexLabel(
+                detail::vertex_booleans(vertex, num_booleans), detail::vertex_numericals(vertex, num_booleans, num_numericals)));
+        return static_cast<graphs::VertexIndex>(vertex_remap[vertex]);
     };
     for (const auto& edge : edges)
     {
         if (!edge.alive || component_of[edge.source] != component_of[edge.target])
             continue;
-        counterexample_builder.add_directed_edge(map_vertex(edge.source),
-                                                 map_vertex(edge.target),
-                                                 PolicyGraphEdgeLabel(rules[edge.rule_position], edge.numerical_changes));
+        counterexample_builder.add_directed_edge(
+            map_vertex(edge.source),
+            map_vertex(edge.target),
+            PolicyGraphEdgeLabel(rules[edge.rule_position], profiles[edge.rule_position].numerical_changes));
     }
     result.counterexample = std::make_shared<PolicyGraph>(std::move(counterexample_builder));
     return result;
@@ -486,31 +537,12 @@ namespace fmt
 {
 
 template<>
-struct formatter<runir::kr::ps::base::dl::NumericalChange, char> : formatter<std::string_view>
-{
-    template<typename FormatContext>
-    auto format(runir::kr::ps::base::dl::NumericalChange change, FormatContext& ctx) const
-    {
-        using runir::kr::ps::base::dl::NumericalChange;
-        auto text = std::string_view { "?" };
-        switch (change)
-        {
-            case NumericalChange::UNCONSTRAINED: text = "?"; break;
-            case NumericalChange::INCREASES: text = "inc"; break;
-            case NumericalChange::DECREASES: text = "dec"; break;
-            case NumericalChange::UNCHANGED: text = "unchanged"; break;
-        }
-        return formatter<std::string_view>::format(text, ctx);
-    }
-};
-
-template<>
 struct formatter<runir::kr::ps::base::dl::PolicyGraphVertexLabel, char> : formatter<std::string_view>
 {
     template<typename FormatContext>
     auto format(const runir::kr::ps::base::dl::PolicyGraphVertexLabel& label, FormatContext& ctx) const
     {
-        const auto text = fmt::format("(booleans={:#b}, numericals={:#b})", label.boolean_values, label.numerical_values);
+        const auto text = fmt::format("(booleans={}, numericals={})", label.boolean_values, label.numerical_values);
         return formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -521,7 +553,7 @@ struct formatter<runir::kr::ps::base::dl::PolicyGraphEdgeLabel, char> : formatte
     template<typename FormatContext>
     auto format(const runir::kr::ps::base::dl::PolicyGraphEdgeLabel& label, FormatContext& ctx) const
     {
-        const auto text = fmt::format("(rule={}, numerical_changes={:#x})", label.rule.get_symbol(), label.numerical_changes);
+        const auto text = fmt::format("(rule={}, numerical_changes={})", label.rule.get_symbol(), label.numerical_changes);
         return formatter<std::string_view>::format(text, ctx);
     }
 };

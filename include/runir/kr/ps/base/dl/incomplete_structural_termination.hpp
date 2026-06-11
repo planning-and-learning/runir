@@ -4,7 +4,8 @@
 #include "runir/config.hpp"
 #include "runir/kr/ps/base/dl/structural_termination.hpp"
 
-#include <cstdint>
+#include <boost/dynamic_bitset.hpp>
+#include <cstddef>
 #include <optional>
 #include <vector>
 
@@ -90,24 +91,26 @@ namespace detail
 /// versa.
 struct IncompleteRuleChanges
 {
-    std::uint32_t boolean_to_true = 0;   // "not p" in C and p in E
-    std::uint32_t boolean_to_false = 0;  // p in C and "not p" in E
-    std::uint32_t numerical_decreases = 0;
-    std::uint32_t numerical_increases_or_unconstrained = 0;
+    boost::dynamic_bitset<> boolean_to_true;   // "not p" in C and p in E
+    boost::dynamic_bitset<> boolean_to_false;  // p in C and "not p" in E
+    boost::dynamic_bitset<> numerical_decreases;
+    boost::dynamic_bitset<> numerical_increases_or_unconstrained;
 };
 
-inline IncompleteRuleChanges make_incomplete_changes(const RuleProfile& profile, std::size_t num_numericals)
+inline IncompleteRuleChanges make_incomplete_changes(const RuleProfile& profile)
 {
     auto changes = IncompleteRuleChanges {};
     changes.boolean_to_true = profile.boolean_negative_conditions & profile.boolean_positive_effects;
     changes.boolean_to_false = profile.boolean_positive_conditions & profile.boolean_negative_effects;
-    for (std::size_t position = 0; position < num_numericals; ++position)
+    changes.numerical_decreases.resize(profile.numerical_changes.size());
+    changes.numerical_increases_or_unconstrained.resize(profile.numerical_changes.size());
+    for (std::size_t position = 0; position < profile.numerical_changes.size(); ++position)
     {
-        const auto change = static_cast<NumericalChange>((profile.numerical_changes >> (2 * position)) & std::uint64_t { 3 });
-        if (change == NumericalChange::DECREASES)
-            changes.numerical_decreases |= std::uint32_t { 1 } << position;
-        if (change == NumericalChange::INCREASES || change == NumericalChange::UNCONSTRAINED)
-            changes.numerical_increases_or_unconstrained |= std::uint32_t { 1 } << position;
+        if (profile.numerical_changes[position] == NumericalChange::DECREASES)
+            changes.numerical_decreases.set(position);
+        if (profile.numerical_changes[position] == NumericalChange::INCREASES
+            || profile.numerical_changes[position] == NumericalChange::UNCONSTRAINED)
+            changes.numerical_increases_or_unconstrained.set(position);
     }
     return changes;
 }
@@ -116,16 +119,16 @@ inline IncompleteRuleChanges make_incomplete_changes(const RuleProfile& profile,
 /// complementary to C(r').
 inline bool r3_discounts(const RuleProfile& rule,
                          const RuleProfile& opposing,
-                         std::uint32_t marked_booleans,
-                         std::uint32_t marked_numericals)
+                         const boost::dynamic_bitset<>& marked_booleans,
+                         const boost::dynamic_bitset<>& marked_numericals)
 {
-    if ((rule.boolean_positive_conditions & opposing.boolean_negative_conditions & marked_booleans) != 0)
+    if ((rule.boolean_positive_conditions & opposing.boolean_negative_conditions & marked_booleans).any())
         return true;
-    if ((rule.boolean_negative_conditions & opposing.boolean_positive_conditions & marked_booleans) != 0)
+    if ((rule.boolean_negative_conditions & opposing.boolean_positive_conditions & marked_booleans).any())
         return true;
-    if ((rule.numerical_greater_conditions & opposing.numerical_zero_conditions & marked_numericals) != 0)
+    if ((rule.numerical_greater_conditions & opposing.numerical_zero_conditions & marked_numericals).any())
         return true;
-    if ((rule.numerical_zero_conditions & opposing.numerical_greater_conditions & marked_numericals) != 0)
+    if ((rule.numerical_zero_conditions & opposing.numerical_greater_conditions & marked_numericals).any())
         return true;
     return false;
 }
@@ -139,8 +142,6 @@ inline IncompleteStructuralTerminationResult incomplete_structural_termination(S
 
     const auto num_booleans = features.booleans.size();
     const auto num_numericals = features.numericals.size();
-    if (num_booleans > 32 || num_numericals > 32)
-        throw std::invalid_argument("incomplete_structural_termination: more than 32 features of one kind are not supported.");
 
     auto rules = std::vector<RuleView> {};
     for (auto rule : sketch.get_rules())
@@ -151,18 +152,17 @@ inline IncompleteStructuralTerminationResult incomplete_structural_termination(S
     for (auto rule : rules)
     {
         profiles.push_back(detail::make_rule_profile(features, rule));
-        changes.push_back(detail::make_incomplete_changes(profiles.back(), num_numericals));
+        changes.push_back(detail::make_incomplete_changes(profiles.back()));
     }
 
     auto remaining = std::vector<bool>(rules.size(), true);
-    auto marked_booleans = std::uint32_t { 0 };
-    auto marked_numericals = std::uint32_t { 0 };
+    auto marked_booleans = boost::dynamic_bitset<>(num_booleans);
+    auto marked_numericals = boost::dynamic_bitset<>(num_numericals);
 
     // Collect, for rule r and one changed feature, the remaining opposing
     // rules that R3 cannot discount.
     const auto opposing_rules = [&](std::size_t rule_position, bool is_boolean, std::size_t feature_position, bool to_true)
     {
-        const auto bit = std::uint32_t { 1 } << feature_position;
         auto opposing = std::vector<std::size_t> {};
         for (std::size_t other = 0; other < rules.size(); ++other)
         {
@@ -172,12 +172,12 @@ inline IncompleteStructuralTerminationResult incomplete_structural_termination(S
             if (is_boolean)
             {
                 // R2: only explicit opposite changes oppose.
-                opposes = to_true ? (changes[other].boolean_to_false & bit) != 0 : (changes[other].boolean_to_true & bit) != 0;
+                opposes = to_true ? changes[other].boolean_to_false.test(feature_position) : changes[other].boolean_to_true.test(feature_position);
             }
             else
             {
                 // R1: an explicit increase or an unconstrained effect opposes.
-                opposes = (changes[other].numerical_increases_or_unconstrained & bit) != 0;
+                opposes = changes[other].numerical_increases_or_unconstrained.test(feature_position);
             }
             if (opposes && !detail::r3_discounts(profiles[rule_position], profiles[other], marked_booleans, marked_numericals))
                 opposing.push_back(other);
@@ -196,26 +196,25 @@ inline IncompleteStructuralTerminationResult incomplete_structural_termination(S
 
             for (std::size_t position = 0; position < num_numericals && !eliminated; ++position)
             {
-                if ((changes[rule_position].numerical_decreases & (std::uint32_t { 1 } << position)) == 0)
+                if (!changes[rule_position].numerical_decreases.test(position))
                     continue;
                 if (opposing_rules(rule_position, false, position, false).empty())
                 {
                     remaining[rule_position] = false;
-                    marked_numericals |= std::uint32_t { 1 } << position;
+                    marked_numericals.set(position);
                     eliminated = true;
                 }
             }
             for (std::size_t position = 0; position < num_booleans && !eliminated; ++position)
             {
-                const auto bit = std::uint32_t { 1 } << position;
-                const auto to_true = (changes[rule_position].boolean_to_true & bit) != 0;
-                const auto to_false = (changes[rule_position].boolean_to_false & bit) != 0;
+                const auto to_true = changes[rule_position].boolean_to_true.test(position);
+                const auto to_false = changes[rule_position].boolean_to_false.test(position);
                 if (!to_true && !to_false)
                     continue;
                 if (opposing_rules(rule_position, true, position, to_true).empty())
                 {
                     remaining[rule_position] = false;
-                    marked_booleans |= bit;
+                    marked_booleans.set(position);
                     eliminated = true;
                 }
             }
@@ -234,7 +233,7 @@ inline IncompleteStructuralTerminationResult incomplete_structural_termination(S
         auto surviving = IncompleteSurvivingRule { rules[rule_position], {} };
         for (std::size_t position = 0; position < num_numericals; ++position)
         {
-            if ((changes[rule_position].numerical_decreases & (std::uint32_t { 1 } << position)) == 0)
+            if (!changes[rule_position].numerical_decreases.test(position))
                 continue;
             auto reason = IncompleteBlockingReason {};
             reason.numerical_position = position;
@@ -244,9 +243,8 @@ inline IncompleteStructuralTerminationResult incomplete_structural_termination(S
         }
         for (std::size_t position = 0; position < num_booleans; ++position)
         {
-            const auto bit = std::uint32_t { 1 } << position;
-            const auto to_true = (changes[rule_position].boolean_to_true & bit) != 0;
-            const auto to_false = (changes[rule_position].boolean_to_false & bit) != 0;
+            const auto to_true = changes[rule_position].boolean_to_true.test(position);
+            const auto to_false = changes[rule_position].boolean_to_false.test(position);
             if (!to_true && !to_false)
                 continue;
             auto reason = IncompleteBlockingReason {};
