@@ -56,8 +56,6 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
     const auto global_num_concepts = features.concepts.size();
     const auto global_num_booleans = features.booleans.size();
     const auto global_num_numerical_like = global_num_concepts + features.numericals.size();
-    if (global_num_booleans > 32 || global_num_numerical_like > 32)
-        throw std::invalid_argument("ceg_structural_termination: more than 32 features of one kind are not supported.");
 
     // Strongly connected components of the memory graph.
     auto memory_builder = graphs::StaticGraphBuilder<> {};
@@ -100,8 +98,8 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
         const auto num_local_memory = component_memory.size();
 
         // Features mentioned by the component's rules (global positions).
-        auto used_booleans = std::uint32_t { 0 };
-        auto used_numerical_like = std::uint64_t { 0 };
+        auto used_booleans = boost::dynamic_bitset<>(global_num_booleans);
+        auto used_numerical_like = boost::dynamic_bitset<>(global_num_numerical_like);
         for (auto rule_position : component_rules)
         {
             const auto& profile = profiles[rule_position];
@@ -109,17 +107,17 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
                              | profile.boolean_negative_effects | profile.boolean_unchanged_effects;
             used_numerical_like |= profile.numerical_greater_conditions | profile.numerical_zero_conditions;
             for (std::size_t position = 0; position < global_num_numerical_like; ++position)
-                if (static_cast<NumericalChange>((profile.numerical_changes >> (2 * position)) & std::uint64_t { 3 }) != NumericalChange::UNCONSTRAINED)
-                    used_numerical_like |= std::uint64_t { 1 } << position;
+                if (profile.numerical_changes[position] != NumericalChange::UNCONSTRAINED)
+                    used_numerical_like.set(position);
         }
 
         auto local_boolean_positions = std::vector<std::size_t> {};  // local -> global
         for (std::size_t position = 0; position < global_num_booleans; ++position)
-            if (used_booleans & (std::uint32_t { 1 } << position))
+            if (used_booleans.test(position))
                 local_boolean_positions.push_back(position);
         auto local_numerical_positions = std::vector<std::size_t> {};  // local -> global (numerical-like)
         for (std::size_t position = 0; position < global_num_numerical_like; ++position)
-            if (used_numerical_like & (std::uint64_t { 1 } << position))
+            if (used_numerical_like.test(position))
                 local_numerical_positions.push_back(position);
 
         const auto num_local_booleans = local_boolean_positions.size();
@@ -127,133 +125,61 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
         if (num_local_booleans + num_local_numerical_like > 14)
             throw std::invalid_argument("ceg_structural_termination: too many features in one memory component.");
 
-        const auto remap_boolean_mask = [&](std::uint32_t global_mask)
+        const auto remap_boolean_values = [&](const boost::dynamic_bitset<>& global_values)
         {
-            auto local_mask = std::uint32_t { 0 };
+            auto local_values = boost::dynamic_bitset<>(num_local_booleans);
             for (std::size_t local = 0; local < num_local_booleans; ++local)
-                if (global_mask & (std::uint32_t { 1 } << local_boolean_positions[local]))
-                    local_mask |= std::uint32_t { 1 } << local;
-            return local_mask;
+                local_values.set(local, global_values.test(local_boolean_positions[local]));
+            return local_values;
         };
-        const auto remap_numerical_mask = [&](std::uint64_t global_mask)
+        const auto remap_numerical_values = [&](const boost::dynamic_bitset<>& global_values)
         {
-            auto local_mask = std::uint64_t { 0 };
+            auto local_values = boost::dynamic_bitset<>(num_local_numerical_like);
             for (std::size_t local = 0; local < num_local_numerical_like; ++local)
-                if (global_mask & (std::uint64_t { 1 } << local_numerical_positions[local]))
-                    local_mask |= std::uint64_t { 1 } << local;
-            return local_mask;
-        };
-        const auto remap_numerical_changes = [&](std::uint64_t global_changes)
-        {
-            auto local_changes = std::uint64_t { 0 };
-            for (std::size_t local = 0; local < num_local_numerical_like; ++local)
-                local_changes |= ((global_changes >> (2 * local_numerical_positions[local])) & std::uint64_t { 3 }) << (2 * local);
-            return local_changes;
+                local_values.set(local, global_values.test(local_numerical_positions[local]));
+            return local_values;
         };
 
-        // Local profiles and policy edges.
-        const auto local_boolean_mask = (num_local_booleans ? (std::uint32_t { 1 } << num_local_booleans) : 1u) - 1;
-        const auto num_local_valuations = std::uint64_t { 1 } << (num_local_booleans + num_local_numerical_like);
-
-        auto edges = std::vector<detail::ModulePolicyEdge> {};
+        // Local profiles over the component's features and memory states.
+        auto local_profiles = std::vector<detail::ModuleRuleProfile> {};
+        auto local_rule_positions = std::vector<std::size_t> {};  // local profile -> global rule position
         for (auto rule_position : component_rules)
         {
             const auto& profile = profiles[rule_position];
-            const auto boolean_positive_conditions = remap_boolean_mask(profile.boolean_positive_conditions);
-            const auto boolean_negative_conditions = remap_boolean_mask(profile.boolean_negative_conditions);
-            const auto numerical_greater_conditions = remap_numerical_mask(profile.numerical_greater_conditions);
-            const auto numerical_zero_conditions = remap_numerical_mask(profile.numerical_zero_conditions);
-            const auto boolean_positive_effects = remap_boolean_mask(profile.boolean_positive_effects);
-            const auto boolean_negative_effects = remap_boolean_mask(profile.boolean_negative_effects);
-            const auto boolean_unchanged_effects = remap_boolean_mask(profile.boolean_unchanged_effects);
-            const auto numerical_changes = remap_numerical_changes(profile.numerical_changes);
-            const auto source_memory = local_memory_position[profile.source_memory_position];
-            const auto target_memory = local_memory_position[profile.target_memory_position];
-
-            for (std::uint64_t source = 0; source < num_local_valuations; ++source)
-            {
-                const auto source_booleans = static_cast<std::uint32_t>(source) & local_boolean_mask;
-                const auto source_numericals = source >> num_local_booleans;
-
-                if ((source_booleans & boolean_positive_conditions) != boolean_positive_conditions)
-                    continue;
-                if ((~source_booleans & boolean_negative_conditions) != boolean_negative_conditions)
-                    continue;
-                if ((source_numericals & numerical_greater_conditions) != numerical_greater_conditions)
-                    continue;
-                if ((~source_numericals & numerical_zero_conditions) != numerical_zero_conditions)
-                    continue;
-
-                auto forced_booleans = boolean_positive_effects | (boolean_unchanged_effects & source_booleans);
-                const auto fixed_boolean_mask = boolean_positive_effects | boolean_negative_effects | boolean_unchanged_effects;
-
-                auto forced_numericals = std::uint64_t { 0 };
-                auto fixed_numerical_mask = std::uint64_t { 0 };
-                auto decreases_unsatisfiable = false;
-                for (std::size_t position = 0; position < num_local_numerical_like; ++position)
-                {
-                    const auto bit = std::uint64_t { 1 } << position;
-                    switch (static_cast<NumericalChange>((numerical_changes >> (2 * position)) & std::uint64_t { 3 }))
-                    {
-                        case NumericalChange::INCREASES:
-                        {
-                            forced_numericals |= bit;
-                            fixed_numerical_mask |= bit;
-                            break;
-                        }
-                        case NumericalChange::DECREASES:
-                        {
-                            if (!(source_numericals & bit))
-                                decreases_unsatisfiable = true;
-                            break;
-                        }
-                        case NumericalChange::UNCHANGED:
-                        {
-                            forced_numericals |= source_numericals & bit;
-                            fixed_numerical_mask |= bit;
-                            break;
-                        }
-                        case NumericalChange::UNCONSTRAINED: break;
-                    }
-                }
-                if (decreases_unsatisfiable)
-                    continue;
-
-                const auto free_boolean_mask = static_cast<std::uint32_t>(~fixed_boolean_mask) & local_boolean_mask;
-                const auto numerical_like_mask = (num_local_numerical_like ? (std::uint64_t { 1 } << num_local_numerical_like) : 1u) - 1;
-                const auto free_numerical_mask = ~fixed_numerical_mask & numerical_like_mask;
-
-                auto boolean_subset = std::uint32_t { 0 };
-                while (true)
-                {
-                    auto numerical_subset = std::uint64_t { 0 };
-                    while (true)
-                    {
-                        const auto target_booleans = forced_booleans | boolean_subset;
-                        const auto target_numericals = forced_numericals | numerical_subset;
-                        const auto target_valuation = static_cast<std::uint64_t>(target_booleans) | (target_numericals << num_local_booleans);
-                        edges.push_back(detail::ModulePolicyEdge { static_cast<std::uint32_t>(source * num_local_memory + source_memory),
-                                                                   static_cast<std::uint32_t>(target_valuation * num_local_memory + target_memory),
-                                                                   static_cast<std::uint32_t>(rule_position),
-                                                                   numerical_changes });
-
-                        if (numerical_subset == free_numerical_mask)
-                            break;
-                        numerical_subset = (numerical_subset - free_numerical_mask) & free_numerical_mask;
-                    }
-                    if (boolean_subset == free_boolean_mask)
-                        break;
-                    boolean_subset = (boolean_subset - free_boolean_mask) & free_boolean_mask;
-                }
-            }
+            auto local_profile = detail::ModuleRuleProfile(num_local_booleans, num_local_numerical_like);
+            local_profile.source_memory_position = local_memory_position[profile.source_memory_position];
+            local_profile.target_memory_position = local_memory_position[profile.target_memory_position];
+            local_profile.boolean_positive_conditions = remap_boolean_values(profile.boolean_positive_conditions);
+            local_profile.boolean_negative_conditions = remap_boolean_values(profile.boolean_negative_conditions);
+            local_profile.numerical_greater_conditions = remap_numerical_values(profile.numerical_greater_conditions);
+            local_profile.numerical_zero_conditions = remap_numerical_values(profile.numerical_zero_conditions);
+            local_profile.boolean_positive_effects = remap_boolean_values(profile.boolean_positive_effects);
+            local_profile.boolean_negative_effects = remap_boolean_values(profile.boolean_negative_effects);
+            local_profile.boolean_unchanged_effects = remap_boolean_values(profile.boolean_unchanged_effects);
+            for (std::size_t local = 0; local < num_local_numerical_like; ++local)
+                local_profile.numerical_changes[local] = profile.numerical_changes[local_numerical_positions[local]];
+            local_rule_positions.push_back(rule_position);
+            local_profiles.push_back(std::move(local_profile));
         }
 
-        const auto num_local_vertices = static_cast<std::size_t>(num_local_valuations) * num_local_memory;
+        auto edges = std::vector<detail::ModulePolicyEdge> {};
+        for (std::size_t local_rule = 0; local_rule < local_profiles.size(); ++local_rule)
+            detail::enumerate_rule_edges(local_profiles[local_rule],
+                                         num_local_memory,
+                                         num_local_booleans,
+                                         num_local_numerical_like,
+                                         [&](std::size_t source, std::size_t target)
+                                         { edges.push_back(detail::ModulePolicyEdge { source, target, local_rule }); });
+
+        const auto num_local_vertices = (std::size_t { 1 } << (num_local_booleans + num_local_numerical_like)) * num_local_memory;
         const auto [has_cycle, component_of] =
             detail::sieve(edges,
                           num_local_vertices,
+                          num_local_booleans,
                           num_local_numerical_like,
-                          [&](std::uint32_t vertex) { return static_cast<std::uint32_t>(vertex / num_local_memory) & local_boolean_mask; });
+                          [&](std::size_t vertex) { return detail::vertex_booleans(vertex, num_local_memory, num_local_booleans); },
+                          [&](const detail::ModulePolicyEdge& edge) -> const std::vector<NumericalChange>&
+                          { return local_profiles[edge.rule_position].numerical_changes; });
         if (!has_cycle)
             continue;
 
@@ -262,41 +188,44 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
         // Append the surviving cycles to the counterexample, mapping local
         // valuations back to the global feature positions (unmentioned
         // features are 0).
-        auto vertex_remap = std::vector<std::uint32_t>(num_local_vertices, std::numeric_limits<std::uint32_t>::max());
-        const auto map_vertex = [&](std::uint32_t vertex)
+        auto vertex_remap = std::vector<std::size_t>(num_local_vertices, std::numeric_limits<std::size_t>::max());
+        const auto map_vertex = [&](std::size_t vertex)
         {
-            if (vertex_remap[vertex] == std::numeric_limits<std::uint32_t>::max())
+            if (vertex_remap[vertex] == std::numeric_limits<std::size_t>::max())
             {
-                const auto valuation = static_cast<std::uint64_t>(vertex / num_local_memory);
-                const auto memory = component_memory[static_cast<std::size_t>(vertex % num_local_memory)];
-                const auto local_booleans = static_cast<std::uint32_t>(valuation) & local_boolean_mask;
-                const auto local_numericals = valuation >> num_local_booleans;
+                const auto local_booleans = detail::vertex_booleans(vertex, num_local_memory, num_local_booleans);
+                const auto local_numericals = detail::vertex_numerical_like(vertex, num_local_memory, num_local_booleans, num_local_numerical_like);
 
-                auto global_booleans = std::uint32_t { 0 };
+                auto global_booleans = boost::dynamic_bitset<>(global_num_booleans);
                 for (std::size_t local = 0; local < num_local_booleans; ++local)
-                    if (local_booleans & (std::uint32_t { 1 } << local))
-                        global_booleans |= std::uint32_t { 1 } << local_boolean_positions[local];
-                auto global_numerical_like = std::uint64_t { 0 };
+                    global_booleans.set(local_boolean_positions[local], local_booleans.test(local));
+                auto global_concepts = boost::dynamic_bitset<>(global_num_concepts);
+                auto global_numericals = boost::dynamic_bitset<>(features.numericals.size());
                 for (std::size_t local = 0; local < num_local_numerical_like; ++local)
-                    if (local_numericals & (std::uint64_t { 1 } << local))
-                        global_numerical_like |= std::uint64_t { 1 } << local_numerical_positions[local];
+                {
+                    const auto global_position = local_numerical_positions[local];
+                    if (global_position < global_num_concepts)
+                        global_concepts.set(global_position, local_numericals.test(local));
+                    else
+                        global_numericals.set(global_position - global_num_concepts, local_numericals.test(local));
+                }
 
-                const auto concepts =
-                    static_cast<std::uint32_t>(global_numerical_like & ((global_num_concepts ? (std::uint64_t { 1 } << global_num_concepts) : 1u) - 1));
-                const auto numericals = static_cast<std::uint32_t>(global_numerical_like >> global_num_concepts);
-                vertex_remap[vertex] =
-                    counterexample_builder.add_vertex(ModulePolicyGraphVertexLabel(concepts, global_booleans, numericals, memory_states[memory]));
+                const auto memory = component_memory[static_cast<std::size_t>(vertex % num_local_memory)];
+                vertex_remap[vertex] = counterexample_builder.add_vertex(ModulePolicyGraphVertexLabel(std::move(global_concepts),
+                                                                                                      std::move(global_booleans),
+                                                                                                      std::move(global_numericals),
+                                                                                                      memory_states[memory]));
             }
-            return vertex_remap[vertex];
+            return static_cast<graphs::VertexIndex>(vertex_remap[vertex]);
         };
         for (const auto& edge : edges)
         {
             if (!edge.alive || component_of[edge.source] != component_of[edge.target])
                 continue;
-            counterexample_builder.add_directed_edge(
-                map_vertex(edge.source),
-                map_vertex(edge.target),
-                ModulePolicyGraphEdgeLabel(rules[edge.rule_position], profiles[edge.rule_position].numerical_changes));
+            const auto rule_position = local_rule_positions[edge.rule_position];
+            counterexample_builder.add_directed_edge(map_vertex(edge.source),
+                                                     map_vertex(edge.target),
+                                                     ModulePolicyGraphEdgeLabel(rules[rule_position], profiles[rule_position].numerical_changes));
         }
     }
 
