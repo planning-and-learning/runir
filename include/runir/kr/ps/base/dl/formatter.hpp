@@ -6,8 +6,11 @@
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/ps/base/dl/condition_view.hpp"
+#include "runir/kr/ps/base/dl/incomplete_structural_termination_data.hpp"
+#include "runir/kr/ps/base/dl/structural_termination_data.hpp"
 #include "runir/kr/ps/base/dl/effect_view.hpp"
 #include "runir/kr/ps/base/dl/feature_view.hpp"
+#include "runir/kr/ps/dl/formatter.hpp"
 
 #include <concepts>
 #include <fmt/format.h>
@@ -17,6 +20,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::ps::base::dl::format
@@ -342,6 +346,56 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::
     auto format(View view, format_context& ctx) const
     {
         const auto text = runir::kr::ps::base::dl::format::effect(view, fmt::format("f_{}", view.get_feature().get_index().get_value()));
+        return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::base::dl::PolicyGraphVertexLabel, char> : fmt::formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::kr::ps::base::dl::PolicyGraphVertexLabel& label, FormatContext& ctx) const
+    {
+        const auto text = fmt::format("(booleans={}, numericals={})", label.boolean_values, label.numerical_values);
+        return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::base::dl::PolicyGraphEdgeLabel, char> : fmt::formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::kr::ps::base::dl::PolicyGraphEdgeLabel& label, FormatContext& ctx) const
+    {
+        const auto text = fmt::format("(rule={}, numerical_changes={})", label.rule.get_symbol(), label.numerical_changes);
+        return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::base::dl::StructuralTerminationResult, char> : fmt::formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::kr::ps::base::dl::StructuralTerminationResult& result, FormatContext& ctx) const
+    {
+        const auto text = result.is_terminating() ?
+                              std::string { "StructuralTerminationResult(terminating)" } :
+                              fmt::format("StructuralTerminationResult(non-terminating, counterexample with {} vertices and {} edges)",
+                                          result.counterexample->get_num_vertices(),
+                                          result.counterexample->get_num_edges());
+        return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::base::dl::IncompleteStructuralTerminationResult, char> : fmt::formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::kr::ps::base::dl::IncompleteStructuralTerminationResult& result, FormatContext& ctx) const
+    {
+        const auto text = result.is_terminating() ?
+                              std::string { "IncompleteStructuralTerminationResult(terminating)" } :
+                              fmt::format("IncompleteStructuralTerminationResult(unknown, {} surviving rules)", result.surviving_rules.size());
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
