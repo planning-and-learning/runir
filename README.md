@@ -26,9 +26,9 @@ The native CMake package exports `runir::core` as the aggregate target and compo
 
 ## Dependencies
 
-- `pyyggdrasil >= 0.0.14, < 0.1` for shared third-party native dependencies.
-- `pytyr >= 0.0.22, < 0.1` for Tyr planning, formalism, search, and C++ headers/libraries.
-- `pypddl >= 1.0.9, < 1.1` through Tyr/PDDL parsing infrastructure.
+- `pyyggdrasil >= 0.0.15, < 0.1` for shared third-party native dependencies.
+- `pytyr >= 0.0.23, < 0.1` for Tyr planning, formalism, search, and C++ headers/libraries.
+- `pypddl >= 1.0.10, < 1.1` through Tyr/PDDL parsing infrastructure.
 - `scikit-build-core` for Python wheel builds.
 
 The shared workspace layout and general Python/CMake integration pattern are
@@ -41,7 +41,7 @@ Install Runir's native dependency providers into the active Python environment,
 then configure CMake with their native prefixes:
 
 ```console
-python -m pip install 'pyyggdrasil>=0.0.14,<0.1' 'pypddl>=1.0.9,<1.1' 'pytyr>=0.0.22,<0.1'
+python -m pip install 'pyyggdrasil>=0.0.15,<0.1' 'pypddl>=1.0.10,<1.1' 'pytyr>=0.0.23,<0.1'
 
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 
