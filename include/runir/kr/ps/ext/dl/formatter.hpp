@@ -9,6 +9,8 @@
 #include "runir/kr/dl/grammar/parser/ext/ast.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
+#include "runir/kr/ps/dl/formatter.hpp"
+#include "runir/kr/ps/ext/dl/structural_termination_data.hpp"
 
 #include <concepts>
 #include <fmt/format.h>
@@ -17,6 +19,7 @@
 #include <vector>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 
 namespace runir::kr::ps::ext::dl::format
 {
@@ -218,5 +221,48 @@ std::string expression(T value)
 }
 
 }  // namespace runir::kr::ps::ext::dl::format
+
+#if RUNIR_ENABLE_FMT_FORMATTERS
+template<>
+struct fmt::formatter<runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel, char> : fmt::formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel& label, FormatContext& ctx) const
+    {
+        const auto text = fmt::format("(concepts={}, booleans={}, numericals={}, memory={})",
+                                      label.concept_values,
+                                      label.boolean_values,
+                                      label.numerical_values,
+                                      label.memory_state.get_name().str());
+        return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::ext::dl::ModulePolicyGraphEdgeLabel, char> : fmt::formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::kr::ps::ext::dl::ModulePolicyGraphEdgeLabel& label, FormatContext& ctx) const
+    {
+        const auto text = fmt::format("(rule={}, numerical_changes={})", label.rule.get_index().get_value(), label.numerical_changes);
+        return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::ext::dl::ModuleStructuralTerminationResult, char> : fmt::formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::kr::ps::ext::dl::ModuleStructuralTerminationResult& result, FormatContext& ctx) const
+    {
+        const auto text = result.is_terminating() ?
+                              std::string { "ModuleStructuralTerminationResult(terminating)" } :
+                              fmt::format("ModuleStructuralTerminationResult(non-terminating, counterexample with {} vertices and {} edges)",
+                                          result.counterexample->get_num_vertices(),
+                                          result.counterexample->get_num_edges());
+        return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+#endif
 
 #endif
