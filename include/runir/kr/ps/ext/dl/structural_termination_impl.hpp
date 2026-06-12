@@ -298,7 +298,7 @@ inline ModuleAnalysis analyze_module(ModuleView module_)
         }
     };
     for (auto transition : module_.get_memory_transitions())
-        for (auto rule : ygg::make_view(transition, module_.get_context()))
+        for (auto rule : transition)
         {
             analysis.rules.push_back(rule);
             ygg::visit([&](auto concrete_rule) { collect_rule_features(concrete_rule); }, rule.get_variant());
@@ -670,7 +670,7 @@ inline ModuleProgramStructuralTerminationResult structural_termination(ModulePro
     {
         for (auto transition : modules[source_module].get_memory_transitions())
         {
-            for (auto rule_variant : ygg::make_view(transition, modules[source_module].get_context()))
+            for (auto rule_variant : transition)
             {
                 ygg::visit(
                     [&](auto rule)

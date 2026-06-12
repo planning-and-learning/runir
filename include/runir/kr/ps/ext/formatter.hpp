@@ -132,7 +132,7 @@ FeatureNames collect_features(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, 
 {
     auto names = FeatureNames {};
     for (const auto& transition : view.get_memory_transitions())
-        for (auto rule : ygg::make_view(transition, view.get_context()))
+        for (auto rule : transition)
             collect_features(names, rule);
     return names;
 }
@@ -456,7 +456,7 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
             ygg::IndentScope transition_scope(os);
             for (const auto& transition : view.get_memory_transitions())
             {
-                for (auto item : ygg::make_view(transition, view.get_context()))
+                for (auto item : transition)
                 {
                     os << ygg::print_indent << "(:rule\n";
                     {

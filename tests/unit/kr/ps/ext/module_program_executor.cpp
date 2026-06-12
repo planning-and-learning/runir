@@ -146,7 +146,7 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
                                                       *blocksworld_repository);
     EXPECT_EQ(blocks.get_name(), "blocks");
     ASSERT_GT(blocks.get_memory_transitions().size(), 1);
-    const auto block_rules = ygg::make_view(blocks.get_memory_transitions()[1], blocks.get_context());
+    const auto block_rules = blocks.get_memory_transitions()[1];
     ASSERT_FALSE(block_rules.empty());
     auto call_rule = block_rules.front();
     auto found_call_rule = false;
@@ -232,7 +232,7 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
     EXPECT_EQ(modules[1].get_name(), "callee");
 
     ASSERT_EQ(modules[0].get_data().memory_transitions.size(), 1);
-    const auto rules = ygg::make_view(modules[0].get_memory_transitions()[0], modules[0].get_context());
+    const auto rules = modules[0].get_memory_transitions()[0];
     ASSERT_FALSE(rules.empty());
     auto found_call_rule = false;
     ygg::visit(
@@ -1174,7 +1174,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
     const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
     ASSERT_EQ(module.get_memory_transitions().size(), 3);
 
-    const auto load_rules = ygg::make_view(module.get_memory_transitions()[0], module.get_context());
+    const auto load_rules = module.get_memory_transitions()[0];
     ASSERT_EQ(load_rules.size(), 1);
     EXPECT_EQ(load_rules[0].get_symbol(), "load-edge");
     EXPECT_EQ(load_rules[0].get_description(), "load transition");
@@ -1190,10 +1190,10 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
         },
         load_rules[0].get_variant()));
 
-    const auto sketch_rules = ygg::make_view(module.get_memory_transitions()[1], module.get_context());
+    const auto sketch_rules = module.get_memory_transitions()[1];
     ASSERT_EQ(sketch_rules.size(), 1);
 
-    const auto do_rules = ygg::make_view(module.get_memory_transitions()[2], module.get_context());
+    const auto do_rules = module.get_memory_transitions()[2];
     ASSERT_EQ(do_rules.size(), 1);
     EXPECT_TRUE(ygg::visit(
         [](auto rule)
@@ -1810,7 +1810,7 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
 )",
                                                       planning_task.get_domain().get_domain(),
                                                       *repository);
-    const auto rule_variant = ygg::make_view(module.get_memory_transitions()[0], module.get_context())[0];
+    const auto rule_variant = module.get_memory_transitions()[0][0];
 
     auto builder = kr::dl::semantics::Builder();
     auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
