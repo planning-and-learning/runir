@@ -13,7 +13,7 @@ set(PYRUNIR_NATIVE_LIBDIR "${PYRUNIR_NATIVE_DIR}/${CMAKE_INSTALL_LIBDIR}")
 set(PYRUNIR_NATIVE_BINDIR "${PYRUNIR_NATIVE_DIR}/${CMAKE_INSTALL_BINDIR}")
 set(PYRUNIR_NATIVE_CMAKEDIR "${PYRUNIR_NATIVE_LIBDIR}/cmake")
 
-nanobind_add_module(_pyrunir
+nanobind_add_module(_pyrunir NB_SHARED
     module.cpp
     pyrunir/module.cpp
     pyrunir/datasets/config.cpp
@@ -78,31 +78,13 @@ nanobind_add_module(_pyrunir
 target_link_libraries(_pyrunir PRIVATE runir::core)
 target_include_directories(_pyrunir PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 if(APPLE)
-    set(PYRUNIR_MODULE_RPATH
-        "@loader_path/native/${CMAKE_INSTALL_LIBDIR}"
-        "@loader_path/../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
-        "@loader_path/../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
-        "@loader_path/../pytyr.libs"
-        "@loader_path/../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
-    set(PYRUNIR_CORE_RPATH
-        "@loader_path"
-        "@loader_path/../../../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
-        "@loader_path/../../../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
-        "@loader_path/../../../pytyr.libs"
-        "@loader_path/../../../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
+    yggdrasil_make_python_native_runtime_rpaths(PYRUNIR_MODULE_RPATH "@loader_path" "../")
+    list(APPEND PYRUNIR_MODULE_RPATH "@loader_path/native/${CMAKE_INSTALL_LIBDIR}")
+    yggdrasil_make_python_native_runtime_rpaths(PYRUNIR_CORE_RPATH "@loader_path" "../../../")
 elseif(UNIX)
-    set(PYRUNIR_MODULE_RPATH
-        "$ORIGIN/native/${CMAKE_INSTALL_LIBDIR}"
-        "$ORIGIN/../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
-        "$ORIGIN/../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
-        "$ORIGIN/../pytyr.libs"
-        "$ORIGIN/../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
-    set(PYRUNIR_CORE_RPATH
-        "$ORIGIN"
-        "$ORIGIN/../../../pypddl/native/${CMAKE_INSTALL_LIBDIR}"
-        "$ORIGIN/../../../pytyr/native/${CMAKE_INSTALL_LIBDIR}"
-        "$ORIGIN/../../../pytyr.libs"
-        "$ORIGIN/../../../pyyggdrasil/${CMAKE_INSTALL_LIBDIR}")
+    yggdrasil_make_python_native_runtime_rpaths(PYRUNIR_MODULE_RPATH "$ORIGIN" "../")
+    list(APPEND PYRUNIR_MODULE_RPATH "$ORIGIN/native/${CMAKE_INSTALL_LIBDIR}")
+    yggdrasil_make_python_native_runtime_rpaths(PYRUNIR_CORE_RPATH "$ORIGIN" "../../../")
 endif()
 
 if(PYRUNIR_MODULE_RPATH)

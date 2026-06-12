@@ -10,7 +10,7 @@ find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(nanobind CONFIG REQUIRED)
 find_package(runir CONFIG REQUIRED COMPONENTS core)
 
-nanobind_add_module(downstream_runir_user
+nanobind_add_module(downstream_runir_user NB_SHARED
     src/downstream_runir_user.cpp
 )
 

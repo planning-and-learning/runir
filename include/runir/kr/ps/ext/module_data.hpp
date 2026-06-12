@@ -10,7 +10,6 @@
 #include "runir/kr/ps/ext/rule_variant_index.hpp"
 
 #include <cista/containers/string.h>
-#include <cista/containers/vector.h>
 #include <string>
 #include <tuple>
 #include <yggdrasil/core/types.hpp>
@@ -31,7 +30,7 @@ struct Data<runir::kr::ps::ext::Module>
     IndexList<runir::kr::ps::ext::Register> registers;
     Index<runir::kr::ps::ext::MemoryState> entry_memory_state;
     IndexList<runir::kr::ps::ext::MemoryState> memory_states;
-    ::cista::offset::vector<IndexList<runir::kr::ps::ext::RuleVariant>> memory_transitions;
+    IndexMatrix<runir::kr::ps::ext::RuleVariant> memory_transitions;
     Data() = default;
     Data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
     Data(const std::string& name_) : index(), name(name_) {}
