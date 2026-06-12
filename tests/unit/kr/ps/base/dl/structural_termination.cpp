@@ -67,11 +67,45 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorIsNotTerminating)
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     // {not b1} -> {b1} and {b1} -> {not b1}: an unbreakable two-cycle.
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
-      (:features
-        (:boolean (:symbol b1) (:description "") (:expression (b_nonempty (c_atomic_state "at-robby")))))
-      (:rules
-        (:rule (:symbol) (:description "") (:expression (:conditions (:negative b1)) (:effects (:positive b1))))
-        (:rule (:symbol) (:description "") (:expression (:conditions (:positive b1)) (:effects (:negative b1)))))))",
+    (:features
+        (:boolean
+            (:symbol b1)
+            (:description "")
+            (:expression
+                (b_nonempty
+                    (c_atomic_state
+                        "at-robby"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto1)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:negative b1)
+                )
+                (:effects
+                    (:positive b1)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto2)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:positive b1)
+                )
+                (:effects
+                    (:negative b1)
+                )
+            )
+        )
+    )
+)
+)",
                                                        planning_domain.get_domain(),
                                                        *repository);
 
@@ -92,11 +126,43 @@ TEST(RunirTests, StructuralTerminationNumericalIncreaseDecreasePairIsNotTerminat
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     // {n1 > 0} -> {n1 dec} and {} -> {n1 inc}: the increase regenerates n1.
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
-      (:features
-        (:numerical (:symbol n1) (:description "") (:expression (n_count (c_atomic_state "ball")))))
-      (:rules
-        (:rule (:symbol) (:description "") (:expression (:conditions (:greater_zero n1)) (:effects (:decreases n1))))
-        (:rule (:symbol) (:description "") (:expression (:conditions) (:effects (:increases n1)))))))",
+    (:features
+        (:numerical
+            (:symbol n1)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto3)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero n1)
+                )
+                (:effects
+                    (:decreases n1)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto4)
+            (:description "")
+            (:expression
+                (:conditions)
+                (:effects
+                    (:increases n1)
+                )
+            )
+        )
+    )
+)
+)",
                                                        planning_domain.get_domain(),
                                                        *repository);
 
@@ -116,12 +182,44 @@ TEST(RunirTests, StructuralTerminationFloortileSketchIsTerminating)
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     // incomplete_sieve.pdf Section 5.2, Theorem 5: r = {v, g > 0} -> {g dec}.
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
-      (:features
-        (:boolean (:symbol v) (:description "") (:expression (b_nonempty (c_atomic_state "at-robby"))))
-        (:numerical (:symbol g) (:description "") (:expression (n_count (c_atomic_state "ball")))))
-      (:rules
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:positive v) (:greater_zero g)) (:effects (:decreases g) (:unchanged v)))))))",
+    (:features
+        (:boolean
+            (:symbol v)
+            (:description "")
+            (:expression
+                (b_nonempty
+                    (c_atomic_state
+                        "at-robby"))
+            )
+        )
+        (:numerical
+            (:symbol g)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto5)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:positive v)
+                    (:greater_zero g)
+                )
+                (:effects
+                    (:decreases g)
+                    (:unchanged v)
+                )
+            )
+        )
+    )
+)
+)",
                                                        planning_domain.get_domain(),
                                                        *repository);
 
@@ -140,17 +238,78 @@ TEST(RunirTests, StructuralTerminationTppSketchIsTerminating)
     //   r1 = {b > 0} -> {b dec}, r2 = {l > 0} -> {b?, l dec},
     //   r3 = {n > 0} -> {b?, l?, n dec}.
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
-      (:features
-        (:numerical (:symbol fb) (:description "") (:expression (n_count (c_atomic_state "ball"))))
-        (:numerical (:symbol fl) (:description "") (:expression (n_count (c_atomic_state "room"))))
-        (:numerical (:symbol fn) (:description "") (:expression (n_count (c_atomic_state "gripper")))))
-      (:rules
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:greater_zero fb)) (:effects (:decreases fb) (:unchanged fl) (:unchanged fn))))
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:greater_zero fl)) (:effects (:decreases fl) (:unchanged fn))))
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:greater_zero fn)) (:effects (:decreases fn)))))))",
+    (:features
+        (:numerical
+            (:symbol fb)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+        (:numerical
+            (:symbol fl)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "room"))
+            )
+        )
+        (:numerical
+            (:symbol fn)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "gripper"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto6)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero fb)
+                )
+                (:effects
+                    (:decreases fb)
+                    (:unchanged fl)
+                    (:unchanged fn)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto7)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero fl)
+                )
+                (:effects
+                    (:unchanged fn)
+                    (:decreases fl)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto8)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero fn)
+                )
+                (:effects
+                    (:decreases fn)
+                )
+            )
+        )
+    )
+)
+)",
                                                        planning_domain.get_domain(),
                                                        *repository);
 
@@ -169,20 +328,105 @@ TEST(RunirTests, StructuralTerminationBarmanSketchIsTerminating)
     //   r1 = {not c1} -> {u?, c1}, r2 = {c1, not c2} -> {u?, c2},
     //   r3 = {u > 0} -> {u dec}, r4 = {g > 0} -> {g dec, c1?, c2?}.
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
-      (:features
-        (:boolean (:symbol c1) (:description "") (:expression (b_nonempty (c_atomic_state "at-robby"))))
-        (:boolean (:symbol c2) (:description "") (:expression (b_nonempty (c_atomic_state "free"))))
-        (:numerical (:symbol g) (:description "") (:expression (n_count (c_atomic_state "ball"))))
-        (:numerical (:symbol u) (:description "") (:expression (n_count (c_atomic_state "room")))))
-      (:rules
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:negative c1)) (:effects (:positive c1) (:unchanged c2) (:unchanged g))))
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:positive c1) (:negative c2)) (:effects (:positive c2) (:unchanged c1) (:unchanged g))))
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:greater_zero u)) (:effects (:decreases u) (:unchanged c1) (:unchanged c2) (:unchanged g))))
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:greater_zero g)) (:effects (:decreases g) (:unchanged u)))))))",
+    (:features
+        (:boolean
+            (:symbol c1)
+            (:description "")
+            (:expression
+                (b_nonempty
+                    (c_atomic_state
+                        "at-robby"))
+            )
+        )
+        (:boolean
+            (:symbol c2)
+            (:description "")
+            (:expression
+                (b_nonempty
+                    (c_atomic_state
+                        "free"))
+            )
+        )
+        (:numerical
+            (:symbol g)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+        (:numerical
+            (:symbol u)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "room"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto9)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:negative c1)
+                )
+                (:effects
+                    (:positive c1)
+                    (:unchanged c2)
+                    (:unchanged g)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto10)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:positive c1)
+                    (:negative c2)
+                )
+                (:effects
+                    (:unchanged g)
+                    (:positive c2)
+                    (:unchanged c1)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto11)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero u)
+                )
+                (:effects
+                    (:unchanged c2)
+                    (:unchanged g)
+                    (:unchanged c1)
+                    (:decreases u)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto12)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero g)
+                )
+                (:effects
+                    (:decreases g)
+                    (:unchanged u)
+                )
+            )
+        )
+    )
+)
+)",
                                                        planning_domain.get_domain(),
                                                        *repository);
 

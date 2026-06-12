@@ -71,7 +71,7 @@ bool is_canonical(const ygg::Data<Rule<Kind>>& data) noexcept
     else if constexpr (std::same_as<Kind, SketchTag>)
         return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects);
     else if constexpr (std::same_as<Kind, DoTag>)
-        return ygg::is_canonical(data.conditions);
+        return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects);
     else if constexpr (std::same_as<Kind, CallTag>)
         return ygg::is_canonical(data.conditions);
 }
@@ -140,6 +140,7 @@ void canonicalize(ygg::Data<Rule<Kind>>& data)
     else if constexpr (std::same_as<Kind, DoTag>)
     {
         ygg::canonicalize(data.conditions);
+        ygg::canonicalize(data.effects);
     }
     else if constexpr (std::same_as<Kind, CallTag>)
     {

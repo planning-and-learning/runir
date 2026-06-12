@@ -16,10 +16,7 @@ namespace
 
 std::filesystem::path runir_root() { return std::filesystem::path(RUNIR_ROOT_DIR); }
 
-std::filesystem::path gripper_domain()
-{
-    return runir_root() / "data" / "planning-benchmarks" / "tests" / "classical" / "gripper" / "domain.pddl";
-}
+std::filesystem::path gripper_domain() { return runir_root() / "data" / "planning-benchmarks" / "tests" / "classical" / "gripper" / "domain.pddl"; }
 
 }  // namespace
 
@@ -36,17 +33,78 @@ TEST(RunirTests, IncompleteStructuralTerminationTppSketchIsTerminating)
     // incomplete_sieve.pdf Theorem 6 proof: eliminate r3 (mark n), then r2
     // (mark l), then r1 -- the paper proves this sketch syntactically.
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
-      (:features
-        (:numerical (:symbol fb) (:description "") (:expression (n_count (c_atomic_state "ball"))))
-        (:numerical (:symbol fl) (:description "") (:expression (n_count (c_atomic_state "room"))))
-        (:numerical (:symbol fn) (:description "") (:expression (n_count (c_atomic_state "gripper")))))
-      (:rules
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:greater_zero fb)) (:effects (:decreases fb) (:unchanged fl) (:unchanged fn))))
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:greater_zero fl)) (:effects (:decreases fl) (:unchanged fn))))
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:greater_zero fn)) (:effects (:decreases fn)))))))",
+    (:features
+        (:numerical
+            (:symbol fb)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+        (:numerical
+            (:symbol fl)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "room"))
+            )
+        )
+        (:numerical
+            (:symbol fn)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "gripper"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto1)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero fb)
+                )
+                (:effects
+                    (:decreases fb)
+                    (:unchanged fl)
+                    (:unchanged fn)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto2)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero fl)
+                )
+                (:effects
+                    (:unchanged fn)
+                    (:decreases fl)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto3)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero fn)
+                )
+                (:effects
+                    (:decreases fn)
+                )
+            )
+        )
+    )
+)
+)",
                                                        planning_domain.get_domain(),
                                                        *repository);
 
@@ -64,20 +122,105 @@ TEST(RunirTests, IncompleteStructuralTerminationBarmanSketchIsTerminating)
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     // incomplete_sieve.pdf Theorem 7 (Barman); provable via R1/R2 alone.
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
-      (:features
-        (:boolean (:symbol c1) (:description "") (:expression (b_nonempty (c_atomic_state "at-robby"))))
-        (:boolean (:symbol c2) (:description "") (:expression (b_nonempty (c_atomic_state "free"))))
-        (:numerical (:symbol g) (:description "") (:expression (n_count (c_atomic_state "ball"))))
-        (:numerical (:symbol u) (:description "") (:expression (n_count (c_atomic_state "room")))))
-      (:rules
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:negative c1)) (:effects (:positive c1) (:unchanged c2) (:unchanged g))))
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:positive c1) (:negative c2)) (:effects (:positive c2) (:unchanged c1) (:unchanged g))))
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:greater_zero u)) (:effects (:decreases u) (:unchanged c1) (:unchanged c2) (:unchanged g))))
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:greater_zero g)) (:effects (:decreases g) (:unchanged u)))))))",
+    (:features
+        (:boolean
+            (:symbol c1)
+            (:description "")
+            (:expression
+                (b_nonempty
+                    (c_atomic_state
+                        "at-robby"))
+            )
+        )
+        (:boolean
+            (:symbol c2)
+            (:description "")
+            (:expression
+                (b_nonempty
+                    (c_atomic_state
+                        "free"))
+            )
+        )
+        (:numerical
+            (:symbol g)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+        (:numerical
+            (:symbol u)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "room"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto4)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:negative c1)
+                )
+                (:effects
+                    (:positive c1)
+                    (:unchanged c2)
+                    (:unchanged g)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto5)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:positive c1)
+                    (:negative c2)
+                )
+                (:effects
+                    (:unchanged g)
+                    (:positive c2)
+                    (:unchanged c1)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto6)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero u)
+                )
+                (:effects
+                    (:unchanged c2)
+                    (:unchanged g)
+                    (:unchanged c1)
+                    (:decreases u)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto7)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero g)
+                )
+                (:effects
+                    (:decreases g)
+                    (:unchanged u)
+                )
+            )
+        )
+    )
+)
+)",
                                                        planning_domain.get_domain(),
                                                        *repository);
 
@@ -97,16 +240,71 @@ TEST(RunirTests, IncompleteStructuralTerminationRequiresR3MarkedComplementaryCon
     // other on q, but R3 discounts rB against rA: n is marked and n > 0 in
     // C(rA) is complementary to n = 0 in C(rB).
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
-      (:features
-        (:boolean (:symbol q) (:description "") (:expression (b_nonempty (c_atomic_state "at-robby"))))
-        (:numerical (:symbol n) (:description "") (:expression (n_count (c_atomic_state "ball")))))
-      (:rules
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:positive q) (:greater_zero n)) (:effects (:negative q) (:unchanged n))))
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:negative q) (:equal_zero n)) (:effects (:positive q) (:unchanged n))))
-        (:rule (:symbol) (:description "")
-          (:expression (:conditions (:greater_zero n)) (:effects (:decreases n) (:unchanged q)))))))",
+    (:features
+        (:boolean
+            (:symbol q)
+            (:description "")
+            (:expression
+                (b_nonempty
+                    (c_atomic_state
+                        "at-robby"))
+            )
+        )
+        (:numerical
+            (:symbol n)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto8)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:positive q)
+                    (:greater_zero n)
+                )
+                (:effects
+                    (:negative q)
+                    (:unchanged n)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto9)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:negative q)
+                    (:equal_zero n)
+                )
+                (:effects
+                    (:unchanged n)
+                    (:positive q)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto10)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero n)
+                )
+                (:effects
+                    (:decreases n)
+                    (:unchanged q)
+                )
+            )
+        )
+    )
+)
+)",
                                                        planning_domain.get_domain(),
                                                        *repository);
 
@@ -122,11 +320,45 @@ TEST(RunirTests, IncompleteStructuralTerminationBooleanOscillatorIsUnknownWithBl
     auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
-      (:features
-        (:boolean (:symbol b1) (:description "") (:expression (b_nonempty (c_atomic_state "at-robby")))))
-      (:rules
-        (:rule (:symbol) (:description "") (:expression (:conditions (:negative b1)) (:effects (:positive b1))))
-        (:rule (:symbol) (:description "") (:expression (:conditions (:positive b1)) (:effects (:negative b1)))))))",
+    (:features
+        (:boolean
+            (:symbol b1)
+            (:description "")
+            (:expression
+                (b_nonempty
+                    (c_atomic_state
+                        "at-robby"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto11)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:negative b1)
+                )
+                (:effects
+                    (:positive b1)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto12)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:positive b1)
+                )
+                (:effects
+                    (:negative b1)
+                )
+            )
+        )
+    )
+)
+)",
                                                        planning_domain.get_domain(),
                                                        *repository);
 

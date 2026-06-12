@@ -13,24 +13,119 @@ from pyrunir.kr.ps.base.dl import (
 from pytyr.formalism.planning import Parser, ParserOptions
 
 OSCILLATOR = """(:sketch
-  (:features
-    (:boolean (:symbol b1) (:description "") (:expression (b_nonempty (c_atomic_state "at-robby")))))
-  (:rules
-    (:rule (:symbol) (:description "") (:expression (:conditions (:negative b1)) (:effects (:positive b1))))
-    (:rule (:symbol) (:description "") (:expression (:conditions (:positive b1)) (:effects (:negative b1))))))"""
+    (:features
+        (:boolean
+            (:symbol b1)
+            (:description "")
+            (:expression
+                (b_nonempty
+                    (c_atomic_state
+                        "at-robby"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto1)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:negative b1)
+                )
+                (:effects
+                    (:positive b1)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto2)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:positive b1)
+                )
+                (:effects
+                    (:negative b1)
+                )
+            )
+        )
+    )
+)
+"""
 
 TPP = """(:sketch
-  (:features
-    (:numerical (:symbol fb) (:description "") (:expression (n_count (c_atomic_state "ball"))))
-    (:numerical (:symbol fl) (:description "") (:expression (n_count (c_atomic_state "room"))))
-    (:numerical (:symbol fn) (:description "") (:expression (n_count (c_atomic_state "gripper")))))
-  (:rules
-    (:rule (:symbol) (:description "")
-      (:expression (:conditions (:greater_zero fb)) (:effects (:decreases fb) (:unchanged fl) (:unchanged fn))))
-    (:rule (:symbol) (:description "")
-      (:expression (:conditions (:greater_zero fl)) (:effects (:decreases fl) (:unchanged fn))))
-    (:rule (:symbol) (:description "")
-      (:expression (:conditions (:greater_zero fn)) (:effects (:decreases fn))))))"""
+    (:features
+        (:numerical
+            (:symbol fb)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+        (:numerical
+            (:symbol fl)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "room"))
+            )
+        )
+        (:numerical
+            (:symbol fn)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "gripper"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto3)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero fb)
+                )
+                (:effects
+                    (:decreases fb)
+                    (:unchanged fl)
+                    (:unchanged fn)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto4)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero fl)
+                )
+                (:effects
+                    (:unchanged fn)
+                    (:decreases fl)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto5)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero fn)
+                )
+                (:effects
+                    (:decreases fn)
+                )
+            )
+        )
+    )
+)
+"""
 
 
 def make_repository():
@@ -87,11 +182,43 @@ def test_structural_termination_edge_changes_are_dict_shaped():
     domain, repository = make_repository()
     sketch = parse_sketch(
         """(:sketch
-      (:features
-        (:numerical (:symbol n1) (:description "") (:expression (n_count (c_atomic_state "ball")))))
-      (:rules
-        (:rule (:symbol) (:description "") (:expression (:conditions (:greater_zero n1)) (:effects (:decreases n1))))
-        (:rule (:symbol) (:description "") (:expression (:conditions) (:effects (:increases n1))))))""",
+    (:features
+        (:numerical
+            (:symbol n1)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto6)
+            (:description "")
+            (:expression
+                (:conditions
+                    (:greater_zero n1)
+                )
+                (:effects
+                    (:decreases n1)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto7)
+            (:description "")
+            (:expression
+                (:conditions)
+                (:effects
+                    (:increases n1)
+                )
+            )
+        )
+    )
+)
+""",
         domain,
         repository,
     )

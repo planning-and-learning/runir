@@ -8,7 +8,10 @@
 #include <boost/dynamic_bitset.hpp>
 #include <cstddef>
 #include <limits>
+#include <optional>
 #include <stdexcept>
+#include <string>
+#include <type_traits>
 #include <vector>
 
 namespace runir::kr::ps::ext::dl
@@ -27,14 +30,14 @@ namespace runir::kr::ps::ext::dl
  * (well-founded downward, abstracted to |C| > 0).
  *
  * Rule kinds (bonet-et-al-icaps2024.pdf Algorithm 2): sketch rules carry
- * explicit effects with unmentioned features unconstrained; load, do, and
- * call rules are treated conservatively with all features unconstrained.
- * (Load rules do not change the planning state, but they write registers and
- * feature denotations may depend on registers; the register-aware refinement
- * of Bonet and Geffner 2023 is a sound strengthening left to future work.)
- * A "terminating" verdict is therefore always sound, while modules whose
- * termination argument rests on register structure are reported
- * non-terminating.
+ * explicit effects with unmentioned features unconstrained. Do rules may also
+ * carry explicit effects; concrete execution/proof only accepts matching
+ * actions whose source-to-successor feature transition satisfies those
+ * effects. Load rules do not change the planning state; loading concept
+ * register r only unconstrains features whose denotation depends on r (the
+ * paper's Phi(r)), and leaves all other tracked features unchanged. Call rules
+ * are treated conservatively with all features unconstrained because they may
+ * change the planning state through arbitrary module side effects.
  */
 
 namespace detail
@@ -61,8 +64,7 @@ void insert_unique(std::vector<ygg::Index<Feature<FeatureTag>>>& features, ygg::
 }
 
 template<typename FeatureTag, typename ObservationTag>
-void collect_feature(ModuleFeatures& features,
-                     ygg::View<ygg::Index<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> condition)
+void collect_feature(ModuleFeatures& features, ygg::View<ygg::Index<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> condition)
 {
     if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
         insert_unique(features.concepts, condition.get_feature().get_index());
@@ -73,8 +75,7 @@ void collect_feature(ModuleFeatures& features,
 }
 
 template<typename FeatureTag, typename ObservationTag>
-void collect_feature(ModuleFeatures& features,
-                     ygg::View<ygg::Index<ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> effect)
+void collect_feature(ModuleFeatures& features, ygg::View<ygg::Index<ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> effect)
 {
     if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
         insert_unique(features.concepts, effect.get_feature().get_index());
@@ -82,6 +83,63 @@ void collect_feature(ModuleFeatures& features,
         insert_unique(features.booleans, effect.get_feature().get_index());
     else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
         insert_unique(features.numericals, effect.get_feature().get_index());
+}
+
+template<typename VariantView>
+bool variant_references_concept_register(VariantView view, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag> reg);
+
+template<typename View>
+bool references_concept_register(View view, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag> reg)
+{
+    if constexpr (requires { view.get_variant(); })
+    {
+        return variant_references_concept_register(view.get_variant(), reg);
+    }
+    else
+    {
+        if constexpr (requires { view.get_data().identifier; })
+        {
+            using Identifier = std::remove_cvref_t<decltype(view.get_data().identifier)>;
+            if constexpr (std::same_as<Identifier, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>)
+                return view.get_data().identifier == reg;
+        }
+
+        auto result = false;
+        if constexpr (requires { view.get_arg(); })
+        {
+            auto arg = view.get_arg();
+            if constexpr (requires { arg.get_variant(); })
+                result = result || references_concept_register(arg, reg);
+            else
+                result = result || variant_references_concept_register(arg, reg);
+        }
+        if constexpr (requires { view.get_lhs(); })
+            result = result || references_concept_register(view.get_lhs(), reg);
+        if constexpr (requires { view.get_rhs(); })
+            result = result || references_concept_register(view.get_rhs(), reg);
+        if constexpr (requires { view.get_mid(); })
+            result = result || references_concept_register(view.get_mid(), reg);
+        if constexpr (requires { view.get_role(); })
+            result = result || references_concept_register(view.get_role(), reg);
+        if constexpr (requires { view.get_concept(); })
+            result = result || references_concept_register(view.get_concept(), reg);
+        return result;
+    }
+}
+
+template<typename VariantView>
+bool variant_references_concept_register(VariantView view, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag> reg)
+{
+    return ygg::visit([&](auto child) { return references_concept_register(child, reg); }, view);
+}
+
+template<typename FeatureTag>
+bool feature_references_concept_register(ygg::Index<Feature<FeatureTag>> feature,
+                                         const Repository& repository,
+                                         runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag> reg)
+{
+    return ygg::visit([&](auto concrete) { return references_concept_register(concrete.get_expression(), reg); },
+                      ygg::make_view(feature, repository).get_variant());
 }
 
 /// Per-rule qualitative profile. Numerical-like positions span the concept
@@ -114,6 +172,24 @@ struct ModuleRuleProfile
     {
     }
 };
+
+inline void record_load_effects(const ModuleFeatures& features,
+                                ModuleRuleProfile& profile,
+                                const Repository& repository,
+                                runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag> reg)
+{
+    for (std::size_t position = 0; position < features.booleans.size(); ++position)
+        if (!feature_references_concept_register(features.booleans[position], repository, reg))
+            profile.boolean_unchanged_effects.set(position);
+
+    for (std::size_t position = 0; position < features.concepts.size(); ++position)
+        if (!feature_references_concept_register(features.concepts[position], repository, reg))
+            profile.numerical_changes[position] = NumericalChange::UNCHANGED;
+
+    for (std::size_t position = 0; position < features.numericals.size(); ++position)
+        if (!feature_references_concept_register(features.numericals[position], repository, reg))
+            profile.numerical_changes[features.concepts.size() + position] = NumericalChange::UNCHANGED;
+}
 
 template<typename FeatureTag, typename ObservationTag>
 void record_condition(const ModuleFeatures& features,
@@ -239,24 +315,20 @@ inline ModuleAnalysis analyze_module(ModuleView module_)
                 profile.source_memory_position = memory_position(concrete_rule.get_source().get_index());
                 profile.target_memory_position = memory_position(concrete_rule.get_target().get_index());
                 for (auto condition : concrete_rule.get_conditions())
-                    ygg::visit(
-                        [&](auto concrete_variant) {
-                            ygg::visit([&](auto concrete) { record_condition(analysis.features, profile, concrete); },
-                                       concrete_variant.get_variant());
-                        },
-                        condition.get_variant());
+                    ygg::visit([&](auto concrete_variant)
+                               { ygg::visit([&](auto concrete) { record_condition(analysis.features, profile, concrete); }, concrete_variant.get_variant()); },
+                               condition.get_variant());
                 if constexpr (requires { concrete_rule.get_effects(); })
                 {
                     for (auto effect : concrete_rule.get_effects())
-                        ygg::visit(
-                            [&](auto concrete_variant) {
-                                ygg::visit([&](auto concrete) { record_effect(analysis.features, profile, concrete); },
-                                           concrete_variant.get_variant());
-                            },
-                            effect.get_variant());
+                        ygg::visit([&](auto concrete_variant)
+                                   { ygg::visit([&](auto concrete) { record_effect(analysis.features, profile, concrete); }, concrete_variant.get_variant()); },
+                                   effect.get_variant());
                 }
-                // Load/do/call rules: no effect entries; everything stays
-                // unconstrained (see the file comment).
+                if constexpr (std::same_as<std::remove_cvref_t<decltype(concrete_rule)>, ygg::View<ygg::Index<Rule<LoadTag>>, Repository>>)
+                    record_load_effects(analysis.features, profile, module_.get_context(), concrete_rule.get_register().get_identifier());
+                // Rules without explicit effect entries leave unmentioned
+                // features unconstrained. Call rules have no effect entries.
             },
             rule.get_variant());
         analysis.profiles.push_back(std::move(profile));
@@ -287,10 +359,8 @@ vertex_numerical_like(std::size_t vertex, std::size_t num_memory_states, std::si
     return values;
 }
 
-inline std::size_t make_vertex(const boost::dynamic_bitset<>& booleans,
-                               const boost::dynamic_bitset<>& numerical_like,
-                               std::size_t num_memory_states,
-                               std::size_t memory_position)
+inline std::size_t
+make_vertex(const boost::dynamic_bitset<>& booleans, const boost::dynamic_bitset<>& numerical_like, std::size_t num_memory_states, std::size_t memory_position)
 {
     auto valuation = std::size_t { 0 };
     for (std::size_t position = 0; position < booleans.size(); ++position)
@@ -358,7 +428,8 @@ void enumerate_rule_edges(const ModuleRuleProfile& profile,
                     fixed_numericals.set(position);
                     break;
                 }
-                case NumericalChange::UNCONSTRAINED: break;
+                case NumericalChange::UNCONSTRAINED:
+                    break;
             }
         }
         if (decreases_unsatisfiable)
@@ -427,8 +498,7 @@ std::pair<bool, std::vector<std::size_t>> sieve(std::vector<ModulePolicyEdge>& e
             {
             }
         };
-        auto component_profiles = std::vector<ComponentProfile>(static_cast<std::size_t>(num_components),
-                                                                ComponentProfile(num_booleans, num_numerical_like));
+        auto component_profiles = std::vector<ComponentProfile>(static_cast<std::size_t>(num_components), ComponentProfile(num_booleans, num_numerical_like));
 
         for (const auto& edge : edges)
         {
@@ -514,14 +584,13 @@ inline ModuleStructuralTerminationResult structural_termination(ModuleView modul
                                      { edges.push_back(detail::ModulePolicyEdge { source, target, rule_position }); });
 
     const auto num_vertices = (std::size_t { 1 } << (num_booleans + num_numerical_like)) * num_memory_states;
-    const auto [has_cycle, component_of] =
-        detail::sieve(edges,
-                      num_vertices,
-                      num_booleans,
-                      num_numerical_like,
-                      [&](std::size_t vertex) { return detail::vertex_booleans(vertex, num_memory_states, num_booleans); },
-                      [&](const detail::ModulePolicyEdge& edge) -> const std::vector<NumericalChange>&
-                      { return profiles[edge.rule_position].numerical_changes; });
+    const auto [has_cycle, component_of] = detail::sieve(
+        edges,
+        num_vertices,
+        num_booleans,
+        num_numerical_like,
+        [&](std::size_t vertex) { return detail::vertex_booleans(vertex, num_memory_states, num_booleans); },
+        [&](const detail::ModulePolicyEdge& edge) -> const std::vector<NumericalChange>& { return profiles[edge.rule_position].numerical_changes; });
 
     if (!has_cycle)
     {
@@ -555,12 +624,89 @@ inline ModuleStructuralTerminationResult structural_termination(ModuleView modul
     {
         if (!edge.alive || component_of[edge.source] != component_of[edge.target])
             continue;
-        counterexample_builder.add_directed_edge(
-            map_vertex(edge.source),
-            map_vertex(edge.target),
-            ModulePolicyGraphEdgeLabel(rules[edge.rule_position], profiles[edge.rule_position].numerical_changes));
+        counterexample_builder.add_directed_edge(map_vertex(edge.source),
+                                                 map_vertex(edge.target),
+                                                 ModulePolicyGraphEdgeLabel(rules[edge.rule_position], profiles[edge.rule_position].numerical_changes));
     }
     result.counterexample = std::make_shared<ModulePolicyGraph>(std::move(counterexample_builder));
+    return result;
+}
+
+inline ModuleProgramStructuralTerminationResult structural_termination(ModuleProgramView program)
+{
+    auto result = ModuleProgramStructuralTerminationResult {};
+
+    auto modules = std::vector<ModuleView> {};
+    for (auto module : program.get_modules())
+    {
+        modules.push_back(module);
+        auto module_result = structural_termination(module);
+        if (!module_result.is_terminating())
+            result.status = StructuralTerminationStatus::NON_TERMINATING;
+        result.module_results.push_back(std::move(module_result));
+    }
+
+    const auto module_position_by_name = [&](const std::string& name) -> std::optional<std::size_t>
+    {
+        for (std::size_t position = 0; position < modules.size(); ++position)
+            if (std::string(modules[position].get_name()) == name)
+                return position;
+        return std::nullopt;
+    };
+
+    auto call_graph_builder = graphs::StaticGraphBuilder<> {};
+    for (std::size_t position = 0; position < modules.size(); ++position)
+        call_graph_builder.add_vertex();
+
+    struct CallEdge
+    {
+        std::size_t source_module;
+        std::size_t target_module;
+        RuleVariantView rule;
+    };
+    auto call_edges = std::vector<CallEdge> {};
+
+    for (std::size_t source_module = 0; source_module < modules.size(); ++source_module)
+    {
+        for (auto transition : modules[source_module].get_memory_transitions())
+        {
+            for (auto rule_variant : transition.get_rules())
+            {
+                ygg::visit(
+                    [&](auto rule)
+                    {
+                        using RuleViewT = std::decay_t<decltype(rule)>;
+                        if constexpr (std::same_as<RuleViewT, ygg::View<ygg::Index<Rule<CallTag>>, Repository>>)
+                        {
+                            const auto target_module = module_position_by_name(rule.get_callee_name());
+                            if (!target_module)
+                            {
+                                result.status = StructuralTerminationStatus::NON_TERMINATING;
+                                result.recursive_call_rules.push_back(rule_variant);
+                                return;
+                            }
+                            call_graph_builder.add_directed_edge(static_cast<graphs::VertexIndex>(source_module),
+                                                                 static_cast<graphs::VertexIndex>(*target_module));
+                            call_edges.push_back(CallEdge { source_module, *target_module, rule_variant });
+                        }
+                    },
+                    rule_variant.get_variant());
+            }
+        }
+    }
+
+    const auto call_graph = graphs::StaticGraph<> { std::move(call_graph_builder) };
+    const auto [num_components, component_of] = graphs::algorithms::strong_components(call_graph);
+    static_cast<void>(num_components);
+    for (const auto& edge : call_edges)
+    {
+        if (component_of[edge.source_module] == component_of[edge.target_module])
+        {
+            result.status = StructuralTerminationStatus::NON_TERMINATING;
+            result.recursive_call_rules.push_back(edge.rule);
+        }
+    }
+
     return result;
 }
 

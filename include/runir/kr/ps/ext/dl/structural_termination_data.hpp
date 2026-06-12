@@ -80,6 +80,15 @@ struct ModuleStructuralTerminationResult
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
 };
 
+struct ModuleProgramStructuralTerminationResult
+{
+    StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
+    std::vector<ModuleStructuralTerminationResult> module_results;
+    std::vector<RuleVariantView> recursive_call_rules;
+
+    bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
+};
+
 }  // namespace runir::kr::ps::ext::dl
 
 #endif

@@ -93,16 +93,28 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto description = R"(
-(:module
-  "entry"
-  (:arguments (:concept "X" 0) (:role "O" 0) (:boolean "B" 0) (:numerical "N" 0))
-  (:registers
-    (:concept (:symbol 0)))
-  (:entry m0)
-  (:memory m0 m1)
-  (:features)
-  (:rules))
+    const auto description = R"((:module
+    (:symbol entry)
+    (:arguments
+        (:concept "X" 0)
+        (:role "O" 0)
+        (:boolean "B" 0)
+        (:numerical "N" 0)
+    )
+    (:description "")
+    (:registers
+        (:concept (:symbol 0))
+    )
+    (:entry m0)
+    (:memory
+        m0
+        m1
+    )
+    (:features
+    )
+    (:rules
+    )
+)
 )";
 
     const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
@@ -157,36 +169,53 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto caller_description = R"(
-(:module
-  "caller"
-  (:arguments)
-  (:registers)
-  (:entry m0)
-  (:memory m0 m1)
-  (:features)
-  (:rules
-    (:rule
-      (:symbol)
-      (:description "")
-      (:expression
-        (:source-memory m0)
-        (:target-memory m1)
-        (:call
-          (:expression
-            (:conditions)
-            (:callee "callee")
-            (:arguments)))))))
+    const auto caller_description = R"((:module
+    (:symbol caller)
+    (:arguments
+    )
+    (:description "")
+    (:registers
+    )
+    (:entry m0)
+    (:memory
+        m0
+        m1
+    )
+    (:features
+    )
+    (:rules
+        (:rule
+            (:symbol auto1)
+            (:description "")
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:call
+                    (:conditions)
+                    (:callee "callee")
+                    (:arguments)
+                )
+            )
+        )
+    )
+)
 )";
-    const auto callee_description = R"(
-(:module
-  "callee"
-  (:arguments)
-  (:registers)
-  (:entry m0)
-  (:memory m0)
-  (:features)
-  (:rules))
+    const auto callee_description = R"((:module
+    (:symbol callee)
+    (:arguments
+    )
+    (:description "")
+    (:registers
+    )
+    (:entry m0)
+    (:memory
+        m0
+    )
+    (:features
+    )
+    (:rules
+    )
+)
 )";
 
     const auto modules = kr::ps::ext::dl::parse_modules({ caller_description, callee_description }, planning_task.get_domain().get_domain(), *repository);
@@ -225,49 +254,75 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidModuleSets)
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto caller_with_argument = R"(
-(:module
-  "caller"
-  (:arguments)
-  (:registers)
-  (:entry m0)
-  (:memory m0 m1)
-  (:features)
-  (:rules
-    (:rule
-      (:symbol)
-      (:description "")
-      (:expression
-        (:source-memory m0)
-        (:target-memory m1)
-        (:call
-          (:expression
-            (:conditions)
-            (:callee "callee")
-            (:arguments (c_top))))))))
+    const auto caller_with_argument = R"((:module
+    (:symbol caller)
+    (:arguments
+    )
+    (:description "")
+    (:registers
+    )
+    (:entry m0)
+    (:memory
+        m0
+        m1
+    )
+    (:features
+    )
+    (:rules
+        (:rule
+            (:symbol auto2)
+            (:description "")
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:call
+                    (:conditions)
+                    (:callee "callee")
+                    (:arguments
+                        (c_top)
+                    )
+                )
+            )
+        )
+    )
+)
 )";
-    const auto callee_without_arguments = R"(
-(:module
-  "callee"
-  (:arguments)
-  (:registers)
-  (:entry m0)
-  (:memory m0)
-  (:features)
-  (:rules))
+    const auto callee_without_arguments = R"((:module
+    (:symbol callee)
+    (:arguments
+    )
+    (:description "")
+    (:registers
+    )
+    (:entry m0)
+    (:memory
+        m0
+    )
+    (:features
+    )
+    (:rules
+    )
+)
 )";
     EXPECT_THROW(kr::ps::ext::dl::parse_modules({ caller_with_argument, callee_without_arguments }, planning_task.get_domain().get_domain(), *repository),
                  std::runtime_error);
 
-    const auto duplicate_callee = R"(
-(:module
-  "callee"
-  (:arguments)
-  (:registers)
-  (:entry m0)
-  (:memory m0)
-  (:features)
-  (:rules))
+    const auto duplicate_callee = R"((:module
+    (:symbol callee)
+    (:arguments
+    )
+    (:description "")
+    (:registers
+    )
+    (:entry m0)
+    (:memory
+        m0
+    )
+    (:features
+    )
+    (:rules
+    )
+)
 )";
     EXPECT_THROW(kr::ps::ext::dl::parse_modules({ callee_without_arguments, duplicate_callee }, planning_task.get_domain().get_domain(), *repository),
                  std::runtime_error);
@@ -296,13 +351,13 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
   (:features)
   (:rules
     (:rule
-      (:symbol)
+      (:symbol auto3)
       (:description "")
       (:expression
         (:source-memory m0)
         (:target-memory m1)
         (:do
-          (:symbol)
+          (:symbol auto4)
           (:description "")
           (:expression
             (:conditions)
@@ -321,13 +376,13 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
   (:features)
   (:rules
     (:rule
-      (:symbol)
+      (:symbol auto5)
       (:description "")
       (:expression
         (:source-memory m0)
         (:target-memory m1)
         (:do
-          (:symbol)
+          (:symbol auto6)
           (:description "")
           (:expression
             (:conditions)
@@ -472,7 +527,8 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
       (:symbol X)
       (:description "bad argument")
       (:expression
-        (c_argument 0))))
+        (c_argument
+            0))))
   (:rules))
 )");
     try
@@ -483,7 +539,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
     }
     catch (const std::runtime_error& err)
     {
-        const auto expected_offset = out_of_range_expression_argument.find("(c_argument 0)");
+        const auto expected_offset = out_of_range_expression_argument.find("(c_argument\n            0)");
         ASSERT_NE(expected_offset, std::string::npos);
         EXPECT_NE(std::string(err.what()).find("offset " + std::to_string(expected_offset)), std::string::npos) << err.what();
     }
@@ -501,7 +557,8 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
       (:symbol X)
       (:description "bad register")
       (:expression
-        (c_register 1))))
+        (c_register
+            1))))
   (:rules))
 )";
     EXPECT_THROW(kr::ps::ext::dl::parse_module(undeclared_expression_register, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
@@ -517,13 +574,13 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
   (:features)
   (:rules
     (:rule
-      (:symbol)
+      (:symbol auto7)
       (:description "")
       (:expression
         (:source-memory m0)
         (:target-memory m1)
         (:load
-          (:symbol)
+          (:symbol auto8)
           (:description "")
           (:expression
             (:conditions)
@@ -544,13 +601,13 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
   (:features)
   (:rules
     (:rule
-      (:symbol)
+      (:symbol auto9)
       (:description "")
       (:expression
         (:source-memory m0)
         (:target-memory m1)
         (:load
-          (:symbol)
+          (:symbol auto10)
           (:description "")
           (:expression
             (:conditions)
@@ -560,15 +617,22 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
 )";
     EXPECT_THROW(kr::ps::ext::dl::parse_module(invalid_rule_section, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
 
-    const auto root = R"(
-(:module
-  "root"
-  (:arguments)
-  (:registers)
-  (:entry m0)
-  (:memory m0)
-  (:features)
-  (:rules))
+    const auto root = R"((:module
+    (:symbol root)
+    (:arguments
+    )
+    (:description "")
+    (:registers
+    )
+    (:entry m0)
+    (:memory
+        m0
+    )
+    (:features
+    )
+    (:rules
+    )
+)
 )";
     EXPECT_THROW(kr::ps::ext::dl::parse_module_program(R"(
 (:program
@@ -593,15 +657,22 @@ TEST(RunirTests, ExtModuleProgramParserRejectsInvalidProgramWiring)
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto root = R"(
-(:module
-  "root"
-  (:arguments)
-  (:registers)
-  (:entry m0)
-  (:memory m0)
-  (:features)
-  (:rules))
+    const auto root = R"((:module
+    (:symbol root)
+    (:arguments
+    )
+    (:description "")
+    (:registers
+    )
+    (:entry m0)
+    (:memory
+        m0
+    )
+    (:features
+    )
+    (:rules
+    )
+)
 )";
 
     EXPECT_THROW(kr::ps::ext::dl::parse_module_program(R"(
@@ -630,7 +701,7 @@ TEST(RunirTests, ExtModuleProgramParserRejectsInvalidProgramWiring)
     (:features)
     (:rules
       (:rule
-        (:symbol)
+        (:symbol auto11)
         (:description "")
         (:expression
           (:source-memory m0)
@@ -656,7 +727,7 @@ TEST(RunirTests, ExtModuleParserReadsPaperFactoryDescriptions)
     EXPECT_EQ(on.transitions.size(), 14);
     EXPECT_EQ(on.transitions.back().rules.front().action, "stack");
     ASSERT_EQ(on.transitions.back().rules.front().arguments.size(), 2);
-    EXPECT_EQ(on.transitions.back().rules.front().arguments[0].text, "(c_argument 0)");
+    EXPECT_EQ(on.transitions.back().rules.front().arguments[0].text, std::string("(c_argument") + " 0)");
 
     const auto tower = kr::ps::ext::dl::parser::parse_module_ast(kr::ps::ext::dl::ModuleFactory::create_tower_bonet_et_al_icaps2024_description());
     EXPECT_EQ(tower.name, "tower");
@@ -664,7 +735,7 @@ TEST(RunirTests, ExtModuleParserReadsPaperFactoryDescriptions)
     EXPECT_EQ(tower.transitions.size(), 4);
     EXPECT_EQ(tower.transitions[2].rules.front().callee, "on");
     ASSERT_EQ(tower.transitions[2].rules.front().arguments.size(), 2);
-    EXPECT_EQ(tower.transitions[2].rules.front().arguments[1].text, "(c_some (r_inverse (r_argument 0)) (c_register 0))");
+    EXPECT_EQ(tower.transitions[2].rules.front().arguments[1].text, std::string("(c_some") + " (r_inverse" + " (r_argument" + " 0))" + " (c_register" + " 0))");
 
     const auto blocks = kr::ps::ext::dl::parser::parse_module_ast(kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024_description());
     EXPECT_EQ(blocks.name, "blocks");
@@ -764,20 +835,22 @@ TEST(RunirTests, ExtModuleFormatterEscapesQuotedStringContents)
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto description = R"RUNIR(
-(:module
-  (:symbol entry)
-  (:arguments)
-  (:description "")
-  (:registers)
-  (:entry m0)
-  (:memory m0)
-  (:features
-    (:concept
-      (:symbol X)
-      (:description "quote \" and slash \\")
-      (:expression (c_top))))
-  (:rules))
+    const auto description = R"RUNIR((:module
+    (:symbol entry)
+    (:arguments
+    )
+    (:description "")
+    (:registers
+    )
+    (:entry m0)
+    (:memory
+        m0
+    )
+    (:features
+    )
+    (:rules
+    )
+)
 )RUNIR";
 
     const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
@@ -854,69 +927,116 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    const auto description = R"(
-(:module
-  "entry"
-  (:arguments (:concept "X" 0))
-  (:registers
-    (:concept (:symbol 0)))
-  (:entry m0)
-  (:memory m0 m1 m2)
-  (:features
-    (:concept
-      (:symbol B)
-      (:description "all blocks")
-      (:expression
-        (c_top)))
-    (:boolean
-      (:symbol H)
-      (:description "has blocks")
-      (:expression
-        (b_nonempty (c_top))))
-    (:numerical
-      (:symbol N)
-      (:description "block count")
-      (:expression
-        (n_count (c_top)))))
-  (:rules
-    (:rule
-      (:symbol load-edge)
-      (:description "load transition")
-      (:expression
-        (:source-memory m0)
-        (:target-memory m1)
-        (:load
-          (:symbol load-rule)
-          (:description "load description")
-          (:expression
-            (:conditions (:greater_zero B))
-            (:concept B)
-            (:register 0)))))
-    (:rule
-      (:symbol)
-      (:description "")
-      (:expression
-        (:source-memory m1)
-        (:target-memory m1)
-        (:sketch
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions (:positive H) (:greater_zero N))
-            (:effects (:unchanged B))))))
-    (:rule
-      (:symbol)
-      (:description "")
-      (:expression
-        (:source-memory m1)
-        (:target-memory m2)
-        (:do
-          (:symbol)
-          (:description "")
-          (:expression
-            (:conditions)
-            (:action "pick")
-            (:arguments (c_register 0) (c_top) (c_top))))))))
+    const auto description = R"((:module
+    (:symbol entry)
+    (:arguments
+        (:concept "X" 0)
+    )
+    (:description "")
+    (:registers
+        (:concept (:symbol 0))
+    )
+    (:entry m0)
+    (:memory
+        m0
+        m1
+        m2
+    )
+    (:features
+        (:concept
+            (:symbol B)
+            (:description "all blocks")
+            (:expression
+                (c_top)
+            )
+        )
+        (:boolean
+            (:symbol H)
+            (:description "has blocks")
+            (:expression
+                (b_nonempty
+                    (c_top))
+            )
+        )
+        (:numerical
+            (:symbol N)
+            (:description "block count")
+            (:expression
+                (n_count
+                    (c_top))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol load-edge)
+            (:description "load transition")
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:load
+                    (:symbol load-rule)
+                    (:description "load description")
+                    (:expression
+                        (:conditions
+                            (:greater_zero B)
+                        )
+                        (:concept
+                            (c_top)
+                        )
+                        (:register 0)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto12)
+            (:description "")
+            (:expression
+                (:source-memory m1)
+                (:target-memory m1)
+                (:sketch
+                    (:symbol auto13)
+                    (:description "")
+                    (:expression
+                        (:conditions
+                            (:positive H)
+                            (:greater_zero N)
+                        )
+                        (:effects
+                            (:unchanged B)
+                        )
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto14)
+            (:description "")
+            (:expression
+                (:source-memory m1)
+                (:target-memory m2)
+                (:do
+                    (:symbol auto15)
+                    (:description "")
+                    (:expression
+                        (:conditions)
+                        (:action "pick")
+                        (:arguments
+                            (c_register
+                                0)
+                            (c_top)
+                            (c_top)
+                        )
+                        (:effects
+                            (:unchanged B)
+                        )
+                    )
+                )
+            )
+        )
+    )
+)
 )";
 
     const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
@@ -952,7 +1072,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
             using View = std::decay_t<decltype(rule)>;
             using Expected = ygg::View<ygg::Index<kr::ps::ext::Rule<kr::ps::ext::DoTag>>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
-                return rule.get_action_name() == "pick" && rule.get_action_arguments().size() == 3;
+                return rule.get_action_name() == "pick" && rule.get_action_arguments().size() == 3 && rule.get_effects().size() == 1;
             else
                 return false;
         },
@@ -970,7 +1090,10 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
     auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
 
-    const auto concept_argument = kr::ps::ext::dl::parse_concept("(c_argument 0)", planning_task.get_domain().get_domain(), *dl_repository);
+    const auto concept_argument = kr::ps::ext::dl::parse_concept(R"((c_argument
+    0))",
+                                                                 planning_task.get_domain().get_domain(),
+                                                                 *dl_repository);
     EXPECT_TRUE(ygg::visit(
         [](auto child)
         {
@@ -984,7 +1107,10 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         },
         concept_argument.get_variant()));
 
-    const auto concept_register = kr::ps::ext::dl::parse_concept("(c_register 1)", planning_task.get_domain().get_domain(), *dl_repository);
+    const auto concept_register = kr::ps::ext::dl::parse_concept(R"((c_register
+    1))",
+                                                                 planning_task.get_domain().get_domain(),
+                                                                 *dl_repository);
     EXPECT_TRUE(ygg::visit(
         [](auto child)
         {
@@ -997,7 +1123,10 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         },
         concept_register.get_variant()));
 
-    const auto role_argument = kr::ps::ext::dl::parse_role("(r_argument 0)", planning_task.get_domain().get_domain(), *dl_repository);
+    const auto role_argument = kr::ps::ext::dl::parse_role(R"((r_argument
+    0))",
+                                                           planning_task.get_domain().get_domain(),
+                                                           *dl_repository);
     EXPECT_TRUE(ygg::visit(
         [](auto child)
         {
@@ -1010,11 +1139,26 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         },
         role_argument.get_variant()));
 
-    EXPECT_NO_THROW(
-        kr::ps::ext::dl::parse_concept("(c_some (r_inverse (r_argument 0)) (c_register 1))", planning_task.get_domain().get_domain(), *dl_repository));
-    EXPECT_NO_THROW(kr::ps::ext::dl::parse_role("(r_atomic_state \"at\")", planning_task.get_domain().get_domain(), *dl_repository));
-    EXPECT_NO_THROW(kr::ps::ext::dl::parse_boolean("(b_nonempty (c_top))", planning_task.get_domain().get_domain(), *dl_repository));
-    EXPECT_NO_THROW(kr::ps::ext::dl::parse_numerical("(n_count (c_top))", planning_task.get_domain().get_domain(), *dl_repository));
+    EXPECT_NO_THROW(kr::ps::ext::dl::parse_concept(R"((c_some
+    (r_inverse
+        (r_argument
+            0))
+    (c_register
+        1)))",
+                                                   planning_task.get_domain().get_domain(),
+                                                   *dl_repository));
+    EXPECT_NO_THROW(kr::ps::ext::dl::parse_role(R"((r_atomic_state
+    "at"))",
+                                                planning_task.get_domain().get_domain(),
+                                                *dl_repository));
+    EXPECT_NO_THROW(kr::ps::ext::dl::parse_boolean(R"((b_nonempty
+    (c_top)))",
+                                                   planning_task.get_domain().get_domain(),
+                                                   *dl_repository));
+    EXPECT_NO_THROW(kr::ps::ext::dl::parse_numerical(R"((n_count
+    (c_top)))",
+                                                     planning_task.get_domain().get_domain(),
+                                                     *dl_repository));
 }
 
 TEST(RunirTests, RejectsUnknownModuleFactorySpecification)
@@ -1051,22 +1195,27 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
     EXPECT_NE(empty_description.find("(:module\n  (:symbol empty)\n  (:arguments)\n  (:description \"\")"), std::string::npos);
 
     const auto on_description = kr::ps::ext::dl::ModuleFactory::create_description(kr::ps::ext::dl::ModuleSpecification::ON_BONET_ET_AL_ICAPS2024);
-    EXPECT_NE(on_description.find("(:module\n  (:symbol on)\n  (:arguments (:concept \"X\" 0) (:concept \"Y\" 1))\n  (:description \"\")"), std::string::npos);
+    EXPECT_NE(on_description.find(
+                  "(:module\n    (:symbol on)\n    (:arguments\n        (:concept \"X\" 0)\n        (:concept \"Y\" 1)\n    )\n    (:description \"\")"),
+              std::string::npos);
     EXPECT_NE(on_description.find("(:action \"stack\")"), std::string::npos);
-    EXPECT_NE(on_description.find("(c_argument 0)"), std::string::npos);
+    EXPECT_NE(on_description.find("(c_argument\n"), std::string::npos);
 
     const auto on_table_description = kr::ps::ext::dl::ModuleFactory::create_on_table_bonet_et_al_icaps2024_description();
-    EXPECT_NE(on_table_description.find("(:module\n  (:symbol on-table)\n  (:arguments (:concept \"X\" 0))\n  (:description \"\")"), std::string::npos);
+    EXPECT_NE(on_table_description.find("(:module\n    (:symbol on-table)\n    (:arguments\n        (:concept \"X\" 0)\n    )\n    (:description \"\")"),
+              std::string::npos);
     EXPECT_NE(on_table_description.find("(:action \"putdown\")"), std::string::npos);
 
     const auto tower_description = kr::ps::ext::dl::ModuleFactory::create_tower_bonet_et_al_icaps2024_description();
-    EXPECT_NE(tower_description.find("(:module\n  (:symbol tower)\n  (:arguments (:role \"O\" 0) (:concept \"X\" 0))\n  (:description \"\")"),
+    EXPECT_NE(tower_description.find(
+                  "(:module\n    (:symbol tower)\n    (:arguments\n        (:concept \"X\" 0)\n        (:role \"O\" 0)\n    )\n    (:description \"\")"),
               std::string::npos);
     EXPECT_NE(tower_description.find("(:callee \"on\")"), std::string::npos);
-    EXPECT_NE(tower_description.find("(r_argument 0)"), std::string::npos);
+    EXPECT_NE(tower_description.find("(r_argument\n"), std::string::npos);
 
     const auto blocks_description = kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024_description();
-    EXPECT_NE(blocks_description.find("(:module\n  (:symbol blocks)\n  (:arguments (:role \"O\" 0))\n  (:description \"\")"), std::string::npos);
+    EXPECT_NE(blocks_description.find("(:module\n    (:symbol blocks)\n    (:arguments\n        (:role \"O\" 0)\n    )\n    (:description \"\")"),
+              std::string::npos);
     EXPECT_NE(blocks_description.find("(:callee \"tower\")"), std::string::npos);
 
     const auto on = kr::ps::ext::dl::ModuleFactory::create_on_bonet_et_al_icaps2024(planning_task.get_domain().get_domain(), *repository);
@@ -1273,12 +1422,27 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
 
     const auto top_concept = create_top_concept(*dl_repository);
     const auto universal_role = kr::ps::ext::dl::parse_role("(r_universal)", planning_task.get_domain().get_domain(), *dl_repository);
-    const auto true_boolean = kr::ps::ext::dl::parse_boolean("(b_nonempty (c_top))", planning_task.get_domain().get_domain(), *dl_repository);
-    const auto object_count = kr::ps::ext::dl::parse_numerical("(n_count (c_top))", planning_task.get_domain().get_domain(), *dl_repository);
+    const auto true_boolean = kr::ps::ext::dl::parse_boolean(R"((b_nonempty
+    (c_top)))",
+                                                             planning_task.get_domain().get_domain(),
+                                                             *dl_repository);
+    const auto object_count = kr::ps::ext::dl::parse_numerical(R"((n_count
+    (c_top)))",
+                                                               planning_task.get_domain().get_domain(),
+                                                               *dl_repository);
     const auto concept_argument = create_concept_argument(*dl_repository, 0);
-    const auto role_argument = kr::ps::ext::dl::parse_role("(r_argument 0)", planning_task.get_domain().get_domain(), *dl_repository);
-    const auto boolean_argument = kr::ps::ext::dl::parse_boolean("(b_argument 0)", planning_task.get_domain().get_domain(), *dl_repository);
-    const auto numerical_argument = kr::ps::ext::dl::parse_numerical("(n_argument 0)", planning_task.get_domain().get_domain(), *dl_repository);
+    const auto role_argument = kr::ps::ext::dl::parse_role(R"((r_argument
+    0))",
+                                                           planning_task.get_domain().get_domain(),
+                                                           *dl_repository);
+    const auto boolean_argument = kr::ps::ext::dl::parse_boolean(R"((b_argument
+    0))",
+                                                                 planning_task.get_domain().get_domain(),
+                                                                 *dl_repository);
+    const auto numerical_argument = kr::ps::ext::dl::parse_numerical(R"((n_argument
+    0))",
+                                                                     planning_task.get_domain().get_domain(),
+                                                                     *dl_repository);
 
     auto call_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::CallTag>>();
     call_data.source = caller_entry.get_index();
@@ -1427,6 +1591,106 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     EXPECT_EQ(context.get_memory_state().get_index(), target.get_index());
     EXPECT_NE(context.get_state().get_index(), initial_state);
     EXPECT_EQ(context.get_state().get_index(), selected->node.get_state().get_index());
+}
+
+TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
+{
+    namespace fp = tyr::formalism::planning;
+    namespace p = tyr::planning;
+
+    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+    auto execution_context = ygg::ExecutionContext::create(1);
+    auto lifted_task = p::Task<p::LiftedTag>(planning_task);
+    auto task = lifted_task.instantiate_ground_task(*execution_context).task;
+    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+
+    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto repository_factory = kr::ps::ext::RepositoryFactory();
+    auto dl_repository = dl_repository_factory.create(task->get_repository());
+    auto repository = repository_factory.create(dl_repository);
+
+    const auto module = kr::ps::ext::dl::parse_module(R"((:module
+    (:symbol module)
+    (:arguments
+    )
+    (:description "")
+    (:registers
+    )
+    (:entry source)
+    (:memory
+        source
+        target
+    )
+    (:features
+        (:numerical
+            (:symbol C)
+            (:description "free grippers")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "free"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto16)
+            (:description "")
+            (:expression
+                (:source-memory source)
+                (:target-memory target)
+                (:do
+                    (:symbol auto17)
+                    (:description "")
+                    (:expression
+                        (:conditions)
+                        (:action "pick")
+                        (:arguments
+                            (c_top)
+                            (c_top)
+                            (c_top)
+                        )
+                        (:effects
+                            (:unchanged C)
+                        )
+                    )
+                )
+            )
+        )
+    )
+)
+)",
+                                                      planning_task.get_domain().get_domain(),
+                                                      *repository);
+    const auto rule_variant = module.get_memory_transitions()[0].get_rules()[0];
+
+    auto builder = kr::dl::semantics::Builder();
+    auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
+    auto denotation_repository = denotation_repository_factory.create();
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
+                                                                module,
+                                                                builder,
+                                                                denotation_repository);
+
+    const auto initial_node = search_context->successor_generator->get_initial_node();
+    const auto successors = search_context->successor_generator->get_labeled_successor_nodes(initial_node);
+    ygg::visit(
+        [&](auto rule)
+        {
+            using RuleView = std::decay_t<decltype(rule)>;
+            if constexpr (std::same_as<RuleView, ygg::View<ygg::Index<kr::ps::ext::Rule<kr::ps::ext::DoTag>>, kr::ps::ext::Repository>>)
+            {
+                EXPECT_FALSE(kr::ps::ext::detail::select_do_successor(rule, context, successors));
+                EXPECT_EQ(kr::ps::ext::detail::execute_do(rule, context, successors), kr::ps::ext::detail::RuleExecutionStatus::NO_APPLICABLE_ACTION);
+            }
+            else
+            {
+                FAIL() << "expected do rule";
+            }
+        },
+        rule_variant.get_variant());
 }
 
 TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)

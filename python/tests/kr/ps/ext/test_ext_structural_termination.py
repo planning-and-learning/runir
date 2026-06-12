@@ -6,24 +6,76 @@ from pyrunir.kr.ps.base.dl import NumericalChange
 from pytyr.formalism.planning import Parser, ParserOptions
 
 TERMINATING_MODULE = """(:module
-  (:symbol term)
-  (:arguments)
-  (:description "")
-  (:registers)
-  (:entry m0)
-  (:memory m0 m1)
-  (:features
-    (:numerical (:symbol fn) (:description "") (:expression (n_count (c_atomic_state "ball")))))
-  (:rules
-    (:rule (:symbol) (:description "")
-      (:expression (:source-memory m0) (:target-memory m1)
-        (:sketch (:conditions (:greater_zero fn)) (:effects (:decreases fn)))))
-    (:rule (:symbol) (:description "")
-      (:expression (:source-memory m1) (:target-memory m0)
-        (:sketch (:conditions) (:effects (:unchanged fn)))))))"""
+    (:symbol term)
+    (:arguments
+    )
+    (:description "")
+    (:registers
+    )
+    (:entry m0)
+    (:memory
+        m0
+        m1
+    )
+    (:features
+        (:numerical
+            (:symbol fn)
+            (:description "")
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto1)
+            (:description "")
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:sketch
+                    (:symbol auto2)
+                    (:description "")
+                    (:expression
+                        (:conditions
+                            (:greater_zero fn)
+                        )
+                        (:effects
+                            (:decreases fn)
+                        )
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto3)
+            (:description "")
+            (:expression
+                (:source-memory m1)
+                (:target-memory m0)
+                (:sketch
+                    (:symbol auto4)
+                    (:description "")
+                    (:expression
+                        (:conditions)
+                        (:effects
+                            (:unchanged fn)
+                        )
+                    )
+                )
+            )
+        )
+    )
+)
+"""
 
 NON_TERMINATING_MODULE = TERMINATING_MODULE.replace("(:symbol term)", "(:symbol nonterm)").replace(
-    "(:effects (:unchanged fn))", "(:effects)"
+    """(:effects
+                            (:unchanged fn)
+                        )""",
+    "(:effects)",
 )
 
 

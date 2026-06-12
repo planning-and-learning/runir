@@ -97,6 +97,7 @@ from ...._pyrunir.kr.ps.ext import (
     ModulePolicyGraphEdge,
     ModulePolicyGraphVertex,
     ModuleStructuralTerminationResult,
+    ModuleProgramStructuralTerminationResult,
     StructuralTerminationStatus,
     ceg_structural_termination,
     structural_termination,

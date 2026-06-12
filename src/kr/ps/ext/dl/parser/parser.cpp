@@ -2,7 +2,6 @@
 
 #include <boost/spirit/home/x3.hpp>
 #include <boost/spirit/home/x3/support/utility/error_reporting.hpp>
-
 #include <cctype>
 #include <cstddef>
 #include <functional>
@@ -190,10 +189,7 @@ private:
     }
 };
 
-[[noreturn]] void fail_at(const std::string& message, std::size_t offset)
-{
-    throw std::runtime_error(message + " at offset " + std::to_string(offset) + ".");
-}
+[[noreturn]] void fail_at(const std::string& message, std::size_t offset) { throw std::runtime_error(message + " at offset " + std::to_string(offset) + "."); }
 
 const Node& require_child(const Node& node, std::size_t index, std::string_view context)
 {
@@ -335,10 +331,7 @@ std::vector<ast::Observation> parse_observation_section(const Node& section, std
 
 bool is_allowed_rule_expression_section(ast::RuleKind kind, std::string_view name);
 
-bool is_rule_metadata_section(std::string_view name)
-{
-    return name == ":symbol" || name == ":description";
-}
+bool is_rule_metadata_section(std::string_view name) { return name == ":symbol" || name == ":description"; }
 
 bool is_allowed_rule_section(ast::RuleKind kind, std::string_view name)
 {
@@ -357,7 +350,7 @@ bool is_allowed_rule_expression_section(ast::RuleKind kind, std::string_view nam
         case ast::RuleKind::SKETCH:
             return name == ":effects";
         case ast::RuleKind::DO:
-            return name == ":action" || name == ":arguments";
+            return name == ":action" || name == ":arguments" || name == ":effects";
         case ast::RuleKind::CALL:
             return name == ":callee" || name == ":arguments";
     }
@@ -381,10 +374,7 @@ void validate_rule_sections(const Node& rule, ast::RuleKind kind)
     }
 }
 
-bool is_allowed_feature_section(std::string_view name)
-{
-    return name == ":symbol" || name == ":description" || name == ":expression";
-}
+bool is_allowed_feature_section(std::string_view name) { return name == ":symbol" || name == ":description" || name == ":expression"; }
 
 void validate_feature_sections(const Node& feature)
 {
@@ -417,7 +407,6 @@ const Node& require_section(const Node& rule, std::string_view name)
         return *section;
     fail_at(std::string("Missing rule section ") + std::string(name) + ".", rule.source_offset);
 }
-
 
 void validate_rule_expression_sections(const Node& expression, ast::RuleKind kind, bool allow_metadata_sections = false)
 {
@@ -480,6 +469,7 @@ const Node& require_single_value_section_value(const Node& rule, std::string_vie
 }
 
 std::string optional_metadata_value(const Node& node, std::string_view name);
+std::string parse_symbol_section_value(const Node& section, std::string_view name);
 std::string optional_symbol_value(const Node& node, std::string_view name);
 const Node* optional_single_value_section(const Node& node, std::string_view name);
 
@@ -502,7 +492,8 @@ ast::Rule parse_rule(const Node& node)
     validate_rule_sections(node, result.kind);
     if (result.kind != ast::RuleKind::CALL)
     {
-        result.symbol = optional_symbol_value(node, ":symbol");
+        const auto& symbol_section = require_section(node, ":symbol");
+        result.symbol = parse_symbol_section_value(symbol_section, ":symbol");
         result.description = optional_metadata_value(node, ":description");
     }
     const auto& expression = require_rule_expression(node, result.kind);
@@ -511,11 +502,11 @@ ast::Rule parse_rule(const Node& node)
     switch (result.kind)
     {
         case ast::RuleKind::LOAD:
-            {
-                const auto& concept_node = require_single_value_section_value(expression, ":concept");
-                result.concept_expression = render(concept_node);
-                result.concept_expression_offset = concept_node.source_offset;
-            }
+        {
+            const auto& concept_node = require_single_value_section_value(expression, ":concept");
+            result.concept_expression = render(concept_node);
+            result.concept_expression_offset = concept_node.source_offset;
+        }
             {
                 const auto& reg = require_single_value_section_value(expression, ":register");
                 result.reg = std::to_string(integer(reg, ":register"));
@@ -526,13 +517,15 @@ ast::Rule parse_rule(const Node& node)
             result.effects = parse_observation_section(require_section(expression, ":effects"), ":effects");
             break;
         case ast::RuleKind::DO:
-            {
-                const auto& action = require_single_value_section_value(expression, ":action");
-                result.action = atom(action, ":action");
-                result.action_offset = action.atom_offset;
-            }
+        {
+            const auto& action = require_single_value_section_value(expression, ":action");
+            result.action = atom(action, ":action");
+            result.action_offset = action.atom_offset;
+        }
             result.arguments_offset = require_section(expression, ":arguments").source_offset;
             result.arguments = parse_expression_list_section(expression, ":arguments");
+            if (const auto* effects = find_section(expression, ":effects"))
+                result.effects = parse_observation_section(*effects, ":effects");
             break;
         case ast::RuleKind::CALL:
         {
@@ -552,7 +545,11 @@ ast::Argument parse_argument(const Node& node)
 {
     if (!node.list || node.children.size() != 3)
         fail_at("Malformed argument.", node.source_offset);
-    return ast::Argument { node.source_offset, node.children[1].atom_offset, parse_argument_kind(node.children[0]), atom(node.children[1], "argument"), integer(node.children[2], "argument") };
+    return ast::Argument { node.source_offset,
+                           node.children[1].atom_offset,
+                           parse_argument_kind(node.children[0]),
+                           atom(node.children[1], "argument"),
+                           integer(node.children[2], "argument") };
 }
 
 ast::Register parse_register(const Node& node)
@@ -611,8 +608,6 @@ std::string parse_symbol_section_value(const Node& section, std::string_view nam
 {
     if (!section.list || section.children.empty() || atom(section.children[0], "symbol section") != name)
         fail_at("Malformed symbol section " + std::string(name) + ".", section.source_offset);
-    if (section.children.size() == 1)
-        return {};
     if (section.children.size() != 2)
         fail_at("Malformed symbol section " + std::string(name) + ".", section.source_offset);
 
@@ -626,10 +621,7 @@ std::string parse_symbol_section_value(const Node& section, std::string_view nam
     return result;
 }
 
-std::size_t symbol_section_value_offset(const Node& section)
-{
-    return section.children.size() == 2 ? section.children[1].atom_offset : section.source_offset;
-}
+std::size_t symbol_section_value_offset(const Node& section) { return section.children.size() == 2 ? section.children[1].atom_offset : section.source_offset; }
 
 std::string identifier_atom(const Node& node, std::string_view context)
 {
@@ -684,10 +676,7 @@ ast::Feature parse_feature(const Node& node)
                           render(*expression) };
 }
 
-bool is_allowed_transition_section(std::string_view name)
-{
-    return name == ":symbol" || name == ":description" || name == ":expression";
-}
+bool is_allowed_transition_section(std::string_view name) { return name == ":symbol" || name == ":description" || name == ":expression"; }
 
 void validate_transition_sections(const Node& transition)
 {

@@ -10,12 +10,12 @@
 #include <cstddef>
 #include <optional>
 #include <type_traits>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/containers/variant.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/node.hpp>
 #include <utility>
 #include <vector>
+#include <yggdrasil/containers/variant.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -160,8 +160,15 @@ std::optional<tyr::planning::LabeledNode<Kind>> select_do_successor(ygg::View<yg
 
     const auto denotations = evaluate_do_arguments(rule, context);
     for (const auto& successor : successors)
-        if (action_matches_do_arguments(rule, successor.label, denotations))
-            return successor;
+    {
+        if (!action_matches_do_arguments(rule, successor.label, denotations))
+            continue;
+
+        if (!context.with_dl_transition_context(successor.node.get_state(), [&](auto& dl_context) { return is_compatible_with(rule, dl_context); }))
+            continue;
+
+        return successor;
+    }
 
     return std::nullopt;
 }
@@ -266,8 +273,7 @@ std::optional<tyr::planning::LabeledNode<Kind>> select_sketch_successor(ygg::Vie
 }
 
 template<tyr::planning::TaskKind Kind>
-std::optional<RuleVariantView> find_applicable_sketch_rule(EvaluationContext<Kind>& context,
-                                                           const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
+std::optional<RuleVariantView> find_applicable_sketch_rule(EvaluationContext<Kind>& context, const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
 {
     const auto module = context.get_module();
     for (const auto& transition : module.get_memory_transitions())

@@ -23,16 +23,7 @@
 namespace runir::kr::ps::ext::format
 {
 
-template<typename String>
-std::string symbol_section(const String& value)
-{
-    const auto text = std::string(value.str());
-    return text.empty() ? std::string("(:symbol)") : fmt::format("(:symbol {})", text);
-}
-
-inline std::string symbol_section(std::string_view value) { return value.empty() ? std::string("(:symbol)") : fmt::format("(:symbol {})", value); }
-
-inline std::string symbol_section(const std::string& value) { return symbol_section(std::string_view(value)); }
+inline std::string symbol_section(std::string_view value) { return fmt::format("(:symbol {})", value); }
 
 template<typename FeatureTag>
 struct NamedFeature
@@ -122,7 +113,7 @@ void collect_features(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::e
 {
     for (auto condition : view.get_conditions())
         collect_features(names, condition);
-    if constexpr (std::same_as<Kind, runir::kr::ps::ext::SketchTag>)
+    if constexpr (requires { view.get_effects(); })
         for (auto effect : view.get_effects())
             collect_features(names, effect);
 }
@@ -152,25 +143,84 @@ std::string feature_type()
         return FeatureTag::keyword;
 }
 
-template<typename FeatureTag, typename C>
-std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C> view, std::string_view)
+inline void append_value(std::ostream& os, std::string_view value)
 {
-    auto os = std::ostringstream {};
-    os << fmt::format("(:{}\n", feature_type<FeatureTag>());
+    auto stream = std::istringstream(std::string(value));
+    auto line = std::string {};
+    auto first = true;
+    while (std::getline(stream, line))
+    {
+        if (!first)
+            os << '\n';
+        os << ygg::print_indent << line;
+        first = false;
+    }
+}
+
+inline void append_list_section(std::ostream& os, std::string_view name, const std::vector<std::string>& values)
+{
+    if (values.empty())
+    {
+        os << ygg::print_indent << fmt::format("(:{})", name) << "\n";
+        return;
+    }
+
+    os << ygg::print_indent << fmt::format("(:{}\n", name);
     {
         ygg::IndentScope scope(os);
-        os << ygg::print_indent << symbol_section(view.get_symbol()) << "\n";
+        for (const auto& value : values)
+        {
+            append_value(os, value);
+            os << "\n";
+        }
+    }
+    os << ygg::print_indent << ")\n";
+}
+
+inline void append_value_section(std::ostream& os, std::string_view name, std::string_view value)
+{
+    os << ygg::print_indent << fmt::format("(:{}\n", name);
+    {
+        ygg::IndentScope scope(os);
+        append_value(os, value);
+        os << "\n";
+    }
+    os << ygg::print_indent << ")\n";
+}
+
+template<typename FeatureTag, typename C>
+void append_feature(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C> view, std::string_view)
+{
+    os << ygg::print_indent << fmt::format("(:{}\n", feature_type<FeatureTag>());
+    {
+        ygg::IndentScope scope(os);
+        os << ygg::print_indent << symbol_section(std::string(view.get_symbol().str())) << "\n";
         os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(view.get_description().str()))) << "\n";
-        os << ygg::print_indent << fmt::format("(:expression {})", runir::kr::ps::ext::dl::format::expression(view.get_feature())) << "\n";
+        append_value_section(os, "expression", runir::kr::ps::ext::dl::format::expression(view.get_feature()));
     }
     os << ygg::print_indent << ")";
+}
+
+template<typename FeatureTag, typename C>
+std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C> view, std::string_view name)
+{
+    auto os = std::ostringstream {};
+    append_feature(os, view, name);
     return os.str();
+}
+
+template<typename FeatureTag, typename C>
+void append_feature(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> view, std::string_view name)
+{
+    ygg::visit([&](auto concrete_feature) { append_feature(os, concrete_feature, name); }, view.get_variant());
 }
 
 template<typename FeatureTag, typename C>
 std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> view, std::string_view name)
 {
-    return ygg::visit([&](auto concrete_feature) { return feature(concrete_feature, name); }, view.get_variant());
+    auto os = std::ostringstream {};
+    append_feature(os, view, name);
+    return os.str();
 }
 
 template<typename FeatureTag, typename C>
@@ -183,11 +233,20 @@ template<typename C>
 void append_features(std::ostream& os, const C& context, const FeatureNames& names)
 {
     for (const auto& entry : names.concepts)
-        os << ygg::print_indent << feature(ygg::make_view(entry.index, context), entry.name) << "\n";
+    {
+        append_feature(os, ygg::make_view(entry.index, context), entry.name);
+        os << "\n";
+    }
     for (const auto& entry : names.booleans)
-        os << ygg::print_indent << feature(ygg::make_view(entry.index, context), entry.name) << "\n";
+    {
+        append_feature(os, ygg::make_view(entry.index, context), entry.name);
+        os << "\n";
+    }
     for (const auto& entry : names.numericals)
-        os << ygg::print_indent << feature(ygg::make_view(entry.index, context), entry.name) << "\n";
+    {
+        append_feature(os, ygg::make_view(entry.index, context), entry.name);
+        os << "\n";
+    }
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
@@ -258,25 +317,26 @@ std::vector<std::string> call_arguments(ygg::View<ygg::Index<runir::kr::ps::ext:
 template<typename Kind, typename C>
 void append_rule_body(std::ostream& os, FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
 {
-    os << ygg::print_indent << fmt::format("(:conditions {})", fmt::join(conditions(names, view.get_conditions()), " ")) << "\n";
+    append_list_section(os, "conditions", conditions(names, view.get_conditions()));
     if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag>)
     {
-        os << ygg::print_indent << fmt::format("(:concept {})", runir::kr::ps::ext::dl::format::expression(view.get_concept())) << "\n";
+        append_value_section(os, "concept", runir::kr::ps::ext::dl::format::expression(view.get_concept()));
         os << ygg::print_indent << fmt::format("(:register {})", ygg::uint_t(view.get_register().get_identifier())) << "\n";
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::SketchTag>)
     {
-        os << ygg::print_indent << fmt::format("(:effects {})", fmt::join(effects(names, view.get_effects()), " ")) << "\n";
+        append_list_section(os, "effects", effects(names, view.get_effects()));
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::DoTag>)
     {
         os << ygg::print_indent << fmt::format("(:action {})", fmt::format("{:?}", std::string(view.get_action_name().str()))) << "\n";
-        os << ygg::print_indent << fmt::format("(:arguments {})", fmt::join(action_arguments(view), " ")) << "\n";
+        append_list_section(os, "arguments", action_arguments(view));
+        append_list_section(os, "effects", effects(names, view.get_effects()));
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::CallTag>)
     {
         os << ygg::print_indent << fmt::format("(:callee {})", fmt::format("{:?}", view.get_callee_name())) << "\n";
-        os << ygg::print_indent << fmt::format("(:arguments {})", fmt::join(call_arguments(view), " ")) << "\n";
+        append_list_section(os, "arguments", call_arguments(view));
     }
 }
 
@@ -293,7 +353,21 @@ void append_rule(std::ostream& os, FeatureNames& names, ygg::View<ygg::Index<run
         os << ygg::print_indent << "(:call\n";
     {
         ygg::IndentScope scope(os);
-        append_rule_body(os, names, view);
+        if constexpr (!std::same_as<Kind, runir::kr::ps::ext::CallTag>)
+        {
+            os << ygg::print_indent << symbol_section(std::string(view.get_symbol().str())) << "\n";
+            os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(view.get_description().str()))) << "\n";
+            os << ygg::print_indent << "(:expression\n";
+            {
+                ygg::IndentScope expression_scope(os);
+                append_rule_body(os, names, view);
+            }
+            os << ygg::print_indent << ")\n";
+        }
+        else
+        {
+            append_rule_body(os, names, view);
+        }
     }
     os << ygg::print_indent << ")";
 }
@@ -345,7 +419,7 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
     os << "(:module\n";
     {
         ygg::IndentScope scope(os);
-        os << ygg::print_indent << symbol_section(view.get_name()) << "\n";
+        os << ygg::print_indent << symbol_section(std::string(view.get_name().str())) << "\n";
         os << ygg::print_indent << "(:arguments\n";
         {
             ygg::IndentScope argument_scope(os);
@@ -370,18 +444,10 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
         os << ygg::print_indent << ")\n";
 
         os << ygg::print_indent << fmt::format("(:entry {})", memory_state(view.get_entry_memory_state())) << "\n";
-        os << ygg::print_indent
-           << fmt::format("(:memory {})",
-                          fmt::join(
-                              [&]
-                              {
-                                  auto values = std::vector<std::string> {};
-                                  for (auto state : view.get_memory_states())
-                                      values.push_back(memory_state(state));
-                                  return values;
-                              }(),
-                              " "))
-           << "\n";
+        auto memory_states = std::vector<std::string> {};
+        for (auto state : view.get_memory_states())
+            memory_states.push_back(memory_state(state));
+        append_list_section(os, "memory", memory_states);
 
         os << ygg::print_indent << "(:features\n";
         {
@@ -398,7 +464,7 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
                 os << ygg::print_indent << "(:rule\n";
                 {
                     ygg::IndentScope transition_scope_inner(os);
-                    os << ygg::print_indent << symbol_section(transition.get_symbol()) << "\n";
+                    os << ygg::print_indent << symbol_section(std::string(transition.get_symbol().str())) << "\n";
                     os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(transition.get_description().str()))) << "\n";
                     os << ygg::print_indent << "(:expression\n";
                     {
@@ -431,7 +497,10 @@ std::string module_program(ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgra
         ygg::IndentScope scope(os);
         os << ygg::print_indent << fmt::format("(:entry {})", fmt::format("{:?}", std::string(view.get_entry_module().get_name().str()))) << "\n";
         for (auto item : view.get_modules())
-            os << ygg::print_indent << module(item);
+        {
+            append_value(os, module(item));
+            os << "\n";
+        }
     }
     os << ")\n";
     return os.str();

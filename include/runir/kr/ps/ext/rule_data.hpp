@@ -15,9 +15,9 @@
 #include <cista/containers/variant.h>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
-#include <utility>
 
 namespace runir::kr::ps::ext
 {
@@ -96,6 +96,7 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
     ::cista::offset::string symbol;
     ::cista::offset::string description;
     IndexList<runir::kr::ps::ext::ConditionVariant> conditions;
+    IndexList<runir::kr::ps::ext::EffectVariant> effects;
     ::cista::offset::string action_name;
     IndexList<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> arguments;
 
@@ -111,12 +112,13 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
         ygg::clear(symbol);
         ygg::clear(description);
         ygg::clear(conditions);
+        ygg::clear(effects);
         ygg::clear(action_name);
         ygg::clear(arguments);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, source, target, symbol, description, conditions, action_name, arguments); }
-    auto identifying_members() const noexcept { return std::tie(source, target, symbol, description, conditions, action_name, arguments); }
+    auto cista_members() const noexcept { return std::tie(index, source, target, symbol, description, conditions, effects, action_name, arguments); }
+    auto identifying_members() const noexcept { return std::tie(source, target, symbol, description, conditions, effects, action_name, arguments); }
 };
 
 template<>

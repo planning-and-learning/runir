@@ -8,8 +8,8 @@
 #include "runir/kr/ps/ext/rule_view.hpp"
 
 #include <concepts>
-#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/containers/variant.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -54,7 +54,7 @@ bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationCon
     if (!conditions_are_compatible(rule, context))
         return false;
 
-    if constexpr (std::same_as<Kind, SketchTag>)
+    if constexpr (requires { rule.get_effects(); })
     {
         for (auto effect : rule.get_effects())
             if (!runir::kr::ps::ext::is_compatible_with(effect, context))

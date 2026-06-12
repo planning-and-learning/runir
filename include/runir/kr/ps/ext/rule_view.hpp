@@ -8,8 +8,8 @@
 
 #include <string>
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/containers/vector.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {
@@ -45,7 +45,7 @@ public:
     auto get_conditions() const noexcept { return make_view(get_data().conditions, *m_context); }
 
     auto get_effects() const noexcept
-        requires std::same_as<Kind, runir::kr::ps::ext::SketchTag>
+        requires(std::same_as<Kind, runir::kr::ps::ext::SketchTag> || std::same_as<Kind, runir::kr::ps::ext::DoTag>)
     {
         return make_view(get_data().effects, *m_context);
     }

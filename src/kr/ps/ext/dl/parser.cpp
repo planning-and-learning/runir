@@ -497,10 +497,7 @@ std::string signature_text(const SignatureCounts& counts)
            + ", numerical=" + std::to_string(counts.numericals);
 }
 
-[[noreturn]] void fail_at(const std::string& message, std::size_t offset)
-{
-    throw std::runtime_error(message + " at offset " + std::to_string(offset) + ".");
-}
+[[noreturn]] void fail_at(const std::string& message, std::size_t offset) { throw std::runtime_error(message + " at offset " + std::to_string(offset) + "."); }
 
 SignatureCounts signature_counts(const ast::Module& module)
 {
@@ -574,10 +571,10 @@ void validate_module_declarations(const ast::Module& module)
                         + " is out of range; declared arguments of this kind: " + std::to_string(max_identifier) + ".",
                     argument.source_offset);
 
-        auto& seen = argument.kind == ast::ArgumentKind::CONCEPT     ? concept_arguments
-                   : argument.kind == ast::ArgumentKind::ROLE        ? role_arguments
-                   : argument.kind == ast::ArgumentKind::BOOLEAN     ? boolean_arguments
-                                                                      : numerical_arguments;
+        auto& seen = argument.kind == ast::ArgumentKind::CONCEPT ? concept_arguments :
+                     argument.kind == ast::ArgumentKind::ROLE    ? role_arguments :
+                     argument.kind == ast::ArgumentKind::BOOLEAN ? boolean_arguments :
+                                                                   numerical_arguments;
         if (!seen.emplace(argument.identifier).second)
             fail_at(std::string("Duplicate ") + argument_kind_name(argument.kind) + " argument identifier " + std::to_string(argument.identifier) + ".",
                     argument.source_offset);
@@ -709,21 +706,26 @@ auto parse_condition(Repository& repository,
     switch (observation.kind)
     {
         case ast::ObservationKind::POSITIVE:
-            return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(repository,
-                                                                                                  require_feature(boolean_features, observation.feature, observation.feature_offset));
+            return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(
+                repository,
+                require_feature(boolean_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::NEGATIVE:
-            return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(repository,
-                                                                                                  require_feature(boolean_features, observation.feature, observation.feature_offset));
+            return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(
+                repository,
+                require_feature(boolean_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::EQUAL_ZERO:
             if (concept_features.contains(observation.feature))
-                return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>(repository,
-                                                                                               require_feature(concept_features, observation.feature, observation.feature_offset));
-            return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>(repository,
-                                                                                                     require_feature(numerical_features, observation.feature, observation.feature_offset));
+                return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>(
+                    repository,
+                    require_feature(concept_features, observation.feature, observation.feature_offset));
+            return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>(
+                repository,
+                require_feature(numerical_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::GREATER_ZERO:
             if (concept_features.contains(observation.feature))
-                return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>(repository,
-                                                                                                 require_feature(concept_features, observation.feature, observation.feature_offset));
+                return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>(
+                    repository,
+                    require_feature(concept_features, observation.feature, observation.feature_offset));
             return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>(
                 repository,
                 require_feature(numerical_features, observation.feature, observation.feature_offset));
@@ -744,29 +746,41 @@ auto parse_effect(Repository& repository,
     switch (observation.kind)
     {
         case ast::ObservationKind::POSITIVE:
-            return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(repository,
-                                                                                               require_feature(boolean_features, observation.feature, observation.feature_offset));
+            return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(
+                repository,
+                require_feature(boolean_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::NEGATIVE:
-            return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(repository,
-                                                                                               require_feature(boolean_features, observation.feature, observation.feature_offset));
+            return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(
+                repository,
+                require_feature(boolean_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::UNCHANGED:
             if (concept_features.contains(observation.feature))
-                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>(repository, require_feature(concept_features, observation.feature, observation.feature_offset));
+                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>(
+                    repository,
+                    require_feature(concept_features, observation.feature, observation.feature_offset));
             if (boolean_features.contains(observation.feature))
-                return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>(repository,
-                                                                                                    require_feature(boolean_features, observation.feature, observation.feature_offset));
-            return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>(repository,
-                                                                                                  require_feature(numerical_features, observation.feature, observation.feature_offset));
+                return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>(
+                    repository,
+                    require_feature(boolean_features, observation.feature, observation.feature_offset));
+            return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>(
+                repository,
+                require_feature(numerical_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::INCREASES:
             if (concept_features.contains(observation.feature))
-                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>(repository, require_feature(concept_features, observation.feature, observation.feature_offset));
-            return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>(repository,
-                                                                                                  require_feature(numerical_features, observation.feature, observation.feature_offset));
+                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>(
+                    repository,
+                    require_feature(concept_features, observation.feature, observation.feature_offset));
+            return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>(
+                repository,
+                require_feature(numerical_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::DECREASES:
             if (concept_features.contains(observation.feature))
-                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>(repository, require_feature(concept_features, observation.feature, observation.feature_offset));
-            return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>(repository,
-                                                                                                  require_feature(numerical_features, observation.feature, observation.feature_offset));
+                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>(
+                    repository,
+                    require_feature(concept_features, observation.feature, observation.feature_offset));
+            return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>(
+                repository,
+                require_feature(numerical_features, observation.feature, observation.feature_offset));
         case ast::ObservationKind::EQUAL_ZERO:
         case ast::ObservationKind::GREATER_ZERO:
             fail_at("Condition observations are not valid rule effects.", observation.source_offset);
@@ -1050,9 +1064,9 @@ void validate_register_reference_at(ygg::uint_t identifier, const std::unordered
 }
 
 void validate_expression_references(const SExpr& expr,
-                                     std::size_t base_offset,
-                                     const SignatureCounts& signature,
-                                     const std::unordered_set<std::uint64_t>& concept_registers)
+                                    std::size_t base_offset,
+                                    const SignatureCounts& signature,
+                                    const std::unordered_set<std::uint64_t>& concept_registers)
 {
     if (expr.is_atom())
         return;
@@ -1210,8 +1224,8 @@ void validate_do_action(tyr::formalism::planning::DomainView domain, const ast::
         fail_at("Unknown action \"" + rule.action + "\".", rule.action_offset);
 
     if (rule.arguments.size() != *arity)
-        fail_at("Do rule for action \"" + rule.action + "\" has " + std::to_string(rule.arguments.size()) + " arguments; expected "
-                    + std::to_string(*arity) + ".",
+        fail_at("Do rule for action \"" + rule.action + "\" has " + std::to_string(rule.arguments.size()) + " arguments; expected " + std::to_string(*arity)
+                    + ".",
                 rule.arguments_offset);
 }
 
@@ -1263,6 +1277,7 @@ auto parse_rule(Repository& repository,
             data.symbol = rule.symbol;
             data.description = rule.description;
             data.conditions = conditions;
+            data.effects = parse_effects(repository, rule.effects, concept_features, boolean_features, numerical_features);
             for (const auto& argument : rule.arguments)
                 data.arguments.push_back(parse_concept_argument(repository, argument.text, argument.source_offset, domain, concept_aliases));
             return intern_rule_variant(repository, data);

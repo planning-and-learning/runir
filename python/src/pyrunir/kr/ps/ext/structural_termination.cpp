@@ -25,6 +25,7 @@ using BooleanFeatureView = ygg::View<ygg::Index<Feature<runir::kr::ps::dl::Boole
 using NumericalFeatureView = ygg::View<ygg::Index<Feature<runir::kr::ps::dl::NumericalFeature>>, Repository>;
 using NumericalLikeFeatureView = std::variant<ConceptFeatureView, NumericalFeatureView>;
 using runir::kr::ps::ext::dl::ModuleStructuralTerminationResult;
+using runir::kr::ps::ext::dl::ModuleProgramStructuralTerminationResult;
 using runir::kr::ps::ext::dl::NumericalChange;
 using runir::kr::ps::ext::dl::StructuralTerminationStatus;
 
@@ -60,6 +61,15 @@ struct ModuleStructuralTerminationResultWrapper
     std::vector<BooleanFeatureView> booleans;
     std::vector<NumericalFeatureView> numericals;
     std::optional<ModulePolicyGraphWrapper> counterexample;
+
+    bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
+};
+
+struct ModuleProgramStructuralTerminationResultWrapper
+{
+    StructuralTerminationStatus status;
+    std::vector<ModuleStructuralTerminationResultWrapper> module_results;
+    std::vector<RuleVariantView> recursive_call_rules;
 
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
 };
@@ -124,6 +134,17 @@ ModuleStructuralTerminationResultWrapper wrap_result(ModuleStructuralTermination
     return wrapper;
 }
 
+ModuleProgramStructuralTerminationResultWrapper wrap_result(ModuleProgramStructuralTerminationResult result, const Repository& context)
+{
+    auto wrapper = ModuleProgramStructuralTerminationResultWrapper {};
+    wrapper.status = result.status;
+    for (auto& module_result : result.module_results)
+        wrapper.module_results.push_back(wrap_result(std::move(module_result), context));
+    for (auto rule : result.recursive_call_rules)
+        wrapper.recursive_call_rules.push_back(rule);
+    return wrapper;
+}
+
 }  // namespace
 
 void bind_structural_termination(nb::module_& m)
@@ -165,11 +186,24 @@ void bind_structural_termination(nb::module_& m)
         .def("get_counterexample", [](const ModuleStructuralTerminationResultWrapper& self) { return self.counterexample; },
              "The surviving non-trivial strongly connected components, or None if terminating.");
 
+    nb::class_<ModuleProgramStructuralTerminationResultWrapper>(m, "ModuleProgramStructuralTerminationResult")
+        .def_ro("status", &ModuleProgramStructuralTerminationResultWrapper::status)
+        .def("is_terminating", &ModuleProgramStructuralTerminationResultWrapper::is_terminating)
+        .def("get_module_results", [](const ModuleProgramStructuralTerminationResultWrapper& self) { return self.module_results; })
+        .def("get_recursive_call_rules", [](const ModuleProgramStructuralTerminationResultWrapper& self) { return self.recursive_call_rules; },
+             "Call rules that participate in the recursive module call graph.");
+
     m.def(
         "structural_termination",
         [](ModuleView module_) { return wrap_result(runir::kr::ps::ext::dl::structural_termination(module_), module_.get_context()); },
         "module"_a,
         "Decide structural termination of the extended sketch module on the extended policy graph.");
+
+    m.def(
+        "structural_termination",
+        [](ModuleProgramView program) { return wrap_result(runir::kr::ps::ext::dl::structural_termination(program), program.get_context()); },
+        "program"_a,
+        "Conservatively decide structural termination of a module program, including inter-module call graph cycles.");
 
     m.def(
         "ceg_structural_termination",

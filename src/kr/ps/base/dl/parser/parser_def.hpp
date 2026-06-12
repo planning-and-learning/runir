@@ -51,7 +51,7 @@ inline auto identifier_parser() { return raw[lexeme[(alpha | char_('_')) >> *(al
 
 inline auto quoted_string_parser() { return lexeme[lit('"') >> raw[*('\\' >> char_ | (char_ - '"'))] >> lit('"')]; }
 
-const auto symbol_value_def = identifier_parser() | attr(std::string {});
+const auto symbol_value_def = identifier_parser();
 const auto symbol_section_def = lit("(") > lit(":symbol") > symbol_value_def > lit(")");
 const auto description_section_def = lit("(") > lit(":description") > quoted_string_parser() > lit(")");
 const auto boolean_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::base::grammar::boolean_parser() > lit(")");

@@ -124,7 +124,7 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
         (:conditions (:positive r) (:equal_zero c))
         (:effects (:negative r) (:increases c))))
     (:rule
-      (:symbol)
+      (:symbol auto1)
       (:description "")
       (:expression
         (:conditions (:negative r) (:greater_zero c))
