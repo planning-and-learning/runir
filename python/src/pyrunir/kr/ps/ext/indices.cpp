@@ -14,7 +14,6 @@ void bind_indices(nb::module_& m)
     ygg::bind_index<ygg::Index<Argument<runir::kr::dl::NumericalTag>>>(m, "NumericalArgumentIndex");
     ygg::bind_index<ygg::Index<Register>>(m, "RegisterIndex");
     ygg::bind_index<ygg::Index<MemoryState>>(m, "MemoryStateIndex");
-    ygg::bind_index<ygg::Index<MemoryTransition>>(m, "MemoryTransitionIndex");
     ygg::bind_index<ygg::Index<Module>>(m, "ModuleIndex");
     ygg::bind_index<ygg::Index<ModuleProgram>>(m, "ModuleProgramIndex");
     ygg::bind_index<ygg::Index<ConditionVariant>>(m, "ConditionVariantIndex");

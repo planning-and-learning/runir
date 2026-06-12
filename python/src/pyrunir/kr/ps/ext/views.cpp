@@ -85,7 +85,6 @@ void bind_views(nb::module_& m)
     bind_view<Feature<runir::kr::ps::dl::NumericalFeature>>(m, "NumericalFeature");
     bind_view<Register>(m, "Register");
     bind_view<MemoryState>(m, "MemoryState");
-    bind_view<MemoryTransition>(m, "MemoryTransition");
     bind_view<Module>(m, "Module");
     bind_view<ModuleProgram>(m, "ModuleProgram");
     bind_view<ConditionVariant>(m, "ConditionVariant");

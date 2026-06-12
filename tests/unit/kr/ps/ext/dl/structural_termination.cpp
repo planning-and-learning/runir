@@ -81,8 +81,6 @@ TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminatin
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:symbol auto2)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero fn)
@@ -101,8 +99,6 @@ TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminatin
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:symbol auto4)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:effects
@@ -171,8 +167,6 @@ TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
                 (:source-memory m0)
                 (:target-memory m1)
                 (:do
-                    (:symbol auto6)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero fn)
@@ -197,8 +191,6 @@ TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:symbol auto8)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:effects
@@ -262,8 +254,6 @@ TEST(RunirTests, ExtStructuralTerminationLoadPreservesRegisterIndependentFeature
                 (:source-memory m0)
                 (:target-memory m1)
                 (:load
-                    (:symbol auto10)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero fn)
@@ -284,8 +274,6 @@ TEST(RunirTests, ExtStructuralTerminationLoadPreservesRegisterIndependentFeature
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:symbol auto12)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:effects
@@ -349,8 +337,6 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRegisterDependentFeatur
                 (:source-memory m0)
                 (:target-memory m1)
                 (:load
-                    (:symbol auto14)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:concept
@@ -369,8 +355,6 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRegisterDependentFeatur
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:symbol auto16)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero fn)
@@ -435,8 +419,6 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:symbol auto18)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero fn)
@@ -455,8 +437,6 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:symbol auto20)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:effects)

@@ -159,8 +159,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m0)
                     (:target-memory m1)
                     (:load
-                        (:symbol auto44)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:greater_zero L)
@@ -266,8 +264,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m0)
                     (:target-memory m1)
                     (:load
-                        (:symbol auto39)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:greater_zero X)
@@ -414,8 +410,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m0)
                     (:target-memory m1)
                     (:do
-                        (:symbol auto33)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:negative H)
@@ -438,8 +432,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m0)
                     (:target-memory m1)
                     (:sketch
-                        (:symbol auto35)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:positive H)
@@ -456,8 +448,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m0)
                     (:target-memory m2)
                     (:sketch
-                        (:symbol auto31)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:positive Tx)
@@ -474,8 +464,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m1)
                     (:target-memory m2)
                     (:do
-                        (:symbol auto37)
-                        (:description "")
                         (:expression
                             (:conditions)
                             (:action "putdown")
@@ -643,8 +631,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m0)
                     (:target-memory m1)
                     (:load
-                        (:symbol auto7)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:negative H)
@@ -673,8 +659,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m0)
                     (:target-memory m4)
                     (:sketch
-                        (:symbol auto3)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:positive H)
@@ -691,8 +675,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m0)
                     (:target-memory m7)
                     (:sketch
-                        (:symbol auto5)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:negative H)
@@ -710,8 +692,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m1)
                     (:target-memory m2)
                     (:load
-                        (:symbol auto9)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:greater_zero T0)
@@ -736,8 +716,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m2)
                     (:target-memory m2)
                     (:load
-                        (:symbol auto11)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:greater_zero T1)
@@ -762,8 +740,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m2)
                     (:target-memory m5)
                     (:sketch
-                        (:symbol auto13)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:equal_zero T1)
@@ -780,8 +756,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m3)
                     (:target-memory m0)
                     (:sketch
-                        (:symbol auto17)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:equal_zero T0)
@@ -798,8 +772,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m3)
                     (:target-memory m1)
                     (:sketch
-                        (:symbol auto15)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:greater_zero T0)
@@ -816,8 +788,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m4)
                     (:target-memory m0)
                     (:do
-                        (:symbol auto19)
-                        (:description "")
                         (:expression
                             (:conditions)
                             (:action "putdown")
@@ -836,8 +806,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m5)
                     (:target-memory m6)
                     (:do
-                        (:symbol auto21)
-                        (:description "")
                         (:expression
                             (:conditions)
                             (:action "unstack")
@@ -857,8 +825,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m6)
                     (:target-memory m3)
                     (:do
-                        (:symbol auto23)
-                        (:description "")
                         (:expression
                             (:conditions)
                             (:action "putdown")
@@ -877,8 +843,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m7)
                     (:target-memory m8)
                     (:do
-                        (:symbol auto25)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:positive Tx)
@@ -899,8 +863,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m7)
                     (:target-memory m8)
                     (:do
-                        (:symbol auto27)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:negative Tx)
@@ -922,8 +884,6 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:source-memory m8)
                     (:target-memory m8)
                     (:do
-                        (:symbol auto29)
-                        (:description "")
                         (:expression
                             (:conditions)
                             (:action "stack")
@@ -1123,8 +1083,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m0)
                 (:target-memory m1)
                 (:load
-                    (:symbol auto7)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:negative H)
@@ -1153,8 +1111,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m0)
                 (:target-memory m4)
                 (:sketch
-                    (:symbol auto3)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:positive H)
@@ -1171,8 +1127,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m0)
                 (:target-memory m7)
                 (:sketch
-                    (:symbol auto5)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:negative H)
@@ -1190,8 +1144,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m1)
                 (:target-memory m2)
                 (:load
-                    (:symbol auto9)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero T0)
@@ -1216,8 +1168,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m2)
                 (:target-memory m2)
                 (:load
-                    (:symbol auto11)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero T1)
@@ -1242,8 +1192,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m2)
                 (:target-memory m5)
                 (:sketch
-                    (:symbol auto13)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:equal_zero T1)
@@ -1260,8 +1208,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m3)
                 (:target-memory m0)
                 (:sketch
-                    (:symbol auto17)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:equal_zero T0)
@@ -1278,8 +1224,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m3)
                 (:target-memory m1)
                 (:sketch
-                    (:symbol auto15)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero T0)
@@ -1296,8 +1240,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m4)
                 (:target-memory m0)
                 (:do
-                    (:symbol auto19)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:action "putdown")
@@ -1316,8 +1258,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m5)
                 (:target-memory m6)
                 (:do
-                    (:symbol auto21)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:action "unstack")
@@ -1337,8 +1277,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m6)
                 (:target-memory m3)
                 (:do
-                    (:symbol auto23)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:action "putdown")
@@ -1357,8 +1295,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m7)
                 (:target-memory m8)
                 (:do
-                    (:symbol auto25)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:positive Tx)
@@ -1379,8 +1315,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m7)
                 (:target-memory m8)
                 (:do
-                    (:symbol auto27)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:negative Tx)
@@ -1402,8 +1336,6 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                 (:source-memory m8)
                 (:target-memory m8)
                 (:do
-                    (:symbol auto29)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:action "stack")
@@ -1489,8 +1421,6 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
                 (:source-memory m0)
                 (:target-memory m1)
                 (:do
-                    (:symbol auto33)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:negative H)
@@ -1513,8 +1443,6 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:symbol auto35)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:positive H)
@@ -1531,8 +1459,6 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
                 (:source-memory m0)
                 (:target-memory m2)
                 (:sketch
-                    (:symbol auto31)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:positive Tx)
@@ -1549,8 +1475,6 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
                 (:source-memory m1)
                 (:target-memory m2)
                 (:do
-                    (:symbol auto37)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:action "putdown")
@@ -1627,8 +1551,6 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
                 (:source-memory m0)
                 (:target-memory m1)
                 (:load
-                    (:symbol auto39)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero X)
@@ -1760,8 +1682,6 @@ std::string ModuleFactory::create_blocks_bonet_et_al_icaps2024_description()
                 (:source-memory m0)
                 (:target-memory m1)
                 (:load
-                    (:symbol auto44)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero L)

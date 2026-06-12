@@ -79,7 +79,6 @@ void bind_datas(nb::module_& m)
     bind_data<Argument<runir::kr::dl::NumericalTag>>(m, "NumericalArgumentData");
     bind_data<Register>(m, "RegisterData");
     bind_data<MemoryState>(m, "MemoryStateData");
-    bind_data<MemoryTransition>(m, "MemoryTransitionData");
     bind_data<Module>(m, "ModuleData");
     bind_data<ModuleProgram>(m, "ModuleProgramData");
 

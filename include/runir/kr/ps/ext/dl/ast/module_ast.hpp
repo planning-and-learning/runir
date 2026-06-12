@@ -101,8 +101,6 @@ struct Rule
     std::size_t action_offset = 0;
     std::size_t callee_offset = 0;
     std::size_t arguments_offset = 0;
-    std::string symbol;
-    std::string description;
     std::vector<Observation> conditions;
     std::vector<Observation> effects;
     std::string concept_expression;
@@ -112,7 +110,7 @@ struct Rule
     std::vector<Expression> arguments;
 };
 
-struct MemoryTransition
+struct RuleEntry
 {
     std::size_t source_offset = 0;
     std::size_t source_name_offset = 0;
@@ -134,7 +132,7 @@ struct Module
     std::string entry;
     std::vector<NamedValue> memory_states;
     std::vector<Feature> features;
-    std::vector<MemoryTransition> transitions;
+    std::vector<RuleEntry> rule_entries;
 };
 
 struct ModuleProgram

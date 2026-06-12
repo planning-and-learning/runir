@@ -331,11 +331,9 @@ std::vector<ast::Observation> parse_observation_section(const Node& section, std
 
 bool is_allowed_rule_expression_section(ast::RuleKind kind, std::string_view name);
 
-bool is_rule_metadata_section(std::string_view name) { return name == ":symbol" || name == ":description"; }
-
 bool is_allowed_rule_section(ast::RuleKind kind, std::string_view name)
 {
-    return is_rule_metadata_section(name) || name == ":expression" || is_allowed_rule_expression_section(kind, name);
+    return name == ":expression" || is_allowed_rule_expression_section(kind, name);
 }
 
 bool is_allowed_rule_expression_section(ast::RuleKind kind, std::string_view name)
@@ -408,7 +406,7 @@ const Node& require_section(const Node& rule, std::string_view name)
     fail_at(std::string("Missing rule section ") + std::string(name) + ".", rule.source_offset);
 }
 
-void validate_rule_expression_sections(const Node& expression, ast::RuleKind kind, bool allow_metadata_sections = false)
+void validate_rule_expression_sections(const Node& expression, ast::RuleKind kind)
 {
     auto seen = std::unordered_set<std::string> {};
     for (std::size_t i = 1; i < expression.children.size(); ++i)
@@ -417,8 +415,6 @@ void validate_rule_expression_sections(const Node& expression, ast::RuleKind kin
         if (!section.list || section.children.empty())
             fail_at("Malformed rule expression section.", section.source_offset);
         const auto name = atom(section.children[0], "rule expression section");
-        if (allow_metadata_sections && is_rule_metadata_section(name))
-            continue;
         if (!is_allowed_rule_expression_section(kind, name))
             fail_at("Rule expression section " + name + " is not valid for this rule kind.", section.source_offset);
         if (!seen.emplace(name).second)
@@ -434,7 +430,7 @@ const Node& require_rule_expression(const Node& rule, ast::RuleKind kind)
         {
             const auto& section = rule.children[i];
             const auto name = atom(section.children[0], "rule section");
-            if (!is_rule_metadata_section(name) && name != ":expression")
+            if (name != ":expression")
                 fail_at("Rule must not mix direct expression sections with an :expression wrapper.", section.source_offset);
         }
         validate_rule_expression_sections(*expression, kind);
@@ -446,8 +442,6 @@ const Node& require_rule_expression(const Node& rule, ast::RuleKind kind)
     {
         const auto& section = rule.children[i];
         const auto name = atom(section.children[0], "rule section");
-        if (is_rule_metadata_section(name))
-            continue;
         has_expression_section = true;
         if (!is_allowed_rule_expression_section(kind, name))
             fail_at("Rule expression section " + name + " is not valid for this rule kind.", section.source_offset);
@@ -456,7 +450,7 @@ const Node& require_rule_expression(const Node& rule, ast::RuleKind kind)
     if (!has_expression_section)
         fail_at("Missing rule expression sections.", rule.source_offset);
 
-    validate_rule_expression_sections(rule, kind, true);
+    validate_rule_expression_sections(rule, kind);
     return rule;
 }
 
@@ -490,12 +484,6 @@ ast::Rule parse_rule(const Node& node)
     result.source_offset = node.source_offset;
     result.kind = parse_rule_kind(node.children[0]);
     validate_rule_sections(node, result.kind);
-    if (result.kind != ast::RuleKind::CALL)
-    {
-        const auto& symbol_section = require_section(node, ":symbol");
-        result.symbol = parse_symbol_section_value(symbol_section, ":symbol");
-        result.description = optional_metadata_value(node, ":description");
-    }
     const auto& expression = require_rule_expression(node, result.kind);
     result.conditions = parse_observation_section(require_section(expression, ":conditions"), ":conditions");
 
@@ -678,34 +666,34 @@ ast::Feature parse_feature(const Node& node)
 
 bool is_allowed_transition_section(std::string_view name) { return name == ":symbol" || name == ":description" || name == ":expression"; }
 
-void validate_transition_sections(const Node& transition)
+void validate_rule_entry_sections(const Node& transition)
 {
     auto seen = std::unordered_set<std::string> {};
     for (std::size_t i = 1; i < transition.children.size(); ++i)
     {
         const auto& section = transition.children[i];
         if (!section.list || section.children.empty())
-            fail_at("Malformed transition section.", section.source_offset);
+            fail_at("Malformed rule entry section.", section.source_offset);
 
-        const auto name = atom(section.children[0], "transition section");
+        const auto name = atom(section.children[0], "rule entry section");
         if (!is_allowed_transition_section(name))
-            fail_at("Transition section " + name + " is not valid.", section.source_offset);
+            fail_at("Rule entry section " + name + " is not valid.", section.source_offset);
         if (!seen.emplace(name).second)
-            fail_at("Duplicate transition section " + name + ".", section.source_offset);
+            fail_at("Duplicate rule entry section " + name + ".", section.source_offset);
     }
 }
 
-ast::MemoryTransition parse_transition(const Node& node)
+ast::RuleEntry parse_rule_entry(const Node& node)
 {
     if (!node.list || node.children.empty() || atom(node.children[0], "rule") != ":rule")
-        fail_at("Malformed memory rule.", node.source_offset);
+        fail_at("Malformed rule entry.", node.source_offset);
 
-    validate_transition_sections(node);
+    validate_rule_entry_sections(node);
     const auto& expression = require_section(node, ":expression");
     const auto& source_node = require_single_value_section_value(expression, ":source-memory");
     const auto& target_node = require_single_value_section_value(expression, ":target-memory");
 
-    auto result = ast::MemoryTransition { node.source_offset,
+    auto result = ast::RuleEntry { node.source_offset,
                                           source_node.atom_offset,
                                           target_node.atom_offset,
                                           identifier_atom(source_node, ":source-memory"),
@@ -716,7 +704,7 @@ ast::MemoryTransition parse_transition(const Node& node)
     for (std::size_t i = 1; i < expression.children.size(); ++i)
     {
         const auto& child = expression.children[i];
-        const auto child_head = head(child, "transition expression");
+        const auto child_head = head(child, "rule entry expression");
         if (child_head == ":source-memory" || child_head == ":target-memory")
             continue;
         result.rules.push_back(parse_rule(child));
@@ -733,7 +721,7 @@ struct ModuleSectionPresence
     bool entry = false;
     bool memory = false;
     bool features = false;
-    bool transitions = false;
+    bool rule_entries = false;
 };
 
 void require_new_section(bool& seen, std::string_view name, std::size_t offset)
@@ -795,9 +783,9 @@ void parse_module_section(ast::Module& result, const Node& section, ModuleSectio
     }
     else if (name == ":rules")
     {
-        require_new_section(presence.transitions, name, section.source_offset);
+        require_new_section(presence.rule_entries, name, section.source_offset);
         for (std::size_t i = 1; i < section.children.size(); ++i)
-            result.transitions.push_back(parse_transition(section.children[i]));
+            result.rule_entries.push_back(parse_rule_entry(section.children[i]));
     }
     else
     {
@@ -835,7 +823,7 @@ ast::Module parse_module_node(const Node& root)
     require_module_section(presence.entry, ":entry", root.source_offset);
     require_module_section(presence.memory, ":memory", root.source_offset);
     require_module_section(presence.features, ":features", root.source_offset);
-    require_module_section(presence.transitions, ":rules", root.source_offset);
+    require_module_section(presence.rule_entries, ":rules", root.source_offset);
     return result;
 }
 

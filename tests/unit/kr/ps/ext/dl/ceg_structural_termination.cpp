@@ -77,8 +77,6 @@ TEST(RunirTests, CegStructuralTerminationAgreesWithCompleteSieve)
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:symbol auto2)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero fn)
@@ -97,8 +95,6 @@ TEST(RunirTests, CegStructuralTerminationAgreesWithCompleteSieve)
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:symbol auto4)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:effects
@@ -142,8 +138,6 @@ TEST(RunirTests, CegStructuralTerminationAgreesWithCompleteSieve)
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:symbol auto6)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero fn)
@@ -162,8 +156,6 @@ TEST(RunirTests, CegStructuralTerminationAgreesWithCompleteSieve)
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:symbol auto8)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:effects)
@@ -252,8 +244,6 @@ TEST(RunirTests, CegStructuralTerminationDecomposesMemoryComponents)
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:symbol auto10)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero fa)
@@ -272,8 +262,6 @@ TEST(RunirTests, CegStructuralTerminationDecomposesMemoryComponents)
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:symbol auto12)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:effects
@@ -290,8 +278,6 @@ TEST(RunirTests, CegStructuralTerminationDecomposesMemoryComponents)
                 (:source-memory m1)
                 (:target-memory m2)
                 (:sketch
-                    (:symbol auto14)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:effects)
@@ -306,8 +292,6 @@ TEST(RunirTests, CegStructuralTerminationDecomposesMemoryComponents)
                 (:source-memory m2)
                 (:target-memory m3)
                 (:sketch
-                    (:symbol auto16)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero fb)
@@ -326,8 +310,6 @@ TEST(RunirTests, CegStructuralTerminationDecomposesMemoryComponents)
                 (:source-memory m3)
                 (:target-memory m2)
                 (:sketch
-                    (:symbol auto18)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:effects)

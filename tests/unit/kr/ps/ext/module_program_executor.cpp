@@ -146,7 +146,7 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
                                                       *blocksworld_repository);
     EXPECT_EQ(blocks.get_name(), "blocks");
     ASSERT_GT(blocks.get_memory_transitions().size(), 1);
-    const auto block_rules = blocks.get_memory_transitions()[1].get_rules();
+    const auto block_rules = ygg::make_view(blocks.get_memory_transitions()[1], blocks.get_context());
     ASSERT_FALSE(block_rules.empty());
     auto call_rule = block_rules.front();
     auto found_call_rule = false;
@@ -232,7 +232,7 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
     EXPECT_EQ(modules[1].get_name(), "callee");
 
     ASSERT_EQ(modules[0].get_data().memory_transitions.size(), 1);
-    const auto rules = modules[0].get_memory_transitions()[0].get_rules();
+    const auto rules = ygg::make_view(modules[0].get_memory_transitions()[0], modules[0].get_context());
     ASSERT_FALSE(rules.empty());
     auto found_call_rule = false;
     ygg::visit(
@@ -365,8 +365,6 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
         (:source-memory m0)
         (:target-memory m1)
         (:do
-          (:symbol auto4)
-          (:description "")
           (:expression
             (:conditions)
             (:action "missing-action")
@@ -390,8 +388,6 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
         (:source-memory m0)
         (:target-memory m1)
         (:do
-          (:symbol auto6)
-          (:description "")
           (:expression
             (:conditions)
             (:action "move")
@@ -429,8 +425,6 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
         (:source-memory m0)
         (:target-memory m1)
         (:do
-          (:symbol auto8)
-          (:description "")
           (:expression
             (:conditions)
             (:action "pick")
@@ -466,8 +460,6 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
         (:source-memory m0)
         (:target-memory m1)
         (:do
-          (:symbol auto10)
-          (:description "")
           (:expression
             (:conditions)
             (:action "pick")
@@ -662,8 +654,6 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
         (:source-memory m0)
         (:target-memory m1)
         (:load
-          (:symbol auto8)
-          (:description "")
           (:expression
             (:conditions)
             (:conditions)
@@ -689,8 +679,6 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
         (:source-memory m0)
         (:target-memory m1)
         (:load
-          (:symbol auto10)
-          (:description "")
           (:expression
             (:conditions)
             (:concept (c_top))
@@ -806,30 +794,30 @@ TEST(RunirTests, ExtModuleParserReadsPaperFactoryDescriptions)
     EXPECT_EQ(on.arguments.size(), 2);
     EXPECT_EQ(on.registers.size(), 2);
     EXPECT_EQ(on.memory_states.size(), 9);
-    EXPECT_EQ(on.transitions.size(), 14);
-    EXPECT_EQ(on.transitions.back().rules.front().action, "stack");
-    ASSERT_EQ(on.transitions.back().rules.front().arguments.size(), 2);
-    EXPECT_EQ(on.transitions.back().rules.front().arguments[0].text, "DO_on_8");
+    EXPECT_EQ(on.rule_entries.size(), 14);
+    EXPECT_EQ(on.rule_entries.back().rules.front().action, "stack");
+    ASSERT_EQ(on.rule_entries.back().rules.front().arguments.size(), 2);
+    EXPECT_EQ(on.rule_entries.back().rules.front().arguments[0].text, "DO_on_8");
 
     const auto tower = kr::ps::ext::dl::parser::parse_module_ast(kr::ps::ext::dl::ModuleFactory::create_tower_bonet_et_al_icaps2024_description());
     EXPECT_EQ(tower.name, "tower");
     EXPECT_EQ(tower.arguments.size(), 2);
-    EXPECT_EQ(tower.transitions.size(), 4);
-    EXPECT_EQ(tower.transitions[2].rules.front().callee, "on");
-    ASSERT_EQ(tower.transitions[2].rules.front().arguments.size(), 2);
-    EXPECT_EQ(tower.transitions[2].rules.front().arguments[1].text, std::string("(c_some") + " (r_inverse" + " (r_argument" + " 0))" + " (c_register" + " 0))");
+    EXPECT_EQ(tower.rule_entries.size(), 4);
+    EXPECT_EQ(tower.rule_entries[2].rules.front().callee, "on");
+    ASSERT_EQ(tower.rule_entries[2].rules.front().arguments.size(), 2);
+    EXPECT_EQ(tower.rule_entries[2].rules.front().arguments[1].text, std::string("(c_some") + " (r_inverse" + " (r_argument" + " 0))" + " (c_register" + " 0))");
 
     const auto blocks = kr::ps::ext::dl::parser::parse_module_ast(kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024_description());
     EXPECT_EQ(blocks.name, "blocks");
     EXPECT_EQ(blocks.arguments.size(), 1);
-    EXPECT_EQ(blocks.transitions.size(), 2);
-    EXPECT_EQ(blocks.transitions[1].rules.front().callee, "tower");
+    EXPECT_EQ(blocks.rule_entries.size(), 2);
+    EXPECT_EQ(blocks.rule_entries[1].rules.front().callee, "tower");
 
     const auto program = kr::ps::ext::dl::parser::parse_module_program_ast(kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program_description());
     EXPECT_EQ(program.entry, "root");
     ASSERT_EQ(program.modules.size(), 5);
     EXPECT_EQ(program.modules[0].name, "root");
-    EXPECT_EQ(program.modules[0].transitions.front().rules.front().callee, "blocks");
+    EXPECT_EQ(program.modules[0].rule_entries.front().rules.front().callee, "blocks");
 }
 
 TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld)
@@ -943,6 +931,67 @@ TEST(RunirTests, ExtModuleFormatterEscapesQuotedStringContents)
     const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), *repository);
     EXPECT_EQ(reparsed.get_name(), module.get_name());
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
+}
+
+
+TEST(RunirTests, ExtModuleFormatterOmitsEmptyNestedRuleMetadata)
+{
+    namespace fp = tyr::formalism::planning;
+
+    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+
+    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto repository_factory = kr::ps::ext::RepositoryFactory();
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
+    auto repository = repository_factory.create(dl_repository);
+
+    const auto description = R"RUNIR((:module
+    (:symbol entry)
+    (:arguments)
+    (:description "")
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1)
+    (:features
+        (:concept
+            (:symbol Any)
+            (:description "")
+            (:expression (c_top))
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol move-once)
+            (:description "")
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:do
+                    (:expression
+                        (:conditions)
+                        (:action "move")
+                        (:arguments Any Any)
+                        (:effects)
+                    )
+                )
+            )
+        )
+    )
+))RUNIR";
+
+    const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
+    const auto formatted = fmt::format("{}", module);
+
+    EXPECT_EQ(formatted.find("(:symbol )"), std::string::npos) << formatted;
+    EXPECT_EQ(formatted.find("(:do\n                        (:symbol"), std::string::npos) << formatted;
+    EXPECT_EQ(formatted.find("(:do\n                        (:description"), std::string::npos) << formatted;
+    EXPECT_NE(formatted.find("(:symbol move-once)"), std::string::npos) << formatted;
+
+    const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), *repository);
+    EXPECT_EQ(fmt::format("{}", reparsed), formatted);
+
 }
 
 TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
@@ -1065,8 +1114,6 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
                 (:source-memory m0)
                 (:target-memory m1)
                 (:load
-                    (:symbol load-rule)
-                    (:description "load description")
                     (:expression
                         (:conditions
                             (:greater_zero B)
@@ -1086,8 +1133,6 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
                 (:source-memory m1)
                 (:target-memory m1)
                 (:sketch
-                    (:symbol auto13)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:positive H)
@@ -1107,8 +1152,6 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
                 (:source-memory m1)
                 (:target-memory m2)
                 (:do
-                    (:symbol auto15)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:action "pick")
@@ -1131,29 +1174,26 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
     const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
     ASSERT_EQ(module.get_memory_transitions().size(), 3);
 
-    const auto first_transition = module.get_memory_transitions()[0];
-    EXPECT_EQ(first_transition.get_symbol(), "load-edge");
-    EXPECT_EQ(first_transition.get_description(), "load transition");
-
-    const auto load_rules = first_transition.get_rules();
+    const auto load_rules = ygg::make_view(module.get_memory_transitions()[0], module.get_context());
     ASSERT_EQ(load_rules.size(), 1);
+    EXPECT_EQ(load_rules[0].get_symbol(), "load-edge");
+    EXPECT_EQ(load_rules[0].get_description(), "load transition");
     EXPECT_TRUE(ygg::visit(
         [](auto rule)
         {
             using View = std::decay_t<decltype(rule)>;
             using Expected = ygg::View<ygg::Index<kr::ps::ext::Rule<kr::ps::ext::LoadTag>>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
-                return ygg::uint_t(rule.get_register().get_identifier()) == 0 && rule.get_conditions().size() == 1 && rule.get_symbol() == "load-rule"
-                       && rule.get_description() == "load description";
+                return ygg::uint_t(rule.get_register().get_identifier()) == 0 && rule.get_conditions().size() == 1;
             else
                 return false;
         },
         load_rules[0].get_variant()));
 
-    const auto sketch_rules = module.get_memory_transitions()[1].get_rules();
+    const auto sketch_rules = ygg::make_view(module.get_memory_transitions()[1], module.get_context());
     ASSERT_EQ(sketch_rules.size(), 1);
 
-    const auto do_rules = module.get_memory_transitions()[2].get_rules();
+    const auto do_rules = ygg::make_view(module.get_memory_transitions()[2], module.get_context());
     ASSERT_EQ(do_rules.size(), 1);
     EXPECT_TRUE(ygg::visit(
         [](auto rule)
@@ -1435,12 +1475,10 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     module_data.memory_states.push_back(source.get_index());
     module_data.memory_states.push_back(target.get_index());
     module_data.registers.push_back(reg.get_index());
-    auto transition = ygg::Data<kr::ps::ext::MemoryTransition>();
-    transition.source = source.get_index();
-    transition.target = target.get_index();
-    transition.rules.push_back(variant.get_index());
-    kr::ps::ext::canonicalize(transition);
-    module_data.memory_transitions.push_back(repository->get_or_create(transition).first.get_index());
+    auto transition = ygg::IndexList<kr::ps::ext::RuleVariant>();
+    transition.push_back(variant.get_index());
+    ygg::canonicalize(transition);
+    module_data.memory_transitions.push_back(std::move(transition));
     kr::ps::ext::canonicalize(module_data);
     const auto module = repository->get_or_create(module_data).first;
 
@@ -1752,8 +1790,6 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
                 (:source-memory source)
                 (:target-memory target)
                 (:do
-                    (:symbol auto17)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:action "pick")
@@ -1774,7 +1810,7 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
 )",
                                                       planning_task.get_domain().get_domain(),
                                                       *repository);
-    const auto rule_variant = module.get_memory_transitions()[0].get_rules()[0];
+    const auto rule_variant = ygg::make_view(module.get_memory_transitions()[0], module.get_context())[0];
 
     auto builder = kr::dl::semantics::Builder();
     auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
@@ -1868,19 +1904,15 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     module_data.memory_states.push_back(move_target.get_index());
     module_data.memory_states.push_back(pick_target.get_index());
 
-    auto move_transition = ygg::Data<kr::ps::ext::MemoryTransition>();
-    move_transition.source = source.get_index();
-    move_transition.target = move_target.get_index();
-    move_transition.rules.push_back(move_variant.get_index());
-    kr::ps::ext::canonicalize(move_transition);
-    module_data.memory_transitions.push_back(repository->get_or_create(move_transition).first.get_index());
+    auto move_transition = ygg::IndexList<kr::ps::ext::RuleVariant>();
+    move_transition.push_back(move_variant.get_index());
+    ygg::canonicalize(move_transition);
+    module_data.memory_transitions.push_back(std::move(move_transition));
 
-    auto pick_transition = ygg::Data<kr::ps::ext::MemoryTransition>();
-    pick_transition.source = source.get_index();
-    pick_transition.target = pick_target.get_index();
-    pick_transition.rules.push_back(pick_variant.get_index());
-    kr::ps::ext::canonicalize(pick_transition);
-    module_data.memory_transitions.push_back(repository->get_or_create(pick_transition).first.get_index());
+    auto pick_transition = ygg::IndexList<kr::ps::ext::RuleVariant>();
+    pick_transition.push_back(pick_variant.get_index());
+    ygg::canonicalize(pick_transition);
+    module_data.memory_transitions.push_back(std::move(pick_transition));
 
     kr::ps::ext::canonicalize(module_data);
     const auto module = repository->get_or_create(module_data).first;
@@ -1947,12 +1979,10 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     load_module_data.entry_memory_state = source.get_index();
     load_module_data.memory_states.push_back(source.get_index());
     load_module_data.registers.push_back(load_data.reg);
-    auto load_transition = ygg::Data<kr::ps::ext::MemoryTransition>();
-    load_transition.source = source.get_index();
-    load_transition.target = source.get_index();
-    load_transition.rules.push_back(load_variant.get_index());
-    kr::ps::ext::canonicalize(load_transition);
-    load_module_data.memory_transitions.push_back(repository->get_or_create(load_transition).first.get_index());
+    auto load_transition = ygg::IndexList<kr::ps::ext::RuleVariant>();
+    load_transition.push_back(load_variant.get_index());
+    ygg::canonicalize(load_transition);
+    load_module_data.memory_transitions.push_back(std::move(load_transition));
     kr::ps::ext::canonicalize(load_module_data);
     const auto load_module = repository->get_or_create(load_module_data).first;
     auto load_proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
@@ -1983,12 +2013,10 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     caller_data.entry_memory_state = source.get_index();
     caller_data.memory_states.push_back(source.get_index());
     caller_data.memory_states.push_back(target.get_index());
-    auto call_transition = ygg::Data<kr::ps::ext::MemoryTransition>();
-    call_transition.source = source.get_index();
-    call_transition.target = target.get_index();
-    call_transition.rules.push_back(call_variant.get_index());
-    kr::ps::ext::canonicalize(call_transition);
-    caller_data.memory_transitions.push_back(repository->get_or_create(call_transition).first.get_index());
+    auto call_transition = ygg::IndexList<kr::ps::ext::RuleVariant>();
+    call_transition.push_back(call_variant.get_index());
+    ygg::canonicalize(call_transition);
+    caller_data.memory_transitions.push_back(std::move(call_transition));
     kr::ps::ext::canonicalize(caller_data);
     const auto caller = repository->get_or_create(caller_data).first;
     const auto caller_program = create_module_program(*repository, caller, { caller, callee });
@@ -2008,12 +2036,10 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     do_module_data.entry_memory_state = source.get_index();
     do_module_data.memory_states.push_back(source.get_index());
     do_module_data.memory_states.push_back(target.get_index());
-    auto do_transition = ygg::Data<kr::ps::ext::MemoryTransition>();
-    do_transition.source = source.get_index();
-    do_transition.target = target.get_index();
-    do_transition.rules.push_back(do_variant.get_index());
-    kr::ps::ext::canonicalize(do_transition);
-    do_module_data.memory_transitions.push_back(repository->get_or_create(do_transition).first.get_index());
+    auto do_transition = ygg::IndexList<kr::ps::ext::RuleVariant>();
+    do_transition.push_back(do_variant.get_index());
+    ygg::canonicalize(do_transition);
+    do_module_data.memory_transitions.push_back(std::move(do_transition));
     kr::ps::ext::canonicalize(do_module_data);
     const auto do_module = repository->get_or_create(do_module_data).first;
 

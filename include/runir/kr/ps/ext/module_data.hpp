@@ -3,7 +3,6 @@
 
 #include "runir/kr/ps/ext/argument_index.hpp"
 #include "runir/kr/ps/ext/memory_state_index.hpp"
-#include "runir/kr/ps/ext/memory_transition_index.hpp"
 #include "runir/kr/ps/ext/module_index.hpp"
 #include "runir/kr/ps/ext/register_index.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
@@ -32,7 +31,7 @@ struct Data<runir::kr::ps::ext::Module>
     IndexList<runir::kr::ps::ext::Register> registers;
     Index<runir::kr::ps::ext::MemoryState> entry_memory_state;
     IndexList<runir::kr::ps::ext::MemoryState> memory_states;
-    IndexList<runir::kr::ps::ext::MemoryTransition> memory_transitions;
+    ::cista::offset::vector<IndexList<runir::kr::ps::ext::RuleVariant>> memory_transitions;
     Data() = default;
     Data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
     Data(const std::string& name_) : index(), name(name_) {}

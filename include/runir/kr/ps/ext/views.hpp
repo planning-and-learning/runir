@@ -6,7 +6,6 @@
 #include "runir/kr/ps/ext/effect_view.hpp"
 #include "runir/kr/ps/ext/feature_view.hpp"
 #include "runir/kr/ps/ext/memory_state_view.hpp"
-#include "runir/kr/ps/ext/memory_transition_view.hpp"
 #include "runir/kr/ps/ext/module_program_view.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/register_view.hpp"

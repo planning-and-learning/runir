@@ -32,10 +32,7 @@ auto enumerate_load_steps(const EvaluationContext<Kind>& context) -> std::vector
     const auto module = context.get_module();
     for (const auto& transition : module.get_memory_transitions())
     {
-        if (transition.get_source().get_index() != context.get_memory_state().get_index())
-            continue;
-
-        for (auto rule_variant : transition.get_rules())
+        for (auto rule_variant : ygg::make_view(transition, module.get_context()))
         {
             ygg::visit(
                 [&](auto rule)
@@ -99,10 +96,7 @@ auto enumerate_immediate_control_steps(const runir::datasets::TaskSearchContext<
 
     for (const auto& transition : module.get_memory_transitions())
     {
-        if (transition.get_source().get_index() != context.get_memory_state().get_index())
-            continue;
-
-        for (auto rule_variant : transition.get_rules())
+        for (auto rule_variant : ygg::make_view(transition, module.get_context()))
         {
             ygg::visit(
                 [&](auto rule)
@@ -176,10 +170,7 @@ auto enumerate_sketch_control_steps(const EvaluationContext<Kind>& context,
 
     for (const auto& transition : module.get_memory_transitions())
     {
-        if (transition.get_source().get_index() != context.get_memory_state().get_index())
-            continue;
-
-        for (auto rule_variant : transition.get_rules())
+        for (auto rule_variant : ygg::make_view(transition, module.get_context()))
         {
             ygg::visit(
                 [&](auto rule)

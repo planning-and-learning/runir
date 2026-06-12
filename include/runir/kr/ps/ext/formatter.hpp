@@ -132,7 +132,7 @@ FeatureNames collect_features(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, 
 {
     auto names = FeatureNames {};
     for (const auto& transition : view.get_memory_transitions())
-        for (auto rule : transition.get_rules())
+        for (auto rule : ygg::make_view(transition, view.get_context()))
             collect_features(names, rule);
     return names;
 }
@@ -358,8 +358,6 @@ void append_rule(std::ostream& os, FeatureNames& names, ygg::View<ygg::Index<run
         ygg::IndentScope scope(os);
         if constexpr (!std::same_as<Kind, runir::kr::ps::ext::CallTag>)
         {
-            os << ygg::print_indent << symbol_section(std::string(view.get_symbol().str())) << "\n";
-            os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(view.get_description().str()))) << "\n";
             os << ygg::print_indent << "(:expression\n";
             {
                 ygg::IndentScope expression_scope(os);
@@ -397,12 +395,6 @@ template<typename C>
 std::string memory_state(ygg::View<ygg::Index<runir::kr::ps::ext::MemoryState>, C> view)
 {
     return std::string(view.get_name());
-}
-
-template<typename C>
-std::string memory_transition(ygg::View<ygg::Index<runir::kr::ps::ext::MemoryTransition>, C> view)
-{
-    return fmt::format("{} -> {}", memory_state(view.get_source()), memory_state(view.get_target()));
 }
 
 template<typename C>
@@ -464,25 +456,27 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
             ygg::IndentScope transition_scope(os);
             for (const auto& transition : view.get_memory_transitions())
             {
-                os << ygg::print_indent << "(:rule\n";
+                for (auto item : ygg::make_view(transition, view.get_context()))
                 {
-                    ygg::IndentScope transition_scope_inner(os);
-                    os << ygg::print_indent << symbol_section(std::string(transition.get_symbol().str())) << "\n";
-                    os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(transition.get_description().str()))) << "\n";
-                    os << ygg::print_indent << "(:expression\n";
+                    os << ygg::print_indent << "(:rule\n";
                     {
-                        ygg::IndentScope expression_scope(os);
-                        os << ygg::print_indent << fmt::format("(:source-memory {})", memory_state(transition.get_source())) << "\n";
-                        os << ygg::print_indent << fmt::format("(:target-memory {})", memory_state(transition.get_target())) << "\n";
-                        for (auto item : transition.get_rules())
+                        ygg::IndentScope transition_scope_inner(os);
+                        os << ygg::print_indent << symbol_section(std::string(item.get_symbol().str())) << "\n";
+                        os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(item.get_description().str()))) << "\n";
+                        os << ygg::print_indent << "(:expression\n";
                         {
+                            ygg::IndentScope expression_scope(os);
+                            const auto source = ygg::visit([](auto rule) { return memory_state(rule.get_source()); }, item.get_variant());
+                            const auto target = ygg::visit([](auto rule) { return memory_state(rule.get_target()); }, item.get_variant());
+                            os << ygg::print_indent << fmt::format("(:source-memory {})", source) << "\n";
+                            os << ygg::print_indent << fmt::format("(:target-memory {})", target) << "\n";
                             append_rule(os, names, item);
                             os << "\n";
                         }
+                        os << ygg::print_indent << ")\n";
                     }
                     os << ygg::print_indent << ")\n";
                 }
-                os << ygg::print_indent << ")\n";
             }
         }
         os << ygg::print_indent << ")\n";
@@ -559,16 +553,6 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::MemoryState>, C>>
 {
     using View = ygg::View<ygg::Index<runir::kr::ps::ext::MemoryState>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::memory_state(view), ctx); }
-};
-
-template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::MemoryTransition>, C>> : fmt::formatter<std::string_view>
-{
-    using View = ygg::View<ygg::Index<runir::kr::ps::ext::MemoryTransition>, C>;
-    auto format(View view, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::memory_transition(view), ctx);
-    }
 };
 
 template<typename FeatureTag, typename C>

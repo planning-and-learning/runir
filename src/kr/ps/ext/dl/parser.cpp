@@ -1158,7 +1158,7 @@ void validate_module_expression_references(const ast::Module& module)
     for (const auto& feature : module.features)
         validate_expression_references(feature.expression, feature.expression_offset, signature, concept_registers);
 
-    for (const auto& transition : module.transitions)
+    for (const auto& transition : module.rule_entries)
     {
         for (const auto& rule : transition.rules)
         {
@@ -1188,10 +1188,10 @@ Variant parse_constructor_variant_child(runir::kr::dl::ext::ConstructorRepositor
 }
 
 template<typename RuleTag>
-auto intern_rule_variant(Repository& repository, ygg::Data<Rule<RuleTag>>& data)
+auto intern_rule_variant(Repository& repository, ygg::Data<Rule<RuleTag>>& data, const std::string& symbol, const std::string& description)
 {
     const auto rule = intern(repository, data);
-    ygg::Data<RuleVariant> variant_data(rule.get_index());
+    ygg::Data<RuleVariant> variant_data(symbol, description, rule.get_index());
     return intern(repository, variant_data);
 }
 
@@ -1247,7 +1247,9 @@ auto parse_rule(Repository& repository,
                 const ConceptFeatureMap& concept_features,
                 const BooleanFeatureMap& boolean_features,
                 const NumericalFeatureMap& numerical_features,
-                const ConceptAliasMap& concept_aliases)
+                const ConceptAliasMap& concept_aliases,
+                const std::string& symbol,
+                const std::string& description)
 {
     const auto conditions = parse_conditions(repository, rule.conditions, concept_features, boolean_features, numerical_features);
 
@@ -1258,23 +1260,19 @@ auto parse_rule(Repository& repository,
             ygg::Data<Rule<LoadTag>> data;
             data.source = source;
             data.target = target;
-            data.symbol = rule.symbol;
-            data.description = rule.description;
             data.conditions = conditions;
             data.load_concept = parse_concept_argument(repository, rule.concept_expression, rule.concept_expression_offset, domain, concept_aliases);
             data.reg = require_register(registers, rule.reg, rule.register_offset);
-            return intern_rule_variant(repository, data);
+            return intern_rule_variant(repository, data, symbol, description);
         }
         case ast::RuleKind::SKETCH:
         {
             ygg::Data<Rule<SketchTag>> data;
             data.source = source;
             data.target = target;
-            data.symbol = rule.symbol;
-            data.description = rule.description;
             data.conditions = conditions;
             data.effects = parse_effects(repository, rule.effects, concept_features, boolean_features, numerical_features);
-            return intern_rule_variant(repository, data);
+            return intern_rule_variant(repository, data, symbol, description);
         }
         case ast::RuleKind::DO:
         {
@@ -1282,13 +1280,11 @@ auto parse_rule(Repository& repository,
             ygg::Data<Rule<DoTag>> data(rule.action);
             data.source = source;
             data.target = target;
-            data.symbol = rule.symbol;
-            data.description = rule.description;
             data.conditions = conditions;
             data.effects = parse_effects(repository, rule.effects, concept_features, boolean_features, numerical_features);
             for (const auto& argument : rule.arguments)
                 data.arguments.push_back(parse_do_argument(argument, concept_features));
-            return intern_rule_variant(repository, data);
+            return intern_rule_variant(repository, data, symbol, description);
         }
         case ast::RuleKind::CALL:
         {
@@ -1301,7 +1297,7 @@ auto parse_rule(Repository& repository,
                 data.callee = *callee;
             for (const auto& argument : rule.arguments)
                 data.arguments.push_back(parse_call_argument(repository, argument, domain, concept_aliases));
-            return intern_rule_variant(repository, data);
+            return intern_rule_variant(repository, data, symbol, description);
         }
     }
     throw std::runtime_error("Unknown rule kind.");
@@ -1464,35 +1460,30 @@ ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::Domain
     if (auto callee = repository.find(data))
         modules.emplace(ast.name, callee->get_index());
 
-    auto parsed_transitions = ygg::DataList<MemoryTransition> {};
-    parsed_transitions.reserve(ast.transitions.size());
-    for (const auto& transition : ast.transitions)
+    data.memory_transitions.reserve(ast.rule_entries.size());
+    for (const auto& transition : ast.rule_entries)
     {
-        auto parsed_transition = ygg::Data<MemoryTransition> {};
-        parsed_transition.source = require_memory_state(memory_states, transition.source, transition.source_name_offset);
-        parsed_transition.target = require_memory_state(memory_states, transition.target, transition.target_name_offset);
-        parsed_transition.symbol = transition.symbol;
-        parsed_transition.description = transition.description;
+        auto parsed_transition = ygg::IndexList<RuleVariant> {};
+        const auto source = require_memory_state(memory_states, transition.source, transition.source_name_offset);
+        const auto target = require_memory_state(memory_states, transition.target, transition.target_name_offset);
         for (const auto& rule : transition.rules)
-            parsed_transition.rules.push_back(parse_rule(repository,
-                                                         rule,
-                                                         parsed_transition.source,
-                                                         parsed_transition.target,
-                                                         domain,
-                                                         registers,
-                                                         modules,
-                                                         concept_features,
-                                                         boolean_features,
-                                                         numerical_features,
-                                                         concept_aliases)
-                                                  .get_index());
-        canonicalize(parsed_transition);
-        parsed_transitions.push_back(std::move(parsed_transition));
+            parsed_transition.push_back(parse_rule(repository,
+                                                   rule,
+                                                   source,
+                                                   target,
+                                                   domain,
+                                                   registers,
+                                                   modules,
+                                                   concept_features,
+                                                   boolean_features,
+                                                   numerical_features,
+                                                   concept_aliases,
+                                                   transition.symbol,
+                                                   transition.description)
+                                            .get_index());
+        ygg::canonicalize(parsed_transition);
+        data.memory_transitions.push_back(std::move(parsed_transition));
     }
-
-    ygg::canonicalize(parsed_transitions);
-    for (auto& transition : parsed_transitions)
-        data.memory_transitions.push_back(repository.get_or_create(transition).first.get_index());
 
     return intern(repository, data);
 }
@@ -1508,7 +1499,7 @@ void validate_module_set(const std::vector<ast::Module>& modules)
 
     for (const auto& module : modules)
     {
-        for (const auto& transition : module.transitions)
+        for (const auto& transition : module.rule_entries)
         {
             for (const auto& rule : transition.rules)
             {

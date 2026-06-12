@@ -18,8 +18,6 @@
 #include "runir/kr/ps/ext/feature_view.hpp"
 #include "runir/kr/ps/ext/memory_state_data.hpp"
 #include "runir/kr/ps/ext/memory_state_view.hpp"
-#include "runir/kr/ps/ext/memory_transition_data.hpp"
-#include "runir/kr/ps/ext/memory_transition_view.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
 #include "runir/kr/ps/ext/module_program_data.hpp"
 #include "runir/kr/ps/ext/module_program_view.hpp"
@@ -65,7 +63,7 @@ using EffectTypes = ygg::TypeList<EffectVariant,
                                   ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
                                   ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
 using ArgumentTypes = ygg::TypeList<Argument<runir::kr::dl::ConceptTag>, Argument<runir::kr::dl::RoleTag>, Argument<runir::kr::dl::BooleanTag>, Argument<runir::kr::dl::NumericalTag>>;
-using ProgramTypes = ygg::TypeList<Register, MemoryState, MemoryTransition, Module, ModuleProgram>;
+using ProgramTypes = ygg::TypeList<Register, MemoryState, Module, ModuleProgram>;
 using RepositoryTypes =
     ygg::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ArgumentTypes, ProgramTypes>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ext::ConstructorRepositoryPtr>;
@@ -74,7 +72,6 @@ using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFa
 
 using RegisterView = ygg::View<ygg::Index<Register>, Repository>;
 using MemoryStateView = ygg::View<ygg::Index<MemoryState>, Repository>;
-using MemoryTransitionView = ygg::View<ygg::Index<MemoryTransition>, Repository>;
 using ModuleView = ygg::View<ygg::Index<Module>, Repository>;
 using ModuleProgramView = ygg::View<ygg::Index<ModuleProgram>, Repository>;
 using RuleVariantView = ygg::View<ygg::Index<RuleVariant>, Repository>;

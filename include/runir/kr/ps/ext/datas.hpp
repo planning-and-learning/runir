@@ -6,7 +6,6 @@
 #include "runir/kr/ps/ext/effect_data.hpp"
 #include "runir/kr/ps/ext/feature_data.hpp"
 #include "runir/kr/ps/ext/memory_state_data.hpp"
-#include "runir/kr/ps/ext/memory_transition_data.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
 #include "runir/kr/ps/ext/module_program_data.hpp"
 #include "runir/kr/ps/ext/register_data.hpp"

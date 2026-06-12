@@ -6,7 +6,6 @@
 #include "runir/kr/ps/ext/effect_data.hpp"
 #include "runir/kr/ps/ext/feature_data.hpp"
 #include "runir/kr/ps/ext/memory_state_data.hpp"
-#include "runir/kr/ps/ext/memory_transition_data.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
 #include "runir/kr/ps/ext/module_program_data.hpp"
 #include "runir/kr/ps/ext/register_data.hpp"
@@ -78,8 +77,6 @@ bool is_canonical(const ygg::Data<Rule<Kind>>& data) noexcept
 
 inline bool is_canonical(const ygg::Data<RuleVariant>&) noexcept { return true; }
 
-inline bool is_canonical(const ygg::Data<MemoryTransition>& transition) noexcept { return ygg::is_canonical(transition.rules); }
-
 inline bool is_canonical(const ygg::Data<Module>& data) noexcept
 {
     return ygg::is_canonical(data.concept_arguments) && ygg::is_canonical(data.role_arguments) && ygg::is_canonical(data.boolean_arguments)
@@ -149,8 +146,6 @@ void canonicalize(ygg::Data<Rule<Kind>>& data)
 }
 
 inline void canonicalize(ygg::Data<RuleVariant>&) noexcept {}
-
-inline void canonicalize(ygg::Data<MemoryTransition>& transition) { ygg::canonicalize(transition.rules); }
 
 inline void canonicalize(ygg::Data<Module>& data)
 {
