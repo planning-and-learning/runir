@@ -47,7 +47,7 @@ public:
     auto get_registers() const noexcept { return make_view(get_data().registers, *m_context); }
     auto get_entry_memory_state() const noexcept { return make_view(get_data().entry_memory_state, *m_context); }
     auto get_memory_states() const noexcept { return make_view(get_data().memory_states, *m_context); }
-    const auto& get_memory_transitions() const noexcept { return get_data().memory_transitions; }
+    auto get_memory_transitions() const noexcept { return make_view(get_data().memory_transitions, *m_context); }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };

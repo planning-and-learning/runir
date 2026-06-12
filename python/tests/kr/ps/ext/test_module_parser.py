@@ -64,9 +64,10 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     memory_transitions = modules[3].get_memory_transitions()
     assert len(memory_transitions) > 0
     first_transition = memory_transitions[0]
-    assert first_transition.get_source() is not None
-    assert first_transition.get_target() is not None
-    assert len(first_transition.get_rules()) > 0
+    assert len(first_transition) > 0
+    first_rule = first_transition[0].get_variant()
+    assert first_rule.get_source() is not None
+    assert first_rule.get_target() is not None
 
     created_modules = ext.ModuleFactory.create_bonet_et_al_icaps2024_modules(planning_domain, repository)
     assert [module.get_name() for module in created_modules] == ["on", "on-table", "tower", "blocks"]
@@ -87,7 +88,7 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     assert [module.get_name() for module in program.get_modules()] == ["root", "blocks", "tower", "on-table", "on"]
 
     formatted_program = str(program)
-    assert re.search(r"\(:sketch\s+\(:symbol\s+[^\s\)]+\)\s+\(:description \"\"\)\s+\(:expression", formatted_program)
+    assert re.search(r"\(:sketch\s+\(:expression", formatted_program)
     assert re.search(r"\(:rule\s+\(:symbol\s+[^\s\)]+\)\s+\(:description \"\"\)\s+\(:expression\s+\(:source-memory", formatted_program)
 
     reparsed_program = ext.parse_module_program(formatted_program, planning_domain, repository)
@@ -210,8 +211,6 @@ def test_module_program_parser_rejects_invalid_wiring():
                     (:source-memory m0)
                     (:target-memory missing)
                     (:sketch
-                        (:symbol auto4)
-                        (:description "")
                         (:expression
                             (:conditions)
                             (:effects)
@@ -250,8 +249,6 @@ def test_module_program_parser_rejects_invalid_wiring():
                     (:source-memory m0)
                     (:target-memory m1)
                     (:load
-                        (:symbol auto6)
-                        (:description "")
                         (:expression
                             (:conditions)
                             (:concept
@@ -293,8 +290,6 @@ def test_module_program_parser_rejects_invalid_wiring():
                     (:source-memory m0)
                     (:target-memory m1)
                     (:sketch
-                        (:symbol auto8)
-                        (:description "")
                         (:expression
                             (:conditions
                                 (:greater_zero missing)
@@ -415,8 +410,6 @@ def test_executor_reports_structured_failure_statuses_from_python():
                     (:source-memory source)
                     (:target-memory source)
                     (:load
-                        (:symbol auto10)
-                        (:description "")
                         (:expression
                             (:conditions)
                             (:concept
@@ -464,8 +457,6 @@ def test_executor_reports_structured_failure_statuses_from_python():
                     (:source-memory source)
                     (:target-memory target)
                     (:do
-                        (:symbol auto12)
-                        (:description "")
                         (:expression
                             (:conditions)
                             (:action "missing-action")

@@ -36,8 +36,6 @@ TERMINATING_MODULE = """(:module
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:symbol auto2)
-                    (:description "")
                     (:expression
                         (:conditions
                             (:greater_zero fn)
@@ -56,8 +54,6 @@ TERMINATING_MODULE = """(:module
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:symbol auto4)
-                    (:description "")
                     (:expression
                         (:conditions)
                         (:effects
