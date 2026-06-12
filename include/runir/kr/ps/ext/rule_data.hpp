@@ -98,7 +98,7 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
     IndexList<runir::kr::ps::ext::ConditionVariant> conditions;
     IndexList<runir::kr::ps::ext::EffectVariant> effects;
     ::cista::offset::string action_name;
-    IndexList<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> arguments;
+    IndexList<runir::kr::ps::ext::Feature<runir::kr::dl::ConceptTag>> arguments;
 
     Data() = default;
     Data(::cista::offset::string action_name_) : index(), action_name(std::move(action_name_)) {}

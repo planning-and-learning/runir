@@ -146,6 +146,13 @@ TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
         m1
     )
     (:features
+        (:concept
+            (:symbol T)
+            (:description "")
+            (:expression
+                (c_top)
+            )
+        )
         (:numerical
             (:symbol fn)
             (:description "")
@@ -172,9 +179,9 @@ TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
                         )
                         (:action "pick")
                         (:arguments
-                            (c_top)
-                            (c_top)
-                            (c_top)
+                            T
+                            T
+                            T
                         )
                         (:effects
                             (:unchanged fn)

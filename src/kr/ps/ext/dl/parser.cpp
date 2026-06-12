@@ -851,6 +851,14 @@ auto parse_concept_argument(Repository& repository,
     }
 }
 
+auto parse_do_argument(const ast::Expression& expression, const ConceptFeatureMap& concept_features)
+{
+    const auto name = trim_copy(expression.text);
+    if (starts_with_expression(name))
+        fail_at("Do-rule action arguments must reference declared concept features by symbol.", expression.source_offset);
+    return require_feature(concept_features, name, expression.source_offset);
+}
+
 auto parse_call_argument(Repository& repository,
                          const ast::Expression& expression,
                          tyr::formalism::planning::DomainView domain,
@@ -1279,7 +1287,7 @@ auto parse_rule(Repository& repository,
             data.conditions = conditions;
             data.effects = parse_effects(repository, rule.effects, concept_features, boolean_features, numerical_features);
             for (const auto& argument : rule.arguments)
-                data.arguments.push_back(parse_concept_argument(repository, argument.text, argument.source_offset, domain, concept_aliases));
+                data.arguments.push_back(parse_do_argument(argument, concept_features));
             return intern_rule_variant(repository, data);
         }
         case ast::RuleKind::CALL:

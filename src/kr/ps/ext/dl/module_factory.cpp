@@ -384,6 +384,27 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                                 "on-table")))
                 )
             )
+        
+            (:concept
+                (:symbol DO_on_table_1)
+                (:description "")
+                (:expression
+                    (c_argument
+                                                        0))
+            )
+            (:concept
+                (:symbol DO_on_table_2)
+                (:description "")
+                (:expression
+                    (c_top))
+            )
+            (:concept
+                (:symbol DO_on_table_3)
+                (:description "")
+                (:expression
+                    (c_argument
+                                                        0))
+            )
         )
         (:rules
             (:rule
@@ -402,9 +423,8 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                             )
                             (:action "unstack")
                             (:arguments
-                                (c_argument
-                                    0)
-                                (c_top)
+                                DO_on_table_1
+                                DO_on_table_2
                             )
                             (:effects)
                         )
@@ -460,8 +480,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                             (:conditions)
                             (:action "putdown")
                             (:arguments
-                                (c_argument
-                                    0)
+                                DO_on_table_3
                             )
                             (:effects)
                         )
@@ -553,6 +572,67 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                             (c_atomic_state
                                 "on-table")))
                 )
+            )
+        
+            (:concept
+                (:symbol DO_on_1)
+                (:description "")
+                (:expression
+                    (c_top))
+            )
+            (:concept
+                (:symbol DO_on_2)
+                (:description "")
+                (:expression
+                    (c_register
+                                                        1))
+            )
+            (:concept
+                (:symbol DO_on_3)
+                (:description "")
+                (:expression
+                    (c_top))
+            )
+            (:concept
+                (:symbol DO_on_4)
+                (:description "")
+                (:expression
+                    (c_register
+                                                        1))
+            )
+            (:concept
+                (:symbol DO_on_5)
+                (:description "")
+                (:expression
+                    (c_argument
+                                                        0))
+            )
+            (:concept
+                (:symbol DO_on_6)
+                (:description "")
+                (:expression
+                    (c_argument
+                                                        0))
+            )
+            (:concept
+                (:symbol DO_on_7)
+                (:description "")
+                (:expression
+                    (c_top))
+            )
+            (:concept
+                (:symbol DO_on_8)
+                (:description "")
+                (:expression
+                    (c_argument
+                                                        0))
+            )
+            (:concept
+                (:symbol DO_on_9)
+                (:description "")
+                (:expression
+                    (c_argument
+                                                        1))
             )
         )
         (:rules
@@ -742,7 +822,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                             (:conditions)
                             (:action "putdown")
                             (:arguments
-                                (c_top)
+                                DO_on_1
                             )
                             (:effects)
                         )
@@ -762,9 +842,8 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                             (:conditions)
                             (:action "unstack")
                             (:arguments
-                                (c_register
-                                    1)
-                                (c_top)
+                                DO_on_2
+                                DO_on_3
                             )
                             (:effects)
                         )
@@ -784,8 +863,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                             (:conditions)
                             (:action "putdown")
                             (:arguments
-                                (c_register
-                                    1)
+                                DO_on_4
                             )
                             (:effects)
                         )
@@ -807,8 +885,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                             )
                             (:action "pickup")
                             (:arguments
-                                (c_argument
-                                    0)
+                                DO_on_5
                             )
                             (:effects)
                         )
@@ -830,9 +907,8 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                             )
                             (:action "unstack")
                             (:arguments
-                                (c_argument
-                                    0)
-                                (c_top)
+                                DO_on_6
+                                DO_on_7
                             )
                             (:effects)
                         )
@@ -852,10 +928,8 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                             (:conditions)
                             (:action "stack")
                             (:arguments
-                                (c_argument
-                                    0)
-                                (c_argument
-                                    1)
+                                DO_on_8
+                                DO_on_9
                             )
                             (:effects)
                         )
@@ -978,6 +1052,67 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                         (c_atomic_state
                             "on-table")))
             )
+        )
+    
+        (:concept
+            (:symbol DO_on_1)
+            (:description "")
+            (:expression
+                (c_top))
+        )
+        (:concept
+            (:symbol DO_on_2)
+            (:description "")
+            (:expression
+                (c_register
+                                                1))
+        )
+        (:concept
+            (:symbol DO_on_3)
+            (:description "")
+            (:expression
+                (c_top))
+        )
+        (:concept
+            (:symbol DO_on_4)
+            (:description "")
+            (:expression
+                (c_register
+                                                1))
+        )
+        (:concept
+            (:symbol DO_on_5)
+            (:description "")
+            (:expression
+                (c_argument
+                                                0))
+        )
+        (:concept
+            (:symbol DO_on_6)
+            (:description "")
+            (:expression
+                (c_argument
+                                                0))
+        )
+        (:concept
+            (:symbol DO_on_7)
+            (:description "")
+            (:expression
+                (c_top))
+        )
+        (:concept
+            (:symbol DO_on_8)
+            (:description "")
+            (:expression
+                (c_argument
+                                                0))
+        )
+        (:concept
+            (:symbol DO_on_9)
+            (:description "")
+            (:expression
+                (c_argument
+                                                1))
         )
     )
     (:rules
@@ -1167,7 +1302,7 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                         (:conditions)
                         (:action "putdown")
                         (:arguments
-                            (c_top)
+                            DO_on_1
                         )
                         (:effects)
                     )
@@ -1187,9 +1322,8 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                         (:conditions)
                         (:action "unstack")
                         (:arguments
-                            (c_register
-                                1)
-                            (c_top)
+                            DO_on_2
+                            DO_on_3
                         )
                         (:effects)
                     )
@@ -1209,8 +1343,7 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                         (:conditions)
                         (:action "putdown")
                         (:arguments
-                            (c_register
-                                1)
+                            DO_on_4
                         )
                         (:effects)
                     )
@@ -1232,8 +1365,7 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                         )
                         (:action "pickup")
                         (:arguments
-                            (c_argument
-                                0)
+                            DO_on_5
                         )
                         (:effects)
                     )
@@ -1255,9 +1387,8 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                         )
                         (:action "unstack")
                         (:arguments
-                            (c_argument
-                                0)
-                            (c_top)
+                            DO_on_6
+                            DO_on_7
                         )
                         (:effects)
                     )
@@ -1277,10 +1408,8 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                         (:conditions)
                         (:action "stack")
                         (:arguments
-                            (c_argument
-                                0)
-                            (c_argument
-                                1)
+                            DO_on_8
+                            DO_on_9
                         )
                         (:effects)
                     )
@@ -1330,6 +1459,27 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
                             "on-table")))
             )
         )
+    
+        (:concept
+            (:symbol DO_on_table_1)
+            (:description "")
+            (:expression
+                (c_argument
+                                                0))
+        )
+        (:concept
+            (:symbol DO_on_table_2)
+            (:description "")
+            (:expression
+                (c_top))
+        )
+        (:concept
+            (:symbol DO_on_table_3)
+            (:description "")
+            (:expression
+                (c_argument
+                                                0))
+        )
     )
     (:rules
         (:rule
@@ -1348,9 +1498,8 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
                         )
                         (:action "unstack")
                         (:arguments
-                            (c_argument
-                                0)
-                            (c_top)
+                            DO_on_table_1
+                            DO_on_table_2
                         )
                         (:effects)
                     )
@@ -1406,8 +1555,7 @@ std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
                         (:conditions)
                         (:action "putdown")
                         (:arguments
-                            (c_argument
-                                0)
+                            DO_on_table_3
                         )
                         (:effects)
                     )

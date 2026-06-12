@@ -71,7 +71,7 @@ public:
     auto get_action_arguments() const noexcept
         requires std::same_as<Kind, runir::kr::ps::ext::DoTag>
     {
-        return make_view(get_data().arguments, get_repository(*m_context).get_dl_repository());
+        return make_view(get_data().arguments, *m_context);
     }
 
     auto get_callee() const noexcept

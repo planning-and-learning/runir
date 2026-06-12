@@ -69,6 +69,14 @@ auto create_top_concept(kr::dl::ext::ConstructorRepository& repository)
     return repository.get_or_create(constructor_data).first;
 }
 
+auto create_concept_feature(kr::ps::ext::Repository& repository, kr::ps::ext::ConceptArgument concept_index, const std::string& name)
+{
+    auto concrete_data = ygg::Data<kr::ps::ext::ConcreteFeature<kr::DlTag, kr::dl::ConceptTag>>(concept_index, name, "");
+    const auto concrete = repository.get_or_create(concrete_data).first;
+    auto feature_data = ygg::Data<kr::ps::ext::Feature<kr::dl::ConceptTag>>(concrete.get_index());
+    return repository.get_or_create(feature_data).first;
+}
+
 auto create_concept_argument(kr::dl::ext::ConstructorRepository& repository, ygg::uint_t identifier)
 {
     auto argument_data =
@@ -400,6 +408,80 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
         ASSERT_NE(expected_offset, std::string::npos);
         EXPECT_NE(std::string(err.what()).find("offset " + std::to_string(expected_offset)), std::string::npos) << err.what();
     }
+
+    const auto undeclared_argument_feature = R"(
+(:module
+  "entry"
+  (:arguments)
+  (:registers)
+  (:entry m0)
+  (:memory m0 m1)
+  (:features
+    (:concept
+      (:symbol B)
+      (:description "")
+      (:expression (c_top))))
+  (:rules
+    (:rule
+      (:symbol auto7)
+      (:description "")
+      (:expression
+        (:source-memory m0)
+        (:target-memory m1)
+        (:do
+          (:symbol auto8)
+          (:description "")
+          (:expression
+            (:conditions)
+            (:action "pick")
+            (:arguments B Missing B)))))))
+)";
+    try
+    {
+        [[maybe_unused]] const auto module = kr::ps::ext::dl::parse_module(undeclared_argument_feature, planning_task.get_domain().get_domain(), *repository);
+        FAIL() << "Expected undeclared do-argument concept feature to be rejected.";
+    }
+    catch (const std::runtime_error& err)
+    {
+        EXPECT_NE(std::string(err.what()).find("Unknown feature \"Missing\""), std::string::npos) << err.what();
+    }
+
+    const auto inline_argument_expression = R"(
+(:module
+  "entry"
+  (:arguments)
+  (:registers)
+  (:entry m0)
+  (:memory m0 m1)
+  (:features
+    (:concept
+      (:symbol B)
+      (:description "")
+      (:expression (c_top))))
+  (:rules
+    (:rule
+      (:symbol auto9)
+      (:description "")
+      (:expression
+        (:source-memory m0)
+        (:target-memory m1)
+        (:do
+          (:symbol auto10)
+          (:description "")
+          (:expression
+            (:conditions)
+            (:action "pick")
+            (:arguments (c_top) B B)))))))
+)";
+    try
+    {
+        [[maybe_unused]] const auto module = kr::ps::ext::dl::parse_module(inline_argument_expression, planning_task.get_domain().get_domain(), *repository);
+        FAIL() << "Expected inline do-argument expression to be rejected.";
+    }
+    catch (const std::runtime_error& err)
+    {
+        EXPECT_NE(std::string(err.what()).find("Do-rule action arguments must reference declared concept features by symbol"), std::string::npos) << err.what();
+    }
 }
 
 TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
@@ -727,7 +809,7 @@ TEST(RunirTests, ExtModuleParserReadsPaperFactoryDescriptions)
     EXPECT_EQ(on.transitions.size(), 14);
     EXPECT_EQ(on.transitions.back().rules.front().action, "stack");
     ASSERT_EQ(on.transitions.back().rules.front().arguments.size(), 2);
-    EXPECT_EQ(on.transitions.back().rules.front().arguments[0].text, std::string("(c_argument") + " 0)");
+    EXPECT_EQ(on.transitions.back().rules.front().arguments[0].text, "DO_on_8");
 
     const auto tower = kr::ps::ext::dl::parser::parse_module_ast(kr::ps::ext::dl::ModuleFactory::create_tower_bonet_et_al_icaps2024_description());
     EXPECT_EQ(tower.name, "tower");
@@ -950,6 +1032,14 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
                 (c_top)
             )
         )
+        (:concept
+            (:symbol C0)
+            (:description "register 0")
+            (:expression
+                (c_register
+                    0)
+            )
+        )
         (:boolean
             (:symbol H)
             (:description "has blocks")
@@ -1023,10 +1113,9 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
                         (:conditions)
                         (:action "pick")
                         (:arguments
-                            (c_register
-                                0)
-                            (c_top)
-                            (c_top)
+                            C0
+                            B
+                            B
                         )
                         (:effects
                             (:unchanged B)
@@ -1560,14 +1649,28 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
 
     const auto source = create_memory_state(*repository, "source");
     const auto target = create_memory_state(*repository, "target");
-    const auto top_concept = create_top_concept(*dl_repository);
+    const auto ball_feature = create_concept_feature(*repository,
+                                                     kr::ps::ext::dl::parse_concept("(c_atomic_state \"ball\")",
+                                                                                  planning_task.get_domain().get_domain(),
+                                                                                  *dl_repository).get_index(),
+                                                     "ball");
+    const auto room_feature = create_concept_feature(*repository,
+                                                     kr::ps::ext::dl::parse_concept("(c_atomic_state \"room\")",
+                                                                                  planning_task.get_domain().get_domain(),
+                                                                                  *dl_repository).get_index(),
+                                                     "room");
+    const auto gripper_feature = create_concept_feature(*repository,
+                                                        kr::ps::ext::dl::parse_concept("(c_atomic_state \"gripper\")",
+                                                                                     planning_task.get_domain().get_domain(),
+                                                                                     *dl_repository).get_index(),
+                                                        "gripper");
 
     auto do_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("pick"));
     do_data.source = source.get_index();
     do_data.target = target.get_index();
-    do_data.arguments.push_back(top_concept.get_index());
-    do_data.arguments.push_back(top_concept.get_index());
-    do_data.arguments.push_back(top_concept.get_index());
+    do_data.arguments.push_back(ball_feature.get_index());
+    do_data.arguments.push_back(room_feature.get_index());
+    do_data.arguments.push_back(gripper_feature.get_index());
     kr::ps::ext::canonicalize(do_data);
     const auto rule = repository->get_or_create(do_data).first;
 
@@ -1624,6 +1727,13 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
         target
     )
     (:features
+        (:concept
+            (:symbol T)
+            (:description "top")
+            (:expression
+                (c_top)
+            )
+        )
         (:numerical
             (:symbol C)
             (:description "free grippers")
@@ -1648,9 +1758,9 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
                         (:conditions)
                         (:action "pick")
                         (:arguments
-                            (c_top)
-                            (c_top)
-                            (c_top)
+                            T
+                            T
+                            T
                         )
                         (:effects
                             (:unchanged C)
@@ -1714,13 +1824,28 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     const auto source = create_memory_state(*repository, "source");
     const auto move_target = create_memory_state(*repository, "move_target");
     const auto pick_target = create_memory_state(*repository, "pick_target");
-    const auto top_concept = create_top_concept(*dl_repository);
+    const auto ball_feature = create_concept_feature(*repository,
+                                                     kr::ps::ext::dl::parse_concept("(c_atomic_state \"ball\")",
+                                                                                  planning_task.get_domain().get_domain(),
+                                                                                  *dl_repository).get_index(),
+                                                     "ball");
+    const auto room_feature = create_concept_feature(*repository,
+                                                     kr::ps::ext::dl::parse_concept("(c_atomic_state \"room\")",
+                                                                                  planning_task.get_domain().get_domain(),
+                                                                                  *dl_repository).get_index(),
+                                                     "room");
+    const auto gripper_feature = create_concept_feature(*repository,
+                                                        kr::ps::ext::dl::parse_concept("(c_atomic_state \"gripper\")",
+                                                                                     planning_task.get_domain().get_domain(),
+                                                                                     *dl_repository).get_index(),
+                                                        "gripper");
 
-    auto move_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("move"));
+    auto move_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("pick"));
     move_data.source = source.get_index();
     move_data.target = move_target.get_index();
-    move_data.arguments.push_back(top_concept.get_index());
-    move_data.arguments.push_back(top_concept.get_index());
+    move_data.arguments.push_back(ball_feature.get_index());
+    move_data.arguments.push_back(room_feature.get_index());
+    move_data.arguments.push_back(gripper_feature.get_index());
     kr::ps::ext::canonicalize(move_data);
     const auto move_rule = repository->get_or_create(move_data).first;
     auto move_variant_data = ygg::Data<kr::ps::ext::RuleVariant>(move_rule.get_index());
@@ -1729,9 +1854,9 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     auto pick_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("pick"));
     pick_data.source = source.get_index();
     pick_data.target = pick_target.get_index();
-    pick_data.arguments.push_back(top_concept.get_index());
-    pick_data.arguments.push_back(top_concept.get_index());
-    pick_data.arguments.push_back(top_concept.get_index());
+    pick_data.arguments.push_back(ball_feature.get_index());
+    pick_data.arguments.push_back(room_feature.get_index());
+    pick_data.arguments.push_back(gripper_feature.get_index());
     kr::ps::ext::canonicalize(pick_data);
     const auto pick_rule = repository->get_or_create(pick_data).first;
     auto pick_variant_data = ygg::Data<kr::ps::ext::RuleVariant>(pick_rule.get_index());

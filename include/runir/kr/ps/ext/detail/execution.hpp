@@ -121,10 +121,11 @@ LoadExecutionStatus execute_next_load(EvaluationContext<Kind>& context)
 template<typename C, tyr::planning::TaskKind Kind>
 auto evaluate_do_arguments(ygg::View<ygg::Index<Rule<DoTag>>, C> rule, EvaluationContext<Kind>& context)
 {
-    auto denotations = std::vector<decltype(evaluate_argument(rule.get_data().arguments.front(), context))> {};
-    denotations.reserve(rule.get_data().arguments.size());
-    for (auto argument : rule.get_data().arguments)
-        denotations.push_back(evaluate_argument(argument, context));
+    auto action_arguments = rule.get_action_arguments();
+    auto denotations = std::vector<decltype(evaluate(action_arguments.front(), context))> {};
+    denotations.reserve(action_arguments.size());
+    for (auto argument : action_arguments)
+        denotations.push_back(evaluate(argument, context));
     return denotations;
 }
 
@@ -141,7 +142,7 @@ bool action_matches_do_arguments(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
         return false;
 
     for (size_t index = 0; index < denotations.size(); ++index)
-        if (!denotations[index].get().test(ygg::uint_t(objects[index].get_index())))
+        if (!denotations[index].test(ygg::uint_t(objects[index].get_index())))
             return false;
 
     return true;

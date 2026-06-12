@@ -116,6 +116,9 @@ void collect_features(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::e
     if constexpr (requires { view.get_effects(); })
         for (auto effect : view.get_effects())
             collect_features(names, effect);
+    if constexpr (std::same_as<Kind, runir::kr::ps::ext::DoTag>)
+        for (auto argument : view.get_action_arguments())
+            get_or_create_name(names, argument);
 }
 
 template<typename C>
@@ -300,7 +303,7 @@ std::vector<std::string> action_arguments(ygg::View<ygg::Index<runir::kr::ps::ex
 {
     auto result = std::vector<std::string> {};
     for (auto value : view.get_action_arguments())
-        result.push_back(runir::kr::ps::ext::dl::format::expression(value));
+        result.push_back(feature_symbol(value));
     return result;
 }
 
