@@ -110,8 +110,10 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::FamilyNumer
 {
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return 1 + ygg::visit([&](auto child) { return syntactic_complexity(detail::as_view(child, view.get_context())); }, view.get_arg());
-    else
+    else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
         return 1 + syntactic_complexity(view.get_lhs()) + syntactic_complexity(view.get_mid()) + syntactic_complexity(view.get_rhs());
+    else
+        return 1;
 }
 
 }  // namespace runir::kr::dl::semantics

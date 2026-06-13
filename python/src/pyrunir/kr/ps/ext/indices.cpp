@@ -23,6 +23,45 @@ void bind_indices(nb::module_& m)
     ygg::bind_index<ygg::Index<Rule<SketchTag>>>(m, "SketchRuleIndex");
     ygg::bind_index<ygg::Index<Rule<DoTag>>>(m, "DoRuleIndex");
     ygg::bind_index<ygg::Index<Rule<CallTag>>>(m, "CallRuleIndex");
+
+    // Features
+    ygg::bind_index<ygg::Index<Feature<runir::kr::dl::ConceptTag>>>(m, "ConceptFeatureIndex");
+    ygg::bind_index<ygg::Index<Feature<runir::kr::ps::dl::BooleanFeature>>>(m, "BooleanFeatureIndex");
+    ygg::bind_index<ygg::Index<Feature<runir::kr::ps::dl::NumericalFeature>>>(m, "NumericalFeatureIndex");
+    ygg::bind_index<ygg::Index<ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>>>(m, "ConcreteConceptFeatureIndex");
+    ygg::bind_index<ygg::Index<ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>>(m, "ConcreteBooleanFeatureIndex");
+    ygg::bind_index<ygg::Index<ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>>(m, "ConcreteNumericalFeatureIndex");
+
+    // Conditions
+    ygg::bind_index<ygg::Index<ConcreteConditionVariant<runir::kr::DlTag>>>(m, "ConcreteConditionVariantIndex");
+    ygg::bind_index<ygg::Index<ConcreteCondition<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>>>(m, "EqualZeroConceptConditionIndex");
+    ygg::bind_index<ygg::Index<ConcreteCondition<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>>>(m,
+                                                                                                                              "GreaterZeroConceptConditionIndex");
+    ygg::bind_index<ygg::Index<ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>>(m,
+                                                                                                                                    "PositiveBooleanConditionIndex");
+    ygg::bind_index<ygg::Index<ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>>(m,
+                                                                                                                                    "NegativeBooleanConditionIndex");
+    ygg::bind_index<ygg::Index<ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>>>(
+        m,
+        "EqualZeroNumericalConditionIndex");
+    ygg::bind_index<ygg::Index<ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>>(
+        m,
+        "GreaterZeroNumericalConditionIndex");
+
+    // Effects
+    ygg::bind_index<ygg::Index<ConcreteEffectVariant<runir::kr::DlTag>>>(m, "ConcreteEffectVariantIndex");
+    ygg::bind_index<ygg::Index<ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>>>(m, "IncreasesConceptEffectIndex");
+    ygg::bind_index<ygg::Index<ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>>>(m, "DecreasesConceptEffectIndex");
+    ygg::bind_index<ygg::Index<ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>>>(m, "UnchangedConceptEffectIndex");
+    ygg::bind_index<ygg::Index<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>>(m, "PositiveBooleanEffectIndex");
+    ygg::bind_index<ygg::Index<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>>(m, "NegativeBooleanEffectIndex");
+    ygg::bind_index<ygg::Index<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>>>(m, "UnchangedBooleanEffectIndex");
+    ygg::bind_index<ygg::Index<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>>>(m,
+                                                                                                                                    "IncreasesNumericalEffectIndex");
+    ygg::bind_index<ygg::Index<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>>>(m,
+                                                                                                                                    "DecreasesNumericalEffectIndex");
+    ygg::bind_index<ygg::Index<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>>(m,
+                                                                                                                                    "UnchangedNumericalEffectIndex");
 }
 
 }  // namespace runir::kr::ps::ext

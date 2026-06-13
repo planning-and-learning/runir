@@ -25,6 +25,11 @@ nanobind_add_module(_pyrunir NB_SHARED
     pyrunir/kr/dl/ext/module.cpp
     pyrunir/kr/dl/ext/parser.cpp
     pyrunir/kr/dl/ext/repository.cpp
+    pyrunir/kr/dl/ext/semantics/datas.cpp
+    pyrunir/kr/dl/ext/semantics/indices.cpp
+    pyrunir/kr/dl/ext/semantics/module.cpp
+    pyrunir/kr/dl/ext/semantics/repositories.cpp
+    pyrunir/kr/dl/ext/semantics/views.cpp
     pyrunir/kr/ps/base/module.cpp
     pyrunir/kr/ps/base/dl/indices.cpp
     pyrunir/kr/ps/base/dl/module.cpp
@@ -107,6 +112,7 @@ yggdrasil_install_python_files(pyrunir "${CMAKE_CURRENT_SOURCE_DIR}"
     pyrunir/kr/dl/__init__.py
     pyrunir/kr/dl/base/__init__.py
     pyrunir/kr/dl/ext/__init__.py
+    pyrunir/kr/dl/ext/semantics/__init__.py
     pyrunir/kr/dl/base/semantics/__init__.py
     pyrunir/kr/dl/base/grammar/__init__.py
     pyrunir/kr/dl/base/cnf_grammar/__init__.py

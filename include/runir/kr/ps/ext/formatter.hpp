@@ -596,6 +596,18 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteCondition
     }
 };
 
+template<typename LanguageTag, typename FeatureTag, typename ObservationTag, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteCondition<LanguageTag, FeatureTag, ObservationTag>>, C>> :
+    fmt::formatter<std::string_view>
+{
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteCondition<LanguageTag, FeatureTag, ObservationTag>>, C>;
+    auto format(View view, format_context& ctx) const
+    {
+        auto names = runir::kr::ps::ext::format::FeatureNames {};
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::condition(names, view), ctx);
+    }
+};
+
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::EffectVariant>, C>> : fmt::formatter<std::string_view>
 {
@@ -616,6 +628,18 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffectVar
         auto names = runir::kr::ps::ext::format::FeatureNames {};
         const auto text = ygg::visit([&](auto concrete_effect) { return runir::kr::ps::ext::format::effect(names, concrete_effect); }, view.get_variant());
         return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<typename LanguageTag, typename FeatureTag, typename ObservationTag, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffect<LanguageTag, FeatureTag, ObservationTag>>, C>> :
+    fmt::formatter<std::string_view>
+{
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffect<LanguageTag, FeatureTag, ObservationTag>>, C>;
+    auto format(View view, format_context& ctx) const
+    {
+        auto names = runir::kr::ps::ext::format::FeatureNames {};
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::effect(names, view), ctx);
     }
 };
 

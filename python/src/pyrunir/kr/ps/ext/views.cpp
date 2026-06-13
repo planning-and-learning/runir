@@ -94,6 +94,32 @@ void bind_views(nb::module_& m)
     bind_view<Rule<SketchTag>>(m, "SketchRule");
     bind_view<Rule<DoTag>>(m, "DoRule");
     bind_view<Rule<CallTag>>(m, "CallRule");
+
+    // Concrete feature/condition/effect views, reachable transitively through the get_variant()
+    // accessors of the Feature/ConditionVariant/EffectVariant views above. Mirrors the repository
+    // TypeList in runir/kr/ps/ext/repository.hpp (and ps/base/dl/views.cpp, plus ext-only Concept
+    // variants). fmt formatters for all of these live in runir/kr/ps/ext/formatter.hpp.
+    bind_view<ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>>(m, "ConcreteConceptFeature");
+    bind_view<ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>(m, "ConcreteBooleanFeature");
+    bind_view<ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>(m, "ConcreteNumericalFeature");
+    bind_view<ConcreteConditionVariant<runir::kr::DlTag>>(m, "ConcreteConditionVariant");
+    bind_view<ConcreteCondition<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>>(m, "EqualZeroConceptCondition");
+    bind_view<ConcreteCondition<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>>(m, "GreaterZeroConceptCondition");
+    bind_view<ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>(m, "PositiveBooleanCondition");
+    bind_view<ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>(m, "NegativeBooleanCondition");
+    bind_view<ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>>(m, "EqualZeroNumericalCondition");
+    bind_view<ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>(m, "GreaterZeroNumericalCondition");
+
+    bind_view<ConcreteEffectVariant<runir::kr::DlTag>>(m, "ConcreteEffectVariant");
+    bind_view<ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>>(m, "IncreasesConceptEffect");
+    bind_view<ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>>(m, "DecreasesConceptEffect");
+    bind_view<ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>>(m, "UnchangedConceptEffect");
+    bind_view<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>(m, "PositiveBooleanEffect");
+    bind_view<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>(m, "NegativeBooleanEffect");
+    bind_view<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>>(m, "UnchangedBooleanEffect");
+    bind_view<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>>(m, "IncreasesNumericalEffect");
+    bind_view<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>>(m, "DecreasesNumericalEffect");
+    bind_view<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>(m, "UnchangedNumericalEffect");
 }
 
 }  // namespace runir::kr::ps::ext
