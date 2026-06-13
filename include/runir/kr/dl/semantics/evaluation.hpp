@@ -8,6 +8,8 @@
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 
+#include <yggdrasil/core/dependent_false.hpp>
+
 #include <cassert>
 #include <limits>
 #include <stdexcept>
@@ -540,6 +542,14 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
         for (auto object : constructor.get_objects())
             result_bitset.set(ygg::uint_t(object.get_index()));
     }
+    else if constexpr (is_placeholder_constructor_tag_v<Tag>)
+    {
+        // Grammar placeholder (ext Register/Argument): not directly evaluable; leave the default empty denotation.
+    }
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL concept constructor tag in evaluate_impl");
+    }
 
     return result;
 }
@@ -668,6 +678,14 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
         for (auto object = bitset.find_first(); object != decltype(bitset)::npos; object = bitset.find_next(object))
             detail::row(result, static_cast<uint_t>(object)).set(object);
     }
+    else if constexpr (is_placeholder_constructor_tag_v<Tag>)
+    {
+        // Grammar placeholder (ext Register/Argument): not directly evaluable; leave the default empty denotation.
+    }
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL role constructor tag in evaluate_impl");
+    }
 
     return result;
 }
@@ -690,6 +708,15 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
     {
         const auto result_value = ygg::visit([&](auto arg) { return detail::evaluate_nonempty(arg, context, workspace); }, constructor.get_arg());
         return context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
+    }
+    else if constexpr (is_placeholder_constructor_tag_v<Tag>)
+    {
+        // Grammar placeholder (ext Argument): not directly evaluable; return the default denotation.
+        return context.get_builder().template get_builder<Denotation<BooleanTag>>(false);
+    }
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in evaluate_impl");
     }
 }
 
@@ -765,6 +792,15 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
                 }
             }
         }
+    }
+
+    else if constexpr (is_placeholder_constructor_tag_v<Tag>)
+    {
+        // Grammar placeholder (ext Argument): not directly evaluable; leave result_value at its default 0.
+    }
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL numerical constructor tag in evaluate_impl");
     }
 
     auto result = context.get_builder().template get_builder<Denotation<NumericalTag>>(result_value);

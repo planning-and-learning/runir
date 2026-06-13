@@ -219,6 +219,19 @@ struct IsAtomicGoalTag<AtomicGoalTag<T>> : std::true_type
 template<typename T>
 inline constexpr bool is_atomic_goal_tag_v = IsAtomicGoalTag<T>::value;
 
+// Customization point: constructor tags that are grammar placeholders (e.g. the ext family's
+// RegisterTag/ArgumentTag) rather than directly-evaluable constructors. The base layer knows of
+// none; family layers (see kr/dl/ext/declarations.hpp) specialize this to true. evaluate_impl and
+// the formatters use it to dispatch placeholders explicitly while keeping a dependent_false
+// catch-all that makes any genuinely-unhandled tag a compile error.
+template<typename T>
+struct IsPlaceholderConstructorTag : std::false_type
+{
+};
+
+template<typename T>
+inline constexpr bool is_placeholder_constructor_tag_v = IsPlaceholderConstructorTag<T>::value;
+
 template<typename T>
 concept BaseConceptConstructorTag =
     std::same_as<T, BotTag> || std::same_as<T, TopTag> || is_atomic_state_tag_v<T> || is_atomic_goal_tag_v<T> || std::same_as<T, IntersectionTag>

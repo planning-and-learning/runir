@@ -20,6 +20,18 @@ struct ArgumentTag
 {
 };
 
+// RegisterTag/ArgumentTag are grammar placeholders, not directly-evaluable constructors; mark them
+// so the base evaluate_impl/formatter dispatch handles them explicitly (see is_placeholder_constructor_tag_v).
+template<>
+struct IsPlaceholderConstructorTag<RegisterTag> : std::true_type
+{
+};
+
+template<CategoryTag Category>
+struct IsPlaceholderConstructorTag<ArgumentTag<Category>> : std::true_type
+{
+};
+
 inline constexpr size_t num_registers = 4;
 
 template<CategoryTag Category>
