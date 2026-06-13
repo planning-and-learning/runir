@@ -20,6 +20,7 @@
 #include <string_view>
 #include <utility>
 #include <yggdrasil/containers/variant.hpp>
+#include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 
@@ -156,6 +157,10 @@ std::string concept_expression(ygg::View<ygg::Index<runir::kr::dl::FamilyConcept
         return constructor_expression(ext_ast::ConceptRegister::keyword, ygg::uint_t(view.get_data().identifier));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>)
         return constructor_expression(ext_ast::Argument<runir::kr::dl::ConceptTag>::keyword, ygg::uint_t(view.get_data().identifier));
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL concept constructor tag in concept_expression");
+    }
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
@@ -195,6 +200,10 @@ std::string role(ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C
         return constructor_expression(ext_ast::RoleRegister::keyword, ygg::uint_t(view.get_data().identifier));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>)
         return constructor_expression(ext_ast::Argument<runir::kr::dl::RoleTag>::keyword, ygg::uint_t(view.get_data().identifier));
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL role constructor tag in role");
+    }
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
@@ -216,6 +225,10 @@ std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyBoolea
         return constructor_expression(ast::BooleanNonempty<Family>::keyword, variant_expression(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>)
         return constructor_expression(ext_ast::Argument<runir::kr::dl::BooleanTag>::keyword, ygg::uint_t(view.get_data().identifier));
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in boolean_constructor");
+    }
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
@@ -234,6 +247,10 @@ std::string numerical(ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family
                                       expression(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>)
         return constructor_expression(ext_ast::Argument<runir::kr::dl::NumericalTag>::keyword, ygg::uint_t(view.get_data().identifier));
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL numerical constructor tag in numerical");
+    }
 }
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>

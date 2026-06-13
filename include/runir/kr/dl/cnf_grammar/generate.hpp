@@ -10,6 +10,7 @@
 #include <optional>
 #include <tyr/planning/state_view.hpp>
 #include <vector>
+#include <yggdrasil/core/dependent_false.hpp>
 
 namespace runir::kr::dl::cnf_grammar
 {
@@ -64,6 +65,10 @@ struct GenerateResultsFor
             return booleans;
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
             return numericals;
+        else
+        {
+            static_assert(ygg::dependent_false<Category>::value, "unhandled DL category in get_constructors");
+        }
     }
 };
 

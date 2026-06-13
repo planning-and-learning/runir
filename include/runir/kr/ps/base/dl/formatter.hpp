@@ -19,6 +19,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
@@ -171,6 +172,10 @@ std::string concept_constructor(ygg::View<ygg::Index<runir::kr::dl::Concept<runi
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
         return constructor_components(runir::kr::dl::grammar::ast::ConceptNominal<runir::kr::BaseFamilyTag>::keyword,
                                       fmt::format("{:?}", std::string(view.get_object().get_name().str())));
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL concept constructor tag in concept_constructor");
+    }
 }
 
 template<runir::kr::dl::BaseRoleConstructorTag Tag, typename C>
@@ -212,6 +217,10 @@ std::string role(ygg::View<ygg::Index<runir::kr::dl::Role<runir::kr::BaseFamilyT
                                       constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IdentityTag>)
         return constructor_components(runir::kr::dl::grammar::ast::RoleIdentity<runir::kr::BaseFamilyTag>::keyword, constructor(view.get_arg()));
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL role constructor tag in role");
+    }
 }
 
 template<runir::kr::dl::BaseBooleanConstructorTag Tag, typename C>
@@ -227,6 +236,10 @@ std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::Boolean<runi
                                       boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return constructor_components(runir::kr::dl::grammar::ast::BooleanNonempty<runir::kr::BaseFamilyTag>::keyword, constructor_variant(view.get_arg()));
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in boolean_constructor");
+    }
 }
 
 template<runir::kr::dl::BaseNumericalConstructorTag Tag, typename C>
@@ -239,6 +252,10 @@ std::string numerical(ygg::View<ygg::Index<runir::kr::dl::Numerical<runir::kr::B
                                       constructor(view.get_lhs()),
                                       constructor(view.get_mid()),
                                       constructor(view.get_rhs()));
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL numerical constructor tag in numerical");
+    }
 }
 
 template<runir::kr::dl::BaseConceptConstructorTag Tag, typename C>

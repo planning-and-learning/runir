@@ -6,6 +6,7 @@
 #include <concepts>
 #include <tuple>
 #include <yggdrasil/containers/optional.hpp>
+#include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/containers/vector.hpp>
 #include <tyr/formalism/planning/domain_view.hpp>
@@ -41,6 +42,10 @@ public:
             return make_view(get_data().boolean_start, *m_context);
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
             return make_view(get_data().numerical_start, *m_context);
+        else
+        {
+            static_assert(ygg::dependent_false<Category>::value, "unhandled DL category in get_start");
+        }
     }
 
     template<runir::kr::dl::CategoryTag Category>
@@ -54,6 +59,10 @@ public:
             return make_view(get_data().boolean_derivation_rules, *m_context);
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
             return make_view(get_data().numerical_derivation_rules, *m_context);
+        else
+        {
+            static_assert(ygg::dependent_false<Category>::value, "unhandled DL category in get_derivation_rules");
+        }
     }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }

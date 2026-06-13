@@ -17,6 +17,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
@@ -48,6 +49,10 @@ auto& named_features(FeatureNames& names)
         return names.booleans;
     else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
         return names.numericals;
+    else
+    {
+        static_assert(ygg::dependent_false<FeatureTag>::value, "unhandled feature tag in named_features");
+    }
 }
 
 template<typename FeatureTag>
@@ -59,6 +64,10 @@ std::string feature_prefix()
         return "b";
     else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
         return "n";
+    else
+    {
+        static_assert(ygg::dependent_false<FeatureTag>::value, "unhandled feature tag in feature_prefix");
+    }
 }
 
 template<typename FeatureTag, typename C>

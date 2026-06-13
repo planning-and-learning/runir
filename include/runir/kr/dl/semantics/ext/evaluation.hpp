@@ -6,6 +6,8 @@
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/ext/evaluation_context.hpp"
 
+#include <yggdrasil/core/dependent_false.hpp>
+
 namespace runir::kr::dl::semantics
 {
 
@@ -33,6 +35,10 @@ auto copy_argument_denotation(EvaluationContext<runir::kr::ExtFamilyTag, Kind>& 
         for (uint_t object = 0; object < result->num_objects; ++object)
             row(result, object).copy_from(view.get(ygg::Index<tyr::formalism::Object>(object)));
         return result;
+    }
+    else
+    {
+        static_assert(ygg::dependent_false<Category>::value, "unhandled DL denotation category in copy_argument_denotation");
     }
 }
 

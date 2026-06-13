@@ -4,8 +4,8 @@
 #include <nanobind/stl/string.h>
 #include <runir/kr/dl/ext/declarations.hpp>
 #include <runir/kr/dl/ext/repository.hpp>
+#include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation_context.hpp>
-#include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/dl/semantics/views.hpp>

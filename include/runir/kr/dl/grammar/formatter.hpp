@@ -12,6 +12,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>
 #include <yggdrasil/formatting/formatter.hpp>
 
@@ -76,6 +77,10 @@ std::string concept_constructor(ygg::View<ygg::Index<Concept<Family, Tag>>, C> v
         return fmt::format("{} {}", ast::ConceptOneOf<Family>::keyword, fmt::join(quoted_object_names(view.get_objects()), " "));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
         return fmt::format("{} {}", ast::ConceptNominal<Family>::keyword, fmt::format("{:?}", std::string(view.get_object().get_name().str())));
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL concept constructor tag in concept_constructor");
+    }
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
@@ -109,6 +114,10 @@ std::string role(ygg::View<ygg::Index<Role<Family, Tag>>, C> view)
         return fmt::format("{} {} {}", ast::RoleRestriction<Family>::keyword, view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::IdentityTag>)
         return fmt::format("{} {}", ast::RoleIdentity<Family>::keyword, view.get_arg());
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL role constructor tag in role");
+    }
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
@@ -127,6 +136,10 @@ std::string boolean_constructor(ygg::View<ygg::Index<Boolean<Family, Tag>>, C> v
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return fmt::format("{} {}", ast::BooleanNonempty<Family>::keyword, view.get_arg());
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in boolean_constructor");
+    }
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
@@ -137,6 +150,10 @@ std::string numerical(ygg::View<ygg::Index<Numerical<Family, Tag>>, C> view)
         return fmt::format("{} {}", ast::NumericalCount<Family>::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::DistanceTag>)
         return fmt::format("{} {} {} {}", ast::NumericalDistance<Family>::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
+    else
+    {
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL numerical constructor tag in numerical");
+    }
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
