@@ -58,9 +58,9 @@ endif()
 
 yggdrasil_find_python_native_prefix(pypddl PYPDDL_NATIVE_PREFIX)
 yggdrasil_find_python_native_prefix(pytyr TYR_NATIVE_PREFIX)
-yggdrasil_register_python_native_runtime_prefix("pypddl/native")
-yggdrasil_register_python_native_runtime_prefix("pytyr/native")
-yggdrasil_register_python_native_runtime_prefix("pyyggdrasil")
+yggdrasil_register_python_native_runtime_prefix("pypddl/native" "${PYPDDL_NATIVE_PREFIX}")
+yggdrasil_register_python_native_runtime_prefix("pytyr/native" "${TYR_NATIVE_PREFIX}")
+yggdrasil_register_python_native_runtime_prefix("pyyggdrasil" "${YGGDRASIL_NATIVE_PREFIX}")
 
 find_package(fmt CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 if(fmt_FOUND)

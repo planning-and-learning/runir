@@ -4,7 +4,7 @@ from pyyggdrasil.build_support import ProviderBackend
 
 _BACKEND = ProviderBackend(
     package="pyrunir",
-    providers=("pypddl", "pyyggdrasil", "pytyr"),
+    providers=("pypddl", "pytyr", "pyyggdrasil"),
     cmake_defines=(
         "-DRUNIR_BUILD_PYRUNIR=ON",
         "-DRUNIR_BUILD_TESTS=OFF",

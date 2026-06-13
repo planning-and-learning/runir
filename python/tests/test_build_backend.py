@@ -87,7 +87,7 @@ def test_prepare_native_build_sets_expected_environment(tmp_path):
             assert os.environ["LD_LIBRARY_PATH"].endswith("/existing/ld")
 
             cmake_args = os.environ["CMAKE_ARGS"]
-            expected_prefix_path = f"{pypddl_prefix.resolve()};{yggdrasil_prefix.resolve()};{pytyr_prefix.resolve()}"
+            expected_prefix_path = f"{pypddl_prefix.resolve()};{pytyr_prefix.resolve()};{yggdrasil_prefix.resolve()}"
             assert f"-DCMAKE_PREFIX_PATH={expected_prefix_path}" in cmake_args
             assert f"-DYGGDRASIL_NATIVE_PREFIX={yggdrasil_prefix.resolve()}" in cmake_args
             assert "-DRUNIR_BUILD_PYRUNIR=ON" in cmake_args
