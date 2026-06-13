@@ -26,14 +26,15 @@ The native CMake package exports `runir::core` as the aggregate target and compo
 
 ## Dependencies
 
-- `pyyggdrasil >= 0.0.15, < 0.1` for shared third-party native dependencies.
-- `pytyr >= 0.0.23, < 0.1` for Tyr planning, formalism, search, and C++ headers/libraries.
-- `pypddl >= 1.0.10, < 1.1` through Tyr/PDDL parsing infrastructure.
+- `pyyggdrasil >= 0.0.17, < 0.1` for shared third-party native dependencies.
+- `pytyr >= 0.0.24, < 0.1` for Tyr planning, formalism, search, and C++ headers/libraries.
+- `pypddl >= 1.0.11, < 1.1` through Tyr/PDDL parsing infrastructure.
 - `scikit-build-core` for Python wheel builds.
 
-The shared workspace layout and general Python/CMake integration pattern are
-documented in the
-[Planning and Learning build instructions](https://github.com/planning-and-learning/.github/blob/main/profile/README.md#local-development).
+The shared workspace layout, layered install order, and the common
+build-from-source and CMake-integration patterns are documented in the
+[Planning and Learning build instructions](https://github.com/planning-and-learning/.github/blob/main/profile/README.md#building-from-source);
+the sections below cover `runir`/`pyrunir`-specific details.
 
 ## Build C++
 
@@ -49,9 +50,10 @@ cmake --build build -j4
 ```
 
 CMake discovers the installed provider packages automatically through
-`cmake/find_python_native_packages.cmake` and links against the
-`yggdrasil::yggdrasil` and `tyr::core` targets. To point at different prefixes
-explicitly:
+`cmake/bootstrap_pyyggdrasil.cmake` (which locates `pyyggdrasil` and adds its
+native prefix to `CMAKE_PREFIX_PATH`; `find_package(yggdrasil)` then resolves
+the rest of the chain) and links against the `yggdrasil::yggdrasil` and
+`tyr::core` targets. To point at different prefixes explicitly:
 
 ```console
 cmake -S . -B build \
@@ -88,6 +90,10 @@ pytest python/tests
 ```
 
 ## CMake Integration
+
+This section covers `pyrunir`-specific paths and targets; the general pattern for
+consuming the native prefixes from CMake is in the
+[common CMake integration instructions](https://github.com/planning-and-learning/.github/blob/main/profile/README.md#cmake-integration).
 
 The Python package `pyrunir` installs Runir's native headers, shared libraries,
 and CMake package config under `pyrunir.native_prefix()`. Use
