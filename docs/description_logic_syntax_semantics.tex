@@ -54,13 +54,9 @@ Bottom &
 $\bot$ &
 $\sem{\bot} = \emptyset$ \\
 
-Positive atomic state concept &
+Atomic state concept &
 $P$ &
 $\sem{P} = \{ a \in \DeltaI \mid P(a) \in s \}$ \\
-
-Negative atomic state concept &
-$\neg P$ &
-$\sem{\neg P} = \DeltaI \setminus \sem{P}$ \\
 
 Positive atomic goal concept &
 $G^+$ &
@@ -153,8 +149,7 @@ Name & Concrete syntax & Abstract syntax \\
 \endhead
 Top & \texttt{c\_top} & $\top$ \\
 Bottom & \texttt{c\_bot} & $\bot$ \\
-Positive atomic state concept & \texttt{(c\_atomic\_state "p" true)} & $P$ \\
-Negative atomic state concept & \texttt{(c\_atomic\_state "p" false)} & $\neg P$ \\
+Atomic state concept & \texttt{(c\_atomic\_state "p")} & $P$ \\
 Positive atomic goal concept & \texttt{(c\_atomic\_goal "p" true)} & $G^+$ \\
 Negative atomic goal concept & \texttt{(c\_atomic\_goal "p" false)} & $G^-$ \\
 Intersection & \texttt{(c\_and C1 ... Cn)} & $C_1 \sqcap \cdots \sqcap C_n$ \\
@@ -176,6 +171,17 @@ Nominal & \texttt{(c\_nominal a)} & $\{a\}$ \\
 \bottomrule
 \end{longtable}
 \end{compacttable}
+
+\paragraph{Polarity of atomic state vs.\ goal constructors.}
+Atomic \emph{state} concepts and roles take no polarity argument: the concrete
+syntax is \texttt{(c\_atomic\_state "p")} and \texttt{(r\_atomic\_state "p")},
+and a negated state concept/role is built compositionally with
+\texttt{c\_not}/\texttt{r\_complement}. Atomic \emph{goal} concepts and roles
+carry an explicit polarity, \texttt{(c\_atomic\_goal "p" true)} /
+\texttt{(c\_atomic\_goal "p" false)} (and likewise for \texttt{r\_atomic\_goal}),
+because the goal condition may assert a literal positively or negatively. The
+boolean atomic constructors below also carry a polarity argument and require a
+nullary (0-arity) predicate.
 
 \section{Restrictions on Role Interpretations}
 
@@ -211,13 +217,9 @@ Universal role &
 $U$ &
 $\sem{U} = \DeltaI \times \DeltaI$ \\
 
-Positive atomic state role &
+Atomic state role &
 $P$ &
 $\sem{P} = \{ (a,b) \in \DeltaI \times \DeltaI \mid P(a,b) \in s \}$ \\
-
-Negative atomic state role &
-$\neg P$ &
-$\sem{\neg P} = (\DeltaI \times \DeltaI) \setminus \sem{P}$ \\
 
 Positive atomic goal role &
 $G^+$ &
@@ -285,8 +287,7 @@ Name & Concrete syntax & Abstract syntax \\
 \midrule
 \endhead
 Universal role & \texttt{r\_universal} & $U$ \\
-Positive atomic state role & \texttt{(r\_atomic\_state "p" true)} & $P$ \\
-Negative atomic state role & \texttt{(r\_atomic\_state "p" false)} & $\neg P$ \\
+Atomic state role & \texttt{(r\_atomic\_state "p")} & $P$ \\
 Positive atomic goal role & \texttt{(r\_atomic\_goal "p" true)} & $G^+$ \\
 Negative atomic goal role & \texttt{(r\_atomic\_goal "p" false)} & $G^-$ \\
 Intersection & \texttt{(r\_and R1 ... Rn)} & $R_1 \sqcap \cdots \sqcap R_n$ \\
