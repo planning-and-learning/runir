@@ -407,6 +407,89 @@ Role distance & \texttt{(n\_distance C R D)} & $d_R(C,D)$ \\
 \end{compacttable}
 
 
+\section{Unsolvability Family Constructors}
+
+The unsolvability family (\texttt{uns}) extends the base family with comparison operators and
+constants. A comparison takes two operands of the same category---either two Booleans or two
+Numericals---and yields a Boolean. Boolean operands are interpreted numerically as $0$ (false) or
+$1$ (true), so the same relational operators apply uniformly to both operand categories. We write
+$\sem{e}$ for the numeric value of an operand $e$ (a count/distance for Numericals,
+or $0/1$ for Booleans).
+
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.30\textwidth}
+                  >{\centering\arraybackslash}p{0.20\textwidth}
+                  >{\raggedright\arraybackslash}p{0.46\textwidth}}
+\toprule
+Name & Syntax & Semantics \\
+\midrule
+\endhead
+
+Equal &
+$e_1 = e_2$ &
+$\mathrm{true}$ iff $\sem{e_1} = \sem{e_2}$ \\
+
+Not equal &
+$e_1 \neq e_2$ &
+$\mathrm{true}$ iff $\sem{e_1} \neq \sem{e_2}$ \\
+
+Less than &
+$e_1 < e_2$ &
+$\mathrm{true}$ iff $\sem{e_1} < \sem{e_2}$ \\
+
+Less or equal &
+$e_1 \leq e_2$ &
+$\mathrm{true}$ iff $\sem{e_1} \leq \sem{e_2}$ \\
+
+Greater than &
+$e_1 > e_2$ &
+$\mathrm{true}$ iff $\sem{e_1} > \sem{e_2}$ \\
+
+Greater or equal &
+$e_1 \geq e_2$ &
+$\mathrm{true}$ iff $\sem{e_1} \geq \sem{e_2}$ \\
+
+Boolean constant &
+$b \in \{\mathrm{true}, \mathrm{false}\}$ &
+the constant truth value $b$ \\
+
+Numerical constant &
+$k \in \Nat$ &
+the constant nonnegative integer $k$ \\
+
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+\section{Concrete Syntax for Unsolvability Family Constructors}
+
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.30\textwidth}
+                  >{\raggedright\arraybackslash}p{0.46\textwidth}
+                  >{\raggedright\arraybackslash}p{0.20\textwidth}}
+\toprule
+Name & Concrete syntax & Abstract syntax \\
+\midrule
+\endhead
+Boolean equal & \texttt{(b\_eq B1 B2)} & $B_1 = B_2$ \\
+Boolean not equal & \texttt{(b\_neq B1 B2)} & $B_1 \neq B_2$ \\
+Boolean less than & \texttt{(b\_lt B1 B2)} & $B_1 < B_2$ \\
+Boolean less or equal & \texttt{(b\_le B1 B2)} & $B_1 \leq B_2$ \\
+Boolean greater than & \texttt{(b\_gt B1 B2)} & $B_1 > B_2$ \\
+Boolean greater or equal & \texttt{(b\_ge B1 B2)} & $B_1 \geq B_2$ \\
+Numerical equal & \texttt{(n\_eq N1 N2)} & $N_1 = N_2$ \\
+Numerical not equal & \texttt{(n\_neq N1 N2)} & $N_1 \neq N_2$ \\
+Numerical less than & \texttt{(n\_lt N1 N2)} & $N_1 < N_2$ \\
+Numerical less or equal & \texttt{(n\_le N1 N2)} & $N_1 \leq N_2$ \\
+Numerical greater than & \texttt{(n\_gt N1 N2)} & $N_1 > N_2$ \\
+Numerical greater or equal & \texttt{(n\_ge N1 N2)} & $N_1 \geq N_2$ \\
+Boolean constant & \texttt{(b\_const true)} / \texttt{(b\_const false)} & $\mathrm{true}$ / $\mathrm{false}$ \\
+Numerical constant & \texttt{(n\_const k)} & $k$ \\
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+
 \section{Module Programs}
 
 A module program state is an extended state

@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/boolean_data.hpp"
 #include "runir/kr/dl/constructors.hpp"
+#include "runir/kr/dl/uns/declarations.hpp"
 
 #include <concepts>
 #include <tuple>
@@ -46,6 +47,24 @@ public:
         requires std::same_as<Tag, runir::kr::dl::NonemptyTag>
     {
         return make_view(get_data().arg, *m_context);
+    }
+
+    auto get_lhs() const noexcept
+        requires runir::kr::dl::ComparisonTag<Tag>
+    {
+        return make_view(get_data().lhs, *m_context);
+    }
+
+    auto get_rhs() const noexcept
+        requires runir::kr::dl::ComparisonTag<Tag>
+    {
+        return make_view(get_data().rhs, *m_context);
+    }
+
+    auto get_value() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::BooleanConstantTag>
+    {
+        return get_data().identifier;
     }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }

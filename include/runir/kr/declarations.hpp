@@ -18,8 +18,12 @@ struct ExtFamilyTag
 {
 };
 
+struct UnsFamilyTag
+{
+};
+
 template<typename T>
-concept FamilyTag = std::same_as<T, BaseFamilyTag> || std::same_as<T, ExtFamilyTag>;
+concept FamilyTag = std::same_as<T, BaseFamilyTag> || std::same_as<T, ExtFamilyTag> || std::same_as<T, UnsFamilyTag>;
 
 }  // namespace runir::kr
 

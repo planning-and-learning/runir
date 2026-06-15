@@ -9,6 +9,8 @@ add_library(kr SHARED
     dl/grammar/parser/base/parser_instantiations.cpp
     dl/grammar/parser/ext/parser.cpp
     dl/grammar/parser/ext/parser_instantiations.cpp
+    dl/grammar/parser/uns/grammar_parser.cpp
+    dl/grammar/parser/uns/grammar_parser_instantiations.cpp
     ps/base/dl/parser.cpp
     ps/base/dl/parser/parser.cpp
     ps/base/dl/parser/parser_instantiations.cpp
@@ -18,6 +20,11 @@ add_library(kr SHARED
     ps/ext/dl/parser/parser.cpp
     ps/ext/dl/parser.cpp
     ps/ext/module_program_executor.cpp
+    ps/uns/dl/parser.cpp
+    ps/uns/dl/parser/parser.cpp
+    ps/uns/dl/parser/parser_instantiations.cpp
+    ps/uns/dl/sketch_factory.cpp
+    ps/uns/sketch_executor.cpp
 )
 add_library(runir::kr ALIAS kr)
 

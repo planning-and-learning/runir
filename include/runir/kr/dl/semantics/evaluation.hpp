@@ -7,6 +7,7 @@
 #include "runir/kr/dl/semantics/denotations.hpp"
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
+#include "runir/kr/dl/uns/declarations.hpp"
 
 #include <yggdrasil/core/dependent_false.hpp>
 
@@ -359,6 +360,23 @@ auto evaluate_count(ygg::View<ygg::Index<FamilyConstructor<Family, RoleTag>>, C>
     return detail::role_count(evaluate_impl(constructor, context, workspace));
 }
 
+template<Comparator Op>
+constexpr bool apply_comparison(uint_t lhs, uint_t rhs) noexcept
+{
+    if constexpr (Op == Comparator::Eq)
+        return lhs == rhs;
+    else if constexpr (Op == Comparator::Neq)
+        return lhs != rhs;
+    else if constexpr (Op == Comparator::Lt)
+        return lhs < rhs;
+    else if constexpr (Op == Comparator::Le)
+        return lhs <= rhs;
+    else if constexpr (Op == Comparator::Gt)
+        return lhs > rhs;
+    else if constexpr (Op == Comparator::Ge)
+        return lhs >= rhs;
+}
+
 }
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
@@ -701,6 +719,19 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
         const auto result_value = ygg::visit([&](auto arg) { return detail::evaluate_nonempty(arg, context, workspace); }, constructor.get_arg());
         return context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
     }
+    else if constexpr (ComparisonTag<Tag>)
+    {
+        const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
+        const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
+        const auto lhs_value = static_cast<uint_t>(lhs->get_data());
+        const auto rhs_value = static_cast<uint_t>(rhs->get_data());
+        const bool result_value = detail::apply_comparison<Tag::comparator>(lhs_value, rhs_value);
+        return context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
+    }
+    else if constexpr (std::same_as<Tag, BooleanConstantTag>)
+    {
+        return context.get_builder().template get_builder<Denotation<BooleanTag>>(constructor.get_value());
+    }
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in evaluate_impl");
@@ -780,7 +811,10 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
             }
         }
     }
-
+    else if constexpr (std::same_as<Tag, NumericalConstantTag>)
+    {
+        result_value = constructor.get_value();
+    }
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL numerical constructor tag in evaluate_impl");

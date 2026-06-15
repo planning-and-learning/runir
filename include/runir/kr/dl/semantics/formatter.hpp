@@ -5,6 +5,7 @@
 #include "runir/formatter.hpp"
 #include "runir/kr/dl/ext/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
+#include "runir/kr/dl/uns/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 
@@ -230,6 +231,10 @@ std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyBoolea
         return constructor(runir::kr::dl::grammar::ast::BooleanNonempty<Family>::keyword, view.get_arg());
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>)
         return argument_identifier(view.get_data().identifier);
+    else if constexpr (runir::kr::dl::ComparisonTag<Tag>)
+        return constructor(runir::kr::dl::comparison_keyword<Tag>(), view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::BooleanConstantTag>)
+        return constructor(runir::kr::dl::boolean_constant_keyword, boolean(view.get_value()));
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in boolean_constructor");
@@ -246,6 +251,8 @@ std::string numerical(ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family
         return constructor(runir::kr::dl::grammar::ast::NumericalDistance<Family>::keyword, view.get_lhs(), view.get_mid(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>)
         return argument_identifier(view.get_data().identifier);
+    else if constexpr (std::same_as<Tag, runir::kr::dl::NumericalConstantTag>)
+        return constructor(runir::kr::dl::numerical_constant_keyword, view.get_value());
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL numerical constructor tag in numerical");

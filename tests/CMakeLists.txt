@@ -31,3 +31,5 @@ add_runir_test(runir_kr_ps_ext_module_program_executor unit/kr/ps/ext/module_pro
 add_runir_test(runir_kr_ps_ext_structural_termination unit/kr/ps/ext/dl/structural_termination.cpp runir::datasets runir::kr)
 add_runir_test(runir_kr_ps_ext_ceg_structural_termination unit/kr/ps/ext/dl/ceg_structural_termination.cpp runir::datasets runir::kr)
 add_runir_test(runir_kr_grammar_factory unit/kr/grammar/grammar_factory.cpp runir::kr)
+add_runir_test(runir_kr_dl_uns_constructors unit/kr/dl/uns/constructors.cpp runir::datasets runir::kr)
+add_runir_test(runir_kr_ps_uns_sketch_parser unit/kr/ps/uns/sketch_parser.cpp runir::datasets runir::kr)

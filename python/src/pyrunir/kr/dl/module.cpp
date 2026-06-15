@@ -2,6 +2,7 @@
 
 #include "base/module.hpp"
 #include "ext/module.hpp"
+#include "uns/module.hpp"
 
 namespace runir::kr::dl
 {
@@ -13,6 +14,9 @@ void bind_module_definitions(nb::module_& m)
 
     auto ext_module = m.def_submodule("ext");
     ext::bind_module_definitions(ext_module);
+
+    auto uns_module = m.def_submodule("uns");
+    uns::bind_module_definitions(uns_module);
 }
 
 }  // namespace runir::kr::dl

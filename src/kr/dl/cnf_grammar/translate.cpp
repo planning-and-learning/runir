@@ -3,6 +3,7 @@
 #include "runir/kr/dl/cnf_grammar/base/translate.hpp"
 #include "runir/kr/dl/cnf_grammar/canonicalization.hpp"
 #include "runir/kr/dl/cnf_grammar/ext/repository.hpp"
+#include "runir/kr/dl/cnf_grammar/uns/repository.hpp"
 
 #include <cassert>
 #include <concepts>
@@ -516,6 +517,9 @@ template FamilyGrammarView<runir::kr::BaseFamilyTag> translate<runir::kr::BaseFa
 
 template FamilyGrammarView<runir::kr::ExtFamilyTag> translate<runir::kr::ExtFamilyTag>(const runir::kr::dl::grammar::base::GrammarView&,
                                                                                        ConstructorRepositoryFor<runir::kr::ExtFamilyTag>&);
+
+template FamilyGrammarView<runir::kr::UnsFamilyTag> translate<runir::kr::UnsFamilyTag>(const runir::kr::dl::grammar::base::GrammarView&,
+                                                                                       ConstructorRepositoryFor<runir::kr::UnsFamilyTag>&);
 
 namespace base
 {

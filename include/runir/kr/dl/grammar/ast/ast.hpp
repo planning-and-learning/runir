@@ -564,4 +564,9 @@ using NumericalConstructor = Constructor<Family, runir::kr::dl::NumericalTag>;
 
 }  // namespace runir::kr::dl::grammar::ast
 
+// The Uns family extends the Boolean/Numerical constructor variants with comparison and constant
+// nodes. Pull the specializations in here so every translation unit that sees grammar::ast also
+// sees the consistent (extended) Uns variants, avoiding ODR mismatches.
+#include "runir/kr/dl/grammar/ast/uns_ast.hpp"
+
 #endif
