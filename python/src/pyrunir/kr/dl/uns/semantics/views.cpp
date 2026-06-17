@@ -132,10 +132,19 @@ void bind_semantics_views(nb::module_& m)
     bind_view<Boolean<runir::kr::UnsFamilyTag, GtTag<NumericalTag>>, uns::ConstructorRepository>(m, "NumericalGt");
     bind_view<Boolean<runir::kr::UnsFamilyTag, GeTag<NumericalTag>>, uns::ConstructorRepository>(m, "NumericalGe");
     bind_view<Boolean<runir::kr::UnsFamilyTag, BooleanConstantTag>, uns::ConstructorRepository>(m, "BooleanConstant");
+    bind_view<Boolean<runir::kr::UnsFamilyTag, AndTag>, uns::ConstructorRepository>(m, "BooleanAnd");
+    bind_view<Boolean<runir::kr::UnsFamilyTag, OrTag>, uns::ConstructorRepository>(m, "BooleanOr");
+    bind_view<Boolean<runir::kr::UnsFamilyTag, NotTag>, uns::ConstructorRepository>(m, "BooleanNot");
 
     bind_view<Numerical<runir::kr::UnsFamilyTag, CountTag>, uns::ConstructorRepository>(m, "NumericalCount");
     bind_view<Numerical<runir::kr::UnsFamilyTag, DistanceTag>, uns::ConstructorRepository>(m, "NumericalDistance");
     bind_view<Numerical<runir::kr::UnsFamilyTag, NumericalConstantTag>, uns::ConstructorRepository>(m, "NumericalConstant");
+    bind_view<Numerical<runir::kr::UnsFamilyTag, AddTag>, uns::ConstructorRepository>(m, "NumericalAdd");
+    bind_view<Numerical<runir::kr::UnsFamilyTag, SubtractTag>, uns::ConstructorRepository>(m, "NumericalSub");
+    bind_view<Numerical<runir::kr::UnsFamilyTag, MultiplyTag>, uns::ConstructorRepository>(m, "NumericalMul");
+    bind_view<Numerical<runir::kr::UnsFamilyTag, DivideTag>, uns::ConstructorRepository>(m, "NumericalDiv");
+    bind_view<Numerical<runir::kr::UnsFamilyTag, MinTag>, uns::ConstructorRepository>(m, "NumericalMin");
+    bind_view<Numerical<runir::kr::UnsFamilyTag, MaxTag>, uns::ConstructorRepository>(m, "NumericalMax");
 
     m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<runir::kr::UnsFamilyTag, ConceptTag, uns::ConstructorRepository>, "constructor"_a);
     m.def("syntactic_complexity", &runir::kr::dl::semantics::syntactic_complexity<runir::kr::UnsFamilyTag, RoleTag, uns::ConstructorRepository>, "constructor"_a);

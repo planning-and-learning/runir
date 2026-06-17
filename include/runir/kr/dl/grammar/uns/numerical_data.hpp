@@ -15,6 +15,19 @@ struct Data<runir::kr::dl::grammar::Numerical<Family, runir::kr::dl::NumericalCo
     using Base::Base;
 };
 
+// Binary numerical operators over two numerical choices.
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalBinaryTag Tag>
+struct Data<runir::kr::dl::grammar::Numerical<Family, Tag>> :
+    runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Numerical<Family, Tag>,
+                                         runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::NumericalTag>,
+                                         runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::NumericalTag>>
+{
+    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Numerical<Family, Tag>,
+                                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::NumericalTag>,
+                                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::NumericalTag>>;
+    using Base::Base;
+};
+
 }  // namespace ygg
 
 #endif

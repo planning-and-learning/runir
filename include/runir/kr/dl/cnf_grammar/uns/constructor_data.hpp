@@ -119,7 +119,10 @@ struct Data<runir::kr::dl::cnf_grammar::Constructor<runir::kr::UnsFamilyTag, run
                                              Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::UnsFamilyTag, runir::kr::dl::LeTag<runir::kr::dl::NumericalTag>>>,
                                              Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::UnsFamilyTag, runir::kr::dl::GtTag<runir::kr::dl::NumericalTag>>>,
                                              Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::UnsFamilyTag, runir::kr::dl::GeTag<runir::kr::dl::NumericalTag>>>,
-                                             Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanConstantTag>>>;
+                                             Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanConstantTag>>,
+                                             Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::UnsFamilyTag, runir::kr::dl::AndTag>>,
+                                             Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::UnsFamilyTag, runir::kr::dl::OrTag>>,
+                                             Index<runir::kr::dl::cnf_grammar::Boolean<runir::kr::UnsFamilyTag, runir::kr::dl::NotTag>>>;
 
     Index<runir::kr::dl::cnf_grammar::Constructor<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>> index;
     Variant value;
@@ -142,7 +145,13 @@ struct Data<runir::kr::dl::cnf_grammar::Constructor<runir::kr::UnsFamilyTag, run
 {
     using Variant = ::cista::offset::variant<Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::CountTag>>,
                                              Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::DistanceTag>>,
-                                             Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::NumericalConstantTag>>>;
+                                             Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::NumericalConstantTag>>,
+                                             Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::AddTag>>,
+                                             Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::SubtractTag>>,
+                                             Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::MultiplyTag>>,
+                                             Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::DivideTag>>,
+                                             Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::MinTag>>,
+                                             Index<runir::kr::dl::cnf_grammar::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::MaxTag>>>;
 
     Index<runir::kr::dl::cnf_grammar::Constructor<runir::kr::UnsFamilyTag, runir::kr::dl::NumericalTag>> index;
     Variant value;

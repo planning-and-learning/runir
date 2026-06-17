@@ -16,45 +16,103 @@ using NumericalChoice = ConstructorOrNonTerminal<Family, runir::kr::dl::Numerica
 /**
  * Comparison nodes: one node per (operator, operand category). Each holds two operands of its
  * operand category (as choices, allowing non-terminals). The keyword is the canonical DL keyword.
- *
- * Concrete (rather than Operand-templated) nodes are used so the member type is comma-free, which
- * Boost.Fusion's ADAPT_TPL_STRUCT macro requires.
  */
 
-#define RUNIR_UNS_BOOLEAN_COMPARISON_NODE(NodeName, OpTag)                                              \
-    template<runir::kr::dl::FamilyTag Family>                                                          \
-    struct NodeName : x3::position_tagged                                                              \
-    {                                                                                                  \
-        static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::OpTag<runir::kr::dl::BooleanTag>>();   \
-        BooleanChoice<Family> lhs;                                                                     \
-        BooleanChoice<Family> rhs;                                                                     \
-    }
+template<runir::kr::dl::FamilyTag Family>
+struct BooleanEq : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::EqTag<runir::kr::dl::BooleanTag>>();
+    BooleanChoice<Family> lhs;
+    BooleanChoice<Family> rhs;
+};
 
-#define RUNIR_UNS_NUMERICAL_COMPARISON_NODE(NodeName, OpTag)                                            \
-    template<runir::kr::dl::FamilyTag Family>                                                          \
-    struct NodeName : x3::position_tagged                                                              \
-    {                                                                                                  \
-        static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::OpTag<runir::kr::dl::NumericalTag>>(); \
-        NumericalChoice<Family> lhs;                                                                   \
-        NumericalChoice<Family> rhs;                                                                   \
-    }
+template<runir::kr::dl::FamilyTag Family>
+struct BooleanNeq : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::NeqTag<runir::kr::dl::BooleanTag>>();
+    BooleanChoice<Family> lhs;
+    BooleanChoice<Family> rhs;
+};
 
-RUNIR_UNS_BOOLEAN_COMPARISON_NODE(BooleanEq, EqTag);
-RUNIR_UNS_BOOLEAN_COMPARISON_NODE(BooleanNeq, NeqTag);
-RUNIR_UNS_BOOLEAN_COMPARISON_NODE(BooleanLt, LtTag);
-RUNIR_UNS_BOOLEAN_COMPARISON_NODE(BooleanLe, LeTag);
-RUNIR_UNS_BOOLEAN_COMPARISON_NODE(BooleanGt, GtTag);
-RUNIR_UNS_BOOLEAN_COMPARISON_NODE(BooleanGe, GeTag);
+template<runir::kr::dl::FamilyTag Family>
+struct BooleanLt : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::LtTag<runir::kr::dl::BooleanTag>>();
+    BooleanChoice<Family> lhs;
+    BooleanChoice<Family> rhs;
+};
 
-RUNIR_UNS_NUMERICAL_COMPARISON_NODE(NumericalEq, EqTag);
-RUNIR_UNS_NUMERICAL_COMPARISON_NODE(NumericalNeq, NeqTag);
-RUNIR_UNS_NUMERICAL_COMPARISON_NODE(NumericalLt, LtTag);
-RUNIR_UNS_NUMERICAL_COMPARISON_NODE(NumericalLe, LeTag);
-RUNIR_UNS_NUMERICAL_COMPARISON_NODE(NumericalGt, GtTag);
-RUNIR_UNS_NUMERICAL_COMPARISON_NODE(NumericalGe, GeTag);
+template<runir::kr::dl::FamilyTag Family>
+struct BooleanLe : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::LeTag<runir::kr::dl::BooleanTag>>();
+    BooleanChoice<Family> lhs;
+    BooleanChoice<Family> rhs;
+};
 
-#undef RUNIR_UNS_BOOLEAN_COMPARISON_NODE
-#undef RUNIR_UNS_NUMERICAL_COMPARISON_NODE
+template<runir::kr::dl::FamilyTag Family>
+struct BooleanGt : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::GtTag<runir::kr::dl::BooleanTag>>();
+    BooleanChoice<Family> lhs;
+    BooleanChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct BooleanGe : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::GeTag<runir::kr::dl::BooleanTag>>();
+    BooleanChoice<Family> lhs;
+    BooleanChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct NumericalEq : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::EqTag<runir::kr::dl::NumericalTag>>();
+    NumericalChoice<Family> lhs;
+    NumericalChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct NumericalNeq : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::NeqTag<runir::kr::dl::NumericalTag>>();
+    NumericalChoice<Family> lhs;
+    NumericalChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct NumericalLt : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::LtTag<runir::kr::dl::NumericalTag>>();
+    NumericalChoice<Family> lhs;
+    NumericalChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct NumericalLe : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::LeTag<runir::kr::dl::NumericalTag>>();
+    NumericalChoice<Family> lhs;
+    NumericalChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct NumericalGt : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::GtTag<runir::kr::dl::NumericalTag>>();
+    NumericalChoice<Family> lhs;
+    NumericalChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct NumericalGe : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::comparison_keyword<runir::kr::dl::GeTag<runir::kr::dl::NumericalTag>>();
+    NumericalChoice<Family> lhs;
+    NumericalChoice<Family> rhs;
+};
 
 template<runir::kr::dl::FamilyTag Family>
 struct BooleanConstant : x3::position_tagged
@@ -68,6 +126,82 @@ struct NumericalConstant : x3::position_tagged
 {
     static constexpr auto keyword = runir::kr::dl::numerical_constant_keyword;
     ygg::uint_t value;
+};
+
+/**
+ * Numerical binary operator nodes (two numerical choices) and logical operator nodes (binary: two
+ * boolean choices; unary not: one boolean choice).
+ */
+
+template<runir::kr::dl::FamilyTag Family>
+struct NumericalAdd : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::numerical_binary_keyword<runir::kr::dl::AddTag>();
+    NumericalChoice<Family> lhs;
+    NumericalChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct NumericalSub : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::numerical_binary_keyword<runir::kr::dl::SubtractTag>();
+    NumericalChoice<Family> lhs;
+    NumericalChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct NumericalMul : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::numerical_binary_keyword<runir::kr::dl::MultiplyTag>();
+    NumericalChoice<Family> lhs;
+    NumericalChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct NumericalDiv : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::numerical_binary_keyword<runir::kr::dl::DivideTag>();
+    NumericalChoice<Family> lhs;
+    NumericalChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct NumericalMin : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::numerical_binary_keyword<runir::kr::dl::MinTag>();
+    NumericalChoice<Family> lhs;
+    NumericalChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct NumericalMax : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::numerical_binary_keyword<runir::kr::dl::MaxTag>();
+    NumericalChoice<Family> lhs;
+    NumericalChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct BooleanAnd : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::logical_binary_keyword<runir::kr::dl::AndTag>();
+    BooleanChoice<Family> lhs;
+    BooleanChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct BooleanOr : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::logical_binary_keyword<runir::kr::dl::OrTag>();
+    BooleanChoice<Family> lhs;
+    BooleanChoice<Family> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct BooleanNot : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::logical_not_keyword;
+    BooleanChoice<Family> arg;
 };
 
 /**
@@ -92,7 +226,10 @@ struct Constructor<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag> :
                       x3::forward_ast<NumericalLe<runir::kr::UnsFamilyTag>>,
                       x3::forward_ast<NumericalGt<runir::kr::UnsFamilyTag>>,
                       x3::forward_ast<NumericalGe<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanConstant<runir::kr::UnsFamilyTag>>>
+                      x3::forward_ast<BooleanConstant<runir::kr::UnsFamilyTag>>,
+                      x3::forward_ast<BooleanAnd<runir::kr::UnsFamilyTag>>,
+                      x3::forward_ast<BooleanOr<runir::kr::UnsFamilyTag>>,
+                      x3::forward_ast<BooleanNot<runir::kr::UnsFamilyTag>>>
 {
     using Base = PositionedVariant<x3::forward_ast<BooleanAtomicState<runir::kr::UnsFamilyTag>>,
                                    x3::forward_ast<BooleanAtomicGoal<runir::kr::UnsFamilyTag>>,
@@ -109,7 +246,10 @@ struct Constructor<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag> :
                                    x3::forward_ast<NumericalLe<runir::kr::UnsFamilyTag>>,
                                    x3::forward_ast<NumericalGt<runir::kr::UnsFamilyTag>>,
                                    x3::forward_ast<NumericalGe<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanConstant<runir::kr::UnsFamilyTag>>>;
+                                   x3::forward_ast<BooleanConstant<runir::kr::UnsFamilyTag>>,
+                                   x3::forward_ast<BooleanAnd<runir::kr::UnsFamilyTag>>,
+                                   x3::forward_ast<BooleanOr<runir::kr::UnsFamilyTag>>,
+                                   x3::forward_ast<BooleanNot<runir::kr::UnsFamilyTag>>>;
     using Base::Base;
     using Base::operator=;
 };
@@ -118,11 +258,23 @@ template<>
 struct Constructor<runir::kr::UnsFamilyTag, runir::kr::dl::NumericalTag> :
     PositionedVariant<x3::forward_ast<NumericalCount<runir::kr::UnsFamilyTag>>,
                       x3::forward_ast<NumericalDistance<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalConstant<runir::kr::UnsFamilyTag>>>
+                      x3::forward_ast<NumericalConstant<runir::kr::UnsFamilyTag>>,
+                      x3::forward_ast<NumericalAdd<runir::kr::UnsFamilyTag>>,
+                      x3::forward_ast<NumericalSub<runir::kr::UnsFamilyTag>>,
+                      x3::forward_ast<NumericalMul<runir::kr::UnsFamilyTag>>,
+                      x3::forward_ast<NumericalDiv<runir::kr::UnsFamilyTag>>,
+                      x3::forward_ast<NumericalMin<runir::kr::UnsFamilyTag>>,
+                      x3::forward_ast<NumericalMax<runir::kr::UnsFamilyTag>>>
 {
     using Base = PositionedVariant<x3::forward_ast<NumericalCount<runir::kr::UnsFamilyTag>>,
                                    x3::forward_ast<NumericalDistance<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalConstant<runir::kr::UnsFamilyTag>>>;
+                                   x3::forward_ast<NumericalConstant<runir::kr::UnsFamilyTag>>,
+                                   x3::forward_ast<NumericalAdd<runir::kr::UnsFamilyTag>>,
+                                   x3::forward_ast<NumericalSub<runir::kr::UnsFamilyTag>>,
+                                   x3::forward_ast<NumericalMul<runir::kr::UnsFamilyTag>>,
+                                   x3::forward_ast<NumericalDiv<runir::kr::UnsFamilyTag>>,
+                                   x3::forward_ast<NumericalMin<runir::kr::UnsFamilyTag>>,
+                                   x3::forward_ast<NumericalMax<runir::kr::UnsFamilyTag>>>;
     using Base::Base;
     using Base::operator=;
 };

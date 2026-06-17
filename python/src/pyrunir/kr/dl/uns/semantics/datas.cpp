@@ -98,10 +98,19 @@ void bind_semantics_datas(nb::module_& m)
     bind_data<Boolean<runir::kr::UnsFamilyTag, GtTag<NumericalTag>>>(m, "NumericalGtData");
     bind_data<Boolean<runir::kr::UnsFamilyTag, GeTag<NumericalTag>>>(m, "NumericalGeData");
     bind_data<Boolean<runir::kr::UnsFamilyTag, BooleanConstantTag>>(m, "BooleanConstantData");
+    bind_data<Boolean<runir::kr::UnsFamilyTag, AndTag>>(m, "BooleanAndData");
+    bind_data<Boolean<runir::kr::UnsFamilyTag, OrTag>>(m, "BooleanOrData");
+    bind_data<Boolean<runir::kr::UnsFamilyTag, NotTag>>(m, "BooleanNotData");
 
     bind_data<Numerical<runir::kr::UnsFamilyTag, CountTag>>(m, "NumericalCountData");
     bind_data<Numerical<runir::kr::UnsFamilyTag, DistanceTag>>(m, "NumericalDistanceData");
     bind_data<Numerical<runir::kr::UnsFamilyTag, NumericalConstantTag>>(m, "NumericalConstantData");
+    bind_data<Numerical<runir::kr::UnsFamilyTag, AddTag>>(m, "NumericalAddData");
+    bind_data<Numerical<runir::kr::UnsFamilyTag, SubtractTag>>(m, "NumericalSubData");
+    bind_data<Numerical<runir::kr::UnsFamilyTag, MultiplyTag>>(m, "NumericalMulData");
+    bind_data<Numerical<runir::kr::UnsFamilyTag, DivideTag>>(m, "NumericalDivData");
+    bind_data<Numerical<runir::kr::UnsFamilyTag, MinTag>>(m, "NumericalMinData");
+    bind_data<Numerical<runir::kr::UnsFamilyTag, MaxTag>>(m, "NumericalMaxData");
 
     bind_data<Constructor<runir::kr::UnsFamilyTag, ConceptTag>>(m, "ConceptData");
     bind_data<Constructor<runir::kr::UnsFamilyTag, RoleTag>>(m, "RoleData");

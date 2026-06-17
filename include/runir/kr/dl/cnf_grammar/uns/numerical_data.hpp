@@ -15,6 +15,19 @@ struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::Numeric
     using Base::Base;
 };
 
+// Binary numerical operators over two numerical non-terminals (CNF form).
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalBinaryTag Tag>
+struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>> :
+    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>
+{
+    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>,
+                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>,
+                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>;
+    using Base::Base;
+};
+
 }  // namespace ygg
 
 #endif

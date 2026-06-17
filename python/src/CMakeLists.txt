@@ -81,18 +81,14 @@ nanobind_add_module(_pyrunir NB_SHARED
     pyrunir/kr/dl/uns/semantics/datas.cpp
     pyrunir/kr/dl/uns/semantics/views.cpp
     pyrunir/kr/dl/uns/semantics/repositories.cpp
-    pyrunir/kr/ps/uns/module.cpp
-    pyrunir/kr/ps/uns/indices.cpp
-    pyrunir/kr/ps/uns/repository.cpp
-    pyrunir/kr/ps/uns/sketch_executor.cpp
-    pyrunir/kr/ps/uns/syntactic_complexity.cpp
-    pyrunir/kr/ps/uns/views.cpp
-    pyrunir/kr/ps/uns/dl/indices.cpp
-    pyrunir/kr/ps/uns/dl/module.cpp
-    pyrunir/kr/ps/uns/dl/parser.cpp
-    pyrunir/kr/ps/uns/dl/sketch_factory.cpp
-    pyrunir/kr/ps/uns/dl/structural_termination.cpp
-    pyrunir/kr/ps/uns/dl/views.cpp
+    pyrunir/kr/uns/module.cpp
+    pyrunir/kr/uns/indices.cpp
+    pyrunir/kr/uns/repository.cpp
+    pyrunir/kr/uns/views.cpp
+    pyrunir/kr/uns/dl/indices.cpp
+    pyrunir/kr/uns/dl/module.cpp
+    pyrunir/kr/uns/dl/parser.cpp
+    pyrunir/kr/uns/dl/views.cpp
 )
 
 target_link_libraries(_pyrunir PRIVATE runir::core)
@@ -143,8 +139,8 @@ yggdrasil_install_python_files(pyrunir "${CMAKE_CURRENT_SOURCE_DIR}"
     pyrunir/kr/ps/base/dl/__init__.py
     pyrunir/kr/dl/uns/__init__.py
     pyrunir/kr/dl/uns/semantics/__init__.py
-    pyrunir/kr/ps/uns/__init__.py
-    pyrunir/kr/ps/uns/dl/__init__.py)
+    pyrunir/kr/uns/__init__.py
+    pyrunir/kr/uns/dl/__init__.py)
 
 yggdrasil_install_provider_env(PYRUNIR pyrunir
     PREFIXES "${PYPDDL_NATIVE_PREFIX}" "${TYR_NATIVE_PREFIX}" "${YGGDRASIL_NATIVE_PREFIX}")

@@ -235,6 +235,10 @@ std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyBoolea
         return constructor(runir::kr::dl::comparison_keyword<Tag>(), view.get_lhs(), view.get_rhs());
     else if constexpr (std::same_as<Tag, runir::kr::dl::BooleanConstantTag>)
         return constructor(runir::kr::dl::boolean_constant_keyword, boolean(view.get_value()));
+    else if constexpr (runir::kr::dl::LogicalBinaryTag<Tag>)
+        return constructor(runir::kr::dl::logical_binary_keyword<Tag>(), view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, runir::kr::dl::NotTag>)
+        return constructor(runir::kr::dl::logical_not_keyword, view.get_arg());
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in boolean_constructor");
@@ -253,6 +257,8 @@ std::string numerical(ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family
         return argument_identifier(view.get_data().identifier);
     else if constexpr (std::same_as<Tag, runir::kr::dl::NumericalConstantTag>)
         return constructor(runir::kr::dl::numerical_constant_keyword, view.get_value());
+    else if constexpr (runir::kr::dl::NumericalBinaryTag<Tag>)
+        return constructor(runir::kr::dl::numerical_binary_keyword<Tag>(), view.get_lhs(), view.get_rhs());
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL numerical constructor tag in numerical");

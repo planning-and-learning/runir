@@ -29,6 +29,29 @@ struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::BooleanConstantTag>> :
     using Base::Base;
 };
 
+// Binary logical operators (and/or): a Boolean over two Boolean operands.
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::LogicalBinaryTag Tag>
+struct Data<runir::kr::dl::Boolean<Family, Tag>> :
+    runir::kr::dl::semantics::BinaryData<runir::kr::dl::Boolean<Family, Tag>,
+                                         runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>,
+                                         runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>>
+{
+    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::Boolean<Family, Tag>,
+                                                      runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>,
+                                                      runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>>;
+    using Base::Base;
+};
+
+// Unary logical operator (not): a Boolean over one Boolean operand.
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NotTag>> :
+    runir::kr::dl::semantics::UnaryData<runir::kr::dl::Boolean<Family, runir::kr::dl::NotTag>, runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>>
+{
+    using Base =
+        runir::kr::dl::semantics::UnaryData<runir::kr::dl::Boolean<Family, runir::kr::dl::NotTag>, runir::kr::dl::Constructor<Family, runir::kr::dl::BooleanTag>>;
+    using Base::Base;
+};
+
 }  // namespace ygg
 
 #endif

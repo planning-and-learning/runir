@@ -86,6 +86,9 @@ boolean_le_type const boolean_le = "boolean_le";
 boolean_gt_type const boolean_gt = "boolean_gt";
 boolean_ge_type const boolean_ge = "boolean_ge";
 boolean_constant_type const boolean_constant = "boolean_constant";
+boolean_and_type const boolean_and = "boolean_and";
+boolean_or_type const boolean_or = "boolean_or";
+boolean_not_type const boolean_not = "boolean_not";
 boolean_non_terminal_type const boolean_non_terminal = "boolean_non_terminal";
 boolean_choice_type const boolean_choice = "boolean_choice";
 boolean_derivation_rule_type const boolean_derivation_rule = "boolean_derivation_rule";
@@ -101,6 +104,12 @@ numerical_le_type const numerical_le = "numerical_le";
 numerical_gt_type const numerical_gt = "numerical_gt";
 numerical_ge_type const numerical_ge = "numerical_ge";
 numerical_constant_type const numerical_constant = "numerical_constant";
+numerical_add_type const numerical_add = "numerical_add";
+numerical_sub_type const numerical_sub = "numerical_sub";
+numerical_mul_type const numerical_mul = "numerical_mul";
+numerical_div_type const numerical_div = "numerical_div";
+numerical_min_type const numerical_min = "numerical_min";
+numerical_max_type const numerical_max = "numerical_max";
 numerical_non_terminal_type const numerical_non_terminal = "numerical_non_terminal";
 numerical_choice_type const numerical_choice = "numerical_choice";
 numerical_derivation_rule_type const numerical_derivation_rule = "numerical_derivation_rule";
@@ -218,7 +227,7 @@ const auto role_derivation_rule_def = (lit("(") >> role_non_terminal) > ((lit("(
 
 const auto constructor_or_non_terminal_variant_def = concept_choice | role_choice;
 
-const auto boolean_def = boolean_atomic_state | boolean_atomic_goal | boolean_nonempty | boolean_eq | boolean_neq | boolean_lt | boolean_le | boolean_gt | boolean_ge | numerical_eq | numerical_neq | numerical_lt | numerical_le | numerical_gt | numerical_ge | boolean_constant;
+const auto boolean_def = boolean_atomic_state | boolean_atomic_goal | boolean_nonempty | boolean_eq | boolean_neq | boolean_lt | boolean_le | boolean_gt | boolean_ge | numerical_eq | numerical_neq | numerical_lt | numerical_le | numerical_gt | numerical_ge | boolean_constant | boolean_and | boolean_or | boolean_not;
 const auto boolean_root_def = boolean > eoi;
 const auto boolean_atomic_state_def = with_constructor_parentheses(lit(grammar_ast::BooleanAtomicState<runir::kr::UnsFamilyTag>::keyword)
                                                                    > predicate_name_string_parser() > bool_string_parser());
@@ -252,12 +261,18 @@ const auto numerical_ge_def =
     with_constructor_parentheses(lit(grammar_ast::NumericalGe<runir::kr::UnsFamilyTag>::keyword) > numerical_choice > numerical_choice);
 const auto boolean_constant_def =
     with_constructor_parentheses(lit(grammar_ast::BooleanConstant<runir::kr::UnsFamilyTag>::keyword) > bool_string_parser());
+const auto boolean_and_def =
+    with_constructor_parentheses(lit(grammar_ast::BooleanAnd<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
+const auto boolean_or_def =
+    with_constructor_parentheses(lit(grammar_ast::BooleanOr<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
+const auto boolean_not_def =
+    with_constructor_parentheses(lit(grammar_ast::BooleanNot<runir::kr::UnsFamilyTag>::keyword) > boolean_choice);
 const auto boolean_non_terminal_def = boolean_non_terminal_string_parser();
 const auto boolean_choice_def = boolean_non_terminal | boolean;
 const auto boolean_derivation_rule_def = (lit("(") >> boolean_non_terminal)
                                          > ((lit("(") > (boolean_choice % lit("or")) > lit(")")) | x3::repeat(1)[boolean_choice]) > lit(")");
 
-const auto numerical_def = numerical_count | numerical_distance | numerical_constant;
+const auto numerical_def = numerical_count | numerical_distance | numerical_constant | numerical_add | numerical_sub | numerical_mul | numerical_div | numerical_min | numerical_max;
 const auto numerical_root_def = numerical > eoi;
 const auto numerical_count_def =
     with_constructor_parentheses(lit(grammar_ast::NumericalCount<runir::kr::UnsFamilyTag>::keyword) > constructor_or_non_terminal_variant);
@@ -265,6 +280,18 @@ const auto numerical_distance_def =
     with_constructor_parentheses(lit(grammar_ast::NumericalDistance<runir::kr::UnsFamilyTag>::keyword) > concept_choice > role_choice > concept_choice);
 const auto numerical_constant_def =
     with_constructor_parentheses(lit(grammar_ast::NumericalConstant<runir::kr::UnsFamilyTag>::keyword) > uint_);
+const auto numerical_add_def =
+    with_constructor_parentheses(lit(grammar_ast::NumericalAdd<runir::kr::UnsFamilyTag>::keyword) > numerical_choice > numerical_choice);
+const auto numerical_sub_def =
+    with_constructor_parentheses(lit(grammar_ast::NumericalSub<runir::kr::UnsFamilyTag>::keyword) > numerical_choice > numerical_choice);
+const auto numerical_mul_def =
+    with_constructor_parentheses(lit(grammar_ast::NumericalMul<runir::kr::UnsFamilyTag>::keyword) > numerical_choice > numerical_choice);
+const auto numerical_div_def =
+    with_constructor_parentheses(lit(grammar_ast::NumericalDiv<runir::kr::UnsFamilyTag>::keyword) > numerical_choice > numerical_choice);
+const auto numerical_min_def =
+    with_constructor_parentheses(lit(grammar_ast::NumericalMin<runir::kr::UnsFamilyTag>::keyword) > numerical_choice > numerical_choice);
+const auto numerical_max_def =
+    with_constructor_parentheses(lit(grammar_ast::NumericalMax<runir::kr::UnsFamilyTag>::keyword) > numerical_choice > numerical_choice);
 const auto numerical_non_terminal_def = numerical_non_terminal_string_parser();
 const auto numerical_choice_def = numerical_non_terminal | numerical;
 const auto numerical_derivation_rule_def = (lit("(") >> numerical_non_terminal)
@@ -333,6 +360,9 @@ BOOST_SPIRIT_DEFINE(boolean,
                     boolean_gt,
                     boolean_ge,
                     boolean_constant,
+                    boolean_and,
+                    boolean_or,
+                    boolean_not,
                     boolean_non_terminal,
                     boolean_choice,
                     boolean_derivation_rule)
@@ -348,6 +378,12 @@ BOOST_SPIRIT_DEFINE(numerical,
                     numerical_gt,
                     numerical_ge,
                     numerical_constant,
+                    numerical_add,
+                    numerical_sub,
+                    numerical_mul,
+                    numerical_div,
+                    numerical_min,
+                    numerical_max,
                     numerical_non_terminal,
                     numerical_choice,
                     numerical_derivation_rule)
@@ -626,6 +662,19 @@ struct BooleanConstantClass : x3::annotate_on_success
 {
 };
 
+struct BooleanAndClass : x3::annotate_on_success
+{
+};
+
+struct BooleanOrClass : x3::annotate_on_success
+{
+};
+
+struct BooleanNotClass : x3::annotate_on_success
+{
+};
+
+
 struct NumericalEqClass : x3::annotate_on_success
 {
 };
@@ -653,6 +702,31 @@ struct NumericalGeClass : x3::annotate_on_success
 struct NumericalConstantClass : x3::annotate_on_success
 {
 };
+
+struct NumericalAddClass : x3::annotate_on_success
+{
+};
+
+struct NumericalSubClass : x3::annotate_on_success
+{
+};
+
+struct NumericalMulClass : x3::annotate_on_success
+{
+};
+
+struct NumericalDivClass : x3::annotate_on_success
+{
+};
+
+struct NumericalMinClass : x3::annotate_on_success
+{
+};
+
+struct NumericalMaxClass : x3::annotate_on_success
+{
+};
+
 
 
 struct NumericalCountClass : x3::annotate_on_success
@@ -746,6 +820,9 @@ boolean_le_type const& boolean_le_parser() { return boolean_le; }
 boolean_gt_type const& boolean_gt_parser() { return boolean_gt; }
 boolean_ge_type const& boolean_ge_parser() { return boolean_ge; }
 boolean_constant_type const& boolean_constant_parser() { return boolean_constant; }
+boolean_and_type const& boolean_and_parser() { return boolean_and; }
+boolean_or_type const& boolean_or_parser() { return boolean_or; }
+boolean_not_type const& boolean_not_parser() { return boolean_not; }
 numerical_eq_type const& numerical_eq_parser() { return numerical_eq; }
 numerical_neq_type const& numerical_neq_parser() { return numerical_neq; }
 numerical_lt_type const& numerical_lt_parser() { return numerical_lt; }
@@ -753,6 +830,12 @@ numerical_le_type const& numerical_le_parser() { return numerical_le; }
 numerical_gt_type const& numerical_gt_parser() { return numerical_gt; }
 numerical_ge_type const& numerical_ge_parser() { return numerical_ge; }
 numerical_constant_type const& numerical_constant_parser() { return numerical_constant; }
+numerical_add_type const& numerical_add_parser() { return numerical_add; }
+numerical_sub_type const& numerical_sub_parser() { return numerical_sub; }
+numerical_mul_type const& numerical_mul_parser() { return numerical_mul; }
+numerical_div_type const& numerical_div_parser() { return numerical_div; }
+numerical_min_type const& numerical_min_parser() { return numerical_min; }
+numerical_max_type const& numerical_max_parser() { return numerical_max; }
 boolean_non_terminal_type const& boolean_non_terminal_parser() { return boolean_non_terminal; }
 boolean_choice_type const& boolean_choice_parser() { return boolean_choice; }
 boolean_derivation_rule_type const& boolean_derivation_rule_parser() { return boolean_derivation_rule; }

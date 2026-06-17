@@ -76,10 +76,19 @@ void bind_semantics_indices(nb::module_& m)
     ygg::bind_index<ygg::Index<Boolean<runir::kr::UnsFamilyTag, GtTag<NumericalTag>>>>(m, "NumericalGtIndex");
     ygg::bind_index<ygg::Index<Boolean<runir::kr::UnsFamilyTag, GeTag<NumericalTag>>>>(m, "NumericalGeIndex");
     ygg::bind_index<ygg::Index<Boolean<runir::kr::UnsFamilyTag, BooleanConstantTag>>>(m, "BooleanConstantIndex");
+    ygg::bind_index<ygg::Index<Boolean<runir::kr::UnsFamilyTag, AndTag>>>(m, "BooleanAndIndex");
+    ygg::bind_index<ygg::Index<Boolean<runir::kr::UnsFamilyTag, OrTag>>>(m, "BooleanOrIndex");
+    ygg::bind_index<ygg::Index<Boolean<runir::kr::UnsFamilyTag, NotTag>>>(m, "BooleanNotIndex");
 
     ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, CountTag>>>(m, "NumericalCountIndex");
     ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, DistanceTag>>>(m, "NumericalDistanceIndex");
     ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, NumericalConstantTag>>>(m, "NumericalConstantIndex");
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, AddTag>>>(m, "NumericalAddIndex");
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, SubtractTag>>>(m, "NumericalSubIndex");
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, MultiplyTag>>>(m, "NumericalMulIndex");
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, DivideTag>>>(m, "NumericalDivIndex");
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, MinTag>>>(m, "NumericalMinIndex");
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, MaxTag>>>(m, "NumericalMaxIndex");
 }
 
 }  // namespace runir::kr::dl::uns

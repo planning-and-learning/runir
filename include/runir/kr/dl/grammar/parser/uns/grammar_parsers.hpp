@@ -74,6 +74,9 @@ struct BooleanLeClass;
 struct BooleanGtClass;
 struct BooleanGeClass;
 struct BooleanConstantClass;
+struct BooleanAndClass;
+struct BooleanOrClass;
+struct BooleanNotClass;
 
 struct NumericalCountClass;
 struct NumericalDistanceClass;
@@ -84,6 +87,12 @@ struct NumericalLeClass;
 struct NumericalGtClass;
 struct NumericalGeClass;
 struct NumericalConstantClass;
+struct NumericalAddClass;
+struct NumericalSubClass;
+struct NumericalMulClass;
+struct NumericalDivClass;
+struct NumericalMinClass;
+struct NumericalMaxClass;
 
 struct GrammarBodyClass;
 struct GrammarClass;
@@ -163,6 +172,9 @@ using boolean_le_type = x3::rule<BooleanLeClass, grammar_ast::BooleanLe<runir::k
 using boolean_gt_type = x3::rule<BooleanGtClass, grammar_ast::BooleanGt<runir::kr::UnsFamilyTag>>;
 using boolean_ge_type = x3::rule<BooleanGeClass, grammar_ast::BooleanGe<runir::kr::UnsFamilyTag>>;
 using boolean_constant_type = x3::rule<BooleanConstantClass, grammar_ast::BooleanConstant<runir::kr::UnsFamilyTag>>;
+using boolean_and_type = x3::rule<BooleanAndClass, grammar_ast::BooleanAnd<runir::kr::UnsFamilyTag>>;
+using boolean_or_type = x3::rule<BooleanOrClass, grammar_ast::BooleanOr<runir::kr::UnsFamilyTag>>;
+using boolean_not_type = x3::rule<BooleanNotClass, grammar_ast::BooleanNot<runir::kr::UnsFamilyTag>>;
 using boolean_non_terminal_type =
     x3::rule<NonTerminalClass<runir::kr::dl::BooleanTag>, grammar_ast::NonTerminal<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>>;
 using boolean_choice_type = x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::BooleanTag>,
@@ -182,6 +194,12 @@ using numerical_le_type = x3::rule<NumericalLeClass, grammar_ast::NumericalLe<ru
 using numerical_gt_type = x3::rule<NumericalGtClass, grammar_ast::NumericalGt<runir::kr::UnsFamilyTag>>;
 using numerical_ge_type = x3::rule<NumericalGeClass, grammar_ast::NumericalGe<runir::kr::UnsFamilyTag>>;
 using numerical_constant_type = x3::rule<NumericalConstantClass, grammar_ast::NumericalConstant<runir::kr::UnsFamilyTag>>;
+using numerical_add_type = x3::rule<NumericalAddClass, grammar_ast::NumericalAdd<runir::kr::UnsFamilyTag>>;
+using numerical_sub_type = x3::rule<NumericalSubClass, grammar_ast::NumericalSub<runir::kr::UnsFamilyTag>>;
+using numerical_mul_type = x3::rule<NumericalMulClass, grammar_ast::NumericalMul<runir::kr::UnsFamilyTag>>;
+using numerical_div_type = x3::rule<NumericalDivClass, grammar_ast::NumericalDiv<runir::kr::UnsFamilyTag>>;
+using numerical_min_type = x3::rule<NumericalMinClass, grammar_ast::NumericalMin<runir::kr::UnsFamilyTag>>;
+using numerical_max_type = x3::rule<NumericalMaxClass, grammar_ast::NumericalMax<runir::kr::UnsFamilyTag>>;
 using numerical_non_terminal_type =
     x3::rule<NonTerminalClass<runir::kr::dl::NumericalTag>, grammar_ast::NonTerminal<runir::kr::UnsFamilyTag, runir::kr::dl::NumericalTag>>;
 using numerical_choice_type = x3::rule<ConstructorOrNonTerminalClass<runir::kr::dl::NumericalTag>,
@@ -253,6 +271,9 @@ BOOST_SPIRIT_DECLARE(boolean_type,
                      boolean_gt_type,
                      boolean_ge_type,
                      boolean_constant_type,
+                     boolean_and_type,
+                     boolean_or_type,
+                     boolean_not_type,
                      boolean_non_terminal_type,
                      boolean_choice_type,
                      boolean_derivation_rule_type)
@@ -268,6 +289,12 @@ BOOST_SPIRIT_DECLARE(numerical_type,
                      numerical_gt_type,
                      numerical_ge_type,
                      numerical_constant_type,
+                     numerical_add_type,
+                     numerical_sub_type,
+                     numerical_mul_type,
+                     numerical_div_type,
+                     numerical_min_type,
+                     numerical_max_type,
                      numerical_non_terminal_type,
                      numerical_choice_type,
                      numerical_derivation_rule_type)
@@ -333,6 +360,9 @@ boolean_le_type const& boolean_le_parser();
 boolean_gt_type const& boolean_gt_parser();
 boolean_ge_type const& boolean_ge_parser();
 boolean_constant_type const& boolean_constant_parser();
+boolean_and_type const& boolean_and_parser();
+boolean_or_type const& boolean_or_parser();
+boolean_not_type const& boolean_not_parser();
 boolean_non_terminal_type const& boolean_non_terminal_parser();
 boolean_choice_type const& boolean_choice_parser();
 boolean_derivation_rule_type const& boolean_derivation_rule_parser();
@@ -348,6 +378,12 @@ numerical_le_type const& numerical_le_parser();
 numerical_gt_type const& numerical_gt_parser();
 numerical_ge_type const& numerical_ge_parser();
 numerical_constant_type const& numerical_constant_parser();
+numerical_add_type const& numerical_add_parser();
+numerical_sub_type const& numerical_sub_parser();
+numerical_mul_type const& numerical_mul_parser();
+numerical_div_type const& numerical_div_parser();
+numerical_min_type const& numerical_min_parser();
+numerical_max_type const& numerical_max_parser();
 numerical_non_terminal_type const& numerical_non_terminal_parser();
 numerical_choice_type const& numerical_choice_parser();
 numerical_derivation_rule_type const& numerical_derivation_rule_parser();

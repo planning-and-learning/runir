@@ -28,6 +28,30 @@ struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::BooleanCo
     using Base::Base;
 };
 
+// Binary logical operators over two boolean non-terminals (CNF form).
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::LogicalBinaryTag Tag>
+struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>> :
+    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>
+{
+    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>,
+                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>,
+                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>;
+    using Base::Base;
+};
+
+// Unary logical operator (not) over one boolean non-terminal (CNF form).
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NotTag>> :
+    runir::kr::dl::semantics::UnaryData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NotTag>,
+                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>
+{
+    using Base = runir::kr::dl::semantics::UnaryData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NotTag>,
+                                                     runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>;
+    using Base::Base;
+};
+
 }  // namespace ygg
 
 #endif

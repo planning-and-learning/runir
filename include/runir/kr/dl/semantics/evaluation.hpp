@@ -377,6 +377,61 @@ constexpr bool apply_comparison(uint_t lhs, uint_t rhs) noexcept
         return lhs >= rhs;
 }
 
+template<LogicalBinaryOperator Op>
+constexpr bool apply_logical_binary(bool lhs, bool rhs) noexcept
+{
+    if constexpr (Op == LogicalBinaryOperator::And)
+        return lhs && rhs;
+    else
+        return lhs || rhs;
+}
+
+// Numerical operands are nonnegative integers; numeric_limits<uint_t>::max() denotes infinity
+// (as produced by the distance constructor for unreachable targets).
+template<NumericalBinaryOperator Op>
+constexpr uint_t apply_numerical_binary(uint_t lhs, uint_t rhs) noexcept
+{
+    constexpr auto inf = std::numeric_limits<uint_t>::max();
+    if constexpr (Op == NumericalBinaryOperator::Add)
+    {
+        if (lhs == inf || rhs == inf)
+            return inf;
+        const uint_t result = lhs + rhs;
+        return result < lhs ? inf : result;  // clamp overflow to infinity
+    }
+    else if constexpr (Op == NumericalBinaryOperator::Subtract)
+    {
+        if (lhs == inf)
+            return inf;
+        return lhs >= rhs ? lhs - rhs : 0;  // saturate at 0
+    }
+    else if constexpr (Op == NumericalBinaryOperator::Multiply)
+    {
+        if (lhs == 0 || rhs == 0)
+            return 0;
+        if (lhs == inf || rhs == inf)
+            return inf;
+        const uint_t result = lhs * rhs;
+        return result / lhs != rhs ? inf : result;  // clamp overflow to infinity
+    }
+    else if constexpr (Op == NumericalBinaryOperator::Divide)
+    {
+        if (rhs == 0)
+            return inf;  // division by zero -> infinity
+        if (lhs == inf)
+            return inf;
+        return lhs / rhs;
+    }
+    else if constexpr (Op == NumericalBinaryOperator::Min)
+    {
+        return lhs < rhs ? lhs : rhs;
+    }
+    else  // Max
+    {
+        return lhs > rhs ? lhs : rhs;
+    }
+}
+
 }
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
@@ -732,6 +787,18 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
     {
         return context.get_builder().template get_builder<Denotation<BooleanTag>>(constructor.get_value());
     }
+    else if constexpr (LogicalBinaryTag<Tag>)
+    {
+        const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
+        const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
+        const bool result_value = detail::apply_logical_binary<Tag::op>(lhs->get_data(), rhs->get_data());
+        return context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
+    }
+    else if constexpr (std::same_as<Tag, NotTag>)
+    {
+        const auto arg = evaluate_impl(constructor.get_arg(), context, workspace);
+        return context.get_builder().template get_builder<Denotation<BooleanTag>>(!arg->get_data());
+    }
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in evaluate_impl");
@@ -814,6 +881,12 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
     else if constexpr (std::same_as<Tag, NumericalConstantTag>)
     {
         result_value = constructor.get_value();
+    }
+    else if constexpr (NumericalBinaryTag<Tag>)
+    {
+        const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
+        const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
+        result_value = detail::apply_numerical_binary<Tag::op>(lhs->get_data(), rhs->get_data());
     }
     else
     {
