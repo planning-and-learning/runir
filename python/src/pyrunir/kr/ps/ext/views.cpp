@@ -60,6 +60,12 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_callee", &View::get_callee);
     if constexpr (requires(const View& view) { view.get_registers(); })
         cls.def("get_registers", &View::get_registers);
+    if constexpr (requires(const View& view) { view.template get_features<runir::kr::dl::ConceptTag>(); })
+    {
+        cls.def("get_concept_features", [](const View& view) { return view.template get_features<runir::kr::dl::ConceptTag>(); });
+        cls.def("get_boolean_features", [](const View& view) { return view.template get_features<runir::kr::ps::dl::BooleanFeature>(); });
+        cls.def("get_numerical_features", [](const View& view) { return view.template get_features<runir::kr::ps::dl::NumericalFeature>(); });
+    }
     if constexpr (requires(const View& view) { view.get_entry_memory_state(); })
         cls.def("get_entry_memory_state", &View::get_entry_memory_state);
     if constexpr (requires(const View& view) { view.get_entry_module(); })

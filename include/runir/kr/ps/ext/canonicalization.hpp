@@ -80,7 +80,8 @@ inline bool is_canonical(const ygg::Data<RuleVariant>&) noexcept { return true; 
 inline bool is_canonical(const ygg::Data<Module>& data) noexcept
 {
     return ygg::is_canonical(data.concept_arguments) && ygg::is_canonical(data.role_arguments) && ygg::is_canonical(data.boolean_arguments)
-           && ygg::is_canonical(data.numerical_arguments) && ygg::is_canonical(data.registers) && ygg::is_canonical(data.memory_states);
+           && ygg::is_canonical(data.numerical_arguments) && ygg::is_canonical(data.registers) && ygg::is_canonical(data.concept_features)
+           && ygg::is_canonical(data.boolean_features) && ygg::is_canonical(data.numerical_features) && ygg::is_canonical(data.memory_states);
 }
 
 inline bool is_canonical(const ygg::Data<ModuleProgram>&) noexcept { return true; }
@@ -154,6 +155,9 @@ inline void canonicalize(ygg::Data<Module>& data)
     ygg::canonicalize(data.boolean_arguments);
     ygg::canonicalize(data.numerical_arguments);
     ygg::canonicalize(data.registers);
+    ygg::canonicalize(data.concept_features);
+    ygg::canonicalize(data.boolean_features);
+    ygg::canonicalize(data.numerical_features);
     ygg::canonicalize(data.memory_states);
 }
 

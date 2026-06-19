@@ -59,6 +59,12 @@ void bind_data(nb::module_& m, const std::string& name)
         cls.def_rw("numerical_arguments", &Data::numerical_arguments);
     if constexpr (requires { &Data::registers; })
         cls.def_rw("registers", &Data::registers);
+    if constexpr (requires { &Data::concept_features; })
+        cls.def_rw("concept_features", &Data::concept_features);
+    if constexpr (requires { &Data::boolean_features; })
+        cls.def_rw("boolean_features", &Data::boolean_features);
+    if constexpr (requires { &Data::numerical_features; })
+        cls.def_rw("numerical_features", &Data::numerical_features);
     if constexpr (requires { &Data::entry_memory_state; })
         cls.def_rw("entry_memory_state", &Data::entry_memory_state);
     if constexpr (requires { &Data::entry_module; })

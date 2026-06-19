@@ -623,6 +623,7 @@ auto intern_dl_feature(Repository& repository,
 }
 
 void append_feature(Repository& repository,
+                    ygg::Data<Module>& module_data,
                     const ast::Feature& feature,
                     tyr::formalism::planning::DomainView domain,
                     ConceptFeatureMap& concept_features,
@@ -640,6 +641,7 @@ void append_feature(Repository& repository,
                 const auto view = intern_dl_feature<runir::kr::dl::ConceptTag>(repository, constructor.get_index(), feature);
                 if (!concept_features.emplace(feature.name, view.get_index()).second || !concept_aliases.emplace(feature.name, constructor.get_index()).second)
                     fail_at("Duplicate feature name \"" + feature.name + "\".", feature.name_offset);
+                module_data.concept_features.push_back(view.get_index());
                 break;
             }
             case ast::FeatureKind::BOOLEAN:
@@ -648,6 +650,7 @@ void append_feature(Repository& repository,
                 const auto view = intern_dl_feature<runir::kr::ps::dl::BooleanFeature>(repository, constructor.get_index(), feature);
                 if (!boolean_features.emplace(feature.name, view.get_index()).second)
                     fail_at("Duplicate feature name \"" + feature.name + "\".", feature.name_offset);
+                module_data.boolean_features.push_back(view.get_index());
                 break;
             }
             case ast::FeatureKind::NUMERICAL:
@@ -656,6 +659,7 @@ void append_feature(Repository& repository,
                 const auto view = intern_dl_feature<runir::kr::ps::dl::NumericalFeature>(repository, constructor.get_index(), feature);
                 if (!numerical_features.emplace(feature.name, view.get_index()).second)
                     fail_at("Duplicate feature name \"" + feature.name + "\".", feature.name_offset);
+                module_data.numerical_features.push_back(view.get_index());
                 break;
             }
         }
@@ -1454,7 +1458,7 @@ ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::Domain
     auto numerical_features = NumericalFeatureMap {};
     auto concept_aliases = ConceptAliasMap {};
     for (const auto& feature : ast.features)
-        append_feature(repository, feature, domain, concept_features, boolean_features, numerical_features, concept_aliases);
+        append_feature(repository, data, feature, domain, concept_features, boolean_features, numerical_features, concept_aliases);
 
     auto modules = known_modules;
     if (auto callee = repository.find(data))

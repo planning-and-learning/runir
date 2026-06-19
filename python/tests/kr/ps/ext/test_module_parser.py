@@ -60,6 +60,10 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     modules = ext.parse_modules(descriptions, planning_domain, repository)
 
     assert [module.get_name() for module in modules] == ["on", "on-table", "tower", "blocks"]
+    assert len(modules[0].get_concept_features()) == 12
+    assert len(modules[0].get_boolean_features()) == 2
+    assert len(modules[0].get_numerical_features()) == 0
+    assert len(modules[3].get_concept_features()) == 1
     assert "(:symbol blocks)" in str(modules[3])
     memory_transitions = modules[3].get_memory_transitions()
     assert len(memory_transitions) > 0
@@ -81,6 +85,8 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     reparsed_on = ext.parse_module(formatted_on, planning_domain, repository)
 
     assert reparsed_on.get_name() == "on"
+    assert len(reparsed_on.get_concept_features()) == len(modules[0].get_concept_features())
+    assert len(reparsed_on.get_boolean_features()) == len(modules[0].get_boolean_features())
     assert str(reparsed_on) == formatted_on
 
     program = ext.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)

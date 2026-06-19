@@ -89,63 +89,6 @@ std::string get_or_create_name(FeatureNames& names, ygg::View<ygg::Index<runir::
     return name;
 }
 
-template<typename FeatureTag, typename ObservationTag, typename C>
-void collect_feature(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
-{
-    get_or_create_name(names, view.get_feature());
-}
-
-template<typename FeatureTag, typename ObservationTag, typename C>
-void collect_feature(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
-{
-    get_or_create_name(names, view.get_feature());
-}
-
-template<typename C>
-void collect_features(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::ConditionVariant>, C> view)
-{
-    ygg::visit([&](auto concrete_variant)
-               { ygg::visit([&](auto concrete_condition) { collect_feature(names, concrete_condition); }, concrete_variant.get_variant()); },
-               view.get_variant());
-}
-
-template<typename C>
-void collect_features(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::EffectVariant>, C> view)
-{
-    ygg::visit([&](auto concrete_variant)
-               { ygg::visit([&](auto concrete_effect) { collect_feature(names, concrete_effect); }, concrete_variant.get_variant()); },
-               view.get_variant());
-}
-
-template<typename Kind, typename C>
-void collect_features(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
-{
-    for (auto condition : view.get_conditions())
-        collect_features(names, condition);
-    if constexpr (requires { view.get_effects(); })
-        for (auto effect : view.get_effects())
-            collect_features(names, effect);
-    if constexpr (std::same_as<Kind, runir::kr::ps::ext::DoTag>)
-        for (auto argument : view.get_action_arguments())
-            get_or_create_name(names, argument);
-}
-
-template<typename C>
-void collect_features(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::RuleVariant>, C> view)
-{
-    ygg::visit([&](auto rule) { collect_features(names, rule); }, view.get_variant());
-}
-
-template<typename C>
-FeatureNames collect_features(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
-{
-    auto names = FeatureNames {};
-    for (const auto& transition : view.get_memory_transitions())
-        for (auto rule : transition)
-            collect_features(names, rule);
-    return names;
-}
-
 template<typename FeatureTag>
 std::string feature_type()
 {
@@ -241,22 +184,12 @@ std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>
     return feature(view, fmt::format("{}_{}", feature_prefix<FeatureTag>(), view.get_index().get_value()));
 }
 
-template<typename C>
-void append_features(std::ostream& os, const C& context, const FeatureNames& names)
+template<typename Features>
+void append_declared_features(std::ostream& os, FeatureNames& names, Features features)
 {
-    for (const auto& entry : names.concepts)
+    for (auto feature : features)
     {
-        append_feature(os, ygg::make_view(entry.index, context), entry.name);
-        os << "\n";
-    }
-    for (const auto& entry : names.booleans)
-    {
-        append_feature(os, ygg::make_view(entry.index, context), entry.name);
-        os << "\n";
-    }
-    for (const auto& entry : names.numericals)
-    {
-        append_feature(os, ygg::make_view(entry.index, context), entry.name);
+        append_feature(os, feature, get_or_create_name(names, feature));
         os << "\n";
     }
 }
@@ -417,7 +350,7 @@ std::string rule(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::R
 template<typename C>
 std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
 {
-    auto names = collect_features(view);
+    auto names = FeatureNames {};
     auto os = std::ostringstream {};
 
     os << "(:module\n";
@@ -456,7 +389,9 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
         os << ygg::print_indent << "(:features\n";
         {
             ygg::IndentScope feature_scope(os);
-            append_features(os, view.get_context(), names);
+            append_declared_features(os, names, view.template get_features<runir::kr::dl::ConceptTag>());
+            append_declared_features(os, names, view.template get_features<runir::kr::ps::dl::BooleanFeature>());
+            append_declared_features(os, names, view.template get_features<runir::kr::ps::dl::NumericalFeature>());
         }
         os << ygg::print_indent << ")\n";
 

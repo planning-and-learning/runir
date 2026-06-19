@@ -7,6 +7,7 @@
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 
 #include <concepts>
+#include <yggdrasil/core/dependent_false.hpp>
 #include <tuple>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/containers/vector.hpp>
@@ -45,6 +46,22 @@ public:
     }
 
     auto get_registers() const noexcept { return make_view(get_data().registers, *m_context); }
+
+    template<typename FeatureTag>
+    auto get_features() const noexcept
+    {
+        if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
+            return make_view(get_data().concept_features, *m_context);
+        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
+            return make_view(get_data().boolean_features, *m_context);
+        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
+            return make_view(get_data().numerical_features, *m_context);
+        else
+        {
+            static_assert(ygg::dependent_false<FeatureTag>::value, "unhandled feature tag in Module::get_features");
+        }
+    }
+
     auto get_entry_memory_state() const noexcept { return make_view(get_data().entry_memory_state, *m_context); }
     auto get_memory_states() const noexcept { return make_view(get_data().memory_states, *m_context); }
     auto get_memory_transitions() const noexcept { return make_view(get_data().memory_transitions, *m_context); }

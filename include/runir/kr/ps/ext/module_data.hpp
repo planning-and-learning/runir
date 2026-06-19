@@ -6,6 +6,7 @@
 #include "runir/kr/ps/ext/module_index.hpp"
 #include "runir/kr/ps/ext/register_index.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
+#include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/rule_index.hpp"
 #include "runir/kr/ps/ext/rule_variant_index.hpp"
 
@@ -28,6 +29,9 @@ struct Data<runir::kr::ps::ext::Module>
     IndexList<runir::kr::ps::ext::Argument<runir::kr::dl::BooleanTag>> boolean_arguments;
     IndexList<runir::kr::ps::ext::Argument<runir::kr::dl::NumericalTag>> numerical_arguments;
     IndexList<runir::kr::ps::ext::Register> registers;
+    IndexList<runir::kr::ps::ext::Feature<runir::kr::dl::ConceptTag>> concept_features;
+    IndexList<runir::kr::ps::ext::Feature<runir::kr::ps::dl::BooleanFeature>> boolean_features;
+    IndexList<runir::kr::ps::ext::Feature<runir::kr::ps::dl::NumericalFeature>> numerical_features;
     Index<runir::kr::ps::ext::MemoryState> entry_memory_state;
     IndexList<runir::kr::ps::ext::MemoryState> memory_states;
     IndexMatrix<runir::kr::ps::ext::RuleVariant> memory_transitions;
@@ -44,6 +48,9 @@ struct Data<runir::kr::ps::ext::Module>
         ygg::clear(boolean_arguments);
         ygg::clear(numerical_arguments);
         ygg::clear(registers);
+        ygg::clear(concept_features);
+        ygg::clear(boolean_features);
+        ygg::clear(numerical_features);
         ygg::clear(entry_memory_state);
         ygg::clear(memory_states);
         ygg::clear(memory_transitions);
@@ -58,6 +65,9 @@ struct Data<runir::kr::ps::ext::Module>
                         boolean_arguments,
                         numerical_arguments,
                         registers,
+                        concept_features,
+                        boolean_features,
+                        numerical_features,
                         entry_memory_state,
                         memory_states,
                         memory_transitions);
@@ -70,6 +80,9 @@ struct Data<runir::kr::ps::ext::Module>
                         boolean_arguments,
                         numerical_arguments,
                         registers,
+                        concept_features,
+                        boolean_features,
+                        numerical_features,
                         entry_memory_state,
                         memory_states,
                         memory_transitions);
