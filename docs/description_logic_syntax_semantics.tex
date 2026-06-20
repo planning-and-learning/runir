@@ -9,7 +9,7 @@
 
 \newcommand{\I}{\mathcal{I}}
 \newcommand{\DeltaI}{\Delta^{\I}}
-\newcommand{\sem}[1]{#1^{\I}}
+\newcommand{\sem}[1]{\left(#1\right)^{\I}}
 \newcommand{\Nat}{\mathbb{N}}
 \newenvironment{compacttable}
   {\begingroup\setlength{\tabcolsep}{3pt}}
@@ -28,7 +28,7 @@ Let $\I$ be an interpretation with non-empty domain $\DeltaI$.
 Each atomic concept $A$ is interpreted as a set
 $\sem{A} \subseteq \DeltaI$, each atomic role $R$ as a binary relation
 $\sem{R} \subseteq \DeltaI \times \DeltaI$, and each individual name $a$
-as an element $a^{\I} \in \DeltaI$.
+as an element $\sem{a} \in \DeltaI$.
 
 Concept descriptions denote subsets of $\DeltaI$. Role descriptions denote
 binary relations over $\DeltaI$.
@@ -120,15 +120,15 @@ $\sem{R \doteq S} = \{ a \in \DeltaI \mid \forall b.\,(a,b)\in\sem{R} \Leftright
 
 Role fillers &
 $R:\{a_1,\ldots,a_k\}$ &
-$\sem{R:\{a_1,\ldots,a_k\}} = \{ a \in \DeltaI \mid \{a_1^{\I},\ldots,a_k^{\I}\} \subseteq \{ b \in \DeltaI \mid (a,b)\in\sem{R} \} \}$ \\
+$\sem{R:\{a_1,\ldots,a_k\}} = \{ a \in \DeltaI \mid \{\sem{a_1},\ldots,\sem{a_k}\} \subseteq \{ b \in \DeltaI \mid (a,b)\in\sem{R} \} \}$ \\
 
 One-of &
 $\{a_1,\ldots,a_k\}$ &
-$\sem{\{a_1,\ldots,a_k\}} = \{a_1^{\I},\ldots,a_k^{\I}\}$ \\
+$\sem{\{a_1,\ldots,a_k\}} = \{\sem{a_1},\ldots,\sem{a_k}\}$ \\
 
 Nominal &
 $\{a\}$ &
-$\sem{\{a\}} = \{a^{\I}\}$ \\
+$\sem{\{a\}} = \{\sem{a}\}$ \\
 
 \bottomrule
 \end{longtable}
@@ -243,7 +243,7 @@ $\sem{\neg R} = (\DeltaI \times \DeltaI) \setminus \sem{R}$ \\
 
 Inverse &
 $R^{-}$ &
-$\left(R^{-}\right)^{\I} = \{(b,a)\in\DeltaI\times\DeltaI \mid (a,b)\in\sem{R}\}$ \\
+$\sem{R^{-}} = \{(b,a)\in\DeltaI\times\DeltaI \mid (a,b)\in\sem{R}\}$ \\
 
 Composition &
 $R \circ S$ &
@@ -251,11 +251,11 @@ $\sem{R \circ S} = \{(a,c) \mid \exists b.\,(a,b)\in\sem{R} \land (b,c)\in\sem{S
 
 Transitive closure &
 $R^{+}$ &
-$\left(R^{+}\right)^{\I} = \bigcup_{n\geq 1}(\sem{R})^n$ \\
+$\sem{R^{+}} = \bigcup_{n\geq 1}(\sem{R})^n$ \\
 
 Reflexive-transitive closure &
 $R^{*}$ &
-$\left(R^{*}\right)^{\I} = \bigcup_{n\geq 0}(\sem{R})^n$ \\
+$\sem{R^{*}} = \bigcup_{n\geq 0}(\sem{R})^n$ \\
 
 Role restriction &
 $R|C$ &
