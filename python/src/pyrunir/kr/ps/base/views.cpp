@@ -44,6 +44,11 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_effects", &View::get_effects);
     if constexpr (requires(const View& view) { view.get_rules(); })
         cls.def("get_rules", &View::get_rules);
+    if constexpr (requires(const View& view) { view.template get_features<runir::kr::ps::dl::BooleanFeature>(); })
+    {
+        cls.def("get_boolean_features", [](const View& view) { return view.template get_features<runir::kr::ps::dl::BooleanFeature>(); });
+        cls.def("get_numerical_features", [](const View& view) { return view.template get_features<runir::kr::ps::dl::NumericalFeature>(); });
+    }
     if constexpr (requires(const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context) {
                       { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })

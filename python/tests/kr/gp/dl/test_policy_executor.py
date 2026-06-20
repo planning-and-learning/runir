@@ -24,6 +24,39 @@ from pyrunir.kr.ps.base.dl import (
 )
 
 
+def test_base_sketch_exposes_declared_features(gripper_planning_domain):
+    planning_domain = gripper_planning_domain
+    dl_repository = ConstructorRepositoryFactory().create(planning_domain)
+    sketch_repository = SketchRepositoryFactory().create(dl_repository)
+    sketch = parse_sketch(
+        """
+(:sketch
+  (:features
+    (:numerical
+      (:symbol n_balls)
+      (:description "all balls")
+      (:expression (n_count (c_atomic_state "ball"))))
+    (:numerical
+      (:symbol n_held)
+      (:description "held pairs")
+      (:expression (n_count (r_atomic_state "carry")))))
+  (:rules
+    (:rule
+      (:symbol hold)
+      (:description "hold something")
+      (:expression
+        (:conditions (:greater_zero n_balls))
+        (:effects (:increases n_held))))))
+""",
+        planning_domain,
+        sketch_repository,
+    )
+
+    assert [feature.get_variant().get_symbol() for feature in sketch.get_boolean_features()] == []
+    assert [feature.get_variant().get_symbol() for feature in sketch.get_numerical_features()] == ["n_balls", "n_held"]
+
+
+
 def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_search_context, gripper_planning_domain):
     search_context = ground_gripper_search_context
     planning_domain = gripper_planning_domain

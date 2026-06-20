@@ -64,48 +64,20 @@ std::string get_or_create_name(FeatureNames& names, ygg::View<ygg::Index<runir::
     return name;
 }
 
-template<typename FeatureTag, typename ObservationTag, typename C>
-void collect_feature(
-    FeatureNames& names,
-    ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition)
+template<typename FeatureTag, typename C>
+void append_declared_feature(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C> feature)
 {
-    get_or_create_name(names, condition.get_feature());
-}
-
-template<typename FeatureTag, typename ObservationTag, typename C>
-void collect_feature(FeatureNames& names,
-                     ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> effect)
-{
-    get_or_create_name(names, effect.get_feature());
+    get_or_create_name(names, feature);
 }
 
 template<typename C>
-void collect_features(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C> condition)
-{
-    ygg::visit([&](auto concrete_variant)
-               { ygg::visit([&](auto concrete_condition) { collect_feature(names, concrete_condition); }, concrete_variant.get_variant()); },
-               condition.get_variant());
-}
-
-template<typename C>
-void collect_features(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C> effect)
-{
-    ygg::visit([&](auto concrete_variant)
-               { ygg::visit([&](auto concrete_effect) { collect_feature(names, concrete_effect); }, concrete_variant.get_variant()); },
-               effect.get_variant());
-}
-
-template<typename C>
-FeatureNames collect_features(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> sketch)
+FeatureNames declared_features(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> sketch)
 {
     auto names = FeatureNames {};
-    for (auto rule : sketch.get_rules())
-    {
-        for (auto condition : rule.get_conditions())
-            collect_features(names, condition);
-        for (auto effect : rule.get_effects())
-            collect_features(names, effect);
-    }
+    for (auto feature : sketch.template get_features<runir::kr::ps::dl::BooleanFeature>())
+        append_declared_feature(names, feature);
+    for (auto feature : sketch.template get_features<runir::kr::ps::dl::NumericalFeature>())
+        append_declared_feature(names, feature);
     return names;
 }
 
@@ -226,7 +198,7 @@ std::string rule(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::base::
 template<typename C>
 std::string sketch(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> view)
 {
-    auto names = collect_features(view);
+    auto names = declared_features(view);
     auto os = std::ostringstream {};
 
     os << "(:sketch\n";

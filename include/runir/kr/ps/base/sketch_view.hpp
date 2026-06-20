@@ -5,7 +5,9 @@
 #include "runir/kr/ps/base/rule_view.hpp"
 #include "runir/kr/ps/base/sketch_data.hpp"
 
+#include <concepts>
 #include <tuple>
+#include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/types.hpp>
 
 namespace ygg
@@ -26,6 +28,20 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
 
     auto get_index() const noexcept { return m_handle; }
+
+    template<typename FeatureTag>
+    auto get_features() const noexcept
+    {
+        if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
+            return make_view(get_data().boolean_features, *m_context);
+        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
+            return make_view(get_data().numerical_features, *m_context);
+        else
+        {
+            static_assert(ygg::dependent_false<FeatureTag>::value, "unhandled feature tag in Sketch::get_features");
+        }
+    }
+
     auto get_rules() const noexcept { return make_view(get_data().rules, *m_context); }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }

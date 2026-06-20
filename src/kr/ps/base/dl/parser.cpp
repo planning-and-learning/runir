@@ -535,7 +535,8 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr:
                    tyr::formalism::planning::DomainView domain,
                    Repository& repository,
                    BooleanFeatureMap& boolean_features,
-                   NumericalFeatureMap&)
+                   NumericalFeatureMap&,
+                   ygg::Data<runir::kr::ps::base::Sketch>& sketch_data)
 {
     ygg::Data<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>> concrete_data(
         parse_constructor(node.feature, domain, repository.get_dl_repository()).get_index(),
@@ -545,13 +546,15 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr:
     ygg::Data<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>> data(concrete.get_index());
     auto feature = intern(repository, data);
     boolean_features.emplace(node.symbol, feature.get_index());
+    sketch_data.boolean_features.push_back(feature.get_index());
 }
 
 auto parse_feature(const runir::kr::ps::base::dl::ast::NumericalFeature<runir::kr::BaseFamilyTag>& node,
                    tyr::formalism::planning::DomainView domain,
                    Repository& repository,
                    BooleanFeatureMap&,
-                   NumericalFeatureMap& numerical_features)
+                   NumericalFeatureMap& numerical_features,
+                   ygg::Data<runir::kr::ps::base::Sketch>& sketch_data)
 {
     ygg::Data<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>> concrete_data(
         parse_constructor(node.feature, domain, repository.get_dl_repository()).get_index(),
@@ -561,6 +564,7 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::NumericalFeature<runir::k
     ygg::Data<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>> data(concrete.get_index());
     auto feature = intern(repository, data);
     numerical_features.emplace(node.symbol, feature.get_index());
+    sketch_data.numerical_features.push_back(feature.get_index());
 }
 
 template<typename FeatureTag>
@@ -733,15 +737,15 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
 
     auto boolean_features = BooleanFeatureMap {};
     auto numerical_features = NumericalFeatureMap {};
+    ygg::Data<runir::kr::ps::base::Sketch> data;
 
     for (const auto& feature : ast.features)
-        boost::apply_visitor([&](const auto& arg) { parse_feature(arg, domain, repository, boolean_features, numerical_features); }, feature.get());
+        boost::apply_visitor([&](const auto& arg) { parse_feature(arg, domain, repository, boolean_features, numerical_features, data); }, feature.get());
 
     auto rules = ygg::IndexList<runir::kr::ps::base::Rule> {};
     for (const auto& rule : ast.rules)
         rules.push_back(parse_rule(rule, repository, boolean_features, numerical_features).get_index());
 
-    ygg::Data<runir::kr::ps::base::Sketch> data;
     data.rules = std::move(rules);
     return intern(repository, data);
 }
