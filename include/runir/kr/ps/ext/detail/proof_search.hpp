@@ -50,14 +50,18 @@ auto enumerate_load_steps(const EvaluationContext<Kind>& context) -> std::vector
                         const auto denotation = evaluate(rule.get_concept(), eval_context);
                         if (denotation.begin() == denotation.end())
                         {
-                            result.emplace_back(ModuleProgramOutcome::FAILURE, context);
+                            auto step = ModuleProofStep<Kind>(ModuleProgramOutcome::FAILURE, context);
+                            step.rule = rule_variant;
+                            result.push_back(std::move(step));
                             return;
                         }
 
                         auto target = context;
                         target.set(rule.get_register().get_identifier(), (*denotation.begin()).get_index());
                         target.set_memory_state(rule.get_target());
-                        result.emplace_back(ModuleProgramOutcome::APPLIED, std::move(target));
+                        auto step = ModuleProofStep<Kind>(ModuleProgramOutcome::APPLIED, std::move(target));
+                        step.rule = rule_variant;
+                        result.push_back(std::move(step));
                     }
                 },
                 rule_variant.get_variant());
@@ -289,13 +293,17 @@ auto execute_greedy_solution(const runir::datasets::TaskSearchContext<Kind>& sea
         while (true)
         {
             const auto load_source = current_vertex;
-            const auto load_status = execute_next_load(context);
-            if (load_status == LoadExecutionStatus::STABLE)
+            const auto load_steps = enumerate_load_steps(context);
+            if (load_steps.empty())
                 break;
+
+            const auto& load_step = load_steps.front();
+            const auto load_status = load_step.status == ModuleProgramOutcome::APPLIED ? LoadExecutionStatus::APPLIED : LoadExecutionStatus::EMPTY_DENOTATION;
+            context = load_step.context;
 
             const auto terminal = load_status != LoadExecutionStatus::APPLIED;
             const auto [target, created] = proof.get_or_create_vertex(context, InternalMemoryState(context.get_memory_state()), false, !terminal, terminal);
-            const auto edge = proof.add_edge(load_source, target, std::nullopt);
+            const auto edge = proof.add_edge(load_source, target, std::nullopt, load_step.rule);
             current_vertex = target;
 
             if (load_status == LoadExecutionStatus::EMPTY_DENOTATION)
