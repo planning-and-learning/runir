@@ -1,14 +1,14 @@
 # Import all classes and functions for better IDE support
 
+from . import semantics
+
 from ...._pyrunir.kr.dl.uns import (
+    BooleanConstructorIndex,
+    ConceptConstructorIndex,
     ConstructorRepository,
     ConstructorRepositoryFactory,
-    ConceptConstructorIndex,
-    RoleConstructorIndex,
-    BooleanConstructorIndex,
     NumericalConstructorIndex,
-    parse_concept,
-    parse_role,
+    RoleConstructorIndex,
     parse_boolean,
     parse_numerical,
 )

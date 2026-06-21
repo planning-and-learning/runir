@@ -9,14 +9,6 @@ namespace runir::kr::dl::uns
 void bind_parser(nb::module_& m)
 {
     m.def(
-        "parse_concept",
-        [](const std::string& description) { (void) runir::kr::dl::grammar::parser::uns::parse_concept_ast(description); },
-        nb::arg("description"));
-    m.def(
-        "parse_role",
-        [](const std::string& description) { (void) runir::kr::dl::grammar::parser::uns::parse_role_ast(description); },
-        nb::arg("description"));
-    m.def(
         "parse_boolean",
         [](const std::string& description) { (void) runir::kr::dl::grammar::parser::uns::parse_boolean_ast(description); },
         nb::arg("description"));
