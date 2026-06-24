@@ -120,6 +120,12 @@ public:
     void set_memory_state(MemoryStateView memory_state) noexcept { m_memory_state = memory_state; }
     void set_memory_state(ygg::Index<MemoryState> memory_state) noexcept { m_memory_state = MemoryStateView(memory_state, get_repository()); }
 
+    void set_registers(ConceptRegisters concept_registers, RoleRegisters role_registers) noexcept
+    {
+        m_concept_registers = std::move(concept_registers);
+        m_role_registers = std::move(role_registers);
+    }
+
     std::optional<ModuleView> find_module(const std::string& name) const
     {
         for (auto module : m_modules)

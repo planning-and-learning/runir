@@ -12,6 +12,7 @@
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/module_program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <runir/kr/ps/ext/successor_expander.hpp>
 #include <type_traits>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/planning.hpp>
@@ -1497,8 +1498,8 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
                                                                 denotation_repository);
     const auto initial_state = context.get_state().get_index();
 
-    EXPECT_EQ(kr::ps::ext::detail::execute_next_load(context), kr::ps::ext::detail::LoadExecutionStatus::APPLIED);
-    EXPECT_EQ(kr::ps::ext::detail::execute_next_load(context), kr::ps::ext::detail::LoadExecutionStatus::STABLE);
+    EXPECT_EQ(kr::ps::ext::detail::execute_load(load, context), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
+    EXPECT_EQ(kr::ps::ext::detail::execute_load(load, context), kr::ps::ext::detail::RuleExecutionStatus::NOT_APPLICABLE);
     EXPECT_EQ(context.get_state().get_index(), initial_state);
     EXPECT_EQ(context.get_memory_state().get_index(), target.get_index());
     ASSERT_TRUE(context.concept_registers()[0]);
@@ -1928,8 +1929,12 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     const auto initial_node = search_context->successor_generator->get_initial_node();
     const auto successors = search_context->successor_generator->get_labeled_successor_nodes(initial_node);
 
-    EXPECT_EQ(kr::ps::ext::detail::execute_next_immediate_external_rule(context, successors), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
-    EXPECT_EQ(context.get_memory_state().get_index(), move_target.get_index());
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(*search_context, initial_node);
+    const auto options = kr::ps::ext::detail::ModuleExecutionOptions<p::GroundTag> {};
+    const auto steps = expander.control_steps(*search_context, context, options);
+    ASSERT_FALSE(steps.empty());
+    EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
+    EXPECT_EQ(steps.front().context.get_memory_state().get_index(), move_target.get_index());
 }
 
 TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)

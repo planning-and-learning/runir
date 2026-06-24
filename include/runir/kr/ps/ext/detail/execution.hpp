@@ -26,16 +26,7 @@ enum class RuleExecutionStatus
     NOT_APPLICABLE,
     EMPTY_DENOTATION,
     NO_APPLICABLE_ACTION,
-    MALFORMED_CALL,
-    NO_APPLICABLE_RULE,
-    RETURNED_FROM_CALL
-};
-
-enum class LoadExecutionStatus
-{
-    STABLE,
-    APPLIED,
-    EMPTY_DENOTATION
+    MALFORMED_CALL
 };
 
 template<typename C, tyr::planning::TaskKind Kind>
@@ -82,40 +73,6 @@ RuleExecutionStatus execute_load(ygg::View<ygg::Index<Rule<LoadTag>>, C> rule, E
 }
 
 template<typename C, tyr::planning::TaskKind Kind>
-RuleExecutionStatus execute_load(ygg::View<ygg::Index<RuleVariant>, C> rule, EvaluationContext<Kind>& context)
-{
-    return ygg::visit(
-        [&](auto concrete_rule)
-        {
-            using RuleView = std::decay_t<decltype(concrete_rule)>;
-            if constexpr (std::same_as<RuleView, ygg::View<ygg::Index<Rule<LoadTag>>, C>>)
-                return execute_load(concrete_rule, context);
-            else
-                return RuleExecutionStatus::NOT_APPLICABLE;
-        },
-        rule.get_variant());
-}
-
-template<tyr::planning::TaskKind Kind>
-LoadExecutionStatus execute_next_load(EvaluationContext<Kind>& context)
-{
-    const auto module = context.get_module();
-    for (const auto& transition : module.get_memory_transitions())
-    {
-        for (auto rule : transition)
-        {
-            const auto status = execute_load(rule, context);
-            if (status == RuleExecutionStatus::APPLIED)
-                return LoadExecutionStatus::APPLIED;
-            if (status == RuleExecutionStatus::EMPTY_DENOTATION)
-                return LoadExecutionStatus::EMPTY_DENOTATION;
-        }
-    }
-
-    return LoadExecutionStatus::STABLE;
-}
-
-template<typename C, tyr::planning::TaskKind Kind>
 auto evaluate_do_arguments(ygg::View<ygg::Index<Rule<DoTag>>, C> rule, EvaluationContext<Kind>& context)
 {
     auto action_arguments = rule.get_action_arguments();
@@ -145,28 +102,37 @@ bool action_matches_do_arguments(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
     return true;
 }
 
+// Whether a Do rule selects the concrete transition (context state -> target_state) taken by
+// `action`: memory match + conditions on the source + action name/argument match + effects
+// across the transition. The single source of truth shared by the executor (select_do_successor)
+// and the public successor expander (ext/successor_expander.hpp).
+template<typename C, tyr::planning::TaskKind Kind>
+bool do_rule_matches(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
+                     EvaluationContext<Kind>& context,
+                     tyr::formalism::planning::GroundActionView action,
+                     const tyr::planning::StateView<Kind>& target_state)
+{
+    if (!has_current_source(rule, context))
+        return false;
+
+    if (!conditions_are_compatible(rule, context))
+        return false;
+
+    const auto denotations = evaluate_do_arguments(rule, context);
+    if (!action_matches_do_arguments(rule, action, denotations))
+        return false;
+
+    return context.with_dl_transition_context(target_state, [&](auto& dl_context) { return is_compatible_with(rule, dl_context); });
+}
+
 template<typename C, tyr::planning::TaskKind Kind>
 std::optional<tyr::planning::LabeledNode<Kind>> select_do_successor(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
                                                                     EvaluationContext<Kind>& context,
                                                                     const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
 {
-    if (!has_current_source(rule, context))
-        return std::nullopt;
-
-    if (!conditions_are_compatible(rule, context))
-        return std::nullopt;
-
-    const auto denotations = evaluate_do_arguments(rule, context);
     for (const auto& successor : successors)
-    {
-        if (!action_matches_do_arguments(rule, successor.label, denotations))
-            continue;
-
-        if (!context.with_dl_transition_context(successor.node.get_state(), [&](auto& dl_context) { return is_compatible_with(rule, dl_context); }))
-            continue;
-
-        return successor;
-    }
+        if (do_rule_matches(rule, context, successor.label, successor.node.get_state()))
+            return successor;
 
     return std::nullopt;
 }
@@ -267,33 +233,6 @@ std::optional<tyr::planning::LabeledNode<Kind>> select_sketch_successor(ygg::Vie
     return std::nullopt;
 }
 
-template<tyr::planning::TaskKind Kind>
-std::optional<RuleVariantView> find_applicable_sketch_rule(EvaluationContext<Kind>& context, const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
-{
-    const auto module = context.get_module();
-    for (const auto& transition : module.get_memory_transitions())
-    {
-        for (auto rule : transition)
-        {
-            const auto applicable = ygg::visit(
-                [&](auto concrete_rule)
-                {
-                    using RuleView = std::decay_t<decltype(concrete_rule)>;
-                    if constexpr (std::same_as<RuleView, ygg::View<ygg::Index<Rule<SketchTag>>, Repository>>)
-                        return (concrete_rule.get_effects().empty() && conditions_are_compatible(concrete_rule, context))
-                               || select_sketch_successor(concrete_rule, context, successors).has_value();
-                    else
-                        return false;
-                },
-                rule.get_variant());
-            if (applicable)
-                return rule;
-        }
-    }
-
-    return std::nullopt;
-}
-
 template<typename C, tyr::planning::TaskKind Kind>
 RuleExecutionStatus execute_sketch(ygg::View<ygg::Index<Rule<SketchTag>>, C> rule,
                                    EvaluationContext<Kind>& context,
@@ -315,32 +254,6 @@ RuleExecutionStatus execute_sketch(ygg::View<ygg::Index<Rule<SketchTag>>, C> rul
     context.set_state(successor->node.get_state());
     context.set_memory_state(rule.get_target());
     return RuleExecutionStatus::APPLIED;
-}
-
-template<tyr::planning::TaskKind Kind>
-RuleExecutionStatus execute_next_sketch_rule(EvaluationContext<Kind>& context, const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
-{
-    const auto module = context.get_module();
-    for (const auto& transition : module.get_memory_transitions())
-    {
-        for (auto rule : transition)
-        {
-            const auto status = ygg::visit(
-                [&](auto concrete_rule)
-                {
-                    using RuleView = std::decay_t<decltype(concrete_rule)>;
-                    if constexpr (std::same_as<RuleView, ygg::View<ygg::Index<Rule<SketchTag>>, Repository>>)
-                        return execute_sketch(concrete_rule, context, successors);
-                    else
-                        return RuleExecutionStatus::NOT_APPLICABLE;
-                },
-                rule.get_variant());
-            if (status != RuleExecutionStatus::NOT_APPLICABLE)
-                return status;
-        }
-    }
-
-    return RuleExecutionStatus::NO_APPLICABLE_RULE;
 }
 
 template<tyr::planning::TaskKind Kind>
@@ -423,70 +336,6 @@ RuleExecutionStatus execute_call(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, E
                          std::move(arguments.boolean_arguments),
                          std::move(arguments.numerical_arguments));
     return RuleExecutionStatus::APPLIED;
-}
-
-template<typename C, tyr::planning::TaskKind Kind>
-RuleExecutionStatus execute_immediate_external_rule(ygg::View<ygg::Index<RuleVariant>, C> rule,
-                                                    EvaluationContext<Kind>& context,
-                                                    const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
-{
-    return ygg::visit(
-        [&](auto concrete_rule)
-        {
-            using RuleView = std::decay_t<decltype(concrete_rule)>;
-            if constexpr (std::same_as<RuleView, ygg::View<ygg::Index<Rule<DoTag>>, C>>)
-                return execute_do(concrete_rule, context, successors);
-            else if constexpr (std::same_as<RuleView, ygg::View<ygg::Index<Rule<CallTag>>, C>>)
-                return execute_call(concrete_rule, context);
-            else
-                return RuleExecutionStatus::NOT_APPLICABLE;
-        },
-        rule.get_variant());
-}
-
-template<tyr::planning::TaskKind Kind>
-RuleExecutionStatus execute_next_immediate_external_rule(EvaluationContext<Kind>& context, const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
-{
-    const auto module = context.get_module();
-    for (const auto& transition : module.get_memory_transitions())
-    {
-        for (auto rule : transition)
-        {
-            const auto status = execute_immediate_external_rule(rule, context, successors);
-            if (status != RuleExecutionStatus::NOT_APPLICABLE)
-                return status;
-        }
-    }
-
-    return RuleExecutionStatus::NO_APPLICABLE_RULE;
-}
-
-template<typename RuleView, tyr::planning::TaskKind Kind>
-bool is_applicable_immediate_external_rule(RuleView rule, EvaluationContext<Kind>& context)
-{
-    if constexpr (std::same_as<RuleView, ygg::View<ygg::Index<Rule<DoTag>>, Repository>>
-                  || std::same_as<RuleView, ygg::View<ygg::Index<Rule<CallTag>>, Repository>>)
-        return has_current_source(rule, context) && conditions_are_compatible(rule, context);
-    else
-        return false;
-}
-
-template<tyr::planning::TaskKind Kind>
-std::optional<RuleVariantView> find_applicable_immediate_external_rule(EvaluationContext<Kind>& context)
-{
-    const auto module = context.get_module();
-    for (const auto& transition : module.get_memory_transitions())
-    {
-        for (auto rule : transition)
-        {
-            const auto applicable =
-                ygg::visit([&](auto concrete_rule) { return is_applicable_immediate_external_rule(concrete_rule, context); }, rule.get_variant());
-            if (applicable)
-                return rule;
-        }
-    }
-
-    return std::nullopt;
 }
 
 }  // namespace runir::kr::ps::ext::detail

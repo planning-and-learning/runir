@@ -133,6 +133,7 @@ from ...._pyrunir.kr.ps.ext import (
     UnchangedNumericalEffect,
     UnchangedNumericalEffectIndex,
     ceg_structural_termination,
+    SuccessorExpander,
     find_ground_solution,
     find_lifted_solution,
     parse_module,

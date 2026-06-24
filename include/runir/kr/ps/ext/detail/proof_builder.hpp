@@ -4,6 +4,7 @@
 #include "runir/graphs/algorithms.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
+#include "runir/kr/ps/ext/successor_expander.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -68,23 +69,7 @@ private:
     ModuleProgramProofResults<Kind> m_result;
     ModuleProgramProofGraphBuilder<Kind> m_builder;
     ygg::UnorderedMap<ModuleProgramProofVertexLabel<Kind>, graphs::VertexIndex> m_vertex_to_index;
-    tyr::planning::ConjunctiveGoalStrategy<Kind> m_task_goal_strategy;
-    tyr::planning::StateView<Kind> m_initial_state;
-    bool m_static_goal_satisfied;
-
-    ModuleProgramProofVertexLabel<Kind>
-    make_vertex_label(const EvaluationContext<Kind>& context, MemoryStateVariant memory_state, bool is_initial, bool is_alive, bool is_unsolvable)
-    {
-        auto annotated =
-            datasets::AnnotatedStateGraphVertexLabel<Kind> { context.get_state(),
-                                                             is_goal(context.get_state()) ? ygg::float_t(0) : std::numeric_limits<ygg::float_t>::infinity(),
-                                                             is_initial,
-                                                             is_goal(context.get_state()),
-                                                             is_alive,
-                                                             is_unsolvable };
-        auto extended = ExtendedState<Kind> { annotated, std::move(memory_state), context.concept_registers(), context.role_registers() };
-        return ModuleProgramProofVertexLabel<Kind> { std::move(extended), context.get_module() };
-    }
+    SuccessorExpander<Kind> m_expander;
 
 public:
     ModuleProgramProofBuilder(const runir::datasets::TaskSearchContext<Kind>& search_context,
@@ -93,21 +78,25 @@ public:
         m_result(),
         m_builder(),
         m_vertex_to_index(),
-        m_task_goal_strategy(*search_context.task),
-        m_initial_state(initial_node.get_state()),
-        m_static_goal_satisfied(m_task_goal_strategy.is_static_goal_satisfied(*search_context.task))
+        m_expander(search_context, initial_node)
     {
         m_result.context_owner = std::move(context_owner);
     }
 
-    bool is_goal(const tyr::planning::StateView<Kind>& state)
+    bool is_goal(const tyr::planning::StateView<Kind>& state) { return m_expander.is_goal(state); }
+
+    auto internal_steps(const EvaluationContext<Kind>& context) { return m_expander.internal_steps(context); }
+
+    auto control_steps(const runir::datasets::TaskSearchContext<Kind>& search_context,
+                       const EvaluationContext<Kind>& context,
+                       const ModuleExecutionOptions<Kind>& options)
     {
-        return m_static_goal_satisfied && m_task_goal_strategy.is_dynamic_goal_satisfied(m_initial_state, state);
+        return m_expander.control_steps(search_context, context, options);
     }
 
     auto get_or_create_vertex(const EvaluationContext<Kind>& context, MemoryStateVariant memory_state, bool is_initial, bool is_alive, bool is_unsolvable)
     {
-        auto label = make_vertex_label(context, std::move(memory_state), is_initial, is_alive, is_unsolvable);
+        auto label = m_expander.make_vertex_label(context, std::move(memory_state), is_initial, is_alive, is_unsolvable);
         if (const auto it = m_vertex_to_index.find(label); it != m_vertex_to_index.end())
             return std::pair(it->second, false);
 
