@@ -493,6 +493,24 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::MemoryState>, C>>
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::memory_state(view), ctx); }
 };
 
+template<>
+struct fmt::formatter<runir::kr::ps::ext::InternalMemoryState> : fmt::formatter<std::string_view>
+{
+    auto format(const runir::kr::ps::ext::InternalMemoryState& state, format_context& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(fmt::format("internal({})", state.value), ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::ext::ExternalMemoryState> : fmt::formatter<std::string_view>
+{
+    auto format(const runir::kr::ps::ext::ExternalMemoryState& state, format_context& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(fmt::format("external({})", state.value), ctx);
+    }
+};
+
 template<typename FeatureTag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C>> : fmt::formatter<std::string_view>
 {

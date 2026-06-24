@@ -4,8 +4,10 @@
 #include <nanobind/stl/vector.h>
 #include <pyrunir/graphs/graph.hpp>
 #include <runir/datasets/state_graph.hpp>
+#include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
 #include <tyr/planning/declarations.hpp>
+#include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::ps::base
@@ -54,9 +56,11 @@ void bind_sketch_search_options(nb::module_& m, const char* name)
 
 void bind_sketch_executor(nb::module_& m)
 {
-    nb::class_<SketchProofEdgeLabel>(m, "SketchProofEdgeLabel")
-        .def_ro("transition", &SketchProofEdgeLabel::transition)
-        .def_ro("rule", &SketchProofEdgeLabel::rule);
+    auto edge_label = nb::class_<SketchProofEdgeLabel>(m, "SketchProofEdgeLabel")
+                          .def_ro("transition", &SketchProofEdgeLabel::transition)
+                          .def_ro("rule", &SketchProofEdgeLabel::rule);
+    ygg::add_print(edge_label);
+    ygg::add_hash(edge_label);
 
     nb::enum_<SketchProofStatus>(m, "SketchProofStatus")
         .value("SUCCESS", SketchProofStatus::SUCCESS)

@@ -2,9 +2,11 @@
 #define RUNIR_KR_PS_BASE_FORMATTER_HPP_
 
 #include "runir/config.hpp"
+#include "runir/datasets/formatter.hpp"
 #include "runir/kr/ps/base/dl/formatter.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
 #include "runir/kr/ps/base/sketch_executor.hpp"
+#include "runir/kr/ps/base/sketch_proof_graph.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/effect_view.hpp"
@@ -344,6 +346,16 @@ struct fmt::formatter<runir::kr::ps::base::SketchProofResults<Kind>> : fmt::form
     auto format(const runir::kr::ps::base::SketchProofResults<Kind>& result, format_context& ctx) const
     {
         return fmt::formatter<std::string_view>::format(runir::kr::ps::base::format::sketch_proof_results(result), ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::base::SketchProofEdgeLabel> : fmt::formatter<std::string_view>
+{
+    auto format(const runir::kr::ps::base::SketchProofEdgeLabel& label, format_context& ctx) const
+    {
+        const auto text = fmt::format("rule={} transition={}", std::string(label.rule.get_symbol().str()), label.transition);
+        return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
 #endif

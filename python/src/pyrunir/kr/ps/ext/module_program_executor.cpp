@@ -14,6 +14,7 @@
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
 #include <runir/kr/ps/ext/module_program_executor.hpp>
+#include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/node.hpp>
@@ -39,7 +40,7 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
     using Results = ModuleProgramProofResults<Kind>;
     using Options = ModuleProgramSearchOptions<Kind>;
 
-    nb::class_<VertexLabel>(m, (std::string(prefix) + "ModuleProgramProofVertexLabel").c_str())
+    auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ModuleProgramProofVertexLabel").c_str())
         .def_prop_ro("state", [](const VertexLabel& label) { return label.extended_state.annotated_state.state; })
         .def_prop_ro("memory_state", [](const VertexLabel& label) { return label.extended_state.memory_state; })
         .def_prop_ro("concept_registers", [](const VertexLabel& label) { return label.extended_state.concept_registers; })
@@ -50,6 +51,8 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
         .def_prop_ro("is_goal", [](const VertexLabel& label) { return label.extended_state.annotated_state.is_goal; })
         .def_prop_ro("is_alive", [](const VertexLabel& label) { return label.extended_state.annotated_state.is_alive; })
         .def_prop_ro("is_unsolvable", [](const VertexLabel& label) { return label.extended_state.annotated_state.is_unsolvable; });
+    ygg::add_print(vertex_label);
+    ygg::add_hash(vertex_label);
 
     auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ModuleProgramProofGraph").c_str());
     graph.def(nb::init<>());
@@ -111,14 +114,21 @@ struct BoundExpander
 
 void bind_module_program_executor(nb::module_& m)
 {
-    nb::class_<InternalMemoryState>(m, "InternalMemoryState")
-        .def_ro("value", &InternalMemoryState::value);
-    nb::class_<ExternalMemoryState>(m, "ExternalMemoryState")
-        .def_ro("value", &ExternalMemoryState::value);
+    auto internal_memory_state = nb::class_<InternalMemoryState>(m, "InternalMemoryState")
+                                     .def_ro("value", &InternalMemoryState::value);
+    ygg::add_print(internal_memory_state);
+    ygg::add_hash(internal_memory_state);
 
-    nb::class_<ModuleProgramProofEdgeLabel>(m, "ModuleProgramProofEdgeLabel")
-        .def_ro("state_transition", &ModuleProgramProofEdgeLabel::state_transition)
-        .def_ro("rule", &ModuleProgramProofEdgeLabel::rule);
+    auto external_memory_state = nb::class_<ExternalMemoryState>(m, "ExternalMemoryState")
+                                     .def_ro("value", &ExternalMemoryState::value);
+    ygg::add_print(external_memory_state);
+    ygg::add_hash(external_memory_state);
+
+    auto edge_label = nb::class_<ModuleProgramProofEdgeLabel>(m, "ModuleProgramProofEdgeLabel")
+                          .def_ro("state_transition", &ModuleProgramProofEdgeLabel::state_transition)
+                          .def_ro("rule", &ModuleProgramProofEdgeLabel::rule);
+    ygg::add_print(edge_label);
+    ygg::add_hash(edge_label);
 
     nb::enum_<ModuleProgramProofStatus>(m, "ModuleProgramProofStatus")
         .value("SUCCESS", ModuleProgramProofStatus::SUCCESS)
