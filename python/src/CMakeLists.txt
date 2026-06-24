@@ -85,6 +85,7 @@ nanobind_add_module(_pyrunir NB_SHARED
     pyrunir/kr/uns/indices.cpp
     pyrunir/kr/uns/repository.cpp
     pyrunir/kr/uns/views.cpp
+    pyrunir/kr/uns/dl/classifier_factory.cpp
     pyrunir/kr/uns/dl/indices.cpp
     pyrunir/kr/uns/dl/module.cpp
     pyrunir/kr/uns/dl/parser.cpp

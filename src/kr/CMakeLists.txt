@@ -20,6 +20,7 @@ add_library(kr SHARED
     ps/ext/dl/parser/parser.cpp
     ps/ext/dl/parser.cpp
     ps/ext/module_program_executor.cpp
+    uns/dl/classifier_factory.cpp
     uns/dl/parser.cpp
     uns/dl/parser/parser.cpp
     uns/dl/parser/parser_instantiations.cpp
