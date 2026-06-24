@@ -49,10 +49,7 @@ std::string constructor_components(std::string_view keyword, Components&&... com
 {
     auto os = std::ostringstream {};
     os << keyword;
-    {
-        ygg::IndentScope scope(os);
-        ((os << '\n', append_component(os, fmt::format("{}", std::forward<Components>(components)))), ...);
-    }
+    ((os << ' ' << fmt::format("{}", std::forward<Components>(components))), ...);
     return os.str();
 }
 
@@ -61,11 +58,8 @@ std::string constructor_objects(std::string_view keyword, Objects objects)
 {
     auto os = std::ostringstream {};
     os << keyword;
-    {
-        ygg::IndentScope scope(os);
-        for (auto object : objects)
-            os << '\n' << ygg::print_indent << fmt::format("{:?}", std::string(object.get_name().str()));
-    }
+    for (auto object : objects)
+        os << ' ' << fmt::format("{:?}", std::string(object.get_name().str()));
     return os.str();
 }
 
@@ -74,13 +68,9 @@ std::string constructor_objects(std::string_view keyword, Head&& head, Objects o
 {
     auto os = std::ostringstream {};
     os << keyword;
-    {
-        ygg::IndentScope scope(os);
-        os << '\n';
-        append_component(os, fmt::format("{}", std::forward<Head>(head)));
-        for (auto object : objects)
-            os << '\n' << ygg::print_indent << fmt::format("{:?}", std::string(object.get_name().str()));
-    }
+    os << ' ' << fmt::format("{}", std::forward<Head>(head));
+    for (auto object : objects)
+        os << ' ' << fmt::format("{:?}", std::string(object.get_name().str()));
     return os.str();
 }
 

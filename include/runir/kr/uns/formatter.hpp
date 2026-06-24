@@ -68,15 +68,10 @@ std::string classifier(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> view
         }
         os << ygg::print_indent << ")\n";
 
-        os << ygg::print_indent << "(:expression\n";
-        {
-            ygg::IndentScope expression_scope(os);
-            os << ygg::print_indent << "(or";
-            for (auto item : view.get_clauses())
-                os << ' ' << clause(item);
-            os << ")\n";
-        }
-        os << ygg::print_indent << ")\n";
+        os << ygg::print_indent << "(:expression (or";
+        for (auto item : view.get_clauses())
+            os << ' ' << clause(item);
+        os << "))\n";
     }
     os << ")";
     return os.str();

@@ -120,16 +120,10 @@ inline void append_list_section(std::ostream& os, std::string_view name, const s
         return;
     }
 
-    os << ygg::print_indent << fmt::format("(:{}\n", name);
-    {
-        ygg::IndentScope scope(os);
-        for (const auto& value : values)
-        {
-            append_value(os, value);
-            os << "\n";
-        }
-    }
-    os << ygg::print_indent << ")\n";
+    os << ygg::print_indent << fmt::format("(:{}", name);
+    for (const auto& value : values)
+        os << ' ' << value;
+    os << ")\n";
 }
 
 inline void append_value_section(std::ostream& os, std::string_view name, std::string_view value)

@@ -151,13 +151,10 @@ inline void append_list_section(std::ostream& os, std::string_view name, const s
         return;
     }
 
-    os << ygg::print_indent << fmt::format("(:{}\n", name);
-    {
-        ygg::IndentScope scope(os);
-        for (const auto& value : values)
-            os << ygg::print_indent << value << "\n";
-    }
-    os << ygg::print_indent << ")\n";
+    os << ygg::print_indent << fmt::format("(:{}", name);
+    for (const auto& value : values)
+        os << ' ' << value;
+    os << ")\n";
 }
 
 template<typename C>

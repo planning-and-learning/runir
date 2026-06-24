@@ -29,29 +29,12 @@ namespace runir::kr::ps::ext::dl::format
 
 inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
 
-inline void append_component(std::ostream& os, std::string_view component)
-{
-    auto stream = std::istringstream(std::string(component));
-    auto line = std::string {};
-    auto first = true;
-    while (std::getline(stream, line))
-    {
-        if (!first)
-            os << '\n';
-        os << ygg::print_indent << line;
-        first = false;
-    }
-}
-
 template<typename... Components>
 std::string constructor_expression(std::string_view keyword, Components&&... components)
 {
     auto os = std::ostringstream {};
     os << '(' << keyword;
-    {
-        ygg::IndentScope scope(os);
-        ((os << '\n', append_component(os, fmt::format("{}", std::forward<Components>(components)))), ...);
-    }
+    ((os << ' ' << fmt::format("{}", std::forward<Components>(components))), ...);
     os << ')';
     return os.str();
 }
@@ -61,11 +44,8 @@ std::string constructor_expression_objects(std::string_view keyword, Objects obj
 {
     auto os = std::ostringstream {};
     os << '(' << keyword;
-    {
-        ygg::IndentScope scope(os);
-        for (auto object : objects)
-            os << '\n' << ygg::print_indent << fmt::format("{:?}", std::string(object.get_name().str()));
-    }
+    for (auto object : objects)
+        os << ' ' << fmt::format("{:?}", std::string(object.get_name().str()));
     os << ')';
     return os.str();
 }
@@ -75,13 +55,9 @@ std::string constructor_expression_objects(std::string_view keyword, Head&& head
 {
     auto os = std::ostringstream {};
     os << '(' << keyword;
-    {
-        ygg::IndentScope scope(os);
-        os << '\n';
-        append_component(os, fmt::format("{}", std::forward<Head>(head)));
-        for (auto object : objects)
-            os << '\n' << ygg::print_indent << fmt::format("{:?}", std::string(object.get_name().str()));
-    }
+    os << ' ' << fmt::format("{}", std::forward<Head>(head));
+    for (auto object : objects)
+        os << ' ' << fmt::format("{:?}", std::string(object.get_name().str()));
     os << ')';
     return os.str();
 }
