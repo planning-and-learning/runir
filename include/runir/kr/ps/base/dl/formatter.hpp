@@ -30,48 +30,22 @@ inline std::string symbol_section(std::string_view value) { return fmt::format("
 
 inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
 
-inline void append_component(std::ostream& os, std::string_view component)
-{
-    auto stream = std::istringstream(std::string(component));
-    auto line = std::string {};
-    auto first = true;
-    while (std::getline(stream, line))
-    {
-        if (!first)
-            os << '\n';
-        os << ygg::print_indent << line;
-        first = false;
-    }
-}
-
 template<typename... Components>
 std::string constructor_components(std::string_view keyword, Components&&... components)
 {
-    auto os = std::ostringstream {};
-    os << keyword;
-    ((os << ' ' << fmt::format("{}", std::forward<Components>(components))), ...);
-    return os.str();
+    return runir::formatting::components(keyword, std::forward<Components>(components)...);
 }
 
 template<typename Objects>
 std::string constructor_objects(std::string_view keyword, Objects objects)
 {
-    auto os = std::ostringstream {};
-    os << keyword;
-    for (auto object : objects)
-        os << ' ' << fmt::format("{:?}", std::string(object.get_name().str()));
-    return os.str();
+    return runir::formatting::components_with_objects(keyword, objects);
 }
 
 template<typename Head, typename Objects>
 std::string constructor_objects(std::string_view keyword, Head&& head, Objects objects)
 {
-    auto os = std::ostringstream {};
-    os << keyword;
-    os << ' ' << fmt::format("{}", std::forward<Head>(head));
-    for (auto object : objects)
-        os << ' ' << fmt::format("{:?}", std::string(object.get_name().str()));
-    return os.str();
+    return runir::formatting::components_with_objects(keyword, std::forward<Head>(head), objects);
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
@@ -292,13 +266,7 @@ void append_feature(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::Concre
         ygg::IndentScope scope(os);
         os << ygg::print_indent << symbol_section(std::string(view.get_symbol().str())) << "\n";
         os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(view.get_description().str()))) << "\n";
-        os << ygg::print_indent << "(:expression\n";
-        {
-            ygg::IndentScope expression_scope(os);
-            append_component(os, constructor(view.get_feature()));
-            os << "\n";
-        }
-        os << ygg::print_indent << ")\n";
+        os << ygg::print_indent << fmt::format("(:expression {})", constructor(view.get_feature())) << "\n";
     }
     os << ygg::print_indent << ")";
 }

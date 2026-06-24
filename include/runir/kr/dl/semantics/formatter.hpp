@@ -5,14 +5,13 @@
 #include "runir/formatter.hpp"
 #include "runir/kr/dl/ext/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
-#include "runir/kr/dl/uns/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
+#include "runir/kr/dl/uns/declarations.hpp"
 
 #include <cstddef>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -22,7 +21,6 @@
 #include <yggdrasil/formatting/cista_formatters.hpp>
 #include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 #include <yggdrasil/formatting/formatter.hpp>
-#include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::dl::semantics::format
 {
@@ -32,40 +30,19 @@ inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::
 template<typename... Components>
 std::string constructor(std::string_view keyword, Components&&... components)
 {
-    auto os = std::ostringstream {};
-    os << fmt::format("@{}", keyword);
-    {
-        ygg::IndentScope scope(os);
-        ((os << '\n' << ygg::print_indent << fmt::format("{}", std::forward<Components>(components))), ...);
-    }
-    return os.str();
+    return runir::formatting::components(fmt::format("@{}", keyword), std::forward<Components>(components)...);
 }
 
 template<typename Objects>
 std::string constructor_with_objects(std::string_view keyword, Objects objects)
 {
-    auto os = std::ostringstream {};
-    os << fmt::format("@{}", keyword);
-    {
-        ygg::IndentScope scope(os);
-        for (auto object : objects)
-            os << '\n' << ygg::print_indent << fmt::format("{:?}", std::string(object.get_name().str()));
-    }
-    return os.str();
+    return runir::formatting::components_with_objects(fmt::format("@{}", keyword), objects);
 }
 
 template<typename Head, typename Objects>
 std::string constructor_with_objects(std::string_view keyword, Head&& head, Objects objects)
 {
-    auto os = std::ostringstream {};
-    os << fmt::format("@{}", keyword);
-    {
-        ygg::IndentScope scope(os);
-        os << '\n' << ygg::print_indent << fmt::format("{}", std::forward<Head>(head));
-        for (auto object : objects)
-            os << '\n' << ygg::print_indent << fmt::format("{:?}", std::string(object.get_name().str()));
-    }
-    return os.str();
+    return runir::formatting::components_with_objects(fmt::format("@{}", keyword), std::forward<Head>(head), objects);
 }
 
 template<runir::kr::dl::CategoryTag Category>

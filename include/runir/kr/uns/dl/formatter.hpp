@@ -2,6 +2,7 @@
 #define RUNIR_KR_UNS_DL_FORMATTER_HPP_
 
 #include "runir/config.hpp"
+#include "runir/formatter.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/uns/declarations.hpp"
@@ -38,31 +39,19 @@ inline void append_component(std::ostream& os, std::string_view component)
 template<typename... Components>
 std::string constructor_components(std::string_view keyword, Components&&... components)
 {
-    auto os = std::ostringstream {};
-    os << keyword;
-    ((os << ' ' << fmt::format("{}", std::forward<Components>(components))), ...);
-    return os.str();
+    return runir::formatting::components(keyword, std::forward<Components>(components)...);
 }
 
 template<typename Objects>
 std::string constructor_objects(std::string_view keyword, Objects objects)
 {
-    auto os = std::ostringstream {};
-    os << keyword;
-    for (auto object : objects)
-        os << ' ' << fmt::format("{:?}", std::string(object.get_name().str()));
-    return os.str();
+    return runir::formatting::components_with_objects(keyword, objects);
 }
 
 template<typename Head, typename Objects>
 std::string constructor_objects(std::string_view keyword, Head&& head, Objects objects)
 {
-    auto os = std::ostringstream {};
-    os << keyword;
-    os << ' ' << fmt::format("{}", std::forward<Head>(head));
-    for (auto object : objects)
-        os << ' ' << fmt::format("{:?}", std::string(object.get_name().str()));
-    return os.str();
+    return runir::formatting::components_with_objects(keyword, std::forward<Head>(head), objects);
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
