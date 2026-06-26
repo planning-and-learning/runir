@@ -63,11 +63,31 @@ TEST(RunirTests, UnsClassifierParsesAndClassifies)
     const auto description = R"((:classifier
         (:symbol c0) ; classifier symbol comment
         (:features
-            (:boolean (:symbol some_ball) ; feature comment
-                (:expression (b_nonempty (c_top))))
-            (:boolean (:symbol no_object) (:expression (b_not (b_nonempty (c_top)))))
+            (:boolean
+                (:symbol some_ball) ; feature comment
+                (:expression
+                    (b_nonempty
+                        (c_top)
+                    )
+                )
+            )
+            (:boolean
+                (:symbol no_object)
+                (:expression
+                    (b_not
+                        (b_nonempty
+                            (c_top)
+                        )
+                    )
+                )
+            )
         )
-        (:expression (or (and some_ball (not no_object)) (and no_object)))
+        (:expression
+            (or
+                (and some_ball (not no_object))
+                (and no_object)
+            )
+        )
     ))";
 
     auto classifier = runir::kr::uns::dl::parse_classifier(description, fixture.domain(), *fixture.repository);
@@ -102,8 +122,21 @@ TEST(RunirTests, UnsClassifierInterningIsStructural)
 
     const auto description = R"((:classifier
         (:symbol c0) ; classifier symbol comment
-        (:features (:boolean (:symbol a) (:expression (b_nonempty (c_top)))))
-        (:expression (or (and a)))
+        (:features
+            (:boolean
+                (:symbol a)
+                (:expression
+                    (b_nonempty
+                        (c_top)
+                    )
+                )
+            )
+        )
+        (:expression
+            (or
+                (and a)
+            )
+        )
     ))";
 
     auto first = runir::kr::uns::dl::parse_classifier(description, fixture.domain(), *fixture.repository);
@@ -117,8 +150,21 @@ TEST(RunirTests, UnsClassifierRejectsUnknownFeatureSymbol)
 
     const auto description = R"((:classifier
         (:symbol c0) ; classifier symbol comment
-        (:features (:boolean (:symbol a) (:expression (b_nonempty (c_top)))))
-        (:expression (or (and b)))
+        (:features
+            (:boolean
+                (:symbol a)
+                (:expression
+                    (b_nonempty
+                        (c_top)
+                    )
+                )
+            )
+        )
+        (:expression
+            (or
+                (and b)
+            )
+        )
     ))";
 
     EXPECT_ANY_THROW({

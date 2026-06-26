@@ -105,26 +105,54 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 
     const auto description = std::string { R"(
 (:sketch
-  (:features
-    (:boolean
-      (:symbol r) ; feature comment
-      (:expression
-        (b_nonempty (c_atomic_state "ball"))))
-    (:numerical
-      (:symbol c)
-      (:expression
-        (n_count (c_atomic_state "ball")))))
-  (:rules
-    (:rule
-      (:symbol ready-rule) ; rule comment
-      (:expression
-        (:conditions (positive r) (equal_zero c))
-        (:effects (negative r) (increases c))))
-    (:rule
-      (:symbol auto1)
-      (:expression
-        (:conditions (negative r) (greater_zero c))
-        (:effects (positive r) (decreases c) (unchanged c))))))
+    (:features
+        (:boolean
+            (:symbol r) ; feature comment
+            (:expression
+                (b_nonempty
+                    (c_atomic_state "ball")
+                )
+            )
+        )
+        (:numerical
+            (:symbol c)
+            (:expression
+                (n_count
+                    (c_atomic_state "ball")
+                )
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol ready-rule) ; rule comment
+            (:expression
+                (:conditions
+                    (positive r)
+                    (equal_zero c)
+                )
+                (:effects
+                    (negative r)
+                    (increases c)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto1)
+            (:expression
+                (:conditions
+                    (negative r)
+                    (greater_zero c)
+                )
+                (:effects
+                    (positive r)
+                    (decreases c)
+                    (unchanged c)
+                )
+            )
+        )
+    )
+)
 )" };
 
     const auto sketch = kr::ps::base::dl::parse_sketch(description, planning_domain.get_domain(), *repository);

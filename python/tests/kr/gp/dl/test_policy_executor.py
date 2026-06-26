@@ -31,19 +31,38 @@ def test_base_sketch_exposes_declared_features(gripper_planning_domain):
     sketch = parse_sketch(
         """
 (:sketch
-  (:features
-    (:numerical
-      (:symbol n_balls)
-      (:expression (n_count (c_atomic_state "ball"))))
-    (:numerical
-      (:symbol n_held)
-      (:expression (n_count (r_atomic_state "carry")))))
-  (:rules
-    (:rule
-      (:symbol hold)
-      (:expression
-        (:conditions (greater_zero n_balls))
-        (:effects (increases n_held))))))
+    (:features
+        (:numerical
+            (:symbol n_balls)
+            (:expression
+                (n_count
+                    (c_atomic_state "ball")
+                )
+            )
+        )
+        (:numerical
+            (:symbol n_held)
+            (:expression
+                (n_count
+                    (r_atomic_state "carry")
+                )
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol hold)
+            (:expression
+                (:conditions
+                    (greater_zero n_balls)
+                )
+                (:effects
+                    (increases n_held)
+                )
+            )
+        )
+    )
+)
 """,
         planning_domain,
         sketch_repository,
