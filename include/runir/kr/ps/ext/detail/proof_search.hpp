@@ -98,12 +98,7 @@ auto execute_greedy_solution(const runir::datasets::TaskSearchContext<Kind>& sea
         if (step.status == ModuleProgramOutcome::OUT_OF_STATES)
             return proof.finish(ModuleProgramProofStatus::OUT_OF_STATES);
 
-        context = step.context;
-        const auto [target, created] = proof.get_or_create_vertex(context, ExternalMemoryState(context.get_memory_state()), false, false, true);
-        static_cast<void>(created);
-        const auto edge = proof.add_edge(source_vertex, target, std::nullopt);
-        proof.add_deadend_transition(edge);
-        proof.add_open_state(target);
+        proof.add_open_state(source_vertex);
         return proof.finish(translate_proof_status(step.status));
     }
 }
@@ -135,13 +130,9 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
     const auto initial_vertex = proof.get_or_create_vertex(initial_context, ExternalMemoryState(initial_context.get_memory_state()), true, true, false).first;
     open.emplace_back(initial_context, initial_vertex);
 
-    auto add_terminal = [&](graphs::VertexIndex source, const EvaluationContext<Kind>& context, MemoryStateVariant memory_state)
+    auto add_terminal = [&](graphs::VertexIndex source)
     {
-        const auto [target, created] = proof.get_or_create_vertex(context, std::move(memory_state), false, false, true);
-        static_cast<void>(created);
-        const auto edge = proof.add_edge(source, target, std::nullopt);
-        proof.add_deadend_transition(edge);
-        proof.add_open_state(target);
+        proof.add_open_state(source);
         failed = true;
     };
 
@@ -169,7 +160,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
                 if (step.status == ModuleProgramOutcome::APPLIED)
                     add_successor(source_vertex, step, InternalMemoryState(step.context.get_memory_state()));
                 else
-                    add_terminal(source_vertex, step.context, InternalMemoryState(step.context.get_memory_state()));
+                    add_terminal(source_vertex);
             }
             continue;
         }
@@ -184,7 +175,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
             else if (step.status == ModuleProgramOutcome::OUT_OF_STATES)
                 return proof.finish(ModuleProgramProofStatus::OUT_OF_STATES);
             else
-                add_terminal(source_vertex, step.context, ExternalMemoryState(step.context.get_memory_state()));
+                add_terminal(source_vertex);
         }
     }
 
