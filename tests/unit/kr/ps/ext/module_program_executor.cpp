@@ -2056,9 +2056,10 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     EXPECT_EQ(empty_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(empty_proof.graph);
     EXPECT_EQ(empty_proof.graph->get_num_vertices(), 1);
-    EXPECT_EQ(empty_proof.graph->get_num_edges(), 1);
-    EXPECT_FALSE(empty_proof.deadend_transitions.empty());
-    EXPECT_FALSE(empty_proof.cycle.empty());
+    EXPECT_EQ(empty_proof.graph->get_num_edges(), 0);
+    EXPECT_TRUE(empty_proof.deadend_transitions.empty());
+    EXPECT_FALSE(empty_proof.open_states.empty());
+    EXPECT_TRUE(empty_proof.cycle.empty());
 
     auto load_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::LoadTag, kr::dl::ConceptTag>>();
     load_data.source = source.get_index();
@@ -2117,7 +2118,8 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     const auto caller_proof = kr::ps::ext::prove_solution(search_context, caller_program);
     EXPECT_EQ(caller_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(caller_proof.graph);
-    EXPECT_FALSE(caller_proof.deadend_transitions.empty());
+    EXPECT_TRUE(caller_proof.deadend_transitions.empty());
+    EXPECT_FALSE(caller_proof.open_states.empty());
 
     auto do_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("missing-action"));
     do_data.source = source.get_index();
@@ -2142,9 +2144,10 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     EXPECT_EQ(do_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(do_proof.graph);
     EXPECT_EQ(do_proof.graph->get_num_vertices(), 1);
-    EXPECT_EQ(do_proof.graph->get_num_edges(), 1);
-    EXPECT_FALSE(do_proof.deadend_transitions.empty());
+    EXPECT_EQ(do_proof.graph->get_num_edges(), 0);
+    EXPECT_TRUE(do_proof.deadend_transitions.empty());
     EXPECT_FALSE(do_proof.open_states.empty());
+    EXPECT_TRUE(do_proof.cycle.empty());
 }
 
 }  // namespace runir::tests

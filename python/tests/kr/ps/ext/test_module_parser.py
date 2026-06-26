@@ -336,9 +336,10 @@ def test_executor_reports_structured_failure_statuses_from_python():
     empty_proof = ext.prove_ground_solution(search_context, empty_program, options)
     assert empty_proof.status == ext.ModuleProgramProofStatus.FAILURE
     assert empty_proof.graph.get_num_vertices() == 1
-    assert empty_proof.graph.get_num_edges() == 1
-    assert len(empty_proof.deadend_transitions) > 0
-    assert len(empty_proof.cycle) > 0
+    assert empty_proof.graph.get_num_edges() == 0
+    assert len(empty_proof.deadend_transitions) == 0
+    assert len(empty_proof.open_states) > 0
+    assert len(empty_proof.cycle) == 0
 
     load_loop = ext.parse_module_program("""(:program
     (:entry load-loop)
