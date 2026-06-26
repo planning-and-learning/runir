@@ -63,25 +63,23 @@ struct Data<runir::kr::uns::Classifier>
 {
     Index<runir::kr::uns::Classifier> index;
     ::cista::offset::string symbol;
-    ::cista::offset::string description;
     IndexList<runir::kr::uns::Feature> features;
     IndexList<runir::kr::uns::ClassifierClause> clauses;
 
     Data() = default;
-    Data(::cista::offset::string symbol_, ::cista::offset::string description_) : index(), symbol(std::move(symbol_)), description(std::move(description_)) {}
-    Data(const std::string& symbol_, const std::string& description_) : index(), symbol(symbol_), description(description_) {}
+    Data(::cista::offset::string symbol_) : index(), symbol(std::move(symbol_)) {}
+    Data(const std::string& symbol_) : index(), symbol(symbol_) {}
 
     void clear() noexcept
     {
         ygg::clear(index);
         ygg::clear(symbol);
-        ygg::clear(description);
         ygg::clear(features);
         ygg::clear(clauses);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, symbol, description, features, clauses); }
-    auto identifying_members() const noexcept { return std::tie(symbol, description, features, clauses); }
+    auto cista_members() const noexcept { return std::tie(index, symbol, features, clauses); }
+    auto identifying_members() const noexcept { return std::tie(symbol, features, clauses); }
 };
 
 }  // namespace ygg

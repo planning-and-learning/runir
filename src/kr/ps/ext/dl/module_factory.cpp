@@ -30,17 +30,15 @@ ModuleView ModuleFactory::create(ModuleSpecification specification, tyr::formali
 
 std::string ModuleFactory::create_empty_description()
 {
-    return R"(
-(:module
-  (:symbol empty)
-  (:arguments)
-  (:description "")
-  (:registers)
-  (:entry m0)
-  (:memory m0)
-  (:features)
-  (:rules))
-)";
+    return R"RUNIR((:module
+    (:symbol empty)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0)
+    (:features)
+    (:rules)
+))RUNIR";
 }
 
 std::string ModuleFactory::create_description(ModuleSpecification specification)
@@ -77,37 +75,32 @@ std::vector<std::string> ModuleFactory::create_bonet_et_al_icaps2024_description
 
 std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
 {
-    return R"((:program
-    (:entry "root")
+    return R"RUNIR((:program
+    (:entry root)
     (:module
         (:symbol root)
-        (:arguments
-        )
-        (:description "")
-        (:registers
-        )
+        (:arguments)
+        (:registers)
         (:entry m0)
-        (:memory
-            m0
-            m1
-        )
+        (:memory m0 m1)
         (:features
+            (:role
+                (:symbol O)
+                (:expression
+                    (r_atomic_goal "on" true)
+                )
+            )
         )
         (:rules
             (:rule
                 (:symbol auto1)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m1)
                     (:call
                         (:conditions)
-                        (:callee "blocks")
-                        (:arguments
-                            (r_atomic_goal
-                                "on"
-                                true)
-                        )
+                        (:callee blocks)
+                        (:arguments O)
                     )
                 )
             )
@@ -116,91 +109,93 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
     (:module
         (:symbol blocks)
         (:arguments
-            (:role "O" 0)
+            (:role O)
         )
-        (:description "")
         (:registers
-            (:concept (:symbol 0))
+            (:concept r0)
         )
         (:entry m0)
-        (:memory
-            m0
-            m1
-        )
+        (:memory m0 m1)
         (:features
             (:concept
                 (:symbol L)
-                (:description "lowest misplaced block")
                 (:expression
                     (c_and
-                        (c_not
-                            (c_same_as
-                                (r_atomic_state
-                                    "on")
-                                (r_argument
-                                    0)))
                         (c_all
                             (r_transitive_closure
-                                (r_atomic_state
-                                    "on"))
+                                (r_atomic_state "on")
+                            )
                             (c_same_as
-                                (r_atomic_state
-                                    "on")
-                                (r_argument
-                                    0))))
+                                (r_argument O)
+                                (r_atomic_state "on")
+                            )
+                        )
+                        (c_not
+                            (c_same_as
+                                (r_argument O)
+                                (r_atomic_state "on")
+                            )
+                        )
+                    )
+                )
+            )
+            (:role
+                (:symbol O_arg)
+                (:expression
+                    (r_argument O)
+                )
+            )
+            (:concept
+                (:symbol R0)
+                (:expression
+                    (c_register r0)
                 )
             )
         )
         (:rules
             (:rule
                 (:symbol auto43)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m1)
                     (:load
-                        (:expression
-                            (:conditions
-                                (:greater_zero L)
+                        (:conditions
+                            (greater_zero L)
+                        )
+                        (:concept
+                            (c_and
+                                (c_all
+                                    (r_transitive_closure
+                                        (r_atomic_state "on")
+                                    )
+                                    (c_same_as
+                                        (r_argument O)
+                                        (r_atomic_state "on")
+                                    )
+                                )
+                                (c_not
+                                    (c_same_as
+                                        (r_argument O)
+                                        (r_atomic_state "on")
+                                    )
+                                )
                             )
-                            (:concept
-                                (c_and
-                                    (c_not
-                                        (c_same_as
-                                            (r_atomic_state
-                                                "on")
-                                            (r_argument
-                                                0)))
-                                    (c_all
-                                        (r_transitive_closure
-                                            (r_atomic_state
-                                                "on"))
-                                        (c_same_as
-                                            (r_atomic_state
-                                                "on")
-                                            (r_argument
-                                                0))))
-                            )
-                            (:register 0)
+                        )
+                        (:register
+                            (:concept r0)
                         )
                     )
                 )
             )
             (:rule
                 (:symbol auto45)
-                (:description "")
                 (:expression
                     (:source-memory m1)
                     (:target-memory m0)
                     (:call
                         (:conditions)
-                        (:callee "tower")
-                        (:arguments
-                            (r_argument
-                                0)
-                            (c_register
-                                0)
-                        )
+                        (:callee tower)
+                        (:arguments O_arg R0)
                     )
                 )
             )
@@ -209,136 +204,112 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
     (:module
         (:symbol tower)
         (:arguments
-            (:concept "X" 0)
-            (:role "O" 0)
+            (:concept X)
+            (:role O)
         )
-        (:description "")
         (:registers
-            (:concept (:symbol 0))
+            (:concept r0)
         )
         (:entry m0)
-        (:memory
-            m0
-            m1
-            m2
-            m3
-        )
+        (:memory m0 m1 m2 m3)
         (:features
             (:concept
                 (:symbol X)
-                (:description "current block argument")
                 (:expression
-                    (c_argument
-                        0)
+                    (c_argument X)
                 )
             )
             (:concept
                 (:symbol W)
-                (:description "block below r0 in target tower O")
                 (:expression
                     (c_some
                         (r_inverse
-                            (r_argument
-                                0))
-                        (c_register
-                            0))
+                            (r_argument O)
+                        )
+                        (c_register r0)
+                    )
                 )
             )
             (:concept
                 (:symbol M)
-                (:description "block above r0 in target tower O")
                 (:expression
                     (c_some
-                        (r_argument
-                            0)
-                        (c_register
-                            0))
+                        (r_argument O)
+                        (c_register r0)
+                    )
+                )
+            )
+            (:concept
+                (:symbol R0)
+                (:expression
+                    (c_register r0)
+                )
+            )
+            (:role
+                (:symbol O_arg)
+                (:expression
+                    (r_argument O)
                 )
             )
         )
         (:rules
             (:rule
                 (:symbol auto38)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m1)
                     (:load
-                        (:expression
-                            (:conditions
-                                (:greater_zero X)
-                            )
-                            (:concept
-                                (c_argument
-                                    0)
-                            )
-                            (:register 0)
+                        (:conditions
+                            (greater_zero X)
+                        )
+                        (:concept
+                            (c_argument X)
+                        )
+                        (:register
+                            (:concept r0)
                         )
                     )
                 )
             )
             (:rule
                 (:symbol auto40)
-                (:description "")
                 (:expression
                     (:source-memory m1)
                     (:target-memory m2)
                     (:call
                         (:conditions
-                            (:equal_zero W)
+                            (equal_zero W)
                         )
-                        (:callee "on-table")
-                        (:arguments
-                            (c_register
-                                0)
-                        )
+                        (:callee on-table)
+                        (:arguments R0)
                     )
                 )
             )
             (:rule
                 (:symbol auto41)
-                (:description "")
                 (:expression
                     (:source-memory m1)
                     (:target-memory m2)
                     (:call
                         (:conditions
-                            (:greater_zero W)
+                            (greater_zero W)
                         )
-                        (:callee "on")
-                        (:arguments
-                            (c_register
-                                0)
-                            (c_some
-                                (r_inverse
-                                    (r_argument
-                                        0))
-                                (c_register
-                                    0))
-                        )
+                        (:callee on)
+                        (:arguments R0 W)
                     )
                 )
             )
             (:rule
                 (:symbol auto42)
-                (:description "")
                 (:expression
                     (:source-memory m2)
                     (:target-memory m3)
                     (:call
                         (:conditions
-                            (:greater_zero M)
+                            (greater_zero M)
                         )
-                        (:callee "tower")
-                        (:arguments
-                            (r_argument
-                                0)
-                            (c_some
-                                (r_argument
-                                    0)
-                                (c_register
-                                    0))
-                        )
+                        (:callee tower)
+                        (:arguments O_arg M)
                     )
                 )
             )
@@ -347,131 +318,103 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
     (:module
         (:symbol on-table)
         (:arguments
-            (:concept "X" 0)
+            (:concept X)
         )
-        (:description "")
-        (:registers
-        )
+        (:registers)
         (:entry m0)
-        (:memory
-            m0
-            m1
-            m2
-        )
+        (:memory m0 m1 m2)
         (:features
+            (:concept
+                (:symbol DO_on_table_1)
+                (:expression
+                    (c_argument X)
+                )
+            )
+            (:concept
+                (:symbol DO_on_table_2)
+                (:expression
+                    (c_top)
+                )
+            )
+            (:concept
+                (:symbol DO_on_table_3)
+                (:expression
+                    (c_argument X)
+                )
+            )
             (:boolean
                 (:symbol H)
-                (:description "holding a block")
                 (:expression
                     (b_nonempty
-                        (c_atomic_state
-                            "holding"))
+                        (c_atomic_state "holding")
+                    )
                 )
             )
             (:boolean
                 (:symbol Tx)
-                (:description "X is on the table")
                 (:expression
                     (b_nonempty
                         (c_and
-                            (c_argument
-                                0)
-                            (c_atomic_state
-                                "on-table")))
+                            (c_argument X)
+                            (c_atomic_state "on-table")
+                        )
+                    )
                 )
-            )
-        
-            (:concept
-                (:symbol DO_on_table_1)
-                (:description "")
-                (:expression
-                    (c_argument
-                                                        0))
-            )
-            (:concept
-                (:symbol DO_on_table_2)
-                (:description "")
-                (:expression
-                    (c_top))
-            )
-            (:concept
-                (:symbol DO_on_table_3)
-                (:description "")
-                (:expression
-                    (c_argument
-                                                        0))
             )
         )
         (:rules
             (:rule
                 (:symbol auto32)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m1)
                     (:do
-                        (:expression
-                            (:conditions
-                                (:negative H)
-                                (:negative Tx)
-                            )
-                            (:action "unstack")
-                            (:arguments
-                                DO_on_table_1
-                                DO_on_table_2
-                            )
-                            (:effects)
+                        (:conditions
+                            (negative H)
+                            (negative Tx)
                         )
+                        (:action "unstack")
+                        (:arguments DO_on_table_1 DO_on_table_2)
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto34)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m1)
                     (:sketch
-                        (:expression
-                            (:conditions
-                                (:positive H)
-                            )
-                            (:effects)
+                        (:conditions
+                            (positive H)
                         )
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto30)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m2)
                     (:sketch
-                        (:expression
-                            (:conditions
-                                (:positive Tx)
-                            )
-                            (:effects)
+                        (:conditions
+                            (positive Tx)
                         )
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto36)
-                (:description "")
                 (:expression
                     (:source-memory m1)
                     (:target-memory m2)
                     (:do
-                        (:expression
-                            (:conditions)
-                            (:action "putdown")
-                            (:arguments
-                                DO_on_table_3
-                            )
-                            (:effects)
-                        )
+                        (:conditions)
+                        (:action "putdown")
+                        (:arguments DO_on_table_3)
+                        (:effects)
                     )
                 )
             )
@@ -480,426 +423,351 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
     (:module
         (:symbol on)
         (:arguments
-            (:concept "X" 0)
-            (:concept "Y" 1)
+            (:concept X)
+            (:concept Y)
         )
-        (:description "")
         (:registers
-            (:concept (:symbol 0))
-            (:concept (:symbol 1))
+            (:concept r0)
+            (:concept r1)
         )
         (:entry m0)
-        (:memory
-            m0
-            m1
-            m2
-            m3
-            m4
-            m5
-            m6
-            m7
-            m8
-        )
+        (:memory m0 m1 m2 m3 m4 m5 m6 m7 m8)
         (:features
             (:concept
                 (:symbol N)
-                (:description "blocks above X or Y")
                 (:expression
                     (c_and
-                        (c_not
-                            (c_atomic_state
-                                "clear"))
                         (c_or
-                            (c_argument
-                                0)
-                            (c_argument
-                                1)))
+                            (c_argument X)
+                            (c_argument Y)
+                        )
+                        (c_not
+                            (c_atomic_state "clear")
+                        )
+                    )
                 )
             )
             (:concept
                 (:symbol T0)
-                (:description "block directly above r0")
                 (:expression
                     (c_some
                         (r_inverse
-                            (r_atomic_state
-                                "on"))
-                        (c_register
-                            0))
+                            (r_atomic_state "on")
+                        )
+                        (c_register r0)
+                    )
                 )
             )
             (:concept
                 (:symbol T1)
-                (:description "block directly above r1")
                 (:expression
                     (c_some
                         (r_inverse
-                            (r_atomic_state
-                                "on"))
-                        (c_register
-                            1))
+                            (r_atomic_state "on")
+                        )
+                        (c_register r1)
+                    )
+                )
+            )
+            (:concept
+                (:symbol DO_on_1)
+                (:expression
+                    (c_top)
+                )
+            )
+            (:concept
+                (:symbol DO_on_2)
+                (:expression
+                    (c_register r1)
+                )
+            )
+            (:concept
+                (:symbol DO_on_3)
+                (:expression
+                    (c_top)
+                )
+            )
+            (:concept
+                (:symbol DO_on_4)
+                (:expression
+                    (c_register r1)
+                )
+            )
+            (:concept
+                (:symbol DO_on_5)
+                (:expression
+                    (c_argument X)
+                )
+            )
+            (:concept
+                (:symbol DO_on_6)
+                (:expression
+                    (c_argument X)
+                )
+            )
+            (:concept
+                (:symbol DO_on_7)
+                (:expression
+                    (c_top)
+                )
+            )
+            (:concept
+                (:symbol DO_on_8)
+                (:expression
+                    (c_argument X)
+                )
+            )
+            (:concept
+                (:symbol DO_on_9)
+                (:expression
+                    (c_argument Y)
                 )
             )
             (:boolean
                 (:symbol H)
-                (:description "holding a block")
                 (:expression
                     (b_nonempty
-                        (c_atomic_state
-                            "holding"))
+                        (c_atomic_state "holding")
+                    )
                 )
             )
             (:boolean
                 (:symbol Tx)
-                (:description "X is on the table")
                 (:expression
                     (b_nonempty
                         (c_and
-                            (c_argument
-                                0)
-                            (c_atomic_state
-                                "on-table")))
+                            (c_argument X)
+                            (c_atomic_state "on-table")
+                        )
+                    )
                 )
-            )
-        
-            (:concept
-                (:symbol DO_on_1)
-                (:description "")
-                (:expression
-                    (c_top))
-            )
-            (:concept
-                (:symbol DO_on_2)
-                (:description "")
-                (:expression
-                    (c_register
-                                                        1))
-            )
-            (:concept
-                (:symbol DO_on_3)
-                (:description "")
-                (:expression
-                    (c_top))
-            )
-            (:concept
-                (:symbol DO_on_4)
-                (:description "")
-                (:expression
-                    (c_register
-                                                        1))
-            )
-            (:concept
-                (:symbol DO_on_5)
-                (:description "")
-                (:expression
-                    (c_argument
-                                                        0))
-            )
-            (:concept
-                (:symbol DO_on_6)
-                (:description "")
-                (:expression
-                    (c_argument
-                                                        0))
-            )
-            (:concept
-                (:symbol DO_on_7)
-                (:description "")
-                (:expression
-                    (c_top))
-            )
-            (:concept
-                (:symbol DO_on_8)
-                (:description "")
-                (:expression
-                    (c_argument
-                                                        0))
-            )
-            (:concept
-                (:symbol DO_on_9)
-                (:description "")
-                (:expression
-                    (c_argument
-                                                        1))
             )
         )
         (:rules
             (:rule
                 (:symbol auto6)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m1)
                     (:load
-                        (:expression
-                            (:conditions
-                                (:negative H)
-                                (:greater_zero N)
+                        (:conditions
+                            (negative H)
+                            (greater_zero N)
+                        )
+                        (:concept
+                            (c_and
+                                (c_or
+                                    (c_argument X)
+                                    (c_argument Y)
+                                )
+                                (c_not
+                                    (c_atomic_state "clear")
+                                )
                             )
-                            (:concept
-                                (c_and
-                                    (c_not
-                                        (c_atomic_state
-                                            "clear"))
-                                    (c_or
-                                        (c_argument
-                                            0)
-                                        (c_argument
-                                            1)))
-                            )
-                            (:register 0)
+                        )
+                        (:register
+                            (:concept r0)
                         )
                     )
                 )
             )
             (:rule
                 (:symbol auto2)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m4)
                     (:sketch
-                        (:expression
-                            (:conditions
-                                (:positive H)
-                            )
-                            (:effects)
+                        (:conditions
+                            (positive H)
                         )
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto4)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m7)
                     (:sketch
-                        (:expression
-                            (:conditions
-                                (:negative H)
-                                (:equal_zero N)
-                            )
-                            (:effects)
+                        (:conditions
+                            (negative H)
+                            (equal_zero N)
                         )
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto8)
-                (:description "")
                 (:expression
                     (:source-memory m1)
                     (:target-memory m2)
                     (:load
-                        (:expression
-                            (:conditions
-                                (:greater_zero T0)
+                        (:conditions
+                            (greater_zero T0)
+                        )
+                        (:concept
+                            (c_some
+                                (r_inverse
+                                    (r_atomic_state "on")
+                                )
+                                (c_register r0)
                             )
-                            (:concept
-                                (c_some
-                                    (r_inverse
-                                        (r_atomic_state
-                                            "on"))
-                                    (c_register
-                                        0))
-                            )
-                            (:register 1)
+                        )
+                        (:register
+                            (:concept r1)
                         )
                     )
                 )
             )
             (:rule
                 (:symbol auto10)
-                (:description "")
                 (:expression
                     (:source-memory m2)
                     (:target-memory m2)
                     (:load
-                        (:expression
-                            (:conditions
-                                (:greater_zero T1)
+                        (:conditions
+                            (greater_zero T1)
+                        )
+                        (:concept
+                            (c_some
+                                (r_inverse
+                                    (r_atomic_state "on")
+                                )
+                                (c_register r1)
                             )
-                            (:concept
-                                (c_some
-                                    (r_inverse
-                                        (r_atomic_state
-                                            "on"))
-                                    (c_register
-                                        1))
-                            )
-                            (:register 1)
+                        )
+                        (:register
+                            (:concept r1)
                         )
                     )
                 )
             )
             (:rule
                 (:symbol auto12)
-                (:description "")
                 (:expression
                     (:source-memory m2)
                     (:target-memory m5)
                     (:sketch
-                        (:expression
-                            (:conditions
-                                (:equal_zero T1)
-                            )
-                            (:effects)
+                        (:conditions
+                            (equal_zero T1)
                         )
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto16)
-                (:description "")
                 (:expression
                     (:source-memory m3)
                     (:target-memory m0)
                     (:sketch
-                        (:expression
-                            (:conditions
-                                (:equal_zero T0)
-                            )
-                            (:effects)
+                        (:conditions
+                            (equal_zero T0)
                         )
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto14)
-                (:description "")
                 (:expression
                     (:source-memory m3)
                     (:target-memory m1)
                     (:sketch
-                        (:expression
-                            (:conditions
-                                (:greater_zero T0)
-                            )
-                            (:effects)
+                        (:conditions
+                            (greater_zero T0)
                         )
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto18)
-                (:description "")
                 (:expression
                     (:source-memory m4)
                     (:target-memory m0)
                     (:do
-                        (:expression
-                            (:conditions)
-                            (:action "putdown")
-                            (:arguments
-                                DO_on_1
-                            )
-                            (:effects)
-                        )
+                        (:conditions)
+                        (:action "putdown")
+                        (:arguments DO_on_1)
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto20)
-                (:description "")
                 (:expression
                     (:source-memory m5)
                     (:target-memory m6)
                     (:do
-                        (:expression
-                            (:conditions)
-                            (:action "unstack")
-                            (:arguments
-                                DO_on_2
-                                DO_on_3
-                            )
-                            (:effects)
-                        )
+                        (:conditions)
+                        (:action "unstack")
+                        (:arguments DO_on_2 DO_on_3)
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto22)
-                (:description "")
                 (:expression
                     (:source-memory m6)
                     (:target-memory m3)
                     (:do
-                        (:expression
-                            (:conditions)
-                            (:action "putdown")
-                            (:arguments
-                                DO_on_4
-                            )
-                            (:effects)
-                        )
+                        (:conditions)
+                        (:action "putdown")
+                        (:arguments DO_on_4)
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto24)
-                (:description "")
                 (:expression
                     (:source-memory m7)
                     (:target-memory m8)
                     (:do
-                        (:expression
-                            (:conditions
-                                (:positive Tx)
-                            )
-                            (:action "pickup")
-                            (:arguments
-                                DO_on_5
-                            )
-                            (:effects)
+                        (:conditions
+                            (positive Tx)
                         )
+                        (:action "pickup")
+                        (:arguments DO_on_5)
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto26)
-                (:description "")
                 (:expression
                     (:source-memory m7)
                     (:target-memory m8)
                     (:do
-                        (:expression
-                            (:conditions
-                                (:negative Tx)
-                            )
-                            (:action "unstack")
-                            (:arguments
-                                DO_on_6
-                                DO_on_7
-                            )
-                            (:effects)
+                        (:conditions
+                            (negative Tx)
                         )
+                        (:action "unstack")
+                        (:arguments DO_on_6 DO_on_7)
+                        (:effects)
                     )
                 )
             )
             (:rule
                 (:symbol auto28)
-                (:description "")
                 (:expression
                     (:source-memory m8)
                     (:target-memory m8)
                     (:do
-                        (:expression
-                            (:conditions)
-                            (:action "stack")
-                            (:arguments
-                                DO_on_8
-                                DO_on_9
-                            )
-                            (:effects)
-                        )
+                        (:conditions)
+                        (:action "stack")
+                        (:arguments DO_on_8 DO_on_9)
+                        (:effects)
                     )
                 )
             )
         )
     )
-)
-)";
+))RUNIR";
 }
 
 ModuleProgramView ModuleFactory::create_bonet_et_al_icaps2024_program(tyr::formalism::planning::DomainView domain, Repository& repository)
@@ -929,807 +797,679 @@ ModuleView ModuleFactory::create_blocks_bonet_et_al_icaps2024(tyr::formalism::pl
 
 std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
 {
-    return R"((:module
+    return R"RUNIR((:module
     (:symbol on)
     (:arguments
-        (:concept "X" 0)
-        (:concept "Y" 1)
+        (:concept X)
+        (:concept Y)
     )
-    (:description "")
     (:registers
-        (:concept (:symbol 0))
-        (:concept (:symbol 1))
+        (:concept r0)
+        (:concept r1)
     )
     (:entry m0)
-    (:memory
-        m0
-        m1
-        m2
-        m3
-        m4
-        m5
-        m6
-        m7
-        m8
-    )
+    (:memory m0 m1 m2 m3 m4 m5 m6 m7 m8)
     (:features
         (:concept
             (:symbol N)
-            (:description "blocks above X or Y")
             (:expression
                 (c_and
-                    (c_not
-                        (c_atomic_state
-                            "clear"))
                     (c_or
-                        (c_argument
-                            0)
-                        (c_argument
-                            1)))
+                        (c_argument X)
+                        (c_argument Y)
+                    )
+                    (c_not
+                        (c_atomic_state "clear")
+                    )
+                )
             )
         )
         (:concept
             (:symbol T0)
-            (:description "block directly above r0")
             (:expression
                 (c_some
                     (r_inverse
-                        (r_atomic_state
-                            "on"))
-                    (c_register
-                        0))
+                        (r_atomic_state "on")
+                    )
+                    (c_register r0)
+                )
             )
         )
         (:concept
             (:symbol T1)
-            (:description "block directly above r1")
             (:expression
                 (c_some
                     (r_inverse
-                        (r_atomic_state
-                            "on"))
-                    (c_register
-                        1))
+                        (r_atomic_state "on")
+                    )
+                    (c_register r1)
+                )
+            )
+        )
+        (:concept
+            (:symbol DO_on_1)
+            (:expression
+                (c_top)
+            )
+        )
+        (:concept
+            (:symbol DO_on_2)
+            (:expression
+                (c_register r1)
+            )
+        )
+        (:concept
+            (:symbol DO_on_3)
+            (:expression
+                (c_top)
+            )
+        )
+        (:concept
+            (:symbol DO_on_4)
+            (:expression
+                (c_register r1)
+            )
+        )
+        (:concept
+            (:symbol DO_on_5)
+            (:expression
+                (c_argument X)
+            )
+        )
+        (:concept
+            (:symbol DO_on_6)
+            (:expression
+                (c_argument X)
+            )
+        )
+        (:concept
+            (:symbol DO_on_7)
+            (:expression
+                (c_top)
+            )
+        )
+        (:concept
+            (:symbol DO_on_8)
+            (:expression
+                (c_argument X)
+            )
+        )
+        (:concept
+            (:symbol DO_on_9)
+            (:expression
+                (c_argument Y)
             )
         )
         (:boolean
             (:symbol H)
-            (:description "holding a block")
             (:expression
                 (b_nonempty
-                    (c_atomic_state
-                        "holding"))
+                    (c_atomic_state "holding")
+                )
             )
         )
         (:boolean
             (:symbol Tx)
-            (:description "X is on the table")
             (:expression
                 (b_nonempty
                     (c_and
-                        (c_argument
-                            0)
-                        (c_atomic_state
-                            "on-table")))
+                        (c_argument X)
+                        (c_atomic_state "on-table")
+                    )
+                )
             )
-        )
-    
-        (:concept
-            (:symbol DO_on_1)
-            (:description "")
-            (:expression
-                (c_top))
-        )
-        (:concept
-            (:symbol DO_on_2)
-            (:description "")
-            (:expression
-                (c_register
-                                                1))
-        )
-        (:concept
-            (:symbol DO_on_3)
-            (:description "")
-            (:expression
-                (c_top))
-        )
-        (:concept
-            (:symbol DO_on_4)
-            (:description "")
-            (:expression
-                (c_register
-                                                1))
-        )
-        (:concept
-            (:symbol DO_on_5)
-            (:description "")
-            (:expression
-                (c_argument
-                                                0))
-        )
-        (:concept
-            (:symbol DO_on_6)
-            (:description "")
-            (:expression
-                (c_argument
-                                                0))
-        )
-        (:concept
-            (:symbol DO_on_7)
-            (:description "")
-            (:expression
-                (c_top))
-        )
-        (:concept
-            (:symbol DO_on_8)
-            (:description "")
-            (:expression
-                (c_argument
-                                                0))
-        )
-        (:concept
-            (:symbol DO_on_9)
-            (:description "")
-            (:expression
-                (c_argument
-                                                1))
         )
     )
     (:rules
         (:rule
             (:symbol auto6)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:load
-                    (:expression
-                        (:conditions
-                            (:negative H)
-                            (:greater_zero N)
+                    (:conditions
+                        (negative H)
+                        (greater_zero N)
+                    )
+                    (:concept
+                        (c_and
+                            (c_or
+                                (c_argument X)
+                                (c_argument Y)
+                            )
+                            (c_not
+                                (c_atomic_state "clear")
+                            )
                         )
-                        (:concept
-                            (c_and
-                                (c_not
-                                    (c_atomic_state
-                                        "clear"))
-                                (c_or
-                                    (c_argument
-                                        0)
-                                    (c_argument
-                                        1)))
-                        )
-                        (:register 0)
+                    )
+                    (:register
+                        (:concept r0)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto2)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m4)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:positive H)
-                        )
-                        (:effects)
+                    (:conditions
+                        (positive H)
                     )
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto4)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m7)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:negative H)
-                            (:equal_zero N)
-                        )
-                        (:effects)
+                    (:conditions
+                        (negative H)
+                        (equal_zero N)
                     )
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto8)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m2)
                 (:load
-                    (:expression
-                        (:conditions
-                            (:greater_zero T0)
+                    (:conditions
+                        (greater_zero T0)
+                    )
+                    (:concept
+                        (c_some
+                            (r_inverse
+                                (r_atomic_state "on")
+                            )
+                            (c_register r0)
                         )
-                        (:concept
-                            (c_some
-                                (r_inverse
-                                    (r_atomic_state
-                                        "on"))
-                                (c_register
-                                    0))
-                        )
-                        (:register 1)
+                    )
+                    (:register
+                        (:concept r1)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto10)
-            (:description "")
             (:expression
                 (:source-memory m2)
                 (:target-memory m2)
                 (:load
-                    (:expression
-                        (:conditions
-                            (:greater_zero T1)
+                    (:conditions
+                        (greater_zero T1)
+                    )
+                    (:concept
+                        (c_some
+                            (r_inverse
+                                (r_atomic_state "on")
+                            )
+                            (c_register r1)
                         )
-                        (:concept
-                            (c_some
-                                (r_inverse
-                                    (r_atomic_state
-                                        "on"))
-                                (c_register
-                                    1))
-                        )
-                        (:register 1)
+                    )
+                    (:register
+                        (:concept r1)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto12)
-            (:description "")
             (:expression
                 (:source-memory m2)
                 (:target-memory m5)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:equal_zero T1)
-                        )
-                        (:effects)
+                    (:conditions
+                        (equal_zero T1)
                     )
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto16)
-            (:description "")
             (:expression
                 (:source-memory m3)
                 (:target-memory m0)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:equal_zero T0)
-                        )
-                        (:effects)
+                    (:conditions
+                        (equal_zero T0)
                     )
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto14)
-            (:description "")
             (:expression
                 (:source-memory m3)
                 (:target-memory m1)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:greater_zero T0)
-                        )
-                        (:effects)
+                    (:conditions
+                        (greater_zero T0)
                     )
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto18)
-            (:description "")
             (:expression
                 (:source-memory m4)
                 (:target-memory m0)
                 (:do
-                    (:expression
-                        (:conditions)
-                        (:action "putdown")
-                        (:arguments
-                            DO_on_1
-                        )
-                        (:effects)
-                    )
+                    (:conditions)
+                    (:action "putdown")
+                    (:arguments DO_on_1)
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto20)
-            (:description "")
             (:expression
                 (:source-memory m5)
                 (:target-memory m6)
                 (:do
-                    (:expression
-                        (:conditions)
-                        (:action "unstack")
-                        (:arguments
-                            DO_on_2
-                            DO_on_3
-                        )
-                        (:effects)
-                    )
+                    (:conditions)
+                    (:action "unstack")
+                    (:arguments DO_on_2 DO_on_3)
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto22)
-            (:description "")
             (:expression
                 (:source-memory m6)
                 (:target-memory m3)
                 (:do
-                    (:expression
-                        (:conditions)
-                        (:action "putdown")
-                        (:arguments
-                            DO_on_4
-                        )
-                        (:effects)
-                    )
+                    (:conditions)
+                    (:action "putdown")
+                    (:arguments DO_on_4)
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto24)
-            (:description "")
             (:expression
                 (:source-memory m7)
                 (:target-memory m8)
                 (:do
-                    (:expression
-                        (:conditions
-                            (:positive Tx)
-                        )
-                        (:action "pickup")
-                        (:arguments
-                            DO_on_5
-                        )
-                        (:effects)
+                    (:conditions
+                        (positive Tx)
                     )
+                    (:action "pickup")
+                    (:arguments DO_on_5)
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto26)
-            (:description "")
             (:expression
                 (:source-memory m7)
                 (:target-memory m8)
                 (:do
-                    (:expression
-                        (:conditions
-                            (:negative Tx)
-                        )
-                        (:action "unstack")
-                        (:arguments
-                            DO_on_6
-                            DO_on_7
-                        )
-                        (:effects)
+                    (:conditions
+                        (negative Tx)
                     )
+                    (:action "unstack")
+                    (:arguments DO_on_6 DO_on_7)
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto28)
-            (:description "")
             (:expression
                 (:source-memory m8)
                 (:target-memory m8)
                 (:do
-                    (:expression
-                        (:conditions)
-                        (:action "stack")
-                        (:arguments
-                            DO_on_8
-                            DO_on_9
-                        )
-                        (:effects)
-                    )
+                    (:conditions)
+                    (:action "stack")
+                    (:arguments DO_on_8 DO_on_9)
+                    (:effects)
                 )
             )
         )
     )
-)
-)";
+))RUNIR";
 }
 
 std::string ModuleFactory::create_on_table_bonet_et_al_icaps2024_description()
 {
-    return R"((:module
+    return R"RUNIR((:module
     (:symbol on-table)
     (:arguments
-        (:concept "X" 0)
+        (:concept X)
     )
-    (:description "")
-    (:registers
-    )
+    (:registers)
     (:entry m0)
-    (:memory
-        m0
-        m1
-        m2
-    )
+    (:memory m0 m1 m2)
     (:features
+        (:concept
+            (:symbol DO_on_table_1)
+            (:expression
+                (c_argument X)
+            )
+        )
+        (:concept
+            (:symbol DO_on_table_2)
+            (:expression
+                (c_top)
+            )
+        )
+        (:concept
+            (:symbol DO_on_table_3)
+            (:expression
+                (c_argument X)
+            )
+        )
         (:boolean
             (:symbol H)
-            (:description "holding a block")
             (:expression
                 (b_nonempty
-                    (c_atomic_state
-                        "holding"))
+                    (c_atomic_state "holding")
+                )
             )
         )
         (:boolean
             (:symbol Tx)
-            (:description "X is on the table")
             (:expression
                 (b_nonempty
                     (c_and
-                        (c_argument
-                            0)
-                        (c_atomic_state
-                            "on-table")))
+                        (c_argument X)
+                        (c_atomic_state "on-table")
+                    )
+                )
             )
-        )
-    
-        (:concept
-            (:symbol DO_on_table_1)
-            (:description "")
-            (:expression
-                (c_argument
-                                                0))
-        )
-        (:concept
-            (:symbol DO_on_table_2)
-            (:description "")
-            (:expression
-                (c_top))
-        )
-        (:concept
-            (:symbol DO_on_table_3)
-            (:description "")
-            (:expression
-                (c_argument
-                                                0))
         )
     )
     (:rules
         (:rule
             (:symbol auto32)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:do
-                    (:expression
-                        (:conditions
-                            (:negative H)
-                            (:negative Tx)
-                        )
-                        (:action "unstack")
-                        (:arguments
-                            DO_on_table_1
-                            DO_on_table_2
-                        )
-                        (:effects)
+                    (:conditions
+                        (negative H)
+                        (negative Tx)
                     )
+                    (:action "unstack")
+                    (:arguments DO_on_table_1 DO_on_table_2)
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto34)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:positive H)
-                        )
-                        (:effects)
+                    (:conditions
+                        (positive H)
                     )
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto30)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m2)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:positive Tx)
-                        )
-                        (:effects)
+                    (:conditions
+                        (positive Tx)
                     )
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto36)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m2)
                 (:do
-                    (:expression
-                        (:conditions)
-                        (:action "putdown")
-                        (:arguments
-                            DO_on_table_3
-                        )
-                        (:effects)
-                    )
+                    (:conditions)
+                    (:action "putdown")
+                    (:arguments DO_on_table_3)
+                    (:effects)
                 )
             )
         )
     )
-)
-)";
+))RUNIR";
 }
 
 std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
 {
-    return R"((:module
+    return R"RUNIR((:module
     (:symbol tower)
     (:arguments
-        (:concept "X" 0)
-        (:role "O" 0)
+        (:concept X)
+        (:role O)
     )
-    (:description "")
     (:registers
-        (:concept (:symbol 0))
+        (:concept r0)
     )
     (:entry m0)
-    (:memory
-        m0
-        m1
-        m2
-        m3
-    )
+    (:memory m0 m1 m2 m3)
     (:features
         (:concept
             (:symbol X)
-            (:description "current block argument")
             (:expression
-                (c_argument
-                    0)
+                (c_argument X)
             )
         )
         (:concept
             (:symbol W)
-            (:description "block below r0 in target tower O")
             (:expression
                 (c_some
                     (r_inverse
-                        (r_argument
-                            0))
-                    (c_register
-                        0))
+                        (r_argument O)
+                    )
+                    (c_register r0)
+                )
             )
         )
         (:concept
             (:symbol M)
-            (:description "block above r0 in target tower O")
             (:expression
                 (c_some
-                    (r_argument
-                        0)
-                    (c_register
-                        0))
+                    (r_argument O)
+                    (c_register r0)
+                )
+            )
+        )
+        (:concept
+            (:symbol R0)
+            (:expression
+                (c_register r0)
+            )
+        )
+        (:role
+            (:symbol O_arg)
+            (:expression
+                (r_argument O)
             )
         )
     )
     (:rules
         (:rule
             (:symbol auto38)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:load
-                    (:expression
-                        (:conditions
-                            (:greater_zero X)
-                        )
-                        (:concept
-                            (c_argument
-                                0)
-                        )
-                        (:register 0)
+                    (:conditions
+                        (greater_zero X)
+                    )
+                    (:concept
+                        (c_argument X)
+                    )
+                    (:register
+                        (:concept r0)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto40)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m2)
                 (:call
                     (:conditions
-                        (:equal_zero W)
+                        (equal_zero W)
                     )
-                    (:callee "on-table")
-                    (:arguments
-                        (c_register
-                            0)
-                    )
+                    (:callee on-table)
+                    (:arguments R0)
                 )
             )
         )
         (:rule
             (:symbol auto41)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m2)
                 (:call
                     (:conditions
-                        (:greater_zero W)
+                        (greater_zero W)
                     )
-                    (:callee "on")
-                    (:arguments
-                        (c_register
-                            0)
-                        (c_some
-                            (r_inverse
-                                (r_argument
-                                    0))
-                            (c_register
-                                0))
-                    )
+                    (:callee on)
+                    (:arguments R0 W)
                 )
             )
         )
         (:rule
             (:symbol auto42)
-            (:description "")
             (:expression
                 (:source-memory m2)
                 (:target-memory m3)
                 (:call
                     (:conditions
-                        (:greater_zero M)
+                        (greater_zero M)
                     )
-                    (:callee "tower")
-                    (:arguments
-                        (r_argument
-                            0)
-                        (c_some
-                            (r_argument
-                                0)
-                            (c_register
-                                0))
-                    )
+                    (:callee tower)
+                    (:arguments O_arg M)
                 )
             )
         )
     )
-)
-)";
+))RUNIR";
 }
 
 std::string ModuleFactory::create_blocks_bonet_et_al_icaps2024_description()
 {
-    return R"((:module
+    return R"RUNIR((:module
     (:symbol blocks)
     (:arguments
-        (:role "O" 0)
+        (:role O)
     )
-    (:description "")
     (:registers
-        (:concept (:symbol 0))
+        (:concept r0)
     )
     (:entry m0)
-    (:memory
-        m0
-        m1
-    )
+    (:memory m0 m1)
     (:features
         (:concept
             (:symbol L)
-            (:description "lowest misplaced block")
             (:expression
                 (c_and
-                    (c_not
-                        (c_same_as
-                            (r_atomic_state
-                                "on")
-                            (r_argument
-                                0)))
                     (c_all
                         (r_transitive_closure
-                            (r_atomic_state
-                                "on"))
+                            (r_atomic_state "on")
+                        )
                         (c_same_as
-                            (r_atomic_state
-                                "on")
-                            (r_argument
-                                0))))
+                            (r_argument O)
+                            (r_atomic_state "on")
+                        )
+                    )
+                    (c_not
+                        (c_same_as
+                            (r_argument O)
+                            (r_atomic_state "on")
+                        )
+                    )
+                )
+            )
+        )
+        (:role
+            (:symbol O_arg)
+            (:expression
+                (r_argument O)
+            )
+        )
+        (:concept
+            (:symbol R0)
+            (:expression
+                (c_register r0)
             )
         )
     )
     (:rules
         (:rule
             (:symbol auto43)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:load
-                    (:expression
-                        (:conditions
-                            (:greater_zero L)
+                    (:conditions
+                        (greater_zero L)
+                    )
+                    (:concept
+                        (c_and
+                            (c_all
+                                (r_transitive_closure
+                                    (r_atomic_state "on")
+                                )
+                                (c_same_as
+                                    (r_argument O)
+                                    (r_atomic_state "on")
+                                )
+                            )
+                            (c_not
+                                (c_same_as
+                                    (r_argument O)
+                                    (r_atomic_state "on")
+                                )
+                            )
                         )
-                        (:concept
-                            (c_and
-                                (c_not
-                                    (c_same_as
-                                        (r_atomic_state
-                                            "on")
-                                        (r_argument
-                                            0)))
-                                (c_all
-                                    (r_transitive_closure
-                                        (r_atomic_state
-                                            "on"))
-                                    (c_same_as
-                                        (r_atomic_state
-                                            "on")
-                                        (r_argument
-                                            0))))
-                        )
-                        (:register 0)
+                    )
+                    (:register
+                        (:concept r0)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto45)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m0)
                 (:call
                     (:conditions)
-                    (:callee "tower")
-                    (:arguments
-                        (r_argument
-                            0)
-                        (c_register
-                            0)
-                    )
+                    (:callee tower)
+                    (:arguments O_arg R0)
                 )
             )
         )
     )
-)
-)";
+))RUNIR";
 }
 
 }  // namespace runir::kr::ps::ext::dl

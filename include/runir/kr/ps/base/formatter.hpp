@@ -145,9 +145,44 @@ std::string effect(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::Effe
                       view.get_variant());
 }
 
-inline std::string list_section(std::string_view name, const std::vector<std::string>& values)
+inline void append_value(std::ostream& os, std::string_view value)
 {
-    return fmt::format("({})", runir::formatting::joined_components(fmt::format(":{}", name), values));
+    auto stream = std::istringstream(std::string(value));
+    auto line = std::string {};
+    auto first = true;
+    while (std::getline(stream, line))
+    {
+        if (!first)
+            os << '\n';
+        os << ygg::print_indent << line;
+        first = false;
+    }
+}
+
+inline void append_list_section(std::ostream& os, std::string_view name, const std::vector<std::string>& values)
+{
+    if (values.empty())
+    {
+        os << ygg::print_indent << fmt::format("(:{})", name) << "\n";
+        return;
+    }
+
+    if (values.size() == 1 && values.front().find('\n') == std::string::npos)
+    {
+        os << ygg::print_indent << fmt::format("(:{} {})", name, values.front()) << "\n";
+        return;
+    }
+
+    os << ygg::print_indent << fmt::format("(:{}\n", name);
+    {
+        ygg::IndentScope scope(os);
+        for (const auto& value : values)
+        {
+            append_value(os, value);
+            os << "\n";
+        }
+    }
+    os << ygg::print_indent << ")\n";
 }
 
 template<typename C>
@@ -165,8 +200,13 @@ void append_rule(std::ostream& os, FeatureNames& names, ygg::View<ygg::Index<run
     {
         ygg::IndentScope scope(os);
         os << ygg::print_indent << runir::kr::ps::base::dl::format::symbol_section(std::string(view.get_symbol().str())) << "\n";
-        os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(view.get_description().str()))) << "\n";
-        os << ygg::print_indent << fmt::format("(:expression {} {})", list_section("conditions", conditions), list_section("effects", effects)) << "\n";
+        os << ygg::print_indent << "(:expression\n";
+        {
+            ygg::IndentScope expression_scope(os);
+            append_list_section(os, "conditions", conditions);
+            append_list_section(os, "effects", effects);
+        }
+        os << ygg::print_indent << ")\n";
     }
     os << ygg::print_indent << ")";
 }

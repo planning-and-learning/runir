@@ -17,7 +17,6 @@ namespace runir::kr::uns::dl
 namespace
 {
 
-
 template<typename T>
 struct IsForwardAst : std::false_type
 {
@@ -180,7 +179,7 @@ template<typename Tag, typename Ast>
 auto parse_binary_concept(const Ast& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::uns::ConstructorRepository& repository)
 {
     ygg::Data<runir::kr::dl::Concept<runir::kr::UnsFamilyTag, Tag>> data(parse_constructor_or_non_terminal(node.lhs, domain, repository).get_index(),
-                                                                          parse_constructor_or_non_terminal(node.rhs, domain, repository).get_index());
+                                                                         parse_constructor_or_non_terminal(node.rhs, domain, repository).get_index());
     return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
 }
 
@@ -246,8 +245,8 @@ auto parse_qualified_number_restriction_concept(const Ast& node,
                                                 runir::kr::dl::uns::ConstructorRepository& repository)
 {
     ygg::Data<runir::kr::dl::Concept<runir::kr::UnsFamilyTag, Tag>> data(node.n,
-                                                                          parse_constructor_or_non_terminal(node.role, domain, repository).get_index(),
-                                                                          parse_constructor_or_non_terminal(node.concept_, domain, repository).get_index());
+                                                                         parse_constructor_or_non_terminal(node.role, domain, repository).get_index(),
+                                                                         parse_constructor_or_non_terminal(node.concept_, domain, repository).get_index());
     return intern_constructor<runir::kr::dl::ConceptTag>(repository, intern(repository, data).get_index());
 }
 
@@ -365,7 +364,7 @@ template<typename Tag, typename Ast>
 auto parse_binary_role(const Ast& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::uns::ConstructorRepository& repository)
 {
     ygg::Data<runir::kr::dl::Role<runir::kr::UnsFamilyTag, Tag>> data(parse_constructor_or_non_terminal(node.lhs, domain, repository).get_index(),
-                                                                       parse_constructor_or_non_terminal(node.rhs, domain, repository).get_index());
+                                                                      parse_constructor_or_non_terminal(node.rhs, domain, repository).get_index());
     return intern_constructor<runir::kr::dl::RoleTag>(repository, intern(repository, data).get_index());
 }
 
@@ -493,10 +492,10 @@ auto parse(const runir::kr::dl::grammar::ast::NumericalCount<runir::kr::UnsFamil
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::uns::ConstructorRepository& repository)
 {
-    const auto arg = boost::apply_visitor(
-        [&](const auto& value) -> ygg::Data<runir::kr::dl::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::CountTag>>::ConstructorVariant
-        { return parse_constructor_or_non_terminal(unwrap(value), domain, repository).get_index(); },
-        node.arg.get());
+    const auto arg =
+        boost::apply_visitor([&](const auto& value) -> ygg::Data<runir::kr::dl::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::CountTag>>::ConstructorVariant
+                             { return parse_constructor_or_non_terminal(unwrap(value), domain, repository).get_index(); },
+                             node.arg.get());
 
     ygg::Data<runir::kr::dl::Numerical<runir::kr::UnsFamilyTag, runir::kr::dl::CountTag>> data(arg);
     return intern_constructor<runir::kr::dl::NumericalTag>(repository, intern(repository, data).get_index());
@@ -517,7 +516,7 @@ template<typename Tag, typename Ast>
 auto parse_comparison(const Ast& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::uns::ConstructorRepository& repository)
 {
     ygg::Data<runir::kr::dl::Boolean<runir::kr::UnsFamilyTag, Tag>> data(parse_constructor_or_non_terminal(node.lhs, domain, repository).get_index(),
-                                            parse_constructor_or_non_terminal(node.rhs, domain, repository).get_index());
+                                                                         parse_constructor_or_non_terminal(node.rhs, domain, repository).get_index());
     return intern_constructor<runir::kr::dl::BooleanTag>(repository, intern(repository, data).get_index());
 }
 
@@ -625,7 +624,7 @@ template<typename Tag, typename Ast>
 auto parse_numerical_binary(const Ast& node, tyr::formalism::planning::DomainView domain, runir::kr::dl::uns::ConstructorRepository& repository)
 {
     ygg::Data<runir::kr::dl::Numerical<runir::kr::UnsFamilyTag, Tag>> data(parse_constructor_or_non_terminal(node.lhs, domain, repository).get_index(),
-                                                                          parse_constructor_or_non_terminal(node.rhs, domain, repository).get_index());
+                                                                           parse_constructor_or_non_terminal(node.rhs, domain, repository).get_index());
     return intern_constructor<runir::kr::dl::NumericalTag>(repository, intern(repository, data).get_index());
 }
 
@@ -702,13 +701,9 @@ auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<runir::kr:
     return boost::apply_visitor([&](const auto& arg) { return parse(unwrap(arg), domain, repository); }, node.get());
 }
 
-auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
-                   tyr::formalism::planning::DomainView domain,
-                   Repository& repository)
+auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node, tyr::formalism::planning::DomainView domain, Repository& repository)
 {
-    ygg::Data<runir::kr::uns::dl::Feature> concrete_data(parse_constructor(node.feature, domain, repository.get_dl_repository()).get_index(),
-                                                         node.symbol,
-                                                         node.description);
+    ygg::Data<runir::kr::uns::dl::Feature> concrete_data(parse_constructor(node.feature, domain, repository.get_dl_repository()).get_index(), node.symbol);
     auto concrete = intern(repository, concrete_data);
 
     ygg::Data<runir::kr::uns::Feature> data(concrete.get_index());
@@ -732,26 +727,31 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
         features.push_back(wrapper.get_index());
     }
 
+    const auto parse_literal = [&](const auto& literal)
+    {
+        using Literal = std::remove_cvref_t<decltype(literal)>;
+        const auto it = symbol_to_feature.find(literal.symbol);
+        if (it == symbol_to_feature.end())
+            throw std::runtime_error("Unknown feature \"" + literal.symbol + "\" in classifier expression.");
+
+        constexpr auto polarity = std::same_as<Literal, runir::kr::uns::dl::ast::PositiveLiteral>;
+        ygg::Data<runir::kr::uns::ClassifierLiteral> literal_data(ygg::Data<runir::kr::uns::ClassifierLiteral>::Variant(it->second), polarity);
+        return intern(repository, literal_data).get_index();
+    };
+
     auto clauses = ygg::IndexList<runir::kr::uns::ClassifierClause> {};
-    for (const auto& ast_clause : ast.clauses)
+    for (const auto& ast_clause : ast.expression.clauses)
     {
         auto literals = ygg::IndexList<runir::kr::uns::ClassifierLiteral> {};
-        for (const auto& ast_literal : ast_clause)
-        {
-            const auto it = symbol_to_feature.find(ast_literal.symbol);
-            if (it == symbol_to_feature.end())
-                throw std::runtime_error("Unknown feature \"" + ast_literal.symbol + "\" in classifier expression.");
-
-            ygg::Data<runir::kr::uns::ClassifierLiteral> literal_data(ygg::Data<runir::kr::uns::ClassifierLiteral>::Variant(it->second), !ast_literal.negated);
-            literals.push_back(intern(repository, literal_data).get_index());
-        }
+        for (const auto& ast_literal : ast_clause.literals)
+            literals.push_back(boost::apply_visitor(parse_literal, ast_literal.get()));
 
         ygg::Data<runir::kr::uns::ClassifierClause> clause_data;
         clause_data.literals = std::move(literals);
         clauses.push_back(intern(repository, clause_data).get_index());
     }
 
-    ygg::Data<runir::kr::uns::Classifier> data(ast.symbol, ast.description);
+    ygg::Data<runir::kr::uns::Classifier> data(ast.symbol);
     data.features = std::move(features);
     data.clauses = std::move(clauses);
     return intern(repository, data);

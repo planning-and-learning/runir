@@ -52,65 +52,51 @@ TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminatin
     // strictly decreases fn, so the module terminates.
     const auto module = kr::ps::ext::dl::parse_module(R"((:module
     (:symbol term)
-    (:arguments
-    )
-    (:description "")
-    (:registers
-    )
+    (:arguments)
+    (:registers)
     (:entry m0)
-    (:memory
-        m0
-        m1
-    )
+    (:memory m0 m1)
     (:features
         (:numerical
             (:symbol fn)
-            (:description "")
             (:expression
                 (n_count
-                    (c_atomic_state
-                        "ball"))
+                    (c_atomic_state "ball")
+                )
             )
         )
     )
     (:rules
         (:rule
             (:symbol auto1)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:greater_zero fn)
-                        )
-                        (:effects
-                            (:decreases fn)
-                        )
+                    (:conditions
+                        (greater_zero fn)
+                    )
+                    (:effects
+                        (decreases fn)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto3)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:expression
-                        (:conditions)
-                        (:effects
-                            (:unchanged fn)
-                        )
+                    (:conditions)
+                    (:effects
+                        (unchanged fn)
                     )
                 )
             )
         )
     )
-)
-)",
+))",
                                                       planning_task.get_domain().get_domain(),
                                                       *repository);
 
@@ -131,78 +117,59 @@ TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
     // This is structurally terminating even though a do edge is in the memory cycle.
     const auto module = kr::ps::ext::dl::parse_module(R"((:module
     (:symbol do_effects)
-    (:arguments
-    )
-    (:description "")
-    (:registers
-    )
+    (:arguments)
+    (:registers)
     (:entry m0)
-    (:memory
-        m0
-        m1
-    )
+    (:memory m0 m1)
     (:features
         (:concept
             (:symbol T)
-            (:description "")
             (:expression
                 (c_top)
             )
         )
         (:numerical
             (:symbol fn)
-            (:description "")
             (:expression
                 (n_count
-                    (c_atomic_state
-                        "ball"))
+                    (c_atomic_state "ball")
+                )
             )
         )
     )
     (:rules
         (:rule
             (:symbol auto5)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:do
-                    (:expression
-                        (:conditions
-                            (:greater_zero fn)
-                        )
-                        (:action "pick")
-                        (:arguments
-                            T
-                            T
-                            T
-                        )
-                        (:effects
-                            (:unchanged fn)
-                        )
+                    (:conditions
+                        (greater_zero fn)
+                    )
+                    (:action "pick")
+                    (:arguments T T T)
+                    (:effects
+                        (unchanged fn)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto7)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:expression
-                        (:conditions)
-                        (:effects
-                            (:decreases fn)
-                        )
+                    (:conditions)
+                    (:effects
+                        (decreases fn)
                     )
                 )
             )
         )
     )
-)
-)",
+))",
                                                       planning_task.get_domain().get_domain(),
                                                       *repository);
 
@@ -224,68 +191,56 @@ TEST(RunirTests, ExtStructuralTerminationLoadPreservesRegisterIndependentFeature
     // decreasing sketch edge to prove the memory cycle terminating.
     const auto module = kr::ps::ext::dl::parse_module(R"((:module
     (:symbol load_independent)
-    (:arguments
-    )
-    (:description "")
+    (:arguments)
     (:registers
-        (:concept (:symbol 0))
+        (:concept r0)
     )
     (:entry m0)
-    (:memory
-        m0
-        m1
-    )
+    (:memory m0 m1)
     (:features
         (:numerical
             (:symbol fn)
-            (:description "")
             (:expression
                 (n_count
-                    (c_atomic_state
-                        "ball"))
+                    (c_atomic_state "ball")
+                )
             )
         )
     )
     (:rules
         (:rule
             (:symbol auto9)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:load
-                    (:expression
-                        (:conditions
-                            (:greater_zero fn)
-                        )
-                        (:concept
-                            (c_atomic_state
-                                "ball")
-                        )
-                        (:register 0)
+                    (:conditions
+                        (greater_zero fn)
+                    )
+                    (:concept
+                        (c_atomic_state "ball")
+                    )
+                    (:register
+                        (:concept r0)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto11)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:expression
-                        (:conditions)
-                        (:effects
-                            (:decreases fn)
-                        )
+                    (:conditions)
+                    (:effects
+                        (decreases fn)
                     )
                 )
             )
         )
     )
-)
-)",
+))",
                                                       planning_task.get_domain().get_domain(),
                                                       *repository);
 
@@ -307,68 +262,56 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRegisterDependentFeatur
     // decreasing edge; SIEVE must leave a counterexample cycle.
     const auto module = kr::ps::ext::dl::parse_module(R"((:module
     (:symbol load_dependent)
-    (:arguments
-    )
-    (:description "")
+    (:arguments)
     (:registers
-        (:concept (:symbol 0))
+        (:concept r0)
     )
     (:entry m0)
-    (:memory
-        m0
-        m1
-    )
+    (:memory m0 m1)
     (:features
         (:numerical
             (:symbol fn)
-            (:description "")
             (:expression
                 (n_count
-                    (c_register
-                        0))
+                    (c_register r0)
+                )
             )
         )
     )
     (:rules
         (:rule
             (:symbol auto13)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:load
-                    (:expression
-                        (:conditions)
-                        (:concept
-                            (c_atomic_state
-                                "ball")
-                        )
-                        (:register 0)
+                    (:conditions)
+                    (:concept
+                        (c_atomic_state "ball")
+                    )
+                    (:register
+                        (:concept r0)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto15)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:greater_zero fn)
-                        )
-                        (:effects
-                            (:decreases fn)
-                        )
+                    (:conditions
+                        (greater_zero fn)
+                    )
+                    (:effects
+                        (decreases fn)
                     )
                 )
             )
         )
     )
-)
-)",
+))",
                                                       planning_task.get_domain().get_domain(),
                                                       *repository);
 
@@ -390,63 +333,49 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
     // memory cycle can restore fn, so termination cannot be proven.
     const auto module = kr::ps::ext::dl::parse_module(R"((:module
     (:symbol nonterm)
-    (:arguments
-    )
-    (:description "")
-    (:registers
-    )
+    (:arguments)
+    (:registers)
     (:entry m0)
-    (:memory
-        m0
-        m1
-    )
+    (:memory m0 m1)
     (:features
         (:numerical
             (:symbol fn)
-            (:description "")
             (:expression
                 (n_count
-                    (c_atomic_state
-                        "ball"))
+                    (c_atomic_state "ball")
+                )
             )
         )
     )
     (:rules
         (:rule
             (:symbol auto17)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:greater_zero fn)
-                        )
-                        (:effects
-                            (:decreases fn)
-                        )
+                    (:conditions
+                        (greater_zero fn)
+                    )
+                    (:effects
+                        (decreases fn)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto19)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:expression
-                        (:conditions)
-                        (:effects)
-                    )
+                    (:conditions)
+                    (:effects)
                 )
             )
         )
     )
-)
-)",
+))",
                                                       planning_task.get_domain().get_domain(),
                                                       *repository);
 
@@ -476,31 +405,23 @@ TEST(RunirTests, ExtStructuralTerminationAcyclicModuleProgramCallsAreTerminating
     auto dl_repository = kr::dl::ext::ConstructorRepositoryFactory().create(planning_task.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto program = kr::ps::ext::dl::parse_module_program(R"((:program
-    (:entry "root")
+    (:entry root)
     (:module
         (:symbol root)
-        (:arguments
-        )
-        (:description "")
-        (:registers
-        )
+        (:arguments)
+        (:registers)
         (:entry m0)
-        (:memory
-            m0
-            m1
-        )
-        (:features
-        )
+        (:memory m0 m1)
+        (:features)
         (:rules
             (:rule
                 (:symbol auto21)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m1)
                     (:call
                         (:conditions)
-                        (:callee "leaf")
+                        (:callee leaf)
                         (:arguments)
                     )
                 )
@@ -509,22 +430,14 @@ TEST(RunirTests, ExtStructuralTerminationAcyclicModuleProgramCallsAreTerminating
     )
     (:module
         (:symbol leaf)
-        (:arguments
-        )
-        (:description "")
-        (:registers
-        )
+        (:arguments)
+        (:registers)
         (:entry m0)
-        (:memory
-            m0
-        )
-        (:features
-        )
-        (:rules
-        )
+        (:memory m0)
+        (:features)
+        (:rules)
     )
-)
-)",
+))",
                                                                planning_task.get_domain().get_domain(),
                                                                *repository);
 
@@ -547,31 +460,23 @@ TEST(RunirTests, ExtStructuralTerminationRecursiveModuleProgramCallsAreNotTermin
     // insufficient. The program-level call graph root -> leaf -> root is a
     // recursive module cycle and is conservatively rejected.
     const auto program = kr::ps::ext::dl::parse_module_program(R"((:program
-    (:entry "root")
+    (:entry root)
     (:module
         (:symbol root)
-        (:arguments
-        )
-        (:description "")
-        (:registers
-        )
+        (:arguments)
+        (:registers)
         (:entry m0)
-        (:memory
-            m0
-            m1
-        )
-        (:features
-        )
+        (:memory m0 m1)
+        (:features)
         (:rules
             (:rule
                 (:symbol auto22)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m1)
                     (:call
                         (:conditions)
-                        (:callee "leaf")
+                        (:callee leaf)
                         (:arguments)
                     )
                 )
@@ -580,36 +485,27 @@ TEST(RunirTests, ExtStructuralTerminationRecursiveModuleProgramCallsAreNotTermin
     )
     (:module
         (:symbol leaf)
-        (:arguments
-        )
-        (:description "")
-        (:registers
-        )
+        (:arguments)
+        (:registers)
         (:entry m0)
-        (:memory
-            m0
-            m1
-        )
-        (:features
-        )
+        (:memory m0 m1)
+        (:features)
         (:rules
             (:rule
                 (:symbol auto23)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m1)
                     (:call
                         (:conditions)
-                        (:callee "root")
+                        (:callee root)
                         (:arguments)
                     )
                 )
             )
         )
     )
-)
-)",
+))",
                                                                planning_task.get_domain().get_domain(),
                                                                *repository);
 

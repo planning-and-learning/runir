@@ -36,7 +36,6 @@ TEST(RunirTests, IncompleteStructuralTerminationTppSketchIsTerminating)
     (:features
         (:numerical
             (:symbol fb)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -45,7 +44,6 @@ TEST(RunirTests, IncompleteStructuralTerminationTppSketchIsTerminating)
         )
         (:numerical
             (:symbol fl)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -54,7 +52,6 @@ TEST(RunirTests, IncompleteStructuralTerminationTppSketchIsTerminating)
         )
         (:numerical
             (:symbol fn)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -65,40 +62,37 @@ TEST(RunirTests, IncompleteStructuralTerminationTppSketchIsTerminating)
     (:rules
         (:rule
             (:symbol auto1)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero fb)
+                    (greater_zero fb)
                 )
                 (:effects
-                    (:decreases fb)
-                    (:unchanged fl)
-                    (:unchanged fn)
+                    (decreases fb)
+                    (unchanged fl)
+                    (unchanged fn)
                 )
             )
         )
         (:rule
             (:symbol auto2)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero fl)
+                    (greater_zero fl)
                 )
                 (:effects
-                    (:unchanged fn)
-                    (:decreases fl)
+                    (unchanged fn)
+                    (decreases fl)
                 )
             )
         )
         (:rule
             (:symbol auto3)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero fn)
+                    (greater_zero fn)
                 )
                 (:effects
-                    (:decreases fn)
+                    (decreases fn)
                 )
             )
         )
@@ -125,7 +119,6 @@ TEST(RunirTests, IncompleteStructuralTerminationBarmanSketchIsTerminating)
     (:features
         (:boolean
             (:symbol c1)
-            (:description "")
             (:expression
                 (b_nonempty
                     (c_atomic_state
@@ -134,7 +127,6 @@ TEST(RunirTests, IncompleteStructuralTerminationBarmanSketchIsTerminating)
         )
         (:boolean
             (:symbol c2)
-            (:description "")
             (:expression
                 (b_nonempty
                     (c_atomic_state
@@ -143,7 +135,6 @@ TEST(RunirTests, IncompleteStructuralTerminationBarmanSketchIsTerminating)
         )
         (:numerical
             (:symbol g)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -152,7 +143,6 @@ TEST(RunirTests, IncompleteStructuralTerminationBarmanSketchIsTerminating)
         )
         (:numerical
             (:symbol u)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -163,58 +153,54 @@ TEST(RunirTests, IncompleteStructuralTerminationBarmanSketchIsTerminating)
     (:rules
         (:rule
             (:symbol auto4)
-            (:description "")
             (:expression
                 (:conditions
-                    (:negative c1)
+                    (negative c1)
                 )
                 (:effects
-                    (:positive c1)
-                    (:unchanged c2)
-                    (:unchanged g)
+                    (positive c1)
+                    (unchanged c2)
+                    (unchanged g)
                 )
             )
         )
         (:rule
             (:symbol auto5)
-            (:description "")
             (:expression
                 (:conditions
-                    (:positive c1)
-                    (:negative c2)
+                    (positive c1)
+                    (negative c2)
                 )
                 (:effects
-                    (:unchanged g)
-                    (:positive c2)
-                    (:unchanged c1)
+                    (unchanged g)
+                    (positive c2)
+                    (unchanged c1)
                 )
             )
         )
         (:rule
             (:symbol auto6)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero u)
+                    (greater_zero u)
                 )
                 (:effects
-                    (:unchanged c2)
-                    (:unchanged g)
-                    (:unchanged c1)
-                    (:decreases u)
+                    (unchanged c2)
+                    (unchanged g)
+                    (unchanged c1)
+                    (decreases u)
                 )
             )
         )
         (:rule
             (:symbol auto7)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero g)
+                    (greater_zero g)
                 )
                 (:effects
-                    (:decreases g)
-                    (:unchanged u)
+                    (decreases g)
+                    (unchanged u)
                 )
             )
         )
@@ -243,7 +229,6 @@ TEST(RunirTests, IncompleteStructuralTerminationRequiresR3MarkedComplementaryCon
     (:features
         (:boolean
             (:symbol q)
-            (:description "")
             (:expression
                 (b_nonempty
                     (c_atomic_state
@@ -252,7 +237,6 @@ TEST(RunirTests, IncompleteStructuralTerminationRequiresR3MarkedComplementaryCon
         )
         (:numerical
             (:symbol n)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -263,42 +247,39 @@ TEST(RunirTests, IncompleteStructuralTerminationRequiresR3MarkedComplementaryCon
     (:rules
         (:rule
             (:symbol auto8)
-            (:description "")
             (:expression
                 (:conditions
-                    (:positive q)
-                    (:greater_zero n)
+                    (positive q)
+                    (greater_zero n)
                 )
                 (:effects
-                    (:negative q)
-                    (:unchanged n)
+                    (negative q)
+                    (unchanged n)
                 )
             )
         )
         (:rule
             (:symbol auto9)
-            (:description "")
             (:expression
                 (:conditions
-                    (:negative q)
-                    (:equal_zero n)
+                    (negative q)
+                    (equal_zero n)
                 )
                 (:effects
-                    (:unchanged n)
-                    (:positive q)
+                    (unchanged n)
+                    (positive q)
                 )
             )
         )
         (:rule
             (:symbol auto10)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero n)
+                    (greater_zero n)
                 )
                 (:effects
-                    (:decreases n)
-                    (:unchanged q)
+                    (decreases n)
+                    (unchanged q)
                 )
             )
         )
@@ -323,7 +304,6 @@ TEST(RunirTests, IncompleteStructuralTerminationBooleanOscillatorIsUnknownWithBl
     (:features
         (:boolean
             (:symbol b1)
-            (:description "")
             (:expression
                 (b_nonempty
                     (c_atomic_state
@@ -334,25 +314,23 @@ TEST(RunirTests, IncompleteStructuralTerminationBooleanOscillatorIsUnknownWithBl
     (:rules
         (:rule
             (:symbol auto11)
-            (:description "")
             (:expression
                 (:conditions
-                    (:negative b1)
+                    (negative b1)
                 )
                 (:effects
-                    (:positive b1)
+                    (positive b1)
                 )
             )
         )
         (:rule
             (:symbol auto12)
-            (:description "")
             (:expression
                 (:conditions
-                    (:positive b1)
+                    (positive b1)
                 )
                 (:effects
-                    (:negative b1)
+                    (negative b1)
                 )
             )
         )

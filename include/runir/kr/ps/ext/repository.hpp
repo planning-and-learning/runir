@@ -35,12 +35,16 @@
 namespace runir::kr::ps::ext
 {
 
-using ConcreteRuleTypes = ygg::MapTypeListT<Rule, ygg::TypeList<LoadTag, SketchTag, DoTag, CallTag>>;
+using LoadRuleTypes = ygg::TypeList<Rule<LoadTag, runir::kr::dl::ConceptTag>, Rule<LoadTag, runir::kr::dl::RoleTag>>;
+using ControlRuleTypes = ygg::MapTypeListT<Rule, ygg::TypeList<SketchTag, DoTag, CallTag>>;
+using ConcreteRuleTypes = ygg::ConcatTypeListsT<LoadRuleTypes, ControlRuleTypes>;
 using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<RuleVariant>, ConcreteRuleTypes>;
 using FeatureTypes = ygg::TypeList<Feature<runir::kr::dl::ConceptTag>,
+                                   Feature<runir::kr::dl::RoleTag>,
                                    Feature<runir::kr::ps::dl::BooleanFeature>,
                                    Feature<runir::kr::ps::dl::NumericalFeature>,
                                    ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>,
+                                   ConcreteFeature<runir::kr::DlTag, runir::kr::dl::RoleTag>,
                                    ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
                                    ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>;
 using ConditionTypes = ygg::TypeList<ConditionVariant,
@@ -63,21 +67,23 @@ using EffectTypes = ygg::TypeList<EffectVariant,
                                   ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
                                   ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
 using ArgumentTypes = ygg::TypeList<Argument<runir::kr::dl::ConceptTag>, Argument<runir::kr::dl::RoleTag>, Argument<runir::kr::dl::BooleanTag>, Argument<runir::kr::dl::NumericalTag>>;
-using ProgramTypes = ygg::TypeList<Register, MemoryState, Module, ModuleProgram>;
+using RegisterTypes = ygg::TypeList<Register<runir::kr::dl::ConceptTag>, Register<runir::kr::dl::RoleTag>>;
+using ProgramTypes = ygg::TypeList<MemoryState, Module, ModuleProgram>;
 using RepositoryTypes =
-    ygg::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ArgumentTypes, ProgramTypes>;
+    ygg::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ArgumentTypes, RegisterTypes, ProgramTypes>;
 using Repository = runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ext::ConstructorRepositoryPtr>;
 using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ext::ConstructorRepositoryPtr>;
 
-using RegisterView = ygg::View<ygg::Index<Register>, Repository>;
+using ConceptRegisterView = ygg::View<ygg::Index<Register<runir::kr::dl::ConceptTag>>, Repository>;
+using RoleRegisterView = ygg::View<ygg::Index<Register<runir::kr::dl::RoleTag>>, Repository>;
 using MemoryStateView = ygg::View<ygg::Index<MemoryState>, Repository>;
 using ModuleView = ygg::View<ygg::Index<Module>, Repository>;
 using ModuleProgramView = ygg::View<ygg::Index<ModuleProgram>, Repository>;
 using RuleVariantView = ygg::View<ygg::Index<RuleVariant>, Repository>;
 
-template<RuleKind Kind>
-using RuleView = ygg::View<ygg::Index<Rule<Kind>>, Repository>;
+template<RuleKind Kind, typename Category = void>
+using RuleView = ygg::View<ygg::Index<Rule<Kind, Category>>, Repository>;
 
 }  // namespace runir::kr::ps::ext
 

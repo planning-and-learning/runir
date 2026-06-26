@@ -18,6 +18,7 @@ add_library(kr SHARED
     ps/base/sketch_executor.cpp
     ps/ext/dl/module_factory.cpp
     ps/ext/dl/parser/parser.cpp
+    ps/ext/dl/parser/parser_instantiations.cpp
     ps/ext/dl/parser.cpp
     ps/ext/module_program_executor.cpp
     uns/dl/classifier_factory.cpp

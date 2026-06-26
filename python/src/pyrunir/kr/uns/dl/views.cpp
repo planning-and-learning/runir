@@ -39,8 +39,6 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_feature", &View::get_feature);
     if constexpr (requires(const View& view) { view.get_symbol(); })
         cls.def("get_symbol", [](const View& view) { return std::string(view.get_symbol()); });
-    if constexpr (requires(const View& view) { view.get_description(); })
-        cls.def("get_description", [](const View& view) { return std::string(view.get_description()); });
     if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<Family, tyr::planning::GroundTag>& context) { evaluate(view, context); })
         cls.def(
             "evaluate",

@@ -45,13 +45,23 @@ public:
             return make_view(get_data().numerical_arguments, *m_context);
     }
 
-    auto get_registers() const noexcept { return make_view(get_data().registers, *m_context); }
+    template<runir::kr::dl::CategoryTag Category>
+    auto get_registers() const noexcept
+        requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
+    {
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+            return make_view(get_data().concept_registers, *m_context);
+        else
+            return make_view(get_data().role_registers, *m_context);
+    }
 
     template<typename FeatureTag>
     auto get_features() const noexcept
     {
         if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
             return make_view(get_data().concept_features, *m_context);
+        else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
+            return make_view(get_data().role_features, *m_context);
         else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
             return make_view(get_data().boolean_features, *m_context);
         else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)

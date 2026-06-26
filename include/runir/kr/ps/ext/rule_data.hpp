@@ -33,15 +33,16 @@ using CallArgument = ::cista::offset::variant<ConceptArgument, RoleArgument, Boo
 namespace ygg
 {
 
-template<>
-struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag>>
+template<runir::kr::dl::CategoryTag Category>
+    requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
+struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag, Category>>
 {
-    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag>> index;
+    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag, Category>> index;
     Index<runir::kr::ps::ext::MemoryState> source;
     Index<runir::kr::ps::ext::MemoryState> target;
     IndexList<runir::kr::ps::ext::ConditionVariant> conditions;
-    runir::kr::ps::ext::ConceptArgument load_concept;
-    Index<runir::kr::ps::ext::Register> reg;
+    Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, Category>> load_expression;
+    Index<runir::kr::ps::ext::Register<Category>> reg;
 
     void clear() noexcept
     {
@@ -49,12 +50,12 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag>>
         ygg::clear(source);
         ygg::clear(target);
         ygg::clear(conditions);
-        ygg::clear(load_concept);
+        ygg::clear(load_expression);
         ygg::clear(reg);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, load_concept, reg); }
-    auto identifying_members() const noexcept { return std::tie(source, target, conditions, load_concept, reg); }
+    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, load_expression, reg); }
+    auto identifying_members() const noexcept { return std::tie(source, target, conditions, load_expression, reg); }
 };
 
 template<>

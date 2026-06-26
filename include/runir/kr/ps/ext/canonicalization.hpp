@@ -28,7 +28,11 @@ bool is_canonical(const ygg::Data<Argument<Category>>&) noexcept
 
 inline bool is_canonical(const ygg::Data<MemoryState>&) noexcept { return true; }
 
-inline bool is_canonical(const ygg::Data<Register>&) noexcept { return true; }
+template<runir::kr::dl::CategoryTag Category>
+bool is_canonical(const ygg::Data<Register<Category>>&) noexcept
+{
+    return true;
+}
 
 template<typename FeatureTag>
 bool is_canonical(const ygg::Data<Feature<FeatureTag>>&) noexcept
@@ -62,8 +66,8 @@ inline bool is_canonical(const ygg::Data<EffectVariant>&) noexcept { return true
 
 inline bool is_canonical(const ygg::Data<ConcreteEffectVariant<runir::kr::DlTag>>&) noexcept { return true; }
 
-template<RuleKind Kind>
-bool is_canonical(const ygg::Data<Rule<Kind>>& data) noexcept
+template<RuleKind Kind, typename Category>
+bool is_canonical(const ygg::Data<Rule<Kind, Category>>& data) noexcept
 {
     if constexpr (std::same_as<Kind, LoadTag>)
         return ygg::is_canonical(data.conditions);
@@ -80,7 +84,8 @@ inline bool is_canonical(const ygg::Data<RuleVariant>&) noexcept { return true; 
 inline bool is_canonical(const ygg::Data<Module>& data) noexcept
 {
     return ygg::is_canonical(data.concept_arguments) && ygg::is_canonical(data.role_arguments) && ygg::is_canonical(data.boolean_arguments)
-           && ygg::is_canonical(data.numerical_arguments) && ygg::is_canonical(data.registers) && ygg::is_canonical(data.concept_features)
+           && ygg::is_canonical(data.numerical_arguments) && ygg::is_canonical(data.concept_registers) && ygg::is_canonical(data.role_registers)
+           && ygg::is_canonical(data.concept_features) && ygg::is_canonical(data.role_features)
            && ygg::is_canonical(data.boolean_features) && ygg::is_canonical(data.numerical_features) && ygg::is_canonical(data.memory_states);
 }
 
@@ -93,7 +98,10 @@ void canonicalize(ygg::Data<Argument<Category>>&) noexcept
 
 inline void canonicalize(ygg::Data<MemoryState>&) noexcept {}
 
-inline void canonicalize(ygg::Data<Register>&) noexcept {}
+template<runir::kr::dl::CategoryTag Category>
+void canonicalize(ygg::Data<Register<Category>>&) noexcept
+{
+}
 
 template<typename FeatureTag>
 void canonicalize(ygg::Data<Feature<FeatureTag>>&) noexcept
@@ -123,8 +131,8 @@ inline void canonicalize(ygg::Data<EffectVariant>&) noexcept {}
 
 inline void canonicalize(ygg::Data<ConcreteEffectVariant<runir::kr::DlTag>>&) noexcept {}
 
-template<RuleKind Kind>
-void canonicalize(ygg::Data<Rule<Kind>>& data)
+template<RuleKind Kind, typename Category>
+void canonicalize(ygg::Data<Rule<Kind, Category>>& data)
 {
     if constexpr (std::same_as<Kind, LoadTag>)
     {
@@ -154,8 +162,10 @@ inline void canonicalize(ygg::Data<Module>& data)
     ygg::canonicalize(data.role_arguments);
     ygg::canonicalize(data.boolean_arguments);
     ygg::canonicalize(data.numerical_arguments);
-    ygg::canonicalize(data.registers);
+    ygg::canonicalize(data.concept_registers);
+    ygg::canonicalize(data.role_registers);
     ygg::canonicalize(data.concept_features);
+    ygg::canonicalize(data.role_features);
     ygg::canonicalize(data.boolean_features);
     ygg::canonicalize(data.numerical_features);
     ygg::canonicalize(data.memory_states);

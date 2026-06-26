@@ -38,8 +38,8 @@ bool is_compatible_with(ygg::View<ygg::Index<EffectVariant>, C> effect, Evaluati
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context); }, effect.get_variant());
 }
 
-template<RuleKind Kind, typename C, typename EvaluationContext>
-bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationContext& context)
+template<RuleKind Kind, typename Category, typename C, typename EvaluationContext>
+bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind, Category>>, C> rule, EvaluationContext& context)
 {
     for (auto condition : rule.get_conditions())
         if (!runir::kr::ps::ext::is_compatible_with(condition, context))
@@ -48,8 +48,8 @@ bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, Evalua
     return true;
 }
 
-template<RuleKind Kind, typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationContext& context)
+template<RuleKind Kind, typename Category, typename C, typename EvaluationContext>
+bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind, Category>>, C> rule, EvaluationContext& context)
 {
     if (!conditions_are_compatible(rule, context))
         return false;

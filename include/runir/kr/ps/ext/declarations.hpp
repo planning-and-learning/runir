@@ -9,6 +9,8 @@
 namespace runir::kr::ps::ext
 {
 
+template<runir::kr::dl::CategoryTag Category>
+    requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
 struct Register
 {
 };
@@ -91,7 +93,7 @@ struct CallTag
 template<typename T>
 concept RuleKind = std::same_as<T, LoadTag> || std::same_as<T, SketchTag> || std::same_as<T, DoTag> || std::same_as<T, CallTag>;
 
-template<RuleKind Kind>
+template<RuleKind Kind, typename Category = void>
 struct Rule
 {
 };

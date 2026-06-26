@@ -29,8 +29,6 @@ void bind_data(nb::module_& m, const std::string& name)
         cls.def_rw("feature", &Data::feature);
     if constexpr (requires { &Data::symbol; })
         cls.def_rw("symbol", &Data::symbol);
-    if constexpr (requires { &Data::description; })
-        cls.def_rw("description", &Data::description);
     if constexpr (requires { &Data::source; })
         cls.def_rw("source", &Data::source);
     if constexpr (requires { &Data::target; })
@@ -39,8 +37,8 @@ void bind_data(nb::module_& m, const std::string& name)
         cls.def_rw("conditions", &Data::conditions);
     if constexpr (requires { &Data::effects; })
         cls.def_rw("effects", &Data::effects);
-    if constexpr (requires { &Data::load_concept; })
-        cls.def_rw("load_concept", &Data::load_concept);
+    if constexpr (requires { &Data::load_expression; })
+        cls.def_rw("load_expression", &Data::load_expression);
     if constexpr (requires { &Data::reg; })
         cls.def_rw("reg", &Data::reg);
     if constexpr (requires { &Data::action_name; })
@@ -57,8 +55,10 @@ void bind_data(nb::module_& m, const std::string& name)
         cls.def_rw("boolean_arguments", &Data::boolean_arguments);
     if constexpr (requires { &Data::numerical_arguments; })
         cls.def_rw("numerical_arguments", &Data::numerical_arguments);
-    if constexpr (requires { &Data::registers; })
-        cls.def_rw("registers", &Data::registers);
+    if constexpr (requires { &Data::concept_registers; })
+        cls.def_rw("concept_registers", &Data::concept_registers);
+    if constexpr (requires { &Data::role_registers; })
+        cls.def_rw("role_registers", &Data::role_registers);
     if constexpr (requires { &Data::concept_features; })
         cls.def_rw("concept_features", &Data::concept_features);
     if constexpr (requires { &Data::boolean_features; })
@@ -83,15 +83,18 @@ void bind_datas(nb::module_& m)
     bind_data<Argument<runir::kr::dl::RoleTag>>(m, "RoleArgumentData");
     bind_data<Argument<runir::kr::dl::BooleanTag>>(m, "BooleanArgumentData");
     bind_data<Argument<runir::kr::dl::NumericalTag>>(m, "NumericalArgumentData");
-    bind_data<Register>(m, "RegisterData");
+    bind_data<Register<runir::kr::dl::ConceptTag>>(m, "ConceptRegisterData");
+    bind_data<Register<runir::kr::dl::RoleTag>>(m, "RoleRegisterData");
     bind_data<MemoryState>(m, "MemoryStateData");
     bind_data<Module>(m, "ModuleData");
     bind_data<ModuleProgram>(m, "ModuleProgramData");
 
     bind_data<Feature<runir::kr::dl::ConceptTag>>(m, "ConceptFeatureData");
+    bind_data<Feature<runir::kr::dl::RoleTag>>(m, "RoleFeatureData");
     bind_data<Feature<runir::kr::ps::dl::BooleanFeature>>(m, "BooleanFeatureData");
     bind_data<Feature<runir::kr::ps::dl::NumericalFeature>>(m, "NumericalFeatureData");
     bind_data<ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>>(m, "DlConceptFeatureData");
+    bind_data<ConcreteFeature<runir::kr::DlTag, runir::kr::dl::RoleTag>>(m, "DlRoleFeatureData");
     bind_data<ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>(m, "DlBooleanFeatureData");
     bind_data<ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>(m, "DlNumericalFeatureData");
 
@@ -113,7 +116,8 @@ void bind_datas(nb::module_& m)
     bind_data<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>(m, "DlNumericalUnchangedEffectData");
 
     bind_data<RuleVariant>(m, "RuleVariantData");
-    bind_data<Rule<LoadTag>>(m, "LoadRuleData");
+    bind_data<Rule<LoadTag, runir::kr::dl::ConceptTag>>(m, "ConceptLoadRuleData");
+    bind_data<Rule<LoadTag, runir::kr::dl::RoleTag>>(m, "RoleLoadRuleData");
     bind_data<Rule<SketchTag>>(m, "SketchRuleData");
     bind_data<Rule<DoTag>>(m, "DoRuleData");
     bind_data<Rule<CallTag>>(m, "CallRuleData");

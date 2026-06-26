@@ -17,6 +17,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <yggdrasil/containers/variant.hpp>
 
 namespace runir::kr::ps::ext::dl
 {
@@ -466,19 +467,50 @@ auto parse_constructor(const dl_ast::Constructor<runir::kr::ExtFamilyTag, Catego
     return boost::apply_visitor([&](const auto& arg) { return parse_dl(unwrap(arg), domain, repository); }, node.get());
 }
 
-template<runir::kr::dl::CategoryTag Category>
-auto intern_argument(Repository& repository, const ast::Argument& argument)
+template<typename T>
+struct AstCategory
 {
-    auto data = ygg::Data<Argument<Category>>(argument.name, runir::kr::dl::ArgumentIdentifier<Category>(argument.identifier));
+};
+
+template<dl_::CategoryTag Category>
+struct AstCategory<ast::Argument<Category>>
+{
+    using Type = Category;
+};
+
+template<dl_::CategoryTag Category>
+struct AstCategory<ast::Register<Category>>
+{
+    using Type = Category;
+};
+
+template<dl_::CategoryTag Category>
+struct AstCategory<ast::Feature<Category>>
+{
+    using Type = Category;
+};
+
+template<dl_::CategoryTag Category>
+struct AstCategory<ast::LoadRule<Category>>
+{
+    using Type = Category;
+};
+
+template<dl_::CategoryTag Category>
+auto intern_argument(Repository& repository, const ast::Argument<Category>& argument, ygg::uint_t identifier)
+{
+    auto data = ygg::Data<Argument<Category>>(argument.symbol, runir::kr::dl::ArgumentIdentifier<Category>(identifier));
     return intern(repository, data);
 }
 
 using ConceptFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::ext::Feature<runir::kr::dl::ConceptTag>>>;
+using RoleFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::ext::Feature<runir::kr::dl::RoleTag>>>;
 using BooleanFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::ext::Feature<runir::kr::ps::dl::BooleanFeature>>>;
 using NumericalFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::ext::Feature<runir::kr::ps::dl::NumericalFeature>>>;
 using ConceptAliasMap = std::unordered_map<std::string, ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>;
 using MemoryStateMap = std::unordered_map<std::string, ygg::Index<MemoryState>>;
-using RegisterMap = std::unordered_map<std::string, ygg::Index<Register>>;
+using ConceptRegisterMap = std::unordered_map<std::string, ygg::Index<Register<runir::kr::dl::ConceptTag>>>;
+using RoleRegisterMap = std::unordered_map<std::string, ygg::Index<Register<runir::kr::dl::RoleTag>>>;
 using ModuleMap = std::unordered_map<std::string, ygg::Index<Module>>;
 
 struct SignatureCounts
@@ -497,185 +529,188 @@ std::string signature_text(const SignatureCounts& counts)
            + ", numerical=" + std::to_string(counts.numericals);
 }
 
-[[noreturn]] void fail_at(const std::string& message, std::size_t offset) { throw std::runtime_error(message + " at offset " + std::to_string(offset) + "."); }
+[[noreturn]] void fail(const std::string& message) { throw std::runtime_error(message + "."); }
+
+template<dl_::CategoryTag Category>
+void increment(SignatureCounts& counts)
+{
+    if constexpr (std::same_as<Category, dl_::ConceptTag>)
+        ++counts.concepts;
+    else if constexpr (std::same_as<Category, dl_::RoleTag>)
+        ++counts.roles;
+    else if constexpr (std::same_as<Category, dl_::BooleanTag>)
+        ++counts.booleans;
+    else if constexpr (std::same_as<Category, dl_::NumericalTag>)
+        ++counts.numericals;
+}
 
 SignatureCounts signature_counts(const ast::Module& module)
 {
     auto result = SignatureCounts {};
     for (const auto& argument : module.arguments)
+        boost::apply_visitor([&](const auto& concrete) { increment<typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type>(result); },
+                             argument.get());
+    return result;
+}
+
+template<dl_::CategoryTag Category>
+void validate_unique_names(const std::vector<ast::Register<Category>>& declarations, const char* kind)
+{
+    if (declarations.size() > runir::kr::dl::num_registers)
+        fail(std::string(kind) + " declares more registers than the supported maximum of " + std::to_string(runir::kr::dl::num_registers));
+
+    auto names = std::unordered_set<std::string> {};
+    for (const auto& declaration : declarations)
+        if (!names.emplace(declaration.symbol).second)
+            fail(std::string("Duplicate ") + kind + " register name \"" + declaration.symbol + "\"");
+}
+
+template<dl_::CategoryTag Category>
+std::vector<ast::Register<Category>> collect_registers(const std::vector<ast::RegisterVariant>& registers)
+{
+    auto result = std::vector<ast::Register<Category>> {};
+    for (const auto& reg : registers)
     {
-        switch (argument.kind)
-        {
-            case ast::ArgumentKind::CONCEPT:
-                ++result.concepts;
-                break;
-            case ast::ArgumentKind::ROLE:
-                ++result.roles;
-                break;
-            case ast::ArgumentKind::BOOLEAN:
-                ++result.booleans;
-                break;
-            case ast::ArgumentKind::NUMERICAL:
-                ++result.numericals;
-                break;
-        }
+        boost::apply_visitor(
+            [&](const auto& concrete)
+            {
+                using ConcreteCategory = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+                if constexpr (std::same_as<ConcreteCategory, Category>)
+                    result.push_back(concrete);
+            },
+            reg.get());
     }
     return result;
 }
 
-std::size_t argument_count(const SignatureCounts& counts, ast::ArgumentKind kind)
-{
-    switch (kind)
-    {
-        case ast::ArgumentKind::CONCEPT:
-            return counts.concepts;
-        case ast::ArgumentKind::ROLE:
-            return counts.roles;
-        case ast::ArgumentKind::BOOLEAN:
-            return counts.booleans;
-        case ast::ArgumentKind::NUMERICAL:
-            return counts.numericals;
-    }
-    return 0;
-}
-
-const char* argument_kind_name(ast::ArgumentKind kind)
-{
-    switch (kind)
-    {
-        case ast::ArgumentKind::CONCEPT:
-            return "concept";
-        case ast::ArgumentKind::ROLE:
-            return "role";
-        case ast::ArgumentKind::BOOLEAN:
-            return "boolean";
-        case ast::ArgumentKind::NUMERICAL:
-            return "numerical";
-    }
-    return "unknown";
-}
-
 void validate_module_declarations(const ast::Module& module)
 {
-    const auto counts = signature_counts(module);
-    auto concept_arguments = std::unordered_set<std::uint64_t> {};
-    auto role_arguments = std::unordered_set<std::uint64_t> {};
-    auto boolean_arguments = std::unordered_set<std::uint64_t> {};
-    auto numerical_arguments = std::unordered_set<std::uint64_t> {};
+    auto concept_arguments = std::unordered_set<std::string> {};
+    auto role_arguments = std::unordered_set<std::string> {};
+    auto boolean_arguments = std::unordered_set<std::string> {};
+    auto numerical_arguments = std::unordered_set<std::string> {};
+
+    const auto add_argument = [&](auto& names, const std::string& symbol, const char* kind)
+    {
+        if (!names.emplace(symbol).second)
+            fail(std::string("Duplicate ") + kind + " argument name \"" + symbol + "\"");
+    };
 
     for (const auto& argument : module.arguments)
     {
-        const auto max_identifier = argument_count(counts, argument.kind);
-        if (argument.identifier >= max_identifier)
-            fail_at(std::string(argument_kind_name(argument.kind)) + " argument identifier " + std::to_string(argument.identifier)
-                        + " is out of range; declared arguments of this kind: " + std::to_string(max_identifier) + ".",
-                    argument.source_offset);
-
-        auto& seen = argument.kind == ast::ArgumentKind::CONCEPT ? concept_arguments :
-                     argument.kind == ast::ArgumentKind::ROLE    ? role_arguments :
-                     argument.kind == ast::ArgumentKind::BOOLEAN ? boolean_arguments :
-                                                                   numerical_arguments;
-        if (!seen.emplace(argument.identifier).second)
-            fail_at(std::string("Duplicate ") + argument_kind_name(argument.kind) + " argument identifier " + std::to_string(argument.identifier) + ".",
-                    argument.source_offset);
+        boost::apply_visitor(
+            [&](const auto& concrete)
+            {
+                using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+                if constexpr (std::same_as<Category, dl_::ConceptTag>)
+                    add_argument(concept_arguments, concrete.symbol, "concept");
+                else if constexpr (std::same_as<Category, dl_::RoleTag>)
+                    add_argument(role_arguments, concrete.symbol, "role");
+                else if constexpr (std::same_as<Category, dl_::BooleanTag>)
+                    add_argument(boolean_arguments, concrete.symbol, "boolean");
+                else if constexpr (std::same_as<Category, dl_::NumericalTag>)
+                    add_argument(numerical_arguments, concrete.symbol, "numerical");
+            },
+            argument.get());
     }
 
-    auto register_identifiers = std::unordered_set<std::uint64_t> {};
-    for (const auto& reg : module.registers)
-    {
-        if (reg.identifier >= runir::kr::dl::num_registers)
-            fail_at("Register identifier " + std::to_string(reg.identifier) + " is out of range; max registers is "
-                        + std::to_string(runir::kr::dl::num_registers) + ".",
-                    reg.source_offset);
-        if (!register_identifiers.emplace(reg.identifier).second)
-            fail_at("Duplicate register identifier " + std::to_string(reg.identifier) + ".", reg.source_offset);
-    }
+    validate_unique_names(collect_registers<dl_::ConceptTag>(module.registers), "concept");
+    validate_unique_names(collect_registers<dl_::RoleTag>(module.registers), "role");
 }
 
-void append_argument(Repository& repository, ygg::Data<Module>& data, const ast::Argument& argument)
+void append_argument(Repository& repository,
+                     ygg::Data<Module>& data,
+                     const ast::ArgumentVariant& argument,
+                     ygg::uint_t& concept_identifier,
+                     ygg::uint_t& role_identifier,
+                     ygg::uint_t& boolean_identifier,
+                     ygg::uint_t& numerical_identifier)
 {
-    switch (argument.kind)
-    {
-        case ast::ArgumentKind::CONCEPT:
-            data.concept_arguments.push_back(intern_argument<runir::kr::dl::ConceptTag>(repository, argument).get_index());
-            break;
-        case ast::ArgumentKind::ROLE:
-            data.role_arguments.push_back(intern_argument<runir::kr::dl::RoleTag>(repository, argument).get_index());
-            break;
-        case ast::ArgumentKind::BOOLEAN:
-            data.boolean_arguments.push_back(intern_argument<runir::kr::dl::BooleanTag>(repository, argument).get_index());
-            break;
-        case ast::ArgumentKind::NUMERICAL:
-            data.numerical_arguments.push_back(intern_argument<runir::kr::dl::NumericalTag>(repository, argument).get_index());
-            break;
-    }
+    boost::apply_visitor(
+        [&](const auto& concrete)
+        {
+            using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+            if constexpr (std::same_as<Category, dl_::ConceptTag>)
+                data.concept_arguments.push_back(intern_argument<Category>(repository, concrete, concept_identifier++).get_index());
+            else if constexpr (std::same_as<Category, dl_::RoleTag>)
+                data.role_arguments.push_back(intern_argument<Category>(repository, concrete, role_identifier++).get_index());
+            else if constexpr (std::same_as<Category, dl_::BooleanTag>)
+                data.boolean_arguments.push_back(intern_argument<Category>(repository, concrete, boolean_identifier++).get_index());
+            else if constexpr (std::same_as<Category, dl_::NumericalTag>)
+                data.numerical_arguments.push_back(intern_argument<Category>(repository, concrete, numerical_identifier++).get_index());
+        },
+        argument.get());
 }
 
 template<typename FeatureTag, typename ConcreteFeatureTag>
 auto intern_dl_feature(Repository& repository,
                        ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, ConcreteFeatureTag>> constructor,
-                       const ast::Feature& feature)
+                       const std::string& symbol)
 {
-    ygg::Data<ConcreteFeature<runir::kr::DlTag, FeatureTag>> concrete_data(constructor, feature.symbol, feature.description);
+    ygg::Data<ConcreteFeature<runir::kr::DlTag, FeatureTag>> concrete_data(constructor, symbol);
     const auto concrete = intern(repository, concrete_data);
     ygg::Data<Feature<FeatureTag>> feature_data(concrete.get_index());
     return intern(repository, feature_data);
 }
 
+template<dl_::CategoryTag Category>
 void append_feature(Repository& repository,
                     ygg::Data<Module>& module_data,
-                    const ast::Feature& feature,
+                    const ast::Feature<Category>& feature,
                     tyr::formalism::planning::DomainView domain,
                     ConceptFeatureMap& concept_features,
+                    RoleFeatureMap& role_features,
                     BooleanFeatureMap& boolean_features,
                     NumericalFeatureMap& numerical_features,
                     ConceptAliasMap& concept_aliases)
 {
     try
     {
-        switch (feature.kind)
+        if constexpr (std::same_as<Category, dl_::ConceptTag>)
         {
-            case ast::FeatureKind::CONCEPT:
-            {
-                const auto constructor = parse_concept(feature.expression, domain, repository.get_dl_repository());
-                const auto view = intern_dl_feature<runir::kr::dl::ConceptTag>(repository, constructor.get_index(), feature);
-                if (!concept_features.emplace(feature.name, view.get_index()).second || !concept_aliases.emplace(feature.name, constructor.get_index()).second)
-                    fail_at("Duplicate feature name \"" + feature.name + "\".", feature.name_offset);
-                module_data.concept_features.push_back(view.get_index());
-                break;
-            }
-            case ast::FeatureKind::BOOLEAN:
-            {
-                const auto constructor = parse_boolean(feature.expression, domain, repository.get_dl_repository());
-                const auto view = intern_dl_feature<runir::kr::ps::dl::BooleanFeature>(repository, constructor.get_index(), feature);
-                if (!boolean_features.emplace(feature.name, view.get_index()).second)
-                    fail_at("Duplicate feature name \"" + feature.name + "\".", feature.name_offset);
-                module_data.boolean_features.push_back(view.get_index());
-                break;
-            }
-            case ast::FeatureKind::NUMERICAL:
-            {
-                const auto constructor = parse_numerical(feature.expression, domain, repository.get_dl_repository());
-                const auto view = intern_dl_feature<runir::kr::ps::dl::NumericalFeature>(repository, constructor.get_index(), feature);
-                if (!numerical_features.emplace(feature.name, view.get_index()).second)
-                    fail_at("Duplicate feature name \"" + feature.name + "\".", feature.name_offset);
-                module_data.numerical_features.push_back(view.get_index());
-                break;
-            }
+            const auto constructor = parse_concept(feature.expression, domain, repository.get_dl_repository());
+            const auto view = intern_dl_feature<runir::kr::dl::ConceptTag>(repository, constructor.get_index(), feature.symbol);
+            if (!concept_features.emplace(feature.symbol, view.get_index()).second || !concept_aliases.emplace(feature.symbol, constructor.get_index()).second)
+                fail("Duplicate feature name \"" + feature.symbol + "\"");
+            module_data.concept_features.push_back(view.get_index());
+        }
+        else if constexpr (std::same_as<Category, dl_::RoleTag>)
+        {
+            const auto constructor = parse_role(feature.expression, domain, repository.get_dl_repository());
+            const auto view = intern_dl_feature<runir::kr::dl::RoleTag>(repository, constructor.get_index(), feature.symbol);
+            if (!role_features.emplace(feature.symbol, view.get_index()).second)
+                fail("Duplicate feature name \"" + feature.symbol + "\"");
+            module_data.role_features.push_back(view.get_index());
+        }
+        else if constexpr (std::same_as<Category, dl_::BooleanTag>)
+        {
+            const auto constructor = parse_boolean(feature.expression, domain, repository.get_dl_repository());
+            const auto view = intern_dl_feature<runir::kr::ps::dl::BooleanFeature>(repository, constructor.get_index(), feature.symbol);
+            if (!boolean_features.emplace(feature.symbol, view.get_index()).second)
+                fail("Duplicate feature name \"" + feature.symbol + "\"");
+            module_data.boolean_features.push_back(view.get_index());
+        }
+        else if constexpr (std::same_as<Category, dl_::NumericalTag>)
+        {
+            const auto constructor = parse_numerical(feature.expression, domain, repository.get_dl_repository());
+            const auto view = intern_dl_feature<runir::kr::ps::dl::NumericalFeature>(repository, constructor.get_index(), feature.symbol);
+            if (!numerical_features.emplace(feature.symbol, view.get_index()).second)
+                fail("Duplicate feature name \"" + feature.symbol + "\"");
+            module_data.numerical_features.push_back(view.get_index());
         }
     }
     catch (const std::exception& e)
     {
-        fail_at("Invalid feature \"" + feature.name + "\": " + e.what(), feature.expression_offset);
+        fail("Invalid feature \"" + feature.symbol + "\": " + e.what());
     }
 }
 
 template<typename FeatureTag>
-auto require_feature(const std::unordered_map<std::string, ygg::Index<Feature<FeatureTag>>>& features, const std::string& name, std::size_t offset)
+auto require_feature(const std::unordered_map<std::string, ygg::Index<Feature<FeatureTag>>>& features, const std::string& name)
 {
     const auto it = features.find(name);
     if (it == features.end())
-        fail_at("Unknown feature \"" + name + "\".", offset);
+        fail("Unknown feature \"" + name + "\"");
     return it->second;
 }
 
@@ -702,98 +737,97 @@ auto make_effect(Repository& repository, ygg::Index<Feature<FeatureTag>> feature
 }
 
 auto parse_condition(Repository& repository,
-                     const ast::Observation& observation,
+                     const ast::Condition& condition,
                      const ConceptFeatureMap& concept_features,
                      const BooleanFeatureMap& boolean_features,
                      const NumericalFeatureMap& numerical_features)
 {
-    switch (observation.kind)
-    {
-        case ast::ObservationKind::POSITIVE:
-            return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(
-                repository,
-                require_feature(boolean_features, observation.feature, observation.feature_offset));
-        case ast::ObservationKind::NEGATIVE:
-            return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(
-                repository,
-                require_feature(boolean_features, observation.feature, observation.feature_offset));
-        case ast::ObservationKind::EQUAL_ZERO:
-            if (concept_features.contains(observation.feature))
-                return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>(
+    return boost::apply_visitor(
+        [&](const auto& observation)
+        {
+            using Observation = std::remove_cvref_t<decltype(observation)>;
+            if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Positive>)
+            {
+                return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(repository,
+                                                                                                      require_feature(boolean_features, condition.feature));
+            }
+            else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Negative>)
+            {
+                return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(repository,
+                                                                                                      require_feature(boolean_features, condition.feature));
+            }
+            else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::EqualZero>)
+            {
+                if (concept_features.contains(condition.feature))
+                    return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>(repository,
+                                                                                                   require_feature(concept_features, condition.feature));
+                return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>(
                     repository,
-                    require_feature(concept_features, observation.feature, observation.feature_offset));
-            return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>(
-                repository,
-                require_feature(numerical_features, observation.feature, observation.feature_offset));
-        case ast::ObservationKind::GREATER_ZERO:
-            if (concept_features.contains(observation.feature))
-                return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>(
+                    require_feature(numerical_features, condition.feature));
+            }
+            else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::GreaterZero>)
+            {
+                if (concept_features.contains(condition.feature))
+                    return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>(repository,
+                                                                                                     require_feature(concept_features, condition.feature));
+                return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>(
                     repository,
-                    require_feature(concept_features, observation.feature, observation.feature_offset));
-            return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>(
-                repository,
-                require_feature(numerical_features, observation.feature, observation.feature_offset));
-        case ast::ObservationKind::UNCHANGED:
-        case ast::ObservationKind::INCREASES:
-        case ast::ObservationKind::DECREASES:
-            fail_at("Effect observations are not valid rule conditions.", observation.source_offset);
-    }
-    fail_at("Unknown condition observation kind.", observation.source_offset);
+                    require_feature(numerical_features, condition.feature));
+            }
+        },
+        condition.observation.get());
 }
 
 auto parse_effect(Repository& repository,
-                  const ast::Observation& observation,
+                  const ast::Effect& effect,
                   const ConceptFeatureMap& concept_features,
                   const BooleanFeatureMap& boolean_features,
                   const NumericalFeatureMap& numerical_features)
 {
-    switch (observation.kind)
-    {
-        case ast::ObservationKind::POSITIVE:
-            return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(
-                repository,
-                require_feature(boolean_features, observation.feature, observation.feature_offset));
-        case ast::ObservationKind::NEGATIVE:
-            return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(
-                repository,
-                require_feature(boolean_features, observation.feature, observation.feature_offset));
-        case ast::ObservationKind::UNCHANGED:
-            if (concept_features.contains(observation.feature))
-                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>(
-                    repository,
-                    require_feature(concept_features, observation.feature, observation.feature_offset));
-            if (boolean_features.contains(observation.feature))
-                return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>(
-                    repository,
-                    require_feature(boolean_features, observation.feature, observation.feature_offset));
-            return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>(
-                repository,
-                require_feature(numerical_features, observation.feature, observation.feature_offset));
-        case ast::ObservationKind::INCREASES:
-            if (concept_features.contains(observation.feature))
-                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>(
-                    repository,
-                    require_feature(concept_features, observation.feature, observation.feature_offset));
-            return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>(
-                repository,
-                require_feature(numerical_features, observation.feature, observation.feature_offset));
-        case ast::ObservationKind::DECREASES:
-            if (concept_features.contains(observation.feature))
-                return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>(
-                    repository,
-                    require_feature(concept_features, observation.feature, observation.feature_offset));
-            return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>(
-                repository,
-                require_feature(numerical_features, observation.feature, observation.feature_offset));
-        case ast::ObservationKind::EQUAL_ZERO:
-        case ast::ObservationKind::GREATER_ZERO:
-            fail_at("Condition observations are not valid rule effects.", observation.source_offset);
-    }
-    fail_at("Unknown effect observation kind.", observation.source_offset);
+    return boost::apply_visitor(
+        [&](const auto& observation)
+        {
+            using Observation = std::remove_cvref_t<decltype(observation)>;
+            if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Positive>)
+            {
+                return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(repository,
+                                                                                                   require_feature(boolean_features, effect.feature));
+            }
+            else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Negative>)
+            {
+                return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(repository,
+                                                                                                   require_feature(boolean_features, effect.feature));
+            }
+            else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Unchanged>)
+            {
+                if (concept_features.contains(effect.feature))
+                    return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>(repository, require_feature(concept_features, effect.feature));
+                if (boolean_features.contains(effect.feature))
+                    return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>(repository,
+                                                                                                        require_feature(boolean_features, effect.feature));
+                return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>(repository,
+                                                                                                      require_feature(numerical_features, effect.feature));
+            }
+            else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Increases>)
+            {
+                if (concept_features.contains(effect.feature))
+                    return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>(repository, require_feature(concept_features, effect.feature));
+                return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>(repository,
+                                                                                                      require_feature(numerical_features, effect.feature));
+            }
+            else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Decreases>)
+            {
+                if (concept_features.contains(effect.feature))
+                    return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>(repository, require_feature(concept_features, effect.feature));
+                return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>(repository,
+                                                                                                      require_feature(numerical_features, effect.feature));
+            }
+        },
+        effect.observation.get());
 }
 
 auto parse_conditions(Repository& repository,
-                      const std::vector<ast::Observation>& observations,
+                      const std::vector<ast::Condition>& observations,
                       const ConceptFeatureMap& concept_features,
                       const BooleanFeatureMap& boolean_features,
                       const NumericalFeatureMap& numerical_features)
@@ -806,7 +840,7 @@ auto parse_conditions(Repository& repository,
 }
 
 auto parse_effects(Repository& repository,
-                   const std::vector<ast::Observation>& observations,
+                   const std::vector<ast::Effect>& observations,
                    const ConceptFeatureMap& concept_features,
                    const BooleanFeatureMap& boolean_features,
                    const NumericalFeatureMap& numerical_features)
@@ -818,109 +852,307 @@ auto parse_effects(Repository& repository,
     return result;
 }
 
-std::string trim_copy(std::string value)
-{
-    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())))
-        value.erase(value.begin());
-    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back())))
-        value.pop_back();
-    return value;
-}
-
-bool starts_with_expression(const std::string& value)
-{
-    const auto trimmed = trim_copy(value);
-    return !trimmed.empty() && trimmed.front() == '(';
-}
+bool is_expression_text(const std::string& value) { return !value.empty() && value.front() == '('; }
 
 auto parse_concept_argument(Repository& repository,
-                            const std::string& expression,
-                            std::size_t offset,
+                            const ast::Expression& expression,
                             tyr::formalism::planning::DomainView domain,
                             const ConceptAliasMap& concept_aliases)
 {
     try
     {
-        if (starts_with_expression(expression))
-            return parse_concept(expression, domain, repository.get_dl_repository()).get_index();
-
-        const auto it = concept_aliases.find(expression);
-        if (it == concept_aliases.end())
-            fail_at("Unknown concept expression or feature alias \"" + expression + "\".", offset);
-        return it->second;
+        return boost::apply_visitor(
+            [&](const auto& concrete)
+            {
+                using Expression = std::remove_cvref_t<decltype(concrete)>;
+                if constexpr (std::same_as<Expression, ast::ConstructorExpression>)
+                {
+                    return parse_concept(concrete.text, domain, repository.get_dl_repository()).get_index();
+                }
+                else
+                {
+                    const auto it = concept_aliases.find(concrete.symbol);
+                    if (it == concept_aliases.end())
+                        fail("Unknown concept expression or feature alias \"" + concrete.symbol + "\"");
+                    return it->second;
+                }
+            },
+            expression.get());
     }
     catch (const std::exception& e)
     {
-        fail_at(e.what(), offset);
+        fail(e.what());
+    }
+}
+
+template<typename FeatureTag>
+auto constructor_from_feature(Repository& repository, ygg::Index<Feature<FeatureTag>> feature)
+{
+    const auto view = ygg::make_view(feature, repository);
+    return ygg::visit([](auto concrete_feature) { return concrete_feature.get_feature().get_index(); }, view.get_variant());
+}
+
+auto parse_role_argument(Repository& repository,
+                         const ast::Expression& expression,
+                         tyr::formalism::planning::DomainView domain,
+                         const RoleFeatureMap& role_features)
+{
+    try
+    {
+        return boost::apply_visitor(
+            [&](const auto& concrete)
+            {
+                using Expression = std::remove_cvref_t<decltype(concrete)>;
+                if constexpr (std::same_as<Expression, ast::ConstructorExpression>)
+                {
+                    return parse_role(concrete.text, domain, repository.get_dl_repository()).get_index();
+                }
+                else
+                {
+                    const auto it = role_features.find(concrete.symbol);
+                    if (it == role_features.end())
+                        fail("Unknown role expression or feature alias \"" + concrete.symbol + "\"");
+                    return constructor_from_feature(repository, it->second);
+                }
+            },
+            expression.get());
+    }
+    catch (const std::exception& e)
+    {
+        fail(e.what());
     }
 }
 
 auto parse_do_argument(const ast::Expression& expression, const ConceptFeatureMap& concept_features)
 {
-    const auto name = trim_copy(expression.text);
-    if (starts_with_expression(name))
-        fail_at("Do-rule action arguments must reference declared concept features by symbol.", expression.source_offset);
-    return require_feature(concept_features, name, expression.source_offset);
+    return boost::apply_visitor(
+        [&](const auto& concrete) -> ygg::Index<Feature<runir::kr::dl::ConceptTag>>
+        {
+            using Expression = std::remove_cvref_t<decltype(concrete)>;
+            if constexpr (std::same_as<Expression, ast::ConstructorExpression>)
+            {
+                fail("Do-rule action arguments must reference declared concept features by symbol");
+            }
+            else
+            {
+                return require_feature(concept_features, concrete.symbol);
+            }
+        },
+        expression.get());
 }
 
 auto parse_call_argument(Repository& repository,
                          const ast::Expression& expression,
-                         tyr::formalism::planning::DomainView domain,
-                         const ConceptAliasMap& concept_aliases) -> CallArgument
+                         const ConceptFeatureMap& concept_features,
+                         const RoleFeatureMap& role_features,
+                         const BooleanFeatureMap& boolean_features,
+                         const NumericalFeatureMap& numerical_features) -> CallArgument
 {
-    const auto trimmed = trim_copy(expression.text);
-    try
-    {
-        if (trimmed.starts_with("(r_"))
-            return parse_role(trimmed, domain, repository.get_dl_repository()).get_index();
-        if (trimmed.starts_with("(b_"))
-            return parse_boolean(trimmed, domain, repository.get_dl_repository()).get_index();
-        if (trimmed.starts_with("(n_"))
-            return parse_numerical(trimmed, domain, repository.get_dl_repository()).get_index();
-        return parse_concept_argument(repository, trimmed, expression.source_offset, domain, concept_aliases);
-    }
-    catch (const std::exception& e)
-    {
-        fail_at(e.what(), expression.source_offset);
-    }
+    return boost::apply_visitor(
+        [&](const auto& concrete) -> CallArgument
+        {
+            using Expression = std::remove_cvref_t<decltype(concrete)>;
+            if constexpr (std::same_as<Expression, ast::ConstructorExpression>)
+            {
+                fail("Call-rule arguments must reference declared features by symbol");
+            }
+            else
+            {
+                const auto& name = concrete.symbol;
+                auto matches = 0;
+                auto result = CallArgument {};
+                if (const auto it = concept_features.find(name); it != concept_features.end())
+                {
+                    result = constructor_from_feature(repository, it->second);
+                    ++matches;
+                }
+                if (const auto it = role_features.find(name); it != role_features.end())
+                {
+                    result = constructor_from_feature(repository, it->second);
+                    ++matches;
+                }
+                if (const auto it = boolean_features.find(name); it != boolean_features.end())
+                {
+                    result = constructor_from_feature(repository, it->second);
+                    ++matches;
+                }
+                if (const auto it = numerical_features.find(name); it != numerical_features.end())
+                {
+                    result = constructor_from_feature(repository, it->second);
+                    ++matches;
+                }
+
+                if (matches == 0)
+                    fail("Unknown call-rule argument feature \"" + name + "\"");
+                if (matches > 1)
+                    fail("Ambiguous call-rule argument feature \"" + name + "\"");
+                return result;
+            }
+        },
+        expression.get());
 }
 
-SignatureCounts call_argument_signature_counts(const ast::Rule& rule)
+struct FeatureSymbolSets
+{
+    std::unordered_set<std::string> concepts;
+    std::unordered_set<std::string> roles;
+    std::unordered_set<std::string> booleans;
+    std::unordered_set<std::string> numericals;
+};
+
+FeatureSymbolSets feature_symbols(const ast::Module& module)
+{
+    auto result = FeatureSymbolSets {};
+    for (const auto& feature : module.features)
+    {
+        boost::apply_visitor(
+            [&](const auto& concrete)
+            {
+                using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+                if constexpr (std::same_as<Category, dl_::ConceptTag>)
+                    result.concepts.emplace(concrete.symbol);
+                else if constexpr (std::same_as<Category, dl_::RoleTag>)
+                    result.roles.emplace(concrete.symbol);
+                else if constexpr (std::same_as<Category, dl_::BooleanTag>)
+                    result.booleans.emplace(concrete.symbol);
+                else if constexpr (std::same_as<Category, dl_::NumericalTag>)
+                    result.numericals.emplace(concrete.symbol);
+            },
+            feature.get());
+    }
+    return result;
+}
+
+void increment_signature_count(SignatureCounts& counts, const FeatureSymbolSets& features, const std::string& symbol)
+{
+    auto matches = 0;
+    if (features.concepts.contains(symbol))
+    {
+        ++counts.concepts;
+        ++matches;
+    }
+    if (features.roles.contains(symbol))
+    {
+        ++counts.roles;
+        ++matches;
+    }
+    if (features.booleans.contains(symbol))
+    {
+        ++counts.booleans;
+        ++matches;
+    }
+    if (features.numericals.contains(symbol))
+    {
+        ++counts.numericals;
+        ++matches;
+    }
+    if (matches == 0)
+        fail("Unknown call-rule argument feature \"" + symbol + "\"");
+    if (matches > 1)
+        fail("Ambiguous call-rule argument feature \"" + symbol + "\"");
+}
+
+SignatureCounts call_argument_signature_counts(const ast::CallRule& rule, const FeatureSymbolSets& features)
 {
     auto result = SignatureCounts {};
     for (const auto& argument : rule.arguments)
     {
-        const auto trimmed = trim_copy(argument.text);
-        if (trimmed.starts_with("(r_"))
-            ++result.roles;
-        else if (trimmed.starts_with("(b_"))
-            ++result.booleans;
-        else if (trimmed.starts_with("(n_"))
-            ++result.numericals;
-        else
-            ++result.concepts;
+        boost::apply_visitor(
+            [&](const auto& concrete)
+            {
+                using Expression = std::remove_cvref_t<decltype(concrete)>;
+                if constexpr (std::same_as<Expression, ast::ConstructorExpression>)
+                    fail("Call-rule arguments must reference declared features by symbol");
+                else
+                    increment_signature_count(result, features, concrete.symbol);
+            },
+            argument.get());
     }
     return result;
 }
 
 struct SExpr
 {
-    std::size_t source_offset = 0;
     std::string atom;
     std::vector<SExpr> list;
 
     bool is_atom() const noexcept { return list.empty(); }
 };
 
-struct ExpressionToken
+using IdentifierMap = std::unordered_map<std::string, ygg::uint_t>;
+
+struct ModuleReferenceMaps
 {
-    std::size_t source_offset = 0;
-    std::string text;
+    IdentifierMap concept_arguments;
+    IdentifierMap role_arguments;
+    IdentifierMap boolean_arguments;
+    IdentifierMap numerical_arguments;
+    IdentifierMap concept_registers;
+    IdentifierMap role_registers;
 };
 
-std::vector<ExpressionToken> tokenize_expression(const std::string& text)
+void add_identifier(IdentifierMap& map, const std::string& name, ygg::uint_t identifier, const char* kind)
 {
-    auto tokens = std::vector<ExpressionToken> {};
+    if (!map.emplace(name, identifier).second)
+        fail(std::string("Duplicate ") + kind + " name \"" + name + "\"");
+}
+
+ModuleReferenceMaps reference_maps(const ast::Module& module)
+{
+    auto result = ModuleReferenceMaps {};
+    auto concept_argument = ygg::uint_t(0);
+    auto role_argument = ygg::uint_t(0);
+    auto boolean_argument = ygg::uint_t(0);
+    auto numerical_argument = ygg::uint_t(0);
+
+    for (const auto& argument : module.arguments)
+    {
+        boost::apply_visitor(
+            [&](const auto& concrete)
+            {
+                using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+                if constexpr (std::same_as<Category, dl_::ConceptTag>)
+                    add_identifier(result.concept_arguments, concrete.symbol, concept_argument++, "concept argument");
+                else if constexpr (std::same_as<Category, dl_::RoleTag>)
+                    add_identifier(result.role_arguments, concrete.symbol, role_argument++, "role argument");
+                else if constexpr (std::same_as<Category, dl_::BooleanTag>)
+                    add_identifier(result.boolean_arguments, concrete.symbol, boolean_argument++, "boolean argument");
+                else if constexpr (std::same_as<Category, dl_::NumericalTag>)
+                    add_identifier(result.numerical_arguments, concrete.symbol, numerical_argument++, "numerical argument");
+            },
+            argument.get());
+    }
+
+    auto concept_register = ygg::uint_t(0);
+    auto role_register = ygg::uint_t(0);
+    for (const auto& reg : module.registers)
+    {
+        boost::apply_visitor(
+            [&](const auto& concrete)
+            {
+                using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+                if constexpr (std::same_as<Category, dl_::ConceptTag>)
+                    add_identifier(result.concept_registers, concrete.symbol, concept_register++, "concept register");
+                else if constexpr (std::same_as<Category, dl_::RoleTag>)
+                    add_identifier(result.role_registers, concrete.symbol, role_register++, "role register");
+            },
+            reg.get());
+    }
+
+    return result;
+}
+
+ygg::uint_t require_identifier(const IdentifierMap& map, const std::string& name, const char* kind)
+{
+    const auto it = map.find(name);
+    if (it == map.end())
+        fail(std::string("Unknown ") + kind + " \"" + name + "\"");
+    return it->second;
+}
+
+std::vector<std::string> tokenize_expression(const std::string& text)
+{
+    auto tokens = std::vector<std::string> {};
     for (size_t i = 0; i < text.size();)
     {
         if (std::isspace(static_cast<unsigned char>(text[i])))
@@ -929,7 +1161,7 @@ std::vector<ExpressionToken> tokenize_expression(const std::string& text)
         }
         else if (text[i] == '(' || text[i] == ')')
         {
-            tokens.push_back(ExpressionToken { i, std::string(1, text[i++]) });
+            tokens.emplace_back(1, text[i++]);
         }
         else if (text[i] == '"')
         {
@@ -937,41 +1169,40 @@ std::vector<ExpressionToken> tokenize_expression(const std::string& text)
             while (i < text.size() && text[i] != '"')
                 ++i;
             if (i == text.size())
-                throw std::runtime_error("Unterminated string in DL expression.");
+                fail("Unterminated string in DL expression");
             ++i;
-            tokens.push_back(ExpressionToken { start, text.substr(start, i - start) });
+            tokens.push_back(text.substr(start, i - start));
         }
         else
         {
             const auto start = i;
             while (i < text.size() && !std::isspace(static_cast<unsigned char>(text[i])) && text[i] != '(' && text[i] != ')')
                 ++i;
-            tokens.push_back(ExpressionToken { start, text.substr(start, i - start) });
+            tokens.push_back(text.substr(start, i - start));
         }
     }
     return tokens;
 }
 
-SExpr parse_expression_tokens(const std::vector<ExpressionToken>& tokens, size_t& pos)
+SExpr parse_expression_tokens(const std::vector<std::string>& tokens, size_t& pos)
 {
     if (pos >= tokens.size())
-        throw std::runtime_error("Unexpected end of DL expression.");
+        fail("Unexpected end of DL expression");
 
-    const auto source_offset = tokens[pos].source_offset;
-    if (tokens[pos].text != "(")
-        return SExpr { source_offset, tokens[pos++].text, {} };
+    if (tokens[pos] != "(")
+        return SExpr { tokens[pos++], {} };
 
     ++pos;
-    auto result = SExpr { source_offset, {}, {} };
-    while (pos < tokens.size() && tokens[pos].text != ")")
+    auto result = SExpr {};
+    while (pos < tokens.size() && tokens[pos] != ")")
         result.list.push_back(parse_expression_tokens(tokens, pos));
 
     if (pos >= tokens.size())
-        throw std::runtime_error("Unclosed list in DL expression.");
+        fail("Unclosed list in DL expression");
     ++pos;
 
     if (result.list.empty())
-        throw std::runtime_error("Empty list in DL expression.");
+        fail("Empty list in DL expression");
     return result;
 }
 
@@ -981,7 +1212,7 @@ SExpr parse_expression(const std::string& text)
     size_t pos = 0;
     auto result = parse_expression_tokens(tokens, pos);
     if (pos != tokens.size())
-        throw std::runtime_error("Trailing tokens in DL expression.");
+        fail("Trailing tokens in DL expression");
     return result;
 }
 
@@ -1009,6 +1240,97 @@ const std::string& require_atom(const SExpr& expr, const char* context)
     return expr.atom;
 }
 
+const std::string& expression_operator(const SExpr& expr)
+{
+    if (expr.is_atom() || expr.list.empty())
+        throw std::runtime_error("Expected constructor expression list.");
+    return require_atom(expr.list.front(), "constructor operator");
+}
+
+void normalize_identifier_expression(SExpr& expr, const IdentifierMap& map, const char* constructor, const char* kind)
+{
+    if (expr.list.size() != 2)
+        fail(std::string(constructor) + " expects one symbol");
+    auto& identifier = expr.list[1];
+    if (!identifier.is_atom())
+        fail(std::string(constructor) + " expects one symbol");
+    identifier.atom = std::to_string(require_identifier(map, identifier.atom, kind));
+}
+
+void normalize_expression_references(SExpr& expr, const ModuleReferenceMaps& maps)
+{
+    if (expr.is_atom())
+        return;
+
+    const auto& op = expression_operator(expr);
+    if (op == "c_argument")
+        normalize_identifier_expression(expr, maps.concept_arguments, "c_argument", "concept argument");
+    else if (op == "r_argument")
+        normalize_identifier_expression(expr, maps.role_arguments, "r_argument", "role argument");
+    else if (op == "b_argument")
+        normalize_identifier_expression(expr, maps.boolean_arguments, "b_argument", "boolean argument");
+    else if (op == "n_argument")
+        normalize_identifier_expression(expr, maps.numerical_arguments, "n_argument", "numerical argument");
+    else if (op == "c_register")
+        normalize_identifier_expression(expr, maps.concept_registers, "c_register", "concept register");
+    else if (op == "r_register")
+        normalize_identifier_expression(expr, maps.role_registers, "r_register", "role register");
+
+    for (std::size_t i = 1; i < expr.list.size(); ++i)
+        normalize_expression_references(expr.list[i], maps);
+}
+
+std::string normalize_expression_references(const std::string& expression, const ModuleReferenceMaps& maps)
+{
+    if (!is_expression_text(expression))
+        return expression;
+
+    auto expr = parse_expression(expression);
+    normalize_expression_references(expr, maps);
+    return format_expression(expr);
+}
+
+ast::Expression normalize_expression_references(ast::Expression expression, const ModuleReferenceMaps& maps)
+{
+    boost::apply_visitor(
+        [&](auto& concrete)
+        {
+            using Expression = std::remove_cvref_t<decltype(concrete)>;
+            if constexpr (std::same_as<Expression, ast::ConstructorExpression>)
+                concrete.text = normalize_expression_references(concrete.text, maps);
+        },
+        expression.get());
+    return expression;
+}
+
+ast::Module normalize_module_expressions(ast::Module module, const ModuleReferenceMaps& maps)
+{
+    for (auto& feature : module.features)
+    {
+        boost::apply_visitor([&](auto& concrete) { concrete.expression = normalize_expression_references(concrete.expression, maps); }, feature.get());
+    }
+
+    for (auto& transition : module.rule_entries)
+    {
+        for (auto& rule : transition.rules)
+        {
+            boost::apply_visitor(
+                [&](auto& concrete)
+                {
+                    using Rule = std::remove_cvref_t<decltype(concrete)>;
+                    if constexpr (requires { concrete.expression; })
+                        concrete.expression = normalize_expression_references(concrete.expression, maps);
+                    if constexpr (requires { concrete.arguments; })
+                        for (auto& argument : concrete.arguments)
+                            argument = normalize_expression_references(argument, maps);
+                    if constexpr (std::same_as<Rule, ast::CallRule>) {}
+                },
+                rule.get());
+        }
+    }
+    return module;
+}
+
 std::string unquote(std::string value)
 {
     if (value.size() >= 2 && value.front() == '"' && value.back() == '"')
@@ -1026,159 +1348,10 @@ bool parse_truth_atom(const SExpr& expr)
     throw std::runtime_error("Expected true or false truth value.");
 }
 
-const std::string& expression_operator(const SExpr& expr);
-
 ygg::uint_t parse_uint_atom(const SExpr& expr, const char* context)
 {
     const auto& value = require_atom(expr, context);
     return static_cast<ygg::uint_t>(std::stoull(value));
-}
-
-ygg::uint_t parse_uint_atom_at(const SExpr& expr, std::size_t base_offset, const char* context)
-{
-    if (!expr.is_atom())
-        fail_at(std::string("Expected atom in ") + context + ".", base_offset + expr.source_offset);
-
-    try
-    {
-        std::size_t parsed = 0;
-        const auto value = std::stoull(expr.atom, &parsed);
-        if (parsed != expr.atom.size())
-            fail_at(std::string("Expected unsigned integer in ") + context + ".", base_offset + expr.source_offset);
-        return static_cast<ygg::uint_t>(value);
-    }
-    catch (const std::invalid_argument&)
-    {
-        fail_at(std::string("Expected unsigned integer in ") + context + ".", base_offset + expr.source_offset);
-    }
-    catch (const std::out_of_range&)
-    {
-        fail_at(std::string("Unsigned integer in ") + context + " is out of range.", base_offset + expr.source_offset);
-    }
-}
-
-void validate_argument_reference_at(ygg::uint_t identifier, std::size_t count, const char* kind, std::size_t offset)
-{
-    if (identifier >= count)
-        fail_at(std::string(kind) + " argument reference " + std::to_string(identifier)
-                    + " is out of range; declared arguments of this kind: " + std::to_string(count) + ".",
-                offset);
-}
-
-void validate_register_reference_at(ygg::uint_t identifier, const std::unordered_set<std::uint64_t>& concept_registers, const char* kind, std::size_t offset)
-{
-    if (identifier >= runir::kr::dl::num_registers)
-        fail_at(std::string(kind) + " register reference " + std::to_string(identifier) + " is out of range; max registers is "
-                    + std::to_string(runir::kr::dl::num_registers) + ".",
-                offset);
-    if (!concept_registers.contains(identifier))
-        fail_at(std::string(kind) + " register reference " + std::to_string(identifier) + " is not declared by the module.", offset);
-}
-
-void validate_expression_references(const SExpr& expr,
-                                    std::size_t base_offset,
-                                    const SignatureCounts& signature,
-                                    const std::unordered_set<std::uint64_t>& concept_registers)
-{
-    if (expr.is_atom())
-        return;
-
-    const auto fail_here = [&](const std::string& message) { fail_at(message, base_offset + expr.source_offset); };
-    const auto& op = expression_operator(expr);
-    if (op == "c_argument")
-    {
-        if (expr.list.size() != 2)
-            fail_here("c_argument expects one identifier.");
-        const auto identifier = parse_uint_atom_at(expr.list[1], base_offset, "concept argument identifier");
-        validate_argument_reference_at(identifier, signature.concepts, "Concept", base_offset + expr.source_offset);
-    }
-    else if (op == "r_argument")
-    {
-        if (expr.list.size() != 2)
-            fail_here("r_argument expects one identifier.");
-        const auto identifier = parse_uint_atom_at(expr.list[1], base_offset, "role argument identifier");
-        validate_argument_reference_at(identifier, signature.roles, "Role", base_offset + expr.source_offset);
-    }
-    else if (op == "b_argument")
-    {
-        if (expr.list.size() != 2)
-            fail_here("b_argument expects one identifier.");
-        const auto identifier = parse_uint_atom_at(expr.list[1], base_offset, "boolean argument identifier");
-        validate_argument_reference_at(identifier, signature.booleans, "Boolean", base_offset + expr.source_offset);
-    }
-    else if (op == "n_argument")
-    {
-        if (expr.list.size() != 2)
-            fail_here("n_argument expects one identifier.");
-        const auto identifier = parse_uint_atom_at(expr.list[1], base_offset, "numerical argument identifier");
-        validate_argument_reference_at(identifier, signature.numericals, "Numerical", base_offset + expr.source_offset);
-    }
-    else if (op == "c_register")
-    {
-        if (expr.list.size() != 2)
-            fail_here("c_register expects one identifier.");
-        const auto identifier = parse_uint_atom_at(expr.list[1], base_offset, "concept register identifier");
-        validate_register_reference_at(identifier, concept_registers, "Concept", base_offset + expr.source_offset);
-    }
-    else if (op == "r_register")
-    {
-        if (expr.list.size() != 2)
-            fail_here("r_register expects one identifier.");
-        const auto identifier = parse_uint_atom_at(expr.list[1], base_offset, "role register identifier");
-        validate_register_reference_at(identifier, concept_registers, "Role", base_offset + expr.source_offset);
-    }
-
-    for (std::size_t i = 1; i < expr.list.size(); ++i)
-        validate_expression_references(expr.list[i], base_offset, signature, concept_registers);
-}
-
-void validate_expression_references(const std::string& expression,
-                                    std::size_t offset,
-                                    const SignatureCounts& signature,
-                                    const std::unordered_set<std::uint64_t>& concept_registers)
-{
-    if (!starts_with_expression(expression))
-        return;
-
-    auto expr = SExpr {};
-    try
-    {
-        expr = parse_expression(expression);
-    }
-    catch (const std::exception& e)
-    {
-        fail_at(e.what(), offset);
-    }
-    validate_expression_references(expr, offset, signature, concept_registers);
-}
-
-void validate_module_expression_references(const ast::Module& module)
-{
-    const auto signature = signature_counts(module);
-    auto concept_registers = std::unordered_set<std::uint64_t> {};
-    for (const auto& reg : module.registers)
-        concept_registers.insert(reg.identifier);
-
-    for (const auto& feature : module.features)
-        validate_expression_references(feature.expression, feature.expression_offset, signature, concept_registers);
-
-    for (const auto& transition : module.rule_entries)
-    {
-        for (const auto& rule : transition.rules)
-        {
-            if (rule.kind == ast::RuleKind::LOAD)
-                validate_expression_references(rule.concept_expression, rule.concept_expression_offset, signature, concept_registers);
-            for (const auto& argument : rule.arguments)
-                validate_expression_references(argument.text, argument.source_offset, signature, concept_registers);
-        }
-    }
-}
-
-const std::string& expression_operator(const SExpr& expr)
-{
-    if (expr.is_atom() || expr.list.empty())
-        throw std::runtime_error("Expected constructor expression list.");
-    return require_atom(expr.list.front(), "constructor operator");
 }
 
 template<typename Variant>
@@ -1191,27 +1364,28 @@ Variant parse_constructor_variant_child(runir::kr::dl::ext::ConstructorRepositor
     return parse_concept(text, domain, repository).get_index();
 }
 
-template<typename RuleTag>
-auto intern_rule_variant(Repository& repository, ygg::Data<Rule<RuleTag>>& data, const std::string& symbol, const std::string& description)
+template<typename RuleTag, typename Category>
+auto intern_rule_variant(Repository& repository, ygg::Data<Rule<RuleTag, Category>>& data, const std::string& symbol)
 {
     const auto rule = intern(repository, data);
-    ygg::Data<RuleVariant> variant_data(symbol, description, rule.get_index());
+    ygg::Data<RuleVariant> variant_data(symbol, rule.get_index());
     return intern(repository, variant_data);
 }
 
-auto require_memory_state(const MemoryStateMap& memory_states, const std::string& name, std::size_t offset)
+auto require_memory_state(const MemoryStateMap& memory_states, const std::string& name)
 {
     const auto it = memory_states.find(name);
     if (it == memory_states.end())
-        fail_at("Unknown memory state \"" + name + "\".", offset);
+        fail("Unknown memory state \"" + name + "\"");
     return it->second;
 }
 
-auto require_register(const RegisterMap& registers, const std::string& name, std::size_t offset)
+template<typename RegisterMap>
+auto require_register(const RegisterMap& registers, const std::string& name)
 {
     const auto it = registers.find(name);
     if (it == registers.end())
-        fail_at("Unknown register \"" + name + "\".", offset);
+        fail("Unknown register \"" + name + "\"");
     return it->second;
 }
 
@@ -1229,16 +1403,46 @@ auto find_action_arity(tyr::formalism::planning::DomainView domain, const std::s
     return std::optional<ygg::uint_t> {};
 }
 
-void validate_do_action(tyr::formalism::planning::DomainView domain, const ast::Rule& rule)
+void validate_do_action(tyr::formalism::planning::DomainView domain, const ast::DoRule& rule)
 {
     const auto arity = find_action_arity(domain, rule.action);
     if (!arity)
-        fail_at("Unknown action \"" + rule.action + "\".", rule.action_offset);
+        fail("Unknown action \"" + rule.action + "\"");
 
     if (rule.arguments.size() != *arity)
-        fail_at("Do rule for action \"" + rule.action + "\" has " + std::to_string(rule.arguments.size()) + " arguments; expected " + std::to_string(*arity)
-                    + ".",
-                rule.arguments_offset);
+        fail("Do rule for action \"" + rule.action + "\" has " + std::to_string(rule.arguments.size()) + " arguments; expected " + std::to_string(*arity));
+}
+
+template<dl_::CategoryTag Category>
+auto parse_load_rule(Repository& repository,
+                     const ast::LoadRule<Category>& rule,
+                     ygg::Index<MemoryState> source,
+                     ygg::Index<MemoryState> target,
+                     tyr::formalism::planning::DomainView domain,
+                     const ConceptRegisterMap& concept_registers,
+                     const RoleRegisterMap& role_registers,
+                     const ConceptFeatureMap& concept_features,
+                     const RoleFeatureMap& role_features,
+                     const BooleanFeatureMap& boolean_features,
+                     const NumericalFeatureMap& numerical_features,
+                     const ConceptAliasMap& concept_aliases,
+                     const std::string& symbol)
+{
+    ygg::Data<Rule<LoadTag, Category>> data;
+    data.source = source;
+    data.target = target;
+    data.conditions = parse_conditions(repository, rule.conditions, concept_features, boolean_features, numerical_features);
+    if constexpr (std::same_as<Category, dl_::ConceptTag>)
+    {
+        data.load_expression = parse_concept_argument(repository, rule.expression, domain, concept_aliases);
+        data.reg = require_register(concept_registers, rule.reg);
+    }
+    else
+    {
+        data.load_expression = parse_role_argument(repository, rule.expression, domain, role_features);
+        data.reg = require_register(role_registers, rule.reg);
+    }
+    return intern_rule_variant(repository, data, symbol);
 }
 
 auto parse_rule(Repository& repository,
@@ -1246,65 +1450,73 @@ auto parse_rule(Repository& repository,
                 ygg::Index<MemoryState> source,
                 ygg::Index<MemoryState> target,
                 tyr::formalism::planning::DomainView domain,
-                const RegisterMap& registers,
+                const ConceptRegisterMap& concept_registers,
+                const RoleRegisterMap& role_registers,
                 const ModuleMap& modules,
                 const ConceptFeatureMap& concept_features,
+                const RoleFeatureMap& role_features,
                 const BooleanFeatureMap& boolean_features,
                 const NumericalFeatureMap& numerical_features,
                 const ConceptAliasMap& concept_aliases,
-                const std::string& symbol,
-                const std::string& description)
+                const std::string& symbol)
 {
-    const auto conditions = parse_conditions(repository, rule.conditions, concept_features, boolean_features, numerical_features);
-
-    switch (rule.kind)
-    {
-        case ast::RuleKind::LOAD:
+    return boost::apply_visitor(
+        [&](const auto& concrete) -> RuleVariantView
         {
-            ygg::Data<Rule<LoadTag>> data;
-            data.source = source;
-            data.target = target;
-            data.conditions = conditions;
-            data.load_concept = parse_concept_argument(repository, rule.concept_expression, rule.concept_expression_offset, domain, concept_aliases);
-            data.reg = require_register(registers, rule.reg, rule.register_offset);
-            return intern_rule_variant(repository, data, symbol, description);
-        }
-        case ast::RuleKind::SKETCH:
-        {
-            ygg::Data<Rule<SketchTag>> data;
-            data.source = source;
-            data.target = target;
-            data.conditions = conditions;
-            data.effects = parse_effects(repository, rule.effects, concept_features, boolean_features, numerical_features);
-            return intern_rule_variant(repository, data, symbol, description);
-        }
-        case ast::RuleKind::DO:
-        {
-            validate_do_action(domain, rule);
-            ygg::Data<Rule<DoTag>> data(rule.action);
-            data.source = source;
-            data.target = target;
-            data.conditions = conditions;
-            data.effects = parse_effects(repository, rule.effects, concept_features, boolean_features, numerical_features);
-            for (const auto& argument : rule.arguments)
-                data.arguments.push_back(parse_do_argument(argument, concept_features));
-            return intern_rule_variant(repository, data, symbol, description);
-        }
-        case ast::RuleKind::CALL:
-        {
-            ygg::Data<Rule<CallTag>> data;
-            data.source = source;
-            data.target = target;
-            data.conditions = conditions;
-            data.callee_name = rule.callee;
-            if (const auto callee = find_module(modules, rule.callee))
-                data.callee = *callee;
-            for (const auto& argument : rule.arguments)
-                data.arguments.push_back(parse_call_argument(repository, argument, domain, concept_aliases));
-            return intern_rule_variant(repository, data, symbol, description);
-        }
-    }
-    throw std::runtime_error("Unknown rule kind.");
+            using RuleAst = std::remove_cvref_t<decltype(concrete)>;
+            if constexpr (requires { typename AstCategory<RuleAst>::Type; })
+            {
+                using Category = typename AstCategory<RuleAst>::Type;
+                return parse_load_rule<Category>(repository,
+                                                 concrete,
+                                                 source,
+                                                 target,
+                                                 domain,
+                                                 concept_registers,
+                                                 role_registers,
+                                                 concept_features,
+                                                 role_features,
+                                                 boolean_features,
+                                                 numerical_features,
+                                                 concept_aliases,
+                                                 symbol);
+            }
+            else if constexpr (std::same_as<RuleAst, ast::SketchRule>)
+            {
+                ygg::Data<Rule<SketchTag>> data;
+                data.source = source;
+                data.target = target;
+                data.conditions = parse_conditions(repository, concrete.conditions, concept_features, boolean_features, numerical_features);
+                data.effects = parse_effects(repository, concrete.effects, concept_features, boolean_features, numerical_features);
+                return intern_rule_variant(repository, data, symbol);
+            }
+            else if constexpr (std::same_as<RuleAst, ast::DoRule>)
+            {
+                validate_do_action(domain, concrete);
+                ygg::Data<Rule<DoTag>> data(concrete.action);
+                data.source = source;
+                data.target = target;
+                data.conditions = parse_conditions(repository, concrete.conditions, concept_features, boolean_features, numerical_features);
+                data.effects = parse_effects(repository, concrete.effects, concept_features, boolean_features, numerical_features);
+                for (const auto& argument : concrete.arguments)
+                    data.arguments.push_back(parse_do_argument(argument, concept_features));
+                return intern_rule_variant(repository, data, symbol);
+            }
+            else if constexpr (std::same_as<RuleAst, ast::CallRule>)
+            {
+                ygg::Data<Rule<CallTag>> data;
+                data.source = source;
+                data.target = target;
+                data.conditions = parse_conditions(repository, concrete.conditions, concept_features, boolean_features, numerical_features);
+                data.callee_name = concrete.callee;
+                if (const auto callee = find_module(modules, concrete.callee))
+                    data.callee = *callee;
+                for (const auto& argument : concrete.arguments)
+                    data.arguments.push_back(parse_call_argument(repository, argument, concept_features, role_features, boolean_features, numerical_features));
+                return intern_rule_variant(repository, data, symbol);
+            }
+        },
+        rule.get());
 }
 
 }  // namespace
@@ -1420,70 +1632,102 @@ parse_numerical(const std::string& description, tyr::formalism::planning::Domain
 ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::DomainView domain, Repository& repository, const ModuleMap& known_modules = {})
 {
     validate_module_declarations(ast);
-    validate_module_expression_references(ast);
+    const auto maps = reference_maps(ast);
+    const auto normalized_ast = normalize_module_expressions(ast, maps);
 
     auto memory_states = MemoryStateMap {};
-    for (const auto& state : ast.memory_states)
+    for (const auto& state : normalized_ast.memory_states)
     {
         auto state_data = ygg::Data<MemoryState>(state.value);
         if (!memory_states.emplace(state.value, intern(repository, state_data).get_index()).second)
-            fail_at("Duplicate memory state \"" + state.value + "\".", state.source_offset);
+            fail("Duplicate memory state \"" + state.value + "\"");
     }
 
-    const auto entry = memory_states.find(ast.entry);
+    const auto entry = memory_states.find(normalized_ast.entry);
     if (entry == memory_states.end())
-        fail_at("Module entry memory state \"" + ast.entry + "\" is not declared in :memory.", ast.entry_offset);
+        fail("Module entry memory state \"" + normalized_ast.entry + "\" is not declared in :memory");
 
-    auto data = ygg::Data<Module>(ast.name);
+    auto data = ygg::Data<Module>(normalized_ast.name);
     data.entry_memory_state = entry->second;
 
-    for (const auto& argument : ast.arguments)
-        append_argument(repository, data, argument);
+    auto concept_argument = ygg::uint_t(0);
+    auto role_argument = ygg::uint_t(0);
+    auto boolean_argument = ygg::uint_t(0);
+    auto numerical_argument = ygg::uint_t(0);
+    for (const auto& argument : normalized_ast.arguments)
+        append_argument(repository, data, argument, concept_argument, role_argument, boolean_argument, numerical_argument);
 
-    auto registers = RegisterMap {};
-    for (const auto& reg : ast.registers)
+    auto concept_registers = ConceptRegisterMap {};
+    auto role_registers = RoleRegisterMap {};
+    auto concept_register = ygg::uint_t(0);
+    auto role_register = ygg::uint_t(0);
+    for (const auto& reg : normalized_ast.registers)
     {
-        auto reg_data = ygg::Data<Register>(reg.name, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>(reg.identifier));
-        const auto view = intern(repository, reg_data);
-        data.registers.push_back(view.get_index());
-        if (!registers.emplace(std::to_string(reg.identifier), view.get_index()).second)
-            fail_at("Duplicate register name \"" + reg.name + "\".", reg.name_offset);
+        boost::apply_visitor(
+            [&](const auto& concrete)
+            {
+                using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
+                if constexpr (std::same_as<Category, dl_::ConceptTag>)
+                {
+                    auto reg_data = ygg::Data<Register<Category>>(concrete.symbol, runir::kr::dl::RegisterIdentifier<Category>(concept_register++));
+                    const auto view = intern(repository, reg_data);
+                    data.concept_registers.push_back(view.get_index());
+                    if (!concept_registers.emplace(concrete.symbol, view.get_index()).second)
+                        fail("Duplicate concept register name \"" + concrete.symbol + "\"");
+                }
+                else if constexpr (std::same_as<Category, dl_::RoleTag>)
+                {
+                    auto reg_data = ygg::Data<Register<Category>>(concrete.symbol, runir::kr::dl::RegisterIdentifier<Category>(role_register++));
+                    const auto view = intern(repository, reg_data);
+                    data.role_registers.push_back(view.get_index());
+                    if (!role_registers.emplace(concrete.symbol, view.get_index()).second)
+                        fail("Duplicate role register name \"" + concrete.symbol + "\"");
+                }
+            },
+            reg.get());
     }
 
-    for (const auto& state : ast.memory_states)
+    for (const auto& state : normalized_ast.memory_states)
         data.memory_states.push_back(memory_states.at(state.value));
 
     auto concept_features = ConceptFeatureMap {};
+    auto role_features = RoleFeatureMap {};
     auto boolean_features = BooleanFeatureMap {};
     auto numerical_features = NumericalFeatureMap {};
     auto concept_aliases = ConceptAliasMap {};
-    for (const auto& feature : ast.features)
-        append_feature(repository, data, feature, domain, concept_features, boolean_features, numerical_features, concept_aliases);
+    for (const auto& feature : normalized_ast.features)
+    {
+        boost::apply_visitor(
+            [&](const auto& concrete)
+            { append_feature(repository, data, concrete, domain, concept_features, role_features, boolean_features, numerical_features, concept_aliases); },
+            feature.get());
+    }
 
     auto modules = known_modules;
     if (auto callee = repository.find(data))
-        modules.emplace(ast.name, callee->get_index());
+        modules.emplace(normalized_ast.name, callee->get_index());
 
-    data.memory_transitions.reserve(ast.rule_entries.size());
-    for (const auto& transition : ast.rule_entries)
+    data.memory_transitions.reserve(normalized_ast.rule_entries.size());
+    for (const auto& transition : normalized_ast.rule_entries)
     {
         auto parsed_transition = ygg::IndexList<RuleVariant> {};
-        const auto source = require_memory_state(memory_states, transition.source, transition.source_name_offset);
-        const auto target = require_memory_state(memory_states, transition.target, transition.target_name_offset);
+        const auto source = require_memory_state(memory_states, transition.source);
+        const auto target = require_memory_state(memory_states, transition.target);
         for (const auto& rule : transition.rules)
             parsed_transition.push_back(parse_rule(repository,
                                                    rule,
                                                    source,
                                                    target,
                                                    domain,
-                                                   registers,
+                                                   concept_registers,
+                                                   role_registers,
                                                    modules,
                                                    concept_features,
+                                                   role_features,
                                                    boolean_features,
                                                    numerical_features,
                                                    concept_aliases,
-                                                   transition.symbol,
-                                                   transition.description)
+                                                   transition.symbol)
                                             .get_index());
         ygg::canonicalize(parsed_transition);
         data.memory_transitions.push_back(std::move(parsed_transition));
@@ -1495,30 +1739,38 @@ ModuleView lower_module(const ast::Module& ast, tyr::formalism::planning::Domain
 void validate_module_set(const std::vector<ast::Module>& modules)
 {
     auto signatures_by_name = std::unordered_map<std::string, SignatureCounts> {};
+    auto feature_symbols_by_module = std::unordered_map<std::string, FeatureSymbolSets> {};
     for (const auto& module : modules)
     {
         if (!signatures_by_name.emplace(module.name, signature_counts(module)).second)
-            fail_at("Duplicate module name \"" + module.name + "\" in module set", module.source_offset);
+            fail("Duplicate module name \"" + module.name + "\" in module set");
+        feature_symbols_by_module.emplace(module.name, feature_symbols(module));
     }
 
     for (const auto& module : modules)
     {
+        const auto& caller_features = feature_symbols_by_module.at(module.name);
         for (const auto& transition : module.rule_entries)
         {
             for (const auto& rule : transition.rules)
             {
-                if (rule.kind != ast::RuleKind::CALL)
-                    continue;
+                boost::apply_visitor(
+                    [&](const auto& concrete)
+                    {
+                        using RuleAst = std::remove_cvref_t<decltype(concrete)>;
+                        if constexpr (std::same_as<RuleAst, ast::CallRule>)
+                        {
+                            const auto callee = signatures_by_name.find(concrete.callee);
+                            if (callee == signatures_by_name.end())
+                                fail("Module \"" + module.name + "\" calls unknown module \"" + concrete.callee + "\"");
 
-                const auto callee = signatures_by_name.find(rule.callee);
-                if (callee == signatures_by_name.end())
-                    fail_at("Module \"" + module.name + "\" calls unknown module \"" + rule.callee + "\"", rule.callee_offset);
-
-                const auto actual = call_argument_signature_counts(rule);
-                if (actual != callee->second)
-                    fail_at("Call from module \"" + module.name + "\" to module \"" + rule.callee + "\" has argument signature " + signature_text(actual)
-                                + "; expected " + signature_text(callee->second),
-                            rule.source_offset);
+                            const auto actual = call_argument_signature_counts(concrete, caller_features);
+                            if (actual != callee->second)
+                                fail("Call from module \"" + module.name + "\" to module \"" + concrete.callee + "\" has argument signature "
+                                     + signature_text(actual) + "; expected " + signature_text(callee->second));
+                        }
+                    },
+                    rule.get());
             }
         }
     }
@@ -1528,12 +1780,12 @@ void validate_module_program(const ast::ModuleProgram& program)
 {
     validate_module_set(program.modules);
 
-    auto module_names = std::unordered_map<std::string, std::size_t> {};
+    auto module_names = std::unordered_set<std::string> {};
     for (const auto& module : program.modules)
-        module_names.emplace(module.name, module.source_offset);
+        module_names.emplace(module.name);
 
     if (!module_names.contains(program.entry))
-        fail_at("Module program entry module \"" + program.entry + "\" is not declared.", program.entry_offset);
+        fail("Module program entry module \"" + program.entry + "\" is not declared");
 }
 
 ModuleView parse_module(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)

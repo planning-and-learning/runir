@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <runir/datasets/task_class.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
@@ -60,11 +61,11 @@ TEST(RunirTests, UnsClassifierParsesAndClassifies)
     //  - some_ball: there exists at least one object satisfying c_top (always true for a nonempty domain)
     //  - no_object: the domain has no objects (false for gripper)
     const auto description = R"((:classifier
-        (:symbol c0)
-        (:description "a gripper classifier")
+        (:symbol c0) ; classifier symbol comment
         (:features
-            (:boolean (:symbol some_ball) (:description "") (:expression (b_nonempty (c_top))))
-            (:boolean (:symbol no_object) (:description "") (:expression (b_not (b_nonempty (c_top)))))
+            (:boolean (:symbol some_ball) ; feature comment
+                (:expression (b_nonempty (c_top))))
+            (:boolean (:symbol no_object) (:expression (b_not (b_nonempty (c_top)))))
         )
         (:expression (or (and some_ball (not no_object)) (and no_object)))
     ))";
@@ -72,7 +73,6 @@ TEST(RunirTests, UnsClassifierParsesAndClassifies)
     auto classifier = runir::kr::uns::dl::parse_classifier(description, fixture.domain(), *fixture.repository);
 
     EXPECT_EQ(classifier.get_symbol(), "c0");
-    EXPECT_EQ(classifier.get_description(), "a gripper classifier");
 
     std::size_t num_features = 0;
     for (auto feature : classifier.get_features())
@@ -89,6 +89,10 @@ TEST(RunirTests, UnsClassifierParsesAndClassifies)
     auto context = sem::EvaluationContext<Uns, p::GroundTag>(state, builder, denotation_repository);
 
     // some_ball is true and no_object is false, so the first clause (some_ball AND NOT no_object) holds.
+    const auto formatted = fmt::format("{}", classifier);
+    EXPECT_EQ(formatted.find("(:boolean (:symbol"), std::string::npos) << formatted;
+    EXPECT_EQ(formatted.find(std::string(":") + "description"), std::string::npos) << formatted;
+
     EXPECT_TRUE(runir::kr::uns::classify(classifier, context));
 }
 
@@ -97,8 +101,8 @@ TEST(RunirTests, UnsClassifierInterningIsStructural)
     Fixture fixture;
 
     const auto description = R"((:classifier
-        (:symbol c0) (:description "")
-        (:features (:boolean (:symbol a) (:description "") (:expression (b_nonempty (c_top)))))
+        (:symbol c0) ; classifier symbol comment
+        (:features (:boolean (:symbol a) (:expression (b_nonempty (c_top)))))
         (:expression (or (and a)))
     ))";
 
@@ -112,8 +116,8 @@ TEST(RunirTests, UnsClassifierRejectsUnknownFeatureSymbol)
     Fixture fixture;
 
     const auto description = R"((:classifier
-        (:symbol c0) (:description "")
-        (:features (:boolean (:symbol a) (:description "") (:expression (b_nonempty (c_top)))))
+        (:symbol c0) ; classifier symbol comment
+        (:features (:boolean (:symbol a) (:expression (b_nonempty (c_top)))))
         (:expression (or (and b)))
     ))";
 

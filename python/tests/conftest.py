@@ -4,7 +4,8 @@ import pytest
 
 from pyrunir.datasets import GroundTaskSearchContext
 from pyyggdrasil.execution import ExecutionContext
-from pytyr.formalism.planning import Parser, ParserOptions
+from pypddl.formalism import ParserOptions
+from pytyr.formalism.planning import Parser
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
 

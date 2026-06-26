@@ -34,19 +34,16 @@ def test_base_sketch_exposes_declared_features(gripper_planning_domain):
   (:features
     (:numerical
       (:symbol n_balls)
-      (:description "all balls")
       (:expression (n_count (c_atomic_state "ball"))))
     (:numerical
       (:symbol n_held)
-      (:description "held pairs")
       (:expression (n_count (r_atomic_state "carry")))))
   (:rules
     (:rule
       (:symbol hold)
-      (:description "hold something")
       (:expression
-        (:conditions (:greater_zero n_balls))
-        (:effects (:increases n_held))))))
+        (:conditions (greater_zero n_balls))
+        (:effects (increases n_held))))))
 """,
         planning_domain,
         sketch_repository,

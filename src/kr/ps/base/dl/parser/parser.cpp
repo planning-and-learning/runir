@@ -7,6 +7,53 @@
 #include <functional>
 #include <sstream>
 #include <stdexcept>
+#include <string_view>
+
+
+namespace
+{
+
+std::string strip_line_comments(std::string_view input)
+{
+    auto result = std::string(input);
+    auto quoted = false;
+    auto escaped = false;
+    for (std::size_t i = 0; i < result.size(); ++i)
+    {
+        const auto ch = result[i];
+        if (quoted)
+        {
+            if (escaped)
+            {
+                escaped = false;
+            }
+            else if (ch == '\\')
+            {
+                escaped = true;
+            }
+            else if (ch == '"')
+            {
+                quoted = false;
+            }
+            continue;
+        }
+        if (ch == '"')
+        {
+            quoted = true;
+            continue;
+        }
+        if (ch == ';')
+        {
+            while (i < result.size() && result[i] != '\n')
+                result[i++] = ' ';
+            if (i == result.size())
+                break;
+        }
+    }
+    return result;
+}
+
+}  // namespace
 
 namespace runir::kr::ps::base::dl::parser
 {
@@ -15,8 +62,9 @@ ast::Sketch<runir::kr::BaseFamilyTag> parse_sketch_ast(const std::string& descri
 {
     namespace x3 = boost::spirit::x3;
 
-    auto first = description.cbegin();
-    const auto last = description.cend();
+    const auto stripped_description = strip_line_comments(description);
+    auto first = stripped_description.cbegin();
+    const auto last = stripped_description.cend();
 
     ast::Sketch<runir::kr::BaseFamilyTag> result;
     std::ostringstream errors;

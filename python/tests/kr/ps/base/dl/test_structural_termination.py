@@ -10,13 +10,13 @@ from pyrunir.kr.ps.base.dl import (
     parse_sketch,
     structural_termination,
 )
-from pytyr.formalism.planning import Parser, ParserOptions
+from pypddl.formalism import ParserOptions
+from pytyr.formalism.planning import Parser
 
 OSCILLATOR = """(:sketch
     (:features
         (:boolean
             (:symbol b1)
-            (:description "")
             (:expression
                 (b_nonempty
                     (c_atomic_state
@@ -27,25 +27,23 @@ OSCILLATOR = """(:sketch
     (:rules
         (:rule
             (:symbol auto1)
-            (:description "")
             (:expression
                 (:conditions
-                    (:negative b1)
+                    (negative b1)
                 )
                 (:effects
-                    (:positive b1)
+                    (positive b1)
                 )
             )
         )
         (:rule
             (:symbol auto2)
-            (:description "")
             (:expression
                 (:conditions
-                    (:positive b1)
+                    (positive b1)
                 )
                 (:effects
-                    (:negative b1)
+                    (negative b1)
                 )
             )
         )
@@ -57,7 +55,6 @@ TPP = """(:sketch
     (:features
         (:numerical
             (:symbol fb)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -66,7 +63,6 @@ TPP = """(:sketch
         )
         (:numerical
             (:symbol fl)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -75,7 +71,6 @@ TPP = """(:sketch
         )
         (:numerical
             (:symbol fn)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -86,40 +81,37 @@ TPP = """(:sketch
     (:rules
         (:rule
             (:symbol auto3)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero fb)
+                    (greater_zero fb)
                 )
                 (:effects
-                    (:decreases fb)
-                    (:unchanged fl)
-                    (:unchanged fn)
+                    (decreases fb)
+                    (unchanged fl)
+                    (unchanged fn)
                 )
             )
         )
         (:rule
             (:symbol auto4)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero fl)
+                    (greater_zero fl)
                 )
                 (:effects
-                    (:unchanged fn)
-                    (:decreases fl)
+                    (unchanged fn)
+                    (decreases fl)
                 )
             )
         )
         (:rule
             (:symbol auto5)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero fn)
+                    (greater_zero fn)
                 )
                 (:effects
-                    (:decreases fn)
+                    (decreases fn)
                 )
             )
         )
@@ -185,7 +177,6 @@ def test_structural_termination_edge_changes_are_dict_shaped():
     (:features
         (:numerical
             (:symbol n1)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -196,23 +187,21 @@ def test_structural_termination_edge_changes_are_dict_shaped():
     (:rules
         (:rule
             (:symbol auto6)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero n1)
+                    (greater_zero n1)
                 )
                 (:effects
-                    (:decreases n1)
+                    (decreases n1)
                 )
             )
         )
         (:rule
             (:symbol auto7)
-            (:description "")
             (:expression
                 (:conditions)
                 (:effects
-                    (:increases n1)
+                    (increases n1)
                 )
             )
         )

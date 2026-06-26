@@ -48,124 +48,96 @@ TEST(RunirTests, CegStructuralTerminationAgreesWithCompleteSieve)
 
     const auto terminating_description = std::string(R"((:module
     (:symbol term)
-    (:arguments
-    )
-    (:description "")
-    (:registers
-    )
+    (:arguments)
+    (:registers)
     (:entry m0)
-    (:memory
-        m0
-        m1
-    )
+    (:memory m0 m1)
     (:features
         (:numerical
             (:symbol fn)
-            (:description "")
             (:expression
                 (n_count
-                    (c_atomic_state
-                        "ball"))
+                    (c_atomic_state "ball")
+                )
             )
         )
     )
     (:rules
         (:rule
             (:symbol auto1)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:greater_zero fn)
-                        )
-                        (:effects
-                            (:decreases fn)
-                        )
+                    (:conditions
+                        (greater_zero fn)
+                    )
+                    (:effects
+                        (decreases fn)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto3)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:expression
-                        (:conditions)
-                        (:effects
-                            (:unchanged fn)
-                        )
+                    (:conditions)
+                    (:effects
+                        (unchanged fn)
                     )
                 )
             )
         )
     )
-)
-)");
+))");
     const auto non_terminating_description = std::string(R"((:module
     (:symbol nonterm)
-    (:arguments
-    )
-    (:description "")
-    (:registers
-    )
+    (:arguments)
+    (:registers)
     (:entry m0)
-    (:memory
-        m0
-        m1
-    )
+    (:memory m0 m1)
     (:features
         (:numerical
             (:symbol fn)
-            (:description "")
             (:expression
                 (n_count
-                    (c_atomic_state
-                        "ball"))
+                    (c_atomic_state "ball")
+                )
             )
         )
     )
     (:rules
         (:rule
             (:symbol auto5)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:greater_zero fn)
-                        )
-                        (:effects
-                            (:decreases fn)
-                        )
+                    (:conditions
+                        (greater_zero fn)
+                    )
+                    (:effects
+                        (decreases fn)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto7)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:expression
-                        (:conditions)
-                        (:effects)
-                    )
+                    (:conditions)
+                    (:effects)
                 )
             )
         )
     )
-)
-)");
+))");
 
     {
         const auto module = kr::ps::ext::dl::ModuleFactory::create_empty(*repository);
@@ -204,122 +176,96 @@ TEST(RunirTests, CegStructuralTerminationDecomposesMemoryComponents)
     // components and never participates in a cycle.
     const auto module = kr::ps::ext::dl::parse_module(R"((:module
     (:symbol multi)
-    (:arguments
-    )
-    (:description "")
-    (:registers
-    )
+    (:arguments)
+    (:registers)
     (:entry m0)
-    (:memory
-        m0
-        m1
-        m2
-        m3
-    )
+    (:memory m0 m1 m2 m3)
     (:features
         (:numerical
             (:symbol fa)
-            (:description "")
             (:expression
                 (n_count
-                    (c_atomic_state
-                        "ball"))
+                    (c_atomic_state "ball")
+                )
             )
         )
         (:numerical
             (:symbol fb)
-            (:description "")
             (:expression
                 (n_count
-                    (c_atomic_state
-                        "room"))
+                    (c_atomic_state "room")
+                )
             )
         )
     )
     (:rules
         (:rule
             (:symbol auto9)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:greater_zero fa)
-                        )
-                        (:effects
-                            (:decreases fa)
-                        )
+                    (:conditions
+                        (greater_zero fa)
+                    )
+                    (:effects
+                        (decreases fa)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto11)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:expression
-                        (:conditions)
-                        (:effects
-                            (:unchanged fa)
-                        )
+                    (:conditions)
+                    (:effects
+                        (unchanged fa)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto13)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m2)
                 (:sketch
-                    (:expression
-                        (:conditions)
-                        (:effects)
-                    )
+                    (:conditions)
+                    (:effects)
                 )
             )
         )
         (:rule
             (:symbol auto15)
-            (:description "")
             (:expression
                 (:source-memory m2)
                 (:target-memory m3)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:greater_zero fb)
-                        )
-                        (:effects
-                            (:decreases fb)
-                        )
+                    (:conditions
+                        (greater_zero fb)
+                    )
+                    (:effects
+                        (decreases fb)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto17)
-            (:description "")
             (:expression
                 (:source-memory m3)
                 (:target-memory m2)
                 (:sketch
-                    (:expression
-                        (:conditions)
-                        (:effects)
-                    )
+                    (:conditions)
+                    (:effects)
                 )
             )
         )
     )
-)
-)",
+))",
                                                       planning_task.get_domain().get_domain(),
                                                       *repository);
 

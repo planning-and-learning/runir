@@ -28,8 +28,10 @@ struct Data<runir::kr::ps::ext::Module>
     IndexList<runir::kr::ps::ext::Argument<runir::kr::dl::RoleTag>> role_arguments;
     IndexList<runir::kr::ps::ext::Argument<runir::kr::dl::BooleanTag>> boolean_arguments;
     IndexList<runir::kr::ps::ext::Argument<runir::kr::dl::NumericalTag>> numerical_arguments;
-    IndexList<runir::kr::ps::ext::Register> registers;
+    IndexList<runir::kr::ps::ext::Register<runir::kr::dl::ConceptTag>> concept_registers;
+    IndexList<runir::kr::ps::ext::Register<runir::kr::dl::RoleTag>> role_registers;
     IndexList<runir::kr::ps::ext::Feature<runir::kr::dl::ConceptTag>> concept_features;
+    IndexList<runir::kr::ps::ext::Feature<runir::kr::dl::RoleTag>> role_features;
     IndexList<runir::kr::ps::ext::Feature<runir::kr::ps::dl::BooleanFeature>> boolean_features;
     IndexList<runir::kr::ps::ext::Feature<runir::kr::ps::dl::NumericalFeature>> numerical_features;
     Index<runir::kr::ps::ext::MemoryState> entry_memory_state;
@@ -47,8 +49,10 @@ struct Data<runir::kr::ps::ext::Module>
         ygg::clear(role_arguments);
         ygg::clear(boolean_arguments);
         ygg::clear(numerical_arguments);
-        ygg::clear(registers);
+        ygg::clear(concept_registers);
+        ygg::clear(role_registers);
         ygg::clear(concept_features);
+        ygg::clear(role_features);
         ygg::clear(boolean_features);
         ygg::clear(numerical_features);
         ygg::clear(entry_memory_state);
@@ -64,8 +68,10 @@ struct Data<runir::kr::ps::ext::Module>
                         role_arguments,
                         boolean_arguments,
                         numerical_arguments,
-                        registers,
+                        concept_registers,
+                        role_registers,
                         concept_features,
+                        role_features,
                         boolean_features,
                         numerical_features,
                         entry_memory_state,
@@ -79,8 +85,10 @@ struct Data<runir::kr::ps::ext::Module>
                         role_arguments,
                         boolean_arguments,
                         numerical_arguments,
-                        registers,
+                        concept_registers,
+                        role_registers,
                         concept_features,
+                        role_features,
                         boolean_features,
                         numerical_features,
                         entry_memory_state,

@@ -33,7 +33,6 @@ public:
     auto get_expression() const noexcept { return make_view(get_data().feature, m_context->get_dl_repository()); }
     auto get_feature() const noexcept { return get_expression(); }
     const auto& get_symbol() const noexcept { return get_data().symbol; }
-    const auto& get_description() const noexcept { return get_data().description; }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };

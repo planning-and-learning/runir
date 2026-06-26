@@ -34,8 +34,6 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_variant", &View::get_variant);
     if constexpr (requires(const View& view) { view.get_symbol(); })
         cls.def("get_symbol", [](const View& view) { return std::string(view.get_symbol()); });
-    if constexpr (requires(const View& view) { view.get_description(); })
-        cls.def("get_description", [](const View& view) { return std::string(view.get_description()); });
     if constexpr (requires(const View& view) { view.get_expression(); })
         cls.def("get_expression", &View::get_expression);
     if constexpr (requires(const View& view) { view.get_source(); })
@@ -58,11 +56,15 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_action_arguments", &View::get_action_arguments);
     if constexpr (requires(const View& view) { view.get_callee(); })
         cls.def("get_callee", &View::get_callee);
-    if constexpr (requires(const View& view) { view.get_registers(); })
-        cls.def("get_registers", &View::get_registers);
+    if constexpr (requires(const View& view) { view.template get_registers<runir::kr::dl::ConceptTag>(); })
+    {
+        cls.def("get_concept_registers", [](const View& view) { return view.template get_registers<runir::kr::dl::ConceptTag>(); });
+        cls.def("get_role_registers", [](const View& view) { return view.template get_registers<runir::kr::dl::RoleTag>(); });
+    }
     if constexpr (requires(const View& view) { view.template get_features<runir::kr::dl::ConceptTag>(); })
     {
         cls.def("get_concept_features", [](const View& view) { return view.template get_features<runir::kr::dl::ConceptTag>(); });
+        cls.def("get_role_features", [](const View& view) { return view.template get_features<runir::kr::dl::RoleTag>(); });
         cls.def("get_boolean_features", [](const View& view) { return view.template get_features<runir::kr::ps::dl::BooleanFeature>(); });
         cls.def("get_numerical_features", [](const View& view) { return view.template get_features<runir::kr::ps::dl::NumericalFeature>(); });
     }
@@ -87,16 +89,19 @@ void bind_views(nb::module_& m)
     bind_view<Argument<runir::kr::dl::BooleanTag>>(m, "BooleanArgument");
     bind_view<Argument<runir::kr::dl::NumericalTag>>(m, "NumericalArgument");
     bind_view<Feature<runir::kr::dl::ConceptTag>>(m, "ConceptFeature");
+    bind_view<Feature<runir::kr::dl::RoleTag>>(m, "RoleFeature");
     bind_view<Feature<runir::kr::ps::dl::BooleanFeature>>(m, "BooleanFeature");
     bind_view<Feature<runir::kr::ps::dl::NumericalFeature>>(m, "NumericalFeature");
-    bind_view<Register>(m, "Register");
+    bind_view<Register<runir::kr::dl::ConceptTag>>(m, "ConceptRegister");
+    bind_view<Register<runir::kr::dl::RoleTag>>(m, "RoleRegister");
     bind_view<MemoryState>(m, "MemoryState");
     bind_view<Module>(m, "Module");
     bind_view<ModuleProgram>(m, "ModuleProgram");
     bind_view<ConditionVariant>(m, "ConditionVariant");
     bind_view<EffectVariant>(m, "EffectVariant");
     bind_view<RuleVariant>(m, "RuleVariant");
-    bind_view<Rule<LoadTag>>(m, "LoadRule");
+    bind_view<Rule<LoadTag, runir::kr::dl::ConceptTag>>(m, "ConceptLoadRule");
+    bind_view<Rule<LoadTag, runir::kr::dl::RoleTag>>(m, "RoleLoadRule");
     bind_view<Rule<SketchTag>>(m, "SketchRule");
     bind_view<Rule<DoTag>>(m, "DoRule");
     bind_view<Rule<CallTag>>(m, "CallRule");
@@ -104,8 +109,9 @@ void bind_views(nb::module_& m)
     // Concrete feature/condition/effect views, reachable transitively through the get_variant()
     // accessors of the Feature/ConditionVariant/EffectVariant views above. Mirrors the repository
     // TypeList in runir/kr/ps/ext/repository.hpp (and ps/base/dl/views.cpp, plus ext-only Concept
-    // variants). fmt formatters for all of these live in runir/kr/ps/ext/formatter.hpp.
+    // and Role variants). fmt formatters for all of these live in runir/kr/ps/ext/formatter.hpp.
     bind_view<ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>>(m, "ConcreteConceptFeature");
+    bind_view<ConcreteFeature<runir::kr::DlTag, runir::kr::dl::RoleTag>>(m, "ConcreteRoleFeature");
     bind_view<ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>(m, "ConcreteBooleanFeature");
     bind_view<ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>(m, "ConcreteNumericalFeature");
     bind_view<ConcreteConditionVariant<runir::kr::DlTag>>(m, "ConcreteConditionVariant");

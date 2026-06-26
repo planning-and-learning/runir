@@ -3,75 +3,65 @@ from pathlib import Path
 from pyrunir.kr.dl import ext as dl_ext
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.base.dl import NumericalChange
-from pytyr.formalism.planning import Parser, ParserOptions
+from pypddl.formalism import ParserOptions
+from pytyr.formalism.planning import Parser
 
 TERMINATING_MODULE = """(:module
     (:symbol term)
-    (:arguments
-    )
-    (:description "")
-    (:registers
-    )
+    (:arguments)
+    (:registers)
     (:entry m0)
-    (:memory
-        m0
-        m1
-    )
+    (:memory m0 m1)
     (:features
         (:numerical
             (:symbol fn)
-            (:description "")
             (:expression
                 (n_count
-                    (c_atomic_state
-                        "ball"))
+                    (c_atomic_state "ball")
+                )
             )
         )
     )
     (:rules
         (:rule
             (:symbol auto1)
-            (:description "")
             (:expression
                 (:source-memory m0)
                 (:target-memory m1)
                 (:sketch
-                    (:expression
-                        (:conditions
-                            (:greater_zero fn)
-                        )
-                        (:effects
-                            (:decreases fn)
-                        )
+                    (:conditions
+                        (greater_zero fn)
+                    )
+                    (:effects
+                        (decreases fn)
                     )
                 )
             )
         )
         (:rule
             (:symbol auto3)
-            (:description "")
             (:expression
                 (:source-memory m1)
                 (:target-memory m0)
                 (:sketch
-                    (:expression
-                        (:conditions)
-                        (:effects
-                            (:unchanged fn)
-                        )
+                    (:conditions)
+                    (:effects
+                        (unchanged fn)
                     )
                 )
             )
         )
     )
-)
-"""
+)"""
 
 NON_TERMINATING_MODULE = TERMINATING_MODULE.replace("(:symbol term)", "(:symbol nonterm)").replace(
     """(:effects
-                            (:unchanged fn)
-                        )""",
-    "(:effects)",
+                        (decreases fn)
+                    )""",
+    """(:effects
+                        (unchanged fn)
+                    )""",
+    1,
 )
 
 
@@ -112,10 +102,9 @@ def test_ext_structural_termination_counterexample_spans_memory_states():
     rules = {edge.get_rule().get_index() for edge in counterexample.get_edges()}
     assert len(rules) == 2
 
-    # Dict-shaped per-edge changes over the numerical feature: the decrease
-    # rule and the unconstrained return rule.
+    # Dict-shaped per-edge changes over the numerical feature: both rules preserve it.
     changes = {edge.get_numerical_changes()[feature] for edge in counterexample.get_edges()}
-    assert changes == {NumericalChange.DECREASES, NumericalChange.UNCONSTRAINED}
+    assert changes == {NumericalChange.UNCHANGED}
 
 
 def test_ext_ceg_agrees_with_complete_sieve():

@@ -36,6 +36,27 @@ struct Data<runir::kr::ps::ext::Feature<runir::kr::dl::ConceptTag>>
 };
 
 template<>
+struct Data<runir::kr::ps::ext::Feature<runir::kr::dl::RoleTag>>
+{
+    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl::RoleTag>>>;
+
+    Index<runir::kr::ps::ext::Feature<runir::kr::dl::RoleTag>> index;
+    Variant value;
+
+    Data() = default;
+    Data(Variant value_) : index(), value(std::move(value_)) {}
+
+    void clear() noexcept
+    {
+        ygg::clear(index);
+        ygg::clear(value);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, value); }
+    auto identifying_members() const noexcept { return std::tie(value); }
+};
+
+template<>
 struct Data<runir::kr::ps::ext::Feature<runir::kr::ps::dl::BooleanFeature>>
 {
     using Variant = ::cista::offset::variant<Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>>;

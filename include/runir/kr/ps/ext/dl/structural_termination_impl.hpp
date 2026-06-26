@@ -325,8 +325,12 @@ inline ModuleAnalysis analyze_module(ModuleView module_)
                                    { ygg::visit([&](auto concrete) { record_effect(analysis.features, profile, concrete); }, concrete_variant.get_variant()); },
                                    effect.get_variant());
                 }
-                if constexpr (std::same_as<std::remove_cvref_t<decltype(concrete_rule)>, ygg::View<ygg::Index<Rule<LoadTag>>, Repository>>)
-                    record_load_effects(analysis.features, profile, module_.get_context(), concrete_rule.get_register().get_identifier());
+                if constexpr (requires { concrete_rule.get_expression(); concrete_rule.get_register(); })
+                {
+                    using RegisterIdentifier = std::remove_cvref_t<decltype(concrete_rule.get_register().get_identifier())>;
+                    if constexpr (std::same_as<RegisterIdentifier, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>)
+                        record_load_effects(analysis.features, profile, module_.get_context(), concrete_rule.get_register().get_identifier());
+                }
                 // Rules without explicit effect entries leave unmentioned
                 // features unconstrained. Call rules have no effect entries.
             },

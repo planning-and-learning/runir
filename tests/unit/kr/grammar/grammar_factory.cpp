@@ -107,28 +107,24 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 (:sketch
   (:features
     (:boolean
-      (:symbol r)
-      (:description "ready feature")
+      (:symbol r) ; feature comment
       (:expression
         (b_nonempty (c_atomic_state "ball"))))
     (:numerical
       (:symbol c)
-      (:description "")
       (:expression
         (n_count (c_atomic_state "ball")))))
   (:rules
     (:rule
-      (:symbol ready-rule)
-      (:description "ready rule")
+      (:symbol ready-rule) ; rule comment
       (:expression
-        (:conditions (:positive r) (:equal_zero c))
-        (:effects (:negative r) (:increases c))))
+        (:conditions (positive r) (equal_zero c))
+        (:effects (negative r) (increases c))))
     (:rule
       (:symbol auto1)
-      (:description "")
       (:expression
-        (:conditions (:negative r) (:greater_zero c))
-        (:effects (:positive r) (:decreases c) (:unchanged c))))))
+        (:conditions (negative r) (greater_zero c))
+        (:effects (positive r) (decreases c) (unchanged c))))))
 )" };
 
     const auto sketch = kr::ps::base::dl::parse_sketch(description, planning_domain.get_domain(), *repository);
@@ -143,9 +139,10 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 
     const auto first_rule = sketch.get_rules()[0];
     EXPECT_EQ(first_rule.get_symbol(), "ready-rule");
-    EXPECT_EQ(first_rule.get_description(), "ready rule");
 
     const auto formatted = fmt::format("{}", sketch);
+    EXPECT_EQ(formatted.find("(:boolean (:symbol"), std::string::npos) << formatted;
+    EXPECT_EQ(formatted.find("(:numerical (:symbol"), std::string::npos) << formatted;
     EXPECT_NE(formatted.find("(:expression"), std::string::npos);
     const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository);
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);

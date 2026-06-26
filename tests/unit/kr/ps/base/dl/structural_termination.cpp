@@ -43,7 +43,7 @@ std::set<ygg::Index<kr::ps::base::Rule>> sketch_rules(kr::ps::base::SketchView s
 // symbols, not on the feature denotations. Paper rules from
 // incomplete_sieve.pdf use the convention that unmentioned features stay
 // unchanged and "f?" marks an unconstrained feature; the runir sketch
-// language encodes "f?" by omitting f and requires explicit (:unchanged f).
+// language encodes "f?" by omitting f and requires explicit (unchanged f).
 
 TEST(RunirTests, StructuralTerminationEmptySketchIsTerminating)
 {
@@ -70,7 +70,6 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorIsNotTerminating)
     (:features
         (:boolean
             (:symbol b1)
-            (:description "")
             (:expression
                 (b_nonempty
                     (c_atomic_state
@@ -81,25 +80,23 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorIsNotTerminating)
     (:rules
         (:rule
             (:symbol auto1)
-            (:description "")
             (:expression
                 (:conditions
-                    (:negative b1)
+                    (negative b1)
                 )
                 (:effects
-                    (:positive b1)
+                    (positive b1)
                 )
             )
         )
         (:rule
             (:symbol auto2)
-            (:description "")
             (:expression
                 (:conditions
-                    (:positive b1)
+                    (positive b1)
                 )
                 (:effects
-                    (:negative b1)
+                    (negative b1)
                 )
             )
         )
@@ -129,7 +126,6 @@ TEST(RunirTests, StructuralTerminationNumericalIncreaseDecreasePairIsNotTerminat
     (:features
         (:numerical
             (:symbol n1)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -140,23 +136,21 @@ TEST(RunirTests, StructuralTerminationNumericalIncreaseDecreasePairIsNotTerminat
     (:rules
         (:rule
             (:symbol auto3)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero n1)
+                    (greater_zero n1)
                 )
                 (:effects
-                    (:decreases n1)
+                    (decreases n1)
                 )
             )
         )
         (:rule
             (:symbol auto4)
-            (:description "")
             (:expression
                 (:conditions)
                 (:effects
-                    (:increases n1)
+                    (increases n1)
                 )
             )
         )
@@ -185,7 +179,6 @@ TEST(RunirTests, StructuralTerminationFloortileSketchIsTerminating)
     (:features
         (:boolean
             (:symbol v)
-            (:description "")
             (:expression
                 (b_nonempty
                     (c_atomic_state
@@ -194,7 +187,6 @@ TEST(RunirTests, StructuralTerminationFloortileSketchIsTerminating)
         )
         (:numerical
             (:symbol g)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -205,15 +197,14 @@ TEST(RunirTests, StructuralTerminationFloortileSketchIsTerminating)
     (:rules
         (:rule
             (:symbol auto5)
-            (:description "")
             (:expression
                 (:conditions
-                    (:positive v)
-                    (:greater_zero g)
+                    (positive v)
+                    (greater_zero g)
                 )
                 (:effects
-                    (:decreases g)
-                    (:unchanged v)
+                    (decreases g)
+                    (unchanged v)
                 )
             )
         )
@@ -241,7 +232,6 @@ TEST(RunirTests, StructuralTerminationTppSketchIsTerminating)
     (:features
         (:numerical
             (:symbol fb)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -250,7 +240,6 @@ TEST(RunirTests, StructuralTerminationTppSketchIsTerminating)
         )
         (:numerical
             (:symbol fl)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -259,7 +248,6 @@ TEST(RunirTests, StructuralTerminationTppSketchIsTerminating)
         )
         (:numerical
             (:symbol fn)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -270,40 +258,37 @@ TEST(RunirTests, StructuralTerminationTppSketchIsTerminating)
     (:rules
         (:rule
             (:symbol auto6)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero fb)
+                    (greater_zero fb)
                 )
                 (:effects
-                    (:decreases fb)
-                    (:unchanged fl)
-                    (:unchanged fn)
+                    (decreases fb)
+                    (unchanged fl)
+                    (unchanged fn)
                 )
             )
         )
         (:rule
             (:symbol auto7)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero fl)
+                    (greater_zero fl)
                 )
                 (:effects
-                    (:unchanged fn)
-                    (:decreases fl)
+                    (unchanged fn)
+                    (decreases fl)
                 )
             )
         )
         (:rule
             (:symbol auto8)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero fn)
+                    (greater_zero fn)
                 )
                 (:effects
-                    (:decreases fn)
+                    (decreases fn)
                 )
             )
         )
@@ -331,7 +316,6 @@ TEST(RunirTests, StructuralTerminationBarmanSketchIsTerminating)
     (:features
         (:boolean
             (:symbol c1)
-            (:description "")
             (:expression
                 (b_nonempty
                     (c_atomic_state
@@ -340,7 +324,6 @@ TEST(RunirTests, StructuralTerminationBarmanSketchIsTerminating)
         )
         (:boolean
             (:symbol c2)
-            (:description "")
             (:expression
                 (b_nonempty
                     (c_atomic_state
@@ -349,7 +332,6 @@ TEST(RunirTests, StructuralTerminationBarmanSketchIsTerminating)
         )
         (:numerical
             (:symbol g)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -358,7 +340,6 @@ TEST(RunirTests, StructuralTerminationBarmanSketchIsTerminating)
         )
         (:numerical
             (:symbol u)
-            (:description "")
             (:expression
                 (n_count
                     (c_atomic_state
@@ -369,58 +350,54 @@ TEST(RunirTests, StructuralTerminationBarmanSketchIsTerminating)
     (:rules
         (:rule
             (:symbol auto9)
-            (:description "")
             (:expression
                 (:conditions
-                    (:negative c1)
+                    (negative c1)
                 )
                 (:effects
-                    (:positive c1)
-                    (:unchanged c2)
-                    (:unchanged g)
+                    (positive c1)
+                    (unchanged c2)
+                    (unchanged g)
                 )
             )
         )
         (:rule
             (:symbol auto10)
-            (:description "")
             (:expression
                 (:conditions
-                    (:positive c1)
-                    (:negative c2)
+                    (positive c1)
+                    (negative c2)
                 )
                 (:effects
-                    (:unchanged g)
-                    (:positive c2)
-                    (:unchanged c1)
+                    (unchanged g)
+                    (positive c2)
+                    (unchanged c1)
                 )
             )
         )
         (:rule
             (:symbol auto11)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero u)
+                    (greater_zero u)
                 )
                 (:effects
-                    (:unchanged c2)
-                    (:unchanged g)
-                    (:unchanged c1)
-                    (:decreases u)
+                    (unchanged c2)
+                    (unchanged g)
+                    (unchanged c1)
+                    (decreases u)
                 )
             )
         )
         (:rule
             (:symbol auto12)
-            (:description "")
             (:expression
                 (:conditions
-                    (:greater_zero g)
+                    (greater_zero g)
                 )
                 (:effects
-                    (:decreases g)
-                    (:unchanged u)
+                    (decreases g)
+                    (unchanged u)
                 )
             )
         )

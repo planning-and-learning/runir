@@ -9,10 +9,10 @@
 namespace ygg
 {
 
-template<>
-struct Index<runir::kr::ps::ext::Register> : IndexMixin<Index<runir::kr::ps::ext::Register>>
+template<runir::kr::dl::CategoryTag Category>
+struct Index<runir::kr::ps::ext::Register<Category>> : IndexMixin<Index<runir::kr::ps::ext::Register<Category>>>
 {
-    using Base = IndexMixin<Index<runir::kr::ps::ext::Register>>;
+    using Base = IndexMixin<Index<runir::kr::ps::ext::Register<Category>>>;
     using Base::Base;
 };
 

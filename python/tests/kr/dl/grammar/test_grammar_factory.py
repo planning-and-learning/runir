@@ -7,7 +7,8 @@ from pyrunir.kr.dl.base.grammar import (
     GrammarFactory,
     GrammarSpecification,
 )
-from pytyr.formalism.planning import Parser, ParserOptions
+from pypddl.formalism import ParserOptions
+from pytyr.formalism.planning import Parser
 
 
 def test_france_et_al_aaai2021_grammar_factory_for_gripper_domain():

@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DL_PARSER_PARSER_HPP_
 #define RUNIR_KR_PS_EXT_DL_PARSER_PARSER_HPP_
 
-#include "runir/kr/ps/ext/dl/ast/module_ast.hpp"
+#include "runir/kr/ps/ext/dl/ast/ast_adapted.hpp"
 
 #include <string>
 #include <vector>

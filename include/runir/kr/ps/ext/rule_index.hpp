@@ -9,10 +9,10 @@
 namespace ygg
 {
 
-template<runir::kr::ps::ext::RuleKind Kind>
-struct Index<runir::kr::ps::ext::Rule<Kind>> : IndexMixin<Index<runir::kr::ps::ext::Rule<Kind>>>
+template<runir::kr::ps::ext::RuleKind Kind, typename Category>
+struct Index<runir::kr::ps::ext::Rule<Kind, Category>> : IndexMixin<Index<runir::kr::ps::ext::Rule<Kind, Category>>>
 {
-    using Base = IndexMixin<Index<runir::kr::ps::ext::Rule<Kind>>>;
+    using Base = IndexMixin<Index<runir::kr::ps::ext::Rule<Kind, Category>>>;
     using Base::Base;
 };
 

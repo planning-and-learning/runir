@@ -68,7 +68,6 @@ public:
 
     auto get_index() const noexcept { return m_handle; }
     const auto& get_symbol() const noexcept { return get_data().symbol; }
-    const auto& get_description() const noexcept { return get_data().description; }
     auto get_features() const noexcept { return make_view(get_data().features, *m_context); }
     auto get_clauses() const noexcept { return make_view(get_data().clauses, *m_context); }
 

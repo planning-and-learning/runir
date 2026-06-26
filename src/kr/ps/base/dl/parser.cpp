@@ -540,8 +540,7 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr:
 {
     ygg::Data<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>> concrete_data(
         parse_constructor(node.feature, domain, repository.get_dl_repository()).get_index(),
-        node.symbol,
-        node.description);
+        node.symbol);
     auto concrete = intern(repository, concrete_data);
     ygg::Data<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>> data(concrete.get_index());
     auto feature = intern(repository, data);
@@ -558,8 +557,7 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::NumericalFeature<runir::k
 {
     ygg::Data<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>> concrete_data(
         parse_constructor(node.feature, domain, repository.get_dl_repository()).get_index(),
-        node.symbol,
-        node.description);
+        node.symbol);
     auto concrete = intern(repository, concrete_data);
     ygg::Data<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>> data(concrete.get_index());
     auto feature = intern(repository, data);
@@ -723,7 +721,7 @@ auto parse_rule(const runir::kr::ps::base::dl::ast::Rule<runir::kr::BaseFamilyTa
     for (const auto& effect : node.effects)
         effects.push_back(parse_effect(effect, repository, boolean_features, numerical_features).get_index());
 
-    ygg::Data<runir::kr::ps::base::Rule> data(node.symbol, node.description);
+    ygg::Data<runir::kr::ps::base::Rule> data(node.symbol);
     data.conditions = std::move(conditions);
     data.effects = std::move(effects);
     return intern(repository, data);

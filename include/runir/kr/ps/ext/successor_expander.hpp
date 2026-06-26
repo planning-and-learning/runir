@@ -45,6 +45,33 @@
 namespace runir::kr::ps::ext
 {
 
+template<typename T>
+struct IsLoadRuleView : std::false_type
+{
+};
+
+template<runir::kr::dl::CategoryTag Category, typename C>
+struct IsLoadRuleView<ygg::View<ygg::Index<Rule<LoadTag, Category>>, C>> : std::true_type
+{
+};
+
+template<typename T>
+inline constexpr bool is_load_rule_view_v = IsLoadRuleView<std::remove_cvref_t<T>>::value;
+
+template<typename R, typename Kind>
+struct MatchesRuleKind : std::bool_constant<std::same_as<R, RuleView<Kind>>>
+{
+};
+
+template<typename R>
+struct MatchesRuleKind<R, LoadTag> : std::bool_constant<is_load_rule_view_v<R>>
+{
+};
+
+template<typename R, typename Kind>
+inline constexpr bool matches_rule_kind_v = MatchesRuleKind<std::remove_cvref_t<R>, Kind>::value;
+
+
 // Build a source-vertex evaluation context from its proof-graph contents (state + module +
 // memory + registers). `modules` is the program's module list (needed so Call rules can resolve
 // their callee). The arguments of any enclosing Call frame are not recoverable from a vertex, so
@@ -207,7 +234,7 @@ private:
                     [&](auto rule)
                     {
                         using R = std::decay_t<decltype(rule)>;
-                        if constexpr ((std::same_as<R, RuleView<Kinds>> || ...))
+                        if constexpr ((matches_rule_kind_v<R, Kinds> || ...))
                             if (auto step = make_step(rule, rule_variant, context, successors))
                                 result.push_back(std::move(*step));
                     },
@@ -228,7 +255,7 @@ private:
     template<typename R>
     std::optional<Step> make_step(R rule, RuleVariantView rule_variant, const EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors)
     {
-        if constexpr (std::same_as<R, RuleView<LoadTag>>)
+        if constexpr (is_load_rule_view_v<R>)
         {
             auto target = context;
             const auto status = detail::execute_load(rule, target);
@@ -326,7 +353,7 @@ private:
             [&](auto rule) -> MemoryStateVariant
             {
                 using R = std::decay_t<decltype(rule)>;
-                if constexpr (std::same_as<R, RuleView<LoadTag>>)
+                if constexpr (is_load_rule_view_v<R>)
                     return InternalMemoryState(step.context.get_memory_state());
                 else if constexpr (std::same_as<R, RuleView<DoTag>> || std::same_as<R, RuleView<CallTag>> || std::same_as<R, RuleView<SketchTag>>)
                     return ExternalMemoryState(step.context.get_memory_state());
@@ -349,7 +376,7 @@ private:
                     return detail::sketch_rule_matches_state(concrete, context, candidate.node.get_state());
                 else if constexpr (std::same_as<R, RuleView<DoTag>>)
                     return detail::do_rule_matches(concrete, context, candidate.label, candidate.node.get_state());
-                else if constexpr (std::same_as<R, RuleView<LoadTag>> || std::same_as<R, RuleView<CallTag>>)
+                else if constexpr (is_load_rule_view_v<R> || std::same_as<R, RuleView<CallTag>>)
                     return false;
                 else
                     static_assert(ygg::dependent_false<R>::value, "unhandled rule kind in SuccessorExpander::selects");

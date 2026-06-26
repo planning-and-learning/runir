@@ -4,9 +4,11 @@ namespace runir::kr::uns::dl::parser
 {
 
 BOOST_SPIRIT_INSTANTIATE(boolean_feature_type, iterator_type, context_type)
-BOOST_SPIRIT_INSTANTIATE(dnf_literal_type, iterator_type, context_type)
-BOOST_SPIRIT_INSTANTIATE(dnf_clause_type, iterator_type, context_type)
-BOOST_SPIRIT_INSTANTIATE(dnf_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(positive_literal_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(negative_literal_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(literal_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(conjunction_type, iterator_type, context_type)
+BOOST_SPIRIT_INSTANTIATE(disjunction_type, iterator_type, context_type)
 BOOST_SPIRIT_INSTANTIATE(classifier_type, iterator_type, context_type)
 BOOST_SPIRIT_INSTANTIATE(classifier_root_type, iterator_type, context_type)
 

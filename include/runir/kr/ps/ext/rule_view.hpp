@@ -14,15 +14,15 @@
 namespace ygg
 {
 
-template<typename Kind, typename C>
-class View<Index<runir::kr::ps::ext::Rule<Kind>>, C>
+template<typename Kind, typename Category, typename C>
+class View<Index<runir::kr::ps::ext::Rule<Kind, Category>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::ext::Rule<Kind>> m_handle;
+    Index<runir::kr::ps::ext::Rule<Kind, Category>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::ext::Rule<Kind>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::ext::Rule<Kind, Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }
@@ -39,16 +39,22 @@ public:
         return make_view(get_data().effects, *m_context);
     }
 
-    auto get_concept() const noexcept
+    auto get_expression() const noexcept
         requires std::same_as<Kind, runir::kr::ps::ext::LoadTag>
     {
-        return make_view(get_data().load_concept, get_repository(*m_context).get_dl_repository());
+        return make_view(get_data().load_expression, get_repository(*m_context).get_dl_repository());
+    }
+
+    auto get_concept() const noexcept
+        requires(std::same_as<Kind, runir::kr::ps::ext::LoadTag> && std::same_as<Category, runir::kr::dl::ConceptTag>)
+    {
+        return get_expression();
     }
 
     auto get_register() const noexcept
         requires std::same_as<Kind, runir::kr::ps::ext::LoadTag>
     {
-        return View<Index<runir::kr::ps::ext::Register>, C>(get_data().reg, *m_context);
+        return View<Index<runir::kr::ps::ext::Register<Category>>, C>(get_data().reg, *m_context);
     }
 
     const auto& get_action_name() const noexcept

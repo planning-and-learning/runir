@@ -29,8 +29,8 @@ enum class RuleExecutionStatus
     MALFORMED_CALL
 };
 
-template<typename C, tyr::planning::TaskKind Kind>
-bool has_current_source(ygg::View<ygg::Index<Rule<LoadTag>>, C> rule, const EvaluationContext<Kind>& context)
+template<runir::kr::dl::CategoryTag Category, typename C, tyr::planning::TaskKind Kind>
+bool has_current_source(ygg::View<ygg::Index<Rule<LoadTag, Category>>, C> rule, const EvaluationContext<Kind>& context)
 {
     return rule.get_source().get_index() == context.get_memory_state().get_index();
 }
@@ -53,8 +53,8 @@ bool has_current_source(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, const Eval
     return rule.get_source().get_index() == context.get_memory_state().get_index();
 }
 
-template<typename C, tyr::planning::TaskKind Kind>
-RuleExecutionStatus execute_load(ygg::View<ygg::Index<Rule<LoadTag>>, C> rule, EvaluationContext<Kind>& context)
+template<runir::kr::dl::CategoryTag Category, typename C, tyr::planning::TaskKind Kind>
+RuleExecutionStatus execute_load(ygg::View<ygg::Index<Rule<LoadTag, Category>>, C> rule, EvaluationContext<Kind>& context)
 {
     if (!has_current_source(rule, context))
         return RuleExecutionStatus::NOT_APPLICABLE;
@@ -62,12 +62,17 @@ RuleExecutionStatus execute_load(ygg::View<ygg::Index<Rule<LoadTag>>, C> rule, E
     if (!conditions_are_compatible(rule, context))
         return RuleExecutionStatus::NOT_APPLICABLE;
 
-    const auto denotation = evaluate(rule.get_concept(), context);
+    const auto denotation = evaluate(rule.get_expression(), context);
     const auto first = denotation.begin();
     if (first == denotation.end())
         return RuleExecutionStatus::EMPTY_DENOTATION;
 
-    context.set(rule.get_register().get_identifier(), (*first).get_index());
+    if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+        context.set(rule.get_register().get_identifier(), (*first).get_index());
+    else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
+        context.set(rule.get_register().get_identifier(), (*first).first.get_index(), (*first).second.get_index());
+    else
+        static_assert(ygg::dependent_false<Category>::value, "unhandled load rule category");
     context.set_memory_state(rule.get_target());
     return RuleExecutionStatus::APPLIED;
 }

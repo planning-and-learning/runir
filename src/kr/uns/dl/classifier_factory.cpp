@@ -9,13 +9,19 @@ namespace runir::kr::uns::dl
 
 ClassifierView ClassifierFactory::create_empty(Repository& repository)
 {
-    auto data = ygg::Data<runir::kr::uns::Classifier>(std::string("c0"), std::string(""));
+    auto data = ygg::Data<runir::kr::uns::Classifier>(std::string("c0"));
     return repository.get_or_create(data).first;
 }
 
 std::string ClassifierFactory::create_empty_description()
 {
-    return R"((:classifier (:symbol c0) (:description "") (:features) (:expression (or))))";
+    return R"RUNIR((:classifier
+    (:symbol c0)
+    (:features)
+    (:expression
+        (or)
+    )
+))RUNIR";
 }
 
 }  // namespace runir::kr::uns::dl

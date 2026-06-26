@@ -1,23 +1,12 @@
 from pathlib import Path
-import re
-
 import pytest
 
-try:
-    from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
-    from pyrunir.kr.dl import ext as dl_ext
-    from pyrunir.kr.ps import ext
-except ModuleNotFoundError as exc:
-    if "pyrunir._pyrunir" not in str(exc):
-        raise
-    import _pyrunir
-
-    GroundTaskSearchContext = _pyrunir.datasets.GroundTaskSearchContext
-    LiftedTaskSearchContext = _pyrunir.datasets.LiftedTaskSearchContext
-    dl_ext = _pyrunir.kr.dl.ext
-    ext = _pyrunir.kr.ps.ext
+from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
+from pyrunir.kr.dl import ext as dl_ext
+from pyrunir.kr.ps import ext
 from pyyggdrasil.execution import ExecutionContext
-from pytyr.formalism.planning import Parser, ParserOptions
+from pypddl.formalism import ParserOptions
+from pytyr.formalism.planning import Parser
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
 
@@ -63,7 +52,7 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     assert len(modules[0].get_concept_features()) == 12
     assert len(modules[0].get_boolean_features()) == 2
     assert len(modules[0].get_numerical_features()) == 0
-    assert len(modules[3].get_concept_features()) == 1
+    assert len(modules[3].get_concept_features()) == 2
     assert "(:symbol blocks)" in str(modules[3])
     memory_transitions = modules[3].get_memory_transitions()
     assert len(memory_transitions) > 0
@@ -94,8 +83,7 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     assert [module.get_name() for module in program.get_modules()] == ["root", "blocks", "tower", "on-table", "on"]
 
     formatted_program = str(program)
-    assert re.search(r"\(:sketch\s+\(:expression", formatted_program)
-    assert re.search(r"\(:rule\s+\(:symbol\s+[^\s\)]+\)\s+\(:description \"\"\)\s+\(:expression\s+\(:source-memory", formatted_program)
+    assert "(:sketch\n                        (:conditions" in formatted_program
 
     reparsed_program = ext.parse_module_program(formatted_program, planning_domain, repository)
     assert reparsed_program.get_entry_module().get_name() == "root"
@@ -106,209 +94,177 @@ def test_module_program_parser_reports_x3_syntax_position():
     planning_domain, repository = _repositories()
 
     with pytest.raises(RuntimeError, match="Error! Expecting:.*here"):
-        ext.parse_module_program('(:program (:entry "root")', planning_domain, repository)
+        ext.parse_module_program('(:program (:entry root)', planning_domain, repository)
 
 
 def test_module_program_parser_rejects_invalid_wiring():
     planning_domain, repository = _repositories()
     root = """(:module
     (:symbol root)
-    (:arguments
-    )
-    (:description "")
-    (:registers
-    )
-    (:entry m0)
-    (:memory
-        m0
-    )
-    (:features
-    )
-    (:rules
-    )
-)
-"""
-
-    with pytest.raises(RuntimeError):
-        ext.parse_module_program(f'(:program (:entry "missing") {root})', planning_domain, repository)
-    with pytest.raises(RuntimeError):
-        ext.parse_module_program(f'(:program (:entry "root") {root} {root})', planning_domain, repository)
-    with pytest.raises(RuntimeError):
-        ext.parse_module_program("""
-(:program
-  (:entry "root")
-  (:module
-    "root"
     (:arguments)
     (:registers)
     (:entry m0)
-    (:memory m0 m1)
+    (:memory m0)
     (:features)
-    (:rules
-      (:rule
-        (:symbol auto1)
-        (:description "")
-        (:expression
-          (:source-memory m0)
-          (:target-memory m1)
-          (:call
-            (:conditions)
-            (:callee "missing")
-            (:arguments)))))))
-""", planning_domain, repository)
+    (:rules)
+)"""
 
-    with pytest.raises(RuntimeError, match="argument signature.*offset"):
-        ext.parse_module_program("""
-(:program
-  (:entry "caller")
-  (:module
-    "caller"
-    (:arguments)
-    (:registers)
-    (:entry source)
-    (:memory source target)
-    (:features)
-    (:rules
-      (:rule
-        (:symbol auto2)
-        (:description "")
-        (:expression
-          (:source-memory source)
-          (:target-memory target)
-          (:call
-            (:conditions)
-            (:callee "callee")
-            (:arguments))))))
-  (:module
-    "callee"
-    (:arguments (:concept "x" 0))
-    (:registers)
-    (:entry target)
-    (:memory target)
-    (:features)
-    (:rules)))
-""", planning_domain, repository)
+    with pytest.raises(RuntimeError):
+        ext.parse_module_program(f'(:program (:entry missing) {root})', planning_domain, repository)
+    with pytest.raises(RuntimeError):
+        ext.parse_module_program(f'(:program (:entry root) {root} {root})', planning_domain, repository)
+    with pytest.raises(RuntimeError):
+        ext.parse_module_program("""(:program
+    (:entry root)
+    (:module
+        (:symbol root)
+        (:arguments)
+        (:registers)
+        (:entry m0)
+        (:memory m0 m1)
+        (:features)
+        (:rules
+            (:rule
+                (:symbol auto1)
+                (:expression
+                    (:source-memory m0)
+                    (:target-memory m1)
+                    (:call
+                        (:conditions)
+                        (:callee missing)
+                        (:arguments)
+                    )
+                )
+            )
+        )
+    )
+)""", planning_domain, repository)
 
-    with pytest.raises(RuntimeError, match=r'entry module "missing" is not declared.*offset'):
-        ext.parse_module_program(f'(:program (:entry "missing") {root})', planning_domain, repository)
+    with pytest.raises(RuntimeError, match="argument signature"):
+        ext.parse_module_program("""(:program
+    (:entry caller)
+    (:module
+        (:symbol caller)
+        (:arguments)
+        (:registers)
+        (:entry source)
+        (:memory source target)
+        (:features)
+        (:rules
+            (:rule
+                (:symbol auto2)
+                (:expression
+                    (:source-memory source)
+                    (:target-memory target)
+                    (:call
+                        (:conditions)
+                        (:callee callee)
+                        (:arguments)
+                    )
+                )
+            )
+        )
+    )
+    (:module
+        (:symbol callee)
+        (:arguments
+            (:concept x)
+        )
+        (:registers)
+        (:entry target)
+        (:memory target)
+        (:features)
+        (:rules)
+    )
+)""", planning_domain, repository)
 
-    with pytest.raises(RuntimeError, match=r'Unknown memory state "missing".*offset'):
-        ext.parse_module_program("""
-(:program
-    (:entry "bad-memory")
+    with pytest.raises(RuntimeError, match=r'entry module "missing" is not declared'):
+        ext.parse_module_program(f'(:program (:entry missing) {root})', planning_domain, repository)
+
+    with pytest.raises(RuntimeError, match=r'Unknown memory state "missing"'):
+        ext.parse_module_program("""(:program
+    (:entry bad-memory)
     (:module
         (:symbol bad-memory)
-        (:arguments
-        )
-        (:description "")
-        (:registers
-        )
+        (:arguments)
+        (:registers)
         (:entry m0)
-        (:memory
-            m0
-        )
-        (:features
-        )
+        (:memory m0)
+        (:features)
         (:rules
             (:rule
                 (:symbol auto3)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory missing)
                     (:sketch
-                        (:expression
-                            (:conditions)
-                            (:effects)
-                        )
+                        (:conditions)
+                        (:effects)
                     )
                 )
             )
         )
     )
-)
-""", planning_domain, repository)
+)""", planning_domain, repository)
 
-    with pytest.raises(RuntimeError, match=r'Unknown register "1".*offset'):
-        ext.parse_module_program("""
-(:program
-    (:entry "bad-register")
+    with pytest.raises(RuntimeError, match=r'Unknown register "r1"'):
+        ext.parse_module_program("""(:program
+    (:entry bad-register)
     (:module
         (:symbol bad-register)
-        (:arguments
-        )
-        (:description "")
-        (:registers
-        )
+        (:arguments)
+        (:registers)
         (:entry m0)
-        (:memory
-            m0
-            m1
-        )
-        (:features
-        )
+        (:memory m0 m1)
+        (:features)
         (:rules
             (:rule
                 (:symbol auto5)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m1)
                     (:load
-                        (:expression
-                            (:conditions)
-                            (:concept
-                                (c_top)
-                            )
-                            (:register 1)
+                        (:conditions)
+                        (:concept
+                            (c_top)
+                        )
+                        (:register
+                            (:concept r1)
                         )
                     )
                 )
             )
         )
     )
-)
-""", planning_domain, repository)
+)""", planning_domain, repository)
 
-    with pytest.raises(RuntimeError, match=r'Unknown feature "missing".*offset'):
-        ext.parse_module_program("""
-(:program
-    (:entry "bad-feature")
+    with pytest.raises(RuntimeError, match=r'Unknown feature "missing"'):
+        ext.parse_module_program("""(:program
+    (:entry bad-feature)
     (:module
         (:symbol bad-feature)
-        (:arguments
-        )
-        (:description "")
-        (:registers
-        )
+        (:arguments)
+        (:registers)
         (:entry m0)
-        (:memory
-            m0
-            m1
-        )
-        (:features
-        )
+        (:memory m0 m1)
+        (:features)
         (:rules
             (:rule
                 (:symbol auto7)
-                (:description "")
                 (:expression
                     (:source-memory m0)
                     (:target-memory m1)
                     (:sketch
-                        (:expression
-                            (:conditions
-                                (:greater_zero missing)
-                            )
-                            (:effects)
+                        (:conditions
+                            (greater_zero missing)
                         )
+                        (:effects)
                     )
                 )
             )
         )
     )
-)
-""", planning_domain, repository)
+)""", planning_domain, repository)
 
 
 def test_empty_module_factory_uses_ext_repositories():
@@ -365,25 +321,17 @@ def test_executor_reports_structured_failure_statuses_from_python():
     repository = ext.RepositoryFactory().create(dl_repository)
 
     empty_program = ext.parse_module_program("""(:program
-    (:entry "empty")
+    (:entry empty)
     (:module
         (:symbol empty)
-        (:arguments
-        )
-        (:description "")
-        (:registers
-        )
+        (:arguments)
+        (:registers)
         (:entry source)
-        (:memory
-            source
-        )
-        (:features
-        )
-        (:rules
-        )
+        (:memory source)
+        (:features)
+        (:rules)
     )
-)
-""", planning_domain, repository)
+)""", planning_domain, repository)
     options = ext.GroundModuleProgramSearchOptions()
     empty_proof = ext.prove_ground_solution(search_context, empty_program, options)
     assert empty_proof.status == ext.ModuleProgramProofStatus.FAILURE
@@ -393,43 +341,36 @@ def test_executor_reports_structured_failure_statuses_from_python():
     assert len(empty_proof.cycle) > 0
 
     load_loop = ext.parse_module_program("""(:program
-    (:entry "load-loop")
+    (:entry load-loop)
     (:module
         (:symbol load-loop)
-        (:arguments
-        )
-        (:description "")
+        (:arguments)
         (:registers
-            (:concept (:symbol 0))
+            (:concept r0)
         )
         (:entry source)
-        (:memory
-            source
-        )
-        (:features
-        )
+        (:memory source)
+        (:features)
         (:rules
             (:rule
                 (:symbol auto9)
-                (:description "")
                 (:expression
                     (:source-memory source)
                     (:target-memory source)
                     (:load
-                        (:expression
-                            (:conditions)
-                            (:concept
-                                (c_top)
-                            )
-                            (:register 0)
+                        (:conditions)
+                        (:concept
+                            (c_top)
+                        )
+                        (:register
+                            (:concept r0)
                         )
                     )
                 )
             )
         )
     )
-)
-""", planning_domain, repository)
+)""", planning_domain, repository)
     options = ext.GroundModuleProgramSearchOptions()
     load_proof = ext.prove_ground_solution(search_context, load_loop, options)
     assert load_proof.status == ext.ModuleProgramProofStatus.FAILURE
@@ -437,44 +378,33 @@ def test_executor_reports_structured_failure_statuses_from_python():
     assert len(load_proof.cycle) > 0
 
 
-    with pytest.raises(RuntimeError, match=r'Unknown action "missing-action".*offset'):
-        ext.parse_module_program("""
-(:program
-    (:entry "no-action")
+    with pytest.raises(RuntimeError, match=r'Unknown action "missing-action"'):
+        ext.parse_module_program("""(:program
+    (:entry no-action)
     (:module
         (:symbol no-action)
-        (:arguments
-        )
-        (:description "")
-        (:registers
-        )
+        (:arguments)
+        (:registers)
         (:entry source)
-        (:memory
-            source
-            target
-        )
-        (:features
-        )
+        (:memory source target)
+        (:features)
         (:rules
             (:rule
                 (:symbol auto11)
-                (:description "")
                 (:expression
                     (:source-memory source)
                     (:target-memory target)
                     (:do
-                        (:expression
-                            (:conditions)
-                            (:action "missing-action")
-                            (:arguments)
-                        )
+                        (:conditions)
+                        (:action "missing-action")
+                        (:arguments)
+                        (:effects)
                     )
                 )
             )
         )
     )
-)
-""", planning_domain, repository)
+)""", planning_domain, repository)
 
 
 def test_lifted_executor_binding_reports_failure_status():
@@ -486,25 +416,17 @@ def test_lifted_executor_binding_reports_failure_status():
     repository = ext.RepositoryFactory().create(dl_repository)
 
     program = ext.parse_module_program("""(:program
-    (:entry "empty")
+    (:entry empty)
     (:module
         (:symbol empty)
-        (:arguments
-        )
-        (:description "")
-        (:registers
-        )
+        (:arguments)
+        (:registers)
         (:entry source)
-        (:memory
-            source
-        )
-        (:features
-        )
-        (:rules
-        )
+        (:memory source)
+        (:features)
+        (:rules)
     )
-)
-""", planning_domain, repository)
+)""", planning_domain, repository)
     options = ext.LiftedModuleProgramSearchOptions()
 
     result = ext.prove_lifted_solution(search_context, program, options)

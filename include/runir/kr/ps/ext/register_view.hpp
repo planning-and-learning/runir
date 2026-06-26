@@ -9,15 +9,15 @@
 namespace ygg
 {
 
-template<typename C>
-class View<Index<runir::kr::ps::ext::Register>, C>
+template<runir::kr::dl::CategoryTag Category, typename C>
+class View<Index<runir::kr::ps::ext::Register<Category>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::ext::Register> m_handle;
+    Index<runir::kr::ps::ext::Register<Category>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::ext::Register> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::ext::Register<Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

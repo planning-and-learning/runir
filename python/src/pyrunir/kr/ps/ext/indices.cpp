@@ -12,23 +12,27 @@ void bind_indices(nb::module_& m)
     ygg::bind_index<ygg::Index<Argument<runir::kr::dl::RoleTag>>>(m, "RoleArgumentIndex");
     ygg::bind_index<ygg::Index<Argument<runir::kr::dl::BooleanTag>>>(m, "BooleanArgumentIndex");
     ygg::bind_index<ygg::Index<Argument<runir::kr::dl::NumericalTag>>>(m, "NumericalArgumentIndex");
-    ygg::bind_index<ygg::Index<Register>>(m, "RegisterIndex");
+    ygg::bind_index<ygg::Index<Register<runir::kr::dl::ConceptTag>>>(m, "ConceptRegisterIndex");
+    ygg::bind_index<ygg::Index<Register<runir::kr::dl::RoleTag>>>(m, "RoleRegisterIndex");
     ygg::bind_index<ygg::Index<MemoryState>>(m, "MemoryStateIndex");
     ygg::bind_index<ygg::Index<Module>>(m, "ModuleIndex");
     ygg::bind_index<ygg::Index<ModuleProgram>>(m, "ModuleProgramIndex");
     ygg::bind_index<ygg::Index<ConditionVariant>>(m, "ConditionVariantIndex");
     ygg::bind_index<ygg::Index<EffectVariant>>(m, "EffectVariantIndex");
     ygg::bind_index<ygg::Index<RuleVariant>>(m, "RuleVariantIndex");
-    ygg::bind_index<ygg::Index<Rule<LoadTag>>>(m, "LoadRuleIndex");
+    ygg::bind_index<ygg::Index<Rule<LoadTag, runir::kr::dl::ConceptTag>>>(m, "ConceptLoadRuleIndex");
+    ygg::bind_index<ygg::Index<Rule<LoadTag, runir::kr::dl::RoleTag>>>(m, "RoleLoadRuleIndex");
     ygg::bind_index<ygg::Index<Rule<SketchTag>>>(m, "SketchRuleIndex");
     ygg::bind_index<ygg::Index<Rule<DoTag>>>(m, "DoRuleIndex");
     ygg::bind_index<ygg::Index<Rule<CallTag>>>(m, "CallRuleIndex");
 
     // Features
     ygg::bind_index<ygg::Index<Feature<runir::kr::dl::ConceptTag>>>(m, "ConceptFeatureIndex");
+    ygg::bind_index<ygg::Index<Feature<runir::kr::dl::RoleTag>>>(m, "RoleFeatureIndex");
     ygg::bind_index<ygg::Index<Feature<runir::kr::ps::dl::BooleanFeature>>>(m, "BooleanFeatureIndex");
     ygg::bind_index<ygg::Index<Feature<runir::kr::ps::dl::NumericalFeature>>>(m, "NumericalFeatureIndex");
     ygg::bind_index<ygg::Index<ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>>>(m, "ConcreteConceptFeatureIndex");
+    ygg::bind_index<ygg::Index<ConcreteFeature<runir::kr::DlTag, runir::kr::dl::RoleTag>>>(m, "ConcreteRoleFeatureIndex");
     ygg::bind_index<ygg::Index<ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>>(m, "ConcreteBooleanFeatureIndex");
     ygg::bind_index<ygg::Index<ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>>(m, "ConcreteNumericalFeatureIndex");
 

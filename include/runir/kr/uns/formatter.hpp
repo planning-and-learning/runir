@@ -17,6 +17,38 @@
 namespace runir::kr::uns::format
 {
 
+inline void append_value(std::ostream& os, std::string_view value)
+{
+    auto stream = std::istringstream(std::string(value));
+    auto line = std::string {};
+    auto first = true;
+    while (std::getline(stream, line))
+    {
+        if (!first)
+            os << '\n';
+        os << ygg::print_indent << line;
+        first = false;
+    }
+}
+
+inline void append_value_section(std::ostream& os, std::string_view name, std::string_view value)
+{
+    const auto formatted_value = runir::pretty_sexpression(value);
+    if (formatted_value.find('\n') == std::string::npos)
+    {
+        os << ygg::print_indent << fmt::format("(:{} {})", name, formatted_value) << "\n";
+        return;
+    }
+
+    os << ygg::print_indent << fmt::format("(:{}\n", name);
+    {
+        ygg::IndentScope scope(os);
+        append_value(os, formatted_value);
+        os << "\n";
+    }
+    os << ygg::print_indent << ")\n";
+}
+
 template<typename C>
 std::string feature(ygg::View<ygg::Index<runir::kr::uns::Feature>, C> view)
 {
@@ -55,7 +87,6 @@ std::string classifier(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> view
     {
         ygg::IndentScope scope(os);
         os << ygg::print_indent << fmt::format("(:symbol {})", std::string(view.get_symbol().str())) << "\n";
-        os << ygg::print_indent << fmt::format("(:description {})", fmt::format("{:?}", std::string(view.get_description().str()))) << "\n";
 
         os << ygg::print_indent << "(:features\n";
         {
@@ -68,10 +99,11 @@ std::string classifier(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> view
         }
         os << ygg::print_indent << ")\n";
 
-        os << ygg::print_indent << "(:expression (or";
+        auto expression = std::string("(or");
         for (auto item : view.get_clauses())
-            os << ' ' << clause(item);
-        os << "))\n";
+            expression += fmt::format(" {}", clause(item));
+        expression += ")";
+        append_value_section(os, "expression", expression);
     }
     os << ")";
     return os.str();

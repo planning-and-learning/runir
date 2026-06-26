@@ -5,8 +5,11 @@
 
 #include <boost/fusion/include/adapt_struct.hpp>
 
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::uns::dl::ast::BooleanFeature, symbol, description, feature)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::uns::dl::ast::DnfLiteral, symbol, negated)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::uns::dl::ast::Classifier, symbol, description, features, clauses)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::uns::dl::ast::BooleanFeature, symbol, feature)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::uns::dl::ast::PositiveLiteral, symbol)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::uns::dl::ast::NegativeLiteral, symbol)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::uns::dl::ast::Conjunction, literals)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::uns::dl::ast::Disjunction, clauses)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::uns::dl::ast::Classifier, symbol, features, expression)
 
 #endif
