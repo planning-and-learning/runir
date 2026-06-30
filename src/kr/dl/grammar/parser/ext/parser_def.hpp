@@ -140,9 +140,9 @@ auto constructor_identifier_parser(Parser parser)
 }
 
 const auto ext_concept_def = concept_bot | concept_top | concept_atomic_state | concept_atomic_goal | concept_intersection | concept_union | concept_negation
-                             | concept_value_restriction | concept_existential_quantification | concept_qualified_at_least_number_restriction
-                             | concept_qualified_at_most_number_restriction | concept_qualified_exact_number_restriction | concept_at_least_number_restriction
-                             | concept_at_most_number_restriction | concept_exact_number_restriction | concept_role_value_map | concept_agreement
+                             | concept_value_restriction | concept_existential_quantification | concept_at_least_number_restriction
+                             | concept_at_most_number_restriction | concept_exact_number_restriction | concept_qualified_at_least_number_restriction
+                             | concept_qualified_at_most_number_restriction | concept_qualified_exact_number_restriction | concept_role_value_map | concept_agreement
                              | concept_role_fillers | concept_one_of | concept_nominal | concept_register | concept_argument;
 const auto ext_concept_root_def = ext_concept > eoi;
 const auto ext_concept_non_terminal_def = concept_non_terminal_string_parser();
