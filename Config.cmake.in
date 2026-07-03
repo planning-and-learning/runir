@@ -12,7 +12,7 @@ endif()
 yggdrasil_find_python_native_prefix(pytyr TYR_NATIVE_PREFIX)
 
 
-find_dependency(tyr 0.0.26 CONFIG REQUIRED COMPONENTS core PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+find_dependency(tyr 0.0.27 CONFIG REQUIRED COMPONENTS core PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 if(tyr_FOUND)
     message(STATUS "Found tyr: ${tyr_DIR} (found version ${tyr_VERSION})")
 endif()
