@@ -12,6 +12,7 @@
 #endif
 
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/family_traits.hpp"
 
 #include <boost/optional.hpp>
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
@@ -224,6 +225,28 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag>
     std::string object_name;
 };
 
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+struct Constructor<Family, Category, runir::kr::dl::ArgumentTag<Category>> : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::ArgumentTag<Category>::keyword;
+    ygg::uint_t identifier;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag> : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::ConceptRegisterSyntaxTag::keyword;
+    ygg::uint_t identifier;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag> : x3::position_tagged
+{
+    static constexpr auto keyword = runir::kr::dl::RoleRegisterSyntaxTag::keyword;
+    ygg::uint_t identifier;
+};
+
 template<runir::kr::dl::FamilyTag Family>
 using ConceptBot = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::BotTag>;
 template<runir::kr::dl::FamilyTag Family>
@@ -264,53 +287,159 @@ template<runir::kr::dl::FamilyTag Family>
 using ConceptOneOf = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::OneOfTag>;
 template<runir::kr::dl::FamilyTag Family>
 using ConceptNominal = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag>;
-
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::ConceptTag, void> :
-    PositionedVariant<x3::forward_ast<ConceptBot<Family>>,
-                      x3::forward_ast<ConceptTop<Family>>,
-                      x3::forward_ast<ConceptAtomicState<Family>>,
-                      x3::forward_ast<ConceptAtomicGoal<Family>>,
-                      x3::forward_ast<ConceptIntersection<Family>>,
-                      x3::forward_ast<ConceptUnion<Family>>,
-                      x3::forward_ast<ConceptNegation<Family>>,
-                      x3::forward_ast<ConceptValueRestriction<Family>>,
-                      x3::forward_ast<ConceptExistentialQuantification<Family>>,
-                      x3::forward_ast<ConceptAtLeastNumberRestriction<Family>>,
-                      x3::forward_ast<ConceptAtMostNumberRestriction<Family>>,
-                      x3::forward_ast<ConceptExactNumberRestriction<Family>>,
-                      x3::forward_ast<ConceptQualifiedAtLeastNumberRestriction<Family>>,
-                      x3::forward_ast<ConceptQualifiedAtMostNumberRestriction<Family>>,
-                      x3::forward_ast<ConceptQualifiedExactNumberRestriction<Family>>,
-                      x3::forward_ast<ConceptRoleValueMap<Family>>,
-                      x3::forward_ast<ConceptAgreement<Family>>,
-                      x3::forward_ast<ConceptRoleFillers<Family>>,
-                      x3::forward_ast<ConceptOneOf<Family>>,
-                      x3::forward_ast<ConceptNominal<Family>>>
+using ConceptRegister = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag>;
+template<runir::kr::dl::FamilyTag Family>
+using ConceptArgument = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>;
+
+using BaseAstConceptConstructorTags = ygg::TypeList<runir::kr::dl::BotTag,
+                                                   runir::kr::dl::TopTag,
+                                                   runir::kr::dl::ConceptAtomicStateSyntaxTag,
+                                                   runir::kr::dl::ConceptAtomicGoalSyntaxTag,
+                                                   runir::kr::dl::ConceptIntersectionSyntaxTag,
+                                                   runir::kr::dl::ConceptUnionSyntaxTag,
+                                                   runir::kr::dl::NegationTag,
+                                                   runir::kr::dl::ValueRestrictionTag,
+                                                   runir::kr::dl::ExistentialQuantificationTag,
+                                                   runir::kr::dl::AtLeastNumberRestrictionTag,
+                                                   runir::kr::dl::AtMostNumberRestrictionTag,
+                                                   runir::kr::dl::ExactNumberRestrictionTag,
+                                                   runir::kr::dl::QualifiedAtLeastNumberRestrictionTag,
+                                                   runir::kr::dl::QualifiedAtMostNumberRestrictionTag,
+                                                   runir::kr::dl::QualifiedExactNumberRestrictionTag,
+                                                   runir::kr::dl::RoleValueMapTag,
+                                                   runir::kr::dl::AgreementTag,
+                                                   runir::kr::dl::RoleFillersTag,
+                                                   runir::kr::dl::OneOfTag,
+                                                   runir::kr::dl::NominalTag>;
+
+using BaseAstRoleConstructorTags = ygg::TypeList<runir::kr::dl::UniversalTag,
+                                                runir::kr::dl::RoleAtomicStateSyntaxTag,
+                                                runir::kr::dl::RoleAtomicGoalSyntaxTag,
+                                                runir::kr::dl::RoleIntersectionSyntaxTag,
+                                                runir::kr::dl::RoleUnionSyntaxTag,
+                                                runir::kr::dl::ComplementTag,
+                                                runir::kr::dl::InverseTag,
+                                                runir::kr::dl::CompositionTag,
+                                                runir::kr::dl::TransitiveClosureTag,
+                                                runir::kr::dl::ReflexiveTransitiveClosureTag,
+                                                runir::kr::dl::RestrictionTag,
+                                                runir::kr::dl::IdentityTag>;
+
+using BaseAstBooleanConstructorTags = ygg::TypeList<runir::kr::dl::BooleanAtomicStateSyntaxTag,
+                                                   runir::kr::dl::BooleanAtomicGoalSyntaxTag,
+                                                   runir::kr::dl::NonemptyTag>;
+
+using BaseAstNumericalConstructorTags = ygg::TypeList<runir::kr::dl::CountTag, runir::kr::dl::DistanceTag>;
+
+using ExtAstConceptConstructorTags = ygg::ConcatTypeListsT<BaseAstConceptConstructorTags,
+                                                          ygg::TypeList<runir::kr::dl::RegisterTag,
+                                                                        runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>;
+using ExtAstRoleConstructorTags = ygg::ConcatTypeListsT<BaseAstRoleConstructorTags,
+                                                       ygg::TypeList<runir::kr::dl::RegisterTag,
+                                                                     runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>;
+using ExtAstBooleanConstructorTags = ygg::ConcatTypeListsT<BaseAstBooleanConstructorTags,
+                                                          ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>;
+using ExtAstNumericalConstructorTags = ygg::ConcatTypeListsT<BaseAstNumericalConstructorTags,
+                                                            ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>;
+
+using UnsAstBooleanConstructorTags = ygg::ConcatTypeListsT<BaseAstBooleanConstructorTags,
+                                                          ygg::ConcatTypeListsT<runir::kr::dl::UnsComparisonConstructorTags,
+                                                                                ygg::ConcatTypeListsT<ygg::TypeList<runir::kr::dl::BooleanConstantTag>,
+                                                                                                      runir::kr::dl::UnsLogicalConstructorTags>>>;
+using UnsAstNumericalConstructorTags = ygg::ConcatTypeListsT<BaseAstNumericalConstructorTags,
+                                                            ygg::ConcatTypeListsT<ygg::TypeList<runir::kr::dl::NumericalConstantTag>,
+                                                                                  runir::kr::dl::UnsNumericalBinaryConstructorTags>>;
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+struct AstConstructorTags;
+
+template<>
+struct AstConstructorTags<runir::kr::BaseFamilyTag, runir::kr::dl::ConceptTag>
 {
-    using Base = PositionedVariant<x3::forward_ast<ConceptBot<Family>>,
-                                   x3::forward_ast<ConceptTop<Family>>,
-                                   x3::forward_ast<ConceptAtomicState<Family>>,
-                                   x3::forward_ast<ConceptAtomicGoal<Family>>,
-                                   x3::forward_ast<ConceptIntersection<Family>>,
-                                   x3::forward_ast<ConceptUnion<Family>>,
-                                   x3::forward_ast<ConceptNegation<Family>>,
-                                   x3::forward_ast<ConceptValueRestriction<Family>>,
-                                   x3::forward_ast<ConceptExistentialQuantification<Family>>,
-                                   x3::forward_ast<ConceptAtLeastNumberRestriction<Family>>,
-                                   x3::forward_ast<ConceptAtMostNumberRestriction<Family>>,
-                                   x3::forward_ast<ConceptExactNumberRestriction<Family>>,
-                                   x3::forward_ast<ConceptQualifiedAtLeastNumberRestriction<Family>>,
-                                   x3::forward_ast<ConceptQualifiedAtMostNumberRestriction<Family>>,
-                                   x3::forward_ast<ConceptQualifiedExactNumberRestriction<Family>>,
-                                   x3::forward_ast<ConceptRoleValueMap<Family>>,
-                                   x3::forward_ast<ConceptAgreement<Family>>,
-                                   x3::forward_ast<ConceptRoleFillers<Family>>,
-                                   x3::forward_ast<ConceptOneOf<Family>>,
-                                   x3::forward_ast<ConceptNominal<Family>>>;
-    using Base::Base;
-    using Base::operator=;
+    using Type = BaseAstConceptConstructorTags;
 };
+
+template<>
+struct AstConstructorTags<runir::kr::BaseFamilyTag, runir::kr::dl::RoleTag>
+{
+    using Type = BaseAstRoleConstructorTags;
+};
+
+template<>
+struct AstConstructorTags<runir::kr::BaseFamilyTag, runir::kr::dl::BooleanTag>
+{
+    using Type = BaseAstBooleanConstructorTags;
+};
+
+template<>
+struct AstConstructorTags<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>
+{
+    using Type = BaseAstNumericalConstructorTags;
+};
+
+template<>
+struct AstConstructorTags<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>
+{
+    using Type = ExtAstConceptConstructorTags;
+};
+
+template<>
+struct AstConstructorTags<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>
+{
+    using Type = ExtAstRoleConstructorTags;
+};
+
+template<>
+struct AstConstructorTags<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>
+{
+    using Type = ExtAstBooleanConstructorTags;
+};
+
+template<>
+struct AstConstructorTags<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>
+{
+    using Type = ExtAstNumericalConstructorTags;
+};
+
+template<>
+struct AstConstructorTags<runir::kr::UnsFamilyTag, runir::kr::dl::ConceptTag>
+{
+    using Type = BaseAstConceptConstructorTags;
+};
+
+template<>
+struct AstConstructorTags<runir::kr::UnsFamilyTag, runir::kr::dl::RoleTag>
+{
+    using Type = BaseAstRoleConstructorTags;
+};
+
+template<>
+struct AstConstructorTags<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag>
+{
+    using Type = UnsAstBooleanConstructorTags;
+};
+
+template<>
+struct AstConstructorTags<runir::kr::UnsFamilyTag, runir::kr::dl::NumericalTag>
+{
+    using Type = UnsAstNumericalConstructorTags;
+};
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+using AstConstructorTagsT = typename AstConstructorTags<Family, Category>::Type;
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+struct AstConstructorAlternative
+{
+    template<typename Tag>
+    using Type = x3::forward_ast<Constructor<Family, Category, Tag>>;
+};
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+using ConstructorVariantBase = ygg::ApplyTypeListT<PositionedVariant,
+                                                  ygg::MapTypeListT<AstConstructorAlternative<Family, Category>::template Type,
+                                                                    AstConstructorTagsT<Family, Category>>>;
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::UniversalTag> : x3::position_tagged
@@ -424,37 +553,10 @@ template<runir::kr::dl::FamilyTag Family>
 using RoleRestriction = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RestrictionTag>;
 template<runir::kr::dl::FamilyTag Family>
 using RoleIdentity = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::IdentityTag>;
-
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::RoleTag, void> :
-    PositionedVariant<x3::forward_ast<RoleUniversal<Family>>,
-                      x3::forward_ast<RoleAtomicState<Family>>,
-                      x3::forward_ast<RoleAtomicGoal<Family>>,
-                      x3::forward_ast<RoleIntersection<Family>>,
-                      x3::forward_ast<RoleUnion<Family>>,
-                      x3::forward_ast<RoleComplement<Family>>,
-                      x3::forward_ast<RoleInverse<Family>>,
-                      x3::forward_ast<RoleComposition<Family>>,
-                      x3::forward_ast<RoleTransitiveClosure<Family>>,
-                      x3::forward_ast<RoleReflexiveTransitiveClosure<Family>>,
-                      x3::forward_ast<RoleRestriction<Family>>,
-                      x3::forward_ast<RoleIdentity<Family>>>
-{
-    using Base = PositionedVariant<x3::forward_ast<RoleUniversal<Family>>,
-                                   x3::forward_ast<RoleAtomicState<Family>>,
-                                   x3::forward_ast<RoleAtomicGoal<Family>>,
-                                   x3::forward_ast<RoleIntersection<Family>>,
-                                   x3::forward_ast<RoleUnion<Family>>,
-                                   x3::forward_ast<RoleComplement<Family>>,
-                                   x3::forward_ast<RoleInverse<Family>>,
-                                   x3::forward_ast<RoleComposition<Family>>,
-                                   x3::forward_ast<RoleTransitiveClosure<Family>>,
-                                   x3::forward_ast<RoleReflexiveTransitiveClosure<Family>>,
-                                   x3::forward_ast<RoleRestriction<Family>>,
-                                   x3::forward_ast<RoleIdentity<Family>>>;
-    using Base::Base;
-    using Base::operator=;
-};
+using RoleRegister = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag>;
+template<runir::kr::dl::FamilyTag Family>
+using RoleArgument = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>;
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag> : x3::position_tagged
@@ -547,61 +649,8 @@ template<runir::kr::dl::FamilyTag Family>
 using BooleanOr = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::OrTag>;
 template<runir::kr::dl::FamilyTag Family>
 using BooleanNot = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NotTag>;
-
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::BooleanTag, void> :
-    PositionedVariant<x3::forward_ast<BooleanAtomicState<Family>>, x3::forward_ast<BooleanAtomicGoal<Family>>, x3::forward_ast<BooleanNonempty<Family>>>
-{
-    using Base =
-        PositionedVariant<x3::forward_ast<BooleanAtomicState<Family>>, x3::forward_ast<BooleanAtomicGoal<Family>>, x3::forward_ast<BooleanNonempty<Family>>>;
-    using Base::Base;
-    using Base::operator=;
-};
-
-template<>
-struct Constructor<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag, void> :
-    PositionedVariant<x3::forward_ast<BooleanAtomicState<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanAtomicGoal<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanNonempty<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanEq<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanNeq<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanLt<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanLe<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanGt<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanGe<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalEq<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalNeq<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalLt<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalLe<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalGt<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalGe<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanConstant<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanAnd<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanOr<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<BooleanNot<runir::kr::UnsFamilyTag>>>
-{
-    using Base = PositionedVariant<x3::forward_ast<BooleanAtomicState<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanAtomicGoal<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanNonempty<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanEq<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanNeq<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanLt<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanLe<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanGt<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanGe<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalEq<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalNeq<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalLt<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalLe<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalGt<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalGe<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanConstant<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanAnd<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanOr<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<BooleanNot<runir::kr::UnsFamilyTag>>>;
-    using Base::Base;
-    using Base::operator=;
-};
+using BooleanArgument = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>;
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::CountTag> : x3::position_tagged
@@ -652,36 +701,14 @@ template<runir::kr::dl::FamilyTag Family>
 using NumericalMin = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::MinTag>;
 template<runir::kr::dl::FamilyTag Family>
 using NumericalMax = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::MaxTag>;
-
 template<runir::kr::dl::FamilyTag Family>
-struct Constructor<Family, runir::kr::dl::NumericalTag, void> : PositionedVariant<x3::forward_ast<NumericalCount<Family>>, x3::forward_ast<NumericalDistance<Family>>>
-{
-    using Base = PositionedVariant<x3::forward_ast<NumericalCount<Family>>, x3::forward_ast<NumericalDistance<Family>>>;
-    using Base::Base;
-    using Base::operator=;
-};
+using NumericalArgument = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>;
 
-template<>
-struct Constructor<runir::kr::UnsFamilyTag, runir::kr::dl::NumericalTag, void> :
-    PositionedVariant<x3::forward_ast<NumericalCount<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalDistance<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalConstant<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalAdd<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalSub<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalMul<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalDiv<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalMin<runir::kr::UnsFamilyTag>>,
-                      x3::forward_ast<NumericalMax<runir::kr::UnsFamilyTag>>>
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+struct Constructor<Family, Category, void> : ConstructorVariantBase<Family, Category>
 {
-    using Base = PositionedVariant<x3::forward_ast<NumericalCount<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalDistance<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalConstant<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalAdd<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalSub<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalMul<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalDiv<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalMin<runir::kr::UnsFamilyTag>>,
-                                   x3::forward_ast<NumericalMax<runir::kr::UnsFamilyTag>>>;
+    using Base = ConstructorVariantBase<Family, Category>;
     using Base::Base;
     using Base::operator=;
 };

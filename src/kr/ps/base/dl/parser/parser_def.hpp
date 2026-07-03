@@ -1,7 +1,7 @@
 #ifndef RUNIR_SRC_KR_PS_DL_PARSER_PARSER_DEF_HPP_
 #define RUNIR_SRC_KR_PS_DL_PARSER_PARSER_DEF_HPP_
 
-#include "runir/kr/dl/grammar/parser/base/grammar_parsers.hpp"
+#include "runir/kr/dl/grammar/parser/parsers.hpp"
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
 #include "runir/kr/ps/base/dl/ast/ast_adapted.hpp"
 #include "runir/kr/ps/base/dl/parser/error_handler.hpp"
@@ -53,8 +53,8 @@ inline auto quoted_string_parser() { return lexeme[lit('"') >> raw[*('\\' >> cha
 
 const auto symbol_value_def = identifier_parser();
 const auto symbol_section_def = lit("(") > lit(":symbol") > symbol_value_def > lit(")");
-const auto boolean_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::base::grammar::boolean_parser() > lit(")");
-const auto numerical_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::base::grammar::numerical_parser() > lit(")");
+const auto boolean_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::boolean_parser<runir::kr::BaseFamilyTag>() > lit(")");
+const auto numerical_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::numerical_parser<runir::kr::BaseFamilyTag>() > lit(")");
 
 const auto boolean_feature_def = (lit("(") >> lit(":") >> lit(runir::kr::ps::dl::BooleanFeature::keyword))
                                  > symbol_section_def > boolean_expression_section_def > lit(")");

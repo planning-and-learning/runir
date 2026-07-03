@@ -57,6 +57,8 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::ast::RoleChoice<Family>, role)(std::vector<std::string>, object_names))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptOneOf)(Family), (std::vector<std::string>, object_names))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptNominal)(Family), (std::string, object_name))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptRegister)(Family), (ygg::uint_t, identifier))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptArgument)(Family), (ygg::uint_t, identifier))
 
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleUniversal)(Family))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleAtomicState)(Family), (std::string, predicate_name))
@@ -80,6 +82,8 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::ast::RoleRestriction)(Family),
                               (runir::kr::dl::grammar::ast::RoleChoice<Family>, lhs)(runir::kr::dl::grammar::ast::ConceptChoice<Family>, rhs))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleIdentity)(Family), (runir::kr::dl::grammar::ast::ConceptChoice<Family>, arg))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleRegister)(Family), (ygg::uint_t, identifier))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleArgument)(Family), (ygg::uint_t, identifier))
 
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::BooleanAtomicState)(Family), (std::string, predicate_name)(bool, polarity))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::BooleanAtomicGoal)(Family), (std::string, predicate_name)(bool, polarity))
@@ -142,6 +146,7 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
 // Constants.
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::BooleanConstant)(Family), (bool, value))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::NumericalConstant)(Family), (ygg::uint_t, value))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::NumericalArgument)(Family), (ygg::uint_t, identifier))
 
 // Numerical binary operators (two numerical choices) -> Numerical.
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
@@ -171,5 +176,6 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::ast::BooleanOr)(Family),
                               (runir::kr::dl::grammar::ast::BooleanChoice<Family>, lhs)(runir::kr::dl::grammar::ast::BooleanChoice<Family>, rhs))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::BooleanNot)(Family), (runir::kr::dl::grammar::ast::BooleanChoice<Family>, arg))
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::BooleanArgument)(Family), (ygg::uint_t, identifier))
 
 #endif

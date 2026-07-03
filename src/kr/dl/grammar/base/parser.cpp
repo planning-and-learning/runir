@@ -2,7 +2,7 @@
 
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/grammar/canonicalization.hpp"
-#include "runir/kr/dl/grammar/parser/base/parser.hpp"
+#include "runir/kr/dl/grammar/parser/parser.hpp"
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <boost/variant/apply_visitor.hpp>
@@ -580,7 +580,7 @@ auto parse_grammar_impl(const std::string& description,
                         tyr::formalism::planning::DomainView domain,
                         ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository)
 {
-    const auto ast = parser::base::parse_grammar_ast(description);
+    const auto ast = parser::parse_grammar_ast<runir::kr::BaseFamilyTag>(description);
 
     ygg::Data<GrammarTag<runir::kr::BaseFamilyTag>> data;
 

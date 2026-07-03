@@ -3,12 +3,8 @@ add_library(kr SHARED
     dl/cnf_grammar/translate.cpp
     dl/grammar/base/grammar_factory.cpp
     dl/grammar/base/parser.cpp
-    dl/grammar/parser/base/parser.cpp
-    dl/grammar/parser/base/parser_instantiations.cpp
-    dl/grammar/parser/ext/parser.cpp
-    dl/grammar/parser/ext/parser_instantiations.cpp
-    dl/grammar/parser/uns/grammar_parser.cpp
-    dl/grammar/parser/uns/grammar_parser_instantiations.cpp
+    dl/grammar/parser/parser.cpp
+    dl/grammar/parser/parser_instantiations.cpp
     ps/base/dl/parser.cpp
     ps/base/dl/parser/parser.cpp
     ps/base/dl/parser/parser_instantiations.cpp

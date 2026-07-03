@@ -6,7 +6,7 @@
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
-#include "runir/kr/dl/grammar/parser/ast.hpp"
+#include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/dl/formatter.hpp"
@@ -76,7 +76,7 @@ template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
 std::string concept_expression(ygg::View<ygg::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C> view)
 {
     namespace ast = runir::kr::dl::grammar::ast;
-    namespace ext_ast = runir::kr::dl::grammar::parser::ext::ast;
+    namespace ext_ast = runir::kr::dl::grammar::ast;
 
     if constexpr (std::same_as<Tag, runir::kr::dl::BotTag>)
         return constructor_expression(ast::ConceptBot<Family>::keyword);
@@ -130,9 +130,9 @@ std::string concept_expression(ygg::View<ygg::Index<runir::kr::dl::FamilyConcept
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
         return constructor_expression(ast::ConceptNominal<Family>::keyword, fmt::format("{:?}", std::string(view.get_object().get_name().str())));
     else if constexpr (std::same_as<Tag, runir::kr::dl::RegisterTag>)
-        return constructor_expression(ext_ast::ConceptRegister::keyword, ygg::uint_t(view.get_data().identifier));
+        return constructor_expression(ext_ast::ConceptRegister<runir::kr::ExtFamilyTag>::keyword, ygg::uint_t(view.get_data().identifier));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>)
-        return constructor_expression(ext_ast::Argument<runir::kr::dl::ConceptTag>::keyword, ygg::uint_t(view.get_data().identifier));
+        return constructor_expression(ext_ast::ConceptArgument<runir::kr::ExtFamilyTag>::keyword, ygg::uint_t(view.get_data().identifier));
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL concept constructor tag in concept_expression");
@@ -144,7 +144,7 @@ template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
 std::string role(ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C> view)
 {
     namespace ast = runir::kr::dl::grammar::ast;
-    namespace ext_ast = runir::kr::dl::grammar::parser::ext::ast;
+    namespace ext_ast = runir::kr::dl::grammar::ast;
 
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
         return constructor_expression(ast::RoleUniversal<Family>::keyword);
@@ -173,9 +173,9 @@ std::string role(ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C
     else if constexpr (std::same_as<Tag, runir::kr::dl::IdentityTag>)
         return constructor_expression(ast::RoleIdentity<Family>::keyword, expression(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::RegisterTag>)
-        return constructor_expression(ext_ast::RoleRegister::keyword, ygg::uint_t(view.get_data().identifier));
+        return constructor_expression(ext_ast::RoleRegister<runir::kr::ExtFamilyTag>::keyword, ygg::uint_t(view.get_data().identifier));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>)
-        return constructor_expression(ext_ast::Argument<runir::kr::dl::RoleTag>::keyword, ygg::uint_t(view.get_data().identifier));
+        return constructor_expression(ext_ast::RoleArgument<runir::kr::ExtFamilyTag>::keyword, ygg::uint_t(view.get_data().identifier));
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL role constructor tag in role");
@@ -187,7 +187,7 @@ template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
 std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C> view)
 {
     namespace ast = runir::kr::dl::grammar::ast;
-    namespace ext_ast = runir::kr::dl::grammar::parser::ext::ast;
+    namespace ext_ast = runir::kr::dl::grammar::ast;
 
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return constructor_expression(ast::BooleanAtomicState<Family>::keyword,
@@ -200,7 +200,7 @@ std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::FamilyBoolea
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return constructor_expression(ast::BooleanNonempty<Family>::keyword, variant_expression(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>)
-        return constructor_expression(ext_ast::Argument<runir::kr::dl::BooleanTag>::keyword, ygg::uint_t(view.get_data().identifier));
+        return constructor_expression(ext_ast::BooleanArgument<runir::kr::ExtFamilyTag>::keyword, ygg::uint_t(view.get_data().identifier));
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in boolean_constructor");
@@ -212,7 +212,7 @@ template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
 std::string numerical(ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C> view)
 {
     namespace ast = runir::kr::dl::grammar::ast;
-    namespace ext_ast = runir::kr::dl::grammar::parser::ext::ast;
+    namespace ext_ast = runir::kr::dl::grammar::ast;
 
     if constexpr (std::same_as<Tag, runir::kr::dl::CountTag>)
         return constructor_expression(ast::NumericalCount<Family>::keyword, variant_expression(view.get_arg()));
@@ -222,7 +222,7 @@ std::string numerical(ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family
                                       expression(view.get_mid()),
                                       expression(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>)
-        return constructor_expression(ext_ast::Argument<runir::kr::dl::NumericalTag>::keyword, ygg::uint_t(view.get_data().identifier));
+        return constructor_expression(ext_ast::NumericalArgument<runir::kr::ExtFamilyTag>::keyword, ygg::uint_t(view.get_data().identifier));
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL numerical constructor tag in numerical");
