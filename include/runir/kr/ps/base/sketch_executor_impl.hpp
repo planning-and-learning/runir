@@ -7,6 +7,7 @@
 #include "runir/kr/ps/base/compatibility.hpp"
 #include "runir/kr/ps/base/dl/evaluation_context.hpp"
 #include "runir/kr/ps/base/sketch_executor_data.hpp"
+#include "runir/kr/ps/base/successor_expander.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -92,14 +93,16 @@ template<tyr::planning::TaskKind Kind>
 class SketchGoalStrategy : public tyr::planning::GoalStrategy<Kind>
 {
 private:
-    SketchView m_sketch;
-    kr::dl::semantics::Builder m_dl_builder;
-    kr::dl::semantics::DenotationRepositoryFactory m_dl_denotation_repository_factory;
-    kr::dl::semantics::DenotationRepository m_dl_denotation_repository;
+    using EvaluationContext = runir::kr::ps::base::EvaluationContext<Kind>;
+
+    SuccessorExpander<Kind> m_expander;
+    runir::kr::dl::semantics::Builder m_dl_builder;
+    runir::kr::dl::semantics::DenotationRepositoryFactory m_dl_denotation_repository_factory;
+    runir::kr::dl::semantics::DenotationRepository m_dl_denotation_repository;
 
 public:
     explicit SketchGoalStrategy(SketchView sketch) :
-        m_sketch(sketch),
+        m_expander(sketch),
         m_dl_builder(),
         m_dl_denotation_repository_factory(),
         m_dl_denotation_repository(m_dl_denotation_repository_factory.create())
@@ -112,24 +115,16 @@ public:
         return true;
     }
 
-    SketchView get_sketch() const noexcept { return m_sketch; }
-
     auto find_compatible_rule(const tyr::planning::StateView<Kind>& seed_state, const tyr::planning::StateView<Kind>& state) -> std::optional<RuleView>
     {
-        if (seed_state.get_index() == state.get_index())
-            return std::nullopt;
-
-        auto context = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, Kind>(seed_state, state, m_dl_builder, m_dl_denotation_repository);
-        for (auto rule : m_sketch.get_rules())
-            if (runir::kr::ps::base::is_compatible_with(rule, context))
-                return rule;
-
-        return std::nullopt;
+        auto context = EvaluationContext(seed_state, m_dl_builder, m_dl_denotation_repository);
+        return m_expander.matching_rule(context, state);
     }
 
     bool is_dynamic_goal_satisfied(const tyr::planning::StateView<Kind>& seed_state, const tyr::planning::StateView<Kind>& state) override
     {
-        return find_compatible_rule(seed_state, state).has_value();
+        auto context = EvaluationContext(seed_state, m_dl_builder, m_dl_denotation_repository);
+        return m_expander.is_compatible(context, state);
     }
 };
 

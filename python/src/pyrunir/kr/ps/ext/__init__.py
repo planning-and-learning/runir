@@ -99,6 +99,8 @@ from ...._pyrunir.kr.ps.ext import (
     ModuleProgramData,
     ModuleProgramIndex,
     ModuleProgramProofEdgeLabel,
+    ModuleProgramExecutionContext,
+    ModuleProgramExecutionStep,
     ModuleProgramProofStatus,
     ModuleProgramStructuralTerminationResult,
     ModuleSpecification,

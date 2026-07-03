@@ -6,6 +6,7 @@
 #include <runir/datasets/state_graph.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
+#include <runir/kr/ps/base/successor_expander.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
@@ -52,6 +53,49 @@ void bind_sketch_search_options(nb::module_& m, const char* name)
         .def_rw("max_arity", &Options::max_arity);
 }
 
+
+template<tyr::planning::TaskKind Kind>
+struct BoundExecutionContext
+{
+    runir::kr::ps::base::EvaluationContext<Kind> context;
+    bool is_initial;
+};
+
+template<tyr::planning::TaskKind Kind>
+std::string context_key(const BoundExecutionContext<Kind>& bound)
+{
+    return "s" + std::to_string(bound.context.get_state().get_index().get_value());
+}
+
+template<tyr::planning::TaskKind Kind>
+class BoundSuccessorExpander
+{
+private:
+    runir::kr::dl::semantics::Builder m_dl_builder;
+    runir::kr::dl::semantics::DenotationRepositoryFactory m_dl_denotation_repository_factory;
+    runir::kr::dl::semantics::DenotationRepository m_dl_denotation_repository;
+    SuccessorExpander<Kind> m_expander;
+
+public:
+    explicit BoundSuccessorExpander(SketchView sketch) :
+        m_dl_builder(),
+        m_dl_denotation_repository_factory(),
+        m_dl_denotation_repository(m_dl_denotation_repository_factory.create()),
+        m_expander(sketch)
+    {
+    }
+
+    BoundExecutionContext<Kind> context_at(tyr::planning::StateView<Kind> state, bool is_initial = false)
+    {
+        return BoundExecutionContext<Kind> { runir::kr::ps::base::EvaluationContext<Kind>(std::move(state), m_dl_builder, m_dl_denotation_repository), is_initial };
+    }
+
+    std::optional<RuleView> matching_rule(BoundExecutionContext<Kind>& source, tyr::planning::StateView<Kind> target_state)
+    {
+        return m_expander.matching_rule(source.context, target_state);
+    }
+};
+
 }  // namespace
 
 void bind_sketch_executor(nb::module_& m)
@@ -72,6 +116,21 @@ void bind_sketch_executor(nb::module_& m)
     bind_sketch_proof_types<tyr::planning::LiftedTag>(m, "Lifted");
     bind_sketch_search_options<tyr::planning::GroundTag>(m, "GroundSketchSearchOptions");
     bind_sketch_search_options<tyr::planning::LiftedTag>(m, "LiftedSketchSearchOptions");
+
+
+    using Kind = tyr::planning::GroundTag;
+    using BoundContext = BoundExecutionContext<Kind>;
+    using BoundExpander = BoundSuccessorExpander<Kind>;
+
+    nb::class_<BoundContext>(m, "ExecutionContext")
+        .def_prop_ro("state", [](const BoundContext& bound) { return bound.context.get_state(); })
+        .def_prop_ro("is_initial", [](const BoundContext& bound) { return bound.is_initial; })
+        .def("identity_key", &context_key<Kind>);
+
+    nb::class_<BoundExpander>(m, "SuccessorExpander")
+        .def(nb::init<SketchView>(), "sketch"_a)
+        .def("context_at", &BoundExpander::context_at, "state"_a, "is_initial"_a = false)
+        .def("matching_rule", &BoundExpander::matching_rule, "context"_a, "target_state"_a);
 
     m.def(
         "prove_ground_solution",
