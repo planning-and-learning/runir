@@ -8,10 +8,10 @@
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_context.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
-#include <tyr/planning/ground_task/state_repository.hpp>
-#include <tyr/planning/ground_task/state_view.hpp>
-#include <tyr/planning/lifted_task/state_repository.hpp>
-#include <tyr/planning/lifted_task/state_view.hpp>
+#include <tyr/planning/ground/state_repository.hpp>
+#include <tyr/planning/ground/state_view.hpp>
+#include <tyr/planning/lifted/state_repository.hpp>
+#include <tyr/planning/lifted/state_view.hpp>
 
 namespace runir::kr::dl::base
 {

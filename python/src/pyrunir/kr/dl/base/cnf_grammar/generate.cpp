@@ -5,8 +5,8 @@
 #include <nanobind/stl/vector.h>
 #include <runir/kr/dl/cnf_grammar/generate.hpp>
 #include <runir/kr/dl/datas.hpp>
-#include <tyr/planning/ground_task/state_view.hpp>
-#include <tyr/planning/lifted_task/state_view.hpp>
+#include <tyr/planning/ground/state_view.hpp>
+#include <tyr/planning/lifted/state_view.hpp>
 
 namespace runir::kr::dl::base
 {

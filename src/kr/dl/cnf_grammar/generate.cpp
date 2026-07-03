@@ -16,11 +16,11 @@
 #include <optional>
 #include <type_traits>
 #include <tyr/planning/ground_task.hpp>
-#include <tyr/planning/ground_task/state_repository.hpp>
-#include <tyr/planning/ground_task/state_view.hpp>
+#include <tyr/planning/ground/state_repository.hpp>
+#include <tyr/planning/ground/state_view.hpp>
 #include <tyr/planning/lifted_task.hpp>
-#include <tyr/planning/lifted_task/state_repository.hpp>
-#include <tyr/planning/lifted_task/state_view.hpp>
+#include <tyr/planning/lifted/state_repository.hpp>
+#include <tyr/planning/lifted/state_view.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/chrono.hpp>

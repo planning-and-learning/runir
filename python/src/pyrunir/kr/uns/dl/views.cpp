@@ -7,10 +7,10 @@
 #include <runir/kr/uns/repository.hpp>
 #include <string>
 #include <tyr/planning/declarations.hpp>
-#include <tyr/planning/ground_task/state_repository.hpp>
-#include <tyr/planning/ground_task/state_view.hpp>
-#include <tyr/planning/lifted_task/state_repository.hpp>
-#include <tyr/planning/lifted_task/state_view.hpp>
+#include <tyr/planning/ground/state_repository.hpp>
+#include <tyr/planning/ground/state_view.hpp>
+#include <tyr/planning/lifted/state_repository.hpp>
+#include <tyr/planning/lifted/state_view.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
