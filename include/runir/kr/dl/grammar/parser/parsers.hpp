@@ -125,69 +125,68 @@ using numerical_type = constructor_type<Family, runir::kr::dl::NumericalTag>;
 template<runir::kr::dl::FamilyTag Family>
 using numerical_root_type = constructor_root_type<Family, runir::kr::dl::NumericalTag>;
 
-
-#define RUNIR_DECLARE_RULE_ALIASES(Prefix, Family)                                                                                                  \
-    using Prefix##_concept_root_type = constructor_root_type<Family, runir::kr::dl::ConceptTag>;                                                    \
-    using Prefix##_role_root_type = constructor_root_type<Family, runir::kr::dl::RoleTag>;                                                          \
-    using Prefix##_boolean_root_type = constructor_root_type<Family, runir::kr::dl::BooleanTag>;                                                    \
-    using Prefix##_numerical_root_type = constructor_root_type<Family, runir::kr::dl::NumericalTag>;                                                \
-    using Prefix##_concept_type = constructor_type<Family, runir::kr::dl::ConceptTag>;                                                              \
-    using Prefix##_role_type = constructor_type<Family, runir::kr::dl::RoleTag>;                                                                    \
-    using Prefix##_boolean_type = constructor_type<Family, runir::kr::dl::BooleanTag>;                                                              \
-    using Prefix##_numerical_type = constructor_type<Family, runir::kr::dl::NumericalTag>;                                                          \
-    using Prefix##_concept_choice_type = choice_type<Family, runir::kr::dl::ConceptTag>;                                                            \
-    using Prefix##_role_choice_type = choice_type<Family, runir::kr::dl::RoleTag>;                                                                  \
-    using Prefix##_boolean_choice_type = choice_type<Family, runir::kr::dl::BooleanTag>;                                                            \
-    using Prefix##_numerical_choice_type = choice_type<Family, runir::kr::dl::NumericalTag>;                                                        \
+#define RUNIR_DECLARE_RULE_ALIASES(Prefix, Family)                                                   \
+    using Prefix##_concept_root_type = constructor_root_type<Family, runir::kr::dl::ConceptTag>;     \
+    using Prefix##_role_root_type = constructor_root_type<Family, runir::kr::dl::RoleTag>;           \
+    using Prefix##_boolean_root_type = constructor_root_type<Family, runir::kr::dl::BooleanTag>;     \
+    using Prefix##_numerical_root_type = constructor_root_type<Family, runir::kr::dl::NumericalTag>; \
+    using Prefix##_concept_type = constructor_type<Family, runir::kr::dl::ConceptTag>;               \
+    using Prefix##_role_type = constructor_type<Family, runir::kr::dl::RoleTag>;                     \
+    using Prefix##_boolean_type = constructor_type<Family, runir::kr::dl::BooleanTag>;               \
+    using Prefix##_numerical_type = constructor_type<Family, runir::kr::dl::NumericalTag>;           \
+    using Prefix##_concept_choice_type = choice_type<Family, runir::kr::dl::ConceptTag>;             \
+    using Prefix##_role_choice_type = choice_type<Family, runir::kr::dl::RoleTag>;                   \
+    using Prefix##_boolean_choice_type = choice_type<Family, runir::kr::dl::BooleanTag>;             \
+    using Prefix##_numerical_choice_type = choice_type<Family, runir::kr::dl::NumericalTag>;         \
     using Prefix##_grammar_root_type = grammar_root_type<Family>;
 
-RUNIR_DECLARE_RULE_ALIASES(family0, runir::kr::BaseFamilyTag)
-RUNIR_DECLARE_RULE_ALIASES(family1, runir::kr::ExtFamilyTag)
-RUNIR_DECLARE_RULE_ALIASES(family2, runir::kr::UnsFamilyTag)
+RUNIR_DECLARE_RULE_ALIASES(base_family, runir::kr::BaseFamilyTag)
+RUNIR_DECLARE_RULE_ALIASES(ext_family, runir::kr::ExtFamilyTag)
+RUNIR_DECLARE_RULE_ALIASES(uns_family, runir::kr::UnsFamilyTag)
 
 #undef RUNIR_DECLARE_RULE_ALIASES
 
-BOOST_SPIRIT_DECLARE(family0_concept_root_type,
-                     family0_role_root_type,
-                     family0_boolean_root_type,
-                     family0_numerical_root_type,
-                     family0_concept_type,
-                     family0_role_type,
-                     family0_boolean_type,
-                     family0_numerical_type,
-                     family0_concept_choice_type,
-                     family0_role_choice_type,
-                     family0_boolean_choice_type,
-                     family0_numerical_choice_type,
-                     family0_grammar_root_type)
+BOOST_SPIRIT_DECLARE(base_family_concept_root_type,
+                     base_family_role_root_type,
+                     base_family_boolean_root_type,
+                     base_family_numerical_root_type,
+                     base_family_concept_type,
+                     base_family_role_type,
+                     base_family_boolean_type,
+                     base_family_numerical_type,
+                     base_family_concept_choice_type,
+                     base_family_role_choice_type,
+                     base_family_boolean_choice_type,
+                     base_family_numerical_choice_type,
+                     base_family_grammar_root_type)
 
-BOOST_SPIRIT_DECLARE(family1_concept_root_type,
-                     family1_role_root_type,
-                     family1_boolean_root_type,
-                     family1_numerical_root_type,
-                     family1_concept_type,
-                     family1_role_type,
-                     family1_boolean_type,
-                     family1_numerical_type,
-                     family1_concept_choice_type,
-                     family1_role_choice_type,
-                     family1_boolean_choice_type,
-                     family1_numerical_choice_type,
-                     family1_grammar_root_type)
+BOOST_SPIRIT_DECLARE(ext_family_concept_root_type,
+                     ext_family_role_root_type,
+                     ext_family_boolean_root_type,
+                     ext_family_numerical_root_type,
+                     ext_family_concept_type,
+                     ext_family_role_type,
+                     ext_family_boolean_type,
+                     ext_family_numerical_type,
+                     ext_family_concept_choice_type,
+                     ext_family_role_choice_type,
+                     ext_family_boolean_choice_type,
+                     ext_family_numerical_choice_type,
+                     ext_family_grammar_root_type)
 
-BOOST_SPIRIT_DECLARE(family2_concept_root_type,
-                     family2_role_root_type,
-                     family2_boolean_root_type,
-                     family2_numerical_root_type,
-                     family2_concept_type,
-                     family2_role_type,
-                     family2_boolean_type,
-                     family2_numerical_type,
-                     family2_concept_choice_type,
-                     family2_role_choice_type,
-                     family2_boolean_choice_type,
-                     family2_numerical_choice_type,
-                     family2_grammar_root_type)
+BOOST_SPIRIT_DECLARE(uns_family_concept_root_type,
+                     uns_family_role_root_type,
+                     uns_family_boolean_root_type,
+                     uns_family_numerical_root_type,
+                     uns_family_concept_type,
+                     uns_family_role_type,
+                     uns_family_boolean_type,
+                     uns_family_numerical_type,
+                     uns_family_concept_choice_type,
+                     uns_family_role_choice_type,
+                     uns_family_boolean_choice_type,
+                     uns_family_numerical_choice_type,
+                     uns_family_grammar_root_type)
 
 template<runir::kr::dl::FamilyTag Family>
 concept_type<Family> const& concept_parser();

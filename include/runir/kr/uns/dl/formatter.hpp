@@ -239,9 +239,9 @@ std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::Boolean<runi
     else if constexpr (runir::kr::dl::LogicalBinaryTag<Tag>)
         return constructor_components(Tag::keyword, constructor(view.get_lhs()), constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NotTag>)
-        return constructor_components(runir::kr::dl::logical_not_keyword, constructor(view.get_arg()));
+        return constructor_components(runir::kr::dl::NotTag::keyword, constructor(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::BooleanConstantTag>)
-        return constructor_components(runir::kr::dl::boolean_constant_keyword, boolean(view.get_value()));
+        return constructor_components(runir::kr::dl::BooleanConstantTag::keyword, boolean(view.get_value()));
     else
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL boolean constructor tag in boolean_constructor");
 }
@@ -259,7 +259,7 @@ std::string numerical(ygg::View<ygg::Index<runir::kr::dl::Numerical<runir::kr::U
     else if constexpr (runir::kr::dl::NumericalBinaryTag<Tag>)
         return constructor_components(Tag::keyword, constructor(view.get_lhs()), constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NumericalConstantTag>)
-        return constructor_components(runir::kr::dl::numerical_constant_keyword, fmt::format("{}", view.get_value()));
+        return constructor_components(runir::kr::dl::NumericalConstantTag::keyword, fmt::format("{}", view.get_value()));
     else
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL numerical constructor tag in numerical");
 }

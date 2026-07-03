@@ -319,7 +319,8 @@ struct RegisterTag
 template<CategoryTag Category>
 struct ArgumentTag
 {
-    static constexpr auto keyword = [] {
+    static constexpr auto keyword = []
+    {
         if constexpr (std::same_as<Category, ConceptTag>)
             return "c_argument";
         else if constexpr (std::same_as<Category, RoleTag>)
@@ -621,10 +622,6 @@ struct NotTag
     static constexpr auto keyword = "b_not";
 };
 
-inline constexpr const char* boolean_constant_keyword = BooleanConstantTag::keyword;
-inline constexpr const char* numerical_constant_keyword = NumericalConstantTag::keyword;
-inline constexpr const char* logical_not_keyword = NotTag::keyword;
-
 template<typename T, typename List>
 struct TypeListContains : std::false_type
 {
@@ -723,29 +720,6 @@ struct Numerical;
 
 template<FamilyTag Family, CategoryTag Category>
 struct Constructor;
-
-template<FamilyTag Family>
-struct ConstructorFamily
-{
-    template<typename Tag>
-        requires FamilyConceptConstructorTag<Family, Tag>
-    using Concept = runir::kr::dl::Concept<Family, Tag>;
-
-    template<typename Tag>
-        requires FamilyRoleConstructorTag<Family, Tag>
-    using Role = runir::kr::dl::Role<Family, Tag>;
-
-    template<typename Tag>
-        requires FamilyBooleanConstructorTag<Family, Tag>
-    using Boolean = runir::kr::dl::Boolean<Family, Tag>;
-
-    template<typename Tag>
-        requires FamilyNumericalConstructorTag<Family, Tag>
-    using Numerical = runir::kr::dl::Numerical<Family, Tag>;
-
-    template<CategoryTag Category>
-    using Constructor = runir::kr::dl::Constructor<Family, Category>;
-};
 
 }
 
