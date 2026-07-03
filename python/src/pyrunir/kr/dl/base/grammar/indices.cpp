@@ -1,6 +1,6 @@
 #include "module.hpp"
 
-#include <runir/kr/dl/grammar/base/indices.hpp>
+#include <runir/kr/dl/grammar/indices.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::dl::base

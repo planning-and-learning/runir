@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_UNS_EVALUATION_CONTEXT_HPP_
 #define RUNIR_KR_DL_SEMANTICS_UNS_EVALUATION_CONTEXT_HPP_
 
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
-#include "runir/kr/dl/uns/declarations.hpp"
 
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>

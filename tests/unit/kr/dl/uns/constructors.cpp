@@ -1,14 +1,14 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <limits>
 #include <runir/datasets/task_class.hpp>
+#include <runir/kr/dl/grammar/parser/uns/parser.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
-#include <runir/kr/dl/grammar/parser/uns/parser.hpp>
 #include <runir/kr/dl/semantics/uns/evaluation.hpp>
-#include <runir/kr/dl/uns/repository.hpp>
-#include <limits>
 #include <string>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/planning.hpp>
@@ -28,64 +28,60 @@ using Uns = runir::kr::UnsFamilyTag;
 std::filesystem::path benchmark_prefix() { return std::filesystem::path(RUNIR_ROOT_DIR) / "data" / "planning-benchmarks"; }
 
 // Wrap a boolean constructor in a Boolean-category constructor view.
-auto wrap_boolean(dl::uns::ConstructorRepository& repo, auto boolean_view)
+auto wrap_boolean(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto boolean_view)
 {
     auto data = ygg::Data<dl::Constructor<Uns, dl::BooleanTag>>(boolean_view.get_index());
     return repo.get_or_create(data).first;
 }
 
 // Wrap a numerical constructor in a Numerical-category constructor view.
-auto wrap_numerical(dl::uns::ConstructorRepository& repo, auto numerical_view)
+auto wrap_numerical(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto numerical_view)
 {
     auto data = ygg::Data<dl::Constructor<Uns, dl::NumericalTag>>(numerical_view.get_index());
     return repo.get_or_create(data).first;
 }
 
-auto boolean_constant(dl::uns::ConstructorRepository& repo, bool value)
+auto boolean_constant(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, bool value)
 {
     auto data = ygg::Data<dl::Boolean<Uns, dl::BooleanConstantTag>>(value);
     return wrap_boolean(repo, repo.get_or_create(data).first);
 }
 
-auto numerical_constant(dl::uns::ConstructorRepository& repo, ygg::uint_t value)
+auto numerical_constant(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, ygg::uint_t value)
 {
     auto data = ygg::Data<dl::Numerical<Uns, dl::NumericalConstantTag>>(value);
     return wrap_numerical(repo, repo.get_or_create(data).first);
 }
 
-template<dl::Comparator Op>
-auto numerical_comparison(dl::uns::ConstructorRepository& repo, auto lhs_numerical_ctor, auto rhs_numerical_ctor)
+template<dl::ComparisonTag Tag>
+auto numerical_comparison(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto lhs_numerical_ctor, auto rhs_numerical_ctor)
 {
-    using Tag = dl::ComparisonOperatorTag<Op, dl::NumericalTag>;
     auto data = ygg::Data<dl::Boolean<Uns, Tag>>(lhs_numerical_ctor.get_index(), rhs_numerical_ctor.get_index());
     return wrap_boolean(repo, repo.get_or_create(data).first);
 }
 
-template<dl::Comparator Op>
-auto boolean_comparison(dl::uns::ConstructorRepository& repo, auto lhs_boolean_ctor, auto rhs_boolean_ctor)
+template<dl::ComparisonTag Tag>
+auto boolean_comparison(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto lhs_boolean_ctor, auto rhs_boolean_ctor)
 {
-    using Tag = dl::ComparisonOperatorTag<Op, dl::BooleanTag>;
     auto data = ygg::Data<dl::Boolean<Uns, Tag>>(lhs_boolean_ctor.get_index(), rhs_boolean_ctor.get_index());
     return wrap_boolean(repo, repo.get_or_create(data).first);
 }
 
-template<dl::NumericalBinaryOperator Op>
-auto numerical_binary(dl::uns::ConstructorRepository& repo, auto lhs_numerical_ctor, auto rhs_numerical_ctor)
+template<dl::NumericalBinaryTag Tag>
+auto numerical_binary(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto lhs_numerical_ctor, auto rhs_numerical_ctor)
 {
-    using Tag = dl::NumericalBinaryOperatorTag<Op>;
     auto data = ygg::Data<dl::Numerical<Uns, Tag>>(lhs_numerical_ctor.get_index(), rhs_numerical_ctor.get_index());
     return wrap_numerical(repo, repo.get_or_create(data).first);
 }
 
-template<dl::LogicalBinaryOperator Op>
-auto logical_binary(dl::uns::ConstructorRepository& repo, auto lhs_boolean_ctor, auto rhs_boolean_ctor)
+template<dl::LogicalBinaryTag Tag>
+auto logical_binary(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto lhs_boolean_ctor, auto rhs_boolean_ctor)
 {
-    using Tag = dl::LogicalBinaryOperatorTag<Op>;
     auto data = ygg::Data<dl::Boolean<Uns, Tag>>(lhs_boolean_ctor.get_index(), rhs_boolean_ctor.get_index());
     return wrap_boolean(repo, repo.get_or_create(data).first);
 }
 
-auto logical_not(dl::uns::ConstructorRepository& repo, auto boolean_ctor)
+auto logical_not(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto boolean_ctor)
 {
     auto data = ygg::Data<dl::Boolean<Uns, dl::NotTag>>(boolean_ctor.get_index());
     return wrap_boolean(repo, repo.get_or_create(data).first);
@@ -106,7 +102,7 @@ TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
     auto search = datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
     const auto state = search->state_repository->get_initial_state();
 
-    auto dl_repository_factory = dl::uns::ConstructorRepositoryFactory();
+    auto dl_repository_factory = dl::ConstructorRepositoryFactoryFor<kr::UnsFamilyTag>();
     auto repository = dl_repository_factory.create(task->get_repository());
     auto& repo = *repository;
 
@@ -134,31 +130,31 @@ TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
     auto n_const_zero = numerical_constant(repo, 0);
 
     // Numerical comparisons against |c_top|.
-    EXPECT_TRUE(sem::evaluate(numerical_comparison<dl::Comparator::Eq>(repo, count_ctor, n_const_eq), context).get());
-    EXPECT_FALSE(sem::evaluate(numerical_comparison<dl::Comparator::Neq>(repo, count_ctor, n_const_eq), context).get());
-    EXPECT_FALSE(sem::evaluate(numerical_comparison<dl::Comparator::Lt>(repo, count_ctor, n_const_eq), context).get());
-    EXPECT_TRUE(sem::evaluate(numerical_comparison<dl::Comparator::Le>(repo, count_ctor, n_const_eq), context).get());
-    EXPECT_TRUE(sem::evaluate(numerical_comparison<dl::Comparator::Gt>(repo, count_ctor, n_const_zero), context).get());
-    EXPECT_TRUE(sem::evaluate(numerical_comparison<dl::Comparator::Ge>(repo, count_ctor, n_const_eq), context).get());
+    EXPECT_TRUE(sem::evaluate(numerical_comparison<dl::EqTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
+    EXPECT_FALSE(sem::evaluate(numerical_comparison<dl::NeqTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
+    EXPECT_FALSE(sem::evaluate(numerical_comparison<dl::LtTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
+    EXPECT_TRUE(sem::evaluate(numerical_comparison<dl::LeTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
+    EXPECT_TRUE(sem::evaluate(numerical_comparison<dl::GtTag<dl::NumericalTag>>(repo, count_ctor, n_const_zero), context).get());
+    EXPECT_TRUE(sem::evaluate(numerical_comparison<dl::GeTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
 
     // Boolean constants and comparisons.
     auto b_true = boolean_constant(repo, true);
     auto b_false = boolean_constant(repo, false);
     EXPECT_TRUE(sem::evaluate(b_true, context).get());
     EXPECT_FALSE(sem::evaluate(b_false, context).get());
-    EXPECT_TRUE(sem::evaluate(boolean_comparison<dl::Comparator::Eq>(repo, b_true, b_true), context).get());
-    EXPECT_FALSE(sem::evaluate(boolean_comparison<dl::Comparator::Eq>(repo, b_true, b_false), context).get());
-    EXPECT_TRUE(sem::evaluate(boolean_comparison<dl::Comparator::Neq>(repo, b_true, b_false), context).get());
+    EXPECT_TRUE(sem::evaluate(boolean_comparison<dl::EqTag<dl::BooleanTag>>(repo, b_true, b_true), context).get());
+    EXPECT_FALSE(sem::evaluate(boolean_comparison<dl::EqTag<dl::BooleanTag>>(repo, b_true, b_false), context).get());
+    EXPECT_TRUE(sem::evaluate(boolean_comparison<dl::NeqTag<dl::BooleanTag>>(repo, b_true, b_false), context).get());
 
     // Formatting round-trips the keywords and nested children.
-    const auto lt = numerical_comparison<dl::Comparator::Lt>(repo, count_ctor, n_const_zero);
+    const auto lt = numerical_comparison<dl::LtTag<dl::NumericalTag>>(repo, count_ctor, n_const_zero);
     const auto formatted = fmt::format("{}", lt);
     EXPECT_NE(formatted.find("n_lt"), std::string::npos) << formatted;
     EXPECT_NE(formatted.find("n_count"), std::string::npos) << formatted;
     EXPECT_NE(formatted.find("c_top"), std::string::npos) << formatted;
     EXPECT_NE(formatted.find("n_const"), std::string::npos) << formatted;
 
-    const auto b_eq = boolean_comparison<dl::Comparator::Eq>(repo, b_true, b_false);
+    const auto b_eq = boolean_comparison<dl::EqTag<dl::BooleanTag>>(repo, b_true, b_false);
     const auto b_formatted = fmt::format("{}", b_eq);
     EXPECT_NE(b_formatted.find("b_eq"), std::string::npos) << b_formatted;
     EXPECT_NE(b_formatted.find("b_const"), std::string::npos) << b_formatted;
@@ -211,7 +207,7 @@ TEST(RunirTests, UnsFamilyArithmeticLogicalOperatorsEvaluateAndFormat)
     auto search = datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
     const auto state = search->state_repository->get_initial_state();
 
-    auto dl_repository_factory = dl::uns::ConstructorRepositoryFactory();
+    auto dl_repository_factory = dl::ConstructorRepositoryFactoryFor<kr::UnsFamilyTag>();
     auto repository = dl_repository_factory.create(task->get_repository());
     auto& repo = *repository;
 
@@ -226,31 +222,31 @@ TEST(RunirTests, UnsFamilyArithmeticLogicalOperatorsEvaluateAndFormat)
     auto zero = numerical_constant(repo, 0);
 
     // Arithmetic.
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::NumericalBinaryOperator::Add>(repo, two, five), context).get(), 7u);
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::NumericalBinaryOperator::Subtract>(repo, two, five), context).get(), 0u);  // saturates at 0
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::NumericalBinaryOperator::Subtract>(repo, five, two), context).get(), 3u);
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::NumericalBinaryOperator::Multiply>(repo, two, five), context).get(), 10u);
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::NumericalBinaryOperator::Divide>(repo, five, two), context).get(), 2u);
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::NumericalBinaryOperator::Divide>(repo, five, zero), context).get(), inf);  // div by zero -> inf
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::NumericalBinaryOperator::Min>(repo, two, five), context).get(), 2u);
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::NumericalBinaryOperator::Max>(repo, two, five), context).get(), 5u);
+    EXPECT_EQ(sem::evaluate(numerical_binary<dl::AddTag>(repo, two, five), context).get(), 7u);
+    EXPECT_EQ(sem::evaluate(numerical_binary<dl::SubTag>(repo, two, five), context).get(), 0u);  // saturates at 0
+    EXPECT_EQ(sem::evaluate(numerical_binary<dl::SubTag>(repo, five, two), context).get(), 3u);
+    EXPECT_EQ(sem::evaluate(numerical_binary<dl::MulTag>(repo, two, five), context).get(), 10u);
+    EXPECT_EQ(sem::evaluate(numerical_binary<dl::DivTag>(repo, five, two), context).get(), 2u);
+    EXPECT_EQ(sem::evaluate(numerical_binary<dl::DivTag>(repo, five, zero), context).get(), inf);  // div by zero -> inf
+    EXPECT_EQ(sem::evaluate(numerical_binary<dl::MinTag>(repo, two, five), context).get(), 2u);
+    EXPECT_EQ(sem::evaluate(numerical_binary<dl::MaxTag>(repo, two, five), context).get(), 5u);
 
     // Logical.
     auto b_true = boolean_constant(repo, true);
     auto b_false = boolean_constant(repo, false);
-    EXPECT_FALSE(sem::evaluate(logical_binary<dl::LogicalBinaryOperator::And>(repo, b_true, b_false), context).get());
-    EXPECT_TRUE(sem::evaluate(logical_binary<dl::LogicalBinaryOperator::And>(repo, b_true, b_true), context).get());
-    EXPECT_TRUE(sem::evaluate(logical_binary<dl::LogicalBinaryOperator::Or>(repo, b_true, b_false), context).get());
-    EXPECT_FALSE(sem::evaluate(logical_binary<dl::LogicalBinaryOperator::Or>(repo, b_false, b_false), context).get());
+    EXPECT_FALSE(sem::evaluate(logical_binary<dl::AndTag>(repo, b_true, b_false), context).get());
+    EXPECT_TRUE(sem::evaluate(logical_binary<dl::AndTag>(repo, b_true, b_true), context).get());
+    EXPECT_TRUE(sem::evaluate(logical_binary<dl::OrTag>(repo, b_true, b_false), context).get());
+    EXPECT_FALSE(sem::evaluate(logical_binary<dl::OrTag>(repo, b_false, b_false), context).get());
     EXPECT_TRUE(sem::evaluate(logical_not(repo, b_false), context).get());
     EXPECT_FALSE(sem::evaluate(logical_not(repo, b_true), context).get());
 
     // Formatting.
-    const auto add = numerical_binary<dl::NumericalBinaryOperator::Add>(repo, two, five);
+    const auto add = numerical_binary<dl::AddTag>(repo, two, five);
     const auto add_formatted = fmt::format("{}", add);
     EXPECT_NE(add_formatted.find("n_add"), std::string::npos) << add_formatted;
 
-    const auto and_not = logical_binary<dl::LogicalBinaryOperator::And>(repo, b_true, logical_not(repo, b_false));
+    const auto and_not = logical_binary<dl::AndTag>(repo, b_true, logical_not(repo, b_false));
     const auto and_formatted = fmt::format("{}", and_not);
     EXPECT_NE(and_formatted.find("b_and"), std::string::npos) << and_formatted;
     EXPECT_NE(and_formatted.find("b_not"), std::string::npos) << and_formatted;

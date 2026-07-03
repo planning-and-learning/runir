@@ -43,7 +43,7 @@ TEST(RunirTests, CegStructuralTerminationAgreesWithCompleteSieve)
     const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
     const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ext::ConstructorRepositoryFactory().create(planning_task.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
 
     const auto terminating_description = std::string(R"((:module
@@ -169,7 +169,7 @@ TEST(RunirTests, CegStructuralTerminationDecomposesMemoryComponents)
     const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
     const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
-    auto dl_repository = kr::dl::ext::ConstructorRepositoryFactory().create(planning_task.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     // Two memory cycles bridged one-way: m0 <-> m1 terminates on fa; m2 <->
     // m3 does not terminate on fb. The bridge rule m1 -> m2 crosses memory

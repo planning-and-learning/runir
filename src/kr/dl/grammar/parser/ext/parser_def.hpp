@@ -1,9 +1,8 @@
 #ifndef RUNIR_SRC_KR_DL_GRAMMAR_PARSER_EXT_PARSER_DEF_HPP_
 #define RUNIR_SRC_KR_DL_GRAMMAR_PARSER_EXT_PARSER_DEF_HPP_
 
-#include "runir/kr/dl/grammar/parser/base/ast_adapted.hpp"
+#include "runir/kr/dl/grammar/parser/ast_adapted.hpp"
 #include "runir/kr/dl/grammar/parser/error_handler.hpp"
-#include "runir/kr/dl/grammar/parser/ext/ast_adapted.hpp"
 #include "runir/kr/dl/grammar/parser/ext/parsers.hpp"
 
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
@@ -142,8 +141,8 @@ auto constructor_identifier_parser(Parser parser)
 const auto ext_concept_def = concept_bot | concept_top | concept_atomic_state | concept_atomic_goal | concept_intersection | concept_union | concept_negation
                              | concept_value_restriction | concept_existential_quantification | concept_at_least_number_restriction
                              | concept_at_most_number_restriction | concept_exact_number_restriction | concept_qualified_at_least_number_restriction
-                             | concept_qualified_at_most_number_restriction | concept_qualified_exact_number_restriction | concept_role_value_map | concept_agreement
-                             | concept_role_fillers | concept_one_of | concept_nominal | concept_register | concept_argument;
+                             | concept_qualified_at_most_number_restriction | concept_qualified_exact_number_restriction | concept_role_value_map
+                             | concept_agreement | concept_role_fillers | concept_one_of | concept_nominal | concept_register | concept_argument;
 const auto ext_concept_root_def = ext_concept > eoi;
 const auto ext_concept_non_terminal_def = concept_non_terminal_string_parser();
 const auto ext_concept_choice_def = ext_concept_non_terminal | ext_concept;

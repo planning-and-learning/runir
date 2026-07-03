@@ -1,8 +1,8 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
-#include <runir/kr/dl/uns/datas.hpp>
-#include <runir/kr/dl/uns/declarations.hpp>
+#include <runir/kr/dl/datas.hpp>
+#include <runir/kr/dl/declarations.hpp>
 #include <runir/kr/dl/semantics/datas.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -17,19 +17,32 @@ void bind_data(nb::module_& m, const std::string& name)
 {
     using Data = ygg::Data<T>;
     auto cls = nb::class_<Data>(m, name.c_str()).def(nb::init<>());
-    if constexpr (requires { &Data::index; }) cls.def_rw("index", &Data::index);
-    if constexpr (requires { &Data::identifier; }) cls.def_rw("identifier", &Data::identifier);
-    if constexpr (requires { &Data::arg; }) cls.def_rw("arg", &Data::arg);
-    if constexpr (requires { &Data::lhs; }) cls.def_rw("lhs", &Data::lhs);
-    if constexpr (requires { &Data::mid; }) cls.def_rw("mid", &Data::mid);
-    if constexpr (requires { &Data::rhs; }) cls.def_rw("rhs", &Data::rhs);
-    if constexpr (requires { &Data::predicate; }) cls.def_rw("predicate", &Data::predicate);
-    if constexpr (requires { &Data::polarity; }) cls.def_rw("polarity", &Data::polarity);
-    if constexpr (requires { &Data::object; }) cls.def_rw("object", &Data::object);
-    if constexpr (requires { &Data::objects; }) cls.def_rw("objects", &Data::objects);
-    if constexpr (requires { &Data::n; }) cls.def_rw("n", &Data::n);
-    if constexpr (requires { &Data::role; }) cls.def_rw("role", &Data::role);
-    if constexpr (requires { &Data::concept_; }) cls.def_rw("concept", &Data::concept_);
+    if constexpr (requires { &Data::index; })
+        cls.def_rw("index", &Data::index);
+    if constexpr (requires { &Data::identifier; })
+        cls.def_rw("identifier", &Data::identifier);
+    if constexpr (requires { &Data::arg; })
+        cls.def_rw("arg", &Data::arg);
+    if constexpr (requires { &Data::lhs; })
+        cls.def_rw("lhs", &Data::lhs);
+    if constexpr (requires { &Data::mid; })
+        cls.def_rw("mid", &Data::mid);
+    if constexpr (requires { &Data::rhs; })
+        cls.def_rw("rhs", &Data::rhs);
+    if constexpr (requires { &Data::predicate; })
+        cls.def_rw("predicate", &Data::predicate);
+    if constexpr (requires { &Data::polarity; })
+        cls.def_rw("polarity", &Data::polarity);
+    if constexpr (requires { &Data::object; })
+        cls.def_rw("object", &Data::object);
+    if constexpr (requires { &Data::objects; })
+        cls.def_rw("objects", &Data::objects);
+    if constexpr (requires { &Data::n; })
+        cls.def_rw("n", &Data::n);
+    if constexpr (requires { &Data::role; })
+        cls.def_rw("role", &Data::role);
+    if constexpr (requires { &Data::concept_; })
+        cls.def_rw("concept", &Data::concept_);
 }
 
 }  // namespace
@@ -106,9 +119,9 @@ void bind_semantics_datas(nb::module_& m)
     bind_data<Numerical<runir::kr::UnsFamilyTag, DistanceTag>>(m, "NumericalDistanceData");
     bind_data<Numerical<runir::kr::UnsFamilyTag, NumericalConstantTag>>(m, "NumericalConstantData");
     bind_data<Numerical<runir::kr::UnsFamilyTag, AddTag>>(m, "NumericalAddData");
-    bind_data<Numerical<runir::kr::UnsFamilyTag, SubtractTag>>(m, "NumericalSubData");
-    bind_data<Numerical<runir::kr::UnsFamilyTag, MultiplyTag>>(m, "NumericalMulData");
-    bind_data<Numerical<runir::kr::UnsFamilyTag, DivideTag>>(m, "NumericalDivData");
+    bind_data<Numerical<runir::kr::UnsFamilyTag, SubTag>>(m, "NumericalSubData");
+    bind_data<Numerical<runir::kr::UnsFamilyTag, MulTag>>(m, "NumericalMulData");
+    bind_data<Numerical<runir::kr::UnsFamilyTag, DivTag>>(m, "NumericalDivData");
     bind_data<Numerical<runir::kr::UnsFamilyTag, MinTag>>(m, "NumericalMinData");
     bind_data<Numerical<runir::kr::UnsFamilyTag, MaxTag>>(m, "NumericalMaxData");
 

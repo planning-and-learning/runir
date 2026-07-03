@@ -5,9 +5,9 @@
 
 #include <cista/containers/variant.h>
 #include <tuple>
+#include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
-#include <utility>
 
 namespace ygg
 {
@@ -44,6 +44,59 @@ struct Data<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::NonemptyTag>>
     }
     auto cista_members() const noexcept { return std::tie(index, arg); }
     auto identifying_members() const noexcept { return std::tie(arg); }
+};
+
+template<>
+struct Data<runir::kr::dl::grammar::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> :
+    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::grammar::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
+                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>
+{
+    using Base =
+        runir::kr::dl::semantics::ArgumentData<runir::kr::dl::grammar::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
+                                               runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>;
+    using Base::Base;
+};
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ComparisonTag Tag>
+struct Data<runir::kr::dl::grammar::Boolean<Family, Tag>> :
+    runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Boolean<Family, Tag>,
+                                         runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::comparison_operand_t<Tag>>,
+                                         runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::comparison_operand_t<Tag>>>
+{
+    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Boolean<Family, Tag>,
+                                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::comparison_operand_t<Tag>>,
+                                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::comparison_operand_t<Tag>>>;
+    using Base::Base;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::BooleanConstantTag>> :
+    runir::kr::dl::semantics::IdentifierData<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::BooleanConstantTag>, bool>
+{
+    using Base = runir::kr::dl::semantics::IdentifierData<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::BooleanConstantTag>, bool>;
+    using Base::Base;
+};
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::LogicalBinaryTag Tag>
+struct Data<runir::kr::dl::grammar::Boolean<Family, Tag>> :
+    runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Boolean<Family, Tag>,
+                                         runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::BooleanTag>,
+                                         runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::BooleanTag>>
+{
+    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Boolean<Family, Tag>,
+                                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::BooleanTag>,
+                                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::BooleanTag>>;
+    using Base::Base;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::NotTag>> :
+    runir::kr::dl::semantics::UnaryData<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::NotTag>,
+                                        runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::BooleanTag>>
+{
+    using Base = runir::kr::dl::semantics::UnaryData<runir::kr::dl::grammar::Boolean<Family, runir::kr::dl::NotTag>,
+                                                     runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::BooleanTag>>;
+    using Base::Base;
 };
 
 }  // namespace ygg

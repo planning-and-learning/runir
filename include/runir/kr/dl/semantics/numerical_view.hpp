@@ -2,8 +2,8 @@
 #define RUNIR_SEMANTICS_NUMERICAL_VIEW_HPP_
 
 #include "runir/kr/dl/constructors.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/numerical_data.hpp"
-#include "runir/kr/dl/uns/declarations.hpp"
 
 #include <concepts>
 #include <tuple>

@@ -8,6 +8,7 @@
 #include "runir/kr/ps/base/sketch_view.hpp"
 
 #include <optional>
+#include <tuple>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>
 #include <utility>
@@ -36,6 +37,7 @@ public:
     }
 
     const auto& get_state() const noexcept { return m_state; }
+    auto identifying_members() const noexcept { return std::tie(m_state); }
     auto& get_dl_builder() const noexcept { return *m_dl_builder; }
     auto& get_dl_denotation_repository() const noexcept { return *m_dl_denotation_repository; }
 
@@ -52,9 +54,23 @@ class SuccessorExpander
 {
 private:
     SketchView m_sketch;
+    runir::kr::dl::semantics::Builder m_dl_builder;
+    runir::kr::dl::semantics::DenotationRepositoryFactory m_dl_denotation_repository_factory;
+    runir::kr::dl::semantics::DenotationRepository m_dl_denotation_repository;
 
 public:
-    explicit SuccessorExpander(SketchView sketch) : m_sketch(sketch) {}
+    explicit SuccessorExpander(SketchView sketch) :
+        m_sketch(sketch),
+        m_dl_builder(),
+        m_dl_denotation_repository_factory(),
+        m_dl_denotation_repository(m_dl_denotation_repository_factory.create())
+    {
+    }
+
+    EvaluationContext<Kind> context_at(tyr::planning::StateView<Kind> state)
+    {
+        return EvaluationContext<Kind>(std::move(state), m_dl_builder, m_dl_denotation_repository);
+    }
 
     std::optional<RuleView> matching_rule(EvaluationContext<Kind>& context, const tyr::planning::StateView<Kind>& target_state)
     {

@@ -1,8 +1,8 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
-#include <runir/kr/dl/base/datas.hpp>
-#include <runir/kr/dl/base/declarations.hpp>
+#include <runir/kr/dl/datas.hpp>
+#include <runir/kr/dl/declarations.hpp>
 #include <runir/kr/dl/semantics/datas.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 

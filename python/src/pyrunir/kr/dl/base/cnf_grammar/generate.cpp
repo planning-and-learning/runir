@@ -3,8 +3,8 @@
 #include <nanobind/stl/chrono.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/vector.h>
-#include <runir/kr/dl/base/datas.hpp>
-#include <runir/kr/dl/cnf_grammar/base/generate.hpp>
+#include <runir/kr/dl/cnf_grammar/generate.hpp>
+#include <runir/kr/dl/datas.hpp>
 #include <tyr/planning/ground_task/state_view.hpp>
 #include <tyr/planning/lifted_task/state_view.hpp>
 
@@ -15,12 +15,12 @@ namespace
 {
 
 template<tyr::planning::TaskKind Kind>
-auto generate(runir::kr::dl::cnf_grammar::base::GrammarView grammar,
+auto generate(runir::kr::dl::cnf_grammar::FamilyGrammarView<runir::kr::BaseFamilyTag> grammar,
               const std::vector<tyr::planning::StateView<Kind>>& states,
-              runir::kr::dl::base::ConstructorRepository& output_repository,
+              runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& output_repository,
               const runir::kr::dl::cnf_grammar::GenerateOptions& options)
 {
-    return runir::kr::dl::cnf_grammar::base::generate<Kind>(grammar, states, output_repository, options);
+    return runir::kr::dl::cnf_grammar::generate<kr::BaseFamilyTag, Kind>(grammar, states, output_repository, options);
 }
 
 }  // namespace
@@ -42,13 +42,13 @@ void bind_cnf_grammar_generate(nb::module_& m)
         .value("COMPLETED", runir::kr::dl::cnf_grammar::GenerateStatus::COMPLETED)
         .value("OUT_OF_TIME", runir::kr::dl::cnf_grammar::GenerateStatus::OUT_OF_TIME);
 
-    nb::class_<runir::kr::dl::cnf_grammar::base::GenerateResults>(m, "GenerateResults")
-        .def_ro("statistics", &runir::kr::dl::cnf_grammar::base::GenerateResults::statistics)
-        .def_ro("status", &runir::kr::dl::cnf_grammar::base::GenerateResults::status)
-        .def_ro("concepts", &runir::kr::dl::cnf_grammar::base::GenerateResults::concepts)
-        .def_ro("roles", &runir::kr::dl::cnf_grammar::base::GenerateResults::roles)
-        .def_ro("booleans", &runir::kr::dl::cnf_grammar::base::GenerateResults::booleans)
-        .def_ro("numericals", &runir::kr::dl::cnf_grammar::base::GenerateResults::numericals);
+    nb::class_<runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>>(m, "GenerateResults")
+        .def_ro("statistics", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::statistics)
+        .def_ro("status", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::status)
+        .def_ro("concepts", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::concepts)
+        .def_ro("roles", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::roles)
+        .def_ro("booleans", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::booleans)
+        .def_ro("numericals", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::numericals);
 
     m.def("generate_ground",
           &generate<tyr::planning::GroundTag>,

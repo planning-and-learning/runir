@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>
-#include <runir/kr/dl/base/repository.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/base/evaluation_context.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -50,14 +50,15 @@ void bind_semantics_repositories(nb::module_& m)
     bind_evaluation_context<tyr::planning::GroundTag>(m, "GroundEvaluationContext");
     bind_evaluation_context<tyr::planning::LiftedTag>(m, "LiftedEvaluationContext");
 
-    auto cls = nb::class_<runir::kr::dl::base::ConstructorRepository>(m, "ConstructorRepository");
-    cls.def("clear", &runir::kr::dl::base::ConstructorRepository::clear).def("get_index", &runir::kr::dl::base::ConstructorRepository::get_index);
+    auto cls = nb::class_<runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>(m, "ConstructorRepository");
+    cls.def("clear", &runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>::clear)
+        .def("get_index", &runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>::get_index);
 
-    auto factory = nb::class_<runir::kr::dl::base::ConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");
+    auto factory = nb::class_<runir::kr::dl::ConstructorRepositoryFactoryFor<runir::kr::BaseFamilyTag>>(m, "ConstructorRepositoryFactory");
     factory.def(nb::init<>())
         .def(
             "create",
-            [](runir::kr::dl::base::ConstructorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
+            [](runir::kr::dl::ConstructorRepositoryFactoryFor<runir::kr::BaseFamilyTag>& self, tyr::formalism::planning::PlanningDomain planning_domain)
             { return self.create(planning_domain.get_repository()); },
             nb::arg("planning_domain"));
 }

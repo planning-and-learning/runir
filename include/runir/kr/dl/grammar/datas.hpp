@@ -4,6 +4,7 @@
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/grammar/boolean_data.hpp"
 #include "runir/kr/dl/grammar/concept_data.hpp"
+#include "runir/kr/dl/grammar/constructor_data.hpp"
 #include "runir/kr/dl/grammar/constructor_or_non_terminal_data.hpp"
 #include "runir/kr/dl/grammar/declarations.hpp"
 #include "runir/kr/dl/grammar/derivation_rule_data.hpp"

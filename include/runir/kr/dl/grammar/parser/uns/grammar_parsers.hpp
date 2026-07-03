@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_DL_GRAMMAR_PARSER_UNS_GRAMMAR_PARSERS_HPP_
 #define RUNIR_KR_DL_GRAMMAR_PARSER_UNS_GRAMMAR_PARSERS_HPP_
 
-#include "runir/kr/dl/grammar/ast/uns_ast.hpp"
+#include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/grammar/parser/error_handler.hpp"
 
 #include <boost/spirit/home/x3.hpp>
@@ -115,8 +115,7 @@ using concept_at_least_number_restriction_type =
     x3::rule<ConceptAtLeastNumberRestrictionClass, grammar_ast::ConceptAtLeastNumberRestriction<runir::kr::UnsFamilyTag>>;
 using concept_at_most_number_restriction_type =
     x3::rule<ConceptAtMostNumberRestrictionClass, grammar_ast::ConceptAtMostNumberRestriction<runir::kr::UnsFamilyTag>>;
-using concept_exact_number_restriction_type =
-    x3::rule<ConceptExactNumberRestrictionClass, grammar_ast::ConceptExactNumberRestriction<runir::kr::UnsFamilyTag>>;
+using concept_exact_number_restriction_type = x3::rule<ConceptExactNumberRestrictionClass, grammar_ast::ConceptExactNumberRestriction<runir::kr::UnsFamilyTag>>;
 using concept_qualified_at_least_number_restriction_type =
     x3::rule<ConceptQualifiedAtLeastNumberRestrictionClass, grammar_ast::ConceptQualifiedAtLeastNumberRestriction<runir::kr::UnsFamilyTag>>;
 using concept_qualified_at_most_number_restriction_type =

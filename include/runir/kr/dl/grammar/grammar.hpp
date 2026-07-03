@@ -6,7 +6,9 @@
 #include "runir/kr/dl/grammar/datas.hpp"
 #include "runir/kr/dl/grammar/declarations.hpp"
 #include "runir/kr/dl/grammar/formatter.hpp"
+#include "runir/kr/dl/grammar/grammar_factory.hpp"
 #include "runir/kr/dl/grammar/indices.hpp"
+#include "runir/kr/dl/grammar/parser.hpp"
 #include "runir/kr/dl/grammar/views.hpp"
 
 #endif

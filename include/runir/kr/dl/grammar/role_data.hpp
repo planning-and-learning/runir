@@ -72,6 +72,27 @@ struct Data<runir::kr::dl::grammar::Role<Family, runir::kr::dl::IdentityTag>> :
     using Base::Base;
 };
 
+template<>
+struct Data<runir::kr::dl::grammar::Role<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>> :
+    runir::kr::dl::semantics::RegisterData<runir::kr::dl::grammar::Role<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>,
+                                           runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>
+{
+    using Base = runir::kr::dl::semantics::RegisterData<runir::kr::dl::grammar::Role<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>,
+                                                        runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::grammar::Role<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>> :
+    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::grammar::Role<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
+                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>
+{
+    using Base =
+        runir::kr::dl::semantics::ArgumentData<runir::kr::dl::grammar::Role<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>,
+                                               runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>;
+    using Base::Base;
+};
+
 }  // namespace ygg
 
 #endif

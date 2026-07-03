@@ -44,6 +44,38 @@ struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::Distanc
     using Base::Base;
 };
 
+template<>
+struct Data<runir::kr::dl::cnf_grammar::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
+    runir::kr::dl::semantics::ArgumentData<
+        runir::kr::dl::cnf_grammar::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
+        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>
+{
+    using Base = runir::kr::dl::semantics::ArgumentData<
+        runir::kr::dl::cnf_grammar::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
+        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>;
+    using Base::Base;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::NumericalConstantTag>> :
+    runir::kr::dl::semantics::IdentifierData<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::NumericalConstantTag>, ygg::uint_t>
+{
+    using Base = runir::kr::dl::semantics::IdentifierData<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::NumericalConstantTag>, ygg::uint_t>;
+    using Base::Base;
+};
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalBinaryTag Tag>
+struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>> :
+    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>
+{
+    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Numerical<Family, Tag>,
+                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>,
+                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::NumericalTag>>;
+    using Base::Base;
+};
+
 }  // namespace ygg
 
 #endif

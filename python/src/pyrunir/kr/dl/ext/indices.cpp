@@ -1,8 +1,8 @@
 #include "module.hpp"
-#include "runir/kr/dl/ext/declarations.hpp"
+#include "runir/kr/dl/declarations.hpp"
 
-#include <runir/kr/dl/ext/repository.hpp>
-#include <runir/kr/dl/grammar/ext/indices.hpp>
+#include <runir/kr/dl/grammar/indices.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::dl::ext

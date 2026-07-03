@@ -3,6 +3,7 @@
 
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/ps/declarations.hpp"
 
 #include <concepts>
 
@@ -24,49 +25,30 @@ struct Argument
 {
 };
 
-// Features
+// Features/conditions/effects use the generic policy-sketch wrappers. The ext namespace keeps
+// aliases for the module-program API surface while storage/evaluation stay family-parametric.
 
 template<typename FeatureTag>
-struct Feature
-{
-};
+using Feature = runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>;
 
 template<typename LanguageTag, typename FeatureTag>
-struct ConcreteFeature
-{
-};
+using ConcreteFeature = runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, LanguageTag, FeatureTag>;
 
-// Conditions
-
-struct ConditionVariant
-{
-};
+using ConditionVariant = runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>;
 
 template<typename LanguageTag>
-struct ConcreteConditionVariant
-{
-};
+using ConcreteConditionVariant = runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, LanguageTag>;
 
 template<typename LanguageTag, typename FeatureTag, typename ObservationTag>
-struct ConcreteCondition
-{
-};
+using ConcreteCondition = runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, LanguageTag, FeatureTag, ObservationTag>;
 
-// Effects
-
-struct EffectVariant
-{
-};
+using EffectVariant = runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>;
 
 template<typename LanguageTag>
-struct ConcreteEffectVariant
-{
-};
+using ConcreteEffectVariant = runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, LanguageTag>;
 
 template<typename LanguageTag, typename FeatureTag, typename ObservationTag>
-struct ConcreteEffect
-{
-};
+using ConcreteEffect = runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, LanguageTag, FeatureTag, ObservationTag>;
 
 // Rules
 

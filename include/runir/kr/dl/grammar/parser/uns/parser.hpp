@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_DL_GRAMMAR_PARSER_UNS_PARSER_HPP_
 #define RUNIR_KR_DL_GRAMMAR_PARSER_UNS_PARSER_HPP_
 
-#include "runir/kr/dl/grammar/ast/uns_ast.hpp"
+#include "runir/kr/dl/grammar/ast/ast.hpp"
 
 #include <string>
 

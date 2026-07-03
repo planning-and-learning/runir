@@ -28,7 +28,7 @@ TEST(RunirTests, IncompleteStructuralTerminationTppSketchIsTerminating)
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     // incomplete_sieve.pdf Theorem 6 proof: eliminate r3 (mark n), then r2
     // (mark l), then r1 -- the paper proves this sketch syntactically.
@@ -112,7 +112,7 @@ TEST(RunirTests, IncompleteStructuralTerminationBarmanSketchIsTerminating)
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     // incomplete_sieve.pdf Theorem 7 (Barman); provable via R1/R2 alone.
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
@@ -219,7 +219,7 @@ TEST(RunirTests, IncompleteStructuralTerminationRequiresR3MarkedComplementaryCon
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     // rC = {n > 0} -> {n dec} eliminates first and marks n. Then
     // rA = {q, n > 0} -> {not q} and rB = {not q, n = 0} -> {q} oppose each
@@ -298,7 +298,7 @@ TEST(RunirTests, IncompleteStructuralTerminationBooleanOscillatorIsUnknownWithBl
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
     (:features
@@ -362,7 +362,7 @@ TEST(RunirTests, IncompleteStructuralTerminationEmptySketchIsTerminating)
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::SketchFactory::create_empty(*repository);
 

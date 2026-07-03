@@ -2,11 +2,11 @@
 
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>
-#include <runir/kr/dl/uns/repository.hpp>
-#include <runir/kr/dl/semantics/uns/evaluation_context.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_context.hpp>
+#include <runir/kr/dl/semantics/uns/evaluation_context.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 #include <tyr/planning/ground_task/state_repository.hpp>
 #include <tyr/planning/ground_task/state_view.hpp>
@@ -25,8 +25,11 @@ void bind_evaluation_context(nb::module_& m, const char* name)
     using Context = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, Kind>;
     nb::class_<Context>(m, name)
         .def(nb::init<tyr::planning::StateView<Kind>, runir::kr::dl::semantics::Builder&, runir::kr::dl::semantics::DenotationRepository&>(),
-             nb::arg("state"), nb::arg("builder"), nb::arg("denotation_repository"),
-             nb::keep_alive<1, 3>(), nb::keep_alive<1, 4>())
+             nb::arg("state"),
+             nb::arg("builder"),
+             nb::arg("denotation_repository"),
+             nb::keep_alive<1, 3>(),
+             nb::keep_alive<1, 4>())
         .def("get_state", &Context::get_state, nb::rv_policy::reference_internal);
 }
 

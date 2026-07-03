@@ -30,6 +30,34 @@ enum class ModuleProgramOutcome
     CYCLE,
 };
 
+inline const char* outcome_name(ModuleProgramOutcome outcome)
+{
+    switch (outcome)
+    {
+        case ModuleProgramOutcome::SUCCESS:
+            return "success";
+        case ModuleProgramOutcome::APPLIED:
+            return "applied";
+        case ModuleProgramOutcome::RESTORED_CALLER:
+            return "restored_caller";
+        case ModuleProgramOutcome::FAILURE:
+            return "failure";
+        case ModuleProgramOutcome::NO_APPLICABLE_ACTION:
+            return "no_applicable_action";
+        case ModuleProgramOutcome::MALFORMED_CALL:
+            return "malformed_call";
+        case ModuleProgramOutcome::SEARCH_FAILURE:
+            return "search_failure";
+        case ModuleProgramOutcome::OUT_OF_TIME:
+            return "out_of_time";
+        case ModuleProgramOutcome::OUT_OF_STATES:
+            return "out_of_states";
+        case ModuleProgramOutcome::CYCLE:
+            return "cycle";
+    }
+    return "failure";
+}
+
 template<tyr::planning::TaskKind Kind>
 struct ModuleExecutionOptions
 {
@@ -53,6 +81,16 @@ struct ModuleProgramStep
     tyr::planning::LabeledNodeList<Kind> plan_suffix;
 
     ModuleProgramStep(ModuleProgramOutcome status_, EvaluationContext<Kind> context_) : status(status_), context(std::move(context_)) {}
+
+    const char* get_status_name() const noexcept { return outcome_name(status); }
+    const EvaluationContext<Kind>& get_target() const noexcept { return context; }
+
+    std::optional<ModuleProgramProofEdgeLabel> get_edge() const
+    {
+        if (rule || state_transition)
+            return ModuleProgramProofEdgeLabel { state_transition, rule };
+        return std::nullopt;
+    }
 };
 
 template<tyr::planning::TaskKind Kind>

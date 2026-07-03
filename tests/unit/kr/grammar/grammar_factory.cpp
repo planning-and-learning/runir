@@ -2,19 +2,19 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <runir/kr/dl/cnf_grammar/base/translate.hpp>
 #include <runir/kr/dl/cnf_grammar/formatter.hpp>
-#include <runir/kr/dl/grammar/base/grammar_factory.hpp>
-#include <runir/kr/dl/grammar/base/parser.hpp>
+#include <runir/kr/dl/cnf_grammar/translate.hpp>
 #include <runir/kr/dl/grammar/formatter.hpp>
+#include <runir/kr/dl/grammar/grammar_factory.hpp>
+#include <runir/kr/dl/grammar/parser.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/syntactic_complexity.hpp>
 #include <string>
-#include <yggdrasil/semantics/equal_to.hpp>
 #include <tyr/formalism/planning/parser.hpp>
+#include <yggdrasil/semantics/equal_to.hpp>
 
 namespace runir::tests
 {
@@ -45,7 +45,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
         { benchmark_prefix() / "tests" / "classical" / "delivery" / "domain.pddl", kr::ps::base::dl::SketchSpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
     };
 
-    auto dl_repository_factory = kr::dl::base::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>();
     auto repository_factory = kr::ps::base::RepositoryFactory();
 
     for (const auto& test_case : cases)
@@ -83,7 +83,7 @@ TEST(RunirTests, RejectsUnknownFactorySpecifications)
 
     EXPECT_THROW(
         try {
-            static_cast<void>(kr::dl::grammar::base::GrammarFactory::create_description(static_cast<kr::dl::grammar::base::GrammarSpecification>(999), domain));
+            static_cast<void>(kr::dl::grammar::GrammarFactory::create_description(static_cast<kr::dl::grammar::GrammarSpecification>(999), domain));
         } catch (const std::runtime_error& error) {
             EXPECT_STREQ(error.what(), "Unknown grammar specification: 999.");
             throw;
@@ -98,7 +98,7 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     const auto domain_filepath = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
     const auto planning_domain = fp::Parser(domain_filepath).get_domain();
 
-    auto dl_repository_factory = kr::dl::base::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>();
     auto repository_factory = kr::ps::base::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_domain.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -340,32 +340,31 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
 )
 )EXPECTED" };
 
-    auto repository_factory = kr::dl::grammar::base::ConstructorRepositoryFactory();
+    auto repository_factory = kr::dl::grammar::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>();
     auto repository = repository_factory.create(planning_domain.get_repository());
     auto other_repository = repository_factory.create(planning_domain.get_repository());
     EXPECT_EQ(repository->get_index(), 0);
     EXPECT_EQ(other_repository->get_index(), 1);
 
-    const auto grammar_view =
-        kr::dl::grammar::base::GrammarFactory::create(kr::dl::grammar::base::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, *repository);
+    const auto grammar_view = kr::dl::grammar::GrammarFactory::create(kr::dl::grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, *repository);
     const auto formatted = fmt::format("{}", grammar_view);
     std::cout << formatted << std::endl;
     EXPECT_EQ(formatted, expected);
 
-    const auto reparsed_grammar_view = kr::dl::grammar::base::parse_grammar(formatted, domain, *repository);
+    const auto reparsed_grammar_view = kr::dl::grammar::parse_grammar(formatted, domain, *repository);
     EXPECT_TRUE(ygg::EqualTo<decltype(grammar_view)> {}(grammar_view, reparsed_grammar_view));
     EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(), 1);
     EXPECT_EQ(grammar_view.get_index(), ygg::Index<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(0));
 
-    auto cnf_repository_factory = kr::dl::cnf_grammar::base::ConstructorRepositoryFactory();
+    auto cnf_repository_factory = kr::dl::cnf_grammar::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>();
     auto cnf_repository = cnf_repository_factory.create(planning_domain.get_repository());
-    const auto cnf_grammar_view = kr::dl::cnf_grammar::base::translate(grammar_view, *cnf_repository);
+    const auto cnf_grammar_view = kr::dl::cnf_grammar::translate(grammar_view, *cnf_repository);
     const auto cnf_formatted = fmt::format("{}", cnf_grammar_view);
     std::cout << cnf_formatted << std::endl;
     EXPECT_EQ(cnf_formatted, expected_cnf);
 
-    const auto reparsed_cnf_source_grammar_view = kr::dl::grammar::base::parse_grammar(cnf_formatted, domain, *repository);
-    const auto reparsed_cnf_grammar_view = kr::dl::cnf_grammar::base::translate(reparsed_cnf_source_grammar_view, *cnf_repository);
+    const auto reparsed_cnf_source_grammar_view = kr::dl::grammar::parse_grammar(cnf_formatted, domain, *repository);
+    const auto reparsed_cnf_grammar_view = kr::dl::cnf_grammar::translate(reparsed_cnf_source_grammar_view, *cnf_repository);
     EXPECT_TRUE(ygg::EqualTo<decltype(cnf_grammar_view)> {}(cnf_grammar_view, reparsed_cnf_grammar_view));
     EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(), 2);
 }
@@ -515,27 +514,26 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryParsesDomainsWithBooleanPrimiti
 )
 )EXPECTED" };
 
-    auto repository_factory = kr::dl::grammar::base::ConstructorRepositoryFactory();
+    auto repository_factory = kr::dl::grammar::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>();
     auto repository = repository_factory.create(planning_domain.get_repository());
 
-    const auto grammar_view =
-        kr::dl::grammar::base::GrammarFactory::create(kr::dl::grammar::base::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, *repository);
+    const auto grammar_view = kr::dl::grammar::GrammarFactory::create(kr::dl::grammar::GrammarSpecification::FRANCE_ET_AL_AAAI2021, domain, *repository);
     const auto formatted = fmt::format("{}", grammar_view);
     EXPECT_EQ(formatted, expected);
 
-    const auto reparsed_grammar_view = kr::dl::grammar::base::parse_grammar(formatted, domain, *repository);
+    const auto reparsed_grammar_view = kr::dl::grammar::parse_grammar(formatted, domain, *repository);
     EXPECT_TRUE(ygg::EqualTo<decltype(grammar_view)> {}(grammar_view, reparsed_grammar_view));
     EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(), 1);
     EXPECT_EQ(grammar_view.get_index(), ygg::Index<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(0));
 
-    auto cnf_repository_factory = kr::dl::cnf_grammar::base::ConstructorRepositoryFactory();
+    auto cnf_repository_factory = kr::dl::cnf_grammar::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>();
     auto cnf_repository = cnf_repository_factory.create(planning_domain.get_repository());
-    const auto cnf_grammar_view = kr::dl::cnf_grammar::base::translate(grammar_view, *cnf_repository);
+    const auto cnf_grammar_view = kr::dl::cnf_grammar::translate(grammar_view, *cnf_repository);
     const auto cnf_formatted = fmt::format("{}", cnf_grammar_view);
     EXPECT_EQ(cnf_formatted, expected_cnf);
 
-    const auto reparsed_cnf_source_grammar_view = kr::dl::grammar::base::parse_grammar(cnf_formatted, domain, *repository);
-    const auto reparsed_cnf_grammar_view = kr::dl::cnf_grammar::base::translate(reparsed_cnf_source_grammar_view, *cnf_repository);
+    const auto reparsed_cnf_source_grammar_view = kr::dl::grammar::parse_grammar(cnf_formatted, domain, *repository);
+    const auto reparsed_cnf_grammar_view = kr::dl::cnf_grammar::translate(reparsed_cnf_source_grammar_view, *cnf_repository);
     EXPECT_TRUE(ygg::EqualTo<decltype(cnf_grammar_view)> {}(cnf_grammar_view, reparsed_cnf_grammar_view));
     EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(), 2);
 }

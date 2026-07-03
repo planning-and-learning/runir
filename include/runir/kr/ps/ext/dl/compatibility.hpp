@@ -4,10 +4,12 @@
 #include "runir/kr/ps/ext/dl/condition_view.hpp"
 #include "runir/kr/ps/ext/dl/effect_view.hpp"
 #include "runir/kr/ps/ext/dl/evaluation.hpp"
+#include "runir/kr/ps/ext/evaluation_context.hpp"
+#include "runir/kr/ps/ext/evaluation_environment.hpp"
 
 #include <concepts>
-#include <yggdrasil/core/types.hpp>
 #include <tyr/planning/declarations.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -53,20 +55,11 @@ bool is_compatible_with(ygg::View<ygg::Index<ConcreteCondition<runir::kr::DlTag,
 
 template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
 bool is_compatible_with(ygg::View<ygg::Index<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
-                        runir::kr::ps::ext::EvaluationContext<Kind>& context)
+                        runir::kr::ps::ext::EvaluationContext<Kind>& context,
+                        runir::kr::ps::ext::EvaluationEnvironment<Kind>& environment)
 {
-    const auto value = evaluate(condition.get_feature(), context);
-
-    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Positive>)
-        return value;
-    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Negative>)
-        return !value;
-    else if constexpr ((std::same_as<FeatureTag, runir::kr::dl::ConceptTag> || std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
-                       && std::same_as<ObservationTag, runir::kr::ps::dl::EqualZero>)
-        return detail::observation_count<FeatureTag>(value) == 0;
-    else if constexpr ((std::same_as<FeatureTag, runir::kr::dl::ConceptTag> || std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
-                       && std::same_as<ObservationTag, runir::kr::ps::dl::GreaterZero>)
-        return detail::observation_count<FeatureTag>(value) > 0;
+    auto dl_context = environment.make_dl_context(context);
+    return is_compatible_with(condition, dl_context);
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>

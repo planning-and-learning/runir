@@ -1,10 +1,8 @@
 #ifndef RUNIR_KR_PS_EXT_EVALUATION_CONTEXT_HPP_
 #define RUNIR_KR_PS_EXT_EVALUATION_CONTEXT_HPP_
 
-#include "runir/kr/dl/ext/declarations.hpp"
-#include "runir/kr/dl/semantics/denotation_view.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/ext/evaluation_context.hpp"
-#include "runir/kr/ps/ext/dl/evaluation_context.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 
@@ -13,6 +11,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <tyr/formalism/object_index.hpp>
 #include <tyr/planning/declarations.hpp>
@@ -27,13 +26,8 @@ template<tyr::planning::TaskKind Kind>
 class EvaluationContext
 {
 public:
-    using DlContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>;
-
     template<runir::kr::dl::CategoryTag Category>
-    using Argument = typename DlContext::template Argument<Category>;
-
-    template<runir::kr::dl::CategoryTag Category>
-    using Arguments = typename DlContext::template Arguments<Category>;
+    using Arguments = typename runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>::template Arguments<Category>;
 
     using ConceptRegisterValue = std::optional<ygg::Index<tyr::formalism::Object>>;
     using RoleRegisterValue = std::optional<std::pair<ygg::Index<tyr::formalism::Object>, ygg::Index<tyr::formalism::Object>>>;
@@ -42,7 +36,7 @@ public:
 
     struct CallFrame
     {
-        ModuleView module;
+        ModuleView module_;
         MemoryStateView return_memory_state;
         ConceptRegisters concept_registers;
         RoleRegisters role_registers;
@@ -62,23 +56,17 @@ private:
     Arguments<runir::kr::dl::RoleTag> m_role_arguments;
     Arguments<runir::kr::dl::BooleanTag> m_boolean_arguments;
     Arguments<runir::kr::dl::NumericalTag> m_numerical_arguments;
-    runir::kr::dl::semantics::Builder* m_dl_builder;
-    runir::kr::dl::semantics::DenotationRepository* m_dl_denotation_repository;
-    RepositoryPtr m_repository_owner;
     std::vector<ModuleView> m_modules;
     std::vector<CallFrame> m_call_stack;
 
 public:
     EvaluationContext(tyr::planning::StateView<Kind> state,
                       ModuleView module,
-                      runir::kr::dl::semantics::Builder& dl_builder,
-                      runir::kr::dl::semantics::DenotationRepository& dl_denotation_repository,
                       Arguments<runir::kr::dl::ConceptTag> concept_arguments = {},
                       Arguments<runir::kr::dl::RoleTag> role_arguments = {},
                       Arguments<runir::kr::dl::BooleanTag> boolean_arguments = {},
                       Arguments<runir::kr::dl::NumericalTag> numerical_arguments = {},
-                      std::vector<ModuleView> modules = {},
-                      RepositoryPtr repository_owner = {}) noexcept :
+                      std::vector<ModuleView> modules = {}) noexcept :
         m_state(std::move(state)),
         m_module(module),
         m_memory_state(module.get_entry_memory_state()),
@@ -88,33 +76,19 @@ public:
         m_role_arguments(std::move(role_arguments)),
         m_boolean_arguments(std::move(boolean_arguments)),
         m_numerical_arguments(std::move(numerical_arguments)),
-        m_dl_builder(&dl_builder),
-        m_dl_denotation_repository(&dl_denotation_repository),
-        m_repository_owner(std::move(repository_owner)),
         m_modules(std::move(modules)),
         m_call_stack()
     {
-        if (!m_repository_owner)
-            m_repository_owner = std::const_pointer_cast<Repository>(m_module.get_context().get_shared_ptr());
-
-        auto contains_entry = false;
-        for (auto module : m_modules)
-            contains_entry |= module.get_index() == m_module.get_index();
-        if (!contains_entry)
-            m_modules.push_back(m_module);
     }
 
     const auto& get_state() const noexcept { return m_state; }
     auto get_module() const noexcept { return m_module; }
     auto get_memory_state() const noexcept { return m_memory_state; }
     const auto& get_modules() const noexcept { return m_modules; }
-    const auto& get_repository_owner() const noexcept { return m_repository_owner; }
     const auto& get_call_stack() const noexcept { return m_call_stack; }
     bool has_caller() const noexcept { return !m_call_stack.empty(); }
     auto& get_repository() const noexcept { return m_module.get_context(); }
-    auto& get_dl_repository() const noexcept { return m_module.get_context().get_dl_repository(); }
-    auto& get_dl_builder() const noexcept { return *m_dl_builder; }
-    auto& get_dl_denotation_repository() const noexcept { return *m_dl_denotation_repository; }
+    auto identifying_members() const noexcept { return std::tie(m_state, m_module, m_memory_state, m_concept_registers, m_role_registers); }
 
     void set_state(tyr::planning::StateView<Kind> state) noexcept { m_state = std::move(state); }
     void set_memory_state(MemoryStateView memory_state) noexcept { m_memory_state = memory_state; }
@@ -168,7 +142,7 @@ public:
         auto frame = std::move(m_call_stack.back());
         m_call_stack.pop_back();
 
-        m_module = frame.module;
+        m_module = frame.module_;
         m_memory_state = frame.return_memory_state;
         m_concept_registers = std::move(frame.concept_registers);
         m_role_registers = std::move(frame.role_registers);
@@ -224,42 +198,6 @@ public:
     void clear(runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag> reg) { concept_registers()[verify_bounds(reg)].reset(); }
     void clear(runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag> reg) { role_registers()[verify_bounds(reg)].reset(); }
 
-    template<typename F>
-    decltype(auto) with_dl_context(tyr::planning::StateView<Kind> state, F&& f) const
-    {
-        auto context = DlContext(std::move(state),
-                                 get_dl_builder(),
-                                 get_dl_denotation_repository(),
-                                 m_concept_arguments,
-                                 m_role_arguments,
-                                 m_boolean_arguments,
-                                 m_numerical_arguments);
-        initialize_registers(context);
-        return std::forward<F>(f)(context);
-    }
-
-    template<typename F>
-    decltype(auto) with_current_dl_context(F&& f) const
-    {
-        return with_dl_context(m_state, std::forward<F>(f));
-    }
-
-    template<typename F>
-    decltype(auto) with_dl_transition_context(tyr::planning::StateView<Kind> target_state, F&& f) const
-    {
-        auto context = runir::kr::ps::dl::EvaluationContext<runir::kr::ExtFamilyTag, Kind>(m_state,
-                                                                                           std::move(target_state),
-                                                                                           get_dl_builder(),
-                                                                                           get_dl_denotation_repository(),
-                                                                                           m_concept_arguments,
-                                                                                           m_role_arguments,
-                                                                                           m_boolean_arguments,
-                                                                                           m_numerical_arguments);
-        initialize_registers(context.get_source_context());
-        initialize_registers(context.get_target_context());
-        return std::forward<F>(f)(context);
-    }
-
 private:
     size_t verify_bounds(runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag> reg) const
     {
@@ -275,18 +213,6 @@ private:
         if (index >= m_role_registers.size())
             throw std::out_of_range(make_out_of_range_message<runir::kr::dl::RoleTag>(index));
         return index;
-    }
-
-    void initialize_registers(DlContext& context) const
-    {
-        for (size_t index = 0; index < m_concept_registers.size(); ++index)
-            if (const auto object = m_concept_registers[index])
-                context.set(runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>(static_cast<ygg::uint_t>(index)), ygg::make_view(*object, context));
-
-        for (size_t index = 0; index < m_role_registers.size(); ++index)
-            if (const auto role = m_role_registers[index])
-                context.set(runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>(static_cast<ygg::uint_t>(index)),
-                            std::pair(ygg::make_view(role->first, context), ygg::make_view(role->second, context)));
     }
 
     template<runir::kr::dl::CategoryTag Category>

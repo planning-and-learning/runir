@@ -5,9 +5,9 @@
 
 #include <cista/containers/variant.h>
 #include <tuple>
+#include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
-#include <utility>
 
 namespace ygg
 {
@@ -41,6 +41,37 @@ struct Data<runir::kr::dl::grammar::Numerical<Family, runir::kr::dl::DistanceTag
                                                        GrammarConceptChoice<Family>,
                                                        GrammarRoleChoice<Family>,
                                                        GrammarConceptChoice<Family>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::grammar::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
+    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::grammar::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
+                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>
+{
+    using Base = runir::kr::dl::semantics::ArgumentData<
+        runir::kr::dl::grammar::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
+        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>;
+    using Base::Base;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct Data<runir::kr::dl::grammar::Numerical<Family, runir::kr::dl::NumericalConstantTag>> :
+    runir::kr::dl::semantics::IdentifierData<runir::kr::dl::grammar::Numerical<Family, runir::kr::dl::NumericalConstantTag>, ygg::uint_t>
+{
+    using Base = runir::kr::dl::semantics::IdentifierData<runir::kr::dl::grammar::Numerical<Family, runir::kr::dl::NumericalConstantTag>, ygg::uint_t>;
+    using Base::Base;
+};
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalBinaryTag Tag>
+struct Data<runir::kr::dl::grammar::Numerical<Family, Tag>> :
+    runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Numerical<Family, Tag>,
+                                         runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::NumericalTag>,
+                                         runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::NumericalTag>>
+{
+    using Base = runir::kr::dl::semantics::BinaryData<runir::kr::dl::grammar::Numerical<Family, Tag>,
+                                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::NumericalTag>,
+                                                      runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, runir::kr::dl::NumericalTag>>;
     using Base::Base;
 };
 

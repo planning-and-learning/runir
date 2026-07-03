@@ -2,7 +2,7 @@
 #define RUNIR_KR_DL_GRAMMAR_PARSER_BASE_PARSER_HPP_
 
 #include "runir/kr/dl/grammar/ast/ast.hpp"
-#include "runir/kr/dl/grammar/parser/base/ast.hpp"
+#include "runir/kr/dl/grammar/parser/ast.hpp"
 
 #include <string>
 

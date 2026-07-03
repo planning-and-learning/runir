@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_EXT_EVALUATION_CONTEXT_HPP_
 #define RUNIR_KR_DL_SEMANTICS_EXT_EVALUATION_CONTEXT_HPP_
 
-#include "runir/kr/dl/ext/declarations.hpp"
-#include "runir/kr/dl/ext/register_index.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/register_index.hpp"
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
 
 #include <array>

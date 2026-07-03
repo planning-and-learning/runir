@@ -1,10 +1,10 @@
 #ifndef RUNIR_KR_PS_EXT_MODULE_PROGRAM_PROOF_GRAPH_HPP_
 #define RUNIR_KR_PS_EXT_MODULE_PROGRAM_PROOF_GRAPH_HPP_
 
-#include "runir/graphs/static_graph.hpp"
 #include "runir/datasets/state_graph.hpp"
-#include "runir/kr/dl/ext/declarations.hpp"
+#include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/ext/memory_state.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
@@ -36,10 +36,7 @@ struct ExtendedState
     ConceptRegisters concept_registers;
     RoleRegisters role_registers;
 
-    auto identifying_members() const noexcept
-    {
-        return std::tie(annotated_state.state, memory_state, concept_registers, role_registers);
-    }
+    auto identifying_members() const noexcept { return std::tie(annotated_state.state, memory_state, concept_registers, role_registers); }
 };
 
 template<tyr::planning::TaskKind Kind>

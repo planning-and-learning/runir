@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/boolean_data.hpp"
 #include "runir/kr/dl/constructors.hpp"
-#include "runir/kr/dl/uns/declarations.hpp"
+#include "runir/kr/dl/declarations.hpp"
 
 #include <concepts>
 #include <tuple>

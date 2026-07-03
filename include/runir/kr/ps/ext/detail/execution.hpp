@@ -4,6 +4,7 @@
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/evaluation.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
+#include "runir/kr/ps/ext/evaluation_environment.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
 
 #include <concepts>
@@ -54,15 +55,16 @@ bool has_current_source(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, const Eval
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C, tyr::planning::TaskKind Kind>
-RuleExecutionStatus execute_load(ygg::View<ygg::Index<Rule<LoadTag, Category>>, C> rule, EvaluationContext<Kind>& context)
+RuleExecutionStatus
+execute_load(ygg::View<ygg::Index<Rule<LoadTag, Category>>, C> rule, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
 {
     if (!has_current_source(rule, context))
         return RuleExecutionStatus::NOT_APPLICABLE;
 
-    if (!conditions_are_compatible(rule, context))
+    if (!conditions_are_compatible(rule, context, environment))
         return RuleExecutionStatus::NOT_APPLICABLE;
 
-    const auto denotation = evaluate(rule.get_expression(), context);
+    const auto denotation = evaluate(rule.get_expression(), context, environment);
     const auto first = denotation.begin();
     if (first == denotation.end())
         return RuleExecutionStatus::EMPTY_DENOTATION;
@@ -78,13 +80,13 @@ RuleExecutionStatus execute_load(ygg::View<ygg::Index<Rule<LoadTag, Category>>, 
 }
 
 template<typename C, tyr::planning::TaskKind Kind>
-auto evaluate_do_arguments(ygg::View<ygg::Index<Rule<DoTag>>, C> rule, EvaluationContext<Kind>& context)
+auto evaluate_do_arguments(ygg::View<ygg::Index<Rule<DoTag>>, C> rule, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
 {
     auto action_arguments = rule.get_action_arguments();
-    auto denotations = std::vector<decltype(evaluate(action_arguments.front(), context))> {};
+    auto denotations = std::vector<decltype(evaluate(action_arguments.front(), context, environment))> {};
     denotations.reserve(action_arguments.size());
     for (auto argument : action_arguments)
-        denotations.push_back(evaluate(argument, context));
+        denotations.push_back(evaluate(argument, context, environment));
     return denotations;
 }
 
@@ -114,45 +116,50 @@ bool action_matches_do_arguments(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
 template<typename C, tyr::planning::TaskKind Kind>
 bool do_rule_matches(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
                      EvaluationContext<Kind>& context,
+                     EvaluationEnvironment<Kind>& environment,
                      tyr::formalism::planning::GroundActionView action,
                      const tyr::planning::StateView<Kind>& target_state)
 {
     if (!has_current_source(rule, context))
         return false;
 
-    if (!conditions_are_compatible(rule, context))
+    if (!conditions_are_compatible(rule, context, environment))
         return false;
 
-    const auto denotations = evaluate_do_arguments(rule, context);
+    const auto denotations = evaluate_do_arguments(rule, context, environment);
     if (!action_matches_do_arguments(rule, action, denotations))
         return false;
 
-    return context.with_dl_transition_context(target_state, [&](auto& dl_context) { return is_compatible_with(rule, dl_context); });
+    auto dl_context = environment.make_dl_transition_context(context, target_state);
+    return is_compatible_with(rule, dl_context);
 }
 
 template<typename C, tyr::planning::TaskKind Kind>
 std::optional<tyr::planning::LabeledNode<Kind>> select_do_successor(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
                                                                     EvaluationContext<Kind>& context,
+                                                                    EvaluationEnvironment<Kind>& environment,
                                                                     const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
 {
     for (const auto& successor : successors)
-        if (do_rule_matches(rule, context, successor.label, successor.node.get_state()))
+        if (do_rule_matches(rule, context, environment, successor.label, successor.node.get_state()))
             return successor;
 
     return std::nullopt;
 }
 
 template<typename C, tyr::planning::TaskKind Kind>
-RuleExecutionStatus
-execute_do(ygg::View<ygg::Index<Rule<DoTag>>, C> rule, EvaluationContext<Kind>& context, const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
+RuleExecutionStatus execute_do(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
+                               EvaluationContext<Kind>& context,
+                               EvaluationEnvironment<Kind>& environment,
+                               const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
 {
     if (!has_current_source(rule, context))
         return RuleExecutionStatus::NOT_APPLICABLE;
 
-    if (!conditions_are_compatible(rule, context))
+    if (!conditions_are_compatible(rule, context, environment))
         return RuleExecutionStatus::NOT_APPLICABLE;
 
-    const auto successor = select_do_successor(rule, context, successors);
+    const auto successor = select_do_successor(rule, context, environment, successors);
     if (!successor)
         return RuleExecutionStatus::NO_APPLICABLE_ACTION;
 
@@ -164,16 +171,20 @@ execute_do(ygg::View<ygg::Index<Rule<DoTag>>, C> rule, EvaluationContext<Kind>& 
 template<typename C, tyr::planning::TaskKind Kind>
 bool sketch_rule_matches_state(ygg::View<ygg::Index<Rule<SketchTag>>, C> rule,
                                EvaluationContext<Kind>& context,
+                               EvaluationEnvironment<Kind>& environment,
                                const tyr::planning::StateView<Kind>& target_state)
 {
     if (!has_current_source(rule, context))
         return false;
 
-    return context.with_dl_transition_context(target_state, [&](auto& dl_context) { return is_compatible_with(rule, dl_context); });
+    auto dl_context = environment.make_dl_transition_context(context, target_state);
+    return is_compatible_with(rule, dl_context);
 }
 
 template<tyr::planning::TaskKind Kind>
-std::optional<RuleVariantView> find_matching_sketch_rule_variant(EvaluationContext<Kind>& context, const tyr::planning::StateView<Kind>& target_state)
+std::optional<RuleVariantView> find_matching_sketch_rule_variant(EvaluationContext<Kind>& context,
+                                                                 EvaluationEnvironment<Kind>& environment,
+                                                                 const tyr::planning::StateView<Kind>& target_state)
 {
     const auto module = context.get_module();
     for (const auto& transition : module.get_memory_transitions())
@@ -185,7 +196,7 @@ std::optional<RuleVariantView> find_matching_sketch_rule_variant(EvaluationConte
                 {
                     using RuleView = std::decay_t<decltype(concrete_rule)>;
                     if constexpr (std::same_as<RuleView, ygg::View<ygg::Index<Rule<SketchTag>>, Repository>>)
-                        return sketch_rule_matches_state(concrete_rule, context, target_state);
+                        return sketch_rule_matches_state(concrete_rule, context, environment, target_state);
                     else
                         return false;
                 },
@@ -199,10 +210,10 @@ std::optional<RuleVariantView> find_matching_sketch_rule_variant(EvaluationConte
 }
 
 template<tyr::planning::TaskKind Kind>
-std::optional<ygg::View<ygg::Index<Rule<SketchTag>>, Repository>> find_matching_sketch_rule(EvaluationContext<Kind>& context,
-                                                                                            const tyr::planning::StateView<Kind>& target_state)
+std::optional<ygg::View<ygg::Index<Rule<SketchTag>>, Repository>>
+find_matching_sketch_rule(EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, const tyr::planning::StateView<Kind>& target_state)
 {
-    const auto rule_variant = find_matching_sketch_rule_variant(context, target_state);
+    const auto rule_variant = find_matching_sketch_rule_variant(context, environment, target_state);
     if (!rule_variant)
         return std::nullopt;
 
@@ -221,18 +232,20 @@ std::optional<ygg::View<ygg::Index<Rule<SketchTag>>, Repository>> find_matching_
 template<typename C, tyr::planning::TaskKind Kind>
 bool sketch_rule_matches_successor(ygg::View<ygg::Index<Rule<SketchTag>>, C> rule,
                                    EvaluationContext<Kind>& context,
+                                   EvaluationEnvironment<Kind>& environment,
                                    const tyr::planning::LabeledNode<Kind>& successor)
 {
-    return sketch_rule_matches_state(rule, context, successor.node.get_state());
+    return sketch_rule_matches_state(rule, context, environment, successor.node.get_state());
 }
 
 template<typename C, tyr::planning::TaskKind Kind>
 std::optional<tyr::planning::LabeledNode<Kind>> select_sketch_successor(ygg::View<ygg::Index<Rule<SketchTag>>, C> rule,
                                                                         EvaluationContext<Kind>& context,
+                                                                        EvaluationEnvironment<Kind>& environment,
                                                                         const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
 {
     for (const auto& successor : successors)
-        if (sketch_rule_matches_successor(rule, context, successor))
+        if (sketch_rule_matches_successor(rule, context, environment, successor))
             return successor;
 
     return std::nullopt;
@@ -241,18 +254,19 @@ std::optional<tyr::planning::LabeledNode<Kind>> select_sketch_successor(ygg::Vie
 template<typename C, tyr::planning::TaskKind Kind>
 RuleExecutionStatus execute_sketch(ygg::View<ygg::Index<Rule<SketchTag>>, C> rule,
                                    EvaluationContext<Kind>& context,
+                                   EvaluationEnvironment<Kind>& environment,
                                    const std::vector<tyr::planning::LabeledNode<Kind>>& successors)
 {
     if (!has_current_source(rule, context))
         return RuleExecutionStatus::NOT_APPLICABLE;
 
-    if (rule.get_effects().empty() && conditions_are_compatible(rule, context))
+    if (rule.get_effects().empty() && conditions_are_compatible(rule, context, environment))
     {
         context.set_memory_state(rule.get_target());
         return RuleExecutionStatus::APPLIED;
     }
 
-    const auto successor = select_sketch_successor(rule, context, successors);
+    const auto successor = select_sketch_successor(rule, context, environment, successors);
     if (!successor)
         return RuleExecutionStatus::NOT_APPLICABLE;
 
@@ -271,35 +285,47 @@ struct EvaluatedCallArguments
 };
 
 template<tyr::planning::TaskKind Kind>
-void append_call_argument(ConceptArgument argument, EvaluationContext<Kind>& context, EvaluatedCallArguments<Kind>& target)
+void append_call_argument(ConceptArgument argument,
+                          EvaluationContext<Kind>& context,
+                          EvaluationEnvironment<Kind>& environment,
+                          EvaluatedCallArguments<Kind>& target)
 {
-    target.concept_arguments.push_back(evaluate_argument(argument, context));
+    target.concept_arguments.push_back(evaluate_argument(argument, context, environment));
 }
 
 template<tyr::planning::TaskKind Kind>
-void append_call_argument(RoleArgument argument, EvaluationContext<Kind>& context, EvaluatedCallArguments<Kind>& target)
+void append_call_argument(RoleArgument argument,
+                          EvaluationContext<Kind>& context,
+                          EvaluationEnvironment<Kind>& environment,
+                          EvaluatedCallArguments<Kind>& target)
 {
-    target.role_arguments.push_back(evaluate_argument(argument, context));
+    target.role_arguments.push_back(evaluate_argument(argument, context, environment));
 }
 
 template<tyr::planning::TaskKind Kind>
-void append_call_argument(BooleanArgument argument, EvaluationContext<Kind>& context, EvaluatedCallArguments<Kind>& target)
+void append_call_argument(BooleanArgument argument,
+                          EvaluationContext<Kind>& context,
+                          EvaluationEnvironment<Kind>& environment,
+                          EvaluatedCallArguments<Kind>& target)
 {
-    target.boolean_arguments.push_back(evaluate_argument(argument, context));
+    target.boolean_arguments.push_back(evaluate_argument(argument, context, environment));
 }
 
 template<tyr::planning::TaskKind Kind>
-void append_call_argument(NumericalArgument argument, EvaluationContext<Kind>& context, EvaluatedCallArguments<Kind>& target)
+void append_call_argument(NumericalArgument argument,
+                          EvaluationContext<Kind>& context,
+                          EvaluationEnvironment<Kind>& environment,
+                          EvaluatedCallArguments<Kind>& target)
 {
-    target.numerical_arguments.push_back(evaluate_argument(argument, context));
+    target.numerical_arguments.push_back(evaluate_argument(argument, context, environment));
 }
 
 template<typename C, tyr::planning::TaskKind Kind>
-auto evaluate_call_arguments(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, EvaluationContext<Kind>& context)
+auto evaluate_call_arguments(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
 {
     auto result = EvaluatedCallArguments<Kind> {};
     for (const auto& argument : rule.get_call_arguments())
-        argument.apply([&](auto typed_argument) { append_call_argument(typed_argument, context, result); });
+        argument.apply([&](auto typed_argument) { append_call_argument(typed_argument, context, environment, result); });
     return result;
 }
 
@@ -321,15 +347,15 @@ std::optional<ModuleView> resolve_callee(ygg::View<ygg::Index<Rule<CallTag>>, C>
 }
 
 template<typename C, tyr::planning::TaskKind Kind>
-RuleExecutionStatus execute_call(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, EvaluationContext<Kind>& context)
+RuleExecutionStatus execute_call(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
 {
     if (!has_current_source(rule, context))
         return RuleExecutionStatus::NOT_APPLICABLE;
 
-    if (!conditions_are_compatible(rule, context))
+    if (!conditions_are_compatible(rule, context, environment))
         return RuleExecutionStatus::NOT_APPLICABLE;
 
-    auto arguments = evaluate_call_arguments(rule, context);
+    auto arguments = evaluate_call_arguments(rule, context, environment);
     const auto callee = resolve_callee(rule, context);
     if (!callee || !call_arguments_match_signature(*callee, arguments))
         return RuleExecutionStatus::MALFORMED_CALL;

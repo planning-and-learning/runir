@@ -1,8 +1,8 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
-#include <runir/kr/dl/uns/declarations.hpp>
-#include <runir/kr/dl/uns/repository.hpp>
+#include <runir/kr/dl/declarations.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_index.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
@@ -84,9 +84,9 @@ void bind_semantics_indices(nb::module_& m)
     ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, DistanceTag>>>(m, "NumericalDistanceIndex");
     ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, NumericalConstantTag>>>(m, "NumericalConstantIndex");
     ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, AddTag>>>(m, "NumericalAddIndex");
-    ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, SubtractTag>>>(m, "NumericalSubIndex");
-    ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, MultiplyTag>>>(m, "NumericalMulIndex");
-    ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, DivideTag>>>(m, "NumericalDivIndex");
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, SubTag>>>(m, "NumericalSubIndex");
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, MulTag>>>(m, "NumericalMulIndex");
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, DivTag>>>(m, "NumericalDivIndex");
     ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, MinTag>>>(m, "NumericalMinIndex");
     ygg::bind_index<ygg::Index<Numerical<runir::kr::UnsFamilyTag, MaxTag>>>(m, "NumericalMaxIndex");
 }

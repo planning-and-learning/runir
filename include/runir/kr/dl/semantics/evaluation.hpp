@@ -3,20 +3,16 @@
 
 #include "runir/config.hpp"
 #include "runir/kr/dl/constructors.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotations.hpp"
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
-#include "runir/kr/dl/uns/declarations.hpp"
-
-#include <yggdrasil/core/dependent_false.hpp>
 
 #include <cassert>
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
-#include <yggdrasil/containers/dynamic_bitset.hpp>
-#include <yggdrasil/core/types.hpp>
 #include <tyr/formalism/object_index.hpp>
 #include <tyr/formalism/planning/ground_atom_view.hpp>
 #include <tyr/formalism/planning/ground_conjunctive_condition_view.hpp>
@@ -25,6 +21,9 @@
 #include <tyr/planning/ground_task.hpp>
 #include <tyr/planning/lifted_task.hpp>
 #include <utility>
+#include <yggdrasil/containers/dynamic_bitset.hpp>
+#include <yggdrasil/core/dependent_false.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -360,52 +359,52 @@ auto evaluate_count(ygg::View<ygg::Index<FamilyConstructor<Family, RoleTag>>, C>
     return detail::role_count(evaluate_impl(constructor, context, workspace));
 }
 
-template<Comparator Op>
+template<ComparisonTag Tag>
 constexpr bool apply_comparison(uint_t lhs, uint_t rhs) noexcept
 {
-    if constexpr (Op == Comparator::Eq)
+    if constexpr (std::same_as<Tag, EqTag<comparison_operand_t<Tag>>>)
         return lhs == rhs;
-    else if constexpr (Op == Comparator::Neq)
+    else if constexpr (std::same_as<Tag, NeqTag<comparison_operand_t<Tag>>>)
         return lhs != rhs;
-    else if constexpr (Op == Comparator::Lt)
+    else if constexpr (std::same_as<Tag, LtTag<comparison_operand_t<Tag>>>)
         return lhs < rhs;
-    else if constexpr (Op == Comparator::Le)
+    else if constexpr (std::same_as<Tag, LeTag<comparison_operand_t<Tag>>>)
         return lhs <= rhs;
-    else if constexpr (Op == Comparator::Gt)
+    else if constexpr (std::same_as<Tag, GtTag<comparison_operand_t<Tag>>>)
         return lhs > rhs;
-    else if constexpr (Op == Comparator::Ge)
+    else if constexpr (std::same_as<Tag, GeTag<comparison_operand_t<Tag>>>)
         return lhs >= rhs;
 }
 
-template<LogicalBinaryOperator Op>
+template<LogicalBinaryTag Tag>
 constexpr bool apply_logical_binary(bool lhs, bool rhs) noexcept
 {
-    if constexpr (Op == LogicalBinaryOperator::And)
+    if constexpr (std::same_as<Tag, AndTag>)
         return lhs && rhs;
-    else
+    else if constexpr (std::same_as<Tag, OrTag>)
         return lhs || rhs;
 }
 
 // Numerical operands are nonnegative integers; numeric_limits<uint_t>::max() denotes infinity
 // (as produced by the distance constructor for unreachable targets).
-template<NumericalBinaryOperator Op>
+template<NumericalBinaryTag Tag>
 constexpr uint_t apply_numerical_binary(uint_t lhs, uint_t rhs) noexcept
 {
     constexpr auto inf = std::numeric_limits<uint_t>::max();
-    if constexpr (Op == NumericalBinaryOperator::Add)
+    if constexpr (std::same_as<Tag, AddTag>)
     {
         if (lhs == inf || rhs == inf)
             return inf;
         const uint_t result = lhs + rhs;
         return result < lhs ? inf : result;  // clamp overflow to infinity
     }
-    else if constexpr (Op == NumericalBinaryOperator::Subtract)
+    else if constexpr (std::same_as<Tag, SubTag>)
     {
         if (lhs == inf)
             return inf;
         return lhs >= rhs ? lhs - rhs : 0;  // saturate at 0
     }
-    else if constexpr (Op == NumericalBinaryOperator::Multiply)
+    else if constexpr (std::same_as<Tag, MulTag>)
     {
         if (lhs == 0 || rhs == 0)
             return 0;
@@ -414,7 +413,7 @@ constexpr uint_t apply_numerical_binary(uint_t lhs, uint_t rhs) noexcept
         const uint_t result = lhs * rhs;
         return result / lhs != rhs ? inf : result;  // clamp overflow to infinity
     }
-    else if constexpr (Op == NumericalBinaryOperator::Divide)
+    else if constexpr (std::same_as<Tag, DivTag>)
     {
         if (rhs == 0)
             return inf;  // division by zero -> infinity
@@ -422,17 +421,17 @@ constexpr uint_t apply_numerical_binary(uint_t lhs, uint_t rhs) noexcept
             return inf;
         return lhs / rhs;
     }
-    else if constexpr (Op == NumericalBinaryOperator::Min)
+    else if constexpr (std::same_as<Tag, MinTag>)
     {
         return lhs < rhs ? lhs : rhs;
     }
-    else  // Max
+    else if constexpr (std::same_as<Tag, MaxTag>)
     {
         return lhs > rhs ? lhs : rhs;
     }
 }
 
-}
+}  // namespace detail
 
 template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
     requires FamilyConceptConstructorTag<Family, Tag>
@@ -780,7 +779,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
         const auto lhs_value = static_cast<uint_t>(lhs->get_data());
         const auto rhs_value = static_cast<uint_t>(rhs->get_data());
-        const bool result_value = detail::apply_comparison<Tag::comparator>(lhs_value, rhs_value);
+        const bool result_value = detail::apply_comparison<Tag>(lhs_value, rhs_value);
         return context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
     }
     else if constexpr (std::same_as<Tag, BooleanConstantTag>)
@@ -791,7 +790,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
     {
         const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
-        const bool result_value = detail::apply_logical_binary<Tag::op>(lhs->get_data(), rhs->get_data());
+        const bool result_value = detail::apply_logical_binary<Tag>(lhs->get_data(), rhs->get_data());
         return context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
     }
     else if constexpr (std::same_as<Tag, NotTag>)
@@ -886,7 +885,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
     {
         const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
-        result_value = detail::apply_numerical_binary<Tag::op>(lhs->get_data(), rhs->get_data());
+        result_value = detail::apply_numerical_binary<Tag>(lhs->get_data(), rhs->get_data());
     }
     else
     {

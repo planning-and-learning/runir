@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_UNS_REPOSITORY_HPP_
 #define RUNIR_KR_UNS_REPOSITORY_HPP_
 
-#include "runir/kr/dl/uns/repository.hpp"
+#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/ps/repository.hpp"
 #include "runir/kr/uns/classifier_data.hpp"
 #include "runir/kr/uns/classifier_view.hpp"
@@ -24,9 +24,11 @@ using RepositoryTypes = ygg::TypeList<runir::kr::uns::dl::Feature,
                                       runir::kr::uns::ClassifierLiteral,
                                       runir::kr::uns::ClassifierClause,
                                       runir::kr::uns::Classifier>;
-using Repository = runir::kr::ps::BasicRepository<runir::kr::UnsFamilyTag, RepositoryTypes, runir::kr::dl::uns::ConstructorRepositoryPtr>;
+using Repository =
+    runir::kr::ps::BasicRepository<runir::kr::UnsFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::UnsFamilyTag>>;
 using RepositoryPtr = std::shared_ptr<Repository>;
-using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::UnsFamilyTag, RepositoryTypes, runir::kr::dl::uns::ConstructorRepositoryPtr>;
+using RepositoryFactory =
+    runir::kr::ps::BasicRepositoryFactory<runir::kr::UnsFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::UnsFamilyTag>>;
 
 using ConcreteFeatureView = ygg::View<ygg::Index<runir::kr::uns::dl::Feature>, Repository>;
 using FeatureView = ygg::View<ygg::Index<runir::kr::uns::Feature>, Repository>;

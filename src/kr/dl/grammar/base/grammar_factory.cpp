@@ -1,8 +1,8 @@
-#include "runir/kr/dl/grammar/base/grammar_factory.hpp"
+#include "runir/kr/dl/grammar/grammar_factory.hpp"
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
-#include "runir/kr/dl/grammar/base/parser.hpp"
+#include "runir/kr/dl/grammar/parser.hpp"
 
 #include <fmt/ranges.h>
 #include <sstream>
@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-namespace runir::kr::dl::grammar::base
+namespace runir::kr::dl::grammar
 {
 namespace
 {
@@ -214,16 +214,8 @@ void add_predicate_primitives(tyr::formalism::planning::DomainView domain,
         }
         else if (predicate.get_arity() == 2)
         {
-            add_atomic_state<runir::kr::dl::RoleTag>(out,
-                                                     role_heads,
-                                                     next_role,
-                                                     ast::RoleAtomicState<runir::kr::BaseFamilyTag>::keyword,
-                                                     predicate.get_name());
-            add_atomic_goal<runir::kr::dl::RoleTag>(out,
-                                                    role_heads,
-                                                    next_role,
-                                                    ast::RoleAtomicGoal<runir::kr::BaseFamilyTag>::keyword,
-                                                    predicate.get_name());
+            add_atomic_state<runir::kr::dl::RoleTag>(out, role_heads, next_role, ast::RoleAtomicState<runir::kr::BaseFamilyTag>::keyword, predicate.get_name());
+            add_atomic_goal<runir::kr::dl::RoleTag>(out, role_heads, next_role, ast::RoleAtomicGoal<runir::kr::BaseFamilyTag>::keyword, predicate.get_name());
         }
     }
 }
@@ -255,9 +247,11 @@ void add_category_rules(std::stringstream& rule_out,
 
 }  // namespace
 
-GrammarView GrammarFactory::create(GrammarSpecification specification, tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+FamilyGrammarView<runir::kr::BaseFamilyTag> GrammarFactory::create(GrammarSpecification specification,
+                                                                   tyr::formalism::planning::DomainView domain,
+                                                                   ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository)
 {
-    return runir::kr::dl::grammar::base::parse_grammar(create_description(specification, domain), domain, repository);
+    return runir::kr::dl::grammar::parse_grammar(create_description(specification, domain), domain, repository);
 }
 
 std::string GrammarFactory::create_description(GrammarSpecification specification, tyr::formalism::planning::DomainView domain)
@@ -271,9 +265,10 @@ std::string GrammarFactory::create_description(GrammarSpecification specificatio
     throw std::runtime_error(fmt::format("Unknown grammar specification: {}.", static_cast<int>(specification)));
 }
 
-GrammarView GrammarFactory::create_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain, ConstructorRepository& repository)
+FamilyGrammarView<runir::kr::BaseFamilyTag> GrammarFactory::create_france_et_al_aaai2021(tyr::formalism::planning::DomainView domain,
+                                                                                         ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository)
 {
-    return runir::kr::dl::grammar::base::parse_grammar(create_france_et_al_aaai2021_description(domain), domain, repository);
+    return runir::kr::dl::grammar::parse_grammar(create_france_et_al_aaai2021_description(domain), domain, repository);
 }
 
 std::string GrammarFactory::create_france_et_al_aaai2021_description(tyr::formalism::planning::DomainView domain)
@@ -365,4 +360,4 @@ std::string GrammarFactory::create_france_et_al_aaai2021_description(tyr::formal
     return out.str();
 }
 
-}  // namespace runir::kr::dl::grammar::base
+}  // namespace runir::kr::dl::grammar

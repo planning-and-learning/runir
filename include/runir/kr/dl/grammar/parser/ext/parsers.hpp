@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_DL_GRAMMAR_PARSER_EXT_PARSERS_HPP_
 #define RUNIR_KR_DL_GRAMMAR_PARSER_EXT_PARSERS_HPP_
 
+#include "runir/kr/dl/grammar/parser/ast.hpp"
 #include "runir/kr/dl/grammar/parser/error_handler.hpp"
-#include "runir/kr/dl/grammar/parser/ext/ast.hpp"
 
 #include <boost/spirit/home/x3.hpp>
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>

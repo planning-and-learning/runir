@@ -1,8 +1,8 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
-#include <runir/kr/dl/ext/declarations.hpp>
 #include <runir/kr/dl/cnf_grammar/indices.hpp>
+#include <runir/kr/dl/declarations.hpp>
 #include <runir/kr/dl/grammar/indices.hpp>
 #include <runir/kr/dl/indices.hpp>
 #include <runir/kr/dl/semantics/denotation_index.hpp>

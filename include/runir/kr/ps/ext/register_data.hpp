@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_REGISTER_DATA_HPP_
 #define RUNIR_KR_PS_EXT_REGISTER_DATA_HPP_
 
-#include "runir/kr/dl/ext/declarations.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/ext/register_index.hpp"
 
 #include <cista/containers/string.h>

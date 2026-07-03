@@ -1,7 +1,7 @@
 #include "module.hpp"
-#include "runir/kr/dl/ext/declarations.hpp"
+#include "runir/kr/dl/declarations.hpp"
 
-#include <runir/kr/dl/grammar/ext/datas.hpp>
+#include <runir/kr/dl/grammar/datas.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::dl::ext

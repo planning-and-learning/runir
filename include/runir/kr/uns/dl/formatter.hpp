@@ -3,9 +3,9 @@
 
 #include "runir/config.hpp"
 #include "runir/formatter.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
-#include "runir/kr/dl/uns/declarations.hpp"
 #include "runir/kr/uns/dl/feature_view.hpp"
 
 #include <concepts>
@@ -235,9 +235,9 @@ std::string boolean_constructor(ygg::View<ygg::Index<runir::kr::dl::Boolean<runi
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return constructor_components(runir::kr::dl::grammar::ast::BooleanNonempty<runir::kr::UnsFamilyTag>::keyword, constructor_variant(view.get_arg()));
     else if constexpr (runir::kr::dl::ComparisonTag<Tag>)
-        return constructor_components(runir::kr::dl::comparison_keyword<Tag>(), constructor(view.get_lhs()), constructor(view.get_rhs()));
+        return constructor_components(Tag::keyword, constructor(view.get_lhs()), constructor(view.get_rhs()));
     else if constexpr (runir::kr::dl::LogicalBinaryTag<Tag>)
-        return constructor_components(runir::kr::dl::logical_binary_keyword<Tag>(), constructor(view.get_lhs()), constructor(view.get_rhs()));
+        return constructor_components(Tag::keyword, constructor(view.get_lhs()), constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NotTag>)
         return constructor_components(runir::kr::dl::logical_not_keyword, constructor(view.get_arg()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::BooleanConstantTag>)
@@ -257,7 +257,7 @@ std::string numerical(ygg::View<ygg::Index<runir::kr::dl::Numerical<runir::kr::U
                                       constructor(view.get_mid()),
                                       constructor(view.get_rhs()));
     else if constexpr (runir::kr::dl::NumericalBinaryTag<Tag>)
-        return constructor_components(runir::kr::dl::numerical_binary_keyword<Tag>(), constructor(view.get_lhs()), constructor(view.get_rhs()));
+        return constructor_components(Tag::keyword, constructor(view.get_lhs()), constructor(view.get_rhs()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NumericalConstantTag>)
         return constructor_components(runir::kr::dl::numerical_constant_keyword, fmt::format("{}", view.get_value()));
     else

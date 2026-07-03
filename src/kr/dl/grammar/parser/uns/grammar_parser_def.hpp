@@ -3,10 +3,8 @@
 
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/grammar/ast/ast_adapted.hpp"
-#include "runir/kr/dl/grammar/ast/uns_ast.hpp"
-#include "runir/kr/dl/grammar/ast/uns_ast_adapted.hpp"
-#include "runir/kr/dl/grammar/parser/uns/grammar_parsers.hpp"
 #include "runir/kr/dl/grammar/parser/error_handler.hpp"
+#include "runir/kr/dl/grammar/parser/uns/grammar_parsers.hpp"
 
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
 
@@ -150,8 +148,8 @@ auto with_constructor_parentheses(Parser parser)
 const auto concept__def = concept_bot | concept_top | concept_atomic_state | concept_atomic_goal | concept_intersection | concept_union | concept_negation
                           | concept_value_restriction | concept_existential_quantification | concept_at_least_number_restriction
                           | concept_at_most_number_restriction | concept_exact_number_restriction | concept_qualified_at_least_number_restriction
-                          | concept_qualified_at_most_number_restriction | concept_qualified_exact_number_restriction | concept_role_value_map | concept_agreement
-                          | concept_role_fillers | concept_one_of | concept_nominal;
+                          | concept_qualified_at_most_number_restriction | concept_qualified_exact_number_restriction | concept_role_value_map
+                          | concept_agreement | concept_role_fillers | concept_one_of | concept_nominal;
 const auto concept_root_def = concept_ > eoi;
 
 const auto concept_bot_def = with_constructor_parentheses(lit(grammar_ast::ConceptBot<runir::kr::UnsFamilyTag>::keyword)
@@ -160,12 +158,11 @@ const auto concept_top_def = with_constructor_parentheses(lit(grammar_ast::Conce
                                                           >> x3::attr(grammar_ast::ConceptTop<runir::kr::UnsFamilyTag> {}));
 const auto concept_atomic_state_def =
     with_constructor_parentheses(lit(grammar_ast::ConceptAtomicState<runir::kr::UnsFamilyTag>::keyword) > predicate_name_string_parser());
-const auto concept_atomic_goal_def = with_constructor_parentheses(lit(grammar_ast::ConceptAtomicGoal<runir::kr::UnsFamilyTag>::keyword)
-                                                                  > predicate_name_string_parser() > bool_string_parser());
+const auto concept_atomic_goal_def =
+    with_constructor_parentheses(lit(grammar_ast::ConceptAtomicGoal<runir::kr::UnsFamilyTag>::keyword) > predicate_name_string_parser() > bool_string_parser());
 const auto concept_intersection_def =
     with_constructor_parentheses(lit(grammar_ast::ConceptIntersection<runir::kr::UnsFamilyTag>::keyword) > concept_choice > concept_choice);
-const auto concept_union_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptUnion<runir::kr::UnsFamilyTag>::keyword) > concept_choice > concept_choice);
+const auto concept_union_def = with_constructor_parentheses(lit(grammar_ast::ConceptUnion<runir::kr::UnsFamilyTag>::keyword) > concept_choice > concept_choice);
 const auto concept_negation_def = with_constructor_parentheses(lit(grammar_ast::ConceptNegation<runir::kr::UnsFamilyTag>::keyword) > concept_choice);
 const auto concept_value_restriction_def =
     with_constructor_parentheses(lit(grammar_ast::ConceptValueRestriction<runir::kr::UnsFamilyTag>::keyword) > role_choice > concept_choice);
@@ -190,8 +187,7 @@ const auto concept_agreement_def =
 const auto concept_role_fillers_def =
     with_constructor_parentheses(lit(grammar_ast::ConceptRoleFillers<runir::kr::UnsFamilyTag>::keyword) > role_choice > +object_name_string_parser());
 const auto concept_one_of_def = with_constructor_parentheses(lit(grammar_ast::ConceptOneOf<runir::kr::UnsFamilyTag>::keyword) > +object_name_string_parser());
-const auto concept_nominal_def =
-    with_constructor_parentheses(lit(grammar_ast::ConceptNominal<runir::kr::UnsFamilyTag>::keyword) > object_name_string_parser());
+const auto concept_nominal_def = with_constructor_parentheses(lit(grammar_ast::ConceptNominal<runir::kr::UnsFamilyTag>::keyword) > object_name_string_parser());
 const auto concept_non_terminal_def = concept_non_terminal_string_parser();
 const auto concept_choice_def = concept_non_terminal | concept_;
 const auto concept_derivation_rule_def = (lit("(") >> concept_non_terminal)
@@ -212,8 +208,7 @@ const auto role_intersection_def =
 const auto role_union_def = with_constructor_parentheses(lit(grammar_ast::RoleUnion<runir::kr::UnsFamilyTag>::keyword) > role_choice > role_choice);
 const auto role_complement_def = with_constructor_parentheses(lit(grammar_ast::RoleComplement<runir::kr::UnsFamilyTag>::keyword) > role_choice);
 const auto role_inverse_def = with_constructor_parentheses(lit(grammar_ast::RoleInverse<runir::kr::UnsFamilyTag>::keyword) > role_choice);
-const auto role_composition_def =
-    with_constructor_parentheses(lit(grammar_ast::RoleComposition<runir::kr::UnsFamilyTag>::keyword) > role_choice > role_choice);
+const auto role_composition_def = with_constructor_parentheses(lit(grammar_ast::RoleComposition<runir::kr::UnsFamilyTag>::keyword) > role_choice > role_choice);
 const auto role_transitive_closure_def = with_constructor_parentheses(lit(grammar_ast::RoleTransitiveClosure<runir::kr::UnsFamilyTag>::keyword) > role_choice);
 const auto role_reflexive_transitive_closure_def =
     with_constructor_parentheses(lit(grammar_ast::RoleReflexiveTransitiveClosure<runir::kr::UnsFamilyTag>::keyword) > role_choice);
@@ -227,26 +222,22 @@ const auto role_derivation_rule_def = (lit("(") >> role_non_terminal) > ((lit("(
 
 const auto constructor_or_non_terminal_variant_def = concept_choice | role_choice;
 
-const auto boolean_def = boolean_atomic_state | boolean_atomic_goal | boolean_nonempty | boolean_eq | boolean_neq | boolean_lt | boolean_le | boolean_gt | boolean_ge | numerical_eq | numerical_neq | numerical_lt | numerical_le | numerical_gt | numerical_ge | boolean_constant | boolean_and | boolean_or | boolean_not;
+const auto boolean_def = boolean_atomic_state | boolean_atomic_goal | boolean_nonempty | boolean_eq | boolean_neq | boolean_lt | boolean_le | boolean_gt
+                         | boolean_ge | numerical_eq | numerical_neq | numerical_lt | numerical_le | numerical_gt | numerical_ge | boolean_constant
+                         | boolean_and | boolean_or | boolean_not;
 const auto boolean_root_def = boolean > eoi;
 const auto boolean_atomic_state_def = with_constructor_parentheses(lit(grammar_ast::BooleanAtomicState<runir::kr::UnsFamilyTag>::keyword)
                                                                    > predicate_name_string_parser() > bool_string_parser());
-const auto boolean_atomic_goal_def = with_constructor_parentheses(lit(grammar_ast::BooleanAtomicGoal<runir::kr::UnsFamilyTag>::keyword)
-                                                                  > predicate_name_string_parser() > bool_string_parser());
+const auto boolean_atomic_goal_def =
+    with_constructor_parentheses(lit(grammar_ast::BooleanAtomicGoal<runir::kr::UnsFamilyTag>::keyword) > predicate_name_string_parser() > bool_string_parser());
 const auto boolean_nonempty_def =
     with_constructor_parentheses(lit(grammar_ast::BooleanNonempty<runir::kr::UnsFamilyTag>::keyword) > constructor_or_non_terminal_variant);
-const auto boolean_eq_def =
-    with_constructor_parentheses(lit(grammar_ast::BooleanEq<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
-const auto boolean_neq_def =
-    with_constructor_parentheses(lit(grammar_ast::BooleanNeq<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
-const auto boolean_lt_def =
-    with_constructor_parentheses(lit(grammar_ast::BooleanLt<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
-const auto boolean_le_def =
-    with_constructor_parentheses(lit(grammar_ast::BooleanLe<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
-const auto boolean_gt_def =
-    with_constructor_parentheses(lit(grammar_ast::BooleanGt<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
-const auto boolean_ge_def =
-    with_constructor_parentheses(lit(grammar_ast::BooleanGe<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
+const auto boolean_eq_def = with_constructor_parentheses(lit(grammar_ast::BooleanEq<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
+const auto boolean_neq_def = with_constructor_parentheses(lit(grammar_ast::BooleanNeq<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
+const auto boolean_lt_def = with_constructor_parentheses(lit(grammar_ast::BooleanLt<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
+const auto boolean_le_def = with_constructor_parentheses(lit(grammar_ast::BooleanLe<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
+const auto boolean_gt_def = with_constructor_parentheses(lit(grammar_ast::BooleanGt<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
+const auto boolean_ge_def = with_constructor_parentheses(lit(grammar_ast::BooleanGe<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
 const auto numerical_eq_def =
     with_constructor_parentheses(lit(grammar_ast::NumericalEq<runir::kr::UnsFamilyTag>::keyword) > numerical_choice > numerical_choice);
 const auto numerical_neq_def =
@@ -259,27 +250,23 @@ const auto numerical_gt_def =
     with_constructor_parentheses(lit(grammar_ast::NumericalGt<runir::kr::UnsFamilyTag>::keyword) > numerical_choice > numerical_choice);
 const auto numerical_ge_def =
     with_constructor_parentheses(lit(grammar_ast::NumericalGe<runir::kr::UnsFamilyTag>::keyword) > numerical_choice > numerical_choice);
-const auto boolean_constant_def =
-    with_constructor_parentheses(lit(grammar_ast::BooleanConstant<runir::kr::UnsFamilyTag>::keyword) > bool_string_parser());
-const auto boolean_and_def =
-    with_constructor_parentheses(lit(grammar_ast::BooleanAnd<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
-const auto boolean_or_def =
-    with_constructor_parentheses(lit(grammar_ast::BooleanOr<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
-const auto boolean_not_def =
-    with_constructor_parentheses(lit(grammar_ast::BooleanNot<runir::kr::UnsFamilyTag>::keyword) > boolean_choice);
+const auto boolean_constant_def = with_constructor_parentheses(lit(grammar_ast::BooleanConstant<runir::kr::UnsFamilyTag>::keyword) > bool_string_parser());
+const auto boolean_and_def = with_constructor_parentheses(lit(grammar_ast::BooleanAnd<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
+const auto boolean_or_def = with_constructor_parentheses(lit(grammar_ast::BooleanOr<runir::kr::UnsFamilyTag>::keyword) > boolean_choice > boolean_choice);
+const auto boolean_not_def = with_constructor_parentheses(lit(grammar_ast::BooleanNot<runir::kr::UnsFamilyTag>::keyword) > boolean_choice);
 const auto boolean_non_terminal_def = boolean_non_terminal_string_parser();
 const auto boolean_choice_def = boolean_non_terminal | boolean;
 const auto boolean_derivation_rule_def = (lit("(") >> boolean_non_terminal)
                                          > ((lit("(") > (boolean_choice % lit("or")) > lit(")")) | x3::repeat(1)[boolean_choice]) > lit(")");
 
-const auto numerical_def = numerical_count | numerical_distance | numerical_constant | numerical_add | numerical_sub | numerical_mul | numerical_div | numerical_min | numerical_max;
+const auto numerical_def =
+    numerical_count | numerical_distance | numerical_constant | numerical_add | numerical_sub | numerical_mul | numerical_div | numerical_min | numerical_max;
 const auto numerical_root_def = numerical > eoi;
 const auto numerical_count_def =
     with_constructor_parentheses(lit(grammar_ast::NumericalCount<runir::kr::UnsFamilyTag>::keyword) > constructor_or_non_terminal_variant);
 const auto numerical_distance_def =
     with_constructor_parentheses(lit(grammar_ast::NumericalDistance<runir::kr::UnsFamilyTag>::keyword) > concept_choice > role_choice > concept_choice);
-const auto numerical_constant_def =
-    with_constructor_parentheses(lit(grammar_ast::NumericalConstant<runir::kr::UnsFamilyTag>::keyword) > uint_);
+const auto numerical_constant_def = with_constructor_parentheses(lit(grammar_ast::NumericalConstant<runir::kr::UnsFamilyTag>::keyword) > uint_);
 const auto numerical_add_def =
     with_constructor_parentheses(lit(grammar_ast::NumericalAdd<runir::kr::UnsFamilyTag>::keyword) > numerical_choice > numerical_choice);
 const auto numerical_sub_def =
@@ -674,7 +661,6 @@ struct BooleanNotClass : x3::annotate_on_success
 {
 };
 
-
 struct NumericalEqClass : x3::annotate_on_success
 {
 };
@@ -726,8 +712,6 @@ struct NumericalMinClass : x3::annotate_on_success
 struct NumericalMaxClass : x3::annotate_on_success
 {
 };
-
-
 
 struct NumericalCountClass : x3::annotate_on_success
 {

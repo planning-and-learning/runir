@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_REPOSITORY_HPP_
 #define RUNIR_KR_PS_EXT_REPOSITORY_HPP_
 
-#include "runir/kr/dl/ext/repository.hpp"
+#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/ext/argument_data.hpp"
 #include "runir/kr/ps/ext/argument_view.hpp"
@@ -28,6 +28,7 @@
 #include "runir/kr/ps/ext/rule_variant_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
+#include "runir/kr/ps/family_traits.hpp"
 
 #include <memory>
 #include <yggdrasil/core/type_list.hpp>
@@ -39,41 +40,20 @@ using LoadRuleTypes = ygg::TypeList<Rule<LoadTag, runir::kr::dl::ConceptTag>, Ru
 using ControlRuleTypes = ygg::MapTypeListT<Rule, ygg::TypeList<SketchTag, DoTag, CallTag>>;
 using ConcreteRuleTypes = ygg::ConcatTypeListsT<LoadRuleTypes, ControlRuleTypes>;
 using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<RuleVariant>, ConcreteRuleTypes>;
-using FeatureTypes = ygg::TypeList<Feature<runir::kr::dl::ConceptTag>,
-                                   Feature<runir::kr::dl::RoleTag>,
-                                   Feature<runir::kr::ps::dl::BooleanFeature>,
-                                   Feature<runir::kr::ps::dl::NumericalFeature>,
-                                   ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>,
-                                   ConcreteFeature<runir::kr::DlTag, runir::kr::dl::RoleTag>,
-                                   ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
-                                   ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>;
-using ConditionTypes = ygg::TypeList<ConditionVariant,
-                                     ConcreteConditionVariant<runir::kr::DlTag>,
-                                     ConcreteCondition<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>,
-                                     ConcreteCondition<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>,
-                                     ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
-                                     ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
-                                     ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>,
-                                     ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>;
-using EffectTypes = ygg::TypeList<EffectVariant,
-                                  ConcreteEffectVariant<runir::kr::DlTag>,
-                                  ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>,
-                                  ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>,
-                                  ConcreteEffect<runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>,
-                                  ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
-                                  ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
-                                  ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>,
-                                  ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>,
-                                  ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
-                                  ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
-using ArgumentTypes = ygg::TypeList<Argument<runir::kr::dl::ConceptTag>, Argument<runir::kr::dl::RoleTag>, Argument<runir::kr::dl::BooleanTag>, Argument<runir::kr::dl::NumericalTag>>;
+using FeatureTypes = runir::kr::ps::PsFeatureTypes<runir::kr::ExtFamilyTag>;
+using ConditionTypes = runir::kr::ps::PsConditionTypes<runir::kr::ExtFamilyTag>;
+using EffectTypes = runir::kr::ps::PsEffectTypes<runir::kr::ExtFamilyTag>;
+using ArgumentTypes = ygg::
+    TypeList<Argument<runir::kr::dl::ConceptTag>, Argument<runir::kr::dl::RoleTag>, Argument<runir::kr::dl::BooleanTag>, Argument<runir::kr::dl::NumericalTag>>;
 using RegisterTypes = ygg::TypeList<Register<runir::kr::dl::ConceptTag>, Register<runir::kr::dl::RoleTag>>;
 using ProgramTypes = ygg::TypeList<MemoryState, Module, ModuleProgram>;
-using RepositoryTypes =
-    ygg::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ArgumentTypes, RegisterTypes, ProgramTypes>;
-using Repository = runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ext::ConstructorRepositoryPtr>;
+using RepositoryTypes = ygg::
+    ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ArgumentTypes, RegisterTypes, ProgramTypes>;
+using Repository =
+    runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::ExtFamilyTag>>;
 using RepositoryPtr = std::shared_ptr<Repository>;
-using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ext::ConstructorRepositoryPtr>;
+using RepositoryFactory =
+    runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::ExtFamilyTag>>;
 
 using ConceptRegisterView = ygg::View<ygg::Index<Register<runir::kr::dl::ConceptTag>>, Repository>;
 using RoleRegisterView = ygg::View<ygg::Index<Register<runir::kr::dl::RoleTag>>, Repository>;

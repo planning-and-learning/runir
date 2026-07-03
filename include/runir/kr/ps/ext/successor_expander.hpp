@@ -19,13 +19,13 @@
 
 #include "runir/datasets/state_graph.hpp"
 #include "runir/datasets/task_class.hpp"
-#include "runir/kr/dl/semantics/builder.hpp"
-#include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/ext/detail/execution.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
+#include "runir/kr/ps/ext/evaluation_environment.hpp"
 #include "runir/kr/ps/ext/memory_state.hpp"
 #include "runir/kr/ps/ext/module_program_proof_graph.hpp"
+#include "runir/kr/ps/ext/module_program_view.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
@@ -33,12 +33,12 @@
 #include <limits>
 #include <optional>
 #include <type_traits>
-#include <utility>
-#include <vector>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/node.hpp>
 #include <tyr/planning/state_view.hpp>
+#include <utility>
+#include <vector>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
 
@@ -71,30 +71,18 @@ struct MatchesRuleKind<R, LoadTag> : std::bool_constant<is_load_rule_view_v<R>>
 template<typename R, typename Kind>
 inline constexpr bool matches_rule_kind_v = MatchesRuleKind<std::remove_cvref_t<R>, Kind>::value;
 
-
-// Build a source-vertex evaluation context from its proof-graph contents (state + module +
-// memory + registers). `modules` is the program's module list (needed so Call rules can resolve
-// their callee). The arguments of any enclosing Call frame are not recoverable from a vertex, so
-// they are empty here (top-level context).
-template<tyr::planning::TaskKind Kind>
-EvaluationContext<Kind> make_evaluation_context(tyr::planning::StateView<Kind> source_state,
-                                                ModuleView module,
-                                                MemoryStateView memory_state,
-                                                typename EvaluationContext<Kind>::ConceptRegisters concept_registers,
-                                                typename EvaluationContext<Kind>::RoleRegisters role_registers,
-                                                std::vector<ModuleView> modules,
-                                                runir::kr::dl::semantics::Builder& builder,
-                                                runir::kr::dl::semantics::DenotationRepository& denotation_repository)
-{
-    EvaluationContext<Kind> context(std::move(source_state), module, builder, denotation_repository, {}, {}, {}, {}, std::move(modules));
-    context.set_memory_state(memory_state);
-    context.set_registers(std::move(concept_registers), std::move(role_registers));
-    return context;
-}
-
 template<tyr::planning::TaskKind Kind>
 class SuccessorExpander
 {
+private:
+    static std::vector<ModuleView> collect_modules(ModuleProgramView program)
+    {
+        auto result = std::vector<ModuleView> {};
+        for (auto module : program.get_modules())
+            result.push_back(module);
+        return result;
+    }
+
 public:
     using VertexLabel = ModuleProgramProofVertexLabel<Kind>;
     using EdgeLabel = ModuleProgramProofEdgeLabel;
@@ -102,11 +90,38 @@ public:
     using LabeledNode = tyr::planning::LabeledNode<Kind>;
     using Step = detail::ModuleProgramStep<Kind>;
 
-    SuccessorExpander(const runir::datasets::TaskSearchContext<Kind>& search_context, const tyr::planning::Node<Kind>& initial_node) :
+    SuccessorExpander(const runir::datasets::TaskSearchContext<Kind>& search_context,
+                      const tyr::planning::Node<Kind>& initial_node,
+                      std::vector<ModuleView> modules = {}) :
+        m_search_context(&search_context),
         m_goal_strategy(*search_context.task),
         m_initial_state(initial_node.get_state()),
-        m_static_goal_satisfied(m_goal_strategy.is_static_goal_satisfied(*search_context.task))
+        m_static_goal_satisfied(m_goal_strategy.is_static_goal_satisfied(*search_context.task)),
+        m_environment(std::move(modules))
     {
+    }
+
+    SuccessorExpander(const runir::datasets::TaskSearchContext<Kind>& search_context,
+                      tyr::planning::StateView<Kind> initial_state,
+                      std::vector<ModuleView> modules = {}) :
+        SuccessorExpander(search_context, tyr::planning::Node<Kind>(std::move(initial_state), ygg::float_t(0)), std::move(modules))
+    {
+    }
+
+    EvaluationContext<Kind> context_at(ModuleView module,
+                                       MemoryStateView memory_state,
+                                       typename EvaluationContext<Kind>::ConceptRegisters concept_registers,
+                                       typename EvaluationContext<Kind>::RoleRegisters role_registers,
+                                       tyr::planning::StateView<Kind> source_state)
+    {
+        return m_environment.make_context(std::move(source_state), module, memory_state, std::move(concept_registers), std::move(role_registers));
+    }
+
+    EvaluationContext<Kind> initial_context(ModuleProgramView program)
+    {
+        if (m_environment.get_modules().empty())
+            m_environment.set_modules(collect_modules(program));
+        return m_environment.make_context(m_initial_state, program.get_entry_module());
     }
 
     bool is_goal(const tyr::planning::StateView<Kind>& state)
@@ -121,20 +136,21 @@ public:
     {
         const auto goal = is_goal(context.get_state());
         auto annotated = runir::datasets::AnnotatedStateGraphVertexLabel<Kind> {
-            context.get_state(),
-            goal ? ygg::float_t(0) : std::numeric_limits<ygg::float_t>::infinity(),
-            is_initial,
-            goal,
-            is_alive,
-            is_unsolvable,
+            context.get_state(), goal ? ygg::float_t(0) : std::numeric_limits<ygg::float_t>::infinity(), is_initial, goal, is_alive, is_unsolvable,
         };
-        return VertexLabel { ExtendedState<Kind> { annotated, std::move(memory_state), context.concept_registers(), context.role_registers() }, context.get_module() };
+        return VertexLabel { ExtendedState<Kind> { annotated, std::move(memory_state), context.concept_registers(), context.role_registers() },
+                             context.get_module() };
     }
 
     // The internal (Load) moves at the vertex: each holds the planning state fixed and changes the
     // memory state by binding a register. An empty-denotation Load yields a FAILURE step. This is
     // the prove/greedy load enumeration.
-    std::vector<Step> internal_steps(const EvaluationContext<Kind>& context) { return collect_steps<LoadTag>(context, {}); }
+    std::vector<Step> internal_steps(const EvaluationContext<Kind>& context)
+    {
+        ensure_modules(context);
+        return collect_steps<LoadTag>(context, {});
+    }
+    std::vector<Step> load_successors(const EvaluationContext<Kind>& context) { return internal_steps(context); }
 
     // The control moves at the vertex, in the executor's priority order: immediate external rules
     // (Do/Call) first; if none fire, Sketch rules; if none fire, the IW transition search to a
@@ -145,6 +161,7 @@ public:
                                     const EvaluationContext<Kind>& context,
                                     const detail::ModuleExecutionOptions<Kind>& options)
     {
+        ensure_modules(context);
         const auto node = search_context.successor_generator->get_node(context.get_state().get_index());
         const auto successors = search_context.successor_generator->get_labeled_successor_nodes(node);
 
@@ -159,9 +176,9 @@ public:
         if (search_result.status == tyr::planning::SearchStatus::SOLVED && search_result.goal_node)
         {
             auto match_context = context;
-            if (const auto rule = detail::find_matching_sketch_rule(match_context, search_result.goal_node->get_state()))
+            if (const auto rule = detail::find_matching_sketch_rule(match_context, m_environment, search_result.goal_node->get_state()))
             {
-                auto variant = detail::find_matching_sketch_rule_variant(match_context, search_result.goal_node->get_state());
+                auto variant = detail::find_matching_sketch_rule_variant(match_context, m_environment, search_result.goal_node->get_state());
                 auto target = context;
                 target.set_state(search_result.goal_node->get_state());
                 target.set_memory_state(rule->get_target());
@@ -189,10 +206,40 @@ public:
         return std::vector<Step> { Step(detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION, context) };
     }
 
+    std::vector<Step> control_successors(const EvaluationContext<Kind>& context, const ModuleProgramSearchOptions<Kind>& options)
+    {
+        return control_steps(*m_search_context, context, detail::execution_options(options));
+    }
+
     // The control rule (Sketch/Do) of the source vertex that selects the candidate planning
     // successor, or nullopt (the gap). Load/Call are internal memory steps, never a planning move.
+    std::optional<RuleVariantView>
+    matching_rule_at(EvaluationContext<Kind>& context, tyr::formalism::planning::GroundActionView action, tyr::planning::StateView<Kind> target_state)
+    {
+        return matching_rule(context, LabeledNode { action, tyr::planning::Node<Kind>(std::move(target_state), ygg::float_t(0)) });
+    }
+
+    std::optional<Successor> apply_at(const EvaluationContext<Kind>& context,
+                                      RuleVariantView rule,
+                                      std::optional<tyr::formalism::planning::GroundActionView> action = std::nullopt,
+                                      std::optional<tyr::planning::StateView<Kind>> target_state = std::nullopt)
+    {
+        std::optional<LabeledNode> candidate;
+        if (action && target_state)
+            candidate = LabeledNode { *action, tyr::planning::Node<Kind>(*target_state, ygg::float_t(0)) };
+        return apply(context, rule, std::move(candidate));
+    }
+
+private:
+    void ensure_modules(const EvaluationContext<Kind>& context)
+    {
+        if (m_environment.get_modules().empty())
+            m_environment.set_modules(std::vector<ModuleView> { context.get_module() });
+    }
+
     std::optional<RuleVariantView> matching_rule(EvaluationContext<Kind>& context, const LabeledNode& candidate)
     {
+        ensure_modules(context);
         for (const auto& transition : context.get_module().get_memory_transitions())
             for (auto rule : transition)
                 if (selects(rule, context, candidate))
@@ -200,28 +247,13 @@ public:
         return std::nullopt;
     }
 
-    // Apply `rule` from the source vertex, returning the transition edge + successor node, or
-    // nullopt if the rule does not fire. Sketch/Do consume `candidate` (a planning successor);
-    // Load/Call ignore it (pass nullopt). Wraps the same `make_step` the search uses.
     std::optional<Successor> apply(const EvaluationContext<Kind>& context, RuleVariantView rule, std::optional<LabeledNode> candidate = std::nullopt)
     {
+        ensure_modules(context);
         const auto successors = candidate ? std::vector<LabeledNode> { *candidate } : std::vector<LabeledNode> {};
         const auto step = step_for(rule, context, successors);
         return step ? to_successor(*step) : std::nullopt;
     }
-
-    // The applicable internal moves (Load/Call) at the vertex, as transition + successor node. Both
-    // hold the planning state fixed and change memory (Load binds a register, Call enters a module).
-    std::vector<Successor> internal_successors(const EvaluationContext<Kind>& context)
-    {
-        std::vector<Successor> result;
-        for (const auto& step : collect_steps<LoadTag, CallTag>(context, {}))
-            if (auto successor = to_successor(step))
-                result.push_back(std::move(*successor));
-        return result;
-    }
-
-private:
     // Apply every rule of the given kinds to the vertex, in module order, keeping the steps that
     // fire. The `if constexpr` fold selects the kinds at compile time, so no runtime rule tag exists.
     template<typename... Kinds>
@@ -258,7 +290,7 @@ private:
         if constexpr (is_load_rule_view_v<R>)
         {
             auto target = context;
-            const auto status = detail::execute_load(rule, target);
+            const auto status = detail::execute_load(rule, target, m_environment);
             if (status == detail::RuleExecutionStatus::NOT_APPLICABLE)
                 return std::nullopt;
             if (status == detail::RuleExecutionStatus::EMPTY_DENOTATION)
@@ -269,7 +301,7 @@ private:
         {
             const auto source_state = context.get_state();
             auto target = context;
-            const auto status = detail::execute_do(rule, target, successors);
+            const auto status = detail::execute_do(rule, target, m_environment, successors);
             if (status == detail::RuleExecutionStatus::NOT_APPLICABLE)
                 return std::nullopt;
             if (status == detail::RuleExecutionStatus::NO_APPLICABLE_ACTION)
@@ -284,7 +316,7 @@ private:
         else if constexpr (std::same_as<R, RuleView<CallTag>>)
         {
             auto target = context;
-            const auto status = detail::execute_call(rule, target);
+            const auto status = detail::execute_call(rule, target, m_environment);
             if (status == detail::RuleExecutionStatus::NOT_APPLICABLE)
                 return std::nullopt;
             if (status == detail::RuleExecutionStatus::MALFORMED_CALL)
@@ -295,7 +327,7 @@ private:
         {
             const auto source_state = context.get_state();
             auto target = context;
-            const auto status = detail::execute_sketch(rule, target, successors);
+            const auto status = detail::execute_sketch(rule, target, m_environment, successors);
             if (status != detail::RuleExecutionStatus::APPLIED)
                 return std::nullopt;
             return planning_step(std::move(target), source_state, successors, rule_variant);
@@ -373,9 +405,9 @@ private:
             {
                 using R = std::decay_t<decltype(concrete)>;
                 if constexpr (std::same_as<R, RuleView<SketchTag>>)
-                    return detail::sketch_rule_matches_state(concrete, context, candidate.node.get_state());
+                    return detail::sketch_rule_matches_state(concrete, context, m_environment, candidate.node.get_state());
                 else if constexpr (std::same_as<R, RuleView<DoTag>>)
-                    return detail::do_rule_matches(concrete, context, candidate.label, candidate.node.get_state());
+                    return detail::do_rule_matches(concrete, context, m_environment, candidate.label, candidate.node.get_state());
                 else if constexpr (is_load_rule_view_v<R> || std::same_as<R, RuleView<CallTag>>)
                     return false;
                 else
@@ -384,9 +416,11 @@ private:
             rule.get_variant());
     }
 
+    const runir::datasets::TaskSearchContext<Kind>* m_search_context;
     tyr::planning::ConjunctiveGoalStrategy<Kind> m_goal_strategy;
     tyr::planning::StateView<Kind> m_initial_state;
     bool m_static_goal_satisfied;
+    EvaluationEnvironment<Kind> m_environment;
 };
 
 }  // namespace runir::kr::ps::ext

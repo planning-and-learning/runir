@@ -201,6 +201,27 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::NominalTa
     using Base::Base;
 };
 
+template<>
+struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>> :
+    runir::kr::dl::cnf_grammar::RegisterData<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>,
+                                             runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>
+{
+    using Base = runir::kr::dl::cnf_grammar::RegisterData<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>,
+                                                          runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>;
+    using Base::Base;
+};
+
+template<>
+struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>> :
+    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
+                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>
+{
+    using Base = runir::kr::dl::semantics::ArgumentData<
+        runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
+        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>;
+    using Base::Base;
+};
+
 }  // namespace ygg
 
 #endif

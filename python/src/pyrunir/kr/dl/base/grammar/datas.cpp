@@ -1,7 +1,7 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
-#include <runir/kr/dl/grammar/base/datas.hpp>
+#include <runir/kr/dl/grammar/datas.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::dl::base

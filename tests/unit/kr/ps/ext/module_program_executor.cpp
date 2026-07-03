@@ -63,7 +63,7 @@ auto create_register(kr::ps::ext::Repository& repository, const std::string& nam
     return repository.get_or_create(data).first;
 }
 
-auto create_top_concept(kr::dl::ext::ConstructorRepository& repository)
+auto create_top_concept(kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository)
 {
     auto top_data = ygg::Data<kr::dl::Concept<kr::ExtFamilyTag, kr::dl::TopTag>>();
     const auto top = repository.get_or_create(top_data).first;
@@ -79,7 +79,7 @@ auto create_concept_feature(kr::ps::ext::Repository& repository, kr::ps::ext::Co
     return repository.get_or_create(feature_data).first;
 }
 
-auto create_concept_argument(kr::dl::ext::ConstructorRepository& repository, ygg::uint_t identifier)
+auto create_concept_argument(kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, ygg::uint_t identifier)
 {
     auto argument_data =
         ygg::Data<kr::dl::Concept<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::ConceptTag>>>(kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(identifier));
@@ -98,7 +98,7 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
     const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -180,7 +180,7 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
     const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -248,7 +248,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidModuleSets)
     const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -315,7 +315,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
     const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -470,7 +470,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
     const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -763,7 +763,7 @@ TEST(RunirTests, ExtModuleProgramParserRejectsInvalidProgramWiring)
     const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -893,7 +893,7 @@ TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld
     const auto task_file = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "p-300-4.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -920,7 +920,7 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
     const auto task_file = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "p-300-4.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -965,7 +965,7 @@ TEST(RunirTests, ExtModuleFormatterEscapesQuotedStringContents)
     const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -998,7 +998,7 @@ TEST(RunirTests, ExtModuleFormatterOmitsEmptyNestedRuleMetadata)
     const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -1061,7 +1061,7 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -1107,7 +1107,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
     const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -1249,7 +1249,7 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
     const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
 
     const auto concept_argument = kr::ps::ext::dl::parse_concept(R"((c_argument
@@ -1260,8 +1260,8 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         [](auto child)
         {
             using View = std::decay_t<decltype(child)>;
-            using Expected =
-                ygg::View<ygg::Index<kr::dl::Concept<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::ConceptTag>>>, kr::dl::ext::ConstructorRepository>;
+            using Expected = ygg::View<ygg::Index<kr::dl::Concept<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::ConceptTag>>>,
+                                       kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>>;
             if constexpr (std::same_as<View, Expected>)
                 return ygg::uint_t(child.get_data().identifier) == 0;
             else
@@ -1277,7 +1277,7 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         [](auto child)
         {
             using View = std::decay_t<decltype(child)>;
-            using Expected = ygg::View<ygg::Index<kr::dl::Concept<kr::ExtFamilyTag, kr::dl::RegisterTag>>, kr::dl::ext::ConstructorRepository>;
+            using Expected = ygg::View<ygg::Index<kr::dl::Concept<kr::ExtFamilyTag, kr::dl::RegisterTag>>, kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>>;
             if constexpr (std::same_as<View, Expected>)
                 return ygg::uint_t(child.get_data().identifier) == 1;
             else
@@ -1293,7 +1293,8 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
         [](auto child)
         {
             using View = std::decay_t<decltype(child)>;
-            using Expected = ygg::View<ygg::Index<kr::dl::Role<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::RoleTag>>>, kr::dl::ext::ConstructorRepository>;
+            using Expected =
+                ygg::View<ygg::Index<kr::dl::Role<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::RoleTag>>>, kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>>;
             if constexpr (std::same_as<View, Expected>)
                 return ygg::uint_t(child.get_data().identifier) == 0;
             else
@@ -1343,7 +1344,7 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
     const auto task_file = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "p-300-4.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -1427,7 +1428,7 @@ TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -1438,13 +1439,7 @@ TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)
     const auto caller = create_module(*repository, "caller", caller_entry, { caller_entry, caller_return });
     const auto callee = create_module(*repository, "callee", callee_entry, { callee_entry });
 
-    auto builder = kr::dl::semantics::Builder();
-    auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
-    auto denotation_repository = denotation_repository_factory.create();
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
-                                                                caller,
-                                                                builder,
-                                                                denotation_repository);
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), caller);
 
     const auto saved_object = ygg::Index<tyr::formalism::Object>(0);
     context.set(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0), saved_object);
@@ -1476,7 +1471,7 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -1515,17 +1510,12 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     EXPECT_NE(formatted.find("(:expression"), std::string::npos);
     EXPECT_NE(formatted.find("(:register\n                        (:concept r0)\n                    )"), std::string::npos) << formatted;
 
-    auto builder = kr::dl::semantics::Builder();
-    auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
-    auto denotation_repository = denotation_repository_factory.create();
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
-                                                                module,
-                                                                builder,
-                                                                denotation_repository);
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), module);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ module });
     const auto initial_state = context.get_state().get_index();
 
-    EXPECT_EQ(kr::ps::ext::detail::execute_load(load, context), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
-    EXPECT_EQ(kr::ps::ext::detail::execute_load(load, context), kr::ps::ext::detail::RuleExecutionStatus::NOT_APPLICABLE);
+    EXPECT_EQ(kr::ps::ext::detail::execute_load(load, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
+    EXPECT_EQ(kr::ps::ext::detail::execute_load(load, context, environment), kr::ps::ext::detail::RuleExecutionStatus::NOT_APPLICABLE);
     EXPECT_EQ(context.get_state().get_index(), initial_state);
     EXPECT_EQ(context.get_memory_state().get_index(), target.get_index());
     ASSERT_TRUE(context.concept_registers()[0]);
@@ -1545,7 +1535,7 @@ TEST(RunirTests, ExtRoleLoadRuleStoresFirstPairAndAdvancesMemory)
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -1601,16 +1591,11 @@ TEST(RunirTests, ExtRoleLoadRuleStoresFirstPairAndAdvancesMemory)
     EXPECT_NE(formatted.find("(:role (r_atomic_state \"at\"))"), std::string::npos) << formatted;
     EXPECT_NE(formatted.find("(:register\n                        (:role r0)\n                    )"), std::string::npos) << formatted;
 
-    auto builder = kr::dl::semantics::Builder();
-    auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
-    auto denotation_repository = denotation_repository_factory.create();
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
-                                                                module,
-                                                                builder,
-                                                                denotation_repository);
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), module);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ module });
     const auto initial_state = context.get_state().get_index();
 
-    EXPECT_EQ(kr::ps::ext::detail::execute_load(*maybe_load, context), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
+    EXPECT_EQ(kr::ps::ext::detail::execute_load(*maybe_load, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_state().get_index(), initial_state);
     EXPECT_EQ(context.get_memory_state().get_name(), "target");
     ASSERT_TRUE(context.role_registers()[0]);
@@ -1630,7 +1615,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -1694,15 +1679,16 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     kr::ps::ext::canonicalize(call_data);
     const auto call = repository->get_or_create(call_data).first;
 
-    auto builder = kr::dl::semantics::Builder();
-    auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
-    auto denotation_repository = denotation_repository_factory.create();
     auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
                                                                 caller,
-                                                                builder,
-                                                                denotation_repository);
+                                                                {},
+                                                                {},
+                                                                {},
+                                                                {},
+                                                                { caller, callee });
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ caller, callee });
 
-    EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
+    EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_module().get_index(), callee.get_index());
     EXPECT_EQ(context.get_memory_state().get_index(), callee_entry.get_index());
     ASSERT_EQ(context.arguments<kr::dl::ConceptTag>().size(), 1);
@@ -1710,20 +1696,20 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     ASSERT_EQ(context.arguments<kr::dl::BooleanTag>().size(), 1);
     ASSERT_EQ(context.arguments<kr::dl::NumericalTag>().size(), 1);
 
-    const auto concept_denotation = kr::ps::ext::evaluate_argument(concept_argument.get_index(), context);
+    const auto concept_denotation = kr::ps::ext::evaluate_argument(concept_argument.get_index(), context, environment);
     const auto concept_first = concept_denotation.begin();
     ASSERT_NE(concept_first, concept_denotation.end());
     EXPECT_EQ((*concept_first).get_index(), ygg::Index<tyr::formalism::Object>(0));
 
-    const auto role_denotation = kr::ps::ext::evaluate_argument(role_argument.get_index(), context);
+    const auto role_denotation = kr::ps::ext::evaluate_argument(role_argument.get_index(), context, environment);
     const auto role_first = role_denotation.begin();
     ASSERT_NE(role_first, role_denotation.end());
     const auto role_pair = *role_first;
     EXPECT_EQ(role_pair.first.get_index(), ygg::Index<tyr::formalism::Object>(0));
     EXPECT_EQ(role_pair.second.get_index(), ygg::Index<tyr::formalism::Object>(0));
 
-    EXPECT_TRUE(kr::ps::ext::evaluate_argument(boolean_argument.get_index(), context).get());
-    EXPECT_GT(kr::ps::ext::evaluate_argument(numerical_argument.get_index(), context).get(), 0);
+    EXPECT_TRUE(kr::ps::ext::evaluate_argument(boolean_argument.get_index(), context, environment).get());
+    EXPECT_GT(kr::ps::ext::evaluate_argument(numerical_argument.get_index(), context, environment).get(), 0);
 
     ASSERT_TRUE(context.restore_caller());
     EXPECT_EQ(context.get_module().get_index(), caller.get_index());
@@ -1743,7 +1729,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -1761,20 +1747,16 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     kr::ps::ext::canonicalize(call_data);
     const auto call = repository->get_or_create(call_data).first;
 
-    auto builder = kr::dl::semantics::Builder();
-    auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
-    auto denotation_repository = denotation_repository_factory.create();
     auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
                                                                 caller,
-                                                                builder,
-                                                                denotation_repository,
                                                                 {},
                                                                 {},
                                                                 {},
                                                                 {},
                                                                 std::vector<kr::ps::ext::ModuleView> { caller, callee });
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ caller, callee });
 
-    EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
+    EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_module().get_index(), callee.get_index());
     EXPECT_EQ(context.get_memory_state().get_index(), callee_entry.get_index());
 }
@@ -1792,7 +1774,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -1822,22 +1804,17 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     const auto rule = repository->get_or_create(do_data).first;
 
     const auto module = create_module(*repository, "module", source, { source, target });
-    auto builder = kr::dl::semantics::Builder();
-    auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
-    auto denotation_repository = denotation_repository_factory.create();
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
-                                                                module,
-                                                                builder,
-                                                                denotation_repository);
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), module);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ module });
 
     const auto initial_node = search_context->successor_generator->get_initial_node();
     const auto initial_state = context.get_state().get_index();
     const auto successors = search_context->successor_generator->get_labeled_successor_nodes(initial_node);
-    const auto selected = kr::ps::ext::detail::select_do_successor(rule, context, successors);
+    const auto selected = kr::ps::ext::detail::select_do_successor(rule, context, environment, successors);
     ASSERT_TRUE(selected);
     EXPECT_EQ(selected->label.get_action().get_name(), "pick");
 
-    EXPECT_EQ(kr::ps::ext::detail::execute_do(rule, context, successors), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
+    EXPECT_EQ(kr::ps::ext::detail::execute_do(rule, context, environment, successors), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_memory_state().get_index(), target.get_index());
     EXPECT_NE(context.get_state().get_index(), initial_state);
     EXPECT_EQ(context.get_state().get_index(), selected->node.get_state().get_index());
@@ -1856,7 +1833,7 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -1905,13 +1882,8 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
                                                       *repository);
     const auto rule_variant = module.get_memory_transitions()[0][0];
 
-    auto builder = kr::dl::semantics::Builder();
-    auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
-    auto denotation_repository = denotation_repository_factory.create();
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
-                                                                module,
-                                                                builder,
-                                                                denotation_repository);
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), module);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ module });
 
     const auto initial_node = search_context->successor_generator->get_initial_node();
     const auto successors = search_context->successor_generator->get_labeled_successor_nodes(initial_node);
@@ -1921,8 +1893,9 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
             using RuleView = std::decay_t<decltype(rule)>;
             if constexpr (std::same_as<RuleView, ygg::View<ygg::Index<kr::ps::ext::Rule<kr::ps::ext::DoTag>>, kr::ps::ext::Repository>>)
             {
-                EXPECT_FALSE(kr::ps::ext::detail::select_do_successor(rule, context, successors));
-                EXPECT_EQ(kr::ps::ext::detail::execute_do(rule, context, successors), kr::ps::ext::detail::RuleExecutionStatus::NO_APPLICABLE_ACTION);
+                EXPECT_FALSE(kr::ps::ext::detail::select_do_successor(rule, context, environment, successors));
+                EXPECT_EQ(kr::ps::ext::detail::execute_do(rule, context, environment, successors),
+                          kr::ps::ext::detail::RuleExecutionStatus::NO_APPLICABLE_ACTION);
             }
             else
             {
@@ -1945,7 +1918,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);
@@ -2007,13 +1980,8 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     kr::ps::ext::canonicalize(module_data);
     const auto module = repository->get_or_create(module_data).first;
 
-    auto builder = kr::dl::semantics::Builder();
-    auto denotation_repository_factory = kr::dl::semantics::DenotationRepositoryFactory();
-    auto denotation_repository = denotation_repository_factory.create();
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
-                                                                module,
-                                                                builder,
-                                                                denotation_repository);
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), module);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ module });
 
     const auto initial_node = search_context->successor_generator->get_initial_node();
     const auto successors = search_context->successor_generator->get_labeled_successor_nodes(initial_node);
@@ -2039,7 +2007,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
-    auto dl_repository_factory = kr::dl::ext::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
     auto dl_repository = dl_repository_factory.create(task->get_repository());
     auto repository = repository_factory.create(dl_repository);

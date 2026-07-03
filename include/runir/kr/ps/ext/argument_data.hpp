@@ -1,15 +1,15 @@
 #ifndef RUNIR_KR_PS_EXT_ARGUMENT_DATA_HPP_
 #define RUNIR_KR_PS_EXT_ARGUMENT_DATA_HPP_
 
-#include "runir/kr/dl/ext/declarations.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/ext/argument_index.hpp"
 
 #include <cista/containers/string.h>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
-#include <utility>
 
 namespace ygg
 {

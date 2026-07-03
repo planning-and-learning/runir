@@ -49,7 +49,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
           kr::ps::base::dl::SketchSpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
     };
 
-    auto dl_repository_factory = kr::dl::base::ConstructorRepositoryFactory();
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>();
     auto repository_factory = kr::ps::base::RepositoryFactory();
 
     for (const auto& test_case : cases)

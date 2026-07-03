@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_DL_GRAMMAR_PARSER_BASE_PARSERS_HPP_
 #define RUNIR_KR_DL_GRAMMAR_PARSER_BASE_PARSERS_HPP_
 
-#include "runir/kr/dl/grammar/parser/base/ast.hpp"
+#include "runir/kr/dl/grammar/parser/ast.hpp"
 #include "runir/kr/dl/grammar/parser/error_handler.hpp"
 
 #include <boost/spirit/home/x3.hpp>

@@ -1,9 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_IMPL_HPP_
 #define RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_IMPL_HPP_
 
-#include "runir/graphs/algorithms.hpp"
-#include "runir/kr/dl/semantics/builder.hpp"
-#include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/graphs/cycle.hpp"
 #include "runir/kr/ps/base/compatibility.hpp"
 #include "runir/kr/ps/base/dl/evaluation_context.hpp"
 #include "runir/kr/ps/base/sketch_executor_data.hpp"
@@ -24,50 +22,6 @@ namespace runir::kr::ps::base
 {
 namespace detail
 {
-
-template<typename Graph>
-class CycleVisitor : public graphs::bgl::TraversalVisitor<Graph>
-{
-private:
-    const Graph& m_graph;
-    ygg::UnorderedMap<graphs::VertexIndex, graphs::VertexIndex> m_parent;
-    graphs::VertexIndexList m_cycle;
-
-public:
-    explicit CycleVisitor(const Graph& graph) : m_graph(graph) {}
-
-    void tree_edge(graphs::EdgeIndex edge) override { m_parent[m_graph.get_target(edge)] = m_graph.get_source(edge); }
-
-    void back_edge(graphs::EdgeIndex edge) override
-    {
-        if (!m_cycle.empty())
-            return;
-
-        const auto source = m_graph.get_source(edge);
-        const auto target = m_graph.get_target(edge);
-
-        m_cycle.push_back(target);
-        for (auto vertex = source; vertex != target; vertex = m_parent.at(vertex))
-            m_cycle.push_back(vertex);
-        m_cycle.push_back(target);
-        std::ranges::reverse(m_cycle);
-    }
-
-    auto get_cycle() const -> const graphs::VertexIndexList& { return m_cycle; }
-};
-
-template<typename Graph>
-auto find_cycle(const Graph& graph) -> graphs::VertexIndexList
-{
-    auto visitor = CycleVisitor<Graph>(graph);
-    auto sources = graphs::VertexIndexList {};
-    sources.reserve(graph.get_num_vertices());
-    for (auto vertex : graph.get_vertex_indices())
-        sources.push_back(vertex);
-
-    graphs::algorithms::depth_first_visit(graph, sources, visitor);
-    return visitor.get_cycle();
-}
 
 template<tyr::planning::TaskKind Kind>
 class NeverGoalStrategy : public tyr::planning::GoalStrategy<Kind>
@@ -96,18 +50,9 @@ private:
     using EvaluationContext = runir::kr::ps::base::EvaluationContext<Kind>;
 
     SuccessorExpander<Kind> m_expander;
-    runir::kr::dl::semantics::Builder m_dl_builder;
-    runir::kr::dl::semantics::DenotationRepositoryFactory m_dl_denotation_repository_factory;
-    runir::kr::dl::semantics::DenotationRepository m_dl_denotation_repository;
 
 public:
-    explicit SketchGoalStrategy(SketchView sketch) :
-        m_expander(sketch),
-        m_dl_builder(),
-        m_dl_denotation_repository_factory(),
-        m_dl_denotation_repository(m_dl_denotation_repository_factory.create())
-    {
-    }
+    explicit SketchGoalStrategy(SketchView sketch) : m_expander(sketch) {}
 
     bool is_static_goal_satisfied(const tyr::planning::Task<Kind>& task) override
     {
@@ -117,13 +62,13 @@ public:
 
     auto find_compatible_rule(const tyr::planning::StateView<Kind>& seed_state, const tyr::planning::StateView<Kind>& state) -> std::optional<RuleView>
     {
-        auto context = EvaluationContext(seed_state, m_dl_builder, m_dl_denotation_repository);
+        auto context = m_expander.context_at(seed_state);
         return m_expander.matching_rule(context, state);
     }
 
     bool is_dynamic_goal_satisfied(const tyr::planning::StateView<Kind>& seed_state, const tyr::planning::StateView<Kind>& state) override
     {
-        auto context = EvaluationContext(seed_state, m_dl_builder, m_dl_denotation_repository);
+        auto context = m_expander.context_at(seed_state);
         return m_expander.is_compatible(context, state);
     }
 };
@@ -343,7 +288,7 @@ auto execute_proof(datasets::TaskSearchContextPtr<Kind> context_owner, SketchVie
     }
 
     auto graph = std::make_shared<SketchProofGraph<Kind>>(std::move(builder));
-    result.cycle = detail::find_cycle(*graph);
+    result.cycle = graphs::find_cycle(*graph);
     result.graph = std::move(graph);
 
     if (!result.open_states.empty() || !result.cycle.empty())
@@ -414,7 +359,7 @@ auto proof_result_from_siw_solution(datasets::TaskSearchContextPtr<Kind> context
         result.status = status;
         auto graph = std::make_shared<SketchProofGraph<Kind>>(std::move(builder));
         if (result.cycle.empty())
-            result.cycle = detail::find_cycle(*graph);
+            result.cycle = graphs::find_cycle(*graph);
         if (result.status == SketchProofStatus::SUCCESS && !result.cycle.empty())
             result.status = SketchProofStatus::FAILURE;
         result.graph = std::move(graph);

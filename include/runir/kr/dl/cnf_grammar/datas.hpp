@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/cnf_grammar/boolean_data.hpp"
 #include "runir/kr/dl/cnf_grammar/concept_data.hpp"
+#include "runir/kr/dl/cnf_grammar/constructor_data.hpp"
 #include "runir/kr/dl/cnf_grammar/derivation_rule_data.hpp"
 #include "runir/kr/dl/cnf_grammar/grammar_data.hpp"
 #include "runir/kr/dl/cnf_grammar/non_terminal_data.hpp"

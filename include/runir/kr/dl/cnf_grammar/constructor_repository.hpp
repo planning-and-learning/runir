@@ -10,12 +10,12 @@
 #include <cassert>
 #include <memory>
 #include <optional>
-#include <yggdrasil/core/type_list.hpp>
-#include <yggdrasil/core/types.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <yggdrasil/formalism/symbol_repository.hpp>
 #include <utility>
 #include <vector>
+#include <yggdrasil/core/type_list.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/symbol_repository.hpp>
 
 namespace runir::kr::dl::cnf_grammar
 {
@@ -233,6 +233,46 @@ using FamilySubstitutionRuleView = ygg::View<ygg::Index<SubstitutionRule<Family,
 
 template<runir::kr::dl::FamilyTag Family>
 using FamilyGrammarView = ygg::View<ygg::Index<Grammar<Family>>, ConstructorRepositoryFor<Family>>;
+
+using BaseConstructorRepository = ConstructorRepositoryFor<runir::kr::BaseFamilyTag>;
+using BaseConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::BaseFamilyTag>;
+using BaseGrammarView = FamilyGrammarView<runir::kr::BaseFamilyTag>;
+
+using ExtConstructorRepository = ConstructorRepositoryFor<runir::kr::ExtFamilyTag>;
+using ExtConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::ExtFamilyTag>;
+using ExtGrammarView = FamilyGrammarView<runir::kr::ExtFamilyTag>;
+
+using UnsConstructorRepository = ConstructorRepositoryFor<runir::kr::UnsFamilyTag>;
+using UnsConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::UnsFamilyTag>;
+using UnsGrammarView = FamilyGrammarView<runir::kr::UnsFamilyTag>;
+
+template<typename Tag>
+    requires runir::kr::dl::FamilyConceptConstructorTag<runir::kr::BaseFamilyTag, Tag>
+using BaseConceptView = FamilyConceptView<runir::kr::BaseFamilyTag, Tag>;
+
+template<typename Tag>
+    requires runir::kr::dl::FamilyRoleConstructorTag<runir::kr::BaseFamilyTag, Tag>
+using BaseRoleView = FamilyRoleView<runir::kr::BaseFamilyTag, Tag>;
+
+template<typename Tag>
+    requires runir::kr::dl::FamilyBooleanConstructorTag<runir::kr::BaseFamilyTag, Tag>
+using BaseBooleanView = FamilyBooleanView<runir::kr::BaseFamilyTag, Tag>;
+
+template<typename Tag>
+    requires runir::kr::dl::FamilyNumericalConstructorTag<runir::kr::BaseFamilyTag, Tag>
+using BaseNumericalView = FamilyNumericalView<runir::kr::BaseFamilyTag, Tag>;
+
+template<runir::kr::dl::CategoryTag Category>
+using BaseConstructorView = FamilyConstructorView<runir::kr::BaseFamilyTag, Category>;
+
+template<runir::kr::dl::CategoryTag Category>
+using BaseNonTerminalView = FamilyNonTerminalView<runir::kr::BaseFamilyTag, Category>;
+
+template<runir::kr::dl::CategoryTag Category>
+using BaseDerivationRuleView = FamilyDerivationRuleView<runir::kr::BaseFamilyTag, Category>;
+
+template<runir::kr::dl::CategoryTag Category>
+using BaseSubstitutionRuleView = FamilySubstitutionRuleView<runir::kr::BaseFamilyTag, Category>;
 
 template<runir::kr::dl::FamilyTag Family>
 inline const ConstructorRepositoryFor<Family>& get_repository(const ConstructorRepositoryFor<Family>& repository) noexcept

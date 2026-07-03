@@ -27,7 +27,7 @@ struct Fixture
     std::shared_ptr<ygg::ExecutionContext> execution_context;
     decltype(std::declval<p::Task<p::LiftedTag>>().instantiate_ground_task(std::declval<ygg::ExecutionContext&>()).task) task;
     std::shared_ptr<runir::datasets::TaskSearchContext<p::GroundTag>> search;
-    runir::kr::dl::uns::ConstructorRepositoryPtr dl_repository;
+    runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::UnsFamilyTag> dl_repository;
     runir::kr::uns::RepositoryPtr repository;
 
     Fixture()
@@ -42,7 +42,7 @@ struct Fixture
         task = lifted_task.instantiate_ground_task(*execution_context).task;
         search = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
 
-        auto dl_repository_factory = runir::kr::dl::uns::ConstructorRepositoryFactory();
+        auto dl_repository_factory = runir::kr::dl::ConstructorRepositoryFactoryFor<runir::kr::UnsFamilyTag>();
         auto repository_factory = runir::kr::uns::RepositoryFactory();
         dl_repository = dl_repository_factory.create(task->get_repository());
         repository = repository_factory.create(dl_repository);

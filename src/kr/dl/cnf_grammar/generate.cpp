@@ -1,8 +1,8 @@
-#include "runir/kr/dl/cnf_grammar/base/generate.hpp"
+#include "runir/kr/dl/cnf_grammar/generate.hpp"
 
-#include "runir/kr/dl/base/datas.hpp"
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/cnf_grammar/generate.hpp"
+#include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/semantics/base/evaluation_context.hpp"
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
@@ -15,7 +15,6 @@
 #include <map>
 #include <optional>
 #include <type_traits>
-#include <yggdrasil/core/chrono.hpp>
 #include <tyr/planning/ground_task.hpp>
 #include <tyr/planning/ground_task/state_repository.hpp>
 #include <tyr/planning/ground_task/state_view.hpp>
@@ -24,6 +23,7 @@
 #include <tyr/planning/lifted_task/state_view.hpp>
 #include <utility>
 #include <vector>
+#include <yggdrasil/core/chrono.hpp>
 
 namespace runir::kr::dl::cnf_grammar
 {
@@ -889,28 +889,25 @@ GenerateResultsFor<Family> generate_impl(FamilyGrammarView<Family> grammar,
 }
 
 }  // namespace
-namespace base
+template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
+GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
+                                    const std::vector<tyr::planning::StateView<Kind>>& states,
+                                    runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,
+                                    const GenerateOptions& options)
 {
-
-template<tyr::planning::TaskKind Kind>
-GenerateResults generate(GrammarView grammar,
-                         const std::vector<tyr::planning::StateView<Kind>>& states,
-                         runir::kr::dl::base::ConstructorRepository& output_repository,
-                         const GenerateOptions& options)
-{
-    return generate_impl<runir::kr::BaseFamilyTag, Kind>(grammar, states, output_repository, options);
+    return generate_impl<Family, Kind>(grammar, states, output_repository, options);
 }
 
-}  // namespace base
+template GenerateResultsFor<runir::kr::BaseFamilyTag>
+generate<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>(FamilyGrammarView<runir::kr::BaseFamilyTag>,
+                                                             const std::vector<tyr::planning::StateView<tyr::planning::GroundTag>>&,
+                                                             runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>&,
+                                                             const GenerateOptions&);
 
-template base::GenerateResults base::generate<tyr::planning::GroundTag>(base::GrammarView,
-                                                                        const std::vector<tyr::planning::StateView<tyr::planning::GroundTag>>&,
-                                                                        runir::kr::dl::base::ConstructorRepository&,
-                                                                        const GenerateOptions&);
-
-template base::GenerateResults base::generate<tyr::planning::LiftedTag>(base::GrammarView,
-                                                                        const std::vector<tyr::planning::StateView<tyr::planning::LiftedTag>>&,
-                                                                        runir::kr::dl::base::ConstructorRepository&,
-                                                                        const GenerateOptions&);
+template GenerateResultsFor<runir::kr::BaseFamilyTag>
+generate<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>(FamilyGrammarView<runir::kr::BaseFamilyTag>,
+                                                             const std::vector<tyr::planning::StateView<tyr::planning::LiftedTag>>&,
+                                                             runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>&,
+                                                             const GenerateOptions&);
 
 }

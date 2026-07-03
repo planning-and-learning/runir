@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_PROOF_BUILDER_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_PROOF_BUILDER_HPP_
 
-#include "runir/graphs/algorithms.hpp"
+#include "runir/graphs/cycle.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
 #include "runir/kr/ps/ext/successor_expander.hpp"
@@ -17,50 +17,6 @@
 
 namespace runir::kr::ps::ext::detail
 {
-
-template<typename Graph>
-class CycleVisitor : public graphs::bgl::TraversalVisitor<Graph>
-{
-private:
-    const Graph& m_graph;
-    ygg::UnorderedMap<graphs::VertexIndex, graphs::VertexIndex> m_parent;
-    graphs::VertexIndexList m_cycle;
-
-public:
-    explicit CycleVisitor(const Graph& graph) : m_graph(graph) {}
-
-    void tree_edge(graphs::EdgeIndex edge) override { m_parent[m_graph.get_target(edge)] = m_graph.get_source(edge); }
-
-    void back_edge(graphs::EdgeIndex edge) override
-    {
-        if (!m_cycle.empty())
-            return;
-
-        const auto source = m_graph.get_source(edge);
-        const auto target = m_graph.get_target(edge);
-
-        m_cycle.push_back(target);
-        for (auto vertex = source; vertex != target; vertex = m_parent.at(vertex))
-            m_cycle.push_back(vertex);
-        m_cycle.push_back(target);
-        std::ranges::reverse(m_cycle);
-    }
-
-    const auto& get_cycle() const noexcept { return m_cycle; }
-};
-
-template<typename Graph>
-auto find_cycle(const Graph& graph) -> graphs::VertexIndexList
-{
-    auto visitor = CycleVisitor<Graph>(graph);
-    auto sources = graphs::VertexIndexList {};
-    sources.reserve(graph.get_num_vertices());
-    for (auto vertex : graph.get_vertex_indices())
-        sources.push_back(vertex);
-
-    graphs::algorithms::depth_first_visit(graph, sources, visitor);
-    return visitor.get_cycle();
-}
 
 template<tyr::planning::TaskKind Kind>
 class ModuleProgramProofBuilder
@@ -125,7 +81,7 @@ public:
         m_result.status = status;
         auto graph = std::make_shared<ModuleProgramProofGraph<Kind>>(std::move(m_builder));
         if (m_result.cycle.empty())
-            m_result.cycle = find_cycle(*graph);
+            m_result.cycle = graphs::find_cycle(*graph);
         if (m_result.status == ModuleProgramProofStatus::SUCCESS && !m_result.cycle.empty())
             m_result.status = ModuleProgramProofStatus::FAILURE;
         m_result.graph = std::move(graph);

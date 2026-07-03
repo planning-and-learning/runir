@@ -49,7 +49,7 @@ TEST(RunirTests, StructuralTerminationEmptySketchIsTerminating)
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::SketchFactory::create_empty(*repository);
 
@@ -63,7 +63,7 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorIsNotTerminating)
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     // {not b1} -> {b1} and {b1} -> {not b1}: an unbreakable two-cycle.
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
@@ -119,7 +119,7 @@ TEST(RunirTests, StructuralTerminationNumericalIncreaseDecreasePairIsNotTerminat
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     // {n1 > 0} -> {n1 dec} and {} -> {n1 inc}: the increase regenerates n1.
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
@@ -172,7 +172,7 @@ TEST(RunirTests, StructuralTerminationFloortileSketchIsTerminating)
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     // incomplete_sieve.pdf Section 5.2, Theorem 5: r = {v, g > 0} -> {g dec}.
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
@@ -223,7 +223,7 @@ TEST(RunirTests, StructuralTerminationTppSketchIsTerminating)
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     // incomplete_sieve.pdf Section 5.3, Theorem 6:
     //   r1 = {b > 0} -> {b dec}, r2 = {l > 0} -> {b?, l dec},
@@ -307,7 +307,7 @@ TEST(RunirTests, StructuralTerminationBarmanSketchIsTerminating)
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     // incomplete_sieve.pdf Section 5.4, Theorem 7:
     //   r1 = {not c1} -> {u?, c1}, r2 = {c1, not c2} -> {u?, c2},
@@ -416,7 +416,7 @@ TEST(RunirTests, StructuralTerminationGripperFactorySketchIsTerminating)
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
-    auto dl_repository = kr::dl::base::ConstructorRepositoryFactory().create(planning_domain.get_repository());
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
     const auto sketch = kr::ps::base::dl::SketchFactory::create(kr::ps::base::dl::SketchSpecification::GRIPPER_FRANCE_ET_AL_AAAI2021,
                                                                 planning_domain.get_domain(),
