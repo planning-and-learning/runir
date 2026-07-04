@@ -71,12 +71,12 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
 
     nb::class_<Results>(m, (std::string(prefix) + "ModuleProgramProofResults").c_str())
         .def_ro("status", &Results::status)
-        .def_ro("graph", &Results::graph, nb::rv_policy::reference_internal)
-        .def_ro("final_state", &Results::final_state, nb::rv_policy::reference_internal)
-        .def_ro("plan", &Results::plan, nb::rv_policy::reference_internal)
-        .def_ro("deadend_transitions", &Results::deadend_transitions, nb::rv_policy::reference_internal)
-        .def_ro("open_states", &Results::open_states, nb::rv_policy::reference_internal)
-        .def_ro("cycle", &Results::cycle, nb::rv_policy::reference_internal)
+        .def_ro("graph", &Results::graph)
+        .def_ro("final_state", &Results::final_state)
+        .def_ro("plan", &Results::plan)
+        .def_ro("deadend_transitions", &Results::deadend_transitions)
+        .def_ro("open_states", &Results::open_states)
+        .def_ro("cycle", &Results::cycle)
         .def("is_successful", &Results::is_successful);
 
     nb::class_<Options>(m, (std::string(prefix) + "ModuleProgramSearchOptions").c_str())
@@ -99,8 +99,8 @@ void bind_module_program_executor(nb::module_& m)
     ygg::add_hash(external_memory_state);
 
     auto edge_label = nb::class_<ModuleProgramProofEdgeLabel>(m, "ModuleProgramProofEdgeLabel")
-                          .def_ro("state_transition", &ModuleProgramProofEdgeLabel::state_transition, nb::rv_policy::reference_internal)
-                          .def_ro("rule", &ModuleProgramProofEdgeLabel::rule, nb::rv_policy::reference_internal);
+                          .def_ro("state_transition", &ModuleProgramProofEdgeLabel::state_transition)
+                          .def_ro("rule", &ModuleProgramProofEdgeLabel::rule);
     ygg::add_print(edge_label);
     ygg::add_hash(edge_label);
 
@@ -154,33 +154,36 @@ void bind_module_program_executor(nb::module_& m)
     using Context = EvaluationContext<Kind>;
     using Step = detail::ModuleProgramStep<Kind>;
     using Expander = SuccessorExpander<Kind>;
+    using ConceptRegisters = Context::ConceptRegisters;
+    using RoleRegisters = Context::RoleRegisters;
 
     auto execution_context =
         nb::class_<Context>(m, "ModuleProgramExecutionContext")
             .def_prop_ro("state", &Context::get_state, nb::keep_alive<0, 1>())
             .def_prop_ro("memory_state", &Context::get_memory_state, nb::keep_alive<0, 1>())
             .def_prop_ro("module", &Context::get_module, nb::keep_alive<0, 1>())
-            .def_prop_ro("concept_registers", nb::overload_cast<>(&Context::concept_registers, nb::const_), nb::rv_policy::reference_internal)
-            .def_prop_ro("role_registers", nb::overload_cast<>(&Context::role_registers, nb::const_), nb::rv_policy::reference_internal);
+            .def_prop_ro("concept_registers", static_cast<const ConceptRegisters& (Context::*) () const noexcept>(&Context::concept_registers))
+            .def_prop_ro("role_registers", static_cast<const RoleRegisters& (Context::*) () const noexcept>(&Context::role_registers));
     ygg::add_hash(execution_context);
 
     nb::class_<Step>(m, "ModuleProgramExecutionStep")
         .def_prop_ro("status", &Step::get_status_name)
         .def_prop_ro("target", &Step::get_target, nb::rv_policy::reference_internal)
-        .def_prop_ro("edge", &Step::get_edge, nb::rv_policy::reference_internal);
+        .def_prop_ro("edge", &Step::get_edge);
 
     nb::class_<Expander>(m, "SuccessorExpander")
-        .def(nb::init<const runir::datasets::TaskSearchContext<Kind>&, tyr::planning::StateView<Kind>, std::vector<ModuleView>>(),
+        .def(nb::init<const runir::datasets::TaskSearchContext<Kind>&, tyr::planning::StateView<Kind>, ModuleProgramView>(),
              "search_context"_a,
              "initial_state"_a,
-             "modules"_a,
-             nb::keep_alive<1, 2>())
+             "program"_a,
+             nb::keep_alive<1, 2>(),
+             nb::keep_alive<1, 4>())
         .def("context_at", &Expander::context_at, "module"_a, "memory_state"_a, "concept_registers"_a, "role_registers"_a, "source_state"_a)
-        .def("initial_context", &Expander::initial_context, "program"_a)
-        .def("load_successors", &Expander::load_successors, "context"_a)
-        .def("control_successors", &Expander::control_successors, "context"_a, "options"_a)
-        .def("matching_rule_at", &Expander::matching_rule_at, "context"_a, "action"_a, "target_state"_a)
-        .def("apply_at", &Expander::apply_at, "context"_a, "rule"_a, "action"_a, "target_state"_a);
+        .def("initial_context", &Expander::initial_context)
+        .def("load_steps", &Expander::load_steps, "context"_a)
+        .def("control_steps", nb::overload_cast<const Context&, const ModuleProgramSearchOptions<Kind>&>(&Expander::control_steps), "context"_a, "options"_a)
+        .def("matching_rule", &Expander::matching_rule, "context"_a, "action"_a, "target_state"_a)
+        .def("apply", &Expander::apply, "context"_a, "rule"_a, "action"_a, "target_state"_a);
 }
 
 }  // namespace runir::kr::ps::ext

@@ -60,7 +60,7 @@ void bind_view(nb::module_& m, const std::string& name)
     ygg::add_hash(cls);
 
     if constexpr (requires(const View& view) { view.get_variant(); })
-        cls.def("get_variant", &View::get_variant, nb::rv_policy::reference_internal);
+        cls.def("get_variant", &View::get_variant);
     if constexpr (requires(const View& view) { view.get_feature(); })
         cls.def("get_feature", &View::get_feature, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_expression(); })

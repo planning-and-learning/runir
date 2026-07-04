@@ -68,8 +68,7 @@ public:
 
     bool is_dynamic_goal_satisfied(const tyr::planning::StateView<Kind>& seed_state, const tyr::planning::StateView<Kind>& state) override
     {
-        auto context = m_expander.context_at(seed_state);
-        return m_expander.is_compatible(context, state);
+        return find_compatible_rule(seed_state, state).has_value();
     }
 };
 

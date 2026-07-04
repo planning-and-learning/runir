@@ -163,19 +163,18 @@ void bind_structural_termination(nb::module_& m)
         .value("UNKNOWN", IncompleteStructuralTerminationStatus::UNKNOWN);
 
     nb::class_<IncompleteBlockingReason>(m, "IncompleteBlockingReason")
-        .def_ro("feature", &IncompleteBlockingReason::feature, nb::rv_policy::reference_internal, "The feature whose decrease or flip the rule performs.")
+        .def_ro("feature", &IncompleteBlockingReason::feature, "The feature whose decrease or flip the rule performs.")
         .def_ro("opposing_rules",
                 &IncompleteBlockingReason::opposing_rules,
-                nb::rv_policy::reference_internal,
                 "Remaining rules that oppose the change and survive R3's marked-complementary-condition check.");
 
     nb::class_<IncompleteSurvivingRule>(m, "IncompleteSurvivingRule")
-        .def_ro("rule", &IncompleteSurvivingRule::rule, nb::rv_policy::reference_internal)
-        .def_ro("blocking_reasons", &IncompleteSurvivingRule::blocking_reasons, nb::rv_policy::reference_internal);
+        .def_ro("rule", &IncompleteSurvivingRule::rule)
+        .def_ro("blocking_reasons", &IncompleteSurvivingRule::blocking_reasons);
 
     nb::class_<IncompleteStructuralTerminationResult>(m, "IncompleteStructuralTerminationResult")
         .def_ro("status", &IncompleteStructuralTerminationResult::status)
-        .def_ro("surviving_rules", &IncompleteStructuralTerminationResult::surviving_rules, nb::rv_policy::reference_internal)
+        .def_ro("surviving_rules", &IncompleteStructuralTerminationResult::surviving_rules)
         .def("is_terminating", &IncompleteStructuralTerminationResult::is_terminating);
 
     m.def("incomplete_structural_termination",

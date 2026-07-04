@@ -3,16 +3,16 @@
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/ext/evaluation_context.hpp"
+#include "runir/kr/ps/ext/module_program_view.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 
 #include <array>
-#include <memory>
+#include <concepts>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <type_traits>
 #include <tyr/formalism/object_index.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>
@@ -48,6 +48,7 @@ public:
 
 private:
     tyr::planning::StateView<Kind> m_state;
+    ModuleProgramView m_program;
     ModuleView m_module;
     MemoryStateView m_memory_state;
     ConceptRegisters m_concept_registers;
@@ -56,18 +57,18 @@ private:
     Arguments<runir::kr::dl::RoleTag> m_role_arguments;
     Arguments<runir::kr::dl::BooleanTag> m_boolean_arguments;
     Arguments<runir::kr::dl::NumericalTag> m_numerical_arguments;
-    std::vector<ModuleView> m_modules;
     std::vector<CallFrame> m_call_stack;
 
 public:
     EvaluationContext(tyr::planning::StateView<Kind> state,
+                      ModuleProgramView program,
                       ModuleView module,
                       Arguments<runir::kr::dl::ConceptTag> concept_arguments = {},
                       Arguments<runir::kr::dl::RoleTag> role_arguments = {},
                       Arguments<runir::kr::dl::BooleanTag> boolean_arguments = {},
-                      Arguments<runir::kr::dl::NumericalTag> numerical_arguments = {},
-                      std::vector<ModuleView> modules = {}) noexcept :
+                      Arguments<runir::kr::dl::NumericalTag> numerical_arguments = {}) noexcept :
         m_state(std::move(state)),
+        m_program(program),
         m_module(module),
         m_memory_state(module.get_entry_memory_state()),
         m_concept_registers(),
@@ -76,15 +77,14 @@ public:
         m_role_arguments(std::move(role_arguments)),
         m_boolean_arguments(std::move(boolean_arguments)),
         m_numerical_arguments(std::move(numerical_arguments)),
-        m_modules(std::move(modules)),
         m_call_stack()
     {
     }
 
     const auto& get_state() const noexcept { return m_state; }
+    auto get_program() const noexcept { return m_program; }
     auto get_module() const noexcept { return m_module; }
     auto get_memory_state() const noexcept { return m_memory_state; }
-    const auto& get_modules() const noexcept { return m_modules; }
     const auto& get_call_stack() const noexcept { return m_call_stack; }
     bool has_caller() const noexcept { return !m_call_stack.empty(); }
     auto& get_repository() const noexcept { return m_module.get_context(); }
@@ -102,7 +102,7 @@ public:
 
     std::optional<ModuleView> find_module(const std::string& name) const
     {
-        for (auto module : m_modules)
+        for (auto module : m_program.get_modules())
             if (module.get_name() == name)
                 return module;
         return std::nullopt;

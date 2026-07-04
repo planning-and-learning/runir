@@ -63,7 +63,7 @@ void bind_view(nb::module_& m, const std::string& name)
     if constexpr (requires(const View& view) { view.get_object(); })
         cls.def("get_object", &View::get_object, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_objects(); })
-        cls.def("get_objects", &View::get_objects, nb::rv_policy::reference_internal);
+        cls.def("get_objects", &View::get_objects);
     if constexpr (requires(const View& view) { view.get_n(); })
         cls.def("get_n", &View::get_n);
     if constexpr (requires(const View& view) { view.get_role(); })

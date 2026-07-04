@@ -31,7 +31,7 @@ void bind_view(nb::module_& m, const std::string& name)
     ygg::add_hash(cls);
 
     if constexpr (requires(const View& view) { view.get_variant(); })
-        cls.def("get_variant", &View::get_variant, nb::rv_policy::reference_internal);
+        cls.def("get_variant", &View::get_variant);
     if constexpr (requires(const View& view) { view.get_feature(); })
         cls.def("get_feature", &View::get_feature, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_expression(); })
@@ -39,15 +39,15 @@ void bind_view(nb::module_& m, const std::string& name)
     if constexpr (requires(const View& view) { view.get_symbol(); })
         cls.def("get_symbol", &View::get_symbol);
     if constexpr (requires(const View& view) { view.get_conditions(); })
-        cls.def("get_conditions", &View::get_conditions, nb::rv_policy::reference_internal);
+        cls.def("get_conditions", &View::get_conditions);
     if constexpr (requires(const View& view) { view.get_effects(); })
-        cls.def("get_effects", &View::get_effects, nb::rv_policy::reference_internal);
+        cls.def("get_effects", &View::get_effects);
     if constexpr (requires(const View& view) { view.get_rules(); })
-        cls.def("get_rules", &View::get_rules, nb::rv_policy::reference_internal);
+        cls.def("get_rules", &View::get_rules);
     if constexpr (requires(const View& view) { view.template get_features<runir::kr::ps::dl::BooleanFeature>(); })
     {
-        cls.def("get_boolean_features", &View::template get_features<runir::kr::ps::dl::BooleanFeature>, nb::rv_policy::reference_internal);
-        cls.def("get_numerical_features", &View::template get_features<runir::kr::ps::dl::NumericalFeature>, nb::rv_policy::reference_internal);
+        cls.def("get_boolean_features", &View::template get_features<runir::kr::ps::dl::BooleanFeature>);
+        cls.def("get_numerical_features", &View::template get_features<runir::kr::ps::dl::NumericalFeature>);
     }
     if constexpr (requires(const View& view, GroundContext& context) {
                       { is_compatible_with(view, context) } -> std::same_as<bool>;

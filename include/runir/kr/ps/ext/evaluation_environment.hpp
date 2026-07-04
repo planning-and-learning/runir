@@ -9,7 +9,6 @@
 
 #include <cstddef>
 #include <utility>
-#include <vector>
 
 namespace runir::kr::ps::ext
 {
@@ -24,24 +23,23 @@ private:
     runir::kr::dl::semantics::Builder m_dl_builder;
     runir::kr::dl::semantics::DenotationRepositoryFactory m_dl_denotation_repository_factory;
     runir::kr::dl::semantics::DenotationRepository m_dl_denotation_repository;
-    std::vector<ModuleView> m_modules;
+    ModuleProgramView m_program;
 
 public:
-    explicit EvaluationEnvironment(std::vector<ModuleView> modules = {}) :
+    explicit EvaluationEnvironment(ModuleProgramView program) :
         m_dl_builder(),
         m_dl_denotation_repository_factory(),
         m_dl_denotation_repository(m_dl_denotation_repository_factory.create()),
-        m_modules(std::move(modules))
+        m_program(program)
     {
     }
 
-    const auto& get_modules() const noexcept { return m_modules; }
-    void set_modules(std::vector<ModuleView> modules) { m_modules = std::move(modules); }
-    auto& get_dl_repository() noexcept { return m_modules.front().get_context().get_dl_repository(); }
+    auto get_program() const noexcept { return m_program; }
+    auto& get_dl_repository() noexcept { return m_program.get_context().get_dl_repository(); }
 
     EvaluationContext<Kind> make_context(tyr::planning::StateView<Kind> state, ModuleView module) const
     {
-        return EvaluationContext<Kind>(std::move(state), module, {}, {}, {}, {}, m_modules);
+        return EvaluationContext<Kind>(std::move(state), m_program, module);
     }
 
     EvaluationContext<Kind> make_context(tyr::planning::StateView<Kind> state,

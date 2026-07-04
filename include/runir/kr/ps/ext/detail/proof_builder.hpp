@@ -30,18 +30,19 @@ private:
 public:
     ModuleProgramProofBuilder(const runir::datasets::TaskSearchContext<Kind>& search_context,
                               const tyr::planning::Node<Kind>& initial_node,
+                              ModuleProgramView program,
                               runir::datasets::TaskSearchContextPtr<Kind> context_owner = {}) :
         m_result(),
         m_builder(),
         m_vertex_to_index(),
-        m_expander(search_context, initial_node)
+        m_expander(search_context, initial_node, program)
     {
         m_result.context_owner = std::move(context_owner);
     }
 
     bool is_goal(const tyr::planning::StateView<Kind>& state) { return m_expander.is_goal(state); }
 
-    auto internal_steps(const EvaluationContext<Kind>& context) { return m_expander.internal_steps(context); }
+    auto load_steps(const EvaluationContext<Kind>& context) { return m_expander.load_steps(context); }
 
     auto control_steps(const runir::datasets::TaskSearchContext<Kind>& search_context,
                        const EvaluationContext<Kind>& context,

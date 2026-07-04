@@ -64,6 +64,86 @@ auto non_terminal_string_parser()
         return raw[lexeme[lit("n_") >> +digit]];
 }
 
+#define RUNIR_CONCEPT_CONSTRUCTORS(Family, prefix, X)                                                                                 \
+    X(Family, prefix, runir::kr::dl::ConceptTag, BotTag, concept_bot)                                                                 \
+    X(Family, prefix, runir::kr::dl::ConceptTag, TopTag, concept_top)                                                                 \
+    X(Family, prefix, runir::kr::dl::ConceptTag, ConceptAtomicStateSyntaxTag, concept_atomic_state)                                   \
+    X(Family, prefix, runir::kr::dl::ConceptTag, ConceptAtomicGoalSyntaxTag, concept_atomic_goal)                                     \
+    X(Family, prefix, runir::kr::dl::ConceptTag, ConceptIntersectionSyntaxTag, concept_intersection)                                  \
+    X(Family, prefix, runir::kr::dl::ConceptTag, ConceptUnionSyntaxTag, concept_union)                                                \
+    X(Family, prefix, runir::kr::dl::ConceptTag, NegationTag, concept_negation)                                                       \
+    X(Family, prefix, runir::kr::dl::ConceptTag, ValueRestrictionTag, concept_value_restriction)                                      \
+    X(Family, prefix, runir::kr::dl::ConceptTag, ExistentialQuantificationTag, concept_existential_quantification)                    \
+    X(Family, prefix, runir::kr::dl::ConceptTag, AtLeastNumberRestrictionTag, concept_at_least_number_restriction)                    \
+    X(Family, prefix, runir::kr::dl::ConceptTag, AtMostNumberRestrictionTag, concept_at_most_number_restriction)                      \
+    X(Family, prefix, runir::kr::dl::ConceptTag, ExactNumberRestrictionTag, concept_exact_number_restriction)                         \
+    X(Family, prefix, runir::kr::dl::ConceptTag, QualifiedAtLeastNumberRestrictionTag, concept_qualified_at_least_number_restriction) \
+    X(Family, prefix, runir::kr::dl::ConceptTag, QualifiedAtMostNumberRestrictionTag, concept_qualified_at_most_number_restriction)   \
+    X(Family, prefix, runir::kr::dl::ConceptTag, QualifiedExactNumberRestrictionTag, concept_qualified_exact_number_restriction)      \
+    X(Family, prefix, runir::kr::dl::ConceptTag, RoleValueMapTag, concept_role_value_map)                                             \
+    X(Family, prefix, runir::kr::dl::ConceptTag, AgreementTag, concept_agreement)                                                     \
+    X(Family, prefix, runir::kr::dl::ConceptTag, RoleFillersTag, concept_role_fillers)                                                \
+    X(Family, prefix, runir::kr::dl::ConceptTag, OneOfTag, concept_one_of)                                                            \
+    X(Family, prefix, runir::kr::dl::ConceptTag, NominalTag, concept_nominal)                                                         \
+    X(Family, prefix, runir::kr::dl::ConceptTag, RegisterTag, concept_register)                                                       \
+    X(Family, prefix, runir::kr::dl::ConceptTag, ArgumentTag<runir::kr::dl::ConceptTag>, concept_argument)
+
+#define RUNIR_ROLE_CONSTRUCTORS(Family, prefix, X)                                                              \
+    X(Family, prefix, runir::kr::dl::RoleTag, UniversalTag, role_universal)                                     \
+    X(Family, prefix, runir::kr::dl::RoleTag, RoleAtomicStateSyntaxTag, role_atomic_state)                      \
+    X(Family, prefix, runir::kr::dl::RoleTag, RoleAtomicGoalSyntaxTag, role_atomic_goal)                        \
+    X(Family, prefix, runir::kr::dl::RoleTag, RoleIntersectionSyntaxTag, role_intersection)                     \
+    X(Family, prefix, runir::kr::dl::RoleTag, RoleUnionSyntaxTag, role_union)                                   \
+    X(Family, prefix, runir::kr::dl::RoleTag, ComplementTag, role_complement)                                   \
+    X(Family, prefix, runir::kr::dl::RoleTag, InverseTag, role_inverse)                                         \
+    X(Family, prefix, runir::kr::dl::RoleTag, CompositionTag, role_composition)                                 \
+    X(Family, prefix, runir::kr::dl::RoleTag, TransitiveClosureTag, role_transitive_closure)                    \
+    X(Family, prefix, runir::kr::dl::RoleTag, ReflexiveTransitiveClosureTag, role_reflexive_transitive_closure) \
+    X(Family, prefix, runir::kr::dl::RoleTag, RestrictionTag, role_restriction)                                 \
+    X(Family, prefix, runir::kr::dl::RoleTag, IdentityTag, role_identity)                                       \
+    X(Family, prefix, runir::kr::dl::RoleTag, RegisterTag, role_register)                                       \
+    X(Family, prefix, runir::kr::dl::RoleTag, ArgumentTag<runir::kr::dl::RoleTag>, role_argument)
+
+#define RUNIR_BOOLEAN_CONSTRUCTORS(Family, prefix, X)                                               \
+    X(Family, prefix, runir::kr::dl::BooleanTag, BooleanAtomicStateSyntaxTag, boolean_atomic_state) \
+    X(Family, prefix, runir::kr::dl::BooleanTag, BooleanAtomicGoalSyntaxTag, boolean_atomic_goal)   \
+    X(Family, prefix, runir::kr::dl::BooleanTag, NonemptyTag, boolean_nonempty)                     \
+    X(Family, prefix, runir::kr::dl::BooleanTag, BooleanEqTag, boolean_eq)                          \
+    X(Family, prefix, runir::kr::dl::BooleanTag, BooleanNeTag, boolean_neq)                         \
+    X(Family, prefix, runir::kr::dl::BooleanTag, BooleanLtTag, boolean_lt)                          \
+    X(Family, prefix, runir::kr::dl::BooleanTag, BooleanLeTag, boolean_le)                          \
+    X(Family, prefix, runir::kr::dl::BooleanTag, BooleanGtTag, boolean_gt)                          \
+    X(Family, prefix, runir::kr::dl::BooleanTag, BooleanGeTag, boolean_ge)                          \
+    X(Family, prefix, runir::kr::dl::BooleanTag, NumericalEqTag, numerical_eq)                      \
+    X(Family, prefix, runir::kr::dl::BooleanTag, NumericalNeTag, numerical_neq)                     \
+    X(Family, prefix, runir::kr::dl::BooleanTag, NumericalLtTag, numerical_lt)                      \
+    X(Family, prefix, runir::kr::dl::BooleanTag, NumericalLeTag, numerical_le)                      \
+    X(Family, prefix, runir::kr::dl::BooleanTag, NumericalGtTag, numerical_gt)                      \
+    X(Family, prefix, runir::kr::dl::BooleanTag, NumericalGeTag, numerical_ge)                      \
+    X(Family, prefix, runir::kr::dl::BooleanTag, BooleanConstantTag, boolean_constant)              \
+    X(Family, prefix, runir::kr::dl::BooleanTag, AndTag, boolean_and)                               \
+    X(Family, prefix, runir::kr::dl::BooleanTag, OrTag, boolean_or)                                 \
+    X(Family, prefix, runir::kr::dl::BooleanTag, NotTag, boolean_not)                               \
+    X(Family, prefix, runir::kr::dl::BooleanTag, ArgumentTag<runir::kr::dl::BooleanTag>, boolean_argument)
+
+#define RUNIR_NUMERICAL_CONSTRUCTORS(Family, prefix, X)                                      \
+    X(Family, prefix, runir::kr::dl::NumericalTag, CountTag, numerical_count)                \
+    X(Family, prefix, runir::kr::dl::NumericalTag, DistanceTag, numerical_distance)          \
+    X(Family, prefix, runir::kr::dl::NumericalTag, NumericalConstantTag, numerical_constant) \
+    X(Family, prefix, runir::kr::dl::NumericalTag, AddTag, numerical_add)                    \
+    X(Family, prefix, runir::kr::dl::NumericalTag, SubTag, numerical_sub)                    \
+    X(Family, prefix, runir::kr::dl::NumericalTag, MulTag, numerical_mul)                    \
+    X(Family, prefix, runir::kr::dl::NumericalTag, DivTag, numerical_div)                    \
+    X(Family, prefix, runir::kr::dl::NumericalTag, MinTag, numerical_min)                    \
+    X(Family, prefix, runir::kr::dl::NumericalTag, MaxTag, numerical_max)                    \
+    X(Family, prefix, runir::kr::dl::NumericalTag, ArgumentTag<runir::kr::dl::NumericalTag>, numerical_argument)
+
+#define RUNIR_DECLARE_CONSTRUCTOR_RULE(Family, prefix, Category, Tag, name) \
+    constructor_tag_type<Family, Category, runir::kr::dl::Tag> const prefix##_##name = #name;
+
+#define RUNIR_CONSTRUCTOR_ALTERNATIVE(Family, prefix, Category, Tag, name) \
+    | maybe<has_ast_constructor_tag_v<Family, Category, runir::kr::dl::Tag>>(prefix##_##name)
+
 #define RUNIR_DEFINE_FAMILY_PARSER(Family, prefix)                                                                                                             \
     constructor_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept = "concept";                                                                    \
     constructor_root_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_root = "concept_root";                                                     \
@@ -90,181 +170,24 @@ auto non_terminal_string_parser()
     grammar_body_type<Family> const prefix##_grammar_body = "grammar_body";                                                                                    \
     grammar_type<Family> const prefix##_grammar = "grammar";                                                                                                   \
     grammar_root_type<Family> const prefix##_grammar_root = "grammar_root";                                                                                    \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::BotTag> const prefix##_concept_bot = "concept_bot";                                 \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::TopTag> const prefix##_concept_top = "concept_top";                                 \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicStateSyntaxTag> const prefix##_concept_atomic_state =                  \
-        "concept_atomic_state";                                                                                                                                \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicGoalSyntaxTag> const prefix##_concept_atomic_goal =                    \
-        "concept_atomic_goal";                                                                                                                                 \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptIntersectionSyntaxTag> const prefix##_concept_intersection =                 \
-        "concept_intersection";                                                                                                                                \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptUnionSyntaxTag> const prefix##_concept_union = "concept_union";              \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NegationTag> const prefix##_concept_negation = "concept_negation";                  \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ValueRestrictionTag> const prefix##_concept_value_restriction =                     \
-        "concept_value_restriction";                                                                                                                           \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExistentialQuantificationTag> const prefix##_concept_existential_quantification =   \
-        "concept_existential_quantification";                                                                                                                  \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtLeastNumberRestrictionTag> const prefix##_concept_at_least_number_restriction =   \
-        "concept_at_least_number_restriction";                                                                                                                 \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtMostNumberRestrictionTag> const prefix##_concept_at_most_number_restriction =     \
-        "concept_at_most_number_restriction";                                                                                                                  \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExactNumberRestrictionTag> const prefix##_concept_exact_number_restriction =        \
-        "concept_exact_number_restriction";                                                                                                                    \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> const                                         \
-        prefix##_concept_qualified_at_least_number_restriction = "concept_qualified_at_least_number_restriction";                                              \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag> const                                          \
-        prefix##_concept_qualified_at_most_number_restriction = "concept_qualified_at_most_number_restriction";                                                \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedExactNumberRestrictionTag> const                                           \
-        prefix##_concept_qualified_exact_number_restriction = "concept_qualified_exact_number_restriction";                                                    \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleValueMapTag> const prefix##_concept_role_value_map = "concept_role_value_map";  \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AgreementTag> const prefix##_concept_agreement = "concept_agreement";               \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleFillersTag> const prefix##_concept_role_fillers = "concept_role_fillers";       \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::OneOfTag> const prefix##_concept_one_of = "concept_one_of";                         \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag> const prefix##_concept_nominal = "concept_nominal";                     \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag> const prefix##_concept_register = "concept_register";                  \
-    constructor_tag_type<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>> const prefix##_concept_argument =           \
-        "concept_argument";                                                                                                                                    \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::UniversalTag> const prefix##_role_universal = "role_universal";                        \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicStateSyntaxTag> const prefix##_role_atomic_state = "role_atomic_state";      \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoalSyntaxTag> const prefix##_role_atomic_goal = "role_atomic_goal";         \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleIntersectionSyntaxTag> const prefix##_role_intersection = "role_intersection";     \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleUnionSyntaxTag> const prefix##_role_union = "role_union";                          \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::ComplementTag> const prefix##_role_complement = "role_complement";                     \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::InverseTag> const prefix##_role_inverse = "role_inverse";                              \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::CompositionTag> const prefix##_role_composition = "role_composition";                  \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::TransitiveClosureTag> const prefix##_role_transitive_closure =                         \
-        "role_transitive_closure";                                                                                                                             \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::ReflexiveTransitiveClosureTag> const prefix##_role_reflexive_transitive_closure =      \
-        "role_reflexive_transitive_closure";                                                                                                                   \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::RestrictionTag> const prefix##_role_restriction = "role_restriction";                  \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::IdentityTag> const prefix##_role_identity = "role_identity";                           \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag> const prefix##_role_register = "role_register";                           \
-    constructor_tag_type<Family, runir::kr::dl::RoleTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>> const prefix##_role_argument = "role_argument";   \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag> const prefix##_boolean_atomic_state =                  \
-        "boolean_atomic_state";                                                                                                                                \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag> const prefix##_boolean_atomic_goal =                    \
-        "boolean_atomic_goal";                                                                                                                                 \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NonemptyTag> const prefix##_boolean_nonempty = "boolean_nonempty";                  \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanEqTag> const prefix##_boolean_eq = "boolean_eq";                             \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanNeTag> const prefix##_boolean_neq = "boolean_neq";                           \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanLtTag> const prefix##_boolean_lt = "boolean_lt";                             \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanLeTag> const prefix##_boolean_le = "boolean_le";                             \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanGtTag> const prefix##_boolean_gt = "boolean_gt";                             \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanGeTag> const prefix##_boolean_ge = "boolean_ge";                             \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalEqTag> const prefix##_numerical_eq = "numerical_eq";                       \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalNeTag> const prefix##_numerical_neq = "numerical_neq";                     \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalLtTag> const prefix##_numerical_lt = "numerical_lt";                       \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalLeTag> const prefix##_numerical_le = "numerical_le";                       \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalGtTag> const prefix##_numerical_gt = "numerical_gt";                       \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalGeTag> const prefix##_numerical_ge = "numerical_ge";                       \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanConstantTag> const prefix##_boolean_constant = "boolean_constant";           \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::AndTag> const prefix##_boolean_and = "boolean_and";                                 \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::OrTag> const prefix##_boolean_or = "boolean_or";                                    \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NotTag> const prefix##_boolean_not = "boolean_not";                                 \
-    constructor_tag_type<Family, runir::kr::dl::BooleanTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>> const prefix##_boolean_argument =           \
-        "boolean_argument";                                                                                                                                    \
-    constructor_tag_type<Family, runir::kr::dl::NumericalTag, runir::kr::dl::CountTag> const prefix##_numerical_count = "numerical_count";                     \
-    constructor_tag_type<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag> const prefix##_numerical_distance = "numerical_distance";            \
-    constructor_tag_type<Family, runir::kr::dl::NumericalTag, runir::kr::dl::NumericalConstantTag> const prefix##_numerical_constant = "numerical_constant";   \
-    constructor_tag_type<Family, runir::kr::dl::NumericalTag, runir::kr::dl::AddTag> const prefix##_numerical_add = "numerical_add";                           \
-    constructor_tag_type<Family, runir::kr::dl::NumericalTag, runir::kr::dl::SubTag> const prefix##_numerical_sub = "numerical_sub";                           \
-    constructor_tag_type<Family, runir::kr::dl::NumericalTag, runir::kr::dl::MulTag> const prefix##_numerical_mul = "numerical_mul";                           \
-    constructor_tag_type<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DivTag> const prefix##_numerical_div = "numerical_div";                           \
-    constructor_tag_type<Family, runir::kr::dl::NumericalTag, runir::kr::dl::MinTag> const prefix##_numerical_min = "numerical_min";                           \
-    constructor_tag_type<Family, runir::kr::dl::NumericalTag, runir::kr::dl::MaxTag> const prefix##_numerical_max = "numerical_max";                           \
-    constructor_tag_type<Family, runir::kr::dl::NumericalTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>> const prefix##_numerical_argument =     \
-        "numerical_argument";                                                                                                                                  \
-    const auto prefix##_concept_def =                                                                                                                          \
-        maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::BotTag>>(prefix##_concept_bot)                                       \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::TopTag>>(prefix##_concept_top)                                     \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicStateSyntaxTag>>(prefix##_concept_atomic_state)       \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicGoalSyntaxTag>>(prefix##_concept_atomic_goal)         \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptIntersectionSyntaxTag>>(prefix##_concept_intersection)      \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptUnionSyntaxTag>>(prefix##_concept_union)                    \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NegationTag>>(prefix##_concept_negation)                           \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ValueRestrictionTag>>(prefix##_concept_value_restriction)          \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExistentialQuantificationTag>>(                                    \
-            prefix##_concept_existential_quantification)                                                                                                       \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtLeastNumberRestrictionTag>>(                                     \
-            prefix##_concept_at_least_number_restriction)                                                                                                      \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtMostNumberRestrictionTag>>(                                      \
-            prefix##_concept_at_most_number_restriction)                                                                                                       \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExactNumberRestrictionTag>>(                                       \
-            prefix##_concept_exact_number_restriction)                                                                                                         \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>>(                            \
-            prefix##_concept_qualified_at_least_number_restriction)                                                                                            \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag>>(                             \
-            prefix##_concept_qualified_at_most_number_restriction)                                                                                             \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedExactNumberRestrictionTag>>(                              \
-            prefix##_concept_qualified_exact_number_restriction)                                                                                               \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleValueMapTag>>(prefix##_concept_role_value_map)                 \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AgreementTag>>(prefix##_concept_agreement)                         \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleFillersTag>>(prefix##_concept_role_fillers)                    \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::OneOfTag>>(prefix##_concept_one_of)                                \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag>>(prefix##_concept_nominal)                             \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag>>(prefix##_concept_register)                           \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>(                          \
-            prefix##_concept_argument);                                                                                                                        \
+    RUNIR_CONCEPT_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                                 \
+    RUNIR_ROLE_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                                    \
+    RUNIR_BOOLEAN_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                                 \
+    RUNIR_NUMERICAL_CONSTRUCTORS(Family, prefix, RUNIR_DECLARE_CONSTRUCTOR_RULE)                                                                               \
+    const auto prefix##_concept_def = x3::eps(false) RUNIR_CONCEPT_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);                                \
     const auto prefix##_concept_root_def = prefix##_concept > eoi;                                                                                             \
     const auto prefix##_concept_non_terminal_def = non_terminal_string_parser<runir::kr::dl::ConceptTag>();                                                    \
     const auto prefix##_concept_choice_def = prefix##_concept_non_terminal | prefix##_concept;                                                                 \
-    const auto prefix##_role_def =                                                                                                                             \
-        maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::UniversalTag>>(prefix##_role_universal)                                 \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicStateSyntaxTag>>(prefix##_role_atomic_state)                \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoalSyntaxTag>>(prefix##_role_atomic_goal)                  \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleIntersectionSyntaxTag>>(prefix##_role_intersection)               \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleUnionSyntaxTag>>(prefix##_role_union)                             \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::ComplementTag>>(prefix##_role_complement)                             \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::InverseTag>>(prefix##_role_inverse)                                   \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::CompositionTag>>(prefix##_role_composition)                           \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::TransitiveClosureTag>>(prefix##_role_transitive_closure)              \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::ReflexiveTransitiveClosureTag>>(                                      \
-            prefix##_role_reflexive_transitive_closure)                                                                                                        \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::RestrictionTag>>(prefix##_role_restriction)                           \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::IdentityTag>>(prefix##_role_identity)                                 \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag>>(prefix##_role_register)                                 \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::RoleTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>(prefix##_role_argument);        \
+    const auto prefix##_role_def = x3::eps(false) RUNIR_ROLE_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);                                      \
     const auto prefix##_role_root_def = prefix##_role > eoi;                                                                                                   \
     const auto prefix##_role_non_terminal_def = non_terminal_string_parser<runir::kr::dl::RoleTag>();                                                          \
     const auto prefix##_role_choice_def = prefix##_role_non_terminal | prefix##_role;                                                                          \
     const auto prefix##_constructor_or_non_terminal_variant_def = prefix##_concept_choice | prefix##_role_choice;                                              \
-    const auto prefix##_boolean_def =                                                                                                                          \
-        maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag>>(prefix##_boolean_atomic_state)         \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag>>(prefix##_boolean_atomic_goal)         \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NonemptyTag>>(prefix##_boolean_nonempty)                           \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanEqTag>>(prefix##_boolean_eq)                                \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanNeTag>>(prefix##_boolean_neq)                               \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanLtTag>>(prefix##_boolean_lt)                                \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanLeTag>>(prefix##_boolean_le)                                \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanGtTag>>(prefix##_boolean_gt)                                \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanGeTag>>(prefix##_boolean_ge)                                \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalEqTag>>(prefix##_numerical_eq)                            \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalNeTag>>(prefix##_numerical_neq)                           \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalLtTag>>(prefix##_numerical_lt)                            \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalLeTag>>(prefix##_numerical_le)                            \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalGtTag>>(prefix##_numerical_gt)                            \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NumericalGeTag>>(prefix##_numerical_ge)                            \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanConstantTag>>(prefix##_boolean_constant)                    \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::AndTag>>(prefix##_boolean_and)                                     \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::OrTag>>(prefix##_boolean_or)                                       \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NotTag>>(prefix##_boolean_not)                                     \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::BooleanTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>(                          \
-            prefix##_boolean_argument);                                                                                                                        \
+    const auto prefix##_boolean_def = x3::eps(false) RUNIR_BOOLEAN_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);                                \
     const auto prefix##_boolean_root_def = prefix##_boolean > eoi;                                                                                             \
     const auto prefix##_boolean_non_terminal_def = non_terminal_string_parser<runir::kr::dl::BooleanTag>();                                                    \
     const auto prefix##_boolean_choice_def = prefix##_boolean_non_terminal | prefix##_boolean;                                                                 \
-    const auto prefix##_numerical_def =                                                                                                                        \
-        maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::NumericalTag, runir::kr::dl::CountTag>>(prefix##_numerical_count)                               \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag>>(prefix##_numerical_distance)                       \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::NumericalTag, runir::kr::dl::NumericalConstantTag>>(prefix##_numerical_constant)              \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::NumericalTag, runir::kr::dl::AddTag>>(prefix##_numerical_add)                                 \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::NumericalTag, runir::kr::dl::SubTag>>(prefix##_numerical_sub)                                 \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::NumericalTag, runir::kr::dl::MulTag>>(prefix##_numerical_mul)                                 \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DivTag>>(prefix##_numerical_div)                                 \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::NumericalTag, runir::kr::dl::MinTag>>(prefix##_numerical_min)                                 \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::NumericalTag, runir::kr::dl::MaxTag>>(prefix##_numerical_max)                                 \
-        | maybe<has_ast_constructor_tag_v<Family, runir::kr::dl::NumericalTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>(                      \
-            prefix##_numerical_argument);                                                                                                                      \
+    const auto prefix##_numerical_def = x3::eps(false) RUNIR_NUMERICAL_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);                            \
     const auto prefix##_numerical_root_def = prefix##_numerical > eoi;                                                                                         \
     const auto prefix##_numerical_non_terminal_def = non_terminal_string_parser<runir::kr::dl::NumericalTag>();                                                \
     const auto prefix##_numerical_choice_def = prefix##_numerical_non_terminal | prefix##_numerical;                                                           \
@@ -499,6 +422,12 @@ RUNIR_DEFINE_FAMILY_PARSER(runir::kr::ExtFamilyTag, ext_family)
 RUNIR_DEFINE_FAMILY_PARSER(runir::kr::UnsFamilyTag, uns_family)
 
 #undef RUNIR_DEFINE_FAMILY_PARSER
+#undef RUNIR_CONSTRUCTOR_ALTERNATIVE
+#undef RUNIR_DECLARE_CONSTRUCTOR_RULE
+#undef RUNIR_NUMERICAL_CONSTRUCTORS
+#undef RUNIR_BOOLEAN_CONSTRUCTORS
+#undef RUNIR_ROLE_CONSTRUCTORS
+#undef RUNIR_CONCEPT_CONSTRUCTORS
 
 template<>
 concept_type<runir::kr::BaseFamilyTag> const& concept_parser<runir::kr::BaseFamilyTag>()

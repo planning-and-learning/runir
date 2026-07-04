@@ -1,21 +1,8 @@
 #ifndef RUNIR_KR_PS_EXT_SUCCESSOR_EXPANDER_HPP_
 #define RUNIR_KR_PS_EXT_SUCCESSOR_EXPANDER_HPP_
 
-// Single source of module-program successor expansion.
-//
-// `SuccessorExpander` is the one place a rule is applied to a source vertex (an `EvaluationContext`:
-// state + memory + registers). Its private `make_step` runs the executor's `execute_*` for the rule
-// and packages the result as a `ModuleProgramStep` (resulting context + planning transition + rule).
-// Everything else is a view over `make_step`:
-//   - `internal_steps` / `control_steps` enumerate the Load and Sketch/Do/Call moves; the prove
-//     driver takes all of them and the greedy driver takes the first, so the two can never disagree.
-//   - `apply` / `internal_successors` wrap a step as the proof graph's own
-//     `ModuleProgramProofVertexLabel` / `ModuleProgramProofEdgeLabel`, the structures runir-mcp
-//     renders, so the public frontier reuses the exact same construction.
-// `ModuleProgramProofBuilder` also delegates its node construction (`make_vertex_label`) here.
-//
-// Rule kinds are dispatched with `if constexpr` over every variant alternative (with a
-// `ygg::dependent_false` catch-all), so adding a rule kind is a compile error until handled here.
+// Single source of module-program execution steps. The proof search explores all returned
+// steps; greedy execution takes the first.
 
 #include "runir/datasets/state_graph.hpp"
 #include "runir/datasets/task_class.hpp"
@@ -74,15 +61,6 @@ inline constexpr bool matches_rule_kind_v = MatchesRuleKind<std::remove_cvref_t<
 template<tyr::planning::TaskKind Kind>
 class SuccessorExpander
 {
-private:
-    static std::vector<ModuleView> collect_modules(ModuleProgramView program)
-    {
-        auto result = std::vector<ModuleView> {};
-        for (auto module : program.get_modules())
-            result.push_back(module);
-        return result;
-    }
-
 public:
     using VertexLabel = ModuleProgramProofVertexLabel<Kind>;
     using EdgeLabel = ModuleProgramProofEdgeLabel;
@@ -92,19 +70,17 @@ public:
 
     SuccessorExpander(const runir::datasets::TaskSearchContext<Kind>& search_context,
                       const tyr::planning::Node<Kind>& initial_node,
-                      std::vector<ModuleView> modules = {}) :
+                      ModuleProgramView program) :
         m_search_context(&search_context),
         m_goal_strategy(*search_context.task),
         m_initial_state(initial_node.get_state()),
         m_static_goal_satisfied(m_goal_strategy.is_static_goal_satisfied(*search_context.task)),
-        m_environment(std::move(modules))
+        m_environment(program)
     {
     }
 
-    SuccessorExpander(const runir::datasets::TaskSearchContext<Kind>& search_context,
-                      tyr::planning::StateView<Kind> initial_state,
-                      std::vector<ModuleView> modules = {}) :
-        SuccessorExpander(search_context, tyr::planning::Node<Kind>(std::move(initial_state), ygg::float_t(0)), std::move(modules))
+    SuccessorExpander(const runir::datasets::TaskSearchContext<Kind>& search_context, tyr::planning::StateView<Kind> initial_state, ModuleProgramView program) :
+        SuccessorExpander(search_context, tyr::planning::Node<Kind>(std::move(initial_state), ygg::float_t(0)), program)
     {
     }
 
@@ -117,10 +93,9 @@ public:
         return m_environment.make_context(std::move(source_state), module, memory_state, std::move(concept_registers), std::move(role_registers));
     }
 
-    EvaluationContext<Kind> initial_context(ModuleProgramView program)
+    EvaluationContext<Kind> initial_context()
     {
-        if (m_environment.get_modules().empty())
-            m_environment.set_modules(collect_modules(program));
+        const auto program = m_environment.get_program();
         return m_environment.make_context(m_initial_state, program.get_entry_module());
     }
 
@@ -145,12 +120,7 @@ public:
     // The internal (Load) moves at the vertex: each holds the planning state fixed and changes the
     // memory state by binding a register. An empty-denotation Load yields a FAILURE step. This is
     // the prove/greedy load enumeration.
-    std::vector<Step> internal_steps(const EvaluationContext<Kind>& context)
-    {
-        ensure_modules(context);
-        return collect_steps<LoadTag>(context, {});
-    }
-    std::vector<Step> load_successors(const EvaluationContext<Kind>& context) { return internal_steps(context); }
+    std::vector<Step> load_steps(const EvaluationContext<Kind>& context) { return collect_steps<LoadTag>(context, {}); }
 
     // The control moves at the vertex, in the executor's priority order: immediate external rules
     // (Do/Call) first; if none fire, Sketch rules; if none fire, the IW transition search to a
@@ -161,7 +131,6 @@ public:
                                     const EvaluationContext<Kind>& context,
                                     const detail::ModuleExecutionOptions<Kind>& options)
     {
-        ensure_modules(context);
         const auto node = search_context.successor_generator->get_node(context.get_state().get_index());
         const auto successors = search_context.successor_generator->get_labeled_successor_nodes(node);
 
@@ -206,7 +175,7 @@ public:
         return std::vector<Step> { Step(detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION, context) };
     }
 
-    std::vector<Step> control_successors(const EvaluationContext<Kind>& context, const ModuleProgramSearchOptions<Kind>& options)
+    std::vector<Step> control_steps(const EvaluationContext<Kind>& context, const ModuleProgramSearchOptions<Kind>& options)
     {
         return control_steps(*m_search_context, context, detail::execution_options(options));
     }
@@ -214,32 +183,25 @@ public:
     // The control rule (Sketch/Do) of the source vertex that selects the candidate planning
     // successor, or nullopt (the gap). Load/Call are internal memory steps, never a planning move.
     std::optional<RuleVariantView>
-    matching_rule_at(EvaluationContext<Kind>& context, tyr::formalism::planning::GroundActionView action, tyr::planning::StateView<Kind> target_state)
+    matching_rule(EvaluationContext<Kind>& context, tyr::formalism::planning::GroundActionView action, tyr::planning::StateView<Kind> target_state)
     {
-        return matching_rule(context, LabeledNode { action, tyr::planning::Node<Kind>(std::move(target_state), ygg::float_t(0)) });
+        return matching_rule_for_candidate(context, LabeledNode { action, tyr::planning::Node<Kind>(std::move(target_state), ygg::float_t(0)) });
     }
 
-    std::optional<Successor> apply_at(const EvaluationContext<Kind>& context,
-                                      RuleVariantView rule,
-                                      std::optional<tyr::formalism::planning::GroundActionView> action = std::nullopt,
-                                      std::optional<tyr::planning::StateView<Kind>> target_state = std::nullopt)
+    std::optional<Successor> apply(const EvaluationContext<Kind>& context,
+                                   RuleVariantView rule,
+                                   std::optional<tyr::formalism::planning::GroundActionView> action = std::nullopt,
+                                   std::optional<tyr::planning::StateView<Kind>> target_state = std::nullopt)
     {
         std::optional<LabeledNode> candidate;
         if (action && target_state)
             candidate = LabeledNode { *action, tyr::planning::Node<Kind>(*target_state, ygg::float_t(0)) };
-        return apply(context, rule, std::move(candidate));
+        return apply_rule(context, rule, std::move(candidate));
     }
 
 private:
-    void ensure_modules(const EvaluationContext<Kind>& context)
+    std::optional<RuleVariantView> matching_rule_for_candidate(EvaluationContext<Kind>& context, const LabeledNode& candidate)
     {
-        if (m_environment.get_modules().empty())
-            m_environment.set_modules(std::vector<ModuleView> { context.get_module() });
-    }
-
-    std::optional<RuleVariantView> matching_rule(EvaluationContext<Kind>& context, const LabeledNode& candidate)
-    {
-        ensure_modules(context);
         for (const auto& transition : context.get_module().get_memory_transitions())
             for (auto rule : transition)
                 if (selects(rule, context, candidate))
@@ -247,9 +209,8 @@ private:
         return std::nullopt;
     }
 
-    std::optional<Successor> apply(const EvaluationContext<Kind>& context, RuleVariantView rule, std::optional<LabeledNode> candidate = std::nullopt)
+    std::optional<Successor> apply_rule(const EvaluationContext<Kind>& context, RuleVariantView rule, std::optional<LabeledNode> candidate = std::nullopt)
     {
-        ensure_modules(context);
         const auto successors = candidate ? std::vector<LabeledNode> { *candidate } : std::vector<LabeledNode> {};
         const auto step = step_for(rule, context, successors);
         return step ? to_successor(*step) : std::nullopt;

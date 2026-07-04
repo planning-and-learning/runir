@@ -22,12 +22,7 @@ private:
     EvaluationContext<Kind> m_context;
 
 public:
-    explicit ModuleProgramTransitionGoalStrategy(const EvaluationContext<Kind>& context) :
-        m_environment(context.get_modules().empty() ? std::vector<ModuleView> { context.get_module() } : context.get_modules()),
-        m_context(context)
-    {
-    }
-
+    explicit ModuleProgramTransitionGoalStrategy(const EvaluationContext<Kind>& context) : m_environment(context.get_program()), m_context(context) {}
     bool is_static_goal_satisfied(const tyr::planning::Task<Kind>& task) override
     {
         static_cast<void>(task);

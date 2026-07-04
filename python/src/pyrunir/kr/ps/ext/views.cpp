@@ -31,7 +31,7 @@ void bind_view(nb::module_& m, const std::string& name)
     if constexpr (requires(const View& view) { view.get_identifier(); })
         cls.def("get_identifier", &View::get_identifier);
     if constexpr (requires(const View& view) { view.get_variant(); })
-        cls.def("get_variant", &View::get_variant, nb::rv_policy::reference_internal);
+        cls.def("get_variant", &View::get_variant);
     if constexpr (requires(const View& view) { view.get_symbol(); })
         cls.def("get_symbol", &View::get_symbol);
     if constexpr (requires(const View& view) { view.get_expression(); })
@@ -41,11 +41,11 @@ void bind_view(nb::module_& m, const std::string& name)
     if constexpr (requires(const View& view) { view.get_target(); })
         cls.def("get_target", &View::get_target, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_rules(); })
-        cls.def("get_rules", &View::get_rules, nb::rv_policy::reference_internal);
+        cls.def("get_rules", &View::get_rules);
     if constexpr (requires(const View& view) { view.get_conditions(); })
-        cls.def("get_conditions", &View::get_conditions, nb::rv_policy::reference_internal);
+        cls.def("get_conditions", &View::get_conditions);
     if constexpr (requires(const View& view) { view.get_effects(); })
-        cls.def("get_effects", &View::get_effects, nb::rv_policy::reference_internal);
+        cls.def("get_effects", &View::get_effects);
     if constexpr (requires(const View& view) { view.get_concept(); })
         cls.def("get_concept", &View::get_concept, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_register(); })
@@ -53,31 +53,31 @@ void bind_view(nb::module_& m, const std::string& name)
     if constexpr (requires(const View& view) { view.get_action_name(); })
         cls.def("get_action_name", &View::get_action_name);
     if constexpr (requires(const View& view) { view.get_action_arguments(); })
-        cls.def("get_action_arguments", &View::get_action_arguments, nb::rv_policy::reference_internal);
+        cls.def("get_action_arguments", &View::get_action_arguments);
     if constexpr (requires(const View& view) { view.get_callee(); })
         cls.def("get_callee", &View::get_callee, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.template get_registers<runir::kr::dl::ConceptTag>(); })
     {
-        cls.def("get_concept_registers", &View::template get_registers<runir::kr::dl::ConceptTag>, nb::rv_policy::reference_internal);
-        cls.def("get_role_registers", &View::template get_registers<runir::kr::dl::RoleTag>, nb::rv_policy::reference_internal);
+        cls.def("get_concept_registers", &View::template get_registers<runir::kr::dl::ConceptTag>);
+        cls.def("get_role_registers", &View::template get_registers<runir::kr::dl::RoleTag>);
     }
     if constexpr (requires(const View& view) { view.template get_features<runir::kr::dl::ConceptTag>(); })
     {
-        cls.def("get_concept_features", &View::template get_features<runir::kr::dl::ConceptTag>, nb::rv_policy::reference_internal);
-        cls.def("get_role_features", &View::template get_features<runir::kr::dl::RoleTag>, nb::rv_policy::reference_internal);
-        cls.def("get_boolean_features", &View::template get_features<runir::kr::ps::dl::BooleanFeature>, nb::rv_policy::reference_internal);
-        cls.def("get_numerical_features", &View::template get_features<runir::kr::ps::dl::NumericalFeature>, nb::rv_policy::reference_internal);
+        cls.def("get_concept_features", &View::template get_features<runir::kr::dl::ConceptTag>);
+        cls.def("get_role_features", &View::template get_features<runir::kr::dl::RoleTag>);
+        cls.def("get_boolean_features", &View::template get_features<runir::kr::ps::dl::BooleanFeature>);
+        cls.def("get_numerical_features", &View::template get_features<runir::kr::ps::dl::NumericalFeature>);
     }
     if constexpr (requires(const View& view) { view.get_entry_memory_state(); })
         cls.def("get_entry_memory_state", &View::get_entry_memory_state, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_entry_module(); })
         cls.def("get_entry_module", &View::get_entry_module, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_memory_states(); })
-        cls.def("get_memory_states", &View::get_memory_states, nb::rv_policy::reference_internal);
+        cls.def("get_memory_states", &View::get_memory_states);
     if constexpr (requires(const View& view) { view.get_memory_transitions(); })
-        cls.def("get_memory_transitions", &View::get_memory_transitions, nb::rv_policy::reference_internal);
+        cls.def("get_memory_transitions", &View::get_memory_transitions);
     if constexpr (requires(const View& view) { view.get_modules(); })
-        cls.def("get_modules", &View::get_modules, nb::rv_policy::reference_internal);
+        cls.def("get_modules", &View::get_modules);
 }
 
 }  // namespace

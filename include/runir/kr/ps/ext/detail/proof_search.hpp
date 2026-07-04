@@ -24,7 +24,7 @@ auto execute_greedy_solution(const runir::datasets::TaskSearchContext<Kind>& sea
     auto execution_state = ModuleProgramExecutionState<Kind>(search_context, program);
     auto& context = execution_state.get_context();
     const auto& initial_node = execution_state.get_initial_node();
-    auto proof = ModuleProgramProofBuilder<Kind>(search_context, initial_node, std::move(context_owner));
+    auto proof = ModuleProgramProofBuilder<Kind>(search_context, initial_node, program, std::move(context_owner));
     auto plan_steps = tyr::planning::LabeledNodeList<Kind> {};
 
     auto current_vertex = proof.get_or_create_vertex(context, ExternalMemoryState(context.get_memory_state()), true, true, false).first;
@@ -41,7 +41,7 @@ auto execute_greedy_solution(const runir::datasets::TaskSearchContext<Kind>& sea
         while (true)
         {
             const auto load_source = current_vertex;
-            const auto load_steps = proof.internal_steps(context);
+            const auto load_steps = proof.load_steps(context);
             if (load_steps.empty())
                 break;
 
@@ -122,7 +122,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
                     const ModuleExecutionOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
 {
     auto execution_state = ModuleProgramExecutionState<Kind>(search_context, program);
-    auto proof = ModuleProgramProofBuilder<Kind>(search_context, execution_state.get_initial_node(), std::move(context_owner));
+    auto proof = ModuleProgramProofBuilder<Kind>(search_context, execution_state.get_initial_node(), program, std::move(context_owner));
     auto open = std::vector<std::pair<EvaluationContext<Kind>, graphs::VertexIndex>> {};
     auto failed = false;
 
@@ -152,7 +152,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
         if (proof.is_goal(context.get_state()))
             continue;
 
-        const auto load_steps = proof.internal_steps(context);
+        const auto load_steps = proof.load_steps(context);
         if (!load_steps.empty())
         {
             for (const auto& step : load_steps)

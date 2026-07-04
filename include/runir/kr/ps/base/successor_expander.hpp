@@ -86,11 +86,6 @@ public:
                                                       return std::nullopt;
                                                   });
     }
-
-    bool is_compatible(EvaluationContext<Kind>& context, const tyr::planning::StateView<Kind>& target_state)
-    {
-        return matching_rule(context, target_state).has_value();
-    }
 };
 
 }  // namespace runir::kr::ps::base
