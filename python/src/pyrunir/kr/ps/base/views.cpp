@@ -23,48 +23,42 @@ template<typename T>
 void bind_view(nb::module_& m, const std::string& name)
 {
     using View = ygg::View<ygg::Index<T>, Repository>;
+    using GroundContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>;
+    using LiftedContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>;
 
     auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
     ygg::add_print(cls);
     ygg::add_hash(cls);
 
     if constexpr (requires(const View& view) { view.get_variant(); })
-        cls.def("get_variant", &View::get_variant);
+        cls.def("get_variant", &View::get_variant, nb::rv_policy::reference_internal);
     if constexpr (requires(const View& view) { view.get_feature(); })
-        cls.def("get_feature", &View::get_feature);
+        cls.def("get_feature", &View::get_feature, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_expression(); })
-        cls.def("get_expression", &View::get_expression);
+        cls.def("get_expression", &View::get_expression, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_symbol(); })
-        cls.def("get_symbol", [](const View& view) { return std::string(view.get_symbol()); });
+        cls.def("get_symbol", &View::get_symbol);
     if constexpr (requires(const View& view) { view.get_conditions(); })
-        cls.def("get_conditions", &View::get_conditions);
+        cls.def("get_conditions", &View::get_conditions, nb::rv_policy::reference_internal);
     if constexpr (requires(const View& view) { view.get_effects(); })
-        cls.def("get_effects", &View::get_effects);
+        cls.def("get_effects", &View::get_effects, nb::rv_policy::reference_internal);
     if constexpr (requires(const View& view) { view.get_rules(); })
-        cls.def("get_rules", &View::get_rules);
+        cls.def("get_rules", &View::get_rules, nb::rv_policy::reference_internal);
     if constexpr (requires(const View& view) { view.template get_features<runir::kr::ps::dl::BooleanFeature>(); })
     {
-        cls.def("get_boolean_features", [](const View& view) { return view.template get_features<runir::kr::ps::dl::BooleanFeature>(); });
-        cls.def("get_numerical_features", [](const View& view) { return view.template get_features<runir::kr::ps::dl::NumericalFeature>(); });
+        cls.def("get_boolean_features", &View::template get_features<runir::kr::ps::dl::BooleanFeature>, nb::rv_policy::reference_internal);
+        cls.def("get_numerical_features", &View::template get_features<runir::kr::ps::dl::NumericalFeature>, nb::rv_policy::reference_internal);
     }
-    if constexpr (requires(const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context) {
+    if constexpr (requires(const View& view, GroundContext& context) {
                       { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
-        cls.def(
-            "is_compatible_with",
-            [](const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context)
-            { return is_compatible_with(view, context); },
-            "context"_a);
-    if constexpr (requires(const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context) {
+        cls.def("is_compatible_with", nb::overload_cast<View, GroundContext&>(&is_compatible_with), "context"_a);
+    if constexpr (requires(const View& view, LiftedContext& context) {
                       { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
-        cls.def(
-            "is_compatible_with",
-            [](const View& view, runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context)
-            { return is_compatible_with(view, context); },
-            "context"_a);
+        cls.def("is_compatible_with", nb::overload_cast<View, LiftedContext&>(&is_compatible_with), "context"_a);
     if constexpr (requires(const View& view) { runir::kr::ps::base::syntactic_complexity(view); })
-        cls.def("syntactic_complexity", [](const View& view) { return runir::kr::ps::base::syntactic_complexity(view); });
+        cls.def("syntactic_complexity", nb::overload_cast<View>(&runir::kr::ps::base::syntactic_complexity));
 }
 
 }  // namespace

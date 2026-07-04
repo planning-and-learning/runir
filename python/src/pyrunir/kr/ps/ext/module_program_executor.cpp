@@ -42,11 +42,20 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
     using Options = ModuleProgramSearchOptions<Kind>;
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ModuleProgramProofVertexLabel").c_str())
-                            .def_prop_ro("state", [](const VertexLabel& label) { return label.extended_state.annotated_state.state; })
-                            .def_prop_ro("memory_state", [](const VertexLabel& label) { return label.extended_state.memory_state; })
+                            .def_prop_ro(
+                                "state",
+                                [](const VertexLabel& label) { return label.extended_state.annotated_state.state; },
+                                nb::keep_alive<0, 1>())
+                            .def_prop_ro(
+                                "memory_state",
+                                [](const VertexLabel& label) { return label.extended_state.memory_state; },
+                                nb::keep_alive<0, 1>())
                             .def_prop_ro("concept_registers", [](const VertexLabel& label) { return label.extended_state.concept_registers; })
                             .def_prop_ro("role_registers", [](const VertexLabel& label) { return label.extended_state.role_registers; })
-                            .def_prop_ro("module", [](const VertexLabel& label) { return label.module_; })
+                            .def_prop_ro(
+                                "module",
+                                [](const VertexLabel& label) { return label.module_; },
+                                nb::keep_alive<0, 1>())
                             .def_prop_ro("goal_distance", [](const VertexLabel& label) { return label.extended_state.annotated_state.goal_distance; })
                             .def_prop_ro("is_initial", [](const VertexLabel& label) { return label.extended_state.annotated_state.is_initial; })
                             .def_prop_ro("is_goal", [](const VertexLabel& label) { return label.extended_state.annotated_state.is_goal; })
@@ -62,12 +71,12 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
 
     nb::class_<Results>(m, (std::string(prefix) + "ModuleProgramProofResults").c_str())
         .def_ro("status", &Results::status)
-        .def_ro("graph", &Results::graph)
-        .def_ro("final_state", &Results::final_state)
-        .def_ro("plan", &Results::plan)
-        .def_ro("deadend_transitions", &Results::deadend_transitions)
-        .def_ro("open_states", &Results::open_states)
-        .def_ro("cycle", &Results::cycle)
+        .def_ro("graph", &Results::graph, nb::rv_policy::reference_internal)
+        .def_ro("final_state", &Results::final_state, nb::rv_policy::reference_internal)
+        .def_ro("plan", &Results::plan, nb::rv_policy::reference_internal)
+        .def_ro("deadend_transitions", &Results::deadend_transitions, nb::rv_policy::reference_internal)
+        .def_ro("open_states", &Results::open_states, nb::rv_policy::reference_internal)
+        .def_ro("cycle", &Results::cycle, nb::rv_policy::reference_internal)
         .def("is_successful", &Results::is_successful);
 
     nb::class_<Options>(m, (std::string(prefix) + "ModuleProgramSearchOptions").c_str())
@@ -90,8 +99,8 @@ void bind_module_program_executor(nb::module_& m)
     ygg::add_hash(external_memory_state);
 
     auto edge_label = nb::class_<ModuleProgramProofEdgeLabel>(m, "ModuleProgramProofEdgeLabel")
-                          .def_ro("state_transition", &ModuleProgramProofEdgeLabel::state_transition)
-                          .def_ro("rule", &ModuleProgramProofEdgeLabel::rule);
+                          .def_ro("state_transition", &ModuleProgramProofEdgeLabel::state_transition, nb::rv_policy::reference_internal)
+                          .def_ro("rule", &ModuleProgramProofEdgeLabel::rule, nb::rv_policy::reference_internal);
     ygg::add_print(edge_label);
     ygg::add_hash(edge_label);
 
@@ -146,18 +155,19 @@ void bind_module_program_executor(nb::module_& m)
     using Step = detail::ModuleProgramStep<Kind>;
     using Expander = SuccessorExpander<Kind>;
 
-    auto execution_context = nb::class_<Context>(m, "ModuleProgramExecutionContext")
-                                 .def_prop_ro("state", [](const Context& context) { return context.get_state(); })
-                                 .def_prop_ro("memory_state", [](const Context& context) { return context.get_memory_state(); })
-                                 .def_prop_ro("module", [](const Context& context) { return context.get_module(); })
-                                 .def_prop_ro("concept_registers", [](const Context& context) { return context.concept_registers(); })
-                                 .def_prop_ro("role_registers", [](const Context& context) { return context.role_registers(); });
+    auto execution_context =
+        nb::class_<Context>(m, "ModuleProgramExecutionContext")
+            .def_prop_ro("state", &Context::get_state, nb::keep_alive<0, 1>())
+            .def_prop_ro("memory_state", &Context::get_memory_state, nb::keep_alive<0, 1>())
+            .def_prop_ro("module", &Context::get_module, nb::keep_alive<0, 1>())
+            .def_prop_ro("concept_registers", nb::overload_cast<>(&Context::concept_registers, nb::const_), nb::rv_policy::reference_internal)
+            .def_prop_ro("role_registers", nb::overload_cast<>(&Context::role_registers, nb::const_), nb::rv_policy::reference_internal);
     ygg::add_hash(execution_context);
 
     nb::class_<Step>(m, "ModuleProgramExecutionStep")
         .def_prop_ro("status", &Step::get_status_name)
-        .def_prop_ro("target", &Step::get_target)
-        .def_prop_ro("edge", &Step::get_edge);
+        .def_prop_ro("target", &Step::get_target, nb::rv_policy::reference_internal)
+        .def_prop_ro("edge", &Step::get_edge, nb::rv_policy::reference_internal);
 
     nb::class_<Expander>(m, "SuccessorExpander")
         .def(nb::init<const runir::datasets::TaskSearchContext<Kind>&, tyr::planning::StateView<Kind>, std::vector<ModuleView>>(),

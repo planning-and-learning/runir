@@ -30,7 +30,7 @@ void bind_evaluation_context(nb::module_& m, const char* name)
              nb::arg("denotation_repository"),
              nb::keep_alive<1, 3>(),
              nb::keep_alive<1, 4>())
-        .def("get_state", &Context::get_state, nb::rv_policy::reference_internal);
+        .def("get_state", &Context::get_state, nb::rv_policy::copy, nb::keep_alive<0, 1>());
 }
 
 }  // namespace

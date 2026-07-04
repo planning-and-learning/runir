@@ -34,10 +34,10 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
 
     nb::class_<Results>(m, (std::string(prefix) + "SketchProofResults").c_str())
         .def_ro("status", &Results::status)
-        .def_ro("graph", &Results::graph)
-        .def_ro("deadend_transitions", &Results::deadend_transitions)
-        .def_ro("open_states", &Results::open_states)
-        .def_ro("cycle", &Results::cycle)
+        .def_ro("graph", &Results::graph, nb::rv_policy::reference_internal)
+        .def_ro("deadend_transitions", &Results::deadend_transitions, nb::rv_policy::reference_internal)
+        .def_ro("open_states", &Results::open_states, nb::rv_policy::reference_internal)
+        .def_ro("cycle", &Results::cycle, nb::rv_policy::reference_internal)
         .def("is_successful", &Results::is_successful);
 }
 
@@ -59,8 +59,8 @@ void bind_sketch_search_options(nb::module_& m, const char* name)
 void bind_sketch_executor(nb::module_& m)
 {
     auto edge_label = nb::class_<SketchProofEdgeLabel>(m, "SketchProofEdgeLabel")
-                          .def_ro("transition", &SketchProofEdgeLabel::transition)
-                          .def_ro("rule", &SketchProofEdgeLabel::rule);
+                          .def_ro("transition", &SketchProofEdgeLabel::transition, nb::rv_policy::reference_internal)
+                          .def_ro("rule", &SketchProofEdgeLabel::rule, nb::rv_policy::reference_internal);
     ygg::add_print(edge_label);
     ygg::add_hash(edge_label);
 
@@ -79,12 +79,12 @@ void bind_sketch_executor(nb::module_& m)
     using Context = EvaluationContext<Kind>;
     using Expander = SuccessorExpander<Kind>;
 
-    auto execution_context = nb::class_<Context>(m, "ExecutionContext").def_prop_ro("state", [](const Context& context) { return context.get_state(); });
+    auto execution_context = nb::class_<Context>(m, "ExecutionContext").def_prop_ro("state", &Context::get_state, nb::keep_alive<0, 1>());
     ygg::add_hash(execution_context);
 
     nb::class_<Expander>(m, "SuccessorExpander")
         .def(nb::init<SketchView>(), "sketch"_a)
-        .def("context_at", &Expander::context_at, "state"_a)
+        .def("context_at", &Expander::context_at, "state"_a, nb::keep_alive<0, 1>())
         .def("matching_rule", &Expander::matching_rule, "context"_a, "target_state"_a);
 
     m.def(

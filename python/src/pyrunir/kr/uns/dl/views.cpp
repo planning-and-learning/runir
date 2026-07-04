@@ -28,27 +28,23 @@ template<typename T>
 void bind_view(nb::module_& m, const std::string& name)
 {
     using View = ygg::View<ygg::Index<T>, runir::kr::uns::Repository>;
+    using GroundContext = runir::kr::dl::semantics::EvaluationContext<Family, tyr::planning::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::EvaluationContext<Family, tyr::planning::LiftedTag>;
 
     auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
     ygg::add_print(cls);
     ygg::add_hash(cls);
 
     if constexpr (requires(const View& view) { view.get_expression(); })
-        cls.def("get_expression", &View::get_expression);
+        cls.def("get_expression", &View::get_expression, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_feature(); })
-        cls.def("get_feature", &View::get_feature);
+        cls.def("get_feature", &View::get_feature, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_symbol(); })
-        cls.def("get_symbol", [](const View& view) { return std::string(view.get_symbol()); });
-    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<Family, tyr::planning::GroundTag>& context) { evaluate(view, context); })
-        cls.def(
-            "evaluate",
-            [](const View& view, runir::kr::dl::semantics::EvaluationContext<Family, tyr::planning::GroundTag>& context) { return evaluate(view, context); },
-            "context"_a);
-    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<Family, tyr::planning::LiftedTag>& context) { evaluate(view, context); })
-        cls.def(
-            "evaluate",
-            [](const View& view, runir::kr::dl::semantics::EvaluationContext<Family, tyr::planning::LiftedTag>& context) { return evaluate(view, context); },
-            "context"_a);
+        cls.def("get_symbol", &View::get_symbol);
+    if constexpr (requires(const View& view, GroundContext& context) { evaluate(view, context); })
+        cls.def("evaluate", nb::overload_cast<View, GroundContext&>(&evaluate), "context"_a);
+    if constexpr (requires(const View& view, LiftedContext& context) { evaluate(view, context); })
+        cls.def("evaluate", nb::overload_cast<View, LiftedContext&>(&evaluate), "context"_a);
 }
 
 }  // namespace

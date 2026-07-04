@@ -45,10 +45,10 @@ void bind_cnf_grammar_generate(nb::module_& m)
     nb::class_<runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>>(m, "GenerateResults")
         .def_ro("statistics", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::statistics)
         .def_ro("status", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::status)
-        .def_ro("concepts", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::concepts)
-        .def_ro("roles", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::roles)
-        .def_ro("booleans", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::booleans)
-        .def_ro("numericals", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::numericals);
+        .def_ro("concepts", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::concepts, nb::rv_policy::reference_internal)
+        .def_ro("roles", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::roles, nb::rv_policy::reference_internal)
+        .def_ro("booleans", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::booleans, nb::rv_policy::reference_internal)
+        .def_ro("numericals", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::numericals, nb::rv_policy::reference_internal);
 
     m.def("generate_ground",
           &generate<tyr::planning::GroundTag>,

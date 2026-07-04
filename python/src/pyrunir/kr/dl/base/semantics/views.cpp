@@ -34,58 +34,48 @@ void bind_denotation_view(nb::module_& m, const std::string& name)
     ygg::add_hash(cls);
 
     if constexpr (std::same_as<Category, BooleanTag> || std::same_as<Category, NumericalTag>)
-        cls.def("get", [](const View& view) { return view.get(); });
+        cls.def("get", &View::get);
 }
 
 template<typename T, typename Repository>
 void bind_view(nb::module_& m, const std::string& name)
 {
     using View = ygg::View<ygg::Index<T>, Repository>;
+    using GroundContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>;
 
     auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
     ygg::add_print(cls);
     ygg::add_hash(cls);
 
     if constexpr (requires(const View& view) { view.get_arg(); })
-        cls.def("get_arg", &View::get_arg);
+        cls.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_lhs(); })
-        cls.def("get_lhs", &View::get_lhs);
+        cls.def("get_lhs", &View::get_lhs, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_mid(); })
-        cls.def("get_mid", &View::get_mid);
+        cls.def("get_mid", &View::get_mid, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_rhs(); })
-        cls.def("get_rhs", &View::get_rhs);
+        cls.def("get_rhs", &View::get_rhs, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_predicate(); })
-        cls.def("get_predicate", &View::get_predicate);
+        cls.def("get_predicate", &View::get_predicate, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_polarity(); })
         cls.def("get_polarity", &View::get_polarity);
     if constexpr (requires(const View& view) { view.get_object(); })
-        cls.def("get_object", &View::get_object);
+        cls.def("get_object", &View::get_object, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_objects(); })
-        cls.def("get_objects", &View::get_objects);
+        cls.def("get_objects", &View::get_objects, nb::rv_policy::reference_internal);
     if constexpr (requires(const View& view) { view.get_n(); })
         cls.def("get_n", &View::get_n);
     if constexpr (requires(const View& view) { view.get_role(); })
-        cls.def("get_role", &View::get_role);
+        cls.def("get_role", &View::get_role, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_concept(); })
-        cls.def("get_concept", &View::get_concept);
-    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context) {
-                      runir::kr::dl::semantics::evaluate(view, context);
-                  })
-        cls.def(
-            "evaluate",
-            [](const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>& context)
-            { return runir::kr::dl::semantics::evaluate(view, context); },
-            "context"_a);
-    if constexpr (requires(const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context) {
-                      runir::kr::dl::semantics::evaluate(view, context);
-                  })
-        cls.def(
-            "evaluate",
-            [](const View& view, runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>& context)
-            { return runir::kr::dl::semantics::evaluate(view, context); },
-            "context"_a);
+        cls.def("get_concept", &View::get_concept, nb::keep_alive<0, 1>());
+    if constexpr (requires(const View& view, GroundContext& context) { runir::kr::dl::semantics::evaluate(view, context); })
+        cls.def("evaluate", nb::overload_cast<View, GroundContext&>(&runir::kr::dl::semantics::evaluate), "context"_a);
+    if constexpr (requires(const View& view, LiftedContext& context) { runir::kr::dl::semantics::evaluate(view, context); })
+        cls.def("evaluate", nb::overload_cast<View, LiftedContext&>(&runir::kr::dl::semantics::evaluate), "context"_a);
     if constexpr (requires(const View& view) { runir::kr::dl::semantics::syntactic_complexity(view); })
-        cls.def("syntactic_complexity", [](const View& view) { return runir::kr::dl::semantics::syntactic_complexity(view); });
+        cls.def("syntactic_complexity", nb::overload_cast<View>(&runir::kr::dl::semantics::syntactic_complexity));
 }
 
 }  // namespace

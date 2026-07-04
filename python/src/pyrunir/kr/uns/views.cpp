@@ -34,19 +34,19 @@ void bind_view(nb::module_& m, const std::string& name)
     ygg::add_hash(cls);
 
     if constexpr (requires(const View& view) { view.get_variant(); })
-        cls.def("get_variant", &View::get_variant);
+        cls.def("get_variant", &View::get_variant, nb::rv_policy::reference_internal);
     if constexpr (requires(const View& view) { view.get_feature(); })
-        cls.def("get_feature", &View::get_feature);
+        cls.def("get_feature", &View::get_feature, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_polarity(); })
         cls.def("get_polarity", &View::get_polarity);
     if constexpr (requires(const View& view) { view.get_literals(); })
-        cls.def("get_literals", &View::get_literals);
+        cls.def("get_literals", &View::get_literals, nb::rv_policy::reference_internal);
     if constexpr (requires(const View& view) { view.get_features(); })
-        cls.def("get_features", &View::get_features);
+        cls.def("get_features", &View::get_features, nb::rv_policy::reference_internal);
     if constexpr (requires(const View& view) { view.get_clauses(); })
-        cls.def("get_clauses", &View::get_clauses);
+        cls.def("get_clauses", &View::get_clauses, nb::rv_policy::reference_internal);
     if constexpr (requires(const View& view) { view.get_symbol(); })
-        cls.def("get_symbol", [](const View& view) { return std::string(view.get_symbol()); });
+        cls.def("get_symbol", &View::get_symbol);
 }
 
 }  // namespace

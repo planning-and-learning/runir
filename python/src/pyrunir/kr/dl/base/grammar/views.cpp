@@ -23,31 +23,31 @@ void bind_view(nb::module_& m, const std::string& name)
     ygg::add_hash(cls);
 
     if constexpr (requires(const View& view) { view.get_arg(); })
-        cls.def("get_arg", &View::get_arg);
+        cls.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_lhs(); })
-        cls.def("get_lhs", &View::get_lhs);
+        cls.def("get_lhs", &View::get_lhs, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_mid(); })
-        cls.def("get_mid", &View::get_mid);
+        cls.def("get_mid", &View::get_mid, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_rhs(); })
-        cls.def("get_rhs", &View::get_rhs);
+        cls.def("get_rhs", &View::get_rhs, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_predicate(); })
-        cls.def("get_predicate", &View::get_predicate);
+        cls.def("get_predicate", &View::get_predicate, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_polarity(); })
         cls.def("get_polarity", &View::get_polarity);
     if constexpr (requires(const View& view) { view.get_object(); })
-        cls.def("get_object", &View::get_object);
+        cls.def("get_object", &View::get_object, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_objects(); })
-        cls.def("get_objects", &View::get_objects);
+        cls.def("get_objects", &View::get_objects, nb::rv_policy::reference_internal);
     if constexpr (requires(const View& view) { view.get_n(); })
         cls.def("get_n", &View::get_n);
     if constexpr (requires(const View& view) { view.get_role(); })
-        cls.def("get_role", &View::get_role);
+        cls.def("get_role", &View::get_role, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_concept(); })
-        cls.def("get_concept", &View::get_concept);
+        cls.def("get_concept", &View::get_concept, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_name(); })
         cls.def("get_name", &View::get_name);
     if constexpr (requires(const View& view) { view.get_variant(); })
-        cls.def("get_variant", &View::get_variant);
+        cls.def("get_variant", &View::get_variant, nb::rv_policy::reference_internal);
 }
 
 }  // namespace

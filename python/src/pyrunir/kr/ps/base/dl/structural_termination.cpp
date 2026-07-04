@@ -112,19 +112,29 @@ void bind_structural_termination(nb::module_& m)
         .value("NON_TERMINATING", StructuralTerminationStatus::NON_TERMINATING);
 
     nb::class_<PolicyGraphVertexWrapper>(m, "PolicyGraphVertex")
-        .def("get_booleans", [](const PolicyGraphVertexWrapper& self) { return to_dict(self.booleans); },
-             "Truth value per Boolean feature.")
-        .def("get_numericals", [](const PolicyGraphVertexWrapper& self) { return to_dict(self.numericals); },
-             "Per numerical feature: whether its value is greater than zero.");
+        .def(
+            "get_booleans",
+            [](const PolicyGraphVertexWrapper& self) { return to_dict(self.booleans); },
+            "Truth value per Boolean feature.")
+        .def(
+            "get_numericals",
+            [](const PolicyGraphVertexWrapper& self) { return to_dict(self.numericals); },
+            "Per numerical feature: whether its value is greater than zero.");
 
     nb::class_<PolicyGraphEdgeWrapper>(m, "PolicyGraphEdge")
-        .def("get_source", [](const PolicyGraphEdgeWrapper& self) { return self.source; },
-             "Index of the source vertex in the counterexample's vertex list.")
-        .def("get_target", [](const PolicyGraphEdgeWrapper& self) { return self.target; },
-             "Index of the target vertex in the counterexample's vertex list.")
+        .def(
+            "get_source",
+            [](const PolicyGraphEdgeWrapper& self) { return self.source; },
+            "Index of the source vertex in the counterexample's vertex list.")
+        .def(
+            "get_target",
+            [](const PolicyGraphEdgeWrapper& self) { return self.target; },
+            "Index of the target vertex in the counterexample's vertex list.")
         .def("get_rule", [](const PolicyGraphEdgeWrapper& self) { return self.rule; })
-        .def("get_numerical_changes", [](const PolicyGraphEdgeWrapper& self) { return to_dict(self.numerical_changes); },
-             "Qualitative change per numerical feature.");
+        .def(
+            "get_numerical_changes",
+            [](const PolicyGraphEdgeWrapper& self) { return to_dict(self.numerical_changes); },
+            "Qualitative change per numerical feature.");
 
     nb::class_<PolicyGraphWrapper>(m, "PolicyGraph")
         .def("get_num_vertices", [](const PolicyGraphWrapper& self) { return self.vertices.size(); })
@@ -137,8 +147,10 @@ void bind_structural_termination(nb::module_& m)
         .def("is_terminating", &StructuralTerminationResultWrapper::is_terminating)
         .def("get_booleans", [](const StructuralTerminationResultWrapper& self) { return self.booleans; })
         .def("get_numericals", [](const StructuralTerminationResultWrapper& self) { return self.numericals; })
-        .def("get_counterexample", [](const StructuralTerminationResultWrapper& self) { return self.counterexample; },
-             "The surviving non-trivial strongly connected components, or None if terminating.");
+        .def(
+            "get_counterexample",
+            [](const StructuralTerminationResultWrapper& self) { return self.counterexample; },
+            "The surviving non-trivial strongly connected components, or None if terminating.");
 
     m.def(
         "structural_termination",
@@ -151,17 +163,19 @@ void bind_structural_termination(nb::module_& m)
         .value("UNKNOWN", IncompleteStructuralTerminationStatus::UNKNOWN);
 
     nb::class_<IncompleteBlockingReason>(m, "IncompleteBlockingReason")
-        .def_ro("feature", &IncompleteBlockingReason::feature, "The feature whose decrease or flip the rule performs.")
-        .def_ro("opposing_rules", &IncompleteBlockingReason::opposing_rules,
+        .def_ro("feature", &IncompleteBlockingReason::feature, nb::rv_policy::reference_internal, "The feature whose decrease or flip the rule performs.")
+        .def_ro("opposing_rules",
+                &IncompleteBlockingReason::opposing_rules,
+                nb::rv_policy::reference_internal,
                 "Remaining rules that oppose the change and survive R3's marked-complementary-condition check.");
 
     nb::class_<IncompleteSurvivingRule>(m, "IncompleteSurvivingRule")
-        .def_ro("rule", &IncompleteSurvivingRule::rule)
-        .def_ro("blocking_reasons", &IncompleteSurvivingRule::blocking_reasons);
+        .def_ro("rule", &IncompleteSurvivingRule::rule, nb::rv_policy::reference_internal)
+        .def_ro("blocking_reasons", &IncompleteSurvivingRule::blocking_reasons, nb::rv_policy::reference_internal);
 
     nb::class_<IncompleteStructuralTerminationResult>(m, "IncompleteStructuralTerminationResult")
         .def_ro("status", &IncompleteStructuralTerminationResult::status)
-        .def_ro("surviving_rules", &IncompleteStructuralTerminationResult::surviving_rules)
+        .def_ro("surviving_rules", &IncompleteStructuralTerminationResult::surviving_rules, nb::rv_policy::reference_internal)
         .def("is_terminating", &IncompleteStructuralTerminationResult::is_terminating);
 
     m.def("incomplete_structural_termination",
