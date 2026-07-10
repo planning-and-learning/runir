@@ -82,7 +82,7 @@ def test_ext_structural_termination_is_terminating():
     result = dl.structural_termination(module)
 
     assert result.is_terminating()
-    assert result.get_counterexample() is None
+    assert result.counterexample is None
 
 
 def test_ext_structural_termination_counterexample_spans_memory_states():
@@ -92,19 +92,19 @@ def test_ext_structural_termination_counterexample_spans_memory_states():
     result = dl.structural_termination(module)
 
     assert not result.is_terminating()
-    counterexample = result.get_counterexample()
+    counterexample = result.counterexample
     assert counterexample is not None
 
-    (feature,) = result.get_numericals()
+    (feature,) = result.numericals
 
-    memory_states = {vertex.get_memory_state().get_name() for vertex in counterexample.get_vertices()}
+    memory_states = {vertex.memory_state.get_name() for vertex in counterexample.vertices}
     assert memory_states == {"m0", "m1"}
 
-    rules = {edge.get_rule().get_index() for edge in counterexample.get_edges()}
+    rules = {edge.rule.get_index() for edge in counterexample.edges}
     assert len(rules) == 2
 
-    # Dict-shaped per-edge changes over the numerical feature: both rules preserve it.
-    changes = {edge.get_numerical_changes()[feature] for edge in counterexample.get_edges()}
+    # Feature-change pairs over the numerical feature: both rules preserve it.
+    changes = {dict(edge.numerical_changes)[feature] for edge in counterexample.edges}
     assert changes == {NumericalChange.UNCHANGED}
 
 
@@ -116,6 +116,6 @@ def test_ext_ceg_agrees_with_complete_sieve():
     ceg = dl.ceg_structural_termination(module)
 
     assert complete.is_terminating() == ceg.is_terminating() == False  # noqa: E712
-    complete_rules = {edge.get_rule().get_index() for edge in complete.get_counterexample().get_edges()}
-    ceg_rules = {edge.get_rule().get_index() for edge in ceg.get_counterexample().get_edges()}
+    complete_rules = {edge.rule.get_index() for edge in complete.counterexample.edges}
+    ceg_rules = {edge.rule.get_index() for edge in ceg.counterexample.edges}
     assert complete_rules == ceg_rules
