@@ -2,6 +2,7 @@ from pathlib import Path
 
 from pyrunir.kr.dl import ext as dl_ext
 from pyrunir.kr.ps import ext
+from pyrunir.kr.ps.ext import dl
 from pyrunir.kr.ps.base.dl import NumericalChange
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser
@@ -66,7 +67,7 @@ NON_TERMINATING_MODULE = TERMINATING_MODULE.replace("(:symbol term)", "(:symbol 
 
 
 def _repositories():
-    root = Path(__file__).resolve().parents[5]
+    root = Path(__file__).resolve().parents[6]
     domain_path = root / "data" / "planning-benchmarks" / "tests" / "classical" / "gripper" / "domain.pddl"
     planning_domain = Parser(domain_path, ParserOptions()).get_domain()
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(planning_domain)
@@ -76,9 +77,9 @@ def _repositories():
 
 def test_ext_structural_termination_is_terminating():
     planning_domain, repository = _repositories()
-    module = ext.parse_module(TERMINATING_MODULE, planning_domain, repository)
+    module = dl.parse_module(TERMINATING_MODULE, planning_domain, repository)
 
-    result = ext.structural_termination(module)
+    result = dl.structural_termination(module)
 
     assert result.is_terminating()
     assert result.get_counterexample() is None
@@ -86,9 +87,9 @@ def test_ext_structural_termination_is_terminating():
 
 def test_ext_structural_termination_counterexample_spans_memory_states():
     planning_domain, repository = _repositories()
-    module = ext.parse_module(NON_TERMINATING_MODULE, planning_domain, repository)
+    module = dl.parse_module(NON_TERMINATING_MODULE, planning_domain, repository)
 
-    result = ext.structural_termination(module)
+    result = dl.structural_termination(module)
 
     assert not result.is_terminating()
     counterexample = result.get_counterexample()
@@ -109,10 +110,10 @@ def test_ext_structural_termination_counterexample_spans_memory_states():
 
 def test_ext_ceg_agrees_with_complete_sieve():
     planning_domain, repository = _repositories()
-    module = ext.parse_module(NON_TERMINATING_MODULE, planning_domain, repository)
+    module = dl.parse_module(NON_TERMINATING_MODULE, planning_domain, repository)
 
-    complete = ext.structural_termination(module)
-    ceg = ext.ceg_structural_termination(module)
+    complete = dl.structural_termination(module)
+    ceg = dl.ceg_structural_termination(module)
 
     assert complete.is_terminating() == ceg.is_terminating() == False  # noqa: E712
     complete_rules = {edge.get_rule().get_index() for edge in complete.get_counterexample().get_edges()}

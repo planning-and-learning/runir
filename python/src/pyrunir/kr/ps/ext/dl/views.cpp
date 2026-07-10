@@ -1,4 +1,4 @@
-#include "pyrunir/kr/ps/ext/module.hpp"
+#include "pyrunir/kr/ps/ext/dl/module.hpp"
 
 #include <concepts>
 #include <nanobind/stl/string.h>
@@ -9,7 +9,7 @@
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
-namespace runir::kr::ps::ext
+namespace runir::kr::ps::ext::dl
 {
 
 using namespace nanobind::literals;
@@ -84,23 +84,50 @@ void bind_view(nb::module_& m, const std::string& name)
 
 void bind_views(nb::module_& m)
 {
-    bind_view<Argument<runir::kr::dl::ConceptTag>>(m, "ConceptArgument");
-    bind_view<Argument<runir::kr::dl::RoleTag>>(m, "RoleArgument");
-    bind_view<Argument<runir::kr::dl::BooleanTag>>(m, "BooleanArgument");
-    bind_view<Argument<runir::kr::dl::NumericalTag>>(m, "NumericalArgument");
-    bind_view<Register<runir::kr::dl::ConceptTag>>(m, "ConceptRegister");
-    bind_view<Register<runir::kr::dl::RoleTag>>(m, "RoleRegister");
-    bind_view<MemoryState>(m, "MemoryState");
-    bind_view<Module>(m, "Module");
-    bind_view<ModuleProgram>(m, "ModuleProgram");
-    bind_view<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>(m, "ConditionVariant");
-    bind_view<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>(m, "EffectVariant");
-    bind_view<RuleVariant>(m, "RuleVariant");
-    bind_view<Rule<LoadTag, runir::kr::dl::ConceptTag>>(m, "ConceptLoadRule");
-    bind_view<Rule<LoadTag, runir::kr::dl::RoleTag>>(m, "RoleLoadRule");
-    bind_view<Rule<SketchTag>>(m, "SketchRule");
-    bind_view<Rule<DoTag>>(m, "DoRule");
-    bind_view<Rule<CallTag>>(m, "CallRule");
+    bind_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>(m, "ConceptFeature");
+    bind_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>(m, "RoleFeature");
+    bind_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>(m, "BooleanFeature");
+    bind_view<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>(m, "NumericalFeature");
+    // Concrete feature/condition/effect views reachable through the wrapper variants. Mirrors the repository
+    // TypeList in runir/kr/ps/ext/repository.hpp (and ps/base/dl/views.cpp, plus ext-only Concept
+    // and Role variants). fmt formatters for all of these live in runir/kr/ps/ext/formatter.hpp.
+    bind_view<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag>>(m, "ConcreteConceptFeature");
+    bind_view<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::RoleTag>>(m, "ConcreteRoleFeature");
+    bind_view<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>(m, "ConcreteBooleanFeature");
+    bind_view<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>(m, "ConcreteNumericalFeature");
+    bind_view<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>(m, "ConcreteConditionVariant");
+    bind_view<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>(
+        m,
+        "PositiveBooleanCondition");
+    bind_view<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>(
+        m,
+        "NegativeBooleanCondition");
+    bind_view<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>>(
+        m,
+        "EqualZeroNumericalCondition");
+    bind_view<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>(
+        m,
+        "GreaterZeroNumericalCondition");
+
+    bind_view<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>(m, "ConcreteEffectVariant");
+    bind_view<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>(
+        m,
+        "PositiveBooleanEffect");
+    bind_view<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>(
+        m,
+        "NegativeBooleanEffect");
+    bind_view<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>>(
+        m,
+        "UnchangedBooleanEffect");
+    bind_view<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>>(
+        m,
+        "IncreasesNumericalEffect");
+    bind_view<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>>(
+        m,
+        "DecreasesNumericalEffect");
+    bind_view<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>(
+        m,
+        "UnchangedNumericalEffect");
 }
 
-}  // namespace runir::kr::ps::ext
+}  // namespace runir::kr::ps::ext::dl

@@ -10,6 +10,7 @@ namespace runir::kr::ps::base
 
 void bind_module_definitions(nb::module_& m);
 void bind_indices(nb::module_& m);
+void bind_datas(nb::module_& m);
 void bind_views(nb::module_& m);
 void bind_repository(nb::module_& m);
 void bind_sketch_executor(nb::module_& m);

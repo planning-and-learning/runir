@@ -1,5 +1,7 @@
 #include "module.hpp"
 
+#include "pyrunir/kr/ps/ext/dl/module.hpp"
+
 namespace runir::kr::ps::ext
 {
 
@@ -10,9 +12,9 @@ void bind_module_definitions(nb::module_& m)
     bind_views(m);
     bind_repository(m);
     bind_module_program_executor(m);
-    bind_module_factory(m);
-    bind_parser(m);
-    bind_structural_termination(m);
+
+    auto dl = m.def_submodule("dl");
+    runir::kr::ps::ext::dl::bind_module_definitions(dl);
 }
 
 }  // namespace runir::kr::ps::ext

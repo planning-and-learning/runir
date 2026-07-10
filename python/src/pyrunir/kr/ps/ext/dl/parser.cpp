@@ -1,11 +1,11 @@
-#include "pyrunir/kr/ps/ext/module.hpp"
+#include "pyrunir/kr/ps/ext/dl/module.hpp"
 
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 
-namespace runir::kr::ps::ext
+namespace runir::kr::ps::ext::dl
 {
 
 using namespace nanobind::literals;
@@ -37,4 +37,4 @@ void bind_parser(nb::module_& m)
         "repository"_a);
 }
 
-}  // namespace runir::kr::ps::ext
+}  // namespace runir::kr::ps::ext::dl

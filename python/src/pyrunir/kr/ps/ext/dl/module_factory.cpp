@@ -1,4 +1,4 @@
-#include "pyrunir/kr/ps/ext/module.hpp"
+#include "pyrunir/kr/ps/ext/dl/module.hpp"
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
@@ -6,7 +6,7 @@
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 
-namespace runir::kr::ps::ext
+namespace runir::kr::ps::ext::dl
 {
 
 namespace nb = nanobind;
@@ -77,4 +77,4 @@ void bind_module_factory(nb::module_& m)
         .def_static("create_blocks_bonet_et_al_icaps2024_description", &ext_dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024_description);
 }
 
-}  // namespace runir::kr::ps::ext
+}  // namespace runir::kr::ps::ext::dl

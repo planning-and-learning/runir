@@ -1,4 +1,4 @@
-#include "pyrunir/kr/ps/ext/module.hpp"
+#include "pyrunir/kr/ps/ext/dl/module.hpp"
 
 #include <cstddef>
 #include <nanobind/stl/optional.h>
@@ -10,7 +10,7 @@
 #include <vector>
 #include <yggdrasil/python/type_casters.hpp>
 
-namespace runir::kr::ps::ext
+namespace runir::kr::ps::ext::dl
 {
 
 using namespace nanobind::literals;
@@ -203,4 +203,4 @@ void bind_structural_termination(nb::module_& m)
         "Equivalent to structural_termination but decomposes by memory-graph components and projects features.");
 }
 
-}  // namespace runir::kr::ps::ext
+}  // namespace runir::kr::ps::ext::dl

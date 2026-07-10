@@ -30,7 +30,9 @@ nanobind_add_module(_pyrunir NB_SHARED
     pyrunir/kr/dl/ext/semantics/module.cpp
     pyrunir/kr/dl/ext/semantics/repositories.cpp
     pyrunir/kr/dl/ext/semantics/views.cpp
+    pyrunir/kr/ps/base/datas.cpp
     pyrunir/kr/ps/base/module.cpp
+    pyrunir/kr/ps/base/dl/datas.cpp
     pyrunir/kr/ps/base/dl/indices.cpp
     pyrunir/kr/ps/base/dl/module.cpp
     pyrunir/kr/ps/base/dl/parser.cpp
@@ -46,9 +48,13 @@ nanobind_add_module(_pyrunir NB_SHARED
     pyrunir/kr/ps/ext/datas.cpp
     pyrunir/kr/ps/ext/indices.cpp
     pyrunir/kr/ps/ext/module.cpp
-    pyrunir/kr/ps/ext/module_factory.cpp
-    pyrunir/kr/ps/ext/parser.cpp
-    pyrunir/kr/ps/ext/structural_termination.cpp
+    pyrunir/kr/ps/ext/dl/datas.cpp
+    pyrunir/kr/ps/ext/dl/indices.cpp
+    pyrunir/kr/ps/ext/dl/module.cpp
+    pyrunir/kr/ps/ext/dl/module_factory.cpp
+    pyrunir/kr/ps/ext/dl/parser.cpp
+    pyrunir/kr/ps/ext/dl/structural_termination.cpp
+    pyrunir/kr/ps/ext/dl/views.cpp
     pyrunir/kr/ps/ext/repository.cpp
     pyrunir/kr/ps/ext/module_program_executor.cpp
     pyrunir/kr/ps/ext/views.cpp
@@ -86,6 +92,7 @@ nanobind_add_module(_pyrunir NB_SHARED
     pyrunir/kr/uns/repository.cpp
     pyrunir/kr/uns/views.cpp
     pyrunir/kr/uns/dl/classifier_factory.cpp
+    pyrunir/kr/uns/dl/datas.cpp
     pyrunir/kr/uns/dl/indices.cpp
     pyrunir/kr/uns/dl/module.cpp
     pyrunir/kr/uns/dl/parser.cpp
@@ -144,6 +151,7 @@ yggdrasil_install_python_files(pyrunir "${CMAKE_CURRENT_SOURCE_DIR}"
     pyrunir/kr/ps/__init__.py
     pyrunir/kr/ps/base/__init__.py
     pyrunir/kr/ps/ext/__init__.py
+    pyrunir/kr/ps/ext/dl/__init__.py
     pyrunir/kr/ps/base/dl/__init__.py
     pyrunir/kr/dl/uns/__init__.py
     pyrunir/kr/dl/uns/semantics/__init__.py

@@ -4,6 +4,7 @@ import pytest
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr.dl import ext as dl_ext
 from pyrunir.kr.ps import ext
+from pyrunir.kr.ps.ext import dl
 from pyyggdrasil.execution import ExecutionContext
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser
@@ -11,7 +12,7 @@ from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
 
 def _blocksworld_data_dir():
-    root = Path(__file__).resolve().parents[5]
+    root = Path(__file__).resolve().parents[6]
     return root / "data" / "planning-benchmarks" / "profiling" / "htg" / "blocksworld-large-simple"
 
 
@@ -44,9 +45,9 @@ def _repositories():
 
 def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     planning_domain, repository = _repositories()
-    descriptions = ext.ModuleFactory.create_bonet_et_al_icaps2024_descriptions()
+    descriptions = dl.ModuleFactory.create_bonet_et_al_icaps2024_descriptions()
 
-    modules = ext.parse_modules(descriptions, planning_domain, repository)
+    modules = dl.parse_modules(descriptions, planning_domain, repository)
 
     assert [module.get_name() for module in modules] == ["on", "on-table", "tower", "blocks"]
     assert len(modules[0].get_concept_features()) == 9
@@ -63,30 +64,30 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     assert first_rule.get_source() is not None
     assert first_rule.get_target() is not None
 
-    created_modules = ext.ModuleFactory.create_bonet_et_al_icaps2024_modules(planning_domain, repository)
+    created_modules = dl.ModuleFactory.create_bonet_et_al_icaps2024_modules(planning_domain, repository)
     assert [module.get_name() for module in created_modules] == ["on", "on-table", "tower", "blocks"]
-    assert ext.ModuleFactory.create(ext.ModuleSpecification.ON_BONET_ET_AL_ICAPS2024, planning_domain, repository).get_name() == "on"
-    assert ext.ModuleFactory.create_on_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "on"
-    assert ext.ModuleFactory.create_on_table_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "on-table"
-    assert ext.ModuleFactory.create_tower_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "tower"
-    assert ext.ModuleFactory.create_blocks_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "blocks"
+    assert dl.ModuleFactory.create(dl.ModuleSpecification.ON_BONET_ET_AL_ICAPS2024, planning_domain, repository).get_name() == "on"
+    assert dl.ModuleFactory.create_on_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "on"
+    assert dl.ModuleFactory.create_on_table_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "on-table"
+    assert dl.ModuleFactory.create_tower_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "tower"
+    assert dl.ModuleFactory.create_blocks_bonet_et_al_icaps2024(planning_domain, repository).get_name() == "blocks"
 
     formatted_on = str(modules[0])
-    reparsed_on = ext.parse_module(formatted_on, planning_domain, repository)
+    reparsed_on = dl.parse_module(formatted_on, planning_domain, repository)
 
     assert reparsed_on.get_name() == "on"
     assert len(reparsed_on.get_concept_features()) == len(modules[0].get_concept_features())
     assert len(reparsed_on.get_boolean_features()) == len(modules[0].get_boolean_features())
     assert str(reparsed_on) == formatted_on
 
-    program = ext.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
+    program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
     assert program.get_entry_module().get_name() == "root"
     assert [module.get_name() for module in program.get_modules()] == ["root", "blocks", "tower", "on-table", "on"]
 
     formatted_program = str(program)
     assert "(:sketch\n                        (:conditions" in formatted_program
 
-    reparsed_program = ext.parse_module_program(formatted_program, planning_domain, repository)
+    reparsed_program = dl.parse_module_program(formatted_program, planning_domain, repository)
     assert reparsed_program.get_entry_module().get_name() == "root"
     assert len(reparsed_program.get_modules()) == 5
 
@@ -95,7 +96,7 @@ def test_module_program_parser_reports_x3_syntax_position():
     planning_domain, repository = _repositories()
 
     with pytest.raises(RuntimeError, match="Error! Expecting:.*here"):
-        ext.parse_module_program('(:program (:entry root)', planning_domain, repository)
+        dl.parse_module_program('(:program (:entry root)', planning_domain, repository)
 
 
 def test_module_program_parser_rejects_invalid_wiring():
@@ -111,11 +112,11 @@ def test_module_program_parser_rejects_invalid_wiring():
 )"""
 
     with pytest.raises(RuntimeError):
-        ext.parse_module_program(f'(:program (:entry missing) {root})', planning_domain, repository)
+        dl.parse_module_program(f'(:program (:entry missing) {root})', planning_domain, repository)
     with pytest.raises(RuntimeError):
-        ext.parse_module_program(f'(:program (:entry root) {root} {root})', planning_domain, repository)
+        dl.parse_module_program(f'(:program (:entry root) {root} {root})', planning_domain, repository)
     with pytest.raises(RuntimeError):
-        ext.parse_module_program("""(:program
+        dl.parse_module_program("""(:program
     (:entry root)
     (:module
         (:symbol root)
@@ -142,7 +143,7 @@ def test_module_program_parser_rejects_invalid_wiring():
 )""", planning_domain, repository)
 
     with pytest.raises(RuntimeError, match="argument signature"):
-        ext.parse_module_program("""(:program
+        dl.parse_module_program("""(:program
     (:entry caller)
     (:module
         (:symbol caller)
@@ -180,10 +181,10 @@ def test_module_program_parser_rejects_invalid_wiring():
 )""", planning_domain, repository)
 
     with pytest.raises(RuntimeError, match=r'entry module "missing" is not declared'):
-        ext.parse_module_program(f'(:program (:entry missing) {root})', planning_domain, repository)
+        dl.parse_module_program(f'(:program (:entry missing) {root})', planning_domain, repository)
 
     with pytest.raises(RuntimeError, match=r'Unknown memory state "missing"'):
-        ext.parse_module_program("""(:program
+        dl.parse_module_program("""(:program
     (:entry bad-memory)
     (:module
         (:symbol bad-memory)
@@ -209,7 +210,7 @@ def test_module_program_parser_rejects_invalid_wiring():
 )""", planning_domain, repository)
 
     with pytest.raises(RuntimeError, match=r'Unknown register "r1"'):
-        ext.parse_module_program("""(:program
+        dl.parse_module_program("""(:program
     (:entry bad-register)
     (:module
         (:symbol bad-register)
@@ -240,7 +241,7 @@ def test_module_program_parser_rejects_invalid_wiring():
 )""", planning_domain, repository)
 
     with pytest.raises(RuntimeError, match=r'Unknown feature "missing"'):
-        ext.parse_module_program("""(:program
+        dl.parse_module_program("""(:program
     (:entry bad-feature)
     (:module
         (:symbol bad-feature)
@@ -271,8 +272,8 @@ def test_module_program_parser_rejects_invalid_wiring():
 def test_empty_module_factory_uses_ext_repositories():
     planning_domain, repository = _repositories()
 
-    module = ext.ModuleFactory.create_empty(repository)
-    reparsed = ext.parse_module(str(module), planning_domain, repository)
+    module = dl.ModuleFactory.create_empty(repository)
+    reparsed = dl.parse_module(str(module), planning_domain, repository)
 
     assert module.get_name() == "empty"
     assert reparsed.get_name() == "empty"
@@ -283,7 +284,7 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(ground_task)
     repository = ext.RepositoryFactory().create(dl_repository)
 
-    program = ext.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
+    program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
     search_options = ext.GroundModuleProgramSearchOptions()
     assert not hasattr(search_options, "siw_options")
@@ -321,7 +322,7 @@ def test_executor_reports_structured_failure_statuses_from_python():
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(ground_task)
     repository = ext.RepositoryFactory().create(dl_repository)
 
-    empty_program = ext.parse_module_program("""(:program
+    empty_program = dl.parse_module_program("""(:program
     (:entry empty)
     (:module
         (:symbol empty)
@@ -342,7 +343,7 @@ def test_executor_reports_structured_failure_statuses_from_python():
     assert len(empty_proof.open_states) > 0
     assert len(empty_proof.cycle) == 0
 
-    load_loop = ext.parse_module_program("""(:program
+    load_loop = dl.parse_module_program("""(:program
     (:entry load-loop)
     (:module
         (:symbol load-loop)
@@ -381,7 +382,7 @@ def test_executor_reports_structured_failure_statuses_from_python():
 
 
     with pytest.raises(RuntimeError, match=r'Unknown action "missing-action"'):
-        ext.parse_module_program("""(:program
+        dl.parse_module_program("""(:program
     (:entry no-action)
     (:module
         (:symbol no-action)
@@ -417,7 +418,7 @@ def test_lifted_executor_binding_reports_failure_status():
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(lifted_task)
     repository = ext.RepositoryFactory().create(dl_repository)
 
-    program = ext.parse_module_program("""(:program
+    program = dl.parse_module_program("""(:program
     (:entry empty)
     (:module
         (:symbol empty)

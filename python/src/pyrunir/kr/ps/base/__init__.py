@@ -2,8 +2,10 @@
 
 from ...._pyrunir.kr.ps.base import (
     ConditionVariant,
+    ConditionVariantData,
     ConditionVariantIndex,
     EffectVariant,
+    EffectVariantData,
     EffectVariantIndex,
     ExecutionContext,
     GroundSketchProofGraph,
@@ -15,8 +17,10 @@ from ...._pyrunir.kr.ps.base import (
     Repository,
     RepositoryFactory,
     Rule,
+    RuleData,
     RuleIndex,
     Sketch,
+    SketchData,
     SketchIndex,
     SketchProofEdgeLabel,
     SketchProofStatus,

@@ -1,6 +1,7 @@
 #include "pyrunir/kr/ps/ext/module.hpp"
 
 #include <memory>
+#include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <runir/kr/ps/ext/repository.hpp>
 
@@ -9,14 +10,26 @@ namespace runir::kr::ps::ext
 
 using namespace nanobind::literals;
 
+namespace
+{
+
+template<typename... Ts>
+void bind_get_or_create(nb::class_<Repository>& repository, ygg::TypeList<Ts...>)
+{
+    (repository.def("get_or_create", [](Repository& self, ygg::Data<Ts>& data) { return self.get_or_create(data); }, "data"_a), ...);
+}
+
+}  // namespace
+
 void bind_repository(nb::module_& m)
 {
     auto repository = nb::class_<Repository>(m, "Repository");
     repository.def("clear", &Repository::clear)
         .def("get_index", &Repository::get_index)
-        .def("get_dl_repository",
-             static_cast<runir::kr::dl::ExtConstructorRepository& (Repository::*) () noexcept>(&Repository::get_dl_repository),
-             nb::rv_policy::reference_internal);
+        .def("get_dl_repository", [](Repository& self) -> auto& { return self.get_dl_repository(); }, nb::rv_policy::reference_internal);
+
+    using BindableRepositoryTypes = ygg::ConcatTypeListsT<FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ArgumentTypes, RegisterTypes, ProgramTypes>;
+    bind_get_or_create(repository, BindableRepositoryTypes {});
 
     auto factory = nb::class_<RepositoryFactory>(m, "RepositoryFactory");
     factory.def(nb::init<>()).def("create", &RepositoryFactory::create, "dl_repository"_a);
