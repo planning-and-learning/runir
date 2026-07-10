@@ -52,13 +52,13 @@ void bind_view(nb::module_& m, const std::string& name)
     if constexpr (requires(const View& view, GroundContext& context) {
                       { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
-        cls.def("is_compatible_with", nb::overload_cast<View, GroundContext&>(&is_compatible_with), "context"_a);
+        cls.def("is_compatible_with", [](View view, GroundContext& context) { return is_compatible_with(view, context); }, "context"_a);
     if constexpr (requires(const View& view, LiftedContext& context) {
                       { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
-        cls.def("is_compatible_with", nb::overload_cast<View, LiftedContext&>(&is_compatible_with), "context"_a);
+        cls.def("is_compatible_with", [](View view, LiftedContext& context) { return is_compatible_with(view, context); }, "context"_a);
     if constexpr (requires(const View& view) { runir::kr::ps::base::syntactic_complexity(view); })
-        cls.def("syntactic_complexity", nb::overload_cast<View>(&runir::kr::ps::base::syntactic_complexity));
+        cls.def("syntactic_complexity", [](View view) { return runir::kr::ps::base::syntactic_complexity(view); });
 }
 
 }  // namespace

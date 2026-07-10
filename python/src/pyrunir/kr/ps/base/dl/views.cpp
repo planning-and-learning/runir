@@ -68,21 +68,21 @@ void bind_view(nb::module_& m, const std::string& name)
     if constexpr (requires(const View& view) { view.get_symbol(); })
         cls.def("get_symbol", &View::get_symbol);
     if constexpr (requires(const View& view, GroundDlContext& context) { evaluate(view, context); })
-        cls.def("evaluate", nb::overload_cast<View, GroundDlContext&>(&evaluate), "context"_a);
+        cls.def("evaluate", [](View view, GroundDlContext& context) { return evaluate(view, context); }, "context"_a);
     if constexpr (requires(const View& view, LiftedDlContext& context) { evaluate(view, context); })
-        cls.def("evaluate", nb::overload_cast<View, LiftedDlContext&>(&evaluate), "context"_a);
+        cls.def("evaluate", [](View view, LiftedDlContext& context) { return evaluate(view, context); }, "context"_a);
     if constexpr (requires(const View& view, GroundPolicyContext& context) {
                       { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
-        cls.def("is_compatible_with", nb::overload_cast<View, GroundPolicyContext&>(&is_compatible_with), "context"_a);
+        cls.def("is_compatible_with", [](View view, GroundPolicyContext& context) { return is_compatible_with(view, context); }, "context"_a);
     if constexpr (requires(const View& view, LiftedPolicyContext& context) {
                       { is_compatible_with(view, context) } -> std::same_as<bool>;
                   })
-        cls.def("is_compatible_with", nb::overload_cast<View, LiftedPolicyContext&>(&is_compatible_with), "context"_a);
+        cls.def("is_compatible_with", [](View view, LiftedPolicyContext& context) { return is_compatible_with(view, context); }, "context"_a);
     if constexpr (requires(const View& view) { runir::kr::ps::base::syntactic_complexity(view); })
-        cls.def("syntactic_complexity", nb::overload_cast<View>(&runir::kr::ps::base::syntactic_complexity));
+        cls.def("syntactic_complexity", [](View view) { return runir::kr::ps::base::syntactic_complexity(view); });
     else if constexpr (requires(const View& view) { runir::kr::ps::base::dl::syntactic_complexity(view); })
-        cls.def("syntactic_complexity", nb::overload_cast<View>(&runir::kr::ps::base::dl::syntactic_complexity));
+        cls.def("syntactic_complexity", [](View view) { return runir::kr::ps::base::dl::syntactic_complexity(view); });
 }
 
 }  // namespace

@@ -18,8 +18,8 @@
 #include <tyr/formalism/planning/ground_conjunctive_condition_view.hpp>
 #include <tyr/formalism/planning/ground_literal_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
-#include <tyr/planning/ground_task.hpp>
-#include <tyr/planning/lifted_task.hpp>
+#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <yggdrasil/containers/dynamic_bitset.hpp>
 #include <yggdrasil/core/dependent_false.hpp>

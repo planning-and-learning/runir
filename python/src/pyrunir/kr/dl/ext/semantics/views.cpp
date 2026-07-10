@@ -58,11 +58,11 @@ void bind_view(nb::module_& m, const std::string& name)
     if constexpr (requires(const View& view) { view.get_concept(); })
         cls.def("get_concept", &View::get_concept, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view, GroundContext& context) { runir::kr::dl::semantics::evaluate(view, context); })
-        cls.def("evaluate", nb::overload_cast<View, GroundContext&>(&runir::kr::dl::semantics::evaluate), "context"_a);
+        cls.def("evaluate", [](View view, GroundContext& context) { return runir::kr::dl::semantics::evaluate(view, context); }, "context"_a);
     if constexpr (requires(const View& view, LiftedContext& context) { runir::kr::dl::semantics::evaluate(view, context); })
-        cls.def("evaluate", nb::overload_cast<View, LiftedContext&>(&runir::kr::dl::semantics::evaluate), "context"_a);
+        cls.def("evaluate", [](View view, LiftedContext& context) { return runir::kr::dl::semantics::evaluate(view, context); }, "context"_a);
     if constexpr (requires(const View& view) { runir::kr::dl::semantics::syntactic_complexity(view); })
-        cls.def("syntactic_complexity", nb::overload_cast<View>(&runir::kr::dl::semantics::syntactic_complexity));
+        cls.def("syntactic_complexity", [](View view) { return runir::kr::dl::semantics::syntactic_complexity(view); });
 }
 
 }  // namespace

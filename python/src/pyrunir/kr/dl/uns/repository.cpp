@@ -4,8 +4,8 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
-#include <tyr/planning/ground_task.hpp>
-#include <tyr/planning/lifted_task.hpp>
+#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/task.hpp>
 
 namespace runir::kr::dl::uns
 {

@@ -1439,7 +1439,8 @@ TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)
     const auto caller = create_module(*repository, "caller", caller_entry, { caller_entry, caller_return });
     const auto callee = create_module(*repository, "callee", callee_entry, { callee_entry });
 
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), caller);
+    const auto program = create_module_program(*repository, caller, { caller, callee });
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, caller);
 
     const auto saved_object = ygg::Index<tyr::formalism::Object>(0);
     context.set(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0), saved_object);
@@ -1510,8 +1511,9 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     EXPECT_NE(formatted.find("(:expression"), std::string::npos);
     EXPECT_NE(formatted.find("(:register\n                        (:concept r0)\n                    )"), std::string::npos) << formatted;
 
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), module);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ module });
+    const auto program = create_module_program(*repository, module, { module });
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
     const auto initial_state = context.get_state().get_index();
 
     EXPECT_EQ(kr::ps::ext::detail::execute_load(load, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
@@ -1591,8 +1593,9 @@ TEST(RunirTests, ExtRoleLoadRuleStoresFirstPairAndAdvancesMemory)
     EXPECT_NE(formatted.find("(:role (r_atomic_state \"at\"))"), std::string::npos) << formatted;
     EXPECT_NE(formatted.find("(:register\n                        (:role r0)\n                    )"), std::string::npos) << formatted;
 
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), module);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ module });
+    const auto program = create_module_program(*repository, module, { module });
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
     const auto initial_state = context.get_state().get_index();
 
     EXPECT_EQ(kr::ps::ext::detail::execute_load(*maybe_load, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
@@ -1679,14 +1682,9 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     kr::ps::ext::canonicalize(call_data);
     const auto call = repository->get_or_create(call_data).first;
 
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
-                                                                caller,
-                                                                {},
-                                                                {},
-                                                                {},
-                                                                {},
-                                                                { caller, callee });
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ caller, callee });
+    const auto program = create_module_program(*repository, caller, { caller, callee });
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, caller);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
 
     EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_module().get_index(), callee.get_index());
@@ -1747,14 +1745,9 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     kr::ps::ext::canonicalize(call_data);
     const auto call = repository->get_or_create(call_data).first;
 
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(),
-                                                                caller,
-                                                                {},
-                                                                {},
-                                                                {},
-                                                                {},
-                                                                std::vector<kr::ps::ext::ModuleView> { caller, callee });
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ caller, callee });
+    const auto program = create_module_program(*repository, caller, { caller, callee });
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, caller);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
 
     EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_module().get_index(), callee.get_index());
@@ -1804,8 +1797,9 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     const auto rule = repository->get_or_create(do_data).first;
 
     const auto module = create_module(*repository, "module", source, { source, target });
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), module);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ module });
+    const auto program = create_module_program(*repository, module, { module });
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
 
     const auto initial_node = search_context->successor_generator->get_initial_node();
     const auto initial_state = context.get_state().get_index();
@@ -1882,8 +1876,9 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
                                                       *repository);
     const auto rule_variant = module.get_memory_transitions()[0][0];
 
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), module);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ module });
+    const auto program = create_module_program(*repository, module, { module });
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
 
     const auto initial_node = search_context->successor_generator->get_initial_node();
     const auto successors = search_context->successor_generator->get_labeled_successor_nodes(initial_node);
@@ -1980,13 +1975,14 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     kr::ps::ext::canonicalize(module_data);
     const auto module = repository->get_or_create(module_data).first;
 
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), module);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>({ module });
+    const auto program = create_module_program(*repository, module, { module });
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
 
     const auto initial_node = search_context->successor_generator->get_initial_node();
     const auto successors = search_context->successor_generator->get_labeled_successor_nodes(initial_node);
 
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(*search_context, initial_node);
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(*search_context, initial_node, program);
     const auto options = kr::ps::ext::detail::ModuleExecutionOptions<p::GroundTag> {};
     const auto steps = expander.control_steps(*search_context, context, options);
     ASSERT_FALSE(steps.empty());

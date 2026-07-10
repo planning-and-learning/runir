@@ -118,6 +118,13 @@ yggdrasil_install_native_export(
 
 yggdrasil_install_runtime_path_fixup(PYRUNIR pyrunir)
 
+set(PYRUNIR_GENERATED_VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/pyrunir/_version.py")
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/pyrunir")
+file(WRITE "${PYRUNIR_GENERATED_VERSION_FILE}" "__version__ = \"${PROJECT_VERSION}\"\n")
+install(FILES "${PYRUNIR_GENERATED_VERSION_FILE}"
+        DESTINATION "pyrunir"
+        COMPONENT pyrunir)
+
 yggdrasil_install_python_files(pyrunir "${CMAKE_CURRENT_SOURCE_DIR}"
     FILES
     pyrunir/__init__.py

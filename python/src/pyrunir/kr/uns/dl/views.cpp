@@ -42,9 +42,9 @@ void bind_view(nb::module_& m, const std::string& name)
     if constexpr (requires(const View& view) { view.get_symbol(); })
         cls.def("get_symbol", &View::get_symbol);
     if constexpr (requires(const View& view, GroundContext& context) { evaluate(view, context); })
-        cls.def("evaluate", nb::overload_cast<View, GroundContext&>(&evaluate), "context"_a);
+        cls.def("evaluate", [](View view, GroundContext& context) { return evaluate(view, context); }, "context"_a);
     if constexpr (requires(const View& view, LiftedContext& context) { evaluate(view, context); })
-        cls.def("evaluate", nb::overload_cast<View, LiftedContext&>(&evaluate), "context"_a);
+        cls.def("evaluate", [](View view, LiftedContext& context) { return evaluate(view, context); }, "context"_a);
 }
 
 }  // namespace
