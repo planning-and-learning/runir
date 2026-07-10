@@ -50,10 +50,10 @@ struct Feature : x3::position_tagged
     std::string expression;
 };
 
-using FeatureVariant = PositionedVariant<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>,
-                                         runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>,
-                                         runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>,
-                                         runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>;
+using FeatureVariant = PositionedVariant<Feature<runir::kr::dl::ConceptTag>,
+                                         Feature<runir::kr::dl::RoleTag>,
+                                         Feature<runir::kr::dl::BooleanTag>,
+                                         Feature<runir::kr::dl::NumericalTag>>;
 
 struct SymbolExpression : x3::position_tagged
 {

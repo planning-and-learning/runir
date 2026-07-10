@@ -1535,7 +1535,7 @@ TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)
     const auto program = create_module_program(*repository, caller, { caller, callee });
     auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, caller);
 
-    const auto saved_object = ygg::make_view(ygg::Index<tyr::formalism::Object>(0), task->get_repository());
+    const auto saved_object = ygg::make_view(ygg::Index<tyr::formalism::Object>(0), *task->get_repository());
     context.get_call_stack().registers().set(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0), saved_object);
     context.get_call_stack().enter_module(callee, caller_return);
 
@@ -1695,8 +1695,8 @@ TEST(RunirTests, ExtRoleLoadRuleStoresFirstPairAndAdvancesMemory)
     EXPECT_EQ(context.get_state().get_index(), initial_state);
     EXPECT_EQ(context.get_call_stack().memory_state().get_name(), "target");
     ASSERT_TRUE(context.get_call_stack().registers().get<kr::dl::RoleTag>()[0]);
-    EXPECT_NE(context.get_call_stack().registers().get<kr::dl::RoleTag>()[0]->first,
-              context.get_call_stack().registers().get<kr::dl::RoleTag>()[0]->second);
+    EXPECT_NE(context.get_call_stack().registers().get<kr::dl::RoleTag>()[0]->first.get_index(),
+              context.get_call_stack().registers().get<kr::dl::RoleTag>()[0]->second.get_index());
 }
 
 TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)

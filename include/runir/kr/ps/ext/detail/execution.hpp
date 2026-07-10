@@ -70,9 +70,12 @@ execute_load(ygg::View<ygg::Index<Rule<LoadTag, Category>>, C> rule, EvaluationC
         return RuleExecutionStatus::EMPTY_DENOTATION;
 
     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-        context.get_call_stack().registers().set(rule.get_register().get_identifier(), *first);
+        context.get_call_stack().registers().set(rule.get_register().get_identifier(),
+                                                 ygg::make_view((*first).get_index(), *context.get_state().get_repository()));
     else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-        context.get_call_stack().registers().set(rule.get_register().get_identifier(), (*first).first, (*first).second);
+        context.get_call_stack().registers().set(rule.get_register().get_identifier(),
+                                                 ygg::make_view((*first).first.get_index(), *context.get_state().get_repository()),
+                                                 ygg::make_view((*first).second.get_index(), *context.get_state().get_repository()));
     else
         static_assert(ygg::dependent_false<Category>::value, "unhandled load rule category");
     context.get_call_stack().set_memory_state(rule.get_target());
@@ -303,37 +306,25 @@ RuleExecutionStatus execute_sketch(ygg::View<ygg::Index<Rule<SketchTag>>, C> rul
 }
 
 template<tyr::planning::TaskKind Kind>
-void append_call_argument(ConceptArgument argument,
-                          EvaluationContext<Kind>& context,
-                          EvaluationEnvironment<Kind>& environment,
-                          CallArguments& target)
+void append_call_argument(ConceptArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, CallArguments& target)
 {
     target.get<runir::kr::dl::ConceptTag>().push_back(evaluate_argument(argument, context, environment));
 }
 
 template<tyr::planning::TaskKind Kind>
-void append_call_argument(RoleArgument argument,
-                          EvaluationContext<Kind>& context,
-                          EvaluationEnvironment<Kind>& environment,
-                          CallArguments& target)
+void append_call_argument(RoleArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, CallArguments& target)
 {
     target.get<runir::kr::dl::RoleTag>().push_back(evaluate_argument(argument, context, environment));
 }
 
 template<tyr::planning::TaskKind Kind>
-void append_call_argument(BooleanArgument argument,
-                          EvaluationContext<Kind>& context,
-                          EvaluationEnvironment<Kind>& environment,
-                          CallArguments& target)
+void append_call_argument(BooleanArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, CallArguments& target)
 {
     target.get<runir::kr::dl::BooleanTag>().push_back(evaluate_argument(argument, context, environment));
 }
 
 template<tyr::planning::TaskKind Kind>
-void append_call_argument(NumericalArgument argument,
-                          EvaluationContext<Kind>& context,
-                          EvaluationEnvironment<Kind>& environment,
-                          CallArguments& target)
+void append_call_argument(NumericalArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, CallArguments& target)
 {
     target.get<runir::kr::dl::NumericalTag>().push_back(evaluate_argument(argument, context, environment));
 }

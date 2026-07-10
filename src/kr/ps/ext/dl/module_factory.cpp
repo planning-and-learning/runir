@@ -117,23 +117,25 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
         (:entry m0)
         (:memory m0 m1)
         (:features
-            (:concept
+            (:numerical
                 (:symbol L)
                 (:expression
-                    (c_and
-                        (c_all
-                            (r_transitive_closure
-                                (r_atomic_state "on")
+                    (n_count
+                        (c_and
+                            (c_all
+                                (r_transitive_closure
+                                    (r_atomic_state "on")
+                                )
+                                (c_same_as
+                                    (r_argument O)
+                                    (r_atomic_state "on")
+                                )
                             )
-                            (c_same_as
-                                (r_argument O)
-                                (r_atomic_state "on")
-                            )
-                        )
-                        (c_not
-                            (c_same_as
-                                (r_argument O)
-                                (r_atomic_state "on")
+                            (c_not
+                                (c_same_as
+                                    (r_argument O)
+                                    (r_atomic_state "on")
+                                )
                             )
                         )
                     )
@@ -219,6 +221,14 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (c_argument X)
                 )
             )
+            (:numerical
+                (:symbol X_count)
+                (:expression
+                    (n_count
+                        (c_argument X)
+                    )
+                )
+            )
             (:concept
                 (:symbol W)
                 (:expression
@@ -230,12 +240,36 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     )
                 )
             )
+            (:numerical
+                (:symbol W_count)
+                (:expression
+                    (n_count
+                        (c_some
+                            (r_inverse
+                                (r_argument O)
+                            )
+                            (c_register r0)
+                        )
+                    )
+                )
+            )
             (:concept
                 (:symbol M)
                 (:expression
                     (c_some
                         (r_argument O)
                         (c_register r0)
+                    )
+                )
+            )
+            (:numerical
+                (:symbol M_count)
+                (:expression
+                    (n_count
+                        (c_some
+                            (r_argument O)
+                            (c_register r0)
+                        )
                     )
                 )
             )
@@ -260,7 +294,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:target-memory m1)
                     (:load
                         (:conditions
-                            (greater_zero X)
+                            (greater_zero X_count)
                         )
                         (:concept
                             (c_argument X)
@@ -278,7 +312,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:target-memory m2)
                     (:call
                         (:conditions
-                            (equal_zero W)
+                            (equal_zero W_count)
                         )
                         (:callee on-table)
                         (:arguments R0)
@@ -292,7 +326,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:target-memory m2)
                     (:call
                         (:conditions
-                            (greater_zero W)
+                            (greater_zero W_count)
                         )
                         (:callee on)
                         (:arguments R0 W)
@@ -306,7 +340,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                     (:target-memory m3)
                     (:call
                         (:conditions
-                            (greater_zero M)
+                            (greater_zero M_count)
                         )
                         (:callee tower)
                         (:arguments O_arg M)
@@ -433,39 +467,45 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
         (:entry m0)
         (:memory m0 m1 m2 m3 m4 m5 m6 m7 m8)
         (:features
-            (:concept
+            (:numerical
                 (:symbol N)
                 (:expression
-                    (c_and
-                        (c_or
-                            (c_argument X)
-                            (c_argument Y)
-                        )
-                        (c_not
-                            (c_atomic_state "clear")
+                    (n_count
+                        (c_and
+                            (c_or
+                                (c_argument X)
+                                (c_argument Y)
+                            )
+                            (c_not
+                                (c_atomic_state "clear")
+                            )
                         )
                     )
                 )
             )
-            (:concept
+            (:numerical
                 (:symbol T0)
                 (:expression
-                    (c_some
-                        (r_inverse
-                            (r_atomic_state "on")
+                    (n_count
+                        (c_some
+                            (r_inverse
+                                (r_atomic_state "on")
+                            )
+                            (c_register r0)
                         )
-                        (c_register r0)
                     )
                 )
             )
-            (:concept
+            (:numerical
                 (:symbol T1)
                 (:expression
-                    (c_some
-                        (r_inverse
-                            (r_atomic_state "on")
+                    (n_count
+                        (c_some
+                            (r_inverse
+                                (r_atomic_state "on")
+                            )
+                            (c_register r1)
                         )
-                        (c_register r1)
                     )
                 )
             )
@@ -810,39 +850,45 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
     (:entry m0)
     (:memory m0 m1 m2 m3 m4 m5 m6 m7 m8)
     (:features
-        (:concept
+        (:numerical
             (:symbol N)
             (:expression
-                (c_and
-                    (c_or
-                        (c_argument X)
-                        (c_argument Y)
-                    )
-                    (c_not
-                        (c_atomic_state "clear")
+                (n_count
+                    (c_and
+                        (c_or
+                            (c_argument X)
+                            (c_argument Y)
+                        )
+                        (c_not
+                            (c_atomic_state "clear")
+                        )
                     )
                 )
             )
         )
-        (:concept
+        (:numerical
             (:symbol T0)
             (:expression
-                (c_some
-                    (r_inverse
-                        (r_atomic_state "on")
+                (n_count
+                    (c_some
+                        (r_inverse
+                            (r_atomic_state "on")
+                        )
+                        (c_register r0)
                     )
-                    (c_register r0)
                 )
             )
         )
-        (:concept
+        (:numerical
             (:symbol T1)
             (:expression
-                (c_some
-                    (r_inverse
-                        (r_atomic_state "on")
+                (n_count
+                    (c_some
+                        (r_inverse
+                            (r_atomic_state "on")
+                        )
+                        (c_register r1)
                     )
-                    (c_register r1)
                 )
             )
         )
@@ -1275,6 +1321,14 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
                 (c_argument X)
             )
         )
+        (:numerical
+            (:symbol X_count)
+            (:expression
+                (n_count
+                    (c_argument X)
+                )
+            )
+        )
         (:concept
             (:symbol W)
             (:expression
@@ -1286,12 +1340,36 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
                 )
             )
         )
+        (:numerical
+            (:symbol W_count)
+            (:expression
+                (n_count
+                    (c_some
+                        (r_inverse
+                            (r_argument O)
+                        )
+                        (c_register r0)
+                    )
+                )
+            )
+        )
         (:concept
             (:symbol M)
             (:expression
                 (c_some
                     (r_argument O)
                     (c_register r0)
+                )
+            )
+        )
+        (:numerical
+            (:symbol M_count)
+            (:expression
+                (n_count
+                    (c_some
+                        (r_argument O)
+                        (c_register r0)
+                    )
                 )
             )
         )
@@ -1316,7 +1394,7 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
                 (:target-memory m1)
                 (:load
                     (:conditions
-                        (greater_zero X)
+                        (greater_zero X_count)
                     )
                     (:concept
                         (c_argument X)
@@ -1334,7 +1412,7 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
                 (:target-memory m2)
                 (:call
                     (:conditions
-                        (equal_zero W)
+                        (equal_zero W_count)
                     )
                     (:callee on-table)
                     (:arguments R0)
@@ -1348,7 +1426,7 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
                 (:target-memory m2)
                 (:call
                     (:conditions
-                        (greater_zero W)
+                        (greater_zero W_count)
                     )
                     (:callee on)
                     (:arguments R0 W)
@@ -1362,7 +1440,7 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
                 (:target-memory m3)
                 (:call
                     (:conditions
-                        (greater_zero M)
+                        (greater_zero M_count)
                     )
                     (:callee tower)
                     (:arguments O_arg M)
@@ -1386,23 +1464,25 @@ std::string ModuleFactory::create_blocks_bonet_et_al_icaps2024_description()
     (:entry m0)
     (:memory m0 m1)
     (:features
-        (:concept
+        (:numerical
             (:symbol L)
             (:expression
-                (c_and
-                    (c_all
-                        (r_transitive_closure
-                            (r_atomic_state "on")
+                (n_count
+                    (c_and
+                        (c_all
+                            (r_transitive_closure
+                                (r_atomic_state "on")
+                            )
+                            (c_same_as
+                                (r_argument O)
+                                (r_atomic_state "on")
+                            )
                         )
-                        (c_same_as
-                            (r_argument O)
-                            (r_atomic_state "on")
-                        )
-                    )
-                    (c_not
-                        (c_same_as
-                            (r_argument O)
-                            (r_atomic_state "on")
+                        (c_not
+                            (c_same_as
+                                (r_argument O)
+                                (r_atomic_state "on")
+                            )
                         )
                     )
                 )

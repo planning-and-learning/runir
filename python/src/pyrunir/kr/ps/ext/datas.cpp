@@ -89,31 +89,50 @@ void bind_datas(nb::module_& m)
     bind_data<Module>(m, "ModuleData");
     bind_data<ModuleProgram>(m, "ModuleProgramData");
 
-    bind_data<Feature<runir::kr::dl::ConceptTag>>(m, "ConceptFeatureData");
-    bind_data<Feature<runir::kr::dl::RoleTag>>(m, "RoleFeatureData");
-    bind_data<Feature<runir::kr::ps::dl::BooleanFeature>>(m, "BooleanFeatureData");
-    bind_data<Feature<runir::kr::ps::dl::NumericalFeature>>(m, "NumericalFeatureData");
-    bind_data<ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>>(m, "DlConceptFeatureData");
-    bind_data<ConcreteFeature<runir::kr::DlTag, runir::kr::dl::RoleTag>>(m, "DlRoleFeatureData");
-    bind_data<ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>(m, "DlBooleanFeatureData");
-    bind_data<ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>(m, "DlNumericalFeatureData");
+    bind_data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>(m, "ConceptFeatureData");
+    bind_data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>(m, "RoleFeatureData");
+    bind_data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>(m, "BooleanFeatureData");
+    bind_data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>(m, "NumericalFeatureData");
+    bind_data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag>>(m, "DlConceptFeatureData");
+    bind_data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::RoleTag>>(m, "DlRoleFeatureData");
+    bind_data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>(m, "DlBooleanFeatureData");
+    bind_data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>(m, "DlNumericalFeatureData");
 
-    bind_data<ConditionVariant>(m, "ConditionVariantData");
-    bind_data<ConcreteConditionVariant<runir::kr::DlTag>>(m, "DlConditionVariantData");
-    bind_data<ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>(m, "DlBooleanPositiveConditionData");
-    bind_data<ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>(m, "DlBooleanNegativeConditionData");
-    bind_data<ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>>(m, "DlNumericalEqualZeroConditionData");
-    bind_data<ConcreteCondition<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>(m,
-                                                                                                                        "DlNumericalGreaterZeroConditionData");
+    bind_data<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>(m, "ConditionVariantData");
+    bind_data<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>(m, "DlConditionVariantData");
+    bind_data<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>(
+        m,
+        "DlBooleanPositiveConditionData");
+    bind_data<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>(
+        m,
+        "DlBooleanNegativeConditionData");
+    bind_data<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>>(
+        m,
+        "DlNumericalEqualZeroConditionData");
+    bind_data<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>(
+        m,
+        "DlNumericalGreaterZeroConditionData");
 
-    bind_data<EffectVariant>(m, "EffectVariantData");
-    bind_data<ConcreteEffectVariant<runir::kr::DlTag>>(m, "DlEffectVariantData");
-    bind_data<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>(m, "DlBooleanPositiveEffectData");
-    bind_data<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>(m, "DlBooleanNegativeEffectData");
-    bind_data<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>>(m, "DlBooleanUnchangedEffectData");
-    bind_data<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>>(m, "DlNumericalIncreasesEffectData");
-    bind_data<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>>(m, "DlNumericalDecreasesEffectData");
-    bind_data<ConcreteEffect<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>(m, "DlNumericalUnchangedEffectData");
+    bind_data<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>(m, "EffectVariantData");
+    bind_data<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>(m, "DlEffectVariantData");
+    bind_data<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>(
+        m,
+        "DlBooleanPositiveEffectData");
+    bind_data<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>(
+        m,
+        "DlBooleanNegativeEffectData");
+    bind_data<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>>(
+        m,
+        "DlBooleanUnchangedEffectData");
+    bind_data<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>>(
+        m,
+        "DlNumericalIncreasesEffectData");
+    bind_data<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>>(
+        m,
+        "DlNumericalDecreasesEffectData");
+    bind_data<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>(
+        m,
+        "DlNumericalUnchangedEffectData");
 
     bind_data<RuleVariant>(m, "RuleVariantData");
     bind_data<Rule<LoadTag, runir::kr::dl::ConceptTag>>(m, "ConceptLoadRuleData");

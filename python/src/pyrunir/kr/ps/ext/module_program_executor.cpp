@@ -154,16 +154,38 @@ void bind_module_program_executor(nb::module_& m)
     using Context = EvaluationContext<Kind>;
     using Step = detail::ModuleProgramStep<Kind>;
     using Expander = SuccessorExpander<Kind>;
-    using ConceptRegisters = Context::ConceptRegisters;
-    using RoleRegisters = Context::RoleRegisters;
+
+    nb::class_<Registers>(m, "Registers")
+        .def(nb::init<>())
+        .def_rw("concept_registers", &Registers::concept_registers)
+        .def_rw("role_registers", &Registers::role_registers);
+
+    nb::class_<CallStack>(m, "CallStack")
+        .def_prop_ro(
+            "module",
+            [](const CallStack& self) { return self.module(); },
+            nb::keep_alive<0, 1>())
+        .def_prop_ro(
+            "memory_state",
+            [](const CallStack& self) { return self.memory_state(); },
+            nb::keep_alive<0, 1>())
+        .def_prop_ro(
+            "registers",
+            [](CallStack& self) -> Registers& { return self.registers(); },
+            nb::rv_policy::reference_internal)
+        .def_prop_ro("has_caller", &CallStack::has_caller);
 
     auto execution_context =
         nb::class_<Context>(m, "ModuleProgramExecutionContext")
-            .def_prop_ro("state", &Context::get_state, nb::keep_alive<0, 1>())
-            .def_prop_ro("memory_state", &Context::get_memory_state, nb::keep_alive<0, 1>())
-            .def_prop_ro("module", &Context::get_module, nb::keep_alive<0, 1>())
-            .def_prop_ro("concept_registers", static_cast<const ConceptRegisters& (Context::*) () const noexcept>(&Context::concept_registers))
-            .def_prop_ro("role_registers", static_cast<const RoleRegisters& (Context::*) () const noexcept>(&Context::role_registers));
+            .def_prop_ro(
+                "state",
+                [](const Context& self) -> const auto& { return self.get_state(); },
+                nb::keep_alive<0, 1>())
+            .def_prop_ro(
+                "program",
+                [](const Context& self) { return self.get_program(); },
+                nb::keep_alive<0, 1>())
+            .def_prop_ro("call_stack", [](Context& self) -> CallStack& { return self.get_call_stack(); }, nb::rv_policy::reference_internal);
     ygg::add_hash(execution_context);
 
     nb::class_<Step>(m, "ModuleProgramExecutionStep")
@@ -178,7 +200,7 @@ void bind_module_program_executor(nb::module_& m)
              "program"_a,
              nb::keep_alive<1, 2>(),
              nb::keep_alive<1, 4>())
-        .def("context_at", &Expander::context_at, "module"_a, "memory_state"_a, "concept_registers"_a, "role_registers"_a, "source_state"_a)
+        .def("context_at", &Expander::context_at, "module"_a, "memory_state"_a, "registers"_a, "source_state"_a)
         .def("initial_context", &Expander::initial_context)
         .def("load_steps", &Expander::load_steps, "context"_a)
         .def("control_steps", nb::overload_cast<const Context&, const ModuleProgramSearchOptions<Kind>&>(&Expander::control_steps), "context"_a, "options"_a)
