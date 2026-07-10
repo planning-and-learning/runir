@@ -67,8 +67,6 @@ struct PsFamilyTraits<runir::kr::ExtFamilyTag>
     using ConditionTypes =
         ygg::TypeList<ConditionVariant<runir::kr::ExtFamilyTag>,
                       ConcreteConditionVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>,
-                      ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>,
-                      ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>,
                       ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
                       ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
                       ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>,
@@ -77,9 +75,6 @@ struct PsFamilyTraits<runir::kr::ExtFamilyTag>
     using EffectTypes =
         ygg::TypeList<EffectVariant<runir::kr::ExtFamilyTag>,
                       ConcreteEffectVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>,
-                      ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>,
-                      ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>,
-                      ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>,
                       ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
                       ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
                       ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>,

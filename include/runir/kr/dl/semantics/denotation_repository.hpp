@@ -12,10 +12,10 @@
 #include <cassert>
 #include <memory>
 #include <optional>
+#include <utility>
 #include <yggdrasil/containers/raw_vector_set.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
-#include <utility>
 
 namespace runir::kr::dl::semantics
 {
@@ -218,6 +218,10 @@ public:
     auto& get_vector_repository() noexcept { return m_vector_repository; }
 };
 
+template<CategoryTag Category>
+using DenotationView = ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>;
+
+using ConceptDenotationView = DenotationView<ConceptTag>;
 using DenotationRepositoryPtr = std::shared_ptr<DenotationRepository>;
 
 class DenotationRepositoryFactory

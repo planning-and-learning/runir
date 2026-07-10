@@ -5,7 +5,7 @@
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
-#include "runir/kr/ps/ext/dl/feature_index.hpp"
+#include "runir/kr/ps/feature_index.hpp"
 
 #include <cista/containers/string.h>
 #include <string>
@@ -18,9 +18,9 @@ namespace ygg
 {
 
 template<>
-struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>>
+struct Data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag>>
 {
-    Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>> index;
+    Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag>> index;
     Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> feature;
     ::cista::offset::string symbol;
 
@@ -52,9 +52,9 @@ struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl:
 };
 
 template<>
-struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl::RoleTag>>
+struct Data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::RoleTag>>
 {
-    Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl::RoleTag>> index;
+    Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::RoleTag>> index;
     Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>> feature;
     ::cista::offset::string symbol;
 
@@ -84,9 +84,9 @@ struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl:
 };
 
 template<>
-struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>
+struct Data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>
 {
-    Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>> index;
+    Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>> index;
     Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>> feature;
     ::cista::offset::string symbol;
 
@@ -118,9 +118,9 @@ struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps:
 };
 
 template<>
-struct Data<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>
+struct Data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>
 {
-    Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>> index;
+    Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>> index;
     Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>> feature;
     ::cista::offset::string symbol;
 

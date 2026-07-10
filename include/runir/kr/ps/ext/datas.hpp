@@ -3,6 +3,8 @@
 
 #include "runir/kr/ps/ext/argument_data.hpp"
 #include "runir/kr/ps/ext/condition_data.hpp"
+#include "runir/kr/ps/ext/dl/condition_data.hpp"
+#include "runir/kr/ps/ext/dl/effect_data.hpp"
 #include "runir/kr/ps/ext/effect_data.hpp"
 #include "runir/kr/ps/ext/feature_data.hpp"
 #include "runir/kr/ps/ext/memory_state_data.hpp"

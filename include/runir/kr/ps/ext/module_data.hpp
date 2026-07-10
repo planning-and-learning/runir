@@ -30,10 +30,10 @@ struct Data<runir::kr::ps::ext::Module>
     IndexList<runir::kr::ps::ext::Argument<runir::kr::dl::NumericalTag>> numerical_arguments;
     IndexList<runir::kr::ps::ext::Register<runir::kr::dl::ConceptTag>> concept_registers;
     IndexList<runir::kr::ps::ext::Register<runir::kr::dl::RoleTag>> role_registers;
-    IndexList<runir::kr::ps::ext::Feature<runir::kr::dl::ConceptTag>> concept_features;
-    IndexList<runir::kr::ps::ext::Feature<runir::kr::dl::RoleTag>> role_features;
-    IndexList<runir::kr::ps::ext::Feature<runir::kr::ps::dl::BooleanFeature>> boolean_features;
-    IndexList<runir::kr::ps::ext::Feature<runir::kr::ps::dl::NumericalFeature>> numerical_features;
+    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> concept_features;
+    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>> role_features;
+    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>> boolean_features;
+    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>> numerical_features;
     Index<runir::kr::ps::ext::MemoryState> entry_memory_state;
     IndexList<runir::kr::ps::ext::MemoryState> memory_states;
     IndexMatrix<runir::kr::ps::ext::RuleVariant> memory_transitions;

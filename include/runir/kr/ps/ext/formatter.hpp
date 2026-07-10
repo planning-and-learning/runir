@@ -31,7 +31,7 @@ inline std::string symbol_section(std::string_view value) { return fmt::format("
 template<typename FeatureTag>
 struct NamedFeature
 {
-    ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>> index;
+    ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> index;
     std::string name;
 };
 
@@ -127,13 +127,13 @@ std::string feature_prefix()
 }
 
 template<typename FeatureTag, typename C>
-std::string feature_symbol(ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> feature)
+std::string feature_symbol(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> feature)
 {
     return ygg::visit([](auto concrete_feature) { return std::string(concrete_feature.get_symbol()); }, feature.get_variant());
 }
 
 template<typename FeatureTag, typename C>
-std::string get_or_create_name(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> feature)
+std::string get_or_create_name(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> feature)
 {
     auto& entries = named_features<FeatureTag>(names);
     for (const auto& entry : entries)
@@ -254,7 +254,7 @@ inline void append_value_section(std::ostream& os, std::string_view name, std::s
 }
 
 template<typename FeatureTag, typename C>
-void append_feature(std::ostream& os, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C> view, std::string_view)
+void append_feature(std::ostream& os, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view, std::string_view)
 {
     os << ygg::print_indent << fmt::format("(:{}\n", feature_type<FeatureTag>());
     {
@@ -266,7 +266,7 @@ void append_feature(std::ostream& os, const ReferenceNames& refs, ygg::View<ygg:
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C> view, std::string_view name)
+std::string feature(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view, std::string_view name)
 {
     auto refs = ReferenceNames {};
     auto os = std::ostringstream {};
@@ -275,19 +275,19 @@ std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<run
 }
 
 template<typename FeatureTag, typename C>
-void append_feature(std::ostream& os, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> view, std::string_view name)
+void append_feature(std::ostream& os, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> view, std::string_view name)
 {
     ygg::visit([&](auto concrete_feature) { append_feature(os, refs, concrete_feature, name); }, view.get_variant());
 }
 
 template<typename FeatureTag, typename C>
-void append_feature(std::ostream& os, FeatureNames& names, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> view)
+void append_feature(std::ostream& os, FeatureNames& names, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> view)
 {
     append_feature(os, refs, view, get_or_create_name(names, view));
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> view, std::string_view name)
+std::string feature(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> view, std::string_view name)
 {
     auto refs = ReferenceNames {};
     auto os = std::ostringstream {};
@@ -296,7 +296,7 @@ std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>
 }
 
 template<typename FeatureTag, typename C>
-std::string feature(ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C> view)
+std::string feature(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> view)
 {
     return feature(view, fmt::format("{}_{}", feature_prefix<FeatureTag>(), view.get_index().get_value()));
 }
@@ -314,19 +314,19 @@ void append_declared_features(std::ostream& os, FeatureNames& names, const Refer
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string condition(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
+std::string condition(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
 {
     return fmt::format("({} {})", ObservationTag::keyword, get_or_create_name(names, view.get_feature()));
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string effect(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
+std::string effect(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
 {
     return fmt::format("({} {})", ObservationTag::keyword, get_or_create_name(names, view.get_feature()));
 }
 
 template<typename C>
-std::string condition(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::ConditionVariant>, C> view)
+std::string condition(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C> view)
 {
     return ygg::visit([&](auto concrete_variant)
                       { return ygg::visit([&](auto concrete_condition) { return condition(names, concrete_condition); }, concrete_variant.get_variant()); },
@@ -334,7 +334,7 @@ std::string condition(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::e
 }
 
 template<typename C>
-std::string effect(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ext::EffectVariant>, C> view)
+std::string effect(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>, C> view)
 {
     return ygg::visit([&](auto concrete_variant)
                       { return ygg::visit([&](auto concrete_effect) { return effect(names, concrete_effect); }, concrete_variant.get_variant()); },
@@ -649,16 +649,16 @@ struct fmt::formatter<runir::kr::ps::ext::ExternalMemoryState> : fmt::formatter<
 };
 
 template<typename FeatureTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::ps::ext::Feature<FeatureTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::feature(view), ctx); }
 };
 
 template<typename FeatureTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, FeatureTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::feature(view, fmt::format("f_{}", view.get_index().get_value())), ctx);
@@ -666,9 +666,9 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteFeature<r
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConditionVariant>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ConditionVariant>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};
@@ -677,9 +677,9 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConditionVariant>
 };
 
 template<typename LanguageTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteConditionVariant<LanguageTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteConditionVariant<LanguageTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};
@@ -690,10 +690,10 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteCondition
 };
 
 template<typename LanguageTag, typename FeatureTag, typename ObservationTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteCondition<LanguageTag, FeatureTag, ObservationTag>>, C>> :
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, LanguageTag, FeatureTag, ObservationTag>>, C>> :
     fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteCondition<LanguageTag, FeatureTag, ObservationTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, LanguageTag, FeatureTag, ObservationTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};
@@ -702,9 +702,9 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteCondition
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::EffectVariant>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::ps::ext::EffectVariant>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};
@@ -713,9 +713,9 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::EffectVariant>, C
 };
 
 template<typename LanguageTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffectVariant<LanguageTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffectVariant<LanguageTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};
@@ -725,10 +725,10 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffectVar
 };
 
 template<typename LanguageTag, typename FeatureTag, typename ObservationTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffect<LanguageTag, FeatureTag, ObservationTag>>, C>> :
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, LanguageTag, FeatureTag, ObservationTag>>, C>> :
     fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::ps::ext::ConcreteEffect<LanguageTag, FeatureTag, ObservationTag>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, LanguageTag, FeatureTag, ObservationTag>>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};

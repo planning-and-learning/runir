@@ -16,6 +16,14 @@ struct Index<runir::kr::ps::Feature<Family, FeatureTag>> : IndexMixin<Index<runi
     using Base::Base;
 };
 
+template<runir::kr::FamilyTag Family, typename LanguageTag, typename FeatureTag>
+struct Index<runir::kr::ps::ConcreteFeature<Family, LanguageTag, FeatureTag>> :
+    IndexMixin<Index<runir::kr::ps::ConcreteFeature<Family, LanguageTag, FeatureTag>>>
+{
+    using Base = IndexMixin<Index<runir::kr::ps::ConcreteFeature<Family, LanguageTag, FeatureTag>>>;
+    using Base::Base;
+};
+
 }  // namespace ygg
 
 #endif

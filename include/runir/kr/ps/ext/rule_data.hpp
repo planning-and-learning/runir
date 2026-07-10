@@ -4,8 +4,8 @@
 #include "runir/kr/dl/constructor_index.hpp"
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/ps/ext/condition_index.hpp"
-#include "runir/kr/ps/ext/effect_index.hpp"
+#include "runir/kr/ps/condition_index.hpp"
+#include "runir/kr/ps/effect_index.hpp"
 #include "runir/kr/ps/ext/memory_state_index.hpp"
 #include "runir/kr/ps/ext/module_index.hpp"
 #include "runir/kr/ps/ext/register_index.hpp"
@@ -40,7 +40,7 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag, Category>>
     Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag, Category>> index;
     Index<runir::kr::ps::ext::MemoryState> source;
     Index<runir::kr::ps::ext::MemoryState> target;
-    IndexList<runir::kr::ps::ext::ConditionVariant> conditions;
+    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
     Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, Category>> load_expression;
     Index<runir::kr::ps::ext::Register<Category>> reg;
 
@@ -64,8 +64,8 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>
     Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>> index;
     Index<runir::kr::ps::ext::MemoryState> source;
     Index<runir::kr::ps::ext::MemoryState> target;
-    IndexList<runir::kr::ps::ext::ConditionVariant> conditions;
-    IndexList<runir::kr::ps::ext::EffectVariant> effects;
+    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
+    IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects;
 
     void clear() noexcept
     {
@@ -86,10 +86,10 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
     Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>> index;
     Index<runir::kr::ps::ext::MemoryState> source;
     Index<runir::kr::ps::ext::MemoryState> target;
-    IndexList<runir::kr::ps::ext::ConditionVariant> conditions;
-    IndexList<runir::kr::ps::ext::EffectVariant> effects;
+    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
+    IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects;
     ::cista::offset::string action_name;
-    IndexList<runir::kr::ps::ext::Feature<runir::kr::dl::ConceptTag>> arguments;
+    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> arguments;
 
     Data() = default;
     Data(::cista::offset::string action_name_) : index(), action_name(std::move(action_name_)) {}
@@ -116,7 +116,7 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
     Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>> index;
     Index<runir::kr::ps::ext::MemoryState> source;
     Index<runir::kr::ps::ext::MemoryState> target;
-    IndexList<runir::kr::ps::ext::ConditionVariant> conditions;
+    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
     ::cista::offset::string callee_name;
     Index<runir::kr::ps::ext::Module> callee;
     ::cista::offset::vector<runir::kr::ps::ext::CallArgument> arguments;

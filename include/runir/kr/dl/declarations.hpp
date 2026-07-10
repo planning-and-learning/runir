@@ -335,7 +335,6 @@ struct ArgumentTag
 inline constexpr size_t num_registers = 4;
 
 template<CategoryTag Category>
-    requires(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
 struct RegisterIdentifier : ygg::IndexMixin<RegisterIdentifier<Category>>
 {
     using Base = ygg::IndexMixin<RegisterIdentifier<Category>>;

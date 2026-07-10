@@ -86,17 +86,16 @@ public:
 
     EvaluationContext<Kind> context_at(ModuleView module,
                                        MemoryStateView memory_state,
-                                       typename EvaluationContext<Kind>::ConceptRegisters concept_registers,
-                                       typename EvaluationContext<Kind>::RoleRegisters role_registers,
+                                       Registers registers,
                                        tyr::planning::StateView<Kind> source_state)
     {
-        return m_environment.make_context(std::move(source_state), module, memory_state, std::move(concept_registers), std::move(role_registers));
+        return EvaluationContext<Kind>(std::move(source_state), m_environment.get_program(), module, memory_state, std::move(registers));
     }
 
     EvaluationContext<Kind> initial_context()
     {
         const auto program = m_environment.get_program();
-        return m_environment.make_context(m_initial_state, program.get_entry_module());
+        return EvaluationContext<Kind>(m_initial_state, program, program.get_entry_module());
     }
 
     bool is_goal(const tyr::planning::StateView<Kind>& state)
@@ -113,8 +112,11 @@ public:
         auto annotated = runir::datasets::AnnotatedStateGraphVertexLabel<Kind> {
             context.get_state(), goal ? ygg::float_t(0) : std::numeric_limits<ygg::float_t>::infinity(), is_initial, goal, is_alive, is_unsolvable,
         };
-        return VertexLabel { ExtendedState<Kind> { annotated, std::move(memory_state), context.concept_registers(), context.role_registers() },
-                             context.get_module() };
+        return VertexLabel { ExtendedState<Kind> { annotated,
+                                                   std::move(memory_state),
+                                                   context.get_call_stack().registers().template get<runir::kr::dl::ConceptTag>(),
+                                                   context.get_call_stack().registers().template get<runir::kr::dl::RoleTag>() },
+                             context.get_call_stack().module() };
     }
 
     // The internal (Load) moves at the vertex: each holds the planning state fixed and changes the
@@ -145,12 +147,12 @@ public:
         if (search_result.status == tyr::planning::SearchStatus::SOLVED && search_result.goal_node)
         {
             auto match_context = context;
-            if (const auto rule = detail::find_matching_sketch_rule(match_context, m_environment, search_result.goal_node->get_state()))
+            if (const auto variant = detail::find_matching_sketch_rule_variant(match_context, m_environment, search_result.goal_node->get_state()))
             {
-                auto variant = detail::find_matching_sketch_rule_variant(match_context, m_environment, search_result.goal_node->get_state());
+                const auto rule = detail::as_sketch_rule(*variant);
                 auto target = context;
-                target.set_state(search_result.goal_node->get_state());
-                target.set_memory_state(rule->get_target());
+                target.get_state() = search_result.goal_node->get_state();
+                target.get_call_stack().set_memory_state(rule.value().get_target());
                 auto step = Step(detail::ModuleProgramOutcome::APPLIED, std::move(target));
                 step.rule = variant;
                 detail::append_plan_suffix(step.plan_suffix, search_result);
@@ -169,7 +171,7 @@ public:
             return std::vector<Step> { Step(detail::ModuleProgramOutcome::OUT_OF_STATES, context) };
 
         auto eval_context = context;
-        if (eval_context.restore_caller())
+        if (eval_context.get_call_stack().restore_caller())
             return std::vector<Step> { Step(detail::ModuleProgramOutcome::RESTORED_CALLER, std::move(eval_context)) };
 
         return std::vector<Step> { Step(detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION, context) };
@@ -202,7 +204,7 @@ public:
 private:
     std::optional<RuleVariantView> matching_rule_for_candidate(EvaluationContext<Kind>& context, const LabeledNode& candidate)
     {
-        for (const auto& transition : context.get_module().get_memory_transitions())
+        for (const auto& transition : context.get_call_stack().module().get_memory_transitions())
             for (auto rule : transition)
                 if (selects(rule, context, candidate))
                     return rule;
@@ -221,7 +223,7 @@ private:
     std::vector<Step> collect_steps(const EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors)
     {
         std::vector<Step> result;
-        for (const auto& transition : context.get_module().get_memory_transitions())
+        for (const auto& transition : context.get_call_stack().module().get_memory_transitions())
             for (auto rule_variant : transition)
                 ygg::visit(
                     [&](auto rule)
@@ -268,7 +270,7 @@ private:
             if (status == detail::RuleExecutionStatus::NO_APPLICABLE_ACTION)
             {
                 auto restored = context;
-                if (restored.restore_caller())
+                if (restored.get_call_stack().restore_caller())
                     return Step(detail::ModuleProgramOutcome::RESTORED_CALLER, std::move(restored));
                 return Step(detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION, context);
             }
@@ -347,9 +349,9 @@ private:
             {
                 using R = std::decay_t<decltype(rule)>;
                 if constexpr (is_load_rule_view_v<R>)
-                    return InternalMemoryState(step.context.get_memory_state());
+                    return InternalMemoryState(step.context.get_call_stack().memory_state());
                 else if constexpr (std::same_as<R, RuleView<DoTag>> || std::same_as<R, RuleView<CallTag>> || std::same_as<R, RuleView<SketchTag>>)
-                    return ExternalMemoryState(step.context.get_memory_state());
+                    return ExternalMemoryState(step.context.get_call_stack().memory_state());
                 else
                     static_assert(ygg::dependent_false<R>::value, "unhandled rule kind in SuccessorExpander::to_successor");
             },

@@ -535,10 +535,10 @@ auto intern_argument(Repository& repository, const ast::Argument<Category>& argu
     return intern(repository, data);
 }
 
-using ConceptFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::ext::Feature<runir::kr::dl::ConceptTag>>>;
-using RoleFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::ext::Feature<runir::kr::dl::RoleTag>>>;
-using BooleanFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::ext::Feature<runir::kr::ps::dl::BooleanFeature>>>;
-using NumericalFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::ext::Feature<runir::kr::ps::dl::NumericalFeature>>>;
+using ConceptFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>;
+using RoleFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>;
+using BooleanFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>;
+using NumericalFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>;
 using ConceptAliasMap = std::unordered_map<std::string, ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>;
 using MemoryStateMap = std::unordered_map<std::string, ygg::Index<MemoryState>>;
 using ConceptRegisterMap = std::unordered_map<std::string, ygg::Index<Register<runir::kr::dl::ConceptTag>>>;
@@ -679,9 +679,9 @@ auto intern_dl_feature(Repository& repository,
                        ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, ConcreteFeatureTag>> constructor,
                        const std::string& symbol)
 {
-    ygg::Data<ConcreteFeature<runir::kr::DlTag, FeatureTag>> concrete_data(constructor, symbol);
+    ygg::Data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>> concrete_data(constructor, symbol);
     const auto concrete = intern(repository, concrete_data);
-    ygg::Data<Feature<FeatureTag>> feature_data(concrete.get_index());
+    ygg::Data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature_data(concrete.get_index());
     return intern(repository, feature_data);
 }
 
@@ -738,7 +738,7 @@ void append_feature(Repository& repository,
 }
 
 template<typename FeatureTag>
-auto require_feature(const std::unordered_map<std::string, ygg::Index<Feature<FeatureTag>>>& features, const std::string& name)
+auto require_feature(const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>>& features, const std::string& name)
 {
     const auto it = features.find(name);
     if (it == features.end())
@@ -747,30 +747,29 @@ auto require_feature(const std::unordered_map<std::string, ygg::Index<Feature<Fe
 }
 
 template<typename FeatureTag, typename ObservationTag>
-auto make_condition(Repository& repository, ygg::Index<Feature<FeatureTag>> feature)
+auto make_condition(Repository& repository, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature)
 {
-    ygg::Data<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
+    ygg::Data<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
     const auto concrete = intern(repository, concrete_data);
-    ygg::Data<ConcreteConditionVariant<runir::kr::DlTag>> concrete_variant_data(concrete.get_index());
+    ygg::Data<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>> concrete_variant_data(concrete.get_index());
     const auto concrete_variant = intern(repository, concrete_variant_data);
-    ygg::Data<ConditionVariant> variant_data(concrete_variant.get_index());
+    ygg::Data<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> variant_data(concrete_variant.get_index());
     return intern(repository, variant_data);
 }
 
 template<typename FeatureTag, typename ObservationTag>
-auto make_effect(Repository& repository, ygg::Index<Feature<FeatureTag>> feature)
+auto make_effect(Repository& repository, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature)
 {
-    ygg::Data<ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
+    ygg::Data<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>> concrete_data(feature);
     const auto concrete = intern(repository, concrete_data);
-    ygg::Data<ConcreteEffectVariant<runir::kr::DlTag>> concrete_variant_data(concrete.get_index());
+    ygg::Data<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>> concrete_variant_data(concrete.get_index());
     const auto concrete_variant = intern(repository, concrete_variant_data);
-    ygg::Data<EffectVariant> variant_data(concrete_variant.get_index());
+    ygg::Data<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> variant_data(concrete_variant.get_index());
     return intern(repository, variant_data);
 }
 
 auto parse_condition(Repository& repository,
                      const ast::Condition& condition,
-                     const ConceptFeatureMap& concept_features,
                      const BooleanFeatureMap& boolean_features,
                      const NumericalFeatureMap& numerical_features)
 {
@@ -790,18 +789,12 @@ auto parse_condition(Repository& repository,
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::EqualZero>)
             {
-                if (concept_features.contains(condition.feature))
-                    return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::EqualZero>(repository,
-                                                                                                   require_feature(concept_features, condition.feature));
                 return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>(
                     repository,
                     require_feature(numerical_features, condition.feature));
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::GreaterZero>)
             {
-                if (concept_features.contains(condition.feature))
-                    return make_condition<runir::kr::dl::ConceptTag, runir::kr::ps::dl::GreaterZero>(repository,
-                                                                                                     require_feature(concept_features, condition.feature));
                 return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>(
                     repository,
                     require_feature(numerical_features, condition.feature));
@@ -812,7 +805,6 @@ auto parse_condition(Repository& repository,
 
 auto parse_effect(Repository& repository,
                   const ast::Effect& effect,
-                  const ConceptFeatureMap& concept_features,
                   const BooleanFeatureMap& boolean_features,
                   const NumericalFeatureMap& numerical_features)
 {
@@ -832,8 +824,6 @@ auto parse_effect(Repository& repository,
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Unchanged>)
             {
-                if (concept_features.contains(effect.feature))
-                    return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Unchanged>(repository, require_feature(concept_features, effect.feature));
                 if (boolean_features.contains(effect.feature))
                     return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>(repository,
                                                                                                         require_feature(boolean_features, effect.feature));
@@ -842,15 +832,11 @@ auto parse_effect(Repository& repository,
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Increases>)
             {
-                if (concept_features.contains(effect.feature))
-                    return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Increases>(repository, require_feature(concept_features, effect.feature));
                 return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>(repository,
                                                                                                       require_feature(numerical_features, effect.feature));
             }
             else if constexpr (std::same_as<Observation, runir::kr::ps::base::dl::ast::Decreases>)
             {
-                if (concept_features.contains(effect.feature))
-                    return make_effect<runir::kr::dl::ConceptTag, runir::kr::ps::dl::Decreases>(repository, require_feature(concept_features, effect.feature));
                 return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>(repository,
                                                                                                       require_feature(numerical_features, effect.feature));
             }
@@ -860,27 +846,25 @@ auto parse_effect(Repository& repository,
 
 auto parse_conditions(Repository& repository,
                       const std::vector<ast::Condition>& observations,
-                      const ConceptFeatureMap& concept_features,
                       const BooleanFeatureMap& boolean_features,
                       const NumericalFeatureMap& numerical_features)
 {
-    auto result = ygg::IndexList<ConditionVariant> {};
+    auto result = ygg::IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> {};
     result.reserve(observations.size());
     for (const auto& observation : observations)
-        result.push_back(parse_condition(repository, observation, concept_features, boolean_features, numerical_features).get_index());
+        result.push_back(parse_condition(repository, observation, boolean_features, numerical_features).get_index());
     return result;
 }
 
 auto parse_effects(Repository& repository,
                    const std::vector<ast::Effect>& observations,
-                   const ConceptFeatureMap& concept_features,
                    const BooleanFeatureMap& boolean_features,
                    const NumericalFeatureMap& numerical_features)
 {
-    auto result = ygg::IndexList<EffectVariant> {};
+    auto result = ygg::IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> {};
     result.reserve(observations.size());
     for (const auto& observation : observations)
-        result.push_back(parse_effect(repository, observation, concept_features, boolean_features, numerical_features).get_index());
+        result.push_back(parse_effect(repository, observation, boolean_features, numerical_features).get_index());
     return result;
 }
 
@@ -918,7 +902,7 @@ auto parse_concept_argument(Repository& repository,
 }
 
 template<typename FeatureTag>
-auto constructor_from_feature(Repository& repository, ygg::Index<Feature<FeatureTag>> feature)
+auto constructor_from_feature(Repository& repository, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature)
 {
     const auto view = ygg::make_view(feature, repository);
     return ygg::visit([](auto concrete_feature) { return concrete_feature.get_feature().get_index(); }, view.get_variant());
@@ -958,7 +942,7 @@ auto parse_role_argument(Repository& repository,
 auto parse_do_argument(const ast::Expression& expression, const ConceptFeatureMap& concept_features)
 {
     return boost::apply_visitor(
-        [&](const auto& concrete) -> ygg::Index<Feature<runir::kr::dl::ConceptTag>>
+        [&](const auto& concrete) -> ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>
         {
             using Expression = std::remove_cvref_t<decltype(concrete)>;
             if constexpr (std::same_as<Expression, ast::ConstructorExpression>)
@@ -1455,7 +1439,6 @@ auto parse_load_rule(Repository& repository,
                      tyr::formalism::planning::DomainView domain,
                      const ConceptRegisterMap& concept_registers,
                      const RoleRegisterMap& role_registers,
-                     const ConceptFeatureMap& concept_features,
                      const RoleFeatureMap& role_features,
                      const BooleanFeatureMap& boolean_features,
                      const NumericalFeatureMap& numerical_features,
@@ -1465,7 +1448,7 @@ auto parse_load_rule(Repository& repository,
     ygg::Data<Rule<LoadTag, Category>> data;
     data.source = source;
     data.target = target;
-    data.conditions = parse_conditions(repository, rule.conditions, concept_features, boolean_features, numerical_features);
+    data.conditions = parse_conditions(repository, rule.conditions, boolean_features, numerical_features);
     if constexpr (std::same_as<Category, dl_::ConceptTag>)
     {
         data.load_expression = parse_concept_argument(repository, rule.expression, domain, concept_aliases);
@@ -1508,7 +1491,6 @@ auto parse_rule(Repository& repository,
                                                  domain,
                                                  concept_registers,
                                                  role_registers,
-                                                 concept_features,
                                                  role_features,
                                                  boolean_features,
                                                  numerical_features,
@@ -1520,8 +1502,8 @@ auto parse_rule(Repository& repository,
                 ygg::Data<Rule<SketchTag>> data;
                 data.source = source;
                 data.target = target;
-                data.conditions = parse_conditions(repository, concrete.conditions, concept_features, boolean_features, numerical_features);
-                data.effects = parse_effects(repository, concrete.effects, concept_features, boolean_features, numerical_features);
+                data.conditions = parse_conditions(repository, concrete.conditions, boolean_features, numerical_features);
+                data.effects = parse_effects(repository, concrete.effects, boolean_features, numerical_features);
                 return intern_rule_variant(repository, data, symbol);
             }
             else if constexpr (std::same_as<RuleAst, ast::DoRule>)
@@ -1530,8 +1512,8 @@ auto parse_rule(Repository& repository,
                 ygg::Data<Rule<DoTag>> data(concrete.action);
                 data.source = source;
                 data.target = target;
-                data.conditions = parse_conditions(repository, concrete.conditions, concept_features, boolean_features, numerical_features);
-                data.effects = parse_effects(repository, concrete.effects, concept_features, boolean_features, numerical_features);
+                data.conditions = parse_conditions(repository, concrete.conditions, boolean_features, numerical_features);
+                data.effects = parse_effects(repository, concrete.effects, boolean_features, numerical_features);
                 for (const auto& argument : concrete.arguments)
                     data.arguments.push_back(parse_do_argument(argument, concept_features));
                 return intern_rule_variant(repository, data, symbol);
@@ -1541,7 +1523,7 @@ auto parse_rule(Repository& repository,
                 ygg::Data<Rule<CallTag>> data;
                 data.source = source;
                 data.target = target;
-                data.conditions = parse_conditions(repository, concrete.conditions, concept_features, boolean_features, numerical_features);
+                data.conditions = parse_conditions(repository, concrete.conditions, boolean_features, numerical_features);
                 data.callee_name = concrete.callee;
                 if (const auto callee = find_module(modules, concrete.callee))
                     data.callee = *callee;

@@ -1,7 +1,9 @@
 #include <boost/variant/get.hpp>
+#include <cstdlib>
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <new>
 #include <runir/datasets/task_class.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -20,6 +22,40 @@
 #include <variant>
 #include <vector>
 #include <yggdrasil/execution/onetbb.hpp>
+
+namespace allocation_probe
+{
+thread_local bool tracking = false;
+thread_local size_t allocations = 0;
+
+void start() noexcept
+{
+    allocations = 0;
+    tracking = true;
+}
+
+size_t stop() noexcept
+{
+    tracking = false;
+    return allocations;
+}
+}  // namespace allocation_probe
+
+void* operator new(size_t size)
+{
+    if (allocation_probe::tracking)
+        ++allocation_probe::allocations;
+    if (auto* memory = std::malloc(size == 0 ? 1 : size))
+        return memory;
+    throw std::bad_alloc();
+}
+
+void* operator new[](size_t size) { return ::operator new(size); }
+
+void operator delete(void* memory) noexcept { std::free(memory); }
+void operator delete[](void* memory) noexcept { ::operator delete(memory); }
+void operator delete(void* memory, size_t) noexcept { std::free(memory); }
+void operator delete[](void* memory, size_t) noexcept { ::operator delete(memory); }
 
 namespace runir::tests
 {
@@ -73,9 +109,9 @@ auto create_top_concept(kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repo
 
 auto create_concept_feature(kr::ps::ext::Repository& repository, kr::ps::ext::ConceptArgument concept_index, const std::string& name)
 {
-    auto concrete_data = ygg::Data<kr::ps::ext::ConcreteFeature<kr::DlTag, kr::dl::ConceptTag>>(concept_index, name);
+    auto concrete_data = ygg::Data<kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, kr::dl::ConceptTag>>(concept_index, name);
     const auto concrete = repository.get_or_create(concrete_data).first;
-    auto feature_data = ygg::Data<kr::ps::ext::Feature<kr::dl::ConceptTag>>(concrete.get_index());
+    auto feature_data = ygg::Data<kr::ps::Feature<kr::ExtFamilyTag, kr::dl::ConceptTag>>(concrete.get_index());
     return repository.get_or_create(feature_data).first;
 }
 
@@ -89,6 +125,63 @@ auto create_concept_argument(kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>&
 }
 
 }  // namespace
+
+TEST(RunirTests, ExtDistanceFeatureEvaluationIsStableAndLeavesInterpreterStateUnchanged)
+{
+    namespace fp = tyr::formalism::planning;
+    namespace p = tyr::planning;
+
+    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+    auto execution_context = ygg::ExecutionContext::create(1);
+    auto lifted_task = p::Task<p::LiftedTag>(planning_task);
+    auto task = lifted_task.instantiate_ground_task(*execution_context).task;
+    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
+    auto repository_factory = kr::ps::ext::RepositoryFactory();
+    auto dl_repository = dl_repository_factory.create(task->get_repository());
+    auto repository = repository_factory.create(dl_repository);
+    const auto module = kr::ps::ext::dl::parse_module(R"((:module
+        (:symbol distance)
+        (:arguments)
+        (:registers)
+        (:entry source)
+        (:memory source)
+        (:features
+            (:numerical
+                (:symbol D)
+                (:expression
+                    (n_distance
+                        (c_atomic_state "ball")
+                        (r_atomic_state "at")
+                        (c_atomic_state "room")
+                    )
+                )
+            )
+        )
+        (:rules)
+    ))",
+                                                      planning_task.get_domain().get_domain(),
+                                                      *repository);
+    const auto program = create_module_program(*repository, module, { module });
+    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
+    const auto feature = module.get_features<kr::ps::dl::NumericalFeature>().front();
+    const auto initial_state = context.get_state().get_index();
+    const auto initial_memory = context.get_call_stack().memory_state().get_index();
+
+    EXPECT_EQ(kr::ps::ext::evaluate(feature, context, environment), 1);
+    EXPECT_EQ(context.get_state().get_index(), initial_state);
+    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), initial_memory);
+
+    allocation_probe::start();
+    const auto repeated_value = kr::ps::ext::evaluate(feature, context, environment);
+    const auto repeated_allocations = allocation_probe::stop();
+    EXPECT_EQ(repeated_value, 1);
+    EXPECT_EQ(repeated_allocations, 0);
+}
 
 TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
 {
@@ -1160,7 +1253,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
                 (:target-memory m1)
                 (:load
                     (:conditions
-                        (greater_zero B)
+                        (greater_zero N)
                     )
                     (:concept
                         (c_top)
@@ -1182,7 +1275,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
                         (greater_zero N)
                     )
                     (:effects
-                        (unchanged B)
+                        (unchanged N)
                     )
                 )
             )
@@ -1197,7 +1290,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
                     (:action "pick")
                     (:arguments C0 B B)
                     (:effects
-                        (unchanged B)
+                        (unchanged N)
                     )
                 )
             )
@@ -1442,21 +1535,21 @@ TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)
     const auto program = create_module_program(*repository, caller, { caller, callee });
     auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, caller);
 
-    const auto saved_object = ygg::Index<tyr::formalism::Object>(0);
-    context.set(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0), saved_object);
-    context.enter_module(callee, caller_return);
+    const auto saved_object = ygg::make_view(ygg::Index<tyr::formalism::Object>(0), task->get_repository());
+    context.get_call_stack().registers().set(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0), saved_object);
+    context.get_call_stack().enter_module(callee, caller_return);
 
-    EXPECT_EQ(context.get_module().get_index(), callee.get_index());
-    EXPECT_EQ(context.get_memory_state().get_index(), callee_entry.get_index());
-    EXPECT_FALSE(context.concept_registers()[0]);
-    ASSERT_EQ(context.get_call_stack().size(), 1);
+    EXPECT_EQ(context.get_call_stack().module().get_index(), callee.get_index());
+    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), callee_entry.get_index());
+    EXPECT_FALSE(context.get_call_stack().registers().get<kr::dl::ConceptTag>()[0]);
+    ASSERT_EQ(context.get_call_stack().frames().size(), 1);
 
-    ASSERT_TRUE(context.restore_caller());
-    EXPECT_EQ(context.get_module().get_index(), caller.get_index());
-    EXPECT_EQ(context.get_memory_state().get_index(), caller_return.get_index());
-    ASSERT_TRUE(context.concept_registers()[0]);
-    EXPECT_EQ(*context.concept_registers()[0], saved_object);
-    EXPECT_FALSE(context.restore_caller());
+    ASSERT_TRUE(context.get_call_stack().restore_caller());
+    EXPECT_EQ(context.get_call_stack().module().get_index(), caller.get_index());
+    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), caller_return.get_index());
+    ASSERT_TRUE(context.get_call_stack().registers().get<kr::dl::ConceptTag>()[0]);
+    EXPECT_EQ(context.get_call_stack().registers().get<kr::dl::ConceptTag>()[0]->get_index(), saved_object.get_index());
+    EXPECT_FALSE(context.get_call_stack().restore_caller());
 }
 
 TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
@@ -1519,9 +1612,9 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     EXPECT_EQ(kr::ps::ext::detail::execute_load(load, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(kr::ps::ext::detail::execute_load(load, context, environment), kr::ps::ext::detail::RuleExecutionStatus::NOT_APPLICABLE);
     EXPECT_EQ(context.get_state().get_index(), initial_state);
-    EXPECT_EQ(context.get_memory_state().get_index(), target.get_index());
-    ASSERT_TRUE(context.concept_registers()[0]);
-    EXPECT_EQ(*context.concept_registers()[0], ygg::Index<tyr::formalism::Object>(0));
+    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), target.get_index());
+    ASSERT_TRUE(context.get_call_stack().registers().get<kr::dl::ConceptTag>()[0]);
+    EXPECT_EQ(context.get_call_stack().registers().get<kr::dl::ConceptTag>()[0]->get_index(), ygg::Index<tyr::formalism::Object>(0));
 }
 
 TEST(RunirTests, ExtRoleLoadRuleStoresFirstPairAndAdvancesMemory)
@@ -1600,9 +1693,10 @@ TEST(RunirTests, ExtRoleLoadRuleStoresFirstPairAndAdvancesMemory)
 
     EXPECT_EQ(kr::ps::ext::detail::execute_load(*maybe_load, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_state().get_index(), initial_state);
-    EXPECT_EQ(context.get_memory_state().get_name(), "target");
-    ASSERT_TRUE(context.role_registers()[0]);
-    EXPECT_NE(context.role_registers()[0]->first, context.role_registers()[0]->second);
+    EXPECT_EQ(context.get_call_stack().memory_state().get_name(), "target");
+    ASSERT_TRUE(context.get_call_stack().registers().get<kr::dl::RoleTag>()[0]);
+    EXPECT_NE(context.get_call_stack().registers().get<kr::dl::RoleTag>()[0]->first,
+              context.get_call_stack().registers().get<kr::dl::RoleTag>()[0]->second);
 }
 
 TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
@@ -1687,12 +1781,12 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
 
     EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
-    EXPECT_EQ(context.get_module().get_index(), callee.get_index());
-    EXPECT_EQ(context.get_memory_state().get_index(), callee_entry.get_index());
-    ASSERT_EQ(context.arguments<kr::dl::ConceptTag>().size(), 1);
-    ASSERT_EQ(context.arguments<kr::dl::RoleTag>().size(), 1);
-    ASSERT_EQ(context.arguments<kr::dl::BooleanTag>().size(), 1);
-    ASSERT_EQ(context.arguments<kr::dl::NumericalTag>().size(), 1);
+    EXPECT_EQ(context.get_call_stack().module().get_index(), callee.get_index());
+    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), callee_entry.get_index());
+    ASSERT_EQ(context.get_call_stack().arguments().get<kr::dl::ConceptTag>().size(), 1);
+    ASSERT_EQ(context.get_call_stack().arguments().get<kr::dl::RoleTag>().size(), 1);
+    ASSERT_EQ(context.get_call_stack().arguments().get<kr::dl::BooleanTag>().size(), 1);
+    ASSERT_EQ(context.get_call_stack().arguments().get<kr::dl::NumericalTag>().size(), 1);
 
     const auto concept_denotation = kr::ps::ext::evaluate_argument(concept_argument.get_index(), context, environment);
     const auto concept_first = concept_denotation.begin();
@@ -1709,9 +1803,27 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     EXPECT_TRUE(kr::ps::ext::evaluate_argument(boolean_argument.get_index(), context, environment).get());
     EXPECT_GT(kr::ps::ext::evaluate_argument(numerical_argument.get_index(), context, environment).get(), 0);
 
-    ASSERT_TRUE(context.restore_caller());
-    EXPECT_EQ(context.get_module().get_index(), caller.get_index());
-    EXPECT_EQ(context.get_memory_state().get_index(), caller_return.get_index());
+    allocation_probe::start();
+    const auto repeated_concept = kr::ps::ext::evaluate_argument(concept_argument.get_index(), context, environment);
+    const auto repeated_allocations = allocation_probe::stop();
+    EXPECT_EQ(repeated_concept.get_index(), concept_denotation.get_index());
+    EXPECT_EQ(repeated_allocations, 0);
+
+    ASSERT_TRUE(context.get_call_stack().restore_caller());
+    EXPECT_EQ(context.get_call_stack().module().get_index(), caller.get_index());
+    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), caller_return.get_index());
+
+    context.get_call_stack().set_memory_state(caller_entry);
+    allocation_probe::start();
+    const auto repeated_call_status = kr::ps::ext::detail::execute_call(call, context, environment);
+    const auto repeated_call_allocations = allocation_probe::stop();
+    EXPECT_EQ(repeated_call_status, kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
+    EXPECT_EQ(repeated_call_allocations, 0);
+    EXPECT_EQ(context.get_call_stack().module().get_index(), callee.get_index());
+
+    ASSERT_TRUE(context.get_call_stack().restore_caller());
+    EXPECT_EQ(context.get_call_stack().module().get_index(), caller.get_index());
+    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), caller_return.get_index());
 }
 
 TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
@@ -1750,8 +1862,8 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
 
     EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
-    EXPECT_EQ(context.get_module().get_index(), callee.get_index());
-    EXPECT_EQ(context.get_memory_state().get_index(), callee_entry.get_index());
+    EXPECT_EQ(context.get_call_stack().module().get_index(), callee.get_index());
+    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), callee_entry.get_index());
 }
 
 TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
@@ -1808,8 +1920,14 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     ASSERT_TRUE(selected);
     EXPECT_EQ(selected->label.get_action().get_name(), "pick");
 
+    allocation_probe::start();
+    const auto repeated_selection = kr::ps::ext::detail::select_do_successor(rule, context, environment, successors);
+    const auto repeated_allocations = allocation_probe::stop();
+    EXPECT_TRUE(repeated_selection);
+    EXPECT_EQ(repeated_allocations, 0);
+
     EXPECT_EQ(kr::ps::ext::detail::execute_do(rule, context, environment, successors), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
-    EXPECT_EQ(context.get_memory_state().get_index(), target.get_index());
+    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), target.get_index());
     EXPECT_NE(context.get_state().get_index(), initial_state);
     EXPECT_EQ(context.get_state().get_index(), selected->node.get_state().get_index());
 }
@@ -1848,8 +1966,10 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
         (:numerical
             (:symbol C)
             (:expression
-                (n_count
-                    (c_atomic_state "free")
+                (n_distance
+                    (c_atomic_state "ball")
+                    (r_atomic_state "at")
+                    (c_atomic_state "room")
                 )
             )
         )
@@ -1865,7 +1985,7 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
                     (:action "pick")
                     (:arguments T T T)
                     (:effects
-                        (unchanged C)
+                        (decreases C)
                     )
                 )
             )
@@ -1889,6 +2009,13 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
             if constexpr (std::same_as<RuleView, ygg::View<ygg::Index<kr::ps::ext::Rule<kr::ps::ext::DoTag>>, kr::ps::ext::Repository>>)
             {
                 EXPECT_FALSE(kr::ps::ext::detail::select_do_successor(rule, context, environment, successors));
+
+                allocation_probe::start();
+                const auto repeated_selection = kr::ps::ext::detail::select_do_successor(rule, context, environment, successors);
+                const auto repeated_allocations = allocation_probe::stop();
+                EXPECT_FALSE(repeated_selection);
+                EXPECT_EQ(repeated_allocations, 0);
+
                 EXPECT_EQ(kr::ps::ext::detail::execute_do(rule, context, environment, successors),
                           kr::ps::ext::detail::RuleExecutionStatus::NO_APPLICABLE_ACTION);
             }
@@ -1987,7 +2114,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     const auto steps = expander.control_steps(*search_context, context, options);
     ASSERT_FALSE(steps.empty());
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
-    EXPECT_EQ(steps.front().context.get_memory_state().get_index(), move_target.get_index());
+    EXPECT_EQ(steps.front().context.get_call_stack().memory_state().get_index(), move_target.get_index());
 }
 
 TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)

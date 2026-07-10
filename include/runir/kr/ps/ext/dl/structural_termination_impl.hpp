@@ -26,9 +26,6 @@ namespace runir::kr::ps::ext::dl
  * rule r exists iff r leads from memory state m to m', its conditions hold
  * in b, and (b, b') is compatible with its effects.
  *
- * Concept features are cardinalities and are treated like numerical features
- * (well-founded downward, abstracted to |C| > 0).
- *
  * Rule kinds (bonet-et-al-icaps2024.pdf Algorithm 2): sketch rules carry
  * explicit effects with unmentioned features unconstrained. Do rules may also
  * carry explicit effects; concrete execution/proof only accepts matching
@@ -45,43 +42,38 @@ namespace detail
 
 struct ModuleFeatures
 {
-    std::vector<ygg::Index<Feature<runir::kr::dl::ConceptTag>>> concepts;
-    std::vector<ygg::Index<Feature<runir::kr::ps::dl::BooleanFeature>>> booleans;
-    std::vector<ygg::Index<Feature<runir::kr::ps::dl::NumericalFeature>>> numericals;
+    std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>> booleans;
+    std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>> numericals;
 };
 
 template<typename FeatureTag>
-std::size_t feature_position(const std::vector<ygg::Index<Feature<FeatureTag>>>& features, ygg::Index<Feature<FeatureTag>> feature)
+std::size_t feature_position(const std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>>& features, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature)
 {
     return static_cast<std::size_t>(std::distance(features.begin(), std::find(features.begin(), features.end(), feature)));
 }
 
 template<typename FeatureTag>
-void insert_unique(std::vector<ygg::Index<Feature<FeatureTag>>>& features, ygg::Index<Feature<FeatureTag>> feature)
+void insert_unique(std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>>& features, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature)
 {
     if (std::find(features.begin(), features.end(), feature) == features.end())
         features.push_back(feature);
 }
 
 template<typename FeatureTag, typename ObservationTag>
-void collect_feature(ModuleFeatures& features, ygg::View<ygg::Index<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> condition)
+void collect_feature(ModuleFeatures& features, ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> condition)
 {
-    if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
-        insert_unique(features.concepts, condition.get_feature().get_index());
-    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
+    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
         insert_unique(features.booleans, condition.get_feature().get_index());
-    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
+    else
         insert_unique(features.numericals, condition.get_feature().get_index());
 }
 
 template<typename FeatureTag, typename ObservationTag>
-void collect_feature(ModuleFeatures& features, ygg::View<ygg::Index<ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> effect)
+void collect_feature(ModuleFeatures& features, ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> effect)
 {
-    if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
-        insert_unique(features.concepts, effect.get_feature().get_index());
-    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
+    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
         insert_unique(features.booleans, effect.get_feature().get_index());
-    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
+    else
         insert_unique(features.numericals, effect.get_feature().get_index());
 }
 
@@ -134,7 +126,7 @@ bool variant_references_concept_register(VariantView view, runir::kr::dl::Regist
 }
 
 template<typename FeatureTag>
-bool feature_references_concept_register(ygg::Index<Feature<FeatureTag>> feature,
+bool feature_references_concept_register(ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature,
                                          const Repository& repository,
                                          runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag> reg)
 {
@@ -142,8 +134,7 @@ bool feature_references_concept_register(ygg::Index<Feature<FeatureTag>> feature
                       ygg::make_view(feature, repository).get_variant());
 }
 
-/// Per-rule qualitative profile. Numerical-like positions span the concept
-/// features first, then the numerical features.
+/// Per-rule qualitative profile.
 struct ModuleRuleProfile
 {
     std::size_t source_memory_position = 0;
@@ -160,15 +151,15 @@ struct ModuleRuleProfile
     boost::dynamic_bitset<> boolean_unchanged_effects;
     std::vector<NumericalChange> numerical_changes;
 
-    ModuleRuleProfile(std::size_t num_booleans, std::size_t num_numerical_like) :
+    ModuleRuleProfile(std::size_t num_booleans, std::size_t num_numericals) :
         boolean_positive_conditions(num_booleans),
         boolean_negative_conditions(num_booleans),
-        numerical_greater_conditions(num_numerical_like),
-        numerical_zero_conditions(num_numerical_like),
+        numerical_greater_conditions(num_numericals),
+        numerical_zero_conditions(num_numericals),
         boolean_positive_effects(num_booleans),
         boolean_negative_effects(num_booleans),
         boolean_unchanged_effects(num_booleans),
-        numerical_changes(num_numerical_like, NumericalChange::UNCONSTRAINED)
+        numerical_changes(num_numericals, NumericalChange::UNCONSTRAINED)
     {
     }
 };
@@ -182,19 +173,15 @@ inline void record_load_effects(const ModuleFeatures& features,
         if (!feature_references_concept_register(features.booleans[position], repository, reg))
             profile.boolean_unchanged_effects.set(position);
 
-    for (std::size_t position = 0; position < features.concepts.size(); ++position)
-        if (!feature_references_concept_register(features.concepts[position], repository, reg))
-            profile.numerical_changes[position] = NumericalChange::UNCHANGED;
-
     for (std::size_t position = 0; position < features.numericals.size(); ++position)
         if (!feature_references_concept_register(features.numericals[position], repository, reg))
-            profile.numerical_changes[features.concepts.size() + position] = NumericalChange::UNCHANGED;
+            profile.numerical_changes[position] = NumericalChange::UNCHANGED;
 }
 
 template<typename FeatureTag, typename ObservationTag>
 void record_condition(const ModuleFeatures& features,
                       ModuleRuleProfile& profile,
-                      ygg::View<ygg::Index<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> condition)
+                      ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> condition)
 {
     namespace psdl = runir::kr::ps::dl;
     if constexpr (std::same_as<FeatureTag, psdl::BooleanFeature>)
@@ -207,11 +194,7 @@ void record_condition(const ModuleFeatures& features,
     }
     else
     {
-        auto position = std::size_t { 0 };
-        if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
-            position = feature_position(features.concepts, condition.get_feature().get_index());
-        else
-            position = features.concepts.size() + feature_position(features.numericals, condition.get_feature().get_index());
+        const auto position = feature_position(features.numericals, condition.get_feature().get_index());
         if constexpr (std::same_as<ObservationTag, psdl::GreaterZero>)
             profile.numerical_greater_conditions.set(position);
         else if constexpr (std::same_as<ObservationTag, psdl::EqualZero>)
@@ -222,7 +205,7 @@ void record_condition(const ModuleFeatures& features,
 template<typename FeatureTag, typename ObservationTag>
 void record_effect(const ModuleFeatures& features,
                    ModuleRuleProfile& profile,
-                   ygg::View<ygg::Index<ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> effect)
+                   ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> effect)
 {
     namespace psdl = runir::kr::ps::dl;
     if constexpr (std::same_as<FeatureTag, psdl::BooleanFeature>)
@@ -237,11 +220,7 @@ void record_effect(const ModuleFeatures& features,
     }
     else
     {
-        auto position = std::size_t { 0 };
-        if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
-            position = feature_position(features.concepts, effect.get_feature().get_index());
-        else
-            position = features.concepts.size() + feature_position(features.numericals, effect.get_feature().get_index());
+        const auto position = feature_position(features.numericals, effect.get_feature().get_index());
         if constexpr (std::same_as<ObservationTag, psdl::Increases>)
             profile.numerical_changes[position] = NumericalChange::INCREASES;
         else if constexpr (std::same_as<ObservationTag, psdl::Decreases>)
@@ -305,10 +284,10 @@ inline ModuleAnalysis analyze_module(ModuleView module_)
         }
 
     const auto num_booleans = analysis.features.booleans.size();
-    const auto num_numerical_like = analysis.features.concepts.size() + analysis.features.numericals.size();
+    const auto num_numericals = analysis.features.numericals.size();
     for (auto rule : analysis.rules)
     {
-        auto profile = ModuleRuleProfile(num_booleans, num_numerical_like);
+        auto profile = ModuleRuleProfile(num_booleans, num_numericals);
         ygg::visit(
             [&](auto concrete_rule)
             {
@@ -342,7 +321,7 @@ inline ModuleAnalysis analyze_module(ModuleView module_)
 }
 
 /// Vertex ids encode valuation * num_memory_states + memory position; within
-/// a valuation, Boolean feature i is at bit i and numerical-like feature j
+/// a valuation, Boolean feature i is at bit i and numerical feature j
 /// at bit num_booleans + j.
 inline boost::dynamic_bitset<> vertex_booleans(std::size_t vertex, std::size_t num_memory_states, std::size_t num_booleans)
 {
@@ -354,24 +333,24 @@ inline boost::dynamic_bitset<> vertex_booleans(std::size_t vertex, std::size_t n
 }
 
 inline boost::dynamic_bitset<>
-vertex_numerical_like(std::size_t vertex, std::size_t num_memory_states, std::size_t num_booleans, std::size_t num_numerical_like)
+vertex_numericals(std::size_t vertex, std::size_t num_memory_states, std::size_t num_booleans, std::size_t num_numericals)
 {
     const auto valuation = vertex / num_memory_states;
-    auto values = boost::dynamic_bitset<>(num_numerical_like);
-    for (std::size_t position = 0; position < num_numerical_like; ++position)
+    auto values = boost::dynamic_bitset<>(num_numericals);
+    for (std::size_t position = 0; position < num_numericals; ++position)
         values.set(position, (valuation >> (num_booleans + position)) & std::size_t { 1 });
     return values;
 }
 
 inline std::size_t
-make_vertex(const boost::dynamic_bitset<>& booleans, const boost::dynamic_bitset<>& numerical_like, std::size_t num_memory_states, std::size_t memory_position)
+make_vertex(const boost::dynamic_bitset<>& booleans, const boost::dynamic_bitset<>& numericals, std::size_t num_memory_states, std::size_t memory_position)
 {
     auto valuation = std::size_t { 0 };
     for (std::size_t position = 0; position < booleans.size(); ++position)
         if (booleans.test(position))
             valuation |= std::size_t { 1 } << position;
-    for (std::size_t position = 0; position < numerical_like.size(); ++position)
-        if (numerical_like.test(position))
+    for (std::size_t position = 0; position < numericals.size(); ++position)
+        if (numericals.test(position))
             valuation |= std::size_t { 1 } << (booleans.size() + position);
     return valuation * num_memory_states + memory_position;
 }
@@ -382,16 +361,16 @@ template<typename Callback>
 void enumerate_rule_edges(const ModuleRuleProfile& profile,
                           std::size_t num_memory_states,
                           std::size_t num_booleans,
-                          std::size_t num_numerical_like,
+                          std::size_t num_numericals,
                           Callback&& callback)
 {
-    const auto num_valuations = std::size_t { 1 } << (num_booleans + num_numerical_like);
+    const auto num_valuations = std::size_t { 1 } << (num_booleans + num_numericals);
 
     for (std::size_t source_valuation = 0; source_valuation < num_valuations; ++source_valuation)
     {
         const auto source = source_valuation * num_memory_states + profile.source_memory_position;
         const auto source_booleans = vertex_booleans(source, num_memory_states, num_booleans);
-        const auto source_numericals = vertex_numerical_like(source, num_memory_states, num_booleans, num_numerical_like);
+        const auto source_numericals = vertex_numericals(source, num_memory_states, num_booleans, num_numericals);
 
         // Conditions.
         if (!profile.boolean_positive_conditions.is_subset_of(source_booleans))
@@ -407,10 +386,10 @@ void enumerate_rule_edges(const ModuleRuleProfile& profile,
         auto target_booleans = profile.boolean_positive_effects | (profile.boolean_unchanged_effects & source_booleans);
         const auto fixed_booleans = profile.boolean_positive_effects | profile.boolean_negative_effects | profile.boolean_unchanged_effects;
 
-        auto target_numericals = boost::dynamic_bitset<>(num_numerical_like);
-        auto fixed_numericals = boost::dynamic_bitset<>(num_numerical_like);
+        auto target_numericals = boost::dynamic_bitset<>(num_numericals);
+        auto fixed_numericals = boost::dynamic_bitset<>(num_numericals);
         auto decreases_unsatisfiable = false;
-        for (std::size_t position = 0; position < num_numerical_like; ++position)
+        for (std::size_t position = 0; position < num_numericals; ++position)
         {
             switch (profile.numerical_changes[position])
             {
@@ -443,7 +422,7 @@ void enumerate_rule_edges(const ModuleRuleProfile& profile,
         for (std::size_t position = 0; position < num_booleans; ++position)
             if (!fixed_booleans.test(position))
                 free_positions.emplace_back(true, position);
-        for (std::size_t position = 0; position < num_numerical_like; ++position)
+        for (std::size_t position = 0; position < num_numericals; ++position)
             if (!fixed_numericals.test(position))
                 free_positions.emplace_back(false, position);
 
@@ -468,7 +447,7 @@ template<typename VertexBooleans, typename EdgeChanges>
 std::pair<bool, std::vector<std::size_t>> sieve(std::vector<ModulePolicyEdge>& edges,
                                                 std::size_t num_vertices,
                                                 std::size_t num_booleans,
-                                                std::size_t num_numerical_like,
+                                                std::size_t num_numericals,
                                                 VertexBooleans&& vertex_booleans_of,
                                                 EdgeChanges&& numerical_changes_of)
 {
@@ -495,14 +474,14 @@ std::pair<bool, std::vector<std::size_t>> sieve(std::vector<ModulePolicyEdge>& e
             boost::dynamic_bitset<> boolean_flipped_to_true;
             boost::dynamic_bitset<> boolean_flipped_to_false;
 
-            ComponentProfile(std::size_t num_booleans, std::size_t num_numerical_like) :
-                numerical_increased_or_unconstrained(num_numerical_like),
+            ComponentProfile(std::size_t num_booleans, std::size_t num_numericals) :
+                numerical_increased_or_unconstrained(num_numericals),
                 boolean_flipped_to_true(num_booleans),
                 boolean_flipped_to_false(num_booleans)
             {
             }
         };
-        auto component_profiles = std::vector<ComponentProfile>(static_cast<std::size_t>(num_components), ComponentProfile(num_booleans, num_numerical_like));
+        auto component_profiles = std::vector<ComponentProfile>(static_cast<std::size_t>(num_components), ComponentProfile(num_booleans, num_numericals));
 
         for (const auto& edge : edges)
         {
@@ -564,7 +543,6 @@ inline ModuleStructuralTerminationResult structural_termination(ModuleView modul
     const auto& profiles = analysis.profiles;
 
     auto result = ModuleStructuralTerminationResult {};
-    result.concepts = features.concepts;
     result.booleans = features.booleans;
     result.numericals = features.numericals;
 
@@ -572,10 +550,9 @@ inline ModuleStructuralTerminationResult structural_termination(ModuleView modul
     if (num_memory_states == 0)
         return result;  // no memory states, no rules, trivially terminating
 
-    const auto num_concepts = features.concepts.size();
     const auto num_booleans = features.booleans.size();
-    const auto num_numerical_like = num_concepts + features.numericals.size();
-    if (num_booleans + num_numerical_like > 14)
+    const auto num_numericals = features.numericals.size();
+    if (num_booleans + num_numericals > 14)
         throw std::invalid_argument("structural_termination: too many features; the policy graph has 2^|features| * |memory| vertices.");
 
     auto edges = std::vector<detail::ModulePolicyEdge> {};
@@ -583,16 +560,16 @@ inline ModuleStructuralTerminationResult structural_termination(ModuleView modul
         detail::enumerate_rule_edges(profiles[rule_position],
                                      num_memory_states,
                                      num_booleans,
-                                     num_numerical_like,
+                                     num_numericals,
                                      [&](std::size_t source, std::size_t target)
                                      { edges.push_back(detail::ModulePolicyEdge { source, target, rule_position }); });
 
-    const auto num_vertices = (std::size_t { 1 } << (num_booleans + num_numerical_like)) * num_memory_states;
+    const auto num_vertices = (std::size_t { 1 } << (num_booleans + num_numericals)) * num_memory_states;
     const auto [has_cycle, component_of] = detail::sieve(
         edges,
         num_vertices,
         num_booleans,
-        num_numerical_like,
+        num_numericals,
         [&](std::size_t vertex) { return detail::vertex_booleans(vertex, num_memory_states, num_booleans); },
         [&](const detail::ModulePolicyEdge& edge) -> const std::vector<NumericalChange>& { return profiles[edge.rule_position].numerical_changes; });
 
@@ -609,18 +586,11 @@ inline ModuleStructuralTerminationResult structural_termination(ModuleView modul
     {
         if (vertex_remap[vertex] == std::numeric_limits<std::size_t>::max())
         {
-            const auto numerical_like = detail::vertex_numerical_like(vertex, num_memory_states, num_booleans, num_numerical_like);
-            auto concepts = boost::dynamic_bitset<>(num_concepts);
-            auto numericals = boost::dynamic_bitset<>(features.numericals.size());
-            for (std::size_t position = 0; position < num_concepts; ++position)
-                concepts.set(position, numerical_like.test(position));
-            for (std::size_t position = 0; position < features.numericals.size(); ++position)
-                numericals.set(position, numerical_like.test(num_concepts + position));
-            vertex_remap[vertex] =
-                counterexample_builder.add_vertex(ModulePolicyGraphVertexLabel(std::move(concepts),
-                                                                               detail::vertex_booleans(vertex, num_memory_states, num_booleans),
-                                                                               std::move(numericals),
-                                                                               memory_states[vertex % num_memory_states]));
+            auto numericals = detail::vertex_numericals(vertex, num_memory_states, num_booleans, num_numericals);
+            vertex_remap[vertex] = counterexample_builder.add_vertex(ModulePolicyGraphVertexLabel(
+                detail::vertex_booleans(vertex, num_memory_states, num_booleans),
+                std::move(numericals),
+                memory_states[vertex % num_memory_states]));
         }
         return static_cast<graphs::VertexIndex>(vertex_remap[vertex]);
     };

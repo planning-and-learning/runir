@@ -261,8 +261,7 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel, char
     template<typename FormatContext>
     auto format(const runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel& label, FormatContext& ctx) const
     {
-        const auto text = fmt::format("(concepts={}, booleans={}, numericals={}, memory={})",
-                                      label.concept_values,
+        const auto text = fmt::format("(booleans={}, numericals={}, memory={})",
                                       label.boolean_values,
                                       label.numerical_values,
                                       label.memory_state.get_name().str());

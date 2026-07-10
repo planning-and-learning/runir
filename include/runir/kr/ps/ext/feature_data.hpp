@@ -3,8 +3,7 @@
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
-#include "runir/kr/ps/ext/dl/feature_index.hpp"
-#include "runir/kr/ps/ext/feature_index.hpp"
+#include "runir/kr/ps/feature_index.hpp"
 
 #include <cista/containers/variant.h>
 #include <tuple>
@@ -15,11 +14,11 @@ namespace ygg
 {
 
 template<>
-struct Data<runir::kr::ps::ext::Feature<runir::kr::dl::ConceptTag>>
+struct Data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl::ConceptTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag>>>;
 
-    Index<runir::kr::ps::ext::Feature<runir::kr::dl::ConceptTag>> index;
+    Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>> index;
     Variant value;
 
     Data() = default;
@@ -36,11 +35,11 @@ struct Data<runir::kr::ps::ext::Feature<runir::kr::dl::ConceptTag>>
 };
 
 template<>
-struct Data<runir::kr::ps::ext::Feature<runir::kr::dl::RoleTag>>
+struct Data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::dl::RoleTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::RoleTag>>>;
 
-    Index<runir::kr::ps::ext::Feature<runir::kr::dl::RoleTag>> index;
+    Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>> index;
     Variant value;
 
     Data() = default;
@@ -57,11 +56,11 @@ struct Data<runir::kr::ps::ext::Feature<runir::kr::dl::RoleTag>>
 };
 
 template<>
-struct Data<runir::kr::ps::ext::Feature<runir::kr::ps::dl::BooleanFeature>>
+struct Data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>>;
 
-    Index<runir::kr::ps::ext::Feature<runir::kr::ps::dl::BooleanFeature>> index;
+    Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>> index;
     Variant value;
 
     Data() = default;
@@ -78,11 +77,11 @@ struct Data<runir::kr::ps::ext::Feature<runir::kr::ps::dl::BooleanFeature>>
 };
 
 template<>
-struct Data<runir::kr::ps::ext::Feature<runir::kr::ps::dl::NumericalFeature>>
+struct Data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ext::ConcreteFeature<runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>>;
 
-    Index<runir::kr::ps::ext::Feature<runir::kr::ps::dl::NumericalFeature>> index;
+    Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>> index;
     Variant value;
 
     Data() = default;

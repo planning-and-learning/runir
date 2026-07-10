@@ -16,6 +16,7 @@
 #include <optional>
 #include <tuple>
 #include <tyr/formalism/object_index.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>
 #include <utility>
@@ -26,8 +27,8 @@ namespace runir::kr::ps::ext
 template<tyr::planning::TaskKind Kind>
 struct ExtendedState
 {
-    using ConceptRegisterValue = std::optional<ygg::Index<tyr::formalism::Object>>;
-    using RoleRegisterValue = std::optional<std::pair<ygg::Index<tyr::formalism::Object>, ygg::Index<tyr::formalism::Object>>>;
+    using ConceptRegisterValue = std::optional<tyr::formalism::planning::ObjectView>;
+    using RoleRegisterValue = std::optional<std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>>;
     using ConceptRegisters = std::array<ConceptRegisterValue, runir::kr::dl::num_registers>;
     using RoleRegisters = std::array<RoleRegisterValue, runir::kr::dl::num_registers>;
 

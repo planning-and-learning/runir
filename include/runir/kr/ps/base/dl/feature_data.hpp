@@ -2,7 +2,6 @@
 #define RUNIR_KR_PS_BASE_DL_FEATURE_DATA_HPP_
 
 #include "runir/kr/dl/constructor_index.hpp"
-#include "runir/kr/ps/base/dl/feature_index.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/feature_index.hpp"
 

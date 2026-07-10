@@ -7,164 +7,177 @@
 
 #include <array>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <string>
-#include <type_traits>
+#include <tuple>
+#include <tyr/formalism/planning/repository.hpp>
 #include <utility>
-#include <vector>
+#include <yggdrasil/core/dependent_false.hpp>
 
 namespace runir::kr::dl::semantics
 {
 
-template<tyr::planning::TaskKind Kind>
-class EvaluationContext<runir::kr::ExtFamilyTag, Kind> : public BaseEvaluationContext<EvaluationContext<runir::kr::ExtFamilyTag, Kind>, Kind>
+struct Arguments
 {
-public:
-    using Self = EvaluationContext<runir::kr::ExtFamilyTag, Kind>;
+    std::span<const DenotationView<ConceptTag>> concept_arguments;
+    std::span<const DenotationView<RoleTag>> role_arguments;
+    std::span<const DenotationView<BooleanTag>> boolean_arguments;
+    std::span<const DenotationView<NumericalTag>> numerical_arguments;
 
-    template<CategoryTag Category>
-    using Element = DenotationElement<Category, Self>;
+    Arguments() noexcept = default;
 
-    template<CategoryTag Category>
-    using Registers = std::array<std::optional<Element<Category>>, runir::kr::dl::num_registers>;
-
-    template<CategoryTag Category>
-    using Argument = ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>;
-
-    template<CategoryTag Category>
-    using Arguments = std::vector<Argument<Category>>;
-
-private:
-    using Base = BaseEvaluationContext<EvaluationContext<runir::kr::ExtFamilyTag, Kind>, Kind>;
-
-    Registers<ConceptTag> m_concept_registers;
-    Registers<RoleTag> m_role_registers;
-    Arguments<ConceptTag> m_concept_arguments;
-    Arguments<RoleTag> m_role_arguments;
-    Arguments<BooleanTag> m_boolean_arguments;
-    Arguments<NumericalTag> m_numerical_arguments;
-
-public:
-    EvaluationContext(tyr::planning::StateView<Kind> state,
-                      Builder& builder,
-                      DenotationRepository& denotation_repository,
-                      Arguments<ConceptTag> concept_arguments = {},
-                      Arguments<RoleTag> role_arguments = {},
-                      Arguments<BooleanTag> boolean_arguments = {},
-                      Arguments<NumericalTag> numerical_arguments = {}) noexcept :
-        Base(std::move(state), builder, denotation_repository),
-        m_concept_registers(),
-        m_role_registers(),
-        m_concept_arguments(std::move(concept_arguments)),
-        m_role_arguments(std::move(role_arguments)),
-        m_boolean_arguments(std::move(boolean_arguments)),
-        m_numerical_arguments(std::move(numerical_arguments))
+    template<typename Source>
+    explicit Arguments(const Source& source) noexcept :
+        concept_arguments(source.template get<ConceptTag>()),
+        role_arguments(source.template get<RoleTag>()),
+        boolean_arguments(source.template get<BooleanTag>()),
+        numerical_arguments(source.template get<NumericalTag>())
     {
     }
 
     template<CategoryTag Category>
-        requires(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
-    auto& registers() noexcept
+    const auto& get() const noexcept
     {
         if constexpr (std::same_as<Category, ConceptTag>)
-            return m_concept_registers;
+            return concept_arguments;
         else if constexpr (std::same_as<Category, RoleTag>)
-            return m_role_registers;
-    }
-
-    template<CategoryTag Category>
-        requires(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
-    const auto& registers() const noexcept
-    {
-        if constexpr (std::same_as<Category, ConceptTag>)
-            return m_concept_registers;
-        else if constexpr (std::same_as<Category, RoleTag>)
-            return m_role_registers;
-    }
-
-    auto& at(RegisterIdentifier<ConceptTag> reg) { return registers<ConceptTag>()[verify_bounds(reg)]; }
-
-    const auto& at(RegisterIdentifier<ConceptTag> reg) const { return registers<ConceptTag>()[verify_bounds(reg)]; }
-
-    auto& at(RegisterIdentifier<RoleTag> reg) { return registers<RoleTag>()[verify_bounds(reg)]; }
-
-    const auto& at(RegisterIdentifier<RoleTag> reg) const { return registers<RoleTag>()[verify_bounds(reg)]; }
-
-    void set(RegisterIdentifier<ConceptTag> reg, Element<ConceptTag> element) { at(reg) = std::move(element); }
-
-    void set(RegisterIdentifier<RoleTag> reg, Element<RoleTag> element) { at(reg) = std::move(element); }
-
-    void clear(RegisterIdentifier<ConceptTag> reg) { at(reg).reset(); }
-
-    void clear(RegisterIdentifier<RoleTag> reg) { at(reg).reset(); }
-
-    template<CategoryTag Category>
-    const auto& arguments() const noexcept
-    {
-        if constexpr (std::same_as<Category, ConceptTag>)
-            return m_concept_arguments;
-        else if constexpr (std::same_as<Category, RoleTag>)
-            return m_role_arguments;
+            return role_arguments;
         else if constexpr (std::same_as<Category, BooleanTag>)
-            return m_boolean_arguments;
+            return boolean_arguments;
         else if constexpr (std::same_as<Category, NumericalTag>)
-            return m_numerical_arguments;
+            return numerical_arguments;
+        else
+            static_assert(ygg::dependent_false<Category>::value, "unhandled DL argument category");
     }
-
-    const auto& argument(ArgumentIdentifier<ConceptTag> arg) const { return arguments<ConceptTag>()[verify_bounds(arg)]; }
-
-    const auto& argument(ArgumentIdentifier<RoleTag> arg) const { return arguments<RoleTag>()[verify_bounds(arg)]; }
-
-    const auto& argument(ArgumentIdentifier<BooleanTag> arg) const { return arguments<BooleanTag>()[verify_bounds(arg)]; }
-
-    const auto& argument(ArgumentIdentifier<NumericalTag> arg) const { return arguments<NumericalTag>()[verify_bounds(arg)]; }
-
-private:
-    size_t verify_bounds(RegisterIdentifier<ConceptTag> reg) const
-    {
-        const auto index = static_cast<size_t>(ygg::uint_t(reg));
-        if (index >= registers<ConceptTag>().size())
-            throw std::out_of_range(make_out_of_range_message<ConceptTag>(index));
-        return index;
-    }
-
-    size_t verify_bounds(RegisterIdentifier<RoleTag> reg) const
-    {
-        const auto index = static_cast<size_t>(ygg::uint_t(reg));
-        if (index >= registers<RoleTag>().size())
-            throw std::out_of_range(make_out_of_range_message<RoleTag>(index));
-        return index;
-    }
-
-    size_t verify_bounds(ArgumentIdentifier<ConceptTag> arg) const { return verify_argument_bounds<ConceptTag>(arg); }
-
-    size_t verify_bounds(ArgumentIdentifier<RoleTag> arg) const { return verify_argument_bounds<RoleTag>(arg); }
-
-    size_t verify_bounds(ArgumentIdentifier<BooleanTag> arg) const { return verify_argument_bounds<BooleanTag>(arg); }
-
-    size_t verify_bounds(ArgumentIdentifier<NumericalTag> arg) const { return verify_argument_bounds<NumericalTag>(arg); }
 
     template<CategoryTag Category>
-    size_t verify_argument_bounds(ArgumentIdentifier<Category> arg) const
+    const auto& at(ArgumentIdentifier<Category> arg) const
+    {
+        return get<Category>()[verify_bounds(arg)];
+    }
+
+private:
+    template<CategoryTag Category>
+    size_t verify_bounds(ArgumentIdentifier<Category> arg) const
     {
         const auto index = static_cast<size_t>(ygg::uint_t(arg));
-        if (index >= arguments<Category>().size())
-            throw std::out_of_range(make_argument_out_of_range_message<Category>(index));
+        if (index >= get<Category>().size())
+            throw std::out_of_range(make_out_of_range_message<Category>(index));
         return index;
     }
+
+    template<CategoryTag Category>
+    std::string make_out_of_range_message(size_t index) const
+    {
+        return std::string(Category::name) + " argument identifier " + std::to_string(index) + " is out of range; argument count is "
+               + std::to_string(get<Category>().size()) + ".";
+    }
+};
+
+struct Registers
+{
+    std::array<std::optional<tyr::formalism::planning::ObjectView>, runir::kr::dl::num_registers> concept_registers;
+    std::array<std::optional<std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>>,
+               runir::kr::dl::num_registers>
+        role_registers;
+
+    template<CategoryTag Category>
+    auto& get() noexcept
+    {
+        if constexpr (std::same_as<Category, ConceptTag>)
+            return concept_registers;
+        else if constexpr (std::same_as<Category, RoleTag>)
+            return role_registers;
+        else
+            static_assert(ygg::dependent_false<Category>::value, "unhandled DL register category");
+    }
+
+    template<CategoryTag Category>
+    const auto& get() const noexcept
+    {
+        if constexpr (std::same_as<Category, ConceptTag>)
+            return concept_registers;
+        else if constexpr (std::same_as<Category, RoleTag>)
+            return role_registers;
+        else
+            static_assert(ygg::dependent_false<Category>::value, "unhandled DL register category");
+    }
+
+    template<CategoryTag Category>
+    auto& at(RegisterIdentifier<Category> reg)
+    {
+        return get<Category>()[verify_bounds(reg)];
+    }
+
+    template<CategoryTag Category>
+    const auto& at(RegisterIdentifier<Category> reg) const
+    {
+        return get<Category>()[verify_bounds(reg)];
+    }
+
+    void set(RegisterIdentifier<ConceptTag> reg, tyr::formalism::planning::ObjectView object)
+    {
+        at(reg) = std::move(object);
+    }
+
+    void set(RegisterIdentifier<RoleTag> reg,
+             tyr::formalism::planning::ObjectView source,
+             tyr::formalism::planning::ObjectView target)
+    {
+        at(reg) = std::pair(std::move(source), std::move(target));
+    }
+
+    template<CategoryTag Category>
+    void clear(RegisterIdentifier<Category> reg)
+    {
+        at(reg).reset();
+    }
+
+    auto identifying_members() const noexcept { return std::tie(concept_registers, role_registers); }
+private:
+
+    template<CategoryTag Category>
+    size_t verify_bounds(RegisterIdentifier<Category> reg) const
+    {
+        const auto index = static_cast<size_t>(ygg::uint_t(reg));
+        if (index >= get<Category>().size())
+            throw std::out_of_range(make_out_of_range_message<Category>(index));
+        return index;
+    }
+
     template<CategoryTag Category>
     static std::string make_out_of_range_message(size_t index)
     {
         return std::string(Category::name) + " register identifier " + std::to_string(index) + " is out of range; max registers is "
                + std::to_string(runir::kr::dl::num_registers) + ".";
     }
+};
 
-    template<CategoryTag Category>
-    std::string make_argument_out_of_range_message(size_t index) const
+template<tyr::planning::TaskKind Kind>
+class EvaluationContext<runir::kr::ExtFamilyTag, Kind> : public BaseEvaluationContext<EvaluationContext<runir::kr::ExtFamilyTag, Kind>, Kind>
+{
+private:
+    using Base = BaseEvaluationContext<EvaluationContext<runir::kr::ExtFamilyTag, Kind>, Kind>;
+
+    Registers m_registers;
+    Arguments m_arguments;
+
+public:
+    EvaluationContext(tyr::planning::StateView<Kind> state,
+                      Builder& builder,
+                      DenotationRepository& denotation_repository,
+                      Arguments arguments = {},
+                      Registers registers = {}) noexcept :
+        Base(std::move(state), builder, denotation_repository),
+        m_registers(std::move(registers)),
+        m_arguments(arguments)
     {
-        return std::string(Category::name) + " argument identifier " + std::to_string(index) + " is out of range; argument count is "
-               + std::to_string(arguments<Category>().size()) + ".";
     }
+
+    auto& registers() noexcept { return m_registers; }
+    const auto& registers() const noexcept { return m_registers; }
+    const auto& arguments() const noexcept { return m_arguments; }
 };
 
 }  // namespace runir::kr::dl::semantics

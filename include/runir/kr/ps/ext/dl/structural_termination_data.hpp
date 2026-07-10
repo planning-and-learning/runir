@@ -24,33 +24,28 @@ enum class StructuralTerminationStatus
 
 using NumericalChange = runir::kr::ps::dl::NumericalChange;
 
-/// Feature valuation paired with a memory state; bit i corresponds to
-/// position i in the result's concept (boolean, numerical) feature list. A
-/// concept or numerical bit encodes a value greater than zero.
+/// Feature valuation paired with a memory state. A numerical bit encodes a
+/// value greater than zero.
 struct ModulePolicyGraphVertexLabel
 {
-    boost::dynamic_bitset<> concept_values;
     boost::dynamic_bitset<> boolean_values;
     boost::dynamic_bitset<> numerical_values;
     MemoryStateView memory_state;
 
-    ModulePolicyGraphVertexLabel(boost::dynamic_bitset<> concept_values_,
-                                 boost::dynamic_bitset<> boolean_values_,
+    ModulePolicyGraphVertexLabel(boost::dynamic_bitset<> boolean_values_,
                                  boost::dynamic_bitset<> numerical_values_,
                                  MemoryStateView memory_state_) noexcept :
-        concept_values(std::move(concept_values_)),
         boolean_values(std::move(boolean_values_)),
         numerical_values(std::move(numerical_values_)),
         memory_state(memory_state_)
     {
     }
 
-    auto identifying_members() const noexcept { return std::tie(concept_values, boolean_values, numerical_values, memory_state); }
+    auto identifying_members() const noexcept { return std::tie(boolean_values, numerical_values, memory_state); }
 };
 
-/// Rule labeling an edge together with its qualitative changes of the
-/// numerical-like features: concepts first, then numericals, aligned with
-/// the result's feature lists.
+/// Rule labeling an edge together with its qualitative numerical feature
+/// changes, aligned with the result's feature list.
 struct ModulePolicyGraphEdgeLabel
 {
     RuleVariantView rule;
@@ -72,9 +67,8 @@ using ModulePolicyGraph = graphs::StaticGraph<ModulePolicyGraphVertexLabel, Modu
 struct ModuleStructuralTerminationResult
 {
     StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
-    std::vector<ygg::Index<Feature<runir::kr::dl::ConceptTag>>> concepts;
-    std::vector<ygg::Index<Feature<runir::kr::ps::dl::BooleanFeature>>> booleans;
-    std::vector<ygg::Index<Feature<runir::kr::ps::dl::NumericalFeature>>> numericals;
+    std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>> booleans;
+    std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>> numericals;
     std::shared_ptr<ModulePolicyGraph> counterexample;  ///< nullptr iff terminating.
 
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }

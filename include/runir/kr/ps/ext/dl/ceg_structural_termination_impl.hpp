@@ -47,7 +47,6 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
     const auto& profiles = analysis.profiles;
 
     auto result = ModuleStructuralTerminationResult {};
-    result.concepts = features.concepts;
     result.booleans = features.booleans;
     result.numericals = features.numericals;
 
@@ -55,9 +54,8 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
     if (num_memory_states == 0)
         return result;
 
-    const auto global_num_concepts = features.concepts.size();
     const auto global_num_booleans = features.booleans.size();
-    const auto global_num_numerical_like = global_num_concepts + features.numericals.size();
+    const auto global_num_numericals = features.numericals.size();
 
     // Strongly connected components of the memory graph.
     auto memory_builder = graphs::StaticGraphBuilder<> {};
@@ -101,30 +99,30 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
 
         // Features mentioned by the component's rules (global positions).
         auto used_booleans = boost::dynamic_bitset<>(global_num_booleans);
-        auto used_numerical_like = boost::dynamic_bitset<>(global_num_numerical_like);
+        auto used_numericals = boost::dynamic_bitset<>(global_num_numericals);
         for (auto rule_position : component_rules)
         {
             const auto& profile = profiles[rule_position];
             used_booleans |= profile.boolean_positive_conditions | profile.boolean_negative_conditions | profile.boolean_positive_effects
                              | profile.boolean_negative_effects | profile.boolean_unchanged_effects;
-            used_numerical_like |= profile.numerical_greater_conditions | profile.numerical_zero_conditions;
-            for (std::size_t position = 0; position < global_num_numerical_like; ++position)
+            used_numericals |= profile.numerical_greater_conditions | profile.numerical_zero_conditions;
+            for (std::size_t position = 0; position < global_num_numericals; ++position)
                 if (profile.numerical_changes[position] != NumericalChange::UNCONSTRAINED)
-                    used_numerical_like.set(position);
+                    used_numericals.set(position);
         }
 
         auto local_boolean_positions = std::vector<std::size_t> {};  // local -> global
         for (std::size_t position = 0; position < global_num_booleans; ++position)
             if (used_booleans.test(position))
                 local_boolean_positions.push_back(position);
-        auto local_numerical_positions = std::vector<std::size_t> {};  // local -> global (numerical-like)
-        for (std::size_t position = 0; position < global_num_numerical_like; ++position)
-            if (used_numerical_like.test(position))
+        auto local_numerical_positions = std::vector<std::size_t> {};  // local -> global (numerical)
+        for (std::size_t position = 0; position < global_num_numericals; ++position)
+            if (used_numericals.test(position))
                 local_numerical_positions.push_back(position);
 
         const auto num_local_booleans = local_boolean_positions.size();
-        const auto num_local_numerical_like = local_numerical_positions.size();
-        if (num_local_booleans + num_local_numerical_like > 14)
+        const auto num_local_numericals = local_numerical_positions.size();
+        if (num_local_booleans + num_local_numericals > 14)
             throw std::invalid_argument("ceg_structural_termination: too many features in one memory component.");
 
         const auto remap_boolean_values = [&](const boost::dynamic_bitset<>& global_values)
@@ -136,8 +134,8 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
         };
         const auto remap_numerical_values = [&](const boost::dynamic_bitset<>& global_values)
         {
-            auto local_values = boost::dynamic_bitset<>(num_local_numerical_like);
-            for (std::size_t local = 0; local < num_local_numerical_like; ++local)
+            auto local_values = boost::dynamic_bitset<>(num_local_numericals);
+            for (std::size_t local = 0; local < num_local_numericals; ++local)
                 local_values.set(local, global_values.test(local_numerical_positions[local]));
             return local_values;
         };
@@ -148,7 +146,7 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
         for (auto rule_position : component_rules)
         {
             const auto& profile = profiles[rule_position];
-            auto local_profile = detail::ModuleRuleProfile(num_local_booleans, num_local_numerical_like);
+            auto local_profile = detail::ModuleRuleProfile(num_local_booleans, num_local_numericals);
             local_profile.source_memory_position = local_memory_position[profile.source_memory_position];
             local_profile.target_memory_position = local_memory_position[profile.target_memory_position];
             local_profile.boolean_positive_conditions = remap_boolean_values(profile.boolean_positive_conditions);
@@ -158,7 +156,7 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
             local_profile.boolean_positive_effects = remap_boolean_values(profile.boolean_positive_effects);
             local_profile.boolean_negative_effects = remap_boolean_values(profile.boolean_negative_effects);
             local_profile.boolean_unchanged_effects = remap_boolean_values(profile.boolean_unchanged_effects);
-            for (std::size_t local = 0; local < num_local_numerical_like; ++local)
+            for (std::size_t local = 0; local < num_local_numericals; ++local)
                 local_profile.numerical_changes[local] = profile.numerical_changes[local_numerical_positions[local]];
             local_rule_positions.push_back(rule_position);
             local_profiles.push_back(std::move(local_profile));
@@ -169,16 +167,16 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
             detail::enumerate_rule_edges(local_profiles[local_rule],
                                          num_local_memory,
                                          num_local_booleans,
-                                         num_local_numerical_like,
+                                         num_local_numericals,
                                          [&](std::size_t source, std::size_t target)
                                          { edges.push_back(detail::ModulePolicyEdge { source, target, local_rule }); });
 
-        const auto num_local_vertices = (std::size_t { 1 } << (num_local_booleans + num_local_numerical_like)) * num_local_memory;
+        const auto num_local_vertices = (std::size_t { 1 } << (num_local_booleans + num_local_numericals)) * num_local_memory;
         const auto [has_cycle, component_of] =
             detail::sieve(edges,
                           num_local_vertices,
                           num_local_booleans,
-                          num_local_numerical_like,
+                          num_local_numericals,
                           [&](std::size_t vertex) { return detail::vertex_booleans(vertex, num_local_memory, num_local_booleans); },
                           [&](const detail::ModulePolicyEdge& edge) -> const std::vector<NumericalChange>&
                           { return local_profiles[edge.rule_position].numerical_changes; });
@@ -196,25 +194,17 @@ inline ModuleStructuralTerminationResult ceg_structural_termination(ModuleView m
             if (vertex_remap[vertex] == std::numeric_limits<std::size_t>::max())
             {
                 const auto local_booleans = detail::vertex_booleans(vertex, num_local_memory, num_local_booleans);
-                const auto local_numericals = detail::vertex_numerical_like(vertex, num_local_memory, num_local_booleans, num_local_numerical_like);
+                const auto local_numericals = detail::vertex_numericals(vertex, num_local_memory, num_local_booleans, num_local_numericals);
 
                 auto global_booleans = boost::dynamic_bitset<>(global_num_booleans);
                 for (std::size_t local = 0; local < num_local_booleans; ++local)
                     global_booleans.set(local_boolean_positions[local], local_booleans.test(local));
-                auto global_concepts = boost::dynamic_bitset<>(global_num_concepts);
                 auto global_numericals = boost::dynamic_bitset<>(features.numericals.size());
-                for (std::size_t local = 0; local < num_local_numerical_like; ++local)
-                {
-                    const auto global_position = local_numerical_positions[local];
-                    if (global_position < global_num_concepts)
-                        global_concepts.set(global_position, local_numericals.test(local));
-                    else
-                        global_numericals.set(global_position - global_num_concepts, local_numericals.test(local));
-                }
+                for (std::size_t local = 0; local < num_local_numericals; ++local)
+                    global_numericals.set(local_numerical_positions[local], local_numericals.test(local));
 
                 const auto memory = component_memory[static_cast<std::size_t>(vertex % num_local_memory)];
-                vertex_remap[vertex] = counterexample_builder.add_vertex(ModulePolicyGraphVertexLabel(std::move(global_concepts),
-                                                                                                      std::move(global_booleans),
+                vertex_remap[vertex] = counterexample_builder.add_vertex(ModulePolicyGraphVertexLabel(std::move(global_booleans),
                                                                                                       std::move(global_numericals),
                                                                                                       memory_states[memory]));
             }

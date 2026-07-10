@@ -27,7 +27,7 @@ auto execute_greedy_solution(const runir::datasets::TaskSearchContext<Kind>& sea
     auto proof = ModuleProgramProofBuilder<Kind>(search_context, initial_node, program, std::move(context_owner));
     auto plan_steps = tyr::planning::LabeledNodeList<Kind> {};
 
-    auto current_vertex = proof.get_or_create_vertex(context, ExternalMemoryState(context.get_memory_state()), true, true, false).first;
+    auto current_vertex = proof.get_or_create_vertex(context, ExternalMemoryState(context.get_call_stack().memory_state()), true, true, false).first;
 
     while (true)
     {
@@ -49,7 +49,8 @@ auto execute_greedy_solution(const runir::datasets::TaskSearchContext<Kind>& sea
             const auto applied = load_step.status == ModuleProgramOutcome::APPLIED;
             context = load_step.context;
 
-            const auto [target, created] = proof.get_or_create_vertex(context, InternalMemoryState(context.get_memory_state()), false, applied, !applied);
+            const auto [target, created] =
+                proof.get_or_create_vertex(context, InternalMemoryState(context.get_call_stack().memory_state()), false, applied, !applied);
             const auto edge = proof.add_edge(load_source, target, std::nullopt, load_step.rule);
             current_vertex = target;
 
@@ -82,7 +83,8 @@ auto execute_greedy_solution(const runir::datasets::TaskSearchContext<Kind>& sea
         {
             context = step.context;
             plan_steps.insert(plan_steps.end(), step.plan_suffix.begin(), step.plan_suffix.end());
-            const auto [target, created] = proof.get_or_create_vertex(context, ExternalMemoryState(context.get_memory_state()), false, true, false);
+            const auto [target, created] =
+                proof.get_or_create_vertex(context, ExternalMemoryState(context.get_call_stack().memory_state()), false, true, false);
             proof.add_edge(source_vertex, target, step.state_transition, step.rule);
             if (!created)
             {
@@ -127,7 +129,8 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
     auto failed = false;
 
     auto& initial_context = execution_state.get_context();
-    const auto initial_vertex = proof.get_or_create_vertex(initial_context, ExternalMemoryState(initial_context.get_memory_state()), true, true, false).first;
+    const auto initial_vertex =
+        proof.get_or_create_vertex(initial_context, ExternalMemoryState(initial_context.get_call_stack().memory_state()), true, true, false).first;
     open.emplace_back(initial_context, initial_vertex);
 
     auto add_terminal = [&](graphs::VertexIndex source)
@@ -158,7 +161,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
             for (const auto& step : load_steps)
             {
                 if (step.status == ModuleProgramOutcome::APPLIED)
-                    add_successor(source_vertex, step, InternalMemoryState(step.context.get_memory_state()));
+                    add_successor(source_vertex, step, InternalMemoryState(step.context.get_call_stack().memory_state()));
                 else
                     add_terminal(source_vertex);
             }
@@ -169,7 +172,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
         for (const auto& step : control_steps)
         {
             if (step.status == ModuleProgramOutcome::APPLIED || step.status == ModuleProgramOutcome::RESTORED_CALLER)
-                add_successor(source_vertex, step, ExternalMemoryState(step.context.get_memory_state()));
+                add_successor(source_vertex, step, ExternalMemoryState(step.context.get_call_stack().memory_state()));
             else if (step.status == ModuleProgramOutcome::OUT_OF_TIME)
                 return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
             else if (step.status == ModuleProgramOutcome::OUT_OF_STATES)

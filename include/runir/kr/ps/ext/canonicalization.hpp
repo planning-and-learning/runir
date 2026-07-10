@@ -3,6 +3,8 @@
 
 #include "runir/kr/ps/ext/argument_data.hpp"
 #include "runir/kr/ps/ext/condition_data.hpp"
+#include "runir/kr/ps/ext/dl/condition_data.hpp"
+#include "runir/kr/ps/ext/dl/effect_data.hpp"
 #include "runir/kr/ps/ext/effect_data.hpp"
 #include "runir/kr/ps/ext/feature_data.hpp"
 #include "runir/kr/ps/ext/memory_state_data.hpp"
@@ -35,36 +37,36 @@ bool is_canonical(const ygg::Data<Register<Category>>&) noexcept
 }
 
 template<typename FeatureTag>
-bool is_canonical(const ygg::Data<Feature<FeatureTag>>&) noexcept
+bool is_canonical(const ygg::Data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>&) noexcept
 {
     return true;
 }
 
 template<typename FeatureTag>
-bool is_canonical(const ygg::Data<ConcreteFeature<runir::kr::DlTag, FeatureTag>>&) noexcept
+bool is_canonical(const ygg::Data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>&) noexcept
 {
     return true;
 }
 
 template<typename FeatureTag, typename ObservationTag>
-bool is_canonical(const ygg::Data<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
+bool is_canonical(const ygg::Data<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
 {
     return true;
 }
 
 template<typename FeatureTag, typename ObservationTag>
-bool is_canonical(const ygg::Data<ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
+bool is_canonical(const ygg::Data<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
 {
     return true;
 }
 
-inline bool is_canonical(const ygg::Data<ConditionVariant>&) noexcept { return true; }
+inline bool is_canonical(const ygg::Data<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>&) noexcept { return true; }
 
-inline bool is_canonical(const ygg::Data<ConcreteConditionVariant<runir::kr::DlTag>>&) noexcept { return true; }
+inline bool is_canonical(const ygg::Data<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>&) noexcept { return true; }
 
-inline bool is_canonical(const ygg::Data<EffectVariant>&) noexcept { return true; }
+inline bool is_canonical(const ygg::Data<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>&) noexcept { return true; }
 
-inline bool is_canonical(const ygg::Data<ConcreteEffectVariant<runir::kr::DlTag>>&) noexcept { return true; }
+inline bool is_canonical(const ygg::Data<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>&) noexcept { return true; }
 
 template<RuleKind Kind, typename Category>
 bool is_canonical(const ygg::Data<Rule<Kind, Category>>& data) noexcept
@@ -104,32 +106,32 @@ void canonicalize(ygg::Data<Register<Category>>&) noexcept
 }
 
 template<typename FeatureTag>
-void canonicalize(ygg::Data<Feature<FeatureTag>>&) noexcept
+void canonicalize(ygg::Data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>&) noexcept
 {
 }
 
 template<typename FeatureTag>
-void canonicalize(ygg::Data<ConcreteFeature<runir::kr::DlTag, FeatureTag>>&) noexcept
+void canonicalize(ygg::Data<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>&) noexcept
 {
 }
 
 template<typename FeatureTag, typename ObservationTag>
-void canonicalize(ygg::Data<ConcreteCondition<runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
+void canonicalize(ygg::Data<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
 {
 }
 
 template<typename FeatureTag, typename ObservationTag>
-void canonicalize(ygg::Data<ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
+void canonicalize(ygg::Data<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>&) noexcept
 {
 }
 
-inline void canonicalize(ygg::Data<ConditionVariant>&) noexcept {}
+inline void canonicalize(ygg::Data<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>&) noexcept {}
 
-inline void canonicalize(ygg::Data<ConcreteConditionVariant<runir::kr::DlTag>>&) noexcept {}
+inline void canonicalize(ygg::Data<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>&) noexcept {}
 
-inline void canonicalize(ygg::Data<EffectVariant>&) noexcept {}
+inline void canonicalize(ygg::Data<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>&) noexcept {}
 
-inline void canonicalize(ygg::Data<ConcreteEffectVariant<runir::kr::DlTag>>&) noexcept {}
+inline void canonicalize(ygg::Data<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>&) noexcept {}
 
 template<RuleKind Kind, typename Category>
 void canonicalize(ygg::Data<Rule<Kind, Category>>& data)

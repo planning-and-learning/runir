@@ -1,8 +1,9 @@
 #ifndef RUNIR_KR_PS_EXT_DL_EFFECT_VIEW_HPP_
 #define RUNIR_KR_PS_EXT_DL_EFFECT_VIEW_HPP_
 
+#include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/ext/dl/effect_data.hpp"
-#include "runir/kr/ps/ext/feature_view.hpp"
+#include "runir/kr/ps/feature_view.hpp"
 
 #include <tuple>
 #include <yggdrasil/core/types.hpp>
@@ -11,14 +12,14 @@ namespace ygg
 {
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-class View<Index<runir::kr::ps::ext::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>>, C>
+class View<Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::ext::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>> m_handle;
+    Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::ext::ConcreteEffect<runir::kr::DlTag, FeatureTag, ObservationTag>> handle, const C& context) noexcept :
+    View(Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>> handle, const C& context) noexcept :
         m_context(&context),
         m_handle(handle)
     {
