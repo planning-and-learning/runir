@@ -17,6 +17,4 @@ IncompleteStructuralTerminationResult incomplete_structural_termination(SketchVi
 
 }  // namespace runir::kr::ps::base::dl
 
-#include "runir/kr/ps/base/dl/incomplete_structural_termination_impl.hpp"
-
 #endif

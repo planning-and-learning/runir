@@ -16,6 +16,4 @@ StructuralTerminationResult structural_termination(SketchView sketch);
 
 }  // namespace runir::kr::ps::base::dl
 
-#include "runir/kr/ps/base/dl/structural_termination_impl.hpp"
-
 #endif

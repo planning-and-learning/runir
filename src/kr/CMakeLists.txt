@@ -9,11 +9,28 @@ add_library(kr SHARED
     ps/base/dl/parser/parser.cpp
     ps/base/dl/parser/parser_instantiations.cpp
     ps/base/dl/sketch_factory.cpp
+    ps/base/dl/incomplete_structural_termination.cpp
+    ps/base/dl/structural_termination.cpp
+    ps/base/dl/structural_termination/analysis.cpp
+    ps/base/dl/structural_termination/incomplete_result.cpp
+    ps/base/dl/structural_termination/incomplete_sieve.cpp
+    ps/base/dl/structural_termination/policy_graph.cpp
+    ps/base/dl/structural_termination/result.cpp
+    ps/base/dl/structural_termination/sieve.cpp
     ps/base/sketch_executor.cpp
+    ps/ext/dl/ceg_structural_termination.cpp
+    ps/ext/dl/module_program_structural_termination.cpp
     ps/ext/dl/module_factory.cpp
     ps/ext/dl/parser/parser.cpp
     ps/ext/dl/parser/parser_instantiations.cpp
     ps/ext/dl/parser.cpp
+    ps/ext/dl/structural_termination.cpp
+    ps/ext/dl/structural_termination/analysis.cpp
+    ps/ext/dl/structural_termination/ceg_analysis.cpp
+    ps/ext/dl/structural_termination/ceg_result.cpp
+    ps/ext/dl/structural_termination/policy_graph.cpp
+    ps/ext/dl/structural_termination/result.cpp
+    ps/ext/dl/structural_termination/sieve.cpp
     ps/ext/module_program_executor.cpp
     uns/dl/classifier_factory.cpp
     uns/dl/parser.cpp

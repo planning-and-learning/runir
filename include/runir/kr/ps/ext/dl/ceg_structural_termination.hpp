@@ -16,6 +16,4 @@ ModuleStructuralTerminationResult ceg_structural_termination(ModuleView module_)
 
 }  // namespace runir::kr::ps::ext::dl
 
-#include "runir/kr/ps/ext/dl/ceg_structural_termination_impl.hpp"
-
 #endif

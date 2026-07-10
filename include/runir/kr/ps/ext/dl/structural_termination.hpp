@@ -26,6 +26,4 @@ ModuleProgramStructuralTerminationResult structural_termination(ModuleProgramVie
 
 }  // namespace runir::kr::ps::ext::dl
 
-#include "runir/kr/ps/ext/dl/structural_termination_impl.hpp"
-
 #endif

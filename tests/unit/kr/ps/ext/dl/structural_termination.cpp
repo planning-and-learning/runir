@@ -321,6 +321,81 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRegisterDependentFeatur
     ASSERT_NE(result.counterexample, nullptr);
 }
 
+TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRoleRegisterDependentFeature)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    // Here fn counts objects reached through the role stored in r0. The load edge
+    // writes r0, so fn is unconstrained and can restore the ranking after the
+    // decreasing edge; SIEVE must leave a counterexample cycle.
+    const auto module = kr::ps::ext::dl::parse_module(R"((:module
+    (:symbol role_load_dependent)
+    (:arguments)
+    (:registers
+        (:role r0)
+    )
+    (:entry m0)
+    (:memory m0 m1)
+    (:features
+        (:numerical
+            (:symbol fn)
+            (:expression
+                (n_count
+                    (c_some
+                        (r_register r0)
+                        (c_top)
+                    )
+                )
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto13)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:load
+                    (:conditions)
+                    (:role
+                        (r_atomic_state "at")
+                    )
+                    (:register
+                        (:role r0)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto15)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m0)
+                (:sketch
+                    (:conditions
+                        (greater_zero fn)
+                    )
+                    (:effects
+                        (decreases fn)
+                    )
+                )
+            )
+        )
+    )
+))",
+                                                      planning_task.get_domain().get_domain(),
+                                                      *repository);
+
+    const auto result = kr::ps::ext::dl::structural_termination(module);
+
+    ASSERT_FALSE(result.is_terminating());
+    ASSERT_NE(result.counterexample, nullptr);
+}
+
 TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
 {
     namespace fp = tyr::formalism::planning;

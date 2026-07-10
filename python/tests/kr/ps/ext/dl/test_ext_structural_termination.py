@@ -14,6 +14,14 @@ TERMINATING_MODULE = """(:module
     (:entry m0)
     (:memory m0 m1)
     (:features
+        (:boolean
+            (:symbol unused)
+            (:expression
+                (b_nonempty
+                    (c_top)
+                )
+            )
+        )
         (:numerical
             (:symbol fn)
             (:expression
@@ -82,6 +90,7 @@ def test_ext_structural_termination_is_terminating():
     result = dl.structural_termination(module)
 
     assert result.is_terminating()
+    assert len(result.booleans) == 1
     assert result.counterexample is None
 
 
