@@ -17,7 +17,7 @@ namespace
 
 std::filesystem::path runir_root() { return std::filesystem::path(RUNIR_ROOT_DIR); }
 
-std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "planning-benchmarks"; }
+std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "benchmarks"; }
 
 std::set<ygg::Index<kr::ps::ext::RuleVariant>> counterexample_rules(const kr::ps::ext::dl::ModuleStructuralTerminationResult& result)
 {
@@ -40,8 +40,8 @@ std::set<ygg::Index<kr::ps::ext::MemoryState>> counterexample_memory_states(cons
 TEST(RunirTests, CegStructuralTerminationAgreesWithCompleteSieve)
 {
     namespace fp = tyr::formalism::planning;
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
@@ -166,8 +166,8 @@ TEST(RunirTests, CegStructuralTerminationAgreesWithCompleteSieve)
 TEST(RunirTests, CegStructuralTerminationDecomposesMemoryComponents)
 {
     namespace fp = tyr::formalism::planning;
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);

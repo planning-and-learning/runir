@@ -13,7 +13,7 @@ from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
 def _blocksworld_data_dir():
     root = Path(__file__).resolve().parents[6]
-    return root / "data" / "planning-benchmarks" / "profiling" / "htg" / "blocksworld-large-simple"
+    return root / "data" / "benchmarks" / "classical" / "profiling" / "blocksworld-large-simple"
 
 
 def _blocksworld_domain():

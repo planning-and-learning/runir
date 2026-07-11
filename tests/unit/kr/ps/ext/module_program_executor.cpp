@@ -62,7 +62,7 @@ namespace runir::tests
 namespace
 {
 
-std::filesystem::path benchmark_prefix() { return std::filesystem::path(RUNIR_ROOT_DIR) / "data" / "planning-benchmarks"; }
+std::filesystem::path benchmark_prefix() { return std::filesystem::path(RUNIR_ROOT_DIR) / "data" / "benchmarks"; }
 
 auto create_memory_state(kr::ps::ext::Repository& repository, const std::string& name)
 {
@@ -131,8 +131,8 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationIsStableAndLeavesInterpreterStateUn
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto execution_context = ygg::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
@@ -187,8 +187,8 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -236,8 +236,8 @@ TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
     EXPECT_EQ(module.get_entry_memory_state().get_name(), "m0");
     EXPECT_EQ(module.get_memory_states().size(), 2);
 
-    const auto blocksworld_domain = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "domain.pddl";
-    const auto blocksworld_task_file = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "p-300-4.pddl";
+    const auto blocksworld_domain = benchmark_prefix() / "classical" / "profiling" / "blocksworld-large-simple" / "domain.pddl";
+    const auto blocksworld_task_file = benchmark_prefix() / "classical" / "profiling" / "blocksworld-large-simple" / "p-300-4.pddl";
     const auto blocksworld_task = fp::Parser(blocksworld_domain).parse_task(blocksworld_task_file);
     auto blocksworld_dl_repository = dl_repository_factory.create(blocksworld_task.get_repository());
     auto blocksworld_repository = repository_factory.create(blocksworld_dl_repository);
@@ -269,8 +269,8 @@ TEST(RunirTests, ExtModuleParserLowersNamedCalleesWithoutPreexistingModules)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -337,8 +337,8 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidModuleSets)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -404,8 +404,8 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -559,8 +559,8 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -852,8 +852,8 @@ TEST(RunirTests, ExtModuleProgramParserRejectsInvalidProgramWiring)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -982,8 +982,8 @@ TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "p-300-4.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "profiling" / "blocksworld-large-simple" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "profiling" / "blocksworld-large-simple" / "p-300-4.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -1009,8 +1009,8 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "p-300-4.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "profiling" / "blocksworld-large-simple" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "profiling" / "blocksworld-large-simple" / "p-300-4.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -1054,8 +1054,8 @@ TEST(RunirTests, ExtModuleFormatterEscapesQuotedStringContents)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -1087,8 +1087,8 @@ TEST(RunirTests, ExtModuleFormatterOmitsEmptyNestedRuleMetadata)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -1146,8 +1146,8 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
-    const auto domain = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "p-100-2.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "profiling" / "blocksworld-large-simple" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "profiling" / "blocksworld-large-simple" / "p-100-2.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto execution_context = ygg::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
@@ -1196,8 +1196,8 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -1338,8 +1338,8 @@ TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -1433,8 +1433,8 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "profiling" / "htg" / "blocksworld-large-simple" / "p-300-4.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "profiling" / "blocksworld-large-simple" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "profiling" / "blocksworld-large-simple" / "p-300-4.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
@@ -1513,8 +1513,8 @@ TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto execution_context = ygg::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
@@ -1557,8 +1557,8 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto execution_context = ygg::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
@@ -1622,8 +1622,8 @@ TEST(RunirTests, ExtRoleLoadRuleStoresFirstPairAndAdvancesMemory)
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto execution_context = ygg::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
@@ -1704,8 +1704,8 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto execution_context = ygg::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
@@ -1831,8 +1831,8 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto execution_context = ygg::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
@@ -1871,8 +1871,8 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto execution_context = ygg::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
@@ -1937,8 +1937,8 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto execution_context = ygg::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
@@ -2032,8 +2032,8 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto execution_context = ygg::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
@@ -2122,8 +2122,8 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto execution_context = ygg::ExecutionContext::create(1);
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);

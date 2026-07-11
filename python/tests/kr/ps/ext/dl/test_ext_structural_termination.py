@@ -76,7 +76,7 @@ NON_TERMINATING_MODULE = TERMINATING_MODULE.replace("(:symbol term)", "(:symbol 
 
 def _repositories():
     root = Path(__file__).resolve().parents[6]
-    domain_path = root / "data" / "planning-benchmarks" / "tests" / "classical" / "gripper" / "domain.pddl"
+    domain_path = root / "data" / "benchmarks" / "classical" / "tests" / "gripper" / "domain.pddl"
     planning_domain = Parser(domain_path, ParserOptions()).get_domain()
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(planning_domain)
     repository = ext.RepositoryFactory().create(dl_repository)

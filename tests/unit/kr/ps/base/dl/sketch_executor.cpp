@@ -18,7 +18,7 @@ namespace
 
 std::filesystem::path runir_root() { return std::filesystem::path(RUNIR_ROOT_DIR); }
 
-std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "planning-benchmarks"; }
+std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "benchmarks"; }
 
 }  // namespace
 
@@ -35,17 +35,17 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
     };
 
     const auto cases = std::vector<Case> {
-        { benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl",
-          benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl",
+        { benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl",
+          benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl",
           kr::ps::base::dl::SketchSpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "tests" / "classical" / "blocks_3" / "domain.pddl",
-          benchmark_prefix() / "tests" / "classical" / "blocks_3" / "test-1.pddl",
+        { benchmark_prefix() / "classical" / "tests" / "blocks_3" / "domain.pddl",
+          benchmark_prefix() / "classical" / "tests" / "blocks_3" / "test-1.pddl",
           kr::ps::base::dl::SketchSpecification::BLOCKS3OPS_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "tests" / "classical" / "spanner" / "domain.pddl",
-          benchmark_prefix() / "tests" / "classical" / "spanner" / "test-1.pddl",
+        { benchmark_prefix() / "classical" / "tests" / "spanner" / "domain.pddl",
+          benchmark_prefix() / "classical" / "tests" / "spanner" / "test-1.pddl",
           kr::ps::base::dl::SketchSpecification::SPANNER_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "tests" / "classical" / "delivery" / "domain.pddl",
-          benchmark_prefix() / "tests" / "classical" / "delivery" / "test-1.pddl",
+        { benchmark_prefix() / "classical" / "tests" / "delivery" / "domain.pddl",
+          benchmark_prefix() / "classical" / "tests" / "delivery" / "test-1.pddl",
           kr::ps::base::dl::SketchSpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
     };
 

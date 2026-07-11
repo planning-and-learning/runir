@@ -13,7 +13,7 @@ from pytyr.formalism.planning import Parser
 
 def test_france_et_al_aaai2021_grammar_factory_for_gripper_domain():
     root = Path(__file__).resolve().parents[5]
-    domain_path = root / "data" / "planning-benchmarks" / "tests" / "classical" / "gripper" / "domain.pddl"
+    domain_path = root / "data" / "benchmarks" / "classical" / "tests" / "gripper" / "domain.pddl"
 
     planning_domain = Parser(domain_path, ParserOptions()).get_domain()
     domain = planning_domain.get_domain()

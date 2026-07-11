@@ -10,7 +10,7 @@ from pytyr.formalism.planning import Parser
 
 def test_base_and_ext_repositories_construct_programmatically():
     root = Path(__file__).resolve().parents[4]
-    domain = Parser(root / "data/planning-benchmarks/tests/classical/gripper/domain.pddl", ParserOptions()).get_domain()
+    domain = Parser(root / "data/benchmarks/classical/tests/gripper/domain.pddl", ParserOptions()).get_domain()
 
     base_repository = base.RepositoryFactory().create(BaseDlRepositoryFactory().create(domain))
     rule_data = base.RuleData()

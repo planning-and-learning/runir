@@ -16,7 +16,7 @@ def repository_root() -> Path:
 
 @pytest.fixture
 def gripper_data_dir(repository_root: Path) -> Path:
-    return repository_root / "data" / "planning-benchmarks" / "tests" / "classical" / "gripper"
+    return repository_root / "data" / "benchmarks" / "classical" / "tests" / "gripper"
 
 
 @pytest.fixture

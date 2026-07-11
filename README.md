@@ -36,6 +36,17 @@ build-from-source and CMake-integration patterns are documented in the
 [Planning and Learning build instructions](https://github.com/planning-and-learning/.github/blob/main/profile/README.md#building-from-source);
 the sections below cover `runir`/`pyrunir`-specific details.
 
+## Benchmark Data
+
+The test and profiling fixtures expect benchmark files under `data/benchmarks`,
+provided by the [pypddl-datasets](https://pypi.org/project/pypddl-datasets/)
+package (downloaded once, cached):
+
+```console
+pip install pypddl-datasets
+python -c "import pypddl_datasets as pb; [pb.export_suite(s, 'data/benchmarks') for s in ('tests-classical', 'tests-numeric', 'profiling-htg')]"
+```
+
 ## Build C++
 
 Install Runir's native dependency providers into the active Python environment,

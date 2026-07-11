@@ -16,9 +16,9 @@ namespace
 
 std::filesystem::path runir_root() { return std::filesystem::path(RUNIR_ROOT_DIR); }
 
-std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "planning-benchmarks"; }
+std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "benchmarks"; }
 
-std::filesystem::path gripper_domain() { return benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl"; }
+std::filesystem::path gripper_domain() { return benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl"; }
 
 std::set<ygg::Index<kr::ps::base::Rule>> counterexample_rules(const kr::ps::base::dl::StructuralTerminationResult& result)
 {

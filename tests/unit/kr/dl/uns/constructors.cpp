@@ -25,7 +25,7 @@ namespace dl = runir::kr::dl;
 namespace sem = runir::kr::dl::semantics;
 using Uns = runir::kr::UnsFamilyTag;
 
-std::filesystem::path benchmark_prefix() { return std::filesystem::path(RUNIR_ROOT_DIR) / "data" / "planning-benchmarks"; }
+std::filesystem::path benchmark_prefix() { return std::filesystem::path(RUNIR_ROOT_DIR) / "data" / "benchmarks"; }
 
 // Wrap a boolean constructor in a Boolean-category constructor view.
 auto wrap_boolean(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto boolean_view)
@@ -91,8 +91,8 @@ auto logical_not(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto bool
 
 TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
 {
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
 
     auto parser = fp::Parser(domain);
     const auto planning_task = parser.parse_task(task_file);
@@ -196,8 +196,8 @@ TEST(RunirTests, UnsFamilyGrammarParserAcceptsComparisonsAndConstants)
 
 TEST(RunirTests, UnsFamilyArithmeticLogicalOperatorsEvaluateAndFormat)
 {
-    const auto domain = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
 
     auto parser = fp::Parser(domain);
     const auto planning_task = parser.parse_task(task_file);

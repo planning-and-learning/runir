@@ -24,7 +24,7 @@ namespace
 
 std::filesystem::path runir_root() { return std::filesystem::path(RUNIR_ROOT_DIR); }
 
-std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "planning-benchmarks"; }
+std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "benchmarks"; }
 
 }  // namespace
 
@@ -39,10 +39,10 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesParse)
     };
 
     const auto cases = std::vector<Case> {
-        { benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl", kr::ps::base::dl::SketchSpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "tests" / "classical" / "blocks_3" / "domain.pddl", kr::ps::base::dl::SketchSpecification::BLOCKS3OPS_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "tests" / "classical" / "spanner" / "domain.pddl", kr::ps::base::dl::SketchSpecification::SPANNER_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "tests" / "classical" / "delivery" / "domain.pddl", kr::ps::base::dl::SketchSpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl", kr::ps::base::dl::SketchSpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "classical" / "tests" / "blocks_3" / "domain.pddl", kr::ps::base::dl::SketchSpecification::BLOCKS3OPS_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "classical" / "tests" / "spanner" / "domain.pddl", kr::ps::base::dl::SketchSpecification::SPANNER_FRANCE_ET_AL_AAAI2021 },
+        { benchmark_prefix() / "classical" / "tests" / "delivery" / "domain.pddl", kr::ps::base::dl::SketchSpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
     };
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>();
@@ -69,7 +69,7 @@ TEST(RunirTests, RejectsUnknownFactorySpecifications)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain_filepath = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto domain_filepath = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
     const auto domain = fp::Parser(domain_filepath).get_domain().get_domain();
 
     EXPECT_THROW(
@@ -95,7 +95,7 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain_filepath = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto domain_filepath = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
     const auto planning_domain = fp::Parser(domain_filepath).get_domain();
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>();
@@ -181,7 +181,7 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain_filepath = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
+    const auto domain_filepath = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
     const auto planning_domain = fp::Parser(domain_filepath).get_domain();
     const auto domain = planning_domain.get_domain();
 
@@ -373,7 +373,7 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryParsesDomainsWithBooleanPrimiti
 {
     namespace fp = tyr::formalism::planning;
 
-    const auto domain_filepath = benchmark_prefix() / "tests" / "classical" / "ferry" / "domain.pddl";
+    const auto domain_filepath = benchmark_prefix() / "classical" / "tests" / "ferry" / "domain.pddl";
     const auto planning_domain = fp::Parser(domain_filepath).get_domain();
     const auto domain = planning_domain.get_domain();
 

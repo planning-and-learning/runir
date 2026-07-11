@@ -16,7 +16,7 @@ namespace
 
 std::filesystem::path runir_root() { return std::filesystem::path(RUNIR_ROOT_DIR); }
 
-std::filesystem::path gripper_domain() { return runir_root() / "data" / "planning-benchmarks" / "tests" / "classical" / "gripper" / "domain.pddl"; }
+std::filesystem::path gripper_domain() { return runir_root() / "data" / "benchmarks" / "classical" / "tests" / "gripper" / "domain.pddl"; }
 
 }  // namespace
 

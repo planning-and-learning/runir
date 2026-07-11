@@ -122,7 +122,7 @@ TPP = """(:sketch
 
 def make_repository():
     root = Path(__file__).resolve().parents[6]
-    domain_path = root / "data" / "planning-benchmarks" / "tests" / "classical" / "gripper" / "domain.pddl"
+    domain_path = root / "data" / "benchmarks" / "classical" / "tests" / "gripper" / "domain.pddl"
     planning_domain = Parser(domain_path, ParserOptions()).get_domain()
     dl_repository = ConstructorRepositoryFactory().create(planning_domain)
     repository = RepositoryFactory().create(dl_repository)

@@ -20,7 +20,7 @@ namespace p = tyr::planning;
 namespace sem = runir::kr::dl::semantics;
 using Uns = runir::kr::UnsFamilyTag;
 
-std::filesystem::path benchmark_prefix() { return std::filesystem::path(RUNIR_ROOT_DIR) / "data" / "planning-benchmarks"; }
+std::filesystem::path benchmark_prefix() { return std::filesystem::path(RUNIR_ROOT_DIR) / "data" / "benchmarks"; }
 
 struct Fixture
 {
@@ -32,8 +32,8 @@ struct Fixture
 
     Fixture()
     {
-        const auto domain_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "domain.pddl";
-        const auto task_file = benchmark_prefix() / "tests" / "classical" / "gripper" / "test-1.pddl";
+        const auto domain_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+        const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
 
         auto parser = fp::Parser(domain_file);
         const auto planning_task = parser.parse_task(task_file);
