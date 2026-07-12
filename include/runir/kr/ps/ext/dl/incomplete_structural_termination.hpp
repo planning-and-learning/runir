@@ -7,8 +7,8 @@
 namespace runir::kr::ps::ext::dl
 {
 
-/// Applies the sound but incomplete, memory-independent syntactic proof to a
-/// module. An unknown result is not a proof of non-termination.
+/// Applies the sound but incomplete syntactic proof inside the recurrent
+/// components of a module. An unknown result is not a proof of non-termination.
 ModuleIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleView module_);
 
 /// Applies the incomplete proof to every module and additionally rejects

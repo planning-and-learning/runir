@@ -73,8 +73,8 @@ NON_TERMINATING_MODULE = TERMINATING_MODULE.replace("(:symbol term)", "(:symbol 
     1,
 )
 
-BOOLEAN_OSCILLATOR_MODULE = """(:module
-    (:symbol oscillator)
+SEPARATED_BOOLEAN_RULES_MODULE = """(:module
+    (:symbol separated)
     (:arguments)
     (:registers)
     (:entry m0)
@@ -159,22 +159,17 @@ def test_ext_structural_termination_counterexample_spans_memory_states():
     assert changes == {NumericalChange.UNCHANGED}
 
 
-def test_ext_incomplete_structural_termination_is_memory_independent():
+def test_ext_incomplete_structural_termination_uses_memory_components():
     planning_domain, repository = _repositories()
-    module = dl.parse_module(BOOLEAN_OSCILLATOR_MODULE, planning_domain, repository)
+    module = dl.parse_module(SEPARATED_BOOLEAN_RULES_MODULE, planning_domain, repository)
 
     result = dl.incomplete_structural_termination(module)
 
-    assert not result.is_terminating()
-    assert result.status == dl.IncompleteStructuralTerminationStatus.UNKNOWN
+    assert result.is_terminating()
+    assert result.status == dl.IncompleteStructuralTerminationStatus.TERMINATING
     assert len(result.booleans) == 1
     assert result.numericals == []
-    assert len(result.surviving_rules) == 2
-    for surviving in result.surviving_rules:
-        (reason,) = surviving.blocking_reasons
-        assert isinstance(reason.feature, dl.BooleanFeature)
-        (opposing,) = reason.opposing_rules
-        assert opposing.get_index() != surviving.rule.get_index()
+    assert result.surviving_rules == []
 
 
 def test_ext_incomplete_structural_termination_accepts_module_program():

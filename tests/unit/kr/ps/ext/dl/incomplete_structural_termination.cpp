@@ -77,7 +77,7 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationMapsNumericalOpponent)
     EXPECT_EQ(reason.opposing_rules.front().get_index(), result.surviving_rules.back().rule.get_index());
 }
 
-TEST(RunirTests, ExtIncompleteStructuralTerminationIgnoresMemorySeparation)
+TEST(RunirTests, ExtIncompleteStructuralTerminationUsesMemorySeparation)
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
@@ -125,17 +125,11 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationIgnoresMemorySeparation)
 
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(module);
 
-    ASSERT_FALSE(result.is_terminating());
-    ASSERT_EQ(result.surviving_rules.size(), 2);
-    for (const auto& surviving : result.surviving_rules)
-    {
-        ASSERT_EQ(surviving.blocking_reasons.size(), 1);
-        ASSERT_EQ(surviving.blocking_reasons.front().opposing_rules.size(), 1);
-        EXPECT_NE(surviving.rule.get_index(), surviving.blocking_reasons.front().opposing_rules.front().get_index());
-    }
+    EXPECT_TRUE(result.is_terminating());
+    EXPECT_TRUE(result.surviving_rules.empty());
 }
 
-TEST(RunirTests, ExtIncompleteStructuralTerminationTreatsRegisterLoadConservatively)
+TEST(RunirTests, ExtIncompleteStructuralTerminationSeparatedRegisterLoadDoesNotBlockDecrease)
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
@@ -185,11 +179,9 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationTreatsRegisterLoadConservativ
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(module);
 
     ASSERT_FALSE(result.is_terminating());
-    ASSERT_EQ(result.surviving_rules.size(), 2);
-    ASSERT_EQ(result.surviving_rules.front().blocking_reasons.size(), 1);
-    ASSERT_EQ(result.surviving_rules.front().blocking_reasons.front().opposing_rules.size(), 1);
-    EXPECT_EQ(result.surviving_rules.front().blocking_reasons.front().opposing_rules.front().get_index(), result.surviving_rules.back().rule.get_index());
-    EXPECT_TRUE(result.surviving_rules.back().blocking_reasons.empty());
+    ASSERT_EQ(result.surviving_rules.size(), 1);
+    EXPECT_EQ(result.surviving_rules.front().rule.get_symbol(), "r2");
+    EXPECT_TRUE(result.surviving_rules.front().blocking_reasons.empty());
 }
 
 TEST(RunirTests, ExtIncompleteStructuralTerminationHasNoFeatureLimit)
@@ -210,7 +202,7 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationHasNoFeatureLimit)
     EXPECT_EQ(result.numericals.size(), 15);
 }
 
-TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicCallIsLocallyUnknown)
+TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicCallIsLocallyTerminating)
 {
     namespace fp = tyr::formalism::planning;
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
@@ -255,10 +247,10 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicCallIsLocallyUnknown)
 
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(program);
 
-    ASSERT_FALSE(result.is_terminating());
+    ASSERT_TRUE(result.is_terminating());
     ASSERT_EQ(result.module_results.size(), 2);
-    EXPECT_FALSE(result.module_results.front().is_terminating());
-    EXPECT_TRUE(result.module_results.back().is_terminating());
+    for (const auto& module_result : result.module_results)
+        EXPECT_TRUE(module_result.is_terminating());
     EXPECT_TRUE(result.recursive_call_rules.empty());
 }
 
@@ -314,6 +306,8 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationReportsRecursiveCalls)
 
     EXPECT_FALSE(result.is_terminating());
     EXPECT_EQ(result.module_results.size(), 2);
+    for (const auto& module_result : result.module_results)
+        EXPECT_TRUE(module_result.is_terminating());
     EXPECT_EQ(result.recursive_call_rules.size(), 2);
 }
 TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicEmptyProgramIsTerminating)

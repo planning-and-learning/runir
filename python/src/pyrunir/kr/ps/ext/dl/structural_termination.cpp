@@ -104,7 +104,7 @@ void bind_structural_termination(nb::module_& m)
           nb::overload_cast<ModuleView>(&incomplete_structural_termination),
           "module"_a,
           nb::keep_alive<0, 1>(),
-          "Apply the sound, memory-independent incomplete termination proof to a module.");
+          "Apply the sound incomplete termination proof within recurrent memory components.");
 
     m.def("incomplete_structural_termination",
           nb::overload_cast<ModuleProgramView>(&incomplete_structural_termination),

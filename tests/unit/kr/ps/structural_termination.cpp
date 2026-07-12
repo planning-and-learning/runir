@@ -51,7 +51,7 @@ TEST(RunirTests, CommonSieveHandlesAcyclicMemoryTransition)
     EXPECT_FALSE(result.has_cycle);
 }
 
-TEST(RunirTests, CommonIncompleteSieveIgnoresDisconnectedMemoryStates)
+TEST(RunirTests, CommonIncompleteSieveUsesDisconnectedMemoryComponents)
 {
     auto policy = kr::ps::detail::QualitativePolicy(2, 1, 0);
     auto to_true = kr::ps::detail::RuleProfile(1, 0, 0, 0);
@@ -65,25 +65,86 @@ TEST(RunirTests, CommonIncompleteSieveIgnoresDisconnectedMemoryStates)
 
     const auto result = kr::ps::detail::incomplete_structural_termination(policy);
 
-    ASSERT_FALSE(result.is_terminating());
-    ASSERT_EQ(result.surviving_rules.size(), 2);
-    ASSERT_EQ(result.surviving_rules[0].blocking_reasons.size(), 1);
-    ASSERT_EQ(result.surviving_rules[1].blocking_reasons.size(), 1);
-    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 1 }));
-    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 0 }));
+    EXPECT_TRUE(result.is_terminating());
+    EXPECT_TRUE(result.surviving_rules.empty());
 }
 
-TEST(RunirTests, CommonIncompleteSieveRetainsCrossMemoryRule)
+TEST(RunirTests, CommonIncompleteSieveEliminatesAcyclicMemoryRule)
 {
     auto policy = kr::ps::detail::QualitativePolicy(2, 0, 0);
     policy.rule_profiles.emplace_back(0, 0, 0, 1);
 
     const auto result = kr::ps::detail::incomplete_structural_termination(policy);
 
+    EXPECT_TRUE(result.is_terminating());
+    EXPECT_TRUE(result.surviving_rules.empty());
+}
+
+TEST(RunirTests, CommonIncompleteSieveDoesNotLeakMarksAcrossMemoryComponents)
+{
+    using NumericalChange = kr::ps::dl::NumericalChange;
+
+    auto policy = kr::ps::detail::QualitativePolicy(2, 0, 2);
+
+    auto mark_y = kr::ps::detail::RuleProfile(0, 2, 0, 0);
+    mark_y.numerical_greater_conditions.set(0);
+    mark_y.numerical_changes = { NumericalChange::DECREASES, NumericalChange::UNCHANGED };
+    policy.rule_profiles.push_back(std::move(mark_y));
+
+    auto decrease_n = kr::ps::detail::RuleProfile(0, 2, 1, 1);
+    decrease_n.numerical_greater_conditions.set(0);
+    decrease_n.numerical_greater_conditions.set(1);
+    decrease_n.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::DECREASES };
+    policy.rule_profiles.push_back(std::move(decrease_n));
+
+    auto increase_n = kr::ps::detail::RuleProfile(0, 2, 1, 1);
+    increase_n.numerical_zero_conditions.set(0);
+    increase_n.numerical_zero_conditions.set(1);
+    increase_n.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::INCREASES };
+    policy.rule_profiles.push_back(std::move(increase_n));
+
+    const auto result = kr::ps::detail::incomplete_structural_termination(policy);
+
+    ASSERT_FALSE(result.is_terminating());
+    ASSERT_EQ(result.surviving_rules.size(), 2);
+    EXPECT_EQ(result.surviving_rules[0].rule_position, 1);
+    EXPECT_EQ(result.surviving_rules[1].rule_position, 2);
+    ASSERT_EQ(result.surviving_rules[0].blocking_reasons.size(), 1);
+    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
+}
+
+TEST(RunirTests, CommonIncompleteSieveInheritsMarksWhenMemoryComponentSplits)
+{
+    using NumericalChange = kr::ps::dl::NumericalChange;
+
+    auto policy = kr::ps::detail::QualitativePolicy(2, 0, 2);
+
+    auto mark_y = kr::ps::detail::RuleProfile(0, 2, 0, 1);
+    mark_y.numerical_greater_conditions.set(0);
+    mark_y.numerical_changes = { NumericalChange::DECREASES, NumericalChange::UNCHANGED };
+    policy.rule_profiles.push_back(std::move(mark_y));
+
+    auto return_to_m0 = kr::ps::detail::RuleProfile(0, 2, 1, 0);
+    return_to_m0.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::UNCHANGED };
+    policy.rule_profiles.push_back(std::move(return_to_m0));
+
+    auto decrease_n = kr::ps::detail::RuleProfile(0, 2, 1, 1);
+    decrease_n.numerical_greater_conditions.set(0);
+    decrease_n.numerical_greater_conditions.set(1);
+    decrease_n.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::DECREASES };
+    policy.rule_profiles.push_back(std::move(decrease_n));
+
+    auto increase_n = kr::ps::detail::RuleProfile(0, 2, 1, 1);
+    increase_n.numerical_zero_conditions.set(0);
+    increase_n.numerical_zero_conditions.set(1);
+    increase_n.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::INCREASES };
+    policy.rule_profiles.push_back(std::move(increase_n));
+
+    const auto result = kr::ps::detail::incomplete_structural_termination(policy);
+
     ASSERT_FALSE(result.is_terminating());
     ASSERT_EQ(result.surviving_rules.size(), 1);
-    EXPECT_EQ(result.surviving_rules.front().rule_position, 0);
-    EXPECT_TRUE(result.surviving_rules.front().blocking_reasons.empty());
+    EXPECT_EQ(result.surviving_rules.front().rule_position, 3);
 }
 
 TEST(RunirTests, CommonIncompleteSieveTreatsUnconstrainedBooleanEffectAsOpponent)
