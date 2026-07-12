@@ -73,6 +73,44 @@ NON_TERMINATING_MODULE = TERMINATING_MODULE.replace("(:symbol term)", "(:symbol 
     1,
 )
 
+BOOLEAN_OSCILLATOR_MODULE = """(:module
+    (:symbol oscillator)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1)
+    (:features
+        (:boolean
+            (:symbol b)
+            (:expression (b_nonempty (c_atomic_state "ball")))
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol r1)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m0)
+                (:sketch
+                    (:conditions (negative b))
+                    (:effects (positive b))
+                )
+            )
+        )
+        (:rule
+            (:symbol r2)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m1)
+                (:sketch
+                    (:conditions (positive b))
+                    (:effects (negative b))
+                )
+            )
+        )
+    )
+)"""
+
 
 def _repositories():
     domain_path = data_root() / "classical" / "tests" / "gripper" / "domain.pddl"
@@ -105,25 +143,46 @@ def test_ext_structural_termination_counterexample_spans_memory_states():
 
     (feature,) = result.numericals
 
-    memory_states = {vertex.memory_state.get_name() for vertex in counterexample.vertices}
+    vertices = [counterexample.get_vertex_property(vertex) for vertex in counterexample.get_vertex_indices()]
+    memory_states = {vertex.memory_state.get_name() for vertex in vertices}
     assert memory_states == {"m0", "m1"}
+    for vertex in vertices:
+        assert len(vertex.boolean_values) == len(result.booleans)
+        assert len(vertex.numerical_values) == len(result.numericals)
 
-    rules = {edge.rule.get_index() for edge in counterexample.edges}
+    edges = [counterexample.get_edge_property(edge) for edge in counterexample.get_edge_indices()]
+    rules = {edge.rule.get_index() for edge in edges}
     assert len(rules) == 2
 
-    # Feature-change pairs over the numerical feature: both rules preserve it.
-    changes = {dict(edge.numerical_changes)[feature] for edge in counterexample.edges}
+    # Positional native labels align with the result's feature indices.
+    changes = {dict(zip(result.numericals, edge.numerical_changes))[feature] for edge in edges}
     assert changes == {NumericalChange.UNCHANGED}
 
 
-def test_ext_ceg_agrees_with_complete_sieve():
+def test_ext_incomplete_structural_termination_is_memory_independent():
     planning_domain, repository = _repositories()
-    module = dl.parse_module(NON_TERMINATING_MODULE, planning_domain, repository)
+    module = dl.parse_module(BOOLEAN_OSCILLATOR_MODULE, planning_domain, repository)
 
-    complete = dl.structural_termination(module)
-    ceg = dl.ceg_structural_termination(module)
+    result = dl.incomplete_structural_termination(module)
 
-    assert complete.is_terminating() == ceg.is_terminating() == False  # noqa: E712
-    complete_rules = {edge.rule.get_index() for edge in complete.counterexample.edges}
-    ceg_rules = {edge.rule.get_index() for edge in ceg.counterexample.edges}
-    assert complete_rules == ceg_rules
+    assert not result.is_terminating()
+    assert result.status == dl.IncompleteStructuralTerminationStatus.UNKNOWN
+    assert len(result.booleans) == 1
+    assert result.numericals == []
+    assert len(result.surviving_rules) == 2
+    for surviving in result.surviving_rules:
+        (reason,) = surviving.blocking_reasons
+        assert isinstance(reason.feature, dl.BooleanFeature)
+        (opposing,) = reason.opposing_rules
+        assert opposing.get_index() != surviving.rule.get_index()
+
+
+def test_ext_incomplete_structural_termination_accepts_module_program():
+    planning_domain, repository = _repositories()
+    program = dl.parse_module_program(f"(:program (:entry nonterm) {NON_TERMINATING_MODULE})", planning_domain, repository)
+
+    result = dl.incomplete_structural_termination(program)
+
+    assert not result.is_terminating()
+    assert len(result.module_results) == 1
+    assert result.recursive_call_rules == []

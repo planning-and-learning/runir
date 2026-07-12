@@ -1,13 +1,12 @@
 #include "pyrunir/kr/ps/base/dl/module.hpp"
 
-#include <cstddef>
-#include <nanobind/stl/optional.h>
+#include <boost/dynamic_bitset.hpp>
+#include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
-#include <optional>
+#include <pyrunir/graphs/graph.hpp>
 #include <runir/kr/ps/base/dl/incomplete_structural_termination.hpp>
 #include <runir/kr/ps/base/dl/structural_termination.hpp>
-#include <utility>
 #include <vector>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -15,86 +14,18 @@ namespace runir::kr::ps::base::dl
 {
 
 using namespace nanobind::literals;
+using runir::graphs::bind_forward_graph;
+using runir::graphs::bind_readable_graph_methods;
 
 namespace
 {
 
-/// Python-facing counterexample with dict-shaped feature valuations: the
-/// positional bitsets of the C++ labels are resolved against the result's
-/// feature lists at conversion time.
-struct PolicyGraphVertexWrapper
+std::vector<bool> materialize(const boost::dynamic_bitset<>& values)
 {
-    std::vector<std::pair<BooleanFeatureView, bool>> booleans;
-    std::vector<std::pair<NumericalFeatureView, bool>> numericals;
-};
-
-struct PolicyGraphEdgeWrapper
-{
-    std::size_t source;
-    std::size_t target;
-    RuleView rule;
-    std::vector<std::pair<NumericalFeatureView, NumericalChange>> numerical_changes;
-};
-
-struct PolicyGraphWrapper
-{
-    std::vector<PolicyGraphVertexWrapper> vertices;
-    std::vector<PolicyGraphEdgeWrapper> edges;
-};
-
-struct StructuralTerminationResultWrapper
-{
-    StructuralTerminationStatus status;
-    std::vector<BooleanFeatureView> booleans;
-    std::vector<NumericalFeatureView> numericals;
-    std::optional<PolicyGraphWrapper> counterexample;
-
-    bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
-};
-
-template<typename Pairs>
-nb::dict to_dict(const Pairs& pairs)
-{
-    auto dict = nb::dict();
-    for (const auto& [key, value] : pairs)
-        dict[nb::cast(key)] = nb::cast(value);
-    return dict;
-}
-
-StructuralTerminationResultWrapper wrap_result(StructuralTerminationResult result, const Repository& context)
-{
-    auto wrapper = StructuralTerminationResultWrapper {};
-    wrapper.status = result.status;
-    for (auto feature : result.booleans)
-        wrapper.booleans.push_back(BooleanFeatureView(feature, context));
-    for (auto feature : result.numericals)
-        wrapper.numericals.push_back(NumericalFeatureView(feature, context));
-
-    if (result.counterexample)
-    {
-        auto graph = PolicyGraphWrapper {};
-        for (const auto& vertex : result.counterexample->get_vertices())
-        {
-            const auto& label = vertex.get_property();
-            auto vertex_wrapper = PolicyGraphVertexWrapper {};
-            for (std::size_t position = 0; position < wrapper.booleans.size(); ++position)
-                vertex_wrapper.booleans.emplace_back(wrapper.booleans[position], label.boolean_values.test(position));
-            for (std::size_t position = 0; position < wrapper.numericals.size(); ++position)
-                vertex_wrapper.numericals.emplace_back(wrapper.numericals[position], label.numerical_values.test(position));
-            graph.vertices.push_back(std::move(vertex_wrapper));
-        }
-        for (const auto& edge : result.counterexample->get_edges())
-        {
-            const auto& label = edge.get_property();
-            auto edge_wrapper = PolicyGraphEdgeWrapper { edge.get_source(), edge.get_target(), label.rule, {} };
-            for (std::size_t position = 0; position < wrapper.numericals.size(); ++position)
-                edge_wrapper.numerical_changes.emplace_back(wrapper.numericals[position], label.numerical_changes[position]);
-            graph.edges.push_back(std::move(edge_wrapper));
-        }
-        wrapper.counterexample = std::move(graph);
-    }
-
-    return wrapper;
+    auto result = std::vector<bool>(values.size());
+    for (std::size_t position = 0; position < values.size(); ++position)
+        result[position] = values.test(position);
+    return result;
 }
 
 }  // namespace
@@ -111,52 +42,30 @@ void bind_structural_termination(nb::module_& m)
         .value("TERMINATING", StructuralTerminationStatus::TERMINATING)
         .value("NON_TERMINATING", StructuralTerminationStatus::NON_TERMINATING);
 
-    nb::class_<PolicyGraphVertexWrapper>(m, "PolicyGraphVertex")
-        .def(
-            "get_booleans",
-            [](const PolicyGraphVertexWrapper& self) { return to_dict(self.booleans); },
-            "Truth value per Boolean feature.")
-        .def(
-            "get_numericals",
-            [](const PolicyGraphVertexWrapper& self) { return to_dict(self.numericals); },
-            "Per numerical feature: whether its value is greater than zero.");
+    nb::class_<PolicyGraphVertexLabel>(m, "PolicyGraphVertexLabel")
+        .def_prop_ro("boolean_values", [](const PolicyGraphVertexLabel& self) { return materialize(self.boolean_values); })
+        .def_prop_ro("numerical_values", [](const PolicyGraphVertexLabel& self) { return materialize(self.numerical_values); });
 
-    nb::class_<PolicyGraphEdgeWrapper>(m, "PolicyGraphEdge")
-        .def(
-            "get_source",
-            [](const PolicyGraphEdgeWrapper& self) { return self.source; },
-            "Index of the source vertex in the counterexample's vertex list.")
-        .def(
-            "get_target",
-            [](const PolicyGraphEdgeWrapper& self) { return self.target; },
-            "Index of the target vertex in the counterexample's vertex list.")
-        .def("get_rule", [](const PolicyGraphEdgeWrapper& self) { return self.rule; })
-        .def(
-            "get_numerical_changes",
-            [](const PolicyGraphEdgeWrapper& self) { return to_dict(self.numerical_changes); },
-            "Qualitative change per numerical feature.");
+    nb::class_<PolicyGraphEdgeLabel>(m, "PolicyGraphEdgeLabel")
+        .def_ro("rule", &PolicyGraphEdgeLabel::rule)
+        .def_ro("numerical_changes", &PolicyGraphEdgeLabel::numerical_changes);
 
-    nb::class_<PolicyGraphWrapper>(m, "PolicyGraph")
-        .def("get_num_vertices", [](const PolicyGraphWrapper& self) { return self.vertices.size(); })
-        .def("get_num_edges", [](const PolicyGraphWrapper& self) { return self.edges.size(); })
-        .def("get_vertices", [](const PolicyGraphWrapper& self) { return self.vertices; })
-        .def("get_edges", [](const PolicyGraphWrapper& self) { return self.edges; });
+    auto policy_graph = nb::class_<PolicyGraph>(m, "PolicyGraph");
+    bind_readable_graph_methods(policy_graph);
+    bind_forward_graph(policy_graph);
 
-    nb::class_<StructuralTerminationResultWrapper>(m, "StructuralTerminationResult")
-        .def_ro("status", &StructuralTerminationResultWrapper::status)
-        .def("is_terminating", &StructuralTerminationResultWrapper::is_terminating)
-        .def("get_booleans", [](const StructuralTerminationResultWrapper& self) { return self.booleans; })
-        .def("get_numericals", [](const StructuralTerminationResultWrapper& self) { return self.numericals; })
-        .def(
-            "get_counterexample",
-            [](const StructuralTerminationResultWrapper& self) { return self.counterexample; },
-            "The surviving non-trivial strongly connected components, or None if terminating.");
+    nb::class_<StructuralTerminationResult>(m, "StructuralTerminationResult")
+        .def_ro("status", &StructuralTerminationResult::status)
+        .def_ro("booleans", &StructuralTerminationResult::booleans)
+        .def_ro("numericals", &StructuralTerminationResult::numericals)
+        .def_ro("counterexample", &StructuralTerminationResult::counterexample, nb::keep_alive<0, 1>())
+        .def("is_terminating", &StructuralTerminationResult::is_terminating);
 
-    m.def(
-        "structural_termination",
-        [](SketchView sketch) { return wrap_result(structural_termination(sketch), sketch.get_context()); },
-        "sketch"_a,
-        "Decide structural termination of the sketch with the complete Sieve algorithm on the policy graph.");
+    m.def("structural_termination",
+          &structural_termination,
+          "sketch"_a,
+          nb::keep_alive<0, 1>(),
+          "Decide structural termination of the sketch with the complete Sieve algorithm on the policy graph.");
 
     nb::enum_<IncompleteStructuralTerminationStatus>(m, "IncompleteStructuralTerminationStatus")
         .value("TERMINATING", IncompleteStructuralTerminationStatus::TERMINATING)
@@ -174,12 +83,15 @@ void bind_structural_termination(nb::module_& m)
 
     nb::class_<IncompleteStructuralTerminationResult>(m, "IncompleteStructuralTerminationResult")
         .def_ro("status", &IncompleteStructuralTerminationResult::status)
+        .def_ro("booleans", &IncompleteStructuralTerminationResult::booleans)
+        .def_ro("numericals", &IncompleteStructuralTerminationResult::numericals)
         .def_ro("surviving_rules", &IncompleteStructuralTerminationResult::surviving_rules)
         .def("is_terminating", &IncompleteStructuralTerminationResult::is_terminating);
 
     m.def("incomplete_structural_termination",
           &incomplete_structural_termination,
           "sketch"_a,
+          nb::keep_alive<0, 1>(),
           "Sound but incomplete syntactic termination test (rule elimination with feature marking).");
 }
 

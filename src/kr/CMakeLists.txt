@@ -13,12 +13,9 @@ add_library(kr SHARED
     ps/base/dl/structural_termination.cpp
     ps/base/dl/structural_termination/analysis.cpp
     ps/base/dl/structural_termination/incomplete_result.cpp
-    ps/base/dl/structural_termination/incomplete_sieve.cpp
-    ps/base/dl/structural_termination/policy_graph.cpp
     ps/base/dl/structural_termination/result.cpp
-    ps/base/dl/structural_termination/sieve.cpp
     ps/base/sketch_executor.cpp
-    ps/ext/dl/ceg_structural_termination.cpp
+    ps/ext/dl/incomplete_structural_termination.cpp
     ps/ext/dl/module_program_structural_termination.cpp
     ps/ext/dl/module_factory.cpp
     ps/ext/dl/parser/parser.cpp
@@ -26,12 +23,12 @@ add_library(kr SHARED
     ps/ext/dl/parser.cpp
     ps/ext/dl/structural_termination.cpp
     ps/ext/dl/structural_termination/analysis.cpp
-    ps/ext/dl/structural_termination/ceg_analysis.cpp
-    ps/ext/dl/structural_termination/ceg_result.cpp
-    ps/ext/dl/structural_termination/policy_graph.cpp
+    ps/ext/dl/structural_termination/incomplete_result.cpp
     ps/ext/dl/structural_termination/result.cpp
-    ps/ext/dl/structural_termination/sieve.cpp
     ps/ext/module_program_executor.cpp
+    ps/structural_termination/incomplete.cpp
+    ps/structural_termination/policy_graph.cpp
+    ps/structural_termination/sieve.cpp
     uns/dl/classifier_factory.cpp
     uns/dl/parser.cpp
     uns/dl/parser/parser.cpp
@@ -44,6 +41,8 @@ set_target_properties(kr PROPERTIES OUTPUT_NAME runir_kr)
 target_compile_features(kr PUBLIC cxx_std_20)
 
 target_include_directories(kr
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>

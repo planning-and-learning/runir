@@ -6,10 +6,10 @@
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
-#include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/dl/formatter.hpp"
+#include "runir/kr/ps/ext/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/ext/dl/structural_termination_data.hpp"
 
 #include <concepts>
@@ -261,10 +261,8 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel, char
     template<typename FormatContext>
     auto format(const runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel& label, FormatContext& ctx) const
     {
-        const auto text = fmt::format("(booleans={}, numericals={}, memory={})",
-                                      label.boolean_values,
-                                      label.numerical_values,
-                                      label.memory_state.get_name().str());
+        const auto text =
+            fmt::format("(booleans={}, numericals={}, memory={})", label.boolean_values, label.numerical_values, label.memory_state.get_name().str());
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -291,6 +289,33 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ModuleStructuralTerminationResult,
                               fmt::format("ModuleStructuralTerminationResult(non-terminating, counterexample with {} vertices and {} edges)",
                                           result.counterexample->get_num_vertices(),
                                           result.counterexample->get_num_edges());
+        return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::ext::dl::ModuleIncompleteStructuralTerminationResult, char> : fmt::formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::kr::ps::ext::dl::ModuleIncompleteStructuralTerminationResult& result, FormatContext& ctx) const
+    {
+        const auto text = result.is_terminating() ?
+                              std::string { "ModuleIncompleteStructuralTerminationResult(terminating)" } :
+                              fmt::format("ModuleIncompleteStructuralTerminationResult(unknown, {} surviving rules)", result.surviving_rules.size());
+        return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::ext::dl::ModuleProgramIncompleteStructuralTerminationResult, char> : fmt::formatter<std::string_view>
+{
+    template<typename FormatContext>
+    auto format(const runir::kr::ps::ext::dl::ModuleProgramIncompleteStructuralTerminationResult& result, FormatContext& ctx) const
+    {
+        const auto text = result.is_terminating() ? std::string { "ModuleProgramIncompleteStructuralTerminationResult(terminating)" } :
+                                                    fmt::format("ModuleProgramIncompleteStructuralTerminationResult(unknown, {} modules, {} recursive calls)",
+                                                                result.module_results.size(),
+                                                                result.recursive_call_rules.size());
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };

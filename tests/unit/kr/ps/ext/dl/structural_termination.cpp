@@ -471,6 +471,127 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
     EXPECT_EQ(memory_state_indices.size(), 2);
 }
 
+TEST(RunirTests, ExtStructuralTerminationIgnoresOneWayBridgeBetweenMemoryCycles)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    // m0 <-> m1 terminates on fa, m2 <-> m3 does not terminate on fb, and
+    // the one-way bridge m1 -> m2 cannot participate in a cycle.
+    const auto module = kr::ps::ext::dl::parse_module(R"((:module
+    (:symbol multi)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1 m2 m3)
+    (:features
+        (:numerical
+            (:symbol fa)
+            (:expression
+                (n_count
+                    (c_atomic_state "ball")
+                )
+            )
+        )
+        (:numerical
+            (:symbol fb)
+            (:expression
+                (n_count
+                    (c_atomic_state "room")
+                )
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto25)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:sketch
+                    (:conditions
+                        (greater_zero fa)
+                    )
+                    (:effects
+                        (decreases fa)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto27)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m0)
+                (:sketch
+                    (:conditions)
+                    (:effects
+                        (unchanged fa)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto29)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m2)
+                (:sketch
+                    (:conditions)
+                    (:effects)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto31)
+            (:expression
+                (:source-memory m2)
+                (:target-memory m3)
+                (:sketch
+                    (:conditions
+                        (greater_zero fb)
+                    )
+                    (:effects
+                        (decreases fb)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto33)
+            (:expression
+                (:source-memory m3)
+                (:target-memory m2)
+                (:sketch
+                    (:conditions)
+                    (:effects)
+                )
+            )
+        )
+    )
+))",
+                                                      planning_task.get_domain().get_domain(),
+                                                      *repository);
+
+    const auto result = kr::ps::ext::dl::structural_termination(module);
+
+    ASSERT_FALSE(result.is_terminating());
+    ASSERT_NE(result.counterexample, nullptr);
+
+    auto rules = std::set<ygg::Index<kr::ps::ext::RuleVariant>> {};
+    for (const auto& edge : result.counterexample->get_edges())
+        rules.insert(edge.get_property().rule.get_index());
+    EXPECT_EQ(rules.size(), 2);
+
+    auto memory_states = std::set<std::string> {};
+    for (const auto& vertex : result.counterexample->get_vertices())
+        memory_states.emplace(vertex.get_property().memory_state.get_name());
+    EXPECT_EQ(memory_states, (std::set<std::string> { "m2", "m3" }));
+}
+
 TEST(RunirTests, ExtStructuralTerminationAcyclicModuleProgramCallsAreTerminating)
 {
     namespace fp = tyr::formalism::planning;

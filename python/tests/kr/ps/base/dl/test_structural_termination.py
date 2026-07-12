@@ -4,8 +4,9 @@ from pyrunir.kr.dl.base.semantics import ConstructorRepositoryFactory
 from pyrunir.kr.ps.base import RepositoryFactory
 from pyrunir.kr.ps.base.dl import (
     BooleanFeature,
+    BooleanFeatureIndex,
     NumericalChange,
-    NumericalFeature,
+    NumericalFeatureIndex,
     incomplete_structural_termination,
     parse_sketch,
     structural_termination,
@@ -135,41 +136,40 @@ def test_structural_termination_tpp_sketch_is_terminating():
     result = structural_termination(sketch)
 
     assert result.is_terminating()
-    assert result.get_counterexample() is None
-    assert len(result.get_numericals()) == 3
-    assert all(isinstance(feature, NumericalFeature) for feature in result.get_numericals())
+    assert result.counterexample is None
+    assert len(result.numericals) == 3
+    assert all(isinstance(feature, NumericalFeatureIndex) for feature in result.numericals)
 
 
-def test_structural_termination_oscillator_counterexample_has_dict_valuations():
+def test_structural_termination_oscillator_counterexample_has_positional_valuations():
     domain, repository = make_repository()
     sketch = parse_sketch(OSCILLATOR, domain, repository)
 
     result = structural_termination(sketch)
 
     assert not result.is_terminating()
-    counterexample = result.get_counterexample()
+    counterexample = result.counterexample
     assert counterexample is not None
     assert counterexample.get_num_vertices() == 2
     assert counterexample.get_num_edges() == 2
 
-    (feature,) = result.get_booleans()
-    assert isinstance(feature, BooleanFeature)
+    (feature,) = result.booleans
+    assert isinstance(feature, BooleanFeatureIndex)
 
-    # Dict-shaped valuations: one vertex per truth value of b1.
-    valuations = {vertex.get_booleans()[feature] for vertex in counterexample.get_vertices()}
+    # Positional valuations: one vertex per truth value of b1.
+    valuations = {counterexample.get_vertex_property(vertex).boolean_values[0] for vertex in counterexample.get_vertex_indices()}
     assert valuations == {True, False}
 
     # The two-cycle uses both rules; each edge flips b1.
-    rules = {edge.get_rule().get_index() for edge in counterexample.get_edges()}
+    rules = {counterexample.get_edge_property(edge).rule.get_index() for edge in counterexample.get_edge_indices()}
     assert rules == {rule.get_index() for rule in sketch.get_rules()}
-    for edge in counterexample.get_edges():
-        vertices = counterexample.get_vertices()
-        source = vertices[edge.get_source()].get_booleans()[feature]
-        target = vertices[edge.get_target()].get_booleans()[feature]
+    for edge in counterexample.get_edge_indices():
+        source = counterexample.get_vertex_property(counterexample.get_source(edge)).boolean_values[0]
+        target = counterexample.get_vertex_property(counterexample.get_target(edge)).boolean_values[0]
         assert source != target
 
 
-def test_structural_termination_edge_changes_are_dict_shaped():
+def test_structural_termination_edge_changes_are_positional():
     domain, repository = make_repository()
     sketch = parse_sketch(
         """(:sketch
@@ -214,8 +214,11 @@ def test_structural_termination_edge_changes_are_dict_shaped():
     result = structural_termination(sketch)
 
     assert not result.is_terminating()
-    (feature,) = result.get_numericals()
-    changes = {edge.get_numerical_changes()[feature] for edge in result.get_counterexample().get_edges()}
+    (feature,) = result.numericals
+    assert isinstance(feature, NumericalFeatureIndex)
+    counterexample = result.counterexample
+    assert counterexample is not None
+    changes = {counterexample.get_edge_property(edge).numerical_changes[0] for edge in counterexample.get_edge_indices()}
     assert changes == {NumericalChange.DECREASES, NumericalChange.INCREASES}
 
 

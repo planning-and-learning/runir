@@ -87,24 +87,16 @@ inline ModuleCallGraph build_module_call_graph(const std::vector<ModuleView>& mo
     return { graphs::StaticGraph<> { std::move(builder) }, std::move(edges), std::move(unresolved_rules) };
 }
 
-inline void record_recursive_calls(const ModuleCallGraph& call_graph, ModuleProgramStructuralTerminationResult& result)
+std::vector<RuleVariantView> find_recursive_call_rules(const std::vector<ModuleView>& modules)
 {
-    for (auto rule : call_graph.unresolved_rules)
-    {
-        result.status = StructuralTerminationStatus::NON_TERMINATING;
-        result.recursive_call_rules.push_back(rule);
-    }
-
+    const auto call_graph = build_module_call_graph(modules);
+    auto result = call_graph.unresolved_rules;
     const auto [num_components, component_of] = graphs::algorithms::strong_components(call_graph.graph);
     static_cast<void>(num_components);
     for (const auto& edge : call_graph.edges)
-    {
         if (component_of[edge.source_module] == component_of[edge.target_module])
-        {
-            result.status = StructuralTerminationStatus::NON_TERMINATING;
-            result.recursive_call_rules.push_back(edge.rule);
-        }
-    }
+            result.push_back(edge.rule);
+    return result;
 }
 
 }  // namespace detail
@@ -113,8 +105,9 @@ ModuleProgramStructuralTerminationResult structural_termination(ModuleProgramVie
 {
     auto result = ModuleProgramStructuralTerminationResult {};
     const auto modules = detail::analyze_modules(program, result);
-    const auto call_graph = detail::build_module_call_graph(modules);
-    detail::record_recursive_calls(call_graph, result);
+    result.recursive_call_rules = detail::find_recursive_call_rules(modules);
+    if (!result.recursive_call_rules.empty())
+        result.status = StructuralTerminationStatus::NON_TERMINATING;
     return result;
 }
 
