@@ -24,6 +24,12 @@ struct SieveState
     boost::dynamic_bitset<> marked_numericals;
 };
 
+struct OpposingRuleSet
+{
+    bool has_raw_opponent = false;
+    std::vector<std::size_t> undiscounted;
+};
+
 RuleChanges make_changes(const RuleProfile& profile)
 {
     auto changes = RuleChanges {};
@@ -60,14 +66,14 @@ bool r3_discounts(const RuleProfile& rule,
            || (rule.numerical_zero_conditions & opposing.numerical_greater_conditions & marked_numericals).any();
 }
 
-std::vector<std::size_t> opposing_rules(const QualitativePolicy& policy,
-                                        const SieveState& state,
-                                        std::size_t rule_position,
-                                        IncompletePolicyResult::FeatureKind feature_kind,
-                                        std::size_t feature_position,
-                                        bool to_true = false)
+OpposingRuleSet opposing_rules(const QualitativePolicy& policy,
+                               const SieveState& state,
+                               std::size_t rule_position,
+                               IncompletePolicyResult::FeatureKind feature_kind,
+                               std::size_t feature_position,
+                               bool to_true = false)
 {
-    auto opposing = std::vector<std::size_t> {};
+    auto opposing = OpposingRuleSet {};
     for (std::size_t other = 0; other < policy.rule_profiles.size(); ++other)
     {
         if (other == rule_position || !state.remaining[other])
@@ -77,8 +83,12 @@ std::vector<std::size_t> opposing_rules(const QualitativePolicy& policy,
                                  (to_true ? state.changes[other].boolean_may_become_false.test(feature_position) :
                                             state.changes[other].boolean_may_become_true.test(feature_position)) :
                                  state.changes[other].numerical_increases_or_unconstrained.test(feature_position);
-        if (opposes && !r3_discounts(policy.rule_profiles[rule_position], policy.rule_profiles[other], state.marked_booleans, state.marked_numericals))
-            opposing.push_back(other);
+        if (!opposes)
+            continue;
+
+        opposing.has_raw_opponent = true;
+        if (!r3_discounts(policy.rule_profiles[rule_position], policy.rule_profiles[other], state.marked_booleans, state.marked_numericals))
+            opposing.undiscounted.push_back(other);
     }
     return opposing;
 }
@@ -108,10 +118,13 @@ SieveState run_sieve(const QualitativePolicy& policy)
             {
                 if (!state.changes[rule_position].numerical_decreases.test(position))
                     continue;
-                if (opposing_rules(policy, state, rule_position, IncompletePolicyResult::FeatureKind::NUMERICAL, position).empty())
+                const auto opposing = opposing_rules(policy, state, rule_position, IncompletePolicyResult::FeatureKind::NUMERICAL, position);
+                if (opposing.undiscounted.empty())
                 {
                     state.remaining[rule_position] = false;
-                    state.marked_numericals.set(position);
+                    // R3 consumes existing stabilization marks but cannot establish a new one.
+                    if (!opposing.has_raw_opponent)
+                        state.marked_numericals.set(position);
                     eliminated = true;
                 }
             }
@@ -121,10 +134,12 @@ SieveState run_sieve(const QualitativePolicy& policy)
                 const auto to_false = state.changes[rule_position].boolean_to_false.test(position);
                 if (!to_true && !to_false)
                     continue;
-                if (opposing_rules(policy, state, rule_position, IncompletePolicyResult::FeatureKind::BOOLEAN, position, to_true).empty())
+                const auto opposing = opposing_rules(policy, state, rule_position, IncompletePolicyResult::FeatureKind::BOOLEAN, position, to_true);
+                if (opposing.undiscounted.empty())
                 {
                     state.remaining[rule_position] = false;
-                    state.marked_booleans.set(position);
+                    if (!opposing.has_raw_opponent)
+                        state.marked_booleans.set(position);
                     eliminated = true;
                 }
             }
@@ -152,7 +167,7 @@ IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy
             surviving.blocking_reasons.push_back(IncompletePolicyResult::BlockingReason {
                 IncompletePolicyResult::FeatureKind::NUMERICAL,
                 position,
-                opposing_rules(policy, state, rule_position, IncompletePolicyResult::FeatureKind::NUMERICAL, position),
+                opposing_rules(policy, state, rule_position, IncompletePolicyResult::FeatureKind::NUMERICAL, position).undiscounted,
             });
         }
         for (std::size_t position = 0; position < policy.num_booleans; ++position)
@@ -164,7 +179,7 @@ IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy
             surviving.blocking_reasons.push_back(IncompletePolicyResult::BlockingReason {
                 IncompletePolicyResult::FeatureKind::BOOLEAN,
                 position,
-                opposing_rules(policy, state, rule_position, IncompletePolicyResult::FeatureKind::BOOLEAN, position, to_true),
+                opposing_rules(policy, state, rule_position, IncompletePolicyResult::FeatureKind::BOOLEAN, position, to_true).undiscounted,
             });
         }
         result.surviving_rules.push_back(std::move(surviving));

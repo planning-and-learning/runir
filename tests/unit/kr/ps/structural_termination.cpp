@@ -160,4 +160,52 @@ TEST(RunirTests, CommonIncompleteSievePreservesOriginalPositionsAndReasonOrder)
     EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 1 }));
 }
 
+TEST(RunirTests, CommonIncompleteSieveDoesNotMarkFeatureAfterR3Elimination)
+{
+    using NumericalChange = kr::ps::dl::NumericalChange;
+
+    auto policy = kr::ps::detail::QualitativePolicy(1, 1, 2);
+
+    auto mark_y = kr::ps::detail::RuleProfile(1, 2);
+    mark_y.numerical_greater_conditions.set(0);
+    mark_y.boolean_unchanged_effects.set(0);
+    mark_y.numerical_changes = { NumericalChange::DECREASES, NumericalChange::UNCHANGED };
+    policy.rule_profiles.push_back(std::move(mark_y));
+
+    auto r3_eliminated = kr::ps::detail::RuleProfile(1, 2);
+    r3_eliminated.numerical_greater_conditions.set(0);
+    r3_eliminated.numerical_greater_conditions.set(1);
+    r3_eliminated.boolean_unchanged_effects.set(0);
+    r3_eliminated.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::DECREASES };
+    policy.rule_profiles.push_back(std::move(r3_eliminated));
+
+    auto to_true = kr::ps::detail::RuleProfile(1, 2);
+    to_true.boolean_negative_conditions.set(0);
+    to_true.numerical_zero_conditions.set(0);
+    to_true.numerical_zero_conditions.set(1);
+    to_true.boolean_positive_effects.set(0);
+    to_true.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::INCREASES };
+    policy.rule_profiles.push_back(std::move(to_true));
+
+    auto to_false = kr::ps::detail::RuleProfile(1, 2);
+    to_false.boolean_positive_conditions.set(0);
+    to_false.numerical_zero_conditions.set(0);
+    to_false.numerical_greater_conditions.set(1);
+    to_false.boolean_negative_effects.set(0);
+    to_false.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::DECREASES };
+    policy.rule_profiles.push_back(std::move(to_false));
+
+    const auto result = kr::ps::detail::incomplete_structural_termination(policy);
+
+    ASSERT_FALSE(result.is_terminating());
+    ASSERT_EQ(result.surviving_rules.size(), 2);
+    EXPECT_EQ(result.surviving_rules[0].rule_position, 2);
+    EXPECT_EQ(result.surviving_rules[1].rule_position, 3);
+    ASSERT_EQ(result.surviving_rules[0].blocking_reasons.size(), 1);
+    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 3 }));
+    ASSERT_EQ(result.surviving_rules[1].blocking_reasons.size(), 2);
+    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
+    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[1].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
+}
+
 }  // namespace runir::tests
