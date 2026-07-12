@@ -52,7 +52,7 @@ private:
     SuccessorExpander<Kind> m_expander;
 
 public:
-    explicit SketchGoalStrategy(SketchView sketch) : m_expander(sketch) {}
+    SketchGoalStrategy(runir::kr::TaskContext<Kind>& task_context, SketchView sketch) : m_expander(task_context, sketch) {}
 
     bool is_static_goal_satisfied(const tyr::planning::Task<Kind>& task) override
     {
@@ -183,17 +183,18 @@ namespace detail
 {
 
 template<tyr::planning::TaskKind Kind>
-auto execute_proof(datasets::TaskSearchContextPtr<Kind> context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
+auto execute_proof(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
-    const auto& context = *context_owner;
+    auto& task_context = *task_context_owner;
+    const auto& context = *task_context.search_context;
     auto result = SketchProofResults<Kind> {};
-    result.context_owner = context_owner;
+    result.task_context_owner = task_context_owner;
     auto builder = SketchProofGraphBuilder<Kind> {};
     auto state_to_vertex = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
     auto vertex_to_node = ygg::UnorderedMap<graphs::VertexIndex, tyr::planning::Node<Kind>> {};
     auto sketch_edges = ygg::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>> {};
     auto task_goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
-    auto sketch_goal_strategy = SketchGoalStrategy<Kind>(sketch);
+    auto sketch_goal_strategy = SketchGoalStrategy<Kind>(task_context, sketch);
     const auto static_goal_satisfied = task_goal_strategy.is_static_goal_satisfied(*context.task);
     const auto initial_node = context.successor_generator->get_initial_node();
     const auto initial_state = initial_node.get_state();
@@ -301,16 +302,17 @@ auto execute_proof(datasets::TaskSearchContextPtr<Kind> context_owner, SketchVie
 }
 
 template<tyr::planning::TaskKind Kind>
-auto find_siw_solution(const datasets::TaskSearchContext<Kind>& context,
+auto find_siw_solution(runir::kr::TaskContext<Kind>& task_context,
                        SketchView sketch,
                        const SketchSearchOptions<Kind>& options) -> tyr::planning::SearchResult<Kind>
 {
+    const auto& context = *task_context.search_context;
     auto brfs_solver = tyr::planning::brfs::Solver<Kind> { context.task, context.successor_generator, options.brfs_options };
     auto iw_solver = tyr::planning::iw::Solver<Kind> { std::move(brfs_solver), options.max_arity, options.iw_options };
     auto siw_options = options.siw_options;
 
     if (!siw_options.subgoal_strategy)
-        siw_options.subgoal_strategy = std::make_shared<SketchGoalStrategy<Kind>>(sketch);
+        siw_options.subgoal_strategy = std::make_shared<SketchGoalStrategy<Kind>>(task_context, sketch);
     if (!siw_options.goal_strategy)
         siw_options.goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>::create(*context.task);
 
@@ -318,17 +320,18 @@ auto find_siw_solution(const datasets::TaskSearchContext<Kind>& context,
 }
 
 template<tyr::planning::TaskKind Kind>
-auto proof_result_from_siw_solution(datasets::TaskSearchContextPtr<Kind> context_owner,
+auto proof_result_from_siw_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
                                     SketchView sketch,
                                     const tyr::planning::SearchResult<Kind>& search_result) -> SketchProofResults<Kind>
 {
-    const auto& context = *context_owner;
+    auto& task_context = *task_context_owner;
+    const auto& context = *task_context.search_context;
     auto result = SketchProofResults<Kind> {};
-    result.context_owner = std::move(context_owner);
+    result.task_context_owner = std::move(task_context_owner);
     auto builder = SketchProofGraphBuilder<Kind> {};
     auto state_to_vertex = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
     auto task_goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
-    auto sketch_goal_strategy = SketchGoalStrategy<Kind>(sketch);
+    auto sketch_goal_strategy = SketchGoalStrategy<Kind>(task_context, sketch);
     const auto initial_node = context.successor_generator->get_initial_node();
     const auto initial_state = initial_node.get_state();
     const auto static_goal_satisfied = task_goal_strategy.is_static_goal_satisfied(*context.task);
@@ -427,26 +430,26 @@ auto proof_result_from_siw_solution(datasets::TaskSearchContextPtr<Kind> context
 }
 
 template<tyr::planning::TaskKind Kind>
-auto execute_greedy_solution(datasets::TaskSearchContextPtr<Kind> context_owner,
+auto execute_greedy_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
                              SketchView sketch,
                              const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
-    const auto search_result = find_siw_solution(*context_owner, sketch, options);
-    return proof_result_from_siw_solution(std::move(context_owner), sketch, search_result);
+    const auto search_result = find_siw_solution(*task_context_owner, sketch, options);
+    return proof_result_from_siw_solution(std::move(task_context_owner), sketch, search_result);
 }
 
 }  // namespace detail
 
 template<tyr::planning::TaskKind Kind>
-auto prove_solution(datasets::TaskSearchContextPtr<Kind> context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
+auto prove_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
-    return detail::execute_proof(std::move(context_owner), sketch, options);
+    return detail::execute_proof(std::move(task_context_owner), sketch, options);
 }
 
 template<tyr::planning::TaskKind Kind>
-auto find_solution(datasets::TaskSearchContextPtr<Kind> context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
+auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
-    return detail::execute_greedy_solution(std::move(context_owner), sketch, options);
+    return detail::execute_greedy_solution(std::move(task_context_owner), sketch, options);
 }
 
 }  // namespace runir::kr::ps::base

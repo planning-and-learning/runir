@@ -203,10 +203,7 @@ inline void append_value(std::ostream& os, std::string_view value)
     }
 }
 
-inline bool is_atomic_list_value(std::string_view value)
-{
-    return !value.empty() && value.front() != '(' && value.find('\n') == std::string_view::npos;
-}
+inline bool is_atomic_list_value(std::string_view value) { return !value.empty() && value.front() != '(' && value.find('\n') == std::string_view::npos; }
 
 inline void append_list_section(std::ostream& os, std::string_view name, const std::vector<std::string>& values)
 {
@@ -254,7 +251,10 @@ inline void append_value_section(std::ostream& os, std::string_view name, std::s
 }
 
 template<typename FeatureTag, typename C>
-void append_feature(std::ostream& os, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view, std::string_view)
+void append_feature(std::ostream& os,
+                    const ReferenceNames& refs,
+                    ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view,
+                    std::string_view)
 {
     os << ygg::print_indent << fmt::format("(:{}\n", feature_type<FeatureTag>());
     {
@@ -275,13 +275,19 @@ std::string feature(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::k
 }
 
 template<typename FeatureTag, typename C>
-void append_feature(std::ostream& os, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> view, std::string_view name)
+void append_feature(std::ostream& os,
+                    const ReferenceNames& refs,
+                    ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> view,
+                    std::string_view name)
 {
     ygg::visit([&](auto concrete_feature) { append_feature(os, refs, concrete_feature, name); }, view.get_variant());
 }
 
 template<typename FeatureTag, typename C>
-void append_feature(std::ostream& os, FeatureNames& names, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> view)
+void append_feature(std::ostream& os,
+                    FeatureNames& names,
+                    const ReferenceNames& refs,
+                    ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> view)
 {
     append_feature(os, refs, view, get_or_create_name(names, view));
 }
@@ -314,13 +320,15 @@ void append_declared_features(std::ostream& os, FeatureNames& names, const Refer
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string condition(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
+std::string condition(FeatureNames& names,
+                      ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
 {
     return fmt::format("({} {})", ObservationTag::keyword, get_or_create_name(names, view.get_feature()));
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
-std::string effect(FeatureNames& names, ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
+std::string effect(FeatureNames& names,
+                   ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
 {
     return fmt::format("({} {})", ObservationTag::keyword, get_or_create_name(names, view.get_feature()));
 }
@@ -377,17 +385,20 @@ std::vector<std::string> call_arguments(FeatureNames& names, ygg::View<ygg::Inde
     return result;
 }
 
-template<typename Kind, typename Category, typename C>
-void append_rule_body(std::ostream& os, FeatureNames& names, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind, Category>>, C> view)
+template<runir::kr::ps::ext::RuleKind Kind, typename C>
+void append_rule_body(std::ostream& os, FeatureNames& names, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
 {
     append_list_section(os, "conditions", conditions(names, view.get_conditions()));
-    if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag>)
+    if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>
+                  || std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::RoleTag>>)
     {
-        append_value_section(os, Category::name, expression(refs, view.get_expression()));
+        constexpr auto category_name =
+            std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>> ? runir::kr::dl::ConceptTag::name : runir::kr::dl::RoleTag::name;
+        append_value_section(os, category_name, expression(refs, view.get_expression()));
         os << ygg::print_indent << "(:register\n";
         {
             ygg::IndentScope register_scope(os);
-            os << ygg::print_indent << fmt::format("(:{} {})", Category::name, std::string(view.get_register().get_name().str())) << "\n";
+            os << ygg::print_indent << fmt::format("(:{} {})", category_name, std::string(view.get_register().get_name().str())) << "\n";
         }
         os << ygg::print_indent << ")\n";
     }
@@ -408,10 +419,11 @@ void append_rule_body(std::ostream& os, FeatureNames& names, const ReferenceName
     }
 }
 
-template<typename Kind, typename Category, typename C>
-void append_rule(std::ostream& os, FeatureNames& names, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind, Category>>, C> view)
+template<runir::kr::ps::ext::RuleKind Kind, typename C>
+void append_rule(std::ostream& os, FeatureNames& names, const ReferenceNames& refs, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
 {
-    if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag>)
+    if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>
+                  || std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::RoleTag>>)
         os << ygg::print_indent << "(:load\n";
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::SketchTag>)
         os << ygg::print_indent << "(:sketch\n";
@@ -656,7 +668,8 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::Ext
 };
 
 template<typename FeatureTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C>> :
+    fmt::formatter<std::string_view>
 {
     using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C>;
     auto format(View view, format_context& ctx) const
@@ -677,7 +690,8 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir
 };
 
 template<typename LanguageTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C>> :
+    fmt::formatter<std::string_view>
 {
     using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C>;
     auto format(View view, format_context& ctx) const
@@ -736,10 +750,10 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::
     }
 };
 
-template<typename Kind, typename Category, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind, Category>>, C>> : fmt::formatter<std::string_view>
+template<runir::kr::ps::ext::RuleKind Kind, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind, Category>>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C>;
     auto format(View view, format_context& ctx) const
     {
         auto names = runir::kr::ps::ext::format::FeatureNames {};

@@ -1,11 +1,10 @@
 #ifndef RUNIR_KR_PS_BASE_SUCCESSOR_EXPANDER_HPP_
 #define RUNIR_KR_PS_BASE_SUCCESSOR_EXPANDER_HPP_
 
-#include "runir/kr/dl/semantics/builder.hpp"
-#include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/base/compatibility.hpp"
 #include "runir/kr/ps/base/dl/evaluation_context.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
+#include "runir/kr/task_context.hpp"
 
 #include <optional>
 #include <tuple>
@@ -53,23 +52,15 @@ template<tyr::planning::TaskKind Kind>
 class SuccessorExpander
 {
 private:
+    runir::kr::TaskContext<Kind>* m_task_context;
     SketchView m_sketch;
-    runir::kr::dl::semantics::Builder m_dl_builder;
-    runir::kr::dl::semantics::DenotationRepositoryFactory m_dl_denotation_repository_factory;
-    runir::kr::dl::semantics::DenotationRepository m_dl_denotation_repository;
 
 public:
-    explicit SuccessorExpander(SketchView sketch) :
-        m_sketch(sketch),
-        m_dl_builder(),
-        m_dl_denotation_repository_factory(),
-        m_dl_denotation_repository(m_dl_denotation_repository_factory.create())
-    {
-    }
+    SuccessorExpander(runir::kr::TaskContext<Kind>& task_context, SketchView sketch) : m_task_context(&task_context), m_sketch(sketch) {}
 
     EvaluationContext<Kind> context_at(tyr::planning::StateView<Kind> state)
     {
-        return EvaluationContext<Kind>(std::move(state), m_dl_builder, m_dl_denotation_repository);
+        return EvaluationContext<Kind>(std::move(state), m_task_context->dl_builder, *m_task_context->dl_denotation_repository);
     }
 
     std::optional<RuleView> matching_rule(EvaluationContext<Kind>& context, const tyr::planning::StateView<Kind>& target_state)

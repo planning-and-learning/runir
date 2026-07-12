@@ -1,9 +1,9 @@
 #ifndef RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_DATA_HPP_
 #define RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_DATA_HPP_
 
-#include "runir/datasets/task_class.hpp"
 #include "runir/graphs/declarations.hpp"
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
+#include "runir/kr/task_context.hpp"
 
 #include <memory>
 #include <tyr/planning/algorithms/brfs.hpp>
@@ -26,7 +26,7 @@ template<tyr::planning::TaskKind Kind>
 struct SketchProofResults
 {
     SketchProofStatus status = SketchProofStatus::SUCCESS;
-    runir::datasets::TaskSearchContextPtr<Kind> context_owner;
+    runir::kr::TaskContextPtr<Kind> task_context_owner;
     std::shared_ptr<SketchProofGraph<Kind>> graph;
     runir::graphs::EdgeIndexList deadend_transitions;
     runir::graphs::VertexIndexList open_states;

@@ -8,9 +8,9 @@
 #include <cista/containers/variant.h>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
-#include <utility>
 
 namespace ygg
 {
@@ -18,8 +18,8 @@ namespace ygg
 template<>
 struct Data<runir::kr::ps::ext::RuleVariant>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag, runir::kr::dl::ConceptTag>>,
-                                             Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag, runir::kr::dl::RoleTag>>,
+    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>>,
+                                             Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<runir::kr::dl::RoleTag>>>,
                                              Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::SketchTag>>,
                                              Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>,
                                              Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>>;
@@ -30,18 +30,8 @@ struct Data<runir::kr::ps::ext::RuleVariant>
 
     Data() = default;
     Data(Variant value_) : index(), value(std::move(value_)) {}
-    Data(::cista::offset::string symbol_, Variant value_) :
-        index(),
-        symbol(std::move(symbol_)),
-        value(std::move(value_))
-    {
-    }
-    Data(const std::string& symbol_, Variant value_) :
-        index(),
-        symbol(symbol_),
-        value(std::move(value_))
-    {
-    }
+    Data(::cista::offset::string symbol_, Variant value_) : index(), symbol(std::move(symbol_)), value(std::move(value_)) {}
+    Data(const std::string& symbol_, Variant value_) : index(), symbol(symbol_), value(std::move(value_)) {}
 
     void clear() noexcept
     {

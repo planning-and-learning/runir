@@ -30,8 +30,8 @@ enum class RuleExecutionStatus
     MALFORMED_CALL
 };
 
-template<runir::kr::dl::CategoryTag Category, typename C, tyr::planning::TaskKind Kind>
-bool has_current_source(ygg::View<ygg::Index<Rule<LoadTag, Category>>, C> rule, const EvaluationContext<Kind>& context)
+template<LoadCategory Category, typename C, tyr::planning::TaskKind Kind>
+bool has_current_source(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> rule, const EvaluationContext<Kind>& context)
 {
     return rule.get_source().get_index() == context.get_call_stack().memory_state().get_index();
 }
@@ -54,9 +54,9 @@ bool has_current_source(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, const Eval
     return rule.get_source().get_index() == context.get_call_stack().memory_state().get_index();
 }
 
-template<runir::kr::dl::CategoryTag Category, typename C, tyr::planning::TaskKind Kind>
+template<LoadCategory Category, typename C, tyr::planning::TaskKind Kind>
 RuleExecutionStatus
-execute_load(ygg::View<ygg::Index<Rule<LoadTag, Category>>, C> rule, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
+execute_load(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> rule, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
 {
     if (!has_current_source(rule, context))
         return RuleExecutionStatus::NOT_APPLICABLE;

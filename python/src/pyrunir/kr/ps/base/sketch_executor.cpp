@@ -34,7 +34,7 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
 
     nb::class_<Results>(m, (std::string(prefix) + "SketchProofResults").c_str())
         .def_ro("status", &Results::status)
-        .def_ro("graph", &Results::graph)
+        .def_ro("graph", &Results::graph, nb::keep_alive<0, 1>())
         .def_ro("deadend_transitions", &Results::deadend_transitions)
         .def_ro("open_states", &Results::open_states)
         .def_ro("cycle", &Results::cycle)
@@ -83,44 +83,44 @@ void bind_sketch_executor(nb::module_& m)
     ygg::add_hash(execution_context);
 
     nb::class_<Expander>(m, "SuccessorExpander")
-        .def(nb::init<SketchView>(), "sketch"_a)
+        .def(nb::init<runir::kr::TaskContext<Kind>&, SketchView>(), "task_context"_a, "sketch"_a, nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
         .def("context_at", &Expander::context_at, "state"_a, nb::keep_alive<0, 1>())
         .def("matching_rule", &Expander::matching_rule, "context"_a, "target_state"_a);
 
     m.def(
         "prove_ground_solution",
-        [](runir::datasets::TaskSearchContextPtr<tyr::planning::GroundTag> context,
-           SketchView sketch,
-           const SketchSearchOptions<tyr::planning::GroundTag>& options) { return prove_solution(std::move(context), sketch, options); },
+        [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::planning::GroundTag>& options)
+        { return prove_solution(std::move(task_context), sketch, options); },
         nb::call_guard<nb::gil_scoped_release>(),
-        "context"_a,
+        nb::keep_alive<0, 2>(),
+        "task_context"_a,
         "sketch"_a,
         "options"_a = SketchSearchOptions<tyr::planning::GroundTag>());
     m.def(
         "prove_lifted_solution",
-        [](runir::datasets::TaskSearchContextPtr<tyr::planning::LiftedTag> context,
-           SketchView sketch,
-           const SketchSearchOptions<tyr::planning::LiftedTag>& options) { return prove_solution(std::move(context), sketch, options); },
+        [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::planning::LiftedTag>& options)
+        { return prove_solution(std::move(task_context), sketch, options); },
         nb::call_guard<nb::gil_scoped_release>(),
-        "context"_a,
+        nb::keep_alive<0, 2>(),
+        "task_context"_a,
         "sketch"_a,
         "options"_a = SketchSearchOptions<tyr::planning::LiftedTag>());
     m.def(
         "find_ground_solution",
-        [](runir::datasets::TaskSearchContextPtr<tyr::planning::GroundTag> context,
-           SketchView sketch,
-           const SketchSearchOptions<tyr::planning::GroundTag>& options) { return find_solution(std::move(context), sketch, options); },
+        [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::planning::GroundTag>& options)
+        { return find_solution(std::move(task_context), sketch, options); },
         nb::call_guard<nb::gil_scoped_release>(),
-        "context"_a,
+        nb::keep_alive<0, 2>(),
+        "task_context"_a,
         "sketch"_a,
         "options"_a = SketchSearchOptions<tyr::planning::GroundTag>());
     m.def(
         "find_lifted_solution",
-        [](runir::datasets::TaskSearchContextPtr<tyr::planning::LiftedTag> context,
-           SketchView sketch,
-           const SketchSearchOptions<tyr::planning::LiftedTag>& options) { return find_solution(std::move(context), sketch, options); },
+        [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::planning::LiftedTag>& options)
+        { return find_solution(std::move(task_context), sketch, options); },
         nb::call_guard<nb::gil_scoped_release>(),
-        "context"_a,
+        nb::keep_alive<0, 2>(),
+        "task_context"_a,
         "sketch"_a,
         "options"_a = SketchSearchOptions<tyr::planning::LiftedTag>());
 }

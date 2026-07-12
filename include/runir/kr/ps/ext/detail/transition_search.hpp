@@ -1,11 +1,11 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_TRANSITION_SEARCH_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_TRANSITION_SEARCH_HPP_
 
-#include "runir/datasets/task_class.hpp"
 #include "runir/kr/ps/ext/detail/execution.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
+#include "runir/kr/task_context.hpp"
 
 #include <memory>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
@@ -22,7 +22,11 @@ private:
     EvaluationContext<Kind> m_context;
 
 public:
-    explicit ModuleProgramTransitionGoalStrategy(const EvaluationContext<Kind>& context) : m_environment(context.get_program()), m_context(context) {}
+    ModuleProgramTransitionGoalStrategy(runir::kr::TaskContext<Kind>& task_context, const EvaluationContext<Kind>& context) :
+        m_environment(task_context, context.get_program()),
+        m_context(context)
+    {
+    }
     bool is_static_goal_satisfied(const tyr::planning::Task<Kind>& task) override
     {
         static_cast<void>(task);
@@ -39,17 +43,18 @@ public:
 };
 
 template<tyr::planning::TaskKind Kind>
-auto find_module_program_transition_node(const runir::datasets::TaskSearchContext<Kind>& search_context,
+auto find_module_program_transition_node(runir::kr::TaskContext<Kind>& task_context,
                                          EvaluationContext<Kind>& context,
                                          const ModuleExecutionOptions<Kind>& options) -> tyr::planning::SearchResult<Kind>
 {
+    auto& search_context = *task_context.search_context;
     const auto start_node = search_context.successor_generator->get_node(context.get_state().get_index());
     auto brfs_options = options.brfs_options;
     auto iw_options = options.iw_options;
     auto brfs_solver = tyr::planning::brfs::Solver<Kind> { search_context.task, search_context.successor_generator, brfs_options };
 
     iw_options.start_node = start_node;
-    iw_options.goal_strategy = std::make_shared<ModuleProgramTransitionGoalStrategy<Kind>>(context);
+    iw_options.goal_strategy = std::make_shared<ModuleProgramTransitionGoalStrategy<Kind>>(task_context, context);
 
     return tyr::planning::iw::find_solution(brfs_solver, options.max_arity, iw_options);
 }

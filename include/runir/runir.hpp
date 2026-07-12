@@ -9,5 +9,6 @@
 #include "runir/kr/ps.hpp"
 #include "runir/kr/ps/base.hpp"
 #include "runir/kr/ps/ext.hpp"
+#include "runir/kr/task_context.hpp"
 
 #endif

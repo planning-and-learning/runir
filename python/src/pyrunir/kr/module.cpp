@@ -9,6 +9,7 @@ namespace runir::kr
 
 void bind_module_definitions(nb::module_& m)
 {
+    bind_task_context(m);
     auto dl = m.def_submodule("dl");
     runir::kr::dl::bind_module_definitions(dl);
 

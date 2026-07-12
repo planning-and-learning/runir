@@ -16,15 +16,16 @@ namespace runir::kr::ps::ext::detail
 // move the expander offers. Both step kinds come from `SuccessorExpander`, the single enumerator the
 // prove search also uses, so greedy and prove can never disagree about what a rule does.
 template<tyr::planning::TaskKind Kind>
-auto execute_greedy_solution(const runir::datasets::TaskSearchContext<Kind>& search_context,
-                             runir::datasets::TaskSearchContextPtr<Kind> context_owner,
+auto execute_greedy_solution(runir::kr::TaskContext<Kind>& task_context,
+                             runir::kr::TaskContextPtr<Kind> task_context_owner,
                              ModuleProgramView program,
                              const ModuleExecutionOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
 {
+    auto& search_context = *task_context.search_context;
     auto execution_state = ModuleProgramExecutionState<Kind>(search_context, program);
     auto& context = execution_state.get_context();
     const auto& initial_node = execution_state.get_initial_node();
-    auto proof = ModuleProgramProofBuilder<Kind>(search_context, initial_node, program, std::move(context_owner));
+    auto proof = ModuleProgramProofBuilder<Kind>(task_context, initial_node, program, std::move(task_context_owner));
     auto plan_steps = tyr::planning::LabeledNodeList<Kind> {};
 
     auto current_vertex = proof.get_or_create_vertex(context, ExternalMemoryState(context.get_call_stack().memory_state()), true, true, false).first;
@@ -76,7 +77,7 @@ auto execute_greedy_solution(const runir::datasets::TaskSearchContext<Kind>& sea
         }
 
         const auto source_vertex = current_vertex;
-        const auto control_steps = proof.control_steps(search_context, context, options);
+        const auto control_steps = proof.control_steps(context, options);
         const auto& step = control_steps.front();
 
         if (step.status == ModuleProgramOutcome::APPLIED || step.status == ModuleProgramOutcome::RESTORED_CALLER)
@@ -106,25 +107,26 @@ auto execute_greedy_solution(const runir::datasets::TaskSearchContext<Kind>& sea
 }
 
 template<tyr::planning::TaskKind Kind>
-auto find_solution(const runir::datasets::TaskSearchContext<Kind>& search_context,
-                   runir::datasets::TaskSearchContextPtr<Kind> context_owner,
+auto find_solution(runir::kr::TaskContext<Kind>& task_context,
+                   runir::kr::TaskContextPtr<Kind> task_context_owner,
                    ModuleProgramView program,
                    const ModuleExecutionOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
 {
-    return execute_greedy_solution(search_context, std::move(context_owner), program, options);
+    return execute_greedy_solution(task_context, std::move(task_context_owner), program, options);
 }
 
 // Proof search: from each open vertex, expand every internal (Load) move, or every control move
 // when no Load applies, materializing each as a proof-graph edge + vertex. Same expander as greedy,
 // so the proof graph contains exactly the moves greedy could have taken.
 template<tyr::planning::TaskKind Kind>
-auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_context,
-                    runir::datasets::TaskSearchContextPtr<Kind> context_owner,
+auto prove_solution(runir::kr::TaskContext<Kind>& task_context,
+                    runir::kr::TaskContextPtr<Kind> task_context_owner,
                     ModuleProgramView program,
                     const ModuleExecutionOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
 {
+    auto& search_context = *task_context.search_context;
     auto execution_state = ModuleProgramExecutionState<Kind>(search_context, program);
-    auto proof = ModuleProgramProofBuilder<Kind>(search_context, execution_state.get_initial_node(), program, std::move(context_owner));
+    auto proof = ModuleProgramProofBuilder<Kind>(task_context, execution_state.get_initial_node(), program, std::move(task_context_owner));
     auto open = std::vector<std::pair<EvaluationContext<Kind>, graphs::VertexIndex>> {};
     auto failed = false;
 
@@ -168,7 +170,7 @@ auto prove_solution(const runir::datasets::TaskSearchContext<Kind>& search_conte
             continue;
         }
 
-        const auto control_steps = proof.control_steps(search_context, context, options);
+        const auto control_steps = proof.control_steps(context, options);
         for (const auto& step : control_steps)
         {
             if (step.status == ModuleProgramOutcome::APPLIED || step.status == ModuleProgramOutcome::RESTORED_CALLER)

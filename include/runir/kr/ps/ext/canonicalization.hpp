@@ -68,10 +68,10 @@ inline bool is_canonical(const ygg::Data<runir::kr::ps::EffectVariant<runir::kr:
 
 inline bool is_canonical(const ygg::Data<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>&) noexcept { return true; }
 
-template<RuleKind Kind, typename Category>
-bool is_canonical(const ygg::Data<Rule<Kind, Category>>& data) noexcept
+template<RuleKind Kind>
+bool is_canonical(const ygg::Data<Rule<Kind>>& data) noexcept
 {
-    if constexpr (std::same_as<Kind, LoadTag>)
+    if constexpr (std::same_as<Kind, LoadTag<runir::kr::dl::ConceptTag>> || std::same_as<Kind, LoadTag<runir::kr::dl::RoleTag>>)
         return ygg::is_canonical(data.conditions);
     else if constexpr (std::same_as<Kind, SketchTag>)
         return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects);
@@ -87,8 +87,8 @@ inline bool is_canonical(const ygg::Data<Module>& data) noexcept
 {
     return ygg::is_canonical(data.concept_arguments) && ygg::is_canonical(data.role_arguments) && ygg::is_canonical(data.boolean_arguments)
            && ygg::is_canonical(data.numerical_arguments) && ygg::is_canonical(data.concept_registers) && ygg::is_canonical(data.role_registers)
-           && ygg::is_canonical(data.concept_features) && ygg::is_canonical(data.role_features)
-           && ygg::is_canonical(data.boolean_features) && ygg::is_canonical(data.numerical_features) && ygg::is_canonical(data.memory_states);
+           && ygg::is_canonical(data.concept_features) && ygg::is_canonical(data.role_features) && ygg::is_canonical(data.boolean_features)
+           && ygg::is_canonical(data.numerical_features) && ygg::is_canonical(data.memory_states);
 }
 
 inline bool is_canonical(const ygg::Data<ModuleProgram>&) noexcept { return true; }
@@ -133,10 +133,10 @@ inline void canonicalize(ygg::Data<runir::kr::ps::EffectVariant<runir::kr::ExtFa
 
 inline void canonicalize(ygg::Data<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>&) noexcept {}
 
-template<RuleKind Kind, typename Category>
-void canonicalize(ygg::Data<Rule<Kind, Category>>& data)
+template<RuleKind Kind>
+void canonicalize(ygg::Data<Rule<Kind>>& data)
 {
-    if constexpr (std::same_as<Kind, LoadTag>)
+    if constexpr (std::same_as<Kind, LoadTag<runir::kr::dl::ConceptTag>> || std::same_as<Kind, LoadTag<runir::kr::dl::RoleTag>>)
     {
         ygg::canonicalize(data.conditions);
     }

@@ -16,6 +16,7 @@
 #include <runir/kr/ps/ext/module_program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
+#include <runir/kr/task_context.hpp>
 #include <type_traits>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/planning.hpp>
@@ -138,6 +139,7 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationIsStableAndLeavesInterpreterStateUn
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -167,12 +169,13 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationIsStableAndLeavesInterpreterStateUn
                                                       *repository);
     const auto program = create_module_program(*repository, module, { module });
     auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(*task_context, program);
     const auto feature = module.get_features<kr::ps::dl::NumericalFeature>().front();
     const auto initial_state = context.get_state().get_index();
     const auto initial_memory = context.get_call_stack().memory_state().get_index();
 
     EXPECT_EQ(kr::ps::ext::evaluate(feature, context, environment), 1);
+    EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::NumericalTag>(), 0);
     EXPECT_EQ(context.get_state().get_index(), initial_state);
     EXPECT_EQ(context.get_call_stack().memory_state().get_index(), initial_memory);
 
@@ -1153,6 +1156,7 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -1165,12 +1169,12 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     auto search_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
     search_options.max_arity = 1;
 
-    const auto search_result = kr::ps::ext::find_solution(search_context, program, search_options);
+    const auto search_result = kr::ps::ext::find_solution(task_context, program, search_options);
     EXPECT_TRUE(search_result.is_successful());
     ASSERT_TRUE(search_result.plan.has_value());
     EXPECT_EQ(search_result.plan->get_length(), 4);
 
-    const auto proof = kr::ps::ext::prove_solution(search_context, program, search_options);
+    const auto proof = kr::ps::ext::prove_solution(task_context, program, search_options);
     EXPECT_EQ(proof.status, kr::ps::ext::ModuleProgramProofStatus::SUCCESS) << fmt::format("{}", proof);
     ASSERT_TRUE(proof.graph);
     EXPECT_EQ(proof.graph->get_num_vertices(), 16);
@@ -1308,7 +1312,7 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
         [](auto rule)
         {
             using View = std::decay_t<decltype(rule)>;
-            using Expected = ygg::View<ygg::Index<kr::ps::ext::Rule<kr::ps::ext::LoadTag, kr::dl::ConceptTag>>, kr::ps::ext::Repository>;
+            using Expected = ygg::View<ygg::Index<kr::ps::ext::Rule<kr::ps::ext::LoadTag<kr::dl::ConceptTag>>>, kr::ps::ext::Repository>;
             if constexpr (std::same_as<View, Expected>)
                 return ygg::uint_t(rule.get_register().get_identifier()) == 0 && rule.get_conditions().size() == 1;
             else
@@ -1564,6 +1568,7 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -1575,7 +1580,7 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
     const auto reg = create_register(*repository, "r0", 0);
     const auto top_concept = create_top_concept(*dl_repository);
 
-    auto load_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::LoadTag, kr::dl::ConceptTag>>();
+    auto load_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::LoadTag<kr::dl::ConceptTag>>>();
     load_data.source = source.get_index();
     load_data.target = target.get_index();
     load_data.load_expression = top_concept.get_index();
@@ -1606,7 +1611,7 @@ TEST(RunirTests, ExtLoadRuleStoresFirstObjectAndAdvancesMemory)
 
     const auto program = create_module_program(*repository, module, { module });
     auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(*task_context, program);
     const auto initial_state = context.get_state().get_index();
 
     EXPECT_EQ(kr::ps::ext::detail::execute_load(load, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
@@ -1629,6 +1634,7 @@ TEST(RunirTests, ExtRoleLoadRuleStoresFirstPairAndAdvancesMemory)
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -1671,12 +1677,12 @@ TEST(RunirTests, ExtRoleLoadRuleStoresFirstPairAndAdvancesMemory)
     ASSERT_EQ(transitions.size(), 1);
     ASSERT_EQ(transitions[0].size(), 1);
 
-    auto maybe_load = std::optional<kr::ps::ext::RuleView<kr::ps::ext::LoadTag, kr::dl::RoleTag>>();
+    auto maybe_load = std::optional<kr::ps::ext::RuleView<kr::ps::ext::LoadTag<kr::dl::RoleTag>>>();
     ygg::visit(
         [&](auto rule)
         {
             using RuleView = std::decay_t<decltype(rule)>;
-            if constexpr (std::same_as<RuleView, kr::ps::ext::RuleView<kr::ps::ext::LoadTag, kr::dl::RoleTag>>)
+            if constexpr (std::same_as<RuleView, kr::ps::ext::RuleView<kr::ps::ext::LoadTag<kr::dl::RoleTag>>>)
                 maybe_load = rule;
         },
         transitions[0][0].get_variant());
@@ -1688,7 +1694,7 @@ TEST(RunirTests, ExtRoleLoadRuleStoresFirstPairAndAdvancesMemory)
 
     const auto program = create_module_program(*repository, module, { module });
     auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(*task_context, program);
     const auto initial_state = context.get_state().get_index();
 
     EXPECT_EQ(kr::ps::ext::detail::execute_load(*maybe_load, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
@@ -1711,6 +1717,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -1778,7 +1785,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
 
     const auto program = create_module_program(*repository, caller, { caller, callee });
     auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, caller);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(*task_context, program);
 
     EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_call_stack().module().get_index(), callee.get_index());
@@ -1838,6 +1845,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -1859,7 +1867,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
 
     const auto program = create_module_program(*repository, caller, { caller, callee });
     auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, caller);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(*task_context, program);
 
     EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
     EXPECT_EQ(context.get_call_stack().module().get_index(), callee.get_index());
@@ -1878,6 +1886,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -1911,7 +1920,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     const auto module = create_module(*repository, "module", source, { source, target });
     const auto program = create_module_program(*repository, module, { module });
     auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(*task_context, program);
 
     const auto initial_node = search_context->successor_generator->get_initial_node();
     const auto initial_state = context.get_state().get_index();
@@ -1944,6 +1953,7 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -1998,7 +2008,7 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
 
     const auto program = create_module_program(*repository, module, { module });
     auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(*task_context, program);
 
     const auto initial_node = search_context->successor_generator->get_initial_node();
     const auto successors = search_context->successor_generator->get_labeled_successor_nodes(initial_node);
@@ -2039,6 +2049,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -2104,14 +2115,14 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
 
     const auto program = create_module_program(*repository, module, { module });
     auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(program);
+    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(*task_context, program);
 
     const auto initial_node = search_context->successor_generator->get_initial_node();
     const auto successors = search_context->successor_generator->get_labeled_successor_nodes(initial_node);
 
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(*search_context, initial_node, program);
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(*task_context, initial_node, program);
     const auto options = kr::ps::ext::detail::ModuleExecutionOptions<p::GroundTag> {};
-    const auto steps = expander.control_steps(*search_context, context, options);
+    const auto steps = expander.control_steps(context, options);
     ASSERT_FALSE(steps.empty());
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
     EXPECT_EQ(steps.front().context.get_call_stack().memory_state().get_index(), move_target.get_index());
@@ -2129,6 +2140,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -2143,7 +2155,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
 
     auto proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
     const auto empty_program = create_module_program(*repository, empty_module, { empty_module });
-    const auto empty_proof = kr::ps::ext::prove_solution(search_context, empty_program, proof_options);
+    const auto empty_proof = kr::ps::ext::prove_solution(task_context, empty_program, proof_options);
     EXPECT_EQ(empty_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(empty_proof.graph);
     EXPECT_EQ(empty_proof.graph->get_num_vertices(), 1);
@@ -2152,7 +2164,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     EXPECT_FALSE(empty_proof.open_states.empty());
     EXPECT_TRUE(empty_proof.cycle.empty());
 
-    auto load_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::LoadTag, kr::dl::ConceptTag>>();
+    auto load_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::LoadTag<kr::dl::ConceptTag>>>();
     load_data.source = source.get_index();
     load_data.target = source.get_index();
     load_data.load_expression = top_concept.get_index();
@@ -2173,7 +2185,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     const auto load_module = repository->get_or_create(load_module_data).first;
     auto load_proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
     const auto load_program = create_module_program(*repository, load_module, { load_module });
-    const auto load_proof = kr::ps::ext::prove_solution(search_context, load_program, load_proof_options);
+    const auto load_proof = kr::ps::ext::prove_solution(task_context, load_program, load_proof_options);
     EXPECT_EQ(load_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(load_proof.graph);
     EXPECT_TRUE(load_proof.deadend_transitions.empty());
@@ -2206,7 +2218,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     kr::ps::ext::canonicalize(caller_data);
     const auto caller = repository->get_or_create(caller_data).first;
     const auto caller_program = create_module_program(*repository, caller, { caller, callee });
-    const auto caller_proof = kr::ps::ext::prove_solution(search_context, caller_program);
+    const auto caller_proof = kr::ps::ext::prove_solution(task_context, caller_program);
     EXPECT_EQ(caller_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(caller_proof.graph);
     EXPECT_TRUE(caller_proof.deadend_transitions.empty());
@@ -2231,7 +2243,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     const auto do_module = repository->get_or_create(do_module_data).first;
 
     const auto do_program = create_module_program(*repository, do_module, { do_module });
-    const auto do_proof = kr::ps::ext::prove_solution(search_context, do_program);
+    const auto do_proof = kr::ps::ext::prove_solution(task_context, do_program);
     EXPECT_EQ(do_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(do_proof.graph);
     EXPECT_EQ(do_proof.graph->get_num_vertices(), 1);

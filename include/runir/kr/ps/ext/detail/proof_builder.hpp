@@ -28,27 +28,25 @@ private:
     SuccessorExpander<Kind> m_expander;
 
 public:
-    ModuleProgramProofBuilder(const runir::datasets::TaskSearchContext<Kind>& search_context,
+    ModuleProgramProofBuilder(runir::kr::TaskContext<Kind>& task_context,
                               const tyr::planning::Node<Kind>& initial_node,
                               ModuleProgramView program,
-                              runir::datasets::TaskSearchContextPtr<Kind> context_owner = {}) :
+                              runir::kr::TaskContextPtr<Kind> task_context_owner = {}) :
         m_result(),
         m_builder(),
         m_vertex_to_index(),
-        m_expander(search_context, initial_node, program)
+        m_expander(task_context, initial_node, program)
     {
-        m_result.context_owner = std::move(context_owner);
+        m_result.task_context_owner = std::move(task_context_owner);
     }
 
     bool is_goal(const tyr::planning::StateView<Kind>& state) { return m_expander.is_goal(state); }
 
     auto load_steps(const EvaluationContext<Kind>& context) { return m_expander.load_steps(context); }
 
-    auto control_steps(const runir::datasets::TaskSearchContext<Kind>& search_context,
-                       const EvaluationContext<Kind>& context,
-                       const ModuleExecutionOptions<Kind>& options)
+    auto control_steps(const EvaluationContext<Kind>& context, const ModuleExecutionOptions<Kind>& options)
     {
-        return m_expander.control_steps(search_context, context, options);
+        return m_expander.control_steps(context, options);
     }
 
     auto get_or_create_vertex(const EvaluationContext<Kind>& context, MemoryStateVariant memory_state, bool is_initial, bool is_alive, bool is_unsolvable)

@@ -91,8 +91,8 @@ void bind_datas(nb::module_& m)
     bind_data<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>(m, "ConditionVariantData");
     bind_data<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>(m, "EffectVariantData");
     bind_data<RuleVariant>(m, "RuleVariantData");
-    bind_data<Rule<LoadTag, runir::kr::dl::ConceptTag>>(m, "ConceptLoadRuleData");
-    bind_data<Rule<LoadTag, runir::kr::dl::RoleTag>>(m, "RoleLoadRuleData");
+    bind_data<Rule<LoadTag<runir::kr::dl::ConceptTag>>>(m, "ConceptLoadRuleData");
+    bind_data<Rule<LoadTag<runir::kr::dl::RoleTag>>>(m, "RoleLoadRuleData");
     bind_data<Rule<SketchTag>>(m, "SketchRuleData");
     bind_data<Rule<DoTag>>(m, "DoRuleData");
     bind_data<Rule<CallTag>>(m, "CallRuleData");

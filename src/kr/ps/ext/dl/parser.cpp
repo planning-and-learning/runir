@@ -144,13 +144,17 @@ auto require_objects(tyr::formalism::planning::DomainView domain, const std::vec
     return result;
 }
 
-auto parse_dl(const dl_ast::ConceptBot<runir::kr::ExtFamilyTag>&, tyr::formalism::planning::DomainView, runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository)
+auto parse_dl(const dl_ast::ConceptBot<runir::kr::ExtFamilyTag>&,
+              tyr::formalism::planning::DomainView,
+              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository)
 {
     ygg::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::BotTag>> data;
     return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
 }
 
-auto parse_dl(const dl_ast::ConceptTop<runir::kr::ExtFamilyTag>&, tyr::formalism::planning::DomainView, runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository)
+auto parse_dl(const dl_ast::ConceptTop<runir::kr::ExtFamilyTag>&,
+              tyr::formalism::planning::DomainView,
+              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository)
 {
     ygg::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::TopTag>> data;
     return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
@@ -351,7 +355,9 @@ auto parse_dl(const dl_ast::ConceptArgument<runir::kr::ExtFamilyTag>& node,
     return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
 }
 
-auto parse_dl(const dl_ast::RoleUniversal<runir::kr::ExtFamilyTag>&, tyr::formalism::planning::DomainView, runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository)
+auto parse_dl(const dl_ast::RoleUniversal<runir::kr::ExtFamilyTag>&,
+              tyr::formalism::planning::DomainView,
+              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository)
 {
     ygg::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::UniversalTag>> data;
     return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
@@ -738,7 +744,8 @@ void append_feature(Repository& repository,
 }
 
 template<typename FeatureTag>
-auto require_feature(const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>>& features, const std::string& name)
+auto require_feature(const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>>& features,
+                     const std::string& name)
 {
     const auto it = features.find(name);
     if (it == features.end())
@@ -803,10 +810,7 @@ auto parse_condition(Repository& repository,
         condition.observation.get());
 }
 
-auto parse_effect(Repository& repository,
-                  const ast::Effect& effect,
-                  const BooleanFeatureMap& boolean_features,
-                  const NumericalFeatureMap& numerical_features)
+auto parse_effect(Repository& repository, const ast::Effect& effect, const BooleanFeatureMap& boolean_features, const NumericalFeatureMap& numerical_features)
 {
     return boost::apply_visitor(
         [&](const auto& observation)
@@ -1382,8 +1386,8 @@ Variant parse_constructor_variant_child(runir::kr::dl::ConstructorRepositoryFor<
     return parse_concept(text, domain, repository).get_index();
 }
 
-template<typename RuleTag, typename Category>
-auto intern_rule_variant(Repository& repository, ygg::Data<Rule<RuleTag, Category>>& data, const std::string& symbol)
+template<RuleKind Kind>
+auto intern_rule_variant(Repository& repository, ygg::Data<Rule<Kind>>& data, const std::string& symbol)
 {
     const auto rule = intern(repository, data);
     ygg::Data<RuleVariant> variant_data(symbol, rule.get_index());
@@ -1431,7 +1435,7 @@ void validate_do_action(tyr::formalism::planning::DomainView domain, const ast::
         fail("Do rule for action \"" + rule.action + "\" has " + std::to_string(rule.arguments.size()) + " arguments; expected " + std::to_string(*arity));
 }
 
-template<dl_::CategoryTag Category>
+template<LoadCategory Category>
 auto parse_load_rule(Repository& repository,
                      const ast::LoadRule<Category>& rule,
                      ygg::Index<MemoryState> source,
@@ -1445,7 +1449,7 @@ auto parse_load_rule(Repository& repository,
                      const ConceptAliasMap& concept_aliases,
                      const std::string& symbol)
 {
-    ygg::Data<Rule<LoadTag, Category>> data;
+    ygg::Data<Rule<LoadTag<Category>>> data;
     data.source = source;
     data.target = target;
     data.conditions = parse_conditions(repository, rule.conditions, boolean_features, numerical_features);

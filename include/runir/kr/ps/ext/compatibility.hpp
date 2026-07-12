@@ -2,8 +2,8 @@
 #define RUNIR_KR_PS_EXT_COMPATIBILITY_HPP_
 
 #include "runir/kr/ps/condition_view.hpp"
-#include "runir/kr/ps/ext/dl/compatibility.hpp"
 #include "runir/kr/ps/effect_view.hpp"
+#include "runir/kr/ps/ext/dl/compatibility.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
@@ -25,15 +25,15 @@ bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVar
 }
 
 template<typename C, tyr::planning::TaskKind Kind>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C> condition, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
+bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C> condition,
+                        EvaluationContext<Kind>& context,
+                        EvaluationEnvironment<Kind>& environment)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context, environment); }, condition.get_variant());
 }
 
-template<RuleKind Kind, typename Category, typename C, tyr::planning::TaskKind TaskKind>
-bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind, Category>>, C> rule,
-                               EvaluationContext<TaskKind>& context,
-                               EvaluationEnvironment<TaskKind>& environment)
+template<RuleKind Kind, typename C, tyr::planning::TaskKind TaskKind>
+bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationContext<TaskKind>& context, EvaluationEnvironment<TaskKind>& environment)
 {
     for (auto condition : rule.get_conditions())
         if (!runir::kr::ps::ext::is_compatible_with(condition, context, environment))
@@ -42,8 +42,8 @@ bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind, Category>>, C> ru
     return true;
 }
 
-template<RuleKind Kind, typename Category, typename C, tyr::planning::TaskKind TaskKind>
-bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind, Category>>, C> rule, EvaluationContext<TaskKind>& context, EvaluationEnvironment<TaskKind>& environment)
+template<RuleKind Kind, typename C, tyr::planning::TaskKind TaskKind>
+bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationContext<TaskKind>& context, EvaluationEnvironment<TaskKind>& environment)
 {
     if (!conditions_are_compatible(rule, context, environment))
         return false;
@@ -59,7 +59,8 @@ bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind, Category>>, C> rule, Eva
 }
 
 template<typename LanguageTag, typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C> condition, EvaluationContext& context)
+bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C> condition,
+                        EvaluationContext& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context); }, condition.get_variant());
 }
@@ -82,8 +83,8 @@ bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::EffectVariant<runir:
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context); }, effect.get_variant());
 }
 
-template<RuleKind Kind, typename Category, typename C, typename EvaluationContext>
-bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind, Category>>, C> rule, EvaluationContext& context)
+template<RuleKind Kind, typename C, typename EvaluationContext>
+bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationContext& context)
 {
     for (auto condition : rule.get_conditions())
         if (!runir::kr::ps::ext::is_compatible_with(condition, context))
@@ -92,8 +93,8 @@ bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind, Category>>, C> ru
     return true;
 }
 
-template<RuleKind Kind, typename Category, typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind, Category>>, C> rule, EvaluationContext& context)
+template<RuleKind Kind, typename C, typename EvaluationContext>
+bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationContext& context)
 {
     if (!conditions_are_compatible(rule, context))
         return false;

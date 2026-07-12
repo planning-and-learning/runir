@@ -1,7 +1,6 @@
+from pyrunir.kr import GroundTaskContext
 from pyrunir.kr.dl.base.semantics import (
-    Builder,
     ConstructorRepositoryFactory,
-    DenotationRepositoryFactory,
     GroundEvaluationContext as GroundDLEvaluationContext,
     LiftedEvaluationContext as LiftedDLEvaluationContext,
     syntactic_complexity as dl_syntactic_complexity,
@@ -10,6 +9,7 @@ from pyrunir.kr.ps.base import (
     GroundSketchProofGraph,
     SketchProofEdgeLabel,
     SketchProofStatus,
+    SuccessorExpander,
     find_ground_solution,
     prove_ground_solution,
     syntactic_complexity,
@@ -75,6 +75,8 @@ def test_base_sketch_exposes_declared_features(gripper_planning_domain):
 
 def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_search_context, gripper_planning_domain):
     search_context = ground_gripper_search_context
+    task_context = GroundTaskContext(search_context)
+    assert task_context.search_context is search_context
     planning_domain = gripper_planning_domain
 
     dl_repository = ConstructorRepositoryFactory().create(planning_domain)
@@ -98,8 +100,14 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
     labeled_successor = search_context.successor_generator.get_labeled_successor_nodes(initial_node)[0]
     source_state = initial_node.get_state()
     target_state = labeled_successor.node.get_state()
-    dl_builder = Builder()
-    dl_denotation_repository = DenotationRepositoryFactory().create()
+    dl_builder = task_context.dl_builder
+    dl_denotation_repository = task_context.dl_denotation_repository
+    assert dl_builder is task_context.dl_builder
+    assert dl_denotation_repository is task_context.dl_denotation_repository
+    expander = SuccessorExpander(task_context, sketch)
+    expander_context = expander.context_at(source_state)
+    assert expander_context.state == source_state
+    expander.matching_rule(expander_context, target_state)
     evaluation_context = GroundEvaluationContext(source_state, target_state, dl_builder, dl_denotation_repository)
     dl_evaluation_context = GroundDLEvaluationContext(source_state, dl_builder, dl_denotation_repository)
     assert LiftedEvaluationContext is not None
@@ -135,7 +143,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
         assert str(view)
         assert isinstance(hash(view), int)
 
-    proof_result = prove_ground_solution(search_context, sketch)
+    proof_result = prove_ground_solution(task_context, sketch)
     assert proof_result.status == SketchProofStatus.SUCCESS
     assert proof_result.is_successful()
     assert proof_result.deadend_transitions == []
@@ -152,7 +160,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
         assert edge in proof_result.graph.get_out_edge_indices(proof_result.graph.get_source(edge))
         assert isinstance(proof_result.graph.get_edge_property(edge), SketchProofEdgeLabel)
 
-    search_result = find_ground_solution(search_context, sketch)
+    search_result = find_ground_solution(task_context, sketch)
     assert search_result.status == SketchProofStatus.SUCCESS
     assert search_result.is_successful()
     assert search_result.deadend_transitions == []

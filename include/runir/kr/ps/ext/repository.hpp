@@ -3,19 +3,18 @@
 
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/ps/base/repository.hpp"
+#include "runir/kr/ps/condition_view.hpp"
+#include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/ext/argument_data.hpp"
 #include "runir/kr/ps/ext/argument_view.hpp"
 #include "runir/kr/ps/ext/canonicalization.hpp"
 #include "runir/kr/ps/ext/condition_data.hpp"
-#include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/ext/dl/condition_view.hpp"
 #include "runir/kr/ps/ext/dl/effect_view.hpp"
 #include "runir/kr/ps/ext/dl/feature_data.hpp"
 #include "runir/kr/ps/ext/dl/feature_view.hpp"
 #include "runir/kr/ps/ext/effect_data.hpp"
-#include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/ext/feature_data.hpp"
-#include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/ps/ext/memory_state_data.hpp"
 #include "runir/kr/ps/ext/memory_state_view.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
@@ -29,14 +28,16 @@
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
 #include "runir/kr/ps/family_traits.hpp"
+#include "runir/kr/ps/feature_view.hpp"
 
+#include <concepts>
 #include <memory>
 #include <yggdrasil/core/type_list.hpp>
 
 namespace runir::kr::ps::ext
 {
 
-using LoadRuleTypes = ygg::TypeList<Rule<LoadTag, runir::kr::dl::ConceptTag>, Rule<LoadTag, runir::kr::dl::RoleTag>>;
+using LoadRuleTypes = ygg::TypeList<Rule<LoadTag<runir::kr::dl::ConceptTag>>, Rule<LoadTag<runir::kr::dl::RoleTag>>>;
 using ControlRuleTypes = ygg::MapTypeListT<Rule, ygg::TypeList<SketchTag, DoTag, CallTag>>;
 using ConcreteRuleTypes = ygg::ConcatTypeListsT<LoadRuleTypes, ControlRuleTypes>;
 using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<RuleVariant>, ConcreteRuleTypes>;
@@ -62,8 +63,11 @@ using ModuleView = ygg::View<ygg::Index<Module>, Repository>;
 using ModuleProgramView = ygg::View<ygg::Index<ModuleProgram>, Repository>;
 using RuleVariantView = ygg::View<ygg::Index<RuleVariant>, Repository>;
 
-template<RuleKind Kind, typename Category = void>
-using RuleView = ygg::View<ygg::Index<Rule<Kind, Category>>, Repository>;
+template<RuleKind Kind>
+using RuleView = ygg::View<ygg::Index<Rule<Kind>>, Repository>;
+
+template<typename R>
+concept LoadRuleView = std::same_as<R, RuleView<LoadTag<runir::kr::dl::ConceptTag>>> || std::same_as<R, RuleView<LoadTag<runir::kr::dl::RoleTag>>>;
 
 }  // namespace runir::kr::ps::ext
 

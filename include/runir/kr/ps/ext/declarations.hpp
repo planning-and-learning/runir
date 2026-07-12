@@ -31,6 +31,10 @@ struct SketchTag
     static constexpr auto keyword = "sketch";
 };
 
+template<typename T>
+concept LoadCategory = std::same_as<T, runir::kr::dl::ConceptTag> || std::same_as<T, runir::kr::dl::RoleTag>;
+
+template<LoadCategory CategoryT>
 struct LoadTag
 {
     static constexpr auto keyword = "load";
@@ -47,9 +51,10 @@ struct CallTag
 };
 
 template<typename T>
-concept RuleKind = std::same_as<T, LoadTag> || std::same_as<T, SketchTag> || std::same_as<T, DoTag> || std::same_as<T, CallTag>;
+concept RuleKind = std::same_as<T, LoadTag<runir::kr::dl::ConceptTag>> || std::same_as<T, LoadTag<runir::kr::dl::RoleTag>> || std::same_as<T, SketchTag>
+                   || std::same_as<T, DoTag> || std::same_as<T, CallTag>;
 
-template<RuleKind Kind, typename Category = void>
+template<RuleKind Kind>
 struct Rule
 {
 };

@@ -96,8 +96,8 @@ void bind_views(nb::module_& m)
     bind_view<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>(m, "ConditionVariant");
     bind_view<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>(m, "EffectVariant");
     bind_view<RuleVariant>(m, "RuleVariant");
-    bind_view<Rule<LoadTag, runir::kr::dl::ConceptTag>>(m, "ConceptLoadRule");
-    bind_view<Rule<LoadTag, runir::kr::dl::RoleTag>>(m, "RoleLoadRule");
+    bind_view<Rule<LoadTag<runir::kr::dl::ConceptTag>>>(m, "ConceptLoadRule");
+    bind_view<Rule<LoadTag<runir::kr::dl::RoleTag>>>(m, "RoleLoadRule");
     bind_view<Rule<SketchTag>>(m, "SketchRule");
     bind_view<Rule<DoTag>>(m, "DoRule");
     bind_view<Rule<CallTag>>(m, "CallRule");

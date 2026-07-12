@@ -53,6 +53,7 @@ target_link_libraries(kr
     PUBLIC
         yggdrasil::yggdrasil
         fmt::fmt-header-only
+        runir::datasets
         tyr::core
 )
 

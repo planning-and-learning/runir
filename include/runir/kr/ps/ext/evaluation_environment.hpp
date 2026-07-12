@@ -7,6 +7,7 @@
 #include "runir/kr/dl/semantics/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/dl/evaluation_context.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
+#include "runir/kr/task_context.hpp"
 
 #include <cstddef>
 #include <utility>
@@ -22,18 +23,16 @@ private:
     using StateDlContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>;
     using TransitionDlContext = runir::kr::ps::dl::EvaluationContext<runir::kr::ExtFamilyTag, Kind>;
 
-    runir::kr::dl::semantics::Builder m_dl_builder;
-    runir::kr::dl::semantics::DenotationRepositoryFactory m_dl_denotation_repository_factory;
-    runir::kr::dl::semantics::DenotationRepository m_dl_denotation_repository;
+    runir::kr::dl::semantics::Builder& m_dl_builder;
+    runir::kr::dl::semantics::DenotationRepository& m_dl_denotation_repository;
     runir::kr::dl::semantics::EvaluationWorkspace m_dl_workspace;
     std::vector<runir::kr::dl::semantics::ConceptDenotationView> m_do_argument_denotations;
     ModuleProgramView m_program;
 
 public:
-    explicit EvaluationEnvironment(ModuleProgramView program) :
-        m_dl_builder(),
-        m_dl_denotation_repository_factory(),
-        m_dl_denotation_repository(m_dl_denotation_repository_factory.create()),
+    EvaluationEnvironment(runir::kr::TaskContext<Kind>& task_context, ModuleProgramView program) :
+        m_dl_builder(task_context.dl_builder),
+        m_dl_denotation_repository(*task_context.dl_denotation_repository),
         m_dl_workspace(),
         m_do_argument_denotations(),
         m_program(program)

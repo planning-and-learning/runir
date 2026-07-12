@@ -1,9 +1,9 @@
 #ifndef RUNIR_KR_PS_EXT_MODULE_PROGRAM_EXECUTOR_DATA_HPP_
 #define RUNIR_KR_PS_EXT_MODULE_PROGRAM_EXECUTOR_DATA_HPP_
 
-#include "runir/datasets/task_class.hpp"
 #include "runir/graphs/declarations.hpp"
 #include "runir/kr/ps/ext/module_program_proof_graph.hpp"
+#include "runir/kr/task_context.hpp"
 
 #include <memory>
 #include <optional>
@@ -34,7 +34,7 @@ template<tyr::planning::TaskKind Kind>
 struct ModuleProgramProofResults
 {
     ModuleProgramProofStatus status = ModuleProgramProofStatus::SUCCESS;
-    runir::datasets::TaskSearchContextPtr<Kind> context_owner;
+    runir::kr::TaskContextPtr<Kind> task_context_owner;
     std::shared_ptr<ModuleProgramProofGraph<Kind>> graph;
     std::optional<tyr::planning::StateView<Kind>> final_state = std::nullopt;
     std::optional<tyr::planning::Plan<Kind>> plan = std::nullopt;

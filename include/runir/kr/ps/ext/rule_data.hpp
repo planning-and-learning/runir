@@ -33,11 +33,10 @@ using CallArgument = ::cista::offset::variant<ConceptArgument, RoleArgument, Boo
 namespace ygg
 {
 
-template<runir::kr::dl::CategoryTag Category>
-    requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
-struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag, Category>>
+template<runir::kr::ps::ext::LoadCategory Category>
+struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
 {
-    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag, Category>> index;
+    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>> index;
     Index<runir::kr::ps::ext::MemoryState> source;
     Index<runir::kr::ps::ext::MemoryState> target;
     IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;

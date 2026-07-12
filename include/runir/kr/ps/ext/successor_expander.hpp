@@ -5,7 +5,6 @@
 // steps; greedy execution takes the first.
 
 #include "runir/datasets/state_graph.hpp"
-#include "runir/datasets/task_class.hpp"
 #include "runir/kr/ps/ext/detail/execution.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
@@ -16,6 +15,7 @@
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/task_context.hpp"
 
 #include <limits>
 #include <optional>
@@ -32,32 +32,6 @@
 namespace runir::kr::ps::ext
 {
 
-template<typename T>
-struct IsLoadRuleView : std::false_type
-{
-};
-
-template<runir::kr::dl::CategoryTag Category, typename C>
-struct IsLoadRuleView<ygg::View<ygg::Index<Rule<LoadTag, Category>>, C>> : std::true_type
-{
-};
-
-template<typename T>
-inline constexpr bool is_load_rule_view_v = IsLoadRuleView<std::remove_cvref_t<T>>::value;
-
-template<typename R, typename Kind>
-struct MatchesRuleKind : std::bool_constant<std::same_as<R, RuleView<Kind>>>
-{
-};
-
-template<typename R>
-struct MatchesRuleKind<R, LoadTag> : std::bool_constant<is_load_rule_view_v<R>>
-{
-};
-
-template<typename R, typename Kind>
-inline constexpr bool matches_rule_kind_v = MatchesRuleKind<std::remove_cvref_t<R>, Kind>::value;
-
 template<tyr::planning::TaskKind Kind>
 class SuccessorExpander
 {
@@ -68,26 +42,21 @@ public:
     using LabeledNode = tyr::planning::LabeledNode<Kind>;
     using Step = detail::ModuleProgramStep<Kind>;
 
-    SuccessorExpander(const runir::datasets::TaskSearchContext<Kind>& search_context,
-                      const tyr::planning::Node<Kind>& initial_node,
-                      ModuleProgramView program) :
-        m_search_context(&search_context),
-        m_goal_strategy(*search_context.task),
+    SuccessorExpander(runir::kr::TaskContext<Kind>& task_context, const tyr::planning::Node<Kind>& initial_node, ModuleProgramView program) :
+        m_task_context(&task_context),
+        m_goal_strategy(*task_context.search_context->task),
         m_initial_state(initial_node.get_state()),
-        m_static_goal_satisfied(m_goal_strategy.is_static_goal_satisfied(*search_context.task)),
-        m_environment(program)
+        m_static_goal_satisfied(m_goal_strategy.is_static_goal_satisfied(*task_context.search_context->task)),
+        m_environment(task_context, program)
     {
     }
 
-    SuccessorExpander(const runir::datasets::TaskSearchContext<Kind>& search_context, tyr::planning::StateView<Kind> initial_state, ModuleProgramView program) :
-        SuccessorExpander(search_context, tyr::planning::Node<Kind>(std::move(initial_state), ygg::float_t(0)), program)
+    SuccessorExpander(runir::kr::TaskContext<Kind>& task_context, tyr::planning::StateView<Kind> initial_state, ModuleProgramView program) :
+        SuccessorExpander(task_context, tyr::planning::Node<Kind>(std::move(initial_state), ygg::float_t(0)), program)
     {
     }
 
-    EvaluationContext<Kind> context_at(ModuleView module,
-                                       MemoryStateView memory_state,
-                                       Registers registers,
-                                       tyr::planning::StateView<Kind> source_state)
+    EvaluationContext<Kind> context_at(ModuleView module, MemoryStateView memory_state, Registers registers, tyr::planning::StateView<Kind> source_state)
     {
         return EvaluationContext<Kind>(std::move(source_state), m_environment.get_program(), module, memory_state, std::move(registers));
     }
@@ -122,17 +91,19 @@ public:
     // The internal (Load) moves at the vertex: each holds the planning state fixed and changes the
     // memory state by binding a register. An empty-denotation Load yields a FAILURE step. This is
     // the prove/greedy load enumeration.
-    std::vector<Step> load_steps(const EvaluationContext<Kind>& context) { return collect_steps<LoadTag>(context, {}); }
+    std::vector<Step> load_steps(const EvaluationContext<Kind>& context)
+    {
+        return collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>>(context, {});
+    }
 
     // The control moves at the vertex, in the executor's priority order: immediate external rules
     // (Do/Call) first; if none fire, Sketch rules; if none fire, the IW transition search to a
     // state a Sketch rule matches; otherwise a single terminal step (restore caller / no applicable
     // action / out of time / out of states). The prove driver explores all returned steps; the
     // greedy driver takes the first.
-    std::vector<Step> control_steps(const runir::datasets::TaskSearchContext<Kind>& search_context,
-                                    const EvaluationContext<Kind>& context,
-                                    const detail::ModuleExecutionOptions<Kind>& options)
+    std::vector<Step> control_steps(const EvaluationContext<Kind>& context, const detail::ModuleExecutionOptions<Kind>& options)
     {
+        auto& search_context = *m_task_context->search_context;
         const auto node = search_context.successor_generator->get_node(context.get_state().get_index());
         const auto successors = search_context.successor_generator->get_labeled_successor_nodes(node);
 
@@ -143,7 +114,7 @@ public:
             return sketch;
 
         auto transition_context = context;
-        const auto search_result = detail::find_module_program_transition_node(search_context, transition_context, options);
+        const auto search_result = detail::find_module_program_transition_node(*m_task_context, transition_context, options);
         if (search_result.status == tyr::planning::SearchStatus::SOLVED && search_result.goal_node)
         {
             auto match_context = context;
@@ -179,7 +150,7 @@ public:
 
     std::vector<Step> control_steps(const EvaluationContext<Kind>& context, const ModuleProgramSearchOptions<Kind>& options)
     {
-        return control_steps(*m_search_context, context, detail::execution_options(options));
+        return control_steps(context, detail::execution_options(options));
     }
 
     // The control rule (Sketch/Do) of the source vertex that selects the candidate planning
@@ -229,7 +200,7 @@ private:
                     [&](auto rule)
                     {
                         using R = std::decay_t<decltype(rule)>;
-                        if constexpr ((matches_rule_kind_v<R, Kinds> || ...))
+                        if constexpr ((std::same_as<R, RuleView<Kinds>> || ...))
                             if (auto step = make_step(rule, rule_variant, context, successors))
                                 result.push_back(std::move(*step));
                     },
@@ -250,7 +221,7 @@ private:
     template<typename R>
     std::optional<Step> make_step(R rule, RuleVariantView rule_variant, const EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors)
     {
-        if constexpr (is_load_rule_view_v<R>)
+        if constexpr (LoadRuleView<R>)
         {
             auto target = context;
             const auto status = detail::execute_load(rule, target, m_environment);
@@ -348,7 +319,7 @@ private:
             [&](auto rule) -> MemoryStateVariant
             {
                 using R = std::decay_t<decltype(rule)>;
-                if constexpr (is_load_rule_view_v<R>)
+                if constexpr (LoadRuleView<R>)
                     return InternalMemoryState(step.context.get_call_stack().memory_state());
                 else if constexpr (std::same_as<R, RuleView<DoTag>> || std::same_as<R, RuleView<CallTag>> || std::same_as<R, RuleView<SketchTag>>)
                     return ExternalMemoryState(step.context.get_call_stack().memory_state());
@@ -371,7 +342,7 @@ private:
                     return detail::sketch_rule_matches_state(concrete, context, m_environment, candidate.node.get_state());
                 else if constexpr (std::same_as<R, RuleView<DoTag>>)
                     return detail::do_rule_matches(concrete, context, m_environment, candidate.label, candidate.node.get_state());
-                else if constexpr (is_load_rule_view_v<R> || std::same_as<R, RuleView<CallTag>>)
+                else if constexpr (LoadRuleView<R> || std::same_as<R, RuleView<CallTag>>)
                     return false;
                 else
                     static_assert(ygg::dependent_false<R>::value, "unhandled rule kind in SuccessorExpander::selects");
@@ -379,7 +350,7 @@ private:
             rule.get_variant());
     }
 
-    const runir::datasets::TaskSearchContext<Kind>* m_search_context;
+    runir::kr::TaskContext<Kind>* m_task_context;
     tyr::planning::ConjunctiveGoalStrategy<Kind> m_goal_strategy;
     tyr::planning::StateView<Kind> m_initial_state;
     bool m_static_goal_satisfied;

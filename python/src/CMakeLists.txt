@@ -17,6 +17,7 @@ nanobind_add_module(_pyrunir NB_SHARED
     pyrunir/datasets/task_class.cpp
     pyrunir/graphs/module.cpp
     pyrunir/kr/module.cpp
+    pyrunir/kr/task_context.cpp
     pyrunir/kr/dl/module.cpp
     pyrunir/kr/dl/base/module.cpp
     pyrunir/kr/dl/base/parser.cpp

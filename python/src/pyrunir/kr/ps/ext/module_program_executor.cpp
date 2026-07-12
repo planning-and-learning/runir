@@ -9,11 +9,11 @@
 #include <nanobind/stl/vector.h>
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
-#include <runir/datasets/task_class.hpp>
 #include <runir/kr/ps/ext/evaluation_context.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/module_program_executor.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
+#include <runir/kr/task_context.hpp>
 #include <string>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/node.hpp>
@@ -71,7 +71,7 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
 
     nb::class_<Results>(m, (std::string(prefix) + "ModuleProgramProofResults").c_str())
         .def_ro("status", &Results::status)
-        .def_ro("graph", &Results::graph)
+        .def_ro("graph", &Results::graph, nb::keep_alive<0, 1>())
         .def_ro("final_state", &Results::final_state)
         .def_ro("plan", &Results::plan)
         .def_ro("deadend_transitions", &Results::deadend_transitions)
@@ -115,38 +115,42 @@ void bind_module_program_executor(nb::module_& m)
 
     m.def(
         "prove_ground_solution",
-        [](runir::datasets::TaskSearchContextPtr<tyr::planning::GroundTag> context,
+        [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
            ModuleProgramView program,
-           const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options) { return prove_solution(std::move(context), program, options); },
+           const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options) { return prove_solution(std::move(task_context), program, options); },
         nb::call_guard<nb::gil_scoped_release>(),
-        "context"_a,
+        nb::keep_alive<0, 2>(),
+        "task_context"_a,
         "program"_a,
         "options"_a = ModuleProgramSearchOptions<tyr::planning::GroundTag>());
     m.def(
         "prove_lifted_solution",
-        [](runir::datasets::TaskSearchContextPtr<tyr::planning::LiftedTag> context,
+        [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
            ModuleProgramView program,
-           const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options) { return prove_solution(std::move(context), program, options); },
+           const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options) { return prove_solution(std::move(task_context), program, options); },
         nb::call_guard<nb::gil_scoped_release>(),
-        "context"_a,
+        nb::keep_alive<0, 2>(),
+        "task_context"_a,
         "program"_a,
         "options"_a = ModuleProgramSearchOptions<tyr::planning::LiftedTag>());
     m.def(
         "find_ground_solution",
-        [](runir::datasets::TaskSearchContextPtr<tyr::planning::GroundTag> context,
+        [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
            ModuleProgramView program,
-           const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options) { return find_solution(std::move(context), program, options); },
+           const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options) { return find_solution(std::move(task_context), program, options); },
         nb::call_guard<nb::gil_scoped_release>(),
-        "context"_a,
+        nb::keep_alive<0, 2>(),
+        "task_context"_a,
         "program"_a,
         "options"_a = ModuleProgramSearchOptions<tyr::planning::GroundTag>());
     m.def(
         "find_lifted_solution",
-        [](runir::datasets::TaskSearchContextPtr<tyr::planning::LiftedTag> context,
+        [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
            ModuleProgramView program,
-           const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options) { return find_solution(std::move(context), program, options); },
+           const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options) { return find_solution(std::move(task_context), program, options); },
         nb::call_guard<nb::gil_scoped_release>(),
-        "context"_a,
+        nb::keep_alive<0, 2>(),
+        "task_context"_a,
         "program"_a,
         "options"_a = ModuleProgramSearchOptions<tyr::planning::LiftedTag>());
 
@@ -194,8 +198,8 @@ void bind_module_program_executor(nb::module_& m)
         .def_prop_ro("edge", &Step::get_edge);
 
     nb::class_<Expander>(m, "SuccessorExpander")
-        .def(nb::init<const runir::datasets::TaskSearchContext<Kind>&, tyr::planning::StateView<Kind>, ModuleProgramView>(),
-             "search_context"_a,
+        .def(nb::init<runir::kr::TaskContext<Kind>&, tyr::planning::StateView<Kind>, ModuleProgramView>(),
+             "task_context"_a,
              "initial_state"_a,
              "program"_a,
              nb::keep_alive<1, 2>(),

@@ -2,12 +2,12 @@
 #define RUNIR_KR_PS_EXT_DETAIL_EXECUTION_STEP_HPP_
 
 #include "runir/datasets/state_graph.hpp"
-#include "runir/datasets/task_class.hpp"
 #include "runir/kr/ps/ext/detail/execution.hpp"
 #include "runir/kr/ps/ext/detail/plan_trace.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/task_context.hpp"
 
 #include <optional>
 #include <tyr/planning/node.hpp>
@@ -94,7 +94,7 @@ struct ModuleProgramStep
 };
 
 template<tyr::planning::TaskKind Kind>
-auto find_module_program_transition_node(const runir::datasets::TaskSearchContext<Kind>& search_context,
+auto find_module_program_transition_node(runir::kr::TaskContext<Kind>& task_context,
                                          EvaluationContext<Kind>& context,
                                          const ModuleExecutionOptions<Kind>& options) -> tyr::planning::SearchResult<Kind>;
 
