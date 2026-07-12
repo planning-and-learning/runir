@@ -65,7 +65,7 @@ struct StructuralTerminationResult
     StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
     std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>> booleans;
     std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>> numericals;
-    std::shared_ptr<PolicyGraph> counterexample;  ///< nullptr iff terminating; else the surviving non-trivial SCCs.
+    std::shared_ptr<PolicyGraph> counterexample;  ///< nullptr iff terminating; otherwise a surviving counterexample graph.
 
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
 };

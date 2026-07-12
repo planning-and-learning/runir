@@ -13,13 +13,14 @@ namespace runir::kr::ps::ext::dl
 namespace detail
 {
 
-inline std::vector<ModuleView> analyze_modules(ModuleProgramView program, ModuleProgramStructuralTerminationResult& result)
+inline std::vector<ModuleView>
+analyze_modules(ModuleProgramView program, ModuleProgramStructuralTerminationResult& result, std::size_t max_features, bool use_incomplete_preprocessing)
 {
     auto modules = std::vector<ModuleView> {};
     for (auto module : program.get_modules())
     {
         modules.push_back(module);
-        auto module_result = structural_termination(module);
+        auto module_result = structural_termination(module, max_features, use_incomplete_preprocessing);
         if (!module_result.is_terminating())
             result.status = StructuralTerminationStatus::NON_TERMINATING;
         result.module_results.push_back(std::move(module_result));
@@ -101,10 +102,10 @@ std::vector<RuleVariantView> find_recursive_call_rules(const std::vector<ModuleV
 
 }  // namespace detail
 
-ModuleProgramStructuralTerminationResult structural_termination(ModuleProgramView program)
+ModuleProgramStructuralTerminationResult structural_termination(ModuleProgramView program, std::size_t max_features, bool use_incomplete_preprocessing)
 {
     auto result = ModuleProgramStructuralTerminationResult {};
-    const auto modules = detail::analyze_modules(program, result);
+    const auto modules = detail::analyze_modules(program, result, max_features, use_incomplete_preprocessing);
     result.recursive_call_rules = detail::find_recursive_call_rules(modules);
     if (!result.recursive_call_rules.empty())
         result.status = StructuralTerminationStatus::NON_TERMINATING;

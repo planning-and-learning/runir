@@ -139,6 +139,7 @@ def test_structural_termination_tpp_sketch_is_terminating():
     assert result.counterexample is None
     assert len(result.numericals) == 3
     assert all(isinstance(feature, NumericalFeatureIndex) for feature in result.numericals)
+    assert structural_termination(sketch, max_features=3, use_incomplete_preprocessing=False).is_terminating()
 
 
 def test_structural_termination_oscillator_counterexample_has_positional_valuations():

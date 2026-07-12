@@ -89,14 +89,18 @@ void bind_structural_termination(nb::module_& m)
         .def("is_terminating", &ModuleProgramStructuralTerminationResult::is_terminating);
 
     m.def("structural_termination",
-          nb::overload_cast<ModuleView>(&structural_termination),
+          nb::overload_cast<ModuleView, std::size_t, bool>(&structural_termination),
           "module"_a,
+          "max_features"_a = runir::kr::ps::dl::default_max_features,
+          "use_incomplete_preprocessing"_a = runir::kr::ps::dl::default_use_incomplete_preprocessing,
           nb::keep_alive<0, 1>(),
-          "Decide structural termination of the extended sketch module on the extended policy graph.");
+          "Decide structural termination with configurable feature limit and optional incomplete preprocessing.");
 
     m.def("structural_termination",
-          nb::overload_cast<ModuleProgramView>(&structural_termination),
+          nb::overload_cast<ModuleProgramView, std::size_t, bool>(&structural_termination),
           "program"_a,
+          "max_features"_a = runir::kr::ps::dl::default_max_features,
+          "use_incomplete_preprocessing"_a = runir::kr::ps::dl::default_use_incomplete_preprocessing,
           nb::keep_alive<0, 1>(),
           "Conservatively decide structural termination of a module program, including inter-module call graph cycles.");
 

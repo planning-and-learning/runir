@@ -2,20 +2,13 @@
 
 #include "structural_termination/detail.hpp"
 
-#include <stdexcept>
-
 namespace runir::kr::ps::ext::dl
 {
 
-ModuleStructuralTerminationResult structural_termination(ModuleView module_)
+ModuleStructuralTerminationResult structural_termination(ModuleView module_, std::size_t max_features, bool use_incomplete_preprocessing)
 {
     const auto analysis = detail::analyze_module(module_);
-    if (analysis.policy.num_booleans + analysis.policy.num_numericals > 14)
-        throw std::invalid_argument("structural_termination: too many features; the policy graph has 2^|features| * |memory| vertices.");
-
-    auto edges = runir::kr::ps::detail::build_policy_edges(analysis.policy);
-    const auto sieve_result = runir::kr::ps::detail::sieve_policy_graph(edges, analysis.policy);
-    return detail::make_result(analysis, edges, sieve_result);
+    return detail::make_result(analysis, runir::kr::ps::detail::sieve_policy(analysis.policy, max_features, use_incomplete_preprocessing));
 }
 
 }  // namespace runir::kr::ps::ext::dl

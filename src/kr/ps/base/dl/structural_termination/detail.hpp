@@ -20,9 +20,7 @@ struct SketchAnalysis
 };
 
 SketchAnalysis analyze_sketch(SketchView sketch);
-StructuralTerminationResult make_result(const SketchAnalysis& analysis,
-                                        const std::vector<runir::kr::ps::detail::PolicyEdge>& edges,
-                                        const runir::kr::ps::detail::SieveResult& sieve_result);
+StructuralTerminationResult make_result(const SketchAnalysis& analysis, const runir::kr::ps::detail::ComponentSieveResult& sieve_result);
 
 IncompleteStructuralTerminationResult
 make_incomplete_result(SketchView sketch, const SketchAnalysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);

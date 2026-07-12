@@ -26,9 +26,7 @@ struct ModuleAnalysis
 
 ModuleAnalysis analyze_module(ModuleView module_);
 
-ModuleStructuralTerminationResult make_result(const ModuleAnalysis& analysis,
-                                              const std::vector<runir::kr::ps::detail::PolicyEdge>& edges,
-                                              const runir::kr::ps::detail::SieveResult& sieve_result);
+ModuleStructuralTerminationResult make_result(const ModuleAnalysis& analysis, const runir::kr::ps::detail::ComponentSieveResult& sieve_result);
 ModuleIncompleteStructuralTerminationResult
 make_incomplete_result(ModuleView module_, const ModuleAnalysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
 

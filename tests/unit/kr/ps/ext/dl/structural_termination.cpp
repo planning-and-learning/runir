@@ -592,6 +592,177 @@ TEST(RunirTests, ExtStructuralTerminationIgnoresOneWayBridgeBetweenMemoryCycles)
     EXPECT_EQ(memory_states, (std::set<std::string> { "m2", "m3" }));
 }
 
+TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    const auto module = kr::ps::ext::dl::parse_module(R"((:module
+    (:symbol projected)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1 m2)
+    (:features
+        (:boolean
+            (:symbol b)
+            (:expression (b_nonempty (c_atomic_state "ball")))
+        )
+        (:numerical
+            (:symbol n0)
+            (:expression (n_count (c_atomic_state "ball")))
+        )
+        (:numerical
+            (:symbol n1)
+            (:expression (n_count (c_atomic_state "room")))
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol to_true)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m0)
+                (:sketch
+                    (:conditions (negative b))
+                    (:effects (positive b))
+                )
+            )
+        )
+        (:rule
+            (:symbol to_false)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m0)
+                (:sketch
+                    (:conditions (positive b))
+                    (:effects (negative b))
+                )
+            )
+        )
+        (:rule
+            (:symbol keep_n1)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m1)
+                (:sketch
+                    (:conditions)
+                    (:effects (unchanged n1))
+                )
+            )
+        )
+        (:rule
+            (:symbol keep_n0)
+            (:expression
+                (:source-memory m2)
+                (:target-memory m2)
+                (:sketch
+                    (:conditions)
+                    (:effects (unchanged n0))
+                )
+            )
+        )
+    )
+))",
+                                                      planning_task.get_domain().get_domain(),
+                                                      *repository);
+
+    const auto result = kr::ps::ext::dl::structural_termination(module);
+
+    ASSERT_FALSE(result.is_terminating());
+    ASSERT_NE(result.counterexample, nullptr);
+    ASSERT_EQ(result.booleans.size(), 1);
+    ASSERT_EQ(result.numericals.size(), 2);
+
+    auto memory_states = std::set<std::string> {};
+    auto saw_positive_n0 = false;
+    auto saw_positive_n1 = false;
+    for (const auto& vertex : result.counterexample->get_vertices())
+    {
+        const auto& label = vertex.get_property();
+        ASSERT_EQ(label.boolean_values.size(), result.booleans.size());
+        ASSERT_EQ(label.numerical_values.size(), result.numericals.size());
+        memory_states.emplace(label.memory_state.get_name());
+        if (label.memory_state.get_name() == "m0")
+            EXPECT_FALSE(label.numerical_values.any());
+        else if (label.memory_state.get_name() == "m1")
+        {
+            EXPECT_FALSE(label.boolean_values.any());
+            EXPECT_FALSE(label.numerical_values.test(0));
+            saw_positive_n1 |= label.numerical_values.test(1);
+        }
+        else
+        {
+            EXPECT_FALSE(label.boolean_values.any());
+            EXPECT_FALSE(label.numerical_values.test(1));
+            saw_positive_n0 |= label.numerical_values.test(0);
+        }
+    }
+    EXPECT_EQ(memory_states, (std::set<std::string> { "m0", "m1", "m2" }));
+    EXPECT_TRUE(saw_positive_n0);
+    EXPECT_TRUE(saw_positive_n1);
+
+    auto rule_symbols = std::set<std::string> {};
+    for (const auto& edge : result.counterexample->get_edges())
+    {
+        const auto& label = edge.get_property();
+        const auto symbol = std::string(label.rule.get_symbol());
+        rule_symbols.emplace(symbol);
+        EXPECT_EQ(label.numerical_changes.size(), result.numericals.size());
+        if (symbol == "keep_n0")
+        {
+            EXPECT_EQ(label.numerical_changes[0], kr::ps::dl::NumericalChange::UNCHANGED);
+            EXPECT_EQ(label.numerical_changes[1], kr::ps::dl::NumericalChange::UNCONSTRAINED);
+        }
+        else if (symbol == "keep_n1")
+        {
+            EXPECT_EQ(label.numerical_changes[0], kr::ps::dl::NumericalChange::UNCONSTRAINED);
+            EXPECT_EQ(label.numerical_changes[1], kr::ps::dl::NumericalChange::UNCHANGED);
+        }
+        else
+        {
+            EXPECT_EQ(label.numerical_changes[0], kr::ps::dl::NumericalChange::UNCONSTRAINED);
+            EXPECT_EQ(label.numerical_changes[1], kr::ps::dl::NumericalChange::UNCONSTRAINED);
+        }
+    }
+    EXPECT_EQ(rule_symbols, (std::set<std::string> { "keep_n0", "keep_n1", "to_false", "to_true" }));
+}
+
+TEST(RunirTests, ExtStructuralTerminationAppliesFeatureLimitPerResidualComponent)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+
+    auto description = std::string { "(:module (:symbol split_features) (:arguments) (:registers) (:entry m0) (:memory m0 m1) (:features " };
+    for (std::size_t position = 0; position < 15; ++position)
+        description += "(:numerical (:symbol n" + std::to_string(position) + ") (:expression (n_count (c_atomic_state \"ball\"))))";
+    description += ") (:rules ";
+    description += "(:rule (:symbol first) (:expression (:source-memory m0) (:target-memory m0) (:sketch (:conditions) (:effects ";
+    for (std::size_t position = 0; position < 8; ++position)
+        description += "(unchanged n" + std::to_string(position) + ")";
+    description += "))) )";
+    description += "(:rule (:symbol second) (:expression (:source-memory m1) (:target-memory m1) (:sketch (:conditions) (:effects ";
+    for (std::size_t position = 8; position < 15; ++position)
+        description += "(unchanged n" + std::to_string(position) + ")";
+    description += "))) )))";
+    const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
+
+    const auto result = kr::ps::ext::dl::structural_termination(module);
+
+    EXPECT_FALSE(result.is_terminating());
+    EXPECT_EQ(result.numericals.size(), 15);
+    ASSERT_NE(result.counterexample, nullptr);
+    for (const auto& vertex : result.counterexample->get_vertices())
+        EXPECT_EQ(vertex.get_property().numerical_values.size(), result.numericals.size());
+}
+
 TEST(RunirTests, ExtStructuralTerminationAcyclicModuleProgramCallsAreTerminating)
 {
     namespace fp = tyr::formalism::planning;

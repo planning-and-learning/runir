@@ -7,6 +7,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <concepts>
 #include <cstddef>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -118,6 +119,30 @@ struct SieveResult
     std::vector<std::size_t> component_of;
 };
 
+struct StrongComponents
+{
+    std::size_t count;
+    std::vector<std::size_t> component_of;
+};
+
+struct ProjectedPolicyComponent
+{
+    QualitativePolicy policy;
+    std::vector<std::size_t> memory_positions;
+    std::vector<std::size_t> boolean_positions;
+    std::vector<std::size_t> numerical_positions;
+    std::vector<std::size_t> rule_positions;
+};
+
+struct SievedPolicyComponent
+{
+    ProjectedPolicyComponent projected;
+    std::vector<PolicyEdge> edges;
+    SieveResult sieve;
+};
+
+using ComponentSieveResult = std::vector<SievedPolicyComponent>;
+
 struct IncompletePolicyResult
 {
     enum class FeatureKind
@@ -147,7 +172,10 @@ struct IncompletePolicyResult
 boost::dynamic_bitset<> vertex_booleans(std::size_t vertex, const QualitativePolicy& policy);
 boost::dynamic_bitset<> vertex_numericals(std::size_t vertex, const QualitativePolicy& policy);
 std::vector<PolicyEdge> build_policy_edges(const QualitativePolicy& policy);
+StrongComponents find_strong_components(const std::vector<PolicyEdge>& edges, std::size_t num_vertices);
+std::vector<ProjectedPolicyComponent> project_policy_components(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions);
 SieveResult sieve_policy_graph(std::vector<PolicyEdge>& edges, const QualitativePolicy& policy);
+ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, bool use_incomplete_preprocessing);
 IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy);
 
 }  // namespace runir::kr::ps::detail

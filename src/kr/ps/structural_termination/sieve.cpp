@@ -10,13 +10,6 @@ namespace runir::kr::ps::detail
 
 namespace
 {
-
-struct StrongComponents
-{
-    std::size_t count;
-    std::vector<std::size_t> component_of;
-};
-
 struct ComponentProfile
 {
     boost::dynamic_bitset<> numerical_increased_or_unconstrained;
@@ -30,23 +23,6 @@ struct ComponentProfile
     {
     }
 };
-
-StrongComponents find_strong_components(const std::vector<PolicyEdge>& edges, std::size_t num_vertices)
-{
-    auto builder = graphs::StaticGraphBuilder<> {};
-    for (std::size_t vertex = 0; vertex < num_vertices; ++vertex)
-        builder.add_vertex();
-    for (const auto& edge : edges)
-        if (edge.alive)
-            builder.add_directed_edge(static_cast<graphs::VertexIndex>(edge.source), static_cast<graphs::VertexIndex>(edge.target));
-
-    const auto graph = graphs::StaticGraph<> { std::move(builder) };
-    const auto [num_components, components] = graphs::algorithms::strong_components(graph);
-    auto component_of = std::vector<std::size_t>(num_vertices);
-    for (std::size_t vertex = 0; vertex < num_vertices; ++vertex)
-        component_of[vertex] = components[vertex];
-    return { static_cast<std::size_t>(num_components), std::move(component_of) };
-}
 
 std::vector<ComponentProfile>
 summarize_opposing_changes(const std::vector<PolicyEdge>& edges, const QualitativePolicy& policy, const StrongComponents& components)
@@ -114,6 +90,23 @@ bool contains_cycle(const std::vector<PolicyEdge>& edges, const StrongComponents
 
 }  // namespace
 
+StrongComponents find_strong_components(const std::vector<PolicyEdge>& edges, std::size_t num_vertices)
+{
+    auto builder = graphs::StaticGraphBuilder<> {};
+    for (std::size_t vertex = 0; vertex < num_vertices; ++vertex)
+        builder.add_vertex();
+    for (const auto& edge : edges)
+        if (edge.alive)
+            builder.add_directed_edge(static_cast<graphs::VertexIndex>(edge.source), static_cast<graphs::VertexIndex>(edge.target));
+
+    const auto graph = graphs::StaticGraph<> { std::move(builder) };
+    const auto [num_components, components] = graphs::algorithms::strong_components(graph);
+    auto component_of = std::vector<std::size_t>(num_vertices);
+    for (std::size_t vertex = 0; vertex < num_vertices; ++vertex)
+        component_of[vertex] = components[vertex];
+    return { static_cast<std::size_t>(num_components), std::move(component_of) };
+}
+
 SieveResult sieve_policy_graph(std::vector<PolicyEdge>& edges, const QualitativePolicy& policy)
 {
     auto components = StrongComponents {};
@@ -125,6 +118,43 @@ SieveResult sieve_policy_graph(std::vector<PolicyEdge>& edges, const Qualitative
         removed_edges = remove_unopposed_edges(edges, policy, components, component_profiles);
     }
     return { contains_cycle(edges, components), std::move(components.component_of) };
+}
+
+ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, bool use_incomplete_preprocessing)
+{
+    auto rule_positions = std::vector<std::size_t> {};
+    if (use_incomplete_preprocessing)
+    {
+        // Rule elimination is a prefix of complete SIEVE: every removed rule
+        // has no edge in a surviving configuration SCC.
+        const auto incomplete_result = incomplete_structural_termination(policy);
+        if (incomplete_result.is_terminating())
+            return {};
+        rule_positions.reserve(incomplete_result.surviving_rules.size());
+        for (const auto& surviving : incomplete_result.surviving_rules)
+            rule_positions.push_back(surviving.rule_position);
+    }
+    else
+    {
+        rule_positions.reserve(policy.rule_profiles.size());
+        for (std::size_t position = 0; position < policy.rule_profiles.size(); ++position)
+            rule_positions.push_back(position);
+    }
+
+    auto projected_components = project_policy_components(policy, rule_positions);
+    for (const auto& projected : projected_components)
+        if (projected.policy.num_booleans + projected.policy.num_numericals > max_features)
+            throw std::invalid_argument("structural_termination: a residual memory component has too many relevant features.");
+
+    auto result = ComponentSieveResult {};
+    for (auto& projected : projected_components)
+    {
+        auto edges = build_policy_edges(projected.policy);
+        auto sieve = sieve_policy_graph(edges, projected.policy);
+        if (sieve.has_cycle)
+            result.push_back(SievedPolicyComponent { std::move(projected), std::move(edges), std::move(sieve) });
+    }
+    return result;
 }
 
 }  // namespace runir::kr::ps::detail

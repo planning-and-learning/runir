@@ -62,10 +62,12 @@ void bind_structural_termination(nb::module_& m)
         .def("is_terminating", &StructuralTerminationResult::is_terminating);
 
     m.def("structural_termination",
-          &structural_termination,
+          nb::overload_cast<SketchView, std::size_t, bool>(&structural_termination),
           "sketch"_a,
+          "max_features"_a = runir::kr::ps::dl::default_max_features,
+          "use_incomplete_preprocessing"_a = runir::kr::ps::dl::default_use_incomplete_preprocessing,
           nb::keep_alive<0, 1>(),
-          "Decide structural termination of the sketch with the complete Sieve algorithm on the policy graph.");
+          "Decide structural termination with configurable feature limit and optional incomplete preprocessing.");
 
     nb::enum_<IncompleteStructuralTerminationStatus>(m, "IncompleteStructuralTerminationStatus")
         .value("TERMINATING", IncompleteStructuralTerminationStatus::TERMINATING)

@@ -1,7 +1,4 @@
 #include "detail.hpp"
-#include "runir/graphs/algorithms.hpp"
-#include "runir/graphs/static_graph.hpp"
-#include "runir/graphs/static_graph_builder.hpp"
 
 namespace runir::kr::ps::detail
 {
@@ -74,27 +71,18 @@ bool r3_discounts(const RuleProfile& rule, const RuleProfile& opposing, const Fe
            || (rule.numerical_zero_conditions & opposing.numerical_greater_conditions & marks.numericals).any();
 }
 
-std::vector<std::size_t> find_strong_components(const QualitativePolicy& policy, const SieveState& state)
+std::vector<std::size_t> find_residual_components(const QualitativePolicy& policy, const SieveState& state)
 {
-    auto builder = graphs::StaticGraphBuilder<> {};
-    for (std::size_t memory_position = 0; memory_position < policy.num_memory_states; ++memory_position)
-        builder.add_vertex();
+    auto edges = std::vector<PolicyEdge> {};
+    edges.reserve(policy.rule_profiles.size());
     for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
     {
         if (!state.remaining[rule_position])
             continue;
         const auto& profile = policy.rule_profiles[rule_position];
-        builder.add_directed_edge(static_cast<graphs::VertexIndex>(profile.source_memory_position),
-                                  static_cast<graphs::VertexIndex>(profile.target_memory_position));
+        edges.push_back(PolicyEdge { profile.source_memory_position, profile.target_memory_position, rule_position });
     }
-
-    const auto graph = graphs::StaticGraph<> { std::move(builder) };
-    const auto [num_components, components] = graphs::algorithms::strong_components(graph);
-    static_cast<void>(num_components);
-    auto component_of = std::vector<std::size_t>(policy.num_memory_states);
-    for (std::size_t memory_position = 0; memory_position < policy.num_memory_states; ++memory_position)
-        component_of[memory_position] = components[memory_position];
-    return component_of;
+    return find_strong_components(edges, policy.num_memory_states).component_of;
 }
 
 bool remove_acyclic_rules(const QualitativePolicy& policy, SieveState& state)
@@ -219,7 +207,7 @@ SieveState run_sieve(const QualitativePolicy& policy)
     auto state = make_state(policy);
     while (true)
     {
-        state.component_of = find_strong_components(policy, state);
+        state.component_of = find_residual_components(policy, state);
         if (remove_acyclic_rules(policy, state))
             continue;
         if (!eliminate_one_rule(policy, state))

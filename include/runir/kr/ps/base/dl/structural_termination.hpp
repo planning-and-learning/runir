@@ -7,12 +7,14 @@
 namespace runir::kr::ps::base::dl
 {
 
-/// Decides structural termination of the sketch with the complete Sieve
-/// algorithm (sieve.pdf Algorithm 1, extended to Boolean features per
-/// incomplete_sieve.pdf Section 5.1) on the policy graph over the sketch's
-/// feature valuations. On failure, the result carries the surviving
-/// non-trivial strongly connected components as a counterexample graph.
-StructuralTerminationResult structural_termination(SketchView sketch);
+/// Decides structural termination by first applying the incomplete syntactic
+/// elimination and then the complete Sieve algorithm (sieve.pdf Algorithm 1,
+/// extended to Boolean features per incomplete_sieve.pdf Section 5.1) to the
+/// residual policy graph. On failure, the result carries a surviving
+/// counterexample graph. The incomplete preprocessing can be disabled.
+StructuralTerminationResult structural_termination(SketchView sketch,
+                                                   std::size_t max_features = runir::kr::ps::dl::default_max_features,
+                                                   bool use_incomplete_preprocessing = runir::kr::ps::dl::default_use_incomplete_preprocessing);
 
 }  // namespace runir::kr::ps::base::dl
 
