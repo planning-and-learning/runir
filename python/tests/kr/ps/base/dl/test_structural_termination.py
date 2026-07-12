@@ -1,4 +1,4 @@
-from pathlib import Path
+from pypddl_datasets import data_root
 
 from pyrunir.kr.dl.base.semantics import ConstructorRepositoryFactory
 from pyrunir.kr.ps.base import RepositoryFactory
@@ -121,8 +121,7 @@ TPP = """(:sketch
 
 
 def make_repository():
-    root = Path(__file__).resolve().parents[6]
-    domain_path = root / "data" / "benchmarks" / "classical" / "tests" / "gripper" / "domain.pddl"
+    domain_path = data_root() / "classical" / "tests" / "gripper" / "domain.pddl"
     planning_domain = Parser(domain_path, ParserOptions()).get_domain()
     dl_repository = ConstructorRepositoryFactory().create(planning_domain)
     repository = RepositoryFactory().create(dl_repository)

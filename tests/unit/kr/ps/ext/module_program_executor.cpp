@@ -63,7 +63,7 @@ namespace runir::tests
 namespace
 {
 
-std::filesystem::path benchmark_prefix() { return std::filesystem::path(RUNIR_ROOT_DIR) / "data" / "benchmarks"; }
+std::filesystem::path benchmark_prefix() { return std::filesystem::path(BENCHMARKS_DIR); }
 
 auto create_memory_state(kr::ps::ext::Repository& repository, const std::string& name)
 {

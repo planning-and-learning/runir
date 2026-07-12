@@ -1,6 +1,5 @@
-from pathlib import Path
-
 from pypddl.formalism import ParserOptions
+from pypddl_datasets import data_root
 from pyrunir.kr.dl.base.semantics import ConstructorRepositoryFactory as BaseDlRepositoryFactory
 from pyrunir.kr.dl.ext import ConstructorRepositoryFactory as ExtDlRepositoryFactory
 from pyrunir.kr.ps import base, ext
@@ -9,8 +8,7 @@ from pytyr.formalism.planning import Parser
 
 
 def test_base_and_ext_repositories_construct_programmatically():
-    root = Path(__file__).resolve().parents[4]
-    domain = Parser(root / "data/benchmarks/classical/tests/gripper/domain.pddl", ParserOptions()).get_domain()
+    domain = Parser(data_root() / "classical/tests/gripper/domain.pddl", ParserOptions()).get_domain()
 
     base_repository = base.RepositoryFactory().create(BaseDlRepositoryFactory().create(domain))
     rule_data = base.RuleData()

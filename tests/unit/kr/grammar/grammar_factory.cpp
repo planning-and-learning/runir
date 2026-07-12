@@ -24,7 +24,7 @@ namespace
 
 std::filesystem::path runir_root() { return std::filesystem::path(RUNIR_ROOT_DIR); }
 
-std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "benchmarks"; }
+std::filesystem::path benchmark_prefix() { return std::filesystem::path(BENCHMARKS_DIR); }
 
 }  // namespace
 

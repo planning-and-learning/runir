@@ -4,8 +4,8 @@ target_link_libraries(state_graph PRIVATE runir::core)
 
 if(RUNIR_BUILD_TESTS)
     set(RUNIR_STATE_GRAPH_TEST_ARGS
-        --domain-filepath ${PROJECT_SOURCE_DIR}/data/benchmarks/classical/tests/gripper/domain.pddl
-        --problem-filepath ${PROJECT_SOURCE_DIR}/data/benchmarks/classical/tests/gripper/test-1.pddl
+        --domain-filepath ${RUNIR_BENCHMARKS_DIR}/classical/tests/gripper/domain.pddl
+        --problem-filepath ${RUNIR_BENCHMARKS_DIR}/classical/tests/gripper/test-1.pddl
         --num-worker-threads 1)
 
     add_test(

@@ -1,4 +1,4 @@
-from pathlib import Path
+from pypddl_datasets import data_root
 
 from pyrunir.kr.dl import ext as dl_ext
 from pyrunir.kr.ps import ext
@@ -75,8 +75,7 @@ NON_TERMINATING_MODULE = TERMINATING_MODULE.replace("(:symbol term)", "(:symbol 
 
 
 def _repositories():
-    root = Path(__file__).resolve().parents[6]
-    domain_path = root / "data" / "benchmarks" / "classical" / "tests" / "gripper" / "domain.pddl"
+    domain_path = data_root() / "classical" / "tests" / "gripper" / "domain.pddl"
     planning_domain = Parser(domain_path, ParserOptions()).get_domain()
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(planning_domain)
     repository = ext.RepositoryFactory().create(dl_repository)

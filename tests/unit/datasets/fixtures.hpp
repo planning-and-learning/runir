@@ -13,7 +13,7 @@
 namespace runir::tests
 {
 
-inline auto gripper_benchmark_root() -> std::filesystem::path { return ygg::common::root_path() / "data/benchmarks/classical/tests/gripper"; }
+inline auto gripper_benchmark_root() -> std::filesystem::path { return std::filesystem::path(BENCHMARKS_DIR) / "classical/tests/gripper"; }
 
 inline auto make_ground_contexts(const std::filesystem::path& domain_file, const std::vector<std::filesystem::path>& task_files)
 {

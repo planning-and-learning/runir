@@ -25,7 +25,7 @@ namespace dl = runir::kr::dl;
 namespace sem = runir::kr::dl::semantics;
 using Uns = runir::kr::UnsFamilyTag;
 
-std::filesystem::path benchmark_prefix() { return std::filesystem::path(RUNIR_ROOT_DIR) / "data" / "benchmarks"; }
+std::filesystem::path benchmark_prefix() { return std::filesystem::path(BENCHMARKS_DIR); }
 
 // Wrap a boolean constructor in a Boolean-category constructor view.
 auto wrap_boolean(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto boolean_view)

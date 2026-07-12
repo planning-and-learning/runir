@@ -20,7 +20,7 @@ namespace p = tyr::planning;
 namespace sem = runir::kr::dl::semantics;
 using Uns = runir::kr::UnsFamilyTag;
 
-std::filesystem::path benchmark_prefix() { return std::filesystem::path(RUNIR_ROOT_DIR) / "data" / "benchmarks"; }
+std::filesystem::path benchmark_prefix() { return std::filesystem::path(BENCHMARKS_DIR); }
 
 struct Fixture
 {

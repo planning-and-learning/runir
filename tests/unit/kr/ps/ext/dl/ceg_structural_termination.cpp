@@ -17,7 +17,7 @@ namespace
 
 std::filesystem::path runir_root() { return std::filesystem::path(RUNIR_ROOT_DIR); }
 
-std::filesystem::path benchmark_prefix() { return runir_root() / "data" / "benchmarks"; }
+std::filesystem::path benchmark_prefix() { return std::filesystem::path(BENCHMARKS_DIR); }
 
 std::set<ygg::Index<kr::ps::ext::RuleVariant>> counterexample_rules(const kr::ps::ext::dl::ModuleStructuralTerminationResult& result)
 {

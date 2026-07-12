@@ -1,3 +1,4 @@
+from pypddl_datasets import data_root
 from pathlib import Path
 
 import pytest
@@ -15,8 +16,8 @@ def repository_root() -> Path:
 
 
 @pytest.fixture
-def gripper_data_dir(repository_root: Path) -> Path:
-    return repository_root / "data" / "benchmarks" / "classical" / "tests" / "gripper"
+def gripper_data_dir() -> Path:
+    return data_root() / "classical" / "tests" / "gripper"
 
 
 @pytest.fixture

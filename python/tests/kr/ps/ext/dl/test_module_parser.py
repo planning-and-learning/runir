@@ -1,4 +1,4 @@
-from pathlib import Path
+from pypddl_datasets import data_root
 import pytest
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
@@ -13,8 +13,7 @@ from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
 
 def _blocksworld_data_dir():
-    root = Path(__file__).resolve().parents[6]
-    return root / "data" / "benchmarks" / "classical" / "profiling" / "blocksworld-large-simple"
+    return data_root() / "classical" / "profiling" / "blocksworld-large-simple"
 
 
 def _blocksworld_domain():
