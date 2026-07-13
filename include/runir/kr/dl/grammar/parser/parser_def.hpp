@@ -1,10 +1,11 @@
-#ifndef RUNIR_SRC_KR_DL_GRAMMAR_PARSER_PARSER_DEF_HPP_
-#define RUNIR_SRC_KR_DL_GRAMMAR_PARSER_PARSER_DEF_HPP_
+#ifndef RUNIR_KR_DL_GRAMMAR_PARSER_PARSER_DEF_HPP_
+#define RUNIR_KR_DL_GRAMMAR_PARSER_PARSER_DEF_HPP_
 
 #include "runir/kr/dl/grammar/ast/ast_adapted.hpp"
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
+#include <string>
 
 namespace runir::kr::dl::grammar::parser
 {
@@ -34,12 +35,50 @@ auto maybe(Parser parser)
         return x3::eps(false);
 }
 
-inline auto predicate_name_string_parser()
+struct PredicateNameClass : ErrorHandlerBase
 {
-    return lexeme[omit[lit('"')]] > raw[lexeme[(alpha >> *(alnum | char_('-') | char_('_'))) | char_('=')]] > lexeme[omit[lit('"')]];
-}
+};
+struct ObjectNameClass : ErrorHandlerBase
+{
+};
+struct ReferenceClass : x3::annotate_on_success
+{
+};
 
-inline auto object_name_string_parser() { return lexeme[omit[lit('"')]] > raw[lexeme[alpha >> *(alnum | char_('-') | char_('_'))]] > lexeme[omit[lit('"')]]; }
+template<runir::kr::dl::CategoryTag Category>
+struct NonTerminalNameClass : ErrorHandlerBase
+{
+};
+
+struct PredicateNameTextClass
+{
+};
+struct ObjectNameTextClass
+{
+};
+struct ReferenceTextClass
+{
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct NonTerminalNameTextClass
+{
+};
+
+predicate_name_type const predicate_name = "predicate_name";
+object_name_type const object_name = "object_name";
+reference_type const reference = "reference";
+
+const auto predicate_name_def = x3::rule<PredicateNameTextClass, std::string> { "predicate_name_text" } =
+    raw[lexeme[((&alpha >> +(alnum | char_('-') | char_('_'))) | x3::repeat(1)[char_('=')])]];
+const auto object_name_def = x3::rule<ObjectNameTextClass, std::string> { "object_name_text" } = raw[lexeme[&alpha >> +(alnum | char_('-') | char_('_'))]];
+const auto reference_def = x3::rule<ReferenceTextClass, std::string> { "reference_text" } =
+    raw[lexeme[+digit | ((alpha | char_('_')) >> *(alnum | char_('-') | char_('_')))]];
+
+BOOST_SPIRIT_DEFINE(predicate_name, object_name, reference)
+
+inline auto predicate_name_string_parser() { return lexeme[omit[lit('"')]] > predicate_name > lexeme[omit[lit('"')]]; }
+inline auto object_name_string_parser() { return lexeme[omit[lit('"')]] > object_name > lexeme[omit[lit('"')]]; }
 
 inline auto true_string_parser() { return x3::lit(runir::kr::dl::TrueTag::keyword) >> x3::attr(true); }
 inline auto false_string_parser() { return x3::lit(runir::kr::dl::FalseTag::keyword) >> x3::attr(false); }
@@ -54,14 +93,19 @@ auto with_constructor_parentheses(Parser parser)
 template<runir::kr::dl::CategoryTag Category>
 auto non_terminal_string_parser()
 {
-    if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-        return raw[lexeme[lit("c_") >> +digit]];
-    else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-        return raw[lexeme[lit("r_") >> +digit]];
-    else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-        return raw[lexeme[lit("b_") >> +digit]];
-    else
-        return raw[lexeme[lit("n_") >> +digit]];
+    const auto parser = []
+    {
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+            return lexeme[lit("c_") >> +digit];
+        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
+            return lexeme[lit("r_") >> +digit];
+        else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
+            return lexeme[lit("b_") >> +digit];
+        else
+            return lexeme[lit("n_") >> +digit];
+    }();
+    return x3::rule<NonTerminalNameClass<Category>, grammar_ast::Identifier> { "non_terminal_name" } =
+               (x3::rule<NonTerminalNameTextClass<Category>, std::string> { "non_terminal_name_text" } = raw[parser]);
 }
 
 #define RUNIR_CONCEPT_CONSTRUCTORS(Family, prefix, X)                                                                                 \
@@ -228,8 +272,8 @@ auto non_terminal_string_parser()
         with_constructor_parentheses(lit(grammar_ast::ConceptRoleFillers<Family>::keyword) > prefix##_role_choice > +object_name_string_parser());             \
     const auto prefix##_concept_one_of_def = with_constructor_parentheses(lit(grammar_ast::ConceptOneOf<Family>::keyword) > +object_name_string_parser());     \
     const auto prefix##_concept_nominal_def = with_constructor_parentheses(lit(grammar_ast::ConceptNominal<Family>::keyword) > object_name_string_parser());   \
-    const auto prefix##_concept_register_def = with_constructor_parentheses(lit(grammar_ast::ConceptRegister<Family>::keyword) > uint_);                       \
-    const auto prefix##_concept_argument_def = with_constructor_parentheses(lit(grammar_ast::ConceptArgument<Family>::keyword) > uint_);                       \
+    const auto prefix##_concept_register_def = with_constructor_parentheses(lit(grammar_ast::ConceptRegister<Family>::keyword) > reference);                   \
+    const auto prefix##_concept_argument_def = with_constructor_parentheses(lit(grammar_ast::ConceptArgument<Family>::keyword) > reference);                   \
     const auto prefix##_role_universal_def =                                                                                                                   \
         with_constructor_parentheses(lit(grammar_ast::RoleUniversal<Family>::keyword) >> x3::attr(grammar_ast::RoleUniversal<Family> {}));                     \
     const auto prefix##_role_atomic_state_def =                                                                                                                \
@@ -251,8 +295,8 @@ auto non_terminal_string_parser()
     const auto prefix##_role_restriction_def =                                                                                                                 \
         with_constructor_parentheses(lit(grammar_ast::RoleRestriction<Family>::keyword) > prefix##_role_choice > prefix##_concept_choice);                     \
     const auto prefix##_role_identity_def = with_constructor_parentheses(lit(grammar_ast::RoleIdentity<Family>::keyword) > prefix##_concept_choice);           \
-    const auto prefix##_role_register_def = with_constructor_parentheses(lit(grammar_ast::RoleRegister<Family>::keyword) > uint_);                             \
-    const auto prefix##_role_argument_def = with_constructor_parentheses(lit(grammar_ast::RoleArgument<Family>::keyword) > uint_);                             \
+    const auto prefix##_role_register_def = with_constructor_parentheses(lit(grammar_ast::RoleRegister<Family>::keyword) > reference);                         \
+    const auto prefix##_role_argument_def = with_constructor_parentheses(lit(grammar_ast::RoleArgument<Family>::keyword) > reference);                         \
     const auto prefix##_boolean_atomic_state_def =                                                                                                             \
         with_constructor_parentheses(lit(grammar_ast::BooleanAtomicState<Family>::keyword) > predicate_name_string_parser() > bool_string_parser());           \
     const auto prefix##_boolean_atomic_goal_def =                                                                                                              \
@@ -289,7 +333,7 @@ auto non_terminal_string_parser()
     const auto prefix##_boolean_or_def =                                                                                                                       \
         with_constructor_parentheses(lit(grammar_ast::BooleanOr<Family>::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                        \
     const auto prefix##_boolean_not_def = with_constructor_parentheses(lit(grammar_ast::BooleanNot<Family>::keyword) > prefix##_boolean_choice);               \
-    const auto prefix##_boolean_argument_def = with_constructor_parentheses(lit(grammar_ast::BooleanArgument<Family>::keyword) > uint_);                       \
+    const auto prefix##_boolean_argument_def = with_constructor_parentheses(lit(grammar_ast::BooleanArgument<Family>::keyword) > reference);                   \
     const auto prefix##_numerical_count_def =                                                                                                                  \
         with_constructor_parentheses(lit(grammar_ast::NumericalCount<Family>::keyword) > prefix##_constructor_or_non_terminal_variant);                        \
     const auto prefix##_numerical_distance_def = with_constructor_parentheses(lit(grammar_ast::NumericalDistance<Family>::keyword) > prefix##_concept_choice   \
@@ -307,7 +351,7 @@ auto non_terminal_string_parser()
         with_constructor_parentheses(lit(grammar_ast::NumericalMin<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
     const auto prefix##_numerical_max_def =                                                                                                                    \
         with_constructor_parentheses(lit(grammar_ast::NumericalMax<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
-    const auto prefix##_numerical_argument_def = with_constructor_parentheses(lit(grammar_ast::NumericalArgument<Family>::keyword) > uint_);                   \
+    const auto prefix##_numerical_argument_def = with_constructor_parentheses(lit(grammar_ast::NumericalArgument<Family>::keyword) > reference);               \
     const auto prefix##_concept_derivation_rule_def =                                                                                                          \
         (lit("(") >> prefix##_concept_non_terminal) > ((lit("(") > (prefix##_concept_choice % lit("or")) > lit(")")) | x3::repeat(1)[prefix##_concept_choice]) \
         > lit(")");                                                                                                                                            \
@@ -428,144 +472,6 @@ RUNIR_DEFINE_FAMILY_PARSER(runir::kr::UnsFamilyTag, uns_family)
 #undef RUNIR_BOOLEAN_CONSTRUCTORS
 #undef RUNIR_ROLE_CONSTRUCTORS
 #undef RUNIR_CONCEPT_CONSTRUCTORS
-
-template<>
-concept_type<runir::kr::BaseFamilyTag> const& concept_parser<runir::kr::BaseFamilyTag>()
-{
-    return base_family_concept;
-}
-template<>
-concept_root_type<runir::kr::BaseFamilyTag> const& concept_root_parser<runir::kr::BaseFamilyTag>()
-{
-    return base_family_concept_root;
-}
-template<>
-role_type<runir::kr::BaseFamilyTag> const& role_parser<runir::kr::BaseFamilyTag>()
-{
-    return base_family_role;
-}
-template<>
-role_root_type<runir::kr::BaseFamilyTag> const& role_root_parser<runir::kr::BaseFamilyTag>()
-{
-    return base_family_role_root;
-}
-template<>
-boolean_type<runir::kr::BaseFamilyTag> const& boolean_parser<runir::kr::BaseFamilyTag>()
-{
-    return base_family_boolean;
-}
-template<>
-boolean_root_type<runir::kr::BaseFamilyTag> const& boolean_root_parser<runir::kr::BaseFamilyTag>()
-{
-    return base_family_boolean_root;
-}
-template<>
-numerical_type<runir::kr::BaseFamilyTag> const& numerical_parser<runir::kr::BaseFamilyTag>()
-{
-    return base_family_numerical;
-}
-template<>
-numerical_root_type<runir::kr::BaseFamilyTag> const& numerical_root_parser<runir::kr::BaseFamilyTag>()
-{
-    return base_family_numerical_root;
-}
-template<>
-grammar_root_type<runir::kr::BaseFamilyTag> const& grammar_root_parser<runir::kr::BaseFamilyTag>()
-{
-    return base_family_grammar_root;
-}
-
-template<>
-concept_type<runir::kr::ExtFamilyTag> const& concept_parser<runir::kr::ExtFamilyTag>()
-{
-    return ext_family_concept;
-}
-template<>
-concept_root_type<runir::kr::ExtFamilyTag> const& concept_root_parser<runir::kr::ExtFamilyTag>()
-{
-    return ext_family_concept_root;
-}
-template<>
-role_type<runir::kr::ExtFamilyTag> const& role_parser<runir::kr::ExtFamilyTag>()
-{
-    return ext_family_role;
-}
-template<>
-role_root_type<runir::kr::ExtFamilyTag> const& role_root_parser<runir::kr::ExtFamilyTag>()
-{
-    return ext_family_role_root;
-}
-template<>
-boolean_type<runir::kr::ExtFamilyTag> const& boolean_parser<runir::kr::ExtFamilyTag>()
-{
-    return ext_family_boolean;
-}
-template<>
-boolean_root_type<runir::kr::ExtFamilyTag> const& boolean_root_parser<runir::kr::ExtFamilyTag>()
-{
-    return ext_family_boolean_root;
-}
-template<>
-numerical_type<runir::kr::ExtFamilyTag> const& numerical_parser<runir::kr::ExtFamilyTag>()
-{
-    return ext_family_numerical;
-}
-template<>
-numerical_root_type<runir::kr::ExtFamilyTag> const& numerical_root_parser<runir::kr::ExtFamilyTag>()
-{
-    return ext_family_numerical_root;
-}
-template<>
-grammar_root_type<runir::kr::ExtFamilyTag> const& grammar_root_parser<runir::kr::ExtFamilyTag>()
-{
-    return ext_family_grammar_root;
-}
-
-template<>
-concept_type<runir::kr::UnsFamilyTag> const& concept_parser<runir::kr::UnsFamilyTag>()
-{
-    return uns_family_concept;
-}
-template<>
-concept_root_type<runir::kr::UnsFamilyTag> const& concept_root_parser<runir::kr::UnsFamilyTag>()
-{
-    return uns_family_concept_root;
-}
-template<>
-role_type<runir::kr::UnsFamilyTag> const& role_parser<runir::kr::UnsFamilyTag>()
-{
-    return uns_family_role;
-}
-template<>
-role_root_type<runir::kr::UnsFamilyTag> const& role_root_parser<runir::kr::UnsFamilyTag>()
-{
-    return uns_family_role_root;
-}
-template<>
-boolean_type<runir::kr::UnsFamilyTag> const& boolean_parser<runir::kr::UnsFamilyTag>()
-{
-    return uns_family_boolean;
-}
-template<>
-boolean_root_type<runir::kr::UnsFamilyTag> const& boolean_root_parser<runir::kr::UnsFamilyTag>()
-{
-    return uns_family_boolean_root;
-}
-template<>
-numerical_type<runir::kr::UnsFamilyTag> const& numerical_parser<runir::kr::UnsFamilyTag>()
-{
-    return uns_family_numerical;
-}
-template<>
-numerical_root_type<runir::kr::UnsFamilyTag> const& numerical_root_parser<runir::kr::UnsFamilyTag>()
-{
-    return uns_family_numerical_root;
-}
-template<>
-grammar_root_type<runir::kr::UnsFamilyTag> const& grammar_root_parser<runir::kr::UnsFamilyTag>()
-{
-    return uns_family_grammar_root;
-}
 
 }  // namespace runir::kr::dl::grammar::parser
 

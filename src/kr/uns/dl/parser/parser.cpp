@@ -1,85 +1,24 @@
 #include "runir/kr/uns/dl/parser/parser.hpp"
 
-#include "runir/kr/uns/dl/parser/error_handler.hpp"
+#include "runir/kr/parser/diagnostics.hpp"
+#include "runir/kr/parser/parser.hpp"
 #include "runir/kr/uns/dl/parser/parsers.hpp"
 
-#include <boost/spirit/home/x3.hpp>
-#include <functional>
 #include <sstream>
-#include <stdexcept>
-#include <string_view>
-
-
-namespace
-{
-
-std::string strip_line_comments(std::string_view input)
-{
-    auto result = std::string(input);
-    auto quoted = false;
-    auto escaped = false;
-    for (std::size_t i = 0; i < result.size(); ++i)
-    {
-        const auto ch = result[i];
-        if (quoted)
-        {
-            if (escaped)
-            {
-                escaped = false;
-            }
-            else if (ch == '\\')
-            {
-                escaped = true;
-            }
-            else if (ch == '"')
-            {
-                quoted = false;
-            }
-            continue;
-        }
-        if (ch == '"')
-        {
-            quoted = true;
-            continue;
-        }
-        if (ch == ';')
-        {
-            while (i < result.size() && result[i] != '\n')
-                result[i++] = ' ';
-            if (i == result.size())
-                break;
-        }
-    }
-    return result;
-}
-
-}  // namespace
 
 namespace runir::kr::uns::dl::parser
 {
 
 ast::Classifier parse_classifier_ast(const std::string& description)
 {
-    namespace x3 = boost::spirit::x3;
+    auto first = description.cbegin();
+    const auto last = description.cend();
+    auto result = ast::Classifier {};
+    auto errors = std::ostringstream {};
+    auto error_handler = runir::kr::parser::ErrorHandlerType(first, last, errors);
 
-    const auto stripped_description = strip_line_comments(description);
-    auto first = stripped_description.cbegin();
-    const auto last = stripped_description.cend();
-
-    ast::Classifier result;
-    std::ostringstream errors;
-    error_handler_type error_handler(first, last, errors);
-
-    const auto parser = x3::with<x3::error_handler_tag>(std::ref(error_handler))[classifier_root_parser()];
-    const auto success = x3::phrase_parse(first, last, parser, x3::ascii::space, result);
-
-    if (!success || first != last)
-    {
-        auto message = errors.str();
-        if (message.empty())
-            message = "Failed to parse DL classifier description.";
-        throw std::runtime_error(message);
-    }
+    if (!runir::kr::parser::parse_full(first, last, classifier_root_parser(), result, error_handler))
+        throw runir::kr::parser::DiagnosticContext::parse_error(error_handler, "Failed to parse DL classifier description.", first);
 
     return result;
 }

@@ -9,6 +9,7 @@ namespace runir::kr::ps::base::dl::parser
 {
 namespace x3 = boost::spirit::x3;
 
+struct IdentifierClass;
 struct BooleanFeatureClass;
 struct NumericalFeatureClass;
 struct FeatureClass;
@@ -32,6 +33,7 @@ struct RuleClass;
 struct SketchClass;
 struct SketchRootClass;
 
+using identifier_type = x3::rule<IdentifierClass, runir::kr::parser::ast::Identifier>;
 using base_boolean_feature_type = x3::rule<BooleanFeatureClass, ast::BooleanFeature<runir::kr::BaseFamilyTag>>;
 using base_numerical_feature_type = x3::rule<NumericalFeatureClass, ast::NumericalFeature<runir::kr::BaseFamilyTag>>;
 using base_feature_type = x3::rule<FeatureClass, ast::Feature<runir::kr::BaseFamilyTag>>;

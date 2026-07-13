@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_UNS_DL_AST_AST_ADAPTED_HPP_
 #define RUNIR_KR_UNS_DL_AST_AST_ADAPTED_HPP_
 
+#include "runir/kr/parser/ast_adapted.hpp"
 #include "runir/kr/uns/dl/ast/ast.hpp"
 
 #include <boost/fusion/include/adapt_struct.hpp>

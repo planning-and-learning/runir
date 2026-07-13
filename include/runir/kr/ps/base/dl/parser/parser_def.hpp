@@ -1,14 +1,15 @@
-#ifndef RUNIR_SRC_KR_PS_DL_PARSER_PARSER_DEF_HPP_
-#define RUNIR_SRC_KR_PS_DL_PARSER_PARSER_DEF_HPP_
+#ifndef RUNIR_KR_PS_BASE_DL_PARSER_PARSER_DEF_HPP_
+#define RUNIR_KR_PS_BASE_DL_PARSER_PARSER_DEF_HPP_
 
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
+#include "runir/kr/parser/error_handler.hpp"
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
 #include "runir/kr/ps/base/dl/ast/ast_adapted.hpp"
-#include "runir/kr/ps/base/dl/parser/error_handler.hpp"
 #include "runir/kr/ps/base/dl/parser/parsers.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
+#include <string>
 
 namespace runir::kr::ps::base::dl::parser
 {
@@ -23,6 +24,12 @@ using x3::raw;
 using x3::ascii::alnum;
 using x3::ascii::alpha;
 using x3::ascii::char_;
+
+struct IdentifierText
+{
+};
+
+identifier_type const identifier = "identifier";
 
 base_boolean_feature_type const boolean_feature = "boolean_feature";
 base_numerical_feature_type const numerical_feature = "numerical_feature";
@@ -47,19 +54,20 @@ base_rule_type const rule = "rule";
 base_sketch_type const sketch = "sketch";
 base_sketch_root_type const sketch_root = "sketch_root";
 
-inline auto identifier_parser() { return raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]]; }
+const auto identifier_def = x3::rule<IdentifierText, std::string> { "identifier_text" } =
+    raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
 
-inline auto quoted_string_parser() { return lexeme[lit('"') >> raw[*('\\' >> char_ | (char_ - '"'))] >> lit('"')]; }
-
-const auto symbol_value_def = identifier_parser();
+const auto symbol_value_def = identifier;
 const auto symbol_section_def = lit("(") > lit(":symbol") > symbol_value_def > lit(")");
-const auto boolean_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::boolean_parser<runir::kr::BaseFamilyTag>() > lit(")");
-const auto numerical_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::numerical_parser<runir::kr::BaseFamilyTag>() > lit(")");
+const auto boolean_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::boolean_parser<runir::kr::BaseFamilyTag>()
+                                            > lit(")");
+const auto numerical_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::numerical_parser<runir::kr::BaseFamilyTag>()
+                                              > lit(")");
 
-const auto boolean_feature_def = (lit("(") >> lit(":") >> lit(runir::kr::ps::dl::BooleanFeature::keyword))
-                                 > symbol_section_def > boolean_expression_section_def > lit(")");
-const auto numerical_feature_def = (lit("(") >> lit(":") >> lit(runir::kr::ps::dl::NumericalFeature::keyword))
-                                   > symbol_section_def > numerical_expression_section_def > lit(")");
+const auto boolean_feature_def = (lit("(") >> lit(":") >> lit(runir::kr::ps::dl::BooleanFeature::keyword)) > symbol_section_def > boolean_expression_section_def
+                                 > lit(")");
+const auto numerical_feature_def = (lit("(") >> lit(":") >> lit(runir::kr::ps::dl::NumericalFeature::keyword)) > symbol_section_def
+                                   > numerical_expression_section_def > lit(")");
 const auto feature_def = boolean_feature | numerical_feature;
 
 const auto positive_condition_def = lit(ast::Positive::keyword) >> attr(ast::Positive {});
@@ -67,7 +75,7 @@ const auto negative_condition_def = lit(ast::Negative::keyword) >> attr(ast::Neg
 const auto equal_zero_condition_def = lit(ast::EqualZero::keyword) >> attr(ast::EqualZero {});
 const auto greater_zero_condition_def = lit(ast::GreaterZero::keyword) >> attr(ast::GreaterZero {});
 const auto condition_observation_def = positive_condition | negative_condition | equal_zero_condition | greater_zero_condition;
-const auto condition_def = (lit("(") >> condition_observation) > identifier_parser() > lit(")");
+const auto condition_def = (lit("(") >> condition_observation) > identifier > lit(")");
 
 const auto positive_effect_def = lit(ast::Positive::keyword) >> attr(ast::Positive {});
 const auto negative_effect_def = lit(ast::Negative::keyword) >> attr(ast::Negative {});
@@ -75,7 +83,7 @@ const auto unchanged_effect_def = lit(ast::Unchanged::keyword) >> attr(ast::Unch
 const auto increases_effect_def = lit(ast::Increases::keyword) >> attr(ast::Increases {});
 const auto decreases_effect_def = lit(ast::Decreases::keyword) >> attr(ast::Decreases {});
 const auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
-const auto effect_def = (lit("(") >> effect_observation) > identifier_parser() > lit(")");
+const auto effect_def = (lit("(") >> effect_observation) > identifier > lit(")");
 
 const auto conditions_section_def = lit("(") > lit(":conditions") > *condition > lit(")");
 const auto effects_section_def = lit("(") > lit(":effects") > *effect > lit(")");
@@ -87,10 +95,14 @@ const auto rule_def = (lit("(") >> lit(":rule")) > symbol_section_def > rule_exp
 const auto sketch_def = (lit("(") >> lit(":sketch")) > features_section_def > rules_section_def > lit(")");
 const auto sketch_root_def = sketch > eoi;
 
-BOOST_SPIRIT_DEFINE(boolean_feature, numerical_feature, feature)
+BOOST_SPIRIT_DEFINE(identifier, boolean_feature, numerical_feature, feature)
 BOOST_SPIRIT_DEFINE(positive_condition, negative_condition, equal_zero_condition, greater_zero_condition, condition_observation, condition)
 BOOST_SPIRIT_DEFINE(positive_effect, negative_effect, unchanged_effect, increases_effect, decreases_effect, effect_observation, effect)
 BOOST_SPIRIT_DEFINE(rule, sketch, sketch_root)
+
+struct IdentifierClass : runir::kr::parser::ErrorHandlerBase
+{
+};
 
 struct BooleanFeatureClass : x3::annotate_on_success
 {
@@ -149,32 +161,9 @@ struct RuleClass : x3::annotate_on_success
 struct SketchClass : x3::annotate_on_success
 {
 };
-struct SketchRootClass : ErrorHandlerBase
+struct SketchRootClass : runir::kr::parser::ErrorHandlerBase
 {
 };
-
-base_boolean_feature_type const& boolean_feature_parser() { return boolean_feature; }
-base_numerical_feature_type const& numerical_feature_parser() { return numerical_feature; }
-base_feature_type const& feature_parser() { return feature; }
-
-positive_condition_type const& positive_condition_parser() { return positive_condition; }
-negative_condition_type const& negative_condition_parser() { return negative_condition; }
-equal_zero_condition_type const& equal_zero_condition_parser() { return equal_zero_condition; }
-greater_zero_condition_type const& greater_zero_condition_parser() { return greater_zero_condition; }
-base_condition_observation_type const& condition_observation_parser() { return condition_observation; }
-base_condition_type const& condition_parser() { return condition; }
-
-positive_effect_type const& positive_effect_parser() { return positive_effect; }
-negative_effect_type const& negative_effect_parser() { return negative_effect; }
-unchanged_effect_type const& unchanged_effect_parser() { return unchanged_effect; }
-increases_effect_type const& increases_effect_parser() { return increases_effect; }
-decreases_effect_type const& decreases_effect_parser() { return decreases_effect; }
-base_effect_observation_type const& effect_observation_parser() { return effect_observation; }
-base_effect_type const& effect_parser() { return effect; }
-
-base_rule_type const& rule_parser() { return rule; }
-base_sketch_type const& sketch_parser() { return sketch; }
-base_sketch_root_type const& sketch_root_parser() { return sketch_root; }
 
 }  // namespace runir::kr::ps::base::dl::parser
 

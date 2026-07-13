@@ -5,6 +5,7 @@
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/uns/evaluation.hpp>
+#include <runir/kr/errors.hpp>
 #include <runir/kr/uns.hpp>
 #include <string>
 #include <tyr/formalism/planning/parser.hpp>
@@ -111,7 +112,10 @@ TEST(RunirTests, UnsClassifierParsesAndClassifies)
     // some_ball is true and no_object is false, so the first clause (some_ball AND NOT no_object) holds.
     const auto formatted = fmt::format("{}", classifier);
     EXPECT_EQ(formatted.find("(:boolean (:symbol"), std::string::npos) << formatted;
+    EXPECT_NE(formatted.find("(:expression (b_nonempty (c_top)))"), std::string::npos) << formatted;
     EXPECT_EQ(formatted.find(std::string(":") + "description"), std::string::npos) << formatted;
+    const auto reparsed = runir::kr::uns::dl::parse_classifier(formatted, fixture.domain(), *fixture.repository);
+    EXPECT_EQ(fmt::format("{}", reparsed), formatted);
 
     EXPECT_TRUE(runir::kr::uns::classify(classifier, context));
 }
@@ -167,10 +171,18 @@ TEST(RunirTests, UnsClassifierRejectsUnknownFeatureSymbol)
         )
     ))";
 
-    EXPECT_ANY_THROW({
-        auto classifier = runir::kr::uns::dl::parse_classifier(description, fixture.domain(), *fixture.repository);
-        (void) classifier;
-    });
+    try
+    {
+        (void) runir::kr::uns::dl::parse_classifier(description, fixture.domain(), *fixture.repository);
+        FAIL() << "Expected unknown feature parsing to fail.";
+    }
+    catch (const runir::kr::UndefinedSymbolError& error)
+    {
+        const auto message = std::string(error.what());
+        EXPECT_NE(message.find("In line 15:"), std::string::npos) << message;
+        EXPECT_NE(message.find("                (and b)"), std::string::npos) << message;
+        EXPECT_NE(message.find(std::string(21, '_') + "^_"), std::string::npos) << message;
+    }
 }
 
 }  // namespace runir::tests

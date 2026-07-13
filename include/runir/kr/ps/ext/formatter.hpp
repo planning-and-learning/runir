@@ -232,24 +232,6 @@ inline void append_list_section(std::ostream& os, std::string_view name, const s
     os << ygg::print_indent << ")\n";
 }
 
-inline void append_value_section(std::ostream& os, std::string_view name, std::string_view value)
-{
-    const auto formatted_value = runir::pretty_sexpression(value);
-    if (formatted_value.find('\n') == std::string::npos)
-    {
-        os << ygg::print_indent << fmt::format("(:{} {})", name, formatted_value) << "\n";
-        return;
-    }
-
-    os << ygg::print_indent << fmt::format("(:{}\n", name);
-    {
-        ygg::IndentScope scope(os);
-        append_value(os, formatted_value);
-        os << "\n";
-    }
-    os << ygg::print_indent << ")\n";
-}
-
 template<typename FeatureTag, typename C>
 void append_feature(std::ostream& os,
                     const ReferenceNames& refs,
@@ -260,7 +242,7 @@ void append_feature(std::ostream& os,
     {
         ygg::IndentScope scope(os);
         os << ygg::print_indent << symbol_section(std::string(view.get_symbol().str())) << "\n";
-        append_value_section(os, "expression", expression(refs, view.get_feature()));
+        os << ygg::print_indent << fmt::format("(:expression {})", expression(refs, view.get_feature())) << "\n";
     }
     os << ygg::print_indent << ")";
 }
@@ -394,7 +376,7 @@ void append_rule_body(std::ostream& os, FeatureNames& names, const ReferenceName
     {
         constexpr auto category_name =
             std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>> ? runir::kr::dl::ConceptTag::name : runir::kr::dl::RoleTag::name;
-        append_value_section(os, category_name, expression(refs, view.get_expression()));
+        os << ygg::print_indent << fmt::format("(:{} {})", category_name, expression(refs, view.get_expression())) << "\n";
         os << ygg::print_indent << "(:register\n";
         {
             ygg::IndentScope register_scope(os);

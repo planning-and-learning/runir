@@ -1,4 +1,4 @@
-#include "parser_def.hpp"
+#include "runir/kr/dl/grammar/parser/parser_def.hpp"
 
 namespace runir::kr::dl::grammar::parser
 {
@@ -67,5 +67,58 @@ RUNIR_INSTANTIATE_ALIAS(uns_family_grammar_root_type)
 
 #undef RUNIR_DEFINE_INSTANTIATION_TYPES
 #undef RUNIR_INSTANTIATE_ALIAS
+
+#define RUNIR_DEFINE_PARSER_ACCESSORS(Family, Prefix)                  \
+    template<>                                                         \
+    concept_type<Family> const& concept_parser<Family>()               \
+    {                                                                  \
+        return Prefix##_concept;                                       \
+    }                                                                  \
+    template<>                                                         \
+    concept_root_type<Family> const& concept_root_parser<Family>()     \
+    {                                                                  \
+        return Prefix##_concept_root;                                  \
+    }                                                                  \
+    template<>                                                         \
+    role_type<Family> const& role_parser<Family>()                     \
+    {                                                                  \
+        return Prefix##_role;                                          \
+    }                                                                  \
+    template<>                                                         \
+    role_root_type<Family> const& role_root_parser<Family>()           \
+    {                                                                  \
+        return Prefix##_role_root;                                     \
+    }                                                                  \
+    template<>                                                         \
+    boolean_type<Family> const& boolean_parser<Family>()               \
+    {                                                                  \
+        return Prefix##_boolean;                                       \
+    }                                                                  \
+    template<>                                                         \
+    boolean_root_type<Family> const& boolean_root_parser<Family>()     \
+    {                                                                  \
+        return Prefix##_boolean_root;                                  \
+    }                                                                  \
+    template<>                                                         \
+    numerical_type<Family> const& numerical_parser<Family>()           \
+    {                                                                  \
+        return Prefix##_numerical;                                     \
+    }                                                                  \
+    template<>                                                         \
+    numerical_root_type<Family> const& numerical_root_parser<Family>() \
+    {                                                                  \
+        return Prefix##_numerical_root;                                \
+    }                                                                  \
+    template<>                                                         \
+    grammar_root_type<Family> const& grammar_root_parser<Family>()     \
+    {                                                                  \
+        return Prefix##_grammar_root;                                  \
+    }
+
+RUNIR_DEFINE_PARSER_ACCESSORS(runir::kr::BaseFamilyTag, base_family)
+RUNIR_DEFINE_PARSER_ACCESSORS(runir::kr::ExtFamilyTag, ext_family)
+RUNIR_DEFINE_PARSER_ACCESSORS(runir::kr::UnsFamilyTag, uns_family)
+
+#undef RUNIR_DEFINE_PARSER_ACCESSORS
 
 }  // namespace runir::kr::dl::grammar::parser

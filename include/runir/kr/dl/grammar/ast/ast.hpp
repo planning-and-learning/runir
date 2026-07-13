@@ -13,17 +13,38 @@
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/family_traits.hpp"
+#include "runir/kr/parser/ast.hpp"
 
 #include <boost/optional.hpp>
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <string>
+#include <utility>
 #include <vector>
 #include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::dl::grammar::ast
 {
 namespace x3 = boost::spirit::x3;
+struct Identifier : runir::kr::parser::ast::Identifier
+{
+    Identifier& operator=(std::string value)
+    {
+        text = std::move(value);
+        return *this;
+    }
+};
+
+struct Reference : x3::position_tagged
+{
+    std::string text;
+
+    Reference& operator=(std::string value)
+    {
+        text = std::move(value);
+        return *this;
+    }
+};
 
 template<typename... Alternatives>
 struct PositionedVariant : x3::position_tagged, x3::variant<Alternatives...>
@@ -39,7 +60,7 @@ struct Constructor;
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct NonTerminal : x3::position_tagged
 {
-    std::string name;
+    Identifier name;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
@@ -86,14 +107,14 @@ template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicStateSyntaxTag> : x3::position_tagged
 {
     static constexpr auto keyword = runir::kr::dl::ConceptAtomicStateSyntaxTag::keyword;
-    std::string predicate_name;
+    Identifier predicate_name;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicGoalSyntaxTag> : x3::position_tagged
 {
     static constexpr auto keyword = runir::kr::dl::ConceptAtomicGoalSyntaxTag::keyword;
-    std::string predicate_name;
+    Identifier predicate_name;
     bool polarity;
 };
 
@@ -208,43 +229,42 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleFillers
 {
     static constexpr auto keyword = runir::kr::dl::RoleFillersTag::keyword;
     RoleChoice<Family> role;
-    std::vector<std::string> object_names;
+    std::vector<Identifier> object_names;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::OneOfTag> : x3::position_tagged
 {
     static constexpr auto keyword = runir::kr::dl::OneOfTag::keyword;
-    std::vector<std::string> object_names;
+    std::vector<Identifier> object_names;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag> : x3::position_tagged
 {
     static constexpr auto keyword = runir::kr::dl::NominalTag::keyword;
-    std::string object_name;
+    Identifier object_name;
 };
-
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct Constructor<Family, Category, runir::kr::dl::ArgumentTag<Category>> : x3::position_tagged
 {
     static constexpr auto keyword = runir::kr::dl::ArgumentTag<Category>::keyword;
-    ygg::uint_t identifier;
+    Reference reference;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag> : x3::position_tagged
 {
     static constexpr auto keyword = runir::kr::dl::ConceptRegisterSyntaxTag::keyword;
-    ygg::uint_t identifier;
+    Reference reference;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag> : x3::position_tagged
 {
     static constexpr auto keyword = runir::kr::dl::RoleRegisterSyntaxTag::keyword;
-    ygg::uint_t identifier;
+    Reference reference;
 };
 
 template<runir::kr::dl::FamilyTag Family>
@@ -293,63 +313,59 @@ template<runir::kr::dl::FamilyTag Family>
 using ConceptArgument = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>;
 
 using BaseAstConceptConstructorTags = ygg::TypeList<runir::kr::dl::BotTag,
-                                                   runir::kr::dl::TopTag,
-                                                   runir::kr::dl::ConceptAtomicStateSyntaxTag,
-                                                   runir::kr::dl::ConceptAtomicGoalSyntaxTag,
-                                                   runir::kr::dl::ConceptIntersectionSyntaxTag,
-                                                   runir::kr::dl::ConceptUnionSyntaxTag,
-                                                   runir::kr::dl::NegationTag,
-                                                   runir::kr::dl::ValueRestrictionTag,
-                                                   runir::kr::dl::ExistentialQuantificationTag,
-                                                   runir::kr::dl::AtLeastNumberRestrictionTag,
-                                                   runir::kr::dl::AtMostNumberRestrictionTag,
-                                                   runir::kr::dl::ExactNumberRestrictionTag,
-                                                   runir::kr::dl::QualifiedAtLeastNumberRestrictionTag,
-                                                   runir::kr::dl::QualifiedAtMostNumberRestrictionTag,
-                                                   runir::kr::dl::QualifiedExactNumberRestrictionTag,
-                                                   runir::kr::dl::RoleValueMapTag,
-                                                   runir::kr::dl::AgreementTag,
-                                                   runir::kr::dl::RoleFillersTag,
-                                                   runir::kr::dl::OneOfTag,
-                                                   runir::kr::dl::NominalTag>;
+                                                    runir::kr::dl::TopTag,
+                                                    runir::kr::dl::ConceptAtomicStateSyntaxTag,
+                                                    runir::kr::dl::ConceptAtomicGoalSyntaxTag,
+                                                    runir::kr::dl::ConceptIntersectionSyntaxTag,
+                                                    runir::kr::dl::ConceptUnionSyntaxTag,
+                                                    runir::kr::dl::NegationTag,
+                                                    runir::kr::dl::ValueRestrictionTag,
+                                                    runir::kr::dl::ExistentialQuantificationTag,
+                                                    runir::kr::dl::AtLeastNumberRestrictionTag,
+                                                    runir::kr::dl::AtMostNumberRestrictionTag,
+                                                    runir::kr::dl::ExactNumberRestrictionTag,
+                                                    runir::kr::dl::QualifiedAtLeastNumberRestrictionTag,
+                                                    runir::kr::dl::QualifiedAtMostNumberRestrictionTag,
+                                                    runir::kr::dl::QualifiedExactNumberRestrictionTag,
+                                                    runir::kr::dl::RoleValueMapTag,
+                                                    runir::kr::dl::AgreementTag,
+                                                    runir::kr::dl::RoleFillersTag,
+                                                    runir::kr::dl::OneOfTag,
+                                                    runir::kr::dl::NominalTag>;
 
 using BaseAstRoleConstructorTags = ygg::TypeList<runir::kr::dl::UniversalTag,
-                                                runir::kr::dl::RoleAtomicStateSyntaxTag,
-                                                runir::kr::dl::RoleAtomicGoalSyntaxTag,
-                                                runir::kr::dl::RoleIntersectionSyntaxTag,
-                                                runir::kr::dl::RoleUnionSyntaxTag,
-                                                runir::kr::dl::ComplementTag,
-                                                runir::kr::dl::InverseTag,
-                                                runir::kr::dl::CompositionTag,
-                                                runir::kr::dl::TransitiveClosureTag,
-                                                runir::kr::dl::ReflexiveTransitiveClosureTag,
-                                                runir::kr::dl::RestrictionTag,
-                                                runir::kr::dl::IdentityTag>;
+                                                 runir::kr::dl::RoleAtomicStateSyntaxTag,
+                                                 runir::kr::dl::RoleAtomicGoalSyntaxTag,
+                                                 runir::kr::dl::RoleIntersectionSyntaxTag,
+                                                 runir::kr::dl::RoleUnionSyntaxTag,
+                                                 runir::kr::dl::ComplementTag,
+                                                 runir::kr::dl::InverseTag,
+                                                 runir::kr::dl::CompositionTag,
+                                                 runir::kr::dl::TransitiveClosureTag,
+                                                 runir::kr::dl::ReflexiveTransitiveClosureTag,
+                                                 runir::kr::dl::RestrictionTag,
+                                                 runir::kr::dl::IdentityTag>;
 
-using BaseAstBooleanConstructorTags = ygg::TypeList<runir::kr::dl::BooleanAtomicStateSyntaxTag,
-                                                   runir::kr::dl::BooleanAtomicGoalSyntaxTag,
-                                                   runir::kr::dl::NonemptyTag>;
+using BaseAstBooleanConstructorTags =
+    ygg::TypeList<runir::kr::dl::BooleanAtomicStateSyntaxTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag, runir::kr::dl::NonemptyTag>;
 
 using BaseAstNumericalConstructorTags = ygg::TypeList<runir::kr::dl::CountTag, runir::kr::dl::DistanceTag>;
 
-using ExtAstConceptConstructorTags = ygg::ConcatTypeListsT<BaseAstConceptConstructorTags,
-                                                          ygg::TypeList<runir::kr::dl::RegisterTag,
-                                                                        runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>;
-using ExtAstRoleConstructorTags = ygg::ConcatTypeListsT<BaseAstRoleConstructorTags,
-                                                       ygg::TypeList<runir::kr::dl::RegisterTag,
-                                                                     runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>;
-using ExtAstBooleanConstructorTags = ygg::ConcatTypeListsT<BaseAstBooleanConstructorTags,
-                                                          ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>;
-using ExtAstNumericalConstructorTags = ygg::ConcatTypeListsT<BaseAstNumericalConstructorTags,
-                                                            ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>;
+using ExtAstConceptConstructorTags =
+    ygg::ConcatTypeListsT<BaseAstConceptConstructorTags, ygg::TypeList<runir::kr::dl::RegisterTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>;
+using ExtAstRoleConstructorTags =
+    ygg::ConcatTypeListsT<BaseAstRoleConstructorTags, ygg::TypeList<runir::kr::dl::RegisterTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>;
+using ExtAstBooleanConstructorTags = ygg::ConcatTypeListsT<BaseAstBooleanConstructorTags, ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>;
+using ExtAstNumericalConstructorTags =
+    ygg::ConcatTypeListsT<BaseAstNumericalConstructorTags, ygg::TypeList<runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>;
 
-using UnsAstBooleanConstructorTags = ygg::ConcatTypeListsT<BaseAstBooleanConstructorTags,
-                                                          ygg::ConcatTypeListsT<runir::kr::dl::UnsComparisonConstructorTags,
-                                                                                ygg::ConcatTypeListsT<ygg::TypeList<runir::kr::dl::BooleanConstantTag>,
-                                                                                                      runir::kr::dl::UnsLogicalConstructorTags>>>;
-using UnsAstNumericalConstructorTags = ygg::ConcatTypeListsT<BaseAstNumericalConstructorTags,
-                                                            ygg::ConcatTypeListsT<ygg::TypeList<runir::kr::dl::NumericalConstantTag>,
-                                                                                  runir::kr::dl::UnsNumericalBinaryConstructorTags>>;
+using UnsAstBooleanConstructorTags = ygg::ConcatTypeListsT<
+    BaseAstBooleanConstructorTags,
+    ygg::ConcatTypeListsT<runir::kr::dl::UnsComparisonConstructorTags,
+                          ygg::ConcatTypeListsT<ygg::TypeList<runir::kr::dl::BooleanConstantTag>, runir::kr::dl::UnsLogicalConstructorTags>>>;
+using UnsAstNumericalConstructorTags =
+    ygg::ConcatTypeListsT<BaseAstNumericalConstructorTags,
+                          ygg::ConcatTypeListsT<ygg::TypeList<runir::kr::dl::NumericalConstantTag>, runir::kr::dl::UnsNumericalBinaryConstructorTags>>;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct AstConstructorTags;
@@ -437,9 +453,9 @@ struct AstConstructorAlternative
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-using ConstructorVariantBase = ygg::ApplyTypeListT<PositionedVariant,
-                                                  ygg::MapTypeListT<AstConstructorAlternative<Family, Category>::template Type,
-                                                                    AstConstructorTagsT<Family, Category>>>;
+using ConstructorVariantBase =
+    ygg::ApplyTypeListT<PositionedVariant,
+                        ygg::MapTypeListT<AstConstructorAlternative<Family, Category>::template Type, AstConstructorTagsT<Family, Category>>>;
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::UniversalTag> : x3::position_tagged
@@ -451,14 +467,14 @@ template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicStateSyntaxTag> : x3::position_tagged
 {
     static constexpr auto keyword = runir::kr::dl::RoleAtomicStateSyntaxTag::keyword;
-    std::string predicate_name;
+    Identifier predicate_name;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoalSyntaxTag> : x3::position_tagged
 {
     static constexpr auto keyword = runir::kr::dl::RoleAtomicGoalSyntaxTag::keyword;
-    std::string predicate_name;
+    Identifier predicate_name;
     bool polarity;
 };
 
@@ -562,7 +578,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag> : x3::position_tagged
 {
     static constexpr auto keyword = runir::kr::dl::BooleanAtomicStateSyntaxTag::keyword;
-    std::string predicate_name;
+    Identifier predicate_name;
     bool polarity;
 };
 
@@ -570,7 +586,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag> : x3::position_tagged
 {
     static constexpr auto keyword = runir::kr::dl::BooleanAtomicGoalSyntaxTag::keyword;
-    std::string predicate_name;
+    Identifier predicate_name;
     bool polarity;
 };
 
@@ -703,7 +719,6 @@ template<runir::kr::dl::FamilyTag Family>
 using NumericalMax = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::MaxTag>;
 template<runir::kr::dl::FamilyTag Family>
 using NumericalArgument = Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>;
-
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct Constructor<Family, Category, void> : ConstructorVariantBase<Family, Category>

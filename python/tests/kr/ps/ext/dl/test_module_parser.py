@@ -4,7 +4,16 @@ from pypddl_datasets import data_root
 import pytest
 
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
-from pyrunir.kr import GroundTaskContext, LiftedTaskContext
+from pyrunir.kr import (
+    ArityMismatchError,
+    DuplicateDefinitionError,
+    GroundTaskContext,
+    InvalidExpressionError,
+    LiftedTaskContext,
+    ParseError,
+    SemanticError,
+    UndefinedSymbolError,
+)
 from pyrunir.kr.dl import ext as dl_ext
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
@@ -43,6 +52,17 @@ def _repositories():
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(planning_domain)
     repository = ext.RepositoryFactory().create(dl_repository)
     return planning_domain, repository
+
+
+def _assert_diagnostic_at(error, source, marker):
+    offset = source.index(marker)
+    line_start = source.rfind("\n", 0, offset) + 1
+    line_end = source.find("\n", offset)
+    if line_end < 0:
+        line_end = len(source)
+    message = str(error)
+    assert f"In line {source.count(chr(10), 0, offset) + 1}:" in message
+    assert f"{source[line_start:line_end]}\n{'_' * (offset - line_start)}^_" in message
 
 
 def test_paper_module_factory_descriptions_parse_and_format_round_trip():
@@ -96,9 +116,103 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
 
 def test_module_program_parser_reports_x3_syntax_position():
     planning_domain, repository = _repositories()
+    source = '(:program (:entry root)'
 
-    with pytest.raises(RuntimeError, match="Error! Expecting:.*here"):
-        dl.parse_module_program('(:program (:entry root)', planning_domain, repository)
+    with pytest.raises(ParseError, match="Error! Expecting:.*here") as raised:
+        dl.parse_module_program(source, planning_domain, repository)
+
+    assert "In line 1:" in str(raised.value)
+    assert source in str(raised.value)
+    assert "^_" in str(raised.value)
+
+
+def test_module_parser_composes_dl_grammar_and_reports_symbolic_reference_position():
+    planning_domain, repository = _repositories()
+    source = """(:module
+    (:symbol entry)
+    (:arguments
+        (:concept x)
+    )
+    (:registers)
+    (:entry m0)
+    (:memory m0)
+    (:features
+        (:concept
+            (:symbol bad)
+            (
+                ; The DL parser shares the outer source and skipper.
+                :expression
+                (c_argument missing)
+            )
+        )
+    )
+    (:rules)
+)"""
+
+    with pytest.raises(UndefinedSymbolError, match=r"Undefined concept argument: missing") as raised:
+        dl.parse_module(source, planning_domain, repository)
+
+    _assert_diagnostic_at(raised.value, source, "missing")
+
+
+def test_module_parser_reports_malformed_nested_constructor_position():
+    planning_domain, repository = _repositories()
+    source = """(:module
+    (:symbol entry)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0)
+    (:features
+        (:concept
+            (:symbol bad)
+            (:expression
+                (c_not
+                    (not_a_constructor)
+                )
+            )
+        )
+    )
+    (:rules)
+)"""
+
+    with pytest.raises(ParseError) as raised:
+        dl.parse_module(source, planning_domain, repository)
+
+    _assert_diagnostic_at(raised.value, source, "(not_a_constructor)")
+
+
+def test_module_parser_reports_fifth_register_position():
+    planning_domain, repository = _repositories()
+    source = """(:module
+    (:symbol entry)
+    (:arguments)
+    (:registers
+        (:concept r0)
+        (:concept r1)
+        (:concept r2)
+        (:concept r3)
+        (:concept r4)
+    )
+    (:entry m0)
+    (:memory m0)
+    (:features)
+    (:rules)
+)"""
+
+    with pytest.raises(InvalidExpressionError, match=r"supported maximum of 4") as raised:
+        dl.parse_module(source, planning_domain, repository)
+
+    _assert_diagnostic_at(raised.value, source, "(:concept r4)")
+
+
+def test_parser_exception_hierarchy_matches_cpp_categories():
+    assert issubclass(ParseError, SemanticError)
+    assert issubclass(UndefinedSymbolError, SemanticError)
+    assert issubclass(DuplicateDefinitionError, SemanticError)
+    assert issubclass(ArityMismatchError, SemanticError)
+    assert issubclass(InvalidExpressionError, SemanticError)
+    assert not issubclass(SemanticError, RuntimeError)
 
 
 def test_module_program_parser_rejects_invalid_wiring():
@@ -113,11 +227,11 @@ def test_module_program_parser_rejects_invalid_wiring():
     (:rules)
 )"""
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(UndefinedSymbolError):
         dl.parse_module_program(f'(:program (:entry missing) {root})', planning_domain, repository)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(DuplicateDefinitionError):
         dl.parse_module_program(f'(:program (:entry root) {root} {root})', planning_domain, repository)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(UndefinedSymbolError):
         dl.parse_module_program("""(:program
     (:entry root)
     (:module
@@ -144,7 +258,7 @@ def test_module_program_parser_rejects_invalid_wiring():
     )
 )""", planning_domain, repository)
 
-    with pytest.raises(RuntimeError, match="argument signature"):
+    with pytest.raises(InvalidExpressionError, match="argument signature"):
         dl.parse_module_program("""(:program
     (:entry caller)
     (:module
@@ -182,10 +296,10 @@ def test_module_program_parser_rejects_invalid_wiring():
     )
 )""", planning_domain, repository)
 
-    with pytest.raises(RuntimeError, match=r'entry module "missing" is not declared'):
+    with pytest.raises(UndefinedSymbolError, match=r"Undefined module: missing"):
         dl.parse_module_program(f'(:program (:entry missing) {root})', planning_domain, repository)
 
-    with pytest.raises(RuntimeError, match=r'Unknown memory state "missing"'):
+    with pytest.raises(UndefinedSymbolError, match=r"Undefined memory state: missing"):
         dl.parse_module_program("""(:program
     (:entry bad-memory)
     (:module
@@ -211,7 +325,7 @@ def test_module_program_parser_rejects_invalid_wiring():
     )
 )""", planning_domain, repository)
 
-    with pytest.raises(RuntimeError, match=r'Unknown register "r1"'):
+    with pytest.raises(UndefinedSymbolError, match=r"Undefined register: r1"):
         dl.parse_module_program("""(:program
     (:entry bad-register)
     (:module
@@ -242,7 +356,7 @@ def test_module_program_parser_rejects_invalid_wiring():
     )
 )""", planning_domain, repository)
 
-    with pytest.raises(RuntimeError, match=r'Unknown feature "missing"'):
+    with pytest.raises(UndefinedSymbolError, match=r"Undefined feature: missing"):
         dl.parse_module_program("""(:program
     (:entry bad-feature)
     (:module
@@ -394,7 +508,7 @@ def test_executor_reports_structured_failure_statuses_from_python():
     assert len(load_proof.cycle) > 0
 
 
-    with pytest.raises(RuntimeError, match=r'Unknown action "missing-action"'):
+    with pytest.raises(UndefinedSymbolError, match=r"Undefined action: missing-action"):
         dl.parse_module_program("""(:program
     (:entry no-action)
     (:module

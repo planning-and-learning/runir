@@ -3,10 +3,10 @@
 
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
+#include "runir/kr/parser/ast.hpp"
 
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
-#include <string>
 #include <vector>
 
 namespace runir::kr::uns::dl::ast
@@ -23,18 +23,18 @@ struct PositionedVariant : x3::position_tagged, x3::variant<Alternatives...>
 
 struct BooleanFeature : x3::position_tagged
 {
-    std::string symbol;
+    runir::kr::parser::ast::Identifier symbol;
     runir::kr::dl::grammar::ast::Constructor<runir::kr::UnsFamilyTag, runir::kr::dl::BooleanTag> feature;
 };
 
 struct PositiveLiteral : x3::position_tagged
 {
-    std::string symbol;
+    runir::kr::parser::ast::Identifier symbol;
 };
 
 struct NegativeLiteral : x3::position_tagged
 {
-    std::string symbol;
+    runir::kr::parser::ast::Identifier symbol;
 };
 
 using Literal = PositionedVariant<PositiveLiteral, NegativeLiteral>;
@@ -51,7 +51,7 @@ struct Disjunction : x3::position_tagged
 
 struct Classifier : x3::position_tagged
 {
-    std::string symbol;
+    runir::kr::parser::ast::Identifier symbol;
     std::vector<BooleanFeature> features;
     Disjunction expression;
 };

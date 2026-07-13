@@ -2,7 +2,7 @@
 #define RUNIR_KR_DL_GRAMMAR_PARSER_PARSERS_HPP_
 
 #include "runir/kr/dl/grammar/ast/ast.hpp"
-#include "runir/kr/dl/grammar/parser/error_handler.hpp"
+#include "runir/kr/parser/error_handler.hpp"
 
 #include <boost/spirit/home/x3.hpp>
 #include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
@@ -12,6 +12,17 @@ namespace runir::kr::dl::grammar::parser
 {
 namespace x3 = boost::spirit::x3;
 namespace ast = runir::kr::dl::grammar::ast;
+
+using iterator_type = runir::kr::parser::Iterator;
+using context_type = runir::kr::parser::Context;
+using ErrorHandlerBase = runir::kr::parser::ErrorHandlerBase;
+
+struct PredicateNameClass;
+struct ObjectNameClass;
+struct ReferenceClass;
+
+template<runir::kr::dl::CategoryTag Category>
+struct NonTerminalNameClass;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct ConstructorClass : x3::annotate_on_success
@@ -67,6 +78,10 @@ template<runir::kr::dl::FamilyTag Family>
 struct GrammarRootClass : ErrorHandlerBase
 {
 };
+
+using predicate_name_type = x3::rule<PredicateNameClass, ast::Identifier>;
+using object_name_type = x3::rule<ObjectNameClass, ast::Identifier>;
+using reference_type = x3::rule<ReferenceClass, ast::Reference>;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 using constructor_type = x3::rule<ConstructorClass<Family, Category>, ast::Constructor<Family, Category>>;
@@ -214,6 +229,32 @@ numerical_root_type<Family> const& numerical_root_parser();
 
 template<runir::kr::dl::FamilyTag Family>
 grammar_root_type<Family> const& grammar_root_parser();
+
+#define RUNIR_DECLARE_PARSER_ACCESSORS(Family)                          \
+    template<>                                                          \
+    concept_type<Family> const& concept_parser<Family>();               \
+    template<>                                                          \
+    concept_root_type<Family> const& concept_root_parser<Family>();     \
+    template<>                                                          \
+    role_type<Family> const& role_parser<Family>();                     \
+    template<>                                                          \
+    role_root_type<Family> const& role_root_parser<Family>();           \
+    template<>                                                          \
+    boolean_type<Family> const& boolean_parser<Family>();               \
+    template<>                                                          \
+    boolean_root_type<Family> const& boolean_root_parser<Family>();     \
+    template<>                                                          \
+    numerical_type<Family> const& numerical_parser<Family>();           \
+    template<>                                                          \
+    numerical_root_type<Family> const& numerical_root_parser<Family>(); \
+    template<>                                                          \
+    grammar_root_type<Family> const& grammar_root_parser<Family>();
+
+RUNIR_DECLARE_PARSER_ACCESSORS(runir::kr::BaseFamilyTag)
+RUNIR_DECLARE_PARSER_ACCESSORS(runir::kr::ExtFamilyTag)
+RUNIR_DECLARE_PARSER_ACCESSORS(runir::kr::UnsFamilyTag)
+
+#undef RUNIR_DECLARE_PARSER_ACCESSORS
 
 }  // namespace runir::kr::dl::grammar::parser
 

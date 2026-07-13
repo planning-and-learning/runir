@@ -3,10 +3,10 @@
 
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
+#include "runir/kr/parser/ast.hpp"
 
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
-#include <string>
 #include <vector>
 
 namespace runir::kr::ps::base::dl::ast
@@ -59,21 +59,21 @@ struct Unchanged : x3::position_tagged
 template<runir::kr::FamilyTag Family>
 struct Concept : x3::position_tagged
 {
-    std::string symbol;
+    runir::kr::parser::ast::Identifier symbol;
     runir::kr::dl::grammar::ast::Constructor<Family, runir::kr::dl::ConceptTag> feature;
 };
 
 template<runir::kr::FamilyTag Family>
 struct BooleanFeature : x3::position_tagged
 {
-    std::string symbol;
+    runir::kr::parser::ast::Identifier symbol;
     runir::kr::dl::grammar::ast::Constructor<Family, runir::kr::dl::BooleanTag> feature;
 };
 
 template<runir::kr::FamilyTag Family>
 struct NumericalFeature : x3::position_tagged
 {
-    std::string symbol;
+    runir::kr::parser::ast::Identifier symbol;
     runir::kr::dl::grammar::ast::Constructor<Family, runir::kr::dl::NumericalTag> feature;
 };
 
@@ -97,7 +97,7 @@ template<runir::kr::FamilyTag Family>
 struct Condition : x3::position_tagged
 {
     ConditionObservation<Family> observation;
-    std::string feature;
+    runir::kr::parser::ast::Identifier feature;
 };
 
 template<runir::kr::FamilyTag Family>
@@ -112,13 +112,13 @@ template<runir::kr::FamilyTag Family>
 struct Effect : x3::position_tagged
 {
     EffectObservation<Family> observation;
-    std::string feature;
+    runir::kr::parser::ast::Identifier feature;
 };
 
 template<runir::kr::FamilyTag Family>
 struct Rule : x3::position_tagged
 {
-    std::string symbol;
+    runir::kr::parser::ast::Identifier symbol;
     std::vector<Condition<Family>> conditions;
     std::vector<Effect<Family>> effects;
 };

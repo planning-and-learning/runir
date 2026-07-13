@@ -2,6 +2,7 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/errors.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
@@ -59,7 +60,7 @@ TEST(RunirTests, PolicyParsersRejectDuplicateSymbolsAndEntryArguments)
                                            domain,
                                            *base_repository);
         },
-        "Duplicate feature symbol \"same\"");
+        "Duplicate feature definition: same");
 
     expect_error_containing(
         [&]
@@ -74,7 +75,7 @@ TEST(RunirTests, PolicyParsersRejectDuplicateSymbolsAndEntryArguments)
                                            domain,
                                            *base_repository);
         },
-        "Duplicate rule symbol \"same\"");
+        "Duplicate rule definition: same");
 
     auto ext_dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(task.get_repository());
     auto ext_repository = kr::ps::ext::RepositoryFactory().create(ext_dl_repository);
@@ -97,7 +98,7 @@ TEST(RunirTests, PolicyParsersRejectDuplicateSymbolsAndEntryArguments)
                                           domain,
                                           *ext_repository);
         },
-        "Duplicate feature symbol \"same\"");
+        "Duplicate feature definition: same");
 
     expect_error_containing(
         [&]
@@ -123,7 +124,7 @@ TEST(RunirTests, PolicyParsersRejectDuplicateSymbolsAndEntryArguments)
                                           domain,
                                           *ext_repository);
         },
-        "Duplicate rule symbol \"same\"");
+        "Duplicate rule definition: same");
 
     expect_error_containing(
         [&]
@@ -143,7 +144,35 @@ TEST(RunirTests, PolicyParsersRejectDuplicateSymbolsAndEntryArguments)
                                                   domain,
                                                   *ext_repository);
         },
-        "entry module \"root\" must not declare formal arguments");
+        "Module program entry must not declare formal arguments: root");
+}
+
+TEST(RunirTests, PolicyParserSemanticErrorPointsAtExactIdentifier)
+{
+    const auto task = parse_gripper_task();
+    const auto domain = task.get_domain().get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(task.get_repository());
+    auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
+    const auto description = std::string("(:sketch\n"
+                                         "  (:features\n"
+                                         "    (:boolean (:symbol same) (:expression (b_nonempty (c_top))))\n"
+                                         "    (:numerical (:symbol same) (:expression (n_count (c_top))))\n"
+                                         "  )\n"
+                                         "  (:rules)\n"
+                                         ")");
+
+    try
+    {
+        (void) kr::ps::base::dl::parse_sketch(description, domain, *repository);
+        FAIL() << "Expected duplicate feature parsing to fail.";
+    }
+    catch (const kr::DuplicateDefinitionError& error)
+    {
+        const auto message = std::string(error.what());
+        EXPECT_NE(message.find("In line 4:"), std::string::npos) << message;
+        EXPECT_NE(message.find("    (:numerical (:symbol same) (:expression (n_count (c_top))))"), std::string::npos) << message;
+        EXPECT_NE(message.find(std::string(25, '_') + "^_"), std::string::npos) << message;
+    }
 }
 
 TEST(RunirTests, ExtendedModuleFormatterPreservesAlternativeRuleGrouping)

@@ -9,6 +9,7 @@ namespace runir::kr::uns::dl::parser
 {
 namespace x3 = boost::spirit::x3;
 
+struct IdentifierClass;
 struct BooleanFeatureClass;
 struct PositiveLiteralClass;
 struct NegativeLiteralClass;
@@ -18,6 +19,7 @@ struct DisjunctionClass;
 struct ClassifierClass;
 struct ClassifierRootClass;
 
+using identifier_type = x3::rule<IdentifierClass, runir::kr::parser::ast::Identifier>;
 using boolean_feature_type = x3::rule<BooleanFeatureClass, ast::BooleanFeature>;
 using positive_literal_type = x3::rule<PositiveLiteralClass, ast::PositiveLiteral>;
 using negative_literal_type = x3::rule<NegativeLiteralClass, ast::NegativeLiteral>;

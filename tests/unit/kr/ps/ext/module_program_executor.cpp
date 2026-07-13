@@ -7,6 +7,7 @@
 #include <runir/datasets/task_class.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/errors.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/execution_builder.hpp>
@@ -461,7 +462,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
     }
     catch (const std::runtime_error& err)
     {
-        EXPECT_NE(std::string(err.what()).find("Do rule for action \"move\" has 0 arguments; expected 2"), std::string::npos) << err.what();
+        EXPECT_NE(std::string(err.what()).find("Arity mismatch for action move: expected 2, got 0"), std::string::npos) << err.what();
     }
 
     const auto undeclared_argument_feature = R"((:module
@@ -501,7 +502,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
     }
     catch (const std::runtime_error& err)
     {
-        EXPECT_NE(std::string(err.what()).find("Unknown feature \"Missing\""), std::string::npos) << err.what();
+        EXPECT_NE(std::string(err.what()).find("Undefined feature: Missing"), std::string::npos) << err.what();
     }
 
     const auto inline_argument_expression = R"((:module
@@ -538,15 +539,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
         )
     )
 ))";
-    try
-    {
-        [[maybe_unused]] const auto module = kr::ps::ext::dl::parse_module(inline_argument_expression, planning_task.get_domain().get_domain(), *repository);
-        FAIL() << "Expected inline do-argument expression to be rejected.";
-    }
-    catch (const std::runtime_error& err)
-    {
-        EXPECT_NE(std::string(err.what()).find("Do-rule action arguments must reference declared concept features by symbol"), std::string::npos) << err.what();
-    }
+    EXPECT_THROW(kr::ps::ext::dl::parse_module(inline_argument_expression, planning_task.get_domain().get_domain(), *repository), kr::ParseError);
 }
 
 TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
@@ -620,7 +613,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
     (:features)
     (:rules)
 ))";
-    expect_parse_error_containing(duplicate_register_identifier, "Duplicate concept register name \"r0\".");
+    expect_parse_error_containing(duplicate_register_identifier, "Duplicate concept register definition: r0");
 
     const auto duplicate_argument_identifier = R"((:module
     (:symbol entry)
@@ -634,7 +627,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
     (:features)
     (:rules)
 ))";
-    expect_parse_error_containing(duplicate_argument_identifier, "Duplicate concept argument name \"x\".");
+    expect_parse_error_containing(duplicate_argument_identifier, "Duplicate concept argument definition: x");
 
     const auto out_of_range_argument = R"((:module
     (:symbol entry)
@@ -654,7 +647,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
     )
     (:rules)
 ))";
-    expect_parse_error_containing(out_of_range_argument, "Unknown concept argument \"missing\".");
+    expect_parse_error_containing(out_of_range_argument, "Undefined concept argument: missing");
 
     const auto out_of_range_expression_argument = std::string(R"((:module
     (:symbol entry)
@@ -680,7 +673,7 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
     }
     catch (const std::runtime_error& err)
     {
-        EXPECT_NE(std::string(err.what()).find("Unknown concept argument \"missing\""), std::string::npos) << err.what();
+        EXPECT_NE(std::string(err.what()).find("Undefined concept argument: missing"), std::string::npos) << err.what();
     }
 
     const auto undeclared_expression_register = R"((:module
@@ -914,7 +907,7 @@ TEST(RunirTests, ExtModuleProgramParserRejectsInvalidProgramWiring)
 TEST(RunirTests, ExtModuleParserReadsPaperFactoryDescriptions)
 {
     const auto on = kr::ps::ext::dl::parser::parse_module_ast(kr::ps::ext::dl::ModuleFactory::create_on_bonet_et_al_icaps2024_description());
-    EXPECT_EQ(on.name, "on");
+    EXPECT_EQ(on.name.text, "on");
     EXPECT_EQ(on.arguments.size(), 2);
     auto concept_register_count = size_t(0);
     auto role_register_count = size_t(0);
@@ -937,39 +930,35 @@ TEST(RunirTests, ExtModuleParserReadsPaperFactoryDescriptions)
     EXPECT_EQ(on.rule_entries.size(), 14);
     const auto* stack_rule = boost::get<kr::ps::ext::dl::ast::DoRule>(&on.rule_entries.back().rules.front().get());
     ASSERT_NE(stack_rule, nullptr);
-    EXPECT_EQ(stack_rule->action, "stack");
+    EXPECT_EQ(stack_rule->action.text, "stack");
     ASSERT_EQ(stack_rule->arguments.size(), 2);
-    const auto* stack_arg = boost::get<kr::ps::ext::dl::ast::SymbolExpression>(&stack_rule->arguments[0].get());
-    ASSERT_NE(stack_arg, nullptr);
-    EXPECT_EQ(stack_arg->symbol, "DO_on_8");
+    EXPECT_EQ(stack_rule->arguments[0].symbol.text, "DO_on_8");
 
     const auto tower = kr::ps::ext::dl::parser::parse_module_ast(kr::ps::ext::dl::ModuleFactory::create_tower_bonet_et_al_icaps2024_description());
-    EXPECT_EQ(tower.name, "tower");
+    EXPECT_EQ(tower.name.text, "tower");
     EXPECT_EQ(tower.arguments.size(), 2);
     EXPECT_EQ(tower.rule_entries.size(), 4);
     const auto* tower_call = boost::get<kr::ps::ext::dl::ast::CallRule>(&tower.rule_entries[2].rules.front().get());
     ASSERT_NE(tower_call, nullptr);
-    EXPECT_EQ(tower_call->callee, "on");
+    EXPECT_EQ(tower_call->callee.text, "on");
     ASSERT_EQ(tower_call->arguments.size(), 2);
-    const auto* tower_arg = boost::get<kr::ps::ext::dl::ast::SymbolExpression>(&tower_call->arguments[1].get());
-    ASSERT_NE(tower_arg, nullptr);
-    EXPECT_EQ(tower_arg->symbol, "W");
+    EXPECT_EQ(tower_call->arguments[1].symbol.text, "W");
 
     const auto blocks = kr::ps::ext::dl::parser::parse_module_ast(kr::ps::ext::dl::ModuleFactory::create_blocks_bonet_et_al_icaps2024_description());
-    EXPECT_EQ(blocks.name, "blocks");
+    EXPECT_EQ(blocks.name.text, "blocks");
     EXPECT_EQ(blocks.arguments.size(), 1);
     EXPECT_EQ(blocks.rule_entries.size(), 2);
     const auto* blocks_call = boost::get<kr::ps::ext::dl::ast::CallRule>(&blocks.rule_entries[1].rules.front().get());
     ASSERT_NE(blocks_call, nullptr);
-    EXPECT_EQ(blocks_call->callee, "tower");
+    EXPECT_EQ(blocks_call->callee.text, "tower");
 
     const auto program = kr::ps::ext::dl::parser::parse_module_program_ast(kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program_description());
-    EXPECT_EQ(program.entry, "root");
+    EXPECT_EQ(program.entry.text, "root");
     ASSERT_EQ(program.modules.size(), 5);
-    EXPECT_EQ(program.modules[0].name, "root");
+    EXPECT_EQ(program.modules[0].name.text, "root");
     const auto* root_call = boost::get<kr::ps::ext::dl::ast::CallRule>(&program.modules[0].rule_entries.front().rules.front().get());
     ASSERT_NE(root_call, nullptr);
-    EXPECT_EQ(root_call->callee, "blocks");
+    EXPECT_EQ(root_call->callee.text, "blocks");
 }
 
 TEST(RunirTests, ExtModuleParserLowersPaperFactoryDescriptionsAgainstBlocksworld)
@@ -1478,10 +1467,10 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
 
     const auto descriptions = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_descriptions();
     ASSERT_EQ(descriptions.size(), 4);
-    EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[0]).name, "on");
-    EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[1]).name, "on-table");
-    EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[2]).name, "tower");
-    EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[3]).name, "blocks");
+    EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[0]).name.text, "on");
+    EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[1]).name.text, "on-table");
+    EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[2]).name.text, "tower");
+    EXPECT_EQ(kr::ps::ext::dl::parser::parse_module_ast(descriptions[3]).name.text, "blocks");
 
     const auto modules = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_modules(planning_task.get_domain().get_domain(), *repository);
     ASSERT_EQ(modules.size(), 4);
@@ -1492,9 +1481,9 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
 
     const auto program_description =
         kr::ps::ext::dl::parser::parse_module_program_ast(kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program_description());
-    EXPECT_EQ(program_description.entry, "root");
+    EXPECT_EQ(program_description.entry.text, "root");
     ASSERT_EQ(program_description.modules.size(), 5);
-    EXPECT_EQ(program_description.modules.front().name, "root");
+    EXPECT_EQ(program_description.modules.front().name.text, "root");
 
     const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(planning_task.get_domain().get_domain(), *repository);
     EXPECT_EQ(program.get_entry_module().get_name(), "root");
