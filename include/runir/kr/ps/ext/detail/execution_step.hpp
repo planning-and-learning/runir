@@ -3,7 +3,6 @@
 
 #include "runir/datasets/state_graph.hpp"
 #include "runir/kr/ps/ext/detail/execution.hpp"
-#include "runir/kr/ps/ext/detail/plan_trace.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
@@ -58,19 +57,10 @@ inline const char* outcome_name(ModuleProgramOutcome outcome)
     return "failure";
 }
 
-template<tyr::planning::TaskKind Kind>
-struct ModuleExecutionOptions
-{
-    tyr::planning::brfs::Options<Kind> brfs_options;
-    tyr::planning::iw::Options<Kind> iw_options;
-    ygg::uint_t max_arity = 0;
-};
-
 // The result of applying one rule from a source vertex: the resulting evaluation context (state +
 // memory + registers, ready to continue stepping), the planning transition it took (if any), the
 // rule responsible, and the planning actions consumed. This is the single currency the
-// `SuccessorExpander` produces and both the prove (all successors) and greedy (first successor)
-// drivers consume.
+// `SuccessorExpander` produces for universal (all successors) and greedy (first successor) search.
 template<tyr::planning::TaskKind Kind>
 struct ModuleProgramStep
 {
@@ -92,21 +82,6 @@ struct ModuleProgramStep
         return std::nullopt;
     }
 };
-
-template<tyr::planning::TaskKind Kind>
-auto find_module_program_transition_node(runir::kr::TaskContext<Kind>& task_context,
-                                         EvaluationContext<Kind>& context,
-                                         const ModuleExecutionOptions<Kind>& options) -> tyr::planning::SearchResult<Kind>;
-
-template<tyr::planning::TaskKind Kind>
-ModuleExecutionOptions<Kind> execution_options(const ModuleProgramSearchOptions<Kind>& options)
-{
-    auto result = ModuleExecutionOptions<Kind> {};
-    result.brfs_options = options.brfs_options;
-    result.iw_options = options.iw_options;
-    result.max_arity = options.max_arity;
-    return result;
-}
 
 inline ModuleProgramProofStatus translate_proof_status(ModuleProgramOutcome status)
 {

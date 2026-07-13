@@ -4,23 +4,15 @@
 namespace runir::kr::ps::ext
 {
 
-template auto prove_solution<tyr::planning::GroundTag>(runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
-                                                       ModuleProgramView program,
-                                                       const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options)
-    -> ModuleProgramProofResults<tyr::planning::GroundTag>;
-
-template auto prove_solution<tyr::planning::LiftedTag>(runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
-                                                       ModuleProgramView program,
-                                                       const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options)
-    -> ModuleProgramProofResults<tyr::planning::LiftedTag>;
-
 template auto find_solution<tyr::planning::GroundTag>(runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
                                                       ModuleProgramView program,
+                                                      bool universal,
                                                       const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options)
     -> ModuleProgramProofResults<tyr::planning::GroundTag>;
 
 template auto find_solution<tyr::planning::LiftedTag>(runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
                                                       ModuleProgramView program,
+                                                      bool universal,
                                                       const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options)
     -> ModuleProgramProofResults<tyr::planning::LiftedTag>;
 

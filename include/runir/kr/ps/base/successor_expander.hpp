@@ -9,8 +9,10 @@
 #include <optional>
 #include <tuple>
 #include <tyr/planning/declarations.hpp>
+#include <tyr/planning/node.hpp>
 #include <tyr/planning/state_view.hpp>
 #include <utility>
+#include <vector>
 
 namespace runir::kr::ps::base
 {
@@ -56,6 +58,9 @@ private:
     SketchView m_sketch;
 
 public:
+    using LabeledNode = tyr::planning::LabeledNode<Kind>;
+    using AcceptedSuccessor = std::pair<LabeledNode, RuleView>;
+
     SuccessorExpander(runir::kr::TaskContext<Kind>& task_context, SketchView sketch) : m_task_context(&task_context), m_sketch(sketch) {}
 
     EvaluationContext<Kind> context_at(tyr::planning::StateView<Kind> state)
@@ -63,7 +68,39 @@ public:
         return EvaluationContext<Kind>(std::move(state), m_task_context->dl_builder, *m_task_context->dl_denotation_repository);
     }
 
+    std::vector<LabeledNode> labeled_successors(const EvaluationContext<Kind>& context)
+    {
+        auto& successor_generator = *m_task_context->search_context->successor_generator;
+        const auto node = successor_generator.get_node(context.get_state().get_index());
+        return successor_generator.get_labeled_successor_nodes(node);
+    }
+
+    std::vector<AcceptedSuccessor> accepted_successors(EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors)
+    {
+        return accepted_successors(context, successors, [] { return false; });
+    }
+
+    template<typename Stop>
+    std::vector<AcceptedSuccessor> accepted_successors(EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors, Stop&& stop)
+    {
+        auto result = std::vector<AcceptedSuccessor> {};
+        for (const auto& successor : successors)
+        {
+            if (stop())
+                break;
+            if (const auto rule = matching_rule_until(context, successor.node.get_state(), stop))
+                result.emplace_back(successor, *rule);
+        }
+        return result;
+    }
+
     std::optional<RuleView> matching_rule(EvaluationContext<Kind>& context, const tyr::planning::StateView<Kind>& target_state)
+    {
+        return matching_rule_until(context, target_state, [] { return false; });
+    }
+
+private:
+    std::optional<RuleView> matching_rule_until(EvaluationContext<Kind>& context, const tyr::planning::StateView<Kind>& target_state, auto&& stop)
     {
         if (context.get_state().get_index() == target_state.get_index())
             return std::nullopt;
@@ -72,8 +109,12 @@ public:
                                                   [&](auto& transition_context) -> std::optional<RuleView>
                                                   {
                                                       for (auto rule : m_sketch.get_rules())
+                                                      {
+                                                          if (stop())
+                                                              return std::nullopt;
                                                           if (runir::kr::ps::base::is_compatible_with(rule, transition_context))
                                                               return rule;
+                                                      }
                                                       return std::nullopt;
                                                   });
     }

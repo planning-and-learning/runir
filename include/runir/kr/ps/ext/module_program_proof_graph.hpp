@@ -5,6 +5,7 @@
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/ps/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/memory_state.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
@@ -20,6 +21,7 @@
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>
 #include <utility>
+#include <vector>
 
 namespace runir::kr::ps::ext
 {
@@ -45,14 +47,18 @@ struct ModuleProgramProofVertexLabel
 {
     ExtendedState<Kind> extended_state;
     ModuleView module_;
+    CallArguments arguments;
+    std::vector<CallFrame> frames;
 
-    ModuleProgramProofVertexLabel(ExtendedState<Kind> extended_state_, ModuleView module__) noexcept :
+    ModuleProgramProofVertexLabel(ExtendedState<Kind> extended_state_, ModuleView module__, CallArguments arguments_, std::vector<CallFrame> frames_) noexcept :
         extended_state(std::move(extended_state_)),
-        module_(module__)
+        module_(module__),
+        arguments(std::move(arguments_)),
+        frames(std::move(frames_))
     {
     }
 
-    auto identifying_members() const noexcept { return std::tie(extended_state, module_); }
+    auto identifying_members() const noexcept { return std::tie(extended_state, module_, arguments, frames); }
 };
 
 struct ModuleProgramProofEdgeLabel

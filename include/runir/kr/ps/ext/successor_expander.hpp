@@ -25,6 +25,7 @@
 #include <tyr/planning/node.hpp>
 #include <tyr/planning/state_view.hpp>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
@@ -61,6 +62,19 @@ public:
         return EvaluationContext<Kind>(std::move(source_state), m_environment.get_program(), module, memory_state, std::move(registers));
     }
 
+    EvaluationContext<Kind> context_at_vertex(const VertexLabel& label)
+    {
+        const auto memory_state = std::visit([](const auto& value) { return value.value; }, label.extended_state.memory_state);
+        auto registers = Registers { label.extended_state.concept_registers, label.extended_state.role_registers };
+        return EvaluationContext<Kind>(label.extended_state.annotated_state.state,
+                                       m_environment.get_program(),
+                                       label.module_,
+                                       memory_state,
+                                       std::move(registers),
+                                       label.arguments,
+                                       label.frames);
+    }
+
     EvaluationContext<Kind> initial_context()
     {
         const auto program = m_environment.get_program();
@@ -85,73 +99,56 @@ public:
                                                    std::move(memory_state),
                                                    context.get_call_stack().registers().template get<runir::kr::dl::ConceptTag>(),
                                                    context.get_call_stack().registers().template get<runir::kr::dl::RoleTag>() },
-                             context.get_call_stack().module() };
+                             context.get_call_stack().module(),
+                             context.get_call_stack().arguments(),
+                             context.get_call_stack().frames() };
     }
 
     // The internal (Load) moves at the vertex: each holds the planning state fixed and changes the
     // memory state by binding a register. An empty-denotation Load yields a FAILURE step. This is
-    // the prove/greedy load enumeration.
+    // the universal/greedy load enumeration.
     std::vector<Step> load_steps(const EvaluationContext<Kind>& context)
     {
-        return collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>>(context, {});
+        return load_steps_until(context, [] { return false; });
     }
 
-    // The control moves at the vertex, in the executor's priority order: immediate external rules
-    // (Do/Call) first; if none fire, Sketch rules; if none fire, the IW transition search to a
-    // state a Sketch rule matches; otherwise a single terminal step (restore caller / no applicable
-    // action / out of time / out of states). The prove driver explores all returned steps; the
-    // greedy driver takes the first.
-    std::vector<Step> control_steps(const EvaluationContext<Kind>& context, const detail::ModuleExecutionOptions<Kind>& options)
+    std::vector<Step> load_steps_until(const EvaluationContext<Kind>& context, auto&& stop)
     {
-        auto& search_context = *m_task_context->search_context;
-        const auto node = search_context.successor_generator->get_node(context.get_state().get_index());
-        const auto successors = search_context.successor_generator->get_labeled_successor_nodes(node);
+        return collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>>(context, {}, stop);
+    }
 
-        if (auto immediate = collect_steps<DoTag, CallTag>(context, successors); !immediate.empty())
+    std::vector<LabeledNode> labeled_successors(const EvaluationContext<Kind>& context)
+    {
+        auto& successor_generator = *m_task_context->search_context->successor_generator;
+        const auto node = successor_generator.get_node(context.get_state().get_index());
+        return successor_generator.get_labeled_successor_nodes(node);
+    }
+
+    // Do and Call form the first control tier. Immediate Sketch transitions form the second.
+    // If neither tier applies, execution restores the caller or terminates.
+    std::vector<Step> control_steps(const EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors)
+    {
+        return control_steps_until(context, successors, [] { return false; });
+    }
+
+    std::vector<Step> control_steps_until(const EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors, auto&& stop)
+    {
+        auto immediate = collect_steps<DoTag, CallTag>(context, successors, stop);
+        if (stop() || !immediate.empty())
             return immediate;
 
-        if (auto sketch = collect_steps<SketchTag>(context, successors); !sketch.empty())
+        auto sketch = collect_steps<SketchTag>(context, successors, stop);
+        if (stop() || !sketch.empty())
             return sketch;
 
-        auto transition_context = context;
-        const auto search_result = detail::find_module_program_transition_node(*m_task_context, transition_context, options);
-        if (search_result.status == tyr::planning::SearchStatus::SOLVED && search_result.goal_node)
-        {
-            auto match_context = context;
-            if (const auto variant = detail::find_matching_sketch_rule_variant(match_context, m_environment, search_result.goal_node->get_state()))
-            {
-                const auto rule = detail::as_sketch_rule(*variant);
-                auto target = context;
-                target.get_state() = search_result.goal_node->get_state();
-                target.get_call_stack().set_memory_state(rule.value().get_target());
-                auto step = Step(detail::ModuleProgramOutcome::APPLIED, std::move(target));
-                step.rule = variant;
-                detail::append_plan_suffix(step.plan_suffix, search_result);
-                if (!step.plan_suffix.empty())
-                {
-                    const auto cost = search_result.plan ? static_cast<ygg::float_t>(search_result.plan->get_length()) : ygg::float_t(1);
-                    step.state_transition = runir::datasets::StateGraphEdgeLabel { step.plan_suffix.front().label, cost };
-                }
-                return std::vector<Step> { std::move(step) };
-            }
-        }
-
-        if (search_result.status == tyr::planning::SearchStatus::OUT_OF_TIME)
-            return std::vector<Step> { Step(detail::ModuleProgramOutcome::OUT_OF_TIME, context) };
-        if (search_result.status == tyr::planning::SearchStatus::OUT_OF_STATES || search_result.status == tyr::planning::SearchStatus::OUT_OF_MEMORY)
-            return std::vector<Step> { Step(detail::ModuleProgramOutcome::OUT_OF_STATES, context) };
-
-        auto eval_context = context;
-        if (eval_context.get_call_stack().restore_caller())
-            return std::vector<Step> { Step(detail::ModuleProgramOutcome::RESTORED_CALLER, std::move(eval_context)) };
+        auto target = context;
+        if (target.get_call_stack().restore_caller())
+            return std::vector<Step> { Step(detail::ModuleProgramOutcome::RESTORED_CALLER, std::move(target)) };
 
         return std::vector<Step> { Step(detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION, context) };
     }
 
-    std::vector<Step> control_steps(const EvaluationContext<Kind>& context, const ModuleProgramSearchOptions<Kind>& options)
-    {
-        return control_steps(context, detail::execution_options(options));
-    }
+    std::vector<Step> control_steps(const EvaluationContext<Kind>& context) { return control_steps(context, labeled_successors(context)); }
 
     // The control rule (Sketch/Do) of the source vertex that selects the candidate planning
     // successor, or nullopt (the gap). Load/Call are internal memory steps, never a planning move.
@@ -185,90 +182,127 @@ private:
     std::optional<Successor> apply_rule(const EvaluationContext<Kind>& context, RuleVariantView rule, std::optional<LabeledNode> candidate = std::nullopt)
     {
         const auto successors = candidate ? std::vector<LabeledNode> { *candidate } : std::vector<LabeledNode> {};
-        const auto step = step_for(rule, context, successors);
-        return step ? to_successor(*step) : std::nullopt;
+        auto steps = std::vector<Step> {};
+        const auto stop = [] { return false; };
+        ygg::visit([&](auto concrete) { append_steps(concrete, rule, context, successors, steps, stop); }, rule.get_variant());
+        return steps.empty() ? std::nullopt : to_successor(steps.front());
     }
-    // Apply every rule of the given kinds to the vertex, in module order, keeping the steps that
-    // fire. The `if constexpr` fold selects the kinds at compile time, so no runtime rule tag exists.
+
     template<typename... Kinds>
-    std::vector<Step> collect_steps(const EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors)
+    std::vector<Step> collect_steps(const EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors, auto&& stop)
     {
-        std::vector<Step> result;
+        auto result = std::vector<Step> {};
         for (const auto& transition : context.get_call_stack().module().get_memory_transitions())
+        {
             for (auto rule_variant : transition)
+            {
+                if (stop())
+                    return result;
                 ygg::visit(
                     [&](auto rule)
                     {
                         using R = std::decay_t<decltype(rule)>;
                         if constexpr ((std::same_as<R, RuleView<Kinds>> || ...))
-                            if (auto step = make_step(rule, rule_variant, context, successors))
-                                result.push_back(std::move(*step));
+                            append_steps(rule, rule_variant, context, successors, result, stop);
                     },
                     rule_variant.get_variant());
+            }
+        }
         return result;
     }
 
-    std::optional<Step> step_for(RuleVariantView rule_variant, const EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors)
-    {
-        return ygg::visit([&](auto rule) { return make_step(rule, rule_variant, context, successors); }, rule_variant.get_variant());
-    }
-
-    // Apply one rule to a copy of `context` via the executor's `execute_*`, packaging the outcome as
-    // a step. Returns nullopt when the rule does not fire at all (source/conditions mismatch, or a
-    // planning rule with no selected successor); a fired rule yields an APPLIED step (with the
-    // planning move attached for Sketch/Do) or a terminal step (empty Load denotation, malformed
-    // call, no applicable action / restored caller for an exhausted Do).
     template<typename R>
-    std::optional<Step> make_step(R rule, RuleVariantView rule_variant, const EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors)
+    void append_steps(R rule,
+                      RuleVariantView rule_variant,
+                      const EvaluationContext<Kind>& context,
+                      const std::vector<LabeledNode>& successors,
+                      std::vector<Step>& result,
+                      auto&& stop)
     {
         if constexpr (LoadRuleView<R>)
         {
-            auto target = context;
-            const auto status = detail::execute_load(rule, target, m_environment);
-            if (status == detail::RuleExecutionStatus::NOT_APPLICABLE)
-                return std::nullopt;
-            if (status == detail::RuleExecutionStatus::EMPTY_DENOTATION)
-                return terminal(detail::ModuleProgramOutcome::FAILURE, context, rule_variant);
-            return applied(std::move(target), rule_variant);
+            auto evaluation_context = context;
+            if (!detail::load_rule_is_applicable(rule, evaluation_context, m_environment))
+                return;
+
+            const auto denotation = detail::evaluate_load_expression(rule, evaluation_context, m_environment);
+            if (denotation.begin() == denotation.end())
+            {
+                result.push_back(terminal(detail::ModuleProgramOutcome::FAILURE, context, rule_variant));
+                return;
+            }
+
+            for (const auto value : denotation)
+            {
+                if (stop())
+                    return;
+                auto target = context;
+                detail::apply_load_binding(rule, value, target);
+                result.push_back(applied(std::move(target), rule_variant));
+            }
         }
         else if constexpr (std::same_as<R, RuleView<DoTag>>)
         {
-            const auto source_state = context.get_state();
-            auto target = context;
-            const auto status = detail::execute_do(rule, target, m_environment, successors);
-            if (status == detail::RuleExecutionStatus::NOT_APPLICABLE)
-                return std::nullopt;
-            if (status == detail::RuleExecutionStatus::NO_APPLICABLE_ACTION)
+            auto evaluation_context = context;
+            if (!detail::do_rule_is_applicable(rule, evaluation_context, m_environment))
+                return;
+
+            const auto& denotations = detail::evaluate_do_arguments(rule, evaluation_context, m_environment);
+            auto matched = false;
+            for (const auto& successor : successors)
             {
-                auto restored = context;
-                if (restored.get_call_stack().restore_caller())
-                    return Step(detail::ModuleProgramOutcome::RESTORED_CALLER, std::move(restored));
-                return Step(detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION, context);
+                if (stop())
+                    return;
+                if (!detail::do_successor_matches(rule, evaluation_context, m_environment, denotations, successor.label, successor.node.get_state()))
+                    continue;
+
+                matched = true;
+                auto target = context;
+                detail::apply_do_successor(rule, successor, target);
+                result.push_back(planning_step(std::move(target), successor, rule_variant));
             }
-            return planning_step(std::move(target), source_state, successors, rule_variant);
+
+            if (!matched)
+            {
+                auto target = context;
+                result.emplace_back(target.get_call_stack().restore_caller() ? detail::ModuleProgramOutcome::RESTORED_CALLER :
+                                                                               detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION,
+                                    std::move(target));
+            }
         }
         else if constexpr (std::same_as<R, RuleView<CallTag>>)
         {
             auto target = context;
             const auto status = detail::execute_call(rule, target, m_environment);
             if (status == detail::RuleExecutionStatus::NOT_APPLICABLE)
-                return std::nullopt;
+                return;
             if (status == detail::RuleExecutionStatus::MALFORMED_CALL)
-                return Step(detail::ModuleProgramOutcome::MALFORMED_CALL, context);
-            return applied(std::move(target), rule_variant);
+                result.emplace_back(detail::ModuleProgramOutcome::MALFORMED_CALL, context);
+            else
+                result.push_back(applied(std::move(target), rule_variant));
         }
         else if constexpr (std::same_as<R, RuleView<SketchTag>>)
         {
-            const auto source_state = context.get_state();
-            auto target = context;
-            const auto status = detail::execute_sketch(rule, target, m_environment, successors);
-            if (status != detail::RuleExecutionStatus::APPLIED)
-                return std::nullopt;
-            return planning_step(std::move(target), source_state, successors, rule_variant);
+            if (rule.get_effects().empty())
+            {
+                auto target = context;
+                if (detail::execute_sketch(rule, target, m_environment, {}) == detail::RuleExecutionStatus::APPLIED)
+                    result.push_back(applied(std::move(target), rule_variant));
+                return;
+            }
+
+            for (const auto& successor : successors)
+            {
+                if (stop())
+                    return;
+                auto target = context;
+                if (detail::execute_sketch(rule, target, m_environment, { successor }) == detail::RuleExecutionStatus::APPLIED)
+                    result.push_back(planning_step(std::move(target), successor, rule_variant));
+            }
         }
         else
         {
-            static_assert(ygg::dependent_false<R>::value, "unhandled rule kind in SuccessorExpander::make_step");
+            static_assert(ygg::dependent_false<R>::value, "unhandled rule kind in SuccessorExpander::append_steps");
         }
     }
 
@@ -286,25 +320,11 @@ private:
         return step;
     }
 
-    // An APPLIED control step that may have moved the planning state. When the state changed, record
-    // the planning action (from the matching generator successor) and its unit cost; a memory-only
-    // move leaves the transition empty.
-    static Step planning_step(EvaluationContext<Kind> context,
-                              const tyr::planning::StateView<Kind>& source_state,
-                              const std::vector<LabeledNode>& successors,
-                              RuleVariantView rule)
+    static Step planning_step(EvaluationContext<Kind> context, const LabeledNode& successor, RuleVariantView rule)
     {
         auto step = applied(std::move(context), rule);
-        const auto target_index = step.context.get_state().get_index();
-        if (source_state.get_index() == target_index)
-            return step;
-        for (const auto& successor : successors)
-            if (successor.node.get_state().get_index() == target_index)
-            {
-                step.plan_suffix.push_back(successor);
-                step.state_transition = runir::datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) };
-                break;
-            }
+        step.plan_suffix.push_back(successor);
+        step.state_transition = runir::datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) };
         return step;
     }
 

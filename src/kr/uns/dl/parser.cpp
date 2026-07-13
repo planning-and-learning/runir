@@ -67,7 +67,7 @@ auto parse_constructor_or_non_terminal(const runir::kr::dl::grammar::ast::Constr
         {
             const auto& unwrapped = unwrap(value);
             if constexpr (std::same_as<std::remove_cvref_t<decltype(unwrapped)>, runir::kr::dl::grammar::ast::NonTerminal<runir::kr::UnsFamilyTag, Category>>)
-                throw std::runtime_error("General-sketch DL features cannot reference grammar nonterminals.");
+                throw std::runtime_error("Classifier DL features cannot reference grammar nonterminals.");
             else
                 return parse_constructor(unwrapped, domain, repository);
         },

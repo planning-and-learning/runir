@@ -539,31 +539,36 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
             ygg::IndentScope transition_scope(os);
             for (const auto& transition : view.get_memory_transitions())
             {
-                for (auto item : transition)
+                if (transition.empty())
+                    continue;
+
+                const auto first = transition.front();
+                auto rule_item_os = std::ostringstream {};
+                rule_item_os << "(:rule\n";
                 {
-                    auto rule_item_os = std::ostringstream {};
-                    rule_item_os << "(:rule\n";
+                    ygg::IndentScope transition_scope_inner(rule_item_os);
+                    rule_item_os << ygg::print_indent << symbol_section(std::string(first.get_symbol().str())) << "\n";
+                    rule_item_os << ygg::print_indent << "(:expression\n";
                     {
-                        ygg::IndentScope transition_scope_inner(rule_item_os);
-                        rule_item_os << ygg::print_indent << symbol_section(std::string(item.get_symbol().str())) << "\n";
-                        rule_item_os << ygg::print_indent << "(:expression\n";
+                        ygg::IndentScope expression_scope(rule_item_os);
+                        const auto source = ygg::visit([](auto rule) { return memory_state(rule.get_source()); }, first.get_variant());
+                        const auto target = ygg::visit([](auto rule) { return memory_state(rule.get_target()); }, first.get_variant());
+                        rule_item_os << ygg::print_indent << fmt::format("(:source-memory {})", source) << "\n";
+                        rule_item_os << ygg::print_indent << fmt::format("(:target-memory {})", target) << "\n";
+
+                        for (auto item : transition)
                         {
-                            ygg::IndentScope expression_scope(rule_item_os);
-                            const auto source = ygg::visit([](auto rule) { return memory_state(rule.get_source()); }, item.get_variant());
-                            const auto target = ygg::visit([](auto rule) { return memory_state(rule.get_target()); }, item.get_variant());
-                            rule_item_os << ygg::print_indent << fmt::format("(:source-memory {})", source) << "\n";
-                            rule_item_os << ygg::print_indent << fmt::format("(:target-memory {})", target) << "\n";
                             auto rule_os = std::ostringstream {};
                             append_rule(rule_os, names, refs, item);
                             append_value(rule_item_os, rule_os.str());
                             rule_item_os << "\n";
                         }
-                        rule_item_os << ygg::print_indent << ")\n";
                     }
-                    rule_item_os << ")";
-                    append_value(os, rule_item_os.str());
-                    os << "\n";
+                    rule_item_os << ygg::print_indent << ")\n";
                 }
+                rule_item_os << ")";
+                append_value(os, rule_item_os.str());
+                os << "\n";
             }
         }
         os << ygg::print_indent << ")\n";

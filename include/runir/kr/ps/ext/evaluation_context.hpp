@@ -64,6 +64,8 @@ struct CallArguments
         boolean_arguments.clear();
         numerical_arguments.clear();
     }
+
+    auto identifying_members() const noexcept { return std::tie(concept_arguments, role_arguments, boolean_arguments, numerical_arguments); }
 };
 
 struct CallFrame
@@ -72,6 +74,8 @@ struct CallFrame
     MemoryStateView return_memory_state;
     Registers registers;
     CallArguments arguments;
+
+    auto identifying_members() const noexcept { return std::tie(module_, return_memory_state, registers, arguments); }
 };
 
 struct CallStack
@@ -85,21 +89,17 @@ private:
     std::vector<CallFrame> m_frames;
 
 public:
-    CallStack(ModuleView module,
-              MemoryStateView memory_state,
-              Registers registers,
-              CallArguments arguments = {}) noexcept :
+    CallStack(ModuleView module, MemoryStateView memory_state, Registers registers, CallArguments arguments = {}, std::vector<CallFrame> frames = {}) noexcept :
         m_module(module),
         m_memory_state(memory_state),
         m_registers(std::move(registers)),
         m_arguments(std::move(arguments)),
         m_call_arguments(),
-        m_frames()
+        m_frames(std::move(frames))
     {
     }
 
-    CallStack(ModuleView module, CallArguments arguments = {}) noexcept :
-        CallStack(module, module.get_entry_memory_state(), Registers {}, std::move(arguments))
+    CallStack(ModuleView module, CallArguments arguments = {}) noexcept : CallStack(module, module.get_entry_memory_state(), Registers {}, std::move(arguments))
     {
     }
 
@@ -114,10 +114,7 @@ public:
     const auto& frames() const noexcept { return m_frames; }
     bool has_caller() const noexcept { return !m_frames.empty(); }
 
-    auto identifying_members() const noexcept
-    {
-        return std::tie(m_module, m_memory_state, m_registers);
-    }
+    auto identifying_members() const noexcept { return std::tie(m_module, m_memory_state, m_registers, m_arguments, m_frames); }
 
     CallArguments& prepare_call_arguments() noexcept
     {
@@ -125,9 +122,7 @@ public:
         return m_call_arguments;
     }
 
-    void enter_module(ModuleView module,
-                      MemoryStateView return_memory_state,
-                      CallArguments arguments = {})
+    void enter_module(ModuleView module, MemoryStateView return_memory_state, CallArguments arguments = {})
     {
         m_frames.push_back(CallFrame { m_module, return_memory_state, std::move(m_registers), std::move(m_arguments) });
 
@@ -163,10 +158,7 @@ private:
     CallStack m_call_stack;
 
 public:
-    EvaluationContext(tyr::planning::StateView<Kind> state,
-                      ModuleProgramView program,
-                      ModuleView module,
-                      CallArguments arguments = {}) noexcept :
+    EvaluationContext(tyr::planning::StateView<Kind> state, ModuleProgramView program, ModuleView module, CallArguments arguments = {}) noexcept :
         m_state(std::move(state)),
         m_program(program),
         m_call_stack(module, std::move(arguments))
@@ -178,10 +170,11 @@ public:
                       ModuleView module,
                       MemoryStateView memory_state,
                       Registers registers,
-                      CallArguments arguments = {}) noexcept :
+                      CallArguments arguments = {},
+                      std::vector<CallFrame> frames = {}) noexcept :
         m_state(std::move(state)),
         m_program(program),
-        m_call_stack(module, memory_state, std::move(registers), std::move(arguments))
+        m_call_stack(module, memory_state, std::move(registers), std::move(arguments), std::move(frames))
     {
     }
 
@@ -192,10 +185,7 @@ public:
     auto& get_call_stack() noexcept { return m_call_stack; }
     const auto& get_call_stack() const noexcept { return m_call_stack; }
 
-    auto identifying_members() const noexcept
-    {
-        return std::tuple_cat(std::tie(m_state), m_call_stack.identifying_members());
-    }
+    auto identifying_members() const noexcept { return std::tie(m_state, m_program, m_call_stack); }
 };
 
 }  // namespace runir::kr::ps::ext

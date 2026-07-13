@@ -1,6 +1,7 @@
 #include "pyrunir/kr/ps/ext/module.hpp"
 
 #include <nanobind/stl/array.h>
+#include <nanobind/stl/chrono.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
@@ -81,9 +82,10 @@ void bind_module_program_proof_types(nb::module_& m, const char* prefix)
 
     nb::class_<Options>(m, (std::string(prefix) + "ModuleProgramSearchOptions").c_str())
         .def(nb::init<>())
-        .def_rw("brfs_options", &Options::brfs_options)
-        .def_rw("iw_options", &Options::iw_options)
-        .def_rw("max_arity", &Options::max_arity);
+        .def_rw("max_num_states", &Options::max_num_states)
+        .def_rw("max_time", &Options::max_time)
+        .def_rw("random_seed", &Options::random_seed)
+        .def_rw("shuffle_labeled_succ_nodes", &Options::shuffle_labeled_succ_nodes);
 }
 
 }  // namespace
@@ -114,44 +116,28 @@ void bind_module_program_executor(nb::module_& m)
     bind_module_program_proof_types<tyr::planning::LiftedTag>(m, "Lifted");
 
     m.def(
-        "prove_ground_solution",
-        [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
-           ModuleProgramView program,
-           const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options) { return prove_solution(std::move(task_context), program, options); },
-        nb::call_guard<nb::gil_scoped_release>(),
-        nb::keep_alive<0, 2>(),
-        "task_context"_a,
-        "program"_a,
-        "options"_a = ModuleProgramSearchOptions<tyr::planning::GroundTag>());
-    m.def(
-        "prove_lifted_solution",
-        [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
-           ModuleProgramView program,
-           const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options) { return prove_solution(std::move(task_context), program, options); },
-        nb::call_guard<nb::gil_scoped_release>(),
-        nb::keep_alive<0, 2>(),
-        "task_context"_a,
-        "program"_a,
-        "options"_a = ModuleProgramSearchOptions<tyr::planning::LiftedTag>());
-    m.def(
         "find_ground_solution",
         [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
            ModuleProgramView program,
-           const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options) { return find_solution(std::move(task_context), program, options); },
+           bool universal,
+           const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options) { return find_solution(std::move(task_context), program, universal, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         nb::keep_alive<0, 2>(),
         "task_context"_a,
         "program"_a,
+        "universal"_a = false,
         "options"_a = ModuleProgramSearchOptions<tyr::planning::GroundTag>());
     m.def(
         "find_lifted_solution",
         [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
            ModuleProgramView program,
-           const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options) { return find_solution(std::move(task_context), program, options); },
+           bool universal,
+           const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options) { return find_solution(std::move(task_context), program, universal, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         nb::keep_alive<0, 2>(),
         "task_context"_a,
         "program"_a,
+        "universal"_a = false,
         "options"_a = ModuleProgramSearchOptions<tyr::planning::LiftedTag>());
 
     using Kind = tyr::planning::GroundTag;
@@ -205,9 +191,10 @@ void bind_module_program_executor(nb::module_& m)
              nb::keep_alive<1, 2>(),
              nb::keep_alive<1, 4>())
         .def("context_at", &Expander::context_at, "module"_a, "memory_state"_a, "registers"_a, "source_state"_a)
+        .def("context_at_vertex", &Expander::context_at_vertex, "vertex"_a)
         .def("initial_context", &Expander::initial_context)
         .def("load_steps", &Expander::load_steps, "context"_a)
-        .def("control_steps", nb::overload_cast<const Context&, const ModuleProgramSearchOptions<Kind>&>(&Expander::control_steps), "context"_a, "options"_a)
+        .def("control_steps", nb::overload_cast<const Context&>(&Expander::control_steps), "context"_a)
         .def("matching_rule", &Expander::matching_rule, "context"_a, "action"_a, "target_state"_a)
         .def("apply", &Expander::apply, "context"_a, "rule"_a, "action"_a, "target_state"_a);
 }

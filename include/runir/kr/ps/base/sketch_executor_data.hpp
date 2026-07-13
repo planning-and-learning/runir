@@ -5,10 +5,11 @@
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
 #include "runir/kr/task_context.hpp"
 
+#include <chrono>
+#include <cstdint>
+#include <limits>
 #include <memory>
-#include <tyr/planning/algorithms/brfs.hpp>
-#include <tyr/planning/algorithms/iw.hpp>
-#include <tyr/planning/algorithms/siw.hpp>
+#include <optional>
 #include <tyr/planning/declarations.hpp>
 
 namespace runir::kr::ps::base
@@ -38,10 +39,10 @@ struct SketchProofResults
 template<tyr::planning::TaskKind Kind>
 struct SketchSearchOptions
 {
-    tyr::planning::brfs::Options<Kind> brfs_options;
-    tyr::planning::iw::Options<Kind> iw_options;
-    tyr::planning::siw::Options<Kind> siw_options;
-    uint_t max_arity = 0;
+    ygg::uint_t max_num_states = std::numeric_limits<ygg::uint_t>::max();
+    std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
+    uint64_t random_seed = 0;
+    bool shuffle_labeled_succ_nodes = false;
 };
 
 }  // namespace runir::kr::ps::base

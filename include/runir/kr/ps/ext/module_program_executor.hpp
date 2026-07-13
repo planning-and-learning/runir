@@ -9,13 +9,9 @@ namespace runir::kr::ps::ext
 {
 
 template<tyr::planning::TaskKind Kind>
-auto prove_solution(runir::kr::TaskContextPtr<Kind> task_context,
-                    ModuleProgramView program,
-                    const ModuleProgramSearchOptions<Kind>& options = ModuleProgramSearchOptions<Kind>()) -> ModuleProgramProofResults<Kind>;
-
-template<tyr::planning::TaskKind Kind>
 auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                    ModuleProgramView program,
+                   bool universal = false,
                    const ModuleProgramSearchOptions<Kind>& options = ModuleProgramSearchOptions<Kind>()) -> ModuleProgramProofResults<Kind>;
 
 }  // namespace runir::kr::ps::ext

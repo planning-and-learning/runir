@@ -654,6 +654,21 @@ void validate_module_declarations(const ast::Module& module)
 
     validate_unique_names(collect_registers<dl_::ConceptTag>(module.registers), "concept");
     validate_unique_names(collect_registers<dl_::RoleTag>(module.registers), "role");
+
+    auto feature_symbols = std::unordered_set<std::string> {};
+    for (const auto& feature : module.features)
+        boost::apply_visitor(
+            [&](const auto& concrete)
+            {
+                if (!feature_symbols.emplace(concrete.symbol).second)
+                    fail("Duplicate feature symbol \"" + concrete.symbol + "\"");
+            },
+            feature.get());
+
+    auto rule_symbols = std::unordered_set<std::string> {};
+    for (const auto& entry : module.rule_entries)
+        if (!rule_symbols.emplace(entry.symbol).second)
+            fail("Duplicate rule symbol \"" + entry.symbol + "\"");
 }
 
 void append_argument(Repository& repository,
@@ -1809,11 +1824,18 @@ void validate_module_program(const ast::ModuleProgram& program)
     validate_module_set(program.modules);
 
     auto module_names = std::unordered_set<std::string> {};
+    auto entry_has_arguments = false;
     for (const auto& module : program.modules)
+    {
         module_names.emplace(module.name);
+        if (module.name == program.entry)
+            entry_has_arguments = !module.arguments.empty();
+    }
 
     if (!module_names.contains(program.entry))
         fail("Module program entry module \"" + program.entry + "\" is not declared");
+    if (entry_has_arguments)
+        fail("Module program entry module \"" + program.entry + "\" must not declare formal arguments");
 }
 
 ModuleView parse_module(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)

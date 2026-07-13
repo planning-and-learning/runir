@@ -11,7 +11,6 @@ from pyrunir.kr.ps.base import (
     SketchProofStatus,
     SuccessorExpander,
     find_ground_solution,
-    prove_ground_solution,
     syntactic_complexity,
 )
 from pyrunir.kr.ps.base import RepositoryFactory as SketchRepositoryFactory
@@ -143,7 +142,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
         assert str(view)
         assert isinstance(hash(view), int)
 
-    proof_result = prove_ground_solution(task_context, sketch)
+    proof_result = find_ground_solution(task_context, sketch, True)
     assert proof_result.status == SketchProofStatus.SUCCESS
     assert proof_result.is_successful()
     assert proof_result.deadend_transitions == []

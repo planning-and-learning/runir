@@ -287,17 +287,23 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
     search_options = ext.GroundModuleProgramSearchOptions()
+    assert not hasattr(search_options, "brfs_options")
+    assert not hasattr(search_options, "iw_options")
     assert not hasattr(search_options, "siw_options")
-    search_options.max_arity = 1
+    assert not hasattr(search_options, "max_arity")
+    assert search_options.max_num_states > 0
+    assert search_options.max_time is None
+    assert search_options.random_seed == 0
+    assert search_options.shuffle_labeled_succ_nodes is False
 
-    search_result = ext.find_ground_solution(task_context, program, search_options)
+    search_result = ext.find_ground_solution(task_context, program, False, search_options)
     assert search_result.status == ext.ModuleProgramProofStatus.SUCCESS
     assert search_result.is_successful()
     assert search_result.final_state is not None
     assert search_result.plan is not None
     assert search_result.plan.get_length() == 4
 
-    proof = ext.prove_ground_solution(task_context, program, search_options)
+    proof = ext.find_ground_solution(task_context, program, True, search_options)
     assert proof.status == ext.ModuleProgramProofStatus.SUCCESS
     assert proof.is_successful()
     assert proof.graph.get_num_vertices() == 16
@@ -335,7 +341,7 @@ def test_executor_reports_structured_failure_statuses_from_python():
     )
 )""", planning_domain, repository)
     options = ext.GroundModuleProgramSearchOptions()
-    empty_proof = ext.prove_ground_solution(task_context, empty_program, options)
+    empty_proof = ext.find_ground_solution(task_context, empty_program, True, options)
     assert empty_proof.status == ext.ModuleProgramProofStatus.FAILURE
     assert empty_proof.graph.get_num_vertices() == 1
     assert empty_proof.graph.get_num_edges() == 0
@@ -375,7 +381,7 @@ def test_executor_reports_structured_failure_statuses_from_python():
     )
 )""", planning_domain, repository)
     options = ext.GroundModuleProgramSearchOptions()
-    load_proof = ext.prove_ground_solution(task_context, load_loop, options)
+    load_proof = ext.find_ground_solution(task_context, load_loop, True, options)
     assert load_proof.status == ext.ModuleProgramProofStatus.FAILURE
     assert len(load_proof.deadend_transitions) == 0
     assert len(load_proof.cycle) > 0
@@ -433,7 +439,7 @@ def test_lifted_executor_binding_reports_failure_status():
 )""", planning_domain, repository)
     options = ext.LiftedModuleProgramSearchOptions()
 
-    result = ext.prove_lifted_solution(task_context, program, options)
+    result = ext.find_lifted_solution(task_context, program, True, options)
 
     assert result.status == ext.ModuleProgramProofStatus.FAILURE
     assert not result.is_successful()

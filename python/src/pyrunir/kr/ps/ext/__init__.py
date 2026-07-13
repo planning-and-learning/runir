@@ -73,8 +73,6 @@ from ...._pyrunir.kr.ps.ext import (
     SuccessorExpander,
     find_ground_solution,
     find_lifted_solution,
-    prove_ground_solution,
-    prove_lifted_solution,
 )
 
 from . import dl as dl

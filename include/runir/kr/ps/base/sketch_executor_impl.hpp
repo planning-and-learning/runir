@@ -2,8 +2,6 @@
 #define RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_IMPL_HPP_
 
 #include "runir/graphs/cycle.hpp"
-#include "runir/kr/ps/base/compatibility.hpp"
-#include "runir/kr/ps/base/dl/evaluation_context.hpp"
 #include "runir/kr/ps/base/sketch_executor_data.hpp"
 #include "runir/kr/ps/base/successor_expander.hpp"
 
@@ -12,444 +10,136 @@
 #include <limits>
 #include <memory>
 #include <optional>
-#include <stdexcept>
-#include <tyr/planning/algorithms/brfs/event_handler.hpp>
-#include <tyr/planning/algorithms/iw.hpp>
-#include <tyr/planning/algorithms/siw.hpp>
+#include <random>
+#include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
+#include <yggdrasil/core/types.hpp>
 
-namespace runir::kr::ps::base
-{
-namespace detail
-{
-
-template<tyr::planning::TaskKind Kind>
-class NeverGoalStrategy : public tyr::planning::GoalStrategy<Kind>
-{
-public:
-    bool is_static_goal_satisfied(const tyr::planning::Task<Kind>& task) override
-    {
-        static_cast<void>(task);
-        return true;
-    }
-
-    bool is_dynamic_goal_satisfied(const tyr::planning::StateView<Kind>& seed_state, const tyr::planning::StateView<Kind>& state) override
-    {
-        static_cast<void>(seed_state);
-        static_cast<void>(state);
-        return false;
-    }
-};
-
-}  // namespace detail
-
-template<tyr::planning::TaskKind Kind>
-class SketchGoalStrategy : public tyr::planning::GoalStrategy<Kind>
-{
-private:
-    using EvaluationContext = runir::kr::ps::base::EvaluationContext<Kind>;
-
-    SuccessorExpander<Kind> m_expander;
-
-public:
-    SketchGoalStrategy(runir::kr::TaskContext<Kind>& task_context, SketchView sketch) : m_expander(task_context, sketch) {}
-
-    bool is_static_goal_satisfied(const tyr::planning::Task<Kind>& task) override
-    {
-        static_cast<void>(task);
-        return true;
-    }
-
-    auto find_compatible_rule(const tyr::planning::StateView<Kind>& seed_state, const tyr::planning::StateView<Kind>& state) -> std::optional<RuleView>
-    {
-        auto context = m_expander.context_at(seed_state);
-        return m_expander.matching_rule(context, state);
-    }
-
-    bool is_dynamic_goal_satisfied(const tyr::planning::StateView<Kind>& seed_state, const tyr::planning::StateView<Kind>& state) override
-    {
-        return find_compatible_rule(seed_state, state).has_value();
-    }
-};
-
-namespace detail
-{
-
-template<tyr::planning::TaskKind Kind, typename GetOrCreateVertex>
-class SketchProofEventHandler : public tyr::planning::brfs::EventHandler<Kind>
-{
-private:
-    graphs::VertexIndex m_source;
-    tyr::planning::Node<Kind> m_source_node;
-    SketchGoalStrategy<Kind>& m_sketch_goal_strategy;
-    SketchProofGraphBuilder<Kind>& m_builder;
-    ygg::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>& m_sketch_edges;
-    graphs::VertexIndexList& m_open;
-    const ygg::UnorderedSet<graphs::VertexIndex>& m_explored;
-    GetOrCreateVertex& m_get_or_create_vertex;
-    tyr::planning::Statistics m_statistics;
-    bool m_found_compatible_transition = false;
-
-public:
-    SketchProofEventHandler(graphs::VertexIndex source,
-                            tyr::planning::Node<Kind> source_node,
-                            SketchGoalStrategy<Kind>& sketch_goal_strategy,
-                            SketchProofGraphBuilder<Kind>& builder,
-                            ygg::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>& sketch_edges,
-                            graphs::VertexIndexList& open,
-                            const ygg::UnorderedSet<graphs::VertexIndex>& explored,
-                            GetOrCreateVertex& get_or_create_vertex) :
-        m_source(source),
-        m_source_node(std::move(source_node)),
-        m_sketch_goal_strategy(sketch_goal_strategy),
-        m_builder(builder),
-        m_sketch_edges(sketch_edges),
-        m_open(open),
-        m_explored(explored),
-        m_get_or_create_vertex(get_or_create_vertex),
-        m_statistics()
-    {
-    }
-
-    bool found_compatible_transition() const noexcept { return m_found_compatible_transition; }
-
-    void on_expand_node(const tyr::planning::Node<Kind>& node) override
-    {
-        static_cast<void>(node);
-        m_statistics.increment_num_expanded();
-    }
-
-    void on_expand_goal_node(const tyr::planning::Node<Kind>& node) override { static_cast<void>(node); }
-
-    void on_generate_node(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
-    {
-        static_cast<void>(source_node);
-        m_statistics.increment_num_generated();
-
-        auto rule = m_sketch_goal_strategy.find_compatible_rule(m_source_node.get_state(), labeled_succ_node.node.get_state());
-        if (!rule)
-            return;
-
-        m_found_compatible_transition = true;
-
-        const auto target = m_get_or_create_vertex(labeled_succ_node.node);
-        if (m_sketch_edges.insert({ m_source, target }).second)
-            m_builder.add_directed_edge(
-                m_source,
-                target,
-                SketchProofEdgeLabel { datasets::StateGraphEdgeLabel { labeled_succ_node.label, labeled_succ_node.node.get_metric() }, *rule });
-
-        if (!m_explored.contains(target))
-            m_open.push_back(target);
-    }
-
-    void on_prune_node(const tyr::planning::Node<Kind>& node) override
-    {
-        static_cast<void>(node);
-        m_statistics.increment_num_pruned();
-    }
-
-    void on_prune_node(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
-    {
-        static_cast<void>(source_node);
-        static_cast<void>(labeled_succ_node);
-        m_statistics.increment_num_pruned();
-    }
-
-    void on_start_search(const tyr::planning::Node<Kind>& node) override
-    {
-        static_cast<void>(node);
-        m_statistics = tyr::planning::Statistics();
-        m_statistics.set_search_start_time_point(std::chrono::high_resolution_clock::now());
-    }
-
-    void on_finish_layer(uint_t layer) override { static_cast<void>(layer); }
-
-    void on_end_search(tyr::planning::SearchStatus status) override
-    {
-        static_cast<void>(status);
-        m_statistics.set_search_end_time_point(std::chrono::high_resolution_clock::now());
-    }
-
-    void on_solved(const tyr::planning::Plan<Kind>& plan) override { static_cast<void>(plan); }
-
-    const tyr::planning::Statistics& get_search_statistics() const override { return m_statistics; }
-    const tyr::planning::Statistics& get_statistics() const override { return m_statistics; }
-};
-
-}  // namespace detail
-
-namespace detail
+namespace runir::kr::ps::base::detail
 {
 
 template<tyr::planning::TaskKind Kind>
-auto execute_proof(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
+auto execute_direct(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, bool universal, const SketchSearchOptions<Kind>& options)
+    -> SketchProofResults<Kind>
 {
     auto& task_context = *task_context_owner;
-    const auto& context = *task_context.search_context;
+    const auto& search_context = *task_context.search_context;
     auto result = SketchProofResults<Kind> {};
     result.task_context_owner = task_context_owner;
     auto builder = SketchProofGraphBuilder<Kind> {};
     auto state_to_vertex = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
-    auto vertex_to_node = ygg::UnorderedMap<graphs::VertexIndex, tyr::planning::Node<Kind>> {};
-    auto sketch_edges = ygg::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>> {};
-    auto task_goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
-    auto sketch_goal_strategy = SketchGoalStrategy<Kind>(task_context, sketch);
-    const auto static_goal_satisfied = task_goal_strategy.is_static_goal_satisfied(*context.task);
-    const auto initial_node = context.successor_generator->get_initial_node();
+    auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*search_context.task);
+    auto expander = SuccessorExpander<Kind>(task_context, sketch);
+    const auto initial_node = search_context.successor_generator->get_initial_node();
     const auto initial_state = initial_node.get_state();
+    const auto static_goal_satisfied = goal_strategy.is_static_goal_satisfied(*search_context.task);
+    const auto started_at = std::chrono::steady_clock::now();
+    auto random = std::mt19937_64(options.random_seed);
 
-    auto is_task_goal = [&](const tyr::planning::StateView<Kind>& state)
-    { return static_goal_satisfied && task_goal_strategy.is_dynamic_goal_satisfied(initial_state, state); };
+    const auto out_of_time = [&]() { return options.max_time && std::chrono::steady_clock::now() - started_at >= *options.max_time; };
 
-    auto make_label = [&](const tyr::planning::StateView<Kind>& state)
+    const auto is_goal = [&](const tyr::planning::StateView<Kind>& state)
+    { return static_goal_satisfied && goal_strategy.is_dynamic_goal_satisfied(initial_state, state); };
+
+    const auto make_label = [&](const tyr::planning::StateView<Kind>& state)
     {
-        const auto goal = is_task_goal(state);
-        return datasets::AnnotatedStateGraphVertexLabel<Kind> { state,
-                                                                goal ? ygg::float_t(0) : std::numeric_limits<ygg::float_t>::infinity(),
-                                                                ygg::EqualTo<tyr::planning::StateView<Kind>> {}(state, initial_state),
-                                                                goal,
-                                                                true,
-                                                                false };
+        const auto goal = is_goal(state);
+        return datasets::AnnotatedStateGraphVertexLabel<Kind> {
+            state, goal ? ygg::float_t(0) : std::numeric_limits<ygg::float_t>::infinity(), state.get_index() == initial_state.get_index(), goal, true, false
+        };
     };
 
-    auto get_or_create_vertex = [&](const tyr::planning::Node<Kind>& node)
+    const auto get_or_create_vertex = [&](const tyr::planning::StateView<Kind>& state) -> std::optional<std::pair<graphs::VertexIndex, bool>>
     {
-        const auto state = node.get_state();
         if (const auto it = state_to_vertex.find(state); it != state_to_vertex.end())
-            return it->second;
+            return std::pair(it->second, false);
+        if (state_to_vertex.size() >= options.max_num_states)
+            return std::nullopt;
 
         const auto vertex = builder.add_vertex(make_label(state));
         state_to_vertex.emplace(state, vertex);
-        vertex_to_node.emplace(vertex, node);
-
-        return vertex;
+        return std::pair(vertex, true);
     };
-
-    auto open = graphs::VertexIndexList {};
-    auto explored = ygg::UnorderedSet<graphs::VertexIndex> {};
-
-    auto finish = [&](SketchProofStatus status)
-    {
-        result.status = status;
-        result.graph = std::make_shared<SketchProofGraph<Kind>>(std::move(builder));
-        return std::move(result);
-    };
-
-    open.push_back(get_or_create_vertex(initial_node));
-
-    while (!open.empty())
-    {
-        const auto source = open.back();
-        open.pop_back();
-
-        if (!explored.insert(source).second)
-            continue;
-
-        const auto source_node = vertex_to_node.at(source);
-        const auto& source_label = builder.get_vertex(source).get_property();
-        if (source_label.is_goal)
-            continue;
-
-        auto brfs_solver = tyr::planning::brfs::Solver<Kind> { context.task, context.successor_generator, options.brfs_options };
-        auto iw_options = options.iw_options;
-        auto event_handler = std::make_shared<detail::SketchProofEventHandler<Kind, decltype(get_or_create_vertex)>>(source,
-                                                                                                                     source_node,
-                                                                                                                     sketch_goal_strategy,
-                                                                                                                     builder,
-                                                                                                                     sketch_edges,
-                                                                                                                     open,
-                                                                                                                     explored,
-                                                                                                                     get_or_create_vertex);
-        brfs_solver.options.event_handler = event_handler;
-        iw_options.start_node = source_node;
-        iw_options.goal_strategy = std::make_shared<detail::NeverGoalStrategy<Kind>>();
-
-        const auto search_result = tyr::planning::iw::find_solution(brfs_solver, options.max_arity, iw_options);
-        switch (search_result.status)
-        {
-            case tyr::planning::SearchStatus::EXHAUSTED:
-                break;
-            case tyr::planning::SearchStatus::OUT_OF_TIME:
-                return finish(SketchProofStatus::OUT_OF_TIME);
-            case tyr::planning::SearchStatus::OUT_OF_STATES:
-            case tyr::planning::SearchStatus::OUT_OF_MEMORY:
-                return finish(SketchProofStatus::OUT_OF_STATES);
-            case tyr::planning::SearchStatus::FAILED:
-            case tyr::planning::SearchStatus::UNSOLVABLE:
-            case tyr::planning::SearchStatus::IN_PROGRESS:
-            case tyr::planning::SearchStatus::SOLVED:
-            case tyr::planning::SearchStatus::CYCLE:
-                return finish(SketchProofStatus::FAILURE);
-        }
-
-        if (!event_handler->found_compatible_transition())
-            result.open_states.push_back(source);
-    }
-
-    auto graph = std::make_shared<SketchProofGraph<Kind>>(std::move(builder));
-    result.cycle = graphs::find_cycle(*graph);
-    result.graph = std::move(graph);
-
-    if (!result.open_states.empty() || !result.cycle.empty())
-    {
-        result.status = SketchProofStatus::FAILURE;
-        return std::move(result);
-    }
-
-    result.status = SketchProofStatus::SUCCESS;
-    return std::move(result);
-}
-
-template<tyr::planning::TaskKind Kind>
-auto find_siw_solution(runir::kr::TaskContext<Kind>& task_context,
-                       SketchView sketch,
-                       const SketchSearchOptions<Kind>& options) -> tyr::planning::SearchResult<Kind>
-{
-    const auto& context = *task_context.search_context;
-    auto brfs_solver = tyr::planning::brfs::Solver<Kind> { context.task, context.successor_generator, options.brfs_options };
-    auto iw_solver = tyr::planning::iw::Solver<Kind> { std::move(brfs_solver), options.max_arity, options.iw_options };
-    auto siw_options = options.siw_options;
-
-    if (!siw_options.subgoal_strategy)
-        siw_options.subgoal_strategy = std::make_shared<SketchGoalStrategy<Kind>>(task_context, sketch);
-    if (!siw_options.goal_strategy)
-        siw_options.goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>::create(*context.task);
-
-    return tyr::planning::siw::find_solution(iw_solver, siw_options);
-}
-
-template<tyr::planning::TaskKind Kind>
-auto proof_result_from_siw_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
-                                    SketchView sketch,
-                                    const tyr::planning::SearchResult<Kind>& search_result) -> SketchProofResults<Kind>
-{
-    auto& task_context = *task_context_owner;
-    const auto& context = *task_context.search_context;
-    auto result = SketchProofResults<Kind> {};
-    result.task_context_owner = std::move(task_context_owner);
-    auto builder = SketchProofGraphBuilder<Kind> {};
-    auto state_to_vertex = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
-    auto task_goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
-    auto sketch_goal_strategy = SketchGoalStrategy<Kind>(task_context, sketch);
-    const auto initial_node = context.successor_generator->get_initial_node();
-    const auto initial_state = initial_node.get_state();
-    const auto static_goal_satisfied = task_goal_strategy.is_static_goal_satisfied(*context.task);
-
-    auto is_task_goal = [&](const tyr::planning::StateView<Kind>& state)
-    { return static_goal_satisfied && task_goal_strategy.is_dynamic_goal_satisfied(initial_state, state); };
-
-    auto add_vertex = [&](const tyr::planning::StateView<Kind>& state)
-    {
-        const auto goal = is_task_goal(state);
-        const auto vertex =
-            builder.add_vertex(datasets::AnnotatedStateGraphVertexLabel<Kind> { state,
-                                                                                goal ? ygg::float_t(0) : std::numeric_limits<ygg::float_t>::infinity(),
-                                                                                ygg::EqualTo<tyr::planning::StateView<Kind>> {}(state, initial_state),
-                                                                                goal,
-                                                                                true,
-                                                                                false });
-        state_to_vertex.emplace(state, vertex);
-        return vertex;
-    };
-
-    auto current_node = initial_node;
-    auto current_vertex = add_vertex(initial_state);
 
     auto finish = [&](SketchProofStatus status)
     {
         result.status = status;
         auto graph = std::make_shared<SketchProofGraph<Kind>>(std::move(builder));
-        if (result.cycle.empty())
-            result.cycle = graphs::find_cycle(*graph);
+        result.cycle = graphs::find_cycle(*graph);
         if (result.status == SketchProofStatus::SUCCESS && !result.cycle.empty())
             result.status = SketchProofStatus::FAILURE;
         result.graph = std::move(graph);
         return std::move(result);
     };
 
-    switch (search_result.status)
+    const auto initial = get_or_create_vertex(initial_state);
+    if (!initial)
+        return finish(SketchProofStatus::OUT_OF_STATES);
+    const auto [initial_vertex, initial_created] = *initial;
+    static_cast<void>(initial_created);
+
+    auto open = graphs::VertexIndexList { initial_vertex };
+    auto explored = ygg::UnorderedSet<graphs::VertexIndex> {};
+
+    while (!open.empty())
     {
-        case tyr::planning::SearchStatus::SOLVED:
-            break;
-        case tyr::planning::SearchStatus::OUT_OF_TIME:
+        if (out_of_time())
             return finish(SketchProofStatus::OUT_OF_TIME);
-        case tyr::planning::SearchStatus::OUT_OF_STATES:
-        case tyr::planning::SearchStatus::OUT_OF_MEMORY:
-            return finish(SketchProofStatus::OUT_OF_STATES);
-        case tyr::planning::SearchStatus::EXHAUSTED:
-        case tyr::planning::SearchStatus::FAILED:
-        case tyr::planning::SearchStatus::UNSOLVABLE:
-        case tyr::planning::SearchStatus::IN_PROGRESS:
-        case tyr::planning::SearchStatus::CYCLE:
-            result.open_states.push_back(current_vertex);
-            return finish(SketchProofStatus::FAILURE);
-    }
 
-    if (!search_result.goal_node || !search_result.plan)
-    {
-        result.open_states.push_back(current_vertex);
-        return finish(SketchProofStatus::FAILURE);
-    }
-
-    const auto& suffix = search_result.plan->get_labeled_succ_nodes();
-    size_t segment_start = 0;
-    for (size_t index = 0; index < suffix.size(); ++index)
-    {
-        const auto& step = suffix[index];
-        const auto target_state = step.node.get_state();
-        const auto rule = sketch_goal_strategy.find_compatible_rule(current_node.get_state(), target_state);
-        if (!rule)
+        const auto source = open.back();
+        open.pop_back();
+        if (!explored.insert(source).second)
             continue;
 
-        const auto segment_length = index - segment_start + 1;
-        const auto edge_label =
-            SketchProofEdgeLabel { datasets::StateGraphEdgeLabel { suffix[segment_start].label, static_cast<ygg::float_t>(segment_length) }, *rule };
+        const auto& source_state = builder.get_vertex(source).get_property().state;
+        if (is_goal(source_state))
+            continue;
 
-        if (const auto it = state_to_vertex.find(target_state); it != state_to_vertex.end())
+        auto context = expander.context_at(source_state);
+        auto successors = expander.labeled_successors(context);
+        if (out_of_time())
+            return finish(SketchProofStatus::OUT_OF_TIME);
+        if (options.shuffle_labeled_succ_nodes)
+            std::shuffle(successors.begin(), successors.end(), random);
+
+        auto accepted = expander.accepted_successors(context, successors, out_of_time);
+        if (out_of_time())
+            return finish(SketchProofStatus::OUT_OF_TIME);
+        if (accepted.empty())
         {
-            builder.add_directed_edge(current_vertex, it->second, edge_label);
-            result.cycle = graphs::VertexIndexList { it->second, current_vertex, it->second };
-            return finish(SketchProofStatus::FAILURE);
+            result.open_states.push_back(source);
+            continue;
         }
+        if (!universal)
+            accepted.erase(accepted.begin() + 1, accepted.end());
 
-        const auto target_vertex = add_vertex(target_state);
-        builder.add_directed_edge(current_vertex, target_vertex, edge_label);
-        current_node = step.node;
-        current_vertex = target_vertex;
-        segment_start = index + 1;
+        for (const auto& [successor, rule] : accepted)
+        {
+            if (out_of_time())
+                return finish(SketchProofStatus::OUT_OF_TIME);
+            const auto target_result = get_or_create_vertex(successor.node.get_state());
+            if (!target_result)
+                return finish(SketchProofStatus::OUT_OF_STATES);
+            const auto [target, created] = *target_result;
+            builder.add_directed_edge(source, target, SketchProofEdgeLabel { datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) }, rule });
+            if (created || !explored.contains(target))
+                open.push_back(target);
+        }
     }
 
-    if (!is_task_goal(current_node.get_state()))
-    {
-        result.open_states.push_back(current_vertex);
-        return finish(SketchProofStatus::FAILURE);
-    }
-
-    return finish(SketchProofStatus::SUCCESS);
+    return finish(result.open_states.empty() ? SketchProofStatus::SUCCESS : SketchProofStatus::FAILURE);
 }
 
-template<tyr::planning::TaskKind Kind>
-auto execute_greedy_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
-                             SketchView sketch,
-                             const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
-{
-    const auto search_result = find_siw_solution(*task_context_owner, sketch, options);
-    return proof_result_from_siw_solution(std::move(task_context_owner), sketch, search_result);
-}
+}  // namespace runir::kr::ps::base::detail
 
-}  // namespace detail
+namespace runir::kr::ps::base
+{
 
 template<tyr::planning::TaskKind Kind>
-auto prove_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
+auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, bool universal, const SketchSearchOptions<Kind>& options)
+    -> SketchProofResults<Kind>
 {
-    return detail::execute_proof(std::move(task_context_owner), sketch, options);
-}
-
-template<tyr::planning::TaskKind Kind>
-auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
-{
-    return detail::execute_greedy_solution(std::move(task_context_owner), sketch, options);
+    return detail::execute_direct(std::move(task_context_owner), sketch, universal, options);
 }
 
 }  // namespace runir::kr::ps::base

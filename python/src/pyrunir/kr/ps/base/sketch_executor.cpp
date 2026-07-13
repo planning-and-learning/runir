@@ -1,5 +1,7 @@
 #include "pyrunir/kr/ps/base/module.hpp"
 
+#include <nanobind/stl/chrono.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
@@ -48,10 +50,10 @@ void bind_sketch_search_options(nb::module_& m, const char* name)
 
     nb::class_<Options>(m, name)
         .def(nb::init<>())
-        .def_rw("brfs_options", &Options::brfs_options)
-        .def_rw("iw_options", &Options::iw_options)
-        .def_rw("siw_options", &Options::siw_options)
-        .def_rw("max_arity", &Options::max_arity);
+        .def_rw("max_num_states", &Options::max_num_states)
+        .def_rw("max_time", &Options::max_time)
+        .def_rw("random_seed", &Options::random_seed)
+        .def_rw("shuffle_labeled_succ_nodes", &Options::shuffle_labeled_succ_nodes);
 }
 
 }  // namespace
@@ -88,40 +90,28 @@ void bind_sketch_executor(nb::module_& m)
         .def("matching_rule", &Expander::matching_rule, "context"_a, "target_state"_a);
 
     m.def(
-        "prove_ground_solution",
-        [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::planning::GroundTag>& options)
-        { return prove_solution(std::move(task_context), sketch, options); },
-        nb::call_guard<nb::gil_scoped_release>(),
-        nb::keep_alive<0, 2>(),
-        "task_context"_a,
-        "sketch"_a,
-        "options"_a = SketchSearchOptions<tyr::planning::GroundTag>());
-    m.def(
-        "prove_lifted_solution",
-        [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::planning::LiftedTag>& options)
-        { return prove_solution(std::move(task_context), sketch, options); },
-        nb::call_guard<nb::gil_scoped_release>(),
-        nb::keep_alive<0, 2>(),
-        "task_context"_a,
-        "sketch"_a,
-        "options"_a = SketchSearchOptions<tyr::planning::LiftedTag>());
-    m.def(
         "find_ground_solution",
-        [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::planning::GroundTag>& options)
-        { return find_solution(std::move(task_context), sketch, options); },
+        [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
+           SketchView sketch,
+           bool universal,
+           const SketchSearchOptions<tyr::planning::GroundTag>& options) { return find_solution(std::move(task_context), sketch, universal, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         nb::keep_alive<0, 2>(),
         "task_context"_a,
         "sketch"_a,
+        "universal"_a = false,
         "options"_a = SketchSearchOptions<tyr::planning::GroundTag>());
     m.def(
         "find_lifted_solution",
-        [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::planning::LiftedTag>& options)
-        { return find_solution(std::move(task_context), sketch, options); },
+        [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
+           SketchView sketch,
+           bool universal,
+           const SketchSearchOptions<tyr::planning::LiftedTag>& options) { return find_solution(std::move(task_context), sketch, universal, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         nb::keep_alive<0, 2>(),
         "task_context"_a,
         "sketch"_a,
+        "universal"_a = false,
         "options"_a = SketchSearchOptions<tyr::planning::LiftedTag>());
 }
 

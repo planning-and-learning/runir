@@ -9,13 +9,9 @@ namespace runir::kr::ps::base
 {
 
 template<tyr::planning::TaskKind Kind>
-auto prove_solution(runir::kr::TaskContextPtr<Kind> task_context,
-                    SketchView sketch,
-                    const SketchSearchOptions<Kind>& options = SketchSearchOptions<Kind>()) -> SketchProofResults<Kind>;
-
-template<tyr::planning::TaskKind Kind>
 auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                    SketchView sketch,
+                   bool universal = false,
                    const SketchSearchOptions<Kind>& options = SketchSearchOptions<Kind>()) -> SketchProofResults<Kind>;
 
 }  // namespace runir::kr::ps::base

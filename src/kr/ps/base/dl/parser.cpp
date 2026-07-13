@@ -12,6 +12,7 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace runir::kr::ps::base::dl
 {
@@ -744,14 +745,27 @@ SketchView parse_sketch(const std::string& description, tyr::formalism::planning
 
     auto boolean_features = BooleanFeatureMap {};
     auto numerical_features = NumericalFeatureMap {};
+    auto feature_symbols = std::unordered_set<std::string> {};
     ygg::Data<runir::kr::ps::base::Sketch> data;
 
     for (const auto& feature : ast.features)
-        boost::apply_visitor([&](const auto& arg) { parse_feature(arg, domain, repository, boolean_features, numerical_features, data); }, feature.get());
+        boost::apply_visitor(
+            [&](const auto& arg)
+            {
+                if (!feature_symbols.emplace(arg.symbol).second)
+                    throw std::runtime_error("Duplicate feature symbol \"" + arg.symbol + "\".");
+                parse_feature(arg, domain, repository, boolean_features, numerical_features, data);
+            },
+            feature.get());
 
     auto rules = ygg::IndexList<runir::kr::ps::base::Rule> {};
+    auto rule_symbols = std::unordered_set<std::string> {};
     for (const auto& rule : ast.rules)
+    {
+        if (!rule_symbols.emplace(rule.symbol).second)
+            throw std::runtime_error("Duplicate rule symbol \"" + rule.symbol + "\".");
         rules.push_back(parse_rule(rule, repository, boolean_features, numerical_features).get_index());
+    }
 
     data.rules = std::move(rules);
     return intern(repository, data);
