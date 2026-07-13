@@ -26,17 +26,18 @@ enum class ModuleProgramProofStatus
 template<tyr::planning::TaskKind Kind>
 struct ModuleProgramSearchOptions
 {
+    bool universal = false;
     ygg::uint_t max_num_states = std::numeric_limits<ygg::uint_t>::max();
     std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
     uint64_t random_seed = 0;
     bool shuffle_labeled_succ_nodes = false;
+    bool shuffle_choice_points = false;
 };
 
 template<tyr::planning::TaskKind Kind>
 struct ModuleProgramProofResults
 {
     ModuleProgramProofStatus status = ModuleProgramProofStatus::SUCCESS;
-    runir::kr::TaskContextPtr<Kind> task_context_owner;
     std::shared_ptr<ModuleProgramProofGraph<Kind>> graph;
     std::optional<tyr::planning::StateView<Kind>> final_state = std::nullopt;
     std::optional<tyr::planning::Plan<Kind>> plan = std::nullopt;

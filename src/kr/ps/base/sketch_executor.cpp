@@ -7,13 +7,11 @@ namespace runir::kr::ps::base
 template auto
 find_solution<tyr::planning::GroundTag>(runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
                                         SketchView sketch,
-                                        bool universal,
                                         const SketchSearchOptions<tyr::planning::GroundTag>& options) -> SketchProofResults<tyr::planning::GroundTag>;
 
 template auto
 find_solution<tyr::planning::LiftedTag>(runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
                                         SketchView sketch,
-                                        bool universal,
                                         const SketchSearchOptions<tyr::planning::LiftedTag>& options) -> SketchProofResults<tyr::planning::LiftedTag>;
 
 }  // namespace runir::kr::ps::base

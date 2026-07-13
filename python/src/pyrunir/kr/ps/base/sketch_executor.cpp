@@ -50,6 +50,7 @@ void bind_sketch_search_options(nb::module_& m, const char* name)
 
     nb::class_<Options>(m, name)
         .def(nb::init<>())
+        .def_rw("universal", &Options::universal)
         .def_rw("max_num_states", &Options::max_num_states)
         .def_rw("max_time", &Options::max_time)
         .def_rw("random_seed", &Options::random_seed)
@@ -91,28 +92,22 @@ void bind_sketch_executor(nb::module_& m)
 
     m.def(
         "find_ground_solution",
-        [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
-           SketchView sketch,
-           bool universal,
-           const SketchSearchOptions<tyr::planning::GroundTag>& options) { return find_solution(std::move(task_context), sketch, universal, options); },
+        [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::planning::GroundTag>& options)
+        { return find_solution(std::move(task_context), sketch, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         nb::keep_alive<0, 2>(),
         "task_context"_a,
         "sketch"_a,
-        "universal"_a = false,
-        "options"_a = SketchSearchOptions<tyr::planning::GroundTag>());
+        "options"_a);
     m.def(
         "find_lifted_solution",
-        [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
-           SketchView sketch,
-           bool universal,
-           const SketchSearchOptions<tyr::planning::LiftedTag>& options) { return find_solution(std::move(task_context), sketch, universal, options); },
+        [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::planning::LiftedTag>& options)
+        { return find_solution(std::move(task_context), sketch, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         nb::keep_alive<0, 2>(),
         "task_context"_a,
         "sketch"_a,
-        "universal"_a = false,
-        "options"_a = SketchSearchOptions<tyr::planning::LiftedTag>());
+        "options"_a);
 }
 
 }  // namespace runir::kr::ps::base

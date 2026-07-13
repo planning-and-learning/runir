@@ -1,3 +1,5 @@
+import gc
+
 from pypddl_datasets import data_root
 import pytest
 
@@ -295,19 +297,22 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     assert search_options.max_time is None
     assert search_options.random_seed == 0
     assert search_options.shuffle_labeled_succ_nodes is False
+    assert search_options.shuffle_choice_points is False
+    assert search_options.universal is False
 
-    search_result = ext.find_ground_solution(task_context, program, False, search_options)
+    search_result = ext.find_ground_solution(task_context, program, search_options)
     assert search_result.status == ext.ModuleProgramProofStatus.SUCCESS
     assert search_result.is_successful()
     assert search_result.final_state is not None
     assert search_result.plan is not None
     assert search_result.plan.get_length() == 4
 
-    proof = ext.find_ground_solution(task_context, program, True, search_options)
-    assert proof.status == ext.ModuleProgramProofStatus.SUCCESS
-    assert proof.is_successful()
-    assert proof.graph.get_num_vertices() == 16
-    assert proof.graph.get_num_edges() == 15
+    proof_options = ext.GroundModuleProgramSearchOptions()
+    proof_options.universal = True
+    proof = ext.find_ground_solution(task_context, program, proof_options)
+    assert proof.status == ext.ModuleProgramProofStatus.FAILURE
+    assert not proof.is_successful()
+    assert proof.graph.get_num_vertices() > search_result.graph.get_num_vertices()
     vertex = next(iter(proof.graph.get_vertex_indices()))
     assert isinstance(proof.graph.get_successor_indices(vertex), list)
     edge = next(iter(proof.graph.get_edge_indices()))
@@ -315,12 +320,12 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     assert proof.graph.get_target(edge) in proof.graph.get_vertex_indices()
     assert edge in proof.graph.get_out_edge_indices(proof.graph.get_source(edge))
     vertex_label = proof.graph.get_vertex_property(vertex)
-    assert vertex_label.memory_state is not None
-    assert len(vertex_label.concept_registers) > 0
-    assert len(vertex_label.role_registers) > 0
+    assert vertex_label.execution_state.call_stack.memory_state is not None
+    assert len(vertex_label.execution_state.call_stack.registers.concept_values) > 0
+    assert len(vertex_label.execution_state.call_stack.registers.role_values) > 0
     assert len(proof.deadend_transitions) == 0
     assert len(proof.open_states) == 0
-    assert len(proof.cycle) == 0
+    assert len(proof.cycle) > 0
 
 
 def test_executor_reports_structured_failure_statuses_from_python():
@@ -341,7 +346,8 @@ def test_executor_reports_structured_failure_statuses_from_python():
     )
 )""", planning_domain, repository)
     options = ext.GroundModuleProgramSearchOptions()
-    empty_proof = ext.find_ground_solution(task_context, empty_program, True, options)
+    options.universal = True
+    empty_proof = ext.find_ground_solution(task_context, empty_program, options)
     assert empty_proof.status == ext.ModuleProgramProofStatus.FAILURE
     assert empty_proof.graph.get_num_vertices() == 1
     assert empty_proof.graph.get_num_edges() == 0
@@ -381,7 +387,8 @@ def test_executor_reports_structured_failure_statuses_from_python():
     )
 )""", planning_domain, repository)
     options = ext.GroundModuleProgramSearchOptions()
-    load_proof = ext.find_ground_solution(task_context, load_loop, True, options)
+    options.universal = True
+    load_proof = ext.find_ground_solution(task_context, load_loop, options)
     assert load_proof.status == ext.ModuleProgramProofStatus.FAILURE
     assert len(load_proof.deadend_transitions) == 0
     assert len(load_proof.cycle) > 0
@@ -438,8 +445,85 @@ def test_lifted_executor_binding_reports_failure_status():
     )
 )""", planning_domain, repository)
     options = ext.LiftedModuleProgramSearchOptions()
+    options.universal = True
 
-    result = ext.find_lifted_solution(task_context, program, True, options)
+    result = ext.find_lifted_solution(task_context, program, options)
 
     assert result.status == ext.ModuleProgramProofStatus.FAILURE
     assert not result.is_successful()
+
+
+def test_ground_execution_views_own_their_task_and_program_contexts():
+    task_context, planning_domain, ground_task = _ground_context_and_domain()
+    dl_repository = dl_ext.ConstructorRepositoryFactory().create(ground_task)
+    repository = ext.RepositoryFactory().create(dl_repository)
+    program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
+
+    expander = ext.GroundSuccessorExpander(task_context, program)
+    initial = expander.initial_state()
+    duplicate_initial = expander.initial_state()
+    assert isinstance(initial, ext.GroundExecutionState)
+    assert initial.phase == ext.ExecutionPhase.EXTERNAL
+    assert isinstance(initial.call_stack, ext.GroundCallStack)
+    assert isinstance(initial.call_stack.registers, ext.GroundRegisterValues)
+    assert isinstance(initial.call_stack.arguments, ext.GroundCallArguments)
+    assert initial == duplicate_initial
+    assert initial.call_stack == duplicate_initial.call_stack
+    assert initial.call_stack.registers == duplicate_initial.call_stack.registers
+    assert initial.call_stack.arguments == duplicate_initial.call_stack.arguments
+    assert len({initial, duplicate_initial}) == 1
+
+    steps = expander.control_steps(initial)
+    assert steps
+    assert isinstance(steps[0], ext.GroundModuleProgramExecutionStep)
+    target = steps[0].target
+
+    del steps, duplicate_initial, initial, expander, program, repository, dl_repository, task_context
+    gc.collect()
+
+    assert target.state is not None
+    assert target.program.get_entry_module() is not None
+    assert target.call_stack.module is not None
+    del target
+    gc.collect()
+
+
+def test_lifted_execution_views_and_proof_labels_survive_owner_destruction():
+    planning_task, planning_domain = _planning_task_and_domain()
+    execution_context = ExecutionContext(1)
+    lifted_task = Task(planning_task)
+    search_context = LiftedTaskSearchContext(lifted_task, execution_context)
+    task_context = LiftedTaskContext(search_context)
+    dl_repository = dl_ext.ConstructorRepositoryFactory().create(lifted_task)
+    repository = ext.RepositoryFactory().create(dl_repository)
+    program = dl.parse_module_program("""(:program
+    (:entry empty)
+    (:module
+        (:symbol empty)
+        (:arguments)
+        (:registers)
+        (:entry source)
+        (:memory source)
+        (:features)
+        (:rules)
+    )
+)""", planning_domain, repository)
+
+    expander = ext.LiftedSuccessorExpander(task_context, program)
+    initial = expander.initial_state()
+    assert isinstance(initial, ext.LiftedExecutionState)
+    assert initial.phase == ext.ExecutionPhase.EXTERNAL
+    assert isinstance(initial.call_stack, ext.LiftedCallStack)
+
+    options = ext.LiftedModuleProgramSearchOptions()
+    options.universal = True
+    result = ext.find_lifted_solution(task_context, program, options)
+    vertex = next(iter(result.graph.get_vertex_indices()))
+    label = result.graph.get_vertex_property(vertex)
+    assert isinstance(label, ext.LiftedModuleProgramProofVertexLabel)
+
+    del result, expander, initial, program, repository, dl_repository, task_context, search_context, lifted_task
+    gc.collect()
+
+    assert label.execution_state.state is not None
+    assert label.execution_state.call_stack.memory_state is not None

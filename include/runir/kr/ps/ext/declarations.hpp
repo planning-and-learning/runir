@@ -31,10 +31,7 @@ struct SketchTag
     static constexpr auto keyword = "sketch";
 };
 
-template<typename T>
-concept LoadCategory = std::same_as<T, runir::kr::dl::ConceptTag> || std::same_as<T, runir::kr::dl::RoleTag>;
-
-template<LoadCategory CategoryT>
+template<runir::kr::dl::CategoryTag CategoryT>
 struct LoadTag
 {
     static constexpr auto keyword = "load";

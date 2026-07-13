@@ -1,17 +1,16 @@
 #include <boost/variant/get.hpp>
-#include <cstdlib>
+#include <cista/serialization.h>
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <new>
+#include <random>
 #include <runir/datasets/task_class.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <runir/kr/ps/ext/detail/execution.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
-#include <runir/kr/ps/ext/evaluation.hpp>
-#include <runir/kr/ps/ext/evaluation_context.hpp>
+#include <runir/kr/ps/ext/execution_builder.hpp>
+#include <runir/kr/ps/ext/execution_repository.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/module_program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
@@ -20,44 +19,11 @@
 #include <set>
 #include <type_traits>
 #include <tyr/formalism/planning/parser.hpp>
+#include <tyr/planning/algorithms/portable_shuffle.hpp>
 #include <tyr/planning/planning.hpp>
 #include <variant>
 #include <vector>
 #include <yggdrasil/execution/onetbb.hpp>
-
-namespace allocation_probe
-{
-thread_local bool tracking = false;
-thread_local size_t allocations = 0;
-
-void start() noexcept
-{
-    allocations = 0;
-    tracking = true;
-}
-
-size_t stop() noexcept
-{
-    tracking = false;
-    return allocations;
-}
-}  // namespace allocation_probe
-
-void* operator new(size_t size)
-{
-    if (allocation_probe::tracking)
-        ++allocation_probe::allocations;
-    if (auto* memory = std::malloc(size == 0 ? 1 : size))
-        return memory;
-    throw std::bad_alloc();
-}
-
-void* operator new[](size_t size) { return ::operator new(size); }
-
-void operator delete(void* memory) noexcept { std::free(memory); }
-void operator delete[](void* memory) noexcept { ::operator delete(memory); }
-void operator delete(void* memory, size_t) noexcept { std::free(memory); }
-void operator delete[](void* memory, size_t) noexcept { ::operator delete(memory); }
 
 namespace runir::tests
 {
@@ -117,18 +83,33 @@ auto create_concept_feature(kr::ps::ext::Repository& repository, kr::ps::ext::Co
     return repository.get_or_create(feature_data).first;
 }
 
-auto create_concept_argument(kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repository, ygg::uint_t identifier)
+template<tyr::planning::TaskKind Kind>
+auto create_task_context(const std::filesystem::path& domain, const std::filesystem::path& task_file)
 {
-    auto argument_data =
-        ygg::Data<kr::dl::Concept<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::ConceptTag>>>(kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(identifier));
-    const auto argument = repository.get_or_create(argument_data).first;
-    auto constructor_data = ygg::Data<kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::ConceptTag>>(argument.get_index());
-    return repository.get_or_create(constructor_data).first;
+    namespace fp = tyr::formalism::planning;
+    namespace p = tyr::planning;
+
+    auto execution_context = ygg::ExecutionContext::create(1);
+    auto lifted_task = p::Task<p::LiftedTag>::create(fp::Parser(domain).parse_task(task_file));
+    auto task = p::TaskPtr<Kind> {};
+    if constexpr (std::same_as<Kind, p::LiftedTag>)
+        task = std::move(lifted_task);
+    else
+        task = lifted_task->instantiate_ground_task(*execution_context).task;
+    return kr::TaskContext<Kind>::create(runir::datasets::TaskSearchContext<Kind>::create(std::move(task), std::move(execution_context)));
+}
+
+template<typename T>
+void expect_cista_round_trip(const T& value)
+{
+    auto bytes = cista::serialize(value);
+    const auto* decoded = cista::deserialize<T>(bytes);
+    EXPECT_TRUE(ygg::EqualTo<T> {}(value, *decoded));
 }
 
 }  // namespace
 
-TEST(RunirTests, ExtDistanceFeatureEvaluationIsStableAndLeavesInterpreterStateUnchanged)
+TEST(RunirTests, ExtDistanceFeatureEvaluationReusesTaskContextCache)
 {
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
@@ -151,7 +132,7 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationIsStableAndLeavesInterpreterStateUn
         (:arguments)
         (:registers)
         (:entry source)
-        (:memory source)
+        (:memory source target)
         (:features
             (:numerical
                 (:symbol D)
@@ -164,27 +145,36 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationIsStableAndLeavesInterpreterStateUn
                 )
             )
         )
-        (:rules)
+        (:rules
+            (:rule
+                (:symbol advance)
+                (:expression
+                    (:source-memory source)
+                    (:target-memory target)
+                    (:sketch
+                        (:conditions (greater_zero D))
+                        (:effects)
+                    )
+                )
+            )
+        )
     ))",
                                                       planning_task.get_domain().get_domain(),
                                                       *repository);
     const auto program = create_module_program(*repository, module, { module });
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, module);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(*task_context, program);
-    const auto feature = module.get_features<kr::ps::dl::NumericalFeature>().front();
-    const auto initial_state = context.get_state().get_index();
-    const auto initial_memory = context.get_call_stack().memory_state().get_index();
-
-    EXPECT_EQ(kr::ps::ext::evaluate(feature, context, environment), 1);
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    const auto initial_state = expander.initial_state();
+    const auto first = expander.control_steps(initial_state);
+    ASSERT_EQ(first.size(), 1);
+    EXPECT_EQ(first.front().status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
     EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::NumericalTag>(), 0);
-    EXPECT_EQ(context.get_state().get_index(), initial_state);
-    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), initial_memory);
+    const auto cached_denotations = task_context->dl_denotation_repository->size<kr::dl::NumericalTag>();
 
-    allocation_probe::start();
-    const auto repeated_value = kr::ps::ext::evaluate(feature, context, environment);
-    const auto repeated_allocations = allocation_probe::stop();
-    EXPECT_EQ(repeated_value, 1);
-    EXPECT_EQ(repeated_allocations, 0);
+    const auto second = expander.control_steps(initial_state);
+    ASSERT_EQ(second.size(), 1);
+    EXPECT_EQ(second.front().get_target().get_index(), first.front().get_target().get_index());
+    EXPECT_EQ(task_context->dl_denotation_repository->size<kr::dl::NumericalTag>(), cached_denotations);
+    EXPECT_EQ(initial_state.get_call_stack().get_memory_state().get_name(), "source");
 }
 
 TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
@@ -1169,12 +1159,14 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
 
     auto search_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
 
-    const auto search_result = kr::ps::ext::find_solution(task_context, program, false, search_options);
+    const auto search_result = kr::ps::ext::find_solution(task_context, program, search_options);
     EXPECT_TRUE(search_result.is_successful());
     ASSERT_TRUE(search_result.plan.has_value());
     EXPECT_EQ(search_result.plan->get_length(), 4);
 
-    const auto proof = kr::ps::ext::find_solution(task_context, program, true, search_options);
+    auto proof_options = search_options;
+    proof_options.universal = true;
+    const auto proof = kr::ps::ext::find_solution(task_context, program, proof_options);
     EXPECT_EQ(proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE) << fmt::format("{}", proof);
     ASSERT_TRUE(proof.graph);
     ASSERT_TRUE(search_result.graph);
@@ -1184,9 +1176,9 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     auto has_external_memory_state = false;
     for (const auto vertex : proof.graph->get_vertex_indices())
     {
-        const auto& memory_state = proof.graph->get_vertex(vertex).get_property().extended_state.memory_state;
-        has_internal_memory_state |= std::holds_alternative<kr::ps::ext::InternalMemoryState>(memory_state);
-        has_external_memory_state |= std::holds_alternative<kr::ps::ext::ExternalMemoryState>(memory_state);
+        const auto phase = proof.graph->get_vertex_view(vertex).get_execution_state().get_phase();
+        has_internal_memory_state |= phase == kr::ps::ext::ExecutionPhase::INTERNAL;
+        has_external_memory_state |= phase == kr::ps::ext::ExecutionPhase::EXTERNAL;
     }
     EXPECT_TRUE(has_internal_memory_state);
     EXPECT_TRUE(has_external_memory_state);
@@ -1510,7 +1502,7 @@ TEST(RunirTests, ExtModuleFactoryExposesPaperDescriptionsAndEmptyModule)
     EXPECT_EQ(program.get_modules()[0].get_name(), "root");
 }
 
-TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)
+TEST(RunirTests, ExtExecutionRepositoryInternsPersistentRecordsAndSharesCallers)
 {
     namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
@@ -1522,6 +1514,7 @@ TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)
     auto lifted_task = p::Task<p::LiftedTag>(planning_task);
     auto task = lifted_task.instantiate_ground_task(*execution_context).task;
     auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
     auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
     auto repository_factory = kr::ps::ext::RepositoryFactory();
@@ -1535,23 +1528,221 @@ TEST(RunirTests, ExtModuleEvaluationContextIsolatesAndRestoresCallFrames)
     const auto callee = create_module(*repository, "callee", callee_entry, { callee_entry });
 
     const auto program = create_module_program(*repository, caller, { caller, callee });
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, caller);
+    auto execution_repository = kr::ps::ext::ExecutionRepository<p::GroundTag>::create(task_context, program);
 
-    const auto saved_object = ygg::make_view(ygg::Index<tyr::formalism::Object>(0), *task->get_repository());
-    context.get_call_stack().registers().set(kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0), saved_object);
-    context.get_call_stack().enter_module(callee, caller_return);
+    const void* scratch_address = nullptr;
+    {
+        auto scratch = execution_repository->get_builder<kr::ps::ext::RegisterValues>();
+        scratch_address = scratch.get();
+        scratch->concept_values[0] = ygg::Index<tyr::formalism::Object>(0);
+    }
+    {
+        auto scratch = execution_repository->get_builder<kr::ps::ext::RegisterValues>();
+        EXPECT_EQ(scratch.get(), scratch_address);
+        EXPECT_FALSE(scratch->concept_values[0]);
+    }
 
-    EXPECT_EQ(context.get_call_stack().module().get_index(), callee.get_index());
-    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), callee_entry.get_index());
-    EXPECT_FALSE(context.get_call_stack().registers().get<kr::dl::ConceptTag>()[0]);
-    ASSERT_EQ(context.get_call_stack().frames().size(), 1);
+    const auto [registers, registers_created] = [&]()
+    {
+        auto data = execution_repository->get_builder<kr::ps::ext::RegisterValues>();
+        data->concept_values[0] = ygg::Index<tyr::formalism::Object>(0);
+        return execution_repository->get_or_create(*data);
+    }();
+    const auto [duplicate_registers, duplicate_registers_created] = [&]()
+    {
+        auto data = execution_repository->get_builder<kr::ps::ext::RegisterValues>();
+        data->concept_values[0] = ygg::Index<tyr::formalism::Object>(0);
+        return execution_repository->get_or_create(*data);
+    }();
+    EXPECT_TRUE(registers_created);
+    EXPECT_FALSE(duplicate_registers_created);
+    EXPECT_EQ(registers, duplicate_registers);
 
-    ASSERT_TRUE(context.get_call_stack().restore_caller());
-    EXPECT_EQ(context.get_call_stack().module().get_index(), caller.get_index());
-    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), caller_return.get_index());
-    ASSERT_TRUE(context.get_call_stack().registers().get<kr::dl::ConceptTag>()[0]);
-    EXPECT_EQ(context.get_call_stack().registers().get<kr::dl::ConceptTag>()[0]->get_index(), saved_object.get_index());
-    EXPECT_FALSE(context.get_call_stack().restore_caller());
+    const auto [arguments, arguments_created] = [&]()
+    {
+        auto data = execution_repository->get_builder<kr::ps::ext::CallArguments>();
+        return execution_repository->get_or_create(*data);
+    }();
+    const auto [duplicate_arguments, duplicate_arguments_created] = [&]()
+    {
+        auto data = execution_repository->get_builder<kr::ps::ext::CallArguments>();
+        return execution_repository->get_or_create(*data);
+    }();
+    EXPECT_TRUE(arguments_created);
+    EXPECT_FALSE(duplicate_arguments_created);
+    EXPECT_EQ(arguments, duplicate_arguments);
+
+    const auto [caller_frame, caller_created] = [&]()
+    {
+        auto data = execution_repository->get_builder<kr::ps::ext::CallStack>();
+        data->module = caller.get_index();
+        data->memory_state = caller_return.get_index();
+        data->registers = registers;
+        data->arguments = arguments;
+        return execution_repository->get_or_create(*data);
+    }();
+    EXPECT_TRUE(caller_created);
+
+    const auto create_callee = [&]()
+    {
+        auto data = execution_repository->get_builder<kr::ps::ext::CallStack>();
+        data->module = callee.get_index();
+        data->memory_state = callee_entry.get_index();
+        data->registers = registers;
+        data->arguments = arguments;
+        data->caller = ::cista::optional<ygg::Index<kr::ps::ext::CallStack>>(caller_frame);
+        return execution_repository->get_or_create(*data);
+    };
+    const auto [callee_frame, callee_created] = create_callee();
+    const auto [duplicate_callee_frame, duplicate_callee_created] = create_callee();
+    EXPECT_TRUE(callee_created);
+    EXPECT_FALSE(duplicate_callee_created);
+    EXPECT_EQ(callee_frame, duplicate_callee_frame);
+
+    const auto callee_view = kr::ps::ext::CallStackView<p::GroundTag>(callee_frame, execution_repository);
+    ASSERT_TRUE(callee_view.get_caller());
+    EXPECT_EQ(callee_view.get_caller()->get_index(), caller_frame);
+    EXPECT_EQ(callee_view.get_caller()->get_registers().get_concept_values()[0]->get_index(), ygg::Index<tyr::formalism::Object>(0));
+
+    const auto state = search_context->successor_generator->get_initial_node().get_state();
+    const auto create_returned_state = [&]()
+    {
+        auto data = execution_repository->get_builder<kr::ps::ext::ExecutionState<p::GroundTag>>();
+        data->state = state.get_index();
+        data->call_stack = caller_frame;
+        data->phase = kr::ps::ext::ExecutionPhase::EXTERNAL;
+        return execution_repository->get_or_create(*data);
+    };
+    const auto [returned_state, state_created] = create_returned_state();
+    const auto [duplicate_state, duplicate_state_created] = create_returned_state();
+    EXPECT_TRUE(state_created);
+    EXPECT_FALSE(duplicate_state_created);
+    EXPECT_EQ(returned_state, duplicate_state);
+    EXPECT_EQ(execution_repository->size<kr::ps::ext::RegisterValues>(), 1);
+    EXPECT_EQ(execution_repository->size<kr::ps::ext::CallArguments>(), 1);
+    EXPECT_EQ(execution_repository->size<kr::ps::ext::CallStack>(), 2);
+    EXPECT_EQ(execution_repository->size<kr::ps::ext::ExecutionState<p::GroundTag>>(), 1);
+}
+
+template<tyr::planning::TaskKind Kind>
+void expect_initial_execution_state_survives_expander()
+{
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
+    auto task_context = create_task_context<Kind>(domain, task_file);
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(task_context->search_context->task->get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    const auto entry = create_memory_state(*repository, "entry");
+    const auto module = create_module(*repository, "module", entry, { entry });
+    const auto program = create_module_program(*repository, module, { module });
+
+    const auto state = [&]()
+    {
+        auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
+        const auto initial = expander.initial_state();
+        EXPECT_EQ(initial.get_phase(), kr::ps::ext::ExecutionPhase::EXTERNAL);
+        return initial;
+    }();
+
+    task_context.reset();
+    repository.reset();
+    dl_repository.reset();
+    EXPECT_EQ(state.get_call_stack().get_module().get_name(), "module");
+    EXPECT_EQ(state.get_call_stack().get_memory_state().get_name(), "entry");
+    EXPECT_EQ(state.get_program().get_entry_module().get_name(), "module");
+}
+
+TEST(RunirTests, ExtGroundAndLiftedInitialStatesOwnTheirExecutionRepositories)
+{
+    expect_initial_execution_state_survives_expander<tyr::planning::GroundTag>();
+    expect_initial_execution_state_survives_expander<tyr::planning::LiftedTag>();
+}
+
+TEST(RunirTests, ExtProofLabelViewsOutliveTheGraphAndExpander)
+{
+    namespace p = tyr::planning;
+
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
+    auto task_context = create_task_context<p::GroundTag>(domain, task_file);
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(task_context->search_context->task->get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    const auto module = kr::ps::ext::dl::parse_module(R"((:module
+        (:symbol module)
+        (:arguments)
+        (:registers)
+        (:entry source)
+        (:memory source target)
+        (:features)
+        (:rules
+            (:rule
+                (:symbol advance)
+                (:expression
+                    (:source-memory source)
+                    (:target-memory target)
+                    (:sketch (:conditions) (:effects))
+                )
+            )
+        )
+    ))",
+                                                      task_context->search_context->task->get_domain().get_domain(),
+                                                      *repository);
+    const auto program = create_module_program(*repository, module, { module });
+    const auto expected_rule = module.get_memory_transitions().front().front().get_index();
+    const auto labels = [&]()
+    {
+        auto options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+        options.universal = true;
+        const auto result = kr::ps::ext::find_solution(task_context, program, options);
+        EXPECT_TRUE(result.graph);
+        EXPECT_EQ(result.graph->get_num_vertices(), 2);
+        EXPECT_EQ(result.graph->get_num_edges(), 1);
+        return std::pair(result.graph->get_vertex_view(0), result.graph->get_edge_view(0));
+    }();
+
+    task_context.reset();
+    repository.reset();
+    dl_repository.reset();
+    EXPECT_EQ(labels.first.get_execution_state().get_call_stack().get_module().get_name(), "module");
+    ASSERT_TRUE(labels.second.get_rule());
+    EXPECT_EQ(labels.second.get_rule()->get_index(), expected_rule);
+}
+
+TEST(RunirTests, ExtExecutionRecordsAreCistaCompatible)
+{
+    namespace p = tyr::planning;
+
+    auto builder = kr::ps::ext::ExecutionBuilder<p::GroundTag>();
+    {
+        auto data = builder.get_builder<kr::ps::ext::RegisterValues>();
+        data->concept_values[0] = ygg::Index<tyr::formalism::Object>(3);
+        expect_cista_round_trip(*data);
+    }
+    {
+        auto data = builder.get_builder<kr::ps::ext::CallArguments>();
+        expect_cista_round_trip(*data);
+    }
+    {
+        auto data = builder.get_builder<kr::ps::ext::CallStack>();
+        data->module = ygg::Index<kr::ps::ext::Module>(1);
+        data->memory_state = ygg::Index<kr::ps::ext::MemoryState>(2);
+        data->registers = ygg::Index<kr::ps::ext::RegisterValues>(3);
+        data->arguments = ygg::Index<kr::ps::ext::CallArguments>(4);
+        expect_cista_round_trip(*data);
+    }
+    {
+        auto data = builder.get_builder<kr::ps::ext::ExecutionState<p::GroundTag>>();
+        data->state = ygg::Index<p::State<p::GroundTag>>(5);
+        data->call_stack = ygg::Index<kr::ps::ext::CallStack>(6);
+        data->phase = kr::ps::ext::ExecutionPhase::INTERNAL;
+        expect_cista_round_trip(*data);
+    }
+    expect_cista_round_trip(
+        kr::ps::ext::ModuleProgramProofVertexLabel<p::GroundTag> { ygg::Index<kr::ps::ext::ExecutionState<p::GroundTag>>(7), 2, true, false, true, false });
+    auto edge = kr::ps::ext::ModuleProgramProofEdgeLabel {};
+    edge.state_transition = kr::ps::ext::ModuleProgramProofStateTransition { ygg::Index<tyr::formalism::planning::GroundAction>(8), 1 };
+    edge.rule = ygg::Index<kr::ps::ext::RuleVariant>(9);
+    expect_cista_round_trip(edge);
 }
 
 TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
@@ -1608,34 +1799,57 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     EXPECT_NE(formatted.find("(:register\n                        (:concept r0)\n                    )"), std::string::npos) << formatted;
 
     const auto program = create_module_program(*repository, module, { module });
-    const auto initial_node = search_context->successor_generator->get_initial_node();
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(*task_context, initial_node, program);
-    const auto initial_context = expander.initial_context();
-    const auto steps = expander.load_steps(initial_context);
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    const auto initial_state = expander.initial_state();
+    const auto steps = expander.load_steps(initial_state);
     ASSERT_GT(steps.size(), 1);
 
     auto loaded_objects = std::set<ygg::uint_t> {};
     for (const auto& step : steps)
     {
         EXPECT_EQ(step.status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
-        EXPECT_EQ(step.context.get_state().get_index(), initial_context.get_state().get_index());
-        EXPECT_EQ(step.context.get_call_stack().memory_state().get_index(), target.get_index());
-        const auto& loaded = step.context.get_call_stack().registers().get<kr::dl::ConceptTag>()[0];
+        const auto target_state = step.get_target();
+        EXPECT_EQ(target_state.get_state().get_index(), initial_state.get_state().get_index());
+        EXPECT_EQ(target_state.get_call_stack().get_memory_state().get_index(), target.get_index());
+        const auto loaded = target_state.get_call_stack().get_registers().get_concept_values()[0];
         ASSERT_TRUE(loaded);
         loaded_objects.insert(ygg::uint_t(loaded->get_index()));
     }
     EXPECT_EQ(loaded_objects.size(), steps.size());
 
-    const auto greedy = kr::ps::ext::find_solution(task_context, program, false);
-    const auto universal = kr::ps::ext::find_solution(task_context, program, true);
+    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
+    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    universal_options.universal = true;
+    const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
+    auto expected_steps = steps;
+    auto random = std::mt19937_64(1);
+    p::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
+    ASSERT_NE(expected_steps.front().get_target().get_index(), steps.front().get_target().get_index());
+
+    auto shuffled_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    shuffled_options.random_seed = 1;
+    shuffled_options.shuffle_choice_points = true;
+    const auto shuffled = kr::ps::ext::find_solution(task_context, program, shuffled_options);
+    ASSERT_TRUE(shuffled.graph);
+    ASSERT_EQ(shuffled.graph->get_out_degree(0), 1);
+    const auto shuffled_edge = shuffled.graph->get_out_edge_indices(0).front();
+    const auto shuffled_target = shuffled.graph->get_vertex_view(shuffled.graph->get_target(shuffled_edge)).get_execution_state();
+    const auto actual_loaded = shuffled_target.get_call_stack().get_registers().get_concept_values()[0];
+    const auto expected_loaded = expected_steps.front().get_target().get_call_stack().get_registers().get_concept_values()[0];
+    ASSERT_TRUE(actual_loaded);
+    ASSERT_TRUE(expected_loaded);
+    EXPECT_EQ(actual_loaded->get_index(), expected_loaded->get_index());
+
     auto options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
     options.max_num_states = 1;
-    const auto bounded = kr::ps::ext::find_solution(task_context, program, true, options);
+    options.universal = true;
+    const auto bounded = kr::ps::ext::find_solution(task_context, program, options);
     EXPECT_EQ(bounded.status, kr::ps::ext::ModuleProgramProofStatus::OUT_OF_STATES);
     ASSERT_TRUE(bounded.graph);
     EXPECT_EQ(bounded.graph->get_num_vertices(), 1);
@@ -1701,19 +1915,19 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
     EXPECT_NE(formatted.find("(:register\n                        (:role r0)\n                    )"), std::string::npos) << formatted;
 
     const auto program = create_module_program(*repository, module, { module });
-    const auto initial_node = search_context->successor_generator->get_initial_node();
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(*task_context, initial_node, program);
-    const auto initial_context = expander.initial_context();
-    const auto steps = expander.load_steps(initial_context);
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    const auto initial_state = expander.initial_state();
+    const auto steps = expander.load_steps(initial_state);
     ASSERT_GT(steps.size(), 1);
 
     auto loaded_pairs = std::set<std::pair<ygg::uint_t, ygg::uint_t>> {};
     for (const auto& step : steps)
     {
         EXPECT_EQ(step.status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
-        EXPECT_EQ(step.context.get_state().get_index(), initial_context.get_state().get_index());
-        EXPECT_EQ(step.context.get_call_stack().memory_state().get_name(), "target");
-        const auto& loaded = step.context.get_call_stack().registers().get<kr::dl::RoleTag>()[0];
+        const auto target_state = step.get_target();
+        EXPECT_EQ(target_state.get_state().get_index(), initial_state.get_state().get_index());
+        EXPECT_EQ(target_state.get_call_stack().get_memory_state().get_name(), "target");
+        const auto loaded = target_state.get_call_stack().get_registers().get_role_values()[0];
         ASSERT_TRUE(loaded);
         loaded_pairs.emplace(ygg::uint_t(loaded->first.get_index()), ygg::uint_t(loaded->second.get_index()));
     }
@@ -1742,8 +1956,6 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     const auto caller_entry = create_memory_state(*repository, "caller_entry");
     const auto caller_return = create_memory_state(*repository, "caller_return");
     const auto callee_entry = create_memory_state(*repository, "callee_entry");
-    const auto caller = create_module(*repository, "caller", caller_entry, { caller_entry, caller_return });
-
     auto concept_arg_data = ygg::Data<kr::ps::ext::Argument<kr::dl::ConceptTag>>(std::string("x"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0));
     const auto concept_arg = repository->get_or_create(concept_arg_data).first;
     auto role_arg_data = ygg::Data<kr::ps::ext::Argument<kr::dl::RoleTag>>(std::string("r"), kr::dl::ArgumentIdentifier<kr::dl::RoleTag>(0));
@@ -1773,20 +1985,6 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     (c_top)))",
                                                                planning_task.get_domain().get_domain(),
                                                                *dl_repository);
-    const auto concept_argument = create_concept_argument(*dl_repository, 0);
-    const auto role_argument = kr::ps::ext::dl::parse_role(R"((r_argument
-    0))",
-                                                           planning_task.get_domain().get_domain(),
-                                                           *dl_repository);
-    const auto boolean_argument = kr::ps::ext::dl::parse_boolean(R"((b_argument
-    0))",
-                                                                 planning_task.get_domain().get_domain(),
-                                                                 *dl_repository);
-    const auto numerical_argument = kr::ps::ext::dl::parse_numerical(R"((n_argument
-    0))",
-                                                                     planning_task.get_domain().get_domain(),
-                                                                     *dl_repository);
-
     auto call_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::CallTag>>();
     call_data.source = caller_entry.get_index();
     call_data.target = caller_return.get_index();
@@ -1798,54 +1996,66 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     kr::ps::ext::canonicalize(call_data);
     const auto call = repository->get_or_create(call_data).first;
 
+    auto variant_data = ygg::Data<kr::ps::ext::RuleVariant>(call.get_index());
+    const auto variant = repository->get_or_create(variant_data).first;
+    auto caller_data = ygg::Data<kr::ps::ext::Module>(std::string("caller"));
+    caller_data.entry_memory_state = caller_entry.get_index();
+    caller_data.memory_states.push_back(caller_entry.get_index());
+    caller_data.memory_states.push_back(caller_return.get_index());
+    auto transition = ygg::IndexList<kr::ps::ext::RuleVariant> {};
+    transition.push_back(variant.get_index());
+    ygg::canonicalize(transition);
+    caller_data.memory_transitions.push_back(std::move(transition));
+    kr::ps::ext::canonicalize(caller_data);
+    const auto caller = repository->get_or_create(caller_data).first;
+
     const auto program = create_module_program(*repository, caller, { caller, callee });
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, caller);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(*task_context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    const auto initial_state = expander.initial_state();
+    const auto call_steps = expander.control_steps(initial_state);
+    ASSERT_EQ(call_steps.size(), 1);
+    EXPECT_EQ(call_steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
+    const auto call_target = call_steps.front().get_target();
+    const auto call_stack = call_target.get_call_stack();
+    EXPECT_EQ(call_stack.get_module().get_index(), callee.get_index());
+    EXPECT_EQ(call_stack.get_memory_state().get_index(), callee_entry.get_index());
+    const auto arguments = call_stack.get_arguments();
+    const auto concept_arguments = arguments.get<kr::dl::ConceptTag>();
+    const auto role_arguments = arguments.get<kr::dl::RoleTag>();
+    const auto boolean_arguments = arguments.get<kr::dl::BooleanTag>();
+    const auto numerical_arguments = arguments.get<kr::dl::NumericalTag>();
+    ASSERT_EQ(concept_arguments.size(), 1);
+    ASSERT_EQ(role_arguments.size(), 1);
+    ASSERT_EQ(boolean_arguments.size(), 1);
+    ASSERT_EQ(numerical_arguments.size(), 1);
 
-    EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
-    EXPECT_EQ(context.get_call_stack().module().get_index(), callee.get_index());
-    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), callee_entry.get_index());
-    ASSERT_EQ(context.get_call_stack().arguments().get<kr::dl::ConceptTag>().size(), 1);
-    ASSERT_EQ(context.get_call_stack().arguments().get<kr::dl::RoleTag>().size(), 1);
-    ASSERT_EQ(context.get_call_stack().arguments().get<kr::dl::BooleanTag>().size(), 1);
-    ASSERT_EQ(context.get_call_stack().arguments().get<kr::dl::NumericalTag>().size(), 1);
-
-    const auto concept_denotation = kr::ps::ext::evaluate_argument(concept_argument.get_index(), context, environment);
+    const auto concept_denotation = concept_arguments.front();
     const auto concept_first = concept_denotation.begin();
     ASSERT_NE(concept_first, concept_denotation.end());
     EXPECT_EQ((*concept_first).get_index(), ygg::Index<tyr::formalism::Object>(0));
 
-    const auto role_denotation = kr::ps::ext::evaluate_argument(role_argument.get_index(), context, environment);
+    const auto role_denotation = role_arguments.front();
     const auto role_first = role_denotation.begin();
     ASSERT_NE(role_first, role_denotation.end());
     const auto role_pair = *role_first;
     EXPECT_EQ(role_pair.first.get_index(), ygg::Index<tyr::formalism::Object>(0));
     EXPECT_EQ(role_pair.second.get_index(), ygg::Index<tyr::formalism::Object>(0));
 
-    EXPECT_TRUE(kr::ps::ext::evaluate_argument(boolean_argument.get_index(), context, environment).get());
-    EXPECT_GT(kr::ps::ext::evaluate_argument(numerical_argument.get_index(), context, environment).get(), 0);
+    EXPECT_TRUE(boolean_arguments.front().get());
+    EXPECT_GT(numerical_arguments.front().get(), 0);
 
-    allocation_probe::start();
-    const auto repeated_concept = kr::ps::ext::evaluate_argument(concept_argument.get_index(), context, environment);
-    const auto repeated_allocations = allocation_probe::stop();
-    EXPECT_EQ(repeated_concept.get_index(), concept_denotation.get_index());
-    EXPECT_EQ(repeated_allocations, 0);
+    const auto caller_frame = call_stack.get_caller();
+    ASSERT_TRUE(caller_frame);
+    const auto return_steps = expander.control_steps(call_target);
+    ASSERT_EQ(return_steps.size(), 1);
+    EXPECT_EQ(return_steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::RESTORED_CALLER);
+    EXPECT_EQ(return_steps.front().get_target().get_call_stack().get_index(), caller_frame->get_index());
+    EXPECT_EQ(return_steps.front().get_target().get_call_stack().get_module().get_index(), caller.get_index());
+    EXPECT_EQ(return_steps.front().get_target().get_call_stack().get_memory_state().get_index(), caller_return.get_index());
 
-    ASSERT_TRUE(context.get_call_stack().restore_caller());
-    EXPECT_EQ(context.get_call_stack().module().get_index(), caller.get_index());
-    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), caller_return.get_index());
-
-    context.get_call_stack().set_memory_state(caller_entry);
-    allocation_probe::start();
-    const auto repeated_call_status = kr::ps::ext::detail::execute_call(call, context, environment);
-    const auto repeated_call_allocations = allocation_probe::stop();
-    EXPECT_EQ(repeated_call_status, kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
-    EXPECT_EQ(repeated_call_allocations, 0);
-    EXPECT_EQ(context.get_call_stack().module().get_index(), callee.get_index());
-
-    ASSERT_TRUE(context.get_call_stack().restore_caller());
-    EXPECT_EQ(context.get_call_stack().module().get_index(), caller.get_index());
-    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), caller_return.get_index());
+    const auto repeated_call_steps = expander.control_steps(initial_state);
+    ASSERT_EQ(repeated_call_steps.size(), 1);
+    EXPECT_EQ(repeated_call_steps.front().get_target().get_index(), call_target.get_index());
 }
 
 TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
@@ -1870,7 +2080,6 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     const auto caller_entry = create_memory_state(*repository, "caller_entry");
     const auto caller_return = create_memory_state(*repository, "caller_return");
     const auto callee_entry = create_memory_state(*repository, "callee_entry");
-    const auto caller = create_module(*repository, "caller", caller_entry, { caller_entry, caller_return });
     const auto callee = create_module(*repository, "callee", callee_entry, { callee_entry });
 
     auto call_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::CallTag>>();
@@ -1880,13 +2089,26 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     kr::ps::ext::canonicalize(call_data);
     const auto call = repository->get_or_create(call_data).first;
 
-    const auto program = create_module_program(*repository, caller, { caller, callee });
-    auto context = kr::ps::ext::EvaluationContext<p::GroundTag>(search_context->successor_generator->get_initial_node().get_state(), program, caller);
-    auto environment = kr::ps::ext::EvaluationEnvironment<p::GroundTag>(*task_context, program);
+    auto variant_data = ygg::Data<kr::ps::ext::RuleVariant>(call.get_index());
+    const auto variant = repository->get_or_create(variant_data).first;
+    auto caller_data = ygg::Data<kr::ps::ext::Module>(std::string("caller"));
+    caller_data.entry_memory_state = caller_entry.get_index();
+    caller_data.memory_states.push_back(caller_entry.get_index());
+    caller_data.memory_states.push_back(caller_return.get_index());
+    auto transition = ygg::IndexList<kr::ps::ext::RuleVariant> {};
+    transition.push_back(variant.get_index());
+    ygg::canonicalize(transition);
+    caller_data.memory_transitions.push_back(std::move(transition));
+    kr::ps::ext::canonicalize(caller_data);
+    const auto caller = repository->get_or_create(caller_data).first;
 
-    EXPECT_EQ(kr::ps::ext::detail::execute_call(call, context, environment), kr::ps::ext::detail::RuleExecutionStatus::APPLIED);
-    EXPECT_EQ(context.get_call_stack().module().get_index(), callee.get_index());
-    EXPECT_EQ(context.get_call_stack().memory_state().get_index(), callee_entry.get_index());
+    const auto program = create_module_program(*repository, caller, { caller, callee });
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    const auto steps = expander.control_steps(expander.initial_state());
+    ASSERT_EQ(steps.size(), 1);
+    EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
+    EXPECT_EQ(steps.front().get_target().get_call_stack().get_module().get_index(), callee.get_index());
+    EXPECT_EQ(steps.front().get_target().get_call_stack().get_memory_state().get_index(), callee_entry.get_index());
 }
 
 TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
@@ -1945,10 +2167,9 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     kr::ps::ext::canonicalize(module_data);
     const auto module = repository->get_or_create(module_data).first;
     const auto program = create_module_program(*repository, module, { module });
-    const auto initial_node = search_context->successor_generator->get_initial_node();
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(*task_context, initial_node, program);
-    const auto initial_context = expander.initial_context();
-    const auto steps = expander.control_steps(initial_context);
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    const auto initial_state = expander.initial_state();
+    const auto steps = expander.control_steps(initial_state);
     ASSERT_GT(steps.size(), 1);
 
     for (const auto& step : steps)
@@ -1956,16 +2177,36 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
         EXPECT_EQ(step.status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
         ASSERT_EQ(step.plan_suffix.size(), 1);
         EXPECT_EQ(step.plan_suffix.front().label.get_action().get_name(), "pick");
-        EXPECT_EQ(step.context.get_call_stack().memory_state().get_index(), target.get_index());
-        EXPECT_NE(step.context.get_state().get_index(), initial_context.get_state().get_index());
+        EXPECT_EQ(step.get_target().get_call_stack().get_memory_state().get_index(), target.get_index());
+        EXPECT_NE(step.get_target().get_state().get_index(), initial_state.get_state().get_index());
     }
 
-    const auto greedy = kr::ps::ext::find_solution(task_context, program, false);
-    const auto universal = kr::ps::ext::find_solution(task_context, program, true);
+    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
+    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    universal_options.universal = true;
+    const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
+
+    auto expected_steps = steps;
+    auto random = std::mt19937_64(1);
+    p::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
+    ASSERT_NE(expected_steps.front().get_target().get_index(), steps.front().get_target().get_index());
+
+    auto shuffled_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    shuffled_options.random_seed = 1;
+    shuffled_options.shuffle_choice_points = true;
+    const auto shuffled = kr::ps::ext::find_solution(task_context, program, shuffled_options);
+    ASSERT_TRUE(shuffled.graph);
+    ASSERT_EQ(shuffled.graph->get_out_degree(0), 1);
+    const auto shuffled_edge = shuffled.graph->get_out_edge_indices(0).front();
+    const auto shuffled_target = shuffled.graph->get_vertex_view(shuffled.graph->get_target(shuffled_edge)).get_execution_state();
+    EXPECT_EQ(shuffled_target.get_state().get_index(), expected_steps.front().get_target().get_state().get_index());
+    EXPECT_EQ(shuffled_target.get_call_stack().get_memory_state().get_index(),
+              expected_steps.front().get_target().get_call_stack().get_memory_state().get_index());
 }
 
 TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
@@ -2032,15 +2273,16 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
                                                       planning_task.get_domain().get_domain(),
                                                       *repository);
     const auto program = create_module_program(*repository, module, { module });
-    const auto initial_node = search_context->successor_generator->get_initial_node();
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(*task_context, initial_node, program);
-    const auto initial_context = expander.initial_context();
-    const auto steps = expander.control_steps(initial_context);
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    const auto initial_state = expander.initial_state();
+    const auto steps = expander.control_steps(initial_state);
     ASSERT_EQ(steps.size(), 1);
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION);
-    EXPECT_EQ(steps.front().context.get_state().get_index(), initial_context.get_state().get_index());
+    EXPECT_EQ(steps.front().get_target().get_state().get_index(), initial_state.get_state().get_index());
 
-    const auto result = kr::ps::ext::find_solution(task_context, program, true);
+    auto options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    options.universal = true;
+    const auto result = kr::ps::ext::find_solution(task_context, program, options);
     EXPECT_EQ(result.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(result.graph);
     EXPECT_EQ(result.graph->get_num_vertices(), 1);
@@ -2125,26 +2367,28 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     const auto module = repository->get_or_create(module_data).first;
 
     const auto program = create_module_program(*repository, module, { module });
-    const auto initial_node = search_context->successor_generator->get_initial_node();
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(*task_context, initial_node, program);
-    const auto steps = expander.control_steps(expander.initial_context());
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    const auto steps = expander.control_steps(expander.initial_state());
     ASSERT_GT(steps.size(), 2);
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
-    EXPECT_EQ(steps.front().context.get_call_stack().memory_state().get_index(), move_target.get_index());
+    EXPECT_EQ(steps.front().get_target().get_call_stack().get_memory_state().get_index(), move_target.get_index());
 
     auto reached_move_target = false;
     auto reached_pick_target = false;
     for (const auto& step : steps)
     {
         ASSERT_EQ(step.plan_suffix.size(), 1);
-        reached_move_target |= step.context.get_call_stack().memory_state().get_index() == move_target.get_index();
-        reached_pick_target |= step.context.get_call_stack().memory_state().get_index() == pick_target.get_index();
+        reached_move_target |= step.get_target().get_call_stack().get_memory_state().get_index() == move_target.get_index();
+        reached_pick_target |= step.get_target().get_call_stack().get_memory_state().get_index() == pick_target.get_index();
     }
     EXPECT_TRUE(reached_move_target);
     EXPECT_TRUE(reached_pick_target);
 
-    const auto greedy = kr::ps::ext::find_solution(task_context, program, false);
-    const auto universal = kr::ps::ext::find_solution(task_context, program, true);
+    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
+    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    universal_options.universal = true;
+    const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
@@ -2201,18 +2445,20 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
                                                       task->get_domain().get_domain(),
                                                       *repository);
     const auto program = create_module_program(*repository, module, { module });
-    const auto initial_node = search_context->successor_generator->get_initial_node();
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(*task_context, initial_node, program);
-    const auto initial_context = expander.initial_context();
-    const auto immediate = expander.labeled_successors(initial_context);
-    const auto steps = expander.control_steps(initial_context, immediate);
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    const auto initial_state = expander.initial_state();
+    const auto immediate = expander.labeled_successors(initial_state);
+    const auto steps = expander.control_steps(initial_state, immediate);
     ASSERT_GT(immediate.size(), 1);
     ASSERT_EQ(steps.size(), immediate.size() * 2);
     for (const auto& step : steps)
         EXPECT_EQ(step.plan_suffix.size(), 1);
 
-    const auto greedy = kr::ps::ext::find_solution(task_context, program, false);
-    const auto universal = kr::ps::ext::find_solution(task_context, program, true);
+    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
+    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    universal_options.universal = true;
+    const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
@@ -2263,13 +2509,14 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
                                                                task->get_domain().get_domain(),
                                                                *repository);
     const auto two_step_program = create_module_program(*repository, two_step_module, { two_step_module });
-    auto two_step_expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(*task_context, initial_node, two_step_program);
-    const auto two_step_context = two_step_expander.initial_context();
-    const auto two_step_outcomes = two_step_expander.control_steps(two_step_context);
+    auto two_step_expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, two_step_program);
+    const auto two_step_state = two_step_expander.initial_state();
+    const auto two_step_outcomes = two_step_expander.control_steps(two_step_state);
     ASSERT_EQ(two_step_outcomes.size(), 1);
     EXPECT_EQ(two_step_outcomes.front().status, kr::ps::ext::detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION);
 
-    const auto rejected = kr::ps::ext::find_solution(task_context, two_step_program, false);
+    auto rejected_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    const auto rejected = kr::ps::ext::find_solution(task_context, two_step_program, rejected_options);
     EXPECT_EQ(rejected.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(rejected.graph);
     EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
@@ -2318,7 +2565,8 @@ TEST(RunirTests, ExtFindSolutionReportsTheCompleteThreeStateCycle)
                                                       *repository);
     const auto program = create_module_program(*repository, module, { module });
 
-    const auto result = kr::ps::ext::find_solution(task_context, program, false);
+    auto options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    const auto result = kr::ps::ext::find_solution(task_context, program, options);
     EXPECT_EQ(result.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(result.graph);
     EXPECT_EQ(result.graph->get_num_vertices(), 3);
@@ -2354,8 +2602,9 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     const auto empty_module = create_module(*repository, "empty", source, { source });
 
     auto proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
+    proof_options.universal = true;
     const auto empty_program = create_module_program(*repository, empty_module, { empty_module });
-    const auto empty_proof = kr::ps::ext::find_solution(task_context, empty_program, true, proof_options);
+    const auto empty_proof = kr::ps::ext::find_solution(task_context, empty_program, proof_options);
     EXPECT_EQ(empty_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(empty_proof.graph);
     EXPECT_EQ(empty_proof.graph->get_num_vertices(), 1);
@@ -2384,8 +2633,9 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     kr::ps::ext::canonicalize(load_module_data);
     const auto load_module = repository->get_or_create(load_module_data).first;
     auto load_proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
+    load_proof_options.universal = true;
     const auto load_program = create_module_program(*repository, load_module, { load_module });
-    const auto load_proof = kr::ps::ext::find_solution(task_context, load_program, true, load_proof_options);
+    const auto load_proof = kr::ps::ext::find_solution(task_context, load_program, load_proof_options);
     EXPECT_EQ(load_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(load_proof.graph);
     EXPECT_TRUE(load_proof.deadend_transitions.empty());
@@ -2418,7 +2668,9 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     kr::ps::ext::canonicalize(caller_data);
     const auto caller = repository->get_or_create(caller_data).first;
     const auto caller_program = create_module_program(*repository, caller, { caller, callee });
-    const auto caller_proof = kr::ps::ext::find_solution(task_context, caller_program, true);
+    auto caller_proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    caller_proof_options.universal = true;
+    const auto caller_proof = kr::ps::ext::find_solution(task_context, caller_program, caller_proof_options);
     EXPECT_EQ(caller_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(caller_proof.graph);
     EXPECT_TRUE(caller_proof.deadend_transitions.empty());
@@ -2443,7 +2695,9 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     const auto do_module = repository->get_or_create(do_module_data).first;
 
     const auto do_program = create_module_program(*repository, do_module, { do_module });
-    const auto do_proof = kr::ps::ext::find_solution(task_context, do_program, true);
+    auto do_proof_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    do_proof_options.universal = true;
+    const auto do_proof = kr::ps::ext::find_solution(task_context, do_program, do_proof_options);
     EXPECT_EQ(do_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(do_proof.graph);
     EXPECT_EQ(do_proof.graph->get_num_vertices(), 1);

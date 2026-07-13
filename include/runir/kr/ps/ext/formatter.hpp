@@ -647,24 +647,6 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::MemoryState>, C>>
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::memory_state(view), ctx); }
 };
 
-template<>
-struct fmt::formatter<runir::kr::ps::ext::InternalMemoryState> : fmt::formatter<std::string_view>
-{
-    auto format(const runir::kr::ps::ext::InternalMemoryState& state, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(fmt::format("internal({})", state.value), ctx);
-    }
-};
-
-template<>
-struct fmt::formatter<runir::kr::ps::ext::ExternalMemoryState> : fmt::formatter<std::string_view>
-{
-    auto format(const runir::kr::ps::ext::ExternalMemoryState& state, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(fmt::format("external({})", state.value), ctx);
-    }
-};
-
 template<typename FeatureTag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C>> : fmt::formatter<std::string_view>
 {
@@ -796,20 +778,34 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgram>, C
     }
 };
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
 template<tyr::planning::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>> : fmt::formatter<std::string_view>
 {
     auto format(const runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>& label, format_context& ctx) const
     {
-        const auto& state = label.extended_state.annotated_state;
+        const auto text = fmt::format("execution_state={} initial={} goal={} alive={} unsolvable={}",
+                                      ygg::uint_t(label.execution_state),
+                                      label.is_initial,
+                                      label.is_goal,
+                                      label.is_alive,
+                                      label.is_unsolvable);
+        return fmt::formatter<std::string_view>::format(text, ctx);
+    }
+};
+
+template<tyr::planning::TaskKind Kind>
+struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofVertexLabelView<Kind>> : fmt::formatter<std::string_view>
+{
+    auto format(const runir::kr::ps::ext::ModuleProgramProofVertexLabelView<Kind>& label, format_context& ctx) const
+    {
+        const auto execution_state = label.get_execution_state();
         const auto text = fmt::format("state={} module={} initial={} goal={} alive={} unsolvable={}",
-                                      ygg::uint_t(state.state.get_index()),
-                                      ygg::uint_t(label.module_.get_index()),
-                                      state.is_initial,
-                                      state.is_goal,
-                                      state.is_alive,
-                                      state.is_unsolvable);
+                                      ygg::uint_t(execution_state.get_state().get_index()),
+                                      ygg::uint_t(execution_state.get_call_stack().get_module().get_index()),
+                                      label.is_initial(),
+                                      label.is_goal(),
+                                      label.is_alive(),
+                                      label.is_unsolvable());
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -819,11 +815,19 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofEdgeLabel> : fmt::fo
 {
     auto format(const runir::kr::ps::ext::ModuleProgramProofEdgeLabel& label, format_context& ctx) const
     {
-        return fmt::formatter<std::string_view>::format(label.rule ? fmt::format("rule={}", ygg::uint_t(label.rule->get_index())) : std::string("rule=<none>"),
-                                                        ctx);
+        return fmt::formatter<std::string_view>::format(label.rule ? fmt::format("rule={}", ygg::uint_t(*label.rule)) : std::string("rule=<none>"), ctx);
     }
 };
-#endif
+
+template<tyr::planning::TaskKind Kind>
+struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofEdgeLabelView<Kind>> : fmt::formatter<std::string_view>
+{
+    auto format(const runir::kr::ps::ext::ModuleProgramProofEdgeLabelView<Kind>& label, format_context& ctx) const
+    {
+        const auto rule = label.get_rule();
+        return fmt::formatter<std::string_view>::format(rule ? fmt::format("rule={}", ygg::uint_t(rule->get_index())) : std::string("rule=<none>"), ctx);
+    }
+};
 
 template<tyr::planning::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofResults<Kind>> : fmt::formatter<std::string_view>

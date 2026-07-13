@@ -28,7 +28,7 @@ enum class RuleExecutionStatus
     MALFORMED_CALL
 };
 
-template<LoadCategory Category, typename C, tyr::planning::TaskKind Kind>
+template<runir::kr::dl::CategoryTag Category, typename C, tyr::planning::TaskKind Kind>
 bool has_current_source(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> rule, const EvaluationContext<Kind>& context)
 {
     return rule.get_source().get_index() == context.get_call_stack().memory_state().get_index();
@@ -52,13 +52,13 @@ bool has_current_source(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, const Eval
     return rule.get_source().get_index() == context.get_call_stack().memory_state().get_index();
 }
 
-template<LoadCategory Category, typename C, tyr::planning::TaskKind Kind>
+template<runir::kr::dl::CategoryTag Category, typename C, tyr::planning::TaskKind Kind>
 bool load_rule_is_applicable(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> rule, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
 {
     return has_current_source(rule, context) && conditions_are_compatible(rule, context, environment);
 }
 
-template<LoadCategory Category, typename C, tyr::planning::TaskKind Kind>
+template<runir::kr::dl::CategoryTag Category, typename C, tyr::planning::TaskKind Kind>
 auto evaluate_load_expression(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> rule,
                               EvaluationContext<Kind>& context,
                               EvaluationEnvironment<Kind>& environment)
@@ -66,7 +66,7 @@ auto evaluate_load_expression(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> 
     return evaluate(rule.get_expression(), context, environment);
 }
 
-template<LoadCategory Category, typename C, tyr::planning::TaskKind Kind, typename Value>
+template<runir::kr::dl::CategoryTag Category, typename C, tyr::planning::TaskKind Kind, typename Value>
 void apply_load_binding(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> rule, const Value& value, EvaluationContext<Kind>& context)
 {
     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
@@ -215,25 +215,25 @@ RuleExecutionStatus execute_sketch(ygg::View<ygg::Index<Rule<SketchTag>>, C> rul
 }
 
 template<tyr::planning::TaskKind Kind>
-void append_call_argument(ConceptArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, CallArguments& target)
+void append_call_argument(ConceptArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, EvaluationArguments& target)
 {
     target.get<runir::kr::dl::ConceptTag>().push_back(evaluate_argument(argument, context, environment));
 }
 
 template<tyr::planning::TaskKind Kind>
-void append_call_argument(RoleArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, CallArguments& target)
+void append_call_argument(RoleArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, EvaluationArguments& target)
 {
     target.get<runir::kr::dl::RoleTag>().push_back(evaluate_argument(argument, context, environment));
 }
 
 template<tyr::planning::TaskKind Kind>
-void append_call_argument(BooleanArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, CallArguments& target)
+void append_call_argument(BooleanArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, EvaluationArguments& target)
 {
     target.get<runir::kr::dl::BooleanTag>().push_back(evaluate_argument(argument, context, environment));
 }
 
 template<tyr::planning::TaskKind Kind>
-void append_call_argument(NumericalArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, CallArguments& target)
+void append_call_argument(NumericalArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, EvaluationArguments& target)
 {
     target.get<runir::kr::dl::NumericalTag>().push_back(evaluate_argument(argument, context, environment));
 }
@@ -247,7 +247,7 @@ auto& evaluate_call_arguments(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, Eval
     return result;
 }
 
-inline bool call_arguments_match_signature(ModuleView callee, const CallArguments& arguments)
+inline bool call_arguments_match_signature(ModuleView callee, const EvaluationArguments& arguments)
 {
     return arguments.get<runir::kr::dl::ConceptTag>().size() == callee.template get_arguments<runir::kr::dl::ConceptTag>().size()
            && arguments.get<runir::kr::dl::RoleTag>().size() == callee.template get_arguments<runir::kr::dl::RoleTag>().size()

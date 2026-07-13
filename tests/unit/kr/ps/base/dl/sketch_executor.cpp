@@ -68,7 +68,9 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, task->get_domain().get_domain(), *repository);
         const auto* dl_builder = &task_context->dl_builder;
         const auto* dl_denotation_repository = task_context->dl_denotation_repository.get();
-        const auto result = kr::ps::base::find_solution(task_context, sketch, true);
+        auto proof_options = kr::ps::base::SketchSearchOptions<p::GroundTag> {};
+        proof_options.universal = true;
+        const auto result = kr::ps::base::find_solution(task_context, sketch, proof_options);
 
         EXPECT_TRUE(result.is_successful()) << test_case.domain;
         EXPECT_TRUE(result.deadend_transitions.empty()) << test_case.domain;
@@ -76,7 +78,8 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_TRUE(result.cycle.empty()) << test_case.domain;
         EXPECT_GT(result.graph->get_num_vertices(), 0) << test_case.domain;
 
-        const auto fragment = kr::ps::base::find_solution(task_context, sketch, false);
+        auto search_options = kr::ps::base::SketchSearchOptions<p::GroundTag> {};
+        const auto fragment = kr::ps::base::find_solution(task_context, sketch, search_options);
         EXPECT_TRUE(fragment.is_successful()) << test_case.domain;
         ASSERT_TRUE(fragment.graph) << test_case.domain;
         EXPECT_GT(fragment.graph->get_num_vertices(), 0) << test_case.domain;
@@ -131,8 +134,11 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     const auto accepted = expander.accepted_successors(context, immediate);
     ASSERT_GT(accepted.size(), 1);
 
-    const auto greedy = kr::ps::base::find_solution(task_context, sketch, false);
-    const auto universal = kr::ps::base::find_solution(task_context, sketch, true);
+    auto greedy_options = kr::ps::base::SketchSearchOptions<p::GroundTag> {};
+    const auto greedy = kr::ps::base::find_solution(task_context, sketch, greedy_options);
+    auto universal_options = kr::ps::base::SketchSearchOptions<p::GroundTag> {};
+    universal_options.universal = true;
+    const auto universal = kr::ps::base::find_solution(task_context, sketch, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
@@ -147,7 +153,8 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
 
     auto options = kr::ps::base::SketchSearchOptions<p::GroundTag> {};
     options.max_num_states = 1;
-    const auto bounded = kr::ps::base::find_solution(task_context, sketch, true, options);
+    options.universal = true;
+    const auto bounded = kr::ps::base::find_solution(task_context, sketch, options);
     EXPECT_EQ(bounded.status, kr::ps::base::SketchProofStatus::OUT_OF_STATES);
     ASSERT_TRUE(bounded.graph);
     EXPECT_EQ(bounded.graph->get_num_vertices(), 1);
@@ -187,7 +194,8 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     const auto two_step_successors = two_step_expander.labeled_successors(two_step_context);
     EXPECT_TRUE(two_step_expander.accepted_successors(two_step_context, two_step_successors).empty());
 
-    const auto rejected = kr::ps::base::find_solution(task_context, two_step_only, false);
+    auto rejected_options = kr::ps::base::SketchSearchOptions<p::GroundTag> {};
+    const auto rejected = kr::ps::base::find_solution(task_context, two_step_only, rejected_options);
     EXPECT_EQ(rejected.status, kr::ps::base::SketchProofStatus::FAILURE);
     ASSERT_TRUE(rejected.graph);
     EXPECT_EQ(rejected.graph->get_num_vertices(), 1);

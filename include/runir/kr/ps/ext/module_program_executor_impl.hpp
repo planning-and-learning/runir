@@ -9,13 +9,11 @@
 namespace runir::kr::ps::ext
 {
 template<tyr::planning::TaskKind Kind>
-auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
+auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                    ModuleProgramView program,
-                   bool universal,
                    const ModuleProgramSearchOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
 {
-    auto& task_context = *task_context_owner;
-    return detail::find_solution(task_context, std::move(task_context_owner), program, universal, options);
+    return detail::find_solution(std::move(task_context), program, options);
 }
 
 }  // namespace runir::kr::ps::ext

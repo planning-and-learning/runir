@@ -1450,7 +1450,7 @@ void validate_do_action(tyr::formalism::planning::DomainView domain, const ast::
         fail("Do rule for action \"" + rule.action + "\" has " + std::to_string(rule.arguments.size()) + " arguments; expected " + std::to_string(*arity));
 }
 
-template<LoadCategory Category>
+template<runir::kr::dl::CategoryTag Category>
 auto parse_load_rule(Repository& repository,
                      const ast::LoadRule<Category>& rule,
                      ygg::Index<MemoryState> source,

@@ -5,12 +5,12 @@
 #include "runir/kr/ps/base/sketch_executor_data.hpp"
 #include "runir/kr/ps/base/successor_expander.hpp"
 
-#include <algorithm>
 #include <chrono>
 #include <limits>
 #include <memory>
 #include <optional>
 #include <random>
+#include <tyr/planning/algorithms/portable_shuffle.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
@@ -19,8 +19,7 @@ namespace runir::kr::ps::base::detail
 {
 
 template<tyr::planning::TaskKind Kind>
-auto execute_direct(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, bool universal, const SketchSearchOptions<Kind>& options)
-    -> SketchProofResults<Kind>
+auto execute_direct(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
     auto& task_context = *task_context_owner;
     const auto& search_context = *task_context.search_context;
@@ -100,7 +99,7 @@ auto execute_direct(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVi
         if (out_of_time())
             return finish(SketchProofStatus::OUT_OF_TIME);
         if (options.shuffle_labeled_succ_nodes)
-            std::shuffle(successors.begin(), successors.end(), random);
+            tyr::planning::portable_shuffle(successors.begin(), successors.end(), random);
 
         auto accepted = expander.accepted_successors(context, successors, out_of_time);
         if (out_of_time())
@@ -110,7 +109,7 @@ auto execute_direct(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVi
             result.open_states.push_back(source);
             continue;
         }
-        if (!universal)
+        if (!options.universal)
             accepted.erase(accepted.begin() + 1, accepted.end());
 
         for (const auto& [successor, rule] : accepted)
@@ -136,10 +135,9 @@ namespace runir::kr::ps::base
 {
 
 template<tyr::planning::TaskKind Kind>
-auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, bool universal, const SketchSearchOptions<Kind>& options)
-    -> SketchProofResults<Kind>
+auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
-    return detail::execute_direct(std::move(task_context_owner), sketch, universal, options);
+    return detail::execute_direct(std::move(task_context_owner), sketch, options);
 }
 
 }  // namespace runir::kr::ps::base

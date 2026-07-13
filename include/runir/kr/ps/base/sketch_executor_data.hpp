@@ -39,6 +39,7 @@ struct SketchProofResults
 template<tyr::planning::TaskKind Kind>
 struct SketchSearchOptions
 {
+    bool universal = false;
     ygg::uint_t max_num_states = std::numeric_limits<ygg::uint_t>::max();
     std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
     uint64_t random_seed = 0;

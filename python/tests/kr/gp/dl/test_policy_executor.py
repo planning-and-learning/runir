@@ -7,6 +7,7 @@ from pyrunir.kr.dl.base.semantics import (
 )
 from pyrunir.kr.ps.base import (
     GroundSketchProofGraph,
+    GroundSketchSearchOptions,
     SketchProofEdgeLabel,
     SketchProofStatus,
     SuccessorExpander,
@@ -142,7 +143,9 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
         assert str(view)
         assert isinstance(hash(view), int)
 
-    proof_result = find_ground_solution(task_context, sketch, True)
+    proof_options = GroundSketchSearchOptions()
+    proof_options.universal = True
+    proof_result = find_ground_solution(task_context, sketch, proof_options)
     assert proof_result.status == SketchProofStatus.SUCCESS
     assert proof_result.is_successful()
     assert proof_result.deadend_transitions == []
@@ -159,7 +162,8 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
         assert edge in proof_result.graph.get_out_edge_indices(proof_result.graph.get_source(edge))
         assert isinstance(proof_result.graph.get_edge_property(edge), SketchProofEdgeLabel)
 
-    search_result = find_ground_solution(task_context, sketch)
+    search_options = GroundSketchSearchOptions()
+    search_result = find_ground_solution(task_context, sketch, search_options)
     assert search_result.status == SketchProofStatus.SUCCESS
     assert search_result.is_successful()
     assert search_result.deadend_transitions == []

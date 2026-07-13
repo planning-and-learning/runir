@@ -2,15 +2,12 @@
 #define RUNIR_KR_PS_EXT_DETAIL_EXECUTION_STEP_HPP_
 
 #include "runir/datasets/state_graph.hpp"
-#include "runir/kr/ps/ext/detail/execution.hpp"
-#include "runir/kr/ps/ext/evaluation_context.hpp"
+#include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
-#include "runir/kr/task_context.hpp"
 
 #include <optional>
 #include <tyr/planning/node.hpp>
-#include <vector>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -57,30 +54,22 @@ inline const char* outcome_name(ModuleProgramOutcome outcome)
     return "failure";
 }
 
-// The result of applying one rule from a source vertex: the resulting evaluation context (state +
-// memory + registers, ready to continue stepping), the planning transition it took (if any), the
-// rule responsible, and the planning actions consumed. This is the single currency the
-// `SuccessorExpander` produces for universal (all successors) and greedy (first successor) search.
+/// One canonical execution successor plus the rule and optional planning transition that produced it.
 template<tyr::planning::TaskKind Kind>
 struct ModuleProgramStep
 {
     ModuleProgramOutcome status;
-    EvaluationContext<Kind> context;
+    ExecutionStateView<Kind> target;
     std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
     std::optional<RuleVariantView> rule = std::nullopt;
     tyr::planning::LabeledNodeList<Kind> plan_suffix;
 
-    ModuleProgramStep(ModuleProgramOutcome status_, EvaluationContext<Kind> context_) : status(status_), context(std::move(context_)) {}
+    ModuleProgramStep(ModuleProgramOutcome status_, ExecutionStateView<Kind> target_) : status(status_), target(std::move(target_)) {}
 
     const char* get_status_name() const noexcept { return outcome_name(status); }
-    const EvaluationContext<Kind>& get_target() const noexcept { return context; }
-
-    std::optional<ModuleProgramProofEdgeLabel> get_edge() const
-    {
-        if (rule || state_transition)
-            return ModuleProgramProofEdgeLabel { state_transition, rule };
-        return std::nullopt;
-    }
+    ExecutionStateView<Kind> get_target() const noexcept { return target; }
+    const auto& get_state_transition() const noexcept { return state_transition; }
+    const auto& get_rule() const noexcept { return rule; }
 };
 
 inline ModuleProgramProofStatus translate_proof_status(ModuleProgramOutcome status)
@@ -97,7 +86,6 @@ inline ModuleProgramProofStatus translate_proof_status(ModuleProgramOutcome stat
         case ModuleProgramOutcome::OUT_OF_STATES:
             return ModuleProgramProofStatus::OUT_OF_STATES;
         case ModuleProgramOutcome::CYCLE:
-            return ModuleProgramProofStatus::FAILURE;
         case ModuleProgramOutcome::FAILURE:
         case ModuleProgramOutcome::NO_APPLICABLE_ACTION:
         case ModuleProgramOutcome::MALFORMED_CALL:

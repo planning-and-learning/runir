@@ -33,7 +33,7 @@ using CallArgument = ::cista::offset::variant<ConceptArgument, RoleArgument, Boo
 namespace ygg
 {
 
-template<runir::kr::ps::ext::LoadCategory Category>
+template<runir::kr::dl::CategoryTag Category>
 struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
 {
     Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>> index;
