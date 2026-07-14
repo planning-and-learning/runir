@@ -1,6 +1,7 @@
 #ifndef RUNIR_SEMANTICS_NUMERICAL_VIEW_HPP_
 #define RUNIR_SEMANTICS_NUMERICAL_VIEW_HPP_
 
+#include "runir/kr/dl/argument_view.hpp"
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/numerical_data.hpp"
@@ -29,6 +30,12 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
 
     auto get_index() const noexcept { return m_handle; }
+
+    auto get_argument() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>
+    {
+        return make_view(get_data().reference, *m_context);
+    }
 
     auto get_arg() const noexcept
         requires std::same_as<Tag, runir::kr::dl::CountTag>

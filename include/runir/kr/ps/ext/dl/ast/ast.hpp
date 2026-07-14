@@ -52,9 +52,6 @@ struct SymbolExpression : x3::position_tagged
 };
 
 template<runir::kr::dl::CategoryTag Category>
-using LoadExpression = PositionedVariant<SymbolExpression, runir::kr::dl::grammar::ast::Constructor<runir::kr::ExtFamilyTag, Category>>;
-
-template<runir::kr::dl::CategoryTag Category>
 struct Feature : x3::position_tagged
 {
     Identifier symbol;
@@ -75,7 +72,7 @@ template<runir::kr::dl::CategoryTag Category>
 struct LoadRule : x3::position_tagged
 {
     std::vector<Condition> conditions;
-    LoadExpression<Category> expression;
+    Identifier feature;
     Identifier reg;
 };
 

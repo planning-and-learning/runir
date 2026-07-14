@@ -28,7 +28,7 @@ void bind_repository(nb::module_& m)
         .def("get_index", &Repository::get_index)
         .def("get_dl_repository", [](Repository& self) -> auto& { return self.get_dl_repository(); }, nb::rv_policy::reference_internal);
 
-    using BindableRepositoryTypes = ygg::ConcatTypeListsT<FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ArgumentTypes, RegisterTypes, ProgramTypes>;
+    using BindableRepositoryTypes = ygg::ConcatTypeListsT<FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ProgramTypes>;
     bind_get_or_create(repository, BindableRepositoryTypes {});
 
     auto factory = nb::class_<RepositoryFactory>(m, "RepositoryFactory");

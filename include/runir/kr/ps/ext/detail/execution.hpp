@@ -58,14 +58,6 @@ bool load_rule_is_applicable(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> r
     return has_current_source(rule, context) && conditions_are_compatible(rule, context, environment);
 }
 
-template<runir::kr::dl::CategoryTag Category, typename C, tyr::planning::TaskKind Kind>
-auto evaluate_load_expression(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> rule,
-                              EvaluationContext<Kind>& context,
-                              EvaluationEnvironment<Kind>& environment)
-{
-    return evaluate(rule.get_expression(), context, environment);
-}
-
 template<runir::kr::dl::CategoryTag Category, typename C, tyr::planning::TaskKind Kind, typename Value>
 void apply_load_binding(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> rule, const Value& value, EvaluationContext<Kind>& context)
 {
@@ -214,36 +206,28 @@ RuleExecutionStatus execute_sketch(ygg::View<ygg::Index<Rule<SketchTag>>, C> rul
     return RuleExecutionStatus::APPLIED;
 }
 
-template<tyr::planning::TaskKind Kind>
-void append_call_argument(ConceptArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, EvaluationArguments& target)
+template<typename FeatureTag, typename C, tyr::planning::TaskKind Kind>
+void append_call_argument(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> argument,
+                          EvaluationContext<Kind>& context,
+                          EvaluationEnvironment<Kind>& environment,
+                          EvaluationArguments& target)
 {
-    target.get<runir::kr::dl::ConceptTag>().push_back(evaluate_argument(argument, context, environment));
-}
-
-template<tyr::planning::TaskKind Kind>
-void append_call_argument(RoleArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, EvaluationArguments& target)
-{
-    target.get<runir::kr::dl::RoleTag>().push_back(evaluate_argument(argument, context, environment));
-}
-
-template<tyr::planning::TaskKind Kind>
-void append_call_argument(BooleanArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, EvaluationArguments& target)
-{
-    target.get<runir::kr::dl::BooleanTag>().push_back(evaluate_argument(argument, context, environment));
-}
-
-template<tyr::planning::TaskKind Kind>
-void append_call_argument(NumericalArgument argument, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment, EvaluationArguments& target)
-{
-    target.get<runir::kr::dl::NumericalTag>().push_back(evaluate_argument(argument, context, environment));
+    const auto denotation = evaluate_feature_denotation(argument, context, environment);
+    if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
+        target.get<runir::kr::dl::ConceptTag>().push_back(denotation);
+    else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
+        target.get<runir::kr::dl::RoleTag>().push_back(denotation);
+    else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
+        target.get<runir::kr::dl::BooleanTag>().push_back(denotation);
+    else
+        target.get<runir::kr::dl::NumericalTag>().push_back(denotation);
 }
 
 template<typename C, tyr::planning::TaskKind Kind>
 auto& evaluate_call_arguments(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
 {
     auto& result = context.get_call_stack().prepare_call_arguments();
-    for (const auto& argument : rule.get_call_arguments())
-        argument.apply([&](auto typed_argument) { append_call_argument(typed_argument, context, environment, result); });
+    rule.for_each_call_argument([&](auto argument) { append_call_argument(argument, context, environment, result); });
     return result;
 }
 
@@ -258,9 +242,7 @@ inline bool call_arguments_match_signature(ModuleView callee, const EvaluationAr
 template<typename C, tyr::planning::TaskKind Kind>
 std::optional<ModuleView> resolve_callee(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, const EvaluationContext<Kind>& context)
 {
-    if (rule.get_data().callee_name.size() != 0)
-        return context.get_program().find_module(rule.get_callee_name());
-    return ModuleView(rule.get_data().callee, context.get_call_stack().module().get_context());
+    return context.get_program().find_module(rule.get_callee().get_index());
 }
 
 template<typename C, tyr::planning::TaskKind Kind>

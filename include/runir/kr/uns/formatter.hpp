@@ -24,16 +24,10 @@ std::string feature(ygg::View<ygg::Index<runir::kr::uns::Feature>, C> view)
 }
 
 template<typename C>
-std::string feature_symbol(ygg::View<ygg::Index<runir::kr::uns::Feature>, C> view)
-{
-    return ygg::visit([](auto concrete) { return std::string(concrete.get_symbol().str()); }, view.get_variant());
-}
-
-template<typename C>
 std::string literal(ygg::View<ygg::Index<runir::kr::uns::ClassifierLiteral>, C> view)
 {
-    const auto symbol = ygg::visit([](auto wrapper) { return feature_symbol(wrapper); }, view.get_feature());
-    return view.get_polarity() ? symbol : fmt::format("(not {})", symbol);
+    const auto symbol = ygg::visit([](auto feature) { return feature.get_symbol(); }, view.get_feature());
+    return view.get_polarity() ? std::string(symbol.str()) : fmt::format("(not {})", symbol.str());
 }
 
 template<typename C>
@@ -61,7 +55,8 @@ std::string classifier(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> view
             ygg::IndentScope feature_scope(os);
             for (auto item : view.get_features())
             {
-                runir::kr::uns::dl::format::append_component(os, feature(item));
+                os << ygg::print_indent;
+                ygg::visit([&](auto concrete) { runir::kr::uns::dl::format::append_feature(os, concrete); }, item.get_variant());
                 os << "\n";
             }
         }

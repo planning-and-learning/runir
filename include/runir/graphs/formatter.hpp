@@ -57,7 +57,13 @@ auto dot(const G& graph, std::string_view name = "G") -> std::string
 
     for (const auto vertex : graph.get_vertex_indices())
     {
-        const auto label = fmt::format("{}", graph.get_vertex(vertex).get_property());
+        const auto label = [&]
+        {
+            if constexpr (requires { graph.get_vertex_view(vertex); })
+                return fmt::format("{}", graph.get_vertex_view(vertex));
+            else
+                return fmt::format("{}", graph.get_vertex(vertex).get_property());
+        }();
         text += fmt::format("  v{} [label=\"{}\"];\n", vertex, dot_escape(label));
     }
 
@@ -65,7 +71,13 @@ auto dot(const G& graph, std::string_view name = "G") -> std::string
     {
         const auto source = graph.get_source(edge);
         const auto target = graph.get_target(edge);
-        const auto label = fmt::format("{}", graph.get_edge(edge).get_property());
+        const auto label = [&]
+        {
+            if constexpr (requires { graph.get_edge_view(edge); })
+                return fmt::format("{}", graph.get_edge_view(edge));
+            else
+                return fmt::format("{}", graph.get_edge(edge).get_property());
+        }();
         text += fmt::format("  v{} -> v{} [label=\"{}\"];\n", source, target, dot_escape(label));
     }
 

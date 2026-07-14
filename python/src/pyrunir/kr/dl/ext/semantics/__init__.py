@@ -163,7 +163,6 @@ from ....._pyrunir.kr.dl.ext.semantics import (
     RoleReflexiveTransitiveClosureIndex,
     RoleRegister,
     RoleRegisterData,
-    RoleRegisterIdentifier,
     RoleRegisterIndex,
     RoleRestriction,
     RoleRestrictionData,

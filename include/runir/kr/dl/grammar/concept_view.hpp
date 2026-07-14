@@ -5,9 +5,9 @@
 
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/predicate_view.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {
@@ -28,6 +28,12 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
 
     auto get_index() const noexcept { return m_handle; }
+
+    auto get_identifier() const noexcept
+        requires(std::same_as<Tag, runir::kr::dl::RegisterTag> || std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>)
+    {
+        return get_data().identifier;
+    }
 
     auto get_predicate() const noexcept
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)

@@ -8,7 +8,6 @@
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <boost/variant/apply_visitor.hpp>
-#include <charconv>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -28,22 +27,27 @@ namespace
 namespace dl_ = runir::kr::dl;
 namespace dl_ast = runir::kr::dl::grammar::ast;
 using DiagnosticContext = runir::kr::parser::DiagnosticContext;
-using IdentifierMap = std::unordered_map<std::string, ygg::uint_t>;
-
-struct ModuleReferenceMaps
+template<typename Entity>
+struct ReferenceTable
 {
-    IdentifierMap concept_arguments;
-    IdentifierMap role_arguments;
-    IdentifierMap boolean_arguments;
-    IdentifierMap numerical_arguments;
-    IdentifierMap concept_registers;
-    IdentifierMap role_registers;
+    std::unordered_map<std::string, ygg::Index<Entity>> by_name;
+    std::vector<ygg::Index<Entity>> by_identifier;
+};
+
+struct ModuleReferences
+{
+    ReferenceTable<dl_::Argument<dl_::ConceptTag>> concept_arguments;
+    ReferenceTable<dl_::Argument<dl_::RoleTag>> role_arguments;
+    ReferenceTable<dl_::Argument<dl_::BooleanTag>> boolean_arguments;
+    ReferenceTable<dl_::Argument<dl_::NumericalTag>> numerical_arguments;
+    ReferenceTable<dl_::Register<dl_::ConceptTag>> concept_registers;
+    ReferenceTable<dl_::Register<dl_::RoleTag>> role_registers;
 };
 
 struct ConstructorContext
 {
     const DiagnosticContext& diagnostics;
-    const ModuleReferenceMaps* references;
+    const ModuleReferences* references;
 
     template<typename Position, typename Error>
     [[noreturn]] void throw_at(const Position& position, Error error) const
@@ -125,7 +129,7 @@ auto parse_constructor(const dl_ast::Constructor<runir::kr::ExtFamilyTag, Catego
                        tyr::formalism::planning::DomainView domain,
                        runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
                        const DiagnosticContext& diagnostics,
-                       const ModuleReferenceMaps* references = nullptr) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>;
+                       const ModuleReferences* references = nullptr) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>;
 
 template<dl_::CategoryTag Category>
 auto parse_choice(const dl_ast::ConstructorOrNonTerminal<runir::kr::ExtFamilyTag, Category>& node,
@@ -193,26 +197,49 @@ auto resolve_predicate(tyr::formalism::planning::DomainView domain,
     diagnostics.throw_at(position, runir::kr::UndefinedSymbolError("predicate", name));
 }
 
-ygg::uint_t resolve_reference(const dl_ast::Reference& reference, const IdentifierMap* names, const char* kind, const ConstructorContext& diagnostics)
+template<typename Entity, typename Identifier, typename Reference>
+ygg::Index<Entity> resolve_reference(const Reference& reference,
+                                     const ReferenceTable<Entity>* declarations,
+                                     const char* kind,
+                                     runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
+                                     const ConstructorContext& diagnostics)
 {
-    auto result = ygg::uint_t {};
-    const auto [end, error] = std::from_chars(reference.text.data(), reference.text.data() + reference.text.size(), result);
-    if (error == std::errc {} && end == reference.text.data() + reference.text.size())
-    {
-        if (names && result >= names->size())
-            diagnostics.throw_at(reference, runir::kr::UndefinedSymbolError(kind, reference.text));
-        return result;
-    }
+    return boost::apply_visitor(
+        [&](const auto& concrete) -> ygg::Index<Entity>
+        {
+            using Concrete = std::remove_cvref_t<decltype(concrete)>;
+            if constexpr (std::same_as<Concrete, dl_ast::NumericReference>)
+            {
+                if (declarations)
+                {
+                    if (concrete.value >= declarations->by_identifier.size())
+                        diagnostics.throw_at(concrete, runir::kr::UndefinedSymbolError(kind, std::to_string(concrete.value)));
+                    return declarations->by_identifier[concrete.value];
+                }
 
-    if (names)
-    {
-        const auto it = names->find(reference.text);
-        if (it != names->end())
-            return it->second;
-        diagnostics.throw_at(reference, runir::kr::UndefinedSymbolError(kind, reference.text));
-    }
-
-    diagnostics.throw_at(reference, runir::kr::InvalidExpressionError("Expected numeric DL reference: " + reference.text));
+                try
+                {
+                    auto data = ygg::Data<Entity>(std::to_string(concrete.value), Identifier(concrete.value));
+                    return intern_dl(repository, data).get_index();
+                }
+                catch (const std::out_of_range&)
+                {
+                    diagnostics.throw_at(concrete, runir::kr::UndefinedSymbolError(kind, std::to_string(concrete.value)));
+                }
+            }
+            else
+            {
+                if (declarations)
+                {
+                    const auto it = declarations->by_name.find(concrete.text);
+                    if (it != declarations->by_name.end())
+                        return it->second;
+                    diagnostics.throw_at(concrete, runir::kr::UndefinedSymbolError(kind, concrete.text));
+                }
+                diagnostics.throw_at(concrete, runir::kr::InvalidExpressionError("Expected numeric DL reference: " + concrete.text));
+            }
+        },
+        reference.get());
 }
 
 auto require_object(tyr::formalism::planning::DomainView domain, const dl_ast::Identifier& name, const ConstructorContext& diagnostics)
@@ -459,8 +486,13 @@ auto parse_dl(const dl_ast::ConceptRegister<runir::kr::ExtFamilyTag>& node,
               runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
               const ConstructorContext& diagnostics)
 {
-    ygg::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::RegisterTag>> data(dl_::RegisterIdentifier<dl_::ConceptTag>(
-        resolve_reference(node.reference, diagnostics.references ? &diagnostics.references->concept_registers : nullptr, "concept register", diagnostics)));
+    ygg::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::RegisterTag>> data(
+        resolve_reference<dl_::Register<dl_::ConceptTag>, dl_::RegisterIdentifier<dl_::ConceptTag>>(
+            node.reference,
+            diagnostics.references ? &diagnostics.references->concept_registers : nullptr,
+            "concept register",
+            repository,
+            diagnostics));
     return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
 }
 
@@ -469,8 +501,13 @@ auto parse_dl(const dl_ast::ConceptArgument<runir::kr::ExtFamilyTag>& node,
               runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
               const ConstructorContext& diagnostics)
 {
-    ygg::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::ConceptTag>>> data(dl_::ArgumentIdentifier<dl_::ConceptTag>(
-        resolve_reference(node.reference, diagnostics.references ? &diagnostics.references->concept_arguments : nullptr, "concept argument", diagnostics)));
+    ygg::Data<dl_::Concept<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::ConceptTag>>> data(
+        resolve_reference<dl_::Argument<dl_::ConceptTag>, dl_::ArgumentIdentifier<dl_::ConceptTag>>(
+            node.reference,
+            diagnostics.references ? &diagnostics.references->concept_arguments : nullptr,
+            "concept argument",
+            repository,
+            diagnostics));
     return intern_constructor<dl_::ConceptTag>(repository, intern_dl(repository, data).get_index());
 }
 
@@ -622,8 +659,13 @@ auto parse_dl(const dl_ast::RoleRegister<runir::kr::ExtFamilyTag>& node,
               runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
               const ConstructorContext& diagnostics)
 {
-    ygg::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::RegisterTag>> data(dl_::RegisterIdentifier<dl_::RoleTag>(
-        resolve_reference(node.reference, diagnostics.references ? &diagnostics.references->role_registers : nullptr, "role register", diagnostics)));
+    ygg::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::RegisterTag>> data(
+        resolve_reference<dl_::Register<dl_::RoleTag>, dl_::RegisterIdentifier<dl_::RoleTag>>(
+            node.reference,
+            diagnostics.references ? &diagnostics.references->role_registers : nullptr,
+            "role register",
+            repository,
+            diagnostics));
     return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
 }
 
@@ -632,8 +674,13 @@ auto parse_dl(const dl_ast::RoleArgument<runir::kr::ExtFamilyTag>& node,
               runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
               const ConstructorContext& diagnostics)
 {
-    ygg::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::RoleTag>>> data(dl_::ArgumentIdentifier<dl_::RoleTag>(
-        resolve_reference(node.reference, diagnostics.references ? &diagnostics.references->role_arguments : nullptr, "role argument", diagnostics)));
+    ygg::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::RoleTag>>> data(
+        resolve_reference<dl_::Argument<dl_::RoleTag>, dl_::ArgumentIdentifier<dl_::RoleTag>>(
+            node.reference,
+            diagnostics.references ? &diagnostics.references->role_arguments : nullptr,
+            "role argument",
+            repository,
+            diagnostics));
     return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
 }
 
@@ -693,8 +740,13 @@ auto parse_dl(const dl_ast::BooleanArgument<runir::kr::ExtFamilyTag>& node,
               runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
               const ConstructorContext& diagnostics)
 {
-    ygg::Data<dl_::Boolean<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::BooleanTag>>> data(dl_::ArgumentIdentifier<dl_::BooleanTag>(
-        resolve_reference(node.reference, diagnostics.references ? &diagnostics.references->boolean_arguments : nullptr, "boolean argument", diagnostics)));
+    ygg::Data<dl_::Boolean<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::BooleanTag>>> data(
+        resolve_reference<dl_::Argument<dl_::BooleanTag>, dl_::ArgumentIdentifier<dl_::BooleanTag>>(
+            node.reference,
+            diagnostics.references ? &diagnostics.references->boolean_arguments : nullptr,
+            "boolean argument",
+            repository,
+            diagnostics));
     return intern_constructor<dl_::BooleanTag>(repository, intern_dl(repository, data).get_index());
 }
 
@@ -727,8 +779,13 @@ auto parse_dl(const dl_ast::NumericalArgument<runir::kr::ExtFamilyTag>& node,
               runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
               const ConstructorContext& diagnostics)
 {
-    ygg::Data<dl_::Numerical<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::NumericalTag>>> data(dl_::ArgumentIdentifier<dl_::NumericalTag>(
-        resolve_reference(node.reference, diagnostics.references ? &diagnostics.references->numerical_arguments : nullptr, "numerical argument", diagnostics)));
+    ygg::Data<dl_::Numerical<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::NumericalTag>>> data(
+        resolve_reference<dl_::Argument<dl_::NumericalTag>, dl_::ArgumentIdentifier<dl_::NumericalTag>>(
+            node.reference,
+            diagnostics.references ? &diagnostics.references->numerical_arguments : nullptr,
+            "numerical argument",
+            repository,
+            diagnostics));
     return intern_constructor<dl_::NumericalTag>(repository, intern_dl(repository, data).get_index());
 }
 
@@ -746,7 +803,7 @@ auto parse_constructor(const dl_ast::Constructor<runir::kr::ExtFamilyTag, Catego
                        tyr::formalism::planning::DomainView domain,
                        runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
                        const DiagnosticContext& diagnostics,
-                       const ModuleReferenceMaps* references) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
+                       const ModuleReferences* references) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
 {
     return parse_constructor(node, domain, repository, ConstructorContext { diagnostics, references });
 }
@@ -783,18 +840,16 @@ struct AstCategory<ast::LoadRule<Category>>
 template<dl_::CategoryTag Category>
 auto intern_argument(Repository& repository, const ast::Argument<Category>& argument, ygg::uint_t identifier)
 {
-    auto data = ygg::Data<Argument<Category>>(argument.symbol.text, runir::kr::dl::ArgumentIdentifier<Category>(identifier));
-    return intern(repository, data);
+    auto data = ygg::Data<dl_::Argument<Category>>(argument.symbol.text, runir::kr::dl::ArgumentIdentifier<Category>(identifier));
+    return intern_dl(repository.get_dl_repository(), data);
 }
 
 using ConceptFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>;
 using RoleFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>;
 using BooleanFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>;
 using NumericalFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>;
-using ConceptAliasMap = std::unordered_map<std::string, ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>;
 using MemoryStateMap = std::unordered_map<std::string, ygg::Index<MemoryState>>;
-using ConceptRegisterMap = std::unordered_map<std::string, ygg::Index<Register<runir::kr::dl::ConceptTag>>>;
-using RoleRegisterMap = std::unordered_map<std::string, ygg::Index<Register<runir::kr::dl::RoleTag>>>;
+using ModuleSymbolMap = std::unordered_map<std::string, ygg::Index<ModuleSymbol>>;
 using ModuleMap = std::unordered_map<std::string, ygg::Index<Module>>;
 
 struct SignatureCounts
@@ -919,6 +974,7 @@ void validate_module_declarations(const ast::Module& module, const DiagnosticCon
 
 void append_argument(Repository& repository,
                      ygg::Data<Module>& data,
+                     ModuleReferences& references,
                      const ast::ArgumentVariant& argument,
                      ygg::uint_t& concept_identifier,
                      ygg::uint_t& role_identifier,
@@ -930,13 +986,33 @@ void append_argument(Repository& repository,
         {
             using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
             if constexpr (std::same_as<Category, dl_::ConceptTag>)
-                data.concept_arguments.push_back(intern_argument<Category>(repository, concrete, concept_identifier++).get_index());
+            {
+                const auto index = intern_argument<Category>(repository, concrete, concept_identifier++).get_index();
+                data.concept_arguments.push_back(index);
+                references.concept_arguments.by_name.emplace(concrete.symbol.text, index);
+                references.concept_arguments.by_identifier.push_back(index);
+            }
             else if constexpr (std::same_as<Category, dl_::RoleTag>)
-                data.role_arguments.push_back(intern_argument<Category>(repository, concrete, role_identifier++).get_index());
+            {
+                const auto index = intern_argument<Category>(repository, concrete, role_identifier++).get_index();
+                data.role_arguments.push_back(index);
+                references.role_arguments.by_name.emplace(concrete.symbol.text, index);
+                references.role_arguments.by_identifier.push_back(index);
+            }
             else if constexpr (std::same_as<Category, dl_::BooleanTag>)
-                data.boolean_arguments.push_back(intern_argument<Category>(repository, concrete, boolean_identifier++).get_index());
+            {
+                const auto index = intern_argument<Category>(repository, concrete, boolean_identifier++).get_index();
+                data.boolean_arguments.push_back(index);
+                references.boolean_arguments.by_name.emplace(concrete.symbol.text, index);
+                references.boolean_arguments.by_identifier.push_back(index);
+            }
             else if constexpr (std::same_as<Category, dl_::NumericalTag>)
-                data.numerical_arguments.push_back(intern_argument<Category>(repository, concrete, numerical_identifier++).get_index());
+            {
+                const auto index = intern_argument<Category>(repository, concrete, numerical_identifier++).get_index();
+                data.numerical_arguments.push_back(index);
+                references.numerical_arguments.by_name.emplace(concrete.symbol.text, index);
+                references.numerical_arguments.by_identifier.push_back(index);
+            }
         },
         argument.get());
 }
@@ -961,8 +1037,7 @@ void append_feature(Repository& repository,
                     RoleFeatureMap& role_features,
                     BooleanFeatureMap& boolean_features,
                     NumericalFeatureMap& numerical_features,
-                    ConceptAliasMap& concept_aliases,
-                    const ModuleReferenceMaps& references,
+                    const ModuleReferences& references,
                     DiagnosticContext& diagnostics)
 {
     if constexpr (std::same_as<Category, dl_::ConceptTag>)
@@ -970,7 +1045,6 @@ void append_feature(Repository& repository,
         const auto constructor = parse_constructor(feature.expression, domain, repository.get_dl_repository(), diagnostics, &references);
         const auto view = intern_dl_feature<runir::kr::dl::ConceptTag>(repository, constructor.get_index(), feature.symbol.text);
         concept_features.emplace(feature.symbol.text, view.get_index());
-        concept_aliases.emplace(feature.symbol.text, constructor.get_index());
         module_data.concept_features.push_back(view.get_index());
     }
     else if constexpr (std::same_as<Category, dl_::RoleTag>)
@@ -1141,72 +1215,12 @@ auto parse_effects(Repository& repository,
     return result;
 }
 
-auto parse_concept_argument(Repository& repository,
-                            const ast::LoadExpression<dl_::ConceptTag>& expression,
-                            tyr::formalism::planning::DomainView domain,
-                            const ConceptAliasMap& concept_aliases,
-                            const ModuleReferenceMaps& references,
-                            DiagnosticContext& diagnostics)
-{
-    return boost::apply_visitor(
-        [&](const auto& concrete)
-        {
-            using Expression = std::remove_cvref_t<decltype(concrete)>;
-            if constexpr (!std::same_as<Expression, ast::SymbolExpression>)
-            {
-                return parse_constructor(concrete, domain, repository.get_dl_repository(), diagnostics, &references).get_index();
-            }
-            else
-            {
-                const auto it = concept_aliases.find(concrete.symbol.text);
-                if (it == concept_aliases.end())
-                    diagnostics.throw_at(concrete.symbol, runir::kr::UndefinedSymbolError("concept expression or feature alias", concrete.symbol.text));
-                return it->second;
-            }
-        },
-        expression.get());
-}
-
-template<typename FeatureTag>
-auto constructor_from_feature(Repository& repository, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature)
-{
-    const auto view = ygg::make_view(feature, repository);
-    return ygg::visit([](auto concrete_feature) { return concrete_feature.get_feature().get_index(); }, view.get_variant());
-}
-
-auto parse_role_argument(Repository& repository,
-                         const ast::LoadExpression<dl_::RoleTag>& expression,
-                         tyr::formalism::planning::DomainView domain,
-                         const RoleFeatureMap& role_features,
-                         const ModuleReferenceMaps& references,
-                         DiagnosticContext& diagnostics)
-{
-    return boost::apply_visitor(
-        [&](const auto& concrete)
-        {
-            using Expression = std::remove_cvref_t<decltype(concrete)>;
-            if constexpr (!std::same_as<Expression, ast::SymbolExpression>)
-            {
-                return parse_constructor(concrete, domain, repository.get_dl_repository(), diagnostics, &references).get_index();
-            }
-            else
-            {
-                const auto it = role_features.find(concrete.symbol.text);
-                if (it == role_features.end())
-                    diagnostics.throw_at(concrete.symbol, runir::kr::UndefinedSymbolError("role expression or feature alias", concrete.symbol.text));
-                return constructor_from_feature(repository, it->second);
-            }
-        },
-        expression.get());
-}
-
 auto parse_do_argument(const ast::SymbolExpression& expression, const ConceptFeatureMap& concept_features, const DiagnosticContext& diagnostics)
 {
     return require_feature(concept_features, expression.symbol, diagnostics);
 }
 
-auto parse_call_argument(Repository& repository,
-                         const ast::SymbolExpression& expression,
+auto parse_call_argument(const ast::SymbolExpression& expression,
                          const ConceptFeatureMap& concept_features,
                          const RoleFeatureMap& role_features,
                          const BooleanFeatureMap& boolean_features,
@@ -1218,22 +1232,22 @@ auto parse_call_argument(Repository& repository,
     auto result = CallArgument {};
     if (const auto it = concept_features.find(name); it != concept_features.end())
     {
-        result = constructor_from_feature(repository, it->second);
+        result = it->second;
         ++matches;
     }
     if (const auto it = role_features.find(name); it != role_features.end())
     {
-        result = constructor_from_feature(repository, it->second);
+        result = it->second;
         ++matches;
     }
     if (const auto it = boolean_features.find(name); it != boolean_features.end())
     {
-        result = constructor_from_feature(repository, it->second);
+        result = it->second;
         ++matches;
     }
     if (const auto it = numerical_features.find(name); it != numerical_features.end())
     {
-        result = constructor_from_feature(repository, it->second);
+        result = it->second;
         ++matches;
     }
 
@@ -1312,53 +1326,6 @@ SignatureCounts call_argument_signature_counts(const ast::CallRule& rule, const 
     return result;
 }
 
-void add_identifier(IdentifierMap& map, const ast::Identifier& name, ygg::uint_t identifier) { map.emplace(name.text, identifier); }
-
-ModuleReferenceMaps reference_maps(const ast::Module& module)
-{
-    auto result = ModuleReferenceMaps {};
-    auto concept_argument = ygg::uint_t(0);
-    auto role_argument = ygg::uint_t(0);
-    auto boolean_argument = ygg::uint_t(0);
-    auto numerical_argument = ygg::uint_t(0);
-
-    for (const auto& argument : module.arguments)
-    {
-        boost::apply_visitor(
-            [&](const auto& concrete)
-            {
-                using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
-                if constexpr (std::same_as<Category, dl_::ConceptTag>)
-                    add_identifier(result.concept_arguments, concrete.symbol, concept_argument++);
-                else if constexpr (std::same_as<Category, dl_::RoleTag>)
-                    add_identifier(result.role_arguments, concrete.symbol, role_argument++);
-                else if constexpr (std::same_as<Category, dl_::BooleanTag>)
-                    add_identifier(result.boolean_arguments, concrete.symbol, boolean_argument++);
-                else if constexpr (std::same_as<Category, dl_::NumericalTag>)
-                    add_identifier(result.numerical_arguments, concrete.symbol, numerical_argument++);
-            },
-            argument.get());
-    }
-
-    auto concept_register = ygg::uint_t(0);
-    auto role_register = ygg::uint_t(0);
-    for (const auto& reg : module.registers)
-    {
-        boost::apply_visitor(
-            [&](const auto& concrete)
-            {
-                using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
-                if constexpr (std::same_as<Category, dl_::ConceptTag>)
-                    add_identifier(result.concept_registers, concrete.symbol, concept_register++);
-                else if constexpr (std::same_as<Category, dl_::RoleTag>)
-                    add_identifier(result.role_registers, concrete.symbol, role_register++);
-            },
-            reg.get());
-    }
-
-    return result;
-}
-
 template<RuleKind Kind>
 auto intern_rule_variant(Repository& repository, ygg::Data<Rule<Kind>>& data, const std::string& symbol)
 {
@@ -1384,10 +1351,10 @@ auto require_register(const RegisterMap& registers, const ast::Identifier& name,
     return it->second;
 }
 
-auto find_module(const ModuleMap& modules, const std::string& name)
+auto find_module(const ModuleSymbolMap& modules, const std::string& name)
 {
     const auto it = modules.find(name);
-    return it == modules.end() ? std::optional<ygg::Index<Module>> {} : std::optional(it->second);
+    return it == modules.end() ? std::optional<ygg::Index<ModuleSymbol>> {} : std::optional(it->second);
 }
 
 auto find_action_arity(tyr::formalism::planning::DomainView domain, const std::string& name)
@@ -1413,14 +1380,11 @@ auto parse_load_rule(Repository& repository,
                      const ast::LoadRule<Category>& rule,
                      ygg::Index<MemoryState> source,
                      ygg::Index<MemoryState> target,
-                     tyr::formalism::planning::DomainView domain,
-                     const ConceptRegisterMap& concept_registers,
-                     const RoleRegisterMap& role_registers,
+                     const ConceptFeatureMap& concept_features,
                      const RoleFeatureMap& role_features,
                      const BooleanFeatureMap& boolean_features,
                      const NumericalFeatureMap& numerical_features,
-                     const ConceptAliasMap& concept_aliases,
-                     const ModuleReferenceMaps& references,
+                     const ModuleReferences& references,
                      const std::string& symbol,
                      DiagnosticContext& diagnostics)
 {
@@ -1430,13 +1394,13 @@ auto parse_load_rule(Repository& repository,
     data.conditions = parse_conditions(repository, rule.conditions, boolean_features, numerical_features, diagnostics);
     if constexpr (std::same_as<Category, dl_::ConceptTag>)
     {
-        data.load_expression = parse_concept_argument(repository, rule.expression, domain, concept_aliases, references, diagnostics);
-        data.reg = require_register(concept_registers, rule.reg, diagnostics);
+        data.feature = require_feature(concept_features, rule.feature, diagnostics);
+        data.reg = require_register(references.concept_registers.by_name, rule.reg, diagnostics);
     }
     else
     {
-        data.load_expression = parse_role_argument(repository, rule.expression, domain, role_features, references, diagnostics);
-        data.reg = require_register(role_registers, rule.reg, diagnostics);
+        data.feature = require_feature(role_features, rule.feature, diagnostics);
+        data.reg = require_register(references.role_registers.by_name, rule.reg, diagnostics);
     }
     return intern_rule_variant(repository, data, symbol);
 }
@@ -1446,15 +1410,12 @@ auto parse_rule(Repository& repository,
                 ygg::Index<MemoryState> source,
                 ygg::Index<MemoryState> target,
                 tyr::formalism::planning::DomainView domain,
-                const ConceptRegisterMap& concept_registers,
-                const RoleRegisterMap& role_registers,
-                const ModuleMap& modules,
+                const ModuleSymbolMap& modules,
                 const ConceptFeatureMap& concept_features,
                 const RoleFeatureMap& role_features,
                 const BooleanFeatureMap& boolean_features,
                 const NumericalFeatureMap& numerical_features,
-                const ConceptAliasMap& concept_aliases,
-                const ModuleReferenceMaps& references,
+                const ModuleReferences& references,
                 const std::string& symbol,
                 DiagnosticContext& diagnostics)
 {
@@ -1469,13 +1430,10 @@ auto parse_rule(Repository& repository,
                                                  concrete,
                                                  source,
                                                  target,
-                                                 domain,
-                                                 concept_registers,
-                                                 role_registers,
+                                                 concept_features,
                                                  role_features,
                                                  boolean_features,
                                                  numerical_features,
-                                                 concept_aliases,
                                                  references,
                                                  symbol,
                                                  diagnostics);
@@ -1507,12 +1465,16 @@ auto parse_rule(Repository& repository,
                 data.source = source;
                 data.target = target;
                 data.conditions = parse_conditions(repository, concrete.conditions, boolean_features, numerical_features, diagnostics);
-                data.callee_name = concrete.callee.text;
                 if (const auto callee = find_module(modules, concrete.callee.text))
                     data.callee = *callee;
+                else
+                {
+                    auto symbol_data = ygg::Data<ModuleSymbol>(concrete.callee.text);
+                    data.callee = intern(repository, symbol_data).get_index();
+                }
                 for (const auto& argument : concrete.arguments)
                     data.arguments.push_back(
-                        parse_call_argument(repository, argument, concept_features, role_features, boolean_features, numerical_features, diagnostics));
+                        parse_call_argument(argument, concept_features, role_features, boolean_features, numerical_features, diagnostics));
                 return intern_rule_variant(repository, data, symbol);
             }
         },
@@ -1622,10 +1584,10 @@ ModuleView lower_module(const ast::Module& ast,
                         tyr::formalism::planning::DomainView domain,
                         Repository& repository,
                         DiagnosticContext& diagnostics,
-                        const ModuleMap& known_modules = {})
+                        const ModuleSymbolMap& module_symbols)
 {
     validate_module_declarations(ast, diagnostics);
-    const auto maps = reference_maps(ast);
+    auto references = ModuleReferences {};
 
     auto memory_states = MemoryStateMap {};
     for (const auto& state : ast.memory_states)
@@ -1639,7 +1601,7 @@ ModuleView lower_module(const ast::Module& ast,
     if (entry == memory_states.end())
         diagnostics.throw_at(ast.entry, runir::kr::UndefinedSymbolError("memory state", ast.entry.text));
 
-    auto data = ygg::Data<Module>(ast.name.text);
+    auto data = ygg::Data<Module>(module_symbols.at(ast.name.text));
     data.entry_memory_state = entry->second;
 
     auto concept_argument = ygg::uint_t(0);
@@ -1647,10 +1609,8 @@ ModuleView lower_module(const ast::Module& ast,
     auto boolean_argument = ygg::uint_t(0);
     auto numerical_argument = ygg::uint_t(0);
     for (const auto& argument : ast.arguments)
-        append_argument(repository, data, argument, concept_argument, role_argument, boolean_argument, numerical_argument);
+        append_argument(repository, data, references, argument, concept_argument, role_argument, boolean_argument, numerical_argument);
 
-    auto concept_registers = ConceptRegisterMap {};
-    auto role_registers = RoleRegisterMap {};
     auto concept_register = ygg::uint_t(0);
     auto role_register = ygg::uint_t(0);
     for (const auto& reg : ast.registers)
@@ -1661,17 +1621,19 @@ ModuleView lower_module(const ast::Module& ast,
                 using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
                 if constexpr (std::same_as<Category, dl_::ConceptTag>)
                 {
-                    auto reg_data = ygg::Data<Register<Category>>(concrete.symbol.text, runir::kr::dl::RegisterIdentifier<Category>(concept_register++));
-                    const auto view = intern(repository, reg_data);
-                    data.concept_registers.push_back(view.get_index());
-                    concept_registers.emplace(concrete.symbol.text, view.get_index());
+                    auto reg_data = ygg::Data<dl_::Register<Category>>(concrete.symbol.text, runir::kr::dl::RegisterIdentifier<Category>(concept_register++));
+                    const auto index = intern_dl(repository.get_dl_repository(), reg_data).get_index();
+                    data.concept_registers.push_back(index);
+                    references.concept_registers.by_name.emplace(concrete.symbol.text, index);
+                    references.concept_registers.by_identifier.push_back(index);
                 }
                 else if constexpr (std::same_as<Category, dl_::RoleTag>)
                 {
-                    auto reg_data = ygg::Data<Register<Category>>(concrete.symbol.text, runir::kr::dl::RegisterIdentifier<Category>(role_register++));
-                    const auto view = intern(repository, reg_data);
-                    data.role_registers.push_back(view.get_index());
-                    role_registers.emplace(concrete.symbol.text, view.get_index());
+                    auto reg_data = ygg::Data<dl_::Register<Category>>(concrete.symbol.text, runir::kr::dl::RegisterIdentifier<Category>(role_register++));
+                    const auto index = intern_dl(repository.get_dl_repository(), reg_data).get_index();
+                    data.role_registers.push_back(index);
+                    references.role_registers.by_name.emplace(concrete.symbol.text, index);
+                    references.role_registers.by_identifier.push_back(index);
                 }
             },
             reg.get());
@@ -1684,7 +1646,6 @@ ModuleView lower_module(const ast::Module& ast,
     auto role_features = RoleFeatureMap {};
     auto boolean_features = BooleanFeatureMap {};
     auto numerical_features = NumericalFeatureMap {};
-    auto concept_aliases = ConceptAliasMap {};
     for (const auto& feature : ast.features)
     {
         boost::apply_visitor(
@@ -1698,16 +1659,11 @@ ModuleView lower_module(const ast::Module& ast,
                                role_features,
                                boolean_features,
                                numerical_features,
-                               concept_aliases,
-                               maps,
+                               references,
                                diagnostics);
             },
             feature.get());
     }
-
-    auto modules = known_modules;
-    if (auto callee = repository.find(data))
-        modules.emplace(ast.name.text, callee->get_index());
 
     data.memory_transitions.reserve(ast.rule_entries.size());
     for (const auto& transition : ast.rule_entries)
@@ -1721,15 +1677,12 @@ ModuleView lower_module(const ast::Module& ast,
                                                    source,
                                                    target,
                                                    domain,
-                                                   concept_registers,
-                                                   role_registers,
-                                                   modules,
+                                                   module_symbols,
                                                    concept_features,
                                                    role_features,
                                                    boolean_features,
                                                    numerical_features,
-                                                   concept_aliases,
-                                                   maps,
+                                                   references,
                                                    transition.symbol.text,
                                                    diagnostics)
                                             .get_index());
@@ -1841,7 +1794,9 @@ ModuleView parse_module(const std::string& description, tyr::formalism::planning
     auto scope = DiagnosticContext::Scope(diagnostics, error_handler);
     auto ast = runir::kr::ps::ext::dl::ast::Module {};
     parser::parse_module_ast(description, ast, error_handler);
-    return lower_module(ast, domain, repository, diagnostics);
+    auto symbol_data = ygg::Data<ModuleSymbol>(ast.name.text);
+    auto module_symbols = ModuleSymbolMap { { ast.name.text, intern(repository, symbol_data).get_index() } };
+    return lower_module(ast, domain, repository, diagnostics, module_symbols);
 }
 
 ModuleProgramView parse_module_program(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
@@ -1856,11 +1811,17 @@ ModuleProgramView parse_module_program(const std::string& description, tyr::form
 
     auto module_views = std::vector<ModuleView> {};
     module_views.reserve(ast.modules.size());
+    auto module_symbols = ModuleSymbolMap {};
+    for (const auto& module : ast.modules)
+    {
+        auto symbol_data = ygg::Data<ModuleSymbol>(module.name.text);
+        module_symbols.emplace(module.name.text, intern(repository, symbol_data).get_index());
+    }
     auto module_indices_by_name = ModuleMap {};
 
     for (const auto& module : ast.modules)
     {
-        auto view = lower_module(module, domain, repository, diagnostics, module_indices_by_name);
+        auto view = lower_module(module, domain, repository, diagnostics, module_symbols);
         module_views.push_back(view);
         module_indices_by_name.emplace(module.name.text, view.get_index());
     }
@@ -1893,13 +1854,17 @@ std::vector<ModuleView> parse_modules(const std::vector<std::string>& descriptio
 
     auto result = std::vector<ModuleView> {};
     result.reserve(asts.size());
-    auto modules = ModuleMap {};
+    auto module_symbols = ModuleSymbolMap {};
+    for (const auto& ast : asts)
+    {
+        auto symbol_data = ygg::Data<ModuleSymbol>(ast.name.text);
+        module_symbols.emplace(ast.name.text, intern(repository, symbol_data).get_index());
+    }
     for (std::size_t i = 0; i < asts.size(); ++i)
     {
         auto scope = DiagnosticContext::Scope(diagnostics, *error_handlers[i]);
-        auto view = lower_module(asts[i], domain, repository, diagnostics, modules);
+        auto view = lower_module(asts[i], domain, repository, diagnostics, module_symbols);
         result.push_back(view);
-        modules.emplace(asts[i].name.text, view.get_index());
     }
     return result;
 }

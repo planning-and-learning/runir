@@ -4,6 +4,7 @@
 #include "runir/kr/ps/feature_index.hpp"
 
 #include <tuple>
+#include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
 
 namespace ygg
@@ -25,6 +26,15 @@ public:
 
     auto get_index() const noexcept { return m_handle; }
     auto get_variant() const noexcept { return make_view(get_data().value, *m_context); }
+    auto get_symbol() const noexcept
+    {
+        return ygg::visit([](auto feature) { return feature.get_symbol(); }, get_variant());
+    }
+    auto get_expression() const noexcept
+    {
+        return ygg::visit([](auto feature) { return feature.get_expression(); }, get_variant());
+    }
+    auto get_feature() const noexcept { return get_expression(); }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };

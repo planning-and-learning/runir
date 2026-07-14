@@ -70,18 +70,18 @@ const auto numerical_feature_def = (lit("(") >> lit(":") >> lit(runir::kr::ps::d
                                    > numerical_expression_section_def > lit(")");
 const auto feature_def = boolean_feature | numerical_feature;
 
-const auto positive_condition_def = lit(ast::Positive::keyword) >> attr(ast::Positive {});
-const auto negative_condition_def = lit(ast::Negative::keyword) >> attr(ast::Negative {});
-const auto equal_zero_condition_def = lit(ast::EqualZero::keyword) >> attr(ast::EqualZero {});
-const auto greater_zero_condition_def = lit(ast::GreaterZero::keyword) >> attr(ast::GreaterZero {});
+const auto positive_condition_def = lit(runir::kr::ps::dl::Positive::keyword) >> attr(ast::Positive {});
+const auto negative_condition_def = lit(runir::kr::ps::dl::Negative::keyword) >> attr(ast::Negative {});
+const auto equal_zero_condition_def = lit(runir::kr::ps::dl::EqualZero::keyword) >> attr(ast::EqualZero {});
+const auto greater_zero_condition_def = lit(runir::kr::ps::dl::GreaterZero::keyword) >> attr(ast::GreaterZero {});
 const auto condition_observation_def = positive_condition | negative_condition | equal_zero_condition | greater_zero_condition;
 const auto condition_def = (lit("(") >> condition_observation) > identifier > lit(")");
 
-const auto positive_effect_def = lit(ast::Positive::keyword) >> attr(ast::Positive {});
-const auto negative_effect_def = lit(ast::Negative::keyword) >> attr(ast::Negative {});
-const auto unchanged_effect_def = lit(ast::Unchanged::keyword) >> attr(ast::Unchanged {});
-const auto increases_effect_def = lit(ast::Increases::keyword) >> attr(ast::Increases {});
-const auto decreases_effect_def = lit(ast::Decreases::keyword) >> attr(ast::Decreases {});
+const auto positive_effect_def = lit(runir::kr::ps::dl::Positive::keyword) >> attr(ast::Positive {});
+const auto negative_effect_def = lit(runir::kr::ps::dl::Negative::keyword) >> attr(ast::Negative {});
+const auto unchanged_effect_def = lit(runir::kr::ps::dl::Unchanged::keyword) >> attr(ast::Unchanged {});
+const auto increases_effect_def = lit(runir::kr::ps::dl::Increases::keyword) >> attr(ast::Increases {});
+const auto decreases_effect_def = lit(runir::kr::ps::dl::Decreases::keyword) >> attr(ast::Decreases {});
 const auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
 const auto effect_def = (lit("(") >> effect_observation) > identifier > lit(")");
 

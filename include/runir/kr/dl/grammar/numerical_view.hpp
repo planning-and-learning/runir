@@ -5,8 +5,8 @@
 
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/containers/variant.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {
@@ -27,6 +27,12 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
 
     auto get_index() const noexcept { return m_handle; }
+
+    auto get_identifier() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>
+    {
+        return get_data().identifier;
+    }
 
     auto get_arg() const noexcept
         requires std::same_as<Tag, runir::kr::dl::CountTag>

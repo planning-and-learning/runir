@@ -44,12 +44,12 @@ struct Data<runir::kr::dl::Numerical<Family, runir::kr::dl::DistanceTag>> :
 
 template<>
 struct Data<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>> :
-    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
-                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>
+    runir::kr::dl::semantics::ReferenceData<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
+                                            runir::kr::dl::Argument<runir::kr::dl::NumericalTag>>
 {
     using Base =
-        runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
-                                               runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>;
+        runir::kr::dl::semantics::ReferenceData<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>,
+                                                runir::kr::dl::Argument<runir::kr::dl::NumericalTag>>;
     using Base::Base;
 };
 

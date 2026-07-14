@@ -72,10 +72,10 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     modules = dl.parse_modules(descriptions, planning_domain, repository)
 
     assert [module.get_name() for module in modules] == ["on", "on-table", "tower", "blocks"]
-    assert len(modules[0].get_concept_features()) == 9
+    assert len(modules[0].get_concept_features()) == 12
     assert len(modules[0].get_boolean_features()) == 2
     assert len(modules[0].get_numerical_features()) == 3
-    assert len(modules[3].get_concept_features()) == 1
+    assert len(modules[3].get_concept_features()) == 2
     assert len(modules[3].get_numerical_features()) == 1
     assert "(:symbol blocks)" in str(modules[3])
     memory_transitions = modules[3].get_memory_transitions()
@@ -85,6 +85,7 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     first_rule = first_transition[0].get_variant()
     assert first_rule.get_source() is not None
     assert first_rule.get_target() is not None
+    assert first_rule.get_feature().get_symbol() == "L_load"
 
     created_modules = dl.ModuleFactory.create_bonet_et_al_icaps2024_modules(planning_domain, repository)
     assert [module.get_name() for module in created_modules] == ["on", "on-table", "tower", "blocks"]
@@ -180,6 +181,44 @@ def test_module_parser_reports_malformed_nested_constructor_position():
         dl.parse_module(source, planning_domain, repository)
 
     _assert_diagnostic_at(raised.value, source, "(not_a_constructor)")
+
+
+def test_load_rules_require_named_features_of_the_matching_category():
+    planning_domain, repository = _repositories()
+
+    def module(features, feature):
+        return f"""(:module
+    (:symbol load)
+    (:arguments)
+    (:registers (:concept r0))
+    (:entry m0)
+    (:memory m0 m1)
+    (:features {features})
+    (:rules
+        (:rule
+            (:symbol r0)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:load
+                    (:conditions)
+                    (:concept {feature})
+                    (:register (:concept r0))
+                )
+            )
+        )
+    )
+)"""
+
+    inline = module("", "(c_top)")
+    with pytest.raises(ParseError) as raised:
+        dl.parse_module(inline, planning_domain, repository)
+    _assert_diagnostic_at(raised.value, inline, "(c_top)")
+
+    wrong_category = module("(:role (:symbol shared) (:expression (r_universal)))", "shared ")
+    with pytest.raises(UndefinedSymbolError, match=r"Undefined feature: shared") as raised:
+        dl.parse_module(wrong_category, planning_domain, repository)
+    _assert_diagnostic_at(raised.value, wrong_category, "shared )")
 
 
 def test_module_parser_reports_fifth_register_position():
@@ -334,7 +373,12 @@ def test_module_program_parser_rejects_invalid_wiring():
         (:registers)
         (:entry m0)
         (:memory m0 m1)
-        (:features)
+        (:features
+            (:concept
+                (:symbol B)
+                (:expression (c_top))
+            )
+        )
         (:rules
             (:rule
                 (:symbol auto5)
@@ -343,9 +387,7 @@ def test_module_program_parser_rejects_invalid_wiring():
                     (:target-memory m1)
                     (:load
                         (:conditions)
-                        (:concept
-                            (c_top)
-                        )
+                        (:concept B)
                         (:register
                             (:concept r1)
                         )
@@ -479,7 +521,12 @@ def test_executor_reports_structured_failure_statuses_from_python():
         )
         (:entry source)
         (:memory source)
-        (:features)
+        (:features
+            (:concept
+                (:symbol B)
+                (:expression (c_top))
+            )
+        )
         (:rules
             (:rule
                 (:symbol auto9)
@@ -488,9 +535,7 @@ def test_executor_reports_structured_failure_statuses_from_python():
                     (:target-memory source)
                     (:load
                         (:conditions)
-                        (:concept
-                            (c_top)
-                        )
+                        (:concept B)
                         (:register
                             (:concept r0)
                         )

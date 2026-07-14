@@ -1,9 +1,11 @@
 #ifndef RUNIR_KR_PS_EXT_MODULE_VIEW_HPP_
 #define RUNIR_KR_PS_EXT_MODULE_VIEW_HPP_
 
-#include "runir/kr/ps/ext/argument_view.hpp"
+#include "runir/kr/dl/argument_view.hpp"
+#include "runir/kr/dl/register_view.hpp"
 #include "runir/kr/ps/ext/memory_state_view.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
+#include "runir/kr/ps/ext/module_symbol_view.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 
 #include <concepts>
@@ -30,19 +32,20 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
 
     auto get_index() const noexcept { return m_handle; }
-    const auto& get_name() const noexcept { return get_data().name; }
+    auto get_symbol() const noexcept { return make_view(get_data().symbol, *m_context); }
+    const auto& get_name() const noexcept { return get_symbol().get_name(); }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_arguments() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(get_data().concept_arguments, *m_context);
+            return make_view(get_data().concept_arguments, get_repository(*m_context).get_dl_repository());
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return make_view(get_data().role_arguments, *m_context);
+            return make_view(get_data().role_arguments, get_repository(*m_context).get_dl_repository());
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return make_view(get_data().boolean_arguments, *m_context);
+            return make_view(get_data().boolean_arguments, get_repository(*m_context).get_dl_repository());
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return make_view(get_data().numerical_arguments, *m_context);
+            return make_view(get_data().numerical_arguments, get_repository(*m_context).get_dl_repository());
     }
 
     template<runir::kr::dl::CategoryTag Category>
@@ -50,9 +53,9 @@ public:
         requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(get_data().concept_registers, *m_context);
+            return make_view(get_data().concept_registers, get_repository(*m_context).get_dl_repository());
         else
-            return make_view(get_data().role_registers, *m_context);
+            return make_view(get_data().role_registers, get_repository(*m_context).get_dl_repository());
     }
 
     template<typename FeatureTag>

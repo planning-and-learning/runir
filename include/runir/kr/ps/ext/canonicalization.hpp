@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_EXT_CANONICALIZATION_HPP_
 #define RUNIR_KR_PS_EXT_CANONICALIZATION_HPP_
 
-#include "runir/kr/ps/ext/argument_data.hpp"
 #include "runir/kr/ps/ext/condition_data.hpp"
 #include "runir/kr/ps/ext/dl/condition_data.hpp"
 #include "runir/kr/ps/ext/dl/effect_data.hpp"
@@ -10,7 +9,7 @@
 #include "runir/kr/ps/ext/memory_state_data.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
 #include "runir/kr/ps/ext/module_program_data.hpp"
-#include "runir/kr/ps/ext/register_data.hpp"
+#include "runir/kr/ps/ext/module_symbol_data.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_data.hpp"
 
@@ -22,19 +21,9 @@
 namespace runir::kr::ps::ext
 {
 
-template<runir::kr::dl::CategoryTag Category>
-bool is_canonical(const ygg::Data<Argument<Category>>&) noexcept
-{
-    return true;
-}
-
 inline bool is_canonical(const ygg::Data<MemoryState>&) noexcept { return true; }
 
-template<runir::kr::dl::CategoryTag Category>
-bool is_canonical(const ygg::Data<Register<Category>>&) noexcept
-{
-    return true;
-}
+inline bool is_canonical(const ygg::Data<ModuleSymbol>&) noexcept { return true; }
 
 template<typename FeatureTag>
 bool is_canonical(const ygg::Data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>&) noexcept
@@ -93,17 +82,9 @@ inline bool is_canonical(const ygg::Data<Module>& data) noexcept
 
 inline bool is_canonical(const ygg::Data<ModuleProgram>&) noexcept { return true; }
 
-template<runir::kr::dl::CategoryTag Category>
-void canonicalize(ygg::Data<Argument<Category>>&) noexcept
-{
-}
-
 inline void canonicalize(ygg::Data<MemoryState>&) noexcept {}
 
-template<runir::kr::dl::CategoryTag Category>
-void canonicalize(ygg::Data<Register<Category>>&) noexcept
-{
-}
+inline void canonicalize(ygg::Data<ModuleSymbol>&) noexcept {}
 
 template<typename FeatureTag>
 void canonicalize(ygg::Data<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>&) noexcept

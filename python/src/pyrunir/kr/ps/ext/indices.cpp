@@ -8,13 +8,8 @@ namespace runir::kr::ps::ext
 
 void bind_indices(nb::module_& m)
 {
-    ygg::bind_index<ygg::Index<Argument<runir::kr::dl::ConceptTag>>>(m, "ConceptArgumentIndex");
-    ygg::bind_index<ygg::Index<Argument<runir::kr::dl::RoleTag>>>(m, "RoleArgumentIndex");
-    ygg::bind_index<ygg::Index<Argument<runir::kr::dl::BooleanTag>>>(m, "BooleanArgumentIndex");
-    ygg::bind_index<ygg::Index<Argument<runir::kr::dl::NumericalTag>>>(m, "NumericalArgumentIndex");
-    ygg::bind_index<ygg::Index<Register<runir::kr::dl::ConceptTag>>>(m, "ConceptRegisterIndex");
-    ygg::bind_index<ygg::Index<Register<runir::kr::dl::RoleTag>>>(m, "RoleRegisterIndex");
     ygg::bind_index<ygg::Index<MemoryState>>(m, "MemoryStateIndex");
+    ygg::bind_index<ygg::Index<ModuleSymbol>>(m, "ModuleSymbolIndex");
     ygg::bind_index<ygg::Index<Module>>(m, "ModuleIndex");
     ygg::bind_index<ygg::Index<ModuleProgram>>(m, "ModuleProgramIndex");
     ygg::bind_index<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>>(m, "ConditionVariantIndex");

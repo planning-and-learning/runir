@@ -3,7 +3,6 @@
 #include "structural_termination/detail.hpp"
 
 #include <optional>
-#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -42,10 +41,10 @@ struct ModuleCallGraph
     std::vector<RuleVariantView> unresolved_rules;
 };
 
-inline std::optional<std::size_t> find_module(const std::vector<ModuleView>& modules, const std::string& name)
+inline std::optional<std::size_t> find_module(const std::vector<ModuleView>& modules, ygg::Index<ModuleSymbol> symbol)
 {
     for (std::size_t position = 0; position < modules.size(); ++position)
-        if (std::string(modules[position].get_name()) == name)
+        if (modules[position].get_symbol().get_index() == symbol)
             return position;
     return std::nullopt;
 }
@@ -70,7 +69,7 @@ inline ModuleCallGraph build_module_call_graph(const std::vector<ModuleView>& mo
                         using RuleViewT = std::decay_t<decltype(rule)>;
                         if constexpr (std::same_as<RuleViewT, ygg::View<ygg::Index<Rule<CallTag>>, Repository>>)
                         {
-                            const auto target_module = find_module(modules, rule.get_callee_name());
+                            const auto target_module = find_module(modules, rule.get_callee().get_index());
                             if (!target_module)
                             {
                                 unresolved_rules.push_back(rule_variant);

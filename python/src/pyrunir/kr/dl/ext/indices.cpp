@@ -1,7 +1,6 @@
 #include "module.hpp"
-#include "runir/kr/dl/declarations.hpp"
 
-#include <runir/kr/dl/grammar/indices.hpp>
+#include <runir/kr/dl/indices.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
@@ -10,21 +9,24 @@ namespace runir::kr::dl::ext
 
 void bind_indices(nb::module_& m)
 {
-    ygg::bind_index<ygg::Index<runir::kr::dl::RegisterTag>>(m, "RegisterIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>>>(m, "ConceptRegisterIndex");
+    ygg::bind_index<ygg::Index<Argument<ConceptTag>>>(m, "ConceptArgumentIndex");
+    ygg::bind_index<ygg::Index<Argument<RoleTag>>>(m, "RoleArgumentIndex");
+    ygg::bind_index<ygg::Index<Argument<BooleanTag>>>(m, "BooleanArgumentIndex");
+    ygg::bind_index<ygg::Index<Argument<NumericalTag>>>(m, "NumericalArgumentIndex");
+    ygg::bind_index<ygg::Index<Register<ConceptTag>>>(m, "ConceptRegisterIndex");
+    ygg::bind_index<ygg::Index<Register<RoleTag>>>(m, "RoleRegisterIndex");
 
-    // Indices into the constructor repository, referenced by ext feature data/views.
-    ygg::bind_index<ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>(m, "ConceptConstructorIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>(m, "RoleConstructorIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>>>(m, "BooleanConstructorIndex");
-    ygg::bind_index<ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>>>(m, "NumericalConstructorIndex");
+    ygg::bind_index<ygg::Index<Constructor<runir::kr::ExtFamilyTag, ConceptTag>>>(m, "ConceptConstructorIndex");
+    ygg::bind_index<ygg::Index<Constructor<runir::kr::ExtFamilyTag, RoleTag>>>(m, "RoleConstructorIndex");
+    ygg::bind_index<ygg::Index<Constructor<runir::kr::ExtFamilyTag, BooleanTag>>>(m, "BooleanConstructorIndex");
+    ygg::bind_index<ygg::Index<Constructor<runir::kr::ExtFamilyTag, NumericalTag>>>(m, "NumericalConstructorIndex");
 
-    // Register/argument identifiers are IndexMixin handles referenced by ext argument/register data.
-    ygg::bind_index<runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>(m, "ConceptRegisterIdentifier");
-    ygg::bind_index<runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>(m, "ConceptArgumentIdentifier");
-    ygg::bind_index<runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>(m, "RoleArgumentIdentifier");
-    ygg::bind_index<runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>(m, "BooleanArgumentIdentifier");
-    ygg::bind_index<runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>(m, "NumericalArgumentIdentifier");
+    ygg::bind_index<ArgumentIdentifier<ConceptTag>>(m, "ConceptArgumentIdentifier");
+    ygg::bind_index<ArgumentIdentifier<RoleTag>>(m, "RoleArgumentIdentifier");
+    ygg::bind_index<ArgumentIdentifier<BooleanTag>>(m, "BooleanArgumentIdentifier");
+    ygg::bind_index<ArgumentIdentifier<NumericalTag>>(m, "NumericalArgumentIdentifier");
+    ygg::bind_index<RegisterIdentifier<ConceptTag>>(m, "ConceptRegisterIdentifier");
+    ygg::bind_index<RegisterIdentifier<RoleTag>>(m, "RoleRegisterIdentifier");
 }
 
 }  // namespace runir::kr::dl::ext

@@ -312,6 +312,16 @@ inline constexpr bool is_atomic_goal_tag_v = IsAtomicGoalTag<T>::value;
  * Ext family constructors
  */
 
+template<CategoryTag Category>
+struct Argument
+{
+};
+
+template<CategoryTag Category>
+struct Register
+{
+};
+
 struct RegisterTag
 {
 };

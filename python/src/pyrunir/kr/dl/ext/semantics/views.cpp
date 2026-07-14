@@ -57,6 +57,10 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_role", &View::get_role, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_concept(); })
         cls.def("get_concept", &View::get_concept, nb::keep_alive<0, 1>());
+    if constexpr (requires(const View& view) { view.get_argument(); })
+        cls.def("get_argument", &View::get_argument, nb::keep_alive<0, 1>());
+    if constexpr (requires(const View& view) { view.get_register(); })
+        cls.def("get_register", &View::get_register, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view, GroundContext& context) { runir::kr::dl::semantics::evaluate(view, context); })
         cls.def("evaluate", [](View view, GroundContext& context) { return runir::kr::dl::semantics::evaluate(view, context); }, "context"_a);
     if constexpr (requires(const View& view, LiftedContext& context) { runir::kr::dl::semantics::evaluate(view, context); })

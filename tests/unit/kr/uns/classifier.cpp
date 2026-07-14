@@ -102,6 +102,13 @@ TEST(RunirTests, UnsClassifierParsesAndClassifies)
         ++num_features;
     }
     EXPECT_EQ(num_features, 2u);
+    EXPECT_EQ(fmt::format("{}", classifier.get_features().front()),
+              "(:boolean\n"
+              "    (:symbol some_ball)\n"
+              "    (:expression (b_nonempty (c_top)))\n"
+              ")");
+    EXPECT_EQ(fmt::format("{}", classifier.get_clauses().front().get_literals()[0]), "some_ball");
+    EXPECT_EQ(fmt::format("{}", classifier.get_clauses().front().get_literals()[1]), "(not no_object)");
 
     const auto state = fixture.search->state_repository->get_initial_state();
     auto builder = sem::Builder();

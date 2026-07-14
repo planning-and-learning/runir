@@ -4,6 +4,7 @@
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 #include "runir/kr/parser/error_handler.hpp"
 #include "runir/kr/ps/base/dl/ast/ast_adapted.hpp"
+#include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/dl/ast/ast_adapted.hpp"
 #include "runir/kr/ps/ext/dl/parser/parsers.hpp"
 
@@ -58,8 +59,6 @@ numerical_feature_type const numerical_feature = "numerical_feature";
 feature_type const feature = "feature";
 features_section_type const features_section = "features_section";
 symbol_expression_type const symbol_expression = "symbol_expression";
-concept_load_expression_type const concept_load_expression = "concept_load_expression";
-role_load_expression_type const role_load_expression = "role_load_expression";
 named_value_type const named_value = "named_value";
 positive_condition_type const positive_condition = "positive_condition";
 negative_condition_type const negative_condition = "negative_condition";
@@ -127,34 +126,31 @@ const auto feature_def = concept_feature | role_feature | boolean_feature | nume
 const auto features_section_def = lit("(") > lit(":features") > *feature > lit(")");
 
 const auto symbol_expression_def = identifier;
-const auto concept_load_expression_def = dl_parser::concept_parser<runir::kr::ExtFamilyTag>() | symbol_expression;
-const auto role_load_expression_def = dl_parser::role_parser<runir::kr::ExtFamilyTag>() | symbol_expression;
-const auto concept_expression_section_def = omit[lit("(:concept")] >> concept_load_expression >> omit[lit(")")];
-const auto role_expression_section_def = omit[lit("(:role")] >> role_load_expression >> omit[lit(")")];
+const auto concept_feature_section_def = omit[lit("(:concept")] > identifier > omit[lit(")")];
+const auto role_feature_section_def = omit[lit("(:role")] > identifier > omit[lit(")")];
 const auto concept_register_section_def = omit[lit("(") >> lit(":register") >> lit("(:concept")] >> identifier >> omit[lit(")") >> lit(")")];
 const auto role_register_section_def = omit[lit("(") >> lit(":register") >> lit("(:role")] >> identifier >> omit[lit(")") >> lit(")")];
 const auto arguments_expression_section_def = lit("(") > lit(":arguments") > *symbol_expression > lit(")");
 
-const auto positive_condition_def = lit(base_ast::Positive::keyword) >> attr(base_ast::Positive {});
-const auto negative_condition_def = lit(base_ast::Negative::keyword) >> attr(base_ast::Negative {});
-const auto equal_zero_condition_def = lit(base_ast::EqualZero::keyword) >> attr(base_ast::EqualZero {});
-const auto greater_zero_condition_def = lit(base_ast::GreaterZero::keyword) >> attr(base_ast::GreaterZero {});
+const auto positive_condition_def = lit(runir::kr::ps::dl::Positive::keyword) >> attr(base_ast::Positive {});
+const auto negative_condition_def = lit(runir::kr::ps::dl::Negative::keyword) >> attr(base_ast::Negative {});
+const auto equal_zero_condition_def = lit(runir::kr::ps::dl::EqualZero::keyword) >> attr(base_ast::EqualZero {});
+const auto greater_zero_condition_def = lit(runir::kr::ps::dl::GreaterZero::keyword) >> attr(base_ast::GreaterZero {});
 const auto condition_observation_def = positive_condition | negative_condition | equal_zero_condition | greater_zero_condition;
 const auto condition_def = omit[lit("(")] >> condition_observation >> identifier >> omit[lit(")")];
 const auto conditions_section_def = lit("(") > lit(":conditions") > *condition > lit(")");
 
-const auto positive_effect_def = lit(base_ast::Positive::keyword) >> attr(base_ast::Positive {});
-const auto negative_effect_def = lit(base_ast::Negative::keyword) >> attr(base_ast::Negative {});
-const auto unchanged_effect_def = lit(base_ast::Unchanged::keyword) >> attr(base_ast::Unchanged {});
-const auto increases_effect_def = lit(base_ast::Increases::keyword) >> attr(base_ast::Increases {});
-const auto decreases_effect_def = lit(base_ast::Decreases::keyword) >> attr(base_ast::Decreases {});
+const auto positive_effect_def = lit(runir::kr::ps::dl::Positive::keyword) >> attr(base_ast::Positive {});
+const auto negative_effect_def = lit(runir::kr::ps::dl::Negative::keyword) >> attr(base_ast::Negative {});
+const auto unchanged_effect_def = lit(runir::kr::ps::dl::Unchanged::keyword) >> attr(base_ast::Unchanged {});
+const auto increases_effect_def = lit(runir::kr::ps::dl::Increases::keyword) >> attr(base_ast::Increases {});
+const auto decreases_effect_def = lit(runir::kr::ps::dl::Decreases::keyword) >> attr(base_ast::Decreases {});
 const auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
 const auto effect_def = omit[lit("(")] >> effect_observation >> identifier >> omit[lit(")")];
 const auto effects_section_def = lit("(") > lit(":effects") > *effect > lit(")");
 
-const auto concept_load_rule_def =
-    omit[lit("(:load")] >> conditions_section >> concept_expression_section_def >> concept_register_section_def >> omit[lit(")")];
-const auto role_load_rule_def = omit[lit("(:load")] >> conditions_section >> role_expression_section_def >> role_register_section_def >> omit[lit(")")];
+const auto concept_load_rule_def = omit[lit("(:load")] >> conditions_section >> concept_feature_section_def >> concept_register_section_def >> omit[lit(")")];
+const auto role_load_rule_def = omit[lit("(:load")] >> conditions_section >> role_feature_section_def >> role_register_section_def >> omit[lit(")")];
 const auto sketch_rule_def = omit[lit("(:sketch")] >> conditions_section >> effects_section >> omit[lit(")")];
 const auto do_rule_def = omit[lit("(:do")] >> conditions_section >> action_section >> arguments_expression_section >> effects_section >> omit[lit(")")];
 const auto call_rule_def = omit[lit("(:call")] >> conditions_section >> callee_section >> arguments_expression_section >> omit[lit(")")];
@@ -198,8 +194,6 @@ BOOST_SPIRIT_DEFINE(identifier,
                     feature,
                     features_section,
                     symbol_expression,
-                    concept_load_expression,
-                    role_load_expression,
                     named_value,
                     positive_condition,
                     negative_condition,
@@ -319,10 +313,6 @@ struct FeatureClass : x3::annotate_on_success
 {
 };
 struct SymbolExpressionClass : x3::annotate_on_success
-{
-};
-template<runir::kr::dl::CategoryTag Category>
-struct LoadExpressionClass : x3::annotate_on_success
 {
 };
 struct NamedValueClass : x3::annotate_on_success

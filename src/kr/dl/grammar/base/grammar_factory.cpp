@@ -1,7 +1,6 @@
 #include "runir/kr/dl/grammar/grammar_factory.hpp"
 
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/grammar/parser.hpp"
 
 #include <fmt/ranges.h>
@@ -47,14 +46,14 @@ void add_concept_intersection(std::stringstream& out, std::vector<std::string>& 
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::ConceptIntersection<runir::kr::BaseFamilyTag>::keyword) + " " + concept_ + " " + concept_);
+    add_rule(out, head, std::string(runir::kr::dl::ConceptIntersectionSyntaxTag::keyword) + " " + concept_ + " " + concept_);
 }
 
 void add_concept_negation(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept, const std::string& concept_)
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::ConceptNegation<runir::kr::BaseFamilyTag>::keyword) + " " + concept_);
+    add_rule(out, head, std::string(runir::kr::dl::NegationTag::keyword) + " " + concept_);
 }
 
 void add_concept_existential_quantification(std::stringstream& out,
@@ -65,7 +64,7 @@ void add_concept_existential_quantification(std::stringstream& out,
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::ConceptExistentialQuantification<runir::kr::BaseFamilyTag>::keyword) + " " + role + " " + concept_);
+    add_rule(out, head, std::string(runir::kr::dl::ExistentialQuantificationTag::keyword) + " " + role + " " + concept_);
 }
 
 void add_concept_value_restriction(std::stringstream& out,
@@ -76,49 +75,49 @@ void add_concept_value_restriction(std::stringstream& out,
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::ConceptValueRestriction<runir::kr::BaseFamilyTag>::keyword) + " " + role + " " + concept_);
+    add_rule(out, head, std::string(runir::kr::dl::ValueRestrictionTag::keyword) + " " + role + " " + concept_);
 }
 
 void add_concept_agreement(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept, const std::string& role)
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::ConceptAgreement<runir::kr::BaseFamilyTag>::keyword) + " " + role + " " + role);
+    add_rule(out, head, std::string(runir::kr::dl::AgreementTag::keyword) + " " + role + " " + role);
 }
 
 void add_concept_bot(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept)
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::ConceptBot<runir::kr::BaseFamilyTag>::keyword));
+    add_rule(out, head, std::string(runir::kr::dl::BotTag::keyword));
 }
 
 void add_concept_top(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept)
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::ConceptTop<runir::kr::BaseFamilyTag>::keyword));
+    add_rule(out, head, std::string(runir::kr::dl::TopTag::keyword));
 }
 
 void add_concept_nominal(std::stringstream& out, std::vector<std::string>& heads, size_t& next_concept, std::string_view object_name)
 {
     const auto head = next_non_terminal<runir::kr::dl::ConceptTag>(next_concept);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::ConceptNominal<runir::kr::BaseFamilyTag>::keyword) + " " + quote(object_name));
+    add_rule(out, head, std::string(runir::kr::dl::NominalTag::keyword) + " " + quote(object_name));
 }
 
 void add_role_transitive_closure(std::stringstream& out, std::vector<std::string>& heads, size_t& next_role, const std::string& role_primitive)
 {
     const auto head = next_non_terminal<runir::kr::dl::RoleTag>(next_role);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::RoleTransitiveClosure<runir::kr::BaseFamilyTag>::keyword) + " " + role_primitive);
+    add_rule(out, head, std::string(runir::kr::dl::TransitiveClosureTag::keyword) + " " + role_primitive);
 }
 
 void add_role_inverse(std::stringstream& out, std::vector<std::string>& heads, size_t& next_role, const std::string& role_primitive)
 {
     const auto head = next_non_terminal<runir::kr::dl::RoleTag>(next_role);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::RoleInverse<runir::kr::BaseFamilyTag>::keyword) + " " + role_primitive);
+    add_rule(out, head, std::string(runir::kr::dl::InverseTag::keyword) + " " + role_primitive);
 }
 
 template<runir::kr::dl::CategoryTag Category>
@@ -137,8 +136,7 @@ void add_boolean_atomic_state(std::stringstream& out, std::vector<std::string>& 
         heads.push_back(head);
         add_rule(out,
                  head,
-                 std::string(ast::BooleanAtomicState<runir::kr::BaseFamilyTag>::keyword) + " " + quote(predicate_name) + " "
-                     + std::string(boolean_keyword(polarity)));
+                 std::string(runir::kr::dl::BooleanAtomicStateSyntaxTag::keyword) + " " + quote(predicate_name) + " " + std::string(boolean_keyword(polarity)));
     }
 }
 
@@ -157,14 +155,14 @@ void add_boolean_nonempty(std::stringstream& out, std::vector<std::string>& head
 {
     const auto head = next_non_terminal<runir::kr::dl::BooleanTag>(next_boolean);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::BooleanNonempty<runir::kr::BaseFamilyTag>::keyword) + " " + arg);
+    add_rule(out, head, std::string(runir::kr::dl::NonemptyTag::keyword) + " " + arg);
 }
 
 void add_numerical_count(std::stringstream& out, std::vector<std::string>& heads, size_t& next_numerical, const std::string& arg)
 {
     const auto head = next_non_terminal<runir::kr::dl::NumericalTag>(next_numerical);
     heads.push_back(head);
-    add_rule(out, head, std::string(ast::NumericalCount<runir::kr::BaseFamilyTag>::keyword) + " " + arg);
+    add_rule(out, head, std::string(runir::kr::dl::CountTag::keyword) + " " + arg);
 }
 
 void add_numerical_distance(std::stringstream& out,
@@ -178,9 +176,9 @@ void add_numerical_distance(std::stringstream& out,
     heads.push_back(head);
     add_rule(out,
              head,
-             std::string(ast::NumericalDistance<runir::kr::BaseFamilyTag>::keyword) + " " + concept_ + " "
-                 + ast::RoleRestriction<runir::kr::BaseFamilyTag>::keyword + " " + role_primitive + " " + concept_primitive + " " + concept_);
-    add_rule(out, head, std::string(ast::NumericalDistance<runir::kr::BaseFamilyTag>::keyword) + " " + concept_ + " " + role_primitive + " " + concept_);
+             std::string(runir::kr::dl::DistanceTag::keyword) + " " + concept_ + " " + runir::kr::dl::RestrictionTag::keyword + " " + role_primitive + " "
+                 + concept_primitive + " " + concept_);
+    add_rule(out, head, std::string(runir::kr::dl::DistanceTag::keyword) + " " + concept_ + " " + role_primitive + " " + concept_);
 }
 
 template<tyr::formalism::FactKind FactKind>
@@ -204,18 +202,18 @@ void add_predicate_primitives(tyr::formalism::planning::DomainView domain,
             add_atomic_state<runir::kr::dl::ConceptTag>(out,
                                                         concept_heads,
                                                         next_concept,
-                                                        ast::ConceptAtomicState<runir::kr::BaseFamilyTag>::keyword,
+                                                        runir::kr::dl::ConceptAtomicStateSyntaxTag::keyword,
                                                         predicate.get_name());
             add_atomic_goal<runir::kr::dl::ConceptTag>(out,
                                                        concept_heads,
                                                        next_concept,
-                                                       ast::ConceptAtomicGoal<runir::kr::BaseFamilyTag>::keyword,
+                                                       runir::kr::dl::ConceptAtomicGoalSyntaxTag::keyword,
                                                        predicate.get_name());
         }
         else if (predicate.get_arity() == 2)
         {
-            add_atomic_state<runir::kr::dl::RoleTag>(out, role_heads, next_role, ast::RoleAtomicState<runir::kr::BaseFamilyTag>::keyword, predicate.get_name());
-            add_atomic_goal<runir::kr::dl::RoleTag>(out, role_heads, next_role, ast::RoleAtomicGoal<runir::kr::BaseFamilyTag>::keyword, predicate.get_name());
+            add_atomic_state<runir::kr::dl::RoleTag>(out, role_heads, next_role, runir::kr::dl::RoleAtomicStateSyntaxTag::keyword, predicate.get_name());
+            add_atomic_goal<runir::kr::dl::RoleTag>(out, role_heads, next_role, runir::kr::dl::RoleAtomicGoalSyntaxTag::keyword, predicate.get_name());
         }
     }
 }

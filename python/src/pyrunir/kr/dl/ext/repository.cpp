@@ -1,6 +1,7 @@
 #include "module.hpp"
 
 #include <memory>
+#include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
@@ -10,10 +11,27 @@
 namespace runir::kr::dl::ext
 {
 
+using namespace nanobind::literals;
+
+namespace
+{
+
+template<typename... Ts>
+void bind_get_or_create(nb::class_<runir::kr::dl::ExtConstructorRepository>& repository, ygg::TypeList<Ts...>)
+{
+    (repository.def("get_or_create",
+                    [](runir::kr::dl::ExtConstructorRepository& self, ygg::Data<Ts>& data) { return self.get_or_create(data); },
+                    "data"_a),
+     ...);
+}
+
+}  // namespace
+
 void bind_repository(nb::module_& m)
 {
     auto repository = nb::class_<runir::kr::dl::ExtConstructorRepository>(m, "ConstructorRepository");
     repository.def("clear", &runir::kr::dl::ExtConstructorRepository::clear).def("get_index", &runir::kr::dl::ExtConstructorRepository::get_index);
+    bind_get_or_create(repository, runir::kr::dl::FamilyReferenceTypes<runir::kr::ExtFamilyTag> {});
 
     auto factory = nb::class_<runir::kr::dl::ExtConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");
     factory.def(nb::init<>())

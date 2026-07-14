@@ -1,7 +1,9 @@
 #ifndef RUNIR_SEMANTICS_ROLE_VIEW_HPP_
 #define RUNIR_SEMANTICS_ROLE_VIEW_HPP_
 
+#include "runir/kr/dl/argument_view.hpp"
 #include "runir/kr/dl/constructors.hpp"
+#include "runir/kr/dl/register_view.hpp"
 #include "runir/kr/dl/role_data.hpp"
 
 #include <concepts>
@@ -39,6 +41,18 @@ public:
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
     {
         return get_data().polarity;
+    }
+
+    auto get_register() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::RegisterTag>
+    {
+        return make_view(get_data().reference, *m_context);
+    }
+
+    auto get_argument() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>
+    {
+        return make_view(get_data().reference, *m_context);
     }
 
     auto get_arg() const noexcept

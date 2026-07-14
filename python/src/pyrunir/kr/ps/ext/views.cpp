@@ -34,8 +34,8 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_variant", &View::get_variant);
     if constexpr (requires(const View& view) { view.get_symbol(); })
         cls.def("get_symbol", &View::get_symbol);
-    if constexpr (requires(const View& view) { view.get_expression(); })
-        cls.def("get_expression", &View::get_expression, nb::keep_alive<0, 1>());
+    if constexpr (requires(const View& view) { view.get_feature(); })
+        cls.def("get_feature", &View::get_feature, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_source(); })
         cls.def("get_source", &View::get_source, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_target(); })
@@ -46,8 +46,6 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_conditions", &View::get_conditions);
     if constexpr (requires(const View& view) { view.get_effects(); })
         cls.def("get_effects", &View::get_effects);
-    if constexpr (requires(const View& view) { view.get_concept(); })
-        cls.def("get_concept", &View::get_concept, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_register(); })
         cls.def("get_register", &View::get_register, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_action_name(); })
@@ -56,6 +54,13 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_action_arguments", &View::get_action_arguments);
     if constexpr (requires(const View& view) { view.get_callee(); })
         cls.def("get_callee", &View::get_callee, nb::keep_alive<0, 1>());
+    if constexpr (requires(const View& view) { view.template get_arguments<runir::kr::dl::ConceptTag>(); })
+    {
+        cls.def("get_concept_arguments", &View::template get_arguments<runir::kr::dl::ConceptTag>);
+        cls.def("get_role_arguments", &View::template get_arguments<runir::kr::dl::RoleTag>);
+        cls.def("get_boolean_arguments", &View::template get_arguments<runir::kr::dl::BooleanTag>);
+        cls.def("get_numerical_arguments", &View::template get_arguments<runir::kr::dl::NumericalTag>);
+    }
     if constexpr (requires(const View& view) { view.template get_registers<runir::kr::dl::ConceptTag>(); })
     {
         cls.def("get_concept_registers", &View::template get_registers<runir::kr::dl::ConceptTag>);
@@ -78,19 +83,24 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_memory_transitions", &View::get_memory_transitions);
     if constexpr (requires(const View& view) { view.get_modules(); })
         cls.def("get_modules", &View::get_modules);
+    if constexpr (std::same_as<T, Rule<CallTag>>)
+        cls.def(
+            "get_call_arguments",
+            [](const View& view)
+            {
+                nb::list result;
+                view.for_each_call_argument([&](auto argument) { result.append(nb::cast(argument)); });
+                return result;
+            },
+            nb::keep_alive<0, 1>());
 }
 
 }  // namespace
 
 void bind_views(nb::module_& m)
 {
-    bind_view<Argument<runir::kr::dl::ConceptTag>>(m, "ConceptArgument");
-    bind_view<Argument<runir::kr::dl::RoleTag>>(m, "RoleArgument");
-    bind_view<Argument<runir::kr::dl::BooleanTag>>(m, "BooleanArgument");
-    bind_view<Argument<runir::kr::dl::NumericalTag>>(m, "NumericalArgument");
-    bind_view<Register<runir::kr::dl::ConceptTag>>(m, "ConceptRegister");
-    bind_view<Register<runir::kr::dl::RoleTag>>(m, "RoleRegister");
     bind_view<MemoryState>(m, "MemoryState");
+    bind_view<ModuleSymbol>(m, "ModuleSymbol");
     bind_view<Module>(m, "Module");
     bind_view<ModuleProgram>(m, "ModuleProgram");
     bind_view<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>(m, "ConditionVariant");

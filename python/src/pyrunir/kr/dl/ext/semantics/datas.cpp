@@ -21,8 +21,8 @@ void bind_data(nb::module_& m, const std::string& name)
 
     if constexpr (requires { &Data::index; })
         cls.def_rw("index", &Data::index);
-    if constexpr (requires { &Data::identifier; })
-        cls.def_rw("identifier", &Data::identifier);
+    if constexpr (requires { &Data::reference; })
+        cls.def_rw("reference", &Data::reference);
     if constexpr (requires { &Data::arg; })
         cls.def_rw("arg", &Data::arg);
     if constexpr (requires { &Data::lhs; })

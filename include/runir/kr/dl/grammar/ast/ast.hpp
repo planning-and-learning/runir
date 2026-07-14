@@ -35,13 +35,13 @@ struct Identifier : runir::kr::parser::ast::Identifier
     }
 };
 
-struct Reference : x3::position_tagged
+struct NumericReference : x3::position_tagged
 {
-    std::string text;
+    ygg::uint_t value {};
 
-    Reference& operator=(std::string value)
+    NumericReference& operator=(ygg::uint_t value_)
     {
-        text = std::move(value);
+        value = value_;
         return *this;
     }
 };
@@ -50,6 +50,22 @@ template<typename... Alternatives>
 struct PositionedVariant : x3::position_tagged, x3::variant<Alternatives...>
 {
     using Base = x3::variant<Alternatives...>;
+    using Base::Base;
+    using Base::operator=;
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct ArgumentReference : PositionedVariant<NumericReference, Identifier>
+{
+    using Base = PositionedVariant<NumericReference, Identifier>;
+    using Base::Base;
+    using Base::operator=;
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct RegisterReference : PositionedVariant<NumericReference, Identifier>
+{
+    using Base = PositionedVariant<NumericReference, Identifier>;
     using Base::Base;
     using Base::operator=;
 };
@@ -94,26 +110,22 @@ struct ConstructorOrNonTerminalVariant : PositionedVariant<ConceptChoice<Family>
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::BotTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::BotTag::keyword;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::TopTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::TopTag::keyword;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicStateSyntaxTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::ConceptAtomicStateSyntaxTag::keyword;
     Identifier predicate_name;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtomicGoalSyntaxTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::ConceptAtomicGoalSyntaxTag::keyword;
     Identifier predicate_name;
     bool polarity;
 };
@@ -121,7 +133,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptAtom
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptIntersectionSyntaxTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::ConceptIntersectionSyntaxTag::keyword;
     ConceptChoice<Family> lhs;
     ConceptChoice<Family> rhs;
 };
@@ -129,7 +140,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptInte
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptUnionSyntaxTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::ConceptUnionSyntaxTag::keyword;
     ConceptChoice<Family> lhs;
     ConceptChoice<Family> rhs;
 };
@@ -137,14 +147,12 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ConceptUnio
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NegationTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::NegationTag::keyword;
     ConceptChoice<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ValueRestrictionTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::ValueRestrictionTag::keyword;
     RoleChoice<Family> lhs;
     ConceptChoice<Family> rhs;
 };
@@ -152,7 +160,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ValueRestri
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExistentialQuantificationTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::ExistentialQuantificationTag::keyword;
     RoleChoice<Family> lhs;
     ConceptChoice<Family> rhs;
 };
@@ -160,7 +167,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::Existential
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtLeastNumberRestrictionTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::AtLeastNumberRestrictionTag::keyword;
     ygg::uint_t n;
     RoleChoice<Family> role;
 };
@@ -168,7 +174,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtLeastNumb
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtMostNumberRestrictionTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::AtMostNumberRestrictionTag::keyword;
     ygg::uint_t n;
     RoleChoice<Family> role;
 };
@@ -176,7 +181,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AtMostNumbe
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExactNumberRestrictionTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::ExactNumberRestrictionTag::keyword;
     ygg::uint_t n;
     RoleChoice<Family> role;
 };
@@ -184,7 +188,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ExactNumber
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtLeastNumberRestrictionTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::QualifiedAtLeastNumberRestrictionTag::keyword;
     ygg::uint_t n;
     RoleChoice<Family> role;
     ConceptChoice<Family> concept_;
@@ -193,7 +196,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAt
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAtMostNumberRestrictionTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::QualifiedAtMostNumberRestrictionTag::keyword;
     ygg::uint_t n;
     RoleChoice<Family> role;
     ConceptChoice<Family> concept_;
@@ -202,7 +204,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedAt
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedExactNumberRestrictionTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::QualifiedExactNumberRestrictionTag::keyword;
     ygg::uint_t n;
     RoleChoice<Family> role;
     ConceptChoice<Family> concept_;
@@ -211,7 +212,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::QualifiedEx
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleValueMapTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::RoleValueMapTag::keyword;
     RoleChoice<Family> lhs;
     RoleChoice<Family> rhs;
 };
@@ -219,7 +219,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleValueMa
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AgreementTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::AgreementTag::keyword;
     RoleChoice<Family> lhs;
     RoleChoice<Family> rhs;
 };
@@ -227,7 +226,6 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::AgreementTa
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleFillersTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::RoleFillersTag::keyword;
     RoleChoice<Family> role;
     std::vector<Identifier> object_names;
 };
@@ -235,36 +233,31 @@ struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RoleFillers
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::OneOfTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::OneOfTag::keyword;
     std::vector<Identifier> object_names;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::NominalTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::NominalTag::keyword;
     Identifier object_name;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct Constructor<Family, Category, runir::kr::dl::ArgumentTag<Category>> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::ArgumentTag<Category>::keyword;
-    Reference reference;
+    ArgumentReference<Category> reference;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::RegisterTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::ConceptRegisterSyntaxTag::keyword;
-    Reference reference;
+    RegisterReference<runir::kr::dl::ConceptTag> reference;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RegisterTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::RoleRegisterSyntaxTag::keyword;
-    Reference reference;
+    RegisterReference<runir::kr::dl::RoleTag> reference;
 };
 
 template<runir::kr::dl::FamilyTag Family>
@@ -460,20 +453,17 @@ using ConstructorVariantBase =
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::UniversalTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::UniversalTag::keyword;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicStateSyntaxTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::RoleAtomicStateSyntaxTag::keyword;
     Identifier predicate_name;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoalSyntaxTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::RoleAtomicGoalSyntaxTag::keyword;
     Identifier predicate_name;
     bool polarity;
 };
@@ -481,7 +471,6 @@ struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleAtomicGoal
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleIntersectionSyntaxTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::RoleIntersectionSyntaxTag::keyword;
     RoleChoice<Family> lhs;
     RoleChoice<Family> rhs;
 };
@@ -489,7 +478,6 @@ struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleIntersecti
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleUnionSyntaxTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::RoleUnionSyntaxTag::keyword;
     RoleChoice<Family> lhs;
     RoleChoice<Family> rhs;
 };
@@ -497,21 +485,18 @@ struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RoleUnionSynta
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ComplementTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::ComplementTag::keyword;
     RoleChoice<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::InverseTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::InverseTag::keyword;
     RoleChoice<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::CompositionTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::CompositionTag::keyword;
     RoleChoice<Family> lhs;
     RoleChoice<Family> rhs;
 };
@@ -519,21 +504,18 @@ struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::CompositionTag
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::TransitiveClosureTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::TransitiveClosureTag::keyword;
     RoleChoice<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ReflexiveTransitiveClosureTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::ReflexiveTransitiveClosureTag::keyword;
     RoleChoice<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RestrictionTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::RestrictionTag::keyword;
     RoleChoice<Family> lhs;
     ConceptChoice<Family> rhs;
 };
@@ -541,7 +523,6 @@ struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::RestrictionTag
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::IdentityTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::IdentityTag::keyword;
     ConceptChoice<Family> arg;
 };
 
@@ -577,7 +558,6 @@ using RoleArgument = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicStateSyntaxTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::BooleanAtomicStateSyntaxTag::keyword;
     Identifier predicate_name;
     bool polarity;
 };
@@ -585,7 +565,6 @@ struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtom
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::BooleanAtomicGoalSyntaxTag::keyword;
     Identifier predicate_name;
     bool polarity;
 };
@@ -593,14 +572,12 @@ struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanAtom
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NonemptyTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::NonemptyTag::keyword;
     ConstructorOrNonTerminalVariant<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ComparisonTag Tag>
 struct Constructor<Family, runir::kr::dl::BooleanTag, Tag> : x3::position_tagged
 {
-    static constexpr auto keyword = Tag::keyword;
     ConstructorOrNonTerminal<Family, typename Tag::OperandCategory> lhs;
     ConstructorOrNonTerminal<Family, typename Tag::OperandCategory> rhs;
 };
@@ -608,14 +585,12 @@ struct Constructor<Family, runir::kr::dl::BooleanTag, Tag> : x3::position_tagged
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::BooleanConstantTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::BooleanConstantTag::keyword;
     bool value;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::LogicalBinaryTag Tag>
 struct Constructor<Family, runir::kr::dl::BooleanTag, Tag> : x3::position_tagged
 {
-    static constexpr auto keyword = Tag::keyword;
     BooleanChoice<Family> lhs;
     BooleanChoice<Family> rhs;
 };
@@ -623,7 +598,6 @@ struct Constructor<Family, runir::kr::dl::BooleanTag, Tag> : x3::position_tagged
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::BooleanTag, runir::kr::dl::NotTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::NotTag::keyword;
     BooleanChoice<Family> arg;
 };
 
@@ -671,14 +645,12 @@ using BooleanArgument = Constructor<Family, runir::kr::dl::BooleanTag, runir::kr
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::CountTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::CountTag::keyword;
     ConstructorOrNonTerminalVariant<Family> arg;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::DistanceTag::keyword;
     ConceptChoice<Family> lhs;
     RoleChoice<Family> mid;
     ConceptChoice<Family> rhs;
@@ -687,14 +659,12 @@ struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DistanceT
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::NumericalConstantTag> : x3::position_tagged
 {
-    static constexpr auto keyword = runir::kr::dl::NumericalConstantTag::keyword;
     ygg::uint_t value;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::NumericalBinaryTag Tag>
 struct Constructor<Family, runir::kr::dl::NumericalTag, Tag> : x3::position_tagged
 {
-    static constexpr auto keyword = Tag::keyword;
     NumericalChoice<Family> lhs;
     NumericalChoice<Family> rhs;
 };

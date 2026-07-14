@@ -5,8 +5,6 @@
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/effect_view.hpp"
-#include "runir/kr/ps/ext/argument_data.hpp"
-#include "runir/kr/ps/ext/argument_view.hpp"
 #include "runir/kr/ps/ext/canonicalization.hpp"
 #include "runir/kr/ps/ext/condition_data.hpp"
 #include "runir/kr/ps/ext/dl/condition_view.hpp"
@@ -20,9 +18,9 @@
 #include "runir/kr/ps/ext/module_data.hpp"
 #include "runir/kr/ps/ext/module_program_data.hpp"
 #include "runir/kr/ps/ext/module_program_view.hpp"
+#include "runir/kr/ps/ext/module_symbol_data.hpp"
+#include "runir/kr/ps/ext/module_symbol_view.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
-#include "runir/kr/ps/ext/register_data.hpp"
-#include "runir/kr/ps/ext/register_view.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
@@ -44,21 +42,19 @@ using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<RuleVariant>, ConcreteRule
 using FeatureTypes = runir::kr::ps::PsFeatureTypes<runir::kr::ExtFamilyTag>;
 using ConditionTypes = runir::kr::ps::PsConditionTypes<runir::kr::ExtFamilyTag>;
 using EffectTypes = runir::kr::ps::PsEffectTypes<runir::kr::ExtFamilyTag>;
-using ArgumentTypes = ygg::
-    TypeList<Argument<runir::kr::dl::ConceptTag>, Argument<runir::kr::dl::RoleTag>, Argument<runir::kr::dl::BooleanTag>, Argument<runir::kr::dl::NumericalTag>>;
-using RegisterTypes = ygg::TypeList<Register<runir::kr::dl::ConceptTag>, Register<runir::kr::dl::RoleTag>>;
-using ProgramTypes = ygg::TypeList<MemoryState, Module, ModuleProgram>;
+using ProgramTypes = ygg::TypeList<MemoryState, ModuleSymbol, Module, ModuleProgram>;
 using RepositoryTypes = ygg::
-    ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ArgumentTypes, RegisterTypes, ProgramTypes>;
+    ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ProgramTypes>;
 using Repository =
     runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::ExtFamilyTag>>;
 using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory =
     runir::kr::ps::BasicRepositoryFactory<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::ExtFamilyTag>>;
 
-using ConceptRegisterView = ygg::View<ygg::Index<Register<runir::kr::dl::ConceptTag>>, Repository>;
-using RoleRegisterView = ygg::View<ygg::Index<Register<runir::kr::dl::RoleTag>>, Repository>;
+using ConceptRegisterView = ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>, runir::kr::dl::ExtConstructorRepository>;
+using RoleRegisterView = ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>, runir::kr::dl::ExtConstructorRepository>;
 using MemoryStateView = ygg::View<ygg::Index<MemoryState>, Repository>;
+using ModuleSymbolView = ygg::View<ygg::Index<ModuleSymbol>, Repository>;
 using ModuleView = ygg::View<ygg::Index<Module>, Repository>;
 using ModuleProgramView = ygg::View<ygg::Index<ModuleProgram>, Repository>;
 using RuleVariantView = ygg::View<ygg::Index<RuleVariant>, Repository>;

@@ -16,7 +16,9 @@ ModuleView ModuleFactory::create_empty(Repository& repository)
     auto entry_data = ygg::Data<MemoryState>(std::string("m0"));
     const auto entry = repository.get_or_create(entry_data).first;
 
-    auto data = ygg::Data<Module>(std::string("empty"));
+    auto symbol_data = ygg::Data<ModuleSymbol>(std::string("empty"));
+    const auto symbol = repository.get_or_create(symbol_data).first;
+    auto data = ygg::Data<Module>(symbol.get_index());
     data.entry_memory_state = entry.get_index();
     data.memory_states.push_back(entry.get_index());
     canonicalize(data);
@@ -117,6 +119,28 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
         (:entry m0)
         (:memory m0 m1)
         (:features
+            (:concept
+                (:symbol L_load)
+                (:expression
+                    (c_and
+                        (c_all
+                            (r_transitive_closure
+                                (r_atomic_state "on")
+                            )
+                            (c_same_as
+                                (r_argument O)
+                                (r_atomic_state "on")
+                            )
+                        )
+                        (c_not
+                            (c_same_as
+                                (r_argument O)
+                                (r_atomic_state "on")
+                            )
+                        )
+                    )
+                )
+            )
             (:numerical
                 (:symbol L)
                 (:expression
@@ -164,25 +188,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                         (:conditions
                             (greater_zero L)
                         )
-                        (:concept
-                            (c_and
-                                (c_all
-                                    (r_transitive_closure
-                                        (r_atomic_state "on")
-                                    )
-                                    (c_same_as
-                                        (r_argument O)
-                                        (r_atomic_state "on")
-                                    )
-                                )
-                                (c_not
-                                    (c_same_as
-                                        (r_argument O)
-                                        (r_atomic_state "on")
-                                    )
-                                )
-                            )
-                        )
+                        (:concept L_load)
                         (:register
                             (:concept r0)
                         )
@@ -296,9 +302,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                         (:conditions
                             (greater_zero X_count)
                         )
-                        (:concept
-                            (c_argument X)
-                        )
+                        (:concept X)
                         (:register
                             (:concept r0)
                         )
@@ -510,6 +514,42 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                 )
             )
             (:concept
+                (:symbol N_load)
+                (:expression
+                    (c_and
+                        (c_or
+                            (c_argument X)
+                            (c_argument Y)
+                        )
+                        (c_not
+                            (c_atomic_state "clear")
+                        )
+                    )
+                )
+            )
+            (:concept
+                (:symbol T0_load)
+                (:expression
+                    (c_some
+                        (r_inverse
+                            (r_atomic_state "on")
+                        )
+                        (c_register r0)
+                    )
+                )
+            )
+            (:concept
+                (:symbol T1_load)
+                (:expression
+                    (c_some
+                        (r_inverse
+                            (r_atomic_state "on")
+                        )
+                        (c_register r1)
+                    )
+                )
+            )
+            (:concept
                 (:symbol DO_on_1)
                 (:expression
                     (c_top)
@@ -594,17 +634,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                             (negative H)
                             (greater_zero N)
                         )
-                        (:concept
-                            (c_and
-                                (c_or
-                                    (c_argument X)
-                                    (c_argument Y)
-                                )
-                                (c_not
-                                    (c_atomic_state "clear")
-                                )
-                            )
-                        )
+                        (:concept N_load)
                         (:register
                             (:concept r0)
                         )
@@ -647,14 +677,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                         (:conditions
                             (greater_zero T0)
                         )
-                        (:concept
-                            (c_some
-                                (r_inverse
-                                    (r_atomic_state "on")
-                                )
-                                (c_register r0)
-                            )
-                        )
+                        (:concept T0_load)
                         (:register
                             (:concept r1)
                         )
@@ -670,14 +693,7 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
                         (:conditions
                             (greater_zero T1)
                         )
-                        (:concept
-                            (c_some
-                                (r_inverse
-                                    (r_atomic_state "on")
-                                )
-                                (c_register r1)
-                            )
-                        )
+                        (:concept T1_load)
                         (:register
                             (:concept r1)
                         )
@@ -893,6 +909,42 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
             )
         )
         (:concept
+            (:symbol N_load)
+            (:expression
+                (c_and
+                    (c_or
+                        (c_argument X)
+                        (c_argument Y)
+                    )
+                    (c_not
+                        (c_atomic_state "clear")
+                    )
+                )
+            )
+        )
+        (:concept
+            (:symbol T0_load)
+            (:expression
+                (c_some
+                    (r_inverse
+                        (r_atomic_state "on")
+                    )
+                    (c_register r0)
+                )
+            )
+        )
+        (:concept
+            (:symbol T1_load)
+            (:expression
+                (c_some
+                    (r_inverse
+                        (r_atomic_state "on")
+                    )
+                    (c_register r1)
+                )
+            )
+        )
+        (:concept
             (:symbol DO_on_1)
             (:expression
                 (c_top)
@@ -977,17 +1029,7 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                         (negative H)
                         (greater_zero N)
                     )
-                    (:concept
-                        (c_and
-                            (c_or
-                                (c_argument X)
-                                (c_argument Y)
-                            )
-                            (c_not
-                                (c_atomic_state "clear")
-                            )
-                        )
-                    )
+                    (:concept N_load)
                     (:register
                         (:concept r0)
                     )
@@ -1030,14 +1072,7 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                     (:conditions
                         (greater_zero T0)
                     )
-                    (:concept
-                        (c_some
-                            (r_inverse
-                                (r_atomic_state "on")
-                            )
-                            (c_register r0)
-                        )
-                    )
+                    (:concept T0_load)
                     (:register
                         (:concept r1)
                     )
@@ -1053,14 +1088,7 @@ std::string ModuleFactory::create_on_bonet_et_al_icaps2024_description()
                     (:conditions
                         (greater_zero T1)
                     )
-                    (:concept
-                        (c_some
-                            (r_inverse
-                                (r_atomic_state "on")
-                            )
-                            (c_register r1)
-                        )
-                    )
+                    (:concept T1_load)
                     (:register
                         (:concept r1)
                     )
@@ -1396,9 +1424,7 @@ std::string ModuleFactory::create_tower_bonet_et_al_icaps2024_description()
                     (:conditions
                         (greater_zero X_count)
                     )
-                    (:concept
-                        (c_argument X)
-                    )
+                    (:concept X)
                     (:register
                         (:concept r0)
                     )
@@ -1464,6 +1490,28 @@ std::string ModuleFactory::create_blocks_bonet_et_al_icaps2024_description()
     (:entry m0)
     (:memory m0 m1)
     (:features
+        (:concept
+            (:symbol L_load)
+            (:expression
+                (c_and
+                    (c_all
+                        (r_transitive_closure
+                            (r_atomic_state "on")
+                        )
+                        (c_same_as
+                            (r_argument O)
+                            (r_atomic_state "on")
+                        )
+                    )
+                    (c_not
+                        (c_same_as
+                            (r_argument O)
+                            (r_atomic_state "on")
+                        )
+                    )
+                )
+            )
+        )
         (:numerical
             (:symbol L)
             (:expression
@@ -1511,25 +1559,7 @@ std::string ModuleFactory::create_blocks_bonet_et_al_icaps2024_description()
                     (:conditions
                         (greater_zero L)
                     )
-                    (:concept
-                        (c_and
-                            (c_all
-                                (r_transitive_closure
-                                    (r_atomic_state "on")
-                                )
-                                (c_same_as
-                                    (r_argument O)
-                                    (r_atomic_state "on")
-                                )
-                            )
-                            (c_not
-                                (c_same_as
-                                    (r_argument O)
-                                    (r_atomic_state "on")
-                                )
-                            )
-                        )
-                    )
+                    (:concept L_load)
                     (:register
                         (:concept r0)
                     )

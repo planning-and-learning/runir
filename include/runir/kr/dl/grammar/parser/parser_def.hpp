@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_GRAMMAR_PARSER_PARSER_DEF_HPP_
 #define RUNIR_KR_DL_GRAMMAR_PARSER_PARSER_DEF_HPP_
 
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/ast/ast_adapted.hpp"
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 
@@ -41,7 +42,10 @@ struct PredicateNameClass : ErrorHandlerBase
 struct ObjectNameClass : ErrorHandlerBase
 {
 };
-struct ReferenceClass : x3::annotate_on_success
+struct IdentifierClass : x3::annotate_on_success
+{
+};
+struct NumericReferenceClass : x3::annotate_on_success
 {
 };
 
@@ -56,7 +60,10 @@ struct PredicateNameTextClass
 struct ObjectNameTextClass
 {
 };
-struct ReferenceTextClass
+struct IdentifierTextClass
+{
+};
+struct NumericReferenceTextClass
 {
 };
 
@@ -67,15 +74,29 @@ struct NonTerminalNameTextClass
 
 predicate_name_type const predicate_name = "predicate_name";
 object_name_type const object_name = "object_name";
-reference_type const reference = "reference";
+identifier_type const identifier = "identifier";
+numeric_reference_type const numeric_reference = "numeric_reference";
 
 const auto predicate_name_def = x3::rule<PredicateNameTextClass, std::string> { "predicate_name_text" } =
     raw[lexeme[((&alpha >> +(alnum | char_('-') | char_('_'))) | x3::repeat(1)[char_('=')])]];
 const auto object_name_def = x3::rule<ObjectNameTextClass, std::string> { "object_name_text" } = raw[lexeme[&alpha >> +(alnum | char_('-') | char_('_'))]];
-const auto reference_def = x3::rule<ReferenceTextClass, std::string> { "reference_text" } =
-    raw[lexeme[+digit | ((alpha | char_('_')) >> *(alnum | char_('-') | char_('_')))]];
+const auto identifier_def = x3::rule<IdentifierTextClass, std::string> { "identifier_text" } =
+    raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('-') | char_('_'))]];
+const auto numeric_reference_def = x3::rule<NumericReferenceTextClass, ygg::uint_t> { "numeric_reference_value" } = uint_;
 
-BOOST_SPIRIT_DEFINE(predicate_name, object_name, reference)
+BOOST_SPIRIT_DEFINE(predicate_name, object_name, identifier, numeric_reference)
+
+template<runir::kr::dl::CategoryTag Category>
+auto argument_reference_parser()
+{
+    return argument_reference_type<Category> { "argument_reference" } = numeric_reference | identifier;
+}
+
+template<runir::kr::dl::CategoryTag Category>
+auto register_reference_parser()
+{
+    return register_reference_type<Category> { "register_reference" } = numeric_reference | identifier;
+}
 
 inline auto predicate_name_string_parser() { return lexeme[omit[lit('"')]] > predicate_name > lexeme[omit[lit('"')]]; }
 inline auto object_name_string_parser() { return lexeme[omit[lit('"')]] > object_name > lexeme[omit[lit('"')]]; }
@@ -235,123 +256,125 @@ auto non_terminal_string_parser()
     const auto prefix##_numerical_root_def = prefix##_numerical > eoi;                                                                                         \
     const auto prefix##_numerical_non_terminal_def = non_terminal_string_parser<runir::kr::dl::NumericalTag>();                                                \
     const auto prefix##_numerical_choice_def = prefix##_numerical_non_terminal | prefix##_numerical;                                                           \
-    const auto prefix##_concept_bot_def =                                                                                                                      \
-        with_constructor_parentheses(lit(grammar_ast::ConceptBot<Family>::keyword) >> x3::attr(grammar_ast::ConceptBot<Family> {}));                           \
-    const auto prefix##_concept_top_def =                                                                                                                      \
-        with_constructor_parentheses(lit(grammar_ast::ConceptTop<Family>::keyword) >> x3::attr(grammar_ast::ConceptTop<Family> {}));                           \
+    const auto prefix##_concept_bot_def = with_constructor_parentheses(lit(runir::kr::dl::BotTag::keyword) >> x3::attr(grammar_ast::ConceptBot<Family> {}));   \
+    const auto prefix##_concept_top_def = with_constructor_parentheses(lit(runir::kr::dl::TopTag::keyword) >> x3::attr(grammar_ast::ConceptTop<Family> {}));   \
     const auto prefix##_concept_atomic_state_def =                                                                                                             \
-        with_constructor_parentheses(lit(grammar_ast::ConceptAtomicState<Family>::keyword) > predicate_name_string_parser());                                  \
+        with_constructor_parentheses(lit(runir::kr::dl::ConceptAtomicStateSyntaxTag::keyword) > predicate_name_string_parser());                               \
     const auto prefix##_concept_atomic_goal_def =                                                                                                              \
-        with_constructor_parentheses(lit(grammar_ast::ConceptAtomicGoal<Family>::keyword) > predicate_name_string_parser() > bool_string_parser());            \
+        with_constructor_parentheses(lit(runir::kr::dl::ConceptAtomicGoalSyntaxTag::keyword) > predicate_name_string_parser() > bool_string_parser());         \
     const auto prefix##_concept_intersection_def =                                                                                                             \
-        with_constructor_parentheses(lit(grammar_ast::ConceptIntersection<Family>::keyword) > prefix##_concept_choice > prefix##_concept_choice);              \
+        with_constructor_parentheses(lit(runir::kr::dl::ConceptIntersectionSyntaxTag::keyword) > prefix##_concept_choice > prefix##_concept_choice);           \
     const auto prefix##_concept_union_def =                                                                                                                    \
-        with_constructor_parentheses(lit(grammar_ast::ConceptUnion<Family>::keyword) > prefix##_concept_choice > prefix##_concept_choice);                     \
-    const auto prefix##_concept_negation_def = with_constructor_parentheses(lit(grammar_ast::ConceptNegation<Family>::keyword) > prefix##_concept_choice);     \
+        with_constructor_parentheses(lit(runir::kr::dl::ConceptUnionSyntaxTag::keyword) > prefix##_concept_choice > prefix##_concept_choice);                  \
+    const auto prefix##_concept_negation_def = with_constructor_parentheses(lit(runir::kr::dl::NegationTag::keyword) > prefix##_concept_choice);               \
     const auto prefix##_concept_value_restriction_def =                                                                                                        \
-        with_constructor_parentheses(lit(grammar_ast::ConceptValueRestriction<Family>::keyword) > prefix##_role_choice > prefix##_concept_choice);             \
+        with_constructor_parentheses(lit(runir::kr::dl::ValueRestrictionTag::keyword) > prefix##_role_choice > prefix##_concept_choice);                       \
     const auto prefix##_concept_existential_quantification_def =                                                                                               \
-        with_constructor_parentheses(lit(grammar_ast::ConceptExistentialQuantification<Family>::keyword) > prefix##_role_choice > prefix##_concept_choice);    \
+        with_constructor_parentheses(lit(runir::kr::dl::ExistentialQuantificationTag::keyword) > prefix##_role_choice > prefix##_concept_choice);              \
     const auto prefix##_concept_at_least_number_restriction_def =                                                                                              \
-        with_constructor_parentheses(lit(grammar_ast::ConceptAtLeastNumberRestriction<Family>::keyword) > uint_ > prefix##_role_choice);                       \
+        with_constructor_parentheses(lit(runir::kr::dl::AtLeastNumberRestrictionTag::keyword) > uint_ > prefix##_role_choice);                                 \
     const auto prefix##_concept_at_most_number_restriction_def =                                                                                               \
-        with_constructor_parentheses(lit(grammar_ast::ConceptAtMostNumberRestriction<Family>::keyword) > uint_ > prefix##_role_choice);                        \
+        with_constructor_parentheses(lit(runir::kr::dl::AtMostNumberRestrictionTag::keyword) > uint_ > prefix##_role_choice);                                  \
     const auto prefix##_concept_exact_number_restriction_def =                                                                                                 \
-        with_constructor_parentheses(lit(grammar_ast::ConceptExactNumberRestriction<Family>::keyword) > uint_ > prefix##_role_choice);                         \
+        with_constructor_parentheses(lit(runir::kr::dl::ExactNumberRestrictionTag::keyword) > uint_ > prefix##_role_choice);                                   \
     const auto prefix##_concept_qualified_at_least_number_restriction_def = with_constructor_parentheses(                                                      \
-        lit(grammar_ast::ConceptQualifiedAtLeastNumberRestriction<Family>::keyword) > uint_ > prefix##_role_choice > prefix##_concept_choice);                 \
+        lit(runir::kr::dl::QualifiedAtLeastNumberRestrictionTag::keyword) > uint_ > prefix##_role_choice > prefix##_concept_choice);                           \
     const auto prefix##_concept_qualified_at_most_number_restriction_def = with_constructor_parentheses(                                                       \
-        lit(grammar_ast::ConceptQualifiedAtMostNumberRestriction<Family>::keyword) > uint_ > prefix##_role_choice > prefix##_concept_choice);                  \
+        lit(runir::kr::dl::QualifiedAtMostNumberRestrictionTag::keyword) > uint_ > prefix##_role_choice > prefix##_concept_choice);                            \
     const auto prefix##_concept_qualified_exact_number_restriction_def = with_constructor_parentheses(                                                         \
-        lit(grammar_ast::ConceptQualifiedExactNumberRestriction<Family>::keyword) > uint_ > prefix##_role_choice > prefix##_concept_choice);                   \
+        lit(runir::kr::dl::QualifiedExactNumberRestrictionTag::keyword) > uint_ > prefix##_role_choice > prefix##_concept_choice);                             \
     const auto prefix##_concept_role_value_map_def =                                                                                                           \
-        with_constructor_parentheses(lit(grammar_ast::ConceptRoleValueMap<Family>::keyword) > prefix##_role_choice > prefix##_role_choice);                    \
+        with_constructor_parentheses(lit(runir::kr::dl::RoleValueMapTag::keyword) > prefix##_role_choice > prefix##_role_choice);                              \
     const auto prefix##_concept_agreement_def =                                                                                                                \
-        with_constructor_parentheses(lit(grammar_ast::ConceptAgreement<Family>::keyword) > prefix##_role_choice > prefix##_role_choice);                       \
+        with_constructor_parentheses(lit(runir::kr::dl::AgreementTag::keyword) > prefix##_role_choice > prefix##_role_choice);                                 \
     const auto prefix##_concept_role_fillers_def =                                                                                                             \
-        with_constructor_parentheses(lit(grammar_ast::ConceptRoleFillers<Family>::keyword) > prefix##_role_choice > +object_name_string_parser());             \
-    const auto prefix##_concept_one_of_def = with_constructor_parentheses(lit(grammar_ast::ConceptOneOf<Family>::keyword) > +object_name_string_parser());     \
-    const auto prefix##_concept_nominal_def = with_constructor_parentheses(lit(grammar_ast::ConceptNominal<Family>::keyword) > object_name_string_parser());   \
-    const auto prefix##_concept_register_def = with_constructor_parentheses(lit(grammar_ast::ConceptRegister<Family>::keyword) > reference);                   \
-    const auto prefix##_concept_argument_def = with_constructor_parentheses(lit(grammar_ast::ConceptArgument<Family>::keyword) > reference);                   \
+        with_constructor_parentheses(lit(runir::kr::dl::RoleFillersTag::keyword) > prefix##_role_choice > +object_name_string_parser());                       \
+    const auto prefix##_concept_one_of_def = with_constructor_parentheses(lit(runir::kr::dl::OneOfTag::keyword) > +object_name_string_parser());               \
+    const auto prefix##_concept_nominal_def = with_constructor_parentheses(lit(runir::kr::dl::NominalTag::keyword) > object_name_string_parser());             \
+    const auto prefix##_concept_register_def =                                                                                                                 \
+        with_constructor_parentheses(lit(runir::kr::dl::ConceptRegisterSyntaxTag::keyword) > register_reference_parser<runir::kr::dl::ConceptTag>());          \
+    const auto prefix##_concept_argument_def = with_constructor_parentheses(lit(runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>::keyword)                \
+                                                                            > argument_reference_parser<runir::kr::dl::ConceptTag>());                         \
     const auto prefix##_role_universal_def =                                                                                                                   \
-        with_constructor_parentheses(lit(grammar_ast::RoleUniversal<Family>::keyword) >> x3::attr(grammar_ast::RoleUniversal<Family> {}));                     \
+        with_constructor_parentheses(lit(runir::kr::dl::UniversalTag::keyword) >> x3::attr(grammar_ast::RoleUniversal<Family> {}));                            \
     const auto prefix##_role_atomic_state_def =                                                                                                                \
-        with_constructor_parentheses(lit(grammar_ast::RoleAtomicState<Family>::keyword) > predicate_name_string_parser());                                     \
+        with_constructor_parentheses(lit(runir::kr::dl::RoleAtomicStateSyntaxTag::keyword) > predicate_name_string_parser());                                  \
     const auto prefix##_role_atomic_goal_def =                                                                                                                 \
-        with_constructor_parentheses(lit(grammar_ast::RoleAtomicGoal<Family>::keyword) > predicate_name_string_parser() > bool_string_parser());               \
+        with_constructor_parentheses(lit(runir::kr::dl::RoleAtomicGoalSyntaxTag::keyword) > predicate_name_string_parser() > bool_string_parser());            \
     const auto prefix##_role_intersection_def =                                                                                                                \
-        with_constructor_parentheses(lit(grammar_ast::RoleIntersection<Family>::keyword) > prefix##_role_choice > prefix##_role_choice);                       \
+        with_constructor_parentheses(lit(runir::kr::dl::RoleIntersectionSyntaxTag::keyword) > prefix##_role_choice > prefix##_role_choice);                    \
     const auto prefix##_role_union_def =                                                                                                                       \
-        with_constructor_parentheses(lit(grammar_ast::RoleUnion<Family>::keyword) > prefix##_role_choice > prefix##_role_choice);                              \
-    const auto prefix##_role_complement_def = with_constructor_parentheses(lit(grammar_ast::RoleComplement<Family>::keyword) > prefix##_role_choice);          \
-    const auto prefix##_role_inverse_def = with_constructor_parentheses(lit(grammar_ast::RoleInverse<Family>::keyword) > prefix##_role_choice);                \
+        with_constructor_parentheses(lit(runir::kr::dl::RoleUnionSyntaxTag::keyword) > prefix##_role_choice > prefix##_role_choice);                           \
+    const auto prefix##_role_complement_def = with_constructor_parentheses(lit(runir::kr::dl::ComplementTag::keyword) > prefix##_role_choice);                 \
+    const auto prefix##_role_inverse_def = with_constructor_parentheses(lit(runir::kr::dl::InverseTag::keyword) > prefix##_role_choice);                       \
     const auto prefix##_role_composition_def =                                                                                                                 \
-        with_constructor_parentheses(lit(grammar_ast::RoleComposition<Family>::keyword) > prefix##_role_choice > prefix##_role_choice);                        \
-    const auto prefix##_role_transitive_closure_def =                                                                                                          \
-        with_constructor_parentheses(lit(grammar_ast::RoleTransitiveClosure<Family>::keyword) > prefix##_role_choice);                                         \
+        with_constructor_parentheses(lit(runir::kr::dl::CompositionTag::keyword) > prefix##_role_choice > prefix##_role_choice);                               \
+    const auto prefix##_role_transitive_closure_def = with_constructor_parentheses(lit(runir::kr::dl::TransitiveClosureTag::keyword) > prefix##_role_choice);  \
     const auto prefix##_role_reflexive_transitive_closure_def =                                                                                                \
-        with_constructor_parentheses(lit(grammar_ast::RoleReflexiveTransitiveClosure<Family>::keyword) > prefix##_role_choice);                                \
+        with_constructor_parentheses(lit(runir::kr::dl::ReflexiveTransitiveClosureTag::keyword) > prefix##_role_choice);                                       \
     const auto prefix##_role_restriction_def =                                                                                                                 \
-        with_constructor_parentheses(lit(grammar_ast::RoleRestriction<Family>::keyword) > prefix##_role_choice > prefix##_concept_choice);                     \
-    const auto prefix##_role_identity_def = with_constructor_parentheses(lit(grammar_ast::RoleIdentity<Family>::keyword) > prefix##_concept_choice);           \
-    const auto prefix##_role_register_def = with_constructor_parentheses(lit(grammar_ast::RoleRegister<Family>::keyword) > reference);                         \
-    const auto prefix##_role_argument_def = with_constructor_parentheses(lit(grammar_ast::RoleArgument<Family>::keyword) > reference);                         \
+        with_constructor_parentheses(lit(runir::kr::dl::RestrictionTag::keyword) > prefix##_role_choice > prefix##_concept_choice);                            \
+    const auto prefix##_role_identity_def = with_constructor_parentheses(lit(runir::kr::dl::IdentityTag::keyword) > prefix##_concept_choice);                  \
+    const auto prefix##_role_register_def =                                                                                                                    \
+        with_constructor_parentheses(lit(runir::kr::dl::RoleRegisterSyntaxTag::keyword) > register_reference_parser<runir::kr::dl::RoleTag>());                \
+    const auto prefix##_role_argument_def =                                                                                                                    \
+        with_constructor_parentheses(lit(runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>::keyword) > argument_reference_parser<runir::kr::dl::RoleTag>());  \
     const auto prefix##_boolean_atomic_state_def =                                                                                                             \
-        with_constructor_parentheses(lit(grammar_ast::BooleanAtomicState<Family>::keyword) > predicate_name_string_parser() > bool_string_parser());           \
+        with_constructor_parentheses(lit(runir::kr::dl::BooleanAtomicStateSyntaxTag::keyword) > predicate_name_string_parser() > bool_string_parser());        \
     const auto prefix##_boolean_atomic_goal_def =                                                                                                              \
-        with_constructor_parentheses(lit(grammar_ast::BooleanAtomicGoal<Family>::keyword) > predicate_name_string_parser() > bool_string_parser());            \
+        with_constructor_parentheses(lit(runir::kr::dl::BooleanAtomicGoalSyntaxTag::keyword) > predicate_name_string_parser() > bool_string_parser());         \
     const auto prefix##_boolean_nonempty_def =                                                                                                                 \
-        with_constructor_parentheses(lit(grammar_ast::BooleanNonempty<Family>::keyword) > prefix##_constructor_or_non_terminal_variant);                       \
+        with_constructor_parentheses(lit(runir::kr::dl::NonemptyTag::keyword) > prefix##_constructor_or_non_terminal_variant);                                 \
     const auto prefix##_boolean_eq_def =                                                                                                                       \
-        with_constructor_parentheses(lit(grammar_ast::BooleanEq<Family>::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                        \
+        with_constructor_parentheses(lit(runir::kr::dl::BooleanEqTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                           \
     const auto prefix##_boolean_neq_def =                                                                                                                      \
-        with_constructor_parentheses(lit(grammar_ast::BooleanNeq<Family>::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                       \
+        with_constructor_parentheses(lit(runir::kr::dl::BooleanNeTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                           \
     const auto prefix##_boolean_lt_def =                                                                                                                       \
-        with_constructor_parentheses(lit(grammar_ast::BooleanLt<Family>::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                        \
+        with_constructor_parentheses(lit(runir::kr::dl::BooleanLtTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                           \
     const auto prefix##_boolean_le_def =                                                                                                                       \
-        with_constructor_parentheses(lit(grammar_ast::BooleanLe<Family>::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                        \
+        with_constructor_parentheses(lit(runir::kr::dl::BooleanLeTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                           \
     const auto prefix##_boolean_gt_def =                                                                                                                       \
-        with_constructor_parentheses(lit(grammar_ast::BooleanGt<Family>::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                        \
+        with_constructor_parentheses(lit(runir::kr::dl::BooleanGtTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                           \
     const auto prefix##_boolean_ge_def =                                                                                                                       \
-        with_constructor_parentheses(lit(grammar_ast::BooleanGe<Family>::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                        \
+        with_constructor_parentheses(lit(runir::kr::dl::BooleanGeTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                           \
     const auto prefix##_numerical_eq_def =                                                                                                                     \
-        with_constructor_parentheses(lit(grammar_ast::NumericalEq<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                  \
+        with_constructor_parentheses(lit(runir::kr::dl::NumericalEqTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                     \
     const auto prefix##_numerical_neq_def =                                                                                                                    \
-        with_constructor_parentheses(lit(grammar_ast::NumericalNeq<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
+        with_constructor_parentheses(lit(runir::kr::dl::NumericalNeTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                     \
     const auto prefix##_numerical_lt_def =                                                                                                                     \
-        with_constructor_parentheses(lit(grammar_ast::NumericalLt<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                  \
+        with_constructor_parentheses(lit(runir::kr::dl::NumericalLtTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                     \
     const auto prefix##_numerical_le_def =                                                                                                                     \
-        with_constructor_parentheses(lit(grammar_ast::NumericalLe<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                  \
+        with_constructor_parentheses(lit(runir::kr::dl::NumericalLeTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                     \
     const auto prefix##_numerical_gt_def =                                                                                                                     \
-        with_constructor_parentheses(lit(grammar_ast::NumericalGt<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                  \
+        with_constructor_parentheses(lit(runir::kr::dl::NumericalGtTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                     \
     const auto prefix##_numerical_ge_def =                                                                                                                     \
-        with_constructor_parentheses(lit(grammar_ast::NumericalGe<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                  \
-    const auto prefix##_boolean_constant_def = with_constructor_parentheses(lit(grammar_ast::BooleanConstant<Family>::keyword) > bool_string_parser());        \
+        with_constructor_parentheses(lit(runir::kr::dl::NumericalGeTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                     \
+    const auto prefix##_boolean_constant_def = with_constructor_parentheses(lit(runir::kr::dl::BooleanConstantTag::keyword) > bool_string_parser());           \
     const auto prefix##_boolean_and_def =                                                                                                                      \
-        with_constructor_parentheses(lit(grammar_ast::BooleanAnd<Family>::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                       \
-    const auto prefix##_boolean_or_def =                                                                                                                       \
-        with_constructor_parentheses(lit(grammar_ast::BooleanOr<Family>::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                        \
-    const auto prefix##_boolean_not_def = with_constructor_parentheses(lit(grammar_ast::BooleanNot<Family>::keyword) > prefix##_boolean_choice);               \
-    const auto prefix##_boolean_argument_def = with_constructor_parentheses(lit(grammar_ast::BooleanArgument<Family>::keyword) > reference);                   \
+        with_constructor_parentheses(lit(runir::kr::dl::AndTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice);                                 \
+    const auto prefix##_boolean_or_def = with_constructor_parentheses(lit(runir::kr::dl::OrTag::keyword) > prefix##_boolean_choice > prefix##_boolean_choice); \
+    const auto prefix##_boolean_not_def = with_constructor_parentheses(lit(runir::kr::dl::NotTag::keyword) > prefix##_boolean_choice);                         \
+    const auto prefix##_boolean_argument_def = with_constructor_parentheses(lit(runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>::keyword)                \
+                                                                            > argument_reference_parser<runir::kr::dl::BooleanTag>());                         \
     const auto prefix##_numerical_count_def =                                                                                                                  \
-        with_constructor_parentheses(lit(grammar_ast::NumericalCount<Family>::keyword) > prefix##_constructor_or_non_terminal_variant);                        \
-    const auto prefix##_numerical_distance_def = with_constructor_parentheses(lit(grammar_ast::NumericalDistance<Family>::keyword) > prefix##_concept_choice   \
-                                                                              > prefix##_role_choice > prefix##_concept_choice);                               \
-    const auto prefix##_numerical_constant_def = with_constructor_parentheses(lit(grammar_ast::NumericalConstant<Family>::keyword) > uint_);                   \
+        with_constructor_parentheses(lit(runir::kr::dl::CountTag::keyword) > prefix##_constructor_or_non_terminal_variant);                                    \
+    const auto prefix##_numerical_distance_def =                                                                                                               \
+        with_constructor_parentheses(lit(runir::kr::dl::DistanceTag::keyword) > prefix##_concept_choice > prefix##_role_choice > prefix##_concept_choice);     \
+    const auto prefix##_numerical_constant_def = with_constructor_parentheses(lit(runir::kr::dl::NumericalConstantTag::keyword) > uint_);                      \
     const auto prefix##_numerical_add_def =                                                                                                                    \
-        with_constructor_parentheses(lit(grammar_ast::NumericalAdd<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
+        with_constructor_parentheses(lit(runir::kr::dl::AddTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                             \
     const auto prefix##_numerical_sub_def =                                                                                                                    \
-        with_constructor_parentheses(lit(grammar_ast::NumericalSub<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
+        with_constructor_parentheses(lit(runir::kr::dl::SubTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                             \
     const auto prefix##_numerical_mul_def =                                                                                                                    \
-        with_constructor_parentheses(lit(grammar_ast::NumericalMul<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
+        with_constructor_parentheses(lit(runir::kr::dl::MulTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                             \
     const auto prefix##_numerical_div_def =                                                                                                                    \
-        with_constructor_parentheses(lit(grammar_ast::NumericalDiv<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
+        with_constructor_parentheses(lit(runir::kr::dl::DivTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                             \
     const auto prefix##_numerical_min_def =                                                                                                                    \
-        with_constructor_parentheses(lit(grammar_ast::NumericalMin<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
+        with_constructor_parentheses(lit(runir::kr::dl::MinTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                             \
     const auto prefix##_numerical_max_def =                                                                                                                    \
-        with_constructor_parentheses(lit(grammar_ast::NumericalMax<Family>::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                 \
-    const auto prefix##_numerical_argument_def = with_constructor_parentheses(lit(grammar_ast::NumericalArgument<Family>::keyword) > reference);               \
+        with_constructor_parentheses(lit(runir::kr::dl::MaxTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                             \
+    const auto prefix##_numerical_argument_def = with_constructor_parentheses(lit(runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>::keyword)            \
+                                                                              > argument_reference_parser<runir::kr::dl::NumericalTag>());                     \
     const auto prefix##_concept_derivation_rule_def =                                                                                                          \
         (lit("(") >> prefix##_concept_non_terminal) > ((lit("(") > (prefix##_concept_choice % lit("or")) > lit(")")) | x3::repeat(1)[prefix##_concept_choice]) \
         > lit(")");                                                                                                                                            \

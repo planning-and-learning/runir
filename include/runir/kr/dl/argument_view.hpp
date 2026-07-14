@@ -1,7 +1,7 @@
-#ifndef RUNIR_KR_PS_EXT_REGISTER_VIEW_HPP_
-#define RUNIR_KR_PS_EXT_REGISTER_VIEW_HPP_
+#ifndef RUNIR_KR_DL_ARGUMENT_VIEW_HPP_
+#define RUNIR_KR_DL_ARGUMENT_VIEW_HPP_
 
-#include "runir/kr/ps/ext/register_data.hpp"
+#include "runir/kr/dl/argument_data.hpp"
 
 #include <tuple>
 #include <yggdrasil/core/types.hpp>
@@ -10,14 +10,14 @@ namespace ygg
 {
 
 template<runir::kr::dl::CategoryTag Category, typename C>
-class View<Index<runir::kr::ps::ext::Register<Category>>, C>
+class View<Index<runir::kr::dl::Argument<Category>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::ext::Register<Category>> m_handle;
+    Index<runir::kr::dl::Argument<Category>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::ext::Register<Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::dl::Argument<Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

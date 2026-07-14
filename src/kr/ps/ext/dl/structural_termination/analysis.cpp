@@ -36,7 +36,7 @@ bool references_register(View view, runir::kr::dl::RegisterIdentifier<Category> 
     else
     {
         if constexpr (std::same_as<View, RegisterConstructorView<Category>>)
-            return view.get_data().identifier == reg;
+            return view.get_register().get_identifier() == reg;
 
         auto result = false;
         if constexpr (requires { view.get_arg(); })

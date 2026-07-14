@@ -19,7 +19,18 @@ using ErrorHandlerBase = runir::kr::parser::ErrorHandlerBase;
 
 struct PredicateNameClass;
 struct ObjectNameClass;
-struct ReferenceClass;
+struct IdentifierClass;
+struct NumericReferenceClass;
+
+template<runir::kr::dl::CategoryTag Category>
+struct ArgumentReferenceClass : x3::annotate_on_success
+{
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct RegisterReferenceClass : x3::annotate_on_success
+{
+};
 
 template<runir::kr::dl::CategoryTag Category>
 struct NonTerminalNameClass;
@@ -81,7 +92,14 @@ struct GrammarRootClass : ErrorHandlerBase
 
 using predicate_name_type = x3::rule<PredicateNameClass, ast::Identifier>;
 using object_name_type = x3::rule<ObjectNameClass, ast::Identifier>;
-using reference_type = x3::rule<ReferenceClass, ast::Reference>;
+using identifier_type = x3::rule<IdentifierClass, ast::Identifier>;
+using numeric_reference_type = x3::rule<NumericReferenceClass, ast::NumericReference>;
+
+template<runir::kr::dl::CategoryTag Category>
+using argument_reference_type = x3::rule<ArgumentReferenceClass<Category>, ast::ArgumentReference<Category>>;
+
+template<runir::kr::dl::CategoryTag Category>
+using register_reference_type = x3::rule<RegisterReferenceClass<Category>, ast::RegisterReference<Category>>;
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 using constructor_type = x3::rule<ConstructorClass<Family, Category>, ast::Constructor<Family, Category>>;

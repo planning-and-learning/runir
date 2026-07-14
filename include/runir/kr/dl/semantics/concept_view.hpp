@@ -1,8 +1,10 @@
 #ifndef RUNIR_SEMANTICS_CONCEPT_VIEW_HPP_
 #define RUNIR_SEMANTICS_CONCEPT_VIEW_HPP_
 
+#include "runir/kr/dl/argument_view.hpp"
 #include "runir/kr/dl/concept_data.hpp"
 #include "runir/kr/dl/constructors.hpp"
+#include "runir/kr/dl/register_view.hpp"
 
 #include <concepts>
 #include <tuple>
@@ -46,6 +48,18 @@ public:
         requires std::same_as<Tag, runir::kr::dl::NominalTag>
     {
         return make_view(get_data().object, m_context->get_planning_repository());
+    }
+
+    auto get_register() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::RegisterTag>
+    {
+        return make_view(get_data().reference, *m_context);
+    }
+
+    auto get_argument() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>
+    {
+        return make_view(get_data().reference, *m_context);
     }
 
     auto get_objects() const noexcept

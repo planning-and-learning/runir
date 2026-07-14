@@ -10,17 +10,11 @@
 namespace runir::kr::ps::ext
 {
 
-template<runir::kr::dl::CategoryTag Category>
-struct Register
-{
-};
-
 struct MemoryState
 {
 };
 
-template<runir::kr::dl::CategoryTag Category>
-struct Argument
+struct ModuleSymbol
 {
 };
 

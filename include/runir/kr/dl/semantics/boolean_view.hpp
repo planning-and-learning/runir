@@ -1,6 +1,7 @@
 #ifndef RUNIR_SEMANTICS_BOOLEAN_VIEW_HPP_
 #define RUNIR_SEMANTICS_BOOLEAN_VIEW_HPP_
 
+#include "runir/kr/dl/argument_view.hpp"
 #include "runir/kr/dl/boolean_data.hpp"
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
@@ -41,6 +42,12 @@ public:
         requires(runir::kr::dl::is_atomic_state_tag_v<Tag> || runir::kr::dl::is_atomic_goal_tag_v<Tag>)
     {
         return get_data().polarity;
+    }
+
+    auto get_argument() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>
+    {
+        return make_view(get_data().reference, *m_context);
     }
 
     auto get_arg() const noexcept

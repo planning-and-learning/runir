@@ -13,7 +13,7 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Feature)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::SymbolExpression, symbol)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::NamedValue, value)
 
-BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::LoadRule)(Category), conditions, expression, reg)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::LoadRule)(Category), conditions, feature, reg)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::SketchRule, conditions, effects)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DoRule, conditions, action, arguments, effects)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::CallRule, conditions, callee, arguments)

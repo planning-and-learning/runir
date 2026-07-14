@@ -36,8 +36,6 @@ void bind_data(nb::module_& m, const std::string& name)
         cls.def_rw("conditions", &Data::conditions);
     if constexpr (requires { &Data::effects; })
         cls.def_rw("effects", &Data::effects);
-    if constexpr (requires { &Data::load_expression; })
-        cls.def_rw("load_expression", &Data::load_expression);
     if constexpr (requires { &Data::reg; })
         cls.def_rw("reg", &Data::reg);
     if constexpr (requires { &Data::action_name; })
@@ -78,13 +76,8 @@ void bind_data(nb::module_& m, const std::string& name)
 
 void bind_datas(nb::module_& m)
 {
-    bind_data<Argument<runir::kr::dl::ConceptTag>>(m, "ConceptArgumentData");
-    bind_data<Argument<runir::kr::dl::RoleTag>>(m, "RoleArgumentData");
-    bind_data<Argument<runir::kr::dl::BooleanTag>>(m, "BooleanArgumentData");
-    bind_data<Argument<runir::kr::dl::NumericalTag>>(m, "NumericalArgumentData");
-    bind_data<Register<runir::kr::dl::ConceptTag>>(m, "ConceptRegisterData");
-    bind_data<Register<runir::kr::dl::RoleTag>>(m, "RoleRegisterData");
     bind_data<MemoryState>(m, "MemoryStateData");
+    bind_data<ModuleSymbol>(m, "ModuleSymbolData");
     bind_data<Module>(m, "ModuleData");
     bind_data<ModuleProgram>(m, "ModuleProgramData");
 

@@ -1,15 +1,18 @@
 #ifndef RUNIR_REPOSITORY_HPP_
 #define RUNIR_REPOSITORY_HPP_
 
+#include "runir/kr/dl/argument_view.hpp"
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/register_view.hpp"
 #include "runir/kr/dl/semantics/datas.hpp"
 #include "runir/kr/dl/semantics/views.hpp"
 
 #include <cassert>
 #include <memory>
 #include <optional>
+#include <type_traits>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
@@ -60,11 +63,18 @@ template<FamilyTag Family>
 using FamilyConstructorTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Constructor, CategoryTags>;
 
 template<FamilyTag Family>
+using FamilyReferenceTypes = std::conditional_t<
+    std::same_as<Family, runir::kr::ExtFamilyTag>,
+    ygg::TypeList<Argument<ConceptTag>, Argument<RoleTag>, Argument<BooleanTag>, Argument<NumericalTag>, Register<ConceptTag>, Register<RoleTag>>,
+    ygg::TypeList<>>;
+
+template<FamilyTag Family>
 using FamilyConstructorRepositoryTypes = ygg::ConcatTypeListsT<FamilyConceptTypes<Family>,
                                                                FamilyRoleTypes<Family>,
                                                                FamilyBooleanTypes<Family>,
                                                                FamilyNumericalTypes<Family>,
-                                                               FamilyConstructorTypes<Family>>;
+                                                               FamilyConstructorTypes<Family>,
+                                                               FamilyReferenceTypes<Family>>;
 
 template<FamilyTag Family>
 using FamilyConstructorSymbolRepository = ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, FamilyConstructorRepositoryTypes<Family>>;
@@ -205,6 +215,12 @@ using BaseConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::
 using ExtConstructorRepository = ConstructorRepositoryFor<runir::kr::ExtFamilyTag>;
 using ExtConstructorRepositoryPtr = ConstructorRepositoryPtrFor<runir::kr::ExtFamilyTag>;
 using ExtConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::ExtFamilyTag>;
+
+template<CategoryTag Category>
+using ArgumentView = ygg::View<ygg::Index<Argument<Category>>, ExtConstructorRepository>;
+
+template<CategoryTag Category>
+using RegisterView = ygg::View<ygg::Index<Register<Category>>, ExtConstructorRepository>;
 
 using UnsConstructorRepository = ConstructorRepositoryFor<runir::kr::UnsFamilyTag>;
 using UnsConstructorRepositoryPtr = ConstructorRepositoryPtrFor<runir::kr::UnsFamilyTag>;

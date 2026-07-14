@@ -184,7 +184,7 @@ private:
             if (!detail::load_rule_is_applicable(rule, evaluation_context, m_environment))
                 return;
 
-            const auto denotation = detail::evaluate_load_expression(rule, evaluation_context, m_environment);
+            const auto denotation = evaluate_feature_denotation(rule.get_feature(), evaluation_context, m_environment);
             if (denotation.begin() == denotation.end())
             {
                 result.push_back(terminal(detail::ModuleProgramOutcome::FAILURE, context, rule_variant, ExecutionPhase::INTERNAL));

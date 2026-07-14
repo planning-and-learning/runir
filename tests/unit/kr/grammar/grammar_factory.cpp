@@ -167,6 +167,13 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 
     const auto first_rule = sketch.get_rules()[0];
     EXPECT_EQ(first_rule.get_symbol(), "ready-rule");
+    EXPECT_EQ(fmt::format("{}", sketch.template get_features<kr::ps::dl::BooleanFeature>().front()),
+              "(:boolean\n"
+              "    (:symbol r)\n"
+              "    (:expression (b_nonempty (c_atomic_state \"ball\")))\n"
+              ")");
+    EXPECT_EQ(fmt::format("{}", first_rule.get_conditions().front()), "(positive r)");
+    EXPECT_EQ(fmt::format("{}", first_rule.get_effects().front()), "(negative r)");
 
     const auto formatted = fmt::format("{}", sketch);
     EXPECT_EQ(formatted.find("(:boolean (:symbol"), std::string::npos) << formatted;
@@ -536,6 +543,60 @@ TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryParsesDomainsWithBooleanPrimiti
     const auto reparsed_cnf_grammar_view = kr::dl::cnf_grammar::translate(reparsed_cnf_source_grammar_view, *cnf_repository);
     EXPECT_TRUE(ygg::EqualTo<decltype(cnf_grammar_view)> {}(cnf_grammar_view, reparsed_cnf_grammar_view));
     EXPECT_EQ(grammar_view.get_context().template size<kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>(), 2);
+}
+
+TEST(RunirTests, ExtGrammarNumericReferencesFormatWithoutExternalNames)
+{
+    namespace fp = tyr::formalism::planning;
+
+    const auto domain_filepath = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto planning_domain = fp::Parser(domain_filepath).get_domain();
+    auto grammar_repository = kr::dl::grammar::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto cnf_repository = kr::dl::cnf_grammar::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+
+    const auto format_grammar = [&]<typename T>(auto identifier)
+    {
+        auto data = ygg::Data<T>(identifier);
+        kr::dl::grammar::canonicalize(data);
+        return fmt::format("{}", grammar_repository->get_or_create(data).first);
+    };
+    const auto format_cnf = [&]<typename T>(auto identifier)
+    {
+        auto data = ygg::Data<T>(identifier);
+        kr::dl::cnf_grammar::canonicalize(data);
+        return fmt::format("{}", cnf_repository->get_or_create(data).first);
+    };
+
+    using ConceptRegister = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>;
+    using RoleRegister = kr::dl::RegisterIdentifier<kr::dl::RoleTag>;
+    using ConceptArgument = kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>;
+    using RoleArgument = kr::dl::ArgumentIdentifier<kr::dl::RoleTag>;
+    using BooleanArgument = kr::dl::ArgumentIdentifier<kr::dl::BooleanTag>;
+    using NumericalArgument = kr::dl::ArgumentIdentifier<kr::dl::NumericalTag>;
+
+    EXPECT_EQ((format_grammar.template operator()<kr::dl::grammar::Concept<kr::ExtFamilyTag, kr::dl::RegisterTag>>(ConceptRegister(1))), "(c_register 1)");
+    EXPECT_EQ((format_grammar.template operator()<kr::dl::grammar::Role<kr::ExtFamilyTag, kr::dl::RegisterTag>>(RoleRegister(2))), "(r_register 2)");
+    EXPECT_EQ((format_grammar.template operator()<kr::dl::grammar::Concept<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::ConceptTag>>>(ConceptArgument(3))),
+              "(c_argument 3)");
+    EXPECT_EQ((format_grammar.template operator()<kr::dl::grammar::Role<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::RoleTag>>>(RoleArgument(4))),
+              "(r_argument 4)");
+    EXPECT_EQ((format_grammar.template operator()<kr::dl::grammar::Boolean<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::BooleanTag>>>(BooleanArgument(5))),
+              "(b_argument 5)");
+    EXPECT_EQ(
+        (format_grammar.template operator()<kr::dl::grammar::Numerical<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::NumericalTag>>>(NumericalArgument(6))),
+        "(n_argument 6)");
+
+    EXPECT_EQ((format_cnf.template operator()<kr::dl::cnf_grammar::Concept<kr::ExtFamilyTag, kr::dl::RegisterTag>>(ConceptRegister(1))), "(c_register 1)");
+    EXPECT_EQ((format_cnf.template operator()<kr::dl::cnf_grammar::Role<kr::ExtFamilyTag, kr::dl::RegisterTag>>(RoleRegister(2))), "(r_register 2)");
+    EXPECT_EQ((format_cnf.template operator()<kr::dl::cnf_grammar::Concept<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::ConceptTag>>>(ConceptArgument(3))),
+              "(c_argument 3)");
+    EXPECT_EQ((format_cnf.template operator()<kr::dl::cnf_grammar::Role<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::RoleTag>>>(RoleArgument(4))),
+              "(r_argument 4)");
+    EXPECT_EQ((format_cnf.template operator()<kr::dl::cnf_grammar::Boolean<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::BooleanTag>>>(BooleanArgument(5))),
+              "(b_argument 5)");
+    EXPECT_EQ(
+        (format_cnf.template operator()<kr::dl::cnf_grammar::Numerical<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::NumericalTag>>>(NumericalArgument(6))),
+        "(n_argument 6)");
 }
 
 }  // namespace runir::tests

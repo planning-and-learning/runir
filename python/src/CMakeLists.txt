@@ -26,6 +26,7 @@ nanobind_add_module(_pyrunir NB_SHARED
     pyrunir/kr/dl/ext/module.cpp
     pyrunir/kr/dl/ext/parser.cpp
     pyrunir/kr/dl/ext/repository.cpp
+    pyrunir/kr/dl/ext/views.cpp
     pyrunir/kr/dl/ext/semantics/datas.cpp
     pyrunir/kr/dl/ext/semantics/indices.cpp
     pyrunir/kr/dl/ext/semantics/module.cpp

@@ -38,12 +38,12 @@ auto evaluate(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::Ext
     return runir::kr::ps::ext::evaluate(feature.get_feature(), context, environment).get();
 }
 
-template<runir::kr::dl::CategoryTag Category, tyr::planning::TaskKind Kind>
-auto evaluate_argument(ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, Category>> argument,
-                       EvaluationContext<Kind>& context,
-                       EvaluationEnvironment<Kind>& environment)
+template<typename FeatureTag, typename C, tyr::planning::TaskKind Kind>
+auto evaluate_feature_denotation(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> feature,
+                                 EvaluationContext<Kind>& context,
+                                 EvaluationEnvironment<Kind>& environment)
 {
-    return runir::kr::ps::ext::evaluate(ygg::make_view(argument, environment.get_dl_repository()), context, environment);
+    return ygg::visit([&](auto concrete) { return runir::kr::ps::ext::evaluate(concrete.get_expression(), context, environment); }, feature.get_variant());
 }
 
 }  // namespace runir::kr::ps::ext

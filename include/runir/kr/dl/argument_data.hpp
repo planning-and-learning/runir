@@ -1,8 +1,7 @@
-#ifndef RUNIR_KR_PS_EXT_ARGUMENT_DATA_HPP_
-#define RUNIR_KR_PS_EXT_ARGUMENT_DATA_HPP_
+#ifndef RUNIR_KR_DL_ARGUMENT_DATA_HPP_
+#define RUNIR_KR_DL_ARGUMENT_DATA_HPP_
 
-#include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/ps/ext/argument_index.hpp"
+#include "runir/kr/dl/argument_index.hpp"
 
 #include <cista/containers/string.h>
 #include <string>
@@ -15,9 +14,9 @@ namespace ygg
 {
 
 template<runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::ps::ext::Argument<Category>>
+struct Data<runir::kr::dl::Argument<Category>>
 {
-    Index<runir::kr::ps::ext::Argument<Category>> index;
+    Index<runir::kr::dl::Argument<Category>> index;
     ::cista::offset::string name;
     runir::kr::dl::ArgumentIdentifier<Category> identifier;
 

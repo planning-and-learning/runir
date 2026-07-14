@@ -5,9 +5,9 @@
 #include "runir/kr/dl/declarations.hpp"
 
 #include <type_traits>
-#include <yggdrasil/semantics/comparators.hpp>
-#include <yggdrasil/core/types.hpp>
 #include <utility>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/semantics/comparators.hpp>
 
 namespace runir::kr::dl
 {
@@ -57,6 +57,18 @@ bool is_canonical(const ygg::Data<FamilyConstructor<Family, Category>>&) noexcep
     return true;
 }
 
+template<CategoryTag Category>
+bool is_canonical(const ygg::Data<Argument<Category>>&) noexcept
+{
+    return true;
+}
+
+template<CategoryTag Category>
+bool is_canonical(const ygg::Data<Register<Category>>&) noexcept
+{
+    return true;
+}
+
 template<FamilyTag Family, typename Tag>
     requires FamilyConceptConstructorTag<Family, Tag>
 void canonicalize(ygg::Data<FamilyConcept<Family, Tag>>&) noexcept
@@ -87,6 +99,18 @@ void canonicalize(ygg::Data<FamilyNumerical<Family, Tag>>&) noexcept
 
 template<FamilyTag Family, CategoryTag Category>
 void canonicalize(ygg::Data<FamilyConstructor<Family, Category>>&) noexcept
+{
+    // Trivially canonical
+}
+
+template<CategoryTag Category>
+void canonicalize(ygg::Data<Argument<Category>>&) noexcept
+{
+    // Trivially canonical
+}
+
+template<CategoryTag Category>
+void canonicalize(ygg::Data<Register<Category>>&) noexcept
 {
     // Trivially canonical
 }

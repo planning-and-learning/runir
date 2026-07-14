@@ -198,6 +198,10 @@ TEST(RunirTests, ExtStructuralTerminationLoadPreservesRegisterIndependentFeature
     (:entry m0)
     (:memory m0 m1)
     (:features
+        (:concept
+            (:symbol B)
+            (:expression (c_atomic_state "ball"))
+        )
         (:numerical
             (:symbol fn)
             (:expression
@@ -217,9 +221,7 @@ TEST(RunirTests, ExtStructuralTerminationLoadPreservesRegisterIndependentFeature
                     (:conditions
                         (greater_zero fn)
                     )
-                    (:concept
-                        (c_atomic_state "ball")
-                    )
+                    (:concept B)
                     (:register
                         (:concept r0)
                     )
@@ -269,6 +271,10 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRegisterDependentFeatur
     (:entry m0)
     (:memory m0 m1)
     (:features
+        (:concept
+            (:symbol B)
+            (:expression (c_atomic_state "ball"))
+        )
         (:numerical
             (:symbol fn)
             (:expression
@@ -286,9 +292,7 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRegisterDependentFeatur
                 (:target-memory m1)
                 (:load
                     (:conditions)
-                    (:concept
-                        (c_atomic_state "ball")
-                    )
+                    (:concept B)
                     (:register
                         (:concept r0)
                     )
@@ -341,6 +345,10 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRoleRegisterDependentFe
     (:entry m0)
     (:memory m0 m1)
     (:features
+        (:role
+            (:symbol At)
+            (:expression (r_atomic_state "at"))
+        )
         (:numerical
             (:symbol fn)
             (:expression
@@ -361,9 +369,7 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRoleRegisterDependentFe
                 (:target-memory m1)
                 (:load
                     (:conditions)
-                    (:role
-                        (r_atomic_state "at")
-                    )
+                    (:role At)
                     (:register
                         (:role r0)
                     )

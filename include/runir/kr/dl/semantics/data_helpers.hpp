@@ -5,11 +5,11 @@
 
 #include <cista/containers/vector.h>
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 #include <tyr/formalism/object_index.hpp>
 #include <tyr/formalism/predicate_index.hpp>
 #include <utility>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -58,6 +58,25 @@ struct ArgumentData : IdentifierData<Self, Identifier>
 {
     using Base = IdentifierData<Self, Identifier>;
     using Base::Base;
+};
+
+template<typename Self, typename Reference>
+struct ReferenceData
+{
+    ygg::Index<Self> index;
+    ygg::Index<Reference> reference;
+
+    ReferenceData() = default;
+    explicit ReferenceData(ygg::Index<Reference> reference_) : index(), reference(std::move(reference_)) {}
+
+    void clear() noexcept
+    {
+        ygg::clear(index);
+        ygg::clear(reference);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, reference); }
+    auto identifying_members() const noexcept { return std::tie(reference); }
 };
 
 template<typename Self, typename Arg>

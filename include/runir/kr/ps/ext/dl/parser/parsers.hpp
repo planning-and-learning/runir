@@ -42,8 +42,6 @@ struct BooleanFeatureClass;
 struct NumericalFeatureClass;
 struct FeatureClass;
 struct SymbolExpressionClass;
-template<runir::kr::dl::CategoryTag Category>
-struct LoadExpressionClass;
 struct NamedValueClass;
 struct PositiveConditionClass;
 struct NegativeConditionClass;
@@ -95,8 +93,6 @@ using numerical_feature_type = x3::rule<NumericalFeatureClass, ast::Feature<dl_:
 using feature_type = x3::rule<FeatureClass, ast::FeatureVariant>;
 using features_section_type = x3::rule<FeaturesSectionClass, std::vector<ast::FeatureVariant>>;
 using symbol_expression_type = x3::rule<SymbolExpressionClass, ast::SymbolExpression>;
-using concept_load_expression_type = x3::rule<LoadExpressionClass<dl_::ConceptTag>, ast::LoadExpression<dl_::ConceptTag>>;
-using role_load_expression_type = x3::rule<LoadExpressionClass<dl_::RoleTag>, ast::LoadExpression<dl_::RoleTag>>;
 using named_value_type = x3::rule<NamedValueClass, ast::NamedValue>;
 using positive_condition_type = x3::rule<PositiveConditionClass, base_ast::Positive>;
 using negative_condition_type = x3::rule<NegativeConditionClass, base_ast::Negative>;

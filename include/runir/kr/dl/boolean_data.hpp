@@ -51,11 +51,11 @@ struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>>
 
 template<>
 struct Data<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> :
-    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
-                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>
+    runir::kr::dl::semantics::ReferenceData<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
+                                            runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>
 {
-    using Base = runir::kr::dl::semantics::ArgumentData<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
-                                                        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>;
+    using Base = runir::kr::dl::semantics::ReferenceData<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
+                                                         runir::kr::dl::Argument<runir::kr::dl::BooleanTag>>;
     using Base::Base;
 };
 

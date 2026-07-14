@@ -142,6 +142,10 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationSeparatedRegisterLoadDoesNotB
         (:entry m0)
         (:memory m0 m1)
         (:features
+            (:concept
+                (:symbol B)
+                (:expression (c_atomic_state "ball"))
+            )
             (:numerical
                 (:symbol n)
                 (:expression (n_count (c_register r0)))
@@ -166,7 +170,7 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationSeparatedRegisterLoadDoesNotB
                     (:target-memory m1)
                     (:load
                         (:conditions)
-                        (:concept (c_atomic_state "ball"))
+                        (:concept B)
                         (:register (:concept r0))
                     )
                 )

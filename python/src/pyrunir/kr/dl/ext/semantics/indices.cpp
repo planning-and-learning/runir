@@ -76,10 +76,6 @@ void bind_semantics_indices(nb::module_& m)
     ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, DistanceTag>>>(m, "NumericalDistanceIndex");
     ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, ArgumentTag<NumericalTag>>>>(m, "NumericalArgumentIndex");
 
-    // Register/argument identifiers referenced by the ext register/argument constructor data.
-    // Concept and argument identifiers are already registered by the ext dl module, but the role
-    // register identifier is reachable only through the role register data exposed here.
-    ygg::bind_index<runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>(m, "RoleRegisterIdentifier");
 }
 
 }  // namespace runir::kr::dl::ext

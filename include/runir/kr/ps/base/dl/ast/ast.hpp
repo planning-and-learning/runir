@@ -23,37 +23,30 @@ struct PositionedVariant : x3::position_tagged, x3::variant<Alternatives...>
 
 struct Positive : x3::position_tagged
 {
-    static constexpr auto keyword = "positive";
 };
 
 struct Negative : x3::position_tagged
 {
-    static constexpr auto keyword = "negative";
 };
 
 struct EqualZero : x3::position_tagged
 {
-    static constexpr auto keyword = "equal_zero";
 };
 
 struct GreaterZero : x3::position_tagged
 {
-    static constexpr auto keyword = "greater_zero";
 };
 
 struct Increases : x3::position_tagged
 {
-    static constexpr auto keyword = "increases";
 };
 
 struct Decreases : x3::position_tagged
 {
-    static constexpr auto keyword = "decreases";
 };
 
 struct Unchanged : x3::position_tagged
 {
-    static constexpr auto keyword = "unchanged";
 };
 
 template<runir::kr::FamilyTag Family>
