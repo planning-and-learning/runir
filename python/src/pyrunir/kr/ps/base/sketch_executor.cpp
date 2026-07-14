@@ -28,6 +28,15 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
 {
     using Graph = SketchProofGraph<Kind>;
     using Results = SketchProofResults<Kind>;
+    using VertexLabel = SketchProofVertexLabel<Kind>;
+
+    auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "SketchProofVertexLabel").c_str())
+                            .def_ro("state", &VertexLabel::state)
+                            .def_ro("is_initial", &VertexLabel::is_initial)
+                            .def_ro("is_goal", &VertexLabel::is_goal)
+                            .def_ro("is_alive", &VertexLabel::is_alive)
+                            .def_ro("is_unsolvable", &VertexLabel::is_unsolvable);
+    ygg::add_hash(vertex_label);
 
     auto graph = nb::class_<Graph>(m, (std::string(prefix) + "SketchProofGraph").c_str());
     graph.def(nb::init<>());
@@ -37,7 +46,7 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
     nb::class_<Results>(m, (std::string(prefix) + "SketchProofResults").c_str())
         .def_ro("status", &Results::status)
         .def_ro("graph", &Results::graph, nb::keep_alive<0, 1>())
-        .def_ro("deadend_transitions", &Results::deadend_transitions)
+        .def_ro("deadend_states", &Results::deadend_states)
         .def_ro("open_states", &Results::open_states)
         .def_ro("cycle", &Results::cycle)
         .def("is_successful", &Results::is_successful);
@@ -51,6 +60,7 @@ void bind_sketch_search_options(nb::module_& m, const char* name)
     nb::class_<Options>(m, name)
         .def(nb::init<>())
         .def_rw("universal", &Options::universal)
+        .def_rw("classifier", &Options::classifier, nb::for_setter(nb::keep_alive<1, 2>()))
         .def_rw("max_num_states", &Options::max_num_states)
         .def_rw("max_time", &Options::max_time)
         .def_rw("random_seed", &Options::random_seed)

@@ -20,7 +20,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                    const ModuleProgramSearchOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
 {
     const auto initial_node = task_context->search_context->successor_generator->get_initial_node();
-    auto proof = ModuleProgramProofBuilder<Kind>(std::move(task_context), program);
+    auto proof = ModuleProgramProofBuilder<Kind>(std::move(task_context), program, options.classifier);
     auto open = std::vector<std::pair<ygg::Index<ExecutionState<Kind>>, graphs::VertexIndex>> {};
     auto plan_steps = tyr::planning::LabeledNodeList<Kind> {};
     auto failed = false;
@@ -48,10 +48,15 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
         {
             if (!options.universal)
             {
-                proof.set_final_state(state.get_state());
                 proof.set_plan(tyr::planning::Plan<Kind>(initial_node, std::move(plan_steps)));
                 return proof.finish(ModuleProgramProofStatus::SUCCESS);
             }
+            continue;
+        }
+        if (proof.is_unsolvable(source_vertex))
+        {
+            proof.add_deadend_state(source_vertex);
+            failed = true;
             continue;
         }
 
@@ -77,11 +82,10 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                     return proof.finish(ModuleProgramProofStatus::OUT_OF_STATES);
 
                 const auto [target, created] = *target_result;
-                const auto edge = proof.add_edge(source_vertex, target, step.get_state_transition(), step.rule);
+                proof.add_edge(source_vertex, target, step.get_state_transition(), step.rule);
                 if (!applied)
                 {
-                    proof.add_deadend_transition(edge);
-                    proof.add_open_state(target);
+                    proof.add_deadend_state(target);
                     failed = true;
                 }
                 else if (created)

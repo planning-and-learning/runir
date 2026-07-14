@@ -7,6 +7,9 @@
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
+#include <runir/kr/uns/classify.hpp>
+#include <runir/kr/uns/dl/parser.hpp>
+#include <runir/kr/uns/repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/planning.hpp>
 #include <vector>
@@ -73,7 +76,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         const auto result = kr::ps::base::find_solution(task_context, sketch, proof_options);
 
         EXPECT_TRUE(result.is_successful()) << test_case.domain;
-        EXPECT_TRUE(result.deadend_transitions.empty()) << test_case.domain;
+        EXPECT_TRUE(result.deadend_states.empty()) << test_case.domain;
         EXPECT_TRUE(result.open_states.empty()) << test_case.domain;
         EXPECT_TRUE(result.cycle.empty()) << test_case.domain;
         EXPECT_GT(result.graph->get_num_vertices(), 0) << test_case.domain;
@@ -200,7 +203,105 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     ASSERT_TRUE(rejected.graph);
     EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
     EXPECT_EQ(rejected.graph->get_num_edges(), 0);
+    EXPECT_TRUE(rejected.deadend_states.empty());
     EXPECT_FALSE(rejected.open_states.empty());
+}
+
+TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
+{
+    namespace fp = tyr::formalism::planning;
+    namespace p = tyr::planning;
+
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+    auto execution_context = ygg::ExecutionContext::create(1);
+    auto lifted_task = p::Task<p::LiftedTag>(planning_task);
+    auto task = lifted_task.instantiate_ground_task(*execution_context).task;
+    auto search_context = datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(task->get_repository());
+    auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
+    const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
+        (:features)
+        (:rules
+            (:rule
+                (:symbol any-transition)
+                (:expression (:conditions) (:effects))
+            )
+        )
+    ))",
+                                                       task->get_domain().get_domain(),
+                                                       *repository);
+
+    auto classifier_dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::UnsFamilyTag>().create(task->get_repository());
+    auto classifier_repository = kr::uns::RepositoryFactory().create(classifier_dl_repository);
+    const auto classifier = kr::uns::dl::parse_classifier(R"((:classifier
+        (:symbol all)
+        (:features
+            (:boolean
+                (:symbol yes)
+                (:expression (b_const true))
+            )
+        )
+        (:expression (or (and yes)))
+    ))",
+                                                          task->get_domain().get_domain(),
+                                                          *classifier_repository);
+
+    auto options = kr::ps::base::SketchSearchOptions<p::GroundTag> {};
+    options.classifier = classifier;
+    const auto result = kr::ps::base::find_solution(task_context, sketch, options);
+
+    EXPECT_EQ(result.status, kr::ps::base::SketchProofStatus::FAILURE);
+    ASSERT_TRUE(result.graph);
+    ASSERT_EQ(result.graph->get_num_vertices(), 1);
+    EXPECT_EQ(result.graph->get_num_edges(), 0);
+    ASSERT_EQ(result.deadend_states.size(), 1);
+    EXPECT_TRUE(result.open_states.empty());
+    const auto& label = result.graph->get_vertex(result.deadend_states.front()).get_property();
+    EXPECT_FALSE(label.is_goal);
+    EXPECT_FALSE(label.is_alive);
+    EXPECT_TRUE(label.is_unsolvable);
+    EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::BooleanTag>(), 0);
+
+    const auto goal_classifier = kr::uns::dl::parse_classifier(R"((:classifier
+        (:symbol goal)
+        (:features
+            (:boolean
+                (:symbol reached)
+                (:expression
+                    (b_nonempty
+                        (c_and
+                            (c_some (r_atomic_goal "at" true) (c_top))
+                            (c_subset (r_atomic_goal "at" true) (r_atomic_state "at"))
+                        )
+                    )
+                )
+            )
+        )
+        (:expression (or (and reached)))
+    ))",
+                                                               task->get_domain().get_domain(),
+                                                               *classifier_repository);
+    options.universal = true;
+    options.classifier = goal_classifier;
+    const auto goal_result = kr::ps::base::find_solution(task_context, sketch, options);
+    auto found_goal = false;
+    for (const auto vertex : goal_result.graph->get_vertex_indices())
+    {
+        const auto& goal_label = goal_result.graph->get_vertex(vertex).get_property();
+        if (!goal_label.is_goal)
+            continue;
+        auto context = kr::dl::semantics::EvaluationContext<kr::UnsFamilyTag, p::GroundTag>(goal_label.state,
+                                                                                            task_context->dl_builder,
+                                                                                            *task_context->dl_denotation_repository);
+        EXPECT_TRUE(kr::uns::classify(goal_classifier, context));
+        EXPECT_FALSE(goal_label.is_unsolvable);
+        found_goal = true;
+    }
+    EXPECT_TRUE(found_goal);
 }
 
 }  // namespace runir::tests

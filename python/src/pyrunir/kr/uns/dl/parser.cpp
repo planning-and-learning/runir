@@ -15,7 +15,8 @@ void bind_parser(nb::module_& m)
         { return runir::kr::uns::dl::parse_classifier(description, domain.get_domain(), repository); },
         nb::arg("description"),
         nb::arg("domain"),
-        nb::arg("repository"));
+        nb::arg("repository"),
+        nb::keep_alive<0, 3>());
 }
 
 }  // namespace runir::kr::uns::dl

@@ -15,8 +15,11 @@ from pyrunir.kr import (
     UndefinedSymbolError,
 )
 from pyrunir.kr.dl import ext as dl_ext
+from pyrunir.kr.dl.uns import ConstructorRepositoryFactory as ClassifierDLRepositoryFactory
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
+from pyrunir.kr.uns import RepositoryFactory as ClassifierRepositoryFactory
+from pyrunir.kr.uns.dl import parse_classifier
 from pyyggdrasil.execution import ExecutionContext
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import Parser
@@ -455,13 +458,49 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     assert search_options.shuffle_labeled_succ_nodes is False
     assert search_options.shuffle_choice_points is False
     assert search_options.universal is False
+    assert search_options.classifier is None
 
     search_result = ext.find_ground_solution(task_context, program, search_options)
     assert search_result.status == ext.ModuleProgramProofStatus.SUCCESS
     assert search_result.is_successful()
-    assert search_result.final_state is not None
     assert search_result.plan is not None
     assert search_result.plan.get_length() == 4
+
+    classifier_dl_repository = ClassifierDLRepositoryFactory().create(ground_task)
+    classifier_repository = ClassifierRepositoryFactory().create(classifier_dl_repository)
+    classifier = parse_classifier(
+        """(:classifier
+    (:symbol all)
+    (:features
+        (:boolean
+            (:symbol yes)
+            (:expression (b_const true))
+        )
+    )
+    (:expression (or (and yes)))
+)""",
+        planning_domain,
+        classifier_repository,
+    )
+    classified_options = ext.GroundModuleProgramSearchOptions()
+    classified_options.classifier = classifier
+    lifted_options = ext.LiftedModuleProgramSearchOptions()
+    assert lifted_options.classifier is None
+    lifted_options.classifier = classifier
+    assert lifted_options.classifier.get_index() == classifier.get_index()
+
+    del classifier, classifier_repository, classifier_dl_repository
+    gc.collect()
+    classified_result = ext.find_ground_solution(task_context, program, classified_options)
+    assert classified_result.status == ext.ModuleProgramProofStatus.FAILURE
+    assert classified_result.graph.get_num_vertices() == 1
+    assert classified_result.graph.get_num_edges() == 0
+    assert len(classified_result.deadend_states) == 1
+    assert classified_result.open_states == []
+    classified_label = classified_result.graph.get_vertex_property(classified_result.deadend_states[0])
+    assert not classified_label.is_goal
+    assert not classified_label.is_alive
+    assert classified_label.is_unsolvable
 
     proof_options = ext.GroundModuleProgramSearchOptions()
     proof_options.universal = True
@@ -479,7 +518,7 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     assert vertex_label.execution_state.call_stack.memory_state is not None
     assert len(vertex_label.execution_state.call_stack.registers.concept_values) > 0
     assert len(vertex_label.execution_state.call_stack.registers.role_values) > 0
-    assert len(proof.deadend_transitions) == 0
+    assert len(proof.deadend_states) == 0
     assert len(proof.open_states) == 0
     assert len(proof.cycle) > 0
 
@@ -507,14 +546,14 @@ def test_executor_reports_structured_failure_statuses_from_python():
     assert empty_proof.status == ext.ModuleProgramProofStatus.FAILURE
     assert empty_proof.graph.get_num_vertices() == 1
     assert empty_proof.graph.get_num_edges() == 0
-    assert len(empty_proof.deadend_transitions) == 0
+    assert len(empty_proof.deadend_states) == 0
     assert len(empty_proof.open_states) > 0
     assert len(empty_proof.cycle) == 0
 
-    load_loop = dl.parse_module_program("""(:program
-    (:entry load-loop)
+    load_deadend = dl.parse_module_program("""(:program
+    (:entry load-deadend)
     (:module
-        (:symbol load-loop)
+        (:symbol load-deadend)
         (:arguments)
         (:registers
             (:concept r0)
@@ -524,7 +563,7 @@ def test_executor_reports_structured_failure_statuses_from_python():
         (:features
             (:concept
                 (:symbol B)
-                (:expression (c_top))
+                (:expression (c_bot))
             )
         )
         (:rules
@@ -547,10 +586,13 @@ def test_executor_reports_structured_failure_statuses_from_python():
 )""", planning_domain, repository)
     options = ext.GroundModuleProgramSearchOptions()
     options.universal = True
-    load_proof = ext.find_ground_solution(task_context, load_loop, options)
+    load_proof = ext.find_ground_solution(task_context, load_deadend, options)
     assert load_proof.status == ext.ModuleProgramProofStatus.FAILURE
-    assert len(load_proof.deadend_transitions) == 0
-    assert len(load_proof.cycle) > 0
+    assert len(load_proof.deadend_states) == 1
+    assert len(load_proof.open_states) == 0
+    assert len(load_proof.cycle) == 0
+    deadend_label = load_proof.graph.get_vertex_property(load_proof.deadend_states[0])
+    assert deadend_label.is_unsolvable
 
 
     with pytest.raises(UndefinedSymbolError, match=r"Undefined action: missing-action"):

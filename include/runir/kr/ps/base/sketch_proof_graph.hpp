@@ -13,6 +13,18 @@
 namespace runir::kr::ps::base
 {
 
+template<tyr::planning::TaskKind Kind>
+struct SketchProofVertexLabel
+{
+    tyr::planning::StateView<Kind> state;
+    bool is_initial = false;
+    bool is_goal = false;
+    bool is_alive = false;
+    bool is_unsolvable = false;
+
+    auto identifying_members() const noexcept { return std::tie(state, is_initial, is_goal, is_alive, is_unsolvable); }
+};
+
 struct SketchProofEdgeLabel
 {
     runir::datasets::StateGraphEdgeLabel transition;
@@ -28,10 +40,10 @@ struct SketchProofEdgeLabel
 };
 
 template<tyr::planning::TaskKind Kind>
-using SketchProofGraphBuilder = graphs::StaticGraphBuilder<runir::datasets::AnnotatedStateGraphVertexLabel<Kind>, SketchProofEdgeLabel>;
+using SketchProofGraphBuilder = graphs::StaticGraphBuilder<SketchProofVertexLabel<Kind>, SketchProofEdgeLabel>;
 
 template<tyr::planning::TaskKind Kind>
-using SketchProofGraph = graphs::StaticGraph<runir::datasets::AnnotatedStateGraphVertexLabel<Kind>, SketchProofEdgeLabel>;
+using SketchProofGraph = graphs::StaticGraph<SketchProofVertexLabel<Kind>, SketchProofEdgeLabel>;
 
 }  // namespace runir::kr::ps::base
 

@@ -1,4 +1,7 @@
+import gc
+
 from pyrunir.kr import GroundTaskContext
+from pyrunir.kr.dl.uns import ConstructorRepositoryFactory as ClassifierDLRepositoryFactory
 from pyrunir.kr.dl.base.semantics import (
     ConstructorRepositoryFactory,
     GroundEvaluationContext as GroundDLEvaluationContext,
@@ -8,6 +11,7 @@ from pyrunir.kr.dl.base.semantics import (
 from pyrunir.kr.ps.base import (
     GroundSketchProofGraph,
     GroundSketchSearchOptions,
+    LiftedSketchSearchOptions,
     SketchProofEdgeLabel,
     SketchProofStatus,
     SuccessorExpander,
@@ -22,6 +26,8 @@ from pyrunir.kr.ps.base.dl import (
     SketchSpecification,
     parse_sketch,
 )
+from pyrunir.kr.uns import RepositoryFactory as ClassifierRepositoryFactory
+from pyrunir.kr.uns.dl import parse_classifier
 
 
 def test_base_sketch_exposes_declared_features(gripper_planning_domain):
@@ -148,7 +154,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
     proof_result = find_ground_solution(task_context, sketch, proof_options)
     assert proof_result.status == SketchProofStatus.SUCCESS
     assert proof_result.is_successful()
-    assert proof_result.deadend_transitions == []
+    assert proof_result.deadend_states == []
     assert proof_result.open_states == []
     assert proof_result.cycle == []
     assert isinstance(proof_result.graph, GroundSketchProofGraph)
@@ -166,6 +172,43 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
     search_result = find_ground_solution(task_context, sketch, search_options)
     assert search_result.status == SketchProofStatus.SUCCESS
     assert search_result.is_successful()
-    assert search_result.deadend_transitions == []
+    assert search_result.deadend_states == []
     assert search_result.open_states == []
     assert search_result.cycle == []
+
+    classifier_dl_repository = ClassifierDLRepositoryFactory().create(search_context.task)
+    classifier_repository = ClassifierRepositoryFactory().create(classifier_dl_repository)
+    classifier = parse_classifier(
+        """(:classifier
+    (:symbol all)
+    (:features
+        (:boolean
+            (:symbol yes)
+            (:expression (b_const true))
+        )
+    )
+    (:expression (or (and yes)))
+)""",
+        planning_domain,
+        classifier_repository,
+    )
+    classified_options = GroundSketchSearchOptions()
+    assert classified_options.classifier is None
+    classified_options.classifier = classifier
+    lifted_options = LiftedSketchSearchOptions()
+    assert lifted_options.classifier is None
+    lifted_options.classifier = classifier
+    assert lifted_options.classifier.get_index() == classifier.get_index()
+
+    del classifier, classifier_repository, classifier_dl_repository
+    gc.collect()
+    classified_result = find_ground_solution(task_context, sketch, classified_options)
+    assert classified_result.status == SketchProofStatus.FAILURE
+    assert classified_result.graph.get_num_vertices() == 1
+    assert classified_result.graph.get_num_edges() == 0
+    assert len(classified_result.deadend_states) == 1
+    assert classified_result.open_states == []
+    classified_label = classified_result.graph.get_vertex_property(classified_result.deadend_states[0])
+    assert not classified_label.is_goal
+    assert not classified_label.is_alive
+    assert classified_label.is_unsolvable

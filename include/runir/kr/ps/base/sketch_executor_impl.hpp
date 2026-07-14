@@ -2,11 +2,12 @@
 #define RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_IMPL_HPP_
 
 #include "runir/graphs/cycle.hpp"
+#include "runir/kr/dl/semantics/uns/evaluation_context.hpp"
 #include "runir/kr/ps/base/sketch_executor_data.hpp"
 #include "runir/kr/ps/base/successor_expander.hpp"
+#include "runir/kr/uns/classify.hpp"
 
 #include <chrono>
-#include <limits>
 #include <memory>
 #include <optional>
 #include <random>
@@ -43,9 +44,15 @@ auto execute_direct(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVi
     const auto make_label = [&](const tyr::planning::StateView<Kind>& state)
     {
         const auto goal = is_goal(state);
-        return datasets::AnnotatedStateGraphVertexLabel<Kind> {
-            state, goal ? ygg::float_t(0) : std::numeric_limits<ygg::float_t>::infinity(), state.get_index() == initial_state.get_index(), goal, true, false
-        };
+        auto unsolvable = false;
+        if (!goal && options.classifier)
+        {
+            auto context = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, Kind>(state,
+                                                                                                      task_context.dl_builder,
+                                                                                                      *task_context.dl_denotation_repository);
+            unsolvable = runir::kr::uns::classify(*options.classifier, context);
+        }
+        return SketchProofVertexLabel<Kind> { state, state.get_index() == initial_state.get_index(), goal, !unsolvable, unsolvable };
     };
 
     const auto get_or_create_vertex = [&](const tyr::planning::StateView<Kind>& state) -> std::optional<std::pair<graphs::VertexIndex, bool>>
@@ -90,9 +97,15 @@ auto execute_direct(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVi
         if (!explored.insert(source).second)
             continue;
 
-        const auto& source_state = builder.get_vertex(source).get_property().state;
-        if (is_goal(source_state))
+        const auto& source_label = builder.get_vertex(source).get_property();
+        const auto& source_state = source_label.state;
+        if (source_label.is_goal)
             continue;
+        if (source_label.is_unsolvable)
+        {
+            result.deadend_states.push_back(source);
+            continue;
+        }
 
         auto context = expander.context_at(source_state);
         auto successors = expander.labeled_successors(context);
@@ -126,7 +139,7 @@ auto execute_direct(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVi
         }
     }
 
-    return finish(result.open_states.empty() ? SketchProofStatus::SUCCESS : SketchProofStatus::FAILURE);
+    return finish(result.deadend_states.empty() && result.open_states.empty() ? SketchProofStatus::SUCCESS : SketchProofStatus::FAILURE);
 }
 
 }  // namespace runir::kr::ps::base::detail

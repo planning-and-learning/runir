@@ -4,6 +4,7 @@
 #include "runir/graphs/declarations.hpp"
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
 #include "runir/kr/task_context.hpp"
+#include "runir/kr/uns/repository.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -29,7 +30,7 @@ struct SketchProofResults
     SketchProofStatus status = SketchProofStatus::SUCCESS;
     runir::kr::TaskContextPtr<Kind> task_context_owner;
     std::shared_ptr<SketchProofGraph<Kind>> graph;
-    runir::graphs::EdgeIndexList deadend_transitions;
+    runir::graphs::VertexIndexList deadend_states;
     runir::graphs::VertexIndexList open_states;
     runir::graphs::VertexIndexList cycle;
 
@@ -40,6 +41,7 @@ template<tyr::planning::TaskKind Kind>
 struct SketchSearchOptions
 {
     bool universal = false;
+    std::optional<runir::kr::uns::ClassifierView> classifier = std::nullopt;
     ygg::uint_t max_num_states = std::numeric_limits<ygg::uint_t>::max();
     std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
     uint64_t random_seed = 0;

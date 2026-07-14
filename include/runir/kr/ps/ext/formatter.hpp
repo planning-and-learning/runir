@@ -486,11 +486,11 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofResults<Kind>>
     auto format(const auto& result, format_context& context) const
     {
         return fmt::format_to(context.out(),
-                              "ModuleProgramProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_transitions={}, open_states={}, cycle={})",
+                              "ModuleProgramProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={})",
                               runir::kr::ps::ext::format::module_program_proof_status(result.status),
                               result.graph ? result.graph->get_num_vertices() : 0,
                               result.graph ? result.graph->get_num_edges() : 0,
-                              result.deadend_transitions.size(),
+                              result.deadend_states.size(),
                               result.open_states.size(),
                               result.cycle.size());
     }

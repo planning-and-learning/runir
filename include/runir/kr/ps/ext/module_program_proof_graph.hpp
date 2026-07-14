@@ -8,7 +8,6 @@
 #include "runir/kr/ps/ext/rule_variant_index.hpp"
 
 #include <cista/containers/optional.h>
-#include <limits>
 #include <optional>
 #include <tuple>
 #include <tyr/formalism/planning/ground_action_index.hpp>
@@ -23,13 +22,12 @@ template<tyr::planning::TaskKind Kind>
 struct ModuleProgramProofVertexLabel
 {
     ygg::Index<ExecutionState<Kind>> execution_state;
-    ygg::float_t goal_distance = std::numeric_limits<ygg::float_t>::infinity();
     bool is_initial = false;
     bool is_goal = false;
     bool is_alive = false;
     bool is_unsolvable = false;
 
-    auto identifying_members() const noexcept { return std::tie(execution_state, goal_distance, is_initial, is_goal, is_alive, is_unsolvable); }
+    auto identifying_members() const noexcept { return std::tie(execution_state, is_initial, is_goal, is_alive, is_unsolvable); }
 };
 
 struct ModuleProgramProofStateTransition
@@ -65,7 +63,6 @@ public:
     const auto& get_data() const noexcept { return m_label; }
     auto get_execution_state() const noexcept { return ExecutionStateView<Kind>(m_label.execution_state, m_repository); }
     auto get_state() const { return get_execution_state().get_state(); }
-    auto get_goal_distance() const noexcept { return m_label.goal_distance; }
     bool is_initial() const noexcept { return m_label.is_initial; }
     bool is_goal() const noexcept { return m_label.is_goal; }
     bool is_alive() const noexcept { return m_label.is_alive; }

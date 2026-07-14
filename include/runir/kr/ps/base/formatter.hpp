@@ -170,11 +170,11 @@ inline std::string sketch_proof_status(runir::kr::ps::base::SketchProofStatus st
 template<tyr::planning::TaskKind Kind>
 std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<Kind>& result)
 {
-    return fmt::format("SketchProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_transitions={}, open_states={}, cycle={})",
+    return fmt::format("SketchProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={})",
                        sketch_proof_status(result.status),
                        result.graph ? result.graph->get_num_vertices() : 0,
                        result.graph ? result.graph->get_num_edges() : 0,
-                       result.deadend_transitions.size(),
+                       result.deadend_states.size(),
                        result.open_states.size(),
                        result.cycle.size());
 }

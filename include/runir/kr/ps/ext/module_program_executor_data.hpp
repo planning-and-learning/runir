@@ -4,6 +4,7 @@
 #include "runir/graphs/declarations.hpp"
 #include "runir/kr/ps/ext/module_program_proof_graph.hpp"
 #include "runir/kr/task_context.hpp"
+#include "runir/kr/uns/repository.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -27,6 +28,7 @@ template<tyr::planning::TaskKind Kind>
 struct ModuleProgramSearchOptions
 {
     bool universal = false;
+    std::optional<runir::kr::uns::ClassifierView> classifier = std::nullopt;
     ygg::uint_t max_num_states = std::numeric_limits<ygg::uint_t>::max();
     std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
     uint64_t random_seed = 0;
@@ -39,9 +41,8 @@ struct ModuleProgramProofResults
 {
     ModuleProgramProofStatus status = ModuleProgramProofStatus::SUCCESS;
     std::shared_ptr<ModuleProgramProofGraph<Kind>> graph;
-    std::optional<tyr::planning::StateView<Kind>> final_state = std::nullopt;
     std::optional<tyr::planning::Plan<Kind>> plan = std::nullopt;
-    runir::graphs::EdgeIndexList deadend_transitions;
+    runir::graphs::VertexIndexList deadend_states;
     runir::graphs::VertexIndexList open_states;
     runir::graphs::VertexIndexList cycle;
 

@@ -17,6 +17,8 @@
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
+#include <runir/kr/uns/dl/parser.hpp>
+#include <runir/kr/uns/repository.hpp>
 #include <set>
 #include <type_traits>
 #include <tyr/formalism/planning/parser.hpp>
@@ -84,9 +86,7 @@ auto create_top_concept(kr::dl::ConstructorRepositoryFor<kr::ExtFamilyTag>& repo
 }
 
 template<typename FeatureTag, kr::dl::CategoryTag Category>
-auto create_feature(kr::ps::ext::Repository& repository,
-                    ygg::Index<kr::dl::FamilyConstructor<kr::ExtFamilyTag, Category>> expression,
-                    const std::string& name)
+auto create_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::FamilyConstructor<kr::ExtFamilyTag, Category>> expression, const std::string& name)
 {
     auto concrete_data = ygg::Data<kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, FeatureTag>>(expression, name);
     const auto concrete = repository.get_or_create(concrete_data).first;
@@ -193,6 +193,77 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationReusesTaskContextCache)
     EXPECT_EQ(second.front().get_target().get_index(), first.front().get_target().get_index());
     EXPECT_EQ(task_context->dl_denotation_repository->size<kr::dl::NumericalTag>(), cached_denotations);
     EXPECT_EQ(initial_state.get_call_stack().get_memory_state().get_name(), "source");
+}
+
+TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
+{
+    namespace fp = tyr::formalism::planning;
+    namespace p = tyr::planning;
+
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+    auto execution_context = ygg::ExecutionContext::create(1);
+    auto lifted_task = p::Task<p::LiftedTag>(planning_task);
+    auto task = lifted_task.instantiate_ground_task(*execution_context).task;
+    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(task->get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    const auto module = kr::ps::ext::dl::parse_module(R"((:module
+        (:symbol module)
+        (:arguments)
+        (:registers)
+        (:entry source)
+        (:memory source target)
+        (:features)
+        (:rules
+            (:rule
+                (:symbol advance)
+                (:expression
+                    (:source-memory source)
+                    (:target-memory target)
+                    (:sketch (:conditions) (:effects))
+                )
+            )
+        )
+    ))",
+                                                      task->get_domain().get_domain(),
+                                                      *repository);
+    const auto program = create_module_program(*repository, module, { module });
+
+    auto classifier_dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::UnsFamilyTag>().create(task->get_repository());
+    auto classifier_repository = kr::uns::RepositoryFactory().create(classifier_dl_repository);
+    const auto classifier = kr::uns::dl::parse_classifier(R"((:classifier
+        (:symbol all)
+        (:features
+            (:boolean
+                (:symbol yes)
+                (:expression (b_const true))
+            )
+        )
+        (:expression (or (and yes)))
+    ))",
+                                                          task->get_domain().get_domain(),
+                                                          *classifier_repository);
+
+    auto options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    options.classifier = classifier;
+    const auto result = kr::ps::ext::find_solution(task_context, program, options);
+
+    EXPECT_EQ(result.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
+    ASSERT_TRUE(result.graph);
+    ASSERT_EQ(result.graph->get_num_vertices(), 1);
+    EXPECT_EQ(result.graph->get_num_edges(), 0);
+    ASSERT_EQ(result.deadend_states.size(), 1);
+    EXPECT_TRUE(result.open_states.empty());
+    const auto label = result.graph->get_vertex_view(result.deadend_states.front());
+    EXPECT_FALSE(label.is_goal());
+    EXPECT_FALSE(label.is_alive());
+    EXPECT_TRUE(label.is_unsolvable());
+    EXPECT_EQ(label.get_execution_state().get_call_stack().get_memory_state().get_name(), "source");
+    EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::BooleanTag>(), 0);
 }
 
 TEST(RunirTests, ExtModuleParserLowersArgumentRegisterMemorySections)
@@ -1754,7 +1825,7 @@ TEST(RunirTests, ExtExecutionRecordsAreCistaCompatible)
         expect_cista_round_trip(*data);
     }
     expect_cista_round_trip(
-        kr::ps::ext::ModuleProgramProofVertexLabel<p::GroundTag> { ygg::Index<kr::ps::ext::ExecutionState<p::GroundTag>>(7), 2, true, false, true, false });
+        kr::ps::ext::ModuleProgramProofVertexLabel<p::GroundTag> { ygg::Index<kr::ps::ext::ExecutionState<p::GroundTag>>(7), true, false, true, false });
     auto edge = kr::ps::ext::ModuleProgramProofEdgeLabel {};
     edge.state_transition = kr::ps::ext::ModuleProgramProofStateTransition { ygg::Index<tyr::formalism::planning::GroundAction>(8), 1 };
     edge.rule = ygg::Index<kr::ps::ext::RuleVariant>(9);
@@ -2313,6 +2384,7 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
     ASSERT_TRUE(result.graph);
     EXPECT_EQ(result.graph->get_num_vertices(), 1);
     EXPECT_EQ(result.graph->get_num_edges(), 0);
+    EXPECT_TRUE(result.deadend_states.empty());
     EXPECT_FALSE(result.open_states.empty());
 }
 
@@ -2636,7 +2708,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     ASSERT_TRUE(empty_proof.graph);
     EXPECT_EQ(empty_proof.graph->get_num_vertices(), 1);
     EXPECT_EQ(empty_proof.graph->get_num_edges(), 0);
-    EXPECT_TRUE(empty_proof.deadend_transitions.empty());
+    EXPECT_TRUE(empty_proof.deadend_states.empty());
     EXPECT_FALSE(empty_proof.open_states.empty());
     EXPECT_TRUE(empty_proof.cycle.empty());
 
@@ -2666,7 +2738,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     const auto load_proof = kr::ps::ext::find_solution(task_context, load_program, load_proof_options);
     EXPECT_EQ(load_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(load_proof.graph);
-    EXPECT_TRUE(load_proof.deadend_transitions.empty());
+    EXPECT_TRUE(load_proof.deadend_states.empty());
     EXPECT_FALSE(load_proof.cycle.empty());
 
     auto concept_arg_data = ygg::Data<kr::dl::Argument<kr::dl::ConceptTag>>(std::string("x"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0));
@@ -2701,7 +2773,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     const auto caller_proof = kr::ps::ext::find_solution(task_context, caller_program, caller_proof_options);
     EXPECT_EQ(caller_proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(caller_proof.graph);
-    EXPECT_TRUE(caller_proof.deadend_transitions.empty());
+    EXPECT_TRUE(caller_proof.deadend_states.empty());
     EXPECT_FALSE(caller_proof.open_states.empty());
 
     auto do_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("missing-action"));
@@ -2730,7 +2802,7 @@ TEST(RunirTests, ExtExecutorReportsStructuredFailureStatuses)
     ASSERT_TRUE(do_proof.graph);
     EXPECT_EQ(do_proof.graph->get_num_vertices(), 1);
     EXPECT_EQ(do_proof.graph->get_num_edges(), 0);
-    EXPECT_TRUE(do_proof.deadend_transitions.empty());
+    EXPECT_TRUE(do_proof.deadend_states.empty());
     EXPECT_FALSE(do_proof.open_states.empty());
     EXPECT_TRUE(do_proof.cycle.empty());
 }
