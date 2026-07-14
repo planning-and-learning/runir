@@ -1133,6 +1133,60 @@ TEST(RunirTests, ExtModuleFormatterRoundTripsPaperFactoryDescriptions)
     EXPECT_EQ(reparsed_program.get_modules().size(), program.get_modules().size());
 }
 
+TEST(RunirTests, ExtModuleFormatterPreservesOrderedDeclarations)
+{
+    namespace fp = tyr::formalism::planning;
+
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+
+    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>();
+    auto repository_factory = kr::ps::ext::RepositoryFactory();
+    auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
+    auto repository = repository_factory.create(dl_repository);
+
+    const auto seed = R"RUNIR((:module
+    (:symbol seed)
+    (:arguments (:concept Z) (:concept X))
+    (:registers (:concept RZ) (:concept RX))
+    (:entry m0)
+    (:memory m0)
+    (:features)
+    (:rules)
+))RUNIR";
+    const auto target = R"RUNIR((:module
+    (:symbol target)
+    (:arguments (:concept Y) (:concept X))
+    (:registers (:concept RY) (:concept RX))
+    (:entry m0)
+    (:memory m0)
+    (:features)
+    (:rules)
+))RUNIR";
+
+    kr::ps::ext::dl::parse_module(seed, planning_task.get_domain().get_domain(), *repository);
+    const auto module = kr::ps::ext::dl::parse_module(target, planning_task.get_domain().get_domain(), *repository);
+
+    const auto arguments = module.get_arguments<kr::dl::ConceptTag>();
+    ASSERT_EQ(arguments.size(), 2);
+    EXPECT_EQ(arguments[0].get_name(), "Y");
+    EXPECT_EQ(arguments[1].get_name(), "X");
+
+    const auto registers = module.get_registers<kr::dl::ConceptTag>();
+    ASSERT_EQ(registers.size(), 2);
+    EXPECT_EQ(registers[0].get_name(), "RY");
+    EXPECT_EQ(registers[1].get_name(), "RX");
+
+    const auto formatted = fmt::format("{}", module);
+    auto reparsed_dl_repository = dl_repository_factory.create(planning_task.get_repository());
+    auto reparsed_repository = repository_factory.create(reparsed_dl_repository);
+    const auto reparsed = kr::ps::ext::dl::parse_module(formatted, planning_task.get_domain().get_domain(), *reparsed_repository);
+    EXPECT_EQ(fmt::format("{}", reparsed), formatted);
+    EXPECT_EQ(reparsed.get_arguments<kr::dl::ConceptTag>()[0].get_name(), "Y");
+    EXPECT_EQ(reparsed.get_registers<kr::dl::ConceptTag>()[0].get_name(), "RY");
+}
+
 TEST(RunirTests, ExtModuleFormatterEscapesQuotedStringContents)
 {
     namespace fp = tyr::formalism::planning;
