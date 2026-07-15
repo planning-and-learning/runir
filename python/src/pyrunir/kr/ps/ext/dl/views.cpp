@@ -3,8 +3,10 @@
 #include <concepts>
 #include <nanobind/stl/string.h>
 #include <runir/kr/ps/ext/compatibility.hpp>
+#include <runir/kr/ps/ext/dl/syntactic_complexity.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <runir/kr/ps/ext/syntactic_complexity.hpp>
 #include <string>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
@@ -56,6 +58,10 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_action_arguments", &View::get_action_arguments);
     if constexpr (requires(const View& view) { view.get_callee(); })
         cls.def("get_callee", &View::get_callee, nb::keep_alive<0, 1>());
+    if constexpr (requires(const View& view) { runir::kr::ps::ext::syntactic_complexity(view); })
+        cls.def("syntactic_complexity", [](View view) { return runir::kr::ps::ext::syntactic_complexity(view); });
+    else if constexpr (requires(const View& view) { runir::kr::ps::ext::dl::syntactic_complexity(view); })
+        cls.def("syntactic_complexity", [](View view) { return runir::kr::ps::ext::dl::syntactic_complexity(view); });
     if constexpr (requires(const View& view) { view.template get_registers<runir::kr::dl::ConceptTag>(); })
     {
         cls.def("get_concept_registers", &View::template get_registers<runir::kr::dl::ConceptTag>);

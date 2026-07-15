@@ -5,6 +5,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/dl/semantics/uns/evaluation.hpp>
 #include <runir/kr/errors.hpp>
 #include <runir/kr/uns.hpp>
@@ -84,6 +85,14 @@ TEST(RunirTests, UnsClassifierParsesAndClassifies)
                     )
                 )
             )
+            (:boolean
+                (:symbol unused)
+                (:expression
+                    (b_nonempty
+                        (c_top)
+                    )
+                )
+            )
         )
         (:expression
             (or
@@ -103,7 +112,7 @@ TEST(RunirTests, UnsClassifierParsesAndClassifies)
         (void) feature;
         ++num_features;
     }
-    EXPECT_EQ(num_features, 2u);
+    EXPECT_EQ(num_features, 3u);
     EXPECT_EQ(fmt::format("{}", classifier.get_features().front()),
               "(:boolean\n"
               "    (:symbol some_ball)\n"
@@ -111,6 +120,14 @@ TEST(RunirTests, UnsClassifierParsesAndClassifies)
               ")");
     EXPECT_EQ(fmt::format("{}", classifier.get_clauses().front().get_literals()[0]), "some_ball");
     EXPECT_EQ(fmt::format("{}", classifier.get_clauses().front().get_literals()[1]), "(not no_object)");
+
+    const auto feature = classifier.get_features().front();
+    const auto concrete_complexity = ygg::visit([](auto concrete) { return runir::kr::uns::dl::syntactic_complexity(concrete); }, feature.get_variant());
+    EXPECT_EQ(runir::kr::uns::syntactic_complexity(feature), concrete_complexity);
+    EXPECT_EQ(concrete_complexity, 1 + runir::kr::dl::semantics::syntactic_complexity(feature.get_expression()));
+    EXPECT_EQ(runir::kr::uns::syntactic_complexity(classifier), 10);
+    auto empty_data = ygg::Data<runir::kr::uns::Classifier>(std::string("empty"));
+    EXPECT_EQ(runir::kr::uns::syntactic_complexity(fixture.repository->get_or_create(empty_data).first), 0);
 
     const auto state = fixture.search->state_repository->get_initial_state();
     auto builder = sem::Builder();

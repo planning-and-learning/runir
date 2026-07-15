@@ -10,6 +10,7 @@
 #include <runir/kr/dl/grammar/grammar_factory.hpp>
 #include <runir/kr/dl/grammar/parser.hpp>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
@@ -117,6 +118,14 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
                 )
             )
         )
+        (:boolean
+            (:symbol unused)
+            (:expression
+                (b_nonempty
+                    (c_atomic_state "ball")
+                )
+            )
+        )
         (:numerical
             (:symbol c)
             (:expression
@@ -163,7 +172,7 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     EXPECT_EQ(sketch.get_index(), ygg::Index<kr::ps::base::Sketch>(0));
     EXPECT_EQ(repository->template size<kr::ps::base::Sketch>(), 1);
     EXPECT_EQ(repository->template size<kr::ps::base::Rule>(), 2);
-    EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::BooleanFeature>>()), 1);
+    EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::BooleanFeature>>()), 2);
     EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::NumericalFeature>>()), 1);
     EXPECT_EQ(repository->template size<kr::ps::ConditionVariant<kr::BaseFamilyTag>>(), 4);
     EXPECT_EQ(repository->template size<kr::ps::EffectVariant<kr::BaseFamilyTag>>(), 5);
@@ -184,7 +193,13 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     EXPECT_NE(formatted.find("(:expression"), std::string::npos);
     const auto reparsed = kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository);
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
-    EXPECT_EQ(kr::ps::base::syntactic_complexity(sketch), 6);
+
+    const auto feature = sketch.template get_features<kr::ps::dl::BooleanFeature>().front();
+    const auto concrete_complexity = ygg::visit([](auto concrete) { return kr::ps::base::dl::syntactic_complexity(concrete); }, feature.get_variant());
+    EXPECT_EQ(kr::ps::base::syntactic_complexity(feature), concrete_complexity);
+    EXPECT_EQ(concrete_complexity, 1 + kr::dl::semantics::syntactic_complexity(feature.get_expression()));
+    EXPECT_EQ(kr::ps::base::syntactic_complexity(sketch), 9);
+    EXPECT_EQ(kr::ps::base::syntactic_complexity(kr::ps::base::dl::SketchFactory::create_empty(*repository)), 0);
 }
 
 TEST(RunirTests, FranceEtAlAaai2021GrammarFactoryForGripperDomain)

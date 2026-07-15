@@ -4,7 +4,6 @@
 #include "kr/ps/structural_termination/detail.hpp"
 #include "runir/kr/ps/base/dl/incomplete_structural_termination.hpp"
 #include "runir/kr/ps/base/dl/structural_termination.hpp"
-#include "runir/kr/ps/base/dl/syntactic_complexity.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
 
 #include <vector>
@@ -14,7 +13,6 @@ namespace runir::kr::ps::base::dl::detail
 
 struct SketchAnalysis
 {
-    FeatureSyntacticComplexityContext features;
     std::vector<RuleView> rules;
     runir::kr::ps::detail::QualitativePolicy policy;
 };

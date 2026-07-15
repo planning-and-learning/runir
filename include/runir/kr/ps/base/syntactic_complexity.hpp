@@ -21,7 +21,10 @@ template<typename C>
 std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> view)
 {
     auto result = std::size_t { 0 };
-    result += runir::kr::ps::base::dl::syntactic_complexity(view.get_rules());
+    for (auto feature : view.template get_features<runir::kr::ps::dl::BooleanFeature>())
+        result += syntactic_complexity(feature);
+    for (auto feature : view.template get_features<runir::kr::ps::dl::NumericalFeature>())
+        result += syntactic_complexity(feature);
     return result;
 }
 

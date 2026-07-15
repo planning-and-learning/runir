@@ -5,6 +5,7 @@
 #include <runir/kr/ps/ext/compatibility.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <runir/kr/ps/ext/syntactic_complexity.hpp>
 #include <string>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
@@ -83,6 +84,8 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_memory_transitions", &View::get_memory_transitions);
     if constexpr (requires(const View& view) { view.get_modules(); })
         cls.def("get_modules", &View::get_modules);
+    if constexpr (requires(const View& view) { runir::kr::ps::ext::syntactic_complexity(view); })
+        cls.def("syntactic_complexity", [](View view) { return runir::kr::ps::ext::syntactic_complexity(view); });
     if constexpr (std::same_as<T, Rule<CallTag>>)
         cls.def(
             "get_call_arguments",

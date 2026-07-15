@@ -56,6 +56,7 @@
 #include "runir/kr/ps/ext/rule_variant_index.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
+#include "runir/kr/ps/ext/syntactic_complexity.hpp"
 #include "runir/kr/ps/ext/views.hpp"
 #include "runir/kr/ps/feature_index.hpp"
 #include "runir/kr/ps/feature_view.hpp"

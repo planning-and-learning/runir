@@ -342,17 +342,18 @@ TEST(RunirTests, IncompleteStructuralTerminationBooleanOscillatorIsUnknownWithBl
                                                        *repository);
 
     const auto result = kr::ps::base::dl::incomplete_structural_termination(sketch);
+    const auto booleans = sketch.get_features<kr::ps::dl::BooleanFeature>();
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_EQ(result.surviving_rules.size(), 2);
-    ASSERT_EQ(result.booleans.size(), 1);
+    ASSERT_EQ(booleans.size(), 1);
     for (const auto& surviving : result.surviving_rules)
     {
         ASSERT_EQ(surviving.blocking_reasons.size(), 1);
         const auto& reason = surviving.blocking_reasons.front();
         // The blocked change concerns the single Boolean feature b1.
         ASSERT_TRUE(std::holds_alternative<kr::ps::base::dl::BooleanFeatureView>(reason.feature));
-        EXPECT_EQ(std::get<kr::ps::base::dl::BooleanFeatureView>(reason.feature).get_index(), result.booleans.front());
+        EXPECT_EQ(std::get<kr::ps::base::dl::BooleanFeatureView>(reason.feature).get_index(), booleans.front().get_index());
         // The opposing rule is exactly the other surviving rule.
         ASSERT_EQ(reason.opposing_rules.size(), 1);
         EXPECT_NE(reason.opposing_rules.front().get_index(), surviving.rule.get_index());

@@ -6,6 +6,7 @@
 #include <runir/kr/uns/classify.hpp>
 #include <runir/kr/uns/formatter.hpp>
 #include <runir/kr/uns/repository.hpp>
+#include <runir/kr/uns/syntactic_complexity.hpp>
 #include <string>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/ground/state_view.hpp>
@@ -46,6 +47,8 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_clauses", &View::get_clauses);
     if constexpr (requires(const View& view) { view.get_symbol(); })
         cls.def("get_symbol", &View::get_symbol);
+    if constexpr (requires(const View& view) { runir::kr::uns::syntactic_complexity(view); })
+        cls.def("syntactic_complexity", [](View view) { return runir::kr::uns::syntactic_complexity(view); });
 }
 
 }  // namespace

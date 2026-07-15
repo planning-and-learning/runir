@@ -57,8 +57,6 @@ void bind_structural_termination(nb::module_& m)
 
     nb::class_<StructuralTerminationResult>(m, "StructuralTerminationResult")
         .def_ro("status", &StructuralTerminationResult::status)
-        .def_ro("booleans", &StructuralTerminationResult::booleans)
-        .def_ro("numericals", &StructuralTerminationResult::numericals)
         .def_ro("counterexample", &StructuralTerminationResult::counterexample, nb::keep_alive<0, 1>())
         .def("is_terminating", &StructuralTerminationResult::is_terminating);
 
@@ -86,8 +84,6 @@ void bind_structural_termination(nb::module_& m)
 
     nb::class_<IncompleteStructuralTerminationResult>(m, "IncompleteStructuralTerminationResult")
         .def_ro("status", &IncompleteStructuralTerminationResult::status)
-        .def_ro("booleans", &IncompleteStructuralTerminationResult::booleans)
-        .def_ro("numericals", &IncompleteStructuralTerminationResult::numericals)
         .def_ro("surviving_rules", &IncompleteStructuralTerminationResult::surviving_rules)
         .def("is_terminating", &IncompleteStructuralTerminationResult::is_terminating);
 

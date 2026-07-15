@@ -120,27 +120,10 @@ SieveResult sieve_policy_graph(std::vector<PolicyEdge>& edges, const Qualitative
     return { contains_cycle(edges, components), std::move(components.component_of) };
 }
 
-ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, bool use_incomplete_preprocessing)
+namespace
 {
-    auto rule_positions = std::vector<std::size_t> {};
-    if (use_incomplete_preprocessing)
-    {
-        // Rule elimination is a prefix of complete SIEVE: every removed rule
-        // has no edge in a surviving configuration SCC.
-        const auto incomplete_result = incomplete_structural_termination(policy);
-        if (incomplete_result.is_terminating())
-            return {};
-        rule_positions.reserve(incomplete_result.surviving_rules.size());
-        for (const auto& surviving : incomplete_result.surviving_rules)
-            rule_positions.push_back(surviving.rule_position);
-    }
-    else
-    {
-        rule_positions.reserve(policy.rule_profiles.size());
-        for (std::size_t position = 0; position < policy.rule_profiles.size(); ++position)
-            rule_positions.push_back(position);
-    }
-
+ComponentSieveResult sieve_policy_for_rules(const QualitativePolicy& policy, std::size_t max_features, const std::vector<std::size_t>& rule_positions)
+{
     auto projected_components = project_policy_components(policy, rule_positions);
     for (const auto& projected : projected_components)
         if (projected.policy.num_booleans + projected.policy.num_numericals > max_features)
@@ -155,6 +138,36 @@ ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t m
             result.push_back(SievedPolicyComponent { std::move(projected), std::move(edges), std::move(sieve) });
     }
     return result;
+}
+}  // namespace
+
+ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, const IncompletePolicyResult& incomplete_result)
+{
+    // Rule elimination is a prefix of complete SIEVE: every removed rule has
+    // no edge in a surviving configuration SCC.
+    if (incomplete_result.is_terminating())
+        return {};
+
+    auto rule_positions = std::vector<std::size_t> {};
+    rule_positions.reserve(incomplete_result.surviving_rules.size());
+    for (const auto& surviving : incomplete_result.surviving_rules)
+        rule_positions.push_back(surviving.rule_position);
+    return sieve_policy_for_rules(policy, max_features, rule_positions);
+}
+
+ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, bool use_incomplete_preprocessing)
+{
+    if (use_incomplete_preprocessing)
+    {
+        const auto incomplete_result = incomplete_structural_termination(policy);
+        return sieve_policy(policy, max_features, incomplete_result);
+    }
+
+    auto rule_positions = std::vector<std::size_t> {};
+    rule_positions.reserve(policy.rule_profiles.size());
+    for (std::size_t position = 0; position < policy.rule_profiles.size(); ++position)
+        rule_positions.push_back(position);
+    return sieve_policy_for_rules(policy, max_features, rule_positions);
 }
 
 }  // namespace runir::kr::ps::detail

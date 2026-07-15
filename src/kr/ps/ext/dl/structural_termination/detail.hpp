@@ -10,25 +10,18 @@
 namespace runir::kr::ps::ext::dl::detail
 {
 
-struct ModuleFeatures
-{
-    std::vector<BooleanFeatureView> booleans;
-    std::vector<NumericalFeatureView> numericals;
-};
-
 struct ModuleAnalysis
 {
     std::vector<MemoryStateView> memory_states;
     std::vector<RuleVariantView> rules;
-    ModuleFeatures features;
     runir::kr::ps::detail::QualitativePolicy policy;
 };
 
 ModuleAnalysis analyze_module(ModuleView module_);
 
 ModuleStructuralTerminationResult make_result(const ModuleAnalysis& analysis, const runir::kr::ps::detail::ComponentSieveResult& sieve_result);
-ModuleIncompleteStructuralTerminationResult make_incomplete_result(const ModuleAnalysis& analysis,
-                                                                   const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
+ModuleIncompleteStructuralTerminationResult
+make_incomplete_result(ModuleView module_, const ModuleAnalysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
 
 std::vector<RuleVariantView> find_recursive_call_rules(const std::vector<ModuleView>& modules);
 

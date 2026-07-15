@@ -8,6 +8,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/errors.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
@@ -18,6 +19,7 @@
 #include <runir/kr/ps/ext/module_program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
+#include <runir/kr/ps/ext/syntactic_complexity.hpp>
 #include <runir/kr/task_context.hpp>
 #include <runir/kr/uns/dl/parser.hpp>
 #include <runir/kr/uns/repository.hpp>
@@ -129,6 +131,66 @@ void expect_cista_round_trip(const T& value)
 }
 
 }  // namespace
+
+TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
+{
+    namespace fp = tyr::formalism::planning;
+
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto planning_domain = fp::Parser(domain).get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+
+    const auto concept_expression = create_top_concept(*dl_repository);
+    const auto role = kr::ps::ext::dl::parse_role("(r_universal)", planning_domain.get_domain(), *dl_repository);
+    const auto boolean = kr::ps::ext::dl::parse_boolean("(b_nonempty (c_top))", planning_domain.get_domain(), *dl_repository);
+    const auto numerical = kr::ps::ext::dl::parse_numerical("(n_count (c_top))", planning_domain.get_domain(), *dl_repository);
+    const auto concept_feature = create_feature<kr::dl::ConceptTag>(*repository, concept_expression.get_index(), "concept");
+    const auto role_feature = create_feature<kr::dl::RoleTag>(*repository, role.get_index(), "role");
+    const auto boolean_feature = create_feature<kr::ps::dl::BooleanFeature>(*repository, boolean.get_index(), "boolean");
+    const auto numerical_feature = create_feature<kr::ps::dl::NumericalFeature>(*repository, numerical.get_index(), "numerical");
+
+    const auto expect_feature_complexity = [](auto feature, std::size_t expected)
+    {
+        const auto concrete = ygg::visit([](auto view) { return kr::ps::ext::dl::syntactic_complexity(view); }, feature.get_variant());
+        EXPECT_EQ(kr::ps::ext::syntactic_complexity(feature), concrete);
+        EXPECT_EQ(concrete, 1 + kr::dl::semantics::syntactic_complexity(feature.get_expression()));
+        EXPECT_EQ(concrete, expected);
+    };
+    expect_feature_complexity(concept_feature, 2);
+    expect_feature_complexity(role_feature, 2);
+    expect_feature_complexity(boolean_feature, 3);
+    expect_feature_complexity(numerical_feature, 3);
+
+    const auto all_entry = create_memory_state(*repository, "all_entry");
+    auto all_data = make_module_data(*repository, "all");
+    all_data.entry_memory_state = all_entry.get_index();
+    all_data.memory_states.push_back(all_entry.get_index());
+    all_data.concept_features.push_back(concept_feature.get_index());
+    all_data.role_features.push_back(role_feature.get_index());
+    all_data.boolean_features.push_back(boolean_feature.get_index());
+    all_data.numerical_features.push_back(numerical_feature.get_index());
+    kr::ps::ext::canonicalize(all_data);
+    const auto all = repository->get_or_create(all_data).first;
+
+    const auto shared_feature = create_feature<kr::ps::dl::BooleanFeature>(*repository, boolean.get_index(), "shared");
+    const auto shared_entry = create_memory_state(*repository, "shared_entry");
+    auto shared_data = make_module_data(*repository, "shared");
+    shared_data.entry_memory_state = shared_entry.get_index();
+    shared_data.memory_states.push_back(shared_entry.get_index());
+    shared_data.boolean_features.push_back(shared_feature.get_index());
+    kr::ps::ext::canonicalize(shared_data);
+    const auto shared = repository->get_or_create(shared_data).first;
+
+    EXPECT_EQ(kr::ps::ext::syntactic_complexity(all), 10);
+    EXPECT_EQ(kr::ps::ext::syntactic_complexity(shared), 3);
+    EXPECT_EQ(kr::ps::ext::syntactic_complexity(create_module_program(*repository, all, { all, shared })), 13);
+
+    const auto empty_entry = create_memory_state(*repository, "empty_entry");
+    const auto empty = create_module(*repository, "empty", empty_entry, { empty_entry });
+    EXPECT_EQ(kr::ps::ext::syntactic_complexity(empty), 0);
+    EXPECT_EQ(kr::ps::ext::syntactic_complexity(create_module_program(*repository, empty, { empty })), 0);
+}
 
 TEST(RunirTests, ExtDistanceFeatureEvaluationReusesTaskContextCache)
 {

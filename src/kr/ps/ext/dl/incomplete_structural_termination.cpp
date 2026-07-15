@@ -11,7 +11,7 @@ namespace runir::kr::ps::ext::dl
 ModuleIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleView module_)
 {
     const auto analysis = detail::analyze_module(module_);
-    return detail::make_incomplete_result(analysis, runir::kr::ps::detail::incomplete_structural_termination(analysis.policy));
+    return detail::make_incomplete_result(module_, analysis, runir::kr::ps::detail::incomplete_structural_termination(analysis.policy));
 }
 
 ModuleProgramIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleProgramView program)

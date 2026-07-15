@@ -9,8 +9,6 @@ namespace runir::kr::ps::ext::dl::detail
 ModuleStructuralTerminationResult make_result(const ModuleAnalysis& analysis, const runir::kr::ps::detail::ComponentSieveResult& sieve_result)
 {
     auto result = ModuleStructuralTerminationResult {};
-    result.booleans = analysis.features.booleans;
-    result.numericals = analysis.features.numericals;
     if (sieve_result.empty())
     {
         result.status = StructuralTerminationStatus::TERMINATING;

@@ -5,7 +5,9 @@
 #include <runir/kr/dl/semantics/uns/evaluation_context.hpp>
 #include <runir/kr/uns/dl/evaluation.hpp>
 #include <runir/kr/uns/dl/formatter.hpp>
+#include <runir/kr/uns/dl/syntactic_complexity.hpp>
 #include <runir/kr/uns/repository.hpp>
+#include <runir/kr/uns/syntactic_complexity.hpp>
 #include <string>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/ground/state_view.hpp>
@@ -40,6 +42,10 @@ void bind_view(nb::module_& m, const std::string& name)
         cls.def("get_feature", &View::get_feature, nb::keep_alive<0, 1>());
     if constexpr (requires(const View& view) { view.get_symbol(); })
         cls.def("get_symbol", &View::get_symbol);
+    if constexpr (requires(const View& view) { runir::kr::uns::syntactic_complexity(view); })
+        cls.def("syntactic_complexity", [](View view) { return runir::kr::uns::syntactic_complexity(view); });
+    else if constexpr (requires(const View& view) { runir::kr::uns::dl::syntactic_complexity(view); })
+        cls.def("syntactic_complexity", [](View view) { return runir::kr::uns::dl::syntactic_complexity(view); });
     if constexpr (requires(const View& view, GroundContext& context) { evaluate(view, context); })
         cls.def("evaluate", [](View view, GroundContext& context) { return evaluate(view, context); }, "context"_a);
     if constexpr (requires(const View& view, LiftedContext& context) { evaluate(view, context); })

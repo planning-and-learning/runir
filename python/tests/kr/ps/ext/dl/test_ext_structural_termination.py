@@ -192,12 +192,17 @@ def test_ext_structural_termination_is_terminating():
     planning_domain, repository = _repositories()
     module = dl.parse_module(TERMINATING_MODULE, planning_domain, repository)
 
+    incomplete_result = dl.incomplete_structural_termination(module)
     result = dl.structural_termination(module)
+    without_incomplete = dl.structural_termination(module, max_features=1, use_incomplete_preprocessing=False)
 
     assert result.is_terminating()
-    assert len(result.booleans) == 1
+    assert len(module.get_boolean_features()) == 1
     assert result.counterexample is None
-    assert dl.structural_termination(module, max_features=1, use_incomplete_preprocessing=False).is_terminating()
+    assert result.incomplete_result is not None
+    assert result.incomplete_result.status == incomplete_result.status
+    assert without_incomplete.is_terminating()
+    assert without_incomplete.incomplete_result is None
 
 
 def test_ext_structural_termination_counterexample_spans_memory_states():
@@ -205,26 +210,28 @@ def test_ext_structural_termination_counterexample_spans_memory_states():
     module = dl.parse_module(NON_TERMINATING_MODULE, planning_domain, repository)
 
     result = dl.structural_termination(module)
+    booleans = module.get_boolean_features()
+    numericals = module.get_numerical_features()
 
     assert not result.is_terminating()
     counterexample = result.counterexample
     assert counterexample is not None
 
-    (feature,) = result.numericals
+    (feature,) = numericals
 
     vertices = [counterexample.get_vertex_property(vertex) for vertex in counterexample.get_vertex_indices()]
     memory_states = {vertex.memory_state.get_name() for vertex in vertices}
     assert memory_states == {"m0", "m1"}
     for vertex in vertices:
-        assert len(vertex.boolean_values) == len(result.booleans)
-        assert len(vertex.numerical_values) == len(result.numericals)
+        assert len(vertex.boolean_values) == len(booleans)
+        assert len(vertex.numerical_values) == len(numericals)
 
     edges = [counterexample.get_edge_property(edge) for edge in counterexample.get_edge_indices()]
     rules = {edge.rule.get_index() for edge in edges}
     assert len(rules) == 2
 
-    # Positional native labels align with the result's feature indices.
-    changes = {dict(zip(result.numericals, edge.numerical_changes))[feature] for edge in edges}
+    # Positional native labels align with the module's declared features.
+    changes = {dict(zip(numericals, edge.numerical_changes))[feature] for edge in edges}
     assert changes == {NumericalChange.UNCHANGED}
 
 
@@ -233,19 +240,21 @@ def test_ext_structural_termination_lifts_projected_components():
     module = dl.parse_module(PROJECTED_COMPONENTS_MODULE, planning_domain, repository)
 
     result = dl.structural_termination(module)
+    booleans = module.get_boolean_features()
+    numericals = module.get_numerical_features()
 
     assert not result.is_terminating()
     assert result.counterexample is not None
-    assert len(result.booleans) == 1
-    assert len(result.numericals) == 2
+    assert len(booleans) == 1
+    assert len(numericals) == 2
 
     vertices = [result.counterexample.get_vertex_property(vertex) for vertex in result.counterexample.get_vertex_indices()]
     assert {vertex.memory_state.get_name() for vertex in vertices} == {"m0", "m1", "m2"}
     positive_n0 = False
     positive_n1 = False
     for vertex in vertices:
-        assert len(vertex.boolean_values) == len(result.booleans)
-        assert len(vertex.numerical_values) == len(result.numericals)
+        assert len(vertex.boolean_values) == len(booleans)
+        assert len(vertex.numerical_values) == len(numericals)
         if vertex.memory_state.get_name() == "m0":
             assert not any(vertex.numerical_values)
         elif vertex.memory_state.get_name() == "m1":
@@ -261,7 +270,7 @@ def test_ext_structural_termination_lifts_projected_components():
 
     edges = [result.counterexample.get_edge_property(edge) for edge in result.counterexample.get_edge_indices()]
     assert {edge.rule.get_symbol() for edge in edges} == {"keep_n0", "keep_n1", "to_false", "to_true"}
-    assert all(len(edge.numerical_changes) == len(result.numericals) for edge in edges)
+    assert all(len(edge.numerical_changes) == len(numericals) for edge in edges)
     expected_changes = {
         "keep_n0": [NumericalChange.UNCHANGED, NumericalChange.UNCONSTRAINED],
         "keep_n1": [NumericalChange.UNCONSTRAINED, NumericalChange.UNCHANGED],
@@ -280,8 +289,8 @@ def test_ext_incomplete_structural_termination_uses_memory_components():
 
     assert result.is_terminating()
     assert result.status == dl.IncompleteStructuralTerminationStatus.TERMINATING
-    assert len(result.booleans) == 1
-    assert result.numericals == []
+    assert len(module.get_boolean_features()) == 1
+    assert module.get_numerical_features() == []
     assert result.surviving_rules == []
 
 

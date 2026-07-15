@@ -79,6 +79,21 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     assert len(modules[3].get_concept_features()) == 2
     assert len(modules[3].get_numerical_features()) == 1
     assert "(:symbol blocks)" in str(modules[3])
+    feature_categories = (
+        "get_concept_features",
+        "get_role_features",
+        "get_boolean_features",
+        "get_numerical_features",
+    )
+    for getter in feature_categories:
+        feature = next(feature for module in modules for feature in getattr(module, getter)())
+        assert feature.syntactic_complexity() == feature.get_variant().syntactic_complexity()
+    for module in modules:
+        assert module.syntactic_complexity() == sum(
+            feature.syntactic_complexity()
+            for getter in feature_categories
+            for feature in getattr(module, getter)()
+        )
     memory_transitions = modules[3].get_memory_transitions()
     assert len(memory_transitions) > 0
     first_transition = memory_transitions[0]
@@ -107,6 +122,7 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip():
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
     assert program.get_entry_module().get_name() == "root"
     assert [module.get_name() for module in program.get_modules()] == ["root", "blocks", "tower", "on-table", "on"]
+    assert program.syntactic_complexity() == sum(module.syntactic_complexity() for module in program.get_modules())
 
     formatted_program = str(program)
     assert "(:sketch\n                        (:conditions" in formatted_program
@@ -436,6 +452,8 @@ def test_empty_module_factory_uses_ext_repositories():
 
     assert module.get_name() == "empty"
     assert reparsed.get_name() == "empty"
+    assert module.syntactic_complexity() == 0
+    assert reparsed.syntactic_complexity() == 0
 
 
 def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
@@ -538,6 +556,7 @@ def test_executor_reports_structured_failure_statuses_from_python():
         (:rules)
     )
 )""", planning_domain, repository)
+    assert empty_program.syntactic_complexity() == 0
     options = ext.GroundModuleProgramSearchOptions()
     options.universal = True
     empty_proof = ext.find_ground_solution(task_context, empty_program, options)

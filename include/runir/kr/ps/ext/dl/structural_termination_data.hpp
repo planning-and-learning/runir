@@ -5,12 +5,13 @@
 #include "runir/graphs/static_graph_builder.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"
+#include "runir/kr/ps/ext/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/ext/memory_state_view.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
-#include "runir/kr/ps/feature_view.hpp"
 
 #include <boost/dynamic_bitset.hpp>
 #include <memory>
+#include <optional>
 #include <vector>
 #include <yggdrasil/containers/dynamic_bitset.hpp>
 #include <yggdrasil/containers/dynamic_bitset_hash.hpp>
@@ -27,8 +28,9 @@ enum class StructuralTerminationStatus
 
 using NumericalChange = runir::kr::ps::dl::NumericalChange;
 
-/// Feature valuation paired with a memory state. A numerical bit encodes a
-/// value greater than zero.
+/// Feature valuation paired with a memory state. Boolean and numerical bits
+/// follow the originating module's declared feature order. A numerical bit
+/// encodes a value greater than zero.
 struct ModulePolicyGraphVertexLabel
 {
     boost::dynamic_bitset<> boolean_values;
@@ -46,7 +48,8 @@ struct ModulePolicyGraphVertexLabel
 };
 
 /// Rule labeling an edge together with its qualitative numerical feature
-/// changes, aligned with the result's feature list.
+/// changes, aligned with the originating module's declared numerical feature
+/// order.
 struct ModulePolicyGraphEdgeLabel
 {
     RuleVariantView rule;
@@ -68,9 +71,8 @@ using ModulePolicyGraph = graphs::StaticGraph<ModulePolicyGraphVertexLabel, Modu
 struct ModuleStructuralTerminationResult
 {
     StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
-    std::vector<BooleanFeatureView> booleans;
-    std::vector<NumericalFeatureView> numericals;
-    std::shared_ptr<ModulePolicyGraph> counterexample;  ///< nullptr iff terminating.
+    std::shared_ptr<ModulePolicyGraph> counterexample;                             ///< nullptr iff terminating.
+    std::optional<ModuleIncompleteStructuralTerminationResult> incomplete_result;  ///< Populated iff incomplete preprocessing was enabled.
 
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
 };

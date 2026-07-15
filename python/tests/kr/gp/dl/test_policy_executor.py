@@ -25,7 +25,7 @@ from pyrunir.kr.ps.base.dl import (
     SketchSpecification,
     parse_sketch,
 )
-from pyrunir.kr.uns.dl import parse_classifier
+from pyrunir.kr.uns.dl import ClassifierFactory, parse_classifier
 
 
 def test_base_sketch_exposes_declared_features(gripper_planning_domain):
@@ -89,6 +89,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
     empty_sketch_description = str(empty_sketch)
     assert empty_sketch_description == str(parse_sketch(empty_sketch_description, planning_domain, sketch_repository))
     assert syntactic_complexity(empty_sketch) == 0
+    assert empty_sketch.syntactic_complexity() == 0
 
     sketch = SketchFactory.create(
         SketchSpecification.GRIPPER_FRANCE_ET_AL_AAAI2021,
@@ -190,6 +191,12 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
         planning_domain,
         classifier_repository,
     )
+    feature = classifier.get_features()[0]
+    concrete_feature = feature.get_variant()
+    assert feature.syntactic_complexity() == concrete_feature.syntactic_complexity()
+    assert concrete_feature.syntactic_complexity() == 1 + concrete_feature.get_expression().syntactic_complexity()
+    assert classifier.syntactic_complexity() == 2
+    assert ClassifierFactory.create_empty(classifier_repository).syntactic_complexity() == 0
     classified_options = GroundSketchSearchOptions()
     assert classified_options.classifier is None
     classified_options.classifier = classifier

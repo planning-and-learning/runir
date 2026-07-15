@@ -40,8 +40,6 @@ struct IncompleteSurvivingRule
 struct IncompleteStructuralTerminationResult
 {
     IncompleteStructuralTerminationStatus status = IncompleteStructuralTerminationStatus::TERMINATING;
-    std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>> booleans;
-    std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>> numericals;
     std::vector<IncompleteSurvivingRule> surviving_rules;  ///< empty iff terminating.
 
     bool is_terminating() const noexcept { return status == IncompleteStructuralTerminationStatus::TERMINATING; }

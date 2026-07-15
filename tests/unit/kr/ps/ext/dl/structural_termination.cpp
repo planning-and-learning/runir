@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/ps/ext/dl/incomplete_structural_termination.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/dl/structural_termination.hpp>
@@ -101,9 +102,15 @@ TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminatin
                                                       planning_task.get_domain().get_domain(),
                                                       *repository);
 
+    const auto incomplete_result = kr::ps::ext::dl::incomplete_structural_termination(module);
     const auto result = kr::ps::ext::dl::structural_termination(module);
+    const auto without_incomplete = kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, false);
 
     EXPECT_TRUE(result.is_terminating());
+    ASSERT_TRUE(result.incomplete_result.has_value());
+    EXPECT_EQ(result.incomplete_result->status, incomplete_result.status);
+    EXPECT_TRUE(without_incomplete.is_terminating());
+    EXPECT_FALSE(without_incomplete.incomplete_result.has_value());
 }
 
 TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
@@ -678,11 +685,13 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
                                                       *repository);
 
     const auto result = kr::ps::ext::dl::structural_termination(module);
+    const auto booleans = module.get_features<kr::ps::dl::BooleanFeature>();
+    const auto numericals = module.get_features<kr::ps::dl::NumericalFeature>();
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_NE(result.counterexample, nullptr);
-    ASSERT_EQ(result.booleans.size(), 1);
-    ASSERT_EQ(result.numericals.size(), 2);
+    ASSERT_EQ(booleans.size(), 1);
+    ASSERT_EQ(numericals.size(), 2);
 
     auto memory_states = std::set<std::string> {};
     auto saw_positive_n0 = false;
@@ -690,8 +699,8 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
     for (const auto& vertex : result.counterexample->get_vertices())
     {
         const auto& label = vertex.get_property();
-        ASSERT_EQ(label.boolean_values.size(), result.booleans.size());
-        ASSERT_EQ(label.numerical_values.size(), result.numericals.size());
+        ASSERT_EQ(label.boolean_values.size(), booleans.size());
+        ASSERT_EQ(label.numerical_values.size(), numericals.size());
         memory_states.emplace(label.memory_state.get_name());
         if (label.memory_state.get_name() == "m0")
             EXPECT_FALSE(label.numerical_values.any());
@@ -718,7 +727,7 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
         const auto& label = edge.get_property();
         const auto symbol = std::string(label.rule.get_symbol());
         rule_symbols.emplace(symbol);
-        EXPECT_EQ(label.numerical_changes.size(), result.numericals.size());
+        EXPECT_EQ(label.numerical_changes.size(), numericals.size());
         if (symbol == "keep_n0")
         {
             EXPECT_EQ(label.numerical_changes[0], kr::ps::dl::NumericalChange::UNCHANGED);
@@ -762,12 +771,13 @@ TEST(RunirTests, ExtStructuralTerminationAppliesFeatureLimitPerResidualComponent
     const auto module = kr::ps::ext::dl::parse_module(description, planning_task.get_domain().get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::structural_termination(module);
+    const auto numericals = module.get_features<kr::ps::dl::NumericalFeature>();
 
     EXPECT_FALSE(result.is_terminating());
-    EXPECT_EQ(result.numericals.size(), 15);
+    EXPECT_EQ(numericals.size(), 15);
     ASSERT_NE(result.counterexample, nullptr);
     for (const auto& vertex : result.counterexample->get_vertices())
-        EXPECT_EQ(vertex.get_property().numerical_values.size(), result.numericals.size());
+        EXPECT_EQ(vertex.get_property().numerical_values.size(), numericals.size());
 }
 
 TEST(RunirTests, ExtStructuralTerminationAcyclicModuleProgramCallsAreTerminating)

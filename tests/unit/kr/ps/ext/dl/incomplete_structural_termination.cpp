@@ -66,16 +66,16 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationMapsNumericalOpponent)
                                                       *repository);
 
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(module);
+    const auto numericals = module.get_features<kr::ps::dl::NumericalFeature>();
 
     ASSERT_FALSE(result.is_terminating());
-    ASSERT_EQ(result.numericals.size(), 1);
+    ASSERT_EQ(numericals.size(), 1);
     ASSERT_EQ(result.surviving_rules.size(), 2);
     const auto& decreasing = result.surviving_rules.front();
     ASSERT_EQ(decreasing.blocking_reasons.size(), 1);
     const auto& reason = decreasing.blocking_reasons.front();
     ASSERT_TRUE(std::holds_alternative<kr::ps::ext::dl::NumericalFeatureView>(reason.feature));
-    EXPECT_TRUE(
-        ygg::EqualTo<kr::ps::ext::dl::NumericalFeatureView> {}(std::get<kr::ps::ext::dl::NumericalFeatureView>(reason.feature), result.numericals.front()));
+    EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::dl::NumericalFeatureView> {}(std::get<kr::ps::ext::dl::NumericalFeatureView>(reason.feature), numericals.front()));
     ASSERT_EQ(reason.opposing_rules.size(), 1);
     EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::RuleVariantView> {}(reason.opposing_rules.front(), result.surviving_rules.back().rule));
 }
@@ -206,7 +206,7 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationHasNoFeatureLimit)
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(module);
 
     EXPECT_TRUE(result.is_terminating());
-    EXPECT_EQ(result.numericals.size(), 15);
+    EXPECT_EQ(module.get_features<kr::ps::dl::NumericalFeature>().size(), 15);
 }
 
 TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicCallIsLocallyTerminating)

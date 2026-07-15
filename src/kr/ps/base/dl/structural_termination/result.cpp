@@ -9,8 +9,6 @@ namespace runir::kr::ps::base::dl::detail
 StructuralTerminationResult make_result(const SketchAnalysis& analysis, const runir::kr::ps::detail::ComponentSieveResult& sieve_result)
 {
     auto result = StructuralTerminationResult {};
-    result.booleans = analysis.features.booleans;
-    result.numericals = analysis.features.numericals;
     if (sieve_result.empty())
     {
         result.status = StructuralTerminationStatus::TERMINATING;

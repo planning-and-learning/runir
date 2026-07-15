@@ -2,6 +2,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <cstddef>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
@@ -52,8 +53,6 @@ void bind_structural_termination(nb::module_& m)
 
     nb::class_<ModuleIncompleteStructuralTerminationResult>(m, "ModuleIncompleteStructuralTerminationResult")
         .def_ro("status", &ModuleIncompleteStructuralTerminationResult::status)
-        .def_ro("booleans", &ModuleIncompleteStructuralTerminationResult::booleans)
-        .def_ro("numericals", &ModuleIncompleteStructuralTerminationResult::numericals)
         .def_ro("surviving_rules", &ModuleIncompleteStructuralTerminationResult::surviving_rules)
         .def("is_terminating", &ModuleIncompleteStructuralTerminationResult::is_terminating);
 
@@ -78,8 +77,7 @@ void bind_structural_termination(nb::module_& m)
 
     nb::class_<ModuleStructuralTerminationResult>(m, "ModuleStructuralTerminationResult")
         .def_ro("status", &ModuleStructuralTerminationResult::status)
-        .def_ro("booleans", &ModuleStructuralTerminationResult::booleans)
-        .def_ro("numericals", &ModuleStructuralTerminationResult::numericals)
+        .def_ro("incomplete_result", &ModuleStructuralTerminationResult::incomplete_result, nb::keep_alive<0, 1>())
         .def_ro("counterexample", &ModuleStructuralTerminationResult::counterexample, nb::keep_alive<0, 1>())
         .def("is_terminating", &ModuleStructuralTerminationResult::is_terminating);
 

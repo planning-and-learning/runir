@@ -175,6 +175,7 @@ std::vector<PolicyEdge> build_policy_edges(const QualitativePolicy& policy);
 StrongComponents find_strong_components(const std::vector<PolicyEdge>& edges, std::size_t num_vertices);
 std::vector<ProjectedPolicyComponent> project_policy_components(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions);
 SieveResult sieve_policy_graph(std::vector<PolicyEdge>& edges, const QualitativePolicy& policy);
+ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, const IncompletePolicyResult& incomplete_result);
 ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, bool use_incomplete_preprocessing);
 IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy);
 

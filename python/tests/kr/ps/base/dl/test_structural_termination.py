@@ -4,9 +4,7 @@ from pyrunir.kr.dl.base.semantics import ConstructorRepositoryFactory
 from pyrunir.kr.ps.base import RepositoryFactory
 from pyrunir.kr.ps.base.dl import (
     BooleanFeature,
-    BooleanFeatureIndex,
     NumericalChange,
-    NumericalFeatureIndex,
     incomplete_structural_termination,
     parse_sketch,
     structural_termination,
@@ -134,11 +132,11 @@ def test_structural_termination_tpp_sketch_is_terminating():
     sketch = parse_sketch(TPP, domain, repository)
 
     result = structural_termination(sketch)
+    numericals = sketch.get_numerical_features()
 
     assert result.is_terminating()
     assert result.counterexample is None
-    assert len(result.numericals) == 3
-    assert all(isinstance(feature, NumericalFeatureIndex) for feature in result.numericals)
+    assert len(numericals) == 3
     assert structural_termination(sketch, max_features=3, use_incomplete_preprocessing=False).is_terminating()
 
 
@@ -154,8 +152,8 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
     assert counterexample.get_num_vertices() == 2
     assert counterexample.get_num_edges() == 2
 
-    (feature,) = result.booleans
-    assert isinstance(feature, BooleanFeatureIndex)
+    (feature,) = sketch.get_boolean_features()
+    assert isinstance(feature, BooleanFeature)
 
     # Positional valuations: one vertex per truth value of b1.
     valuations = {counterexample.get_vertex_property(vertex).boolean_values[0] for vertex in counterexample.get_vertex_indices()}
@@ -215,8 +213,7 @@ def test_structural_termination_edge_changes_are_positional():
     result = structural_termination(sketch)
 
     assert not result.is_terminating()
-    (feature,) = result.numericals
-    assert isinstance(feature, NumericalFeatureIndex)
+    assert len(sketch.get_numerical_features()) == 1
     counterexample = result.counterexample
     assert counterexample is not None
     changes = {counterexample.get_edge_property(edge).numerical_changes[0] for edge in counterexample.get_edge_indices()}
