@@ -1,6 +1,7 @@
 #include "pyrunir/kr/ps/base/dl/module.hpp"
 
 #include <boost/dynamic_bitset.hpp>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
@@ -57,6 +58,7 @@ void bind_structural_termination(nb::module_& m)
 
     nb::class_<StructuralTerminationResult>(m, "StructuralTerminationResult")
         .def_ro("status", &StructuralTerminationResult::status)
+        .def_ro("incomplete_result", &StructuralTerminationResult::incomplete_result, nb::keep_alive<0, 1>())
         .def_ro("counterexample", &StructuralTerminationResult::counterexample, nb::keep_alive<0, 1>())
         .def("is_terminating", &StructuralTerminationResult::is_terminating);
 

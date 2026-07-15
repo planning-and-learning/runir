@@ -4,11 +4,13 @@
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 #include "runir/kr/ps/base/declarations.hpp"
+#include "runir/kr/ps/base/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
 
 #include <boost/dynamic_bitset.hpp>
 #include <memory>
+#include <optional>
 #include <vector>
 #include <yggdrasil/containers/dynamic_bitset.hpp>
 #include <yggdrasil/containers/dynamic_bitset_hash.hpp>
@@ -65,7 +67,8 @@ using PolicyGraph = graphs::StaticGraph<PolicyGraphVertexLabel, PolicyGraphEdgeL
 struct StructuralTerminationResult
 {
     StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
-    std::shared_ptr<PolicyGraph> counterexample;  ///< nullptr iff terminating; otherwise a surviving counterexample graph.
+    std::shared_ptr<PolicyGraph> counterexample;                             ///< nullptr iff terminating; otherwise a surviving counterexample graph.
+    std::optional<IncompleteStructuralTerminationResult> incomplete_result;  ///< Populated iff incomplete preprocessing was enabled.
 
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
 };

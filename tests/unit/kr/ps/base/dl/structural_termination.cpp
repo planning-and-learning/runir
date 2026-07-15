@@ -55,9 +55,14 @@ TEST(RunirTests, StructuralTerminationEmptySketchIsTerminating)
     const auto sketch = kr::ps::base::dl::SketchFactory::create_empty(*repository);
 
     const auto result = kr::ps::base::dl::structural_termination(sketch);
+    const auto without_incomplete = kr::ps::base::dl::structural_termination(sketch, kr::ps::dl::default_max_features, false);
 
     EXPECT_TRUE(result.is_terminating());
+    ASSERT_TRUE(result.incomplete_result.has_value());
+    EXPECT_EQ(result.incomplete_result->status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::TERMINATING);
     EXPECT_EQ(result.counterexample, nullptr);
+    EXPECT_TRUE(without_incomplete.is_terminating());
+    EXPECT_FALSE(without_incomplete.incomplete_result.has_value());
 }
 
 TEST(RunirTests, StructuralTerminationBooleanOscillatorIsNotTerminating)
@@ -110,6 +115,8 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorIsNotTerminating)
     const auto result = kr::ps::base::dl::structural_termination(sketch);
 
     ASSERT_FALSE(result.is_terminating());
+    ASSERT_TRUE(result.incomplete_result.has_value());
+    EXPECT_EQ(result.incomplete_result->status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::UNKNOWN);
     ASSERT_NE(result.counterexample, nullptr);
     EXPECT_EQ(result.counterexample->get_num_vertices(), 2);
     EXPECT_EQ(result.counterexample->get_num_edges(), 2);

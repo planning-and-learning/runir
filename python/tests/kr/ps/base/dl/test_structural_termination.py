@@ -4,6 +4,7 @@ from pyrunir.kr.dl.base.semantics import ConstructorRepositoryFactory
 from pyrunir.kr.ps.base import RepositoryFactory
 from pyrunir.kr.ps.base.dl import (
     BooleanFeature,
+    IncompleteStructuralTerminationStatus,
     NumericalChange,
     incomplete_structural_termination,
     parse_sketch,
@@ -133,11 +134,15 @@ def test_structural_termination_tpp_sketch_is_terminating():
 
     result = structural_termination(sketch)
     numericals = sketch.get_numerical_features()
+    without_incomplete = structural_termination(sketch, max_features=3, use_incomplete_preprocessing=False)
 
     assert result.is_terminating()
     assert result.counterexample is None
+    assert result.incomplete_result is not None
+    assert result.incomplete_result.status == IncompleteStructuralTerminationStatus.TERMINATING
     assert len(numericals) == 3
-    assert structural_termination(sketch, max_features=3, use_incomplete_preprocessing=False).is_terminating()
+    assert without_incomplete.is_terminating()
+    assert without_incomplete.incomplete_result is None
 
 
 def test_structural_termination_oscillator_counterexample_has_positional_valuations():
@@ -147,6 +152,8 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
     result = structural_termination(sketch)
 
     assert not result.is_terminating()
+    assert result.incomplete_result is not None
+    assert result.incomplete_result.status == IncompleteStructuralTerminationStatus.UNKNOWN
     counterexample = result.counterexample
     assert counterexample is not None
     assert counterexample.get_num_vertices() == 2

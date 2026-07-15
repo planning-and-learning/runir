@@ -50,3 +50,9 @@ def test_feature_complexity_methods_are_in_public_stubs():
                     break
                 body.append(line)
             assert "    def syntactic_complexity(self) -> int: ..." in body
+
+
+def test_structural_termination_incomplete_result_is_in_public_stub():
+    stub = Path(pyrunir.__file__).parent / "kr/ps/base/dl/__init__.pyi"
+
+    assert "    def incomplete_result(self) -> IncompleteStructuralTerminationResult | None: ..." in stub.read_text(encoding="utf-8")
