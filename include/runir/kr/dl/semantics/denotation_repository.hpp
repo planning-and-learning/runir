@@ -35,26 +35,6 @@ private:
     std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;
     size_t m_index;
 
-    template<CategoryTag Category>
-    std::optional<ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>> find_with_hash(const ygg::Data<Denotation<Category>>& data,
-                                                                                                    size_t hash) const noexcept
-    {
-        if (auto index = m_symbol_repository.template find_local_with_hash<Denotation<Category>>(data, hash))
-            return ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>(*index, *this);
-        return std::nullopt;
-    }
-
-    template<CategoryTag Category>
-    std::pair<ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>, bool> get_or_create_with_hash(ygg::Data<Denotation<Category>>& data,
-                                                                                                               size_t hash)
-    {
-        if (auto index = m_symbol_repository.template find_local_with_hash<Denotation<Category>>(data, hash))
-            return { ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>(*index, *this), false };
-
-        const auto [index, success] = m_symbol_repository.template get_or_create_local_with_hash<Denotation<Category>>(data, hash);
-        return { ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>(index, *this), success };
-    }
-
     DenotationRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
         m_symbol_repository(nullptr),
         m_vector_repository(),
@@ -87,13 +67,16 @@ public:
     template<CategoryTag Category>
     std::optional<ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>> find(const ygg::Data<Denotation<Category>>& data) const noexcept
     {
-        return find_with_hash<Category>(data, SymbolRepository::template hash<Denotation<Category>>(data));
+        if (auto index = m_symbol_repository.template find_local<Denotation<Category>>(data))
+            return ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>(*index, *this);
+        return std::nullopt;
     }
 
     template<CategoryTag Category>
     std::pair<ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>, bool> get_or_create(ygg::Data<Denotation<Category>>& data)
     {
-        return get_or_create_with_hash<Category>(data, SymbolRepository::template hash<Denotation<Category>>(data));
+        const auto [index, created] = m_symbol_repository.template get_or_create_local<Denotation<Category>>(data);
+        return { ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>(index, *this), created };
     }
 
     template<CategoryTag Category>
