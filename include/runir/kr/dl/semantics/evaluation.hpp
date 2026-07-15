@@ -910,7 +910,16 @@ auto evaluate(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> cons
               EvaluationWorkspace& workspace)
 {
     auto result = evaluate_impl(constructor, context, workspace);
-    return context.get_denotation_repository().get_or_create(*result).first;
+    auto data = context.get_builder().template get_data<Denotation<Category>>();
+    make_data(*result, *data);
+
+    auto& repository = context.get_denotation_repository();
+    if constexpr (std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
+        data->vec_index = repository.get_vector_repository().insert(result->blocks);
+
+    auto view = repository.get_or_create(*data).first;
+    result->index = view.get_index();
+    return view;
 }
 
 template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>

@@ -33,10 +33,6 @@ private:
     SymbolRepository m_symbol_repository;
     VectorRepository m_vector_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;
-    mutable ygg::Data<Denotation<BooleanTag>> m_boolean_data;
-    mutable ygg::Data<Denotation<NumericalTag>> m_numerical_data;
-    mutable ygg::Data<Denotation<ConceptTag>> m_concept_data;
-    mutable ygg::Data<Denotation<RoleTag>> m_role_data;
     size_t m_index;
 
     template<CategoryTag Category>
@@ -57,64 +53,6 @@ private:
 
         const auto [index, success] = m_symbol_repository.template get_or_create_local_with_hash<Denotation<Category>>(data, hash);
         return { ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>(index, *this), success };
-    }
-
-    const ygg::Data<Denotation<BooleanTag>>& make_data(const ygg::Builder<Denotation<BooleanTag>>& builder) const noexcept
-    {
-        m_boolean_data = ygg::Data<Denotation<BooleanTag>>(builder.value);
-        return m_boolean_data;
-    }
-
-    ygg::Data<Denotation<BooleanTag>>& make_data(const ygg::Builder<Denotation<BooleanTag>>& builder) noexcept
-    {
-        m_boolean_data = ygg::Data<Denotation<BooleanTag>>(builder.value);
-        return m_boolean_data;
-    }
-
-    const ygg::Data<Denotation<NumericalTag>>& make_data(const ygg::Builder<Denotation<NumericalTag>>& builder) const noexcept
-    {
-        m_numerical_data = ygg::Data<Denotation<NumericalTag>>(builder.value);
-        return m_numerical_data;
-    }
-
-    ygg::Data<Denotation<NumericalTag>>& make_data(const ygg::Builder<Denotation<NumericalTag>>& builder) noexcept
-    {
-        m_numerical_data = ygg::Data<Denotation<NumericalTag>>(builder.value);
-        return m_numerical_data;
-    }
-
-    std::optional<std::reference_wrapper<const ygg::Data<Denotation<ConceptTag>>>> make_data(const ygg::Builder<Denotation<ConceptTag>>& builder) const noexcept
-    {
-        if (auto vec_index = m_vector_repository.find(builder.blocks))
-        {
-            m_concept_data = ygg::Data<Denotation<ConceptTag>>(builder.num_objects, *vec_index);
-            return m_concept_data;
-        }
-
-        return std::nullopt;
-    }
-
-    ygg::Data<Denotation<ConceptTag>>& make_data(const ygg::Builder<Denotation<ConceptTag>>& builder)
-    {
-        m_concept_data = ygg::Data<Denotation<ConceptTag>>(builder.num_objects, m_vector_repository.insert(builder.blocks));
-        return m_concept_data;
-    }
-
-    std::optional<std::reference_wrapper<const ygg::Data<Denotation<RoleTag>>>> make_data(const ygg::Builder<Denotation<RoleTag>>& builder) const noexcept
-    {
-        if (auto vec_index = m_vector_repository.find(builder.blocks))
-        {
-            m_role_data = ygg::Data<Denotation<RoleTag>>(builder.num_objects, *vec_index);
-            return m_role_data;
-        }
-
-        return std::nullopt;
-    }
-
-    ygg::Data<Denotation<RoleTag>>& make_data(const ygg::Builder<Denotation<RoleTag>>& builder)
-    {
-        m_role_data = ygg::Data<Denotation<RoleTag>>(builder.num_objects, m_vector_repository.insert(builder.blocks));
-        return m_role_data;
     }
 
     DenotationRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
@@ -144,10 +82,6 @@ public:
     {
         m_symbol_repository.clear();
         m_vector_repository.clear();
-        m_boolean_data.clear();
-        m_numerical_data.clear();
-        m_concept_data.clear();
-        m_role_data.clear();
     }
 
     template<CategoryTag Category>
@@ -156,58 +90,10 @@ public:
         return find_with_hash<Category>(data, SymbolRepository::template hash<Denotation<Category>>(data));
     }
 
-    std::optional<ygg::View<ygg::Index<Denotation<ConceptTag>>, DenotationRepository>> find(const ygg::Builder<Denotation<ConceptTag>>& builder) const noexcept
-    {
-        if (auto data = make_data(builder))
-            return find(data->get());
-
-        return std::nullopt;
-    }
-
-    std::optional<ygg::View<ygg::Index<Denotation<RoleTag>>, DenotationRepository>> find(const ygg::Builder<Denotation<RoleTag>>& builder) const noexcept
-    {
-        if (auto data = make_data(builder))
-            return find(data->get());
-
-        return std::nullopt;
-    }
-
     template<CategoryTag Category>
     std::pair<ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>, bool> get_or_create(ygg::Data<Denotation<Category>>& data)
     {
         return get_or_create_with_hash<Category>(data, SymbolRepository::template hash<Denotation<Category>>(data));
-    }
-
-    std::pair<ygg::View<ygg::Index<Denotation<BooleanTag>>, DenotationRepository>, bool> get_or_create(ygg::Builder<Denotation<BooleanTag>>& builder)
-    {
-        auto& data = make_data(builder);
-        auto [view, created] = get_or_create(data);
-        builder.index = view.get_index();
-        return { view, created };
-    }
-
-    std::pair<ygg::View<ygg::Index<Denotation<NumericalTag>>, DenotationRepository>, bool> get_or_create(ygg::Builder<Denotation<NumericalTag>>& builder)
-    {
-        auto& data = make_data(builder);
-        auto [view, created] = get_or_create(data);
-        builder.index = view.get_index();
-        return { view, created };
-    }
-
-    std::pair<ygg::View<ygg::Index<Denotation<ConceptTag>>, DenotationRepository>, bool> get_or_create(ygg::Builder<Denotation<ConceptTag>>& builder)
-    {
-        auto& data = make_data(builder);
-        auto [view, created] = get_or_create(data);
-        builder.index = view.get_index();
-        return { view, created };
-    }
-
-    std::pair<ygg::View<ygg::Index<Denotation<RoleTag>>, DenotationRepository>, bool> get_or_create(ygg::Builder<Denotation<RoleTag>>& builder)
-    {
-        auto& data = make_data(builder);
-        auto [view, created] = get_or_create(data);
-        builder.index = view.get_index();
-        return { view, created };
     }
 
     template<CategoryTag Category>

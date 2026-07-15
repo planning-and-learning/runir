@@ -159,7 +159,14 @@ public:
         {
             auto context = runir::kr::dl::semantics::EvaluationContext<Family, Kind>(state, m_builder, m_denotation_repository);
             auto denotation = runir::kr::dl::semantics::evaluate_impl(constructor, context, m_workspace);
-            created |= context.get_denotation_repository().get_or_create(*denotation).second;
+            auto data = m_builder.template get_data<runir::kr::dl::semantics::Denotation<Category>>();
+            runir::kr::dl::semantics::make_data(*denotation, *data);
+            if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
+                data->vec_index = m_denotation_repository.get_vector_repository().insert(denotation->blocks);
+
+            const auto [view, was_created] = context.get_denotation_repository().get_or_create(*data);
+            denotation->index = view.get_index();
+            created |= was_created;
         }
 
         return !created;
