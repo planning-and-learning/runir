@@ -13,6 +13,7 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <tyr/formalism/planning/repository.hpp>
 
 namespace runir::kr::dl::grammar
 {

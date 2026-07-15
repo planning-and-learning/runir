@@ -4,7 +4,7 @@
 #include "runir/kr/uns/declarations.hpp"
 
 #include <string>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/planning/declarations.hpp>
 
 namespace runir::kr::uns::dl
 {

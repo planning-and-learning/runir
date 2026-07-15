@@ -12,7 +12,7 @@
 #include <cassert>
 #include <memory>
 #include <optional>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/containers/raw_vector_set.hpp>
 #include <yggdrasil/core/types.hpp>

@@ -10,7 +10,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
-#include <tyr/planning/state_repository.hpp>
+#include <tyr/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>

@@ -7,6 +7,7 @@
 #include <fmt/format.h>
 #include <stdexcept>
 #include <string>
+#include <tyr/formalism/planning/repository.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext::dl

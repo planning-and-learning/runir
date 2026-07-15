@@ -12,9 +12,7 @@
 #include <runir/kr/ps/base/syntactic_complexity.hpp>
 #include <runir/kr/ps/repository.hpp>
 #include <string>
-#include <tyr/planning/ground/state_repository.hpp>
 #include <tyr/planning/ground/state_view.hpp>
-#include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/state_view.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>

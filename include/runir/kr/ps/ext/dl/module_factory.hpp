@@ -4,7 +4,7 @@
 #include "runir/kr/ps/ext/declarations.hpp"
 
 #include <string>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/planning/declarations.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext::dl

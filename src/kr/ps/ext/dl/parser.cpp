@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <tyr/formalism/planning/repository.hpp>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>

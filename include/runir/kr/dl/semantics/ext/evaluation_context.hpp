@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/core/dependent_false.hpp>
 

@@ -7,7 +7,6 @@
 
 #include <cista/containers/optional.h>
 #include <tuple>
-#include <tyr/formalism/planning/ground_action_index.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <yggdrasil/serialization/cista_equal_to.hpp>

@@ -9,9 +9,7 @@
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/dl/semantics/views.hpp>
-#include <tyr/planning/ground/state_repository.hpp>
 #include <tyr/planning/ground/state_view.hpp>
-#include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/state_view.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>

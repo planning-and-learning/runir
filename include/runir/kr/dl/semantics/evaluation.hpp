@@ -14,11 +14,10 @@
 #include <stdexcept>
 #include <type_traits>
 #include <tyr/formalism/object_index.hpp>
-#include <tyr/formalism/planning/ground_atom_view.hpp>
-#include <tyr/formalism/planning/ground_conjunctive_condition_view.hpp>
-#include <tyr/formalism/planning/ground_literal_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
+#include <tyr/planning/ground/state_repository.hpp>
 #include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <yggdrasil/containers/dynamic_bitset.hpp>

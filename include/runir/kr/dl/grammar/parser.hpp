@@ -4,7 +4,7 @@
 #include "runir/kr/dl/grammar/declarations.hpp"
 
 #include <string>
-#include <tyr/formalism/planning/repository.hpp>
+#include <tyr/formalism/planning/declarations.hpp>
 
 namespace runir::kr::dl::grammar
 {

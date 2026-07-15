@@ -46,7 +46,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include("${PROJECT_SOURCE_DIR}/cmake/bootstrap_pyyggdrasil.cmake")
 
-find_package(yggdrasil 0.0.22 CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+find_package(yggdrasil 0.0.23 CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 if(yggdrasil_FOUND)
     message(STATUS "Found yggdrasil: ${yggdrasil_DIR} (found version ${yggdrasil_VERSION})")
 endif()
@@ -85,7 +85,7 @@ if(RUNIR_BUILD_TESTS OR RUNIR_BUILD_EXECUTABLES)
         OUTPUT_VARIABLE RUNIR_BENCHMARKS_DIR
         RESULT_VARIABLE RUNIR_BENCHMARKS_RESULT)
     if(NOT RUNIR_BENCHMARKS_RESULT EQUAL 0)
-        message(FATAL_ERROR "Could not resolve the benchmark data root; install 'pypddl-datasets>=0.0.5,<0.1' into the configuring Python (${Python3_EXECUTABLE}).")
+        message(FATAL_ERROR "Could not resolve the benchmark data root; install 'pypddl-datasets>=0.0.7,<0.1' into the configuring Python (${Python3_EXECUTABLE}).")
     endif()
     message(STATUS "Benchmark data: ${RUNIR_BENCHMARKS_DIR}")
     add_compile_definitions(BENCHMARKS_DIR="${RUNIR_BENCHMARKS_DIR}")
