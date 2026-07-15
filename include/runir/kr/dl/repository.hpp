@@ -90,24 +90,6 @@ private:
     std::shared_ptr<const tyr::formalism::planning::Repository> m_planning_repository;
     size_t m_index;
 
-    template<typename T>
-    std::optional<ygg::View<ygg::Index<T>, BasicConstructorRepository>> find_with_hash(const ygg::Data<T>& data, size_t hash) const noexcept
-    {
-        if (auto index = m_symbol_repository.template find_local_with_hash<T>(data, hash))
-            return ygg::View<ygg::Index<T>, BasicConstructorRepository>(*index, *this);
-        return std::nullopt;
-    }
-
-    template<typename T>
-    std::pair<ygg::View<ygg::Index<T>, BasicConstructorRepository>, bool> get_or_create_with_hash(ygg::Data<T>& data, size_t hash)
-    {
-        if (auto index = m_symbol_repository.template find_local_with_hash<T>(data, hash))
-            return { ygg::View<ygg::Index<T>, BasicConstructorRepository>(*index, *this), false };
-
-        const auto [index, success] = m_symbol_repository.template get_or_create_local_with_hash<T>(data, hash);
-        return { ygg::View<ygg::Index<T>, BasicConstructorRepository>(index, *this), success };
-    }
-
     BasicConstructorRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
         m_symbol_repository(nullptr),
         m_planning_repository(std::move(planning_repository)),
@@ -136,13 +118,16 @@ public:
     template<typename T>
     std::optional<ygg::View<ygg::Index<T>, BasicConstructorRepository>> find(const ygg::Data<T>& data) const noexcept
     {
-        return find_with_hash<T>(data, FamilyConstructorSymbolRepository<Family>::template hash<T>(data));
+        if (auto index = m_symbol_repository.template find_local<T>(data))
+            return ygg::View<ygg::Index<T>, BasicConstructorRepository>(*index, *this);
+        return std::nullopt;
     }
 
     template<typename T>
     std::pair<ygg::View<ygg::Index<T>, BasicConstructorRepository>, bool> get_or_create(ygg::Data<T>& data)
     {
-        return get_or_create_with_hash<T>(data, FamilyConstructorSymbolRepository<Family>::template hash<T>(data));
+        const auto [index, created] = m_symbol_repository.template get_or_create_local<T>(data);
+        return { ygg::View<ygg::Index<T>, BasicConstructorRepository>(index, *this), created };
     }
 
     template<typename T>
