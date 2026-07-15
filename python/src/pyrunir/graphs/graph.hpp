@@ -112,7 +112,7 @@ auto get_edge_property(const Graph& graph, graphs::EdgeIndex edge)
     return graph.get_edge(edge).get_property();
 }
 
-template<typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
+template<bool KeepPropertyOwnerAlive = false, typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
 void bind_readable_graph_methods(nb::class_<Graph>& cls, VertexPropertyGetter vertex_property_getter, EdgePropertyGetter edge_property_getter)
 {
     cls.def("get_num_vertices", &Graph::get_num_vertices)
@@ -126,15 +126,19 @@ void bind_readable_graph_methods(nb::class_<Graph>& cls, VertexPropertyGetter ve
             [](const Graph& graph) { return make_graph_iterator<Graph>("edge index iterator", graph.get_edge_indices()); },
             nb::keep_alive<0, 1>())
         .def("get_source", &Graph::get_source, "edge"_a)
-        .def("get_target", &Graph::get_target, "edge"_a)
-        .def("get_vertex_property", vertex_property_getter, "vertex"_a)
-        .def("get_edge_property", edge_property_getter, "edge"_a);
+        .def("get_target", &Graph::get_target, "edge"_a);
+
+    if constexpr (KeepPropertyOwnerAlive)
+        cls.def("get_vertex_property", vertex_property_getter, "vertex"_a, nb::keep_alive<0, 1>())
+            .def("get_edge_property", edge_property_getter, "edge"_a, nb::keep_alive<0, 1>());
+    else
+        cls.def("get_vertex_property", vertex_property_getter, "vertex"_a).def("get_edge_property", edge_property_getter, "edge"_a);
 }
 
-template<typename Graph>
+template<bool KeepPropertyOwnerAlive = false, typename Graph>
 void bind_readable_graph_methods(nb::class_<Graph>& cls)
 {
-    bind_readable_graph_methods(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>);
+    bind_readable_graph_methods<KeepPropertyOwnerAlive>(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>);
 }
 
 template<typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>

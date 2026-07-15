@@ -38,11 +38,10 @@ public:
         m_expander(std::move(task_context), program),
         m_classifier(std::move(classifier))
     {
+        m_result.task_context_owner = m_expander.get_task_context();
     }
 
     auto initial_state() { return m_expander.initial_state(); }
-
-    auto get_execution_state(ygg::Index<ExecutionState<Kind>> state) const { return ExecutionStateView<Kind>(state, m_expander.get_repository()); }
 
     bool is_goal(const tyr::planning::StateView<Kind>& state) { return m_expander.is_goal(state); }
 
@@ -68,14 +67,14 @@ public:
         const auto goal = is_goal(state.get_state());
         if (!goal && m_classifier)
         {
-            auto& task_context = m_expander.get_repository()->get_task_context();
+            auto& task_context = *m_expander.get_task_context();
             auto context = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, Kind>(state.get_state(),
                                                                                                       task_context.dl_builder,
                                                                                                       *task_context.dl_denotation_repository);
             is_unsolvable |= runir::kr::uns::classify(*m_classifier, context);
             is_alive &= !is_unsolvable;
         }
-        auto label = ModuleProgramProofVertexLabel<Kind> { state.get_index(), is_initial, goal, is_alive, is_unsolvable };
+        auto label = ModuleProgramProofVertexLabel<Kind> { state, is_initial, goal, is_alive, is_unsolvable };
         const auto vertex = m_builder.add_vertex(label);
         m_vertex_to_index.emplace(state.get_index(), vertex);
         return std::pair(vertex, true);
@@ -88,9 +87,9 @@ public:
     {
         auto label = ModuleProgramProofEdgeLabel {};
         if (state_transition)
-            label.state_transition = ModuleProgramProofStateTransition { state_transition->action.get_index(), state_transition->cost };
+            label.state_transition = ModuleProgramProofStateTransition { state_transition->action, state_transition->cost };
         if (rule)
-            label.rule = rule->get_index();
+            label.rule = *rule;
         m_builder.add_directed_edge(source, target, std::move(label));
     }
 
@@ -101,7 +100,12 @@ public:
     auto finish(ModuleProgramProofStatus status) -> ModuleProgramProofResults<Kind>
     {
         m_result.status = status;
-        auto graph = std::make_shared<ModuleProgramProofGraph<Kind>>(std::move(m_builder), m_expander.get_repository());
+        auto graph = std::shared_ptr<ModuleProgramProofGraph<Kind>>(new ModuleProgramProofGraph<Kind>(std::move(m_builder)),
+                                                                    [owner = m_result.task_context_owner](ModuleProgramProofGraph<Kind>* graph)
+                                                                    {
+                                                                        (void) owner;
+                                                                        delete graph;
+                                                                    });
         if (m_result.cycle.empty())
             m_result.cycle = graphs::find_cycle(*graph);
         if (m_result.status == ModuleProgramProofStatus::SUCCESS && !m_result.cycle.empty())

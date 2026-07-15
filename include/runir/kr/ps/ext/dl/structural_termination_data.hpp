@@ -67,8 +67,8 @@ using ModulePolicyGraph = graphs::StaticGraph<ModulePolicyGraphVertexLabel, Modu
 struct ModuleStructuralTerminationResult
 {
     StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
-    std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>> booleans;
-    std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>> numericals;
+    std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>, Repository>> booleans;
+    std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>, Repository>> numericals;
     std::shared_ptr<ModulePolicyGraph> counterexample;  ///< nullptr iff terminating.
 
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }

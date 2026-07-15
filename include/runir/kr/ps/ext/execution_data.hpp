@@ -5,15 +5,18 @@
 #include "runir/kr/ps/ext/execution_index.hpp"
 #include "runir/kr/ps/ext/memory_state_index.hpp"
 #include "runir/kr/ps/ext/module_index.hpp"
+#include "runir/kr/ps/ext/module_program_index.hpp"
 
-#include <array>
+#include <cista/containers/array.h>
 #include <cista/containers/optional.h>
+#include <cista/containers/pair.h>
 #include <tuple>
 #include <tyr/formalism/object_index.hpp>
 #include <tyr/planning/state_index.hpp>
-#include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
+#include <yggdrasil/serialization/cista_equal_to.hpp>
+#include <yggdrasil/serialization/cista_hash.hpp>
 
 namespace ygg
 {
@@ -21,20 +24,9 @@ namespace ygg
 template<>
 struct Data<runir::kr::ps::ext::RegisterValues>
 {
-    using ObjectIndex = Index<tyr::formalism::Object>;
-    using ConceptValue = ::cista::optional<ObjectIndex>;
-    using RoleValue = ::cista::optional<std::pair<ObjectIndex, ObjectIndex>>;
-
     Index<runir::kr::ps::ext::RegisterValues> index;
-    std::array<ConceptValue, runir::kr::dl::num_registers> concept_values;
-    std::array<RoleValue, runir::kr::dl::num_registers> role_values;
-
-    Data() = default;
-    Data(std::array<ConceptValue, runir::kr::dl::num_registers> concept_values_, std::array<RoleValue, runir::kr::dl::num_registers> role_values_) noexcept :
-        concept_values(std::move(concept_values_)),
-        role_values(std::move(role_values_))
-    {
-    }
+    ::cista::array<::cista::optional<Index<tyr::formalism::Object>>, runir::kr::dl::num_registers> concept_values;
+    ::cista::array<::cista::optional<::cista::pair<Index<tyr::formalism::Object>, Index<tyr::formalism::Object>>>, runir::kr::dl::num_registers> role_values;
 
     void clear() noexcept
     {
@@ -113,12 +105,17 @@ template<tyr::planning::TaskKind Kind>
 struct Data<runir::kr::ps::ext::ExecutionState<Kind>>
 {
     Index<runir::kr::ps::ext::ExecutionState<Kind>> index;
+    Index<runir::kr::ps::ext::ModuleProgram> program;
     Index<tyr::planning::State<Kind>> state;
     Index<runir::kr::ps::ext::CallStack> call_stack;
     runir::kr::ps::ext::ExecutionPhase phase = runir::kr::ps::ext::ExecutionPhase::EXTERNAL;
 
     Data() = default;
-    Data(Index<tyr::planning::State<Kind>> state_, Index<runir::kr::ps::ext::CallStack> call_stack_, runir::kr::ps::ext::ExecutionPhase phase_) noexcept :
+    Data(Index<runir::kr::ps::ext::ModuleProgram> program_,
+         Index<tyr::planning::State<Kind>> state_,
+         Index<runir::kr::ps::ext::CallStack> call_stack_,
+         runir::kr::ps::ext::ExecutionPhase phase_) noexcept :
+        program(program_),
         state(state_),
         call_stack(call_stack_),
         phase(phase_)
@@ -128,13 +125,14 @@ struct Data<runir::kr::ps::ext::ExecutionState<Kind>>
     void clear() noexcept
     {
         ygg::clear(index);
+        ygg::clear(program);
         ygg::clear(state);
         ygg::clear(call_stack);
         phase = runir::kr::ps::ext::ExecutionPhase::EXTERNAL;
     }
 
-    auto cista_members() const noexcept { return std::tie(index, state, call_stack, phase); }
-    auto identifying_members() const noexcept { return std::tie(state, call_stack, phase); }
+    auto cista_members() const noexcept { return std::tie(index, program, state, call_stack, phase); }
+    auto identifying_members() const noexcept { return std::tie(program, state, call_stack, phase); }
 };
 
 }  // namespace ygg

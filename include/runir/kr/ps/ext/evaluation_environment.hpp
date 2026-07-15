@@ -7,7 +7,7 @@
 #include "runir/kr/dl/semantics/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/dl/evaluation_context.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
-#include "runir/kr/ps/ext/execution_repository.hpp"
+#include "runir/kr/task_context.hpp"
 
 #include <cstddef>
 #include <utility>
@@ -30,12 +30,12 @@ private:
     ModuleProgramView m_program;
 
 public:
-    explicit EvaluationEnvironment(const ExecutionRepositoryPtr<Kind>& repository) :
-        m_dl_builder(repository->get_task_context().dl_builder),
-        m_dl_denotation_repository(*repository->get_task_context().dl_denotation_repository),
+    EvaluationEnvironment(runir::kr::TaskContext<Kind>& task_context, ModuleProgramView program) :
+        m_dl_builder(task_context.dl_builder),
+        m_dl_denotation_repository(*task_context.dl_denotation_repository),
         m_dl_workspace(),
         m_do_argument_denotations(),
-        m_program(repository->get_program())
+        m_program(program)
     {
     }
 

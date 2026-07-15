@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <stdexcept>
 #include <type_traits>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <tyr/planning/declarations.hpp>
@@ -37,25 +38,26 @@ public:
     using Step = detail::ModuleProgramStep<Kind>;
 
     SuccessorExpander(runir::kr::TaskContextPtr<Kind> task_context, ModuleProgramView program) :
-        SuccessorExpander(ExecutionRepository<Kind>::create(std::move(task_context), program))
+        m_task_context(task_context ? std::move(task_context) : throw std::invalid_argument("SuccessorExpander requires a task context.")),
+        m_program(program),
+        m_goal_strategy(*m_task_context->search_context->task),
+        m_initial_state(m_task_context->search_context->successor_generator->get_initial_node().get_state()),
+        m_static_goal_satisfied(m_goal_strategy.is_static_goal_satisfied(*m_task_context->search_context->task)),
+        m_environment(*m_task_context, m_program)
     {
+        if (&m_program.get_context() != m_task_context->ext_repository.get())
+            throw std::invalid_argument("SuccessorExpander requires a program from the task context repository.");
     }
 
-    explicit SuccessorExpander(ExecutionRepositoryPtr<Kind> repository) :
-        m_repository(std::move(repository)),
-        m_goal_strategy(*m_repository->get_task_context().search_context->task),
-        m_initial_state(m_repository->get_task_context().search_context->successor_generator->get_initial_node().get_state()),
-        m_static_goal_satisfied(m_goal_strategy.is_static_goal_satisfied(*m_repository->get_task_context().search_context->task)),
-        m_environment(m_repository)
-    {
-    }
-
-    const auto& get_repository() const noexcept { return m_repository; }
+    const auto& get_task_context() const noexcept { return m_task_context; }
 
     ExecutionStateView<Kind> initial_state()
     {
-        const auto program = m_repository->get_program();
-        auto context = EvaluationContext<Kind>(m_repository, m_initial_state, program.get_entry_module());
+        auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(),
+                                               &m_task_context->execution_builder,
+                                               m_program,
+                                               m_initial_state,
+                                               m_program.get_entry_module());
         return context.intern(ExecutionPhase::EXTERNAL);
     }
 
@@ -73,13 +75,13 @@ public:
 
     std::vector<Step> load_steps_until(ExecutionStateView<Kind> state, auto&& stop)
     {
-        auto context = EvaluationContext<Kind>(state);
+        auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
         return collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>>(context, {}, stop);
     }
 
     std::vector<LabeledNode> labeled_successors(ExecutionStateView<Kind> state)
     {
-        auto& successor_generator = *m_repository->get_task_context().search_context->successor_generator;
+        auto& successor_generator = *m_task_context->search_context->successor_generator;
         const auto node = successor_generator.get_node(state.get_state().get_index());
         return successor_generator.get_labeled_successor_nodes(node);
     }
@@ -91,7 +93,7 @@ public:
 
     std::vector<Step> control_steps_until(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop)
     {
-        auto context = EvaluationContext<Kind>(state);
+        auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
         auto immediate = collect_steps<DoTag, CallTag>(context, successors, stop);
         if (stop() || !immediate.empty())
             return immediate;
@@ -112,7 +114,7 @@ public:
     std::optional<RuleVariantView>
     matching_rule(ExecutionStateView<Kind> state, tyr::formalism::planning::GroundActionView action, tyr::planning::StateView<Kind> target_state)
     {
-        auto context = EvaluationContext<Kind>(state);
+        auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
         return matching_rule_for_candidate(context, LabeledNode { action, tyr::planning::Node<Kind>(std::move(target_state), ygg::float_t(0)) });
     }
 
@@ -121,7 +123,7 @@ public:
                               std::optional<tyr::formalism::planning::GroundActionView> action = std::nullopt,
                               std::optional<tyr::planning::StateView<Kind>> target_state = std::nullopt)
     {
-        auto context = EvaluationContext<Kind>(state);
+        auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
         std::optional<LabeledNode> candidate;
         if (action && target_state)
             candidate = LabeledNode { *action, tyr::planning::Node<Kind>(*target_state, ygg::float_t(0)) };
@@ -265,26 +267,26 @@ private:
         }
     }
 
-    static Step make_step(detail::ModuleProgramOutcome status, EvaluationContext<Kind> context, ExecutionPhase phase)
+    Step make_step(detail::ModuleProgramOutcome status, EvaluationContext<Kind> context, ExecutionPhase phase)
     {
-        return Step(status, context.intern(phase));
+        return Step(status, context.intern(phase), m_task_context);
     }
 
-    static Step applied(EvaluationContext<Kind> context, RuleVariantView rule, ExecutionPhase phase)
+    Step applied(EvaluationContext<Kind> context, RuleVariantView rule, ExecutionPhase phase)
     {
         auto step = make_step(detail::ModuleProgramOutcome::APPLIED, std::move(context), phase);
         step.rule = rule;
         return step;
     }
 
-    static Step terminal(detail::ModuleProgramOutcome status, EvaluationContext<Kind> context, RuleVariantView rule, ExecutionPhase phase)
+    Step terminal(detail::ModuleProgramOutcome status, EvaluationContext<Kind> context, RuleVariantView rule, ExecutionPhase phase)
     {
         auto step = make_step(status, std::move(context), phase);
         step.rule = rule;
         return step;
     }
 
-    static Step planning_step(EvaluationContext<Kind> context, const LabeledNode& successor, RuleVariantView rule)
+    Step planning_step(EvaluationContext<Kind> context, const LabeledNode& successor, RuleVariantView rule)
     {
         auto step = applied(std::move(context), rule, ExecutionPhase::EXTERNAL);
         step.plan_suffix.push_back(successor);
@@ -310,7 +312,8 @@ private:
             rule.get_variant());
     }
 
-    ExecutionRepositoryPtr<Kind> m_repository;
+    runir::kr::TaskContextPtr<Kind> m_task_context;
+    ModuleProgramView m_program;
     tyr::planning::ConjunctiveGoalStrategy<Kind> m_goal_strategy;
     tyr::planning::StateView<Kind> m_initial_state;
     bool m_static_goal_satisfied;

@@ -15,10 +15,8 @@ from pyrunir.kr import (
     UndefinedSymbolError,
 )
 from pyrunir.kr.dl import ext as dl_ext
-from pyrunir.kr.dl.uns import ConstructorRepositoryFactory as ClassifierDLRepositoryFactory
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
-from pyrunir.kr.uns import RepositoryFactory as ClassifierRepositoryFactory
 from pyrunir.kr.uns.dl import parse_classifier
 from pyyggdrasil.execution import ExecutionContext
 from pypddl.formalism import ParserOptions
@@ -442,8 +440,8 @@ def test_empty_module_factory_uses_ext_repositories():
 
 def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     task_context, planning_domain, ground_task = _ground_context_and_domain()
-    dl_repository = dl_ext.ConstructorRepositoryFactory().create(ground_task)
-    repository = ext.RepositoryFactory().create(dl_repository)
+    dl_repository = task_context.ext_dl_repository
+    repository = task_context.ext_repository
 
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
@@ -466,8 +464,8 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
     assert search_result.plan is not None
     assert search_result.plan.get_length() == 4
 
-    classifier_dl_repository = ClassifierDLRepositoryFactory().create(ground_task)
-    classifier_repository = ClassifierRepositoryFactory().create(classifier_dl_repository)
+    classifier_dl_repository = task_context.uns_dl_repository
+    classifier_repository = task_context.uns_repository
     classifier = parse_classifier(
         """(:classifier
     (:symbol all)
@@ -525,8 +523,8 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python():
 
 def test_executor_reports_structured_failure_statuses_from_python():
     task_context, planning_domain, ground_task = _ground_context_and_domain()
-    dl_repository = dl_ext.ConstructorRepositoryFactory().create(ground_task)
-    repository = ext.RepositoryFactory().create(dl_repository)
+    dl_repository = task_context.ext_dl_repository
+    repository = task_context.ext_repository
 
     empty_program = dl.parse_module_program("""(:program
     (:entry empty)
@@ -630,8 +628,8 @@ def test_lifted_executor_binding_reports_failure_status():
     lifted_task = Task(planning_task)
     search_context = LiftedTaskSearchContext(lifted_task, execution_context)
     task_context = LiftedTaskContext(search_context)
-    dl_repository = dl_ext.ConstructorRepositoryFactory().create(lifted_task)
-    repository = ext.RepositoryFactory().create(dl_repository)
+    dl_repository = task_context.ext_dl_repository
+    repository = task_context.ext_repository
 
     program = dl.parse_module_program("""(:program
     (:entry empty)
@@ -656,8 +654,8 @@ def test_lifted_executor_binding_reports_failure_status():
 
 def test_ground_execution_views_own_their_task_and_program_contexts():
     task_context, planning_domain, ground_task = _ground_context_and_domain()
-    dl_repository = dl_ext.ConstructorRepositoryFactory().create(ground_task)
-    repository = ext.RepositoryFactory().create(dl_repository)
+    dl_repository = task_context.ext_dl_repository
+    repository = task_context.ext_repository
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
     expander = ext.GroundSuccessorExpander(task_context, program)
@@ -695,8 +693,8 @@ def test_lifted_execution_views_and_proof_labels_survive_owner_destruction():
     lifted_task = Task(planning_task)
     search_context = LiftedTaskSearchContext(lifted_task, execution_context)
     task_context = LiftedTaskContext(search_context)
-    dl_repository = dl_ext.ConstructorRepositoryFactory().create(lifted_task)
-    repository = ext.RepositoryFactory().create(dl_repository)
+    dl_repository = task_context.ext_dl_repository
+    repository = task_context.ext_repository
     program = dl.parse_module_program("""(:program
     (:entry empty)
     (:module

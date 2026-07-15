@@ -34,8 +34,7 @@ constexpr std::string_view feature_type()
 }
 
 template<typename FeatureTag, typename C>
-void append_feature(std::ostream& os,
-                    ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view)
+void append_feature(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view)
 {
     os << ygg::print_indent << "(:" << feature_type<FeatureTag>() << "\n";
     {
@@ -63,8 +62,7 @@ std::string feature(View view)
 }
 
 template<typename Out, typename FeatureTag, typename ObservationTag, typename C>
-Out condition(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view,
-              Out out)
+Out condition(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view, Out out)
 {
     return fmt::format_to(out, "({} {})", ObservationTag::keyword, std::string(view.get_feature().get_symbol()));
 }
@@ -114,21 +112,13 @@ void append_inline_section(std::ostream& os, std::string_view name, Values value
 template<typename Conditions>
 void append_conditions(std::ostream& os, Conditions conditions)
 {
-    append_inline_section(os,
-                          "conditions",
-                          conditions,
-                          [](std::ostream& output, auto value)
-                          { condition(value, std::ostream_iterator<char>(output)); });
+    append_inline_section(os, "conditions", conditions, [](std::ostream& output, auto value) { condition(value, std::ostream_iterator<char>(output)); });
 }
 
 template<typename Effects>
 void append_effects(std::ostream& os, Effects effects)
 {
-    append_inline_section(os,
-                          "effects",
-                          effects,
-                          [](std::ostream& output, auto value)
-                          { effect(value, std::ostream_iterator<char>(output)); });
+    append_inline_section(os, "effects", effects, [](std::ostream& output, auto value) { effect(value, std::ostream_iterator<char>(output)); });
 }
 
 template<runir::kr::ps::ext::RuleKind Kind, typename C>
@@ -138,9 +128,8 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext:
     if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>
                   || std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::RoleTag>>)
     {
-        using Category = std::conditional_t<std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>,
-                                            runir::kr::dl::ConceptTag,
-                                            runir::kr::dl::RoleTag>;
+        using Category =
+            std::conditional_t<std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>, runir::kr::dl::ConceptTag, runir::kr::dl::RoleTag>;
         os << ygg::print_indent << "(:" << Category::name << ' ' << std::string(view.get_feature().get_symbol()) << ")\n";
         os << ygg::print_indent << "(:register\n";
         {
@@ -415,19 +404,13 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::
 template<runir::kr::ps::ext::RuleKind Kind, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C>> : fmt::formatter<std::string_view>
 {
-    auto format(auto view, format_context& context) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::rule(view), context);
-    }
+    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::rule(view), context); }
 };
 
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::RuleVariant>, C>> : fmt::formatter<std::string_view>
 {
-    auto format(auto view, format_context& context) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::rule(view), context);
-    }
+    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::rule(view), context); }
 };
 
 template<typename C>
@@ -449,32 +432,31 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgram>, C
 };
 
 template<tyr::planning::TaskKind Kind>
-struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofVertexLabelView<Kind>>
+struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& label, format_context& context) const
     {
-        const auto state = label.get_execution_state();
+        const auto state = label.execution_state;
         return fmt::format_to(context.out(),
                               "state={} module={} initial={} goal={} alive={} unsolvable={}",
                               ygg::uint_t(state.get_state().get_index()),
                               std::string(state.get_call_stack().get_module().get_name()),
-                              label.is_initial(),
-                              label.is_goal(),
-                              label.is_alive(),
-                              label.is_unsolvable());
+                              label.is_initial,
+                              label.is_goal,
+                              label.is_alive,
+                              label.is_unsolvable);
     }
 };
 
-template<tyr::planning::TaskKind Kind>
-struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofEdgeLabelView<Kind>>
+template<>
+struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofEdgeLabel>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& label, format_context& context) const
     {
-        const auto rule = label.get_rule();
-        if (rule)
-            return fmt::format_to(context.out(), "rule={}", std::string(rule->get_symbol()));
+        if (label.rule)
+            return fmt::format_to(context.out(), "rule={}", std::string(label.rule->get_symbol()));
         return fmt::format_to(context.out(), "rule=<none>");
     }
 };

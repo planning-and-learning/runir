@@ -54,9 +54,6 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
           kr::ps::base::dl::SketchSpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
     };
 
-    auto dl_repository_factory = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>();
-    auto repository_factory = kr::ps::base::RepositoryFactory();
-
     for (const auto& test_case : cases)
     {
         auto parser = fp::Parser(test_case.domain);
@@ -66,8 +63,8 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         auto task = lifted_task.instantiate_ground_task(*execution_context).task;
         auto context = datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
         auto task_context = kr::TaskContext<p::GroundTag>::create(context);
-        auto dl_repository = dl_repository_factory.create(task->get_repository());
-        auto repository = repository_factory.create(dl_repository);
+        auto dl_repository = task_context->base_dl_repository;
+        auto repository = task_context->base_repository;
         const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, task->get_domain().get_domain(), *repository);
         const auto* dl_builder = &task_context->dl_builder;
         const auto* dl_denotation_repository = task_context->dl_denotation_repository.get();
@@ -114,8 +111,8 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     auto search_context = datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
     auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(task->get_repository());
-    auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
+    auto dl_repository = task_context->base_dl_repository;
+    auto repository = task_context->base_repository;
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
         (:features)
         (:rules
@@ -221,8 +218,8 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     auto search_context = datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
     auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
-    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(task->get_repository());
-    auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
+    auto dl_repository = task_context->base_dl_repository;
+    auto repository = task_context->base_repository;
     const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
         (:features)
         (:rules
@@ -235,8 +232,8 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
                                                        task->get_domain().get_domain(),
                                                        *repository);
 
-    auto classifier_dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::UnsFamilyTag>().create(task->get_repository());
-    auto classifier_repository = kr::uns::RepositoryFactory().create(classifier_dl_repository);
+    auto classifier_dl_repository = task_context->uns_dl_repository;
+    auto classifier_repository = task_context->uns_repository;
     const auto classifier = kr::uns::dl::parse_classifier(R"((:classifier
         (:symbol all)
         (:features

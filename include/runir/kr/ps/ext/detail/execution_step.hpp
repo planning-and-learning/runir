@@ -5,6 +5,7 @@
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/task_context.hpp"
 
 #include <optional>
 #include <tyr/planning/node.hpp>
@@ -58,13 +59,22 @@ inline const char* outcome_name(ModuleProgramOutcome outcome)
 template<tyr::planning::TaskKind Kind>
 struct ModuleProgramStep
 {
+private:
+    runir::kr::TaskContextPtr<Kind> m_task_context;
+
+public:
     ModuleProgramOutcome status;
     ExecutionStateView<Kind> target;
     std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
     std::optional<RuleVariantView> rule = std::nullopt;
     tyr::planning::LabeledNodeList<Kind> plan_suffix;
 
-    ModuleProgramStep(ModuleProgramOutcome status_, ExecutionStateView<Kind> target_) : status(status_), target(std::move(target_)) {}
+    ModuleProgramStep(ModuleProgramOutcome status_, ExecutionStateView<Kind> target_, runir::kr::TaskContextPtr<Kind> task_context) :
+        m_task_context(std::move(task_context)),
+        status(status_),
+        target(std::move(target_))
+    {
+    }
 
     const char* get_status_name() const noexcept { return outcome_name(status); }
     ExecutionStateView<Kind> get_target() const noexcept { return target; }

@@ -21,7 +21,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
 {
     const auto initial_node = task_context->search_context->successor_generator->get_initial_node();
     auto proof = ModuleProgramProofBuilder<Kind>(std::move(task_context), program, options.classifier);
-    auto open = std::vector<std::pair<ygg::Index<ExecutionState<Kind>>, graphs::VertexIndex>> {};
+    auto open = std::vector<std::pair<ExecutionStateView<Kind>, graphs::VertexIndex>> {};
     auto plan_steps = tyr::planning::LabeledNodeList<Kind> {};
     auto failed = false;
 
@@ -29,7 +29,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
     const auto initial_result = proof.get_or_create_vertex(initial_state, true, true, false, options.max_num_states);
     if (!initial_result)
         return proof.finish(ModuleProgramProofStatus::OUT_OF_STATES);
-    open.emplace_back(initial_state.get_index(), initial_result->first);
+    open.emplace_back(initial_state, initial_result->first);
 
     const auto started_at = std::chrono::steady_clock::now();
     auto random = std::mt19937_64(options.random_seed);
@@ -40,9 +40,8 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
         if (out_of_time())
             return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
 
-        const auto [state_index, source_vertex] = open.back();
+        const auto [state, source_vertex] = open.back();
         open.pop_back();
-        const auto state = proof.get_execution_state(state_index);
 
         if (proof.is_goal(state.get_state()))
         {
@@ -90,7 +89,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                 }
                 else if (created)
                 {
-                    open.emplace_back(target_state.get_index(), target);
+                    open.emplace_back(target_state, target);
                 }
             }
             continue;
@@ -127,7 +126,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                 if (!options.universal)
                     plan_steps.insert(plan_steps.end(), step.plan_suffix.begin(), step.plan_suffix.end());
                 if (created)
-                    open.emplace_back(target_state.get_index(), target);
+                    open.emplace_back(target_state, target);
             }
             else if (step.status == ModuleProgramOutcome::OUT_OF_TIME)
             {

@@ -25,6 +25,30 @@ void bind_task_context_for_kind(nb::module_& m, const char* prefix)
             [](TaskContextT& self) -> auto& { return *self.search_context; },
             nb::rv_policy::reference_internal)
         .def_prop_ro(
+            "base_dl_repository",
+            [](TaskContextT& self) -> auto& { return *self.base_dl_repository; },
+            nb::rv_policy::reference_internal)
+        .def_prop_ro(
+            "base_repository",
+            [](TaskContextT& self) -> auto& { return *self.base_repository; },
+            nb::rv_policy::reference_internal)
+        .def_prop_ro(
+            "ext_dl_repository",
+            [](TaskContextT& self) -> auto& { return *self.ext_dl_repository; },
+            nb::rv_policy::reference_internal)
+        .def_prop_ro(
+            "ext_repository",
+            [](TaskContextT& self) -> auto& { return *self.ext_repository; },
+            nb::rv_policy::reference_internal)
+        .def_prop_ro(
+            "uns_dl_repository",
+            [](TaskContextT& self) -> auto& { return *self.uns_dl_repository; },
+            nb::rv_policy::reference_internal)
+        .def_prop_ro(
+            "uns_repository",
+            [](TaskContextT& self) -> auto& { return *self.uns_repository; },
+            nb::rv_policy::reference_internal)
+        .def_prop_ro(
             "dl_builder",
             [](TaskContextT& self) -> auto& { return self.dl_builder; },
             nb::rv_policy::reference_internal)

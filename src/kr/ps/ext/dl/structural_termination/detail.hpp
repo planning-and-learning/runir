@@ -12,8 +12,8 @@ namespace runir::kr::ps::ext::dl::detail
 
 struct ModuleFeatures
 {
-    std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>> booleans;
-    std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>> numericals;
+    std::vector<BooleanFeatureView> booleans;
+    std::vector<NumericalFeatureView> numericals;
 };
 
 struct ModuleAnalysis
@@ -27,8 +27,8 @@ struct ModuleAnalysis
 ModuleAnalysis analyze_module(ModuleView module_);
 
 ModuleStructuralTerminationResult make_result(const ModuleAnalysis& analysis, const runir::kr::ps::detail::ComponentSieveResult& sieve_result);
-ModuleIncompleteStructuralTerminationResult
-make_incomplete_result(ModuleView module_, const ModuleAnalysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
+ModuleIncompleteStructuralTerminationResult make_incomplete_result(const ModuleAnalysis& analysis,
+                                                                   const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
 
 std::vector<RuleVariantView> find_recursive_call_rules(const std::vector<ModuleView>& modules);
 

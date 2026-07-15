@@ -8,6 +8,7 @@
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
+#include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/dl/semantics/uns/evaluation.hpp>
 #include <string>
 #include <tyr/formalism/planning/parser.hpp>
@@ -26,6 +27,18 @@ namespace sem = runir::kr::dl::semantics;
 using Uns = runir::kr::UnsFamilyTag;
 
 std::filesystem::path benchmark_prefix() { return std::filesystem::path(BENCHMARKS_DIR); }
+
+auto wrap_concept(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto concept_view)
+{
+    auto data = ygg::Data<dl::Constructor<Uns, dl::ConceptTag>>(concept_view.get_index());
+    return repo.get_or_create(data).first;
+}
+
+auto wrap_role(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto role_view)
+{
+    auto data = ygg::Data<dl::Constructor<Uns, dl::RoleTag>>(role_view.get_index());
+    return repo.get_or_create(data).first;
+}
 
 // Wrap a boolean constructor in a Boolean-category constructor view.
 auto wrap_boolean(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto boolean_view)
@@ -89,6 +102,33 @@ auto logical_not(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repo, auto bool
 
 }  // namespace
 
+TEST(RunirTests, SyntacticComplexityRecursesIntoConceptChildren)
+{
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto planning_domain = fp::Parser(domain).get_domain();
+    auto repository = dl::ConstructorRepositoryFactoryFor<kr::UnsFamilyTag>().create(planning_domain.get_repository());
+    auto& repo = *repository;
+
+    auto universal_data = ygg::Data<dl::Role<Uns, dl::UniversalTag>>();
+    const auto universal = wrap_role(repo, repo.get_or_create(universal_data).first);
+    auto inverse_data = ygg::Data<dl::Role<Uns, dl::InverseTag>>(universal.get_index());
+    const auto inverse = wrap_role(repo, repo.get_or_create(inverse_data).first);
+
+    auto at_least_data = ygg::Data<dl::Concept<Uns, dl::AtLeastNumberRestrictionTag>>(1, inverse.get_index());
+    const auto at_least = repo.get_or_create(at_least_data).first;
+    EXPECT_EQ(sem::syntactic_complexity(at_least), 3);
+
+    auto objects = ygg::IndexList<tyr::formalism::Object> {};
+    objects.push_back(planning_domain.get_domain().get_constants().front().get_index());
+    auto fillers_data = ygg::Data<dl::Concept<Uns, dl::RoleFillersTag>>(inverse.get_index(), objects);
+    const auto fillers = repo.get_or_create(fillers_data).first;
+    EXPECT_EQ(sem::syntactic_complexity(fillers), 3);
+
+    const auto fillers_constructor = wrap_concept(repo, fillers);
+    auto qualified_data = ygg::Data<dl::Concept<Uns, dl::QualifiedAtLeastNumberRestrictionTag>>(1, inverse.get_index(), fillers_constructor.get_index());
+    EXPECT_EQ(sem::syntactic_complexity(repo.get_or_create(qualified_data).first), 6);
+}
+
 TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
 {
     const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
@@ -148,6 +188,7 @@ TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
 
     // Formatting round-trips the keywords and nested children.
     const auto lt = numerical_comparison<dl::LtTag<dl::NumericalTag>>(repo, count_ctor, n_const_zero);
+    EXPECT_EQ(sem::syntactic_complexity(lt), 4);
     const auto formatted = fmt::format("{}", lt);
     EXPECT_NE(formatted.find("n_lt"), std::string::npos) << formatted;
     EXPECT_NE(formatted.find("n_count"), std::string::npos) << formatted;
@@ -155,6 +196,7 @@ TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
     EXPECT_NE(formatted.find("n_const"), std::string::npos) << formatted;
 
     const auto b_eq = boolean_comparison<dl::EqTag<dl::BooleanTag>>(repo, b_true, b_false);
+    EXPECT_EQ(sem::syntactic_complexity(b_eq), 3);
     const auto b_formatted = fmt::format("{}", b_eq);
     EXPECT_NE(b_formatted.find("b_eq"), std::string::npos) << b_formatted;
     EXPECT_NE(b_formatted.find("b_const"), std::string::npos) << b_formatted;
@@ -243,10 +285,12 @@ TEST(RunirTests, UnsFamilyArithmeticLogicalOperatorsEvaluateAndFormat)
 
     // Formatting.
     const auto add = numerical_binary<dl::AddTag>(repo, two, five);
+    EXPECT_EQ(sem::syntactic_complexity(add), 3);
     const auto add_formatted = fmt::format("{}", add);
     EXPECT_NE(add_formatted.find("n_add"), std::string::npos) << add_formatted;
 
     const auto and_not = logical_binary<dl::AndTag>(repo, b_true, logical_not(repo, b_false));
+    EXPECT_EQ(sem::syntactic_complexity(and_not), 4);
     const auto and_formatted = fmt::format("{}", and_not);
     EXPECT_NE(and_formatted.find("b_and"), std::string::npos) << and_formatted;
     EXPECT_NE(and_formatted.find("b_not"), std::string::npos) << and_formatted;

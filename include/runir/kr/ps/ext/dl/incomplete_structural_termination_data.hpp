@@ -35,8 +35,8 @@ struct IncompleteSurvivingRule
 struct ModuleIncompleteStructuralTerminationResult
 {
     IncompleteStructuralTerminationStatus status = IncompleteStructuralTerminationStatus::TERMINATING;
-    std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>> booleans;
-    std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>> numericals;
+    std::vector<BooleanFeatureView> booleans;
+    std::vector<NumericalFeatureView> numericals;
     /// Rules internal to final cyclic residual memory components.
     std::vector<IncompleteSurvivingRule> surviving_rules;
 

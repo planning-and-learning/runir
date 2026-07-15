@@ -1,7 +1,6 @@
 import gc
 
 from pyrunir.kr import GroundTaskContext
-from pyrunir.kr.dl.uns import ConstructorRepositoryFactory as ClassifierDLRepositoryFactory
 from pyrunir.kr.dl.base.semantics import (
     ConstructorRepositoryFactory,
     GroundEvaluationContext as GroundDLEvaluationContext,
@@ -26,7 +25,6 @@ from pyrunir.kr.ps.base.dl import (
     SketchSpecification,
     parse_sketch,
 )
-from pyrunir.kr.uns import RepositoryFactory as ClassifierRepositoryFactory
 from pyrunir.kr.uns.dl import parse_classifier
 
 
@@ -85,8 +83,8 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
     assert task_context.search_context is search_context
     planning_domain = gripper_planning_domain
 
-    dl_repository = ConstructorRepositoryFactory().create(planning_domain)
-    sketch_repository = SketchRepositoryFactory().create(dl_repository)
+    dl_repository = task_context.base_dl_repository
+    sketch_repository = task_context.base_repository
     empty_sketch = SketchFactory.create_empty(sketch_repository)
     empty_sketch_description = str(empty_sketch)
     assert empty_sketch_description == str(parse_sketch(empty_sketch_description, planning_domain, sketch_repository))
@@ -176,8 +174,8 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
     assert search_result.open_states == []
     assert search_result.cycle == []
 
-    classifier_dl_repository = ClassifierDLRepositoryFactory().create(search_context.task)
-    classifier_repository = ClassifierRepositoryFactory().create(classifier_dl_repository)
+    classifier_dl_repository = task_context.uns_dl_repository
+    classifier_repository = task_context.uns_repository
     classifier = parse_classifier(
         """(:classifier
     (:symbol all)

@@ -8,11 +8,12 @@
 namespace runir::kr::ps::ext::dl::detail
 {
 
-template<typename FeatureTag>
-std::size_t feature_position(const std::vector<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>>& features,
-                             ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature)
+template<typename FeatureView>
+std::size_t feature_position(const std::vector<FeatureView>& features, FeatureView feature)
 {
-    return static_cast<std::size_t>(std::distance(features.begin(), std::find(features.begin(), features.end(), feature)));
+    return static_cast<std::size_t>(
+        std::distance(features.begin(),
+                      std::find_if(features.begin(), features.end(), [&](auto candidate) { return candidate.get_index() == feature.get_index(); })));
 }
 
 template<runir::kr::dl::CategoryTag Category>
@@ -67,26 +68,22 @@ bool variant_references_register(VariantView view, runir::kr::dl::RegisterIdenti
     return ygg::visit([&](auto child) { return references_register(child, reg); }, view);
 }
 
-template<typename FeatureTag, runir::kr::dl::CategoryTag Category>
-bool feature_references_register(ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature,
-                                 const Repository& repository,
+template<typename FeatureTag, typename C, runir::kr::dl::CategoryTag Category>
+bool feature_references_register(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> feature,
                                  runir::kr::dl::RegisterIdentifier<Category> reg)
 {
-    return ygg::visit([&](auto concrete) { return references_register(concrete.get_expression(), reg); }, ygg::make_view(feature, repository).get_variant());
+    return ygg::visit([&](auto concrete) { return references_register(concrete.get_expression(), reg); }, feature.get_variant());
 }
 
 template<runir::kr::dl::CategoryTag Category>
-void record_load_effects(const ModuleFeatures& features,
-                         runir::kr::ps::detail::RuleProfile& profile,
-                         const Repository& repository,
-                         runir::kr::dl::RegisterIdentifier<Category> reg)
+void record_load_effects(const ModuleFeatures& features, runir::kr::ps::detail::RuleProfile& profile, runir::kr::dl::RegisterIdentifier<Category> reg)
 {
     for (std::size_t position = 0; position < features.booleans.size(); ++position)
-        if (!feature_references_register(features.booleans[position], repository, reg))
+        if (!feature_references_register(features.booleans[position], reg))
             profile.template effects<runir::kr::ps::dl::Unchanged>().set(position);
 
     for (std::size_t position = 0; position < features.numericals.size(); ++position)
-        if (!feature_references_register(features.numericals[position], repository, reg))
+        if (!feature_references_register(features.numericals[position], reg))
             profile.numerical_changes[position] = runir::kr::ps::dl::NumericalChange::UNCHANGED;
 }
 
@@ -100,9 +97,9 @@ void record_condition(
     const auto position = [&]()
     {
         if constexpr (std::same_as<FeatureTag, psdl::BooleanFeature>)
-            return feature_position(features.booleans, condition.get_feature().get_index());
+            return feature_position(features.booleans, condition.get_feature());
         else
-            return feature_position(features.numericals, condition.get_feature().get_index());
+            return feature_position(features.numericals, condition.get_feature());
     }();
     profile.template conditions<ObservationTag>().set(position);
 }
@@ -116,12 +113,12 @@ void record_effect(
     namespace psdl = runir::kr::ps::dl;
     if constexpr (std::same_as<FeatureTag, psdl::BooleanFeature>)
     {
-        const auto position = feature_position(features.booleans, effect.get_feature().get_index());
+        const auto position = feature_position(features.booleans, effect.get_feature());
         profile.template effects<ObservationTag>().set(position);
     }
     else
     {
-        const auto position = feature_position(features.numericals, effect.get_feature().get_index());
+        const auto position = feature_position(features.numericals, effect.get_feature());
         profile.numerical_changes[position] = runir::kr::ps::detail::RuleProfile::template numerical_change<ObservationTag>();
     }
 }
@@ -130,9 +127,9 @@ ModuleAnalysis analyze_module(ModuleView module_)
 {
     auto features = ModuleFeatures {};
     for (auto feature : module_.get_features<runir::kr::ps::dl::BooleanFeature>())
-        features.booleans.push_back(feature.get_index());
+        features.booleans.push_back(feature);
     for (auto feature : module_.get_features<runir::kr::ps::dl::NumericalFeature>())
-        features.numericals.push_back(feature.get_index());
+        features.numericals.push_back(feature);
 
     auto memory_states = std::vector<MemoryStateView> {};
     for (auto memory_state : module_.get_memory_states())
@@ -175,7 +172,7 @@ ModuleAnalysis analyze_module(ModuleView module_)
                                    effect.get_variant());
                 }
                 if constexpr (requires { concrete_rule.get_register(); })
-                    record_load_effects(analysis.features, profile, module_.get_context(), concrete_rule.get_register().get_identifier());
+                    record_load_effects(analysis.features, profile, concrete_rule.get_register().get_identifier());
                 // Rules without explicit effect entries leave unmentioned
                 // features unconstrained. Call rules have no effect entries.
             },

@@ -5,9 +5,11 @@
 #include "runir/kr/dl/semantics/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 
+#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <optional>
+#include <stdexcept>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>
 #include <utility>
@@ -79,14 +81,10 @@ struct EvaluationArguments
 
     void write(ygg::Data<CallArguments>& data) const
     {
-        for (const auto argument : concept_arguments)
-            data.concept_arguments.push_back(argument.get_index());
-        for (const auto argument : role_arguments)
-            data.role_arguments.push_back(argument.get_index());
-        for (const auto argument : boolean_arguments)
-            data.boolean_arguments.push_back(argument.get_index());
-        for (const auto argument : numerical_arguments)
-            data.numerical_arguments.push_back(argument.get_index());
+        ygg::set(concept_arguments, data.concept_arguments);
+        ygg::set(role_arguments, data.role_arguments);
+        ygg::set(boolean_arguments, data.boolean_arguments);
+        ygg::set(numerical_arguments, data.numerical_arguments);
     }
 };
 
@@ -95,7 +93,9 @@ template<tyr::planning::TaskKind Kind>
 class EvaluationCallStack
 {
 private:
-    ExecutionRepositoryPtr<Kind> m_repository;
+    ExecutionRepository<Kind>* m_repository;
+    ExecutionBuilder<Kind>* m_builder;
+    ModuleProgramView m_program;
     ModuleView m_module;
     MemoryStateView m_memory_state;
     Registers m_registers;
@@ -103,35 +103,69 @@ private:
     EvaluationArguments m_call_arguments;
     std::optional<CallStackView<Kind>> m_caller;
 
+    static Registers materialize_registers(RegisterValuesView<Kind> registers)
+    {
+        auto result = Registers {};
+        auto& concepts = result.template get<runir::kr::dl::ConceptTag>();
+        auto& roles = result.template get<runir::kr::dl::RoleTag>();
+        const auto concept_values = registers.get_concept_values();
+        const auto role_values = registers.get_role_values();
+        for (size_t i = 0; i < concept_values.size(); ++i)
+        {
+            const auto concept = concept_values[i];
+            if (concept)
+                concepts[i] = concept.value();
+
+            const auto role = role_values[i];
+            if (role)
+            {
+                const auto pair = role.value();
+                roles[i] = std::pair(pair.get_first(), pair.get_second());
+            }
+        }
+        return result;
+    }
+
     auto intern_registers()
     {
-        auto data = m_repository->template get_builder<RegisterValues>();
+        auto data = m_builder->template get_builder<RegisterValues>();
         const auto& concepts = m_registers.template get<runir::kr::dl::ConceptTag>();
         const auto& roles = m_registers.template get<runir::kr::dl::RoleTag>();
         for (size_t i = 0; i < concepts.size(); ++i)
         {
-            if (concepts[i])
-                data->concept_values[i] = concepts[i]->get_index();
+            ygg::set(concepts[i], data->concept_values[i]);
             if (roles[i])
-                data->role_values[i] = std::pair(roles[i]->first.get_index(), roles[i]->second.get_index());
+            {
+                auto& pair = data->role_values[i].emplace();
+                ygg::set(roles[i]->first, pair.first);
+                ygg::set(roles[i]->second, pair.second);
+            }
         }
-        auto [index, created] = m_repository->get_or_create(*data);
+        canonicalize(*data);
+        auto [view, created] = m_repository->get_or_create(*data);
         static_cast<void>(created);
-        return index;
+        return view;
     }
 
     auto intern_arguments()
     {
-        auto data = m_repository->template get_builder<CallArguments>();
+        auto data = m_builder->template get_builder<CallArguments>();
         m_arguments.write(*data);
-        auto [index, created] = m_repository->get_or_create(*data);
+        canonicalize(*data);
+        auto [view, created] = m_repository->get_or_create(*data);
         static_cast<void>(created);
-        return index;
+        return view;
     }
 
 public:
-    EvaluationCallStack(ExecutionRepositoryPtr<Kind> repository, ModuleView module, EvaluationArguments arguments = {}) noexcept :
-        m_repository(std::move(repository)),
+    EvaluationCallStack(ExecutionRepository<Kind>* repository,
+                        ExecutionBuilder<Kind>* builder,
+                        ModuleProgramView program,
+                        ModuleView module,
+                        EvaluationArguments arguments = {}) noexcept :
+        m_repository(repository),
+        m_builder(builder),
+        m_program(program),
         m_module(module),
         m_memory_state(module.get_entry_memory_state()),
         m_registers(),
@@ -139,17 +173,26 @@ public:
         m_call_arguments(),
         m_caller()
     {
+        assert(m_repository);
+        assert(m_builder);
+        assert(&m_program.get_context() == &m_module.get_context());
     }
 
-    explicit EvaluationCallStack(CallStackView<Kind> call_stack) :
-        m_repository(call_stack.get_context()),
+    EvaluationCallStack(ExecutionRepository<Kind>* repository, ExecutionBuilder<Kind>* builder, ModuleProgramView program, CallStackView<Kind> call_stack) :
+        m_repository(repository),
+        m_builder(builder),
+        m_program(program),
         m_module(call_stack.get_module()),
         m_memory_state(call_stack.get_memory_state()),
-        m_registers { call_stack.get_registers().get_concept_values(), call_stack.get_registers().get_role_values() },
+        m_registers(materialize_registers(call_stack.get_registers())),
         m_arguments(call_stack.get_arguments()),
         m_call_arguments(),
         m_caller(call_stack.get_caller())
     {
+        assert(m_repository);
+        assert(m_builder);
+        assert(&call_stack.get_context() == m_repository);
+        assert(&m_program.get_context() == &m_module.get_context());
     }
 
     const auto& module() const noexcept { return m_module; }
@@ -170,15 +213,16 @@ public:
 
     CallStackView<Kind> intern(MemoryStateView memory_state)
     {
-        auto data = m_repository->template get_builder<CallStack>();
-        data->module = m_module.get_index();
-        data->memory_state = memory_state.get_index();
-        data->registers = intern_registers();
-        data->arguments = intern_arguments();
+        auto data = m_builder->template get_builder<CallStack>();
+        ygg::set(m_module, data->module);
+        ygg::set(memory_state, data->memory_state);
+        ygg::set(intern_registers(), data->registers);
+        ygg::set(intern_arguments(), data->arguments);
         ygg::set(m_caller, data->caller);
-        auto [index, created] = m_repository->get_or_create(*data);
+        canonicalize(*data);
+        auto [view, created] = m_repository->get_or_create(*data);
         static_cast<void>(created);
-        return ygg::make_view(index, m_repository);
+        return view;
     }
 
     CallStackView<Kind> intern() { return intern(m_memory_state); }
@@ -201,7 +245,7 @@ public:
         m_module = caller.get_module();
         m_memory_state = caller.get_memory_state();
         const auto registers = caller.get_registers();
-        m_registers = Registers { registers.get_concept_values(), registers.get_role_values() };
+        m_registers = materialize_registers(registers);
         m_arguments = EvaluationArguments(caller.get_arguments());
         m_caller = caller.get_caller();
         return true;
@@ -213,46 +257,63 @@ template<tyr::planning::TaskKind Kind>
 class EvaluationContext
 {
 private:
-    ExecutionRepositoryPtr<Kind> m_repository;
+    ExecutionRepository<Kind>* m_repository;
+    ExecutionBuilder<Kind>* m_builder;
+    ModuleProgramView m_program;
     tyr::planning::StateView<Kind> m_state;
     EvaluationCallStack<Kind> m_call_stack;
 
 public:
-    EvaluationContext(ExecutionRepositoryPtr<Kind> repository,
+    EvaluationContext(ExecutionRepository<Kind>* repository,
+                      ExecutionBuilder<Kind>* builder,
+                      ModuleProgramView program,
                       tyr::planning::StateView<Kind> state,
                       ModuleView module,
                       EvaluationArguments arguments = {}) noexcept :
         m_repository(repository),
+        m_builder(builder),
+        m_program(program),
         m_state(std::move(state)),
-        m_call_stack(std::move(repository), module, std::move(arguments))
+        m_call_stack(repository, builder, program, module, std::move(arguments))
     {
+        assert(m_repository);
+        assert(m_builder);
     }
 
-    explicit EvaluationContext(ExecutionStateView<Kind> state) :
-        m_repository(state.get_context()),
+    EvaluationContext(ExecutionRepository<Kind>* repository, ExecutionBuilder<Kind>* builder, ModuleProgramView program, ExecutionStateView<Kind> state) :
+        m_repository(repository),
+        m_builder(builder),
+        m_program(program),
         m_state(state.get_state()),
-        m_call_stack(state.get_call_stack())
+        m_call_stack(repository, builder, program, state.get_call_stack())
     {
+        assert(m_repository);
+        assert(m_builder);
+        assert(&state.get_context() == m_repository);
+        const auto state_program = state.get_program();
+        if (&state_program.get_context() != &m_program.get_context() || state_program.get_index() != m_program.get_index())
+            throw std::invalid_argument("EvaluationContext requires an execution state from the selected program.");
     }
 
     auto& get_state() noexcept { return m_state; }
     const auto& get_state() const noexcept { return m_state; }
 
-    auto get_program() const noexcept { return m_repository->get_program(); }
+    auto get_program() const noexcept { return m_program; }
     auto& get_call_stack() noexcept { return m_call_stack; }
     const auto& get_call_stack() const noexcept { return m_call_stack; }
-    const auto& get_repository() const noexcept { return m_repository; }
 
     ExecutionStateView<Kind> intern(ExecutionPhase phase)
     {
         const auto call_stack = m_call_stack.intern();
-        auto data = m_repository->template get_builder<ExecutionState<Kind>>();
-        data->state = m_state.get_index();
-        data->call_stack = call_stack.get_index();
+        auto data = m_builder->template get_builder<ExecutionState<Kind>>();
+        ygg::set(m_program, data->program);
+        ygg::set(m_state, data->state);
+        ygg::set(call_stack, data->call_stack);
         data->phase = phase;
-        auto [index, created] = m_repository->get_or_create(*data);
+        canonicalize(*data);
+        auto [view, created] = m_repository->get_or_create(*data);
         static_cast<void>(created);
-        return ygg::make_view(index, m_repository);
+        return view;
     }
 };
 

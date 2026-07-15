@@ -3,8 +3,8 @@
 namespace runir::kr::ps::ext::dl::detail
 {
 
-ModuleIncompleteStructuralTerminationResult
-make_incomplete_result(ModuleView module_, const ModuleAnalysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result)
+ModuleIncompleteStructuralTerminationResult make_incomplete_result(const ModuleAnalysis& analysis,
+                                                                   const runir::kr::ps::detail::IncompletePolicyResult& policy_result)
 {
     using SharedResult = runir::kr::ps::detail::IncompletePolicyResult;
 
@@ -16,13 +16,12 @@ make_incomplete_result(ModuleView module_, const ModuleAnalysis& analysis, const
         auto surviving = IncompleteSurvivingRule { analysis.rules[shared_surviving.rule_position], {} };
         for (const auto& shared_reason : shared_surviving.blocking_reasons)
         {
-            auto reason =
-                IncompleteBlockingReason { shared_reason.feature_kind == SharedResult::FeatureKind::BOOLEAN ?
-                                               std::variant<BooleanFeatureView, NumericalFeatureView>(
-                                                   BooleanFeatureView(analysis.features.booleans[shared_reason.feature_position], module_.get_context())) :
-                                               std::variant<BooleanFeatureView, NumericalFeatureView>(
-                                                   NumericalFeatureView(analysis.features.numericals[shared_reason.feature_position], module_.get_context())),
-                                           {} };
+            auto reason = IncompleteBlockingReason {
+                shared_reason.feature_kind == SharedResult::FeatureKind::BOOLEAN ?
+                    std::variant<BooleanFeatureView, NumericalFeatureView>(analysis.features.booleans[shared_reason.feature_position]) :
+                    std::variant<BooleanFeatureView, NumericalFeatureView>(analysis.features.numericals[shared_reason.feature_position]),
+                {}
+            };
             for (const auto opposing_position : shared_reason.opposing_rule_positions)
                 reason.opposing_rules.push_back(analysis.rules[opposing_position]);
             surviving.blocking_reasons.push_back(std::move(reason));

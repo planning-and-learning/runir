@@ -62,12 +62,9 @@ template<runir::kr::dl::CategoryTag Category, typename C, tyr::planning::TaskKin
 void apply_load_binding(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> rule, const Value& value, EvaluationContext<Kind>& context)
 {
     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-        context.get_call_stack().registers().set(rule.get_register().get_identifier(),
-                                                 ygg::make_view(value.get_index(), *context.get_state().get_repository()));
+        context.get_call_stack().registers().set(rule.get_register().get_identifier(), value);
     else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-        context.get_call_stack().registers().set(rule.get_register().get_identifier(),
-                                                 ygg::make_view(value.first.get_index(), *context.get_state().get_repository()),
-                                                 ygg::make_view(value.second.get_index(), *context.get_state().get_repository()));
+        context.get_call_stack().registers().set(rule.get_register().get_identifier(), value.first, value.second);
     else
         static_assert(ygg::dependent_false<Category>::value, "unhandled load rule category");
     context.get_call_stack().set_memory_state(rule.get_target());
