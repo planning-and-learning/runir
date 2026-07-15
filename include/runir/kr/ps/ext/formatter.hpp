@@ -4,7 +4,7 @@
 #include "runir/config.hpp"
 #include "runir/kr/dl/semantics/formatter.hpp"
 #include "runir/kr/ps/ext/dl/formatter.hpp"
-#include "runir/kr/ps/ext/module_program_executor.hpp"
+#include "runir/kr/ps/ext/module_program_executor_data.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
 #include "runir/kr/ps/ext/views.hpp"
@@ -324,8 +324,6 @@ inline std::string_view module_program_proof_status(runir::kr::ps::ext::ModulePr
 
 }  // namespace runir::kr::ps::ext::format
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
-
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::MemoryState>, C>>
 {
@@ -477,7 +475,5 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofResults<Kind>>
                               result.cycle.size());
     }
 };
-
-#endif
 
 #endif

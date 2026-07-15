@@ -12,6 +12,7 @@
 #include <memory>
 #include <optional>
 #include <tyr/planning/declarations.hpp>
+#include <tyr/planning/plan.hpp>
 
 namespace runir::kr::ps::ext
 {

@@ -4,12 +4,9 @@
 #include "runir/config.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
 #include <fmt/format.h>
 #include <string_view>
-#endif
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
 namespace fmt
 {
 
@@ -23,16 +20,23 @@ struct formatter<runir::kr::ps::dl::NumericalChange, char> : formatter<std::stri
         auto text = std::string_view { "?" };
         switch (change)
         {
-            case NumericalChange::UNCONSTRAINED: text = "?"; break;
-            case NumericalChange::INCREASES: text = "inc"; break;
-            case NumericalChange::DECREASES: text = "dec"; break;
-            case NumericalChange::UNCHANGED: text = "unchanged"; break;
+            case NumericalChange::UNCONSTRAINED:
+                text = "?";
+                break;
+            case NumericalChange::INCREASES:
+                text = "inc";
+                break;
+            case NumericalChange::DECREASES:
+                text = "dec";
+                break;
+            case NumericalChange::UNCHANGED:
+                text = "unchanged";
+                break;
         }
         return formatter<std::string_view>::format(text, ctx);
     }
 };
 
 }  // namespace fmt
-#endif
 
 #endif

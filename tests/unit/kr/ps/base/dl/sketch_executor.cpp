@@ -7,11 +7,13 @@
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
+#include <runir/kr/ps/base/successor_expander.hpp>
 #include <runir/kr/uns/classify.hpp>
 #include <runir/kr/uns/dl/parser.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
-#include <tyr/planning/planning.hpp>
+#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/task.hpp>
 #include <vector>
 #include <yggdrasil/execution/onetbb.hpp>
 

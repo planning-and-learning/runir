@@ -241,7 +241,6 @@ std::string grammar(View view)
 
 }  // namespace runir::kr::dl::cnf_grammar::format
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
     requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Concept<Family, Tag>>, C>> : fmt::formatter<std::string_view>
@@ -331,6 +330,5 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::cnf_grammar::Grammar<F
         return fmt::formatter<std::string_view>::format(runir::kr::dl::cnf_grammar::format::grammar(view), ctx);
     }
 };
-#endif
 
 #endif

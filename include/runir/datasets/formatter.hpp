@@ -15,7 +15,6 @@
 #include <tyr/formalism/planning/formatter.hpp>
 #include <variant>
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
 namespace fmt
 {
 
@@ -152,6 +151,5 @@ struct formatter<runir::datasets::EquivalenceEdgeLabel, char> : formatter<std::s
 };
 
 }  // namespace fmt
-#endif
 
 #endif

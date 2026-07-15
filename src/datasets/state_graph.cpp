@@ -26,6 +26,11 @@
 #include <memory>
 #include <stdexcept>
 #include <tuple>
+#include <tyr/planning/algorithms/astar_eager.hpp>
+#include <tyr/planning/algorithms/astar_eager/event_handler.hpp>
+#include <tyr/planning/algorithms/strategies/goal.hpp>
+#include <tyr/planning/algorithms/strategies/pruning.hpp>
+#include <tyr/planning/heuristics/blind.hpp>
 #include <utility>
 #include <vector>
 

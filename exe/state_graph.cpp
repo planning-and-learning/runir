@@ -16,11 +16,17 @@
  */
 
 #include <argparse/argparse.hpp>
+#include <cstddef>
 #include <fmt/format.h>
 #include <iostream>
-#include <runir/runir.hpp>
+#include <runir/datasets/formatter.hpp>
+#include <runir/datasets/state_graph.hpp>
+#include <stdexcept>
+#include <string>
 #include <tyr/formalism/planning/parser.hpp>
-#include <tyr/planning/planning.hpp>
+#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/task.hpp>
+#include <utility>
 #include <yggdrasil/execution/onetbb.hpp>
 
 namespace

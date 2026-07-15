@@ -32,12 +32,7 @@ endif()
 
 message("Build shared libraries enabled.")
 
-option(RUNIR_ENABLE_FMT_FORMATTERS "Enable Runir's public fmt::formatter specializations." ON)
-if(RUNIR_ENABLE_FMT_FORMATTERS)
-    add_compile_definitions(RUNIR_ENABLE_FMT_FORMATTERS=1 TYR_ENABLE_FMT_FORMATTERS=1 LOKI_ENABLE_FMT_FORMATTERS=1 YGG_ENABLE_FMT_FORMATTERS=1)
-else()
-    add_compile_definitions(RUNIR_ENABLE_FMT_FORMATTERS=0 TYR_ENABLE_FMT_FORMATTERS=0 LOKI_ENABLE_FMT_FORMATTERS=0 YGG_ENABLE_FMT_FORMATTERS=0)
-endif()
+add_compile_definitions(YGG_ENABLE_FMT_FORMATTERS=1)
 
 option(RUNIR_HEADER_INSTANTIATION "Enable template definitions in public headers at higher compile time costs." OFF)
 if(RUNIR_HEADER_INSTANTIATION)

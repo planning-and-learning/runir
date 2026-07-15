@@ -2,7 +2,6 @@
 #define RUNIR_KR_PS_EXT_DL_PARSER_HPP_
 
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/ps/ext/dl/parser/parser.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 
 #include <string>

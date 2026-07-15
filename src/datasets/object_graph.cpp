@@ -19,6 +19,10 @@
 
 #include <algorithm>
 #include <cassert>
+#include <tyr/planning/ground/state_repository.hpp>
+#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/state_repository.hpp>
+#include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/semantics/comparators.hpp>

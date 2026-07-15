@@ -32,7 +32,7 @@
 #include <memory>
 #include <optional>
 #include <tuple>
-#include <tyr/planning/planning.hpp>
+#include <tyr/planning/algorithms/utils.hpp>
 
 namespace runir::datasets
 {

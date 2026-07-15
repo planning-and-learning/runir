@@ -5,7 +5,7 @@
 #include "runir/datasets/formatter.hpp"
 #include "runir/kr/ps/base/dl/formatter.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
-#include "runir/kr/ps/base/sketch_executor.hpp"
+#include "runir/kr/ps/base/sketch_executor_data.hpp"
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/ps/condition_view.hpp"
@@ -181,7 +181,6 @@ std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<K
 
 }  // namespace runir::kr::ps::base::format
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
 template<typename FeatureTag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C>> : fmt::formatter<std::string_view>
 {
@@ -267,6 +266,5 @@ struct fmt::formatter<runir::kr::ps::base::SketchProofEdgeLabel> : fmt::formatte
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
-#endif
 
 #endif

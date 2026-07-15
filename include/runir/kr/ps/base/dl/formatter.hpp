@@ -60,7 +60,6 @@ std::string effect(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr:
 
 }  // namespace runir::kr::ps::base::dl::format
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
 template<typename FeatureTag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C>> :
     fmt::formatter<std::string_view>
@@ -136,6 +135,5 @@ struct fmt::formatter<runir::kr::ps::base::dl::IncompleteStructuralTerminationRe
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
-#endif
 
 #endif

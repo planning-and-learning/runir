@@ -12,7 +12,6 @@
 #include "runir/graphs/static_graph_builder.hpp"
 
 #include <fmt/ranges.h>
-
 #include <string>
 #include <string_view>
 #include <yggdrasil/formatting/formatter.hpp>
@@ -87,7 +86,6 @@ auto dot(const G& graph, std::string_view name = "G") -> std::string
 
 }  // namespace runir::graphs::format
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
 namespace fmt
 {
 
@@ -180,6 +178,5 @@ struct formatter<runir::graphs::weisfeiler_leman::Certificate<K>, char>
 };
 
 }  // namespace fmt
-#endif
 
 #endif

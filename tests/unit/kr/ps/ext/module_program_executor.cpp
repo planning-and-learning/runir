@@ -10,6 +10,7 @@
 #include <runir/kr/errors.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
+#include <runir/kr/ps/ext/dl/parser/parser.hpp>
 #include <runir/kr/ps/ext/execution_builder.hpp>
 #include <runir/kr/ps/ext/execution_repository.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
@@ -23,7 +24,8 @@
 #include <type_traits>
 #include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/algorithms/portable_shuffle.hpp>
-#include <tyr/planning/planning.hpp>
+#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/task.hpp>
 #include <variant>
 #include <vector>
 #include <yggdrasil/execution/onetbb.hpp>

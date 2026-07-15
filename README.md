@@ -68,7 +68,6 @@ CMake options:
 | `RUNIR_BUILD_TESTS` | `OFF` | Build Runir tests. |
 | `RUNIR_BUILD_EXECUTABLES` | `OFF` | Build Runir executables. |
 | `RUNIR_BUILD_PYRUNIR` | `OFF` | Build `pyrunir` Python bindings. |
-| `RUNIR_ENABLE_FMT_FORMATTERS` | `ON` | Enable the public `fmt::formatter` specializations of Runir, Tyr, Loki, and yggdrasil (`RUNIR_`/`TYR_`/`LOKI_`/`YGG_ENABLE_FMT_FORMATTERS` macros, all default-on in the headers). |
 | `RUNIR_HEADER_INSTANTIATION` | `OFF` | Enable template definitions in public headers at higher compile-time cost. |
 
 Run tests from a build configured with `-DRUNIR_BUILD_TESTS=ON`:

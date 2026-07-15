@@ -88,7 +88,6 @@ std::string classifier(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> view
 
 }  // namespace runir::kr::uns::format
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::uns::Feature>, C>> : fmt::formatter<std::string_view>
 {
@@ -116,6 +115,5 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::uns::Classifier>, C>> : fm
     using View = ygg::View<ygg::Index<runir::kr::uns::Classifier>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::uns::format::classifier(view), ctx); }
 };
-#endif
 
 #endif

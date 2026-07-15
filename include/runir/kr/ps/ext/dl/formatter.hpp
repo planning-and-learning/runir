@@ -10,8 +10,6 @@
 #include <fmt/ranges.h>
 #include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
-
 template<>
 struct fmt::formatter<runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel>
 {
@@ -78,9 +76,7 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ModuleIncompleteStructuralTerminat
     {
         if (result.is_terminating())
             return fmt::format_to(context.out(), "ModuleIncompleteStructuralTerminationResult(terminating)");
-        return fmt::format_to(context.out(),
-                              "ModuleIncompleteStructuralTerminationResult(unknown, {} surviving rules)",
-                              result.surviving_rules.size());
+        return fmt::format_to(context.out(), "ModuleIncompleteStructuralTerminationResult(unknown, {} surviving rules)", result.surviving_rules.size());
     }
 };
 
@@ -98,7 +94,5 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ModuleProgramIncompleteStructuralT
                               result.recursive_call_rules.size());
     }
 };
-
-#endif
 
 #endif

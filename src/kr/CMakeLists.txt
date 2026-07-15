@@ -1,6 +1,12 @@
 add_library(kr SHARED
+    task_context.cpp
+    dl/repository.cpp
+    dl/cnf_grammar/constructor_repository.cpp
     dl/cnf_grammar/generate.cpp
     dl/cnf_grammar/translate.cpp
+    dl/cnf_grammar/translate_ext.cpp
+    dl/cnf_grammar/translate_uns.cpp
+    dl/grammar/constructor_repository.cpp
     dl/grammar/base/grammar_factory.cpp
     dl/grammar/base/parser.cpp
     dl/grammar/parser/parser.cpp

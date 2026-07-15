@@ -5,6 +5,7 @@
 #include "runir/kr/errors.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/ps/ext/canonicalization.hpp"
+#include "runir/kr/ps/ext/dl/parser/parser.hpp"
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <boost/variant/apply_visitor.hpp>
@@ -659,13 +660,12 @@ auto parse_dl(const dl_ast::RoleRegister<runir::kr::ExtFamilyTag>& node,
               runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
               const ConstructorContext& diagnostics)
 {
-    ygg::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::RegisterTag>> data(
-        resolve_reference<dl_::Register<dl_::RoleTag>, dl_::RegisterIdentifier<dl_::RoleTag>>(
-            node.reference,
-            diagnostics.references ? &diagnostics.references->role_registers : nullptr,
-            "role register",
-            repository,
-            diagnostics));
+    ygg::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::RegisterTag>> data(resolve_reference<dl_::Register<dl_::RoleTag>, dl_::RegisterIdentifier<dl_::RoleTag>>(
+        node.reference,
+        diagnostics.references ? &diagnostics.references->role_registers : nullptr,
+        "role register",
+        repository,
+        diagnostics));
     return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
 }
 
@@ -675,12 +675,12 @@ auto parse_dl(const dl_ast::RoleArgument<runir::kr::ExtFamilyTag>& node,
               const ConstructorContext& diagnostics)
 {
     ygg::Data<dl_::Role<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::RoleTag>>> data(
-        resolve_reference<dl_::Argument<dl_::RoleTag>, dl_::ArgumentIdentifier<dl_::RoleTag>>(
-            node.reference,
-            diagnostics.references ? &diagnostics.references->role_arguments : nullptr,
-            "role argument",
-            repository,
-            diagnostics));
+        resolve_reference<dl_::Argument<dl_::RoleTag>, dl_::ArgumentIdentifier<dl_::RoleTag>>(node.reference,
+                                                                                              diagnostics.references ? &diagnostics.references->role_arguments :
+                                                                                                                       nullptr,
+                                                                                              "role argument",
+                                                                                              repository,
+                                                                                              diagnostics));
     return intern_constructor<dl_::RoleTag>(repository, intern_dl(repository, data).get_index());
 }
 
@@ -1473,8 +1473,7 @@ auto parse_rule(Repository& repository,
                     data.callee = intern(repository, symbol_data).get_index();
                 }
                 for (const auto& argument : concrete.arguments)
-                    data.arguments.push_back(
-                        parse_call_argument(argument, concept_features, role_features, boolean_features, numerical_features, diagnostics));
+                    data.arguments.push_back(parse_call_argument(argument, concept_features, role_features, boolean_features, numerical_features, diagnostics));
                 return intern_rule_variant(repository, data, symbol);
             }
         },
@@ -1649,8 +1648,7 @@ ModuleView lower_module(const ast::Module& ast,
     for (const auto& feature : ast.features)
     {
         boost::apply_visitor(
-            [&](const auto& concrete)
-            {
+            [&](const auto& concrete) {
                 append_feature(repository,
                                data,
                                concrete,

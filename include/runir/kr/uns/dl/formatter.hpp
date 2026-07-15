@@ -40,13 +40,11 @@ std::string feature(ygg::View<ygg::Index<runir::kr::uns::dl::Feature>, C> view)
 
 }  // namespace runir::kr::uns::dl::format
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::uns::dl::Feature>, C>> : fmt::formatter<std::string_view>
 {
     using View = ygg::View<ygg::Index<runir::kr::uns::dl::Feature>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::uns::dl::format::feature(view), ctx); }
 };
-#endif
 
 #endif

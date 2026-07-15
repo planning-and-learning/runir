@@ -120,6 +120,15 @@ private:
     }
 };
 
+#ifndef RUNIR_HEADER_INSTANTIATION
+
+extern template class EvaluationContext<tyr::planning::GroundTag>;
+extern template class EvaluationContext<tyr::planning::LiftedTag>;
+extern template class SuccessorExpander<tyr::planning::GroundTag>;
+extern template class SuccessorExpander<tyr::planning::LiftedTag>;
+
+#endif
+
 }  // namespace runir::kr::ps::base
 
 #endif

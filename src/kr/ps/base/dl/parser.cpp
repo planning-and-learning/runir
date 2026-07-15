@@ -4,6 +4,7 @@
 #include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/parser/parser.hpp"
 #include "runir/kr/ps/base/canonicalization.hpp"
+#include "runir/kr/ps/base/dl/parser/parser.hpp"
 #include "runir/kr/ps/base/dl/parser/parsers.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 

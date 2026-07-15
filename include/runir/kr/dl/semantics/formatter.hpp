@@ -255,7 +255,6 @@ class View<Index<runir::kr::dl::semantics::Denotation<Category>>, C>;
 
 }  // namespace ygg
 
-#if RUNIR_ENABLE_FMT_FORMATTERS
 template<runir::kr::dl::CategoryTag Category, typename C, typename Char>
 struct fmt::range_format_kind<ygg::View<ygg::Index<runir::kr::dl::semantics::Denotation<Category>>, C>, Char, void> : std::false_type
 {
@@ -318,6 +317,5 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::semantics::Denotation<
         return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::format::denotation(view), ctx);
     }
 };
-#endif
 
 #endif

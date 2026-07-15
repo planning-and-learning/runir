@@ -4,7 +4,8 @@
 #include <filesystem>
 #include <runir/datasets/task_class.hpp>
 #include <tyr/formalism/planning/parser.hpp>
-#include <tyr/planning/planning.hpp>
+#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/execution/onetbb.hpp>

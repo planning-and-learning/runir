@@ -22,10 +22,10 @@
 #include <memory>
 #include <tuple>
 #include <type_traits>
-#include <tyr/planning/planning.hpp>
-#include <yggdrasil/execution/onetbb.hpp>
+#include <tyr/planning/factory.hpp>
 #include <utility>
 #include <vector>
+#include <yggdrasil/execution/onetbb.hpp>
 
 namespace runir::datasets
 {

@@ -13,6 +13,8 @@
 
 #include <memory>
 #include <stdexcept>
+#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/task.hpp>
 #include <utility>
 
 namespace runir::kr
@@ -63,6 +65,11 @@ private:
     {
     }
 };
+
+#ifndef RUNIR_HEADER_INSTANTIATION
+extern template struct TaskContext<tyr::planning::GroundTag>;
+extern template struct TaskContext<tyr::planning::LiftedTag>;
+#endif
 
 template<tyr::planning::TaskKind Kind>
 using TaskContextPtr = std::shared_ptr<TaskContext<Kind>>;

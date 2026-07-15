@@ -320,6 +320,13 @@ private:
     EvaluationEnvironment<Kind> m_environment;
 };
 
+#ifndef RUNIR_HEADER_INSTANTIATION
+
+extern template class SuccessorExpander<tyr::planning::GroundTag>;
+extern template class SuccessorExpander<tyr::planning::LiftedTag>;
+
+#endif
+
 }  // namespace runir::kr::ps::ext
 
 #endif

@@ -1,13 +1,14 @@
 #include "module.hpp"
 
+#include <memory>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/vector.h>
 #include <runir/datasets/task_class.hpp>
-#include <yggdrasil/python/type_casters.hpp>
-
-#include <memory>
+#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <yggdrasil/execution/onetbb.hpp>
+#include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::datasets
 {
@@ -31,7 +32,7 @@ void bind_task_class_for_kind(nb::module_& m, const char* prefix)
     nb::class_<TaskSearchContextT>(m, (std::string(prefix) + "TaskSearchContext").c_str())  //
         .def(nb::new_([]() { return TaskSearchContextT::create(); }))
         .def(nb::new_([](tyr::planning::TaskPtr<Kind> task, ygg::ExecutionContextPtr execution_context)
-             { return TaskSearchContextT::create(std::move(task), std::move(execution_context)); }),
+                      { return TaskSearchContextT::create(std::move(task), std::move(execution_context)); }),
              "task"_a,
              "execution_context"_a)
         .def_rw("task", &TaskSearchContextT::task)

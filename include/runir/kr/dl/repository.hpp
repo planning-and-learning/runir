@@ -171,6 +171,12 @@ public:
     }
 };
 
+#ifndef RUNIR_HEADER_INSTANTIATION
+extern template class BasicConstructorRepositoryFactory<runir::kr::BaseFamilyTag>;
+extern template class BasicConstructorRepositoryFactory<runir::kr::ExtFamilyTag>;
+extern template class BasicConstructorRepositoryFactory<runir::kr::UnsFamilyTag>;
+#endif
+
 template<FamilyTag Family>
 using ConstructorRepositoryFactoryFor = BasicConstructorRepositoryFactory<Family>;
 

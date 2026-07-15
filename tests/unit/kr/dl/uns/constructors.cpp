@@ -12,7 +12,8 @@
 #include <runir/kr/dl/semantics/uns/evaluation.hpp>
 #include <string>
 #include <tyr/formalism/planning/parser.hpp>
-#include <tyr/planning/planning.hpp>
+#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/task.hpp>
 #include <yggdrasil/execution/onetbb.hpp>
 
 namespace runir::tests

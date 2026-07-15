@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_BASE_DL_PARSER_HPP_
 #define RUNIR_KR_PS_BASE_DL_PARSER_HPP_
 
-#include "runir/kr/ps/base/dl/parser/parser.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 
 #include <string>
