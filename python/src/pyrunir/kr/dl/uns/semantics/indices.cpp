@@ -1,9 +1,9 @@
 #include "module.hpp"
 
-#include <nanobind/stl/string.h>
-#include <runir/kr/dl/declarations.hpp>
-#include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/denotation_index.hpp>
+#include <runir/kr/dl/boolean_index.hpp>
+#include <runir/kr/dl/concept_index.hpp>
+#include <runir/kr/dl/numerical_index.hpp>
+#include <runir/kr/dl/role_index.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::dl::uns

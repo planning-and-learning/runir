@@ -1,7 +1,9 @@
 #include "pyrunir/kr/ps/ext/dl/module.hpp"
 
-#include <runir/kr/ps/ext/datas.hpp>
+#include <runir/kr/ps/ext/dl/condition_data.hpp>
+#include <runir/kr/ps/ext/dl/effect_data.hpp>
 #include <runir/kr/ps/ext/dl/feature_data.hpp>
+#include <runir/kr/ps/ext/feature_data.hpp>
 #include <string>
 #include <yggdrasil/python/type_casters.hpp>
 

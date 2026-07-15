@@ -1,6 +1,7 @@
 #include "runir/kr/dl/grammar/grammar_factory.hpp"
 
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/grammar/constructor_repository.hpp"
 #include "runir/kr/dl/grammar/parser.hpp"
 
 #include <fmt/ranges.h>

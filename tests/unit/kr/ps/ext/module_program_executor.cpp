@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <random>
 #include <runir/datasets/task_class.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/errors.hpp>

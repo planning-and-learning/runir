@@ -2,6 +2,7 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <runir/datasets/task_class.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/uns/evaluation.hpp>

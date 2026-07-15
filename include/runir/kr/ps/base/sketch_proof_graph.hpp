@@ -4,11 +4,12 @@
 #include "runir/datasets/state_graph.hpp"
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
-#include "runir/kr/ps/base/repository.hpp"
+#include "runir/kr/ps/base/declarations.hpp"
+#include "runir/kr/ps/base/rule_view.hpp"
 
 #include <tuple>
-#include <utility>
 #include <tyr/planning/declarations.hpp>
+#include <utility>
 
 namespace runir::kr::ps::base
 {
@@ -30,11 +31,7 @@ struct SketchProofEdgeLabel
     runir::datasets::StateGraphEdgeLabel transition;
     RuleView rule;
 
-    SketchProofEdgeLabel(runir::datasets::StateGraphEdgeLabel transition_, RuleView rule_) noexcept :
-        transition(std::move(transition_)),
-        rule(rule_)
-    {
-    }
+    SketchProofEdgeLabel(runir::datasets::StateGraphEdgeLabel transition_, RuleView rule_) noexcept : transition(std::move(transition_)), rule(rule_) {}
 
     auto identifying_members() const noexcept { return std::tie(transition, rule); }
 };

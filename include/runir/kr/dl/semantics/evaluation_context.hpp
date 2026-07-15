@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/builder.hpp"
-#include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>

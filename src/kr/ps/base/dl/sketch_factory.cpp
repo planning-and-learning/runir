@@ -1,6 +1,7 @@
 #include "runir/kr/ps/base/dl/sketch_factory.hpp"
 
 #include "runir/kr/ps/base/dl/parser.hpp"
+#include "runir/kr/ps/base/repository.hpp"
 
 #include <fmt/format.h>
 #include <stdexcept>

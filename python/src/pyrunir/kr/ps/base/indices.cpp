@@ -1,6 +1,9 @@
 #include "pyrunir/kr/ps/base/module.hpp"
 
-#include <runir/kr/ps/base/repository.hpp>
+#include <runir/kr/ps/base/rule_index.hpp>
+#include <runir/kr/ps/base/sketch_index.hpp>
+#include <runir/kr/ps/condition_index.hpp>
+#include <runir/kr/ps/effect_index.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::ps::base

@@ -1,6 +1,9 @@
 #include "pyrunir/kr/ps/base/module.hpp"
 
-#include <runir/kr/ps/base/repository.hpp>
+#include <runir/kr/ps/base/condition_data.hpp>
+#include <runir/kr/ps/base/effect_data.hpp>
+#include <runir/kr/ps/base/rule_data.hpp>
+#include <runir/kr/ps/base/sketch_data.hpp>
 #include <string>
 #include <yggdrasil/python/type_casters.hpp>
 

@@ -1,5 +1,6 @@
 #include "pyrunir/kr/ps/base/module.hpp"
 
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/syntactic_complexity.hpp>
 

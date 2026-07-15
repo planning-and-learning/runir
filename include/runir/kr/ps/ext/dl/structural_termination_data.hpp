@@ -4,7 +4,10 @@
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
-#include "runir/kr/ps/ext/repository.hpp"
+#include "runir/kr/ps/ext/declarations.hpp"
+#include "runir/kr/ps/ext/memory_state_view.hpp"
+#include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/ps/feature_view.hpp"
 
 #include <boost/dynamic_bitset.hpp>
 #include <memory>
@@ -32,9 +35,7 @@ struct ModulePolicyGraphVertexLabel
     boost::dynamic_bitset<> numerical_values;
     MemoryStateView memory_state;
 
-    ModulePolicyGraphVertexLabel(boost::dynamic_bitset<> boolean_values_,
-                                 boost::dynamic_bitset<> numerical_values_,
-                                 MemoryStateView memory_state_) noexcept :
+    ModulePolicyGraphVertexLabel(boost::dynamic_bitset<> boolean_values_, boost::dynamic_bitset<> numerical_values_, MemoryStateView memory_state_) noexcept :
         boolean_values(std::move(boolean_values_)),
         numerical_values(std::move(numerical_values_)),
         memory_state(memory_state_)
@@ -67,8 +68,8 @@ using ModulePolicyGraph = graphs::StaticGraph<ModulePolicyGraphVertexLabel, Modu
 struct ModuleStructuralTerminationResult
 {
     StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
-    std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>, Repository>> booleans;
-    std::vector<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>, Repository>> numericals;
+    std::vector<BooleanFeatureView> booleans;
+    std::vector<NumericalFeatureView> numericals;
     std::shared_ptr<ModulePolicyGraph> counterexample;  ///< nullptr iff terminating.
 
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }

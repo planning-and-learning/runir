@@ -4,7 +4,8 @@
 #include "runir/graphs/declarations.hpp"
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/ps/ext/module_program_proof_graph.hpp"
-#include "runir/kr/uns/repository.hpp"
+#include "runir/kr/uns/classifier_view.hpp"
+#include "runir/kr/uns/declarations.hpp"
 
 #include <chrono>
 #include <cstdint>

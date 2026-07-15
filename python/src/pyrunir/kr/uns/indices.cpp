@@ -1,6 +1,7 @@
 #include "pyrunir/kr/uns/module.hpp"
 
-#include <runir/kr/uns/repository.hpp>
+#include <runir/kr/uns/classifier_index.hpp>
+#include <runir/kr/uns/feature_index.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::uns

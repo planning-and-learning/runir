@@ -2,6 +2,7 @@
 
 #include <nanobind/stl/string.h>
 #include <runir/kr/ps/base/dl/parser.hpp>
+#include <runir/kr/ps/base/repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 
 namespace runir::kr::ps::base::dl

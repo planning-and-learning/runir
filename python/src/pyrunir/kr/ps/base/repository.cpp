@@ -3,6 +3,7 @@
 #include <memory>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 
 namespace runir::kr::ps::base

@@ -1,7 +1,8 @@
 #ifndef RUNIR_KR_PS_EXT_EXECUTION_REPOSITORY_HPP_
 #define RUNIR_KR_PS_EXT_EXECUTION_REPOSITORY_HPP_
 
-#include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/ps/ext/execution_canonicalization.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 
@@ -19,9 +20,6 @@ namespace runir::kr::ps::ext
 
 template<tyr::planning::TaskKind Kind>
 using ExecutionSymbolRepository = ygg::formalism::SymbolRepository<RegisterValues, CallArguments, CallStack, ExecutionState<Kind>>;
-
-template<tyr::planning::TaskKind Kind>
-class ExecutionRepositoryFactory;
 
 template<tyr::planning::TaskKind Kind>
 class ExecutionRepository
@@ -116,9 +114,6 @@ public:
             new ExecutionRepository<Kind>(m_next_index++, std::move(state_repository), std::move(denotation_repository), std::move(program_repository)));
     }
 };
-
-template<tyr::planning::TaskKind Kind>
-using ExecutionRepositoryFactoryPtr = std::shared_ptr<ExecutionRepositoryFactory<Kind>>;
 
 }  // namespace runir::kr::ps::ext
 

@@ -1,8 +1,9 @@
 #include "runir/kr/dl/cnf_grammar/generate.hpp"
 
 #include "runir/kr/dl/canonicalization.hpp"
-#include "runir/kr/dl/cnf_grammar/generate.hpp"
+#include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
 #include "runir/kr/dl/datas.hpp"
+#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/base/evaluation_context.hpp"
 #include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"

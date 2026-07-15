@@ -1,7 +1,9 @@
 #ifndef RUNIR_KR_PS_EXT_DL_INCOMPLETE_STRUCTURAL_TERMINATION_DATA_HPP_
 #define RUNIR_KR_PS_EXT_DL_INCOMPLETE_STRUCTURAL_TERMINATION_DATA_HPP_
 
-#include "runir/kr/ps/ext/repository.hpp"
+#include "runir/kr/ps/ext/declarations.hpp"
+#include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/ps/feature_view.hpp"
 
 #include <variant>
 #include <vector>
@@ -15,9 +17,6 @@ enum class IncompleteStructuralTerminationStatus
     TERMINATING,
     UNKNOWN,
 };
-
-using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>, Repository>;
-using NumericalFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>, Repository>;
 
 struct IncompleteBlockingReason
 {

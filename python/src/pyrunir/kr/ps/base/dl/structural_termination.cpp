@@ -7,6 +7,7 @@
 #include <pyrunir/graphs/graph.hpp>
 #include <runir/kr/ps/base/dl/incomplete_structural_termination.hpp>
 #include <runir/kr/ps/base/dl/structural_termination.hpp>
+#include <runir/kr/ps/base/repository.hpp>
 #include <vector>
 #include <yggdrasil/python/type_casters.hpp>
 

@@ -1,5 +1,6 @@
 #include "runir/graphs/algorithms.hpp"
 #include "runir/kr/ps/ext/dl/structural_termination.hpp"
+#include "runir/kr/ps/ext/repository.hpp"
 #include "structural_termination/detail.hpp"
 
 #include <optional>

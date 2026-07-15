@@ -1,10 +1,10 @@
 #ifndef RUNIR_KR_PS_EXT_DL_MODULE_FACTORY_HPP_
 #define RUNIR_KR_PS_EXT_DL_MODULE_FACTORY_HPP_
 
-#include "runir/kr/ps/ext/repository.hpp"
+#include "runir/kr/ps/ext/declarations.hpp"
 
 #include <string>
-#include <tyr/formalism/planning/domain_view.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 #include <vector>
 
 namespace runir::kr::ps::ext::dl

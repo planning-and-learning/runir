@@ -2,10 +2,12 @@
 
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/grammar/parser/parser.hpp"
+#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/errors.hpp"
 #include "runir/kr/parser/diagnostics.hpp"
 #include "runir/kr/ps/ext/canonicalization.hpp"
 #include "runir/kr/ps/ext/dl/parser/parser.hpp"
+#include "runir/kr/ps/ext/repository.hpp"
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <boost/variant/apply_visitor.hpp>

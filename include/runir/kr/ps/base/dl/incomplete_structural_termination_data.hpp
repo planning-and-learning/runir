@@ -1,7 +1,9 @@
 #ifndef RUNIR_KR_PS_BASE_DL_INCOMPLETE_STRUCTURAL_TERMINATION_DATA_HPP_
 #define RUNIR_KR_PS_BASE_DL_INCOMPLETE_STRUCTURAL_TERMINATION_DATA_HPP_
 
-#include "runir/kr/ps/base/repository.hpp"
+#include "runir/kr/ps/base/declarations.hpp"
+#include "runir/kr/ps/base/rule_view.hpp"
+#include "runir/kr/ps/feature_view.hpp"
 
 #include <variant>
 #include <vector>
@@ -15,9 +17,6 @@ enum class IncompleteStructuralTerminationStatus
     TERMINATING,
     UNKNOWN,
 };
-
-using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>, Repository>;
-using NumericalFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>, Repository>;
 
 /// Why one elimination attempt for a surviving rule is blocked.
 struct IncompleteBlockingReason

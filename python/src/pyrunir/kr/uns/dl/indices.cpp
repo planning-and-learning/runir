@@ -1,6 +1,6 @@
 #include "module.hpp"
 
-#include <runir/kr/uns/repository.hpp>
+#include <runir/kr/uns/dl/feature_index.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::uns::dl

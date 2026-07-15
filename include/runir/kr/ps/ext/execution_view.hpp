@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_EXECUTION_VIEW_HPP_
 #define RUNIR_KR_PS_EXT_EXECUTION_VIEW_HPP_
 
+#include "runir/kr/dl/semantics/denotation_view.hpp"
 #include "runir/kr/ps/ext/execution_repository.hpp"
 
 #include <concepts>
@@ -136,22 +137,5 @@ public:
 };
 
 }  // namespace ygg
-
-namespace runir::kr::ps::ext
-{
-
-template<tyr::planning::TaskKind Kind>
-using RegisterValuesView = ygg::View<ygg::Index<RegisterValues>, ExecutionRepository<Kind>>;
-
-template<tyr::planning::TaskKind Kind>
-using CallArgumentsView = ygg::View<ygg::Index<CallArguments>, ExecutionRepository<Kind>>;
-
-template<tyr::planning::TaskKind Kind>
-using CallStackView = ygg::View<ygg::Index<CallStack>, ExecutionRepository<Kind>>;
-
-template<tyr::planning::TaskKind Kind>
-using ExecutionStateView = ygg::View<ygg::Index<ExecutionState<Kind>>, ExecutionRepository<Kind>>;
-
-}  // namespace runir::kr::ps::ext
 
 #endif

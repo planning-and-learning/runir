@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_PS_EXT_DL_INCOMPLETE_STRUCTURAL_TERMINATION_HPP_
 #define RUNIR_KR_PS_EXT_DL_INCOMPLETE_STRUCTURAL_TERMINATION_HPP_
 
+#include "runir/kr/ps/ext/declarations.hpp"
 #include "runir/kr/ps/ext/dl/incomplete_structural_termination_data.hpp"
-#include "runir/kr/ps/ext/module_program_view.hpp"
 
 namespace runir::kr::ps::ext::dl
 {

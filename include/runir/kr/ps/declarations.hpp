@@ -53,6 +53,14 @@ struct ConcreteEffectVariant;
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag, typename ObservationTag>
 struct ConcreteEffect;
 
+// Repository
+
+template<FamilyTag Family, typename RepositoryTypes, typename DlRepositoryPtr>
+class BasicRepository;
+
+template<FamilyTag Family, typename RepositoryTypes, typename DlRepositoryPtr>
+class BasicRepositoryFactory;
+
 }  // namespace runir::kr::ps
 
 #endif

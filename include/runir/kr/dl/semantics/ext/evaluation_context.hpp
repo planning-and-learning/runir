@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/register_index.hpp"
+#include "runir/kr/dl/semantics/denotation_view.hpp"
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
 
 #include <array>
@@ -78,8 +79,7 @@ private:
 struct Registers
 {
     std::array<std::optional<tyr::formalism::planning::ObjectView>, runir::kr::dl::num_registers> concept_registers;
-    std::array<std::optional<std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>>,
-               runir::kr::dl::num_registers>
+    std::array<std::optional<std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>>, runir::kr::dl::num_registers>
         role_registers;
 
     template<CategoryTag Category>
@@ -116,14 +116,9 @@ struct Registers
         return get<Category>()[verify_bounds(reg)];
     }
 
-    void set(RegisterIdentifier<ConceptTag> reg, tyr::formalism::planning::ObjectView object)
-    {
-        at(reg) = std::move(object);
-    }
+    void set(RegisterIdentifier<ConceptTag> reg, tyr::formalism::planning::ObjectView object) { at(reg) = std::move(object); }
 
-    void set(RegisterIdentifier<RoleTag> reg,
-             tyr::formalism::planning::ObjectView source,
-             tyr::formalism::planning::ObjectView target)
+    void set(RegisterIdentifier<RoleTag> reg, tyr::formalism::planning::ObjectView source, tyr::formalism::planning::ObjectView target)
     {
         at(reg) = std::pair(std::move(source), std::move(target));
     }
@@ -135,8 +130,8 @@ struct Registers
     }
 
     auto identifying_members() const noexcept { return std::tie(concept_registers, role_registers); }
-private:
 
+private:
     template<CategoryTag Category>
     size_t verify_bounds(RegisterIdentifier<Category> reg) const
     {

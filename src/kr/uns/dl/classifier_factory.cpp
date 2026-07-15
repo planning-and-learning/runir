@@ -1,6 +1,7 @@
 #include "runir/kr/uns/dl/classifier_factory.hpp"
 
 #include "runir/kr/uns/classifier_data.hpp"
+#include "runir/kr/uns/repository.hpp"
 
 #include <string>
 

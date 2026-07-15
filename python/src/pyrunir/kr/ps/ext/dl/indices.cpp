@@ -1,6 +1,10 @@
 #include "pyrunir/kr/ps/ext/dl/module.hpp"
 
-#include <runir/kr/ps/ext/repository.hpp>
+#include <runir/kr/dl/declarations.hpp>
+#include <runir/kr/ps/condition_index.hpp>
+#include <runir/kr/ps/dl/declarations.hpp>
+#include <runir/kr/ps/effect_index.hpp>
+#include <runir/kr/ps/feature_index.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::ps::ext::dl

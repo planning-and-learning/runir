@@ -1,6 +1,7 @@
 #include "module.hpp"
 
 #include <nanobind/stl/string.h>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/uns/evaluation_context.hpp>
 #include <runir/kr/uns/dl/evaluation.hpp>
 #include <runir/kr/uns/dl/formatter.hpp>

@@ -1,12 +1,12 @@
 #ifndef RUNIR_KR_PS_BASE_DL_FEATURE_VIEW_HPP_
 #define RUNIR_KR_PS_BASE_DL_FEATURE_VIEW_HPP_
 
-#include "runir/kr/ps/base/dl/evaluation_context.hpp"
+#include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/ps/base/dl/feature_data.hpp"
 
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/containers/variant.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {

@@ -1,7 +1,8 @@
 #include "module.hpp"
 
-#include <runir/kr/dl/indices.hpp>
-#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/argument_index.hpp>
+#include <runir/kr/dl/constructor_index.hpp>
+#include <runir/kr/dl/register_index.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::dl::ext

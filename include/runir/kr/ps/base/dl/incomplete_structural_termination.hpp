@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_PS_BASE_DL_INCOMPLETE_STRUCTURAL_TERMINATION_HPP_
 #define RUNIR_KR_PS_BASE_DL_INCOMPLETE_STRUCTURAL_TERMINATION_HPP_
 
+#include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/base/dl/incomplete_structural_termination_data.hpp"
-#include "runir/kr/ps/base/repository.hpp"
 
 namespace runir::kr::ps::base::dl
 {

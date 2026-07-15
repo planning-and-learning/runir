@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/uns/repository.hpp>
 
 namespace runir::kr::uns

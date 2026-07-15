@@ -2,8 +2,8 @@
 #define RUNIR_SEMANTICS_DENOTATION_REPOSITORY_HPP_
 
 #include "runir/config.hpp"
-#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/canonicalization.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 #include "runir/kr/dl/semantics/denotation_index.hpp"
@@ -101,12 +101,6 @@ public:
     const auto& get_vector_repository() const noexcept { return m_vector_repository; }
     auto& get_vector_repository() noexcept { return m_vector_repository; }
 };
-
-template<CategoryTag Category>
-using DenotationView = ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>;
-
-using ConceptDenotationView = DenotationView<ConceptTag>;
-using DenotationRepositoryPtr = std::shared_ptr<DenotationRepository>;
 
 class DenotationRepositoryFactory
 {

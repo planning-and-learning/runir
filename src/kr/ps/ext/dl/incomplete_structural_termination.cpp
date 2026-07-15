@@ -1,5 +1,6 @@
 #include "runir/kr/ps/ext/dl/incomplete_structural_termination.hpp"
 
+#include "runir/kr/ps/ext/repository.hpp"
 #include "structural_termination/detail.hpp"
 
 #include <utility>

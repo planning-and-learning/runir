@@ -8,6 +8,7 @@
 #include "runir/kr/ps/base/dl/feature_view.hpp"
 #include "runir/kr/ps/base/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/base/dl/structural_termination_data.hpp"
+#include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/dl/formatter.hpp"
 
 #include <fmt/format.h>

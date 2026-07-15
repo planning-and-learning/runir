@@ -2,11 +2,14 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/formatter.hpp>
 #include <runir/kr/dl/cnf_grammar/translate.hpp>
+#include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/formatter.hpp>
 #include <runir/kr/dl/grammar/grammar_factory.hpp>
 #include <runir/kr/dl/grammar/parser.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/formatter.hpp>

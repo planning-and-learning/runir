@@ -6,17 +6,14 @@
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/register_view.hpp"
-#include "runir/kr/dl/semantics/datas.hpp"
-#include "runir/kr/dl/semantics/views.hpp"
+#include "runir/kr/dl/semantics/constructor_view.hpp"
 
 #include <cassert>
 #include <memory>
 #include <optional>
 #include <type_traits>
-#include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
-#include <vector>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
@@ -151,12 +148,6 @@ public:
 };
 
 template<FamilyTag Family>
-using ConstructorRepositoryFor = BasicConstructorRepository<Family>;
-
-template<FamilyTag Family>
-using ConstructorRepositoryPtrFor = std::shared_ptr<ConstructorRepositoryFor<Family>>;
-
-template<FamilyTag Family>
 class BasicConstructorRepositoryFactory
 {
 private:
@@ -176,103 +167,6 @@ extern template class BasicConstructorRepositoryFactory<runir::kr::BaseFamilyTag
 extern template class BasicConstructorRepositoryFactory<runir::kr::ExtFamilyTag>;
 extern template class BasicConstructorRepositoryFactory<runir::kr::UnsFamilyTag>;
 #endif
-
-template<FamilyTag Family>
-using ConstructorRepositoryFactoryFor = BasicConstructorRepositoryFactory<Family>;
-
-template<FamilyTag Family, typename Tag>
-    requires FamilyConceptConstructorTag<Family, Tag>
-using FamilyConceptView = ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, ConstructorRepositoryFor<Family>>;
-
-template<FamilyTag Family, typename Tag>
-    requires FamilyRoleConstructorTag<Family, Tag>
-using FamilyRoleView = ygg::View<ygg::Index<FamilyRole<Family, Tag>>, ConstructorRepositoryFor<Family>>;
-
-template<FamilyTag Family, typename Tag>
-    requires FamilyBooleanConstructorTag<Family, Tag>
-using FamilyBooleanView = ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, ConstructorRepositoryFor<Family>>;
-
-template<FamilyTag Family, typename Tag>
-    requires FamilyNumericalConstructorTag<Family, Tag>
-using FamilyNumericalView = ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, ConstructorRepositoryFor<Family>>;
-
-template<FamilyTag Family, CategoryTag Category>
-using FamilyConstructorView = ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, ConstructorRepositoryFor<Family>>;
-
-using BaseConstructorRepository = ConstructorRepositoryFor<runir::kr::BaseFamilyTag>;
-using BaseConstructorRepositoryPtr = ConstructorRepositoryPtrFor<runir::kr::BaseFamilyTag>;
-using BaseConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::BaseFamilyTag>;
-
-using ExtConstructorRepository = ConstructorRepositoryFor<runir::kr::ExtFamilyTag>;
-using ExtConstructorRepositoryPtr = ConstructorRepositoryPtrFor<runir::kr::ExtFamilyTag>;
-using ExtConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::ExtFamilyTag>;
-
-template<CategoryTag Category>
-using ArgumentView = ygg::View<ygg::Index<Argument<Category>>, ExtConstructorRepository>;
-
-template<CategoryTag Category>
-using RegisterView = ygg::View<ygg::Index<Register<Category>>, ExtConstructorRepository>;
-
-using UnsConstructorRepository = ConstructorRepositoryFor<runir::kr::UnsFamilyTag>;
-using UnsConstructorRepositoryPtr = ConstructorRepositoryPtrFor<runir::kr::UnsFamilyTag>;
-using UnsConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::UnsFamilyTag>;
-
-template<typename Tag>
-    requires FamilyConceptConstructorTag<runir::kr::BaseFamilyTag, Tag>
-using BaseConceptView = FamilyConceptView<runir::kr::BaseFamilyTag, Tag>;
-
-template<typename Tag>
-    requires FamilyRoleConstructorTag<runir::kr::BaseFamilyTag, Tag>
-using BaseRoleView = FamilyRoleView<runir::kr::BaseFamilyTag, Tag>;
-
-template<typename Tag>
-    requires FamilyBooleanConstructorTag<runir::kr::BaseFamilyTag, Tag>
-using BaseBooleanView = FamilyBooleanView<runir::kr::BaseFamilyTag, Tag>;
-
-template<typename Tag>
-    requires FamilyNumericalConstructorTag<runir::kr::BaseFamilyTag, Tag>
-using BaseNumericalView = FamilyNumericalView<runir::kr::BaseFamilyTag, Tag>;
-
-template<CategoryTag Category>
-using BaseConstructorView = FamilyConstructorView<runir::kr::BaseFamilyTag, Category>;
-
-template<typename Tag>
-    requires FamilyConceptConstructorTag<runir::kr::ExtFamilyTag, Tag>
-using ExtConceptView = FamilyConceptView<runir::kr::ExtFamilyTag, Tag>;
-
-template<typename Tag>
-    requires FamilyRoleConstructorTag<runir::kr::ExtFamilyTag, Tag>
-using ExtRoleView = FamilyRoleView<runir::kr::ExtFamilyTag, Tag>;
-
-template<typename Tag>
-    requires FamilyBooleanConstructorTag<runir::kr::ExtFamilyTag, Tag>
-using ExtBooleanView = FamilyBooleanView<runir::kr::ExtFamilyTag, Tag>;
-
-template<typename Tag>
-    requires FamilyNumericalConstructorTag<runir::kr::ExtFamilyTag, Tag>
-using ExtNumericalView = FamilyNumericalView<runir::kr::ExtFamilyTag, Tag>;
-
-template<CategoryTag Category>
-using ExtConstructorView = FamilyConstructorView<runir::kr::ExtFamilyTag, Category>;
-
-template<typename Tag>
-    requires FamilyConceptConstructorTag<runir::kr::UnsFamilyTag, Tag>
-using UnsConceptView = FamilyConceptView<runir::kr::UnsFamilyTag, Tag>;
-
-template<typename Tag>
-    requires FamilyRoleConstructorTag<runir::kr::UnsFamilyTag, Tag>
-using UnsRoleView = FamilyRoleView<runir::kr::UnsFamilyTag, Tag>;
-
-template<typename Tag>
-    requires FamilyBooleanConstructorTag<runir::kr::UnsFamilyTag, Tag>
-using UnsBooleanView = FamilyBooleanView<runir::kr::UnsFamilyTag, Tag>;
-
-template<typename Tag>
-    requires FamilyNumericalConstructorTag<runir::kr::UnsFamilyTag, Tag>
-using UnsNumericalView = FamilyNumericalView<runir::kr::UnsFamilyTag, Tag>;
-
-template<CategoryTag Category>
-using UnsConstructorView = FamilyConstructorView<runir::kr::UnsFamilyTag, Category>;
 
 template<FamilyTag Family>
 inline const ConstructorRepositoryFor<Family>& get_repository(const ConstructorRepositoryFor<Family>& repository) noexcept

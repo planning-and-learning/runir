@@ -3,8 +3,10 @@
 #include <nanobind/stl/chrono.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/vector.h>
+#include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/generate.hpp>
 #include <runir/kr/dl/datas.hpp>
+#include <runir/kr/dl/repository.hpp>
 #include <tyr/planning/ground/state_view.hpp>
 #include <tyr/planning/lifted/state_view.hpp>
 

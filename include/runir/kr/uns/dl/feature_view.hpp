@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_UNS_DL_FEATURE_VIEW_HPP_
 #define RUNIR_KR_UNS_DL_FEATURE_VIEW_HPP_
 
+#include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/uns/dl/feature_data.hpp"
 
 #include <tuple>

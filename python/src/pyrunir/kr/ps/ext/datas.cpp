@@ -1,6 +1,13 @@
 #include "pyrunir/kr/ps/ext/module.hpp"
 
-#include <runir/kr/ps/ext/datas.hpp>
+#include <runir/kr/ps/ext/condition_data.hpp>
+#include <runir/kr/ps/ext/effect_data.hpp>
+#include <runir/kr/ps/ext/memory_state_data.hpp>
+#include <runir/kr/ps/ext/module_data.hpp>
+#include <runir/kr/ps/ext/module_program_data.hpp>
+#include <runir/kr/ps/ext/module_symbol_data.hpp>
+#include <runir/kr/ps/ext/rule_data.hpp>
+#include <runir/kr/ps/ext/rule_variant_data.hpp>
 #include <string>
 #include <yggdrasil/python/type_casters.hpp>
 

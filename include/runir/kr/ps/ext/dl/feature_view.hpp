@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DL_FEATURE_VIEW_HPP_
 #define RUNIR_KR_PS_EXT_DL_FEATURE_VIEW_HPP_
 
-#include "runir/kr/ps/ext/dl/evaluation_context.hpp"
+#include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/ps/ext/dl/feature_data.hpp"
 
 #include <concepts>
@@ -19,7 +19,11 @@ private:
     Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>> handle, const C& context) noexcept :
+        m_context(&context),
+        m_handle(handle)
+    {
+    }
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

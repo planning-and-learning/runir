@@ -1,5 +1,6 @@
 #include "runir/kr/ps/ext/dl/structural_termination.hpp"
 
+#include "runir/kr/ps/ext/module_view.hpp"
 #include "structural_termination/detail.hpp"
 
 namespace runir::kr::ps::ext::dl

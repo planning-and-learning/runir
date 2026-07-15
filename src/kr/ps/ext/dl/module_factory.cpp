@@ -2,6 +2,7 @@
 
 #include "runir/kr/ps/ext/canonicalization.hpp"
 #include "runir/kr/ps/ext/dl/parser.hpp"
+#include "runir/kr/ps/ext/repository.hpp"
 
 #include <fmt/format.h>
 #include <stdexcept>

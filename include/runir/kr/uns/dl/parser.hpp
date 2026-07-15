@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_UNS_DL_PARSER_HPP_
 #define RUNIR_KR_UNS_DL_PARSER_HPP_
 
-#include "runir/kr/uns/repository.hpp"
+#include "runir/kr/uns/declarations.hpp"
 
 #include <string>
 #include <tyr/formalism/planning/repository.hpp>

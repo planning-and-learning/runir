@@ -1,6 +1,13 @@
 #include "pyrunir/kr/ps/ext/module.hpp"
 
-#include <runir/kr/ps/ext/repository.hpp>
+#include <runir/kr/ps/condition_index.hpp>
+#include <runir/kr/ps/effect_index.hpp>
+#include <runir/kr/ps/ext/memory_state_index.hpp>
+#include <runir/kr/ps/ext/module_index.hpp>
+#include <runir/kr/ps/ext/module_program_index.hpp>
+#include <runir/kr/ps/ext/module_symbol_index.hpp>
+#include <runir/kr/ps/ext/rule_index.hpp>
+#include <runir/kr/ps/ext/rule_variant_index.hpp>
 #include <yggdrasil/python/bindings.hpp>
 
 namespace runir::kr::ps::ext

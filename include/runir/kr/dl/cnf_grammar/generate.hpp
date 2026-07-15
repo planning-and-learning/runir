@@ -1,8 +1,9 @@
 #ifndef RUNIR_KR_DL_CNF_GRAMMAR_GENERATE_HPP_
 #define RUNIR_KR_DL_CNF_GRAMMAR_GENERATE_HPP_
 
-#include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
-#include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/cnf_grammar/declarations.hpp"
+#include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/constructor_view.hpp"
 
 #include <chrono>
 #include <concepts>

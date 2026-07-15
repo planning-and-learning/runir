@@ -1,4 +1,6 @@
 #include "detail.hpp"
+#include "runir/kr/dl/repository.hpp"
+#include "runir/kr/ps/ext/repository.hpp"
 
 #include <algorithm>
 #include <stdexcept>

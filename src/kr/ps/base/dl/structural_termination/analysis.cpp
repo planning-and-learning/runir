@@ -1,6 +1,7 @@
 #include "detail.hpp"
 #include "runir/kr/ps/base/dl/condition_view.hpp"
 #include "runir/kr/ps/base/dl/effect_view.hpp"
+#include "runir/kr/ps/base/repository.hpp"
 
 #include <algorithm>
 

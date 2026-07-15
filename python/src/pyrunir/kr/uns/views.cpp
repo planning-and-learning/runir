@@ -1,6 +1,7 @@
 #include "pyrunir/kr/uns/module.hpp"
 
 #include <nanobind/stl/string.h>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/uns/evaluation_context.hpp>
 #include <runir/kr/uns/classify.hpp>
 #include <runir/kr/uns/formatter.hpp>

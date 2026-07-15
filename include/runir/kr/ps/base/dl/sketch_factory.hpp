@@ -1,10 +1,10 @@
 #ifndef RUNIR_KR_PS_BASE_DL_SKETCH_FACTORY_HPP_
 #define RUNIR_KR_PS_BASE_DL_SKETCH_FACTORY_HPP_
 
-#include "runir/kr/ps/base/repository.hpp"
+#include "runir/kr/ps/base/declarations.hpp"
 
 #include <string>
-#include <tyr/formalism/planning/domain_view.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 
 namespace runir::kr::ps::base::dl
 {

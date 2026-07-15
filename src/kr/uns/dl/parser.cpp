@@ -5,6 +5,7 @@
 #include "runir/kr/parser/parser.hpp"
 #include "runir/kr/uns/dl/parser/parser.hpp"
 #include "runir/kr/uns/dl/parser/parsers.hpp"
+#include "runir/kr/uns/repository.hpp"
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <boost/variant/apply_visitor.hpp>

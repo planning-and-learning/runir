@@ -1,6 +1,8 @@
 #include "module.hpp"
 
+#include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/translate.hpp>
+#include <runir/kr/dl/grammar/constructor_repository.hpp>
 
 namespace runir::kr::dl::base
 {

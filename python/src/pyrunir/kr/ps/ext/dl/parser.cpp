@@ -3,6 +3,7 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <runir/kr/ps/ext/dl/parser.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 
 namespace runir::kr::ps::ext::dl

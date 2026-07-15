@@ -1,11 +1,10 @@
 #ifndef RUNIR_KR_DL_GRAMMAR_GRAMMAR_FACTORY_HPP_
 #define RUNIR_KR_DL_GRAMMAR_GRAMMAR_FACTORY_HPP_
 
-#include "runir/kr/dl/grammar/constructor_repository.hpp"
-#include "runir/kr/dl/grammar/parser.hpp"
+#include "runir/kr/dl/grammar/declarations.hpp"
 
 #include <string>
-#include <tyr/formalism/planning/domain_view.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 
 namespace runir::kr::dl::grammar
 {
@@ -18,9 +17,8 @@ enum class GrammarSpecification
 class GrammarFactory
 {
 public:
-    static FamilyGrammarView<runir::kr::BaseFamilyTag> create(GrammarSpecification specification,
-                                                              tyr::formalism::planning::DomainView domain,
-                                                              ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository);
+    static FamilyGrammarView<runir::kr::BaseFamilyTag>
+    create(GrammarSpecification specification, tyr::formalism::planning::DomainView domain, ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository);
 
     static std::string create_description(GrammarSpecification specification, tyr::formalism::planning::DomainView domain);
 

@@ -1,6 +1,6 @@
 #include "pyrunir/kr/uns/dl/module.hpp"
 
-#include <runir/kr/uns/repository.hpp>
+#include <runir/kr/uns/dl/feature_data.hpp>
 #include <string>
 #include <yggdrasil/python/type_casters.hpp>
 

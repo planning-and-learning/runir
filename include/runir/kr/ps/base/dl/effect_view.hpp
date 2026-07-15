@@ -2,7 +2,6 @@
 #define RUNIR_KR_PS_BASE_DL_EFFECT_VIEW_HPP_
 
 #include "runir/kr/ps/base/dl/effect_data.hpp"
-#include "runir/kr/ps/base/dl/evaluation_context.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
 #include <concepts>

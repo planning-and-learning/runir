@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_UNS_DL_CLASSIFIER_FACTORY_HPP_
 #define RUNIR_KR_UNS_DL_CLASSIFIER_FACTORY_HPP_
 
-#include "runir/kr/uns/repository.hpp"
+#include "runir/kr/uns/declarations.hpp"
 
 #include <string>
 

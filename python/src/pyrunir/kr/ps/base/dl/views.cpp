@@ -2,6 +2,7 @@
 
 #include <concepts>
 #include <nanobind/stl/string.h>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_context.hpp>
 #include <runir/kr/ps/base/dl/compatibility.hpp>
 #include <runir/kr/ps/base/dl/evaluation.hpp>

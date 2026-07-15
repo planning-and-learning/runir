@@ -2,6 +2,7 @@
 
 #include <nanobind/stl/string.h>
 #include <runir/kr/uns/dl/classifier_factory.hpp>
+#include <runir/kr/uns/repository.hpp>
 
 namespace runir::kr::uns::dl
 {

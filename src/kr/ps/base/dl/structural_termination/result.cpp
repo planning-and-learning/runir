@@ -1,4 +1,5 @@
 #include "detail.hpp"
+#include "runir/kr/ps/base/repository.hpp"
 
 #include <limits>
 
