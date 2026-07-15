@@ -666,6 +666,7 @@ def test_ground_execution_views_own_their_task_and_program_contexts():
     assert isinstance(initial.call_stack, ext.GroundCallStack)
     assert isinstance(initial.call_stack.registers, ext.GroundRegisterValues)
     assert isinstance(initial.call_stack.arguments, ext.GroundCallArguments)
+    assert initial.call_stack.arguments.concept_arguments == []
     assert initial == duplicate_initial
     assert initial.call_stack == duplicate_initial.call_stack
     assert initial.call_stack.registers == duplicate_initial.call_stack.registers

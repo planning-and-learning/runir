@@ -6,6 +6,7 @@
 #include <string>
 #include <tyr/formalism/planning/parser.hpp>
 #include <variant>
+#include <yggdrasil/semantics/equal_to.hpp>
 
 namespace runir::tests
 {
@@ -72,9 +73,10 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationMapsNumericalOpponent)
     ASSERT_EQ(decreasing.blocking_reasons.size(), 1);
     const auto& reason = decreasing.blocking_reasons.front();
     ASSERT_TRUE(std::holds_alternative<kr::ps::ext::dl::NumericalFeatureView>(reason.feature));
-    EXPECT_EQ(std::get<kr::ps::ext::dl::NumericalFeatureView>(reason.feature).get_index(), result.numericals.front());
+    EXPECT_TRUE(
+        ygg::EqualTo<kr::ps::ext::dl::NumericalFeatureView> {}(std::get<kr::ps::ext::dl::NumericalFeatureView>(reason.feature), result.numericals.front()));
     ASSERT_EQ(reason.opposing_rules.size(), 1);
-    EXPECT_EQ(reason.opposing_rules.front().get_index(), result.surviving_rules.back().rule.get_index());
+    EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::RuleVariantView> {}(reason.opposing_rules.front(), result.surviving_rules.back().rule));
 }
 
 TEST(RunirTests, ExtIncompleteStructuralTerminationUsesMemorySeparation)

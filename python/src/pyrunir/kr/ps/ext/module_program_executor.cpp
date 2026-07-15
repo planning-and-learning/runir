@@ -42,27 +42,15 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using Expander = SuccessorExpander<Kind>;
 
     auto register_values = nb::class_<RegisterView>(m, (std::string(prefix) + "RegisterValues").c_str())
-                               .def_prop_ro("concept_values", &RegisterView::get_concept_values, nb::keep_alive<0, 1>())
-                               .def_prop_ro("role_values", &RegisterView::get_role_values, nb::keep_alive<0, 1>());
+                               .def_prop_ro("concept_values", &RegisterView::get_concept_values)
+                               .def_prop_ro("role_values", &RegisterView::get_role_values);
     ygg::add_hash(register_values);
 
     auto call_arguments = nb::class_<ArgumentsView>(m, (std::string(prefix) + "CallArguments").c_str())
-                              .def_prop_ro(
-                                  "concept_arguments",
-                                  [](const ArgumentsView& self) { return self.template get<runir::kr::dl::ConceptTag>(); },
-                                  nb::keep_alive<0, 1>())
-                              .def_prop_ro(
-                                  "role_arguments",
-                                  [](const ArgumentsView& self) { return self.template get<runir::kr::dl::RoleTag>(); },
-                                  nb::keep_alive<0, 1>())
-                              .def_prop_ro(
-                                  "boolean_arguments",
-                                  [](const ArgumentsView& self) { return self.template get<runir::kr::dl::BooleanTag>(); },
-                                  nb::keep_alive<0, 1>())
-                              .def_prop_ro(
-                                  "numerical_arguments",
-                                  [](const ArgumentsView& self) { return self.template get<runir::kr::dl::NumericalTag>(); },
-                                  nb::keep_alive<0, 1>());
+                              .def_prop_ro("concept_arguments", [](const ArgumentsView& self) { return self.template get<runir::kr::dl::ConceptTag>(); })
+                              .def_prop_ro("role_arguments", [](const ArgumentsView& self) { return self.template get<runir::kr::dl::RoleTag>(); })
+                              .def_prop_ro("boolean_arguments", [](const ArgumentsView& self) { return self.template get<runir::kr::dl::BooleanTag>(); })
+                              .def_prop_ro("numerical_arguments", [](const ArgumentsView& self) { return self.template get<runir::kr::dl::NumericalTag>(); });
     ygg::add_hash(call_arguments);
 
     auto call_stack = nb::class_<StackView>(m, (std::string(prefix) + "CallStack").c_str())
