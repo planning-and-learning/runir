@@ -2,8 +2,8 @@
 #define RUNIR_KR_PS_BASE_SKETCH_EXECUTOR_DATA_HPP_
 
 #include "runir/graphs/declarations.hpp"
+#include "runir/kr/declarations.hpp"
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
-#include "runir/kr/task_context.hpp"
 #include "runir/kr/uns/repository.hpp"
 
 #include <chrono>

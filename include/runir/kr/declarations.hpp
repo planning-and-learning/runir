@@ -2,9 +2,17 @@
 #define RUNIR_KR_DECLARATIONS_HPP_
 
 #include <concepts>
+#include <memory>
+#include <tyr/declarations.hpp>
 
 namespace runir::kr
 {
+
+template<tyr::TaskKind Kind>
+struct TaskContext;
+
+template<tyr::TaskKind Kind>
+using TaskContextPtr = std::shared_ptr<TaskContext<Kind>>;
 
 struct DlTag
 {

@@ -9,9 +9,9 @@ runir_read_project_version(RUNIR_PROJECT_VERSION "${CMAKE_CURRENT_SOURCE_DIR}/py
 
 project(runir VERSION "${RUNIR_PROJECT_VERSION}" LANGUAGES CXX)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wextra -Wuninitialized -pedantic -fPIC")
+add_compile_options(-Wall -Wextra -Wuninitialized -pedantic)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -fomit-frame-pointer")
-set(CMAKE_CXX_FLAGS_DEBUG "-O3 -DDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-O3 -g1")
 
 set(default_build_type "Debug")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)

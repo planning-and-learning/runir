@@ -2,13 +2,14 @@
 #define RUNIR_KR_PS_EXT_DETAIL_EXECUTION_STEP_HPP_
 
 #include "runir/datasets/state_graph.hpp"
+#include "runir/kr/declarations.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
-#include "runir/kr/task_context.hpp"
 
 #include <optional>
 #include <tyr/planning/node.hpp>
+#include <utility>
 
 namespace runir::kr::ps::ext::detail
 {

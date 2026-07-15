@@ -6,6 +6,7 @@
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/sketch_executor_data.hpp"
 #include "runir/kr/ps/base/successor_expander.hpp"
+#include "runir/kr/task_context.hpp"
 #include "runir/kr/uns/classify.hpp"
 
 #include <chrono>

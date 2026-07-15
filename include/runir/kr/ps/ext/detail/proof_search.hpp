@@ -4,6 +4,7 @@
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/proof_builder.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
+#include "runir/kr/task_context.hpp"
 
 #include <chrono>
 #include <random>

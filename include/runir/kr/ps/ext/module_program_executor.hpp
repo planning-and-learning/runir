@@ -1,10 +1,10 @@
 #ifndef RUNIR_KR_PS_EXT_MODULE_PROGRAM_EXECUTOR_HPP_
 #define RUNIR_KR_PS_EXT_MODULE_PROGRAM_EXECUTOR_HPP_
 
+#include "runir/kr/declarations.hpp"
 #include "runir/kr/ps/ext/detail/proof_search.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
-#include "runir/kr/task_context.hpp"
 
 #include <utility>
 

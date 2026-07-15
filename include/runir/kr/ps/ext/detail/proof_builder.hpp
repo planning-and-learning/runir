@@ -5,6 +5,7 @@
 #include "runir/kr/dl/semantics/uns/evaluation_context.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
 #include "runir/kr/ps/ext/successor_expander.hpp"
+#include "runir/kr/task_context.hpp"
 #include "runir/kr/uns/classify.hpp"
 
 #include <memory>
