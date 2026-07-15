@@ -10,6 +10,7 @@
 #include <memory>
 #include <optional>
 #include <tyr/planning/state_repository.hpp>
+#include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
@@ -30,20 +31,23 @@ class ExecutionRepository
 private:
     ygg::uint_t m_index;
     ExecutionSymbolRepository<Kind> m_symbol_repository;
-    tyr::planning::StateRepository<Kind>& m_state_repository;
-    const runir::kr::dl::semantics::DenotationRepository& m_denotation_repository;
-    const Repository& m_program_repository;
+    tyr::planning::StateRepositoryPtr<Kind> m_state_repository;
+    runir::kr::dl::semantics::DenotationRepositoryPtr m_denotation_repository;
+    RepositoryPtr m_program_repository;
 
     ExecutionRepository(ygg::uint_t index,
-                        tyr::planning::StateRepository<Kind>& state_repository,
-                        const runir::kr::dl::semantics::DenotationRepository& denotation_repository,
-                        const Repository& program_repository) :
+                        tyr::planning::StateRepositoryPtr<Kind> state_repository,
+                        runir::kr::dl::semantics::DenotationRepositoryPtr denotation_repository,
+                        RepositoryPtr program_repository) :
         m_index(index),
         m_symbol_repository(nullptr),
-        m_state_repository(state_repository),
-        m_denotation_repository(denotation_repository),
-        m_program_repository(program_repository)
+        m_state_repository(std::move(state_repository)),
+        m_denotation_repository(std::move(denotation_repository)),
+        m_program_repository(std::move(program_repository))
     {
+        assert(m_state_repository);
+        assert(m_denotation_repository);
+        assert(m_program_repository);
     }
 
 public:
@@ -53,10 +57,10 @@ public:
     ExecutionRepository& operator=(ExecutionRepository&&) = delete;
 
     const auto& get_index() const noexcept { return m_index; }
-    auto& get_state_repository() const noexcept { return m_state_repository; }
-    const auto& get_denotation_repository() const noexcept { return m_denotation_repository; }
-    const auto& get_program_repository() const noexcept { return m_program_repository; }
-    const auto& get_formalism_repository() const noexcept { return m_program_repository.get_dl_repository().get_planning_repository(); }
+    auto& get_state_repository() const noexcept { return *m_state_repository; }
+    const auto& get_denotation_repository() const noexcept { return *m_denotation_repository; }
+    const auto& get_program_repository() const noexcept { return *m_program_repository; }
+    const auto& get_formalism_repository() const noexcept { return m_program_repository->get_dl_repository().get_planning_repository(); }
     void clear() noexcept { m_symbol_repository.clear(); }
 
     template<typename T>
@@ -104,11 +108,12 @@ private:
     ygg::uint_t m_next_index = 0;
 
 public:
-    ExecutionRepositoryPtr<Kind> create_shared(tyr::planning::StateRepository<Kind>& state_repository,
-                                               const runir::kr::dl::semantics::DenotationRepository& denotation_repository,
-                                               const Repository& program_repository)
+    ExecutionRepositoryPtr<Kind> create_shared(tyr::planning::StateRepositoryPtr<Kind> state_repository,
+                                               runir::kr::dl::semantics::DenotationRepositoryPtr denotation_repository,
+                                               RepositoryPtr program_repository)
     {
-        return ExecutionRepositoryPtr<Kind>(new ExecutionRepository<Kind>(m_next_index++, state_repository, denotation_repository, program_repository));
+        return ExecutionRepositoryPtr<Kind>(
+            new ExecutionRepository<Kind>(m_next_index++, std::move(state_repository), std::move(denotation_repository), std::move(program_repository)));
     }
 };
 

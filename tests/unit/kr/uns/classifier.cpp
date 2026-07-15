@@ -113,7 +113,7 @@ TEST(RunirTests, UnsClassifierParsesAndClassifies)
     const auto state = fixture.search->state_repository->get_initial_state();
     auto builder = sem::Builder();
     auto denotation_repository_factory = sem::DenotationRepositoryFactory();
-    auto denotation_repository = denotation_repository_factory.create();
+    auto denotation_repository = denotation_repository_factory.create(fixture.task->get_repository());
     auto context = sem::EvaluationContext<Uns, p::GroundTag>(state, builder, denotation_repository);
 
     // some_ball is true and no_object is false, so the first clause (some_ball AND NOT no_object) holds.

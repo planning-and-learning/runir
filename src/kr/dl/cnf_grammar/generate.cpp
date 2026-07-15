@@ -138,11 +138,11 @@ private:
     runir::kr::dl::semantics::EvaluationWorkspace m_workspace;
 
 public:
-    explicit Pruning(const std::vector<tyr::planning::StateView<Kind>>& states) :
+    Pruning(const std::vector<tyr::planning::StateView<Kind>>& states, const runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository) :
         m_states(states),
         m_builder(),
         m_denotation_repository_factory(),
-        m_denotation_repository(m_denotation_repository_factory.create()),
+        m_denotation_repository(m_denotation_repository_factory.create(output_repository.get_planning_repository_ptr())),
         m_workspace()
     {
     }
@@ -845,7 +845,7 @@ public:
         m_options(options),
         m_result(),
         m_sentences(),
-        m_pruning(states),
+        m_pruning(states, output_repository),
         m_timeout(options)
     {
     }

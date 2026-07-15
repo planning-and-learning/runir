@@ -8,11 +8,12 @@
 #include <cassert>
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/containers/dynamic_bitset.hpp>
-#include <yggdrasil/core/types.hpp>
 #include <tyr/formalism/object_index.hpp>
 #include <tyr/formalism/object_view.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 #include <utility>
+#include <yggdrasil/containers/dynamic_bitset.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -35,13 +36,13 @@ struct DenotationElementType<runir::kr::dl::NumericalTag, C>
 template<typename C>
 struct DenotationElementType<runir::kr::dl::ConceptTag, C>
 {
-    using Type = ygg::View<ygg::Index<tyr::formalism::Object>, C>;
+    using Type = tyr::formalism::planning::ObjectView;
 };
 
 template<typename C>
 struct DenotationElementType<runir::kr::dl::RoleTag, C>
 {
-    using Type = std::pair<ygg::View<ygg::Index<tyr::formalism::Object>, C>, ygg::View<ygg::Index<tyr::formalism::Object>, C>>;
+    using Type = std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>;
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>
@@ -72,15 +73,21 @@ public:
     {
     private:
         const View* m_view = nullptr;
+        const tyr::formalism::planning::Repository* m_formalism_repository = nullptr;
         size_t m_object = npos;
 
     public:
         ConceptIterator() = default;
-        ConceptIterator(const View& view, size_t object) noexcept : m_view(&view), m_object(object) {}
+        ConceptIterator(const View& view, size_t object) noexcept :
+            m_view(&view),
+            m_formalism_repository(&view.get_context().get_formalism_repository()),
+            m_object(object)
+        {
+        }
 
         auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElement<runir::kr::dl::ConceptTag, C>
         {
-            return make_view(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_object)), m_view->get_context());
+            return make_view(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_object)), *m_formalism_repository);
         }
 
         ConceptIterator& operator++() noexcept
@@ -101,6 +108,7 @@ public:
     {
     private:
         const View* m_view = nullptr;
+        const tyr::formalism::planning::Repository* m_formalism_repository = nullptr;
         size_t m_source = npos;
         size_t m_target = npos;
 
@@ -122,7 +130,11 @@ public:
 
     public:
         RoleIterator() = default;
-        RoleIterator(const View& view, size_t source, size_t target) noexcept : m_view(&view), m_source(source), m_target(target)
+        RoleIterator(const View& view, size_t source, size_t target) noexcept :
+            m_view(&view),
+            m_formalism_repository(&view.get_context().get_formalism_repository()),
+            m_source(source),
+            m_target(target)
         {
             if (m_source != npos && m_target == npos)
                 advance_to_next_nonempty_row();
@@ -130,8 +142,8 @@ public:
 
         auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElement<runir::kr::dl::RoleTag, C>
         {
-            return std::pair(make_view(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_source)), m_view->get_context()),
-                             make_view(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_target)), m_view->get_context()));
+            return std::pair(make_view(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_source)), *m_formalism_repository),
+                             make_view(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_target)), *m_formalism_repository));
         }
 
         RoleIterator& operator++() noexcept

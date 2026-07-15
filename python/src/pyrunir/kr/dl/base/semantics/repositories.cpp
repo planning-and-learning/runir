@@ -45,7 +45,11 @@ void bind_semantics_repositories(nb::module_& m)
 
     nb::class_<runir::kr::dl::semantics::DenotationRepositoryFactory>(m, "DenotationRepositoryFactory")
         .def(nb::init<>())
-        .def("create", &runir::kr::dl::semantics::DenotationRepositoryFactory::create_shared);
+        .def(
+            "create",
+            [](runir::kr::dl::semantics::DenotationRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
+            { return self.create_shared(planning_domain.get_repository()); },
+            nb::arg("planning_domain"));
 
     bind_evaluation_context<tyr::planning::GroundTag>(m, "GroundEvaluationContext");
     bind_evaluation_context<tyr::planning::LiftedTag>(m, "LiftedEvaluationContext");

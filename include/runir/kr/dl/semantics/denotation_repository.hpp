@@ -12,6 +12,7 @@
 #include <cassert>
 #include <memory>
 #include <optional>
+#include <tyr/formalism/planning/repository.hpp>
 #include <utility>
 #include <yggdrasil/containers/raw_vector_set.hpp>
 #include <yggdrasil/core/types.hpp>
@@ -31,6 +32,7 @@ public:
 private:
     SymbolRepository m_symbol_repository;
     VectorRepository m_vector_repository;
+    std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;
     mutable ygg::Data<Denotation<BooleanTag>> m_boolean_data;
     mutable ygg::Data<Denotation<NumericalTag>> m_numerical_data;
     mutable ygg::Data<Denotation<ConceptTag>> m_concept_data;
@@ -115,7 +117,15 @@ private:
         return m_role_data;
     }
 
-    explicit DenotationRepository(size_t index) : m_symbol_repository(nullptr), m_vector_repository(), m_index(index) { clear(); }
+    DenotationRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
+        m_symbol_repository(nullptr),
+        m_vector_repository(),
+        m_formalism_repository(std::move(formalism_repository)),
+        m_index(index)
+    {
+        assert(m_formalism_repository);
+        clear();
+    }
 
 public:
     DenotationRepository(const DenotationRepository&) = delete;
@@ -124,6 +134,11 @@ public:
     DenotationRepository& operator=(DenotationRepository&&) = delete;
 
     const auto& get_index() const noexcept { return m_index; }
+    const auto& get_formalism_repository() const noexcept
+    {
+        assert(m_formalism_repository);
+        return *m_formalism_repository;
+    }
 
     void clear() noexcept
     {
@@ -232,9 +247,15 @@ private:
 public:
     DenotationRepositoryFactory() : m_next_index(0) {}
 
-    DenotationRepository create() { return DenotationRepository(m_next_index++); }
+    DenotationRepository create(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)
+    {
+        return DenotationRepository(m_next_index++, std::move(formalism_repository));
+    }
 
-    DenotationRepositoryPtr create_shared() { return DenotationRepositoryPtr(new DenotationRepository(m_next_index++)); }
+    DenotationRepositoryPtr create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)
+    {
+        return DenotationRepositoryPtr(new DenotationRepository(m_next_index++, std::move(formalism_repository)));
+    }
 };
 
 inline const DenotationRepository& get_denotation_repository(const DenotationRepository& repository) noexcept { return repository; }

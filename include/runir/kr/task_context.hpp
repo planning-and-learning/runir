@@ -56,10 +56,10 @@ private:
         uns_dl_repository(runir::kr::dl::UnsConstructorRepositoryFactory().create(search_context->task->get_repository())),
         uns_repository(runir::kr::uns::RepositoryFactory().create(uns_dl_repository)),
         dl_builder(),
-        dl_denotation_repository(runir::kr::dl::semantics::DenotationRepositoryFactory().create_shared()),
+        dl_denotation_repository(runir::kr::dl::semantics::DenotationRepositoryFactory().create_shared(search_context->task->get_repository())),
         execution_builder(),
         execution_repository(
-            runir::kr::ps::ext::ExecutionRepositoryFactory<Kind>().create_shared(*search_context->state_repository, *dl_denotation_repository, *ext_repository))
+            runir::kr::ps::ext::ExecutionRepositoryFactory<Kind>().create_shared(search_context->state_repository, dl_denotation_repository, ext_repository))
     {
     }
 };

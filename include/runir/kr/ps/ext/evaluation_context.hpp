@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/ext/evaluation_context.hpp"
+#include "runir/kr/ps/ext/execution_builder.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 
 #include <cassert>
@@ -112,9 +113,9 @@ private:
         const auto role_values = registers.get_role_values();
         for (size_t i = 0; i < concept_values.size(); ++i)
         {
-            const auto concept = concept_values[i];
-            if (concept)
-                concepts[i] = concept.value();
+            const auto concept_value = concept_values[i];
+            if (concept_value)
+                concepts[i] = concept_value.value();
 
             const auto role = role_values[i];
             if (role)
