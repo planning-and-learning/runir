@@ -9,6 +9,7 @@
 #include <set>
 #include <string>
 #include <tyr/formalism/planning/parser.hpp>
+#include <yggdrasil/semantics/equal_to.hpp>
 
 namespace runir::tests
 {
@@ -37,9 +38,13 @@ TEST(RunirTests, ExtStructuralTerminationEmptyModuleIsTerminating)
     const auto module = kr::ps::ext::dl::ModuleFactory::create_empty(*repository);
 
     const auto result = kr::ps::ext::dl::structural_termination(module);
+    const auto without_incomplete = kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, false);
 
     EXPECT_TRUE(result.is_terminating());
     EXPECT_EQ(result.counterexample, nullptr);
+    EXPECT_FALSE(result.scc_results.has_value());
+    ASSERT_TRUE(without_incomplete.scc_results.has_value());
+    EXPECT_TRUE(without_incomplete.scc_results->empty());
 }
 
 TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminating)
@@ -105,12 +110,19 @@ TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminatin
     const auto incomplete_result = kr::ps::ext::dl::incomplete_structural_termination(module);
     const auto result = kr::ps::ext::dl::structural_termination(module);
     const auto without_incomplete = kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, false);
+    const auto numericals = module.get_features<kr::ps::dl::NumericalFeature>();
 
     EXPECT_TRUE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
     EXPECT_EQ(result.incomplete_result->status, incomplete_result.status);
     EXPECT_TRUE(without_incomplete.is_terminating());
     EXPECT_FALSE(without_incomplete.incomplete_result.has_value());
+    EXPECT_FALSE(result.scc_results.has_value());
+    ASSERT_TRUE(without_incomplete.scc_results.has_value());
+    ASSERT_EQ(without_incomplete.scc_results->size(), 1);
+    EXPECT_TRUE(without_incomplete.scc_results->front().booleans.empty());
+    ASSERT_EQ(without_incomplete.scc_results->front().numericals.size(), 1);
+    EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::dl::NumericalFeatureView> {}(without_incomplete.scc_results->front().numericals.front(), numericals.front()));
 }
 
 TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
@@ -692,6 +704,28 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
     ASSERT_NE(result.counterexample, nullptr);
     ASSERT_EQ(booleans.size(), 1);
     ASSERT_EQ(numericals.size(), 2);
+    ASSERT_TRUE(result.scc_results.has_value());
+    ASSERT_EQ(result.scc_results->size(), 3);
+    auto saw_boolean_component = false;
+    auto numerical_components = std::set<std::size_t> {};
+    for (const auto& scc_result : *result.scc_results)
+    {
+        ASSERT_EQ(scc_result.booleans.size() + scc_result.numericals.size(), 1);
+        if (!scc_result.booleans.empty())
+        {
+            EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::dl::BooleanFeatureView> {}(scc_result.booleans.front(), booleans.front()));
+            saw_boolean_component = true;
+        }
+        else if (ygg::EqualTo<kr::ps::ext::dl::NumericalFeatureView> {}(scc_result.numericals.front(), numericals[0]))
+            numerical_components.insert(0);
+        else
+        {
+            EXPECT_TRUE(ygg::EqualTo<kr::ps::ext::dl::NumericalFeatureView> {}(scc_result.numericals.front(), numericals[1]));
+            numerical_components.insert(1);
+        }
+    }
+    EXPECT_TRUE(saw_boolean_component);
+    EXPECT_EQ(numerical_components, (std::set<std::size_t> { 0, 1 }));
 
     auto memory_states = std::set<std::string> {};
     auto saw_positive_n0 = false;

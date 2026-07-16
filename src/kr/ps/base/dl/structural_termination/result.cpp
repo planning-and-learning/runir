@@ -6,10 +6,14 @@
 namespace runir::kr::ps::base::dl::detail
 {
 
-StructuralTerminationResult make_result(const SketchAnalysis& analysis, const runir::kr::ps::detail::ComponentSieveResult& sieve_result)
+StructuralTerminationResult make_result(SketchView sketch, const SketchAnalysis& analysis, const runir::kr::ps::detail::PolicySieveResult& sieve_result)
 {
     auto result = StructuralTerminationResult {};
-    if (sieve_result.empty())
+    result.scc_results =
+        runir::kr::ps::detail::materialize_scc_results<runir::kr::BaseFamilyTag, Repository>(sieve_result.scc_feature_positions,
+                                                                                             sketch.get_features<runir::kr::ps::dl::BooleanFeature>(),
+                                                                                             sketch.get_features<runir::kr::ps::dl::NumericalFeature>());
+    if (sieve_result.components.empty())
     {
         result.status = StructuralTerminationStatus::TERMINATING;
         return result;
@@ -17,7 +21,7 @@ StructuralTerminationResult make_result(const SketchAnalysis& analysis, const ru
 
     result.status = StructuralTerminationStatus::NON_TERMINATING;
     auto counterexample_builder = PolicyGraphBuilder {};
-    for (const auto& component : sieve_result)
+    for (const auto& component : sieve_result.components)
     {
         const auto& projected = component.projected;
         auto vertex_remap = std::vector<std::size_t>(projected.policy.num_vertices(), std::numeric_limits<std::size_t>::max());

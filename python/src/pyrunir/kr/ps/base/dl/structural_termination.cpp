@@ -56,8 +56,13 @@ void bind_structural_termination(nb::module_& m)
     bind_readable_graph_methods(policy_graph);
     bind_forward_graph(policy_graph);
 
+    nb::class_<SccStructuralTerminationResult>(m, "SccStructuralTerminationResult")
+        .def_ro("booleans", &SccStructuralTerminationResult::booleans)
+        .def_ro("numericals", &SccStructuralTerminationResult::numericals);
+
     nb::class_<StructuralTerminationResult>(m, "StructuralTerminationResult")
         .def_ro("status", &StructuralTerminationResult::status)
+        .def_ro("scc_results", &StructuralTerminationResult::scc_results)
         .def_ro("incomplete_result", &StructuralTerminationResult::incomplete_result, nb::keep_alive<0, 1>())
         .def_ro("counterexample", &StructuralTerminationResult::counterexample, nb::keep_alive<0, 1>())
         .def("is_terminating", &StructuralTerminationResult::is_terminating);

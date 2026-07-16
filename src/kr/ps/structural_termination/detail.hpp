@@ -7,6 +7,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <concepts>
 #include <cstddef>
+#include <optional>
 #include <span>
 #include <stdexcept>
 #include <utility>
@@ -143,6 +144,41 @@ struct SievedPolicyComponent
 
 using ComponentSieveResult = std::vector<SievedPolicyComponent>;
 
+struct SccFeaturePositions
+{
+    std::vector<std::size_t> boolean_positions;
+    std::vector<std::size_t> numerical_positions;
+};
+
+struct PolicySieveResult
+{
+    ComponentSieveResult components;
+    std::optional<std::vector<SccFeaturePositions>> scc_feature_positions;
+};
+
+template<runir::kr::FamilyTag Family, typename C, typename BooleanRange, typename NumericalRange>
+auto materialize_scc_results(const std::optional<std::vector<SccFeaturePositions>>& positions,
+                             const BooleanRange& booleans,
+                             const NumericalRange& numericals) -> std::optional<std::vector<dl::SccStructuralTerminationResult<Family, C>>>
+{
+    if (!positions)
+        return std::nullopt;
+
+    auto result = std::vector<dl::SccStructuralTerminationResult<Family, C>> {};
+    result.reserve(positions->size());
+    for (const auto& scc : *positions)
+    {
+        auto& entry = result.emplace_back();
+        entry.booleans.reserve(scc.boolean_positions.size());
+        for (const auto position : scc.boolean_positions)
+            entry.booleans.push_back(booleans[position]);
+        entry.numericals.reserve(scc.numerical_positions.size());
+        for (const auto position : scc.numerical_positions)
+            entry.numericals.push_back(numericals[position]);
+    }
+    return result;
+}
+
 struct IncompletePolicyResult
 {
     enum class FeatureKind
@@ -175,8 +211,8 @@ std::vector<PolicyEdge> build_policy_edges(const QualitativePolicy& policy);
 StrongComponents find_strong_components(const std::vector<PolicyEdge>& edges, std::size_t num_vertices);
 std::vector<ProjectedPolicyComponent> project_policy_components(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions);
 SieveResult sieve_policy_graph(std::vector<PolicyEdge>& edges, const QualitativePolicy& policy);
-ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, const IncompletePolicyResult& incomplete_result);
-ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, bool use_incomplete_preprocessing);
+PolicySieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, const IncompletePolicyResult& incomplete_result);
+PolicySieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, bool use_incomplete_preprocessing);
 IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy);
 
 }  // namespace runir::kr::ps::detail

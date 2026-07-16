@@ -8,6 +8,7 @@
 #include <set>
 #include <string>
 #include <tyr/formalism/planning/parser.hpp>
+#include <yggdrasil/semantics/equal_to.hpp>
 
 namespace runir::tests
 {
@@ -61,8 +62,11 @@ TEST(RunirTests, StructuralTerminationEmptySketchIsTerminating)
     ASSERT_TRUE(result.incomplete_result.has_value());
     EXPECT_EQ(result.incomplete_result->status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::TERMINATING);
     EXPECT_EQ(result.counterexample, nullptr);
+    EXPECT_FALSE(result.scc_results.has_value());
     EXPECT_TRUE(without_incomplete.is_terminating());
     EXPECT_FALSE(without_incomplete.incomplete_result.has_value());
+    ASSERT_TRUE(without_incomplete.scc_results.has_value());
+    EXPECT_TRUE(without_incomplete.scc_results->empty());
 }
 
 TEST(RunirTests, StructuralTerminationBooleanOscillatorIsNotTerminating)
@@ -113,6 +117,7 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorIsNotTerminating)
                                                        *repository);
 
     const auto result = kr::ps::base::dl::structural_termination(sketch);
+    const auto booleans = sketch.get_features<kr::ps::dl::BooleanFeature>();
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
@@ -121,6 +126,11 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorIsNotTerminating)
     EXPECT_EQ(result.counterexample->get_num_vertices(), 2);
     EXPECT_EQ(result.counterexample->get_num_edges(), 2);
     EXPECT_EQ(counterexample_rules(result), sketch_rules(sketch));
+    ASSERT_TRUE(result.scc_results.has_value());
+    ASSERT_EQ(result.scc_results->size(), 1);
+    ASSERT_EQ(result.scc_results->front().booleans.size(), 1);
+    EXPECT_TRUE(ygg::EqualTo<kr::ps::base::dl::BooleanFeatureView> {}(result.scc_results->front().booleans.front(), booleans.front()));
+    EXPECT_TRUE(result.scc_results->front().numericals.empty());
 }
 
 TEST(RunirTests, StructuralTerminationNumericalIncreaseDecreasePairIsNotTerminating)
@@ -169,11 +179,17 @@ TEST(RunirTests, StructuralTerminationNumericalIncreaseDecreasePairIsNotTerminat
                                                        *repository);
 
     const auto result = kr::ps::base::dl::structural_termination(sketch);
+    const auto numericals = sketch.get_features<kr::ps::dl::NumericalFeature>();
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_NE(result.counterexample, nullptr);
     EXPECT_GE(result.counterexample->get_num_edges(), 2);
     EXPECT_EQ(counterexample_rules(result), sketch_rules(sketch));
+    ASSERT_TRUE(result.scc_results.has_value());
+    ASSERT_EQ(result.scc_results->size(), 1);
+    EXPECT_TRUE(result.scc_results->front().booleans.empty());
+    ASSERT_EQ(result.scc_results->front().numericals.size(), 1);
+    EXPECT_TRUE(ygg::EqualTo<kr::ps::base::dl::NumericalFeatureView> {}(result.scc_results->front().numericals.front(), numericals.front()));
 }
 
 TEST(RunirTests, StructuralTerminationFloortileSketchIsTerminating)

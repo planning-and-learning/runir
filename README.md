@@ -26,7 +26,7 @@ The native CMake package exports `runir::core` as the aggregate target and compo
 
 ## Dependencies
 
-- `pyyggdrasil >= 0.0.23, < 0.1` for shared third-party native dependencies.
+- `pyyggdrasil >= 0.0.24, < 0.1` for shared third-party native dependencies.
 - `pytyr >= 0.0.31, < 0.1` for Tyr planning, formalism, search, and C++ headers/libraries.
 - `pypddl >= 1.0.24, < 1.1` through Tyr/PDDL parsing infrastructure.
 - `pypddl-datasets >= 0.0.7, < 0.1` for the PDDL benchmark data used by the C++ test and profiling fixtures (resolved from its cache at CMake configure time).

@@ -19,7 +19,7 @@ struct ModuleAnalysis
 
 ModuleAnalysis analyze_module(ModuleView module_);
 
-ModuleStructuralTerminationResult make_result(const ModuleAnalysis& analysis, const runir::kr::ps::detail::ComponentSieveResult& sieve_result);
+ModuleStructuralTerminationResult make_result(ModuleView module_, const ModuleAnalysis& analysis, const runir::kr::ps::detail::PolicySieveResult& sieve_result);
 ModuleIncompleteStructuralTerminationResult
 make_incomplete_result(ModuleView module_, const ModuleAnalysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
 

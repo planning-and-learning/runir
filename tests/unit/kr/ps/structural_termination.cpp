@@ -17,7 +17,7 @@ bool monolithic_sieve_has_cycle(const kr::ps::detail::QualitativePolicy& policy)
 
 void expect_hybrid_matches_monolithic(const kr::ps::detail::QualitativePolicy& policy)
 {
-    EXPECT_EQ(!kr::ps::detail::sieve_policy(policy, 4, true).empty(), monolithic_sieve_has_cycle(policy));
+    EXPECT_EQ(!kr::ps::detail::sieve_policy(policy, 4, true).components.empty(), monolithic_sieve_has_cycle(policy));
 }
 
 std::vector<kr::ps::detail::RuleProfile> numerical_rule_universe()
@@ -148,12 +148,12 @@ TEST(RunirTests, CommonSieveStartsWithIncompleteRuleElimination)
     const auto result = kr::ps::detail::sieve_policy(policy, 16, true);
 
     ASSERT_TRUE(monolithic_sieve_has_cycle(policy));
-    ASSERT_EQ(result.size(), 1);
-    EXPECT_EQ(result.front().projected.rule_positions, std::vector<std::size_t>({ 1 }));
+    ASSERT_EQ(result.components.size(), 1);
+    EXPECT_EQ(result.components.front().projected.rule_positions, std::vector<std::size_t>({ 1 }));
 
     const auto without_preprocessing = kr::ps::detail::sieve_policy(policy, 16, false);
-    ASSERT_EQ(without_preprocessing.size(), 1);
-    EXPECT_EQ(without_preprocessing.front().projected.rule_positions, std::vector<std::size_t>({ 0, 1 }));
+    ASSERT_EQ(without_preprocessing.components.size(), 1);
+    EXPECT_EQ(without_preprocessing.components.front().projected.rule_positions, std::vector<std::size_t>({ 0, 1 }));
 }
 
 TEST(RunirTests, CommonSieveSkipsFeatureLimitWhenIncompleteProcedureTerminates)
@@ -164,7 +164,9 @@ TEST(RunirTests, CommonSieveSkipsFeatureLimitWhenIncompleteProcedureTerminates)
     decrease.numerical_changes[16] = kr::ps::dl::NumericalChange::DECREASES;
     policy.rule_profiles.push_back(std::move(decrease));
 
-    EXPECT_TRUE(kr::ps::detail::sieve_policy(policy, 16, true).empty());
+    const auto result = kr::ps::detail::sieve_policy(policy, 16, true);
+    EXPECT_TRUE(result.components.empty());
+    EXPECT_FALSE(result.scc_feature_positions.has_value());
     EXPECT_THROW((void) kr::ps::detail::sieve_policy(policy, 16, false), std::invalid_argument);
 }
 
@@ -189,11 +191,11 @@ TEST(RunirTests, CommonSieveSplitsResidualMemoryGraph)
     const auto result = kr::ps::detail::sieve_policy(policy, 16, true);
 
     ASSERT_TRUE(monolithic_sieve_has_cycle(policy));
-    ASSERT_EQ(result.size(), 2);
-    EXPECT_EQ(result[0].projected.memory_positions, std::vector<std::size_t>({ 0 }));
-    EXPECT_EQ(result[0].projected.rule_positions, std::vector<std::size_t>({ 2 }));
-    EXPECT_EQ(result[1].projected.memory_positions, std::vector<std::size_t>({ 1 }));
-    EXPECT_EQ(result[1].projected.rule_positions, std::vector<std::size_t>({ 3 }));
+    ASSERT_EQ(result.components.size(), 2);
+    EXPECT_EQ(result.components[0].projected.memory_positions, std::vector<std::size_t>({ 0 }));
+    EXPECT_EQ(result.components[0].projected.rule_positions, std::vector<std::size_t>({ 2 }));
+    EXPECT_EQ(result.components[1].projected.memory_positions, std::vector<std::size_t>({ 1 }));
+    EXPECT_EQ(result.components[1].projected.rule_positions, std::vector<std::size_t>({ 3 }));
 }
 
 TEST(RunirTests, CommonSieveProjectsResidualFeatures)
@@ -209,10 +211,14 @@ TEST(RunirTests, CommonSieveProjectsResidualFeatures)
 
     const auto result = kr::ps::detail::sieve_policy(policy, 16, true);
 
-    ASSERT_EQ(!result.empty(), monolithic_sieve_has_cycle(policy));
-    ASSERT_EQ(result.size(), 1);
-    EXPECT_EQ(result.front().projected.boolean_positions, std::vector<std::size_t>({ 0, 1 }));
-    EXPECT_EQ(result.front().projected.numerical_positions, std::vector<std::size_t>({ 1 }));
+    ASSERT_EQ(!result.components.empty(), monolithic_sieve_has_cycle(policy));
+    ASSERT_EQ(result.components.size(), 1);
+    EXPECT_EQ(result.components.front().projected.boolean_positions, std::vector<std::size_t>({ 0, 1 }));
+    EXPECT_EQ(result.components.front().projected.numerical_positions, std::vector<std::size_t>({ 1 }));
+    ASSERT_TRUE(result.scc_feature_positions);
+    ASSERT_EQ(result.scc_feature_positions->size(), 1);
+    EXPECT_EQ(result.scc_feature_positions->front().boolean_positions, std::vector<std::size_t>({ 0, 1 }));
+    EXPECT_EQ(result.scc_feature_positions->front().numerical_positions, std::vector<std::size_t>({ 1 }));
 }
 
 TEST(RunirTests, CommonSieveAppliesFeatureLimitPerResidualComponent)
@@ -231,9 +237,13 @@ TEST(RunirTests, CommonSieveAppliesFeatureLimitPerResidualComponent)
 
     const auto result = kr::ps::detail::sieve_policy(policy, 14, true);
 
-    ASSERT_EQ(result.size(), 2);
-    EXPECT_EQ(result[0].projected.policy.num_numericals, 8);
-    EXPECT_EQ(result[1].projected.policy.num_numericals, 8);
+    ASSERT_EQ(result.components.size(), 2);
+    EXPECT_EQ(result.components[0].projected.policy.num_numericals, 8);
+    EXPECT_EQ(result.components[1].projected.policy.num_numericals, 8);
+    ASSERT_TRUE(result.scc_feature_positions);
+    ASSERT_EQ(result.scc_feature_positions->size(), 2);
+    EXPECT_EQ(result.scc_feature_positions->front().numerical_positions, std::vector<std::size_t>({ 0, 1, 2, 3, 4, 5, 6, 7 }));
+    EXPECT_EQ(result.scc_feature_positions->back().numerical_positions, std::vector<std::size_t>({ 8, 9, 10, 11, 12, 13, 14, 15 }));
 }
 
 TEST(RunirTests, CommonSieveRejectsOversizedResidualComponent)
@@ -471,7 +481,32 @@ TEST(RunirTests, CommonIncompleteSieveDoesNotMarkFeatureAfterR3Elimination)
     EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
     EXPECT_EQ(result.surviving_rules[1].blocking_reasons[1].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
 
-    EXPECT_EQ(!kr::ps::detail::sieve_policy(policy, 16, true).empty(), monolithic_sieve_has_cycle(policy));
+    EXPECT_EQ(!kr::ps::detail::sieve_policy(policy, 16, true).components.empty(), monolithic_sieve_has_cycle(policy));
+}
+
+TEST(RunirTests, CommonSieveReportsProjectedSccBeforeCompleteFiltering)
+{
+    auto policy = kr::ps::detail::QualitativePolicy(1, 0, 1);
+    auto decrease = kr::ps::detail::RuleProfile(0, 1);
+    decrease.numerical_changes[0] = kr::ps::dl::NumericalChange::DECREASES;
+    policy.rule_profiles.push_back(std::move(decrease));
+
+    const auto result = kr::ps::detail::sieve_policy(policy, 16, false);
+
+    EXPECT_TRUE(result.components.empty());
+    ASSERT_TRUE(result.scc_feature_positions);
+    ASSERT_EQ(result.scc_feature_positions->size(), 1);
+    EXPECT_TRUE(result.scc_feature_positions->front().boolean_positions.empty());
+    EXPECT_EQ(result.scc_feature_positions->front().numerical_positions, std::vector<std::size_t>({ 0 }));
+}
+
+TEST(RunirTests, CommonSieveReportsEngagedEmptySccsWhenCompleteStageRuns)
+{
+    const auto result = kr::ps::detail::sieve_policy(kr::ps::detail::QualitativePolicy(1, 0, 0), 16, false);
+
+    EXPECT_TRUE(result.components.empty());
+    ASSERT_TRUE(result.scc_feature_positions);
+    EXPECT_TRUE(result.scc_feature_positions->empty());
 }
 
 }  // namespace runir::tests

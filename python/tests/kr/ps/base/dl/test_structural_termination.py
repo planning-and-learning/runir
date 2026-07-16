@@ -6,6 +6,7 @@ from pyrunir.kr.ps.base.dl import (
     BooleanFeature,
     IncompleteStructuralTerminationStatus,
     NumericalChange,
+    SccStructuralTerminationResult,
     incomplete_structural_termination,
     parse_sketch,
     structural_termination,
@@ -140,9 +141,16 @@ def test_structural_termination_tpp_sketch_is_terminating():
     assert result.counterexample is None
     assert result.incomplete_result is not None
     assert result.incomplete_result.status == IncompleteStructuralTerminationStatus.TERMINATING
+    assert result.scc_results is None
     assert len(numericals) == 3
     assert without_incomplete.is_terminating()
     assert without_incomplete.incomplete_result is None
+    assert without_incomplete.scc_results is not None
+    assert len(without_incomplete.scc_results) == 1
+    (scc_result,) = without_incomplete.scc_results
+    assert isinstance(scc_result, SccStructuralTerminationResult)
+    assert scc_result.booleans == []
+    assert [feature.get_index() for feature in scc_result.numericals] == [feature.get_index() for feature in numericals]
 
 
 def test_structural_termination_oscillator_counterexample_has_positional_valuations():
@@ -154,6 +162,9 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
     assert not result.is_terminating()
     assert result.incomplete_result is not None
     assert result.incomplete_result.status == IncompleteStructuralTerminationStatus.UNKNOWN
+    assert result.scc_results is not None
+    (scc_result,) = result.scc_results
+    assert isinstance(scc_result, SccStructuralTerminationResult)
     counterexample = result.counterexample
     assert counterexample is not None
     assert counterexample.get_num_vertices() == 2
@@ -161,6 +172,8 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
 
     (feature,) = sketch.get_boolean_features()
     assert isinstance(feature, BooleanFeature)
+    assert [item.get_index() for item in scc_result.booleans] == [feature.get_index()]
+    assert scc_result.numericals == []
 
     # Positional valuations: one vertex per truth value of b1.
     valuations = {counterexample.get_vertex_property(vertex).boolean_values[0] for vertex in counterexample.get_vertex_indices()}

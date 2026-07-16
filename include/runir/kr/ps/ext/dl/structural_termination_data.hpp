@@ -67,12 +67,14 @@ struct ModulePolicyGraphEdgeLabel
 
 using ModulePolicyGraphBuilder = graphs::StaticGraphBuilder<ModulePolicyGraphVertexLabel, ModulePolicyGraphEdgeLabel>;
 using ModulePolicyGraph = graphs::StaticGraph<ModulePolicyGraphVertexLabel, ModulePolicyGraphEdgeLabel>;
+using SccStructuralTerminationResult = runir::kr::ps::dl::SccStructuralTerminationResult<runir::kr::ExtFamilyTag, runir::kr::ps::ext::Repository>;
 
 struct ModuleStructuralTerminationResult
 {
     StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
     std::shared_ptr<ModulePolicyGraph> counterexample;                             ///< nullptr iff terminating.
     std::optional<ModuleIncompleteStructuralTerminationResult> incomplete_result;  ///< Populated iff incomplete preprocessing was enabled.
+    std::optional<std::vector<SccStructuralTerminationResult>> scc_results;        ///< Populated iff complete SIEVE was run.
 
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
 };

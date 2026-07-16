@@ -18,7 +18,7 @@ struct SketchAnalysis
 };
 
 SketchAnalysis analyze_sketch(SketchView sketch);
-StructuralTerminationResult make_result(const SketchAnalysis& analysis, const runir::kr::ps::detail::ComponentSieveResult& sieve_result);
+StructuralTerminationResult make_result(SketchView sketch, const SketchAnalysis& analysis, const runir::kr::ps::detail::PolicySieveResult& sieve_result);
 
 IncompleteStructuralTerminationResult
 make_incomplete_result(SketchView sketch, const SketchAnalysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);

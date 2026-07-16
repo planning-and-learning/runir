@@ -69,6 +69,7 @@ from ....._pyrunir.kr.ps.ext.dl import (
     RoleFeature,
     RoleFeatureData,
     RoleFeatureIndex,
+    SccStructuralTerminationResult,
     StructuralTerminationStatus,
     UnchangedBooleanEffect,
     UnchangedBooleanEffectIndex,

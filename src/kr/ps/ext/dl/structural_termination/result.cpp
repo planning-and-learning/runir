@@ -6,10 +6,14 @@
 namespace runir::kr::ps::ext::dl::detail
 {
 
-ModuleStructuralTerminationResult make_result(const ModuleAnalysis& analysis, const runir::kr::ps::detail::ComponentSieveResult& sieve_result)
+ModuleStructuralTerminationResult make_result(ModuleView module_, const ModuleAnalysis& analysis, const runir::kr::ps::detail::PolicySieveResult& sieve_result)
 {
     auto result = ModuleStructuralTerminationResult {};
-    if (sieve_result.empty())
+    result.scc_results =
+        runir::kr::ps::detail::materialize_scc_results<runir::kr::ExtFamilyTag, Repository>(sieve_result.scc_feature_positions,
+                                                                                            module_.get_features<runir::kr::ps::dl::BooleanFeature>(),
+                                                                                            module_.get_features<runir::kr::ps::dl::NumericalFeature>());
+    if (sieve_result.components.empty())
     {
         result.status = StructuralTerminationStatus::TERMINATING;
         return result;
@@ -17,7 +21,7 @@ ModuleStructuralTerminationResult make_result(const ModuleAnalysis& analysis, co
 
     result.status = StructuralTerminationStatus::NON_TERMINATING;
     auto counterexample_builder = ModulePolicyGraphBuilder {};
-    for (const auto& component : sieve_result)
+    for (const auto& component : sieve_result.components)
     {
         const auto& projected = component.projected;
         auto vertex_remap = std::vector<std::size_t>(projected.policy.num_vertices(), std::numeric_limits<std::size_t>::max());

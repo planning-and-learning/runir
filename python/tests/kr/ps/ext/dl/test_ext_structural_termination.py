@@ -201,8 +201,16 @@ def test_ext_structural_termination_is_terminating():
     assert result.counterexample is None
     assert result.incomplete_result is not None
     assert result.incomplete_result.status == incomplete_result.status
+    assert result.scc_results is None
     assert without_incomplete.is_terminating()
     assert without_incomplete.incomplete_result is None
+    assert without_incomplete.scc_results is not None
+    (scc_result,) = without_incomplete.scc_results
+    assert isinstance(scc_result, dl.SccStructuralTerminationResult)
+    assert scc_result.booleans == []
+    assert [feature.get_index() for feature in scc_result.numericals] == [
+        feature.get_index() for feature in module.get_numerical_features()
+    ]
 
 
 def test_ext_structural_termination_counterexample_spans_memory_states():
@@ -245,8 +253,22 @@ def test_ext_structural_termination_lifts_projected_components():
 
     assert not result.is_terminating()
     assert result.counterexample is not None
+    assert result.scc_results is not None
     assert len(booleans) == 1
     assert len(numericals) == 2
+
+    feature_sets = {
+        (
+            tuple(feature.get_index() for feature in scc_result.booleans),
+            tuple(feature.get_index() for feature in scc_result.numericals),
+        )
+        for scc_result in result.scc_results
+    }
+    assert feature_sets == {
+        ((booleans[0].get_index(),), ()),
+        ((), (numericals[0].get_index(),)),
+        ((), (numericals[1].get_index(),)),
+    }
 
     vertices = [result.counterexample.get_vertex_property(vertex) for vertex in result.counterexample.get_vertex_indices()]
     assert {vertex.memory_state.get_name() for vertex in vertices} == {"m0", "m1", "m2"}

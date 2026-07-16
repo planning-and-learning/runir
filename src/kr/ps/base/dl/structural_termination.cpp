@@ -10,10 +10,10 @@ StructuralTerminationResult structural_termination(SketchView sketch, std::size_
 {
     const auto analysis = detail::analyze_sketch(sketch);
     if (!use_incomplete_preprocessing)
-        return detail::make_result(analysis, runir::kr::ps::detail::sieve_policy(analysis.policy, max_features, false));
+        return detail::make_result(sketch, analysis, runir::kr::ps::detail::sieve_policy(analysis.policy, max_features, false));
 
     const auto incomplete_result = runir::kr::ps::detail::incomplete_structural_termination(analysis.policy);
-    auto result = detail::make_result(analysis, runir::kr::ps::detail::sieve_policy(analysis.policy, max_features, incomplete_result));
+    auto result = detail::make_result(sketch, analysis, runir::kr::ps::detail::sieve_policy(analysis.policy, max_features, incomplete_result));
     result.incomplete_result = detail::make_incomplete_result(sketch, analysis, incomplete_result);
     return result;
 }

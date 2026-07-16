@@ -53,6 +53,11 @@ def test_feature_complexity_methods_are_in_public_stubs():
 
 
 def test_structural_termination_incomplete_result_is_in_public_stub():
-    stub = Path(pyrunir.__file__).parent / "kr/ps/base/dl/__init__.pyi"
+    package = Path(pyrunir.__file__).parent
+    base_stub = (package / "kr/ps/base/dl/__init__.pyi").read_text(encoding="utf-8")
+    ext_stub = (package / "kr/ps/ext/dl/__init__.pyi").read_text(encoding="utf-8")
 
-    assert "    def incomplete_result(self) -> IncompleteStructuralTerminationResult | None: ..." in stub.read_text(encoding="utf-8")
+    assert "    def incomplete_result(self) -> IncompleteStructuralTerminationResult | None: ..." in base_stub
+    for stub in (base_stub, ext_stub):
+        assert "class SccStructuralTerminationResult:" in stub
+        assert "    def scc_results(self) -> list[SccStructuralTerminationResult] | None: ..." in stub

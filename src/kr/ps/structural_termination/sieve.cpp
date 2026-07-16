@@ -122,31 +122,35 @@ SieveResult sieve_policy_graph(std::vector<PolicyEdge>& edges, const Qualitative
 
 namespace
 {
-ComponentSieveResult sieve_policy_for_rules(const QualitativePolicy& policy, std::size_t max_features, const std::vector<std::size_t>& rule_positions)
+PolicySieveResult sieve_policy_for_rules(const QualitativePolicy& policy, std::size_t max_features, const std::vector<std::size_t>& rule_positions)
 {
     auto projected_components = project_policy_components(policy, rule_positions);
+    auto result = PolicySieveResult { .components = {}, .scc_feature_positions = std::vector<SccFeaturePositions> {} };
+    result.scc_feature_positions->reserve(projected_components.size());
+    for (const auto& projected : projected_components)
+        result.scc_feature_positions->push_back(SccFeaturePositions { projected.boolean_positions, projected.numerical_positions });
+
     for (const auto& projected : projected_components)
         if (projected.policy.num_booleans + projected.policy.num_numericals > max_features)
             throw std::invalid_argument("structural_termination: a residual memory component has too many relevant features.");
 
-    auto result = ComponentSieveResult {};
     for (auto& projected : projected_components)
     {
         auto edges = build_policy_edges(projected.policy);
         auto sieve = sieve_policy_graph(edges, projected.policy);
         if (sieve.has_cycle)
-            result.push_back(SievedPolicyComponent { std::move(projected), std::move(edges), std::move(sieve) });
+            result.components.push_back(SievedPolicyComponent { std::move(projected), std::move(edges), std::move(sieve) });
     }
     return result;
 }
 }  // namespace
 
-ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, const IncompletePolicyResult& incomplete_result)
+PolicySieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, const IncompletePolicyResult& incomplete_result)
 {
     // Rule elimination is a prefix of complete SIEVE: every removed rule has
     // no edge in a surviving configuration SCC.
     if (incomplete_result.is_terminating())
-        return {};
+        return { .components = {}, .scc_feature_positions = std::nullopt };
 
     auto rule_positions = std::vector<std::size_t> {};
     rule_positions.reserve(incomplete_result.surviving_rules.size());
@@ -155,7 +159,7 @@ ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t m
     return sieve_policy_for_rules(policy, max_features, rule_positions);
 }
 
-ComponentSieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, bool use_incomplete_preprocessing)
+PolicySieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, bool use_incomplete_preprocessing)
 {
     if (use_incomplete_preprocessing)
     {

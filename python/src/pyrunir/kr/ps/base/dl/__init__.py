@@ -62,6 +62,7 @@ from ....._pyrunir.kr.ps.base.dl import (
     PolicyGraph,
     PolicyGraphEdgeLabel,
     PolicyGraphVertexLabel,
+    SccStructuralTerminationResult,
     StructuralTerminationResult,
     StructuralTerminationStatus,
     incomplete_structural_termination,
