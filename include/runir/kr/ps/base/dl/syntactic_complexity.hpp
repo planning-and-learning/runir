@@ -13,7 +13,7 @@ namespace runir::kr::ps::base::dl
 template<typename FeatureTag, typename C>
 std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view)
 {
-    return 1 + runir::kr::dl::semantics::syntactic_complexity(view.get_feature());
+    return runir::kr::dl::semantics::syntactic_complexity(view.get_feature());
 }
 
 }  // namespace runir::kr::ps::base::dl

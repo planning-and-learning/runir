@@ -13,7 +13,7 @@ namespace runir::kr::uns::dl
 template<typename C>
 std::size_t syntactic_complexity(ygg::View<ygg::Index<Feature>, C> view)
 {
-    return 1 + runir::kr::dl::semantics::syntactic_complexity(view.get_feature());
+    return runir::kr::dl::semantics::syntactic_complexity(view.get_feature());
 }
 
 }  // namespace runir::kr::uns::dl

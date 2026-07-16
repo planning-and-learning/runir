@@ -154,13 +154,13 @@ TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
     {
         const auto concrete = ygg::visit([](auto view) { return kr::ps::ext::dl::syntactic_complexity(view); }, feature.get_variant());
         EXPECT_EQ(kr::ps::ext::syntactic_complexity(feature), concrete);
-        EXPECT_EQ(concrete, 1 + kr::dl::semantics::syntactic_complexity(feature.get_expression()));
+        EXPECT_EQ(concrete, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
         EXPECT_EQ(concrete, expected);
     };
-    expect_feature_complexity(concept_feature, 2);
-    expect_feature_complexity(role_feature, 2);
-    expect_feature_complexity(boolean_feature, 3);
-    expect_feature_complexity(numerical_feature, 3);
+    expect_feature_complexity(concept_feature, 1);
+    expect_feature_complexity(role_feature, 1);
+    expect_feature_complexity(boolean_feature, 2);
+    expect_feature_complexity(numerical_feature, 2);
 
     const auto all_entry = create_memory_state(*repository, "all_entry");
     auto all_data = make_module_data(*repository, "all");
@@ -182,9 +182,9 @@ TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
     kr::ps::ext::canonicalize(shared_data);
     const auto shared = repository->get_or_create(shared_data).first;
 
-    EXPECT_EQ(kr::ps::ext::syntactic_complexity(all), 10);
-    EXPECT_EQ(kr::ps::ext::syntactic_complexity(shared), 3);
-    EXPECT_EQ(kr::ps::ext::syntactic_complexity(create_module_program(*repository, all, { all, shared })), 13);
+    EXPECT_EQ(kr::ps::ext::syntactic_complexity(all), 6);
+    EXPECT_EQ(kr::ps::ext::syntactic_complexity(shared), 2);
+    EXPECT_EQ(kr::ps::ext::syntactic_complexity(create_module_program(*repository, all, { all, shared })), 8);
 
     const auto empty_entry = create_memory_state(*repository, "empty_entry");
     const auto empty = create_module(*repository, "empty", empty_entry, { empty_entry });

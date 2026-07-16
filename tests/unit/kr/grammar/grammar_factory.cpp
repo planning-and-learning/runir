@@ -197,8 +197,8 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     const auto feature = sketch.template get_features<kr::ps::dl::BooleanFeature>().front();
     const auto concrete_complexity = ygg::visit([](auto concrete) { return kr::ps::base::dl::syntactic_complexity(concrete); }, feature.get_variant());
     EXPECT_EQ(kr::ps::base::syntactic_complexity(feature), concrete_complexity);
-    EXPECT_EQ(concrete_complexity, 1 + kr::dl::semantics::syntactic_complexity(feature.get_expression()));
-    EXPECT_EQ(kr::ps::base::syntactic_complexity(sketch), 9);
+    EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
+    EXPECT_EQ(kr::ps::base::syntactic_complexity(sketch), 6);
     EXPECT_EQ(kr::ps::base::syntactic_complexity(kr::ps::base::dl::SketchFactory::create_empty(*repository)), 0);
 }
 

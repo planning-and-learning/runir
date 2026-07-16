@@ -99,7 +99,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
     sketch_description = str(sketch)
     reparsed_sketch = parse_sketch(sketch_description, planning_domain, sketch_repository)
     assert str(reparsed_sketch) == sketch_description
-    assert syntactic_complexity(sketch) == 16
+    assert syntactic_complexity(sketch) == 13
 
     initial_node = search_context.successor_generator.get_initial_node()
     labeled_successor = search_context.successor_generator.get_labeled_successor_nodes(initial_node)[0]
@@ -194,8 +194,8 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
     feature = classifier.get_features()[0]
     concrete_feature = feature.get_variant()
     assert feature.syntactic_complexity() == concrete_feature.syntactic_complexity()
-    assert concrete_feature.syntactic_complexity() == 1 + concrete_feature.get_expression().syntactic_complexity()
-    assert classifier.syntactic_complexity() == 2
+    assert concrete_feature.syntactic_complexity() == concrete_feature.get_expression().syntactic_complexity()
+    assert classifier.syntactic_complexity() == 1
     assert ClassifierFactory.create_empty(classifier_repository).syntactic_complexity() == 0
     classified_options = GroundSketchSearchOptions()
     assert classified_options.classifier is None

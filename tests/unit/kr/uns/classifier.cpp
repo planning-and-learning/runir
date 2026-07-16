@@ -124,8 +124,8 @@ TEST(RunirTests, UnsClassifierParsesAndClassifies)
     const auto feature = classifier.get_features().front();
     const auto concrete_complexity = ygg::visit([](auto concrete) { return runir::kr::uns::dl::syntactic_complexity(concrete); }, feature.get_variant());
     EXPECT_EQ(runir::kr::uns::syntactic_complexity(feature), concrete_complexity);
-    EXPECT_EQ(concrete_complexity, 1 + runir::kr::dl::semantics::syntactic_complexity(feature.get_expression()));
-    EXPECT_EQ(runir::kr::uns::syntactic_complexity(classifier), 10);
+    EXPECT_EQ(concrete_complexity, runir::kr::dl::semantics::syntactic_complexity(feature.get_expression()));
+    EXPECT_EQ(runir::kr::uns::syntactic_complexity(classifier), 7);
     auto empty_data = ygg::Data<runir::kr::uns::Classifier>(std::string("empty"));
     EXPECT_EQ(runir::kr::uns::syntactic_complexity(fixture.repository->get_or_create(empty_data).first), 0);
 
