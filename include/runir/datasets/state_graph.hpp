@@ -33,20 +33,25 @@
 #include <optional>
 #include <tuple>
 #include <tyr/planning/algorithms/utils.hpp>
+#include <utility>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets
 {
 
 template<tyr::planning::TaskKind Kind>
-struct StateGraphVertexLabel
+struct StateGraphVertexLabel : ygg::comparison::Mixin<StateGraphVertexLabel<Kind>>
 {
     tyr::planning::StateView<Kind> state;
 
+    explicit StateGraphVertexLabel(tyr::planning::StateView<Kind> state_) noexcept : state(std::move(state_)) {}
+
+    auto cista_members() noexcept { return std::tie(state); }
     auto identifying_members() const noexcept { return std::tie(state); }
 };
 
 template<tyr::planning::TaskKind Kind>
-struct AnnotatedStateGraphVertexLabel
+struct AnnotatedStateGraphVertexLabel : ygg::comparison::Mixin<AnnotatedStateGraphVertexLabel<Kind>>
 {
     tyr::planning::StateView<Kind> state;
     ygg::float_t goal_distance = std::numeric_limits<ygg::float_t>::infinity();
@@ -55,14 +60,34 @@ struct AnnotatedStateGraphVertexLabel
     bool is_alive = false;
     bool is_unsolvable = false;
 
+    AnnotatedStateGraphVertexLabel(tyr::planning::StateView<Kind> state_,
+                                   ygg::float_t goal_distance_,
+                                   bool is_initial_,
+                                   bool is_goal_,
+                                   bool is_alive_,
+                                   bool is_unsolvable_) noexcept :
+        state(std::move(state_)),
+        goal_distance(goal_distance_),
+        is_initial(is_initial_),
+        is_goal(is_goal_),
+        is_alive(is_alive_),
+        is_unsolvable(is_unsolvable_)
+    {
+    }
+
+    auto cista_members() noexcept { return std::tie(state, goal_distance, is_initial, is_goal, is_alive, is_unsolvable); }
     auto identifying_members() const noexcept { return std::tie(state, goal_distance, is_initial, is_goal, is_alive, is_unsolvable); }
 };
 
-struct StateGraphEdgeLabel
+struct StateGraphEdgeLabel : ygg::comparison::Mixin<StateGraphEdgeLabel>
 {
     tyr::formalism::planning::GroundActionView action;
     ygg::float_t cost = 0;
 
+    StateGraphEdgeLabel() = default;
+    StateGraphEdgeLabel(tyr::formalism::planning::GroundActionView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
+
+    auto cista_members() noexcept { return std::tie(action, cost); }
     auto identifying_members() const noexcept { return std::make_tuple(action.get_index(), cost); }
 };
 

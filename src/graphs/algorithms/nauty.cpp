@@ -92,11 +92,4 @@ auto compute_permutation(const SparseGraph& source, const SparseGraph& target) -
     return result;
 }
 
-auto operator==(const SparseGraph& lhs, const SparseGraph& rhs) noexcept -> bool
-{
-    return lhs.get_num_directed_edges() == rhs.get_num_directed_edges() && lhs.get_num_vertices() == rhs.get_num_vertices()
-           && lhs.get_offsets() == rhs.get_offsets() && lhs.get_degrees() == rhs.get_degrees() && lhs.get_edges() == rhs.get_edges()
-           && lhs.get_coloring() == rhs.get_coloring();
-}
-
 }  // namespace runir::graphs::nauty

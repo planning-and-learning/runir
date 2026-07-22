@@ -15,6 +15,7 @@
 #include <yggdrasil/containers/dynamic_bitset.hpp>
 #include <yggdrasil/containers/dynamic_bitset_hash.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::kr::ps::base::dl
 {
@@ -30,7 +31,7 @@ using NumericalChange = runir::kr::ps::dl::NumericalChange;
 /// Feature valuation; bit i corresponds to position i in the originating
 /// sketch's declared Boolean (resp. numerical) feature order. A numerical bit
 /// encodes n > 0.
-struct PolicyGraphVertexLabel
+struct PolicyGraphVertexLabel : ygg::comparison::Mixin<PolicyGraphVertexLabel>
 {
     boost::dynamic_bitset<> boolean_values;
     boost::dynamic_bitset<> numerical_values;
@@ -41,12 +42,13 @@ struct PolicyGraphVertexLabel
     {
     }
 
+    auto cista_members() noexcept { return std::tie(boolean_values, numerical_values); }
     auto identifying_members() const noexcept { return std::tie(boolean_values, numerical_values); }
 };
 
 /// Rule labeling an edge together with its qualitative numerical changes,
 /// aligned with the originating sketch's declared numerical feature order.
-struct PolicyGraphEdgeLabel
+struct PolicyGraphEdgeLabel : ygg::comparison::Mixin<PolicyGraphEdgeLabel>
 {
     RuleView rule;
     std::vector<NumericalChange> numerical_changes;
@@ -56,6 +58,8 @@ struct PolicyGraphEdgeLabel
         numerical_changes(std::move(numerical_changes_))
     {
     }
+
+    auto cista_members() noexcept { return std::tie(rule, numerical_changes); }
 
     // The changes are determined by the rule.
     auto identifying_members() const noexcept { return std::tie(rule); }

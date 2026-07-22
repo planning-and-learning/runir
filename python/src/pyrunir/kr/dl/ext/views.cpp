@@ -17,6 +17,7 @@ void bind_view(nb::module_& m, const std::string& name)
                    .def("get_index", &View::get_index)
                    .def("get_name", &View::get_name)
                    .def("get_identifier", &View::get_identifier);
+    ygg::add_comparison(cls);
     ygg::add_hash(cls);
 }
 

@@ -31,20 +31,30 @@
 #include <limits>
 #include <memory>
 #include <tuple>
+#include <utility>
 #include <vector>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets
 {
 
-struct EquivalenceVertexLabel
+struct EquivalenceVertexLabel : ygg::comparison::Mixin<EquivalenceVertexLabel>
 {
     uint_t state_graph_index = 0;
     graphs::VertexIndex state_vertex_index;
 
-    auto identifying_members() const noexcept { return std::tie(state_graph_index, state_vertex_index); }
+    EquivalenceVertexLabel() = default;
+    constexpr EquivalenceVertexLabel(uint_t state_graph_index_, graphs::VertexIndex state_vertex_index_) noexcept :
+        state_graph_index(state_graph_index_),
+        state_vertex_index(state_vertex_index_)
+    {
+    }
+
+    auto cista_members() noexcept { return std::tie(state_graph_index, state_vertex_index); }
+    constexpr auto identifying_members() const noexcept { return std::tie(state_graph_index, state_vertex_index); }
 };
 
-struct AnnotatedEquivalenceVertexLabel
+struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquivalenceVertexLabel>
 {
     uint_t state_graph_index = 0;
     graphs::VertexIndex state_vertex_index;
@@ -54,18 +64,46 @@ struct AnnotatedEquivalenceVertexLabel
     bool is_alive = false;
     bool is_unsolvable = false;
 
+    AnnotatedEquivalenceVertexLabel() = default;
+    AnnotatedEquivalenceVertexLabel(uint_t state_graph_index_,
+                                    graphs::VertexIndex state_vertex_index_,
+                                    ygg::float_t goal_distance_,
+                                    bool is_initial_,
+                                    bool is_goal_,
+                                    bool is_alive_,
+                                    bool is_unsolvable_) noexcept :
+        state_graph_index(state_graph_index_),
+        state_vertex_index(state_vertex_index_),
+        goal_distance(goal_distance_),
+        is_initial(is_initial_),
+        is_goal(is_goal_),
+        is_alive(is_alive_),
+        is_unsolvable(is_unsolvable_)
+    {
+    }
+
+    auto cista_members() noexcept { return std::tie(state_graph_index, state_vertex_index, goal_distance, is_initial, is_goal, is_alive, is_unsolvable); }
+
     auto identifying_members() const noexcept
     {
         return std::tie(state_graph_index, state_vertex_index, goal_distance, is_initial, is_goal, is_alive, is_unsolvable);
     }
 };
 
-struct EquivalenceEdgeLabel
+struct EquivalenceEdgeLabel : ygg::comparison::Mixin<EquivalenceEdgeLabel>
 {
     uint_t state_graph_index = 0;
     graphs::EdgeIndex state_edge_index;
 
-    auto identifying_members() const noexcept { return std::tie(state_graph_index, state_edge_index); }
+    EquivalenceEdgeLabel() = default;
+    constexpr EquivalenceEdgeLabel(uint_t state_graph_index_, graphs::EdgeIndex state_edge_index_) noexcept :
+        state_graph_index(state_graph_index_),
+        state_edge_index(state_edge_index_)
+    {
+    }
+
+    auto cista_members() noexcept { return std::tie(state_graph_index, state_edge_index); }
+    constexpr auto identifying_members() const noexcept { return std::tie(state_graph_index, state_edge_index); }
 };
 
 using EquivalenceGraphBuilder = graphs::StaticGraphBuilder<EquivalenceVertexLabel, EquivalenceEdgeLabel>;

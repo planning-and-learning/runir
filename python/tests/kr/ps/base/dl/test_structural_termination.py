@@ -1,7 +1,12 @@
+from typing import TypedDict, cast
+
+import pytest
+
+from fixture_utils import load_fixture, read_fixture
 from pypddl_datasets import data_root
 
 from pyrunir.kr.dl.base.semantics import ConstructorRepositoryFactory
-from pyrunir.kr.ps.base import RepositoryFactory
+from pyrunir.kr.ps.base import Repository, RepositoryFactory
 from pyrunir.kr.ps.base.dl import (
     BooleanFeature,
     IncompleteStructuralTerminationStatus,
@@ -12,116 +17,23 @@ from pyrunir.kr.ps.base.dl import (
     structural_termination,
 )
 from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import Parser
-
-OSCILLATOR = """(:sketch
-    (:features
-        (:boolean
-            (:symbol b1)
-            (:expression
-                (b_nonempty
-                    (c_atomic_state
-                        "at-robby"))
-            )
-        )
-    )
-    (:rules
-        (:rule
-            (:symbol auto1)
-            (:expression
-                (:conditions
-                    (negative b1)
-                )
-                (:effects
-                    (positive b1)
-                )
-            )
-        )
-        (:rule
-            (:symbol auto2)
-            (:expression
-                (:conditions
-                    (positive b1)
-                )
-                (:effects
-                    (negative b1)
-                )
-            )
-        )
-    )
-)
-"""
-
-TPP = """(:sketch
-    (:features
-        (:numerical
-            (:symbol fb)
-            (:expression
-                (n_count
-                    (c_atomic_state
-                        "ball"))
-            )
-        )
-        (:numerical
-            (:symbol fl)
-            (:expression
-                (n_count
-                    (c_atomic_state
-                        "room"))
-            )
-        )
-        (:numerical
-            (:symbol fn)
-            (:expression
-                (n_count
-                    (c_atomic_state
-                        "gripper"))
-            )
-        )
-    )
-    (:rules
-        (:rule
-            (:symbol auto3)
-            (:expression
-                (:conditions
-                    (greater_zero fb)
-                )
-                (:effects
-                    (decreases fb)
-                    (unchanged fl)
-                    (unchanged fn)
-                )
-            )
-        )
-        (:rule
-            (:symbol auto4)
-            (:expression
-                (:conditions
-                    (greater_zero fl)
-                )
-                (:effects
-                    (unchanged fn)
-                    (decreases fl)
-                )
-            )
-        )
-        (:rule
-            (:symbol auto5)
-            (:expression
-                (:conditions
-                    (greater_zero fn)
-                )
-                (:effects
-                    (decreases fn)
-                )
-            )
-        )
-    )
-)
-"""
+from pytyr.formalism.planning import Parser, PlanningDomain
 
 
-def make_repository():
+class StructuralTerminationFixture(TypedDict):
+    name: str
+    file: str
+    terminating: bool
+
+
+_SUITE = load_fixture("kr/ps/structural_termination.json")
+BASE_CASES = cast(list[StructuralTerminationFixture], _SUITE["base"])
+OSCILLATOR = read_fixture("kr/ps/base/dl/oscillator.sketch")
+NUMERICAL_CYCLE = read_fixture("kr/ps/base/dl/numerical_cycle.sketch")
+TPP = read_fixture("kr/ps/base/dl/tpp.sketch")
+
+
+def make_repository() -> tuple[PlanningDomain, Repository]:
     domain_path = data_root() / "classical" / "tests" / "gripper" / "domain.pddl"
     planning_domain = Parser(domain_path, ParserOptions()).get_domain()
     dl_repository = ConstructorRepositoryFactory().create(planning_domain)
@@ -129,7 +41,15 @@ def make_repository():
     return planning_domain, repository
 
 
-def test_structural_termination_tpp_sketch_is_terminating():
+@pytest.mark.parametrize("case", BASE_CASES, ids=[case["name"] for case in BASE_CASES])
+def test_base_structural_termination_fixture(case: StructuralTerminationFixture) -> None:
+    domain, repository = make_repository()
+    sketch = parse_sketch(read_fixture(case["file"]), domain, repository)
+
+    assert structural_termination(sketch).is_terminating() == case["terminating"]
+
+
+def test_structural_termination_tpp_sketch_is_terminating() -> None:
     domain, repository = make_repository()
     sketch = parse_sketch(TPP, domain, repository)
 
@@ -153,7 +73,7 @@ def test_structural_termination_tpp_sketch_is_terminating():
     assert [feature.get_index() for feature in scc_result.numericals] == [feature.get_index() for feature in numericals]
 
 
-def test_structural_termination_oscillator_counterexample_has_positional_valuations():
+def test_structural_termination_oscillator_counterexample_has_positional_valuations() -> None:
     domain, repository = make_repository()
     sketch = parse_sketch(OSCILLATOR, domain, repository)
 
@@ -178,57 +98,29 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
     # Positional valuations: one vertex per truth value of b1.
     valuations = {counterexample.get_vertex_property(vertex).boolean_values[0] for vertex in counterexample.get_vertex_indices()}
     assert valuations == {True, False}
+    first_vertex = counterexample.get_vertex_property(next(iter(counterexample.get_vertex_indices())))
+    assert first_vertex == first_vertex
+    assert first_vertex <= first_vertex
+    with pytest.raises(TypeError):
+        hash(first_vertex)
 
     # The two-cycle uses both rules; each edge flips b1.
     rules = {counterexample.get_edge_property(edge).rule.get_index() for edge in counterexample.get_edge_indices()}
     assert rules == {rule.get_index() for rule in sketch.get_rules()}
+    first_edge = counterexample.get_edge_property(next(iter(counterexample.get_edge_indices())))
+    assert first_edge == first_edge
+    assert first_edge >= first_edge
+    with pytest.raises(TypeError):
+        hash(first_edge)
     for edge in counterexample.get_edge_indices():
         source = counterexample.get_vertex_property(counterexample.get_source(edge)).boolean_values[0]
         target = counterexample.get_vertex_property(counterexample.get_target(edge)).boolean_values[0]
         assert source != target
 
 
-def test_structural_termination_edge_changes_are_positional():
+def test_structural_termination_edge_changes_are_positional() -> None:
     domain, repository = make_repository()
-    sketch = parse_sketch(
-        """(:sketch
-    (:features
-        (:numerical
-            (:symbol n1)
-            (:expression
-                (n_count
-                    (c_atomic_state
-                        "ball"))
-            )
-        )
-    )
-    (:rules
-        (:rule
-            (:symbol auto6)
-            (:expression
-                (:conditions
-                    (greater_zero n1)
-                )
-                (:effects
-                    (decreases n1)
-                )
-            )
-        )
-        (:rule
-            (:symbol auto7)
-            (:expression
-                (:conditions)
-                (:effects
-                    (increases n1)
-                )
-            )
-        )
-    )
-)
-""",
-        domain,
-        repository,
-    )
+    sketch = parse_sketch(NUMERICAL_CYCLE, domain, repository)
 
     result = structural_termination(sketch)
 
@@ -240,7 +132,7 @@ def test_structural_termination_edge_changes_are_positional():
     assert changes == {NumericalChange.DECREASES, NumericalChange.INCREASES}
 
 
-def test_incomplete_structural_termination_reports_blocking_reasons():
+def test_incomplete_structural_termination_reports_blocking_reasons() -> None:
     domain, repository = make_repository()
     sketch = parse_sketch(OSCILLATOR, domain, repository)
 
@@ -253,13 +145,3 @@ def test_incomplete_structural_termination_reports_blocking_reasons():
         assert isinstance(reason.feature, BooleanFeature)
         (opposing,) = reason.opposing_rules
         assert opposing.get_index() != surviving.rule.get_index()
-
-
-def test_incomplete_structural_termination_tpp_is_terminating():
-    domain, repository = make_repository()
-    sketch = parse_sketch(TPP, domain, repository)
-
-    result = incomplete_structural_termination(sketch)
-
-    assert result.is_terminating()
-    assert result.surviving_rules == []

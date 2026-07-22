@@ -7,12 +7,22 @@
 #include <iostream>
 #include <runir/datasets/equivalence_graph.hpp>
 #include <runir/datasets/formatter.hpp>
+#include <stdexcept>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 #include <yggdrasil/serialization/json_loader.hpp>
 
 namespace runir::tests
 {
+
+static_assert(datasets::StateGraphVertexRef(0, 1) == datasets::StateGraphVertexRef(0, 1));
+static_assert(datasets::StateGraphVertexRef(0, 1) != datasets::StateGraphVertexRef(0, 2));
+static_assert(datasets::StateGraphVertexRef(0, 1) < datasets::StateGraphVertexRef(0, 2));
+static_assert(datasets::StateGraphVertexRef(0, 1) <= datasets::StateGraphVertexRef(0, 1));
+static_assert(datasets::StateGraphVertexRef(0, 2) > datasets::StateGraphVertexRef(0, 1));
+static_assert(datasets::StateGraphVertexRef(0, 2) >= datasets::StateGraphVertexRef(0, 2));
 
 namespace
 {
@@ -36,7 +46,7 @@ auto parse_equivalence_policy_mode(std::string_view value) -> datasets::Equivale
     throw std::runtime_error(fmt::format("Unsupported equivalence policy mode: {}", value));
 }
 
-EquivalenceGraphFigureCase parse_case(const boost::json::object& suite, const boost::json::object& object)
+EquivalenceGraphFigureCase parse_case(const boost::json::object& object)
 {
     auto task_files = std::vector<std::filesystem::path> {};
     for (const auto& task_file : ygg::common::as_array(*object.if_contains("task_files"), "case.task_files"))
@@ -52,7 +62,7 @@ EquivalenceGraphFigureCase parse_case(const boost::json::object& suite, const bo
 
 std::vector<EquivalenceGraphFigureCase> load_cases()
 {
-    const auto suite = ygg::common::load_json_file(ygg::common::root_path() / "tests/unit/datasets/equivalence_graph.json");
+    const auto suite = load_fixture_json("datasets/equivalence_graph.json");
     const auto& suite_object = ygg::common::as_object(suite, "suite");
     const auto* tests_value = suite_object.if_contains("tests");
     if (!tests_value)
@@ -60,7 +70,7 @@ std::vector<EquivalenceGraphFigureCase> load_cases()
 
     auto result = std::vector<EquivalenceGraphFigureCase> {};
     for (const auto& case_value : ygg::common::as_array(*tests_value, "suite.tests"))
-        result.push_back(parse_case(suite_object, ygg::common::as_object(case_value, "case")));
+        result.push_back(parse_case(ygg::common::as_object(case_value, "case")));
     return result;
 }
 

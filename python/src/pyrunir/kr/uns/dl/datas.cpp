@@ -2,6 +2,7 @@
 
 #include <runir/kr/uns/dl/feature_data.hpp>
 #include <string>
+#include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::uns::dl
@@ -15,6 +16,7 @@ void bind_data(nb::module_& m, const std::string& name)
     using Data = ygg::Data<T>;
 
     auto cls = nb::class_<Data>(m, name.c_str()).def(nb::init<>());
+    ygg::add_comparison(cls);
 
     if constexpr (requires { &Data::index; })
         cls.def_rw("index", &Data::index);

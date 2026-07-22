@@ -30,6 +30,7 @@ void bind_view(nb::module_& m, const std::string& name)
     using LiftedContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, tyr::planning::LiftedTag>;
     auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
     ygg::add_print(cls);
+    ygg::add_comparison(cls);
     ygg::add_hash(cls);
     if constexpr (requires(const View& view) { view.get_arg(); })
         cls.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());

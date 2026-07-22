@@ -259,7 +259,7 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context,
         [[maybe_unused]] const auto added =
             builder.add_vertex(AnnotatedStateGraphVertexLabel<Kind> { state,
                                                                       goal_distance[vertex_index],
-                                                                      ygg::EqualTo<tyr::planning::StateView<Kind>> {}(state, initial_state),
+                                                                      state == initial_state,
                                                                       is_goal[vertex_index],
                                                                       is_alive,
                                                                       !is_alive });

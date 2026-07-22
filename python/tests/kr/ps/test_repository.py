@@ -1,5 +1,8 @@
+import pytest
+
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
+from pyrunir.datasets import GroundTaskClass
 from pyrunir.kr.dl.base.semantics import ConstructorRepositoryFactory as BaseDlRepositoryFactory
 from pyrunir.kr.dl.ext import ConstructorRepositoryFactory as ExtDlRepositoryFactory
 from pyrunir.kr.ps import base, ext
@@ -28,3 +31,30 @@ def test_base_and_ext_repositories_construct_programmatically():
 def test_uns_dl_feature_data_is_bound():
     data = uns_dl.FeatureData()
     assert data.index is not None
+
+
+def test_data_rich_comparison_is_bound():
+    first = base.RuleData()
+    first.symbol = "a"
+    second = base.RuleData()
+    second.symbol = "b"
+
+    assert first == first
+    assert first != second
+    assert first < second
+    assert first <= first
+    assert second > first
+    assert second >= second
+    with pytest.raises(TypeError):
+        hash(first)
+
+
+def test_task_class_rich_comparison_is_bound():
+    first = GroundTaskClass()
+    second = GroundTaskClass()
+
+    assert first == second
+    assert first <= second
+    assert first >= second
+    with pytest.raises(TypeError):
+        hash(first)

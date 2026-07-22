@@ -15,8 +15,6 @@
 
 #include <algorithm>
 #include <yggdrasil/semantics/canonicalization.hpp>
-#include <yggdrasil/semantics/comparators.hpp>
-#include <yggdrasil/semantics/equal_to.hpp>
 
 namespace runir::kr::ps::ext
 {

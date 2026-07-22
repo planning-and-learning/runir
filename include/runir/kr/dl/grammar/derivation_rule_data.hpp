@@ -2,11 +2,12 @@
 #define RUNIR_GRAMMAR_DERIVATION_RULE_DATA_HPP_
 
 #include "runir/kr/dl/grammar/constructor_or_non_terminal_data.hpp"
+#include "runir/kr/dl/grammar/derivation_rule_index.hpp"
 
 #include <tuple>
+#include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
-#include <utility>
 
 namespace ygg
 {

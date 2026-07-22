@@ -13,12 +13,13 @@
 #include <tyr/planning/state_view.hpp>
 #include <utility>
 #include <vector>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::kr::ps::base
 {
 
 template<tyr::planning::TaskKind Kind>
-class EvaluationContext
+class EvaluationContext : public ygg::comparison::Mixin<EvaluationContext<Kind>>
 {
 private:
     using TransitionContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, Kind>;

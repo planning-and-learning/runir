@@ -10,3 +10,11 @@ __pycache__/
 
 # Benchmark data materialized by pypddl-datasets (see README)
 data/
+
+# Generated documentation artifacts
+/docs/*.aux
+/docs/*.log
+/docs/*.out
+/docs/bonet-et-al-icaps2024.pdf
+/docs/incomplete_sieve.pdf
+/docs/sieve.pdf

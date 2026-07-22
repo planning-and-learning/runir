@@ -71,6 +71,7 @@ void bind_equivalence_graph(nb::module_& m)
                             .def_rw("state_graph_index", &EquivalenceVertexLabel::state_graph_index)
                             .def_rw("state_vertex_index", &EquivalenceVertexLabel::state_vertex_index);
     ygg::add_print(vertex_label);
+    ygg::add_comparison(vertex_label);
     ygg::add_hash(vertex_label);
 
     auto annotated_vertex_label = nb::class_<AnnotatedEquivalenceVertexLabel>(m, "AnnotatedEquivalenceVertexLabel")  //
@@ -83,6 +84,7 @@ void bind_equivalence_graph(nb::module_& m)
                                       .def_rw("is_alive", &AnnotatedEquivalenceVertexLabel::is_alive)
                                       .def_rw("is_unsolvable", &AnnotatedEquivalenceVertexLabel::is_unsolvable);
     ygg::add_print(annotated_vertex_label);
+    ygg::add_comparison(annotated_vertex_label);
     ygg::add_hash(annotated_vertex_label);
 
     auto edge_label = nb::class_<EquivalenceEdgeLabel>(m, "EquivalenceEdgeLabel")  //
@@ -90,6 +92,7 @@ void bind_equivalence_graph(nb::module_& m)
                           .def_rw("state_graph_index", &EquivalenceEdgeLabel::state_graph_index)
                           .def_rw("state_edge_index", &EquivalenceEdgeLabel::state_edge_index);
     ygg::add_print(edge_label);
+    ygg::add_comparison(edge_label);
     ygg::add_hash(edge_label);
 
     auto builder = nb::class_<EquivalenceGraphBuilder>(m, "EquivalenceGraphBuilder");

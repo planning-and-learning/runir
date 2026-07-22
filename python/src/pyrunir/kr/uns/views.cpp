@@ -31,6 +31,7 @@ void bind_view(nb::module_& m, const std::string& name)
 
     auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
     ygg::add_print(cls);
+    ygg::add_comparison(cls);
     ygg::add_hash(cls);
 
     if constexpr (requires(const View& view) { view.get_variant(); })

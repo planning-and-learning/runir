@@ -5,12 +5,13 @@
 
 #include <cassert>
 #include <tuple>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::graphs
 {
 
 template<typename G, Property P>
-class Vertex
+class Vertex : public ygg::comparison::Mixin<Vertex<G, P>>
 {
 private:
     const G* m_graph;

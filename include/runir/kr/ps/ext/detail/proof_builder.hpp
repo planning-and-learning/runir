@@ -13,7 +13,6 @@
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/semantics/equal_to.hpp>
 #include <yggdrasil/semantics/hash.hpp>
 
 namespace runir::kr::ps::ext::detail

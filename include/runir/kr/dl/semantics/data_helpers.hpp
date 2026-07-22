@@ -10,12 +10,13 @@
 #include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::kr::dl::semantics
 {
 
 template<typename Self>
-struct NullaryData
+struct NullaryData : ygg::comparison::Mixin<NullaryData<Self>>
 {
     ygg::Index<Self> index;
 
@@ -28,7 +29,7 @@ struct NullaryData
 };
 
 template<typename Self, typename Identifier>
-struct IdentifierData
+struct IdentifierData : ygg::comparison::Mixin<IdentifierData<Self, Identifier>>
 {
     ygg::Index<Self> index;
     Identifier identifier;
@@ -61,7 +62,7 @@ struct ArgumentData : IdentifierData<Self, Identifier>
 };
 
 template<typename Self, typename Reference>
-struct ReferenceData
+struct ReferenceData : ygg::comparison::Mixin<ReferenceData<Self, Reference>>
 {
     ygg::Index<Self> index;
     ygg::Index<Reference> reference;
@@ -80,7 +81,7 @@ struct ReferenceData
 };
 
 template<typename Self, typename Arg>
-struct UnaryData
+struct UnaryData : ygg::comparison::Mixin<UnaryData<Self, Arg>>
 {
     ygg::Index<Self> index;
     ygg::Index<Arg> arg;
@@ -99,7 +100,7 @@ struct UnaryData
 };
 
 template<typename Self, typename Lhs, typename Rhs>
-struct BinaryData
+struct BinaryData : ygg::comparison::Mixin<BinaryData<Self, Lhs, Rhs>>
 {
     ygg::Index<Self> index;
     ygg::Index<Lhs> lhs;
@@ -120,7 +121,7 @@ struct BinaryData
 };
 
 template<typename Self, typename Lhs, typename Mid, typename Rhs>
-struct TernaryData
+struct TernaryData : ygg::comparison::Mixin<TernaryData<Self, Lhs, Mid, Rhs>>
 {
     ygg::Index<Self> index;
     ygg::Index<Lhs> lhs;
@@ -143,7 +144,7 @@ struct TernaryData
 };
 
 template<typename Self, tyr::formalism::FactKind T>
-struct PredicateData
+struct PredicateData : ygg::comparison::Mixin<PredicateData<Self, T>>
 {
     ygg::Index<Self> index;
     ygg::Index<tyr::formalism::Predicate<T>> predicate;
@@ -165,7 +166,7 @@ struct PredicateData
 };
 
 template<typename Self>
-struct ObjectData
+struct ObjectData : ygg::comparison::Mixin<ObjectData<Self>>
 {
     ygg::Index<Self> index;
     ygg::Index<tyr::formalism::Object> object;
@@ -184,7 +185,7 @@ struct ObjectData
 };
 
 template<typename Self, typename Role>
-struct NumberRestrictionData
+struct NumberRestrictionData : ygg::comparison::Mixin<NumberRestrictionData<Self, Role>>
 {
     ygg::Index<Self> index;
     ygg::uint_t n;
@@ -205,7 +206,7 @@ struct NumberRestrictionData
 };
 
 template<typename Self, typename Role, typename Concept>
-struct QualifiedNumberRestrictionData
+struct QualifiedNumberRestrictionData : ygg::comparison::Mixin<QualifiedNumberRestrictionData<Self, Role, Concept>>
 {
     ygg::Index<Self> index;
     ygg::uint_t n;
@@ -234,7 +235,7 @@ struct QualifiedNumberRestrictionData
 };
 
 template<typename Self, typename Role>
-struct RoleFillersData
+struct RoleFillersData : ygg::comparison::Mixin<RoleFillersData<Self, Role>>
 {
     ygg::Index<Self> index;
     ygg::Index<Role> role;
@@ -255,7 +256,7 @@ struct RoleFillersData
 };
 
 template<typename Self>
-struct ObjectListData
+struct ObjectListData : ygg::comparison::Mixin<ObjectListData<Self>>
 {
     ygg::Index<Self> index;
     ygg::IndexList<tyr::formalism::Object> objects;

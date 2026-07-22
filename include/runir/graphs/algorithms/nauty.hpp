@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <tuple>
 #include <vector>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::graphs::nauty
 {
@@ -19,7 +20,7 @@ namespace details
 class SparseGraphImpl;
 }
 
-class SparseGraph
+class SparseGraph : public ygg::comparison::Mixin<SparseGraph>
 {
 private:
     std::unique_ptr<details::SparseGraphImpl> m_impl;
@@ -151,8 +152,6 @@ public:
 auto apply_permutation(const std::vector<int>& permutation, std::vector<int>& values) -> std::vector<int>&;
 auto compute_label_permutation(const SparseGraph& source, const SparseGraph& target) -> std::vector<int>;
 auto compute_permutation(const SparseGraph& source, const SparseGraph& target) -> std::vector<int>;
-
-auto operator==(const SparseGraph& lhs, const SparseGraph& rhs) noexcept -> bool;
 
 }  // namespace runir::graphs::nauty
 

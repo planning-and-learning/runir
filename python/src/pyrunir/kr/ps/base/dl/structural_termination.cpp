@@ -10,6 +10,7 @@
 #include <runir/kr/ps/base/dl/structural_termination.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <vector>
+#include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::ps::base::dl
@@ -44,13 +45,15 @@ void bind_structural_termination(nb::module_& m)
         .value("TERMINATING", StructuralTerminationStatus::TERMINATING)
         .value("NON_TERMINATING", StructuralTerminationStatus::NON_TERMINATING);
 
-    nb::class_<PolicyGraphVertexLabel>(m, "PolicyGraphVertexLabel")
-        .def_prop_ro("boolean_values", [](const PolicyGraphVertexLabel& self) { return materialize(self.boolean_values); })
-        .def_prop_ro("numerical_values", [](const PolicyGraphVertexLabel& self) { return materialize(self.numerical_values); });
+    auto vertex_label = nb::class_<PolicyGraphVertexLabel>(m, "PolicyGraphVertexLabel")
+                            .def_prop_ro("boolean_values", [](const PolicyGraphVertexLabel& self) { return materialize(self.boolean_values); })
+                            .def_prop_ro("numerical_values", [](const PolicyGraphVertexLabel& self) { return materialize(self.numerical_values); });
+    ygg::add_comparison(vertex_label);
 
-    nb::class_<PolicyGraphEdgeLabel>(m, "PolicyGraphEdgeLabel")
-        .def_ro("rule", &PolicyGraphEdgeLabel::rule)
-        .def_ro("numerical_changes", &PolicyGraphEdgeLabel::numerical_changes);
+    auto edge_label = nb::class_<PolicyGraphEdgeLabel>(m, "PolicyGraphEdgeLabel")
+                          .def_ro("rule", &PolicyGraphEdgeLabel::rule)
+                          .def_ro("numerical_changes", &PolicyGraphEdgeLabel::numerical_changes);
+    ygg::add_comparison(edge_label);
 
     auto policy_graph = nb::class_<PolicyGraph>(m, "PolicyGraph");
     bind_readable_graph_methods(policy_graph);

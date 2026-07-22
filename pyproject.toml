@@ -1,16 +1,17 @@
 [build-system]
 requires = [
-    "scikit-build-core>=0.10",
-    "pyyggdrasil>=0.0.24,<0.1",
-    "pytyr>=0.0.31,<0.1",
-    "pypddl>=1.0.24,<1.1",
+    # nanobind 2.12 stubgen requires scikit-build-core's pre-1.0 editable loader.
+    "scikit-build-core>=0.10,<1",
+    "pyyggdrasil>=0.0.25,<0.1",
+    "pytyr>=0.0.32,<0.1",
+    "pypddl>=1.0.25,<1.1",
 ]
 build-backend = "pyrunir_build_backend"
 backend-path = ["python"]
 
 [project]
 name = "pyrunir"
-version = "0.0.25"
+version = "0.0.26"
 description = "Runir description logic feature library"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -18,19 +19,22 @@ authors = [
     {name = "Dominik Drexler", email = "dominik.drexler@liu.se"},
 ]
 dependencies = [
-    "pyyggdrasil>=0.0.24,<0.1",
-    "pytyr>=0.0.31,<0.1",
-    "pypddl>=1.0.24,<1.1",
+    "pyyggdrasil>=0.0.25,<0.1",
+    "pytyr>=0.0.32,<0.1",
+    "pypddl>=1.0.25,<1.1",
 ]
 
 [project.optional-dependencies]
 test = [
     "pytest",
-    "pypddl-datasets>=0.0.7,<0.1",
+    "pypddl-datasets>=0.0.9,<0.1; python_version >= '3.10'",
 ]
 
 [project.urls]
 Homepage = "https://github.com/planning-and-learning/runir"
+
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]
 
 [tool.scikit-build]
 build.targets = ["pyrunir_wheel"]
@@ -56,8 +60,8 @@ exclude = [
 ]
 
 [tool.scikit-build.cmake.define]
-RUNIR_BUILD_PYRUNIR = "ON"
-RUNIR_BUILD_TESTS = "OFF"
+RUNIR_BUILD_PYRUNIR = true
+RUNIR_BUILD_TESTS = false
 CMAKE_INSTALL_LIBDIR = "lib"
 
 [tool.cibuildwheel]
@@ -69,7 +73,7 @@ container-engine = "docker"
 # Because --no-isolation also skips scikit-build-core's dynamic build tools,
 # cmake/ninja must be installed here too (manylinux ships cmake but not ninja).
 build-frontend = { name = "build", args = ["--no-isolation"] }
-before-build = "n=0; until python -m pip install --no-cache-dir 'scikit-build-core>=0.10' 'cmake>=3.15' 'ninja>=1.5' 'pypddl>=1.0.24,<1.1' 'pyyggdrasil>=0.0.24,<0.1' 'pytyr>=0.0.31,<0.1'; do n=$((n+1)); [ $n -ge 30 ] && exit 1; echo 'provider wheels not on the index yet; retrying in 60s'; sleep 60; done"
+before-build = "n=0; until python -m pip install --no-cache-dir 'scikit-build-core>=0.10,<1' 'cmake>=3.21' 'ninja>=1.5' 'pypddl>=1.0.25,<1.1' 'pyyggdrasil>=0.0.25,<0.1' 'pytyr>=0.0.32,<0.1'; do n=$((n+1)); [ $n -ge 30 ] && exit 1; echo 'provider wheels not on the index yet; retrying in 60s'; sleep 60; done"
 
 [tool.cibuildwheel.linux]
 repair-wheel-command = "python -m pyyggdrasil.repair --providers pypddl,pyyggdrasil,pytyr --dest-dir {dest_dir} {wheel}"

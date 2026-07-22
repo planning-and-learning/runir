@@ -6,6 +6,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <utility>
 
 namespace runir::graphs::weisfeiler_leman
 {
@@ -25,18 +26,20 @@ template<std::size_t K>
 using ColorTupleList = std::vector<ColorTuple<K>>;
 
 template<std::size_t K>
-struct Signature
+struct Signature : ygg::comparison::Mixin<Signature<K>>
 {
     Color color {};
     ColorTupleList<K> neighbor_colors;
 
-    auto identifying_members() const noexcept { return std::tie(color, neighbor_colors); }
+    Signature() = default;
+    Signature(Color color_, ColorTupleList<K> neighbor_colors_) : color(color_), neighbor_colors(std::move(neighbor_colors_)) {}
 
-    friend auto operator==(const Signature& lhs, const Signature& rhs) noexcept { return lhs.identifying_members() == rhs.identifying_members(); }
+    auto cista_members() noexcept { return std::tie(color, neighbor_colors); }
+    auto identifying_members() const noexcept { return std::tie(color, neighbor_colors); }
 };
 
 template<std::size_t K>
-class Certificate
+class Certificate : public ygg::comparison::Mixin<Certificate<K>>
 {
 public:
     using SignatureList = std::vector<std::pair<Signature<K>, Color>>;
@@ -200,7 +203,7 @@ auto compute_certificate(const G& graph)
         auto round_summary = typename Certificate<K>::RoundSummary();
         for (const auto& [_, signature] : tuple_signatures)
         {
-            if (round_summary.empty() || round_summary.back().first.identifying_members() != signature.identifying_members())
+            if (round_summary.empty() || round_summary.back().first != signature)
                 round_summary.emplace_back(signature, 1);
             else
                 ++round_summary.back().second;

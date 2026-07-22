@@ -8,8 +8,8 @@
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 
-#include <yggdrasil/semantics/comparators.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::kr::dl
 {
@@ -17,31 +17,31 @@ namespace runir::kr::dl
 template<FamilyTag Family>
 inline bool is_canonical(const ygg::Data<FamilyConcept<Family, IntersectionTag>>& data) noexcept
 {
-    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return data.lhs <= data.rhs;
 }
 
 template<FamilyTag Family>
 inline bool is_canonical(const ygg::Data<FamilyConcept<Family, UnionTag>>& data) noexcept
 {
-    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return data.lhs <= data.rhs;
 }
 
 template<FamilyTag Family>
 inline bool is_canonical(const ygg::Data<FamilyConcept<Family, AgreementTag>>& data) noexcept
 {
-    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return data.lhs <= data.rhs;
 }
 
 template<FamilyTag Family>
 inline bool is_canonical(const ygg::Data<FamilyRole<Family, IntersectionTag>>& data) noexcept
 {
-    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return data.lhs <= data.rhs;
 }
 
 template<FamilyTag Family>
 inline bool is_canonical(const ygg::Data<FamilyRole<Family, UnionTag>>& data) noexcept
 {
-    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return data.lhs <= data.rhs;
 }
 
 template<FamilyTag Family>

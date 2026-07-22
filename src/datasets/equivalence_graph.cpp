@@ -32,7 +32,6 @@
 #include <tyr/planning/heuristics/blind.hpp>
 #include <utility>
 #include <vector>
-#include <yggdrasil/semantics/equal_to.hpp>
 
 namespace runir::datasets
 {
@@ -162,7 +161,7 @@ public:
         const auto representative =
             m_policy->get_or_create_representative(StateGraphVertexCandidate<Kind> { m_state_graph_index, succ_state }, proposed_representative);
 
-        if (ygg::EqualTo<StateGraphVertexRef> {}(representative, proposed_representative))
+        if (representative == proposed_representative)
         {
             static_cast<void>(get_or_create_state_vertex(succ_state));
             return false;

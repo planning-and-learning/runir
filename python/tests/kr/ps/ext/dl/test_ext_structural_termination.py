@@ -1,194 +1,47 @@
-from pypddl_datasets import data_root
+from typing import TypedDict, cast
 
+import pytest
+
+from fixture_utils import load_fixture, read_fixture
+from pypddl.formalism import ParserOptions
+from pypddl_datasets import data_root
 from pyrunir.kr.dl import ext as dl_ext
 from pyrunir.kr.ps import ext
-from pyrunir.kr.ps.ext import dl
 from pyrunir.kr.ps.base.dl import NumericalChange
-from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import Parser
-
-TERMINATING_MODULE = """(:module
-    (:symbol term)
-    (:arguments)
-    (:registers)
-    (:entry m0)
-    (:memory m0 m1)
-    (:features
-        (:boolean
-            (:symbol unused)
-            (:expression
-                (b_nonempty
-                    (c_top)
-                )
-            )
-        )
-        (:numerical
-            (:symbol fn)
-            (:expression
-                (n_count
-                    (c_atomic_state "ball")
-                )
-            )
-        )
-    )
-    (:rules
-        (:rule
-            (:symbol auto1)
-            (:expression
-                (:source-memory m0)
-                (:target-memory m1)
-                (:sketch
-                    (:conditions
-                        (greater_zero fn)
-                    )
-                    (:effects
-                        (decreases fn)
-                    )
-                )
-            )
-        )
-        (:rule
-            (:symbol auto3)
-            (:expression
-                (:source-memory m1)
-                (:target-memory m0)
-                (:sketch
-                    (:conditions)
-                    (:effects
-                        (unchanged fn)
-                    )
-                )
-            )
-        )
-    )
-)"""
-
-NON_TERMINATING_MODULE = TERMINATING_MODULE.replace("(:symbol term)", "(:symbol nonterm)").replace(
-    """(:effects
-                        (decreases fn)
-                    )""",
-    """(:effects
-                        (unchanged fn)
-                    )""",
-    1,
-)
-
-SEPARATED_BOOLEAN_RULES_MODULE = """(:module
-    (:symbol separated)
-    (:arguments)
-    (:registers)
-    (:entry m0)
-    (:memory m0 m1)
-    (:features
-        (:boolean
-            (:symbol b)
-            (:expression (b_nonempty (c_atomic_state "ball")))
-        )
-    )
-    (:rules
-        (:rule
-            (:symbol r1)
-            (:expression
-                (:source-memory m0)
-                (:target-memory m0)
-                (:sketch
-                    (:conditions (negative b))
-                    (:effects (positive b))
-                )
-            )
-        )
-        (:rule
-            (:symbol r2)
-            (:expression
-                (:source-memory m1)
-                (:target-memory m1)
-                (:sketch
-                    (:conditions (positive b))
-                    (:effects (negative b))
-                )
-            )
-        )
-    )
-)"""
-
-PROJECTED_COMPONENTS_MODULE = """(:module
-    (:symbol projected)
-    (:arguments)
-    (:registers)
-    (:entry m0)
-    (:memory m0 m1 m2)
-    (:features
-        (:boolean
-            (:symbol b)
-            (:expression (b_nonempty (c_atomic_state "ball")))
-        )
-        (:numerical
-            (:symbol n0)
-            (:expression (n_count (c_atomic_state "ball")))
-        )
-        (:numerical
-            (:symbol n1)
-            (:expression (n_count (c_atomic_state "room")))
-        )
-    )
-    (:rules
-        (:rule
-            (:symbol to_true)
-            (:expression
-                (:source-memory m0)
-                (:target-memory m0)
-                (:sketch
-                    (:conditions (negative b))
-                    (:effects (positive b))
-                )
-            )
-        )
-        (:rule
-            (:symbol to_false)
-            (:expression
-                (:source-memory m0)
-                (:target-memory m0)
-                (:sketch
-                    (:conditions (positive b))
-                    (:effects (negative b))
-                )
-            )
-        )
-        (:rule
-            (:symbol keep_n1)
-            (:expression
-                (:source-memory m1)
-                (:target-memory m1)
-                (:sketch
-                    (:conditions)
-                    (:effects (unchanged n1))
-                )
-            )
-        )
-        (:rule
-            (:symbol keep_n0)
-            (:expression
-                (:source-memory m2)
-                (:target-memory m2)
-                (:sketch
-                    (:conditions)
-                    (:effects (unchanged n0))
-                )
-            )
-        )
-    )
-)"""
+from pyrunir.kr.ps.ext import dl
+from pytyr.formalism.planning import Parser, PlanningDomain
 
 
-def _repositories():
-    domain_path = data_root() / "classical" / "tests" / "gripper" / "domain.pddl"
-    planning_domain = Parser(domain_path, ParserOptions()).get_domain()
+class StructuralTerminationFixture(TypedDict):
+    name: str
+    file: str
+    terminating: bool
+
+
+_SUITE = load_fixture("kr/ps/structural_termination.json")
+EXT_CASES = cast(list[StructuralTerminationFixture], _SUITE["ext"])
+TERMINATING_MODULE = read_fixture("kr/ps/ext/dl/terminating.module")
+NON_TERMINATING_MODULE = read_fixture("kr/ps/ext/dl/non_terminating.module")
+SEPARATED_BOOLEAN_RULES_MODULE = read_fixture("kr/ps/ext/dl/separated_boolean.module")
+PROJECTED_COMPONENTS_MODULE = read_fixture("kr/ps/ext/dl/projected_components.module")
+
+
+def _repositories() -> tuple[PlanningDomain, ext.Repository]:
+    planning_domain = Parser(data_root() / "classical/tests/gripper/domain.pddl", ParserOptions()).get_domain()
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(planning_domain)
     repository = ext.RepositoryFactory().create(dl_repository)
     return planning_domain, repository
 
 
-def test_ext_structural_termination_is_terminating():
+@pytest.mark.parametrize("case", EXT_CASES, ids=[case["name"] for case in EXT_CASES])
+def test_ext_structural_termination_fixture(case: StructuralTerminationFixture) -> None:
+    planning_domain, repository = _repositories()
+    module = dl.parse_module(read_fixture(case["file"]), planning_domain, repository)
+
+    assert dl.structural_termination(module).is_terminating() == case["terminating"]
+
+
+def test_ext_structural_termination_is_terminating() -> None:
     planning_domain, repository = _repositories()
     module = dl.parse_module(TERMINATING_MODULE, planning_domain, repository)
 
@@ -213,44 +66,45 @@ def test_ext_structural_termination_is_terminating():
     ]
 
 
-def test_ext_structural_termination_counterexample_spans_memory_states():
+def test_ext_structural_termination_counterexample_spans_memory_states() -> None:
     planning_domain, repository = _repositories()
     module = dl.parse_module(NON_TERMINATING_MODULE, planning_domain, repository)
 
     result = dl.structural_termination(module)
     booleans = module.get_boolean_features()
     numericals = module.get_numerical_features()
-
     assert not result.is_terminating()
     counterexample = result.counterexample
     assert counterexample is not None
-
     (feature,) = numericals
 
     vertices = [counterexample.get_vertex_property(vertex) for vertex in counterexample.get_vertex_indices()]
-    memory_states = {vertex.memory_state.get_name() for vertex in vertices}
-    assert memory_states == {"m0", "m1"}
+    assert {vertex.memory_state.get_name() for vertex in vertices} == {"m0", "m1"}
+    assert vertices[0] == vertices[0]
+    assert vertices[0] <= vertices[0]
+    with pytest.raises(TypeError):
+        hash(vertices[0])
     for vertex in vertices:
         assert len(vertex.boolean_values) == len(booleans)
         assert len(vertex.numerical_values) == len(numericals)
 
     edges = [counterexample.get_edge_property(edge) for edge in counterexample.get_edge_indices()]
-    rules = {edge.rule.get_index() for edge in edges}
-    assert len(rules) == 2
-
-    # Positional native labels align with the module's declared features.
+    assert len({edge.rule.get_index() for edge in edges}) == 2
+    assert edges[0] == edges[0]
+    assert edges[0] >= edges[0]
+    with pytest.raises(TypeError):
+        hash(edges[0])
     changes = {dict(zip(numericals, edge.numerical_changes))[feature] for edge in edges}
     assert changes == {NumericalChange.UNCHANGED}
 
 
-def test_ext_structural_termination_lifts_projected_components():
+def test_ext_structural_termination_lifts_projected_components() -> None:
     planning_domain, repository = _repositories()
     module = dl.parse_module(PROJECTED_COMPONENTS_MODULE, planning_domain, repository)
 
     result = dl.structural_termination(module)
     booleans = module.get_boolean_features()
     numericals = module.get_numerical_features()
-
     assert not result.is_terminating()
     assert result.counterexample is not None
     assert result.scc_results is not None
@@ -303,12 +157,11 @@ def test_ext_structural_termination_lifts_projected_components():
         assert edge.numerical_changes == expected_changes[edge.rule.get_symbol()]
 
 
-def test_ext_incomplete_structural_termination_uses_memory_components():
+def test_ext_incomplete_structural_termination_uses_memory_components() -> None:
     planning_domain, repository = _repositories()
     module = dl.parse_module(SEPARATED_BOOLEAN_RULES_MODULE, planning_domain, repository)
 
     result = dl.incomplete_structural_termination(module)
-
     assert result.is_terminating()
     assert result.status == dl.IncompleteStructuralTerminationStatus.TERMINATING
     assert len(module.get_boolean_features()) == 1
@@ -316,13 +169,14 @@ def test_ext_incomplete_structural_termination_uses_memory_components():
     assert result.surviving_rules == []
 
 
-def test_ext_incomplete_structural_termination_accepts_module_program():
+def test_ext_incomplete_structural_termination_accepts_module_program() -> None:
     planning_domain, repository = _repositories()
-    program = dl.parse_module_program(f"(:program (:entry nonterm) {NON_TERMINATING_MODULE})", planning_domain, repository)
+    program = dl.parse_module_program(
+        read_fixture("kr/ps/ext/dl/non_terminating.program"), planning_domain, repository
+    )
 
     result = dl.incomplete_structural_termination(program)
     complete_result = dl.structural_termination(program, max_features=1, use_incomplete_preprocessing=False)
-
     assert not complete_result.is_terminating()
     assert not result.is_terminating()
     assert len(result.module_results) == 1

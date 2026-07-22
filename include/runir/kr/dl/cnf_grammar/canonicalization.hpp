@@ -9,6 +9,7 @@
 #include "runir/kr/dl/cnf_grammar/substitution_rule_data.hpp"
 
 #include <yggdrasil/semantics/canonicalization.hpp>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::kr::dl::cnf_grammar
 {
@@ -56,31 +57,31 @@ bool is_canonical(const ygg::Data<NonTerminal<Family, Category>>&) noexcept
 template<runir::kr::dl::FamilyTag Family>
 inline bool is_canonical(const ygg::Data<Concept<Family, runir::kr::dl::IntersectionTag>>& data) noexcept
 {
-    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return data.lhs <= data.rhs;
 }
 
 template<runir::kr::dl::FamilyTag Family>
 inline bool is_canonical(const ygg::Data<Concept<Family, runir::kr::dl::UnionTag>>& data) noexcept
 {
-    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return data.lhs <= data.rhs;
 }
 
 template<runir::kr::dl::FamilyTag Family>
 inline bool is_canonical(const ygg::Data<Concept<Family, runir::kr::dl::AgreementTag>>& data) noexcept
 {
-    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return data.lhs <= data.rhs;
 }
 
 template<runir::kr::dl::FamilyTag Family>
 inline bool is_canonical(const ygg::Data<Role<Family, runir::kr::dl::IntersectionTag>>& data) noexcept
 {
-    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return data.lhs <= data.rhs;
 }
 
 template<runir::kr::dl::FamilyTag Family>
 inline bool is_canonical(const ygg::Data<Role<Family, runir::kr::dl::UnionTag>>& data) noexcept
 {
-    return !ygg::Less<decltype(data.lhs)> {}(data.rhs, data.lhs);
+    return data.lhs <= data.rhs;
 }
 
 template<runir::kr::dl::FamilyTag Family, typename Tag>

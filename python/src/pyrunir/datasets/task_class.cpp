@@ -8,6 +8,7 @@
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <yggdrasil/execution/onetbb.hpp>
+#include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::datasets
@@ -25,9 +26,10 @@ void bind_task_class_for_kind(nb::module_& m, const char* prefix)
     using TaskSearchContextT = TaskSearchContext<Kind>;
     using TaskClassSearchContextsT = TaskClassSearchContexts<Kind>;
 
-    nb::class_<TaskClassT>(m, (std::string(prefix) + "TaskClass").c_str())  //
-        .def(nb::init<>())
-        .def_rw("tasks", &TaskClassT::tasks);
+    auto task_class = nb::class_<TaskClassT>(m, (std::string(prefix) + "TaskClass").c_str())  //
+                          .def(nb::init<>())
+                          .def_rw("tasks", &TaskClassT::tasks);
+    ygg::add_comparison(task_class);
 
     nb::class_<TaskSearchContextT>(m, (std::string(prefix) + "TaskSearchContext").c_str())  //
         .def(nb::new_([]() { return TaskSearchContextT::create(); }))

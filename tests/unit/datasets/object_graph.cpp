@@ -6,8 +6,6 @@
 #include <runir/datasets/formatter.hpp>
 #include <runir/datasets/object_graph.hpp>
 #include <runir/graphs/properties.hpp>
-#include <yggdrasil/semantics/comparators.hpp>
-#include <yggdrasil/semantics/equal_to.hpp>
 
 namespace runir::tests
 {
@@ -31,8 +29,8 @@ TEST(ObjectGraphTest, InitialStateObjectGraphIsSimpleAndCanonicalizesVertexLabel
     for (const auto vertex : graph->get_vertex_indices())
     {
         const auto& labels = graph->get_vertex(vertex).get_property().labels;
-        EXPECT_TRUE(std::ranges::is_sorted(labels, ygg::Less<datasets::ObjectGraphVertexLabelEntry> {}));
-        EXPECT_EQ(std::ranges::adjacent_find(labels, ygg::EqualTo<datasets::ObjectGraphVertexLabelEntry> {}), labels.end());
+        EXPECT_TRUE(std::ranges::is_sorted(labels));
+        EXPECT_EQ(std::ranges::adjacent_find(labels), labels.end());
     }
 }
 

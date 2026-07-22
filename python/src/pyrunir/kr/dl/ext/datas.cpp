@@ -2,6 +2,7 @@
 
 #include <runir/kr/dl/datas.hpp>
 #include <string>
+#include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::dl::ext
@@ -13,11 +14,12 @@ template<typename T>
 void bind_data(nb::module_& m, const std::string& name)
 {
     using Data = ygg::Data<T>;
-    nb::class_<Data>(m, name.c_str())
-        .def(nb::init<>())
-        .def_rw("index", &Data::index)
-        .def_rw("name", &Data::name)
-        .def_rw("identifier", &Data::identifier);
+    auto cls = nb::class_<Data>(m, name.c_str())  //
+                   .def(nb::init<>())
+                   .def_rw("index", &Data::index)
+                   .def_rw("name", &Data::name)
+                   .def_rw("identifier", &Data::identifier);
+    ygg::add_comparison(cls);
 }
 
 }  // namespace

@@ -26,15 +26,20 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/execution/onetbb.hpp>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets
 {
 
 template<tyr::planning::TaskKind Kind>
-struct TaskClass
+struct TaskClass : ygg::comparison::Mixin<TaskClass<Kind>>
 {
     std::vector<tyr::planning::TaskPtr<Kind>> tasks;
 
+    TaskClass() = default;
+    explicit TaskClass(std::vector<tyr::planning::TaskPtr<Kind>> tasks_) : tasks(std::move(tasks_)) {}
+
+    auto cista_members() noexcept { return std::tie(tasks); }
     auto identifying_members() const noexcept { return std::tie(tasks); }
 };
 

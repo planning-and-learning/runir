@@ -26,8 +26,10 @@
 #include <tuple>
 #include <tyr/planning/ground/state_view.hpp>
 #include <tyr/planning/lifted/state_view.hpp>
+#include <utility>
 #include <variant>
 #include <vector>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets
 {
@@ -35,28 +37,48 @@ namespace runir::datasets
 using ObjectGraphPredicateVariant =
     std::variant<tyr::formalism::planning::PredicateView<tyr::formalism::StaticTag>, tyr::formalism::planning::PredicateView<tyr::formalism::FluentTag>>;
 
-struct StateObjectGraphVertexLabelEntry
+struct StateObjectGraphVertexLabelEntry : ygg::comparison::Mixin<StateObjectGraphVertexLabelEntry>
 {
     ObjectGraphPredicateVariant predicate;
     std::size_t argument_position = 0;
 
+    StateObjectGraphVertexLabelEntry() = default;
+    StateObjectGraphVertexLabelEntry(ObjectGraphPredicateVariant predicate_, std::size_t argument_position_) :
+        predicate(std::move(predicate_)),
+        argument_position(argument_position_)
+    {
+    }
+
+    auto cista_members() noexcept { return std::tie(predicate, argument_position); }
     auto identifying_members() const noexcept { return std::tie(predicate, argument_position); }
 };
 
-struct GoalObjectGraphVertexLabelEntry
+struct GoalObjectGraphVertexLabelEntry : ygg::comparison::Mixin<GoalObjectGraphVertexLabelEntry>
 {
     ObjectGraphPredicateVariant predicate;
     std::size_t argument_position = 0;
 
+    GoalObjectGraphVertexLabelEntry() = default;
+    GoalObjectGraphVertexLabelEntry(ObjectGraphPredicateVariant predicate_, std::size_t argument_position_) :
+        predicate(std::move(predicate_)),
+        argument_position(argument_position_)
+    {
+    }
+
+    auto cista_members() noexcept { return std::tie(predicate, argument_position); }
     auto identifying_members() const noexcept { return std::tie(predicate, argument_position); }
 };
 
 using ObjectGraphVertexLabelEntry = std::variant<StateObjectGraphVertexLabelEntry, GoalObjectGraphVertexLabelEntry>;
 
-struct ObjectGraphVertexLabel
+struct ObjectGraphVertexLabel : ygg::comparison::Mixin<ObjectGraphVertexLabel>
 {
     std::vector<ObjectGraphVertexLabelEntry> labels;
 
+    ObjectGraphVertexLabel() = default;
+    explicit ObjectGraphVertexLabel(std::vector<ObjectGraphVertexLabelEntry> labels_) : labels(std::move(labels_)) {}
+
+    auto cista_members() noexcept { return std::tie(labels); }
     auto identifying_members() const noexcept { return std::tie(labels); }
 };
 

@@ -13,7 +13,7 @@ import pytest
 DOWNSTREAM_PACKAGE_DIR = Path(__file__).resolve().parent / "minimal_downstream_package"
 
 
-def test_downstream_python_binding_links_installed_runir(tmp_path):
+def test_downstream_python_binding_links_installed_runir(tmp_path: Path) -> None:
     cmake = shutil.which("cmake")
     if cmake is None:
         pytest.skip("cmake is required for the downstream binding smoke test")

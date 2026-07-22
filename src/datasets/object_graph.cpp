@@ -25,8 +25,6 @@
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/semantics/comparators.hpp>
-#include <yggdrasil/semantics/equal_to.hpp>
 
 namespace runir::datasets
 {
@@ -96,8 +94,8 @@ public:
 
         for (auto& label : m_vertex_labels)
         {
-            std::sort(label.labels.begin(), label.labels.end(), ygg::Less<ObjectGraphVertexLabelEntry> {});
-            label.labels.erase(std::unique(label.labels.begin(), label.labels.end(), ygg::EqualTo<ObjectGraphVertexLabelEntry> {}), label.labels.end());
+            std::sort(label.labels.begin(), label.labels.end());
+            label.labels.erase(std::unique(label.labels.begin(), label.labels.end()), label.labels.end());
             builder.add_vertex(std::move(label));
         }
 

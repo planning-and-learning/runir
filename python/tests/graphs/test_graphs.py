@@ -1,4 +1,8 @@
+from typing import TypedDict, cast, override
+
 import pytest
+
+from fixture_utils import load_fixture
 
 from pyrunir.graphs import (
     BidirectionalStaticGraph,
@@ -23,7 +27,54 @@ from pyrunir.graphs import (
 )
 
 
-def test_dynamic_graph_exposes_borrowed_iterators_and_properties():
+class ExpectedGraphProperties(TypedDict):
+    loopless: bool
+    multi_graph: bool
+    symmetric: bool
+    simple_undirected: bool
+
+
+class GraphFixture(TypedDict):
+    name: str
+    num_vertices: int
+    edges: list[list[int | bool]]
+    expected: ExpectedGraphProperties
+    nauty_error: str | None
+
+
+class CertificatePairFixture(TypedDict):
+    left: str
+    right: str
+    color_refinement_equal: bool
+    color_refinement_colors_equal: bool
+    weisfeiler_leman_2_equal: bool
+    weisfeiler_leman_2_colors_equal: bool
+
+
+_GRAPH_SUITE = load_fixture("graphs/shapes.json")
+GRAPH_FIXTURES = cast(list[GraphFixture], _GRAPH_SUITE["graphs"])
+CERTIFICATE_PAIRS = cast(list[CertificatePairFixture], _GRAPH_SUITE["certificate_pairs"])
+
+
+def _populate_fixture_graph(graph: StaticGraphBuilder | DynamicGraph, case: GraphFixture) -> None:
+    vertices = [graph.add_vertex("x") for _ in range(case["num_vertices"])]
+    for raw_edge in case["edges"]:
+        assert len(raw_edge) == 3
+        source, target, undirected = raw_edge
+        assert isinstance(source, int) and isinstance(target, int) and isinstance(undirected, bool)
+        if undirected:
+            graph.add_undirected_edge(vertices[source], vertices[target], "edge")
+        else:
+            graph.add_directed_edge(vertices[source], vertices[target], "edge")
+
+
+def _make_fixture_graph(case: GraphFixture) -> StaticGraph:
+    builder = StaticGraphBuilder()
+    _populate_fixture_graph(builder, case)
+    return StaticGraph(builder)
+
+
+def test_dynamic_graph_exposes_borrowed_iterators_and_properties() -> None:
     graph = DynamicGraph()
 
     source = graph.add_vertex("source")
@@ -47,7 +98,7 @@ def test_dynamic_graph_exposes_borrowed_iterators_and_properties():
     assert graph.contains_edge(edge)
 
 
-def test_dynamic_graph_removals_update_membership_and_adjacency():
+def test_dynamic_graph_removals_update_membership_and_adjacency() -> None:
     graph = DynamicGraph()
 
     source = graph.add_vertex("source")
@@ -81,7 +132,7 @@ def test_dynamic_graph_removals_update_membership_and_adjacency():
     assert not graph.contains_vertex(source)
 
 
-def test_static_graph_preserves_builder_indices_and_properties():
+def test_static_graph_preserves_builder_indices_and_properties() -> None:
     builder = StaticGraphBuilder()
 
     source = builder.add_vertex("source")
@@ -116,7 +167,7 @@ def test_static_graph_preserves_builder_indices_and_properties():
     assert graph.get_edge_property(edge) == ("edge", 1)
 
 
-def test_bidirectional_static_graph_exposes_forward_and_backward_graphs():
+def test_bidirectional_static_graph_exposes_forward_and_backward_graphs() -> None:
     builder = StaticGraphBuilder()
 
     a = builder.add_vertex("a")
@@ -143,14 +194,14 @@ def test_bidirectional_static_graph_exposes_forward_and_backward_graphs():
     assert list(graph.get_backward_graph().get_successor_indices(b)) == [a, c]
 
 
-def test_graph_properties_must_be_hashable():
+def test_graph_properties_must_be_hashable() -> None:
     graph = DynamicGraph()
 
     with pytest.raises(TypeError):
         graph.add_vertex([])
 
 
-def test_static_graph_boost_algorithms():
+def test_static_graph_boost_algorithms() -> None:
     builder = StaticGraphBuilder()
 
     a = builder.add_vertex("a")
@@ -188,7 +239,7 @@ def test_static_graph_boost_algorithms():
     assert all_pairs_distances[a][c] == 2.0
 
 
-def test_backward_static_graph_boost_algorithms():
+def test_backward_static_graph_boost_algorithms() -> None:
     builder = StaticGraphBuilder()
 
     a = builder.add_vertex("a")
@@ -204,19 +255,22 @@ def test_backward_static_graph_boost_algorithms():
     assert distances[c] == 1
 
 
-def test_static_graph_traversal_visitors_dispatch_python_overrides():
+def test_static_graph_traversal_visitors_dispatch_python_overrides() -> None:
     class Visitor(StaticGraphTraversalVisitor):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__()
-            self.events = []
+            self.events: list[tuple[str, int]] = []
 
-        def discover_vertex(self, vertex):
+        @override
+        def discover_vertex(self, vertex: int) -> None:
             self.events.append(("discover", vertex))
 
-        def examine_edge(self, edge):
+        @override
+        def examine_edge(self, edge: int) -> None:
             self.events.append(("edge", edge))
 
-        def finish_vertex(self, vertex):
+        @override
+        def finish_vertex(self, vertex: int) -> None:
             self.events.append(("finish", vertex))
 
     builder = StaticGraphBuilder()
@@ -246,7 +300,7 @@ def test_static_graph_traversal_visitors_dispatch_python_overrides():
     ]
 
 
-def test_dynamic_graph_boost_algorithms():
+def test_dynamic_graph_boost_algorithms() -> None:
     graph = DynamicGraph()
 
     a = graph.add_vertex("a")
@@ -267,61 +321,41 @@ def test_dynamic_graph_boost_algorithms():
     assert weighted_distances[c] == 5.0
 
 
-def test_graph_property_helpers_classify_common_shapes():
+@pytest.mark.parametrize("case", GRAPH_FIXTURES, ids=lambda case: case["name"])
+def test_graph_fixture_properties(case: GraphFixture) -> None:
     builder = StaticGraphBuilder()
-    lhs = builder.add_vertex("x")
-    rhs = builder.add_vertex("x")
-    builder.add_undirected_edge(lhs, rhs)
+    dynamic = DynamicGraph()
+    _populate_fixture_graph(builder, case)
+    _populate_fixture_graph(dynamic, case)
+    expected = case["expected"]
 
-    assert is_loopless(builder)
-    assert not is_multi_graph(builder)
-    assert is_symmetric(builder)
-    assert is_simple_undirected(builder)
-
-    simple_graph = StaticGraph(builder)
-    assert is_simple_undirected(simple_graph)
-
-    directed = DynamicGraph()
-    source = directed.add_vertex("x")
-    target = directed.add_vertex("x")
-    directed.add_directed_edge(source, target, "edge")
-
-    assert is_loopless(directed)
-    assert not is_multi_graph(directed)
-    assert not is_symmetric(directed)
-    assert not is_simple_undirected(directed)
-
-    directed.add_directed_edge(source, target, "parallel")
-    directed.add_directed_edge(target, source, "reverse")
-
-    assert is_multi_graph(directed)
-    assert is_symmetric(directed)
-    assert not is_simple_undirected(directed)
-
-    loop = DynamicGraph()
-    vertex = loop.add_vertex("x")
-    loop.add_directed_edge(vertex, vertex, "loop")
-
-    assert not is_loopless(loop)
-    assert is_symmetric(loop)
-    assert not is_simple_undirected(loop)
+    for graph in (builder, StaticGraph(builder), dynamic):
+        assert is_loopless(graph) == expected["loopless"]
+        assert is_multi_graph(graph) == expected["multi_graph"]
+        assert is_symmetric(graph) == expected["symmetric"]
+        assert is_simple_undirected(graph) == expected["simple_undirected"]
 
 
-def test_graph_certificates():
-    builder = StaticGraphBuilder()
+@pytest.mark.parametrize("case", CERTIFICATE_PAIRS, ids=lambda case: f'{case["left"]}-{case["right"]}')
+def test_graph_fixture_certificates(case: CertificatePairFixture) -> None:
+    fixtures = {fixture["name"]: fixture for fixture in GRAPH_FIXTURES}
+    left = _make_fixture_graph(fixtures[case["left"]])
+    right = _make_fixture_graph(fixtures[case["right"]])
 
-    a = builder.add_vertex("x")
-    b = builder.add_vertex("x")
-    c = builder.add_vertex("x")
-    builder.add_directed_edge(a, b, "a-b")
-    builder.add_directed_edge(b, c, "b-c")
+    left_cr = color_refinement_certificate(left)
+    right_cr = color_refinement_certificate(right)
+    left_wl2 = weisfeiler_leman_2_certificate(left)
+    right_wl2 = weisfeiler_leman_2_certificate(right)
 
-    graph = StaticGraph(builder)
-
-    color_refinement = color_refinement_certificate(graph)
-    weisfeiler_leman = weisfeiler_leman_2_certificate(graph)
-
-    assert len(color_refinement.get_colors()) == graph.get_num_vertices()
-    assert len(color_refinement.get_round_summaries()) > 0
-    assert len(weisfeiler_leman.get_colors()) == graph.get_num_vertices() ** 2
-    assert len(weisfeiler_leman.get_round_summaries()) > 0
+    assert left_cr.get_round_summaries()
+    assert right_cr.get_round_summaries()
+    assert left_wl2.get_round_summaries()
+    assert right_wl2.get_round_summaries()
+    assert len(left_cr.get_colors()) == fixtures[case["left"]]["num_vertices"]
+    assert len(right_cr.get_colors()) == fixtures[case["right"]]["num_vertices"]
+    assert len(left_wl2.get_colors()) == fixtures[case["left"]]["num_vertices"] ** 2
+    assert len(right_wl2.get_colors()) == fixtures[case["right"]]["num_vertices"] ** 2
+    assert (left_cr.get_round_summaries() == right_cr.get_round_summaries()) == case["color_refinement_equal"]
+    assert (left_cr.get_colors() == right_cr.get_colors()) == case["color_refinement_colors_equal"]
+    assert (left_wl2.get_round_summaries() == right_wl2.get_round_summaries()) == case["weisfeiler_leman_2_equal"]
+    assert (left_wl2.get_colors() == right_wl2.get_colors()) == case["weisfeiler_leman_2_colors_equal"]

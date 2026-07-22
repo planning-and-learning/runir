@@ -25,6 +25,8 @@
 #include <tuple>
 #include <tyr/planning/ground/state_view.hpp>
 #include <tyr/planning/lifted/state_view.hpp>
+#include <utility>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets
 {
@@ -32,38 +34,71 @@ namespace runir::datasets
 template<typename Tag>
 struct EquivalencePolicy;
 
-struct StateGraphVertexRef
+struct StateGraphVertexRef : ygg::comparison::Mixin<StateGraphVertexRef>
 {
     uint_t state_graph_index = 0;
     graphs::VertexIndex state_vertex_index = 0;
 
-    auto identifying_members() const noexcept { return std::tie(state_graph_index, state_vertex_index); }
+    StateGraphVertexRef() = default;
+    constexpr StateGraphVertexRef(uint_t state_graph_index_, graphs::VertexIndex state_vertex_index_) noexcept :
+        state_graph_index(state_graph_index_),
+        state_vertex_index(state_vertex_index_)
+    {
+    }
+
+    auto cista_members() noexcept { return std::tie(state_graph_index, state_vertex_index); }
+    constexpr auto identifying_members() const noexcept { return std::tie(state_graph_index, state_vertex_index); }
 };
 
-struct StateGraphEdgeRef
+struct StateGraphEdgeRef : ygg::comparison::Mixin<StateGraphEdgeRef>
 {
     uint_t state_graph_index = 0;
     graphs::EdgeIndex state_edge_index = 0;
 
-    auto identifying_members() const noexcept { return std::tie(state_graph_index, state_edge_index); }
+    StateGraphEdgeRef() = default;
+    constexpr StateGraphEdgeRef(uint_t state_graph_index_, graphs::EdgeIndex state_edge_index_) noexcept :
+        state_graph_index(state_graph_index_),
+        state_edge_index(state_edge_index_)
+    {
+    }
+
+    auto cista_members() noexcept { return std::tie(state_graph_index, state_edge_index); }
+    constexpr auto identifying_members() const noexcept { return std::tie(state_graph_index, state_edge_index); }
 };
 
 template<tyr::planning::TaskKind Kind>
-struct StateGraphVertexCandidate
+struct StateGraphVertexCandidate : ygg::comparison::Mixin<StateGraphVertexCandidate<Kind>>
 {
     uint_t state_graph_index = 0;
     tyr::planning::StateView<Kind> state;
 
+    StateGraphVertexCandidate(uint_t state_graph_index_, tyr::planning::StateView<Kind> state_) noexcept :
+        state_graph_index(state_graph_index_),
+        state(std::move(state_))
+    {
+    }
+
+    auto cista_members() noexcept { return std::tie(state_graph_index, state); }
     auto identifying_members() const noexcept { return std::tie(state_graph_index, state); }
 };
 
 template<tyr::planning::TaskKind Kind>
-struct StateGraphTransitionCandidate
+struct StateGraphTransitionCandidate : ygg::comparison::Mixin<StateGraphTransitionCandidate<Kind>>
 {
     uint_t state_graph_index = 0;
     tyr::planning::StateView<Kind> source_state;
     tyr::planning::StateView<Kind> target_state;
 
+    StateGraphTransitionCandidate(uint_t state_graph_index_,
+                                  tyr::planning::StateView<Kind> source_state_,
+                                  tyr::planning::StateView<Kind> target_state_) noexcept :
+        state_graph_index(state_graph_index_),
+        source_state(std::move(source_state_)),
+        target_state(std::move(target_state_))
+    {
+    }
+
+    auto cista_members() noexcept { return std::tie(state_graph_index, source_state, target_state); }
     auto identifying_members() const noexcept { return std::tie(state_graph_index, source_state, target_state); }
 };
 

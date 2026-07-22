@@ -292,6 +292,7 @@ inline void bind_graph_certificates(nb::module_& m)
                                             .def_rw("color", &WeisfeilerLeman2Signature::color)
                                             .def_rw("neighbor_colors", &WeisfeilerLeman2Signature::neighbor_colors);
     ygg::add_print(weisfeiler_leman_2_signature);
+    ygg::add_comparison(weisfeiler_leman_2_signature);
     ygg::add_hash(weisfeiler_leman_2_signature);
 
     auto weisfeiler_leman_3_signature = nb::class_<WeisfeilerLeman3Signature>(m, "WeisfeilerLeman3Signature")  //
@@ -299,6 +300,7 @@ inline void bind_graph_certificates(nb::module_& m)
                                             .def_rw("color", &WeisfeilerLeman3Signature::color)
                                             .def_rw("neighbor_colors", &WeisfeilerLeman3Signature::neighbor_colors);
     ygg::add_print(weisfeiler_leman_3_signature);
+    ygg::add_comparison(weisfeiler_leman_3_signature);
     ygg::add_hash(weisfeiler_leman_3_signature);
 
     auto color_refinement_certificate = nb::class_<ColorRefinementCertificate>(m, "ColorRefinementCertificate")  //
@@ -306,6 +308,7 @@ inline void bind_graph_certificates(nb::module_& m)
                                             .def("get_round_summaries", &ColorRefinementCertificate::get_round_summaries)
                                             .def("get_colors", &ColorRefinementCertificate::get_colors);
     ygg::add_print(color_refinement_certificate);
+    ygg::add_comparison(color_refinement_certificate);
     ygg::add_hash(color_refinement_certificate);
 
     auto weisfeiler_leman_2_certificate = nb::class_<WeisfeilerLeman2Certificate>(m, "WeisfeilerLeman2Certificate")  //
@@ -313,6 +316,7 @@ inline void bind_graph_certificates(nb::module_& m)
                                               .def("get_round_summaries", &WeisfeilerLeman2Certificate::get_round_summaries)
                                               .def("get_colors", &WeisfeilerLeman2Certificate::get_colors);
     ygg::add_print(weisfeiler_leman_2_certificate);
+    ygg::add_comparison(weisfeiler_leman_2_certificate);
     ygg::add_hash(weisfeiler_leman_2_certificate);
 
     auto weisfeiler_leman_3_certificate = nb::class_<WeisfeilerLeman3Certificate>(m, "WeisfeilerLeman3Certificate")  //
@@ -320,6 +324,7 @@ inline void bind_graph_certificates(nb::module_& m)
                                               .def("get_round_summaries", &WeisfeilerLeman3Certificate::get_round_summaries)
                                               .def("get_colors", &WeisfeilerLeman3Certificate::get_colors);
     ygg::add_print(weisfeiler_leman_3_certificate);
+    ygg::add_comparison(weisfeiler_leman_3_certificate);
     ygg::add_hash(weisfeiler_leman_3_certificate);
 }
 

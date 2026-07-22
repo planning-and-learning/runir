@@ -2,13 +2,14 @@
 #define RUNIR_GRAMMAR_GRAMMAR_DATA_HPP_
 
 #include "runir/kr/dl/grammar/derivation_rule_data.hpp"
+#include "runir/kr/dl/grammar/grammar_index.hpp"
 
 #include <cista/containers/optional.h>
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/core/types_utils.hpp>
 #include <tyr/formalism/planning/domain_index.hpp>
 #include <utility>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
 namespace ygg
 {

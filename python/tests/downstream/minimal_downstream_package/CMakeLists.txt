@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(nanobind CONFIG REQUIRED)
 find_package(runir CONFIG REQUIRED COMPONENTS core)
 
@@ -29,4 +29,3 @@ if(DOWNSTREAM_RUNIR_RUNTIME_LIBRARY_DIR)
 endif()
 
 install(TARGETS downstream_runir_user DESTINATION src)
-

@@ -1,3 +1,6 @@
+#include "fixtures.hpp"
+
+#include <concepts>
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
@@ -17,6 +20,54 @@
 
 namespace runir::tests
 {
+
+namespace
+{
+
+template<typename Entity>
+using View = ygg::View<ygg::Index<Entity>, kr::uns::Repository>;
+
+template<typename Entity>
+concept IndexedDataView = std::constructible_from<ygg::Index<Entity>, ygg::uint_t> && std::totally_ordered<ygg::Index<Entity>>
+                          && std::totally_ordered<ygg::Data<Entity>> && std::totally_ordered<View<Entity>>;
+
+using Literal = kr::uns::ClassifierLiteral;
+using Clause = kr::uns::ClassifierClause;
+using Classifier = kr::uns::Classifier;
+
+static_assert(IndexedDataView<Literal> && std::same_as<View<Literal>, kr::uns::ClassifierLiteralView>
+              && requires(ygg::Data<Literal>& data, const View<Literal>& view) {
+                     data.index;
+                     data.value;
+                     data.polarity;
+                     data.clear();
+                     view.get_index();
+                     view.get_feature();
+                     view.get_polarity();
+                 });
+static_assert(IndexedDataView<Clause> && std::same_as<View<Clause>, kr::uns::ClassifierClauseView>
+              && requires(ygg::Data<Clause>& data, const View<Clause>& view) {
+                     data.index;
+                     data.literals;
+                     data.clear();
+                     view.get_index();
+                     view.get_literals();
+                 });
+static_assert(IndexedDataView<Classifier> && std::same_as<View<Classifier>, kr::uns::ClassifierView>
+              && requires(ygg::Data<Classifier>& data, const View<Classifier>& view) {
+                     data.index;
+                     data.symbol;
+                     data.features;
+                     data.clauses;
+                     data.clear();
+                     view.get_index();
+                     view.get_symbol();
+                     view.get_features();
+                     view.get_clauses();
+                 });
+
+}  // namespace
+
 namespace
 {
 namespace fp = tyr::formalism::planning;
@@ -64,43 +115,7 @@ TEST(RunirTests, UnsClassifierParsesAndClassifies)
     // Two boolean features over the gripper initial state:
     //  - some_ball: there exists at least one object satisfying c_top (always true for a nonempty domain)
     //  - no_object: the domain has no objects (false for gripper)
-    const auto description = R"((:classifier
-        (:symbol c0) ; classifier symbol comment
-        (:features
-            (:boolean
-                (:symbol some_ball) ; feature comment
-                (:expression
-                    (b_nonempty
-                        (c_top)
-                    )
-                )
-            )
-            (:boolean
-                (:symbol no_object)
-                (:expression
-                    (b_not
-                        (b_nonempty
-                            (c_top)
-                        )
-                    )
-                )
-            )
-            (:boolean
-                (:symbol unused)
-                (:expression
-                    (b_nonempty
-                        (c_top)
-                    )
-                )
-            )
-        )
-        (:expression
-            (or
-                (and some_ball (not no_object))
-                (and no_object)
-            )
-        )
-    ))";
+    const auto description = read_fixture("kr/uns/positive.classifier");
 
     auto classifier = runir::kr::uns::dl::parse_classifier(description, fixture.domain(), *fixture.repository);
 
@@ -150,24 +165,7 @@ TEST(RunirTests, UnsClassifierInterningIsStructural)
 {
     Fixture fixture;
 
-    const auto description = R"((:classifier
-        (:symbol c0) ; classifier symbol comment
-        (:features
-            (:boolean
-                (:symbol a)
-                (:expression
-                    (b_nonempty
-                        (c_top)
-                    )
-                )
-            )
-        )
-        (:expression
-            (or
-                (and a)
-            )
-        )
-    ))";
+    const auto description = read_fixture("kr/uns/interning.classifier");
 
     auto first = runir::kr::uns::dl::parse_classifier(description, fixture.domain(), *fixture.repository);
     auto second = runir::kr::uns::dl::parse_classifier(description, fixture.domain(), *fixture.repository);
@@ -178,24 +176,7 @@ TEST(RunirTests, UnsClassifierRejectsUnknownFeatureSymbol)
 {
     Fixture fixture;
 
-    const auto description = R"((:classifier
-        (:symbol c0) ; classifier symbol comment
-        (:features
-            (:boolean
-                (:symbol a)
-                (:expression
-                    (b_nonempty
-                        (c_top)
-                    )
-                )
-            )
-        )
-        (:expression
-            (or
-                (and b)
-            )
-        )
-    ))";
+    const auto description = read_fixture("kr/uns/unknown_feature.classifier");
 
     try
     {

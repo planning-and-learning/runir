@@ -11,6 +11,7 @@
 #include <runir/kr/ps/ext/dl/structural_termination.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <vector>
+#include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::ps::ext::dl
@@ -62,14 +63,16 @@ void bind_structural_termination(nb::module_& m)
         .def_ro("recursive_call_rules", &ModuleProgramIncompleteStructuralTerminationResult::recursive_call_rules)
         .def("is_terminating", &ModuleProgramIncompleteStructuralTerminationResult::is_terminating);
 
-    nb::class_<ModulePolicyGraphVertexLabel>(m, "ModulePolicyGraphVertexLabel")
-        .def_prop_ro("boolean_values", [](const ModulePolicyGraphVertexLabel& label) { return materialize(label.boolean_values); })
-        .def_prop_ro("numerical_values", [](const ModulePolicyGraphVertexLabel& label) { return materialize(label.numerical_values); })
-        .def_ro("memory_state", &ModulePolicyGraphVertexLabel::memory_state);
+    auto vertex_label = nb::class_<ModulePolicyGraphVertexLabel>(m, "ModulePolicyGraphVertexLabel")
+                            .def_prop_ro("boolean_values", [](const ModulePolicyGraphVertexLabel& label) { return materialize(label.boolean_values); })
+                            .def_prop_ro("numerical_values", [](const ModulePolicyGraphVertexLabel& label) { return materialize(label.numerical_values); })
+                            .def_ro("memory_state", &ModulePolicyGraphVertexLabel::memory_state);
+    ygg::add_comparison(vertex_label);
 
-    nb::class_<ModulePolicyGraphEdgeLabel>(m, "ModulePolicyGraphEdgeLabel")
-        .def_ro("rule", &ModulePolicyGraphEdgeLabel::rule)
-        .def_ro("numerical_changes", &ModulePolicyGraphEdgeLabel::numerical_changes);
+    auto edge_label = nb::class_<ModulePolicyGraphEdgeLabel>(m, "ModulePolicyGraphEdgeLabel")
+                          .def_ro("rule", &ModulePolicyGraphEdgeLabel::rule)
+                          .def_ro("numerical_changes", &ModulePolicyGraphEdgeLabel::numerical_changes);
+    ygg::add_comparison(edge_label);
 
     auto graph = nb::class_<ModulePolicyGraph>(m, "ModulePolicyGraph");
     bind_readable_graph_methods(graph);

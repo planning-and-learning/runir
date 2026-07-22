@@ -36,6 +36,7 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
                             .def_ro("is_goal", &VertexLabel::is_goal)
                             .def_ro("is_alive", &VertexLabel::is_alive)
                             .def_ro("is_unsolvable", &VertexLabel::is_unsolvable);
+    ygg::add_comparison(vertex_label);
     ygg::add_hash(vertex_label);
 
     auto graph = nb::class_<Graph>(m, (std::string(prefix) + "SketchProofGraph").c_str());
@@ -75,6 +76,7 @@ void bind_sketch_executor(nb::module_& m)
                           .def_ro("transition", &SketchProofEdgeLabel::transition)
                           .def_ro("rule", &SketchProofEdgeLabel::rule);
     ygg::add_print(edge_label);
+    ygg::add_comparison(edge_label);
     ygg::add_hash(edge_label);
 
     nb::enum_<SketchProofStatus>(m, "SketchProofStatus")
@@ -93,6 +95,7 @@ void bind_sketch_executor(nb::module_& m)
     using Expander = SuccessorExpander<Kind>;
 
     auto execution_context = nb::class_<Context>(m, "ExecutionContext").def_prop_ro("state", &Context::get_state, nb::keep_alive<0, 1>());
+    ygg::add_comparison(execution_context);
     ygg::add_hash(execution_context);
 
     nb::class_<Expander>(m, "SuccessorExpander")

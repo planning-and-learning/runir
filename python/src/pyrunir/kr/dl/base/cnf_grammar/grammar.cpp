@@ -16,6 +16,7 @@ void bind_cnf_grammar_grammar(nb::module_& m)
 
     auto cls = nb::class_<View>(m, "Grammar").def("get_index", &View::get_index);
     ygg::add_print(cls);
+    ygg::add_comparison(cls);
     ygg::add_hash(cls);
 }
 

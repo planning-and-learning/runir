@@ -15,6 +15,7 @@
 #include <tyr/formalism/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/core/dependent_false.hpp>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -76,7 +77,7 @@ private:
     }
 };
 
-struct Registers
+struct Registers : ygg::comparison::Mixin<Registers>
 {
     std::array<std::optional<tyr::formalism::planning::ObjectView>, runir::kr::dl::num_registers> concept_registers;
     std::array<std::optional<std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>>, runir::kr::dl::num_registers>
@@ -129,6 +130,7 @@ struct Registers
         at(reg).reset();
     }
 
+    auto cista_members() noexcept { return std::tie(concept_registers, role_registers); }
     auto identifying_members() const noexcept { return std::tie(concept_registers, role_registers); }
 
 private:

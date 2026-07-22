@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/semantics/comparators.hpp>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::kr::dl
 {
@@ -19,7 +19,7 @@ void canonicalize_commutative_binary(Data& data) noexcept
     using Rhs = std::remove_cvref_t<decltype(data.rhs)>;
     static_assert(std::same_as<Lhs, Rhs>);
 
-    if (ygg::Less<Lhs> {}(data.rhs, data.lhs))
+    if (data.rhs < data.lhs)
         std::swap(data.lhs, data.rhs);
 }
 

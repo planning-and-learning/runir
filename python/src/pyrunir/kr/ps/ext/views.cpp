@@ -24,6 +24,7 @@ void bind_view(nb::module_& m, const std::string& name)
     using View = ygg::View<ygg::Index<T>, Repository>;
 
     auto cls = nb::class_<View>(m, name.c_str()).def("get_index", &View::get_index);
+    ygg::add_comparison(cls);
     ygg::add_hash(cls);
     ygg::add_print(cls);
 

@@ -46,7 +46,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include("${PROJECT_SOURCE_DIR}/cmake/bootstrap_pyyggdrasil.cmake")
 
-find_package(yggdrasil 0.0.24 CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+find_package(yggdrasil 0.0.25 CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 if(yggdrasil_FOUND)
     message(STATUS "Found yggdrasil: ${yggdrasil_DIR} (found version ${yggdrasil_VERSION})")
 endif()
@@ -68,7 +68,7 @@ if(TBB_FOUND)
     message(STATUS "Found TBB: ${TBB_DIR} (found version ${TBB_VERSION})")
 endif()
 
-find_package(tyr 0.0.27 CONFIG REQUIRED COMPONENTS core PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+find_package(tyr 0.0.32 CONFIG REQUIRED COMPONENTS core PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 if(tyr_FOUND)
     message(STATUS "Found tyr: ${tyr_DIR} (found version ${tyr_VERSION})")
 endif()
@@ -77,15 +77,13 @@ endif()
 if(RUNIR_BUILD_TESTS OR RUNIR_BUILD_EXECUTABLES)
     # Benchmark PDDL comes from the pypddl-datasets cache, resolved (and
     # downloaded on demand) at configure time.
-    if(NOT Python3_EXECUTABLE)
-        find_package(Python3 REQUIRED COMPONENTS Interpreter)
-    endif()
+    find_package(Python 3.10 REQUIRED COMPONENTS Interpreter)
     execute_process(
-        COMMAND "${Python3_EXECUTABLE}" -c "import pypddl_datasets, sys; sys.stdout.write(str(pypddl_datasets.data_root()))"
+        COMMAND "${Python_EXECUTABLE}" -c "import pypddl_datasets, sys; sys.stdout.write(str(pypddl_datasets.data_root()))"
         OUTPUT_VARIABLE RUNIR_BENCHMARKS_DIR
         RESULT_VARIABLE RUNIR_BENCHMARKS_RESULT)
     if(NOT RUNIR_BENCHMARKS_RESULT EQUAL 0)
-        message(FATAL_ERROR "Could not resolve the benchmark data root; install 'pypddl-datasets>=0.0.7,<0.1' into the configuring Python (${Python3_EXECUTABLE}).")
+        message(FATAL_ERROR "Could not resolve the benchmark data root; install 'pypddl-datasets>=0.0.9,<0.1' into the configuring Python (${Python_EXECUTABLE}).")
     endif()
     message(STATUS "Benchmark data: ${RUNIR_BENCHMARKS_DIR}")
     add_compile_definitions(BENCHMARKS_DIR="${RUNIR_BENCHMARKS_DIR}")

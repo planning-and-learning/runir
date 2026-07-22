@@ -1,5 +1,9 @@
 import gc
 
+from fixture_utils import read_fixture
+from pyrunir.datasets import GroundTaskSearchContext
+from pytyr.formalism.planning import PlanningDomain
+
 from pyrunir.kr import GroundTaskContext
 from pyrunir.kr.dl.base.semantics import (
     ConstructorRepositoryFactory,
@@ -28,62 +32,26 @@ from pyrunir.kr.ps.base.dl import (
 from pyrunir.kr.uns.dl import ClassifierFactory, parse_classifier
 
 
-def test_base_sketch_exposes_declared_features(gripper_planning_domain):
+def test_base_sketch_exposes_declared_features(gripper_planning_domain: PlanningDomain) -> None:
     planning_domain = gripper_planning_domain
     dl_repository = ConstructorRepositoryFactory().create(planning_domain)
     sketch_repository = SketchRepositoryFactory().create(dl_repository)
-    sketch = parse_sketch(
-        """
-(:sketch
-    (:features
-        (:numerical
-            (:symbol n_balls)
-            (:expression
-                (n_count
-                    (c_atomic_state "ball")
-                )
-            )
-        )
-        (:numerical
-            (:symbol n_held)
-            (:expression
-                (n_count
-                    (r_atomic_state "carry")
-                )
-            )
-        )
-    )
-    (:rules
-        (:rule
-            (:symbol hold)
-            (:expression
-                (:conditions
-                    (greater_zero n_balls)
-                )
-                (:effects
-                    (increases n_held)
-                )
-            )
-        )
-    )
-)
-""",
-        planning_domain,
-        sketch_repository,
-    )
+    sketch = parse_sketch(read_fixture("kr/ps/base/dl/declared_features.sketch"), planning_domain, sketch_repository)
 
     assert [feature.get_variant().get_symbol() for feature in sketch.get_boolean_features()] == []
     assert [feature.get_variant().get_symbol() for feature in sketch.get_numerical_features()] == ["n_balls", "n_held"]
 
 
 
-def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_search_context, gripper_planning_domain):
+def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
+    ground_gripper_search_context: GroundTaskSearchContext, gripper_planning_domain: PlanningDomain
+) -> None:
     search_context = ground_gripper_search_context
     task_context = GroundTaskContext(search_context)
     assert task_context.search_context is search_context
     planning_domain = gripper_planning_domain
 
-    dl_repository = task_context.base_dl_repository
+    _dl_repository = task_context.base_dl_repository
     sketch_repository = task_context.base_repository
     empty_sketch = SketchFactory.create_empty(sketch_repository)
     empty_sketch_description = str(empty_sketch)
@@ -134,6 +102,11 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
     assert feature.syntactic_complexity() == concrete_feature.syntactic_complexity()
     assert syntactic_complexity(sketch) == sketch.syntactic_complexity()
     assert dl_denotation.get_index() is not None
+    assert sketch == sketch
+    assert not sketch < sketch
+    assert sketch <= sketch
+    assert not sketch > sketch
+    assert sketch >= sketch
     for view in (
         sketch,
         rule,
@@ -177,24 +150,14 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(ground_gripper_s
 
     classifier_dl_repository = task_context.uns_dl_repository
     classifier_repository = task_context.uns_repository
-    classifier = parse_classifier(
-        """(:classifier
-    (:symbol all)
-    (:features
-        (:boolean
-            (:symbol yes)
-            (:expression (b_const true))
-        )
+    classifier = parse_classifier(read_fixture("kr/uns/always.classifier"), planning_domain, classifier_repository)
+    classifier_feature = classifier.get_features()[0]
+    concrete_classifier_feature = classifier_feature.get_variant()
+    assert classifier_feature.syntactic_complexity() == concrete_classifier_feature.syntactic_complexity()
+    assert (
+        concrete_classifier_feature.syntactic_complexity()
+        == concrete_classifier_feature.get_expression().syntactic_complexity()
     )
-    (:expression (or (and yes)))
-)""",
-        planning_domain,
-        classifier_repository,
-    )
-    feature = classifier.get_features()[0]
-    concrete_feature = feature.get_variant()
-    assert feature.syntactic_complexity() == concrete_feature.syntactic_complexity()
-    assert concrete_feature.syntactic_complexity() == concrete_feature.get_expression().syntactic_complexity()
     assert classifier.syntactic_complexity() == 1
     assert ClassifierFactory.create_empty(classifier_repository).syntactic_complexity() == 0
     classified_options = GroundSketchSearchOptions()

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <tuple>
 #include <vector>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::graphs::color_refinement
 {
@@ -18,7 +19,7 @@ template<IsGraph G>
 using Coloring = std::conditional_t<IsDenseGraph<G>, ColorList, ygg::UnorderedMap<VertexIndex, Color>>;
 
 template<typename VertexProperty>
-class Certificate
+class Certificate : public ygg::comparison::Mixin<Certificate<VertexProperty>>
 {
 public:
     using Signature = std::pair<Color, ColorList>;
@@ -33,9 +34,7 @@ private:
 public:
     Certificate() = default;
 
-    Certificate(RoundSummaryList round_summaries, ColorAssignmentList colors) : m_round_summaries(std::move(round_summaries)), m_colors(std::move(colors))
-    {
-    }
+    Certificate(RoundSummaryList round_summaries, ColorAssignmentList colors) : m_round_summaries(std::move(round_summaries)), m_colors(std::move(colors)) {}
 
     auto get_round_summaries() const noexcept -> const RoundSummaryList& { return m_round_summaries; }
     auto get_colors() const noexcept -> const ColorAssignmentList& { return m_colors; }
@@ -152,9 +151,9 @@ auto compute_certificate(const G& graph)
         }
 
         // Canonicalize vertex order based on signature.
-        std::sort(vertex_signatures.begin(), vertex_signatures.end(), [](const auto& lhs, const auto& rhs) {
-            return std::tie(lhs.second, lhs.first) < std::tie(rhs.second, rhs.first);
-        });
+        std::sort(vertex_signatures.begin(),
+                  vertex_signatures.end(),
+                  [](const auto& lhs, const auto& rhs) { return std::tie(lhs.second, lhs.first) < std::tie(rhs.second, rhs.first); });
 
         auto round_summary = typename Result::RoundSummary();
         for (const auto& [_, signature] : vertex_signatures)
