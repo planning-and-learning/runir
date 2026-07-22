@@ -91,11 +91,36 @@ add_runir_test(runir_kr_ps_abstract_structural_termination unit/kr/ps/structural
 target_include_directories(runir_kr_ps_abstract_structural_termination PRIVATE ${PROJECT_SOURCE_DIR}/src)
 add_runir_test(runir_kr_ps_dl_parser unit/kr/ps/dl/parser.cpp runir::kr)
 add_runir_test(runir_kr_ps_sketch_executor unit/kr/ps/base/sketch_executor.cpp runir::datasets runir::kr)
-add_runir_test(runir_kr_ps_structural_termination unit/kr/ps/base/dl/structural_termination.cpp runir::datasets runir::kr)
-add_runir_test(runir_kr_ps_incomplete_structural_termination unit/kr/ps/base/dl/incomplete_structural_termination.cpp runir::datasets runir::kr)
-add_runir_test(runir_kr_ps_ext_module_program_executor unit/kr/ps/ext/module_program_executor.cpp runir::datasets runir::kr)
-add_runir_test(runir_kr_ps_ext_incomplete_structural_termination unit/kr/ps/ext/dl/incomplete_structural_termination.cpp runir::datasets runir::kr)
-add_runir_test(runir_kr_ps_ext_structural_termination unit/kr/ps/ext/dl/structural_termination.cpp runir::datasets runir::kr)
+add_runir_test(
+    runir_kr_ps_structural_termination
+    unit/kr/ps/base/dl/structural_termination.cpp
+    runir::datasets
+    runir::kr
+)
+add_runir_test(
+    runir_kr_ps_incomplete_structural_termination
+    unit/kr/ps/base/dl/incomplete_structural_termination.cpp
+    runir::datasets
+    runir::kr
+)
+add_runir_test(
+    runir_kr_ps_ext_module_program_executor
+    unit/kr/ps/ext/module_program_executor.cpp
+    runir::datasets
+    runir::kr
+)
+add_runir_test(
+    runir_kr_ps_ext_incomplete_structural_termination
+    unit/kr/ps/ext/dl/incomplete_structural_termination.cpp
+    runir::datasets
+    runir::kr
+)
+add_runir_test(
+    runir_kr_ps_ext_structural_termination
+    unit/kr/ps/ext/dl/structural_termination.cpp
+    runir::datasets
+    runir::kr
+)
 add_runir_test(runir_kr_grammar_factory unit/kr/grammar/grammar_factory.cpp runir::kr)
 add_runir_test(runir_kr_dl_uns_constructors unit/kr/dl/uns/constructors.cpp runir::datasets runir::kr)
 add_runir_test(runir_kr_uns_classifier

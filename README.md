@@ -45,7 +45,7 @@ then configure CMake with their native prefixes:
 ```console
 python -m pip install 'pyyggdrasil>=0.0.25,<0.1' 'pypddl>=1.0.25,<1.1' 'pytyr>=0.0.32,<0.1' 'pypddl-datasets>=0.0.9,<0.1'
 
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake -S . -B build
 
 cmake --build build -j4
 ```
@@ -68,7 +68,15 @@ CMake options:
 | `RUNIR_BUILD_TESTS` | `OFF` | Build Runir tests. |
 | `RUNIR_BUILD_EXECUTABLES` | `OFF` | Build Runir executables. |
 | `RUNIR_BUILD_PYRUNIR` | `OFF` | Build `pyrunir` Python bindings. |
-| `RUNIR_HEADER_INSTANTIATION` | `OFF` | Enable template definitions in public headers at higher compile-time cost. |
+| `RUNIR_HEADER_INSTANTIATION` | `OFF` | Instantiate templates in in-tree translation units at higher compile-time cost. |
+| `RUNIR_USE_LLD` | `ON` | Use LLVM `lld` with Clang when available. |
+| `RUNIR_ENABLE_LTO` | `ON` | Enable link-time optimization for Release builds. |
+
+Single-config CMake builds default to Release. On GCC and Clang, Debug builds
+use `-Og` with debug symbols, RelWithDebInfo keeps frame pointers and disables
+LTO, and Release LTO uses GCC LTO or Clang ThinLTO. Editable installs and
+wheels disable `RUNIR_USE_LLD` and `RUNIR_ENABLE_LTO` by default for build
+reliability.
 
 Run tests from a build configured with `-DRUNIR_BUILD_TESTS=ON`:
 

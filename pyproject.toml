@@ -62,6 +62,8 @@ exclude = [
 [tool.scikit-build.cmake.define]
 RUNIR_BUILD_PYRUNIR = true
 RUNIR_BUILD_TESTS = false
+RUNIR_USE_LLD = false
+RUNIR_ENABLE_LTO = {env = "RUNIR_ENABLE_LTO", default = false}
 CMAKE_INSTALL_LIBDIR = "lib"
 
 [tool.cibuildwheel]

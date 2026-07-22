@@ -41,7 +41,8 @@ endif()
 
 set_target_properties(graphs PROPERTIES INSTALL_RPATH "${RUNIR_GRAPHS_LIBRARY_ORIGIN}")
 
-install(TARGETS graphs
+install(
+    TARGETS graphs
     EXPORT runirTargets
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT runir
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT runir

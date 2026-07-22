@@ -10,21 +10,25 @@ find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(nanobind CONFIG REQUIRED)
 find_package(runir CONFIG REQUIRED COMPONENTS core)
 
-nanobind_add_module(downstream_runir_user NB_SHARED
-    src/downstream_runir_user.cpp
-)
+nanobind_add_module(downstream_runir_user NB_SHARED src/downstream_runir_user.cpp)
 
 target_link_libraries(downstream_runir_user PRIVATE runir::core)
 
 if(DOWNSTREAM_RUNIR_RUNTIME_LIBRARY_DIR)
     if(APPLE)
-        set_target_properties(downstream_runir_user PROPERTIES
-            BUILD_RPATH "${DOWNSTREAM_RUNIR_RUNTIME_LIBRARY_DIR}"
-            INSTALL_RPATH "@loader_path")
+        set_target_properties(
+            downstream_runir_user
+            PROPERTIES
+                BUILD_RPATH "${DOWNSTREAM_RUNIR_RUNTIME_LIBRARY_DIR}"
+                INSTALL_RPATH "@loader_path"
+        )
     elseif(UNIX)
-        set_target_properties(downstream_runir_user PROPERTIES
-            BUILD_RPATH "${DOWNSTREAM_RUNIR_RUNTIME_LIBRARY_DIR}"
-            INSTALL_RPATH "$ORIGIN")
+        set_target_properties(
+            downstream_runir_user
+            PROPERTIES
+                BUILD_RPATH "${DOWNSTREAM_RUNIR_RUNTIME_LIBRARY_DIR}"
+                INSTALL_RPATH "$ORIGIN"
+        )
     endif()
 endif()
 

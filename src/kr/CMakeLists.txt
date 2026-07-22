@@ -46,6 +46,11 @@ set_target_properties(kr PROPERTIES OUTPUT_NAME runir_kr)
 
 target_compile_features(kr PUBLIC cxx_std_20)
 
+target_compile_definitions(kr
+    PUBLIC
+        FMT_HEADER_ONLY
+)
+
 target_include_directories(kr
     PRIVATE
         ${PROJECT_SOURCE_DIR}/src
@@ -62,11 +67,6 @@ target_link_libraries(kr
         tyr::core
 )
 
-target_compile_definitions(kr
-    PUBLIC
-        FMT_HEADER_ONLY
-)
-
 if(APPLE)
     set(RUNIR_KR_LIBRARY_ORIGIN "@loader_path")
 elseif(UNIX)
@@ -75,7 +75,8 @@ endif()
 
 set_target_properties(kr PROPERTIES INSTALL_RPATH "${RUNIR_KR_LIBRARY_ORIGIN}")
 
-install(TARGETS kr
+install(
+    TARGETS kr
     EXPORT runirTargets
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT runir
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT runir

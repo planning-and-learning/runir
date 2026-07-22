@@ -9,6 +9,11 @@ set_target_properties(datasets PROPERTIES OUTPUT_NAME runir_datasets)
 
 target_compile_features(datasets PUBLIC cxx_std_20)
 
+target_compile_definitions(datasets
+    PUBLIC
+        FMT_HEADER_ONLY
+)
+
 target_include_directories(datasets
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -23,11 +28,6 @@ target_link_libraries(datasets
         tyr::core
 )
 
-target_compile_definitions(datasets
-    PUBLIC
-        FMT_HEADER_ONLY
-)
-
 if(APPLE)
     set(RUNIR_DATASETS_LIBRARY_ORIGIN "@loader_path")
 elseif(UNIX)
@@ -36,7 +36,8 @@ endif()
 
 set_target_properties(datasets PROPERTIES INSTALL_RPATH "${RUNIR_DATASETS_LIBRARY_ORIGIN}")
 
-install(TARGETS datasets
+install(
+    TARGETS datasets
     EXPORT runirTargets
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT runir
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT runir
