@@ -1,0 +1,36 @@
+(:sketch
+    (:features
+        (:boolean
+            (:symbol b1)
+            (:expression
+                (b_nonempty
+                    (c_atomic_state
+                        "at-robby"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto1)
+            (:expression
+                (:conditions
+                    (negative b1)
+                )
+                (:effects
+                    (positive b1)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto2)
+            (:expression
+                (:conditions
+                    (positive b1)
+                )
+                (:effects
+                    (negative b1)
+                )
+            )
+        )
+    )
+)

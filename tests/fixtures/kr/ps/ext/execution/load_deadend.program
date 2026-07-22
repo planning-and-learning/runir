@@ -1,0 +1,32 @@
+(:program
+    (:entry load-deadend)
+    (:module
+        (:symbol load-deadend)
+        (:arguments)
+        (:registers
+            (:concept r0)
+        )
+        (:entry source)
+        (:memory source)
+        (:features
+            (:concept
+                (:symbol B)
+                (:expression (c_bot))
+            )
+        )
+        (:rules
+            (:rule
+                (:symbol auto9)
+                (:expression
+                    (:source-memory source)
+                    (:target-memory source)
+                    (:load
+                        (:conditions)
+                        (:concept B)
+                        (:register (:concept r0))
+                    )
+                )
+            )
+        )
+    )
+)

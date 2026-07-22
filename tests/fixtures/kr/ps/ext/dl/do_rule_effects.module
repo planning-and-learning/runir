@@ -1,0 +1,56 @@
+(:module
+    (:symbol do_effects)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1)
+    (:features
+        (:concept
+            (:symbol T)
+            (:expression
+                (c_top)
+            )
+        )
+        (:numerical
+            (:symbol fn)
+            (:expression
+                (n_count
+                    (c_atomic_state "ball")
+                )
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto5)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:do
+                    (:conditions
+                        (greater_zero fn)
+                    )
+                    (:action "pick")
+                    (:arguments T T T)
+                    (:effects
+                        (unchanged fn)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto7)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m0)
+                (:sketch
+                    (:conditions)
+                    (:effects
+                        (decreases fn)
+                    )
+                )
+            )
+        )
+    )
+)
+

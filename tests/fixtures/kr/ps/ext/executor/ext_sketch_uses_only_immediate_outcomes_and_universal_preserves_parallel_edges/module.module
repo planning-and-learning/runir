@@ -1,0 +1,32 @@
+(:module
+        (:symbol module)
+        (:arguments)
+        (:registers)
+        (:entry source)
+        (:memory source target)
+        (:features
+            (:numerical
+                (:symbol N)
+                (:expression (n_count (c_top)))
+            )
+        )
+        (:rules
+            (:rule
+                (:symbol first)
+                (:expression
+                    (:source-memory source)
+                    (:target-memory target)
+                    (:sketch (:conditions) (:effects (unchanged N)))
+                )
+            )
+            (:rule
+                (:symbol second)
+                (:expression
+                    (:source-memory source)
+                    (:target-memory target)
+                    (:sketch (:conditions) (:effects (unchanged N)))
+                )
+            )
+        )
+    )
+

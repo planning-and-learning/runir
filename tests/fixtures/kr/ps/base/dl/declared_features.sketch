@@ -1,0 +1,21 @@
+(:sketch
+    (:features
+        (:numerical
+            (:symbol n_balls)
+            (:expression (n_count (c_atomic_state "ball")))
+        )
+        (:numerical
+            (:symbol n_held)
+            (:expression (n_count (r_atomic_state "carry")))
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol hold)
+            (:expression
+                (:conditions (greater_zero n_balls))
+                (:effects (increases n_held))
+            )
+        )
+    )
+)

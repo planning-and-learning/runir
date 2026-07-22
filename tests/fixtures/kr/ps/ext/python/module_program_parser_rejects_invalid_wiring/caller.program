@@ -1,0 +1,37 @@
+(:program
+    (:entry caller)
+    (:module
+        (:symbol caller)
+        (:arguments)
+        (:registers)
+        (:entry source)
+        (:memory source target)
+        (:features)
+        (:rules
+            (:rule
+                (:symbol auto2)
+                (:expression
+                    (:source-memory source)
+                    (:target-memory target)
+                    (:call
+                        (:conditions)
+                        (:callee callee)
+                        (:arguments)
+                    )
+                )
+            )
+        )
+    )
+    (:module
+        (:symbol callee)
+        (:arguments
+            (:concept x)
+        )
+        (:registers)
+        (:entry target)
+        (:memory target)
+        (:features)
+        (:rules)
+    )
+)
+

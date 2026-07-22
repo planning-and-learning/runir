@@ -1,0 +1,12 @@
+(:sketch
+    (:features)
+    (:rules
+        (:rule
+            (:symbol any-transition)
+            (:expression
+                (:conditions)
+                (:effects)
+            )
+        )
+    )
+)

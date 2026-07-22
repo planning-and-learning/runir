@@ -1,0 +1,18 @@
+(:module
+    (:symbol root)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0)
+    (:features)
+    (:rules
+        (:rule
+            (:symbol same)
+            (:expression (:source-memory m0) (:target-memory m0) (:sketch (:conditions) (:effects)))
+        )
+        (:rule
+            (:symbol same)
+            (:expression (:source-memory m0) (:target-memory m0) (:sketch (:conditions) (:effects)))
+        )
+    )
+)

@@ -1,0 +1,10 @@
+(:classifier
+    (:symbol all)
+    (:features
+        (:boolean
+            (:symbol yes)
+            (:expression (b_const true))
+        )
+    )
+    (:expression (or (and yes)))
+)

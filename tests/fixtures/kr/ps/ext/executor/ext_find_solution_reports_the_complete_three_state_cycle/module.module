@@ -1,0 +1,23 @@
+(:module
+        (:symbol module)
+        (:arguments)
+        (:registers)
+        (:entry m0)
+        (:memory m0 m1 m2)
+        (:features)
+        (:rules
+            (:rule
+                (:symbol step-01)
+                (:expression (:source-memory m0) (:target-memory m1) (:sketch (:conditions) (:effects)))
+            )
+            (:rule
+                (:symbol step-12)
+                (:expression (:source-memory m1) (:target-memory m2) (:sketch (:conditions) (:effects)))
+            )
+            (:rule
+                (:symbol step-20)
+                (:expression (:source-memory m2) (:target-memory m0) (:sketch (:conditions) (:effects)))
+            )
+        )
+    )
+

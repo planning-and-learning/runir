@@ -1,0 +1,38 @@
+(:classifier
+        (:symbol c0) ; classifier symbol comment
+        (:features
+            (:boolean
+                (:symbol some_ball) ; feature comment
+                (:expression
+                    (b_nonempty
+                        (c_top)
+                    )
+                )
+            )
+            (:boolean
+                (:symbol no_object)
+                (:expression
+                    (b_not
+                        (b_nonempty
+                            (c_top)
+                        )
+                    )
+                )
+            )
+            (:boolean
+                (:symbol unused)
+                (:expression
+                    (b_nonempty
+                        (c_top)
+                    )
+                )
+            )
+        )
+        (:expression
+            (or
+                (and some_ball (not no_object))
+                (and no_object)
+            )
+        )
+    )
+

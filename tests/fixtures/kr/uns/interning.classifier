@@ -1,0 +1,19 @@
+(:classifier
+        (:symbol c0) ; classifier symbol comment
+        (:features
+            (:boolean
+                (:symbol a)
+                (:expression
+                    (b_nonempty
+                        (c_top)
+                    )
+                )
+            )
+        )
+        (:expression
+            (or
+                (and a)
+            )
+        )
+    )
+

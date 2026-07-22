@@ -1,0 +1,21 @@
+(:module
+    (:symbol root)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1)
+    (:features
+        (:boolean (:symbol H) (:expression (b_nonempty (c_top))))
+    )
+    (:rules
+        (:rule
+            (:symbol choose)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:sketch (:conditions (positive H)) (:effects))
+                (:sketch (:conditions (negative H)) (:effects))
+            )
+        )
+    )
+)

@@ -1,0 +1,27 @@
+(:program
+    (:entry bad-feature)
+    (:module
+        (:symbol bad-feature)
+        (:arguments)
+        (:registers)
+        (:entry m0)
+        (:memory m0 m1)
+        (:features)
+        (:rules
+            (:rule
+                (:symbol auto7)
+                (:expression
+                    (:source-memory m0)
+                    (:target-memory m1)
+                    (:sketch
+                        (:conditions
+                            (greater_zero missing)
+                        )
+                        (:effects)
+                    )
+                )
+            )
+        )
+    )
+)
+

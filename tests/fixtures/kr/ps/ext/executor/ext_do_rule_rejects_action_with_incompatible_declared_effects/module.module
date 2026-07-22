@@ -1,0 +1,43 @@
+(:module
+    (:symbol module)
+    (:arguments)
+    (:registers)
+    (:entry source)
+    (:memory source target)
+    (:features
+        (:concept
+            (:symbol T)
+            (:expression
+                (c_top)
+            )
+        )
+        (:numerical
+            (:symbol C)
+            (:expression
+                (n_distance
+                    (c_atomic_state "ball")
+                    (r_atomic_state "at")
+                    (c_atomic_state "room")
+                )
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto16)
+            (:expression
+                (:source-memory source)
+                (:target-memory target)
+                (:do
+                    (:conditions)
+                    (:action "pick")
+                    (:arguments T T T)
+                    (:effects
+                        (decreases C)
+                    )
+                )
+            )
+        )
+    )
+)
+

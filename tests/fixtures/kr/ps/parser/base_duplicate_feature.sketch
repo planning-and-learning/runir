@@ -1,0 +1,7 @@
+(:sketch
+    (:features
+        (:boolean (:symbol same) (:expression (b_nonempty (c_top))))
+        (:numerical (:symbol same) (:expression (n_count (c_top))))
+    )
+    (:rules)
+)

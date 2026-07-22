@@ -1,0 +1,38 @@
+(:module
+        (:symbol two-step-module)
+        (:arguments)
+        (:registers)
+        (:entry two-step-source)
+        (:memory two-step-source two-step-target)
+        (:features
+            (:boolean
+                (:symbol C)
+                (:expression (b_nonempty (c_some (r_atomic_state "carry") (c_top))))
+            )
+            (:boolean
+                (:symbol R)
+                (:expression
+                    (b_nonempty
+                        (c_some
+                            (r_atomic_goal "at" true)
+                            (c_atomic_state "at-robby")
+                        )
+                    )
+                )
+            )
+        )
+        (:rules
+            (:rule
+                (:symbol two-step-only)
+                (:expression
+                    (:source-memory two-step-source)
+                    (:target-memory two-step-target)
+                    (:sketch
+                        (:conditions (negative C) (negative R))
+                        (:effects (positive C) (positive R))
+                    )
+                )
+            )
+        )
+    )
+

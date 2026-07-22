@@ -1,0 +1,35 @@
+(:sketch
+    (:features
+        (:boolean
+            (:symbol q)
+            (:expression (b_nonempty (c_atomic_state "at-robby")))
+        )
+        (:numerical
+            (:symbol n)
+            (:expression (n_count (c_atomic_state "ball")))
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto8)
+            (:expression
+                (:conditions (positive q) (greater_zero n))
+                (:effects (negative q) (unchanged n))
+            )
+        )
+        (:rule
+            (:symbol auto9)
+            (:expression
+                (:conditions (negative q) (equal_zero n))
+                (:effects (unchanged n) (positive q))
+            )
+        )
+        (:rule
+            (:symbol auto10)
+            (:expression
+                (:conditions (greater_zero n))
+                (:effects (decreases n) (unchanged q))
+            )
+        )
+    )
+)

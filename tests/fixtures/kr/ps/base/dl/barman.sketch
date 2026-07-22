@@ -1,0 +1,50 @@
+(:sketch
+    (:features
+        (:boolean
+            (:symbol c1)
+            (:expression (b_nonempty (c_atomic_state "at-robby")))
+        )
+        (:boolean
+            (:symbol c2)
+            (:expression (b_nonempty (c_atomic_state "free")))
+        )
+        (:numerical
+            (:symbol g)
+            (:expression (n_count (c_atomic_state "ball")))
+        )
+        (:numerical
+            (:symbol u)
+            (:expression (n_count (c_atomic_state "room")))
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto4)
+            (:expression
+                (:conditions (negative c1))
+                (:effects (positive c1) (unchanged c2) (unchanged g))
+            )
+        )
+        (:rule
+            (:symbol auto5)
+            (:expression
+                (:conditions (positive c1) (negative c2))
+                (:effects (unchanged g) (positive c2) (unchanged c1))
+            )
+        )
+        (:rule
+            (:symbol auto6)
+            (:expression
+                (:conditions (greater_zero u))
+                (:effects (unchanged c2) (unchanged g) (unchanged c1) (decreases u))
+            )
+        )
+        (:rule
+            (:symbol auto7)
+            (:expression
+                (:conditions (greater_zero g))
+                (:effects (decreases g) (unchanged u))
+            )
+        )
+    )
+)

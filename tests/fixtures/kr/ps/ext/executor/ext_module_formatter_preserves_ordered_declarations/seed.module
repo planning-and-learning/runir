@@ -1,0 +1,10 @@
+(:module
+    (:symbol seed)
+    (:arguments (:concept Z) (:concept X))
+    (:registers (:concept RZ) (:concept RX))
+    (:entry m0)
+    (:memory m0)
+    (:features)
+    (:rules)
+)
+

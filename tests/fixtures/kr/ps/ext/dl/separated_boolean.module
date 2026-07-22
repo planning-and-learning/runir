@@ -1,0 +1,37 @@
+(:module
+    (:symbol separated)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1)
+    (:features
+        (:boolean
+            (:symbol b)
+            (:expression (b_nonempty (c_atomic_state "ball")))
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol r1)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m0)
+                (:sketch
+                    (:conditions (negative b))
+                    (:effects (positive b))
+                )
+            )
+        )
+        (:rule
+            (:symbol r2)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m1)
+                (:sketch
+                    (:conditions (positive b))
+                    (:effects (negative b))
+                )
+            )
+        )
+    )
+)

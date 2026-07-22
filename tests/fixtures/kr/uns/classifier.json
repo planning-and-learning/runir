@@ -1,0 +1,22 @@
+{
+  "cases": [
+    {
+      "name": "positive",
+      "file": "kr/uns/positive.classifier",
+      "valid": true,
+      "symbol": "c0"
+    },
+    {
+      "name": "interning",
+      "file": "kr/uns/interning.classifier",
+      "valid": true,
+      "symbol": "c0"
+    },
+    {
+      "name": "unknown_feature",
+      "file": "kr/uns/unknown_feature.classifier",
+      "valid": false,
+      "error": "Undefined feature: b"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+(:module
+    (:symbol entry)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1)
+    (:features)
+    (:rules
+        (:rule
+            (:symbol auto5)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:do
+                    (:conditions)
+                    (:action "move")
+                    (:arguments)
+                    (:effects)
+                )
+            )
+        )
+    )
+)
+

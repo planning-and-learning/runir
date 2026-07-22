@@ -1,0 +1,32 @@
+(:module
+    (:symbol module)
+    (:arguments)
+    (:registers
+        (:role r0)
+    )
+    (:entry source)
+    (:memory source target)
+    (:features
+        (:role
+            (:symbol At)
+            (:expression (r_atomic_state "at"))
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol load-edge)
+            (:expression
+                (:source-memory source)
+                (:target-memory target)
+                (:load
+                    (:conditions)
+                    (:role At)
+                    (:register
+                        (:role r0)
+                    )
+                )
+            )
+        )
+    )
+)
+

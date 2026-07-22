@@ -1,0 +1,41 @@
+(:module
+    (:symbol term)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1)
+    (:features
+        (:boolean
+            (:symbol unused)
+            (:expression (b_nonempty (c_top)))
+        )
+        (:numerical
+            (:symbol fn)
+            (:expression (n_count (c_atomic_state "ball")))
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto1)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:sketch
+                    (:conditions (greater_zero fn))
+                    (:effects (decreases fn))
+                )
+            )
+        )
+        (:rule
+            (:symbol auto3)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m0)
+                (:sketch
+                    (:conditions)
+                    (:effects (unchanged fn))
+                )
+            )
+        )
+    )
+)

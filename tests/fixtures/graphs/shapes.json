@@ -1,0 +1,86 @@
+{
+  "graphs": [
+    {
+      "name": "simple_undirected",
+      "num_vertices": 2,
+      "edges": [[0, 1, true]],
+      "expected": {
+        "loopless": true,
+        "multi_graph": false,
+        "symmetric": true,
+        "simple_undirected": true
+      },
+      "nauty_error": null
+    },
+    {
+      "name": "loop",
+      "num_vertices": 1,
+      "edges": [[0, 0, false]],
+      "expected": {
+        "loopless": false,
+        "multi_graph": false,
+        "symmetric": true,
+        "simple_undirected": false
+      },
+      "nauty_error": "runir::graphs::nauty::SparseGraph: loop edges are not supported."
+    },
+    {
+      "name": "parallel_symmetric",
+      "num_vertices": 2,
+      "edges": [[0, 1, false], [0, 1, false], [1, 0, false]],
+      "expected": {
+        "loopless": true,
+        "multi_graph": true,
+        "symmetric": true,
+        "simple_undirected": false
+      },
+      "nauty_error": "runir::graphs::nauty::SparseGraph: parallel edges are not supported."
+    },
+    {
+      "name": "directed",
+      "num_vertices": 2,
+      "edges": [[0, 1, false]],
+      "expected": {
+        "loopless": true,
+        "multi_graph": false,
+        "symmetric": false,
+        "simple_undirected": false
+      },
+      "nauty_error": "runir::graphs::nauty::SparseGraph: directed graphs are not supported."
+    },
+    {
+      "name": "two_triangles",
+      "num_vertices": 6,
+      "edges": [[0, 1, true], [1, 2, true], [2, 0, true], [3, 4, true], [4, 5, true], [5, 3, true]],
+      "expected": {
+        "loopless": true,
+        "multi_graph": false,
+        "symmetric": true,
+        "simple_undirected": true
+      },
+      "nauty_error": null
+    },
+    {
+      "name": "hexagon",
+      "num_vertices": 6,
+      "edges": [[0, 1, true], [1, 2, true], [2, 3, true], [3, 4, true], [4, 5, true], [5, 0, true]],
+      "expected": {
+        "loopless": true,
+        "multi_graph": false,
+        "symmetric": true,
+        "simple_undirected": true
+      },
+      "nauty_error": null
+    }
+  ],
+  "certificate_pairs": [
+    {
+      "left": "two_triangles",
+      "right": "hexagon",
+      "color_refinement_equal": true,
+      "color_refinement_colors_equal": true,
+      "weisfeiler_leman_2_equal": false,
+      "weisfeiler_leman_2_colors_equal": false
+    }
+  ]
+}

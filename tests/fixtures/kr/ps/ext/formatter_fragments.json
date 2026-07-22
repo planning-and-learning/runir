@@ -1,0 +1,8 @@
+{
+  "empty_nested_do_symbol": "(:do\n                        (:symbol",
+  "concept_declaration": "(:concept\n            (:symbol Any)\n            (:expression (c_top))",
+  "rule_declaration": "(:rule\n            (:symbol move-once)\n            (:expression",
+  "concept_load_register": "(:register\n                        (:concept r0)\n                    )",
+  "role_load_register": "(:register\n                        (:role r0)\n                    )",
+  "module_factory_sketch": "(:sketch\n                        (:conditions"
+}

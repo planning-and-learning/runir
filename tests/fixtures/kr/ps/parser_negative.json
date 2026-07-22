@@ -1,0 +1,34 @@
+{
+  "cases": [
+    {
+      "name": "base_duplicate_feature",
+      "parser": "base_sketch",
+      "file": "kr/ps/parser/base_duplicate_feature.sketch",
+      "error": "Duplicate feature definition: same"
+    },
+    {
+      "name": "base_duplicate_rule",
+      "parser": "base_sketch",
+      "file": "kr/ps/parser/base_duplicate_rule.sketch",
+      "error": "Duplicate rule definition: same"
+    },
+    {
+      "name": "ext_duplicate_feature",
+      "parser": "ext_module",
+      "file": "kr/ps/parser/ext_duplicate_feature.module",
+      "error": "Duplicate feature definition: same"
+    },
+    {
+      "name": "ext_duplicate_rule",
+      "parser": "ext_module",
+      "file": "kr/ps/parser/ext_duplicate_rule.module",
+      "error": "Duplicate rule definition: same"
+    },
+    {
+      "name": "entry_arguments",
+      "parser": "ext_program",
+      "file": "kr/ps/parser/entry_arguments.program",
+      "error": "Module program entry must not declare formal arguments: root"
+    }
+  ]
+}

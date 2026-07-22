@@ -1,0 +1,23 @@
+(:module
+    (:symbol entry)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1)
+    (:features)
+    (:rules
+        (:rule
+            (:symbol auto3)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:do
+                    (:conditions)
+                    (:action "missing-action")
+                    (:arguments)
+                )
+            )
+        )
+    )
+)
+

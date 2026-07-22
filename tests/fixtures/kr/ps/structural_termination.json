@@ -1,0 +1,56 @@
+{
+  "base": [
+    {
+      "name": "oscillator",
+      "file": "kr/ps/base/dl/oscillator.sketch",
+      "terminating": false
+    },
+    {
+      "name": "numerical_cycle",
+      "file": "kr/ps/base/dl/numerical_cycle.sketch",
+      "terminating": false
+    },
+    {
+      "name": "floortile",
+      "file": "kr/ps/base/dl/floortile.sketch",
+      "terminating": true
+    },
+    {
+      "name": "tpp",
+      "file": "kr/ps/base/dl/tpp.sketch",
+      "terminating": true
+    },
+    {
+      "name": "barman",
+      "file": "kr/ps/base/dl/barman.sketch",
+      "terminating": true
+    },
+    {
+      "name": "r3_complementary",
+      "file": "kr/ps/base/dl/r3_complementary.sketch",
+      "terminating": true
+    }
+  ],
+  "ext": [
+    {
+      "name": "terminating",
+      "file": "kr/ps/ext/dl/terminating.module",
+      "terminating": true
+    },
+    {
+      "name": "non_terminating",
+      "file": "kr/ps/ext/dl/non_terminating.module",
+      "terminating": false
+    },
+    {
+      "name": "separated_boolean",
+      "file": "kr/ps/ext/dl/separated_boolean.module",
+      "terminating": true
+    },
+    {
+      "name": "projected_components",
+      "file": "kr/ps/ext/dl/projected_components.module",
+      "terminating": false
+    }
+  ]
+}

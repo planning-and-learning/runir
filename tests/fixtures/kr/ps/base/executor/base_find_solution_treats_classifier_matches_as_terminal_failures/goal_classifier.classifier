@@ -1,0 +1,18 @@
+(:classifier
+        (:symbol goal)
+        (:features
+            (:boolean
+                (:symbol reached)
+                (:expression
+                    (b_nonempty
+                        (c_and
+                            (c_some (r_atomic_goal "at" true) (c_top))
+                            (c_subset (r_atomic_goal "at" true) (r_atomic_state "at"))
+                        )
+                    )
+                )
+            )
+        )
+        (:expression (or (and reached)))
+    )
+

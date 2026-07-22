@@ -1,0 +1,66 @@
+(:sketch
+    (:features
+        (:numerical
+            (:symbol fb)
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+        (:numerical
+            (:symbol fl)
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "room"))
+            )
+        )
+        (:numerical
+            (:symbol fn)
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "gripper"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto3)
+            (:expression
+                (:conditions
+                    (greater_zero fb)
+                )
+                (:effects
+                    (decreases fb)
+                    (unchanged fl)
+                    (unchanged fn)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto4)
+            (:expression
+                (:conditions
+                    (greater_zero fl)
+                )
+                (:effects
+                    (unchanged fn)
+                    (decreases fl)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto5)
+            (:expression
+                (:conditions
+                    (greater_zero fn)
+                )
+                (:effects
+                    (decreases fn)
+                )
+            )
+        )
+    )
+)

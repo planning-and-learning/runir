@@ -1,0 +1,31 @@
+(:module
+    (:symbol entry)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1)
+    (:features
+        (:concept
+            (:symbol Any)
+            (:expression
+                (c_top)
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol move-once)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:do
+                    (:conditions)
+                    (:action "move")
+                    (:arguments Any Any)
+                    (:effects)
+                )
+            )
+        )
+    )
+)
+

@@ -1,0 +1,26 @@
+(:program
+    (:entry no-action)
+    (:module
+        (:symbol no-action)
+        (:arguments)
+        (:registers)
+        (:entry source)
+        (:memory source target)
+        (:features)
+        (:rules
+            (:rule
+                (:symbol auto11)
+                (:expression
+                    (:source-memory source)
+                    (:target-memory target)
+                    (:do
+                        (:conditions)
+                        (:action "missing-action")
+                        (:arguments)
+                        (:effects)
+                    )
+                )
+            )
+        )
+    )
+)

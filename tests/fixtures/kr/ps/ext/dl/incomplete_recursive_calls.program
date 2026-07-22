@@ -1,0 +1,40 @@
+(:program
+        (:entry root)
+        (:module
+            (:symbol root)
+            (:arguments)
+            (:registers)
+            (:entry m0)
+            (:memory m0 m1)
+            (:features)
+            (:rules
+                (:rule
+                    (:symbol r1)
+                    (:expression
+                        (:source-memory m0)
+                        (:target-memory m1)
+                        (:call (:conditions) (:callee leaf) (:arguments))
+                    )
+                )
+            )
+        )
+        (:module
+            (:symbol leaf)
+            (:arguments)
+            (:registers)
+            (:entry m0)
+            (:memory m0 m1)
+            (:features)
+            (:rules
+                (:rule
+                    (:symbol r2)
+                    (:expression
+                        (:source-memory m0)
+                        (:target-memory m1)
+                        (:call (:conditions) (:callee root) (:arguments))
+                    )
+                )
+            )
+        )
+    )
+

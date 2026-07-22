@@ -1,0 +1,21 @@
+(:module
+    (:symbol entry)
+    (:arguments
+        (:concept x)
+    )
+    (:registers)
+    (:entry m0)
+    (:memory m0)
+    (:features
+        (:concept
+            (:symbol bad)
+            (
+                ; The DL parser shares the outer source and skipper.
+                :expression
+                (c_argument missing)
+            )
+        )
+    )
+    (:rules)
+)
+

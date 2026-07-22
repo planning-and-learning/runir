@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "name": "GripperIdentity",
+      "domain_file": "classical/tests/gripper/domain.pddl",
+      "task_files": [
+        "classical/tests/gripper/test-1.pddl"
+      ],
+      "equivalence_policy": "identity",
+      "expected_num_vertices": 28,
+      "expected_num_edges": 104
+    },
+    {
+      "name": "GripperGI",
+      "domain_file": "classical/tests/gripper/domain.pddl",
+      "task_files": [
+        "classical/tests/gripper/test-1.pddl"
+      ],
+      "equivalence_policy": "gi",
+      "expected_num_vertices": 6,
+      "expected_num_edges": 22
+    }
+  ]
+}

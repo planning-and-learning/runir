@@ -1,0 +1,93 @@
+(:module
+    (:symbol multi)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1 m2 m3)
+    (:features
+        (:numerical
+            (:symbol fa)
+            (:expression
+                (n_count
+                    (c_atomic_state "ball")
+                )
+            )
+        )
+        (:numerical
+            (:symbol fb)
+            (:expression
+                (n_count
+                    (c_atomic_state "room")
+                )
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto25)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:sketch
+                    (:conditions
+                        (greater_zero fa)
+                    )
+                    (:effects
+                        (decreases fa)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto27)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m0)
+                (:sketch
+                    (:conditions)
+                    (:effects
+                        (unchanged fa)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto29)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m2)
+                (:sketch
+                    (:conditions)
+                    (:effects)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto31)
+            (:expression
+                (:source-memory m2)
+                (:target-memory m3)
+                (:sketch
+                    (:conditions
+                        (greater_zero fb)
+                    )
+                    (:effects
+                        (decreases fb)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto33)
+            (:expression
+                (:source-memory m3)
+                (:target-memory m2)
+                (:sketch
+                    (:conditions)
+                    (:effects)
+                )
+            )
+        )
+    )
+)
+

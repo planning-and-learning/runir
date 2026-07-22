@@ -1,0 +1,32 @@
+(:module
+    (:symbol entry)
+    (:arguments)
+    (:registers
+        (:concept r0)
+    )
+    (:entry m0)
+    (:memory m0 m1)
+    (:features
+        (:concept
+            (:symbol B)
+            (:expression (c_top))
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto12)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:load
+                    (:conditions)
+                    (:concept B)
+                    (:register
+                        (:role r0)
+                    )
+                )
+            )
+        )
+    )
+)
+

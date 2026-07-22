@@ -1,0 +1,12 @@
+(:program
+    (:entry missing)
+    (:module
+        (:symbol root)
+        (:arguments)
+        (:registers)
+        (:entry m0)
+        (:memory m0)
+        (:features)
+        (:rules)
+    )
+)

@@ -1,0 +1,52 @@
+{
+  "domain_file": "classical/profiling/blocksworld-large-simple/domain.pddl",
+  "modules": [
+    {
+      "name": "on",
+      "concept_features": 12,
+      "role_features": 0,
+      "boolean_features": 2,
+      "numerical_features": 3,
+      "transitions": 14,
+      "syntactic_complexity": 46
+    },
+    {
+      "name": "on-table",
+      "concept_features": 3,
+      "role_features": 0,
+      "boolean_features": 2,
+      "numerical_features": 0,
+      "transitions": 4,
+      "syntactic_complexity": 9
+    },
+    {
+      "name": "tower",
+      "concept_features": 4,
+      "role_features": 1,
+      "boolean_features": 0,
+      "numerical_features": 3,
+      "transitions": 4,
+      "syntactic_complexity": 21
+    },
+    {
+      "name": "blocks",
+      "concept_features": 2,
+      "role_features": 1,
+      "boolean_features": 0,
+      "numerical_features": 1,
+      "transitions": 2,
+      "syntactic_complexity": 25
+    }
+  ],
+  "program": {
+    "entry": "root",
+    "modules": [
+      "root",
+      "blocks",
+      "tower",
+      "on-table",
+      "on"
+    ],
+    "syntactic_complexity": 102
+  }
+}

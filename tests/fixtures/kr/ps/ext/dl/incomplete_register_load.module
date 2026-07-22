@@ -1,0 +1,43 @@
+(:module
+        (:symbol load)
+        (:arguments)
+        (:registers (:concept r0))
+        (:entry m0)
+        (:memory m0 m1)
+        (:features
+            (:concept
+                (:symbol B)
+                (:expression (c_atomic_state "ball"))
+            )
+            (:numerical
+                (:symbol n)
+                (:expression (n_count (c_register r0)))
+            )
+        )
+        (:rules
+            (:rule
+                (:symbol r1)
+                (:expression
+                    (:source-memory m0)
+                    (:target-memory m0)
+                    (:sketch
+                        (:conditions (greater_zero n))
+                        (:effects (decreases n))
+                    )
+                )
+            )
+            (:rule
+                (:symbol r2)
+                (:expression
+                    (:source-memory m1)
+                    (:target-memory m1)
+                    (:load
+                        (:conditions)
+                        (:concept B)
+                        (:register (:concept r0))
+                    )
+                )
+            )
+        )
+    )
+

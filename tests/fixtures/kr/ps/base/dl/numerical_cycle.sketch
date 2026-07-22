@@ -1,0 +1,34 @@
+(:sketch
+    (:features
+        (:numerical
+            (:symbol n1)
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto6)
+            (:expression
+                (:conditions
+                    (greater_zero n1)
+                )
+                (:effects
+                    (decreases n1)
+                )
+            )
+        )
+        (:rule
+            (:symbol auto7)
+            (:expression
+                (:conditions)
+                (:effects
+                    (increases n1)
+                )
+            )
+        )
+    )
+)

@@ -1,0 +1,58 @@
+(:module
+    (:symbol role_load_dependent)
+    (:arguments)
+    (:registers
+        (:role r0)
+    )
+    (:entry m0)
+    (:memory m0 m1)
+    (:features
+        (:role
+            (:symbol At)
+            (:expression (r_atomic_state "at"))
+        )
+        (:numerical
+            (:symbol fn)
+            (:expression
+                (n_count
+                    (c_some
+                        (r_register r0)
+                        (c_top)
+                    )
+                )
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto13)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:load
+                    (:conditions)
+                    (:role At)
+                    (:register
+                        (:role r0)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto15)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m0)
+                (:sketch
+                    (:conditions
+                        (greater_zero fn)
+                    )
+                    (:effects
+                        (decreases fn)
+                    )
+                )
+            )
+        )
+    )
+)
+

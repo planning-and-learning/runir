@@ -1,0 +1,10 @@
+{
+  "cases": [
+    {
+      "name": "gripper",
+      "domain_file": "classical/tests/gripper/domain.pddl",
+      "grammar_file": "kr/dl/grammar/gripper.grammar",
+      "cnf_file": "kr/dl/grammar/gripper.cnf"
+    }
+  ]
+}

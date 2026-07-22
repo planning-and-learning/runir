@@ -1,0 +1,12 @@
+(:module
+    (:symbol root)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0)
+    (:features
+        (:concept (:symbol same) (:expression (c_top)))
+        (:boolean (:symbol same) (:expression (b_nonempty (c_top))))
+    )
+    (:rules)
+)

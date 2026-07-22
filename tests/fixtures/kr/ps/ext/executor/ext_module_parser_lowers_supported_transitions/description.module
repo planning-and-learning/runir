@@ -1,0 +1,91 @@
+(:module
+    (:symbol entry)
+    (:arguments
+        (:concept X)
+    )
+    (:registers
+        (:concept r0)
+    )
+    (:entry m0)
+    (:memory m0 m1 m2)
+    (:features
+        (:concept
+            (:symbol B)
+            (:expression
+                (c_top)
+            )
+        )
+        (:concept
+            (:symbol C0)
+            (:expression
+                (c_register r0)
+            )
+        )
+        (:boolean
+            (:symbol H)
+            (:expression
+                (b_nonempty
+                    (c_top)
+                )
+            )
+        )
+        (:numerical
+            (:symbol N)
+            (:expression
+                (n_count
+                    (c_top)
+                )
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol load-edge)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:load
+                    (:conditions
+                        (greater_zero N)
+                    )
+                    (:concept B)
+                    (:register
+                        (:concept r0)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto12)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m1)
+                (:sketch
+                    (:conditions
+                        (positive H)
+                        (greater_zero N)
+                    )
+                    (:effects
+                        (unchanged N)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto14)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m2)
+                (:do
+                    (:conditions)
+                    (:action "pick")
+                    (:arguments C0 B B)
+                    (:effects
+                        (unchanged N)
+                    )
+                )
+            )
+        )
+    )
+)
+

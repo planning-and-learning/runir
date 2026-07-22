@@ -1,0 +1,7 @@
+(:sketch
+    (:features)
+    (:rules
+        (:rule (:symbol same) (:expression (:conditions) (:effects)))
+        (:rule (:symbol same) (:expression (:conditions) (:effects)))
+    )
+)

@@ -1,0 +1,19 @@
+(:module
+    (:symbol entry)
+    (:arguments)
+    (:registers
+        (:concept r0)
+    )
+    (:entry m0)
+    (:memory m0)
+    (:features
+        (:concept
+            (:symbol X)
+            (:expression
+                (c_register missing)
+            )
+        )
+    )
+    (:rules)
+)
+

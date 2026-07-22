@@ -1,0 +1,30 @@
+(:module
+    (:symbol caller)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1)
+    (:features
+        (:concept
+            (:symbol Any)
+            (:expression
+                (c_top)
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto2)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:call
+                    (:conditions)
+                    (:callee callee)
+                    (:arguments Any)
+                )
+            )
+        )
+    )
+)
+

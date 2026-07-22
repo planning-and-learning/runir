@@ -1,0 +1,55 @@
+(:module
+    (:symbol load_independent)
+    (:arguments)
+    (:registers
+        (:concept r0)
+    )
+    (:entry m0)
+    (:memory m0 m1)
+    (:features
+        (:concept
+            (:symbol B)
+            (:expression (c_atomic_state "ball"))
+        )
+        (:numerical
+            (:symbol fn)
+            (:expression
+                (n_count
+                    (c_atomic_state "ball")
+                )
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto9)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:load
+                    (:conditions
+                        (greater_zero fn)
+                    )
+                    (:concept B)
+                    (:register
+                        (:concept r0)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol auto11)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m0)
+                (:sketch
+                    (:conditions)
+                    (:effects
+                        (decreases fn)
+                    )
+                )
+            )
+        )
+    )
+)
+

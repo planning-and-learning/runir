@@ -1,0 +1,35 @@
+(:sketch
+    (:features
+        (:boolean
+            (:symbol v)
+            (:expression
+                (b_nonempty
+                    (c_atomic_state
+                        "at-robby"))
+            )
+        )
+        (:numerical
+            (:symbol g)
+            (:expression
+                (n_count
+                    (c_atomic_state
+                        "ball"))
+            )
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol auto5)
+            (:expression
+                (:conditions
+                    (positive v)
+                    (greater_zero g)
+                )
+                (:effects
+                    (decreases g)
+                    (unchanged v)
+                )
+            )
+        )
+    )
+)

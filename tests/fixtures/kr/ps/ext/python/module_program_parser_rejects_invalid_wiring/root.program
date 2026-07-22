@@ -1,0 +1,26 @@
+(:program
+    (:entry root)
+    (:module
+        (:symbol root)
+        (:arguments)
+        (:registers)
+        (:entry m0)
+        (:memory m0 m1)
+        (:features)
+        (:rules
+            (:rule
+                (:symbol auto1)
+                (:expression
+                    (:source-memory m0)
+                    (:target-memory m1)
+                    (:call
+                        (:conditions)
+                        (:callee missing)
+                        (:arguments)
+                    )
+                )
+            )
+        )
+    )
+)
+

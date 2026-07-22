@@ -1,0 +1,33 @@
+(:module
+        (:symbol distance)
+        (:arguments)
+        (:registers)
+        (:entry source)
+        (:memory source target)
+        (:features
+            (:numerical
+                (:symbol D)
+                (:expression
+                    (n_distance
+                        (c_atomic_state "ball")
+                        (r_atomic_state "at")
+                        (c_atomic_state "room")
+                    )
+                )
+            )
+        )
+        (:rules
+            (:rule
+                (:symbol advance)
+                (:expression
+                    (:source-memory source)
+                    (:target-memory target)
+                    (:sketch
+                        (:conditions (greater_zero D))
+                        (:effects)
+                    )
+                )
+            )
+        )
+    )
+

@@ -1,0 +1,22 @@
+(:program
+        (:entry root)
+        (:module
+            (:symbol root)
+            (:arguments)
+            (:registers)
+            (:entry m0)
+            (:memory m0)
+            (:features)
+            (:rules)
+        )
+        (:module
+            (:symbol leaf)
+            (:arguments)
+            (:registers)
+            (:entry m0)
+            (:memory m0)
+            (:features)
+            (:rules)
+        )
+    )
+

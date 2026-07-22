@@ -1,0 +1,23 @@
+(:module
+    (:symbol load)
+    (:arguments)
+    (:registers (:concept r0))
+    (:entry m0)
+    (:memory m0 m1)
+    (:features {features})
+    (:rules
+        (:rule
+            (:symbol r0)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m1)
+                (:load
+                    (:conditions)
+                    (:concept {feature})
+                    (:register (:concept r0))
+                )
+            )
+        )
+    )
+)
+

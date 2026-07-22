@@ -1,0 +1,19 @@
+(:module
+        (:symbol module)
+        (:arguments)
+        (:registers)
+        (:entry source)
+        (:memory source target)
+        (:features)
+        (:rules
+            (:rule
+                (:symbol advance)
+                (:expression
+                    (:source-memory source)
+                    (:target-memory target)
+                    (:sketch (:conditions) (:effects))
+                )
+            )
+        )
+    )
+

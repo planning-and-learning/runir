@@ -1,0 +1,33 @@
+(:program
+    (:entry bad-register)
+    (:module
+        (:symbol bad-register)
+        (:arguments)
+        (:registers)
+        (:entry m0)
+        (:memory m0 m1)
+        (:features
+            (:concept
+                (:symbol B)
+                (:expression (c_top))
+            )
+        )
+        (:rules
+            (:rule
+                (:symbol auto5)
+                (:expression
+                    (:source-memory m0)
+                    (:target-memory m1)
+                    (:load
+                        (:conditions)
+                        (:concept B)
+                        (:register
+                            (:concept r1)
+                        )
+                    )
+                )
+            )
+        )
+    )
+)
+

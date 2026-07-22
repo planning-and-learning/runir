@@ -1,0 +1,38 @@
+(:module
+        (:symbol numeric)
+        (:arguments)
+        (:registers)
+        (:entry m0)
+        (:memory m0)
+        (:features
+            (:numerical
+                (:symbol n)
+                (:expression (n_count (c_atomic_state "ball")))
+            )
+        )
+        (:rules
+            (:rule
+                (:symbol r1)
+                (:expression
+                    (:source-memory m0)
+                    (:target-memory m0)
+                    (:sketch
+                        (:conditions (greater_zero n))
+                        (:effects (decreases n))
+                    )
+                )
+            )
+            (:rule
+                (:symbol r2)
+                (:expression
+                    (:source-memory m0)
+                    (:target-memory m0)
+                    (:sketch
+                        (:conditions (equal_zero n))
+                        (:effects (increases n))
+                    )
+                )
+            )
+        )
+    )
+

@@ -1,0 +1,55 @@
+(:module
+    (:symbol projected)
+    (:arguments)
+    (:registers)
+    (:entry m0)
+    (:memory m0 m1 m2)
+    (:features
+        (:boolean
+            (:symbol b)
+            (:expression (b_nonempty (c_atomic_state "ball")))
+        )
+        (:numerical
+            (:symbol n0)
+            (:expression (n_count (c_atomic_state "ball")))
+        )
+        (:numerical
+            (:symbol n1)
+            (:expression (n_count (c_atomic_state "room")))
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol to_true)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m0)
+                (:sketch (:conditions (negative b)) (:effects (positive b)))
+            )
+        )
+        (:rule
+            (:symbol to_false)
+            (:expression
+                (:source-memory m0)
+                (:target-memory m0)
+                (:sketch (:conditions (positive b)) (:effects (negative b)))
+            )
+        )
+        (:rule
+            (:symbol keep_n1)
+            (:expression
+                (:source-memory m1)
+                (:target-memory m1)
+                (:sketch (:conditions) (:effects (unchanged n1)))
+            )
+        )
+        (:rule
+            (:symbol keep_n0)
+            (:expression
+                (:source-memory m2)
+                (:target-memory m2)
+                (:sketch (:conditions) (:effects (unchanged n0)))
+            )
+        )
+    )
+)

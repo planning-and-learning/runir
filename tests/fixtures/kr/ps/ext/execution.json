@@ -1,0 +1,26 @@
+{
+  "cases": [
+    {
+      "name": "empty",
+      "program_file": "kr/ps/ext/execution/empty.program",
+      "universal": true,
+      "status": "failure",
+      "num_vertices": 1,
+      "num_edges": 0,
+      "num_deadends": 0,
+      "has_open_states": true,
+      "cycle_length": 0
+    },
+    {
+      "name": "load_deadend",
+      "program_file": "kr/ps/ext/execution/load_deadend.program",
+      "universal": true,
+      "status": "failure",
+      "num_vertices": 2,
+      "num_edges": 1,
+      "num_deadends": 1,
+      "has_open_states": false,
+      "cycle_length": 0
+    }
+  ]
+}

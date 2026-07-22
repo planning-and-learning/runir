@@ -1,0 +1,25 @@
+(:program
+    (:entry bad-memory)
+    (:module
+        (:symbol bad-memory)
+        (:arguments)
+        (:registers)
+        (:entry m0)
+        (:memory m0)
+        (:features)
+        (:rules
+            (:rule
+                (:symbol auto3)
+                (:expression
+                    (:source-memory m0)
+                    (:target-memory missing)
+                    (:sketch
+                        (:conditions)
+                        (:effects)
+                    )
+                )
+            )
+        )
+    )
+)
+
