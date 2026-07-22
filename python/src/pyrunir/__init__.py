@@ -43,6 +43,19 @@ def native_prefix() -> Path:
     return native_dir
 
 
+def native_include_dir() -> Path:
+    return native_prefix() / "include"
+
+
+def native_lib_dir() -> Path:
+    native_dir = native_prefix()
+    for lib_dir_name in ("lib", "lib64"):
+        lib_dir = native_dir / lib_dir_name
+        if lib_dir.is_dir():
+            return lib_dir
+    return native_dir / "lib"
+
+
 def cmake_prefix() -> Path:
     """Return the prefix to put on CMAKE_PREFIX_PATH to find runir via find_package."""
     return native_prefix()

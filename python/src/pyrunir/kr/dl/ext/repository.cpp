@@ -1,7 +1,6 @@
 #include "module.hpp"
 
 #include <memory>
-#include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
@@ -19,9 +18,11 @@ namespace
 template<typename... Ts>
 void bind_get_or_create(nb::class_<runir::kr::dl::ExtConstructorRepository>& repository, ygg::TypeList<Ts...>)
 {
-    (repository.def("get_or_create",
-                    [](runir::kr::dl::ExtConstructorRepository& self, ygg::Data<Ts>& data) { return self.get_or_create(data); },
-                    "data"_a),
+    (repository.def(
+         "get_or_create",
+         [](runir::kr::dl::ExtConstructorRepository& self, ygg::Data<Ts>& data) { return self.get_or_create(data).first; },
+         "data"_a,
+         nb::keep_alive<0, 1>()),
      ...);
 }
 

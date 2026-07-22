@@ -16,16 +16,16 @@ def test_base_and_ext_repositories_construct_programmatically():
     base_repository = base.RepositoryFactory().create(BaseDlRepositoryFactory().create(domain))
     rule_data = base.RuleData()
     rule_data.symbol = "r"
-    rule, created = base_repository.get_or_create(rule_data)
-    assert created and rule.get_symbol() == "r"
-    assert not base_repository.get_or_create(rule_data)[1]
+    rule = base_repository.get_or_create(rule_data)
+    assert rule.get_symbol() == "r"
+    assert base_repository.get_or_create(rule_data) == rule
 
     ext_repository = ext.RepositoryFactory().create(ExtDlRepositoryFactory().create(domain))
     memory_state_data = ext.MemoryStateData()
     memory_state_data.name = "m0"
-    memory_state, created = ext_repository.get_or_create(memory_state_data)
-    assert created and memory_state.get_name() == "m0"
-    assert not ext_repository.get_or_create(memory_state_data)[1]
+    memory_state = ext_repository.get_or_create(memory_state_data)
+    assert memory_state.get_name() == "m0"
+    assert ext_repository.get_or_create(memory_state_data) == memory_state
 
 
 def test_uns_dl_feature_data_is_bound():
