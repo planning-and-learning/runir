@@ -100,11 +100,19 @@ endif()
 
 # Dependencies
 
+set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.0.25)
+set(RUNIR_TYR_REQUIRED_VERSION 0.0.32)
+
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include("${PROJECT_SOURCE_DIR}/cmake/bootstrap_pyyggdrasil.cmake")
 
-find_package(yggdrasil 0.0.25 CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+find_package(
+    yggdrasil ${RUNIR_YGGDRASIL_REQUIRED_VERSION}
+    CONFIG REQUIRED
+    PATHS ${CMAKE_PREFIX_PATH}
+    NO_DEFAULT_PATH
+)
 if(yggdrasil_FOUND)
     message(STATUS "Found yggdrasil: ${yggdrasil_DIR} (found version ${yggdrasil_VERSION})")
 endif()
@@ -126,7 +134,12 @@ if(TBB_FOUND)
     message(STATUS "Found TBB: ${TBB_DIR} (found version ${TBB_VERSION})")
 endif()
 
-find_package(tyr 0.0.32 CONFIG REQUIRED COMPONENTS core PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
+find_package(
+    tyr ${RUNIR_TYR_REQUIRED_VERSION}
+    CONFIG REQUIRED COMPONENTS core
+    PATHS ${CMAKE_PREFIX_PATH}
+    NO_DEFAULT_PATH
+)
 if(tyr_FOUND)
     message(STATUS "Found tyr: ${tyr_DIR} (found version ${tyr_VERSION})")
 endif()
