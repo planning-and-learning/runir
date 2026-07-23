@@ -84,7 +84,7 @@ struct StateGraphEdgeLabel : ygg::comparison::Mixin<StateGraphEdgeLabel>
     tyr::formalism::planning::GroundActionView action;
     ygg::float_t cost = 0;
 
-    StateGraphEdgeLabel() = default;
+    StateGraphEdgeLabel() = delete;
     StateGraphEdgeLabel(tyr::formalism::planning::GroundActionView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
 
     auto cista_members() noexcept { return std::tie(action, cost); }

@@ -42,7 +42,7 @@ struct StateObjectGraphVertexLabelEntry : ygg::comparison::Mixin<StateObjectGrap
     ObjectGraphPredicateVariant predicate;
     std::size_t argument_position = 0;
 
-    StateObjectGraphVertexLabelEntry() = default;
+    StateObjectGraphVertexLabelEntry() = delete;
     StateObjectGraphVertexLabelEntry(ObjectGraphPredicateVariant predicate_, std::size_t argument_position_) :
         predicate(std::move(predicate_)),
         argument_position(argument_position_)
@@ -58,7 +58,7 @@ struct GoalObjectGraphVertexLabelEntry : ygg::comparison::Mixin<GoalObjectGraphV
     ObjectGraphPredicateVariant predicate;
     std::size_t argument_position = 0;
 
-    GoalObjectGraphVertexLabelEntry() = default;
+    GoalObjectGraphVertexLabelEntry() = delete;
     GoalObjectGraphVertexLabelEntry(ObjectGraphPredicateVariant predicate_, std::size_t argument_position_) :
         predicate(std::move(predicate_)),
         argument_position(argument_position_)
