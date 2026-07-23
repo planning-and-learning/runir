@@ -24,6 +24,8 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
     auto proof = ModuleProgramProofBuilder<Kind>(std::move(task_context), program, options.classifier);
     auto open = std::vector<std::pair<ExecutionStateView<Kind>, graphs::VertexIndex>> {};
     auto plan_steps = tyr::planning::LabeledNodeList<Kind> {};
+    auto successors = tyr::planning::LabeledNodeList<Kind> {};
+    auto steps = std::vector<ModuleProgramStep<Kind>> {};
     auto failed = false;
 
     const auto initial_state = proof.initial_state();
@@ -60,57 +62,21 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
             continue;
         }
 
-        auto load_steps = proof.load_steps(state, out_of_time);
-        if (out_of_time())
-            return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
-        if (!load_steps.empty())
-        {
-            if (options.shuffle_choice_points)
-                tyr::planning::portable_shuffle(load_steps.begin(), load_steps.end(), random);
-            if (!options.universal && load_steps.size() > 1)
-                load_steps.erase(load_steps.begin() + 1, load_steps.end());
-
-            for (const auto& step : load_steps)
-            {
-                if (out_of_time())
-                    return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
-
-                const auto applied = step.status == ModuleProgramOutcome::APPLIED;
-                const auto target_state = step.get_target();
-                const auto target_result = proof.get_or_create_vertex(target_state, false, applied, !applied, options.max_num_states);
-                if (!target_result)
-                    return proof.finish(ModuleProgramProofStatus::OUT_OF_STATES);
-
-                const auto [target, created] = *target_result;
-                proof.add_edge(source_vertex, target, step.get_state_transition(), step.rule);
-                if (!applied)
-                {
-                    proof.add_deadend_state(target);
-                    failed = true;
-                }
-                else if (created)
-                {
-                    open.emplace_back(target_state, target);
-                }
-            }
-            continue;
-        }
-
-        auto successors = proof.labeled_successors(state);
-        if (out_of_time())
-            return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
-        if (options.shuffle_labeled_succ_nodes)
-            tyr::planning::portable_shuffle(successors.begin(), successors.end(), random);
-
-        auto control_steps = proof.control_steps(state, successors, out_of_time);
+        proof.labeled_successors(state, successors);
         if (out_of_time())
             return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
         if (options.shuffle_choice_points)
-            tyr::planning::portable_shuffle(control_steps.begin(), control_steps.end(), random);
-        if (!options.universal && control_steps.size() > 1)
-            control_steps.erase(control_steps.begin() + 1, control_steps.end());
+            tyr::planning::portable_shuffle(successors.begin(), successors.end(), random);
 
-        for (const auto& step : control_steps)
+        proof.steps(state, successors, out_of_time, steps);
+        if (out_of_time())
+            return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
+        if (options.shuffle_choice_points)
+            tyr::planning::portable_shuffle(steps.begin(), steps.end(), random);
+        if (!options.universal && steps.size() > 1)
+            steps.erase(steps.begin() + 1, steps.end());
+
+        for (const auto& step : steps)
         {
             if (out_of_time())
                 return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
@@ -139,7 +105,21 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
             }
             else
             {
-                proof.add_open_state(source_vertex);
+                const auto target_state = step.get_target();
+                if (target_state.get_phase() == ExecutionPhase::INTERNAL)
+                {
+                    const auto target_result = proof.get_or_create_vertex(target_state, false, false, true, options.max_num_states);
+                    if (!target_result)
+                        return proof.finish(ModuleProgramProofStatus::OUT_OF_STATES);
+
+                    const auto target = target_result->first;
+                    proof.add_edge(source_vertex, target, step.get_state_transition(), step.rule);
+                    proof.add_deadend_state(target);
+                }
+                else
+                {
+                    proof.add_open_state(source_vertex);
+                }
                 failed = true;
             }
         }

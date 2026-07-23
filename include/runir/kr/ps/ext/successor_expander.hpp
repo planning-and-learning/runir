@@ -70,46 +70,109 @@ public:
 
     std::vector<Step> load_steps(ExecutionStateView<Kind> state)
     {
-        return load_steps_until(state, [] { return false; });
+        auto result = std::vector<Step> {};
+        load_steps(std::move(state), result);
+        return result;
+    }
+
+    void load_steps(ExecutionStateView<Kind> state, std::vector<Step>& out_steps)
+    {
+        load_steps_until(std::move(state), [] { return false; }, out_steps);
     }
 
     std::vector<Step> load_steps_until(ExecutionStateView<Kind> state, auto&& stop)
     {
+        auto result = std::vector<Step> {};
+        load_steps_until(std::move(state), stop, result);
+        return result;
+    }
+
+    void load_steps_until(ExecutionStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
+    {
         auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
-        return collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>>(context, {}, stop);
+        collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>>(context, {}, stop, out_steps);
     }
 
     std::vector<LabeledNode> labeled_successors(ExecutionStateView<Kind> state)
     {
+        auto result = std::vector<LabeledNode> {};
+        labeled_successors(std::move(state), result);
+        return result;
+    }
+
+    void labeled_successors(ExecutionStateView<Kind> state, std::vector<LabeledNode>& out_successors)
+    {
         auto& successor_generator = *m_task_context->search_context->successor_generator;
         const auto node = successor_generator.get_node(state.get_state().get_index());
-        return successor_generator.get_labeled_successor_nodes(node);
+        successor_generator.get_labeled_successor_nodes(node, out_successors);
     }
 
     std::vector<Step> control_steps(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors)
     {
-        return control_steps_until(state, successors, [] { return false; });
+        auto result = std::vector<Step> {};
+        control_steps(std::move(state), successors, result);
+        return result;
+    }
+
+    void control_steps(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, std::vector<Step>& out_steps)
+    {
+        control_steps_until(std::move(state), successors, [] { return false; }, out_steps);
     }
 
     std::vector<Step> control_steps_until(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop)
     {
-        auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
-        auto immediate = collect_steps<DoTag, CallTag>(context, successors, stop);
-        if (stop() || !immediate.empty())
-            return immediate;
-
-        auto sketch = collect_steps<SketchTag>(context, successors, stop);
-        if (stop() || !sketch.empty())
-            return sketch;
-
-        auto target = context;
-        if (target.get_call_stack().restore_caller())
-            return std::vector<Step> { make_step(detail::ModuleProgramOutcome::RESTORED_CALLER, std::move(target), ExecutionPhase::EXTERNAL) };
-
-        return std::vector<Step> { make_step(detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION, std::move(context), ExecutionPhase::EXTERNAL) };
+        auto result = std::vector<Step> {};
+        control_steps_until(std::move(state), successors, stop, result);
+        return result;
     }
 
-    std::vector<Step> control_steps(ExecutionStateView<Kind> state) { return control_steps(state, labeled_successors(state)); }
+    void control_steps_until(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop, std::vector<Step>& out_steps)
+    {
+        auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
+        collect_steps<DoTag, CallTag, SketchTag>(context, successors, stop, out_steps);
+        if (!stop() && out_steps.empty())
+            out_steps.push_back(fallback(std::move(context)));
+    }
+
+    std::vector<Step> control_steps(ExecutionStateView<Kind> state)
+    {
+        auto result = std::vector<Step> {};
+        control_steps(std::move(state), result);
+        return result;
+    }
+
+    void control_steps(ExecutionStateView<Kind> state, std::vector<Step>& out_steps)
+    {
+        auto successors = labeled_successors(state);
+        control_steps(std::move(state), successors, out_steps);
+    }
+
+    std::vector<Step> steps(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors)
+    {
+        auto result = std::vector<Step> {};
+        steps(std::move(state), successors, result);
+        return result;
+    }
+
+    void steps(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, std::vector<Step>& out_steps)
+    {
+        steps_until(std::move(state), successors, [] { return false; }, out_steps);
+    }
+
+    std::vector<Step> steps_until(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop)
+    {
+        auto result = std::vector<Step> {};
+        steps_until(std::move(state), successors, stop, result);
+        return result;
+    }
+
+    void steps_until(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop, std::vector<Step>& out_steps)
+    {
+        auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
+        collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>, DoTag, CallTag, SketchTag>(context, successors, stop, out_steps);
+        if (!stop() && out_steps.empty())
+            out_steps.push_back(fallback(std::move(context)));
+    }
 
     std::optional<RuleVariantView>
     matching_rule(ExecutionStateView<Kind> state, tyr::formalism::planning::GroundActionView action, tyr::planning::StateView<Kind> target_state)
@@ -150,26 +213,25 @@ private:
     }
 
     template<typename... Kinds>
-    std::vector<Step> collect_steps(const EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors, auto&& stop)
+    void collect_steps(const EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors, auto&& stop, std::vector<Step>& out_steps)
     {
-        auto result = std::vector<Step> {};
+        out_steps.clear();
         for (const auto& transition : context.get_call_stack().module().get_memory_transitions())
         {
             for (auto rule_variant : transition)
             {
                 if (stop())
-                    return result;
+                    return;
                 ygg::visit(
                     [&](auto rule)
                     {
                         using R = std::decay_t<decltype(rule)>;
                         if constexpr ((std::same_as<R, RuleView<Kinds>> || ...))
-                            append_steps(rule, rule_variant, context, successors, result, stop);
+                            append_steps(rule, rule_variant, context, successors, out_steps, stop);
                     },
                     rule_variant.get_variant());
             }
         }
-        return result;
     }
 
     template<typename R>
@@ -187,12 +249,6 @@ private:
                 return;
 
             const auto denotation = evaluate_feature_denotation(rule.get_feature(), evaluation_context, m_environment);
-            if (denotation.begin() == denotation.end())
-            {
-                result.push_back(terminal(detail::ModuleProgramOutcome::FAILURE, context, rule_variant, ExecutionPhase::INTERNAL));
-                return;
-            }
-
             for (const auto value : denotation)
             {
                 if (stop())
@@ -209,7 +265,6 @@ private:
                 return;
 
             const auto& denotations = detail::evaluate_do_arguments(rule, evaluation_context, m_environment);
-            auto matched = false;
             for (const auto& successor : successors)
             {
                 if (stop())
@@ -217,18 +272,9 @@ private:
                 if (!detail::do_successor_matches(rule, evaluation_context, m_environment, denotations, successor.label, successor.node.get_state()))
                     continue;
 
-                matched = true;
                 auto target = context;
                 detail::apply_do_successor(rule, successor, target);
                 result.push_back(planning_step(std::move(target), successor, rule_variant));
-            }
-
-            if (!matched)
-            {
-                auto target = context;
-                const auto status = target.get_call_stack().restore_caller() ? detail::ModuleProgramOutcome::RESTORED_CALLER :
-                                                                               detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION;
-                result.push_back(make_step(status, std::move(target), ExecutionPhase::EXTERNAL));
             }
         }
         else if constexpr (std::same_as<R, RuleView<CallTag>>)
@@ -272,16 +318,17 @@ private:
         return Step(status, context.intern(phase), m_task_context);
     }
 
+    Step fallback(EvaluationContext<Kind> context)
+    {
+        auto target = context;
+        if (target.get_call_stack().restore_caller())
+            return make_step(detail::ModuleProgramOutcome::RESTORED_CALLER, std::move(target), ExecutionPhase::EXTERNAL);
+        return make_step(detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION, std::move(context), ExecutionPhase::EXTERNAL);
+    }
+
     Step applied(EvaluationContext<Kind> context, RuleVariantView rule, ExecutionPhase phase)
     {
         auto step = make_step(detail::ModuleProgramOutcome::APPLIED, std::move(context), phase);
-        step.rule = rule;
-        return step;
-    }
-
-    Step terminal(detail::ModuleProgramOutcome status, EvaluationContext<Kind> context, RuleVariantView rule, ExecutionPhase phase)
-    {
-        auto step = make_step(status, std::move(context), phase);
         step.rule = rule;
         return step;
     }

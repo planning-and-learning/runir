@@ -47,13 +47,17 @@ public:
 
     bool is_unsolvable(graphs::VertexIndex vertex) const { return m_builder.get_vertex(vertex).get_property().is_unsolvable; }
 
-    auto load_steps(ExecutionStateView<Kind> state, auto&& stop) { return m_expander.load_steps_until(std::move(state), std::forward<decltype(stop)>(stop)); }
-
-    auto labeled_successors(ExecutionStateView<Kind> state) { return m_expander.labeled_successors(std::move(state)); }
-
-    auto control_steps(ExecutionStateView<Kind> state, const std::vector<tyr::planning::LabeledNode<Kind>>& successors, auto&& stop)
+    void labeled_successors(ExecutionStateView<Kind> state, std::vector<tyr::planning::LabeledNode<Kind>>& out_successors)
     {
-        return m_expander.control_steps_until(std::move(state), successors, std::forward<decltype(stop)>(stop));
+        m_expander.labeled_successors(std::move(state), out_successors);
+    }
+
+    void steps(ExecutionStateView<Kind> state,
+               const std::vector<tyr::planning::LabeledNode<Kind>>& successors,
+               auto&& stop,
+               std::vector<ModuleProgramStep<Kind>>& out_steps)
+    {
+        m_expander.steps_until(std::move(state), successors, std::forward<decltype(stop)>(stop), out_steps);
     }
 
     auto get_or_create_vertex(ExecutionStateView<Kind> state, bool is_initial, bool is_alive, bool is_unsolvable, ygg::uint_t max_num_vertices)
@@ -100,12 +104,7 @@ public:
     auto finish(ModuleProgramProofStatus status) -> ModuleProgramProofResults<Kind>
     {
         m_result.status = status;
-        auto graph = std::shared_ptr<ModuleProgramProofGraph<Kind>>(new ModuleProgramProofGraph<Kind>(std::move(m_builder)),
-                                                                    [owner = m_result.task_context_owner](ModuleProgramProofGraph<Kind>* graph)
-                                                                    {
-                                                                        (void) owner;
-                                                                        delete graph;
-                                                                    });
+        auto graph = std::make_shared<ModuleProgramProofGraph<Kind>>(std::move(m_builder));
         if (m_result.cycle.empty())
             m_result.cycle = graphs::find_cycle(*graph);
         if (m_result.status == ModuleProgramProofStatus::SUCCESS && !m_result.cycle.empty())

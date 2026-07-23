@@ -65,7 +65,7 @@ void bind_sketch_search_options(nb::module_& m, const char* name)
         .def_rw("max_num_states", &Options::max_num_states)
         .def_rw("max_time", &Options::max_time)
         .def_rw("random_seed", &Options::random_seed)
-        .def_rw("shuffle_labeled_succ_nodes", &Options::shuffle_labeled_succ_nodes);
+        .def_rw("shuffle_choice_points", &Options::shuffle_choice_points);
 }
 
 }  // namespace

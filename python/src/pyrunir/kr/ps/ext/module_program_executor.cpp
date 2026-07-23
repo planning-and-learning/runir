@@ -108,7 +108,6 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_rw("max_num_states", &Options::max_num_states)
         .def_rw("max_time", &Options::max_time)
         .def_rw("random_seed", &Options::random_seed)
-        .def_rw("shuffle_labeled_succ_nodes", &Options::shuffle_labeled_succ_nodes)
         .def_rw("shuffle_choice_points", &Options::shuffle_choice_points);
 
     nb::class_<Step>(m, (std::string(prefix) + "ModuleProgramExecutionStep").c_str())
@@ -120,7 +119,10 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     nb::class_<Expander>(m, (std::string(prefix) + "SuccessorExpander").c_str())
         .def(nb::init<runir::kr::TaskContextPtr<Kind>, ModuleProgramView>(), "task_context"_a, "program"_a)
         .def("initial_state", &Expander::initial_state, nb::keep_alive<0, 1>())
-        .def("load_steps", &Expander::load_steps, "state"_a)
+        .def(
+            "load_steps",
+            [](Expander& self, StateView state) { return self.load_steps(std::move(state)); },
+            "state"_a)
         .def(
             "control_steps",
             [](Expander& self, StateView state) { return self.control_steps(std::move(state)); },

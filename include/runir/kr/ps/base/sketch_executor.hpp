@@ -113,7 +113,7 @@ auto execute_direct(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVi
         auto successors = expander.labeled_successors(context);
         if (out_of_time())
             return finish(SketchProofStatus::OUT_OF_TIME);
-        if (options.shuffle_labeled_succ_nodes)
+        if (options.shuffle_choice_points)
             tyr::planning::portable_shuffle(successors.begin(), successors.end(), random);
 
         auto accepted = expander.accepted_successors(context, successors, out_of_time);

@@ -308,7 +308,6 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     assert search_options.max_num_states > 0
     assert search_options.max_time is None
     assert search_options.random_seed == 0
-    assert search_options.shuffle_labeled_succ_nodes is False
     assert search_options.shuffle_choice_points is False
     assert search_options.universal is False
     assert search_options.classifier is None

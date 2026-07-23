@@ -1,0 +1,98 @@
+(:module
+    (:symbol module)
+    (:arguments)
+    (:registers
+        (:concept r0)
+    )
+    (:entry source)
+    (:memory source load-target do-target sketch-target)
+    (:features
+        (:concept
+            (:symbol Top)
+            (:expression (c_top))
+        )
+        (:concept
+            (:symbol Empty)
+            (:expression (c_bot))
+        )
+        (:concept
+            (:symbol Ball)
+            (:expression (c_atomic_state "ball"))
+        )
+        (:concept
+            (:symbol Room)
+            (:expression (c_atomic_state "room"))
+        )
+        (:concept
+            (:symbol Gripper)
+            (:expression (c_atomic_state "gripper"))
+        )
+    )
+    (:rules
+        (:rule
+            (:symbol load)
+            (:expression
+                (:source-memory source)
+                (:target-memory load-target)
+                (:load
+                    (:conditions)
+                    (:concept Top)
+                    (:register
+                        (:concept r0)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol empty-load)
+            (:expression
+                (:source-memory source)
+                (:target-memory load-target)
+                (:load
+                    (:conditions)
+                    (:concept Empty)
+                    (:register
+                        (:concept r0)
+                    )
+                )
+            )
+        )
+        (:rule
+            (:symbol matching-do)
+            (:expression
+                (:source-memory source)
+                (:target-memory do-target)
+                (:do
+                    (:conditions)
+                    (:action "pick")
+                    (:arguments Ball Room Gripper)
+                    (:effects)
+                )
+            )
+        )
+        (:rule
+            (:symbol unmatched-do)
+            (:expression
+                (:source-memory source)
+                (:target-memory do-target)
+                (:do
+                    (:conditions)
+                    (:action "pick")
+                    (:arguments Room Room Room)
+                    (:effects)
+                )
+            )
+        )
+        (:rule
+            (:symbol sketch)
+            (:expression
+                (:source-memory source)
+                (:target-memory sketch-target)
+                (:sketch
+                    (:conditions)
+                    (:effects)
+                )
+            )
+        )
+    )
+)

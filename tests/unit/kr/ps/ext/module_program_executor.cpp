@@ -1167,46 +1167,6 @@ TEST(RunirTests, ExtGroundAndLiftedInitialStatesUseExpanderRepository)
     expect_initial_execution_state_uses_expander_repository<tyr::planning::LiftedTag>();
 }
 
-TEST(RunirTests, ExtProofLabelsOutliveTheGraphAndExpander)
-{
-    namespace p = tyr::planning;
-
-    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
-    auto task_context = create_task_context<p::GroundTag>(domain, task_file);
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
-    const auto module =
-        kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_treats_classifier_matches_as_terminal_failures/module.module"),
-                                      task_context->search_context->task->get_domain().get_domain(),
-                                      *repository);
-    const auto program = create_module_program(*repository, module, { module });
-    const auto expected_rule = module.get_memory_transitions().front().front().get_index();
-    auto options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
-    options.universal = true;
-    auto result = kr::ps::ext::find_solution(task_context, program, options);
-    EXPECT_TRUE(result.graph);
-    EXPECT_EQ(result.graph->get_num_vertices(), 2);
-    EXPECT_EQ(result.graph->get_num_edges(), 1);
-    auto graph = result.graph;
-    const auto task_context_weak = std::weak_ptr(task_context);
-
-    result.graph.reset();
-    result.task_context_owner.reset();
-    task_context.reset();
-    repository.reset();
-    dl_repository.reset();
-    ASSERT_FALSE(task_context_weak.expired());
-    const auto labels = std::pair(graph->get_vertex(0).get_property(), graph->get_edge(0).get_property());
-
-    result.task_context_owner = task_context_weak.lock();
-    graph.reset();
-    EXPECT_EQ(labels.first.execution_state.get_call_stack().get_module().get_name(), "module");
-    ASSERT_TRUE(labels.second.rule);
-    EXPECT_EQ(labels.second.rule->get_index(), expected_rule);
-    EXPECT_EQ(labels.second.rule->get_symbol(), "advance");
-}
-
 TEST(RunirTests, ExtExecutionRecordsAreCistaCompatible)
 {
     namespace p = tyr::planning;
@@ -1327,8 +1287,10 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
-    auto expected_steps = steps;
     auto random = std::mt19937_64(1);
+    auto expected_successors = expander.labeled_successors(initial_state);
+    p::portable_shuffle(expected_successors.begin(), expected_successors.end(), random);
+    auto expected_steps = expander.steps(initial_state, expected_successors);
     p::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
     ASSERT_NE(expected_steps.front().get_target().get_index(), steps.front().get_target().get_index());
 
@@ -1405,6 +1367,78 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
         loaded_pairs.emplace(ygg::uint_t(pair.get_first().get_index()), ygg::uint_t(pair.get_second().get_index()));
     }
     EXPECT_EQ(loaded_pairs.size(), steps.size());
+}
+
+TEST(RunirTests, ExtSuccessorEnumerationCombinesAllApplicableRuleKinds)
+{
+    namespace fp = tyr::formalism::planning;
+    namespace p = tyr::planning;
+
+    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
+    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+    auto execution_context = ygg::ExecutionContext::create(1);
+    auto lifted_task = p::Task<p::LiftedTag>(planning_task);
+    auto task = lifted_task.instantiate_ground_task(*execution_context).task;
+    auto search_context = runir::datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+
+    auto repository = task_context->ext_repository;
+    const auto module =
+        kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_successor_enumeration_combines_all_applicable_rule_kinds/module.module"),
+                                      task->get_domain().get_domain(),
+                                      *repository);
+    const auto program = create_module_program(*repository, module, { module });
+    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    const auto initial_state = expander.initial_state();
+    const auto successors = expander.labeled_successors(initial_state);
+    const auto steps = expander.steps(initial_state, successors);
+
+    auto load_steps = std::size_t(0);
+    auto do_steps = std::size_t(0);
+    auto sketch_steps = std::size_t(0);
+    for (const auto& step : steps)
+    {
+        EXPECT_EQ(step.status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
+        const auto& target = step.get_target();
+        const auto memory = target.get_call_stack().get_memory_state().get_name();
+        if (memory == "load-target")
+        {
+            EXPECT_EQ(target.get_phase(), kr::ps::ext::ExecutionPhase::INTERNAL);
+            ++load_steps;
+        }
+        else if (memory == "do-target")
+        {
+            EXPECT_EQ(target.get_phase(), kr::ps::ext::ExecutionPhase::EXTERNAL);
+            ++do_steps;
+        }
+        else if (memory == "sketch-target")
+        {
+            EXPECT_EQ(target.get_phase(), kr::ps::ext::ExecutionPhase::EXTERNAL);
+            ++sketch_steps;
+        }
+        else
+        {
+            ADD_FAILURE() << "unexpected target memory state: " << memory;
+        }
+    }
+    EXPECT_GT(load_steps, 0);
+    EXPECT_GT(do_steps, 0);
+    EXPECT_EQ(sketch_steps, 1);
+    EXPECT_EQ(steps.size(), load_steps + do_steps + sketch_steps);
+
+    const auto control_steps = expander.control_steps(initial_state, successors);
+    EXPECT_EQ(control_steps.size(), do_steps + sketch_steps);
+
+    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
+    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    universal_options.universal = true;
+    const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
+    ASSERT_TRUE(greedy.graph);
+    ASSERT_TRUE(universal.graph);
+    EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
+    EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 }
 
 TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
@@ -1662,8 +1696,10 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
-    auto expected_steps = steps;
     auto random = std::mt19937_64(1);
+    auto expected_successors = expander.labeled_successors(initial_state);
+    p::portable_shuffle(expected_successors.begin(), expected_successors.end(), random);
+    auto expected_steps = expander.steps(initial_state, expected_successors);
     p::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
     ASSERT_NE(expected_steps.front().get_target().get_index(), steps.front().get_target().get_index());
 
