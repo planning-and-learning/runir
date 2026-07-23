@@ -5,15 +5,15 @@
 namespace runir::kr::ps::detail
 {
 
-ResidualMemorySccs::ResidualMemorySccs(const QualitativePolicy& policy, bool global_mode) :
+ResidualMemorySccs::ResidualMemorySccs(const QualitativePolicy& policy, bool use_memory_scc_scope) :
     policy_(policy),
-    global_mode_(global_mode)
+    use_memory_scc_scope_(use_memory_scc_scope)
 {
 }
 
 void ResidualMemorySccs::begin_round(std::span<const std::size_t> remaining_rule_positions)
 {
-    if (global_mode_)
+    if (!use_memory_scc_scope_)
     {
         if (!forest_)
         {
@@ -67,12 +67,12 @@ void ResidualMemorySccs::begin_round(std::span<const std::size_t> remaining_rule
 
 bool ResidualMemorySccs::share_opponent_scope(std::size_t lhs_rule_position, std::size_t rhs_rule_position) const
 {
-    return global_mode_ || scc_for_rule(lhs_rule_position) == scc_for_rule(rhs_rule_position);
+    return !use_memory_scc_scope_ || scc_for_rule(lhs_rule_position) == scc_for_rule(rhs_rule_position);
 }
 
 bool ResidualMemorySccs::is_cross_scc_rule(std::size_t rule_position) const
 {
-    if (global_mode_)
+    if (!use_memory_scc_scope_)
         return false;
     const auto& rule = policy_.rule_profiles[rule_position];
     return forest_->leaf_of_memory(rule.source_memory_position) != forest_->leaf_of_memory(rule.target_memory_position);

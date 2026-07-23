@@ -96,34 +96,36 @@ void bind_structural_termination(nb::module_& m)
         .def("is_terminating", &ModuleProgramStructuralTerminationResult::is_terminating);
 
     m.def("structural_termination",
-          nb::overload_cast<ModuleView, std::size_t, bool>(&structural_termination),
+          nb::overload_cast<ModuleView, std::size_t, bool, bool>(&structural_termination),
           "module"_a,
           "max_features"_a = runir::kr::ps::dl::default_max_features,
           "use_incomplete_preprocessing"_a = runir::kr::ps::dl::default_use_incomplete_preprocessing,
+          "use_memory_scc_scope"_a = runir::kr::ps::dl::default_use_memory_scc_scope,
           nb::keep_alive<0, 1>(),
-          "Decide structural termination with configurable feature limit and optional incomplete preprocessing.");
+          "Decide structural termination with configurable feature limit and optional memory-SCC-scoped incomplete preprocessing.");
 
     m.def("structural_termination",
-          nb::overload_cast<ModuleProgramView, std::size_t, bool>(&structural_termination),
+          nb::overload_cast<ModuleProgramView, std::size_t, bool, bool>(&structural_termination),
           "program"_a,
           "max_features"_a = runir::kr::ps::dl::default_max_features,
           "use_incomplete_preprocessing"_a = runir::kr::ps::dl::default_use_incomplete_preprocessing,
+          "use_memory_scc_scope"_a = runir::kr::ps::dl::default_use_memory_scc_scope,
           nb::keep_alive<0, 1>(),
           "Conservatively decide structural termination of a module program, including inter-module call graph cycles.");
 
     m.def("incomplete_structural_termination",
           nb::overload_cast<ModuleView, bool>(&incomplete_structural_termination),
           "module"_a,
-          "global_mode"_a = false,
+          "use_memory_scc_scope"_a = runir::kr::ps::dl::default_use_memory_scc_scope,
           nb::keep_alive<0, 1>(),
-          "Apply the sound incomplete termination proof within recurrent memory components.");
+          "Apply the sound incomplete termination proof within residual memory SCCs by default.");
 
     m.def("incomplete_structural_termination",
           nb::overload_cast<ModuleProgramView, bool>(&incomplete_structural_termination),
           "program"_a,
-          "global_mode"_a = false,
+          "use_memory_scc_scope"_a = runir::kr::ps::dl::default_use_memory_scc_scope,
           nb::keep_alive<0, 1>(),
-          "Apply the incomplete proof to every module and reject recursive or unresolved calls.");
+          "Apply the incomplete proof to every module using residual memory SCCs by default and reject recursive or unresolved calls.");
 }
 
 }  // namespace runir::kr::ps::ext::dl

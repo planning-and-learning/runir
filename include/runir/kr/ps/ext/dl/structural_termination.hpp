@@ -16,18 +16,21 @@ namespace runir::kr::ps::ext::dl
 /// because they may change the planning state or transfer control to another
 /// module. On failure, the result carries a canonical counterexample graph
 /// lifted onto the module's full feature axes. The incomplete preprocessing
-/// can be disabled.
+/// can be disabled; use_memory_scc_scope only affects that preprocessing.
 ModuleStructuralTerminationResult structural_termination(ModuleView module_,
                                                          std::size_t max_features = runir::kr::ps::dl::default_max_features,
-                                                         bool use_incomplete_preprocessing = runir::kr::ps::dl::default_use_incomplete_preprocessing);
+                                                         bool use_incomplete_preprocessing = runir::kr::ps::dl::default_use_incomplete_preprocessing,
+                                                         bool use_memory_scc_scope = runir::kr::ps::dl::default_use_memory_scc_scope);
 
 /// Conservative structural termination check for a module program. Each module
 /// must structurally terminate, and the inter-module call graph must be
 /// acyclic. Recursive module calls are reported non-terminating because the
 /// ICAPS 2024 paper leaves modular acyclicity/termination as future work.
+/// use_memory_scc_scope only affects each module's incomplete preprocessing.
 ModuleProgramStructuralTerminationResult structural_termination(ModuleProgramView program,
                                                                 std::size_t max_features = runir::kr::ps::dl::default_max_features,
-                                                                bool use_incomplete_preprocessing = runir::kr::ps::dl::default_use_incomplete_preprocessing);
+                                                                bool use_incomplete_preprocessing = runir::kr::ps::dl::default_use_incomplete_preprocessing,
+                                                                bool use_memory_scc_scope = runir::kr::ps::dl::default_use_memory_scc_scope);
 
 }  // namespace runir::kr::ps::ext::dl
 

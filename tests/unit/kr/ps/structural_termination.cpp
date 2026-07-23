@@ -295,7 +295,7 @@ TEST(RunirTests, CommonIncompleteSieveCanUseGlobalOpponentScope)
     to_false.boolean_negative_effects.set(0);
     policy.rule_profiles.push_back(std::move(to_false));
 
-    const auto result = kr::ps::detail::incomplete_structural_termination(policy, true);
+    const auto result = kr::ps::detail::incomplete_structural_termination(policy, false);
 
     EXPECT_FALSE(result.is_terminating());
     ASSERT_EQ(result.surviving_rules.size(), 2);

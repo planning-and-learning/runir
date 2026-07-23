@@ -220,7 +220,7 @@ private:
 //
 // Intended use:
 //
-//     ResidualMemorySccs memory_sccs(policy, global_mode);
+//     ResidualMemorySccs memory_sccs(policy, use_memory_scc_scope);
 //     memory_sccs.begin_round(remaining_rule_positions);
 //
 //     if (!memory_sccs.share_opponent_scope(candidate, opponent))
@@ -230,14 +230,14 @@ private:
 //     memory_sccs.establish_r1_mark(candidate, numerical_position);
 //     memory_sccs.establish_r2_mark(candidate, boolean_position);
 //
-// With global_mode disabled, begin_round recomputes residual memory SCCs and
-// records their splits. With global_mode enabled, every remaining rule stays
-// in one global opponent scope and the forest has one root. R3 only reads
+// With use_memory_scc_scope enabled, begin_round recomputes residual memory
+// SCCs and records their splits. When disabled, every remaining rule stays in
+// one global opponent scope and the forest has one root. R3 only reads
 // marks_for(); it never establishes a mark.
 class ResidualMemorySccs
 {
 public:
-    explicit ResidualMemorySccs(const QualitativePolicy& policy, bool global_mode = false);
+    explicit ResidualMemorySccs(const QualitativePolicy& policy, bool use_memory_scc_scope);
 
     void begin_round(std::span<const std::size_t> remaining_rule_positions);
 
@@ -255,7 +255,7 @@ private:
     SccRefinementForest::NodeIndex scc_for_rule(std::size_t rule_position) const;
 
     const QualitativePolicy& policy_;
-    bool global_mode_;
+    bool use_memory_scc_scope_;
     std::optional<SccRefinementForest> forest_;
 };
 

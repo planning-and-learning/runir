@@ -6,13 +6,14 @@
 namespace runir::kr::ps::ext::dl
 {
 
-ModuleStructuralTerminationResult structural_termination(ModuleView module_, std::size_t max_features, bool use_incomplete_preprocessing)
+ModuleStructuralTerminationResult
+structural_termination(ModuleView module_, std::size_t max_features, bool use_incomplete_preprocessing, bool use_memory_scc_scope)
 {
     const auto analysis = detail::analyze_module(module_);
     if (!use_incomplete_preprocessing)
         return detail::make_result(module_, analysis, runir::kr::ps::detail::sieve_policy(analysis.policy, max_features, false));
 
-    const auto incomplete_result = runir::kr::ps::detail::incomplete_structural_termination(analysis.policy);
+    const auto incomplete_result = runir::kr::ps::detail::incomplete_structural_termination(analysis.policy, use_memory_scc_scope);
     auto result = detail::make_result(module_, analysis, runir::kr::ps::detail::sieve_policy(analysis.policy, max_features, incomplete_result));
     result.incomplete_result = detail::make_incomplete_result(module_, analysis, incomplete_result);
     return result;

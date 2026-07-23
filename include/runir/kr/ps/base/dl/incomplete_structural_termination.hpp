@@ -3,6 +3,7 @@
 
 #include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/base/dl/incomplete_structural_termination_data.hpp"
+#include "runir/kr/ps/dl/structural_termination.hpp"
 
 namespace runir::kr::ps::base::dl
 {
@@ -12,8 +13,10 @@ namespace runir::kr::ps::base::dl
 /// (cases R1-R3 with feature marking). A "terminating" verdict is sound
 /// (Theorem 4); "unknown" is not a proof of non-termination -- use
 /// structural_termination() for the complete test. On an unknown verdict,
-/// the result lists the surviving rules with their blocking reasons.
-IncompleteStructuralTerminationResult incomplete_structural_termination(SketchView sketch, bool global_mode = false);
+/// the result lists the surviving rules with their blocking reasons. Disable
+/// use_memory_scc_scope to use one global opponent scope.
+IncompleteStructuralTerminationResult incomplete_structural_termination(SketchView sketch,
+                                                                        bool use_memory_scc_scope = runir::kr::ps::dl::default_use_memory_scc_scope);
 
 }  // namespace runir::kr::ps::base::dl
 

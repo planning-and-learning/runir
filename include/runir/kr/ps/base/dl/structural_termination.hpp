@@ -11,10 +11,12 @@ namespace runir::kr::ps::base::dl
 /// elimination and then the complete Sieve algorithm (sieve.pdf Algorithm 1,
 /// extended to Boolean features per incomplete_sieve.pdf Section 5.1) to the
 /// residual policy graph. On failure, the result carries a surviving
-/// counterexample graph. The incomplete preprocessing can be disabled.
+/// counterexample graph. The incomplete preprocessing can be disabled;
+/// use_memory_scc_scope only affects that preprocessing.
 StructuralTerminationResult structural_termination(SketchView sketch,
                                                    std::size_t max_features = runir::kr::ps::dl::default_max_features,
-                                                   bool use_incomplete_preprocessing = runir::kr::ps::dl::default_use_incomplete_preprocessing);
+                                                   bool use_incomplete_preprocessing = runir::kr::ps::dl::default_use_incomplete_preprocessing,
+                                                   bool use_memory_scc_scope = runir::kr::ps::dl::default_use_memory_scc_scope);
 
 }  // namespace runir::kr::ps::base::dl
 

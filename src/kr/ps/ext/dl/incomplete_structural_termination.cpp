@@ -8,20 +8,20 @@
 namespace runir::kr::ps::ext::dl
 {
 
-ModuleIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleView module_, bool global_mode)
+ModuleIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleView module_, bool use_memory_scc_scope)
 {
     const auto analysis = detail::analyze_module(module_);
-    return detail::make_incomplete_result(module_, analysis, runir::kr::ps::detail::incomplete_structural_termination(analysis.policy, global_mode));
+    return detail::make_incomplete_result(module_, analysis, runir::kr::ps::detail::incomplete_structural_termination(analysis.policy, use_memory_scc_scope));
 }
 
-ModuleProgramIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleProgramView program, bool global_mode)
+ModuleProgramIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleProgramView program, bool use_memory_scc_scope)
 {
     auto result = ModuleProgramIncompleteStructuralTerminationResult {};
     auto modules = std::vector<ModuleView> {};
     for (auto module : program.get_modules())
     {
         modules.push_back(module);
-        auto module_result = incomplete_structural_termination(module, global_mode);
+        auto module_result = incomplete_structural_termination(module, use_memory_scc_scope);
         if (!module_result.is_terminating())
             result.status = IncompleteStructuralTerminationStatus::UNKNOWN;
         result.module_results.push_back(std::move(module_result));

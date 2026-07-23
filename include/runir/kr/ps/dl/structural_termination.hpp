@@ -11,8 +11,9 @@
 namespace runir::kr::ps::dl
 {
 
-static constexpr std::size_t default_max_features = 16;
+static constexpr std::size_t default_max_features = 10;
 static constexpr bool default_use_incomplete_preprocessing = true;
+static constexpr bool default_use_memory_scc_scope = true;
 
 template<runir::kr::FamilyTag Family, typename C>
 struct SccStructuralTerminationResult

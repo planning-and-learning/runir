@@ -23,9 +23,9 @@ struct SieveState
     std::vector<bool> remaining;
     ResidualMemorySccs memory_sccs;
 
-    SieveState(const QualitativePolicy& policy, bool global_mode) :
+    SieveState(const QualitativePolicy& policy, bool use_memory_scc_scope) :
         remaining(policy.rule_profiles.size(), true),
-        memory_sccs(policy, global_mode)
+        memory_sccs(policy, use_memory_scc_scope)
     {
     }
 };
@@ -122,9 +122,9 @@ OpposingRuleSet opposing_rules(const QualitativePolicy& policy,
     return opposing;
 }
 
-SieveState make_state(const QualitativePolicy& policy, bool global_mode)
+SieveState make_state(const QualitativePolicy& policy, bool use_memory_scc_scope)
 {
-    auto state = SieveState(policy, global_mode);
+    auto state = SieveState(policy, use_memory_scc_scope);
     state.changes.reserve(policy.rule_profiles.size());
     for (const auto& profile : policy.rule_profiles)
         state.changes.push_back(make_changes(profile));
@@ -171,9 +171,9 @@ bool eliminate_one_rule(const QualitativePolicy& policy, SieveState& state)
     return false;
 }
 
-SieveState run_sieve(const QualitativePolicy& policy, bool global_mode)
+SieveState run_sieve(const QualitativePolicy& policy, bool use_memory_scc_scope)
 {
-    auto state = make_state(policy, global_mode);
+    auto state = make_state(policy, use_memory_scc_scope);
     while (true)
     {
         state.memory_sccs.begin_round(remaining_rule_positions(state));
@@ -186,9 +186,9 @@ SieveState run_sieve(const QualitativePolicy& policy, bool global_mode)
 
 }  // namespace
 
-IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy, bool global_mode)
+IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy, bool use_memory_scc_scope)
 {
-    const auto state = run_sieve(policy, global_mode);
+    const auto state = run_sieve(policy, use_memory_scc_scope);
     auto result = IncompletePolicyResult {};
     for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
     {
