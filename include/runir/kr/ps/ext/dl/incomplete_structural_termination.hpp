@@ -9,11 +9,11 @@ namespace runir::kr::ps::ext::dl
 
 /// Applies the sound but incomplete syntactic proof inside the recurrent
 /// components of a module. An unknown result is not a proof of non-termination.
-ModuleIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleView module_);
+ModuleIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleView module_, bool global_mode = false);
 
 /// Applies the incomplete proof to every module and additionally rejects
 /// unresolved or recursive module calls.
-ModuleProgramIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleProgramView program);
+ModuleProgramIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleProgramView program, bool global_mode = false);
 
 }  // namespace runir::kr::ps::ext::dl
 

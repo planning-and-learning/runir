@@ -213,7 +213,7 @@ std::vector<ProjectedPolicyComponent> project_policy_components(const Qualitativ
 SieveResult sieve_policy_graph(std::vector<PolicyEdge>& edges, const QualitativePolicy& policy);
 PolicySieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, const IncompletePolicyResult& incomplete_result);
 PolicySieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, bool use_incomplete_preprocessing);
-IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy);
+IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy, bool global_mode = false);
 
 }  // namespace runir::kr::ps::detail
 

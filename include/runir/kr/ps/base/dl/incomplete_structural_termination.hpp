@@ -13,7 +13,7 @@ namespace runir::kr::ps::base::dl
 /// (Theorem 4); "unknown" is not a proof of non-termination -- use
 /// structural_termination() for the complete test. On an unknown verdict,
 /// the result lists the surviving rules with their blocking reasons.
-IncompleteStructuralTerminationResult incomplete_structural_termination(SketchView sketch);
+IncompleteStructuralTerminationResult incomplete_structural_termination(SketchView sketch, bool global_mode = false);
 
 }  // namespace runir::kr::ps::base::dl
 

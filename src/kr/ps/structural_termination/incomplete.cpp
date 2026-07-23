@@ -1,4 +1,5 @@
 #include "detail.hpp"
+#include "scc_refinement_forest.hpp"
 
 namespace runir::kr::ps::detail
 {
@@ -16,20 +17,17 @@ struct RuleChanges
     boost::dynamic_bitset<> numerical_increases_or_unconstrained;
 };
 
-struct FeatureMarks
-{
-    boost::dynamic_bitset<> booleans;
-    boost::dynamic_bitset<> numericals;
-
-    FeatureMarks(std::size_t num_booleans, std::size_t num_numericals) : booleans(num_booleans), numericals(num_numericals) {}
-};
-
 struct SieveState
 {
     std::vector<RuleChanges> changes;
     std::vector<bool> remaining;
-    std::vector<FeatureMarks> marks_by_memory_state;
-    std::vector<std::size_t> component_of;
+    ResidualMemorySccs memory_sccs;
+
+    SieveState(const QualitativePolicy& policy, bool global_mode) :
+        remaining(policy.rule_profiles.size(), true),
+        memory_sccs(policy, global_mode)
+    {
+    }
 };
 
 struct OpposingRuleSet
@@ -63,7 +61,7 @@ RuleChanges make_changes(const RuleProfile& profile)
     return changes;
 }
 
-bool r3_discounts(const RuleProfile& rule, const RuleProfile& opposing, const FeatureMarks& marks)
+bool r3_discounts(const RuleProfile& rule, const RuleProfile& opposing, const SccRefinementForest::Marks& marks)
 {
     return (rule.boolean_positive_conditions & opposing.boolean_negative_conditions & marks.booleans).any()
            || (rule.boolean_negative_conditions & opposing.boolean_positive_conditions & marks.booleans).any()
@@ -71,18 +69,14 @@ bool r3_discounts(const RuleProfile& rule, const RuleProfile& opposing, const Fe
            || (rule.numerical_zero_conditions & opposing.numerical_greater_conditions & marks.numericals).any();
 }
 
-std::vector<std::size_t> find_residual_components(const QualitativePolicy& policy, const SieveState& state)
+std::vector<std::size_t> remaining_rule_positions(const SieveState& state)
 {
-    auto edges = std::vector<PolicyEdge> {};
-    edges.reserve(policy.rule_profiles.size());
-    for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
-    {
-        if (!state.remaining[rule_position])
-            continue;
-        const auto& profile = policy.rule_profiles[rule_position];
-        edges.push_back(PolicyEdge { profile.source_memory_position, profile.target_memory_position, rule_position });
-    }
-    return find_strong_components(edges, policy.num_memory_states).component_of;
+    auto result = std::vector<std::size_t> {};
+    result.reserve(state.remaining.size());
+    for (std::size_t rule_position = 0; rule_position < state.remaining.size(); ++rule_position)
+        if (state.remaining[rule_position])
+            result.push_back(rule_position);
+    return result;
 }
 
 bool remove_acyclic_rules(const QualitativePolicy& policy, SieveState& state)
@@ -92,18 +86,12 @@ bool remove_acyclic_rules(const QualitativePolicy& policy, SieveState& state)
     {
         if (!state.remaining[rule_position])
             continue;
-        const auto& profile = policy.rule_profiles[rule_position];
-        if (state.component_of[profile.source_memory_position] == state.component_of[profile.target_memory_position])
+        if (!state.memory_sccs.is_cross_scc_rule(rule_position))
             continue;
         state.remaining[rule_position] = false;
         removed = true;
     }
     return removed;
-}
-
-bool share_component(const QualitativePolicy& policy, const SieveState& state, std::size_t lhs, std::size_t rhs)
-{
-    return state.component_of[policy.rule_profiles[lhs].source_memory_position] == state.component_of[policy.rule_profiles[rhs].source_memory_position];
 }
 
 OpposingRuleSet opposing_rules(const QualitativePolicy& policy,
@@ -116,7 +104,7 @@ OpposingRuleSet opposing_rules(const QualitativePolicy& policy,
     auto opposing = OpposingRuleSet {};
     for (std::size_t other = 0; other < policy.rule_profiles.size(); ++other)
     {
-        if (other == rule_position || !state.remaining[other] || !share_component(policy, state, rule_position, other))
+        if (other == rule_position || !state.remaining[other] || !state.memory_sccs.share_opponent_scope(rule_position, other))
             continue;
 
         const auto opposes = feature_kind == IncompletePolicyResult::FeatureKind::BOOLEAN ?
@@ -127,33 +115,16 @@ OpposingRuleSet opposing_rules(const QualitativePolicy& policy,
             continue;
 
         opposing.has_raw_opponent = true;
-        const auto& marks = state.marks_by_memory_state[policy.rule_profiles[rule_position].source_memory_position];
+        const auto marks = state.memory_sccs.marks_for(rule_position);
         if (!r3_discounts(policy.rule_profiles[rule_position], policy.rule_profiles[other], marks))
             opposing.undiscounted.push_back(other);
     }
     return opposing;
 }
 
-void mark_boolean(SieveState& state, std::size_t component, std::size_t position)
+SieveState make_state(const QualitativePolicy& policy, bool global_mode)
 {
-    for (std::size_t memory_position = 0; memory_position < state.component_of.size(); ++memory_position)
-        if (state.component_of[memory_position] == component)
-            state.marks_by_memory_state[memory_position].booleans.set(position);
-}
-
-void mark_numerical(SieveState& state, std::size_t component, std::size_t position)
-{
-    for (std::size_t memory_position = 0; memory_position < state.component_of.size(); ++memory_position)
-        if (state.component_of[memory_position] == component)
-            state.marks_by_memory_state[memory_position].numericals.set(position);
-}
-
-SieveState make_state(const QualitativePolicy& policy)
-{
-    auto state = SieveState { {},
-                              std::vector<bool>(policy.rule_profiles.size(), true),
-                              std::vector<FeatureMarks>(policy.num_memory_states, FeatureMarks(policy.num_booleans, policy.num_numericals)),
-                              {} };
+    auto state = SieveState(policy, global_mode);
     state.changes.reserve(policy.rule_profiles.size());
     for (const auto& profile : policy.rule_profiles)
         state.changes.push_back(make_changes(profile));
@@ -167,8 +138,6 @@ bool eliminate_one_rule(const QualitativePolicy& policy, SieveState& state)
         if (!state.remaining[rule_position])
             continue;
 
-        const auto& profile = policy.rule_profiles[rule_position];
-        const auto component = state.component_of[profile.source_memory_position];
         for (std::size_t position = 0; position < policy.num_numericals; ++position)
         {
             if (!state.changes[rule_position].numerical_decreases.test(position))
@@ -179,7 +148,7 @@ bool eliminate_one_rule(const QualitativePolicy& policy, SieveState& state)
                 state.remaining[rule_position] = false;
                 // R3 consumes existing stabilization marks but cannot establish a new one.
                 if (!opposing.has_raw_opponent)
-                    mark_numerical(state, component, position);
+                    state.memory_sccs.establish_r1_mark(rule_position, position);
                 return true;
             }
         }
@@ -194,7 +163,7 @@ bool eliminate_one_rule(const QualitativePolicy& policy, SieveState& state)
             {
                 state.remaining[rule_position] = false;
                 if (!opposing.has_raw_opponent)
-                    mark_boolean(state, component, position);
+                    state.memory_sccs.establish_r2_mark(rule_position, position);
                 return true;
             }
         }
@@ -202,12 +171,12 @@ bool eliminate_one_rule(const QualitativePolicy& policy, SieveState& state)
     return false;
 }
 
-SieveState run_sieve(const QualitativePolicy& policy)
+SieveState run_sieve(const QualitativePolicy& policy, bool global_mode)
 {
-    auto state = make_state(policy);
+    auto state = make_state(policy, global_mode);
     while (true)
     {
-        state.component_of = find_residual_components(policy, state);
+        state.memory_sccs.begin_round(remaining_rule_positions(state));
         if (remove_acyclic_rules(policy, state))
             continue;
         if (!eliminate_one_rule(policy, state))
@@ -217,9 +186,9 @@ SieveState run_sieve(const QualitativePolicy& policy)
 
 }  // namespace
 
-IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy)
+IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy, bool global_mode)
 {
-    const auto state = run_sieve(policy);
+    const auto state = run_sieve(policy, global_mode);
     auto result = IncompletePolicyResult {};
     for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
     {

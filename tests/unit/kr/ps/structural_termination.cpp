@@ -1,4 +1,5 @@
 #include "kr/ps/structural_termination/detail.hpp"
+#include "kr/ps/structural_termination/scc_refinement_forest.hpp"
 
 #include <array>
 #include <gtest/gtest.h>
@@ -280,6 +281,46 @@ TEST(RunirTests, CommonIncompleteSieveUsesDisconnectedMemoryComponents)
 
     EXPECT_TRUE(result.is_terminating());
     EXPECT_TRUE(result.surviving_rules.empty());
+}
+
+TEST(RunirTests, CommonIncompleteSieveCanUseGlobalOpponentScope)
+{
+    auto policy = kr::ps::detail::QualitativePolicy(2, 1, 0);
+    auto to_true = kr::ps::detail::RuleProfile(1, 0, 0, 0);
+    to_true.boolean_negative_conditions.set(0);
+    to_true.boolean_positive_effects.set(0);
+    policy.rule_profiles.push_back(std::move(to_true));
+    auto to_false = kr::ps::detail::RuleProfile(1, 0, 1, 1);
+    to_false.boolean_positive_conditions.set(0);
+    to_false.boolean_negative_effects.set(0);
+    policy.rule_profiles.push_back(std::move(to_false));
+
+    const auto result = kr::ps::detail::incomplete_structural_termination(policy, true);
+
+    EXPECT_FALSE(result.is_terminating());
+    ASSERT_EQ(result.surviving_rules.size(), 2);
+    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 1 }));
+    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 0 }));
+}
+
+TEST(RunirTests, SccRefinementForestInheritsMarksAcrossSplits)
+{
+    const auto component_of = std::vector<std::size_t> { 0, 0, 0 };
+    auto forest = kr::ps::detail::SccRefinementForest(component_of, 1, 1, 1);
+    const auto root = forest.roots().front();
+    forest.mark_numerical(root, 0);
+
+    const auto partitions = std::vector<std::vector<std::size_t>> { { 0 }, { 1, 2 } };
+    const auto children = forest.split(root, partitions);
+    forest.mark_boolean(children[1], 0);
+
+    const auto first_marks = forest.effective_marks(children[0]);
+    EXPECT_TRUE(first_marks.numericals.test(0));
+    EXPECT_FALSE(first_marks.booleans.test(0));
+
+    const auto second_marks = forest.effective_marks(children[1]);
+    EXPECT_TRUE(second_marks.numericals.test(0));
+    EXPECT_TRUE(second_marks.booleans.test(0));
 }
 
 TEST(RunirTests, CommonIncompleteSieveEliminatesAcyclicMemoryRule)

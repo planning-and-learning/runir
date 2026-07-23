@@ -34,6 +34,7 @@ add_library(kr SHARED
     ps/ext/module_program_executor.cpp
     ps/structural_termination/incomplete.cpp
     ps/structural_termination/policy_graph.cpp
+    ps/structural_termination/scc_refinement_forest.cpp
     ps/structural_termination/sieve.cpp
     uns/dl/classifier_factory.cpp
     uns/dl/parser.cpp

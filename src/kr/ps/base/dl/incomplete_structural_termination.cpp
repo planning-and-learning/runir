@@ -6,10 +6,10 @@
 namespace runir::kr::ps::base::dl
 {
 
-IncompleteStructuralTerminationResult incomplete_structural_termination(SketchView sketch)
+IncompleteStructuralTerminationResult incomplete_structural_termination(SketchView sketch, bool global_mode)
 {
     const auto analysis = detail::analyze_sketch(sketch);
-    const auto policy_result = runir::kr::ps::detail::incomplete_structural_termination(analysis.policy);
+    const auto policy_result = runir::kr::ps::detail::incomplete_structural_termination(analysis.policy, global_mode);
     return detail::make_incomplete_result(sketch, analysis, policy_result);
 }
 
