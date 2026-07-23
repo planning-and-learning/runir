@@ -9,19 +9,14 @@ ResidualMemorySccs::ResidualMemorySccs(const QualitativePolicy& policy, bool use
     policy_(policy),
     use_memory_scc_scope_(use_memory_scc_scope)
 {
+    const auto component_of = std::vector<std::size_t>(policy_.num_memory_states, 0);
+    forest_.emplace(component_of, 1, policy_.num_booleans, policy_.num_numericals);
 }
 
-void ResidualMemorySccs::begin_round(std::span<const std::size_t> remaining_rule_positions)
+bool ResidualMemorySccs::refine(std::span<const std::size_t> remaining_rule_positions)
 {
     if (!use_memory_scc_scope_)
-    {
-        if (!forest_)
-        {
-            const auto component_of = std::vector<std::size_t>(policy_.num_memory_states, 0);
-            forest_.emplace(component_of, 1, policy_.num_booleans, policy_.num_numericals);
-        }
-        return;
-    }
+        return false;
 
     auto memory_edges = std::vector<PolicyEdge> {};
     memory_edges.reserve(remaining_rule_positions.size());
@@ -32,12 +27,6 @@ void ResidualMemorySccs::begin_round(std::span<const std::size_t> remaining_rule
     }
 
     const auto components = find_strong_components(memory_edges, policy_.num_memory_states);
-    if (!forest_)
-    {
-        forest_.emplace(components.component_of, components.count, policy_.num_booleans, policy_.num_numericals);
-        return;
-    }
-
     auto memories_by_component = std::vector<std::vector<std::size_t>>(components.count);
     for (std::size_t memory = 0; memory < policy_.num_memory_states; ++memory)
         memories_by_component[components.component_of[memory]].push_back(memory);
@@ -53,6 +42,7 @@ void ResidualMemorySccs::begin_round(std::span<const std::size_t> remaining_rule
         children_by_parent[parent].push_back(std::move(memories));
     }
 
+    auto refined = false;
     for (SccRefinementForest::NodeIndex parent = 0; parent < previous_node_count; ++parent)
     {
         if (!forest_->node(parent).is_leaf())
@@ -62,7 +52,9 @@ void ResidualMemorySccs::begin_round(std::span<const std::size_t> remaining_rule
         if (children.size() == 1 && children.front() == forest_->node(parent).memory_positions)
             continue;
         forest_->split(parent, children);
+        refined = true;
     }
+    return refined;
 }
 
 bool ResidualMemorySccs::share_opponent_scope(std::size_t lhs_rule_position, std::size_t rhs_rule_position) const

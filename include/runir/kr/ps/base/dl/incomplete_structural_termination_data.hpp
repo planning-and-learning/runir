@@ -21,7 +21,7 @@ enum class IncompleteStructuralTerminationStatus
 /// Why one elimination attempt for a surviving rule is blocked.
 struct IncompleteBlockingReason
 {
-    /// The feature whose decrease (numerical) or flip (Boolean) the rule
+    /// The feature whose strict change (numerical) or flip (Boolean) the rule
     /// performs.
     std::variant<BooleanFeatureView, NumericalFeatureView> feature;
     /// The remaining rules that oppose the change and survive R3's
@@ -32,7 +32,7 @@ struct IncompleteBlockingReason
 struct IncompleteSurvivingRule
 {
     RuleView rule;
-    /// One entry per feature the rule decreases (numerical) or flips
+    /// One entry per feature the rule changes strictly (numerical) or flips
     /// (Boolean); empty iff the rule performs no eliminating change at all.
     std::vector<IncompleteBlockingReason> blocking_reasons;
 };

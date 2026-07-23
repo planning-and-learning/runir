@@ -3,8 +3,8 @@
 //
 // The forest makes the monotone refinement of residual memory SCCs explicit:
 //
-//   * roots are SCCs of the initial residual memory graph;
-//   * removing rules can replace a leaf by two or more child SCCs;
+//   * the root initially contains all memory states;
+//   * residual SCC decomposition can replace a leaf by child SCCs;
 //   * marks established at a node are inherited by all descendants; and
 //   * current opponent sets are restricted to the leaf containing a rule.
 //
@@ -221,7 +221,7 @@ private:
 // Intended use:
 //
 //     ResidualMemorySccs memory_sccs(policy, use_memory_scc_scope);
-//     memory_sccs.begin_round(remaining_rule_positions);
+//     memory_sccs.refine(remaining_rule_positions);
 //
 //     if (!memory_sccs.share_opponent_scope(candidate, opponent))
 //         continue;
@@ -230,16 +230,17 @@ private:
 //     memory_sccs.establish_r1_mark(candidate, numerical_position);
 //     memory_sccs.establish_r2_mark(candidate, boolean_position);
 //
-// With use_memory_scc_scope enabled, begin_round recomputes residual memory
-// SCCs and records their splits. When disabled, every remaining rule stays in
-// one global opponent scope and the forest has one root. R3 only reads
-// marks_for(); it never establishes a mark.
+// With use_memory_scc_scope enabled, refine decomposes the current leaves into
+// residual memory SCCs. Callers first saturate rule elimination in the current
+// leaves, so marks established there are inherited by every child. When
+// disabled, every remaining rule stays in one global opponent scope. R3 only
+// reads marks_for(); it never establishes a mark.
 class ResidualMemorySccs
 {
 public:
     explicit ResidualMemorySccs(const QualitativePolicy& policy, bool use_memory_scc_scope);
 
-    void begin_round(std::span<const std::size_t> remaining_rule_positions);
+    bool refine(std::span<const std::size_t> remaining_rule_positions);
 
     bool share_opponent_scope(std::size_t lhs_rule_position, std::size_t rhs_rule_position) const;
     bool is_cross_scc_rule(std::size_t rule_position) const;

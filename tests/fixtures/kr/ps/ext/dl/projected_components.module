@@ -40,7 +40,7 @@
             (:expression
                 (:source-memory m1)
                 (:target-memory m1)
-                (:sketch (:conditions) (:effects (unchanged n1)))
+                (:sketch (:conditions (greater_zero n1)) (:effects (unchanged n1)))
             )
         )
         (:rule
@@ -48,7 +48,7 @@
             (:expression
                 (:source-memory m2)
                 (:target-memory m2)
-                (:sketch (:conditions) (:effects (unchanged n0)))
+                (:sketch (:conditions (greater_zero n0)) (:effects (unchanged n0)))
             )
         )
     )

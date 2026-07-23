@@ -129,29 +129,27 @@ std::vector<std::size_t> relevant_booleans(const QualitativePolicy& policy, std:
     for (const auto rule_position : rule_positions)
     {
         const auto& profile = policy.rule_profiles[rule_position];
-        selected |= profile.boolean_positive_conditions | profile.boolean_negative_conditions | profile.boolean_positive_effects
-                    | profile.boolean_negative_effects | profile.boolean_unchanged_effects;
+        selected |=
+            profile.boolean_positive_conditions | profile.boolean_negative_conditions | profile.boolean_positive_effects | profile.boolean_negative_effects;
     }
     return positions(selected);
 }
 
 std::vector<std::size_t> relevant_numericals(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions)
 {
-    auto result = std::vector<std::size_t> {};
-    for (std::size_t position = 0; position < policy.num_numericals; ++position)
+    auto selected = boost::dynamic_bitset<>(policy.num_numericals);
+    for (const auto rule_position : rule_positions)
     {
-        for (const auto rule_position : rule_positions)
+        const auto& profile = policy.rule_profiles[rule_position];
+        selected |= profile.numerical_greater_conditions | profile.numerical_zero_conditions;
+        for (std::size_t position = 0; position < profile.numerical_changes.size(); ++position)
         {
-            const auto& profile = policy.rule_profiles[rule_position];
-            if (profile.numerical_greater_conditions.test(position) || profile.numerical_zero_conditions.test(position)
-                || profile.numerical_changes[position] != dl::NumericalChange::UNCONSTRAINED)
-            {
-                result.push_back(position);
-                break;
-            }
+            const auto change = profile.numerical_changes[position];
+            if (change == dl::NumericalChange::INCREASES || change == dl::NumericalChange::DECREASES)
+                selected.set(position);
         }
     }
-    return result;
+    return positions(selected);
 }
 
 RuleProfile project_profile(const RuleProfile& profile,

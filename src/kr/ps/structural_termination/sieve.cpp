@@ -12,11 +12,13 @@ namespace
 {
 struct ComponentProfile
 {
+    boost::dynamic_bitset<> numerical_decreased_or_unconstrained;
     boost::dynamic_bitset<> numerical_increased_or_unconstrained;
     boost::dynamic_bitset<> boolean_flipped_to_true;
     boost::dynamic_bitset<> boolean_flipped_to_false;
 
     ComponentProfile(std::size_t num_booleans, std::size_t num_numericals) :
+        numerical_decreased_or_unconstrained(num_numericals),
         numerical_increased_or_unconstrained(num_numericals),
         boolean_flipped_to_true(num_booleans),
         boolean_flipped_to_false(num_booleans)
@@ -36,8 +38,12 @@ summarize_opposing_changes(const std::vector<PolicyEdge>& edges, const Qualitati
         auto& component = profiles[components.component_of[edge.source]];
         const auto& changes = policy.rule_profiles[edge.rule_position].numerical_changes;
         for (std::size_t position = 0; position < policy.num_numericals; ++position)
+        {
+            if (changes[position] == dl::NumericalChange::DECREASES || changes[position] == dl::NumericalChange::UNCONSTRAINED)
+                component.numerical_decreased_or_unconstrained.set(position);
             if (changes[position] == dl::NumericalChange::INCREASES || changes[position] == dl::NumericalChange::UNCONSTRAINED)
                 component.numerical_increased_or_unconstrained.set(position);
+        }
 
         const auto source_booleans = vertex_booleans(edge.source, policy);
         const auto target_booleans = vertex_booleans(edge.target, policy);
@@ -63,6 +69,8 @@ bool remove_unopposed_edges(std::vector<PolicyEdge>& edges,
         auto removable = false;
         for (std::size_t position = 0; position < changes.size() && !removable; ++position)
             if (changes[position] == dl::NumericalChange::DECREASES && !component.numerical_increased_or_unconstrained.test(position))
+                removable = true;
+            else if (changes[position] == dl::NumericalChange::INCREASES && !component.numerical_decreased_or_unconstrained.test(position))
                 removable = true;
 
         const auto source_booleans = vertex_booleans(edge.source, policy);

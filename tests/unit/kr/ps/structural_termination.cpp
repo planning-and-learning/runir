@@ -104,6 +104,20 @@ TEST(RunirTests, CommonSieveEliminatesUnopposedDecrease)
     EXPECT_EQ(result.component_of.size(), policy.num_vertices());
 }
 
+TEST(RunirTests, CommonSieveEliminatesUnopposedIncrease)
+{
+    auto policy = kr::ps::detail::QualitativePolicy(1, 0, 1);
+    auto profile = kr::ps::detail::RuleProfile(0, 1);
+    profile.numerical_changes[0] = kr::ps::dl::NumericalChange::INCREASES;
+    policy.rule_profiles.push_back(std::move(profile));
+
+    auto edges = kr::ps::detail::build_policy_edges(policy);
+    const auto result = kr::ps::detail::sieve_policy_graph(edges, policy);
+
+    EXPECT_FALSE(result.has_cycle);
+    EXPECT_TRUE(kr::ps::detail::incomplete_structural_termination(policy).is_terminating());
+}
+
 TEST(RunirTests, CommonSieveRetainsOpposingIncreaseDecreaseCycle)
 {
     auto policy = kr::ps::detail::QualitativePolicy(1, 0, 1);
@@ -118,6 +132,24 @@ TEST(RunirTests, CommonSieveRetainsOpposingIncreaseDecreaseCycle)
     const auto result = kr::ps::detail::sieve_policy_graph(edges, policy);
 
     EXPECT_TRUE(result.has_cycle);
+}
+
+TEST(RunirTests, CommonSieveTreatsUnconstrainedNumericalEffectAsBothDirections)
+{
+    using NumericalChange = kr::ps::dl::NumericalChange;
+
+    for (const auto progress : { NumericalChange::DECREASES, NumericalChange::INCREASES })
+    {
+        auto policy = kr::ps::detail::QualitativePolicy(1, 0, 1);
+        auto profile = kr::ps::detail::RuleProfile(0, 1);
+        profile.numerical_changes[0] = progress;
+        policy.rule_profiles.push_back(std::move(profile));
+        policy.rule_profiles.emplace_back(0, 1);
+
+        auto edges = kr::ps::detail::build_policy_edges(policy);
+        EXPECT_TRUE(kr::ps::detail::sieve_policy_graph(edges, policy).has_cycle);
+        EXPECT_FALSE(kr::ps::detail::incomplete_structural_termination(policy).is_terminating());
+    }
 }
 
 TEST(RunirTests, CommonSieveHandlesAcyclicMemoryTransition)
@@ -142,9 +174,9 @@ TEST(RunirTests, CommonSieveStartsWithIncompleteRuleElimination)
     auto decrease_y = kr::ps::detail::RuleProfile(0, 2);
     decrease_y.numerical_changes = { NumericalChange::DECREASES, NumericalChange::UNCHANGED };
     policy.rule_profiles.push_back(std::move(decrease_y));
-    auto increase_n = kr::ps::detail::RuleProfile(0, 2);
-    increase_n.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::INCREASES };
-    policy.rule_profiles.push_back(std::move(increase_n));
+    auto preserve_n = kr::ps::detail::RuleProfile(0, 2);
+    preserve_n.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::UNCHANGED };
+    policy.rule_profiles.push_back(std::move(preserve_n));
 
     const auto result = kr::ps::detail::sieve_policy(policy, 16, true);
 
@@ -163,6 +195,7 @@ TEST(RunirTests, CommonSieveSkipsFeatureLimitWhenIncompleteProcedureTerminates)
     auto decrease = kr::ps::detail::RuleProfile(0, 17);
     decrease.numerical_changes.assign(17, kr::ps::dl::NumericalChange::UNCHANGED);
     decrease.numerical_changes[16] = kr::ps::dl::NumericalChange::DECREASES;
+    decrease.numerical_greater_conditions.set();
     policy.rule_profiles.push_back(std::move(decrease));
 
     const auto result = kr::ps::detail::sieve_policy(policy, 16, true);
@@ -199,27 +232,26 @@ TEST(RunirTests, CommonSieveSplitsResidualMemoryGraph)
     EXPECT_EQ(result.components[1].projected.rule_positions, std::vector<std::size_t>({ 3 }));
 }
 
-TEST(RunirTests, CommonSieveProjectsResidualFeatures)
+TEST(RunirTests, CommonSieveProjectsTestedAndChangedFeatures)
 {
     using NumericalChange = kr::ps::dl::NumericalChange;
 
-    auto policy = kr::ps::detail::QualitativePolicy(1, 3, 2);
-    auto profile = kr::ps::detail::RuleProfile(3, 2);
+    auto policy = kr::ps::detail::QualitativePolicy(1, 3, 3);
+    auto profile = kr::ps::detail::RuleProfile(3, 3);
     profile.boolean_positive_conditions.set(0);
     profile.boolean_unchanged_effects.set(1);
+    profile.boolean_positive_effects.set(2);
+    profile.numerical_greater_conditions.set(0);
     profile.numerical_changes[1] = NumericalChange::UNCHANGED;
+    profile.numerical_changes[2] = NumericalChange::INCREASES;
     policy.rule_profiles.push_back(std::move(profile));
 
-    const auto result = kr::ps::detail::sieve_policy(policy, 16, true);
+    constexpr auto rule_positions = std::array<std::size_t, 1> { 0 };
+    const auto projected = kr::ps::detail::project_policy_components(policy, rule_positions);
 
-    ASSERT_EQ(!result.components.empty(), monolithic_sieve_has_cycle(policy));
-    ASSERT_EQ(result.components.size(), 1);
-    EXPECT_EQ(result.components.front().projected.boolean_positions, std::vector<std::size_t>({ 0, 1 }));
-    EXPECT_EQ(result.components.front().projected.numerical_positions, std::vector<std::size_t>({ 1 }));
-    ASSERT_TRUE(result.scc_feature_positions);
-    ASSERT_EQ(result.scc_feature_positions->size(), 1);
-    EXPECT_EQ(result.scc_feature_positions->front().boolean_positions, std::vector<std::size_t>({ 0, 1 }));
-    EXPECT_EQ(result.scc_feature_positions->front().numerical_positions, std::vector<std::size_t>({ 1 }));
+    ASSERT_EQ(projected.size(), 1);
+    EXPECT_EQ(projected.front().boolean_positions, std::vector<std::size_t>({ 0, 2 }));
+    EXPECT_EQ(projected.front().numerical_positions, std::vector<std::size_t>({ 0, 2 }));
 }
 
 TEST(RunirTests, CommonSieveAppliesFeatureLimitPerResidualComponent)
@@ -229,11 +261,17 @@ TEST(RunirTests, CommonSieveAppliesFeatureLimitPerResidualComponent)
     auto policy = kr::ps::detail::QualitativePolicy(2, 0, 16);
     auto first_loop = kr::ps::detail::RuleProfile(0, 16, 0, 0);
     for (std::size_t position = 0; position < 8; ++position)
+    {
+        first_loop.numerical_greater_conditions.set(position);
         first_loop.numerical_changes[position] = NumericalChange::UNCHANGED;
+    }
     policy.rule_profiles.push_back(std::move(first_loop));
     auto second_loop = kr::ps::detail::RuleProfile(0, 16, 1, 1);
     for (std::size_t position = 8; position < 16; ++position)
+    {
+        second_loop.numerical_greater_conditions.set(position);
         second_loop.numerical_changes[position] = NumericalChange::UNCHANGED;
+    }
     policy.rule_profiles.push_back(std::move(second_loop));
 
     const auto result = kr::ps::detail::sieve_policy(policy, 14, true);
@@ -253,6 +291,7 @@ TEST(RunirTests, CommonSieveRejectsOversizedResidualComponent)
 
     auto policy = kr::ps::detail::QualitativePolicy(1, 0, 15);
     auto loop = kr::ps::detail::RuleProfile(0, 15);
+    loop.numerical_greater_conditions.set();
     loop.numerical_changes.assign(15, NumericalChange::UNCHANGED);
     policy.rule_profiles.push_back(std::move(loop));
 
@@ -354,7 +393,7 @@ TEST(RunirTests, CommonIncompleteSieveDoesNotLeakMarksAcrossMemoryComponents)
     auto increase_n = kr::ps::detail::RuleProfile(0, 2, 1, 1);
     increase_n.numerical_zero_conditions.set(0);
     increase_n.numerical_zero_conditions.set(1);
-    increase_n.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::INCREASES };
+    increase_n.numerical_changes = { NumericalChange::UNCONSTRAINED, NumericalChange::INCREASES };
     policy.rule_profiles.push_back(std::move(increase_n));
 
     const auto result = kr::ps::detail::incomplete_structural_termination(policy);
@@ -396,9 +435,139 @@ TEST(RunirTests, CommonIncompleteSieveInheritsMarksWhenMemoryComponentSplits)
 
     const auto result = kr::ps::detail::incomplete_structural_termination(policy);
 
+    EXPECT_TRUE(result.is_terminating());
+    EXPECT_TRUE(result.surviving_rules.empty());
+}
+
+TEST(RunirTests, CommonIncompleteSievePrefersMarkingWitnessOverR3)
+{
+    using NumericalChange = kr::ps::dl::NumericalChange;
+
+    auto policy = kr::ps::detail::QualitativePolicy(1, 1, 3);
+
+    auto mark_y = kr::ps::detail::RuleProfile(1, 3);
+    mark_y.numerical_greater_conditions.set(0);
+    mark_y.boolean_unchanged_effects.set(0);
+    mark_y.numerical_changes = { NumericalChange::DECREASES, NumericalChange::UNCHANGED, NumericalChange::UNCHANGED };
+    policy.rule_profiles.push_back(std::move(mark_y));
+
+    auto mark_z = kr::ps::detail::RuleProfile(1, 3);
+    mark_z.numerical_greater_conditions.set(0);
+    mark_z.numerical_greater_conditions.set(1);
+    mark_z.numerical_greater_conditions.set(2);
+    mark_z.boolean_unchanged_effects.set(0);
+    mark_z.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::DECREASES, NumericalChange::DECREASES };
+    policy.rule_profiles.push_back(std::move(mark_z));
+
+    auto increase_x = kr::ps::detail::RuleProfile(1, 3);
+    increase_x.numerical_zero_conditions.set(0);
+    increase_x.boolean_unchanged_effects.set(0);
+    increase_x.numerical_changes = { NumericalChange::UNCHANGED, NumericalChange::INCREASES, NumericalChange::UNCHANGED };
+    policy.rule_profiles.push_back(std::move(increase_x));
+
+    auto to_true = kr::ps::detail::RuleProfile(1, 3);
+    to_true.boolean_negative_conditions.set(0);
+    to_true.numerical_greater_conditions.set(2);
+    to_true.boolean_positive_effects.set(0);
+    to_true.numerical_changes.assign(3, NumericalChange::UNCHANGED);
+    policy.rule_profiles.push_back(std::move(to_true));
+
+    auto to_false = kr::ps::detail::RuleProfile(1, 3);
+    to_false.boolean_positive_conditions.set(0);
+    to_false.numerical_zero_conditions.set(2);
+    to_false.boolean_negative_effects.set(0);
+    to_false.numerical_changes.assign(3, NumericalChange::UNCHANGED);
+    policy.rule_profiles.push_back(std::move(to_false));
+
+    const auto result = kr::ps::detail::incomplete_structural_termination(policy);
+
+    EXPECT_TRUE(result.is_terminating());
+    EXPECT_TRUE(result.surviving_rules.empty());
+}
+
+TEST(RunirTests, CommonIncompleteSieveMarksParentBeforeMemorySplit)
+{
+    auto policy = kr::ps::detail::QualitativePolicy(2, 2, 0);
+    auto connector = kr::ps::detail::RuleProfile(2, 0, 0, 1);
+    connector.boolean_unchanged_effects.set();
+    policy.rule_profiles.push_back(std::move(connector));
+
+    auto mark_y = kr::ps::detail::RuleProfile(2, 0, 1, 0);
+    mark_y.boolean_negative_conditions.set(0);
+    mark_y.boolean_positive_effects.set(0);
+    mark_y.boolean_unchanged_effects.set(1);
+    policy.rule_profiles.push_back(std::move(mark_y));
+
+    auto first_to_true = kr::ps::detail::RuleProfile(2, 0, 0, 0);
+    first_to_true.boolean_positive_conditions.set(0);
+    first_to_true.boolean_negative_conditions.set(1);
+    first_to_true.boolean_unchanged_effects.set(0);
+    first_to_true.boolean_positive_effects.set(1);
+    policy.rule_profiles.push_back(std::move(first_to_true));
+
+    auto first_to_false = kr::ps::detail::RuleProfile(2, 0, 0, 0);
+    first_to_false.boolean_negative_conditions.set(0);
+    first_to_false.boolean_positive_conditions.set(1);
+    first_to_false.boolean_unchanged_effects.set(0);
+    first_to_false.boolean_negative_effects.set(1);
+    policy.rule_profiles.push_back(std::move(first_to_false));
+
+    auto second_to_true = kr::ps::detail::RuleProfile(2, 0, 1, 1);
+    second_to_true.boolean_negative_conditions.set(0);
+    second_to_true.boolean_negative_conditions.set(1);
+    second_to_true.boolean_unchanged_effects.set(0);
+    second_to_true.boolean_positive_effects.set(1);
+    policy.rule_profiles.push_back(std::move(second_to_true));
+
+    auto second_to_false = kr::ps::detail::RuleProfile(2, 0, 1, 1);
+    second_to_false.boolean_positive_conditions.set(0);
+    second_to_false.boolean_positive_conditions.set(1);
+    second_to_false.boolean_unchanged_effects.set(0);
+    second_to_false.boolean_negative_effects.set(1);
+    policy.rule_profiles.push_back(std::move(second_to_false));
+
+    const auto result = kr::ps::detail::incomplete_structural_termination(policy);
+
+    EXPECT_TRUE(result.is_terminating());
+    EXPECT_TRUE(result.surviving_rules.empty());
+}
+
+TEST(RunirTests, CommonIncompleteSieveDoesNotMarkCrossSccRule)
+{
+    auto policy = kr::ps::detail::QualitativePolicy(2, 2, 0);
+
+    auto cross = kr::ps::detail::RuleProfile(2, 0, 0, 1);
+    cross.boolean_negative_conditions.set(0);
+    cross.boolean_positive_effects.set(0);
+    cross.boolean_unchanged_effects.set(1);
+    policy.rule_profiles.push_back(std::move(cross));
+
+    auto opposing_loop = kr::ps::detail::RuleProfile(2, 0, 1, 1);
+    opposing_loop.boolean_positive_conditions.set(0);
+    opposing_loop.boolean_negative_effects.set(0);
+    opposing_loop.boolean_unchanged_effects.set(1);
+    policy.rule_profiles.push_back(std::move(opposing_loop));
+
+    auto to_true = kr::ps::detail::RuleProfile(2, 0, 0, 0);
+    to_true.boolean_positive_conditions.set(0);
+    to_true.boolean_negative_conditions.set(1);
+    to_true.boolean_unchanged_effects.set(0);
+    to_true.boolean_positive_effects.set(1);
+    policy.rule_profiles.push_back(std::move(to_true));
+
+    auto to_false = kr::ps::detail::RuleProfile(2, 0, 0, 0);
+    to_false.boolean_negative_conditions.set(0);
+    to_false.boolean_positive_conditions.set(1);
+    to_false.boolean_unchanged_effects.set(0);
+    to_false.boolean_negative_effects.set(1);
+    policy.rule_profiles.push_back(std::move(to_false));
+
+    const auto result = kr::ps::detail::incomplete_structural_termination(policy);
+
     ASSERT_FALSE(result.is_terminating());
-    ASSERT_EQ(result.surviving_rules.size(), 1);
-    EXPECT_EQ(result.surviving_rules.front().rule_position, 3);
+    ASSERT_EQ(result.surviving_rules.size(), 2);
+    EXPECT_EQ(result.surviving_rules[0].rule_position, 2);
+    EXPECT_EQ(result.surviving_rules[1].rule_position, 3);
 }
 
 TEST(RunirTests, CommonIncompleteSieveTreatsUnconstrainedBooleanEffectAsOpponent)
@@ -470,9 +639,12 @@ TEST(RunirTests, CommonIncompleteSievePreservesOriginalPositionsAndReasonOrder)
     EXPECT_EQ(result.surviving_rules[0].blocking_reasons[1].feature_position, 0);
     EXPECT_EQ(result.surviving_rules[0].blocking_reasons[1].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
 
-    ASSERT_EQ(result.surviving_rules[1].blocking_reasons.size(), 1);
-    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].feature_kind, FeatureKind::BOOLEAN);
+    ASSERT_EQ(result.surviving_rules[1].blocking_reasons.size(), 2);
+    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].feature_kind, FeatureKind::NUMERICAL);
+    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].feature_position, 0);
     EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 1 }));
+    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[1].feature_kind, FeatureKind::BOOLEAN);
+    EXPECT_EQ(result.surviving_rules[1].blocking_reasons[1].opposing_rule_positions, std::vector<std::size_t>({ 1 }));
 }
 
 TEST(RunirTests, CommonIncompleteSieveDoesNotMarkFeatureAfterR3Elimination)
@@ -516,8 +688,9 @@ TEST(RunirTests, CommonIncompleteSieveDoesNotMarkFeatureAfterR3Elimination)
     ASSERT_EQ(result.surviving_rules.size(), 2);
     EXPECT_EQ(result.surviving_rules[0].rule_position, 2);
     EXPECT_EQ(result.surviving_rules[1].rule_position, 3);
-    ASSERT_EQ(result.surviving_rules[0].blocking_reasons.size(), 1);
+    ASSERT_EQ(result.surviving_rules[0].blocking_reasons.size(), 2);
     EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 3 }));
+    EXPECT_EQ(result.surviving_rules[0].blocking_reasons[1].opposing_rule_positions, std::vector<std::size_t>({ 3 }));
     ASSERT_EQ(result.surviving_rules[1].blocking_reasons.size(), 2);
     EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
     EXPECT_EQ(result.surviving_rules[1].blocking_reasons[1].opposing_rule_positions, std::vector<std::size_t>({ 2 }));
