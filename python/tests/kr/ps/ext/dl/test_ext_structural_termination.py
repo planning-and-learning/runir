@@ -168,6 +168,10 @@ def test_ext_incomplete_structural_termination_uses_memory_components() -> None:
     assert module.get_numerical_features() == []
     assert result.surviving_rules == []
 
+    global_result = dl.incomplete_structural_termination(module, global_mode=True)
+    assert not global_result.is_terminating()
+    assert len(global_result.surviving_rules) == 2
+
 
 def test_ext_incomplete_structural_termination_accepts_module_program() -> None:
     planning_domain, repository = _repositories()

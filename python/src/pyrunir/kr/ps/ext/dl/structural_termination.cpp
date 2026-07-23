@@ -112,14 +112,16 @@ void bind_structural_termination(nb::module_& m)
           "Conservatively decide structural termination of a module program, including inter-module call graph cycles.");
 
     m.def("incomplete_structural_termination",
-          nb::overload_cast<ModuleView>(&incomplete_structural_termination),
+          nb::overload_cast<ModuleView, bool>(&incomplete_structural_termination),
           "module"_a,
+          "global_mode"_a = false,
           nb::keep_alive<0, 1>(),
           "Apply the sound incomplete termination proof within recurrent memory components.");
 
     m.def("incomplete_structural_termination",
-          nb::overload_cast<ModuleProgramView>(&incomplete_structural_termination),
+          nb::overload_cast<ModuleProgramView, bool>(&incomplete_structural_termination),
           "program"_a,
+          "global_mode"_a = false,
           nb::keep_alive<0, 1>(),
           "Apply the incomplete proof to every module and reject recursive or unresolved calls.");
 }

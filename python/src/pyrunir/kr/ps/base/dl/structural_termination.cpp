@@ -100,6 +100,7 @@ void bind_structural_termination(nb::module_& m)
     m.def("incomplete_structural_termination",
           &incomplete_structural_termination,
           "sketch"_a,
+          "global_mode"_a = false,
           nb::keep_alive<0, 1>(),
           "Sound but incomplete syntactic termination test (rule elimination with feature marking).");
 }
