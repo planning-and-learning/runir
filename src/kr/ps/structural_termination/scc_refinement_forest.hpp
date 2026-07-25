@@ -233,8 +233,9 @@ private:
 // With use_memory_scc_scope enabled, refine decomposes the current leaves into
 // residual memory SCCs. Callers first saturate rule elimination in the current
 // leaves, so marks established there are inherited by every child. When
-// disabled, every remaining rule stays in one global opponent scope. R3 only
-// reads marks_for(); it never establishes a mark.
+// disabled, all memory states remain in one component, so opponent scope and
+// markings are global and no rule is cross-SCC. R3 only reads marks_for(); it
+// never establishes a mark.
 class ResidualMemorySccs
 {
 public:

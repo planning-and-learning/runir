@@ -15,9 +15,6 @@ ResidualMemorySccs::ResidualMemorySccs(const QualitativePolicy& policy, bool use
 
 bool ResidualMemorySccs::refine(std::span<const std::size_t> remaining_rule_positions)
 {
-    if (!use_memory_scc_scope_)
-        return false;
-
     auto memory_edges = std::vector<PolicyEdge> {};
     memory_edges.reserve(remaining_rule_positions.size());
     for (const auto rule_position : remaining_rule_positions)
@@ -26,7 +23,11 @@ bool ResidualMemorySccs::refine(std::span<const std::size_t> remaining_rule_posi
         memory_edges.push_back(PolicyEdge { rule.source_memory_position, rule.target_memory_position, rule_position });
     }
 
-    const auto components = find_strong_components(memory_edges, policy_.num_memory_states);
+    auto components = StrongComponents {};
+    if (use_memory_scc_scope_)
+        components = find_strong_components(memory_edges, policy_.num_memory_states);
+    else
+        components = { 1, std::vector<std::size_t>(policy_.num_memory_states, 0) };
     auto memories_by_component = std::vector<std::vector<std::size_t>>(components.count);
     for (std::size_t memory = 0; memory < policy_.num_memory_states; ++memory)
         memories_by_component[components.component_of[memory]].push_back(memory);
@@ -59,13 +60,11 @@ bool ResidualMemorySccs::refine(std::span<const std::size_t> remaining_rule_posi
 
 bool ResidualMemorySccs::share_opponent_scope(std::size_t lhs_rule_position, std::size_t rhs_rule_position) const
 {
-    return !use_memory_scc_scope_ || scc_for_rule(lhs_rule_position) == scc_for_rule(rhs_rule_position);
+    return scc_for_rule(lhs_rule_position) == scc_for_rule(rhs_rule_position);
 }
 
 bool ResidualMemorySccs::is_cross_scc_rule(std::size_t rule_position) const
 {
-    if (!use_memory_scc_scope_)
-        return false;
     const auto& rule = policy_.rule_profiles[rule_position];
     return forest_->leaf_of_memory(rule.source_memory_position) != forest_->leaf_of_memory(rule.target_memory_position);
 }

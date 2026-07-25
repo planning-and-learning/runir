@@ -254,7 +254,7 @@ wheels = [
 
 [[package]]
 name = "pyrunir"
-version = "0.0.29"
+version = "0.0.30"
 source = { editable = "." }
 dependencies = [
     { name = "pypddl" },
@@ -271,11 +271,11 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "pypddl", specifier = ">=1.0.25,<1.1" },
+    { name = "pypddl", specifier = ">=1.0.26,<1.1" },
     { name = "pypddl-datasets", marker = "python_full_version >= '3.10' and extra == 'test'", specifier = ">=0.0.9,<0.1" },
     { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytyr", specifier = ">=0.0.32,<0.1" },
-    { name = "pyyggdrasil", specifier = ">=0.0.25,<0.1" },
+    { name = "pytyr", specifier = ">=0.0.33,<0.1" },
+    { name = "pyyggdrasil", specifier = ">=0.0.26,<0.1" },
 ]
 provides-extras = ["test"]
 

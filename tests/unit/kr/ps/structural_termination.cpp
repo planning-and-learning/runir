@@ -362,15 +362,19 @@ TEST(RunirTests, SccRefinementForestInheritsMarksAcrossSplits)
     EXPECT_TRUE(second_marks.booleans.test(0));
 }
 
-TEST(RunirTests, CommonIncompleteSieveEliminatesAcyclicMemoryRule)
+TEST(RunirTests, CommonIncompleteSieveOnlyEliminatesAcyclicMemoryRuleWithSccScope)
 {
     auto policy = kr::ps::detail::QualitativePolicy(2, 0, 0);
     policy.rule_profiles.emplace_back(0, 0, 0, 1);
 
-    const auto result = kr::ps::detail::incomplete_structural_termination(policy);
+    const auto scoped = kr::ps::detail::incomplete_structural_termination(policy);
+    const auto global = kr::ps::detail::incomplete_structural_termination(policy, false);
 
-    EXPECT_TRUE(result.is_terminating());
-    EXPECT_TRUE(result.surviving_rules.empty());
+    EXPECT_TRUE(scoped.is_terminating());
+    EXPECT_TRUE(scoped.surviving_rules.empty());
+    EXPECT_FALSE(global.is_terminating());
+    ASSERT_EQ(global.surviving_rules.size(), 1);
+    EXPECT_EQ(global.surviving_rules.front().rule_position, 0);
 }
 
 TEST(RunirTests, CommonIncompleteSieveDoesNotLeakMarksAcrossMemoryComponents)
