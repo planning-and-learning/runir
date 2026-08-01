@@ -3,19 +3,14 @@
 
 #include <nanobind/nanobind.h>
 
+#include "../bindings.hpp"
+
 namespace nb = nanobind;
 
 namespace runir::kr::ps::base::dl
 {
 
-void bind_module_definitions(nb::module_& m);
-void bind_indices(nb::module_& m);
-void bind_datas(nb::module_& m);
-void bind_views(nb::module_& m);
-void bind_evaluation_contexts(nb::module_& m);
-void bind_parser(nb::module_& m);
-void bind_sketch_factory(nb::module_& m);
-void bind_structural_termination(nb::module_& m);
+void bind_module_definitions(nb::module_& m, RepositoryBinding& repository);
 
 }  // namespace runir::kr::ps::base::dl
 

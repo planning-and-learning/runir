@@ -1,13 +1,13 @@
 #include "module.hpp"
 
+#include "bindings.hpp"
+
 namespace runir::kr::uns::dl
 {
 
 void bind_module_definitions(nb::module_& m)
 {
-    bind_indices(m);
-    bind_datas(m);
-    bind_views(m);
+    bind_feature(m);
     bind_parser(m);
     bind_classifier_factory(m);
 }

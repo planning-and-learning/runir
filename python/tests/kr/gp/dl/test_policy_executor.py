@@ -2,7 +2,7 @@ import gc
 
 from fixture_utils import read_fixture
 from pyrunir.datasets import GroundTaskSearchContext
-from pytyr.formalism.planning import PlanningDomain
+from pytyr.formalism.planning import ActionBinding, PlanningDomain
 
 from pyrunir.kr import GroundTaskContext
 from pyrunir.kr.dl.base.semantics import (
@@ -138,7 +138,9 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
         assert proof_result.graph.get_source(edge) in proof_result.graph.get_vertex_indices()
         assert proof_result.graph.get_target(edge) in proof_result.graph.get_vertex_indices()
         assert edge in proof_result.graph.get_out_edge_indices(proof_result.graph.get_source(edge))
-        assert isinstance(proof_result.graph.get_edge_property(edge), SketchProofEdgeLabel)
+        edge_label = proof_result.graph.get_edge_property(edge)
+        assert isinstance(edge_label, SketchProofEdgeLabel)
+        assert isinstance(edge_label.transition.action, ActionBinding)
 
     search_options = GroundSketchSearchOptions()
     search_result = find_ground_solution(task_context, sketch, search_options)

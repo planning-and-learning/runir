@@ -6,12 +6,8 @@ from typing import cast
 FIXTURE_ROOT = Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 
 
-def fixture_path(relative: str) -> Path:
-    return FIXTURE_ROOT / relative
-
-
 def read_fixture(relative: str) -> str:
-    return fixture_path(relative).read_text(encoding="utf-8")
+    return (FIXTURE_ROOT / relative).read_text(encoding="utf-8")
 
 
 def load_fixture(relative: str) -> dict[str, object]:

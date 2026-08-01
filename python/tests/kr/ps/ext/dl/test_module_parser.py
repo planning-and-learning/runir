@@ -23,7 +23,7 @@ from pyrunir.kr.ps.ext import dl
 from pyrunir.kr.uns.dl import parse_classifier
 from pyyggdrasil.execution import ExecutionContext
 from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import Parser, PlanningDomain, PlanningTask
+from pytyr.formalism.planning import ActionBinding, Parser, PlanningDomain, PlanningTask
 from pytyr.planning.ground import Task as GroundTask
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
@@ -69,10 +69,6 @@ def _blocksworld_data_dir() -> Path:
     return data_root() / "classical" / "profiling" / "blocksworld-large-simple"
 
 
-def _blocksworld_domain() -> Path:
-    return _blocksworld_data_dir() / "domain.pddl"
-
-
 def _planning_task_and_domain() -> tuple[PlanningTask, PlanningDomain]:
     data_dir = _blocksworld_data_dir()
     parser = Parser(data_dir / "domain.pddl", ParserOptions())
@@ -90,7 +86,7 @@ def _ground_context_and_domain() -> tuple[GroundTaskContext, PlanningDomain, Gro
 
 
 def _repositories() -> tuple[PlanningDomain, ext.Repository]:
-    planning_domain = Parser(_blocksworld_domain(), ParserOptions()).get_domain()
+    planning_domain = Parser(_blocksworld_data_dir() / "domain.pddl", ParserOptions()).get_domain()
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(planning_domain)
     repository = ext.RepositoryFactory().create(dl_repository)
     return planning_domain, repository
@@ -353,6 +349,12 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     assert proof.graph.get_source(edge) in proof.graph.get_vertex_indices()
     assert proof.graph.get_target(edge) in proof.graph.get_vertex_indices()
     assert edge in proof.graph.get_out_edge_indices(proof.graph.get_source(edge))
+    edge_label = proof.graph.get_edge_property(edge)
+    assert ext.ModuleProgramProofEdgeLabel is ext.GroundModuleProgramProofEdgeLabel
+    assert isinstance(edge_label, ext.ModuleProgramProofEdgeLabel)
+    if edge_label.state_transition is not None:
+        assert isinstance(edge_label.state_transition, ext.ModuleProgramProofStateTransition)
+        assert isinstance(edge_label.state_transition.action, ActionBinding)
     vertex_label = proof.graph.get_vertex_property(vertex)
     assert vertex_label.execution_state.call_stack.memory_state is not None
     assert len(vertex_label.execution_state.call_stack.registers.concept_values) > 0

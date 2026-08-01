@@ -41,10 +41,10 @@ struct ModuleProgramProofVertexLabel : ygg::comparison::Mixin<ModuleProgramProof
 
 struct ModuleProgramProofStateTransition : ygg::comparison::Mixin<ModuleProgramProofStateTransition>
 {
-    tyr::formalism::planning::GroundActionView action;
+    tyr::formalism::planning::ActionBindingView action;
     ygg::float_t cost = 0;
 
-    ModuleProgramProofStateTransition(tyr::formalism::planning::GroundActionView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
+    ModuleProgramProofStateTransition(tyr::formalism::planning::ActionBindingView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
 
     auto cista_members() noexcept { return std::tie(action, cost); }
     auto identifying_members() const noexcept { return std::make_tuple(action, cost); }

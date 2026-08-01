@@ -1,7 +1,6 @@
 #ifndef RUNIR_SEMANTICS_FORMATTER_HPP_
 #define RUNIR_SEMANTICS_FORMATTER_HPP_
 
-#include "runir/config.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"

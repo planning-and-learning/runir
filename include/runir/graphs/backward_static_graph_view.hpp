@@ -16,7 +16,7 @@ class BackwardStaticGraphView
 private:
     const G* m_graph;
     EdgeIndexList m_out_edges;
-    std::vector<uint_t> m_out_edge_offsets;
+    std::vector<ygg::uint_t> m_out_edge_offsets;
 
     auto get_graph() const noexcept -> const G&
     {

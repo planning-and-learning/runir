@@ -38,10 +38,10 @@ private:
     VertexPropertyMapType m_vertex_properties;
     EdgePropertyMapType m_edge_properties;
 
-    static auto next_index(std::size_t size) noexcept -> uint_t
+    static auto next_index(std::size_t size) noexcept -> ygg::uint_t
     {
-        assert(size <= static_cast<std::size_t>(std::numeric_limits<uint_t>::max()));
-        return static_cast<uint_t>(size);
+        assert(size <= static_cast<std::size_t>(std::numeric_limits<ygg::uint_t>::max()));
+        return static_cast<ygg::uint_t>(size);
     }
 
     void assert_valid_vertex([[maybe_unused]] VertexIndex vertex) const noexcept { assert(vertex < m_vertices.size()); }

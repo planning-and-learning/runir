@@ -175,7 +175,7 @@ public:
     }
 
     std::optional<RuleVariantView>
-    matching_rule(ExecutionStateView<Kind> state, tyr::formalism::planning::GroundActionView action, tyr::planning::StateView<Kind> target_state)
+    matching_rule(ExecutionStateView<Kind> state, tyr::formalism::planning::ActionBindingView action, tyr::planning::StateView<Kind> target_state)
     {
         auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
         return matching_rule_for_candidate(context, LabeledNode { action, tyr::planning::Node<Kind>(std::move(target_state), ygg::float_t(0)) });
@@ -183,7 +183,7 @@ public:
 
     std::optional<Step> apply(ExecutionStateView<Kind> state,
                               RuleVariantView rule,
-                              std::optional<tyr::formalism::planning::GroundActionView> action = std::nullopt,
+                              std::optional<tyr::formalism::planning::ActionBindingView> action = std::nullopt,
                               std::optional<tyr::planning::StateView<Kind>> target_state = std::nullopt)
     {
         auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);

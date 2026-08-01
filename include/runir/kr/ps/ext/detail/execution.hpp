@@ -82,13 +82,13 @@ auto& evaluate_do_arguments(ygg::View<ygg::Index<Rule<DoTag>>, C> rule, Evaluati
 
 template<typename ConceptDenotations, typename C>
 bool action_matches_do_arguments(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
-                                 tyr::formalism::planning::GroundActionView action,
+                                 tyr::formalism::planning::ActionBindingView action,
                                  const ConceptDenotations& denotations)
 {
-    if (action.get_action().get_name() != rule.get_action_name())
+    if (action.get_relation().get_name() != rule.get_action_name())
         return false;
 
-    const auto objects = action.get_row().get_objects();
+    const auto objects = action.get_objects();
     if (objects.size() != denotations.size())
         return false;
 
@@ -110,7 +110,7 @@ bool do_successor_matches(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
                           EvaluationContext<Kind>& context,
                           EvaluationEnvironment<Kind>& environment,
                           const ConceptDenotations& denotations,
-                          tyr::formalism::planning::GroundActionView action,
+                          tyr::formalism::planning::ActionBindingView action,
                           const tyr::planning::StateView<Kind>& target_state)
 {
     if (!action_matches_do_arguments(rule, action, denotations))
@@ -127,7 +127,7 @@ template<typename C, tyr::planning::TaskKind Kind>
 bool do_rule_matches(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
                      EvaluationContext<Kind>& context,
                      EvaluationEnvironment<Kind>& environment,
-                     tyr::formalism::planning::GroundActionView action,
+                     tyr::formalism::planning::ActionBindingView action,
                      const tyr::planning::StateView<Kind>& target_state)
 {
     if (!do_rule_is_applicable(rule, context, environment))

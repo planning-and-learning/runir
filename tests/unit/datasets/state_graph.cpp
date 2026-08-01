@@ -1,4 +1,4 @@
-#include "fixtures.hpp"
+#include "planning_fixtures.hpp"
 
 #include <gtest/gtest.h>
 #include <limits>

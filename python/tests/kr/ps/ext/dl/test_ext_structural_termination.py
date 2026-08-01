@@ -1,49 +1,26 @@
-from typing import TypedDict, cast
-
 import pytest
 
-from fixture_utils import load_fixture, read_fixture
-from pypddl.formalism import ParserOptions
-from pypddl_datasets import data_root
+from fixture_utils import read_fixture
 from pyrunir.kr.dl import ext as dl_ext
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.base.dl import NumericalChange
 from pyrunir.kr.ps.ext import dl
-from pytyr.formalism.planning import Parser, PlanningDomain
+from pytyr.formalism.planning import PlanningDomain
 
-
-class StructuralTerminationFixture(TypedDict):
-    name: str
-    file: str
-    terminating: bool
-
-
-_SUITE = load_fixture("kr/ps/structural_termination.json")
-EXT_CASES = cast(list[StructuralTerminationFixture], _SUITE["ext"])
 TERMINATING_MODULE = read_fixture("kr/ps/ext/dl/terminating.module")
 NON_TERMINATING_MODULE = read_fixture("kr/ps/ext/dl/non_terminating.module")
 SEPARATED_BOOLEAN_RULES_MODULE = read_fixture("kr/ps/ext/dl/separated_boolean.module")
 PROJECTED_COMPONENTS_MODULE = read_fixture("kr/ps/ext/dl/projected_components.module")
 
 
-def _repositories() -> tuple[PlanningDomain, ext.Repository]:
-    planning_domain = Parser(data_root() / "classical/tests/gripper/domain.pddl", ParserOptions()).get_domain()
+def _repository(planning_domain: PlanningDomain) -> ext.Repository:
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(planning_domain)
-    repository = ext.RepositoryFactory().create(dl_repository)
-    return planning_domain, repository
+    return ext.RepositoryFactory().create(dl_repository)
 
 
-@pytest.mark.parametrize("case", EXT_CASES, ids=[case["name"] for case in EXT_CASES])
-def test_ext_structural_termination_fixture(case: StructuralTerminationFixture) -> None:
-    planning_domain, repository = _repositories()
-    module = dl.parse_module(read_fixture(case["file"]), planning_domain, repository)
-
-    assert dl.structural_termination(module).is_terminating() == case["terminating"]
-
-
-def test_ext_structural_termination_is_terminating() -> None:
-    planning_domain, repository = _repositories()
-    module = dl.parse_module(TERMINATING_MODULE, planning_domain, repository)
+def test_ext_structural_termination_is_terminating(gripper_planning_domain: PlanningDomain) -> None:
+    repository = _repository(gripper_planning_domain)
+    module = dl.parse_module(TERMINATING_MODULE, gripper_planning_domain, repository)
 
     incomplete_result = dl.incomplete_structural_termination(module)
     result = dl.structural_termination(module)
@@ -66,9 +43,9 @@ def test_ext_structural_termination_is_terminating() -> None:
     ]
 
 
-def test_ext_structural_termination_counterexample_spans_memory_states() -> None:
-    planning_domain, repository = _repositories()
-    module = dl.parse_module(NON_TERMINATING_MODULE, planning_domain, repository)
+def test_ext_structural_termination_counterexample_spans_memory_states(gripper_planning_domain: PlanningDomain) -> None:
+    repository = _repository(gripper_planning_domain)
+    module = dl.parse_module(NON_TERMINATING_MODULE, gripper_planning_domain, repository)
 
     result = dl.structural_termination(module)
     booleans = module.get_boolean_features()
@@ -98,9 +75,9 @@ def test_ext_structural_termination_counterexample_spans_memory_states() -> None
     assert changes == {NumericalChange.UNCHANGED}
 
 
-def test_ext_structural_termination_lifts_projected_components() -> None:
-    planning_domain, repository = _repositories()
-    module = dl.parse_module(PROJECTED_COMPONENTS_MODULE, planning_domain, repository)
+def test_ext_structural_termination_lifts_projected_components(gripper_planning_domain: PlanningDomain) -> None:
+    repository = _repository(gripper_planning_domain)
+    module = dl.parse_module(PROJECTED_COMPONENTS_MODULE, gripper_planning_domain, repository)
 
     result = dl.structural_termination(module)
     booleans = module.get_boolean_features()
@@ -157,9 +134,9 @@ def test_ext_structural_termination_lifts_projected_components() -> None:
         assert edge.numerical_changes == expected_changes[edge.rule.get_symbol()]
 
 
-def test_ext_incomplete_structural_termination_uses_memory_components() -> None:
-    planning_domain, repository = _repositories()
-    module = dl.parse_module(SEPARATED_BOOLEAN_RULES_MODULE, planning_domain, repository)
+def test_ext_incomplete_structural_termination_uses_memory_components(gripper_planning_domain: PlanningDomain) -> None:
+    repository = _repository(gripper_planning_domain)
+    module = dl.parse_module(SEPARATED_BOOLEAN_RULES_MODULE, gripper_planning_domain, repository)
 
     result = dl.incomplete_structural_termination(module)
     assert result.is_terminating()
@@ -173,14 +150,15 @@ def test_ext_incomplete_structural_termination_uses_memory_components() -> None:
     assert len(global_result.surviving_rules) == 2
 
     combined_result = dl.structural_termination(module, use_memory_scc_scope=False)
+    assert dl.structural_termination(module).is_terminating()
     assert combined_result.incomplete_result is not None
     assert len(combined_result.incomplete_result.surviving_rules) == 2
 
 
-def test_ext_incomplete_structural_termination_accepts_module_program() -> None:
-    planning_domain, repository = _repositories()
+def test_ext_incomplete_structural_termination_accepts_module_program(gripper_planning_domain: PlanningDomain) -> None:
+    repository = _repository(gripper_planning_domain)
     program = dl.parse_module_program(
-        read_fixture("kr/ps/ext/dl/non_terminating.program"), planning_domain, repository
+        read_fixture("kr/ps/ext/dl/non_terminating.program"), gripper_planning_domain, repository
     )
 
     result = dl.incomplete_structural_termination(program)

@@ -7,10 +7,6 @@ namespace runir::kr::dl::base
 {
 
 void bind_semantics_module_definitions(nb::module_& m);
-void bind_semantics_indices(nb::module_& m);
-void bind_semantics_datas(nb::module_& m);
-void bind_semantics_views(nb::module_& m);
-void bind_semantics_repositories(nb::module_& m);
 
 }
 

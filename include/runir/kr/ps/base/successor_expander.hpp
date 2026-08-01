@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_SUCCESSOR_EXPANDER_HPP_
 #define RUNIR_KR_PS_BASE_SUCCESSOR_EXPANDER_HPP_
 
+#include "runir/kr/dl/repository.hpp"
 #include "runir/kr/ps/base/compatibility.hpp"
 #include "runir/kr/ps/base/dl/evaluation_context.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"

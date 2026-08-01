@@ -23,7 +23,7 @@ public:
     using EdgeList = std::vector<EdgeType>;
     using VertexPropertyMapType = VertexPropertyMap<VP>;
     using EdgePropertyMapType = EdgePropertyMap<EP>;
-    using EdgeOffsetList = std::vector<uint_t>;
+    using EdgeOffsetList = std::vector<ygg::uint_t>;
 
 private:
     VertexList m_vertices;

@@ -1,7 +1,7 @@
 #ifndef RUNIR_SEMANTICS_DENOTATION_REPOSITORY_HPP_
 #define RUNIR_SEMANTICS_DENOTATION_REPOSITORY_HPP_
 
-#include "runir/config.hpp"
+#include <yggdrasil/core/config.hpp>
 #include "runir/kr/dl/semantics/canonicalization.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
@@ -27,7 +27,7 @@ class DenotationRepository
 
 public:
     using SymbolRepository = ygg::formalism::SymbolRepository<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>>;
-    using VectorRepository = ygg::RawVectorSet<uint_t, uint_t>;
+    using VectorRepository = ygg::RawVectorSet<ygg::uint_t, ygg::uint_t>;
 
 private:
     SymbolRepository m_symbol_repository;

@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_EXT_FORMATTER_HPP_
 #define RUNIR_KR_PS_EXT_FORMATTER_HPP_
 
-#include "runir/config.hpp"
 #include "runir/kr/dl/semantics/formatter.hpp"
 #include "runir/kr/ps/ext/dl/formatter.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
@@ -16,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
@@ -306,22 +306,6 @@ std::string module_program(ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgra
     return os.str();
 }
 
-inline std::string_view module_program_proof_status(runir::kr::ps::ext::ModuleProgramProofStatus status)
-{
-    switch (status)
-    {
-        case runir::kr::ps::ext::ModuleProgramProofStatus::SUCCESS:
-            return "success";
-        case runir::kr::ps::ext::ModuleProgramProofStatus::FAILURE:
-            return "failure";
-        case runir::kr::ps::ext::ModuleProgramProofStatus::OUT_OF_TIME:
-            return "out_of_time";
-        case runir::kr::ps::ext::ModuleProgramProofStatus::OUT_OF_STATES:
-            return "out_of_states";
-    }
-    return "unknown";
-}
-
 }  // namespace runir::kr::ps::ext::format
 
 template<typename C>
@@ -467,7 +451,7 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofResults<Kind>>
     {
         return fmt::format_to(context.out(),
                               "ModuleProgramProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={})",
-                              runir::kr::ps::ext::format::module_program_proof_status(result.status),
+                              runir::kr::ps::ext::to_string(result.status),
                               result.graph ? result.graph->get_num_vertices() : 0,
                               result.graph ? result.graph->get_num_edges() : 0,
                               result.deadend_states.size(),

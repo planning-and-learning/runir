@@ -1,5 +1,6 @@
 #include "module.hpp"
 
+#include "bindings.hpp"
 #include "semantics/module.hpp"
 
 namespace runir::kr::dl::uns
@@ -7,7 +8,7 @@ namespace runir::kr::dl::uns
 
 void bind_module_definitions(nb::module_& m)
 {
-    bind_indices(m);
+    bind_constructor(m);
     bind_parser(m);
     bind_repository(m);
 

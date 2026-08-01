@@ -9,9 +9,6 @@ namespace runir::kr::uns
 {
 
 void bind_module_definitions(nb::module_& m);
-void bind_indices(nb::module_& m);
-void bind_views(nb::module_& m);
-void bind_repository(nb::module_& m);
 
 }  // namespace runir::kr::uns
 

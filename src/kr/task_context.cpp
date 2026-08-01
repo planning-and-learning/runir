@@ -1,7 +1,45 @@
 #include "runir/kr/task_context.hpp"
 
+#include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
+#include "runir/kr/ps/base/repository.hpp"
+#include "runir/kr/ps/ext/execution_repository.hpp"
+#include "runir/kr/ps/ext/repository.hpp"
+#include "runir/kr/uns/repository.hpp"
+
+#include <stdexcept>
+#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/task.hpp>
+#include <utility>
+
 namespace runir::kr
 {
+
+template<tyr::planning::TaskKind Kind>
+std::shared_ptr<TaskContext<Kind>> TaskContext<Kind>::create(runir::datasets::TaskSearchContextPtr<Kind> search_context)
+{
+    if (!search_context || !search_context->task || !search_context->execution_context || !search_context->state_repository
+        || !search_context->successor_generator)
+        throw std::invalid_argument("TaskContext requires a fully initialized search context.");
+    return std::shared_ptr<TaskContext>(new TaskContext(std::move(search_context)));
+}
+
+template<tyr::planning::TaskKind Kind>
+TaskContext<Kind>::TaskContext(runir::datasets::TaskSearchContextPtr<Kind> search_context_) :
+    search_context(std::move(search_context_)),
+    base_dl_repository(runir::kr::dl::BaseConstructorRepositoryFactory().create(search_context->task->get_repository())),
+    base_repository(runir::kr::ps::base::RepositoryFactory().create(base_dl_repository)),
+    ext_dl_repository(runir::kr::dl::ExtConstructorRepositoryFactory().create(search_context->task->get_repository())),
+    ext_repository(runir::kr::ps::ext::RepositoryFactory().create(ext_dl_repository)),
+    uns_dl_repository(runir::kr::dl::UnsConstructorRepositoryFactory().create(search_context->task->get_repository())),
+    uns_repository(runir::kr::uns::RepositoryFactory().create(uns_dl_repository)),
+    dl_builder(),
+    dl_denotation_repository(runir::kr::dl::semantics::DenotationRepositoryFactory().create_shared(search_context->task->get_repository())),
+    execution_builder(),
+    execution_repository(
+        runir::kr::ps::ext::ExecutionRepositoryFactory<Kind>().create_shared(search_context->state_repository, dl_denotation_repository, ext_repository))
+{
+}
 
 template struct TaskContext<tyr::planning::GroundTag>;
 template struct TaskContext<tyr::planning::LiftedTag>;

@@ -30,27 +30,5 @@
       "file": "kr/ps/base/dl/r3_complementary.sketch",
       "terminating": true
     }
-  ],
-  "ext": [
-    {
-      "name": "terminating",
-      "file": "kr/ps/ext/dl/terminating.module",
-      "terminating": true
-    },
-    {
-      "name": "non_terminating",
-      "file": "kr/ps/ext/dl/non_terminating.module",
-      "terminating": false
-    },
-    {
-      "name": "separated_boolean",
-      "file": "kr/ps/ext/dl/separated_boolean.module",
-      "terminating": true
-    },
-    {
-      "name": "projected_components",
-      "file": "kr/ps/ext/dl/projected_components.module",
-      "terminating": false
-    }
   ]
 }

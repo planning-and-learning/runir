@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_UNS_FORMATTER_HPP_
 #define RUNIR_KR_UNS_FORMATTER_HPP_
 
-#include "runir/config.hpp"
 #include "runir/kr/uns/classifier_view.hpp"
 #include "runir/kr/uns/dl/formatter.hpp"
 #include "runir/kr/uns/feature_view.hpp"

@@ -1,6 +1,8 @@
 #ifndef RUNIR_KR_PARSER_CONFIG_HPP_
 #define RUNIR_KR_PARSER_CONFIG_HPP_
 
+#include "runir/kr/parser/declarations.hpp"
+
 #include <boost/spirit/home/x3.hpp>
 #include <boost/spirit/home/x3/support/utility/error_reporting.hpp>
 #include <functional>
@@ -12,8 +14,6 @@
 namespace runir::kr::parser
 {
 namespace x3 = boost::spirit::x3;
-
-using Iterator = std::string::const_iterator;
 
 template<typename It>
 class ErrorHandler : public x3::error_handler<It>
@@ -44,7 +44,6 @@ private:
 };
 
 using ErrorHandlerTag = x3::error_handler_tag;
-using ErrorHandlerType = ErrorHandler<Iterator>;
 
 inline auto skipper() { return x3::ascii::space | (';' >> *(x3::char_ - x3::eol) >> (x3::eol | x3::eoi)); }
 

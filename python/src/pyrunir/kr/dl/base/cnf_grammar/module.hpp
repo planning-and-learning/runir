@@ -7,13 +7,6 @@ namespace runir::kr::dl::base
 {
 
 void bind_cnf_grammar_module_definitions(nb::module_& m);
-void bind_cnf_grammar_indices(nb::module_& m);
-void bind_cnf_grammar_datas(nb::module_& m);
-void bind_cnf_grammar_views(nb::module_& m);
-void bind_cnf_grammar_constructor_repository(nb::module_& m);
-void bind_cnf_grammar_grammar(nb::module_& m);
-void bind_cnf_grammar_translate(nb::module_& m);
-void bind_cnf_grammar_generate(nb::module_& m);
 
 }
 

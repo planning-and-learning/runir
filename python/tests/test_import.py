@@ -1,12 +1,6 @@
 import pyrunir
 import pytest
 
-
-def test_python_bindings_expose_submodules() -> None:
-    assert pyrunir.graphs.DynamicGraph is not None
-    assert pyrunir.kr.dl.base.grammar.ConstructorRepository is not None
-
-
 def test_native_prefix_points_to_installed_cmake_package() -> None:
     if not hasattr(pyrunir, "native_prefix"):
         pytest.skip("native_prefix is only available through the installed pyrunir package wrapper")

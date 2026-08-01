@@ -12,6 +12,8 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <stdexcept>
+#include <string_view>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/plan.hpp>
 
@@ -25,6 +27,22 @@ enum class ModuleProgramProofStatus
     OUT_OF_TIME,
     OUT_OF_STATES,
 };
+
+constexpr std::string_view to_string(ModuleProgramProofStatus status)
+{
+    switch (status)
+    {
+        case ModuleProgramProofStatus::SUCCESS:
+            return "success";
+        case ModuleProgramProofStatus::FAILURE:
+            return "failure";
+        case ModuleProgramProofStatus::OUT_OF_TIME:
+            return "out_of_time";
+        case ModuleProgramProofStatus::OUT_OF_STATES:
+            return "out_of_states";
+    }
+    throw std::invalid_argument("invalid ModuleProgramProofStatus");
+}
 
 template<tyr::planning::TaskKind Kind>
 struct ModuleProgramSearchOptions

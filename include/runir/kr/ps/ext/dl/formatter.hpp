@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_EXT_DL_FORMATTER_HPP_
 #define RUNIR_KR_PS_EXT_DL_FORMATTER_HPP_
 
-#include "runir/config.hpp"
 #include "runir/kr/ps/dl/formatter.hpp"
 #include "runir/kr/ps/ext/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/ext/dl/structural_termination_data.hpp"

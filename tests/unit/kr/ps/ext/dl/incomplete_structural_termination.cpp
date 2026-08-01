@@ -5,6 +5,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/ext/dl/incomplete_structural_termination.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
+#include <runir/kr/ps/ext/dl/structural_termination.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <tyr/formalism/planning/parser.hpp>
 #include <variant>
@@ -16,7 +17,7 @@ namespace runir::tests
 namespace
 {
 
-std::filesystem::path gripper_domain() { return std::filesystem::path(BENCHMARKS_DIR) / "classical" / "tests" / "gripper" / "domain.pddl"; }
+auto gripper_domain() -> std::filesystem::path { return benchmark_path("classical/tests/gripper/domain.pddl"); }
 
 }  // namespace
 
@@ -56,6 +57,7 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationUsesMemorySeparation)
 
     EXPECT_TRUE(result.is_terminating());
     EXPECT_TRUE(result.surviving_rules.empty());
+    EXPECT_TRUE(kr::ps::ext::dl::structural_termination(module).is_terminating());
 }
 
 TEST(RunirTests, ExtIncompleteStructuralTerminationSeparatedRegisterLoadDoesNotBlockDecrease)

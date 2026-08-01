@@ -11,11 +11,6 @@ from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
 
 @pytest.fixture
-def repository_root() -> Path:
-    return Path(__file__).resolve().parents[2]
-
-
-@pytest.fixture
 def gripper_data_dir() -> Path:
     return data_root() / "classical" / "tests" / "gripper"
 

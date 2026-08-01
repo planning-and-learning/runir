@@ -1,7 +1,7 @@
 #ifndef RUNIR_GRAPHS_DECLARATIONS_HPP_
 #define RUNIR_GRAPHS_DECLARATIONS_HPP_
 
-#include "runir/config.hpp"
+#include <yggdrasil/core/config.hpp>
 
 #include <concepts>
 #include <cstddef>
@@ -9,6 +9,7 @@
 #include <tuple>
 #include <type_traits>
 #include <vector>
+#include <yggdrasil/containers/associative_containers.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/semantics/equal_to.hpp>
 #include <yggdrasil/semantics/hash.hpp>
@@ -16,15 +17,15 @@
 namespace runir::graphs
 {
 
-using VertexIndex = uint_t;
+using VertexIndex = ygg::uint_t;
 using VertexIndexList = std::vector<VertexIndex>;
 using VertexIndexSet = ygg::UnorderedSet<VertexIndex>;
 
-using EdgeIndex = uint_t;
+using EdgeIndex = ygg::uint_t;
 using EdgeIndexList = std::vector<EdgeIndex>;
 using EdgeIndexSet = ygg::UnorderedSet<EdgeIndex>;
 
-using Degree = uint_t;
+using Degree = ygg::uint_t;
 using DegreeList = std::vector<Degree>;
 
 struct DenseIndexRangeTag;

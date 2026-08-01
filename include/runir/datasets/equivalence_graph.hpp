@@ -18,7 +18,7 @@
 #ifndef RUNIR_DATASETS_EQUIVALENCE_GRAPH_HPP_
 #define RUNIR_DATASETS_EQUIVALENCE_GRAPH_HPP_
 
-#include "runir/config.hpp"
+#include <yggdrasil/core/config.hpp>
 #include "runir/datasets/config.hpp"
 #include "runir/datasets/equivalence_policy.hpp"
 #include "runir/datasets/state_graph.hpp"
@@ -40,11 +40,11 @@ namespace runir::datasets
 
 struct EquivalenceVertexLabel : ygg::comparison::Mixin<EquivalenceVertexLabel>
 {
-    uint_t state_graph_index = 0;
+    ygg::uint_t state_graph_index = 0;
     graphs::VertexIndex state_vertex_index;
 
     EquivalenceVertexLabel() = default;
-    constexpr EquivalenceVertexLabel(uint_t state_graph_index_, graphs::VertexIndex state_vertex_index_) noexcept :
+    constexpr EquivalenceVertexLabel(ygg::uint_t state_graph_index_, graphs::VertexIndex state_vertex_index_) noexcept :
         state_graph_index(state_graph_index_),
         state_vertex_index(state_vertex_index_)
     {
@@ -56,7 +56,7 @@ struct EquivalenceVertexLabel : ygg::comparison::Mixin<EquivalenceVertexLabel>
 
 struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquivalenceVertexLabel>
 {
-    uint_t state_graph_index = 0;
+    ygg::uint_t state_graph_index = 0;
     graphs::VertexIndex state_vertex_index;
     ygg::float_t goal_distance = std::numeric_limits<ygg::float_t>::infinity();
     bool is_initial = false;
@@ -65,7 +65,7 @@ struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquival
     bool is_unsolvable = false;
 
     AnnotatedEquivalenceVertexLabel() = default;
-    AnnotatedEquivalenceVertexLabel(uint_t state_graph_index_,
+    AnnotatedEquivalenceVertexLabel(ygg::uint_t state_graph_index_,
                                     graphs::VertexIndex state_vertex_index_,
                                     ygg::float_t goal_distance_,
                                     bool is_initial_,
@@ -92,11 +92,11 @@ struct AnnotatedEquivalenceVertexLabel : ygg::comparison::Mixin<AnnotatedEquival
 
 struct EquivalenceEdgeLabel : ygg::comparison::Mixin<EquivalenceEdgeLabel>
 {
-    uint_t state_graph_index = 0;
+    ygg::uint_t state_graph_index = 0;
     graphs::EdgeIndex state_edge_index;
 
     EquivalenceEdgeLabel() = default;
-    constexpr EquivalenceEdgeLabel(uint_t state_graph_index_, graphs::EdgeIndex state_edge_index_) noexcept :
+    constexpr EquivalenceEdgeLabel(ygg::uint_t state_graph_index_, graphs::EdgeIndex state_edge_index_) noexcept :
         state_graph_index(state_graph_index_),
         state_edge_index(state_edge_index_)
     {

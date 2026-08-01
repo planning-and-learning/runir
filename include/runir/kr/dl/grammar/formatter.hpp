@@ -1,7 +1,7 @@
 #ifndef RUNIR_GRAMMAR_FORMATTER_HPP_
 #define RUNIR_GRAMMAR_FORMATTER_HPP_
 
-#include "runir/config.hpp"
+#include <yggdrasil/core/config.hpp>
 #include "runir/formatter.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/grammar_view.hpp"

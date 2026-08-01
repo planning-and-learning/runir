@@ -1,7 +1,7 @@
 #ifndef RUNIR_SRC_GRAPHS_ALGORITHMS_NAUTY_IMPL_HPP_
 #define RUNIR_SRC_GRAPHS_ALGORITHMS_NAUTY_IMPL_HPP_
 
-#include "runir/config.hpp"
+#include <yggdrasil/core/config.hpp>
 
 #include <cstddef>
 #include <nausparse.h>
@@ -22,7 +22,7 @@ private:
     std::vector<int> m_labels;
     std::vector<int> m_partitions;
     std::vector<int> m_orbits;
-    std::vector<uint_t> m_coloring;
+    std::vector<ygg::uint_t> m_coloring;
     bool m_is_canonical;
     std::vector<int> m_permutation;
     std::vector<int> m_inverse_permutation;
@@ -39,7 +39,7 @@ public:
                     std::vector<int> edges,
                     std::vector<int> labels,
                     std::vector<int> partitions,
-                    std::vector<uint_t> coloring);
+                    std::vector<ygg::uint_t> coloring);
 
     SparseGraphImpl(const SparseGraphImpl& other);
     auto operator=(const SparseGraphImpl& other) -> SparseGraphImpl&;
@@ -57,7 +57,7 @@ public:
     auto get_labels() const noexcept -> const std::vector<int>&;
     auto get_partitions() const noexcept -> const std::vector<int>&;
     auto get_orbits() const noexcept -> const std::vector<int>&;
-    auto get_coloring() const noexcept -> const std::vector<uint_t>&;
+    auto get_coloring() const noexcept -> const std::vector<ygg::uint_t>&;
     auto get_permutation() const -> const std::vector<int>&;
     auto get_inverse_permutation() const -> const std::vector<int>&;
 };

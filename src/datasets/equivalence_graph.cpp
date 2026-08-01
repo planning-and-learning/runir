@@ -48,7 +48,7 @@ private:
     using RepresentativeToVertexMap = ygg::UnorderedMap<EquivalenceVertexLabel, graphs::VertexIndex>;
     using EquivalenceEdgeSet = ygg::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>;
 
-    uint_t m_state_graph_index;
+    ygg::uint_t m_state_graph_index;
     Policy* m_policy;
     EquivalenceGraphBuilder* m_equivalence_builder;
     RepresentativeToVertexMap* m_representative_to_vertex;
@@ -137,7 +137,7 @@ private:
     }
 
 public:
-    EquivalenceGraphEventHandler(uint_t state_graph_index,
+    EquivalenceGraphEventHandler(ygg::uint_t state_graph_index,
                                  Policy& policy,
                                  EquivalenceGraphBuilder& equivalence_builder,
                                  RepresentativeToVertexMap& representative_to_vertex,
@@ -254,7 +254,7 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
     auto state_graph_results = std::vector<StateGraphGenerationResult<Kind>> {};
     state_graph_results.reserve(contexts.size());
 
-    for (uint_t state_graph_index = 0; state_graph_index < contexts.size(); ++state_graph_index)
+    for (ygg::uint_t state_graph_index = 0; state_graph_index < contexts.size(); ++state_graph_index)
     {
         auto& context = *contexts[state_graph_index];
         auto heuristic = tyr::planning::BlindHeuristic<Kind> {};

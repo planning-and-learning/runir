@@ -1,4 +1,4 @@
-#include "module.hpp"
+#include "bindings.hpp"
 
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/translate.hpp>

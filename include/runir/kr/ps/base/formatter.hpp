@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_BASE_FORMATTER_HPP_
 #define RUNIR_KR_PS_BASE_FORMATTER_HPP_
 
-#include "runir/config.hpp"
 #include "runir/datasets/formatter.hpp"
 #include "runir/kr/ps/base/dl/formatter.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
@@ -151,27 +150,11 @@ std::string sketch(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> view)
     return os.str();
 }
 
-inline std::string sketch_proof_status(runir::kr::ps::base::SketchProofStatus status)
-{
-    switch (status)
-    {
-        case runir::kr::ps::base::SketchProofStatus::SUCCESS:
-            return "success";
-        case runir::kr::ps::base::SketchProofStatus::FAILURE:
-            return "failure";
-        case runir::kr::ps::base::SketchProofStatus::OUT_OF_TIME:
-            return "out_of_time";
-        case runir::kr::ps::base::SketchProofStatus::OUT_OF_STATES:
-            return "out_of_states";
-    }
-    return "unknown";
-}
-
 template<tyr::planning::TaskKind Kind>
 std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<Kind>& result)
 {
     return fmt::format("SketchProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={})",
-                       sketch_proof_status(result.status),
+                       runir::kr::ps::base::to_string(result.status),
                        result.graph ? result.graph->get_num_vertices() : 0,
                        result.graph ? result.graph->get_num_edges() : 0,
                        result.deadend_states.size(),
@@ -244,7 +227,7 @@ struct fmt::formatter<runir::kr::ps::base::SketchProofStatus> : fmt::formatter<s
 {
     auto format(runir::kr::ps::base::SketchProofStatus status, format_context& ctx) const
     {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::base::format::sketch_proof_status(status), ctx);
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::base::to_string(status), ctx);
     }
 };
 
