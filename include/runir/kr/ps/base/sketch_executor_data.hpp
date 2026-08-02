@@ -12,6 +12,8 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <stdexcept>
+#include <string_view>
 #include <tyr/planning/declarations.hpp>
 
 namespace runir::kr::ps::base
@@ -24,6 +26,22 @@ enum class SketchProofStatus
     OUT_OF_TIME,
     OUT_OF_STATES,
 };
+
+constexpr std::string_view to_string(SketchProofStatus status)
+{
+    switch (status)
+    {
+        case SketchProofStatus::SUCCESS:
+            return "success";
+        case SketchProofStatus::FAILURE:
+            return "failure";
+        case SketchProofStatus::OUT_OF_TIME:
+            return "out_of_time";
+        case SketchProofStatus::OUT_OF_STATES:
+            return "out_of_states";
+    }
+    throw std::invalid_argument("invalid SketchProofStatus");
+}
 
 template<tyr::planning::TaskKind Kind>
 struct SketchProofResults

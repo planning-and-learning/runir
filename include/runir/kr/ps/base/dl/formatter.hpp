@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_BASE_DL_FORMATTER_HPP_
 #define RUNIR_KR_PS_BASE_DL_FORMATTER_HPP_
 
-#include "runir/config.hpp"
 #include "runir/kr/dl/semantics/formatter.hpp"
 #include "runir/kr/ps/base/dl/condition_view.hpp"
 #include "runir/kr/ps/base/dl/effect_view.hpp"

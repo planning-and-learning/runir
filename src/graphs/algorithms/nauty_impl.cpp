@@ -28,7 +28,7 @@ SparseGraphImpl::SparseGraphImpl(std::size_t nde,
                                  std::vector<int> edges,
                                  std::vector<int> labels,
                                  std::vector<int> partitions,
-                                 std::vector<uint_t> coloring) :
+                                 std::vector<ygg::uint_t> coloring) :
     m_nde(nde),
     m_offsets(std::move(offsets)),
     m_num_vertices(num_vertices),
@@ -182,7 +182,7 @@ auto SparseGraphImpl::get_edges() const noexcept -> const std::vector<int>& { re
 auto SparseGraphImpl::get_labels() const noexcept -> const std::vector<int>& { return m_labels; }
 auto SparseGraphImpl::get_partitions() const noexcept -> const std::vector<int>& { return m_partitions; }
 auto SparseGraphImpl::get_orbits() const noexcept -> const std::vector<int>& { return m_orbits; }
-auto SparseGraphImpl::get_coloring() const noexcept -> const std::vector<uint_t>& { return m_coloring; }
+auto SparseGraphImpl::get_coloring() const noexcept -> const std::vector<ygg::uint_t>& { return m_coloring; }
 
 auto SparseGraphImpl::get_permutation() const -> const std::vector<int>&
 {

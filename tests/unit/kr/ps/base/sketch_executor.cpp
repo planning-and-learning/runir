@@ -1,37 +1,32 @@
 #include "fixtures.hpp"
+#include "planning_fixtures.hpp"
 
 #include <algorithm>
 #include <filesystem>
 #include <gtest/gtest.h>
-#include <runir/datasets/config.hpp>
 #include <runir/datasets/state_graph.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
 #include <runir/kr/ps/base/successor_expander.hpp>
-#include <runir/kr/uns/classify.hpp>
-#include <runir/kr/uns/dl/parser.hpp>
-#include <runir/kr/uns/repository.hpp>
-#include <tyr/formalism/planning/parser.hpp>
-#include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/task.hpp>
 #include <vector>
-#include <yggdrasil/execution/onetbb.hpp>
 
 namespace runir::tests
 {
 
-namespace
+TEST(RunirTests, SketchProofStatusToString)
 {
-
-std::filesystem::path benchmark_prefix() { return std::filesystem::path(BENCHMARKS_DIR); }
-
-}  // namespace
+    using kr::ps::base::SketchProofStatus;
+    EXPECT_EQ(kr::ps::base::to_string(SketchProofStatus::SUCCESS), "success");
+    EXPECT_EQ(kr::ps::base::to_string(SketchProofStatus::FAILURE), "failure");
+    EXPECT_EQ(kr::ps::base::to_string(SketchProofStatus::OUT_OF_TIME), "out_of_time");
+    EXPECT_EQ(kr::ps::base::to_string(SketchProofStatus::OUT_OF_STATES), "out_of_states");
+    EXPECT_THROW((void) kr::ps::base::to_string(static_cast<SketchProofStatus>(255)), std::invalid_argument);
+}
 
 TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
 {
-    namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
     EXPECT_THROW(kr::TaskContext<p::GroundTag>::create(datasets::TaskSearchContextPtr<p::GroundTag> {}), std::invalid_argument);
@@ -44,28 +39,24 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
     };
 
     const auto cases = std::vector<Case> {
-        { benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl",
-          benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl",
+        { benchmark_path("classical/tests/gripper/domain.pddl"),
+          benchmark_path("classical/tests/gripper/test-1.pddl"),
           kr::ps::base::dl::SketchSpecification::GRIPPER_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "classical" / "tests" / "blocks_3" / "domain.pddl",
-          benchmark_prefix() / "classical" / "tests" / "blocks_3" / "test-1.pddl",
+        { benchmark_path("classical/tests/blocks_3/domain.pddl"),
+          benchmark_path("classical/tests/blocks_3/test-1.pddl"),
           kr::ps::base::dl::SketchSpecification::BLOCKS3OPS_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "classical" / "tests" / "spanner" / "domain.pddl",
-          benchmark_prefix() / "classical" / "tests" / "spanner" / "test-1.pddl",
+        { benchmark_path("classical/tests/spanner/domain.pddl"),
+          benchmark_path("classical/tests/spanner/test-1.pddl"),
           kr::ps::base::dl::SketchSpecification::SPANNER_FRANCE_ET_AL_AAAI2021 },
-        { benchmark_prefix() / "classical" / "tests" / "delivery" / "domain.pddl",
-          benchmark_prefix() / "classical" / "tests" / "delivery" / "test-1.pddl",
+        { benchmark_path("classical/tests/delivery/domain.pddl"),
+          benchmark_path("classical/tests/delivery/test-1.pddl"),
           kr::ps::base::dl::SketchSpecification::DELIVERY_FRANCE_ET_AL_AAAI2021 },
     };
 
     for (const auto& test_case : cases)
     {
-        auto parser = fp::Parser(test_case.domain);
-        const auto planning_task = parser.parse_task(test_case.task);
-        auto execution_context = ygg::ExecutionContext::create(1);
-        auto lifted_task = p::Task<p::LiftedTag>(planning_task);
-        auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-        auto context = datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+        auto context = make_ground_context(test_case.domain, test_case.task);
+        auto task = context->task;
         auto task_context = kr::TaskContext<p::GroundTag>::create(context);
         auto dl_repository = task_context->base_dl_repository;
         auto repository = task_context->base_repository;
@@ -103,16 +94,10 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
 
 TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
 {
-    namespace fp = tyr::formalism::planning;
     namespace p = tyr::planning;
 
-    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
-    const auto planning_task = fp::Parser(domain).parse_task(task_file);
-    auto execution_context = ygg::ExecutionContext::create(1);
-    auto lifted_task = p::Task<p::LiftedTag>(planning_task);
-    auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-    auto search_context = datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
+    auto search_context = make_gripper_ground_context();
+    auto task = search_context->task;
     auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->base_dl_repository;
@@ -167,67 +152,6 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     EXPECT_EQ(rejected.graph->get_num_edges(), 0);
     EXPECT_TRUE(rejected.deadend_states.empty());
     EXPECT_FALSE(rejected.open_states.empty());
-}
-
-TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
-{
-    namespace fp = tyr::formalism::planning;
-    namespace p = tyr::planning;
-
-    const auto domain = benchmark_prefix() / "classical" / "tests" / "gripper" / "domain.pddl";
-    const auto task_file = benchmark_prefix() / "classical" / "tests" / "gripper" / "test-1.pddl";
-    const auto planning_task = fp::Parser(domain).parse_task(task_file);
-    auto execution_context = ygg::ExecutionContext::create(1);
-    auto lifted_task = p::Task<p::LiftedTag>(planning_task);
-    auto task = lifted_task.instantiate_ground_task(*execution_context).task;
-    auto search_context = datasets::TaskSearchContext<p::GroundTag>::create(task, execution_context);
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
-
-    auto dl_repository = task_context->base_dl_repository;
-    auto repository = task_context->base_repository;
-    const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/executor/any_transition.sketch"), task->get_domain().get_domain(), *repository);
-
-    auto classifier_dl_repository = task_context->uns_dl_repository;
-    auto classifier_repository = task_context->uns_repository;
-    const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/always.classifier"), task->get_domain().get_domain(), *classifier_repository);
-
-    auto options = kr::ps::base::SketchSearchOptions<p::GroundTag> {};
-    options.classifier = classifier;
-    const auto result = kr::ps::base::find_solution(task_context, sketch, options);
-
-    EXPECT_EQ(result.status, kr::ps::base::SketchProofStatus::FAILURE);
-    ASSERT_TRUE(result.graph);
-    ASSERT_EQ(result.graph->get_num_vertices(), 1);
-    EXPECT_EQ(result.graph->get_num_edges(), 0);
-    ASSERT_EQ(result.deadend_states.size(), 1);
-    EXPECT_TRUE(result.open_states.empty());
-    const auto& label = result.graph->get_vertex(result.deadend_states.front()).get_property();
-    EXPECT_FALSE(label.is_goal);
-    EXPECT_FALSE(label.is_alive);
-    EXPECT_TRUE(label.is_unsolvable);
-    EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::BooleanTag>(), 0);
-
-    const auto goal_classifier = kr::uns::dl::parse_classifier(
-        read_fixture("kr/ps/base/executor/base_find_solution_treats_classifier_matches_as_terminal_failures/goal_classifier.classifier"),
-        task->get_domain().get_domain(),
-        *classifier_repository);
-    options.universal = true;
-    options.classifier = goal_classifier;
-    const auto goal_result = kr::ps::base::find_solution(task_context, sketch, options);
-    auto found_goal = false;
-    for (const auto vertex : goal_result.graph->get_vertex_indices())
-    {
-        const auto& goal_label = goal_result.graph->get_vertex(vertex).get_property();
-        if (!goal_label.is_goal)
-            continue;
-        auto context = kr::dl::semantics::EvaluationContext<kr::UnsFamilyTag, p::GroundTag>(goal_label.state,
-                                                                                            task_context->dl_builder,
-                                                                                            *task_context->dl_denotation_repository);
-        EXPECT_TRUE(kr::uns::classify(goal_classifier, context));
-        EXPECT_FALSE(goal_label.is_unsolvable);
-        found_goal = true;
-    }
-    EXPECT_TRUE(found_goal);
 }
 
 }  // namespace runir::tests

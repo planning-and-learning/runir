@@ -1,7 +1,7 @@
 #ifndef RUNIR_CNF_GRAMMAR_FORMATTER_HPP_
 #define RUNIR_CNF_GRAMMAR_FORMATTER_HPP_
 
-#include "runir/config.hpp"
+#include <yggdrasil/core/config.hpp>
 #include "runir/formatter.hpp"
 #include "runir/kr/dl/cnf_grammar/grammar_view.hpp"
 #include "runir/kr/dl/cnf_grammar/views.hpp"

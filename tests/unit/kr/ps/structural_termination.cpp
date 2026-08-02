@@ -90,6 +90,16 @@ void expect_universe_matches_monolithic(const std::vector<kr::ps::detail::RulePr
 
 TEST(RunirTests, QualitativePolicyRequiresMemoryState) { EXPECT_THROW((void) kr::ps::detail::QualitativePolicy(0, 0, 0), std::invalid_argument); }
 
+TEST(RunirTests, NumericalChangeToString)
+{
+    using kr::ps::dl::NumericalChange;
+    EXPECT_EQ(kr::ps::dl::to_string(NumericalChange::UNCONSTRAINED), "?");
+    EXPECT_EQ(kr::ps::dl::to_string(NumericalChange::INCREASES), "inc");
+    EXPECT_EQ(kr::ps::dl::to_string(NumericalChange::DECREASES), "dec");
+    EXPECT_EQ(kr::ps::dl::to_string(NumericalChange::UNCHANGED), "unchanged");
+    EXPECT_THROW((void) kr::ps::dl::to_string(static_cast<NumericalChange>(255)), std::invalid_argument);
+}
+
 TEST(RunirTests, CommonSieveEliminatesUnopposedDecrease)
 {
     auto policy = kr::ps::detail::QualitativePolicy(1, 0, 1);

@@ -15,7 +15,7 @@ SparseGraph::SparseGraph(std::size_t nde,
                          std::vector<int> edges,
                          std::vector<int> labels,
                          std::vector<int> partitions,
-                         std::vector<uint_t> coloring) :
+                         std::vector<ygg::uint_t> coloring) :
     m_impl(std::make_unique<details::SparseGraphImpl>(nde,
                                                       std::move(offsets),
                                                       num_vertices,
@@ -56,7 +56,7 @@ auto SparseGraph::get_edges() const -> const std::vector<int>& { return m_impl->
 auto SparseGraph::get_labels() const -> const std::vector<int>& { return m_impl->get_labels(); }
 auto SparseGraph::get_partitions() const -> const std::vector<int>& { return m_impl->get_partitions(); }
 auto SparseGraph::get_orbits() const -> const std::vector<int>& { return m_impl->get_orbits(); }
-auto SparseGraph::get_coloring() const -> const std::vector<uint_t>& { return m_impl->get_coloring(); }
+auto SparseGraph::get_coloring() const -> const std::vector<ygg::uint_t>& { return m_impl->get_coloring(); }
 auto SparseGraph::get_permutation() const -> const std::vector<int>& { return m_impl->get_permutation(); }
 auto SparseGraph::get_inverse_permutation() const -> const std::vector<int>& { return m_impl->get_inverse_permutation(); }
 

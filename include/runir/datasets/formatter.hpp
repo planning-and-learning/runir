@@ -1,7 +1,6 @@
 #ifndef RUNIR_DATASETS_FORMATTER_HPP_
 #define RUNIR_DATASETS_FORMATTER_HPP_
 
-#include "runir/config.hpp"
 #include "runir/datasets/equivalence_graph.hpp"
 #include "runir/datasets/object_graph.hpp"
 #include "runir/datasets/state_graph.hpp"
@@ -100,10 +99,10 @@ struct formatter<runir::datasets::StateGraphEdgeLabel, char> : formatter<std::st
     template<typename FormatContext>
     auto format(const runir::datasets::StateGraphEdgeLabel& label, FormatContext& ctx) const
     {
-        auto text = fmt::format("({}", label.action.get_action().get_name());
-        for (size_t i = 0; i < label.action.get_action().get_original_arity(); ++i)
+        auto text = fmt::format("({}", label.action.get_relation().get_name());
+        for (size_t i = 0; i < label.action.get_relation().get_original_arity(); ++i)
         {
-            fmt::format_to(std::back_inserter(text), " {}", label.action.get_row().get_objects()[i].get_name());
+            fmt::format_to(std::back_inserter(text), " {}", label.action.get_objects()[i].get_name());
         }
         fmt::format_to(std::back_inserter(text), ")\ncost={}", label.cost);
         return formatter<std::string_view>::format(text, ctx);

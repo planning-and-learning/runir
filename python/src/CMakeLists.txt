@@ -9,6 +9,12 @@ message(STATUS "Found nanobind: ${nanobind_DIR} (found version ${nanobind_VERSIO
 
 yggdrasil_python_package_init(PYRUNIR pyrunir)
 
+file(
+    GLOB_RECURSE PYRUNIR_KR_SOURCES
+    CONFIGURE_DEPENDS
+    "pyrunir/kr/*.cpp"
+)
+
 nanobind_add_module(
     _pyrunir NB_SHARED
     module.cpp
@@ -19,89 +25,7 @@ nanobind_add_module(
     pyrunir/datasets/state_graph.cpp
     pyrunir/datasets/task_class.cpp
     pyrunir/graphs/module.cpp
-    pyrunir/kr/module.cpp
-    pyrunir/kr/task_context.cpp
-    pyrunir/kr/dl/module.cpp
-    pyrunir/kr/dl/base/module.cpp
-    pyrunir/kr/dl/base/parser.cpp
-    pyrunir/kr/dl/ext/datas.cpp
-    pyrunir/kr/dl/ext/indices.cpp
-    pyrunir/kr/dl/ext/module.cpp
-    pyrunir/kr/dl/ext/parser.cpp
-    pyrunir/kr/dl/ext/repository.cpp
-    pyrunir/kr/dl/ext/views.cpp
-    pyrunir/kr/dl/ext/semantics/datas.cpp
-    pyrunir/kr/dl/ext/semantics/indices.cpp
-    pyrunir/kr/dl/ext/semantics/module.cpp
-    pyrunir/kr/dl/ext/semantics/repositories.cpp
-    pyrunir/kr/dl/ext/semantics/views.cpp
-    pyrunir/kr/ps/base/datas.cpp
-    pyrunir/kr/ps/base/module.cpp
-    pyrunir/kr/ps/base/dl/datas.cpp
-    pyrunir/kr/ps/base/dl/indices.cpp
-    pyrunir/kr/ps/base/dl/module.cpp
-    pyrunir/kr/ps/base/dl/parser.cpp
-    pyrunir/kr/ps/base/dl/sketch_factory.cpp
-    pyrunir/kr/ps/base/dl/structural_termination.cpp
-    pyrunir/kr/ps/base/dl/views.cpp
-    pyrunir/kr/ps/base/indices.cpp
-    pyrunir/kr/ps/module.cpp
-    pyrunir/kr/ps/base/sketch_executor.cpp
-    pyrunir/kr/ps/base/repository.cpp
-    pyrunir/kr/ps/base/syntactic_complexity.cpp
-    pyrunir/kr/ps/base/views.cpp
-    pyrunir/kr/ps/ext/datas.cpp
-    pyrunir/kr/ps/ext/indices.cpp
-    pyrunir/kr/ps/ext/module.cpp
-    pyrunir/kr/ps/ext/dl/datas.cpp
-    pyrunir/kr/ps/ext/dl/indices.cpp
-    pyrunir/kr/ps/ext/dl/module.cpp
-    pyrunir/kr/ps/ext/dl/module_factory.cpp
-    pyrunir/kr/ps/ext/dl/parser.cpp
-    pyrunir/kr/ps/ext/dl/structural_termination.cpp
-    pyrunir/kr/ps/ext/dl/views.cpp
-    pyrunir/kr/ps/ext/repository.cpp
-    pyrunir/kr/ps/ext/module_program_executor.cpp
-    pyrunir/kr/ps/ext/views.cpp
-    pyrunir/kr/dl/base/semantics/datas.cpp
-    pyrunir/kr/dl/base/semantics/indices.cpp
-    pyrunir/kr/dl/base/semantics/module.cpp
-    pyrunir/kr/dl/base/semantics/repositories.cpp
-    pyrunir/kr/dl/base/semantics/views.cpp
-    pyrunir/kr/dl/base/grammar/constructor_repository.cpp
-    pyrunir/kr/dl/base/grammar/datas.cpp
-    pyrunir/kr/dl/base/grammar/grammar.cpp
-    pyrunir/kr/dl/base/grammar/grammar_factory.cpp
-    pyrunir/kr/dl/base/grammar/indices.cpp
-    pyrunir/kr/dl/base/grammar/module.cpp
-    pyrunir/kr/dl/base/grammar/views.cpp
-    pyrunir/kr/dl/base/cnf_grammar/constructor_repository.cpp
-    pyrunir/kr/dl/base/cnf_grammar/datas.cpp
-    pyrunir/kr/dl/base/cnf_grammar/generate.cpp
-    pyrunir/kr/dl/base/cnf_grammar/grammar.cpp
-    pyrunir/kr/dl/base/cnf_grammar/indices.cpp
-    pyrunir/kr/dl/base/cnf_grammar/module.cpp
-    pyrunir/kr/dl/base/cnf_grammar/translate.cpp
-    pyrunir/kr/dl/base/cnf_grammar/views.cpp
-    pyrunir/kr/dl/uns/module.cpp
-    pyrunir/kr/dl/uns/indices.cpp
-    pyrunir/kr/dl/uns/parser.cpp
-    pyrunir/kr/dl/uns/repository.cpp
-    pyrunir/kr/dl/uns/semantics/module.cpp
-    pyrunir/kr/dl/uns/semantics/indices.cpp
-    pyrunir/kr/dl/uns/semantics/datas.cpp
-    pyrunir/kr/dl/uns/semantics/views.cpp
-    pyrunir/kr/dl/uns/semantics/repositories.cpp
-    pyrunir/kr/uns/module.cpp
-    pyrunir/kr/uns/indices.cpp
-    pyrunir/kr/uns/repository.cpp
-    pyrunir/kr/uns/views.cpp
-    pyrunir/kr/uns/dl/classifier_factory.cpp
-    pyrunir/kr/uns/dl/datas.cpp
-    pyrunir/kr/uns/dl/indices.cpp
-    pyrunir/kr/uns/dl/module.cpp
-    pyrunir/kr/uns/dl/parser.cpp
-    pyrunir/kr/uns/dl/views.cpp
+    ${PYRUNIR_KR_SOURCES}
 )
 
 target_link_libraries(_pyrunir PRIVATE runir::core)

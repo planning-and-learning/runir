@@ -1,4 +1,5 @@
 #include "fixtures.hpp"
+#include "planning_fixtures.hpp"
 
 #include <boost/json.hpp>
 #include <filesystem>
@@ -50,10 +51,10 @@ EquivalenceGraphFigureCase parse_case(const boost::json::object& object)
 {
     auto task_files = std::vector<std::filesystem::path> {};
     for (const auto& task_file : ygg::common::as_array(*object.if_contains("task_files"), "case.task_files"))
-        task_files.push_back(ygg::common::resolve_path(std::filesystem::path(BENCHMARKS_DIR), std::string(task_file.as_string())));
+        task_files.push_back(benchmark_path(std::string(task_file.as_string())));
 
     return EquivalenceGraphFigureCase { ygg::common::as_string(object, "name", "case"),
-                                        ygg::common::resolve_path(std::filesystem::path(BENCHMARKS_DIR), ygg::common::as_string(object, "domain_file", "case")),
+                                        benchmark_path(ygg::common::as_string(object, "domain_file", "case")),
                                         std::move(task_files),
                                         parse_equivalence_policy_mode(ygg::common::as_string(object, "equivalence_policy", "case")),
                                         ygg::common::as_size(object, "expected_num_vertices", "case"),
@@ -117,7 +118,7 @@ TEST(EquivalenceGraphTest, RejectsUnsupportedPolicyMode)
 
 TEST(EquivalenceGraphTest, RejectsCrossGraphConcreteStateEdge)
 {
-    const auto root = gripper_benchmark_root();
+    const auto root = benchmark_path("classical/tests/gripper");
     auto contexts = make_ground_contexts(root / "domain.pddl", { root / "test-1.pddl", root / "test-1.pddl" });
 
     EXPECT_THROW(

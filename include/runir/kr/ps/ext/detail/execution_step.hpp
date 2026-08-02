@@ -8,6 +8,8 @@
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 
 #include <optional>
+#include <stdexcept>
+#include <string_view>
 #include <tyr/planning/node.hpp>
 #include <utility>
 
@@ -28,7 +30,7 @@ enum class ModuleProgramOutcome
     CYCLE,
 };
 
-inline const char* outcome_name(ModuleProgramOutcome outcome)
+constexpr std::string_view to_string(ModuleProgramOutcome outcome)
 {
     switch (outcome)
     {
@@ -53,7 +55,7 @@ inline const char* outcome_name(ModuleProgramOutcome outcome)
         case ModuleProgramOutcome::CYCLE:
             return "cycle";
     }
-    return "failure";
+    throw std::invalid_argument("invalid ModuleProgramOutcome");
 }
 
 /// One canonical execution successor plus the rule and optional planning transition that produced it.
@@ -77,7 +79,7 @@ public:
     {
     }
 
-    const char* get_status_name() const noexcept { return outcome_name(status); }
+    std::string_view get_status_name() const { return to_string(status); }
     ExecutionStateView<Kind> get_target() const noexcept { return target; }
     const auto& get_state_transition() const noexcept { return state_transition; }
     const auto& get_rule() const noexcept { return rule; }

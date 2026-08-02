@@ -120,11 +120,11 @@ template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 class PolicyStateGraphPruningStrategy : public tyr::planning::PruningStrategy<Kind>
 {
 private:
-    uint_t m_state_graph_index;
+    ygg::uint_t m_state_graph_index;
     Policy* m_policy;
 
 public:
-    PolicyStateGraphPruningStrategy(uint_t state_graph_index, Policy& policy) : m_state_graph_index(state_graph_index), m_policy(&policy) {}
+    PolicyStateGraphPruningStrategy(ygg::uint_t state_graph_index, Policy& policy) : m_state_graph_index(state_graph_index), m_policy(&policy) {}
 
     bool should_prune_state(const tyr::planning::StateView<Kind>& state) override
     {
@@ -152,7 +152,7 @@ auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexInde
 
             auto result = std::vector<ygg::float_t>(distances.size(), std::numeric_limits<ygg::float_t>::infinity());
             for (graphs::VertexIndex vertex = 0; vertex < distances.size(); ++vertex)
-                if (distances[vertex] != std::numeric_limits<uint_t>::max())
+                if (distances[vertex] != std::numeric_limits<ygg::uint_t>::max())
                     result[vertex] = static_cast<ygg::float_t>(distances[vertex]);
             return result;
         }
@@ -205,7 +205,7 @@ auto generate_state_graph(TaskSearchContext<Kind>& context, const StateGraphGene
 
 template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 auto generate_state_graph_result(TaskSearchContext<Kind>& context,
-                                 uint_t state_graph_index,
+                                 ygg::uint_t state_graph_index,
                                  Policy& policy,
                                  const StateGraphGenerationOptions& generation_options) -> StateGraphGenerationResult<Kind>
 {
@@ -222,7 +222,7 @@ auto generate_state_graph_result(TaskSearchContext<Kind>& context,
 }
 
 template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
-auto generate_state_graph(TaskSearchContext<Kind>& context, uint_t state_graph_index, Policy& policy, const StateGraphGenerationOptions& generation_options)
+auto generate_state_graph(TaskSearchContext<Kind>& context, ygg::uint_t state_graph_index, Policy& policy, const StateGraphGenerationOptions& generation_options)
     -> std::unique_ptr<StateGraph<Kind>>
 {
     return generate_state_graph_result(context, state_graph_index, policy, generation_options).graph;
@@ -288,25 +288,25 @@ template auto generate_state_graph<tyr::planning::LiftedTag>(TaskSearchContext<t
                                                              const StateGraphGenerationOptions&) -> std::unique_ptr<StateGraph<tyr::planning::LiftedTag>>;
 
 template auto generate_state_graph_result<tyr::planning::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::GroundTag>&,
-                                                                                                               uint_t,
+                                                                                                               ygg::uint_t,
                                                                                                                EquivalencePolicy<IdentityEquivalenceTag>&,
                                                                                                                const StateGraphGenerationOptions&)
     -> StateGraphGenerationResult<tyr::planning::GroundTag>;
 
 template auto generate_state_graph_result<tyr::planning::LiftedTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::LiftedTag>&,
-                                                                                                               uint_t,
+                                                                                                               ygg::uint_t,
                                                                                                                EquivalencePolicy<IdentityEquivalenceTag>&,
                                                                                                                const StateGraphGenerationOptions&)
     -> StateGraphGenerationResult<tyr::planning::LiftedTag>;
 
 template auto generate_state_graph<tyr::planning::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::GroundTag>&,
-                                                                                                        uint_t,
+                                                                                                        ygg::uint_t,
                                                                                                         EquivalencePolicy<IdentityEquivalenceTag>&,
                                                                                                         const StateGraphGenerationOptions&)
     -> std::unique_ptr<StateGraph<tyr::planning::GroundTag>>;
 
 template auto generate_state_graph<tyr::planning::LiftedTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::LiftedTag>&,
-                                                                                                        uint_t,
+                                                                                                        ygg::uint_t,
                                                                                                         EquivalencePolicy<IdentityEquivalenceTag>&,
                                                                                                         const StateGraphGenerationOptions&)
     -> std::unique_ptr<StateGraph<tyr::planning::LiftedTag>>;

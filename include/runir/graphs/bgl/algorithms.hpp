@@ -180,7 +180,7 @@ auto breadth_first_search(const G& graph, SourceInputIterator first, SourceInput
 {
     using Vertex = typename boost::graph_traits<G>::vertex_descriptor;
     using Edge = typename boost::graph_traits<G>::edge_descriptor;
-    using Distance = uint_t;
+    using Distance = ygg::uint_t;
 
     const auto infinity = std::numeric_limits<Distance>::max();
     auto predecessors = make_vertex_map_storage(graph, boost::graph_traits<G>::null_vertex());

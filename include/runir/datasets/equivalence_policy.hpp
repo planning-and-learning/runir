@@ -18,7 +18,7 @@
 #ifndef RUNIR_DATASETS_EQUIVALENCE_POLICY_HPP_
 #define RUNIR_DATASETS_EQUIVALENCE_POLICY_HPP_
 
-#include "runir/config.hpp"
+#include <yggdrasil/core/config.hpp>
 #include "runir/graphs/declarations.hpp"
 
 #include <concepts>
@@ -36,11 +36,11 @@ struct EquivalencePolicy;
 
 struct StateGraphVertexRef : ygg::comparison::Mixin<StateGraphVertexRef>
 {
-    uint_t state_graph_index = 0;
+    ygg::uint_t state_graph_index = 0;
     graphs::VertexIndex state_vertex_index = 0;
 
     StateGraphVertexRef() = default;
-    constexpr StateGraphVertexRef(uint_t state_graph_index_, graphs::VertexIndex state_vertex_index_) noexcept :
+    constexpr StateGraphVertexRef(ygg::uint_t state_graph_index_, graphs::VertexIndex state_vertex_index_) noexcept :
         state_graph_index(state_graph_index_),
         state_vertex_index(state_vertex_index_)
     {
@@ -52,11 +52,11 @@ struct StateGraphVertexRef : ygg::comparison::Mixin<StateGraphVertexRef>
 
 struct StateGraphEdgeRef : ygg::comparison::Mixin<StateGraphEdgeRef>
 {
-    uint_t state_graph_index = 0;
+    ygg::uint_t state_graph_index = 0;
     graphs::EdgeIndex state_edge_index = 0;
 
     StateGraphEdgeRef() = default;
-    constexpr StateGraphEdgeRef(uint_t state_graph_index_, graphs::EdgeIndex state_edge_index_) noexcept :
+    constexpr StateGraphEdgeRef(ygg::uint_t state_graph_index_, graphs::EdgeIndex state_edge_index_) noexcept :
         state_graph_index(state_graph_index_),
         state_edge_index(state_edge_index_)
     {
@@ -69,10 +69,10 @@ struct StateGraphEdgeRef : ygg::comparison::Mixin<StateGraphEdgeRef>
 template<tyr::planning::TaskKind Kind>
 struct StateGraphVertexCandidate : ygg::comparison::Mixin<StateGraphVertexCandidate<Kind>>
 {
-    uint_t state_graph_index = 0;
+    ygg::uint_t state_graph_index = 0;
     tyr::planning::StateView<Kind> state;
 
-    StateGraphVertexCandidate(uint_t state_graph_index_, tyr::planning::StateView<Kind> state_) noexcept :
+    StateGraphVertexCandidate(ygg::uint_t state_graph_index_, tyr::planning::StateView<Kind> state_) noexcept :
         state_graph_index(state_graph_index_),
         state(std::move(state_))
     {
@@ -85,11 +85,11 @@ struct StateGraphVertexCandidate : ygg::comparison::Mixin<StateGraphVertexCandid
 template<tyr::planning::TaskKind Kind>
 struct StateGraphTransitionCandidate : ygg::comparison::Mixin<StateGraphTransitionCandidate<Kind>>
 {
-    uint_t state_graph_index = 0;
+    ygg::uint_t state_graph_index = 0;
     tyr::planning::StateView<Kind> source_state;
     tyr::planning::StateView<Kind> target_state;
 
-    StateGraphTransitionCandidate(uint_t state_graph_index_,
+    StateGraphTransitionCandidate(ygg::uint_t state_graph_index_,
                                   tyr::planning::StateView<Kind> source_state_,
                                   tyr::planning::StateView<Kind> target_state_) noexcept :
         state_graph_index(state_graph_index_),

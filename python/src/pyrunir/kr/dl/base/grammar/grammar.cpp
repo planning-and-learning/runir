@@ -1,4 +1,4 @@
-#include "module.hpp"
+#include "bindings.hpp"
 
 #include <nanobind/stl/string.h>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
@@ -11,9 +11,10 @@ namespace runir::kr::dl::base
 
 void bind_grammar_grammar(nb::module_& m)
 {
-    using View = ygg::View<ygg::Index<runir::kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>>,
-                           runir::kr::dl::grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>;
+    using Type = runir::kr::dl::grammar::GrammarTag<runir::kr::BaseFamilyTag>;
+    using View = ygg::View<ygg::Index<Type>, runir::kr::dl::grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>;
 
+    ygg::bind_index<ygg::Index<Type>>(m, "GrammarIndex");
     auto cls = nb::class_<View>(m, "Grammar").def("get_index", &View::get_index);
     ygg::add_print(cls);
     ygg::add_comparison(cls);

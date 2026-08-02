@@ -3,7 +3,7 @@
 
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/proof_builder.hpp"
-#include "runir/kr/ps/ext/module_program_executor_data.hpp"
+#include "runir/kr/ps/ext/module_program_executor.hpp"
 #include "runir/kr/task_context.hpp"
 
 #include <chrono>
@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-namespace runir::kr::ps::ext::detail
+namespace runir::kr::ps::ext
 {
 
 template<tyr::planning::TaskKind Kind>
@@ -21,11 +21,11 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                    const ModuleProgramSearchOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
 {
     const auto initial_node = task_context->search_context->successor_generator->get_initial_node();
-    auto proof = ModuleProgramProofBuilder<Kind>(std::move(task_context), program, options.classifier);
+    auto proof = detail::ModuleProgramProofBuilder<Kind>(std::move(task_context), program, options.classifier);
     auto open = std::vector<std::pair<ExecutionStateView<Kind>, graphs::VertexIndex>> {};
     auto plan_steps = tyr::planning::LabeledNodeList<Kind> {};
     auto successors = tyr::planning::LabeledNodeList<Kind> {};
-    auto steps = std::vector<ModuleProgramStep<Kind>> {};
+    auto steps = std::vector<detail::ModuleProgramStep<Kind>> {};
     auto failed = false;
 
     const auto initial_state = proof.initial_state();
@@ -81,7 +81,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
             if (out_of_time())
                 return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
 
-            if (step.status == ModuleProgramOutcome::APPLIED || step.status == ModuleProgramOutcome::RESTORED_CALLER)
+            if (step.status == detail::ModuleProgramOutcome::APPLIED || step.status == detail::ModuleProgramOutcome::RESTORED_CALLER)
             {
                 const auto target_state = step.get_target();
                 const auto target_result = proof.get_or_create_vertex(target_state, false, true, false, options.max_num_states);
@@ -95,11 +95,11 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                 if (created)
                     open.emplace_back(target_state, target);
             }
-            else if (step.status == ModuleProgramOutcome::OUT_OF_TIME)
+            else if (step.status == detail::ModuleProgramOutcome::OUT_OF_TIME)
             {
                 return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
             }
-            else if (step.status == ModuleProgramOutcome::OUT_OF_STATES)
+            else if (step.status == detail::ModuleProgramOutcome::OUT_OF_STATES)
             {
                 return proof.finish(ModuleProgramProofStatus::OUT_OF_STATES);
             }
@@ -128,6 +128,6 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
     return proof.finish(failed ? ModuleProgramProofStatus::FAILURE : ModuleProgramProofStatus::SUCCESS);
 }
 
-}  // namespace runir::kr::ps::ext::detail
+}  // namespace runir::kr::ps::ext
 
 #endif

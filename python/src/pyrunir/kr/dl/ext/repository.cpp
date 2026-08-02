@@ -1,4 +1,4 @@
-#include "module.hpp"
+#include "bindings.hpp"
 
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>
@@ -12,27 +12,9 @@ namespace runir::kr::dl::ext
 
 using namespace nanobind::literals;
 
-namespace
+void bind_repository(nb::module_& m, RepositoryBinding& repository)
 {
-
-template<typename... Ts>
-void bind_get_or_create(nb::class_<runir::kr::dl::ExtConstructorRepository>& repository, ygg::TypeList<Ts...>)
-{
-    (repository.def(
-         "get_or_create",
-         [](runir::kr::dl::ExtConstructorRepository& self, ygg::Data<Ts>& data) { return self.get_or_create(data).first; },
-         "data"_a,
-         nb::keep_alive<0, 1>()),
-     ...);
-}
-
-}  // namespace
-
-void bind_repository(nb::module_& m)
-{
-    auto repository = nb::class_<runir::kr::dl::ExtConstructorRepository>(m, "ConstructorRepository");
     repository.def("clear", &runir::kr::dl::ExtConstructorRepository::clear).def("get_index", &runir::kr::dl::ExtConstructorRepository::get_index);
-    bind_get_or_create(repository, runir::kr::dl::FamilyReferenceTypes<runir::kr::ExtFamilyTag> {});
 
     auto factory = nb::class_<runir::kr::dl::ExtConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");
     factory.def(nb::init<>())

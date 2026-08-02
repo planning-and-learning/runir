@@ -1,7 +1,12 @@
 #include "module.hpp"
 
 #include <nanobind/stl/shared_ptr.h>
+#include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/ps/base/repository.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/task_context.hpp>
+#include <runir/kr/uns/repository.hpp>
 #include <utility>
 
 namespace runir::kr

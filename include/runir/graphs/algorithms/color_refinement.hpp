@@ -11,7 +11,7 @@
 namespace runir::graphs::color_refinement
 {
 
-using Color = uint_t;
+using Color = ygg::uint_t;
 using ColorList = std::vector<Color>;
 using ColorAssignmentList = std::vector<std::pair<Color, VertexIndex>>;
 

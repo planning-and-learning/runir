@@ -3,8 +3,6 @@ from typing import TypedDict, cast
 import pytest
 
 from fixture_utils import load_fixture, read_fixture
-from pypddl_datasets import data_root
-
 from pyrunir.kr.dl.base.semantics import ConstructorRepositoryFactory
 from pyrunir.kr.ps.base import Repository, RepositoryFactory
 from pyrunir.kr.ps.base.dl import (
@@ -16,8 +14,7 @@ from pyrunir.kr.ps.base.dl import (
     parse_sketch,
     structural_termination,
 )
-from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import Parser, PlanningDomain
+from pytyr.formalism.planning import PlanningDomain
 
 
 class StructuralTerminationFixture(TypedDict):
@@ -33,25 +30,22 @@ NUMERICAL_CYCLE = read_fixture("kr/ps/base/dl/numerical_cycle.sketch")
 TPP = read_fixture("kr/ps/base/dl/tpp.sketch")
 
 
-def make_repository() -> tuple[PlanningDomain, Repository]:
-    domain_path = data_root() / "classical" / "tests" / "gripper" / "domain.pddl"
-    planning_domain = Parser(domain_path, ParserOptions()).get_domain()
+def make_repository(planning_domain: PlanningDomain) -> Repository:
     dl_repository = ConstructorRepositoryFactory().create(planning_domain)
-    repository = RepositoryFactory().create(dl_repository)
-    return planning_domain, repository
+    return RepositoryFactory().create(dl_repository)
 
 
 @pytest.mark.parametrize("case", BASE_CASES, ids=[case["name"] for case in BASE_CASES])
-def test_base_structural_termination_fixture(case: StructuralTerminationFixture) -> None:
-    domain, repository = make_repository()
-    sketch = parse_sketch(read_fixture(case["file"]), domain, repository)
+def test_base_structural_termination_fixture(case: StructuralTerminationFixture, gripper_planning_domain: PlanningDomain) -> None:
+    repository = make_repository(gripper_planning_domain)
+    sketch = parse_sketch(read_fixture(case["file"]), gripper_planning_domain, repository)
 
     assert structural_termination(sketch).is_terminating() == case["terminating"]
 
 
-def test_structural_termination_tpp_sketch_is_terminating() -> None:
-    domain, repository = make_repository()
-    sketch = parse_sketch(TPP, domain, repository)
+def test_structural_termination_tpp_sketch_is_terminating(gripper_planning_domain: PlanningDomain) -> None:
+    repository = make_repository(gripper_planning_domain)
+    sketch = parse_sketch(TPP, gripper_planning_domain, repository)
 
     result = structural_termination(sketch)
     numericals = sketch.get_numerical_features()
@@ -73,9 +67,9 @@ def test_structural_termination_tpp_sketch_is_terminating() -> None:
     assert [feature.get_index() for feature in scc_result.numericals] == [feature.get_index() for feature in numericals]
 
 
-def test_structural_termination_oscillator_counterexample_has_positional_valuations() -> None:
-    domain, repository = make_repository()
-    sketch = parse_sketch(OSCILLATOR, domain, repository)
+def test_structural_termination_oscillator_counterexample_has_positional_valuations(gripper_planning_domain: PlanningDomain) -> None:
+    repository = make_repository(gripper_planning_domain)
+    sketch = parse_sketch(OSCILLATOR, gripper_planning_domain, repository)
 
     result = structural_termination(sketch)
 
@@ -118,9 +112,9 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
         assert source != target
 
 
-def test_structural_termination_edge_changes_are_positional() -> None:
-    domain, repository = make_repository()
-    sketch = parse_sketch(NUMERICAL_CYCLE, domain, repository)
+def test_structural_termination_edge_changes_are_positional(gripper_planning_domain: PlanningDomain) -> None:
+    repository = make_repository(gripper_planning_domain)
+    sketch = parse_sketch(NUMERICAL_CYCLE, gripper_planning_domain, repository)
 
     result = structural_termination(sketch)
 
@@ -132,9 +126,9 @@ def test_structural_termination_edge_changes_are_positional() -> None:
     assert changes == {NumericalChange.DECREASES, NumericalChange.INCREASES}
 
 
-def test_incomplete_structural_termination_reports_blocking_reasons() -> None:
-    domain, repository = make_repository()
-    sketch = parse_sketch(OSCILLATOR, domain, repository)
+def test_incomplete_structural_termination_reports_blocking_reasons(gripper_planning_domain: PlanningDomain) -> None:
+    repository = make_repository(gripper_planning_domain)
+    sketch = parse_sketch(OSCILLATOR, gripper_planning_domain, repository)
 
     result = incomplete_structural_termination(sketch)
 

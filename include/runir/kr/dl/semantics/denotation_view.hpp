@@ -30,7 +30,7 @@ struct DenotationElementType<runir::kr::dl::BooleanTag, C>
 template<typename C>
 struct DenotationElementType<runir::kr::dl::NumericalTag, C>
 {
-    using Type = runir::uint_t;
+    using Type = ygg::uint_t;
 };
 
 template<typename C>
@@ -60,7 +60,7 @@ private:
     const C* m_context;
     Index<runir::kr::dl::semantics::Denotation<Category>> m_handle;
 
-    static constexpr auto npos = BitsetSpan<const runir::uint_t>::npos;
+    static constexpr auto npos = BitsetSpan<const ygg::uint_t>::npos;
 
     auto get_vector() const noexcept
         requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
@@ -87,7 +87,7 @@ public:
 
         auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElement<runir::kr::dl::ConceptTag, C>
         {
-            return make_view(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_object)), *m_formalism_repository);
+            return make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_object)), *m_formalism_repository);
         }
 
         ConceptIterator& operator++() noexcept
@@ -117,7 +117,7 @@ public:
             const auto num_objects = m_view->get_data().num_objects;
             while (m_source < num_objects)
             {
-                const auto row = m_view->get(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_source)));
+                const auto row = m_view->get(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)));
                 m_target = row.find_first();
                 if (m_target != npos)
                     return;
@@ -142,13 +142,13 @@ public:
 
         auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElement<runir::kr::dl::RoleTag, C>
         {
-            return std::pair(make_view(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_source)), *m_formalism_repository),
-                             make_view(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_target)), *m_formalism_repository));
+            return std::pair(make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)), *m_formalism_repository),
+                             make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_target)), *m_formalism_repository));
         }
 
         RoleIterator& operator++() noexcept
         {
-            const auto row = m_view->get(Index<::tyr::formalism::Object>(static_cast<uint_t>(m_source)));
+            const auto row = m_view->get(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)));
             m_target = row.find_next(m_target);
             if (m_target == npos)
             {
@@ -184,7 +184,7 @@ public:
         requires(std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
         using Layout = Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>;
-        using Bitset = BitsetSpan<const runir::uint_t>;
+        using Bitset = BitsetSpan<const ygg::uint_t>;
 
         const auto vector = get_vector();
         const auto& data = get_data();
@@ -198,13 +198,13 @@ public:
         requires(std::same_as<Category, runir::kr::dl::RoleTag>)
     {
         using Layout = Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>;
-        using Bitset = BitsetSpan<const runir::uint_t>;
+        using Bitset = BitsetSpan<const ygg::uint_t>;
 
         const auto vector = get_vector();
         const auto& data = get_data();
 
         assert(vector.size() == Layout::num_blocks(data.num_objects));
-        assert(uint_t(object) < data.num_objects);
+        assert(ygg::uint_t(object) < data.num_objects);
 
         return Bitset(vector.data() + Layout::row_block_offset(object, data.num_objects), data.num_objects);
     }

@@ -1,5 +1,7 @@
 #include "runir/kr/ps/ext/module_program_executor.hpp"
 
+#include "runir/kr/ps/ext/detail/proof_search.hpp"
+
 namespace runir::kr::ps::ext
 {
 

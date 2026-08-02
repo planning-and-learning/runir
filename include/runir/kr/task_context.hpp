@@ -2,21 +2,16 @@
 #define RUNIR_KR_TASK_CONTEXT_HPP_
 
 #include "runir/datasets/task_class.hpp"
-#include "runir/kr/declarations.hpp"
-#include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/builder.hpp"
-#include "runir/kr/dl/semantics/denotation_repository.hpp"
-#include "runir/kr/ps/base/repository.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
+#include "runir/kr/ps/base/declarations.hpp"
+#include "runir/kr/ps/ext/declarations.hpp"
 #include "runir/kr/ps/ext/execution_builder.hpp"
-#include "runir/kr/ps/ext/execution_repository.hpp"
-#include "runir/kr/ps/ext/repository.hpp"
-#include "runir/kr/uns/repository.hpp"
+#include "runir/kr/ps/ext/execution_declarations.hpp"
+#include "runir/kr/uns/declarations.hpp"
 
 #include <memory>
-#include <stdexcept>
-#include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/task.hpp>
-#include <utility>
 
 namespace runir::kr
 {
@@ -41,36 +36,14 @@ struct TaskContext
     TaskContext(TaskContext&&) = delete;
     TaskContext& operator=(TaskContext&&) = delete;
 
-    static std::shared_ptr<TaskContext> create(runir::datasets::TaskSearchContextPtr<Kind> search_context)
-    {
-        if (!search_context || !search_context->task || !search_context->execution_context || !search_context->state_repository
-            || !search_context->successor_generator)
-            throw std::invalid_argument("TaskContext requires a fully initialized search context.");
-        return std::shared_ptr<TaskContext>(new TaskContext(std::move(search_context)));
-    }
+    static std::shared_ptr<TaskContext> create(runir::datasets::TaskSearchContextPtr<Kind> search_context);
 
 private:
-    explicit TaskContext(runir::datasets::TaskSearchContextPtr<Kind> search_context_) :
-        search_context(std::move(search_context_)),
-        base_dl_repository(runir::kr::dl::BaseConstructorRepositoryFactory().create(search_context->task->get_repository())),
-        base_repository(runir::kr::ps::base::RepositoryFactory().create(base_dl_repository)),
-        ext_dl_repository(runir::kr::dl::ExtConstructorRepositoryFactory().create(search_context->task->get_repository())),
-        ext_repository(runir::kr::ps::ext::RepositoryFactory().create(ext_dl_repository)),
-        uns_dl_repository(runir::kr::dl::UnsConstructorRepositoryFactory().create(search_context->task->get_repository())),
-        uns_repository(runir::kr::uns::RepositoryFactory().create(uns_dl_repository)),
-        dl_builder(),
-        dl_denotation_repository(runir::kr::dl::semantics::DenotationRepositoryFactory().create_shared(search_context->task->get_repository())),
-        execution_builder(),
-        execution_repository(
-            runir::kr::ps::ext::ExecutionRepositoryFactory<Kind>().create_shared(search_context->state_repository, dl_denotation_repository, ext_repository))
-    {
-    }
+    explicit TaskContext(runir::datasets::TaskSearchContextPtr<Kind> search_context);
 };
 
-#ifndef RUNIR_HEADER_INSTANTIATION
 extern template struct TaskContext<tyr::planning::GroundTag>;
 extern template struct TaskContext<tyr::planning::LiftedTag>;
-#endif
 
 }  // namespace runir::kr
 

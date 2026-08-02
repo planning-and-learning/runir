@@ -1,7 +1,7 @@
 #ifndef RUNIR_SEMANTICS_EVALUATION_HPP_
 #define RUNIR_SEMANTICS_EVALUATION_HPP_
 
-#include "runir/config.hpp"
+#include <yggdrasil/core/config.hpp>
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
@@ -63,10 +63,10 @@ namespace detail
 {
 
 template<FamilyTag Family, tyr::planning::TaskKind Kind>
-auto num_objects(const EvaluationContext<Family, Kind>& context) noexcept -> uint_t
+auto num_objects(const EvaluationContext<Family, Kind>& context) noexcept -> ygg::uint_t
 {
     const auto task = context.get_state().get_state_repository()->get_task()->get_task();
-    return static_cast<uint_t>(task.get_domain().get_constants().size() + task.get_objects().size());
+    return static_cast<ygg::uint_t>(task.get_domain().get_constants().size() + task.get_objects().size());
 }
 
 template<FamilyTag Family, tyr::planning::TaskKind Kind>
@@ -81,9 +81,9 @@ auto make_role_builder(EvaluationContext<Family, Kind>& context)
     return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects(context));
 }
 
-inline auto object_handle(uint_t object) noexcept { return ygg::Index<tyr::formalism::Object>(object); }
+inline auto object_handle(ygg::uint_t object) noexcept { return ygg::Index<tyr::formalism::Object>(object); }
 template<typename RoleBuilderPtr>
-auto row(const RoleBuilderPtr& role, uint_t object) noexcept
+auto row(const RoleBuilderPtr& role, ygg::uint_t object) noexcept
 {
     return role->get_row_bitset(object_handle(object));
 }
@@ -98,7 +98,7 @@ template<typename RoleBuilderPtr>
 bool role_any(const RoleBuilderPtr& role) noexcept
 {
     const auto num_objects_ = role->num_objects;
-    for (uint_t object = 0; object < num_objects_; ++object)
+    for (ygg::uint_t object = 0; object < num_objects_; ++object)
         if (row(role, object).any())
             return true;
 
@@ -106,12 +106,12 @@ bool role_any(const RoleBuilderPtr& role) noexcept
 }
 
 template<typename RoleBuilderPtr>
-auto role_count(const RoleBuilderPtr& role) noexcept -> uint_t
+auto role_count(const RoleBuilderPtr& role) noexcept -> ygg::uint_t
 {
     const auto num_objects_ = role->num_objects;
-    uint_t result = 0;
-    for (uint_t object = 0; object < num_objects_; ++object)
-        result += static_cast<uint_t>(row(role, object).count());
+    ygg::uint_t result = 0;
+    for (ygg::uint_t object = 0; object < num_objects_; ++object)
+        result += static_cast<ygg::uint_t>(row(role, object).count());
 
     return result;
 }
@@ -263,7 +263,7 @@ auto evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicSt
                                      });
 
     if (!constructor.get_polarity())
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
             detail::row(result, object).flip();
 
     return result;
@@ -345,21 +345,21 @@ bool evaluate_nonempty(ygg::View<ygg::Index<FamilyConstructor<Family, RoleTag>>,
 template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
 auto evaluate_count(ygg::View<ygg::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor,
                     EvaluationContext<Family, Kind>& context,
-                    EvaluationWorkspace& workspace) -> uint_t
+                    EvaluationWorkspace& workspace) -> ygg::uint_t
 {
-    return static_cast<uint_t>(evaluate_impl(constructor, context, workspace)->get_bitset().count());
+    return static_cast<ygg::uint_t>(evaluate_impl(constructor, context, workspace)->get_bitset().count());
 }
 
 template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
 auto evaluate_count(ygg::View<ygg::Index<FamilyConstructor<Family, RoleTag>>, C> constructor,
                     EvaluationContext<Family, Kind>& context,
-                    EvaluationWorkspace& workspace) -> uint_t
+                    EvaluationWorkspace& workspace) -> ygg::uint_t
 {
     return detail::role_count(evaluate_impl(constructor, context, workspace));
 }
 
 template<ComparisonTag Tag>
-constexpr bool apply_comparison(uint_t lhs, uint_t rhs) noexcept
+constexpr bool apply_comparison(ygg::uint_t lhs, ygg::uint_t rhs) noexcept
 {
     if constexpr (std::same_as<Tag, EqTag<comparison_operand_t<Tag>>>)
         return lhs == rhs;
@@ -384,17 +384,17 @@ constexpr bool apply_logical_binary(bool lhs, bool rhs) noexcept
         return lhs || rhs;
 }
 
-// Numerical operands are nonnegative integers; numeric_limits<uint_t>::max() denotes infinity
+// Numerical operands are nonnegative integers; numeric_limits<ygg::uint_t>::max() denotes infinity
 // (as produced by the distance constructor for unreachable targets).
 template<NumericalBinaryTag Tag>
-constexpr uint_t apply_numerical_binary(uint_t lhs, uint_t rhs) noexcept
+constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) noexcept
 {
-    constexpr auto inf = std::numeric_limits<uint_t>::max();
+    constexpr auto inf = std::numeric_limits<ygg::uint_t>::max();
     if constexpr (std::same_as<Tag, AddTag>)
     {
         if (lhs == inf || rhs == inf)
             return inf;
-        const uint_t result = lhs + rhs;
+        const ygg::uint_t result = lhs + rhs;
         return result < lhs ? inf : result;  // clamp overflow to infinity
     }
     else if constexpr (std::same_as<Tag, SubTag>)
@@ -409,7 +409,7 @@ constexpr uint_t apply_numerical_binary(uint_t lhs, uint_t rhs) noexcept
             return 0;
         if (lhs == inf || rhs == inf)
             return inf;
-        const uint_t result = lhs * rhs;
+        const ygg::uint_t result = lhs * rhs;
         return result / lhs != rhs ? inf : result;  // clamp overflow to infinity
     }
     else if constexpr (std::same_as<Tag, DivTag>)
@@ -482,7 +482,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
         const auto concept_bitset = concept_denotation->get_bitset();
 
         result_bitset.set();
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             if (!detail::row(role, object).is_subset_of(concept_bitset))
                 result_bitset.reset(object);
@@ -494,7 +494,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
         const auto concept_denotation = evaluate_impl(constructor.get_rhs(), context, workspace);
         const auto concept_bitset = concept_denotation->get_bitset();
 
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             if (detail::row(role, object).intersects(concept_bitset))
                 result_bitset.set(object);
@@ -504,9 +504,9 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
                        || std::same_as<Tag, ExactNumberRestrictionTag>)
     {
         const auto role = evaluate_impl(constructor.get_role(), context, workspace);
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
-            const auto count = static_cast<uint_t>(detail::row(role, object).count());
+            const auto count = static_cast<ygg::uint_t>(detail::row(role, object).count());
             if constexpr (std::same_as<Tag, AtLeastNumberRestrictionTag>)
             {
                 if (count >= constructor.get_n())
@@ -531,9 +531,9 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
         const auto concept_denotation = evaluate_impl(constructor.get_concept(), context, workspace);
         const auto concept_bitset = concept_denotation->get_bitset();
 
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
-            auto count = uint_t { 0 };
+            auto count = ygg::uint_t { 0 };
             auto row = detail::row(role, object);
             auto target = row.find_first();
             while (target != decltype(row)::npos)
@@ -565,7 +565,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
 
         result_bitset.set();
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             if (!detail::row(lhs, object).is_subset_of(detail::row(rhs, object)))
                 result_bitset.reset(object);
@@ -577,7 +577,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
 
         result_bitset.set();
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             if (detail::row(lhs, object) != detail::row(rhs, object))
                 result_bitset.reset(object);
@@ -592,7 +592,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
     else if constexpr (std::same_as<Tag, RoleFillersTag>)
     {
         const auto role = evaluate_impl(constructor.get_role(), context, workspace);
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             auto row = detail::row(role, object);
             auto contains_all_fillers = true;
@@ -632,7 +632,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
 
     if constexpr (std::same_as<Tag, UniversalTag>)
     {
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
             detail::row(result, object).set();
     }
     else if constexpr (is_atomic_state_tag_v<Tag>)
@@ -648,7 +648,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
         const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
 
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             auto row = detail::row(result, object);
             row.copy_from(detail::row(lhs, object));
@@ -660,7 +660,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
         const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
 
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             auto row = detail::row(result, object);
             row.copy_from(detail::row(lhs, object));
@@ -671,7 +671,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     {
         const auto arg = evaluate_impl(constructor.get_arg(), context, workspace);
 
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             auto row = detail::row(result, object);
             row.copy_from(detail::row(arg, object));
@@ -682,11 +682,11 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     {
         const auto arg = evaluate_impl(constructor.get_arg(), context, workspace);
 
-        for (uint_t lhs = 0; lhs < num_objects; ++lhs)
+        for (ygg::uint_t lhs = 0; lhs < num_objects; ++lhs)
         {
             const auto row = detail::row(arg, lhs);
             for (auto rhs = row.find_first(); rhs != decltype(row)::npos; rhs = row.find_next(rhs))
-                detail::row(result, static_cast<uint_t>(rhs)).set(lhs);
+                detail::row(result, static_cast<ygg::uint_t>(rhs)).set(lhs);
         }
     }
     else if constexpr (std::same_as<Tag, CompositionTag>)
@@ -694,25 +694,25 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
         const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
 
-        for (uint_t source = 0; source < num_objects; ++source)
+        for (ygg::uint_t source = 0; source < num_objects; ++source)
         {
             auto result_row = detail::row(result, source);
             const auto lhs_row = detail::row(lhs, source);
 
             for (auto mid = lhs_row.find_first(); mid != decltype(lhs_row)::npos; mid = lhs_row.find_next(mid))
-                result_row |= detail::row(rhs, static_cast<uint_t>(mid));
+                result_row |= detail::row(rhs, static_cast<ygg::uint_t>(mid));
         }
     }
     else if constexpr (std::same_as<Tag, TransitiveClosureTag> || std::same_as<Tag, ReflexiveTransitiveClosureTag>)
     {
         const auto arg = evaluate_impl(constructor.get_arg(), context, workspace);
 
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
             detail::row(result, object).copy_from(detail::row(arg, object));
 
-        for (uint_t mid = 0; mid < num_objects; ++mid)
+        for (ygg::uint_t mid = 0; mid < num_objects; ++mid)
         {
-            for (uint_t source = 0; source < num_objects; ++source)
+            for (ygg::uint_t source = 0; source < num_objects; ++source)
             {
                 auto source_row = detail::row(result, source);
                 if (source_row[mid])
@@ -721,7 +721,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
         }
 
         if constexpr (std::same_as<Tag, ReflexiveTransitiveClosureTag>)
-            for (uint_t object = 0; object < num_objects; ++object)
+            for (ygg::uint_t object = 0; object < num_objects; ++object)
                 detail::row(result, object).set(object);
     }
     else if constexpr (std::same_as<Tag, RestrictionTag>)
@@ -730,7 +730,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
         const auto concept_denotation = evaluate_impl(constructor.get_rhs(), context, workspace);
         const auto concept_bitset = concept_denotation->get_bitset();
 
-        for (uint_t object = 0; object < num_objects; ++object)
+        for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             auto row = detail::row(result, object);
             row.copy_from(detail::row(role, object));
@@ -743,7 +743,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
         const auto bitset = concept_denotation->get_bitset();
 
         for (auto object = bitset.find_first(); object != decltype(bitset)::npos; object = bitset.find_next(object))
-            detail::row(result, static_cast<uint_t>(object)).set(object);
+            detail::row(result, static_cast<ygg::uint_t>(object)).set(object);
     }
     else
     {
@@ -776,8 +776,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
     {
         const auto lhs = evaluate_impl(constructor.get_lhs(), context, workspace);
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
-        const auto lhs_value = static_cast<uint_t>(lhs->get_data());
-        const auto rhs_value = static_cast<uint_t>(rhs->get_data());
+        const auto lhs_value = static_cast<ygg::uint_t>(lhs->get_data());
+        const auto rhs_value = static_cast<ygg::uint_t>(rhs->get_data());
         const bool result_value = detail::apply_comparison<Tag>(lhs_value, rhs_value);
         return context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
     }
@@ -809,7 +809,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<NumericalTag, Family, Kind>
 {
-    uint_t result_value = 0;
+    ygg::uint_t result_value = 0;
 
     if constexpr (std::same_as<Tag, CountTag>)
     {
@@ -822,7 +822,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
         const auto rhs = evaluate_impl(constructor.get_rhs(), context, workspace);
         [[maybe_unused]] const auto num_objects = detail::num_objects(context);
 
-        result_value = std::numeric_limits<uint_t>::max();
+        result_value = std::numeric_limits<ygg::uint_t>::max();
 
         const auto lhs_bitset = lhs->get_bitset();
         const auto rhs_bitset = rhs->get_bitset();
@@ -842,7 +842,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
 
                 for (auto object = lhs_bitset.find_first(); object != decltype(lhs_bitset)::npos; object = lhs_bitset.find_next(object))
                 {
-                    queue.push_back(static_cast<uint_t>(object));
+                    queue.push_back(static_cast<ygg::uint_t>(object));
                     distances[object] = 0;
                 }
 
@@ -851,7 +851,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
                     const auto source = queue[queue_pos++];
 
                     const auto source_distance = distances[source];
-                    assert(source_distance != std::numeric_limits<uint_t>::max());
+                    assert(source_distance != std::numeric_limits<ygg::uint_t>::max());
 
                     const auto row = detail::row(role, source);
                     for (auto target = row.find_first(); target != decltype(row)::npos; target = row.find_next(target))
@@ -862,7 +862,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
                         if (new_distance < target_distance)
                         {
                             target_distance = new_distance;
-                            queue.push_back(static_cast<uint_t>(target));
+                            queue.push_back(static_cast<ygg::uint_t>(target));
                         }
 
                         if (rhs_bitset[target])

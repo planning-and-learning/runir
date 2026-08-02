@@ -32,7 +32,7 @@ auto copy_argument_denotation(EvaluationContext<runir::kr::ExtFamilyTag, Kind>& 
     else if constexpr (std::same_as<Category, RoleTag>)
     {
         auto result = make_role_builder(context);
-        for (uint_t object = 0; object < result->num_objects; ++object)
+        for (ygg::uint_t object = 0; object < result->num_objects; ++object)
             row(result, object).copy_from(view.get(ygg::Index<tyr::formalism::Object>(object)));
         return result;
     }

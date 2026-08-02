@@ -32,16 +32,16 @@ public:
 private:
     VertexMap m_vertices;
     VertexIndexList m_free_vertices;
-    uint_t m_next_vertex_index = 0;
+    ygg::uint_t m_next_vertex_index = 0;
     EdgeMap m_edges;
     EdgeIndexList m_free_edges;
-    uint_t m_next_edge_index = 0;
+    ygg::uint_t m_next_edge_index = 0;
     VertexPropertyMapType m_vertex_properties;
     EdgePropertyMapType m_edge_properties;
     AdjacentEdgeMap m_out_edges;
     AdjacentEdgeMap m_in_edges;
 
-    static auto next_index(uint_t& next, auto& free_indices) noexcept -> uint_t
+    static auto next_index(ygg::uint_t& next, auto& free_indices) noexcept -> ygg::uint_t
     {
         if (!free_indices.empty())
         {
@@ -50,7 +50,7 @@ private:
             return index;
         }
 
-        assert(next < std::numeric_limits<uint_t>::max());
+        assert(next < std::numeric_limits<ygg::uint_t>::max());
         return next++;
     }
 

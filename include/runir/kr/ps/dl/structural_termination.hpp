@@ -6,6 +6,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <stdexcept>
+#include <string_view>
 #include <vector>
 
 namespace runir::kr::ps::dl
@@ -32,6 +34,22 @@ enum class NumericalChange : std::uint8_t
     DECREASES = 2,
     UNCHANGED = 3,
 };
+
+constexpr std::string_view to_string(NumericalChange change)
+{
+    switch (change)
+    {
+        case NumericalChange::UNCONSTRAINED:
+            return "?";
+        case NumericalChange::INCREASES:
+            return "inc";
+        case NumericalChange::DECREASES:
+            return "dec";
+        case NumericalChange::UNCHANGED:
+            return "unchanged";
+    }
+    throw std::invalid_argument("invalid NumericalChange");
+}
 
 }  // namespace runir::kr::ps::dl
 

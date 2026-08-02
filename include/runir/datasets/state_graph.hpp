@@ -18,7 +18,7 @@
 #ifndef RUNIR_DATASETS_STATE_GRAPH_HPP_
 #define RUNIR_DATASETS_STATE_GRAPH_HPP_
 
-#include "runir/config.hpp"
+#include <yggdrasil/core/config.hpp>
 #include "runir/datasets/config.hpp"
 #include "runir/datasets/equivalence_policy.hpp"
 #include "runir/datasets/task_class.hpp"
@@ -81,11 +81,11 @@ struct AnnotatedStateGraphVertexLabel : ygg::comparison::Mixin<AnnotatedStateGra
 
 struct StateGraphEdgeLabel : ygg::comparison::Mixin<StateGraphEdgeLabel>
 {
-    tyr::formalism::planning::GroundActionView action;
+    tyr::formalism::planning::ActionBindingView action;
     ygg::float_t cost = 0;
 
     StateGraphEdgeLabel() = delete;
-    StateGraphEdgeLabel(tyr::formalism::planning::GroundActionView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
+    StateGraphEdgeLabel(tyr::formalism::planning::ActionBindingView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
 
     auto cista_members() noexcept { return std::tie(action, cost); }
     auto identifying_members() const noexcept { return std::make_tuple(action.get_index(), cost); }
@@ -117,7 +117,7 @@ using DynamicAnnotatedStateGraph = graphs::DynamicGraph<AnnotatedStateGraphVerte
 
 struct StateGraphGenerationOptions
 {
-    uint_t max_num_states = std::numeric_limits<uint_t>::max();
+    ygg::uint_t max_num_states = std::numeric_limits<ygg::uint_t>::max();
     std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
 };
 
@@ -138,13 +138,13 @@ auto generate_state_graph(TaskSearchContext<Kind>& context,
 
 template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 auto generate_state_graph_result(TaskSearchContext<Kind>& context,
-                                 uint_t state_graph_index,
+                                 ygg::uint_t state_graph_index,
                                  Policy& policy,
                                  const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> StateGraphGenerationResult<Kind>;
 
 template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 auto generate_state_graph(TaskSearchContext<Kind>& context,
-                          uint_t state_graph_index,
+                          ygg::uint_t state_graph_index,
                           Policy& policy,
                           const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> std::unique_ptr<StateGraph<Kind>>;
 

@@ -1,26 +1,31 @@
 find_package(Boost REQUIRED COMPONENTS json PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 find_package(GTest CONFIG REQUIRED PATHS ${CMAKE_PREFIX_PATH} NO_DEFAULT_PATH)
 
+add_library(runir_test_fixtures STATIC unit/fixtures.cpp)
+target_include_directories(runir_test_fixtures PUBLIC ${PROJECT_SOURCE_DIR}/tests/unit)
+target_link_libraries(runir_test_fixtures PRIVATE Boost::json)
+target_compile_definitions(runir_test_fixtures PRIVATE ROOT_DIR="${PROJECT_SOURCE_DIR}")
+
 function(add_runir_test test_name source_file)
-    add_executable(${test_name} ${source_file} unit/main.cpp)
-    target_include_directories(${test_name} PRIVATE ${PROJECT_SOURCE_DIR}/tests/unit)
+    add_executable(${test_name} ${source_file})
     target_link_libraries(${test_name}
         PRIVATE
             ${ARGN}
             TBB::tbb
             Boost::json
-            GTest::gtest
-    )
-    target_compile_definitions(${test_name}
-        PRIVATE
-            ROOT_DIR="${PROJECT_SOURCE_DIR}"
+            GTest::gtest_main
+            runir_test_fixtures
     )
     add_test(NAME ${test_name} COMMAND ${test_name})
 endfunction()
 
-add_runir_test(runir_datasets_equivalence_graph unit/datasets/equivalence_graph.cpp runir::datasets)
-add_runir_test(runir_datasets_object_graph unit/datasets/object_graph.cpp runir::datasets)
-add_runir_test(runir_datasets_state_graph unit/datasets/state_graph.cpp runir::datasets)
+add_library(runir_test_planning_fixtures STATIC unit/planning_fixtures.cpp)
+target_include_directories(runir_test_planning_fixtures PUBLIC ${PROJECT_SOURCE_DIR}/tests/unit)
+target_link_libraries(runir_test_planning_fixtures PRIVATE runir::datasets TBB::tbb runir_test_fixtures)
+
+add_runir_test(runir_datasets_equivalence_graph unit/datasets/equivalence_graph.cpp runir::datasets runir_test_planning_fixtures)
+add_runir_test(runir_datasets_object_graph unit/datasets/object_graph.cpp runir::datasets runir_test_planning_fixtures)
+add_runir_test(runir_datasets_state_graph unit/datasets/state_graph.cpp runir::datasets runir_test_planning_fixtures)
 add_runir_test(runir_formatter unit/formatter.cpp runir::core)
 add_runir_test(runir_graphs_color_refinement unit/graphs/algorithms/color_refinement.cpp runir::graphs)
 add_runir_test(runir_graphs_static_graph unit/graphs/static_graph.cpp runir::graphs)
@@ -89,8 +94,18 @@ add_runir_test(runir_kr_ps_types "${RUNIR_KR_PS_TYPE_TEST_SOURCES}" runir::kr)
 
 add_runir_test(runir_kr_ps_abstract_structural_termination unit/kr/ps/structural_termination.cpp runir::kr)
 target_include_directories(runir_kr_ps_abstract_structural_termination PRIVATE ${PROJECT_SOURCE_DIR}/src)
-add_runir_test(runir_kr_ps_dl_parser unit/kr/ps/dl/parser.cpp runir::kr)
-add_runir_test(runir_kr_ps_sketch_executor unit/kr/ps/base/sketch_executor.cpp runir::datasets runir::kr)
+add_runir_test(
+    runir_kr_ps_dl_parser
+    "unit/kr/ps/base/dl/parser.cpp;unit/kr/ps/ext/dl/parser.cpp"
+    runir::kr
+)
+add_runir_test(
+    runir_kr_ps_sketch_executor
+    "unit/kr/ps/base/sketch_executor.cpp;unit/kr/ps/base/sketch_executor_classifier.cpp"
+    runir::datasets
+    runir::kr
+    runir_test_planning_fixtures
+)
 add_runir_test(
     runir_kr_ps_structural_termination
     unit/kr/ps/base/dl/structural_termination.cpp
@@ -105,9 +120,10 @@ add_runir_test(
 )
 add_runir_test(
     runir_kr_ps_ext_module_program_executor
-    unit/kr/ps/ext/module_program_executor.cpp
+    "unit/kr/ps/ext/module_fixtures.cpp;unit/kr/ps/ext/module_program_executor.cpp;unit/kr/ps/ext/module_program_parser.cpp;unit/kr/ps/ext/execution_repository.cpp;unit/kr/ps/ext/successor_expander.cpp"
     runir::datasets
     runir::kr
+    runir_test_planning_fixtures
 )
 add_runir_test(
     runir_kr_ps_ext_incomplete_structural_termination
@@ -121,10 +137,21 @@ add_runir_test(
     runir::datasets
     runir::kr
 )
-add_runir_test(runir_kr_grammar_factory unit/kr/grammar/grammar_factory.cpp runir::kr)
-add_runir_test(runir_kr_dl_uns_constructors unit/kr/dl/uns/constructors.cpp runir::datasets runir::kr)
-add_runir_test(runir_kr_uns_classifier
-    "unit/kr/uns/classifier.cpp;unit/kr/uns/feature.cpp;unit/kr/uns/dl/feature.cpp"
+add_runir_test(
+    runir_kr_grammar_factory
+    "unit/kr/ps/base/dl/sketch_factory.cpp;unit/kr/dl/grammar/grammar_factory.cpp;unit/kr/dl/grammar/ext_formatter.cpp;unit/kr/dl/cnf_grammar/ext_formatter.cpp"
+    runir::kr
+)
+add_runir_test(
+    runir_kr_dl_uns_constructors
+    "unit/kr/dl/uns/constructors.cpp;unit/kr/dl/uns/parser.cpp;unit/kr/dl/uns/evaluation.cpp"
     runir::datasets
     runir::kr
+    runir_test_planning_fixtures
+)
+add_runir_test(runir_kr_uns_classifier
+    "unit/kr/uns/classifier.cpp;unit/kr/uns/classifier_evaluation.cpp;unit/kr/uns/feature.cpp;unit/kr/uns/dl/feature.cpp"
+    runir::datasets
+    runir::kr
+    runir_test_planning_fixtures
 )
