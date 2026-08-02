@@ -24,6 +24,18 @@ void bind_denotation_view(nb::module_& m, const char* name)
 
     if constexpr (std::same_as<Category, BooleanTag> || std::same_as<Category, NumericalTag>)
         cls.def("get", [](View view) { return view.get(); });
+
+    if constexpr (std::same_as<Category, ConceptTag>)
+        cls.def(
+            "__iter__",
+            [](const View& view) { return nb::make_iterator(nb::type<View>(), "ConceptDenotationIterator", view.begin(), view.end()); },
+            nb::keep_alive<0, 1>());
+
+    if constexpr (std::same_as<Category, RoleTag>)
+        cls.def(
+            "__iter__",
+            [](const View& view) { return nb::make_iterator(nb::type<View>(), "RoleDenotationIterator", view.begin(), view.end()); },
+            nb::keep_alive<0, 1>());
 }
 
 }  // namespace
