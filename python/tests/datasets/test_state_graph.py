@@ -82,6 +82,7 @@ def _make_ground_contexts(case: EquivalenceGraphFixture) -> list[GroundTaskSearc
 def test_ground_state_graph_builder_can_copy_generated_graph_labels(ground_gripper_search_context: GroundTaskSearchContext) -> None:
     options = StateGraphGenerationOptions()
     options.max_num_states = 4
+    options.num_search_workers = 4
 
     graph = generate_ground_state_graph(ground_gripper_search_context, options)
     forward_graph = graph.get_forward_graph()
@@ -90,6 +91,11 @@ def test_ground_state_graph_builder_can_copy_generated_graph_labels(ground_gripp
     edge_label = forward_graph.get_edge_property(next(iter(forward_graph.get_edge_indices())))
     assert isinstance(edge_label, StateGraphEdgeLabel)
     assert isinstance(edge_label.action, ActionBinding)
+    for vertex in forward_graph.get_vertex_indices():
+        assert (
+            forward_graph.get_vertex_property(vertex).state.get_state_repository().get_index()
+            == ground_gripper_search_context.state_repository.get_index()
+        )
 
     builder = GroundStateGraphBuilder()
     for vertex in forward_graph.get_vertex_indices():
@@ -119,12 +125,15 @@ def test_lifted_state_graph_edges_store_action_bindings(gripper_data_dir: Path) 
     context = LiftedTaskSearchContext(task, ExecutionContext(1))
     options = StateGraphGenerationOptions()
     options.max_num_states = 4
+    options.num_search_workers = 4
 
     graph = generate_lifted_state_graph(context, options).get_forward_graph()
     edge_label = graph.get_edge_property(next(iter(graph.get_edge_indices())))
 
     assert isinstance(edge_label, StateGraphEdgeLabel)
     assert isinstance(edge_label.action, ActionBinding)
+    for vertex in graph.get_vertex_indices():
+        assert graph.get_vertex_property(vertex).state.get_state_repository().get_index() == context.state_repository.get_index()
 
 
 def test_equivalence_graph_builder_can_construct_static_graph_from_labels() -> None:
@@ -176,6 +185,7 @@ def test_generate_ground_equivalence_graph_exposes_owned_result_graphs(ground_gr
     options = EquivalenceGraphGenerationOptions()
     options.policy_mode = EquivalencePolicyMode.IDENTITY
     options.state_graph_options.max_num_states = 4
+    options.state_graph_options.num_search_workers = 4
 
     result = generate_ground_equivalence_graph([ground_gripper_search_context], options)
 
@@ -184,7 +194,13 @@ def test_generate_ground_equivalence_graph_exposes_owned_result_graphs(ground_gr
     assert forward_graph.get_num_edges() > 0
     assert result.get_num_state_graph_results() == 1
     state_graph_result = result.get_state_graph_result(0)
-    assert state_graph_result.graph.get_forward_graph().get_num_vertices() > 0
+    state_graph = state_graph_result.graph.get_forward_graph()
+    assert state_graph.get_num_vertices() > 0
+    for vertex in state_graph.get_vertex_indices():
+        assert (
+            state_graph.get_vertex_property(vertex).state.get_state_repository().get_index()
+            == ground_gripper_search_context.state_repository.get_index()
+        )
     with pytest.raises(IndexError, match="State graph result index is out of range"):
         result.get_state_graph_result(1)
 

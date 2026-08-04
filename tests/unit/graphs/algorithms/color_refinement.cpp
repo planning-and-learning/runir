@@ -1,5 +1,6 @@
 #include "fixtures.hpp"
 
+#include <atomic>
 #include <boost/json.hpp>
 #include <gtest/gtest.h>
 #include <runir/graphs/algorithms.hpp>
@@ -9,6 +10,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <utility>
 #include <vector>
 #include <yggdrasil/serialization/json.hpp>
@@ -118,6 +120,35 @@ TEST(RunirTests, NautySparseGraphRejectsUnsupportedFixtureShapes)
             },
             std::runtime_error);
     }
+}
+
+TEST(RunirTests, NautyCanonicalizationIsThreadSafe)
+{
+    const auto graph = make_graph(find_graph_case("hexagon"));
+    auto expected = graphs::nauty::SparseGraph(graph);
+    expected.canonize();
+    auto matches = std::atomic(true);
+
+    {
+        auto workers = std::vector<std::jthread> {};
+        workers.reserve(8);
+        for (size_t i = 0; i < 8; ++i)
+        {
+            workers.emplace_back(
+                [&]
+                {
+                    for (size_t iteration = 0; iteration < 100; ++iteration)
+                    {
+                        auto actual = graphs::nauty::SparseGraph(graph);
+                        actual.canonize();
+                        if (actual != expected)
+                            matches.store(false, std::memory_order_relaxed);
+                    }
+                });
+        }
+    }
+
+    EXPECT_TRUE(matches.load(std::memory_order_relaxed));
 }
 
 }  // namespace runir::tests

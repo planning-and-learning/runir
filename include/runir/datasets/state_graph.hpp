@@ -18,9 +18,7 @@
 #ifndef RUNIR_DATASETS_STATE_GRAPH_HPP_
 #define RUNIR_DATASETS_STATE_GRAPH_HPP_
 
-#include <yggdrasil/core/config.hpp>
 #include "runir/datasets/config.hpp"
-#include "runir/datasets/equivalence_policy.hpp"
 #include "runir/datasets/task_class.hpp"
 #include "runir/graphs/bidirectional_static_graph.hpp"
 #include "runir/graphs/dynamic_graph.hpp"
@@ -28,12 +26,14 @@
 #include "runir/graphs/static_graph_builder.hpp"
 
 #include <chrono>
+#include <cstddef>
 #include <limits>
 #include <memory>
 #include <optional>
 #include <tuple>
 #include <tyr/planning/algorithms/utils.hpp>
 #include <utility>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets
@@ -119,6 +119,7 @@ struct StateGraphGenerationOptions
 {
     ygg::uint_t max_num_states = std::numeric_limits<ygg::uint_t>::max();
     std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
+    std::size_t num_search_workers = 1;
 };
 
 template<tyr::TaskKind Kind>
@@ -134,18 +135,6 @@ auto generate_state_graph_result(TaskSearchContext<Kind>& context,
 
 template<tyr::TaskKind Kind>
 auto generate_state_graph(TaskSearchContext<Kind>& context,
-                          const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> std::unique_ptr<StateGraph<Kind>>;
-
-template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
-auto generate_state_graph_result(TaskSearchContext<Kind>& context,
-                                 ygg::uint_t state_graph_index,
-                                 Policy& policy,
-                                 const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> StateGraphGenerationResult<Kind>;
-
-template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
-auto generate_state_graph(TaskSearchContext<Kind>& context,
-                          ygg::uint_t state_graph_index,
-                          Policy& policy,
                           const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> std::unique_ptr<StateGraph<Kind>>;
 
 template<tyr::TaskKind Kind>

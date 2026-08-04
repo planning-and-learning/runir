@@ -134,7 +134,8 @@ void bind_state_graph(nb::module_& m)
     nb::class_<StateGraphGenerationOptions>(m, "StateGraphGenerationOptions")
         .def(nb::init<>())
         .def_rw("max_num_states", &StateGraphGenerationOptions::max_num_states)
-        .def_rw("max_time", &StateGraphGenerationOptions::max_time);
+        .def_rw("max_time", &StateGraphGenerationOptions::max_time)
+        .def_rw("num_search_workers", &StateGraphGenerationOptions::num_search_workers);
 
     auto edge_label = nb::class_<StateGraphEdgeLabel>(m, "StateGraphEdgeLabel")  //
                           .def_ro("action", &StateGraphEdgeLabel::action)

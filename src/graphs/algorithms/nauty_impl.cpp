@@ -132,7 +132,7 @@ void SparseGraphImpl::canonize()
     if (m_is_canonical)
         return;
 
-    static DEFAULTOPTIONS_SPARSEGRAPH(options);
+    DEFAULTOPTIONS_SPARSEGRAPH(options);
     options.defaultptn = FALSE;
     options.getcanon = TRUE;
     options.digraph = FALSE;

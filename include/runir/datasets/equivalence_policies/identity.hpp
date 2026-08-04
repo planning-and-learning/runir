@@ -31,24 +31,10 @@ template<>
 struct EquivalencePolicy<IdentityEquivalenceTag>
 {
     template<tyr::TaskKind Kind>
-    auto try_insert(const StateGraphVertexCandidate<Kind>& candidate) noexcept -> bool
+    auto get_or_create_representative(const StateGraphVertexCandidate<Kind>& candidate, const StateGraphVertexFactory& allocate) -> RepresentativeResult
     {
         static_cast<void>(candidate);
-        return true;
-    }
-
-    template<tyr::TaskKind Kind>
-    auto try_insert(const StateGraphTransitionCandidate<Kind>& candidate) noexcept -> bool
-    {
-        static_cast<void>(candidate);
-        return true;
-    }
-
-    template<tyr::TaskKind Kind>
-    auto get_or_create_representative(const StateGraphVertexCandidate<Kind>& candidate, StateGraphVertexRef vertex) noexcept -> StateGraphVertexRef
-    {
-        static_cast<void>(candidate);
-        return vertex;
+        return { allocate(), true };
     }
 };
 

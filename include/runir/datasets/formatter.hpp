@@ -8,10 +8,10 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include <iterator>
 #include <string>
 #include <string_view>
 #include <tyr/formalism/planning/formatter.hpp>
+#include <utility>
 #include <variant>
 
 namespace fmt
@@ -24,7 +24,7 @@ struct formatter<runir::datasets::StateObjectGraphVertexLabelEntry, char> : form
     auto format(const runir::datasets::StateObjectGraphVertexLabelEntry& entry, FormatContext& ctx) const
     {
         const auto text = std::visit([&](const auto& predicate)
-                                     { return fmt::format("state:{}/{}[{}]", predicate.get_name(), predicate.get_arity(), entry.argument_position); },
+                                     { return fmt::format("state:{}/{}[{}]", predicate.get_name().str(), predicate.get_arity(), entry.argument_position); },
                                      entry.predicate);
         return formatter<std::string_view>::format(text, ctx);
     }
@@ -37,7 +37,7 @@ struct formatter<runir::datasets::GoalObjectGraphVertexLabelEntry, char> : forma
     auto format(const runir::datasets::GoalObjectGraphVertexLabelEntry& entry, FormatContext& ctx) const
     {
         const auto text = std::visit([&](const auto& predicate)
-                                     { return fmt::format("goal:{}/{}[{}]", predicate.get_name(), predicate.get_arity(), entry.argument_position); },
+                                     { return fmt::format("goal:{}/{}[{}]", predicate.get_name().str(), predicate.get_arity(), entry.argument_position); },
                                      entry.predicate);
         return formatter<std::string_view>::format(text, ctx);
     }
@@ -99,12 +99,9 @@ struct formatter<runir::datasets::StateGraphEdgeLabel, char> : formatter<std::st
     template<typename FormatContext>
     auto format(const runir::datasets::StateGraphEdgeLabel& label, FormatContext& ctx) const
     {
-        auto text = fmt::format("({}", label.action.get_relation().get_name());
-        for (size_t i = 0; i < label.action.get_relation().get_original_arity(); ++i)
-        {
-            fmt::format_to(std::back_inserter(text), " {}", label.action.get_objects()[i].get_name());
-        }
-        fmt::format_to(std::back_inserter(text), ")\ncost={}", label.cost);
+        const auto text = fmt::format("{}\ncost={}",
+                                      std::make_pair(label.action, tyr::formalism::planning::PlanFormatting {}),
+                                      label.cost);
         return formatter<std::string_view>::format(text, ctx);
     }
 };

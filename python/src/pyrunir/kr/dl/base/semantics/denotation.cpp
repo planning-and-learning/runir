@@ -1,6 +1,7 @@
 #include "bindings.hpp"
 
 #include <concepts>
+#include <nanobind/make_iterator.h>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/denotation_view.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>

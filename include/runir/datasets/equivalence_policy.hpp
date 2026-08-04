@@ -18,14 +18,15 @@
 #ifndef RUNIR_DATASETS_EQUIVALENCE_POLICY_HPP_
 #define RUNIR_DATASETS_EQUIVALENCE_POLICY_HPP_
 
-#include <yggdrasil/core/config.hpp>
 #include "runir/graphs/declarations.hpp"
 
 #include <concepts>
+#include <functional>
 #include <tuple>
 #include <tyr/planning/ground/state_view.hpp>
 #include <tyr/planning/lifted/state_view.hpp>
 #include <utility>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets
@@ -50,22 +51,6 @@ struct StateGraphVertexRef : ygg::comparison::Mixin<StateGraphVertexRef>
     constexpr auto identifying_members() const noexcept { return std::tie(state_graph_index, state_vertex_index); }
 };
 
-struct StateGraphEdgeRef : ygg::comparison::Mixin<StateGraphEdgeRef>
-{
-    ygg::uint_t state_graph_index = 0;
-    graphs::EdgeIndex state_edge_index = 0;
-
-    StateGraphEdgeRef() = default;
-    constexpr StateGraphEdgeRef(ygg::uint_t state_graph_index_, graphs::EdgeIndex state_edge_index_) noexcept :
-        state_graph_index(state_graph_index_),
-        state_edge_index(state_edge_index_)
-    {
-    }
-
-    auto cista_members() noexcept { return std::tie(state_graph_index, state_edge_index); }
-    constexpr auto identifying_members() const noexcept { return std::tie(state_graph_index, state_edge_index); }
-};
-
 template<tyr::TaskKind Kind>
 struct StateGraphVertexCandidate : ygg::comparison::Mixin<StateGraphVertexCandidate<Kind>>
 {
@@ -82,34 +67,20 @@ struct StateGraphVertexCandidate : ygg::comparison::Mixin<StateGraphVertexCandid
     auto identifying_members() const noexcept { return std::tie(state_graph_index, state); }
 };
 
-template<tyr::TaskKind Kind>
-struct StateGraphTransitionCandidate : ygg::comparison::Mixin<StateGraphTransitionCandidate<Kind>>
+struct RepresentativeResult
 {
-    ygg::uint_t state_graph_index = 0;
-    tyr::planning::StateView<Kind> source_state;
-    tyr::planning::StateView<Kind> target_state;
-
-    StateGraphTransitionCandidate(ygg::uint_t state_graph_index_,
-                                  tyr::planning::StateView<Kind> source_state_,
-                                  tyr::planning::StateView<Kind> target_state_) noexcept :
-        state_graph_index(state_graph_index_),
-        source_state(std::move(source_state_)),
-        target_state(std::move(target_state_))
-    {
-    }
-
-    auto cista_members() noexcept { return std::tie(state_graph_index, source_state, target_state); }
-    auto identifying_members() const noexcept { return std::tie(state_graph_index, source_state, target_state); }
+    StateGraphVertexRef representative;
+    bool inserted;
 };
 
+/// Called at most once, and only when the policy creates a new equivalence class.
+using StateGraphVertexFactory = std::function<StateGraphVertexRef()>;
+
 template<typename Policy, typename Kind>
-concept IsEquivalencePolicy =
-    requires(Policy& policy, StateGraphVertexCandidate<Kind> vertex_candidate, StateGraphTransitionCandidate<Kind> transition_candidate) {
-        requires tyr::TaskKind<Kind>;
-        { policy.try_insert(vertex_candidate) } -> std::same_as<bool>;
-        { policy.try_insert(transition_candidate) } -> std::same_as<bool>;
-        { policy.get_or_create_representative(vertex_candidate, StateGraphVertexRef {}) } -> std::same_as<StateGraphVertexRef>;
-    };
+concept IsEquivalencePolicy = requires(Policy& policy, StateGraphVertexCandidate<Kind> vertex_candidate, const StateGraphVertexFactory& allocate) {
+    requires tyr::TaskKind<Kind>;
+    { policy.get_or_create_representative(vertex_candidate, allocate) } -> std::same_as<RepresentativeResult>;
+};
 
 }  // namespace runir::datasets
 

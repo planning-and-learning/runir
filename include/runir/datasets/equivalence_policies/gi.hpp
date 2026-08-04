@@ -22,6 +22,8 @@
 #include "runir/datasets/object_graph.hpp"
 #include "runir/graphs/algorithms/nauty.hpp"
 
+#include <mutex>
+
 namespace runir::datasets
 {
 
@@ -34,30 +36,22 @@ struct EquivalencePolicy<GIEquivalenceTag>
 {
 private:
     ygg::UnorderedMap<graphs::nauty::SparseGraph, StateGraphVertexRef> m_certificate_to_representative;
+    std::mutex m_mutex;
 
 public:
     template<tyr::TaskKind Kind>
-    auto try_insert(const StateGraphVertexCandidate<Kind>& candidate) -> bool
-    {
-        static_cast<void>(candidate);
-        return true;
-    }
-
-    template<tyr::TaskKind Kind>
-    auto try_insert(const StateGraphTransitionCandidate<Kind>& candidate) -> bool
-    {
-        static_cast<void>(candidate);
-        return true;
-    }
-
-    template<tyr::TaskKind Kind>
-    auto get_or_create_representative(const StateGraphVertexCandidate<Kind>& candidate, StateGraphVertexRef vertex) -> StateGraphVertexRef
+    auto get_or_create_representative(const StateGraphVertexCandidate<Kind>& candidate, const StateGraphVertexFactory& allocate) -> RepresentativeResult
     {
         auto object_graph = create_object_graph(candidate.state);
         auto certificate = graphs::nauty::SparseGraph(*object_graph).canonize();
-        const auto [it, inserted] = m_certificate_to_representative.emplace(std::move(certificate), vertex);
-        static_cast<void>(inserted);
-        return it->second;
+
+        const auto lock = std::lock_guard(m_mutex);
+        if (const auto it = m_certificate_to_representative.find(certificate); it != m_certificate_to_representative.end())
+            return { it->second, false };
+
+        const auto representative = allocate();
+        m_certificate_to_representative.emplace(std::move(certificate), representative);
+        return { representative, true };
     }
 };
 
