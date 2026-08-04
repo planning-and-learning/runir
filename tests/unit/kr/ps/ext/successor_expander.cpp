@@ -17,8 +17,8 @@
 #include <runir/kr/task_context.hpp>
 #include <set>
 #include <string>
-#include <tyr/planning/algorithms/portable_shuffle.hpp>
 #include <utility>
+#include <yggdrasil/core/portable_shuffle.hpp>
 
 namespace runir::tests
 {
@@ -196,9 +196,9 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
 
     auto random = std::mt19937_64(1);
     auto expected_successors = expander.labeled_successors(initial_state);
-    p::portable_shuffle(expected_successors.begin(), expected_successors.end(), random);
+    ygg::portable_shuffle(expected_successors.begin(), expected_successors.end(), random);
     auto expected_steps = expander.steps(initial_state, expected_successors);
-    p::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
+    ygg::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
     ASSERT_NE(expected_steps.front().get_target().get_index(), steps.front().get_target().get_index());
 
     auto shuffled_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
@@ -575,9 +575,9 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
 
     auto random = std::mt19937_64(1);
     auto expected_successors = expander.labeled_successors(initial_state);
-    p::portable_shuffle(expected_successors.begin(), expected_successors.end(), random);
+    ygg::portable_shuffle(expected_successors.begin(), expected_successors.end(), random);
     auto expected_steps = expander.steps(initial_state, expected_successors);
-    p::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
+    ygg::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
     ASSERT_NE(expected_steps.front().get_target().get_index(), steps.front().get_target().get_index());
 
     auto shuffled_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};

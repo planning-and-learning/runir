@@ -8,9 +8,9 @@
 
 #include <chrono>
 #include <random>
-#include <tyr/planning/algorithms/portable_shuffle.hpp>
 #include <utility>
 #include <vector>
+#include <yggdrasil/core/portable_shuffle.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -66,13 +66,13 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
         if (out_of_time())
             return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
         if (options.shuffle_choice_points)
-            tyr::planning::portable_shuffle(successors.begin(), successors.end(), random);
+            ygg::portable_shuffle(successors.begin(), successors.end(), random);
 
         proof.steps(state, successors, out_of_time, steps);
         if (out_of_time())
             return proof.finish(ModuleProgramProofStatus::OUT_OF_TIME);
         if (options.shuffle_choice_points)
-            tyr::planning::portable_shuffle(steps.begin(), steps.end(), random);
+            ygg::portable_shuffle(steps.begin(), steps.end(), random);
         if (!options.universal && steps.size() > 1)
             steps.erase(steps.begin() + 1, steps.end());
 

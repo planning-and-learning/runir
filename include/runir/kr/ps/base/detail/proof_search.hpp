@@ -14,9 +14,9 @@
 #include <memory>
 #include <optional>
 #include <random>
-#include <tyr/planning/algorithms/portable_shuffle.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
+#include <yggdrasil/core/portable_shuffle.hpp>
 #include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::ps::base
@@ -115,7 +115,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
         if (out_of_time())
             return finish(SketchProofStatus::OUT_OF_TIME);
         if (options.shuffle_choice_points)
-            tyr::planning::portable_shuffle(successors.begin(), successors.end(), random);
+            ygg::portable_shuffle(successors.begin(), successors.end(), random);
 
         auto accepted = expander.accepted_successors(context, successors, out_of_time);
         if (out_of_time())
