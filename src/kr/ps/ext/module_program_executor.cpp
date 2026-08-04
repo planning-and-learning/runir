@@ -5,17 +5,17 @@
 namespace runir::kr::ps::ext
 {
 
-template class SuccessorExpander<tyr::planning::GroundTag>;
-template class SuccessorExpander<tyr::planning::LiftedTag>;
+template class SuccessorExpander<tyr::GroundTag>;
+template class SuccessorExpander<tyr::LiftedTag>;
 
-template auto find_solution<tyr::planning::GroundTag>(runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
+template auto find_solution<tyr::GroundTag>(runir::kr::TaskContextPtr<tyr::GroundTag> task_context,
                                                       ModuleProgramView program,
-                                                      const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options)
-    -> ModuleProgramProofResults<tyr::planning::GroundTag>;
+                                                      const ModuleProgramSearchOptions<tyr::GroundTag>& options)
+    -> ModuleProgramProofResults<tyr::GroundTag>;
 
-template auto find_solution<tyr::planning::LiftedTag>(runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
+template auto find_solution<tyr::LiftedTag>(runir::kr::TaskContextPtr<tyr::LiftedTag> task_context,
                                                       ModuleProgramView program,
-                                                      const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options)
-    -> ModuleProgramProofResults<tyr::planning::LiftedTag>;
+                                                      const ModuleProgramSearchOptions<tyr::LiftedTag>& options)
+    -> ModuleProgramProofResults<tyr::LiftedTag>;
 
 }  // namespace runir::kr::ps::ext

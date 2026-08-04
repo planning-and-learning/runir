@@ -11,7 +11,7 @@
 namespace runir::kr::uns::dl
 {
 
-template<typename C, tyr::planning::TaskKind Kind>
+template<typename C, tyr::TaskKind Kind>
 bool evaluate(ygg::View<ygg::Index<runir::kr::uns::dl::Feature>, C> feature,
               runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, Kind>& context)
 {

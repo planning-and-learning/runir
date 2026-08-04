@@ -12,7 +12,7 @@
 namespace runir::kr::dl::semantics
 {
 
-template<typename Derived, tyr::planning::TaskKind Kind>
+template<typename Derived, tyr::TaskKind Kind>
 class BaseEvaluationContext
 {
 private:
@@ -35,10 +35,10 @@ public:
     const auto& get_denotation_repository() const noexcept { return m_denotation_repository; }
 };
 
-template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
+template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 class EvaluationContext;
 
-template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
+template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 const auto& get_repository(const EvaluationContext<Family, Kind>& context) noexcept
 {
     return context.get_state().get_state_repository()->get_task()->get_repository();

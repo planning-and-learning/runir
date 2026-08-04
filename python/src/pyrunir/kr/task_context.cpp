@@ -17,7 +17,7 @@ using namespace nanobind::literals;
 namespace
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void bind_task_context_for_kind(nb::module_& m, const char* prefix)
 {
     using TaskContextT = TaskContext<Kind>;
@@ -64,8 +64,8 @@ void bind_task_context_for_kind(nb::module_& m, const char* prefix)
 
 void bind_task_context(nb::module_& m)
 {
-    bind_task_context_for_kind<tyr::planning::GroundTag>(m, "Ground");
-    bind_task_context_for_kind<tyr::planning::LiftedTag>(m, "Lifted");
+    bind_task_context_for_kind<tyr::GroundTag>(m, "Ground");
+    bind_task_context_for_kind<tyr::LiftedTag>(m, "Lifted");
 }
 
 }  // namespace runir::kr

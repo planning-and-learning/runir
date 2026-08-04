@@ -39,7 +39,7 @@
 namespace runir::datasets
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct StateGraphVertexLabel : ygg::comparison::Mixin<StateGraphVertexLabel<Kind>>
 {
     tyr::planning::StateView<Kind> state;
@@ -50,7 +50,7 @@ struct StateGraphVertexLabel : ygg::comparison::Mixin<StateGraphVertexLabel<Kind
     auto identifying_members() const noexcept { return std::tie(state); }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct AnnotatedStateGraphVertexLabel : ygg::comparison::Mixin<AnnotatedStateGraphVertexLabel<Kind>>
 {
     tyr::planning::StateView<Kind> state;
@@ -91,28 +91,28 @@ struct StateGraphEdgeLabel : ygg::comparison::Mixin<StateGraphEdgeLabel>
     auto identifying_members() const noexcept { return std::make_tuple(action.get_index(), cost); }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using StateGraphBuilder = graphs::StaticGraphBuilder<StateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using StaticStateGraph = graphs::StaticGraph<StateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using StateGraph = graphs::BidirectionalStaticGraph<StateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using DynamicStateGraph = graphs::DynamicGraph<StateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using AnnotatedStateGraphBuilder = graphs::StaticGraphBuilder<AnnotatedStateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using StaticAnnotatedStateGraph = graphs::StaticGraph<AnnotatedStateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using AnnotatedStateGraph = graphs::BidirectionalStaticGraph<AnnotatedStateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using DynamicAnnotatedStateGraph = graphs::DynamicGraph<AnnotatedStateGraphVertexLabel<Kind>, StateGraphEdgeLabel>;
 
 struct StateGraphGenerationOptions
@@ -121,34 +121,34 @@ struct StateGraphGenerationOptions
     std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct StateGraphGenerationResult
 {
     std::unique_ptr<StateGraph<Kind>> graph;
     tyr::planning::SearchStatus status = tyr::planning::SearchStatus::IN_PROGRESS;
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto generate_state_graph_result(TaskSearchContext<Kind>& context,
                                  const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> StateGraphGenerationResult<Kind>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto generate_state_graph(TaskSearchContext<Kind>& context,
                           const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> std::unique_ptr<StateGraph<Kind>>;
 
-template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 auto generate_state_graph_result(TaskSearchContext<Kind>& context,
                                  ygg::uint_t state_graph_index,
                                  Policy& policy,
                                  const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> StateGraphGenerationResult<Kind>;
 
-template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 auto generate_state_graph(TaskSearchContext<Kind>& context,
                           ygg::uint_t state_graph_index,
                           Policy& policy,
                           const StateGraphGenerationOptions& options = StateGraphGenerationOptions()) -> std::unique_ptr<StateGraph<Kind>>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto annotate_state_graph(TaskSearchContext<Kind>& context,
                           const StateGraph<Kind>& graph,
                           StateGraphCostMode cost_mode) -> std::unique_ptr<AnnotatedStateGraph<Kind>>;

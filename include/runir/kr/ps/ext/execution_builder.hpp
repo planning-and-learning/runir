@@ -9,7 +9,7 @@
 namespace runir::kr::ps::ext
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class ExecutionBuilder
 {
 private:

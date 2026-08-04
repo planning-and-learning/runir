@@ -40,14 +40,14 @@ namespace runir::datasets
 namespace
 {
 
-template<tyr::planning::TaskKind Kind>
-class StateGraphEventHandler : public tyr::planning::astar_eager::EventHandler<Kind>
+template<tyr::TaskKind Kind>
+class StateGraphConstructionState
 {
 private:
     StateGraphBuilder<Kind> m_builder;
     ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> m_state_to_vertex;
-    tyr::planning::Statistics m_statistics;
 
+public:
     auto get_or_create_vertex(tyr::planning::Node<Kind> node) -> graphs::VertexIndex
     {
         const auto state = node.get_state();
@@ -69,54 +69,68 @@ private:
         m_builder.add_directed_edge(source, target, StateGraphEdgeLabel { labeled_succ_node.label, cost });
     }
 
-public:
-    void on_expand_node(const tyr::planning::Node<Kind>& node) override { get_or_create_vertex(node); }
+    auto release() && { return std::make_unique<StateGraph<Kind>>(std::move(m_builder)); }
+};
 
-    void on_expand_goal_node(const tyr::planning::Node<Kind>& node) override { static_cast<void>(node); }
+template<tyr::TaskKind Kind>
+class StateGraphWorkerEventHandler final : public tyr::planning::astar_eager::WorkerEventHandler<Kind>
+{
+private:
+    StateGraphConstructionState<Kind>* m_state;
+
+public:
+    explicit StateGraphWorkerEventHandler(StateGraphConstructionState<Kind>& state) : m_state(&state) {}
+
+    void on_expand_node(const tyr::planning::Node<Kind>& node) override { m_state->get_or_create_vertex(node); }
 
     void on_generate_node(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
     {
-        record_edge(source_node, labeled_succ_node);
-    }
-
-    void on_generate_node_relaxed(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
-    {
-        static_cast<void>(source_node);
-        static_cast<void>(labeled_succ_node);
+        m_state->record_edge(source_node, labeled_succ_node);
     }
 
     void on_generate_node_not_relaxed(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
     {
-        record_edge(source_node, labeled_succ_node);
+        m_state->record_edge(source_node, labeled_succ_node);
     }
-
-    void on_close_node(const tyr::planning::Node<Kind>& node) override { static_cast<void>(node); }
-
-    void on_prune_node(const tyr::planning::Node<Kind>& node) override { static_cast<void>(node); }
 
     void on_prune_node(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
     {
-        record_edge(source_node, labeled_succ_node);
+        m_state->record_edge(source_node, labeled_succ_node);
     }
+};
 
+template<tyr::TaskKind Kind>
+class StateGraphEventHandler final : public tyr::planning::astar_eager::EventHandler<Kind>
+{
+private:
+    StateGraphConstructionState<Kind> m_state;
+
+public:
     void on_start_search(const tyr::planning::Node<Kind>& node, ygg::float_t f_value) override
     {
         static_cast<void>(f_value);
-        get_or_create_vertex(node);
+        m_state.get_or_create_vertex(node);
     }
 
-    void on_finish_f_layer(ygg::float_t f_value) override { static_cast<void>(f_value); }
-    void on_end_search(tyr::planning::SearchStatus status) override { static_cast<void>(status); }
+    void on_end_search(tyr::planning::SearchStatus status, const tyr::planning::Statistics& statistics) override
+    {
+        static_cast<void>(status);
+        static_cast<void>(statistics);
+    }
 
     void on_solved(const tyr::planning::Plan<Kind>& plan) override { static_cast<void>(plan); }
-    const tyr::planning::Statistics& get_search_statistics() const override { return m_statistics; }
 
-    const tyr::planning::Statistics& get_statistics() const override { return m_statistics; }
+    auto make_worker(ygg::Index<tyr::planning::Worker> index) -> tyr::planning::astar_eager::WorkerEventHandlerPtr<Kind> override
+    {
+        if (ygg::uint_t(index) != 0)
+            throw std::invalid_argument("State graph construction supports only worker zero.");
+        return std::make_unique<StateGraphWorkerEventHandler<Kind>>(m_state);
+    }
 
-    auto release() && { return std::make_unique<StateGraph<Kind>>(std::move(m_builder)); }
+    auto release() && { return std::move(m_state).release(); }
 };
 
-template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 class PolicyStateGraphPruningStrategy : public tyr::planning::PruningStrategy<Kind>
 {
 private:
@@ -173,7 +187,7 @@ auto compute_goal_distances(const G& graph, const std::vector<graphs::VertexInde
 
 }  // namespace
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto create_astar_options(const StateGraphGenerationOptions& generation_options)
 {
     auto options = tyr::planning::astar_eager::Options<Kind> {};
@@ -182,7 +196,7 @@ auto create_astar_options(const StateGraphGenerationOptions& generation_options)
     return options;
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto generate_state_graph_result(TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& generation_options) -> StateGraphGenerationResult<Kind>
 {
     auto heuristic = tyr::planning::BlindHeuristic<Kind> {};
@@ -197,13 +211,13 @@ auto generate_state_graph_result(TaskSearchContext<Kind>& context, const StateGr
     return { std::move(*event_handler).release(), result.status };
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto generate_state_graph(TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& generation_options) -> std::unique_ptr<StateGraph<Kind>>
 {
     return generate_state_graph_result(context, generation_options).graph;
 }
 
-template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 auto generate_state_graph_result(TaskSearchContext<Kind>& context,
                                  ygg::uint_t state_graph_index,
                                  Policy& policy,
@@ -221,14 +235,16 @@ auto generate_state_graph_result(TaskSearchContext<Kind>& context,
     return { std::move(*event_handler).release(), result.status };
 }
 
-template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
-auto generate_state_graph(TaskSearchContext<Kind>& context, ygg::uint_t state_graph_index, Policy& policy, const StateGraphGenerationOptions& generation_options)
-    -> std::unique_ptr<StateGraph<Kind>>
+template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+auto generate_state_graph(TaskSearchContext<Kind>& context,
+                          ygg::uint_t state_graph_index,
+                          Policy& policy,
+                          const StateGraphGenerationOptions& generation_options) -> std::unique_ptr<StateGraph<Kind>>
 {
     return generate_state_graph_result(context, state_graph_index, policy, generation_options).graph;
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto annotate_state_graph(TaskSearchContext<Kind>& context,
                           const StateGraph<Kind>& graph,
                           StateGraphCostMode cost_mode) -> std::unique_ptr<AnnotatedStateGraph<Kind>>
@@ -256,13 +272,8 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context,
     {
         const auto& state = forward_graph.get_vertex(vertex_index).get_property().state;
         const auto is_alive = goal_distance[vertex_index] != std::numeric_limits<ygg::float_t>::infinity();
-        [[maybe_unused]] const auto added =
-            builder.add_vertex(AnnotatedStateGraphVertexLabel<Kind> { state,
-                                                                      goal_distance[vertex_index],
-                                                                      state == initial_state,
-                                                                      is_goal[vertex_index],
-                                                                      is_alive,
-                                                                      !is_alive });
+        [[maybe_unused]] const auto added = builder.add_vertex(
+            AnnotatedStateGraphVertexLabel<Kind> { state, goal_distance[vertex_index], state == initial_state, is_goal[vertex_index], is_alive, !is_alive });
         assert(added == vertex_index);
     }
 
@@ -275,48 +286,48 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context,
     return std::make_unique<AnnotatedStateGraph<Kind>>(std::move(builder));
 }
 
-template auto generate_state_graph_result<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&,
-                                                                    const StateGraphGenerationOptions&) -> StateGraphGenerationResult<tyr::planning::GroundTag>;
+template auto generate_state_graph_result<tyr::GroundTag>(TaskSearchContext<tyr::GroundTag>&,
+                                                                    const StateGraphGenerationOptions&) -> StateGraphGenerationResult<tyr::GroundTag>;
 
-template auto generate_state_graph_result<tyr::planning::LiftedTag>(TaskSearchContext<tyr::planning::LiftedTag>&,
-                                                                    const StateGraphGenerationOptions&) -> StateGraphGenerationResult<tyr::planning::LiftedTag>;
+template auto generate_state_graph_result<tyr::LiftedTag>(TaskSearchContext<tyr::LiftedTag>&,
+                                                                    const StateGraphGenerationOptions&) -> StateGraphGenerationResult<tyr::LiftedTag>;
 
-template auto generate_state_graph<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&,
-                                                             const StateGraphGenerationOptions&) -> std::unique_ptr<StateGraph<tyr::planning::GroundTag>>;
+template auto generate_state_graph<tyr::GroundTag>(TaskSearchContext<tyr::GroundTag>&,
+                                                             const StateGraphGenerationOptions&) -> std::unique_ptr<StateGraph<tyr::GroundTag>>;
 
-template auto generate_state_graph<tyr::planning::LiftedTag>(TaskSearchContext<tyr::planning::LiftedTag>&,
-                                                             const StateGraphGenerationOptions&) -> std::unique_ptr<StateGraph<tyr::planning::LiftedTag>>;
+template auto generate_state_graph<tyr::LiftedTag>(TaskSearchContext<tyr::LiftedTag>&,
+                                                             const StateGraphGenerationOptions&) -> std::unique_ptr<StateGraph<tyr::LiftedTag>>;
 
-template auto generate_state_graph_result<tyr::planning::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::GroundTag>&,
+template auto generate_state_graph_result<tyr::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::GroundTag>&,
                                                                                                                ygg::uint_t,
                                                                                                                EquivalencePolicy<IdentityEquivalenceTag>&,
                                                                                                                const StateGraphGenerationOptions&)
-    -> StateGraphGenerationResult<tyr::planning::GroundTag>;
+    -> StateGraphGenerationResult<tyr::GroundTag>;
 
-template auto generate_state_graph_result<tyr::planning::LiftedTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::LiftedTag>&,
+template auto generate_state_graph_result<tyr::LiftedTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::LiftedTag>&,
                                                                                                                ygg::uint_t,
                                                                                                                EquivalencePolicy<IdentityEquivalenceTag>&,
                                                                                                                const StateGraphGenerationOptions&)
-    -> StateGraphGenerationResult<tyr::planning::LiftedTag>;
+    -> StateGraphGenerationResult<tyr::LiftedTag>;
 
-template auto generate_state_graph<tyr::planning::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::GroundTag>&,
+template auto generate_state_graph<tyr::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::GroundTag>&,
                                                                                                         ygg::uint_t,
                                                                                                         EquivalencePolicy<IdentityEquivalenceTag>&,
                                                                                                         const StateGraphGenerationOptions&)
-    -> std::unique_ptr<StateGraph<tyr::planning::GroundTag>>;
+    -> std::unique_ptr<StateGraph<tyr::GroundTag>>;
 
-template auto generate_state_graph<tyr::planning::LiftedTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::planning::LiftedTag>&,
+template auto generate_state_graph<tyr::LiftedTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContext<tyr::LiftedTag>&,
                                                                                                         ygg::uint_t,
                                                                                                         EquivalencePolicy<IdentityEquivalenceTag>&,
                                                                                                         const StateGraphGenerationOptions&)
-    -> std::unique_ptr<StateGraph<tyr::planning::LiftedTag>>;
+    -> std::unique_ptr<StateGraph<tyr::LiftedTag>>;
 
-template auto annotate_state_graph<tyr::planning::GroundTag>(TaskSearchContext<tyr::planning::GroundTag>&,
-                                                             const StateGraph<tyr::planning::GroundTag>&,
-                                                             StateGraphCostMode) -> std::unique_ptr<AnnotatedStateGraph<tyr::planning::GroundTag>>;
+template auto annotate_state_graph<tyr::GroundTag>(TaskSearchContext<tyr::GroundTag>&,
+                                                             const StateGraph<tyr::GroundTag>&,
+                                                             StateGraphCostMode) -> std::unique_ptr<AnnotatedStateGraph<tyr::GroundTag>>;
 
-template auto annotate_state_graph<tyr::planning::LiftedTag>(TaskSearchContext<tyr::planning::LiftedTag>&,
-                                                             const StateGraph<tyr::planning::LiftedTag>&,
-                                                             StateGraphCostMode) -> std::unique_ptr<AnnotatedStateGraph<tyr::planning::LiftedTag>>;
+template auto annotate_state_graph<tyr::LiftedTag>(TaskSearchContext<tyr::LiftedTag>&,
+                                                             const StateGraph<tyr::LiftedTag>&,
+                                                             StateGraphCostMode) -> std::unique_ptr<AnnotatedStateGraph<tyr::LiftedTag>>;
 
 }  // namespace runir::datasets

@@ -24,12 +24,12 @@ void bind_repository(nb::module_& m)
             nb::arg("planning_domain"))
         .def(
             "create",
-            [](runir::kr::dl::UnsConstructorRepositoryFactory& self, const tyr::planning::Task<tyr::planning::GroundTag>& task)
+            [](runir::kr::dl::UnsConstructorRepositoryFactory& self, const tyr::planning::Task<tyr::GroundTag>& task)
             { return self.create(task.get_repository()); },
             nb::arg("ground_task"))
         .def(
             "create",
-            [](runir::kr::dl::UnsConstructorRepositoryFactory& self, const tyr::planning::Task<tyr::planning::LiftedTag>& task)
+            [](runir::kr::dl::UnsConstructorRepositoryFactory& self, const tyr::planning::Task<tyr::LiftedTag>& task)
             { return self.create(task.get_repository()); },
             nb::arg("lifted_task"));
 }

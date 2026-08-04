@@ -128,7 +128,7 @@ public:
     bool has_finished() const { return m_stopwatch && m_stopwatch->has_finished(); }
 };
 
-template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
+template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 class Pruning
 {
 private:
@@ -174,7 +174,7 @@ public:
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
+template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 class Generator
 {
 private:
@@ -887,7 +887,7 @@ public:
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
+template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 GenerateResultsFor<Family> generate_impl(FamilyGrammarView<Family> grammar,
                                          const std::vector<tyr::planning::StateView<Kind>>& states,
                                          runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,
@@ -897,7 +897,7 @@ GenerateResultsFor<Family> generate_impl(FamilyGrammarView<Family> grammar,
 }
 
 }  // namespace
-template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
+template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
                                     const std::vector<tyr::planning::StateView<Kind>>& states,
                                     runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,
@@ -907,14 +907,14 @@ GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
 }
 
 template GenerateResultsFor<runir::kr::BaseFamilyTag>
-generate<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>(FamilyGrammarView<runir::kr::BaseFamilyTag>,
-                                                             const std::vector<tyr::planning::StateView<tyr::planning::GroundTag>>&,
+generate<runir::kr::BaseFamilyTag, tyr::GroundTag>(FamilyGrammarView<runir::kr::BaseFamilyTag>,
+                                                             const std::vector<tyr::planning::StateView<tyr::GroundTag>>&,
                                                              runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>&,
                                                              const GenerateOptions&);
 
 template GenerateResultsFor<runir::kr::BaseFamilyTag>
-generate<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>(FamilyGrammarView<runir::kr::BaseFamilyTag>,
-                                                             const std::vector<tyr::planning::StateView<tyr::planning::LiftedTag>>&,
+generate<runir::kr::BaseFamilyTag, tyr::LiftedTag>(FamilyGrammarView<runir::kr::BaseFamilyTag>,
+                                                             const std::vector<tyr::planning::StateView<tyr::LiftedTag>>&,
                                                              runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>&,
                                                              const GenerateOptions&);
 

@@ -113,7 +113,7 @@ public:
     auto identifying_members() const noexcept { return std::make_tuple(get_handle(), m_context->get_index()); }
 };
 
-template<tyr::planning::TaskKind Kind, typename C>
+template<tyr::TaskKind Kind, typename C>
 class View<Index<runir::kr::ps::ext::ExecutionState<Kind>>, C>
 {
 private:

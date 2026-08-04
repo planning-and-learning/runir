@@ -16,7 +16,7 @@ namespace runir::kr::dl::uns
 namespace
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void bind_evaluation_context(nb::module_& m, const char* name)
 {
     using Context = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, Kind>;
@@ -34,8 +34,8 @@ void bind_evaluation_context(nb::module_& m, const char* name)
 
 void bind_semantics_repositories(nb::module_& m)
 {
-    bind_evaluation_context<tyr::planning::GroundTag>(m, "GroundEvaluationContext");
-    bind_evaluation_context<tyr::planning::LiftedTag>(m, "LiftedEvaluationContext");
+    bind_evaluation_context<tyr::GroundTag>(m, "GroundEvaluationContext");
+    bind_evaluation_context<tyr::LiftedTag>(m, "LiftedEvaluationContext");
 }
 
 }  // namespace runir::kr::dl::uns

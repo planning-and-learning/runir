@@ -10,7 +10,7 @@
 namespace runir::kr::dl::semantics
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class EvaluationContext<runir::kr::BaseFamilyTag, Kind> : public BaseEvaluationContext<EvaluationContext<runir::kr::BaseFamilyTag, Kind>, Kind>
 {
 private:

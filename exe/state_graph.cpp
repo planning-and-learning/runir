@@ -32,7 +32,7 @@
 namespace
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void print_state_graph(tyr::planning::TaskPtr<Kind> task, ygg::ExecutionContextPtr execution_context)
 {
     auto context = runir::datasets::TaskSearchContext<Kind>::create(std::move(task), std::move(execution_context));
@@ -76,7 +76,7 @@ int main(int argc, char** argv)
 
     auto parser_options = loki::ParserOptions();
     auto parser = tyr::formalism::planning::Parser(domain_filepath, parser_options);
-    auto lifted_task = tyr::planning::Task<tyr::planning::LiftedTag>::create(parser.parse_task(problem_filepath));
+    auto lifted_task = tyr::planning::Task<tyr::LiftedTag>::create(parser.parse_task(problem_filepath));
     auto execution_context = ygg::ExecutionContext::create(num_worker_threads);
 
     if (!instantiate_ground_task)

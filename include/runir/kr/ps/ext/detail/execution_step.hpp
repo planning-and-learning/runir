@@ -59,7 +59,7 @@ constexpr std::string_view to_string(ModuleProgramOutcome outcome)
 }
 
 /// One canonical execution successor plus the rule and optional planning transition that produced it.
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct ModuleProgramStep
 {
 private:

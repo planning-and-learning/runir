@@ -24,7 +24,7 @@ using runir::graphs::bind_readable_graph;
 namespace
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const char* function_prefix)
 {
     using VertexLabel = StateGraphVertexLabel<Kind>;
@@ -143,8 +143,8 @@ void bind_state_graph(nb::module_& m)
     ygg::add_comparison(edge_label);
     ygg::add_hash(edge_label);
 
-    bind_state_graph_for_kind<tyr::planning::GroundTag>(m, "Ground", "ground");
-    bind_state_graph_for_kind<tyr::planning::LiftedTag>(m, "Lifted", "lifted");
+    bind_state_graph_for_kind<tyr::GroundTag>(m, "Ground", "ground");
+    bind_state_graph_for_kind<tyr::LiftedTag>(m, "Lifted", "lifted");
 }
 
 }  // namespace runir::datasets

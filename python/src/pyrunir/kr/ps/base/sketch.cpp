@@ -22,8 +22,8 @@ void bind_sketch(nb::module_& m, RepositoryBinding& repository)
     using T = Sketch;
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
-    using GroundContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>;
-    using LiftedContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>;
+    using GroundContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
+    using LiftedContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
 
     ygg::bind_index<ygg::Index<T>>(m, "SketchIndex");
 

@@ -413,7 +413,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgram>, C
     }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
@@ -443,7 +443,7 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofEdgeLabel>
     }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofResults<Kind>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }

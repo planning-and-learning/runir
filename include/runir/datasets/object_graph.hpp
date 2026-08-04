@@ -82,13 +82,13 @@ struct ObjectGraphVertexLabel : ygg::comparison::Mixin<ObjectGraphVertexLabel>
     auto identifying_members() const noexcept { return std::tie(labels); }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using ObjectGraphBuilder = graphs::StaticGraphBuilder<ObjectGraphVertexLabel, std::tuple<>>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using ObjectGraph = graphs::StaticGraph<ObjectGraphVertexLabel, std::tuple<>>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto create_object_graph(tyr::planning::StateView<Kind> state) -> std::unique_ptr<ObjectGraph<Kind>>;
 
 }  // namespace runir::datasets

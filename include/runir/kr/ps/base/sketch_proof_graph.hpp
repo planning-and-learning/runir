@@ -15,7 +15,7 @@
 namespace runir::kr::ps::base
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct SketchProofVertexLabel : ygg::comparison::Mixin<SketchProofVertexLabel<Kind>>
 {
     tyr::planning::StateView<Kind> state;
@@ -48,10 +48,10 @@ struct SketchProofEdgeLabel : ygg::comparison::Mixin<SketchProofEdgeLabel>
     auto identifying_members() const noexcept { return std::tie(transition, rule); }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using SketchProofGraphBuilder = graphs::StaticGraphBuilder<SketchProofVertexLabel<Kind>, SketchProofEdgeLabel>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using SketchProofGraph = graphs::StaticGraph<SketchProofVertexLabel<Kind>, SketchProofEdgeLabel>;
 
 }  // namespace runir::kr::ps::base

@@ -15,7 +15,7 @@
 namespace runir::kr::ps::ext
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                    ModuleProgramView program,
                    const ModuleProgramSearchOptions<Kind>& options) -> ModuleProgramProofResults<Kind>

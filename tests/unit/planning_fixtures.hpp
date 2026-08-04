@@ -9,15 +9,15 @@ namespace runir::tests
 {
 
 auto make_ground_context(const std::filesystem::path& domain_file,
-                         const std::filesystem::path& task_file) -> datasets::TaskSearchContextPtr<tyr::planning::GroundTag>;
+                         const std::filesystem::path& task_file) -> datasets::TaskSearchContextPtr<tyr::GroundTag>;
 
 auto make_lifted_context(const std::filesystem::path& domain_file,
-                         const std::filesystem::path& task_file) -> datasets::TaskSearchContextPtr<tyr::planning::LiftedTag>;
+                         const std::filesystem::path& task_file) -> datasets::TaskSearchContextPtr<tyr::LiftedTag>;
 
 auto make_ground_contexts(const std::filesystem::path& domain_file,
-                          const std::vector<std::filesystem::path>& task_files) -> datasets::TaskSearchContextList<tyr::planning::GroundTag>;
+                          const std::vector<std::filesystem::path>& task_files) -> datasets::TaskSearchContextList<tyr::GroundTag>;
 
-auto make_gripper_ground_context() -> datasets::TaskSearchContextPtr<tyr::planning::GroundTag>;
+auto make_gripper_ground_context() -> datasets::TaskSearchContextPtr<tyr::GroundTag>;
 
 }  // namespace runir::tests
 

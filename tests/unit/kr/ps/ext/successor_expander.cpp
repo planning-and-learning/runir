@@ -48,16 +48,16 @@ auto create_concept_feature(kr::ps::ext::Repository& repository,
     return create_feature<kr::dl::ConceptTag>(repository, expression, name);
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto create_task_context(const std::filesystem::path& domain, const std::filesystem::path& task_file)
 {
-    if constexpr (std::same_as<Kind, tyr::planning::GroundTag>)
+    if constexpr (std::same_as<Kind, tyr::GroundTag>)
         return kr::TaskContext<Kind>::create(make_ground_context(domain, task_file));
     else
         return kr::TaskContext<Kind>::create(make_lifted_context(domain, task_file));
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void expect_initial_execution_state_uses_expander_repository()
 {
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
@@ -87,7 +87,7 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationReusesTaskContextCache)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -96,7 +96,7 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationReusesTaskContextCache)
                                       task->get_domain().get_domain(),
                                       *repository);
     const auto program = create_module_program(*repository, module, { module });
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto initial_state = expander.initial_state();
     const auto first = expander.control_steps(initial_state);
     ASSERT_EQ(first.size(), 1);
@@ -113,8 +113,8 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationReusesTaskContextCache)
 
 TEST(RunirTests, ExtGroundAndLiftedInitialStatesUseExpanderRepository)
 {
-    expect_initial_execution_state_uses_expander_repository<tyr::planning::GroundTag>();
-    expect_initial_execution_state_uses_expander_repository<tyr::planning::LiftedTag>();
+    expect_initial_execution_state_uses_expander_repository<tyr::GroundTag>();
+    expect_initial_execution_state_uses_expander_repository<tyr::LiftedTag>();
 }
 
 TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
@@ -123,7 +123,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -166,7 +166,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     EXPECT_NE(formatted.find(formatter_fragment("concept_load_register")), std::string::npos) << formatted;
 
     const auto program = create_module_program(*repository, module, { module });
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto initial_state = expander.initial_state();
     const auto steps = expander.load_steps(initial_state);
     ASSERT_GT(steps.size(), 1);
@@ -184,9 +184,9 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     }
     EXPECT_EQ(loaded_objects.size(), steps.size());
 
-    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
-    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     universal_options.universal = true;
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
@@ -201,7 +201,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     ygg::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
     ASSERT_NE(expected_steps.front().get_target().get_index(), steps.front().get_target().get_index());
 
-    auto shuffled_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto shuffled_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     shuffled_options.random_seed = 1;
     shuffled_options.shuffle_choice_points = true;
     const auto shuffled = kr::ps::ext::find_solution(task_context, program, shuffled_options);
@@ -215,7 +215,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     ASSERT_TRUE(expected_loaded);
     EXPECT_EQ(actual_loaded.value().get_index(), expected_loaded.value().get_index());
 
-    auto options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     options.max_num_states = 1;
     options.universal = true;
     const auto bounded = kr::ps::ext::find_solution(task_context, program, options);
@@ -230,7 +230,7 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -250,7 +250,7 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
     EXPECT_NE(formatted.find(formatter_fragment("role_load_register")), std::string::npos) << formatted;
 
     const auto program = create_module_program(*repository, module, { module });
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto initial_state = expander.initial_state();
     const auto steps = expander.load_steps(initial_state);
     ASSERT_GT(steps.size(), 1);
@@ -276,7 +276,7 @@ TEST(RunirTests, ExtSuccessorEnumerationCombinesAllApplicableRuleKinds)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto repository = task_context->ext_repository;
     const auto module =
@@ -284,7 +284,7 @@ TEST(RunirTests, ExtSuccessorEnumerationCombinesAllApplicableRuleKinds)
                                       task->get_domain().get_domain(),
                                       *repository);
     const auto program = create_module_program(*repository, module, { module });
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto initial_state = expander.initial_state();
     const auto successors = expander.labeled_successors(initial_state);
     const auto steps = expander.steps(initial_state, successors);
@@ -325,9 +325,9 @@ TEST(RunirTests, ExtSuccessorEnumerationCombinesAllApplicableRuleKinds)
     const auto control_steps = expander.control_steps(initial_state, successors);
     EXPECT_EQ(control_steps.size(), do_steps + sketch_steps);
 
-    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
-    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     universal_options.universal = true;
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
@@ -342,7 +342,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -408,7 +408,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     const auto caller = repository->get_or_create(caller_data).first;
 
     const auto program = create_module_program(*repository, caller, { caller, callee });
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto initial_state = expander.initial_state();
     const auto call_steps = expander.control_steps(initial_state);
     ASSERT_EQ(call_steps.size(), 1);
@@ -462,7 +462,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -493,7 +493,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     const auto caller = repository->get_or_create(caller_data).first;
 
     const auto program = create_module_program(*repository, caller, { caller, callee });
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto steps = expander.control_steps(expander.initial_state());
     ASSERT_EQ(steps.size(), 1);
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
@@ -507,7 +507,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -549,7 +549,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     kr::ps::ext::canonicalize(module_data);
     const auto module = repository->get_or_create(module_data).first;
     const auto program = create_module_program(*repository, module, { module });
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto initial_state = expander.initial_state();
     const auto steps = expander.control_steps(initial_state);
     ASSERT_GT(steps.size(), 1);
@@ -563,9 +563,9 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
         EXPECT_NE(step.get_target().get_state().get_index(), initial_state.get_state().get_index());
     }
 
-    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
-    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     universal_options.universal = true;
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
@@ -580,7 +580,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     ygg::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
     ASSERT_NE(expected_steps.front().get_target().get_index(), steps.front().get_target().get_index());
 
-    auto shuffled_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto shuffled_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     shuffled_options.random_seed = 1;
     shuffled_options.shuffle_choice_points = true;
     const auto shuffled = kr::ps::ext::find_solution(task_context, program, shuffled_options);
@@ -599,7 +599,7 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -609,14 +609,14 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
                                       task->get_domain().get_domain(),
                                       *repository);
     const auto program = create_module_program(*repository, module, { module });
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto initial_state = expander.initial_state();
     const auto steps = expander.control_steps(initial_state);
     ASSERT_EQ(steps.size(), 1);
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION);
     EXPECT_EQ(steps.front().get_target().get_state().get_index(), initial_state.get_state().get_index());
 
-    auto options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     options.universal = true;
     const auto result = kr::ps::ext::find_solution(task_context, program, options);
     EXPECT_EQ(result.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
@@ -633,7 +633,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -696,7 +696,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     const auto module = repository->get_or_create(module_data).first;
 
     const auto program = create_module_program(*repository, module, { module });
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto steps = expander.control_steps(expander.initial_state());
     ASSERT_GT(steps.size(), 2);
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
@@ -713,9 +713,9 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     EXPECT_TRUE(reached_move_target);
     EXPECT_TRUE(reached_pick_target);
 
-    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
-    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     universal_options.universal = true;
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);

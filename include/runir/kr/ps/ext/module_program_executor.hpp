@@ -7,22 +7,22 @@
 
 namespace runir::kr::ps::ext
 {
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                    ModuleProgramView program,
                    const ModuleProgramSearchOptions<Kind>& options) -> ModuleProgramProofResults<Kind>;
 
 #ifndef RUNIR_HEADER_INSTANTIATION
 
-extern template auto find_solution<tyr::planning::GroundTag>(runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
+extern template auto find_solution<tyr::GroundTag>(runir::kr::TaskContextPtr<tyr::GroundTag> task_context,
                                                              ModuleProgramView program,
-                                                             const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options)
-    -> ModuleProgramProofResults<tyr::planning::GroundTag>;
+                                                             const ModuleProgramSearchOptions<tyr::GroundTag>& options)
+    -> ModuleProgramProofResults<tyr::GroundTag>;
 
-extern template auto find_solution<tyr::planning::LiftedTag>(runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
+extern template auto find_solution<tyr::LiftedTag>(runir::kr::TaskContextPtr<tyr::LiftedTag> task_context,
                                                              ModuleProgramView program,
-                                                             const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options)
-    -> ModuleProgramProofResults<tyr::planning::LiftedTag>;
+                                                             const ModuleProgramSearchOptions<tyr::LiftedTag>& options)
+    -> ModuleProgramProofResults<tyr::LiftedTag>;
 
 #endif
 

@@ -30,7 +30,7 @@
 namespace runir::kr::ps::ext
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class SuccessorExpander
 {
 public:
@@ -369,8 +369,8 @@ private:
 
 #ifndef RUNIR_HEADER_INSTANTIATION
 
-extern template class SuccessorExpander<tyr::planning::GroundTag>;
-extern template class SuccessorExpander<tyr::planning::LiftedTag>;
+extern template class SuccessorExpander<tyr::GroundTag>;
+extern template class SuccessorExpander<tyr::LiftedTag>;
 
 #endif
 

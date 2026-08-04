@@ -44,7 +44,7 @@ constexpr std::string_view to_string(ModuleProgramProofStatus status)
     throw std::invalid_argument("invalid ModuleProgramProofStatus");
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct ModuleProgramSearchOptions
 {
     bool universal = false;
@@ -55,7 +55,7 @@ struct ModuleProgramSearchOptions
     bool shuffle_choice_points = false;
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct ModuleProgramProofResults
 {
     ModuleProgramProofStatus status = ModuleProgramProofStatus::SUCCESS;

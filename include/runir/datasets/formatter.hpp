@@ -65,7 +65,7 @@ struct formatter<runir::datasets::ObjectGraphVertexLabel, char> : formatter<std:
     }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct formatter<runir::datasets::StateGraphVertexLabel<Kind>, char> : formatter<std::string_view>
 {
     template<typename FormatContext>
@@ -76,7 +76,7 @@ struct formatter<runir::datasets::StateGraphVertexLabel<Kind>, char> : formatter
     }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct formatter<runir::datasets::AnnotatedStateGraphVertexLabel<Kind>, char> : formatter<std::string_view>
 {
     template<typename FormatContext>

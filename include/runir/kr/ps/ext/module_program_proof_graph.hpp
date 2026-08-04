@@ -17,7 +17,7 @@
 namespace runir::kr::ps::ext
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct ModuleProgramProofVertexLabel : ygg::comparison::Mixin<ModuleProgramProofVertexLabel<Kind>>
 {
     ExecutionStateView<Kind> execution_state;
@@ -66,10 +66,10 @@ struct ModuleProgramProofEdgeLabel : ygg::comparison::Mixin<ModuleProgramProofEd
     auto identifying_members() const noexcept { return std::tie(state_transition, rule); }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using ModuleProgramProofGraphBuilder = graphs::StaticGraphBuilder<ModuleProgramProofVertexLabel<Kind>, ModuleProgramProofEdgeLabel>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using ModuleProgramProofGraph = graphs::StaticGraph<ModuleProgramProofVertexLabel<Kind>, ModuleProgramProofEdgeLabel>;
 
 }  // namespace runir::kr::ps::ext

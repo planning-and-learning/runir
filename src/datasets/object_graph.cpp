@@ -32,7 +32,7 @@ namespace runir::datasets
 namespace
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class ObjectGraphConstructionContext
 {
 private:
@@ -106,7 +106,7 @@ public:
     }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void add_objects(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext<Kind>& context)
 {
     const auto task = state.get_state_repository()->get_task()->get_task();
@@ -118,7 +118,7 @@ void add_objects(tyr::planning::StateView<Kind> state, ObjectGraphConstructionCo
         context.add_object(object);
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void add_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext<Kind>& context)
 {
     for (auto atom : state.get_static_atoms_view())
@@ -129,7 +129,7 @@ void add_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionCont
             context.template add_atom<StateObjectGraphVertexLabelEntry>(*atom);
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void add_goal_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext<Kind>& context)
 {
     const auto goal = state.get_state_repository()->get_task()->get_task().get_goal();
@@ -148,7 +148,7 @@ void add_goal_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructio
 
 }  // namespace
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto create_object_graph(tyr::planning::StateView<Kind> state) -> std::unique_ptr<ObjectGraph<Kind>>
 {
     auto context = ObjectGraphConstructionContext<Kind> {};
@@ -159,9 +159,9 @@ auto create_object_graph(tyr::planning::StateView<Kind> state) -> std::unique_pt
 }
 
 template auto
-    create_object_graph<tyr::planning::GroundTag>(tyr::planning::StateView<tyr::planning::GroundTag>) -> std::unique_ptr<ObjectGraph<tyr::planning::GroundTag>>;
+    create_object_graph<tyr::GroundTag>(tyr::planning::StateView<tyr::GroundTag>) -> std::unique_ptr<ObjectGraph<tyr::GroundTag>>;
 
 template auto
-    create_object_graph<tyr::planning::LiftedTag>(tyr::planning::StateView<tyr::planning::LiftedTag>) -> std::unique_ptr<ObjectGraph<tyr::planning::LiftedTag>>;
+    create_object_graph<tyr::LiftedTag>(tyr::planning::StateView<tyr::LiftedTag>) -> std::unique_ptr<ObjectGraph<tyr::LiftedTag>>;
 
 }  // namespace runir::datasets

@@ -11,7 +11,7 @@
 namespace runir::kr::ps::dl
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class EvaluationContext<runir::kr::BaseFamilyTag, Kind> :
     public BaseEvaluationContext<EvaluationContext<runir::kr::BaseFamilyTag, Kind>, runir::kr::BaseFamilyTag, Kind>
 {

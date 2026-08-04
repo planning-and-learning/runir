@@ -39,12 +39,11 @@ namespace runir::datasets
 namespace
 {
 
-template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
-class EquivalenceGraphEventHandler : public tyr::planning::astar_eager::EventHandler<Kind>
+template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+class EquivalenceGraphConstructionState
 {
 private:
     using StateToVertexMap = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex>;
-    using StateToEquivalenceVertexMap = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex>;
     using RepresentativeToVertexMap = ygg::UnorderedMap<EquivalenceVertexLabel, graphs::VertexIndex>;
     using EquivalenceEdgeSet = ygg::UnorderedSet<std::pair<graphs::VertexIndex, graphs::VertexIndex>>;
 
@@ -58,8 +57,8 @@ private:
     StateToVertexMap m_state_to_vertex;
     ygg::UnorderedMap<tyr::planning::StateView<Kind>, StateGraphVertexRef> m_pruned_state_to_representative;
     std::vector<graphs::VertexIndex> m_state_vertex_to_equivalence_vertex;
-    tyr::planning::Statistics m_statistics;
 
+public:
     auto get_or_create_equivalence_vertex(StateGraphVertexRef representative) -> graphs::VertexIndex
     {
         const auto label = EquivalenceVertexLabel { representative.state_graph_index, representative.state_vertex_index };
@@ -136,12 +135,11 @@ private:
             m_equivalence_builder->add_directed_edge(equivalence_source, equivalence_target, EquivalenceEdgeLabel { m_state_graph_index, state_edge });
     }
 
-public:
-    EquivalenceGraphEventHandler(ygg::uint_t state_graph_index,
-                                 Policy& policy,
-                                 EquivalenceGraphBuilder& equivalence_builder,
-                                 RepresentativeToVertexMap& representative_to_vertex,
-                                 EquivalenceEdgeSet& equivalence_edges) :
+    EquivalenceGraphConstructionState(ygg::uint_t state_graph_index,
+                                      Policy& policy,
+                                      EquivalenceGraphBuilder& equivalence_builder,
+                                      RepresentativeToVertexMap& representative_to_vertex,
+                                      EquivalenceEdgeSet& equivalence_edges) :
         m_state_graph_index(state_graph_index),
         m_policy(&policy),
         m_equivalence_builder(&equivalence_builder),
@@ -171,68 +169,95 @@ public:
         return true;
     }
 
-    void on_expand_node(const tyr::planning::Node<Kind>& node) override { get_or_create_state_vertex(node); }
+    auto release() && { return std::make_unique<StateGraph<Kind>>(std::move(m_state_builder)); }
+};
 
-    void on_expand_goal_node(const tyr::planning::Node<Kind>& node) override { static_cast<void>(node); }
+template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+class EquivalenceGraphWorkerEventHandler final : public tyr::planning::astar_eager::WorkerEventHandler<Kind>
+{
+private:
+    EquivalenceGraphConstructionState<Kind, Policy>* m_state;
+
+public:
+    explicit EquivalenceGraphWorkerEventHandler(EquivalenceGraphConstructionState<Kind, Policy>& state) : m_state(&state) {}
+
+    void on_expand_node(const tyr::planning::Node<Kind>& node) override { m_state->get_or_create_state_vertex(node); }
 
     void on_generate_node(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
     {
-        record_edge(source_node, labeled_succ_node);
-    }
-
-    void on_generate_node_relaxed(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
-    {
-        static_cast<void>(source_node);
-        static_cast<void>(labeled_succ_node);
+        m_state->record_edge(source_node, labeled_succ_node);
     }
 
     void on_generate_node_not_relaxed(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
     {
-        record_edge(source_node, labeled_succ_node);
+        m_state->record_edge(source_node, labeled_succ_node);
     }
-
-    void on_close_node(const tyr::planning::Node<Kind>& node) override { static_cast<void>(node); }
-
-    void on_prune_node(const tyr::planning::Node<Kind>& node) override { static_cast<void>(node); }
 
     void on_prune_node(const tyr::planning::Node<Kind>& source_node, const tyr::planning::LabeledNode<Kind>& labeled_succ_node) override
     {
-        record_edge(source_node, labeled_succ_node);
+        m_state->record_edge(source_node, labeled_succ_node);
+    }
+};
+
+template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+class EquivalenceGraphEventHandler final : public tyr::planning::astar_eager::EventHandler<Kind>
+{
+private:
+    EquivalenceGraphConstructionState<Kind, Policy> m_state;
+
+public:
+    template<typename RepresentativeToVertexMap, typename EquivalenceEdgeSet>
+    EquivalenceGraphEventHandler(ygg::uint_t state_graph_index,
+                                 Policy& policy,
+                                 EquivalenceGraphBuilder& equivalence_builder,
+                                 RepresentativeToVertexMap& representative_to_vertex,
+                                 EquivalenceEdgeSet& equivalence_edges) :
+        m_state(state_graph_index, policy, equivalence_builder, representative_to_vertex, equivalence_edges)
+    {
     }
 
     void on_start_search(const tyr::planning::Node<Kind>& node, ygg::float_t f_value) override
     {
         static_cast<void>(f_value);
-        get_or_create_state_vertex(node);
+        m_state.get_or_create_state_vertex(node);
     }
 
-    void on_finish_f_layer(ygg::float_t f_value) override { static_cast<void>(f_value); }
-    void on_end_search(tyr::planning::SearchStatus status) override { static_cast<void>(status); }
+    void on_end_search(tyr::planning::SearchStatus status, const tyr::planning::Statistics& statistics) override
+    {
+        static_cast<void>(status);
+        static_cast<void>(statistics);
+    }
 
     void on_solved(const tyr::planning::Plan<Kind>& plan) override { static_cast<void>(plan); }
-    const tyr::planning::Statistics& get_search_statistics() const override { return m_statistics; }
 
-    const tyr::planning::Statistics& get_statistics() const override { return m_statistics; }
+    auto make_worker(ygg::Index<tyr::planning::Worker> index) -> tyr::planning::astar_eager::WorkerEventHandlerPtr<Kind> override
+    {
+        if (ygg::uint_t(index) != 0)
+            throw std::invalid_argument("Equivalence graph construction supports only worker zero.");
+        return std::make_unique<EquivalenceGraphWorkerEventHandler<Kind, Policy>>(m_state);
+    }
 
-    auto release() && { return std::make_unique<StateGraph<Kind>>(std::move(m_state_builder)); }
+    auto get_state() -> EquivalenceGraphConstructionState<Kind, Policy>& { return m_state; }
+
+    auto release() && { return std::move(m_state).release(); }
 };
 
-template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 class EquivalenceGraphPruningStrategy : public tyr::planning::PruningStrategy<Kind>
 {
 private:
-    EquivalenceGraphEventHandler<Kind, Policy>* m_event_handler;
+    EquivalenceGraphConstructionState<Kind, Policy>* m_state;
 
 public:
-    explicit EquivalenceGraphPruningStrategy(EquivalenceGraphEventHandler<Kind, Policy>& event_handler) : m_event_handler(&event_handler) {}
+    explicit EquivalenceGraphPruningStrategy(EquivalenceGraphConstructionState<Kind, Policy>& state) : m_state(&state) {}
 
     bool should_prune_successor_state(const tyr::planning::StateView<Kind>& state, const tyr::planning::StateView<Kind>& succ_state, bool is_new_succ) override
     {
-        return m_event_handler->should_prune_successor_state(state, succ_state, is_new_succ);
+        return m_state->should_prune_successor_state(state, succ_state, is_new_succ);
     }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto create_astar_options(const StateGraphGenerationOptions& state_graph_options)
 {
     auto options = tyr::planning::astar_eager::Options<Kind> {};
@@ -243,7 +268,7 @@ auto create_astar_options(const StateGraphGenerationOptions& state_graph_options
 
 }  // namespace
 
-template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
                                 Policy& policy,
                                 const StateGraphGenerationOptions& state_graph_options) -> EquivalenceGraphConstructionResult<Kind>
@@ -266,7 +291,7 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
         auto options = create_astar_options<Kind>(state_graph_options);
         options.event_handler = event_handler;
         options.goal_strategy = tyr::planning::ExhaustiveGoalStrategy<Kind>::create();
-        options.pruning_strategy = std::make_shared<EquivalenceGraphPruningStrategy<Kind, Policy>>(*event_handler);
+        options.pruning_strategy = std::make_shared<EquivalenceGraphPruningStrategy<Kind, Policy>>(event_handler->get_state());
 
         const auto result = tyr::planning::astar_eager::find_solution(*context.task, *context.successor_generator, heuristic, options);
 
@@ -277,13 +302,13 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
     return { std::move(state_graph_results), std::move(graph) };
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, EquivalencePolicyMode policy_mode) -> EquivalenceGraphConstructionResult<Kind>
 {
     return generate_equivalence_graph(contexts, EquivalenceGraphGenerationOptions { StateGraphGenerationOptions(), policy_mode });
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
                                 const EquivalenceGraphGenerationOptions& options) -> EquivalenceGraphConstructionResult<Kind>
 {
@@ -304,36 +329,36 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
     throw std::runtime_error(fmt::format("Unsupported equivalence policy mode: {}.", static_cast<int>(options.policy_mode)));
 }
 
-template auto generate_equivalence_graph<tyr::planning::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContextList<tyr::planning::GroundTag>&,
+template auto generate_equivalence_graph<tyr::GroundTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContextList<tyr::GroundTag>&,
                                                                                                               EquivalencePolicy<IdentityEquivalenceTag>&,
                                                                                                               const StateGraphGenerationOptions&)
-    -> EquivalenceGraphConstructionResult<tyr::planning::GroundTag>;
+    -> EquivalenceGraphConstructionResult<tyr::GroundTag>;
 
-template auto generate_equivalence_graph<tyr::planning::LiftedTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContextList<tyr::planning::LiftedTag>&,
+template auto generate_equivalence_graph<tyr::LiftedTag, EquivalencePolicy<IdentityEquivalenceTag>>(TaskSearchContextList<tyr::LiftedTag>&,
                                                                                                               EquivalencePolicy<IdentityEquivalenceTag>&,
                                                                                                               const StateGraphGenerationOptions&)
-    -> EquivalenceGraphConstructionResult<tyr::planning::LiftedTag>;
+    -> EquivalenceGraphConstructionResult<tyr::LiftedTag>;
 
-template auto generate_equivalence_graph<tyr::planning::GroundTag, EquivalencePolicy<GIEquivalenceTag>>(TaskSearchContextList<tyr::planning::GroundTag>&,
+template auto generate_equivalence_graph<tyr::GroundTag, EquivalencePolicy<GIEquivalenceTag>>(TaskSearchContextList<tyr::GroundTag>&,
                                                                                                         EquivalencePolicy<GIEquivalenceTag>&,
                                                                                                         const StateGraphGenerationOptions&)
-    -> EquivalenceGraphConstructionResult<tyr::planning::GroundTag>;
+    -> EquivalenceGraphConstructionResult<tyr::GroundTag>;
 
-template auto generate_equivalence_graph<tyr::planning::LiftedTag, EquivalencePolicy<GIEquivalenceTag>>(TaskSearchContextList<tyr::planning::LiftedTag>&,
+template auto generate_equivalence_graph<tyr::LiftedTag, EquivalencePolicy<GIEquivalenceTag>>(TaskSearchContextList<tyr::LiftedTag>&,
                                                                                                         EquivalencePolicy<GIEquivalenceTag>&,
                                                                                                         const StateGraphGenerationOptions&)
-    -> EquivalenceGraphConstructionResult<tyr::planning::LiftedTag>;
+    -> EquivalenceGraphConstructionResult<tyr::LiftedTag>;
 
-template auto generate_equivalence_graph<tyr::planning::GroundTag>(TaskSearchContextList<tyr::planning::GroundTag>&,
-                                                                   EquivalencePolicyMode) -> EquivalenceGraphConstructionResult<tyr::planning::GroundTag>;
+template auto generate_equivalence_graph<tyr::GroundTag>(TaskSearchContextList<tyr::GroundTag>&,
+                                                                   EquivalencePolicyMode) -> EquivalenceGraphConstructionResult<tyr::GroundTag>;
 
-template auto generate_equivalence_graph<tyr::planning::LiftedTag>(TaskSearchContextList<tyr::planning::LiftedTag>&,
-                                                                   EquivalencePolicyMode) -> EquivalenceGraphConstructionResult<tyr::planning::LiftedTag>;
+template auto generate_equivalence_graph<tyr::LiftedTag>(TaskSearchContextList<tyr::LiftedTag>&,
+                                                                   EquivalencePolicyMode) -> EquivalenceGraphConstructionResult<tyr::LiftedTag>;
 
-template auto generate_equivalence_graph<tyr::planning::GroundTag>(TaskSearchContextList<tyr::planning::GroundTag>&, const EquivalenceGraphGenerationOptions&)
-    -> EquivalenceGraphConstructionResult<tyr::planning::GroundTag>;
+template auto generate_equivalence_graph<tyr::GroundTag>(TaskSearchContextList<tyr::GroundTag>&, const EquivalenceGraphGenerationOptions&)
+    -> EquivalenceGraphConstructionResult<tyr::GroundTag>;
 
-template auto generate_equivalence_graph<tyr::planning::LiftedTag>(TaskSearchContextList<tyr::planning::LiftedTag>&, const EquivalenceGraphGenerationOptions&)
-    -> EquivalenceGraphConstructionResult<tyr::planning::LiftedTag>;
+template auto generate_equivalence_graph<tyr::LiftedTag>(TaskSearchContextList<tyr::LiftedTag>&, const EquivalenceGraphGenerationOptions&)
+    -> EquivalenceGraphConstructionResult<tyr::LiftedTag>;
 
 }  // namespace runir::datasets

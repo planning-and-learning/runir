@@ -15,7 +15,7 @@
 namespace runir::kr
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 std::shared_ptr<TaskContext<Kind>> TaskContext<Kind>::create(runir::datasets::TaskSearchContextPtr<Kind> search_context)
 {
     if (!search_context || !search_context->task || !search_context->execution_context || !search_context->state_repository
@@ -24,7 +24,7 @@ std::shared_ptr<TaskContext<Kind>> TaskContext<Kind>::create(runir::datasets::Ta
     return std::shared_ptr<TaskContext>(new TaskContext(std::move(search_context)));
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 TaskContext<Kind>::TaskContext(runir::datasets::TaskSearchContextPtr<Kind> search_context_) :
     search_context(std::move(search_context_)),
     base_dl_repository(runir::kr::dl::BaseConstructorRepositoryFactory().create(search_context->task->get_repository())),
@@ -41,7 +41,7 @@ TaskContext<Kind>::TaskContext(runir::datasets::TaskSearchContextPtr<Kind> searc
 {
 }
 
-template struct TaskContext<tyr::planning::GroundTag>;
-template struct TaskContext<tyr::planning::LiftedTag>;
+template struct TaskContext<tyr::GroundTag>;
+template struct TaskContext<tyr::LiftedTag>;
 
 }  // namespace runir::kr

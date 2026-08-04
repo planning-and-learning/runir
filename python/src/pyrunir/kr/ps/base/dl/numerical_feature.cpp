@@ -27,8 +27,8 @@ void bind_numerical_feature(nb::module_& m, RepositoryBinding& repository)
     using ConcreteFeature = runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>;
     using ConcreteFeatureData = ygg::Data<ConcreteFeature>;
     using ConcreteFeatureView = ygg::View<ygg::Index<ConcreteFeature>, Repository>;
-    using GroundContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>;
-    using LiftedContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>;
+    using GroundContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
 
     ygg::bind_index<ygg::Index<Feature>>(m, "NumericalFeatureIndex");
     ygg::bind_index<ygg::Index<ConcreteFeature>>(m, "ConcreteNumericalFeatureIndex");

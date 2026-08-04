@@ -8,7 +8,7 @@
 namespace runir::kr::dl::semantics::uns
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 const auto& get_repository(const runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, Kind>& context) noexcept
 {
     return runir::kr::dl::semantics::get_repository(context);

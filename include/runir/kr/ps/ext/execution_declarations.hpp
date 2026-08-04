@@ -27,33 +27,33 @@ enum class ExecutionPhase : std::uint8_t
     EXTERNAL,
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct ExecutionState
 {
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class ExecutionRepository;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class ExecutionRepositoryFactory;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using ExecutionRepositoryPtr = std::shared_ptr<ExecutionRepository<Kind>>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using ExecutionRepositoryFactoryPtr = std::shared_ptr<ExecutionRepositoryFactory<Kind>>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using RegisterValuesView = ygg::View<ygg::Index<RegisterValues>, ExecutionRepository<Kind>>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using CallArgumentsView = ygg::View<ygg::Index<CallArguments>, ExecutionRepository<Kind>>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using CallStackView = ygg::View<ygg::Index<CallStack>, ExecutionRepository<Kind>>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using ExecutionStateView = ygg::View<ygg::Index<ExecutionState<Kind>>, ExecutionRepository<Kind>>;
 
 }  // namespace runir::kr::ps::ext

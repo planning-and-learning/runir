@@ -73,7 +73,7 @@ struct GenerateResultsFor
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, tyr::planning::TaskKind Kind>
+template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
                                     const std::vector<tyr::planning::StateView<Kind>>& states,
                                     runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,

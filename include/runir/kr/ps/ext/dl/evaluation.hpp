@@ -13,14 +13,14 @@
 namespace runir::kr::ps::ext
 {
 
-template<typename FeatureTag, typename C, tyr::planning::TaskKind Kind>
+template<typename FeatureTag, typename C, tyr::TaskKind Kind>
 auto evaluate(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C> feature,
               runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {
     return runir::kr::dl::semantics::evaluate(feature.get_feature(), context).get();
 }
 
-template<typename FeatureTag, typename C, tyr::planning::TaskKind Kind>
+template<typename FeatureTag, typename C, tyr::TaskKind Kind>
 auto evaluate(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C> feature,
               runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
               runir::kr::dl::semantics::EvaluationWorkspace& workspace)
@@ -28,14 +28,14 @@ auto evaluate(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::Ext
     return runir::kr::dl::semantics::evaluate(feature.get_feature(), context, workspace).get();
 }
 
-template<typename FeatureTag, typename C, tyr::planning::TaskKind Kind>
+template<typename FeatureTag, typename C, tyr::TaskKind Kind>
 auto evaluate(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> feature,
               runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::evaluate(child, context); }, feature.get_variant());
 }
 
-template<typename FeatureTag, typename C, tyr::planning::TaskKind Kind>
+template<typename FeatureTag, typename C, tyr::TaskKind Kind>
 auto evaluate(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> feature,
               runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
               runir::kr::dl::semantics::EvaluationWorkspace& workspace)

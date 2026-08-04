@@ -31,7 +31,7 @@
 namespace runir::datasets
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct TaskClass : ygg::comparison::Mixin<TaskClass<Kind>>
 {
     std::vector<tyr::planning::TaskPtr<Kind>> tasks;
@@ -43,7 +43,7 @@ struct TaskClass : ygg::comparison::Mixin<TaskClass<Kind>>
     auto identifying_members() const noexcept { return std::tie(tasks); }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct TaskSearchContext
 {
     tyr::planning::TaskPtr<Kind> task;
@@ -83,13 +83,13 @@ private:
     }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using TaskSearchContextPtr = std::shared_ptr<TaskSearchContext<Kind>>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using TaskSearchContextList = std::vector<TaskSearchContextPtr<Kind>>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct TaskClassSearchContexts
 {
     TaskSearchContextList<Kind> contexts;

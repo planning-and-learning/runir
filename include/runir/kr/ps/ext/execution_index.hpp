@@ -30,7 +30,7 @@ struct Index<runir::kr::ps::ext::CallStack> : IndexMixin<Index<runir::kr::ps::ex
     using Base::Base;
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct Index<runir::kr::ps::ext::ExecutionState<Kind>> : IndexMixin<Index<runir::kr::ps::ext::ExecutionState<Kind>>>
 {
     using Base = IndexMixin<Index<runir::kr::ps::ext::ExecutionState<Kind>>>;

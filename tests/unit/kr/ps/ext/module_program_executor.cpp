@@ -50,7 +50,7 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -64,7 +64,7 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     auto classifier_repository = task_context->uns_repository;
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/always.classifier"), task->get_domain().get_domain(), *classifier_repository);
 
-    auto options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     options.classifier = classifier;
     const auto result = kr::ps::ext::find_solution(task_context, program, options);
 
@@ -90,7 +90,7 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     const auto task_file = benchmark_path("classical/profiling/blocksworld-large-simple/p-100-2.pddl");
     auto search_context = make_ground_context(domain, task_file);
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -98,7 +98,7 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(task->get_domain().get_domain(), *repository);
     ASSERT_EQ(program.get_modules().size(), 5);
 
-    auto search_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
+    auto search_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag>();
 
     const auto search_result = kr::ps::ext::find_solution(task_context, program, search_options);
     EXPECT_TRUE(search_result.is_successful());
@@ -133,7 +133,7 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -142,7 +142,7 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
         task->get_domain().get_domain(),
         *repository);
     const auto program = create_module_program(*repository, module, { module });
-    auto expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, program);
+    auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto initial_state = expander.initial_state();
     const auto immediate = expander.labeled_successors(initial_state);
     const auto steps = expander.control_steps(initial_state, immediate);
@@ -151,9 +151,9 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
     for (const auto& step : steps)
         EXPECT_EQ(step.plan_suffix.size(), 1);
 
-    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
-    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     universal_options.universal = true;
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
@@ -171,13 +171,13 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
         task->get_domain().get_domain(),
         *repository);
     const auto two_step_program = create_module_program(*repository, two_step_module, { two_step_module });
-    auto two_step_expander = kr::ps::ext::SuccessorExpander<p::GroundTag>(task_context, two_step_program);
+    auto two_step_expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, two_step_program);
     const auto two_step_state = two_step_expander.initial_state();
     const auto two_step_outcomes = two_step_expander.control_steps(two_step_state);
     ASSERT_EQ(two_step_outcomes.size(), 1);
     EXPECT_EQ(two_step_outcomes.front().status, kr::ps::ext::detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION);
 
-    auto rejected_options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto rejected_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     const auto rejected = kr::ps::ext::find_solution(task_context, two_step_program, rejected_options);
     EXPECT_EQ(rejected.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(rejected.graph);
@@ -191,7 +191,7 @@ TEST(RunirTests, ExtFindSolutionReportsTheCompleteThreeStateCycle)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -200,7 +200,7 @@ TEST(RunirTests, ExtFindSolutionReportsTheCompleteThreeStateCycle)
                                                       *repository);
     const auto program = create_module_program(*repository, module, { module });
 
-    auto options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag> {};
+    auto options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     const auto result = kr::ps::ext::find_solution(task_context, program, options);
     EXPECT_EQ(result.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
     ASSERT_TRUE(result.graph);
@@ -219,7 +219,7 @@ TEST(RunirTests, ExtExecutorFixtureOutcomesMatch)
     const auto task_file = benchmark_path("classical/profiling/blocksworld-large-simple/p-100-2.pddl");
     auto search_context = make_ground_context(domain, task_file);
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
     const auto suite = load_fixture_json("kr/ps/ext/execution.json");
     const auto& cases = ygg::common::as_array(ygg::common::require_member(ygg::common::as_object(suite, "suite"), "cases", "suite"), "suite.cases");
 
@@ -229,7 +229,7 @@ TEST(RunirTests, ExtExecutorFixtureOutcomesMatch)
         const auto program = kr::ps::ext::dl::parse_module_program(read_fixture(ygg::common::as_string(test_case, "program_file", "case")),
                                                                    task->get_domain().get_domain(),
                                                                    *task_context->ext_repository);
-        auto options = kr::ps::ext::ModuleProgramSearchOptions<p::GroundTag>();
+        auto options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag>();
         options.universal = ygg::common::as_bool(test_case, "universal", "case");
 
         const auto result = kr::ps::ext::find_solution(task_context, program, options);

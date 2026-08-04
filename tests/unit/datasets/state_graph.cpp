@@ -14,10 +14,10 @@ TEST(StateGraphTest, RejectsUnsupportedCostMode)
 
     auto context = make_gripper_ground_context();
 
-    auto builder = datasets::StateGraphBuilder<p::GroundTag> {};
+    auto builder = datasets::StateGraphBuilder<tyr::GroundTag> {};
     const auto initial_state = context->successor_generator->get_initial_node().get_state();
-    [[maybe_unused]] const auto initial_vertex = builder.add_vertex(datasets::StateGraphVertexLabel<p::GroundTag> { initial_state });
-    auto graph = datasets::StateGraph<p::GroundTag>(std::move(builder));
+    [[maybe_unused]] const auto initial_vertex = builder.add_vertex(datasets::StateGraphVertexLabel<tyr::GroundTag> { initial_state });
+    auto graph = datasets::StateGraph<tyr::GroundTag>(std::move(builder));
 
     EXPECT_THROW(
         try {
@@ -73,6 +73,23 @@ TEST(StateGraphTest, AnnotatesGeneratedGraphWithReachabilityAndGoalMetadata)
     EXPECT_EQ(num_initial, 1);
     EXPECT_GT(num_goal, 0);
     EXPECT_GT(num_alive, 0);
+}
+
+TEST(StateGraphTest, KeepsInitialVertexWhenStateLimitIsZero)
+{
+    namespace p = tyr::planning;
+
+    auto context = make_gripper_ground_context();
+    auto options = datasets::StateGraphGenerationOptions {};
+    options.max_num_states = 0;
+
+    const auto result = datasets::generate_state_graph_result(*context, options);
+
+    EXPECT_EQ(result.status, p::SearchStatus::OUT_OF_STATES);
+    ASSERT_NE(result.graph, nullptr);
+    const auto& graph = result.graph->get_forward_graph();
+    ASSERT_EQ(graph.get_num_vertices(), 1);
+    EXPECT_EQ(graph.get_vertex(0).get_property().state, context->successor_generator->get_initial_node().get_state());
 }
 
 }  // namespace runir::tests

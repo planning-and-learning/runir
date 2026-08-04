@@ -19,7 +19,7 @@
 namespace runir::kr::ps::base
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class EvaluationContext : public ygg::comparison::Mixin<EvaluationContext<Kind>>
 {
 private:
@@ -52,7 +52,7 @@ public:
     }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class SuccessorExpander
 {
 private:
@@ -124,10 +124,10 @@ private:
 
 #ifndef RUNIR_HEADER_INSTANTIATION
 
-extern template class EvaluationContext<tyr::planning::GroundTag>;
-extern template class EvaluationContext<tyr::planning::LiftedTag>;
-extern template class SuccessorExpander<tyr::planning::GroundTag>;
-extern template class SuccessorExpander<tyr::planning::LiftedTag>;
+extern template class EvaluationContext<tyr::GroundTag>;
+extern template class EvaluationContext<tyr::LiftedTag>;
+extern template class SuccessorExpander<tyr::GroundTag>;
+extern template class SuccessorExpander<tyr::LiftedTag>;
 
 #endif
 

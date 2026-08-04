@@ -5,19 +5,19 @@
 namespace runir::kr::ps::base
 {
 
-template class EvaluationContext<tyr::planning::GroundTag>;
-template class EvaluationContext<tyr::planning::LiftedTag>;
-template class SuccessorExpander<tyr::planning::GroundTag>;
-template class SuccessorExpander<tyr::planning::LiftedTag>;
+template class EvaluationContext<tyr::GroundTag>;
+template class EvaluationContext<tyr::LiftedTag>;
+template class SuccessorExpander<tyr::GroundTag>;
+template class SuccessorExpander<tyr::LiftedTag>;
 
 template auto
-find_solution<tyr::planning::GroundTag>(runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
+find_solution<tyr::GroundTag>(runir::kr::TaskContextPtr<tyr::GroundTag> task_context,
                                         SketchView sketch,
-                                        const SketchSearchOptions<tyr::planning::GroundTag>& options) -> SketchProofResults<tyr::planning::GroundTag>;
+                                        const SketchSearchOptions<tyr::GroundTag>& options) -> SketchProofResults<tyr::GroundTag>;
 
 template auto
-find_solution<tyr::planning::LiftedTag>(runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
+find_solution<tyr::LiftedTag>(runir::kr::TaskContextPtr<tyr::LiftedTag> task_context,
                                         SketchView sketch,
-                                        const SketchSearchOptions<tyr::planning::LiftedTag>& options) -> SketchProofResults<tyr::planning::LiftedTag>;
+                                        const SketchSearchOptions<tyr::LiftedTag>& options) -> SketchProofResults<tyr::LiftedTag>;
 
 }  // namespace runir::kr::ps::base

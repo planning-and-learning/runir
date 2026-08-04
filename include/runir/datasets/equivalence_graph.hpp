@@ -122,7 +122,7 @@ using AnnotatedEquivalenceGraph = graphs::BidirectionalStaticGraph<AnnotatedEqui
 
 using DynamicAnnotatedEquivalenceGraph = graphs::DynamicGraph<AnnotatedEquivalenceVertexLabel, EquivalenceEdgeLabel>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct EquivalenceGraphConstructionResult
 {
     std::vector<StateGraphGenerationResult<Kind>> state_graph_results;
@@ -135,16 +135,16 @@ struct EquivalenceGraphGenerationOptions
     EquivalencePolicyMode policy_mode = EquivalencePolicyMode::IDENTITY;
 };
 
-template<tyr::planning::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
+template<tyr::TaskKind Kind, IsEquivalencePolicy<Kind> Policy>
 auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
                                 Policy& policy,
                                 const StateGraphGenerationOptions& state_graph_options = StateGraphGenerationOptions())
     -> EquivalenceGraphConstructionResult<Kind>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, EquivalencePolicyMode policy_mode) -> EquivalenceGraphConstructionResult<Kind>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, const EquivalenceGraphGenerationOptions& options = EquivalenceGraphGenerationOptions())
     -> EquivalenceGraphConstructionResult<Kind>;
 

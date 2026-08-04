@@ -27,7 +27,7 @@ using runir::graphs::bind_readable_graph_methods;
 namespace
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void bind_execution_types(nb::module_& m, const char* prefix)
 {
     using RegisterView = RegisterValuesView<Kind>;
@@ -158,23 +158,23 @@ void bind_module_program_executor(nb::module_& m)
     m.attr("GroundModuleProgramProofEdgeLabel") = edge_label;
     m.attr("LiftedModuleProgramProofEdgeLabel") = edge_label;
 
-    bind_execution_types<tyr::planning::GroundTag>(m, "Ground");
-    bind_execution_types<tyr::planning::LiftedTag>(m, "Lifted");
+    bind_execution_types<tyr::GroundTag>(m, "Ground");
+    bind_execution_types<tyr::LiftedTag>(m, "Lifted");
 
     m.def(
         "find_ground_solution",
-        [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context,
+        [](runir::kr::TaskContextPtr<tyr::GroundTag> task_context,
            ModuleProgramView program,
-           const ModuleProgramSearchOptions<tyr::planning::GroundTag>& options) { return find_solution(std::move(task_context), program, options); },
+           const ModuleProgramSearchOptions<tyr::GroundTag>& options) { return find_solution(std::move(task_context), program, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         "task_context"_a,
         "program"_a,
         "options"_a);
     m.def(
         "find_lifted_solution",
-        [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context,
+        [](runir::kr::TaskContextPtr<tyr::LiftedTag> task_context,
            ModuleProgramView program,
-           const ModuleProgramSearchOptions<tyr::planning::LiftedTag>& options) { return find_solution(std::move(task_context), program, options); },
+           const ModuleProgramSearchOptions<tyr::LiftedTag>& options) { return find_solution(std::move(task_context), program, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         "task_context"_a,
         "program"_a,

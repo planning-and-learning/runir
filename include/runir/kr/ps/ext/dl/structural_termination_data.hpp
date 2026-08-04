@@ -14,9 +14,9 @@
 #include <optional>
 #include <vector>
 #include <yggdrasil/containers/dynamic_bitset.hpp>
-#include <yggdrasil/containers/dynamic_bitset_hash.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
+#include <yggdrasil/semantics/containers/dynamic_bitset_hash.hpp>
 
 namespace runir::kr::ps::ext::dl
 {

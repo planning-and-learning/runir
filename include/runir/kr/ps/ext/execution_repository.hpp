@@ -18,10 +18,10 @@
 namespace runir::kr::ps::ext
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 using ExecutionSymbolRepository = ygg::formalism::SymbolRepository<RegisterValues, CallArguments, CallStack, ExecutionState<Kind>>;
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class ExecutionRepository
 {
     friend class ExecutionRepositoryFactory<Kind>;
@@ -93,13 +93,13 @@ public:
     }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 inline const ExecutionRepository<Kind>& get_repository(const ExecutionRepository<Kind>& context) noexcept
 {
     return context;
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class ExecutionRepositoryFactory
 {
 private:

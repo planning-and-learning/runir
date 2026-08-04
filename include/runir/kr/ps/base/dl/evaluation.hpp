@@ -12,14 +12,14 @@
 namespace runir::kr::ps
 {
 
-template<typename FeatureTag, typename C, tyr::planning::TaskKind Kind>
+template<typename FeatureTag, typename C, tyr::TaskKind Kind>
 auto evaluate(ygg::View<ygg::Index<ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> feature,
               runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, Kind>& context)
 {
     return runir::kr::dl::semantics::evaluate(feature.get_feature(), context).get();
 }
 
-template<typename FeatureTag, typename C, tyr::planning::TaskKind Kind, typename EvaluationContext>
+template<typename FeatureTag, typename C, tyr::TaskKind Kind, typename EvaluationContext>
 auto evaluate(ygg::View<ygg::Index<ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> feature,
               tyr::planning::StateView<Kind>,
               EvaluationContext& context)

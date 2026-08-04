@@ -18,7 +18,7 @@
 namespace runir::kr::ps::ext::detail
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class ModuleProgramProofBuilder
 {
 private:

@@ -29,8 +29,8 @@ void bind_constructor_view(nb::module_& m, const char* name)
 {
     using Type = runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>;
     using View = ygg::View<ygg::Index<Type>, runir::kr::dl::BaseConstructorRepository>;
-    using GroundContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>;
-    using LiftedContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>;
+    using GroundContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(cls);
     ygg::add_comparison(cls);

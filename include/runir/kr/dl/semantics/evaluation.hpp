@@ -27,33 +27,33 @@
 namespace runir::kr::dl::semantics
 {
 
-template<CategoryTag Category, FamilyTag Family, tyr::planning::TaskKind Kind>
+template<CategoryTag Category, FamilyTag Family, tyr::TaskKind Kind>
 using EvaluationBuilderT = decltype(std::declval<EvaluationContext<Family, Kind>&>().get_builder().template get_builder<Denotation<Category>>());
 
-template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<Category, Family, Kind>;
 
-template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
     requires FamilyConceptConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<ConceptTag, Family, Kind>;
 
-template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
     requires FamilyRoleConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<RoleTag, Family, Kind>;
 
-template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
     requires FamilyBooleanConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<BooleanTag, Family, Kind>;
 
-template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
     requires FamilyNumericalConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
@@ -62,20 +62,20 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
 namespace detail
 {
 
-template<FamilyTag Family, tyr::planning::TaskKind Kind>
+template<FamilyTag Family, tyr::TaskKind Kind>
 auto num_objects(const EvaluationContext<Family, Kind>& context) noexcept -> ygg::uint_t
 {
     const auto task = context.get_state().get_state_repository()->get_task()->get_task();
     return static_cast<ygg::uint_t>(task.get_domain().get_constants().size() + task.get_objects().size());
 }
 
-template<FamilyTag Family, tyr::planning::TaskKind Kind>
+template<FamilyTag Family, tyr::TaskKind Kind>
 auto make_concept_builder(EvaluationContext<Family, Kind>& context)
 {
     return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects(context));
 }
 
-template<FamilyTag Family, tyr::planning::TaskKind Kind>
+template<FamilyTag Family, tyr::TaskKind Kind>
 auto make_role_builder(EvaluationContext<Family, Kind>& context)
 {
     return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects(context));
@@ -116,14 +116,14 @@ auto role_count(const RoleBuilderPtr& role) noexcept -> ygg::uint_t
     return result;
 }
 
-template<FamilyTag Family, tyr::planning::TaskKind Kind, typename F>
+template<FamilyTag Family, tyr::TaskKind Kind, typename F>
 void for_each_current_atom(EvaluationContext<Family, Kind>& context, std::type_identity<tyr::formalism::StaticTag>, F&& f)
 {
     for (auto atom : context.get_state().get_static_atoms_view())
         std::forward<F>(f)(atom);
 }
 
-template<FamilyTag Family, tyr::planning::TaskKind Kind, typename F>
+template<FamilyTag Family, tyr::TaskKind Kind, typename F>
 void for_each_current_atom(EvaluationContext<Family, Kind>& context, std::type_identity<tyr::formalism::FluentTag>, F&& f)
 {
     for (auto fact : context.get_state().get_fluent_facts_view())
@@ -131,14 +131,14 @@ void for_each_current_atom(EvaluationContext<Family, Kind>& context, std::type_i
             std::forward<F>(f)(*atom);
 }
 
-template<FamilyTag Family, tyr::planning::TaskKind Kind, typename F>
+template<FamilyTag Family, tyr::TaskKind Kind, typename F>
 void for_each_current_atom(EvaluationContext<Family, Kind>& context, std::type_identity<tyr::formalism::DerivedTag>, F&& f)
 {
     for (auto atom : context.get_state().get_derived_atoms_view())
         std::forward<F>(f)(atom);
 }
 
-template<tyr::formalism::FactKind T, FamilyTag Family, tyr::planning::TaskKind Kind, typename F>
+template<tyr::formalism::FactKind T, FamilyTag Family, tyr::TaskKind Kind, typename F>
 void for_each_current_atom(EvaluationContext<Family, Kind>& context, F&& f)
 {
     for_each_current_atom(context, std::type_identity<T> {}, std::forward<F>(f));
@@ -184,7 +184,7 @@ void for_each_goal_atom(Goal goal, bool polarity, F&& f)
     }
 }
 
-template<tyr::formalism::FactKind T, FamilyTag Family, tyr::planning::TaskKind Kind, typename F>
+template<tyr::formalism::FactKind T, FamilyTag Family, tyr::TaskKind Kind, typename F>
 void for_each_goal_atom(EvaluationContext<Family, Kind>& context, bool polarity, F&& f)
 {
     const auto goal = context.get_state().get_state_repository()->get_task()->get_task().get_goal();
@@ -197,7 +197,7 @@ auto object_index(tyr::formalism::planning::GroundAtomView<T> atom, size_t posit
     return atom.get_row().get_objects()[position].get_index();
 }
 
-template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, tyr::formalism::FactKind T, tyr::TaskKind Kind, typename C>
 auto evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<Family, AtomicStateTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
@@ -221,7 +221,7 @@ auto evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<Family, At
     return result;
 }
 
-template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, tyr::formalism::FactKind T, tyr::TaskKind Kind, typename C>
 auto evaluate_atomic_goal_concept(ygg::View<ygg::Index<FamilyConcept<Family, AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
@@ -243,7 +243,7 @@ auto evaluate_atomic_goal_concept(ygg::View<ygg::Index<FamilyConcept<Family, Ato
     return result;
 }
 
-template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, tyr::formalism::FactKind T, tyr::TaskKind Kind, typename C>
 auto evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicStateTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
@@ -269,7 +269,7 @@ auto evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicSt
     return result;
 }
 
-template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, tyr::formalism::FactKind T, tyr::TaskKind Kind, typename C>
 auto evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
@@ -292,7 +292,7 @@ auto evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicGoa
     return result;
 }
 
-template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, tyr::formalism::FactKind T, tyr::TaskKind Kind, typename C>
 auto evaluate_atomic_state_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, AtomicStateTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     bool value = false;
@@ -310,7 +310,7 @@ auto evaluate_atomic_state_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, At
     return context.get_builder().template get_builder<Denotation<BooleanTag>>(value);
 }
 
-template<FamilyTag Family, tyr::formalism::FactKind T, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, tyr::formalism::FactKind T, tyr::TaskKind Kind, typename C>
 auto evaluate_atomic_goal_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, AtomicGoalTag<T>>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     bool value = false;
@@ -326,7 +326,7 @@ auto evaluate_atomic_goal_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, Ato
     return context.get_builder().template get_builder<Denotation<BooleanTag>>(value);
 }
 
-template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, tyr::TaskKind Kind, typename C>
 bool evaluate_nonempty(ygg::View<ygg::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor,
                        EvaluationContext<Family, Kind>& context,
                        EvaluationWorkspace& workspace)
@@ -334,7 +334,7 @@ bool evaluate_nonempty(ygg::View<ygg::Index<FamilyConstructor<Family, ConceptTag
     return evaluate_impl(constructor, context, workspace)->get_bitset().any();
 }
 
-template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, tyr::TaskKind Kind, typename C>
 bool evaluate_nonempty(ygg::View<ygg::Index<FamilyConstructor<Family, RoleTag>>, C> constructor,
                        EvaluationContext<Family, Kind>& context,
                        EvaluationWorkspace& workspace)
@@ -342,7 +342,7 @@ bool evaluate_nonempty(ygg::View<ygg::Index<FamilyConstructor<Family, RoleTag>>,
     return detail::role_any(evaluate_impl(constructor, context, workspace));
 }
 
-template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, tyr::TaskKind Kind, typename C>
 auto evaluate_count(ygg::View<ygg::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor,
                     EvaluationContext<Family, Kind>& context,
                     EvaluationWorkspace& workspace) -> ygg::uint_t
@@ -350,7 +350,7 @@ auto evaluate_count(ygg::View<ygg::Index<FamilyConstructor<Family, ConceptTag>>,
     return static_cast<ygg::uint_t>(evaluate_impl(constructor, context, workspace)->get_bitset().count());
 }
 
-template<FamilyTag Family, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, tyr::TaskKind Kind, typename C>
 auto evaluate_count(ygg::View<ygg::Index<FamilyConstructor<Family, RoleTag>>, C> constructor,
                     EvaluationContext<Family, Kind>& context,
                     EvaluationWorkspace& workspace) -> ygg::uint_t
@@ -432,7 +432,7 @@ constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) n
 
 }  // namespace detail
 
-template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
     requires FamilyConceptConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
@@ -621,7 +621,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
     return result;
 }
 
-template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
     requires FamilyRoleConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
@@ -753,7 +753,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     return result;
 }
 
-template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
     requires FamilyBooleanConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
@@ -803,7 +803,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
     }
 }
 
-template<FamilyTag Family, typename Tag, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
     requires FamilyNumericalConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
@@ -895,7 +895,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
     return result;
 }
 
-template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> constructor,
                    EvaluationContext<Family, Kind>& context,
                    EvaluationWorkspace& workspace) -> EvaluationBuilderT<Category, Family, Kind>
@@ -903,7 +903,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C>
     return ygg::visit([&](auto child) { return evaluate_impl(child, context, workspace); }, constructor.get_variant());
 }
 
-template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind, typename C>
 auto evaluate(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> constructor,
               EvaluationContext<Family, Kind>& context,
               EvaluationWorkspace& workspace)
@@ -921,7 +921,7 @@ auto evaluate(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> cons
     return view;
 }
 
-template<FamilyTag Family, CategoryTag Category, tyr::planning::TaskKind Kind, typename C>
+template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind, typename C>
 auto evaluate(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
     auto workspace = EvaluationWorkspace {};

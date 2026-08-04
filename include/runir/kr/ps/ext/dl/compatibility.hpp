@@ -32,7 +32,7 @@ bool condition_matches(const Value& value)
 
 }  // namespace detail
 
-template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
+template<typename FeatureTag, typename ObservationTag, typename C, tyr::TaskKind Kind>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
                         runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {
@@ -40,7 +40,7 @@ bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<ru
     return detail::condition_matches<FeatureTag, ObservationTag>(value);
 }
 
-template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
+template<typename FeatureTag, typename ObservationTag, typename C, tyr::TaskKind Kind>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
                         runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                         runir::kr::dl::semantics::EvaluationWorkspace& workspace)
@@ -49,14 +49,14 @@ bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<ru
     return detail::condition_matches<FeatureTag, ObservationTag>(value);
 }
 
-template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
+template<typename FeatureTag, typename ObservationTag, typename C, tyr::TaskKind Kind>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
                         runir::kr::ps::dl::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {
     return is_compatible_with(condition, context.get_source_context(), context.get_workspace());
 }
 
-template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
+template<typename FeatureTag, typename ObservationTag, typename C, tyr::TaskKind Kind>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
                         runir::kr::ps::ext::EvaluationContext<Kind>& context,
                         runir::kr::ps::ext::EvaluationEnvironment<Kind>& environment)
@@ -65,7 +65,7 @@ bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<ru
     return is_compatible_with(condition, dl_context, environment.get_dl_workspace());
 }
 
-template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
+template<typename FeatureTag, typename ObservationTag, typename C, tyr::TaskKind Kind>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> effect,
                         runir::kr::ps::dl::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {

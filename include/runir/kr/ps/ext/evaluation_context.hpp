@@ -33,7 +33,7 @@ struct EvaluationArguments
 
     EvaluationArguments() = default;
 
-    template<tyr::planning::TaskKind Kind>
+    template<tyr::TaskKind Kind>
     explicit EvaluationArguments(CallArgumentsView<Kind> arguments) :
         concept_arguments(arguments.template get<runir::kr::dl::ConceptTag>()),
         role_arguments(arguments.template get<runir::kr::dl::RoleTag>()),
@@ -90,7 +90,7 @@ struct EvaluationArguments
 };
 
 /// Mutable materialization of one persistent call-stack node.
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class EvaluationCallStack
 {
 private:
@@ -254,7 +254,7 @@ public:
 };
 
 /// Short-lived mutable evaluator; canonical execution states live in ExecutionRepository.
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 class EvaluationContext
 {
 private:

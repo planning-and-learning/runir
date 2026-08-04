@@ -23,7 +23,7 @@ using runir::graphs::bind_readable_graph_methods;
 
 namespace
 {
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void bind_sketch_proof_types(nb::module_& m, const char* prefix)
 {
     using Graph = SketchProofGraph<Kind>;
@@ -53,7 +53,7 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
         .def("is_successful", &Results::is_successful);
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void bind_sketch_search_options(nb::module_& m, const char* name)
 {
     using Options = SketchSearchOptions<Kind>;
@@ -85,12 +85,12 @@ void bind_sketch_executor(nb::module_& m)
         .value("OUT_OF_TIME", SketchProofStatus::OUT_OF_TIME)
         .value("OUT_OF_STATES", SketchProofStatus::OUT_OF_STATES);
 
-    bind_sketch_proof_types<tyr::planning::GroundTag>(m, "Ground");
-    bind_sketch_proof_types<tyr::planning::LiftedTag>(m, "Lifted");
-    bind_sketch_search_options<tyr::planning::GroundTag>(m, "GroundSketchSearchOptions");
-    bind_sketch_search_options<tyr::planning::LiftedTag>(m, "LiftedSketchSearchOptions");
+    bind_sketch_proof_types<tyr::GroundTag>(m, "Ground");
+    bind_sketch_proof_types<tyr::LiftedTag>(m, "Lifted");
+    bind_sketch_search_options<tyr::GroundTag>(m, "GroundSketchSearchOptions");
+    bind_sketch_search_options<tyr::LiftedTag>(m, "LiftedSketchSearchOptions");
 
-    using Kind = tyr::planning::GroundTag;
+    using Kind = tyr::GroundTag;
     using Context = EvaluationContext<Kind>;
     using Expander = SuccessorExpander<Kind>;
 
@@ -105,7 +105,7 @@ void bind_sketch_executor(nb::module_& m)
 
     m.def(
         "find_ground_solution",
-        [](runir::kr::TaskContextPtr<tyr::planning::GroundTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::planning::GroundTag>& options)
+        [](runir::kr::TaskContextPtr<tyr::GroundTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::GroundTag>& options)
         { return find_solution(std::move(task_context), sketch, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         nb::keep_alive<0, 2>(),
@@ -114,7 +114,7 @@ void bind_sketch_executor(nb::module_& m)
         "options"_a);
     m.def(
         "find_lifted_solution",
-        [](runir::kr::TaskContextPtr<tyr::planning::LiftedTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::planning::LiftedTag>& options)
+        [](runir::kr::TaskContextPtr<tyr::LiftedTag> task_context, SketchView sketch, const SketchSearchOptions<tyr::LiftedTag>& options)
         { return find_solution(std::move(task_context), sketch, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         nb::keep_alive<0, 2>(),

@@ -66,7 +66,7 @@ struct StateGraphEdgeRef : ygg::comparison::Mixin<StateGraphEdgeRef>
     constexpr auto identifying_members() const noexcept { return std::tie(state_graph_index, state_edge_index); }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct StateGraphVertexCandidate : ygg::comparison::Mixin<StateGraphVertexCandidate<Kind>>
 {
     ygg::uint_t state_graph_index = 0;
@@ -82,7 +82,7 @@ struct StateGraphVertexCandidate : ygg::comparison::Mixin<StateGraphVertexCandid
     auto identifying_members() const noexcept { return std::tie(state_graph_index, state); }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct StateGraphTransitionCandidate : ygg::comparison::Mixin<StateGraphTransitionCandidate<Kind>>
 {
     ygg::uint_t state_graph_index = 0;
@@ -105,7 +105,7 @@ struct StateGraphTransitionCandidate : ygg::comparison::Mixin<StateGraphTransiti
 template<typename Policy, typename Kind>
 concept IsEquivalencePolicy =
     requires(Policy& policy, StateGraphVertexCandidate<Kind> vertex_candidate, StateGraphTransitionCandidate<Kind> transition_candidate) {
-        requires tyr::planning::TaskKind<Kind>;
+        requires tyr::TaskKind<Kind>;
         { policy.try_insert(vertex_candidate) } -> std::same_as<bool>;
         { policy.try_insert(transition_candidate) } -> std::same_as<bool>;
         { policy.get_or_create_representative(vertex_candidate, StateGraphVertexRef {}) } -> std::same_as<StateGraphVertexRef>;

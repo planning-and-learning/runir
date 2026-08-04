@@ -13,7 +13,7 @@
 namespace runir::kr::ps::dl
 {
 
-template<typename Derived, runir::kr::FamilyTag Family_, tyr::planning::TaskKind Kind>
+template<typename Derived, runir::kr::FamilyTag Family_, tyr::TaskKind Kind>
 class BaseEvaluationContext
 {
 private:
@@ -46,7 +46,7 @@ public:
     auto& get_target_context() noexcept { return m_target_context; }
 };
 
-template<runir::kr::FamilyTag Family, tyr::planning::TaskKind Kind>
+template<runir::kr::FamilyTag Family, tyr::TaskKind Kind>
 class EvaluationContext;
 
 }  // namespace runir::kr::ps::dl

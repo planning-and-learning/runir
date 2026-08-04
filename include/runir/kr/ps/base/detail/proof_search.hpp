@@ -22,7 +22,7 @@
 namespace runir::kr::ps::base
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
     auto& task_context = *task_context_owner;

@@ -43,7 +43,7 @@ constexpr std::string_view to_string(SketchProofStatus status)
     throw std::invalid_argument("invalid SketchProofStatus");
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct SketchProofResults
 {
     SketchProofStatus status = SketchProofStatus::SUCCESS;
@@ -56,7 +56,7 @@ struct SketchProofResults
     bool is_successful() const noexcept { return status == SketchProofStatus::SUCCESS; }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct SketchSearchOptions
 {
     bool universal = false;

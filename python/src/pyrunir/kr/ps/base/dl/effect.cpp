@@ -33,8 +33,8 @@ template<typename T>
 void bind_effect_view(nb::module_& m, const char* name)
 {
     using View = ygg::View<ygg::Index<T>, Repository>;
-    using GroundContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::GroundTag>;
-    using LiftedContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::planning::LiftedTag>;
+    using GroundContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
+    using LiftedContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
     auto cls = nb::class_<View>(m, name)
                    .def("get_index", &View::get_index)
                    .def("get_feature", &View::get_feature, nb::keep_alive<0, 1>())

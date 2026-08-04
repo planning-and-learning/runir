@@ -16,7 +16,7 @@
 namespace runir::kr
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct TaskContext
 {
     runir::datasets::TaskSearchContextPtr<Kind> search_context;
@@ -42,8 +42,8 @@ private:
     explicit TaskContext(runir::datasets::TaskSearchContextPtr<Kind> search_context);
 };
 
-extern template struct TaskContext<tyr::planning::GroundTag>;
-extern template struct TaskContext<tyr::planning::LiftedTag>;
+extern template struct TaskContext<tyr::GroundTag>;
+extern template struct TaskContext<tyr::LiftedTag>;
 
 }  // namespace runir::kr
 

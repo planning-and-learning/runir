@@ -16,7 +16,7 @@ namespace runir::kr::dl::base
 namespace
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 auto generate(runir::kr::dl::cnf_grammar::FamilyGrammarView<runir::kr::BaseFamilyTag> grammar,
               const std::vector<tyr::planning::StateView<Kind>>& states,
               runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& output_repository,
@@ -53,14 +53,14 @@ void bind_cnf_grammar_generate(nb::module_& m)
         .def_ro("numericals", &runir::kr::dl::cnf_grammar::GenerateResultsFor<runir::kr::BaseFamilyTag>::numericals);
 
     m.def("generate_ground",
-          &generate<tyr::planning::GroundTag>,
+          &generate<tyr::GroundTag>,
           nb::arg("grammar"),
           nb::arg("states"),
           nb::arg("output_repository"),
           nb::arg("options"),
           nb::keep_alive<0, 3>());
     m.def("generate_lifted",
-          &generate<tyr::planning::LiftedTag>,
+          &generate<tyr::LiftedTag>,
           nb::arg("grammar"),
           nb::arg("states"),
           nb::arg("output_repository"),

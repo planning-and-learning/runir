@@ -150,7 +150,7 @@ std::string sketch(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> view)
     return os.str();
 }
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<Kind>& result)
 {
     return fmt::format("SketchProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={})",
@@ -231,7 +231,7 @@ struct fmt::formatter<runir::kr::ps::base::SketchProofStatus> : fmt::formatter<s
     }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::base::SketchProofResults<Kind>> : fmt::formatter<std::string_view>
 {
     auto format(const runir::kr::ps::base::SketchProofResults<Kind>& result, format_context& ctx) const

@@ -14,7 +14,7 @@ namespace runir::kr::dl::semantics
 namespace detail
 {
 
-template<CategoryTag Category, tyr::planning::TaskKind Kind>
+template<CategoryTag Category, tyr::TaskKind Kind>
 auto copy_argument_denotation(EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                               const ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>& view)
     -> EvaluationBuilderT<Category, runir::kr::ExtFamilyTag, Kind>
@@ -44,7 +44,7 @@ auto copy_argument_denotation(EvaluationContext<runir::kr::ExtFamilyTag, Kind>& 
 
 }  // namespace detail
 
-template<tyr::planning::TaskKind Kind, typename C>
+template<tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace&) -> EvaluationBuilderT<ConceptTag, runir::kr::ExtFamilyTag, Kind>
@@ -59,7 +59,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, R
     return result;
 }
 
-template<tyr::planning::TaskKind Kind, typename C>
+template<tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace&) -> EvaluationBuilderT<RoleTag, runir::kr::ExtFamilyTag, Kind>
@@ -76,7 +76,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, Regi
     return result;
 }
 
-template<tyr::planning::TaskKind Kind, typename C>
+template<tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, ArgumentTag<ConceptTag>>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace&) -> EvaluationBuilderT<ConceptTag, runir::kr::ExtFamilyTag, Kind>
@@ -84,7 +84,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, A
     return detail::copy_argument_denotation<ConceptTag>(context, context.arguments().at(constructor.get_argument().get_identifier()));
 }
 
-template<tyr::planning::TaskKind Kind, typename C>
+template<tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, ArgumentTag<RoleTag>>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace&) -> EvaluationBuilderT<RoleTag, runir::kr::ExtFamilyTag, Kind>
@@ -92,7 +92,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, Argu
     return detail::copy_argument_denotation<RoleTag>(context, context.arguments().at(constructor.get_argument().get_identifier()));
 }
 
-template<tyr::planning::TaskKind Kind, typename C>
+template<tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<runir::kr::ExtFamilyTag, ArgumentTag<BooleanTag>>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace&) -> EvaluationBuilderT<BooleanTag, runir::kr::ExtFamilyTag, Kind>
@@ -100,7 +100,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<runir::kr::ExtFamilyTag, A
     return detail::copy_argument_denotation<BooleanTag>(context, context.arguments().at(constructor.get_argument().get_identifier()));
 }
 
-template<tyr::planning::TaskKind Kind, typename C>
+template<tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<runir::kr::ExtFamilyTag, ArgumentTag<NumericalTag>>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                    EvaluationWorkspace&) -> EvaluationBuilderT<NumericalTag, runir::kr::ExtFamilyTag, Kind>
@@ -113,7 +113,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<runir::kr::ExtFamilyTag,
 namespace runir::kr::dl::semantics::ext
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 const auto& get_repository(const runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context) noexcept
 {
     return runir::kr::dl::semantics::get_repository(context);

@@ -13,7 +13,7 @@
 namespace runir::kr::ps
 {
 
-template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
+template<typename FeatureTag, typename ObservationTag, typename C, tyr::TaskKind Kind>
 bool is_compatible_with(ygg::View<ygg::Index<ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
                         runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, Kind>& context)
 {
@@ -29,7 +29,7 @@ bool is_compatible_with(ygg::View<ygg::Index<ConcreteCondition<runir::kr::BaseFa
         return value > 0;
 }
 
-template<typename FeatureTag, typename ObservationTag, typename C, tyr::planning::TaskKind Kind>
+template<typename FeatureTag, typename ObservationTag, typename C, tyr::TaskKind Kind>
 bool is_compatible_with(ygg::View<ygg::Index<ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> effect,
                         runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, Kind>& context)
 {

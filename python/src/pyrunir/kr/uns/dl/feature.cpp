@@ -24,8 +24,8 @@ void bind_feature(nb::module_& m)
     using Type = runir::kr::uns::dl::Feature;
     using Data = ygg::Data<Type>;
     using View = ygg::View<ygg::Index<Type>, runir::kr::uns::Repository>;
-    using GroundContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, tyr::planning::GroundTag>;
-    using LiftedContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, tyr::planning::LiftedTag>;
+    using GroundContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag>;
 
     ygg::bind_index<ygg::Index<Type>>(m, "FeatureIndex");
 

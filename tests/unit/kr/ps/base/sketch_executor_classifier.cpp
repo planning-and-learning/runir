@@ -20,7 +20,7 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->base_dl_repository;
     auto repository = task_context->base_repository;
@@ -30,7 +30,7 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     auto classifier_repository = task_context->uns_repository;
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/always.classifier"), task->get_domain().get_domain(), *classifier_repository);
 
-    auto options = kr::ps::base::SketchSearchOptions<p::GroundTag> {};
+    auto options = kr::ps::base::SketchSearchOptions<tyr::GroundTag> {};
     options.classifier = classifier;
     const auto result = kr::ps::base::find_solution(task_context, sketch, options);
 
@@ -59,7 +59,7 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
         const auto& goal_label = goal_result.graph->get_vertex(vertex).get_property();
         if (!goal_label.is_goal)
             continue;
-        auto context = kr::dl::semantics::EvaluationContext<kr::UnsFamilyTag, p::GroundTag>(goal_label.state,
+        auto context = kr::dl::semantics::EvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(goal_label.state,
                                                                                             task_context->dl_builder,
                                                                                             *task_context->dl_denotation_repository);
         EXPECT_TRUE(kr::uns::classify(goal_classifier, context));

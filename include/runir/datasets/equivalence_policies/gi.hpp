@@ -36,21 +36,21 @@ private:
     ygg::UnorderedMap<graphs::nauty::SparseGraph, StateGraphVertexRef> m_certificate_to_representative;
 
 public:
-    template<tyr::planning::TaskKind Kind>
+    template<tyr::TaskKind Kind>
     auto try_insert(const StateGraphVertexCandidate<Kind>& candidate) -> bool
     {
         static_cast<void>(candidate);
         return true;
     }
 
-    template<tyr::planning::TaskKind Kind>
+    template<tyr::TaskKind Kind>
     auto try_insert(const StateGraphTransitionCandidate<Kind>& candidate) -> bool
     {
         static_cast<void>(candidate);
         return true;
     }
 
-    template<tyr::planning::TaskKind Kind>
+    template<tyr::TaskKind Kind>
     auto get_or_create_representative(const StateGraphVertexCandidate<Kind>& candidate, StateGraphVertexRef vertex) -> StateGraphVertexRef
     {
         auto object_graph = create_object_graph(candidate.state);

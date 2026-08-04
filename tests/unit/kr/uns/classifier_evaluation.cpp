@@ -24,7 +24,7 @@ TEST(RunirTests, UnsClassifierClassifies)
     const auto state = search->state_repository->get_initial_state();
     auto builder = sem::Builder();
     auto denotation_repository = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto context = sem::EvaluationContext<kr::UnsFamilyTag, tyr::planning::GroundTag>(state, builder, denotation_repository);
+    auto context = sem::EvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(state, builder, denotation_repository);
 
     // some_ball is true and no_object is false, so the first clause (some_ball AND NOT no_object) holds.
     EXPECT_TRUE(kr::uns::classify(classifier, context));

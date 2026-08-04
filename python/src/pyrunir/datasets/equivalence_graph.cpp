@@ -27,7 +27,7 @@ using runir::graphs::bind_readable_graph;
 namespace
 {
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 void bind_equivalence_graph_generation_for_kind(nb::module_& m, const char* class_prefix, const char* function_prefix)
 {
     using Result = EquivalenceGraphConstructionResult<Kind>;
@@ -139,8 +139,8 @@ void bind_equivalence_graph(nb::module_& m)
     auto dynamic_annotated_graph = nb::class_<DynamicAnnotatedEquivalenceGraph>(m, "DynamicAnnotatedEquivalenceGraph");
     bind_labeled_dynamic_graph(dynamic_annotated_graph);
 
-    bind_equivalence_graph_generation_for_kind<tyr::planning::GroundTag>(m, "Ground", "ground");
-    bind_equivalence_graph_generation_for_kind<tyr::planning::LiftedTag>(m, "Lifted", "lifted");
+    bind_equivalence_graph_generation_for_kind<tyr::GroundTag>(m, "Ground", "ground");
+    bind_equivalence_graph_generation_for_kind<tyr::LiftedTag>(m, "Lifted", "lifted");
 }
 
 }  // namespace runir::datasets

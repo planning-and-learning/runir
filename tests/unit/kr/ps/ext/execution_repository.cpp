@@ -33,7 +33,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<p::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
 
     auto dl_repository = task_context->ext_dl_repository;
     auto repository = task_context->ext_repository;
@@ -132,7 +132,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto state = search_context->successor_generator->get_initial_node().get_state();
     const auto returned_state = [&]()
     {
-        auto data = execution_builder.get_builder<kr::ps::ext::ExecutionState<p::GroundTag>>();
+        auto data = execution_builder.get_builder<kr::ps::ext::ExecutionState<tyr::GroundTag>>();
         ygg::set(state, data->state);
         ygg::set(program, data->program);
         ygg::set(caller_frame, data->call_stack);
@@ -148,7 +148,7 @@ TEST(RunirTests, ExtExecutionRecordsAreCistaCompatible)
 {
     namespace p = tyr::planning;
 
-    auto builder = kr::ps::ext::ExecutionBuilder<p::GroundTag>();
+    auto builder = kr::ps::ext::ExecutionBuilder<tyr::GroundTag>();
     {
         auto data = builder.get_builder<kr::ps::ext::RegisterValues>();
         EXPECT_EQ(data->concept_values.size(), kr::dl::num_registers);
@@ -172,8 +172,8 @@ TEST(RunirTests, ExtExecutionRecordsAreCistaCompatible)
         expect_cista_round_trip(*data);
     }
     {
-        auto data = builder.get_builder<kr::ps::ext::ExecutionState<p::GroundTag>>();
-        data->state = ygg::Index<p::State<p::GroundTag>>(5);
+        auto data = builder.get_builder<kr::ps::ext::ExecutionState<tyr::GroundTag>>();
+        data->state = ygg::Index<p::State<tyr::GroundTag>>(5);
         data->program = ygg::Index<kr::ps::ext::ModuleProgram>(6);
         data->call_stack = ygg::Index<kr::ps::ext::CallStack>(7);
         data->phase = kr::ps::ext::ExecutionPhase::INTERNAL;

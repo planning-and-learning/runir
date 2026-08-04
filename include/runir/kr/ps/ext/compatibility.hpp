@@ -16,7 +16,7 @@
 namespace runir::kr::ps::ext
 {
 
-template<typename LanguageTag, typename C, tyr::planning::TaskKind Kind>
+template<typename LanguageTag, typename C, tyr::TaskKind Kind>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C> condition,
                         EvaluationContext<Kind>& context,
                         EvaluationEnvironment<Kind>& environment)
@@ -24,7 +24,7 @@ bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVar
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context, environment); }, condition.get_variant());
 }
 
-template<typename C, tyr::planning::TaskKind Kind>
+template<typename C, tyr::TaskKind Kind>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C> condition,
                         EvaluationContext<Kind>& context,
                         EvaluationEnvironment<Kind>& environment)
@@ -32,7 +32,7 @@ bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<run
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context, environment); }, condition.get_variant());
 }
 
-template<RuleKind Kind, typename C, tyr::planning::TaskKind TaskKind>
+template<RuleKind Kind, typename C, tyr::TaskKind TaskKind>
 bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationContext<TaskKind>& context, EvaluationEnvironment<TaskKind>& environment)
 {
     for (auto condition : rule.get_conditions())
@@ -42,7 +42,7 @@ bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, Evalua
     return true;
 }
 
-template<RuleKind Kind, typename C, tyr::planning::TaskKind TaskKind>
+template<RuleKind Kind, typename C, tyr::TaskKind TaskKind>
 bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationContext<TaskKind>& context, EvaluationEnvironment<TaskKind>& environment)
 {
     if (!conditions_are_compatible(rule, context, environment))

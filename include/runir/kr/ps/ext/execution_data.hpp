@@ -101,7 +101,7 @@ struct Data<runir::kr::ps::ext::CallStack>
     auto identifying_members() const noexcept { return std::tie(module, memory_state, registers, arguments, caller); }
 };
 
-template<tyr::planning::TaskKind Kind>
+template<tyr::TaskKind Kind>
 struct Data<runir::kr::ps::ext::ExecutionState<Kind>>
 {
     Index<runir::kr::ps::ext::ExecutionState<Kind>> index;

@@ -102,7 +102,7 @@ TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
     // Evaluation context over the initial state.
     auto builder = sem::Builder();
     auto denotation_repository = sem::DenotationRepositoryFactory().create(task->get_repository());
-    auto context = sem::EvaluationContext<Uns, tyr::planning::GroundTag>(state, builder, denotation_repository);
+    auto context = sem::EvaluationContext<Uns, tyr::GroundTag>(state, builder, denotation_repository);
 
     // |c_top| is the number of objects; build n_const with exactly that value.
     const auto num_objects = sem::evaluate(count_ctor, context).get();
@@ -155,7 +155,7 @@ TEST(RunirTests, UnsFamilyArithmeticLogicalOperatorsEvaluateAndFormat)
 
     auto builder = sem::Builder();
     auto denotation_repository = sem::DenotationRepositoryFactory().create(task->get_repository());
-    auto context = sem::EvaluationContext<Uns, tyr::planning::GroundTag>(state, builder, denotation_repository);
+    auto context = sem::EvaluationContext<Uns, tyr::GroundTag>(state, builder, denotation_repository);
 
     constexpr auto inf = std::numeric_limits<ygg::uint_t>::max();
     auto two = numerical_constant(repo, 2);
