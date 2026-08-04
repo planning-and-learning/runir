@@ -188,27 +188,36 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
 
     const auto repositories = events.collect_repositories();
     auto builder = StateGraphBuilder<Kind> {};
+    auto locator_to_vertex = ygg::UnorderedMap<StateLocator<Kind>, graphs::VertexIndex> {};
     auto state_to_vertex = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
     auto edges = ygg::UnorderedSet<StateGraphEdgeKey> {};
-    auto get_or_create_vertex = [&](tyr::planning::StateView<Kind> state)
+    auto get_or_create_vertex = [&](StateLocator<Kind> locator)
     {
-        if (const auto it = state_to_vertex.find(state); it != state_to_vertex.end())
+        if (const auto it = locator_to_vertex.find(locator); it != locator_to_vertex.end())
             return it->second;
 
-        const auto vertex = static_cast<graphs::VertexIndex>(state_to_vertex.size());
-        state_to_vertex.emplace(state, vertex);
-        [[maybe_unused]] const auto added = builder.add_vertex(StateGraphVertexLabel<Kind> { std::move(state) });
-        assert(added == vertex);
+        auto state = materialize_state(locator, repositories, target_repository);
+        auto vertex = graphs::VertexIndex {};
+        if (const auto it = state_to_vertex.find(state); it != state_to_vertex.end())
+            vertex = it->second;
+        else
+        {
+            vertex = static_cast<graphs::VertexIndex>(state_to_vertex.size());
+            state_to_vertex.emplace(state, vertex);
+            [[maybe_unused]] const auto added = builder.add_vertex(StateGraphVertexLabel<Kind> { std::move(state) });
+            assert(added == vertex);
+        }
+        locator_to_vertex.emplace(locator, vertex);
         return vertex;
     };
 
-    static_cast<void>(get_or_create_vertex(materialize_state(*events.get_start(), repositories, target_repository)));
+    static_cast<void>(get_or_create_vertex(*events.get_start()));
     for (const auto& worker : events.get_workers())
     {
         for (const auto& transition : worker.get_transitions())
         {
-            const auto source = get_or_create_vertex(materialize_state(transition.source, repositories, target_repository));
-            const auto target = get_or_create_vertex(materialize_state(transition.target, repositories, target_repository));
+            const auto source = get_or_create_vertex(transition.source);
+            const auto target = get_or_create_vertex(transition.target);
             if (edges.emplace(source, target, transition.action, transition.cost).second)
                 builder.add_directed_edge(source, target, StateGraphEdgeLabel { transition.action, transition.cost });
         }
