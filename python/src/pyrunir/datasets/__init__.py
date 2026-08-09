@@ -8,6 +8,8 @@ from .._pyrunir.datasets import (
     AnnotatedEquivalenceVertexLabel,
     BackwardAnnotatedEquivalenceGraphView,
     BackwardEquivalenceGraphView,
+    ColorRepository,
+    ColorRepositoryFactory,
     DynamicAnnotatedEquivalenceGraph,
     DynamicEquivalenceGraph,
     EquivalenceEdgeLabel,

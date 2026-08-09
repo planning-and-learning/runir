@@ -8,6 +8,12 @@
 namespace runir::graphs
 {
 
+template<IsVertex Vertex>
+auto get_vertex_color(Vertex vertex) -> typename Vertex::PropertyIndexType
+{
+    return vertex.get_property_index();
+}
+
 template<IsGraph G>
 auto is_loopless(const G& graph) -> bool
 {

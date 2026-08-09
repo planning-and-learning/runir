@@ -17,8 +17,8 @@
         "classical/tests/gripper/test-1.pddl"
       ],
       "equivalence_policy": "gi",
-      "expected_num_vertices": 6,
-      "expected_num_edges": 22
+      "expected_num_vertices": 18,
+      "expected_num_edges": 60
     }
   ]
 }

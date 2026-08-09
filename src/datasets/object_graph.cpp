@@ -17,13 +17,14 @@
 
 #include "runir/datasets/object_graph.hpp"
 
-#include <algorithm>
-#include <cassert>
+#include <cstddef>
+#include <stdexcept>
 #include <tyr/planning/ground/state_repository.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/state_repository.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>
+#include <vector>
 #include <yggdrasil/core/types.hpp>
 
 namespace runir::datasets
@@ -32,15 +33,15 @@ namespace runir::datasets
 namespace
 {
 
-template<tyr::TaskKind Kind>
 class ObjectGraphConstructionContext
 {
 private:
     using ObjectView = tyr::formalism::planning::ObjectView;
     using Edge = std::pair<graphs::VertexIndex, graphs::VertexIndex>;
 
+    ColorRepository& m_repository;
     ygg::UnorderedMap<ObjectView, graphs::VertexIndex> m_object_to_vertex;
-    std::vector<ObjectGraphVertexLabel> m_vertex_labels;
+    std::vector<ygg::Data<Color>::VariantList> m_vertex_colors;
     ygg::UnorderedSet<Edge> m_edges;
 
     auto get_or_create_vertex(ObjectView object) -> graphs::VertexIndex
@@ -48,9 +49,9 @@ private:
         if (const auto it = m_object_to_vertex.find(object); it != m_object_to_vertex.end())
             return it->second;
 
-        const auto vertex = static_cast<graphs::VertexIndex>(m_vertex_labels.size());
+        const auto vertex = static_cast<graphs::VertexIndex>(m_vertex_colors.size());
         m_object_to_vertex.emplace(object, vertex);
-        m_vertex_labels.emplace_back();
+        m_vertex_colors.emplace_back();
         return vertex;
     }
 
@@ -66,12 +67,13 @@ private:
     }
 
 public:
+    explicit ObjectGraphConstructionContext(ColorRepository& repository) : m_repository(repository) {}
+
     void add_object(ObjectView object) { static_cast<void>(get_or_create_vertex(object)); }
 
-    template<typename LabelEntry, tyr::formalism::FactKind FactKind>
-    void add_atom(tyr::formalism::planning::GroundAtomView<FactKind> atom)
+    template<PredicateContext Context, tyr::formalism::FactKind T>
+    void add_atom(tyr::formalism::planning::GroundAtomView<T> atom)
     {
-        const auto predicate = ObjectGraphPredicateVariant(atom.get_predicate());
         const auto objects = atom.get_row().get_objects();
         auto vertices = std::vector<graphs::VertexIndex> {};
         vertices.reserve(objects.size());
@@ -80,7 +82,10 @@ public:
         {
             const auto vertex = get_or_create_vertex(objects[i]);
             vertices.push_back(vertex);
-            m_vertex_labels[vertex].labels.push_back(LabelEntry { predicate, i });
+
+            auto predicate_color_data = ygg::Data<PredicateColor<T>>(atom.get_predicate().get_index(), static_cast<ygg::uint_t>(i), Context);
+            const auto predicate_color = m_repository.get_or_create(predicate_color_data).first;
+            m_vertex_colors[vertex].emplace_back(predicate_color.get_index());
         }
 
         for (std::size_t i = 0; i < vertices.size(); ++i)
@@ -88,26 +93,25 @@ public:
                 add_undirected_edge(vertices[i], vertices[j]);
     }
 
-    auto release() && -> std::unique_ptr<ObjectGraph<Kind>>
+    auto release() && -> std::unique_ptr<ObjectGraph>
     {
-        auto builder = ObjectGraphBuilder<Kind> {};
+        auto builder = ObjectGraphBuilder {};
 
-        for (auto& label : m_vertex_labels)
+        for (auto& colors : m_vertex_colors)
         {
-            std::sort(label.labels.begin(), label.labels.end());
-            label.labels.erase(std::unique(label.labels.begin(), label.labels.end()), label.labels.end());
-            builder.add_vertex(std::move(label));
+            auto color_data = ygg::Data<Color>(std::move(colors));
+            builder.add_vertex(m_repository.get_or_create(color_data).first);
         }
 
         for (const auto& [source, target] : m_edges)
             builder.add_undirected_edge(source, target);
 
-        return std::make_unique<ObjectGraph<Kind>>(std::move(builder));
+        return std::make_unique<ObjectGraph>(std::move(builder));
     }
 };
 
 template<tyr::TaskKind Kind>
-void add_objects(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext<Kind>& context)
+void add_objects(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
 {
     const auto task = state.get_state_repository()->get_task()->get_task();
 
@@ -119,49 +123,50 @@ void add_objects(tyr::planning::StateView<Kind> state, ObjectGraphConstructionCo
 }
 
 template<tyr::TaskKind Kind>
-void add_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext<Kind>& context)
+void add_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
 {
     for (auto atom : state.get_static_atoms_view())
-        context.template add_atom<StateObjectGraphVertexLabelEntry>(atom);
+        context.template add_atom<PredicateContext::STATE>(atom);
 
     for (auto fact : state.get_fluent_facts_view())
         if (const auto atom = fact.get_atom())
-            context.template add_atom<StateObjectGraphVertexLabelEntry>(*atom);
+            context.template add_atom<PredicateContext::STATE>(*atom);
 }
 
 template<tyr::TaskKind Kind>
-void add_goal_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext<Kind>& context)
+void add_goal_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
 {
     const auto goal = state.get_state_repository()->get_task()->get_task().get_goal();
 
     for (auto literal : goal.template get_literals<tyr::formalism::StaticTag>())
-        context.template add_atom<GoalObjectGraphVertexLabelEntry>(literal.get_atom());
+        context.template add_atom<PredicateContext::GOAL>(literal.get_atom());
 
     for (auto fact : goal.template get_facts<tyr::formalism::PositiveTag>())
         if (const auto atom = fact.get_atom())
-            context.template add_atom<GoalObjectGraphVertexLabelEntry>(*atom);
+            context.template add_atom<PredicateContext::GOAL>(*atom);
 
     for (auto fact : goal.template get_facts<tyr::formalism::NegativeTag>())
         if (const auto atom = fact.get_atom())
-            context.template add_atom<GoalObjectGraphVertexLabelEntry>(*atom);
+            context.template add_atom<PredicateContext::GOAL>(*atom);
 }
 
 }  // namespace
 
 template<tyr::TaskKind Kind>
-auto create_object_graph(tyr::planning::StateView<Kind> state) -> std::unique_ptr<ObjectGraph<Kind>>
+auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& repository) -> std::unique_ptr<ObjectGraph>
 {
-    auto context = ObjectGraphConstructionContext<Kind> {};
+    if (&state.get_repository()->get_root() != &repository.get_planning_repository().get_root())
+        throw std::invalid_argument("State and ColorRepository use different planning repositories.");
+
+    auto context = ObjectGraphConstructionContext(repository);
     add_objects(state, context);
     add_atoms(state, context);
     add_goal_atoms(state, context);
     return std::move(context).release();
 }
 
-template auto
-    create_object_graph<tyr::GroundTag>(tyr::planning::StateView<tyr::GroundTag>) -> std::unique_ptr<ObjectGraph<tyr::GroundTag>>;
+template auto create_object_graph<tyr::GroundTag>(tyr::planning::StateView<tyr::GroundTag>, ColorRepository&) -> std::unique_ptr<ObjectGraph>;
 
-template auto
-    create_object_graph<tyr::LiftedTag>(tyr::planning::StateView<tyr::LiftedTag>) -> std::unique_ptr<ObjectGraph<tyr::LiftedTag>>;
+template auto create_object_graph<tyr::LiftedTag>(tyr::planning::StateView<tyr::LiftedTag>, ColorRepository&) -> std::unique_ptr<ObjectGraph>;
 
 }  // namespace runir::datasets

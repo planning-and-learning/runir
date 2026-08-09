@@ -356,7 +356,36 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
         }
         case EquivalencePolicyMode::GI:
         {
-            auto policy = EquivalencePolicy<GIEquivalenceTag> {};
+            if (contexts.empty())
+            {
+                auto policy = EquivalencePolicy<IdentityEquivalenceTag> {};
+                return generate_equivalence_graph(contexts, policy, options.state_graph_options);
+            }
+
+            auto factory = ColorRepositoryFactory {};
+            auto repository = factory.create(contexts.front()->task->get_domain().get_repository());
+            return generate_equivalence_graph(contexts, options, *repository);
+        }
+    }
+
+    throw std::runtime_error(fmt::format("Unsupported equivalence policy mode: {}.", static_cast<int>(options.policy_mode)));
+}
+
+template<tyr::TaskKind Kind>
+auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
+                                const EquivalenceGraphGenerationOptions& options,
+                                ColorRepository& color_repository) -> EquivalenceGraphConstructionResult<Kind>
+{
+    switch (options.policy_mode)
+    {
+        case EquivalencePolicyMode::IDENTITY:
+        {
+            auto policy = EquivalencePolicy<IdentityEquivalenceTag> {};
+            return generate_equivalence_graph(contexts, policy, options.state_graph_options);
+        }
+        case EquivalencePolicyMode::GI:
+        {
+            auto policy = EquivalencePolicy<GIEquivalenceTag> { color_repository };
             return generate_equivalence_graph(contexts, policy, options.state_graph_options);
         }
     }
@@ -395,5 +424,13 @@ template auto generate_equivalence_graph<tyr::GroundTag>(TaskSearchContextList<t
 
 template auto generate_equivalence_graph<tyr::LiftedTag>(TaskSearchContextList<tyr::LiftedTag>&,
                                                          const EquivalenceGraphGenerationOptions&) -> EquivalenceGraphConstructionResult<tyr::LiftedTag>;
+
+template auto generate_equivalence_graph<tyr::GroundTag>(TaskSearchContextList<tyr::GroundTag>&,
+                                                         const EquivalenceGraphGenerationOptions&,
+                                                         ColorRepository&) -> EquivalenceGraphConstructionResult<tyr::GroundTag>;
+
+template auto generate_equivalence_graph<tyr::LiftedTag>(TaskSearchContextList<tyr::LiftedTag>&,
+                                                         const EquivalenceGraphGenerationOptions&,
+                                                         ColorRepository&) -> EquivalenceGraphConstructionResult<tyr::LiftedTag>;
 
 }  // namespace runir::datasets

@@ -93,7 +93,8 @@ public:
         auto color_vertex_pairs = std::vector<std::pair<ygg::uint_t, int>>();
         color_vertex_pairs.reserve(vertices.size());
         for (ygg::uint_t dense_vertex = 0; dense_vertex < vertices.size(); ++dense_vertex)
-            color_vertex_pairs.emplace_back(static_cast<ygg::uint_t>(graph.get_vertex(vertices[dense_vertex]).get_property_index()), static_cast<int>(dense_vertex));
+            color_vertex_pairs.emplace_back(static_cast<ygg::uint_t>(get_vertex_color(graph.get_vertex(vertices[dense_vertex]))),
+                                            static_cast<int>(dense_vertex));
         std::sort(color_vertex_pairs.begin(), color_vertex_pairs.end());
 
         auto coloring = std::vector<ygg::uint_t>();

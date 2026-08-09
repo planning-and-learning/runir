@@ -8,6 +8,9 @@
 #include <runir/datasets/formatter.hpp>
 #include <stdexcept>
 #include <string>
+#include <tyr/formalism/planning/planning_domain.hpp>
+#include <tyr/planning/ground/task.hpp>
+#include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
@@ -51,16 +54,39 @@ void bind_equivalence_graph_generation_for_kind(nb::module_& m, const char* clas
             nb::rv_policy::reference_internal);
 
     m.def((std::string("generate_") + function_prefix + "_equivalence_graph").c_str(),
-          [](ContextList contexts, const EquivalenceGraphGenerationOptions& options)
-          { return std::make_shared<Result>(generate_equivalence_graph<Kind>(contexts, options)); },
+          [](ContextList contexts, const EquivalenceGraphGenerationOptions& options, ColorRepository* color_repository)
+          {
+              if (color_repository)
+                  return std::make_shared<Result>(generate_equivalence_graph<Kind>(contexts, options, *color_repository));
+              return std::make_shared<Result>(generate_equivalence_graph<Kind>(contexts, options));
+          },
           "contexts"_a,
-          "options"_a = EquivalenceGraphGenerationOptions());
+          "options"_a = EquivalenceGraphGenerationOptions(),
+          "color_repository"_a = nb::none());
 }
 
 }  // namespace
 
 void bind_equivalence_graph(nb::module_& m)
 {
+    nb::class_<ColorRepository>(m, "ColorRepository").def_prop_ro("num_colors", [](const ColorRepository& self) { return self.size<Color>(); });
+
+    nb::class_<ColorRepositoryFactory>(m, "ColorRepositoryFactory")
+        .def(nb::init<>())
+        .def(
+            "create",
+            [](ColorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
+            { return self.create(planning_domain.get_repository()); },
+            "planning_domain"_a)
+        .def(
+            "create",
+            [](ColorRepositoryFactory& self, const tyr::planning::Task<tyr::GroundTag>& task) { return self.create(task.get_domain().get_repository()); },
+            "ground_task"_a)
+        .def(
+            "create",
+            [](ColorRepositoryFactory& self, const tyr::planning::Task<tyr::LiftedTag>& task) { return self.create(task.get_domain().get_repository()); },
+            "lifted_task"_a);
+
     nb::class_<EquivalenceGraphGenerationOptions>(m, "EquivalenceGraphGenerationOptions")
         .def(nb::init<>())
         .def_rw("state_graph_options", &EquivalenceGraphGenerationOptions::state_graph_options)

@@ -17,11 +17,12 @@ from pyrunir.datasets import (
     EquivalencePolicyMode,
     EquivalenceVertexLabel,
     GroundDynamicAnnotatedStateGraph,
-    GroundTaskSearchContext,
     GroundDynamicStateGraph,
     GroundStateGraphBuilder,
     GroundStaticStateGraph,
+    GroundTaskSearchContext,
     LiftedTaskSearchContext,
+    ColorRepositoryFactory,
     StateGraphEdgeLabel,
     StaticEquivalenceGraph,
     StateGraphCostMode,
@@ -203,6 +204,19 @@ def test_generate_ground_equivalence_graph_exposes_owned_result_graphs(ground_gr
 
     source = next(vertex for vertex in forward_graph.get_vertex_indices() if forward_graph.get_out_degree(vertex) > 0)
     assert list(forward_graph.get_successor_indices(source))
+
+
+def test_object_graph_color_repository_can_be_reused(ground_gripper_search_context: GroundTaskSearchContext) -> None:
+    options = EquivalenceGraphGenerationOptions()
+    options.policy_mode = EquivalencePolicyMode.GI
+    colors = ColorRepositoryFactory().create(ground_gripper_search_context.task)
+
+    generate_ground_equivalence_graph([ground_gripper_search_context], options, colors)
+    num_colors = colors.num_colors
+    generate_ground_equivalence_graph([ground_gripper_search_context], options, colors)
+
+    assert num_colors > 0
+    assert colors.num_colors == num_colors
 
 
 @pytest.mark.parametrize("case", EQUIVALENCE_GRAPH_FIXTURES, ids=[case["name"] for case in EQUIVALENCE_GRAPH_FIXTURES])

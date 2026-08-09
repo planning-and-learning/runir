@@ -35,15 +35,19 @@ template<>
 struct EquivalencePolicy<GIEquivalenceTag>
 {
 private:
+    ColorRepository& m_colors;
     ygg::UnorderedMap<graphs::nauty::SparseGraph, StateGraphVertexRef> m_certificate_to_representative;
     std::mutex m_mutex;
 
 public:
+    explicit EquivalencePolicy(ColorRepository& colors) : m_colors(colors) {}
+
     template<tyr::TaskKind Kind>
     auto get_or_create_representative(const StateGraphVertexCandidate<Kind>& candidate, const StateGraphVertexFactory& allocate) -> RepresentativeResult
     {
-        auto object_graph = create_object_graph(candidate.state);
-        auto certificate = graphs::nauty::SparseGraph(*object_graph).canonize();
+        auto object_graph = create_object_graph(candidate.state, m_colors);
+        auto certificate = graphs::nauty::SparseGraph(*object_graph);
+        certificate.canonize();
 
         const auto lock = std::lock_guard(m_mutex);
         if (const auto it = m_certificate_to_representative.find(certificate); it != m_certificate_to_representative.end())

@@ -18,6 +18,7 @@
 #ifndef RUNIR_DATASETS_OBJECT_GRAPH_HPP_
 #define RUNIR_DATASETS_OBJECT_GRAPH_HPP_
 
+#include "runir/datasets/object_graph_color.hpp"
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 
@@ -34,62 +35,14 @@
 namespace runir::datasets
 {
 
-using ObjectGraphPredicateVariant =
-    std::variant<tyr::formalism::planning::PredicateView<tyr::formalism::StaticTag>, tyr::formalism::planning::PredicateView<tyr::formalism::FluentTag>>;
+using ObjectGraphBuilder = graphs::StaticGraphBuilder<ColorView, std::tuple<>>;
 
-struct StateObjectGraphVertexLabelEntry : ygg::comparison::Mixin<StateObjectGraphVertexLabelEntry>
-{
-    ObjectGraphPredicateVariant predicate;
-    std::size_t argument_position = 0;
+using ObjectGraph = graphs::StaticGraph<ColorView, std::tuple<>>;
 
-    StateObjectGraphVertexLabelEntry() = delete;
-    StateObjectGraphVertexLabelEntry(ObjectGraphPredicateVariant predicate_, std::size_t argument_position_) :
-        predicate(std::move(predicate_)),
-        argument_position(argument_position_)
-    {
-    }
-
-    auto cista_members() noexcept { return std::tie(predicate, argument_position); }
-    auto identifying_members() const noexcept { return std::tie(predicate, argument_position); }
-};
-
-struct GoalObjectGraphVertexLabelEntry : ygg::comparison::Mixin<GoalObjectGraphVertexLabelEntry>
-{
-    ObjectGraphPredicateVariant predicate;
-    std::size_t argument_position = 0;
-
-    GoalObjectGraphVertexLabelEntry() = delete;
-    GoalObjectGraphVertexLabelEntry(ObjectGraphPredicateVariant predicate_, std::size_t argument_position_) :
-        predicate(std::move(predicate_)),
-        argument_position(argument_position_)
-    {
-    }
-
-    auto cista_members() noexcept { return std::tie(predicate, argument_position); }
-    auto identifying_members() const noexcept { return std::tie(predicate, argument_position); }
-};
-
-using ObjectGraphVertexLabelEntry = std::variant<StateObjectGraphVertexLabelEntry, GoalObjectGraphVertexLabelEntry>;
-
-struct ObjectGraphVertexLabel : ygg::comparison::Mixin<ObjectGraphVertexLabel>
-{
-    std::vector<ObjectGraphVertexLabelEntry> labels;
-
-    ObjectGraphVertexLabel() = default;
-    explicit ObjectGraphVertexLabel(std::vector<ObjectGraphVertexLabelEntry> labels_) : labels(std::move(labels_)) {}
-
-    auto cista_members() noexcept { return std::tie(labels); }
-    auto identifying_members() const noexcept { return std::tie(labels); }
-};
+inline auto get_vertex_color(graphs::Vertex<ObjectGraph, ColorView> vertex) -> ygg::Index<Color> { return vertex.get_property().get_index(); }
 
 template<tyr::TaskKind Kind>
-using ObjectGraphBuilder = graphs::StaticGraphBuilder<ObjectGraphVertexLabel, std::tuple<>>;
-
-template<tyr::TaskKind Kind>
-using ObjectGraph = graphs::StaticGraph<ObjectGraphVertexLabel, std::tuple<>>;
-
-template<tyr::TaskKind Kind>
-auto create_object_graph(tyr::planning::StateView<Kind> state) -> std::unique_ptr<ObjectGraph<Kind>>;
+auto create_object_graph(tyr::planning::StateView<Kind> state, ColorRepository& repository) -> std::unique_ptr<ObjectGraph>;
 
 }  // namespace runir::datasets
 

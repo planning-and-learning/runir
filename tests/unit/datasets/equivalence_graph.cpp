@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tyr/planning/ground/task.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/serialization/json_loader.hpp>
@@ -136,6 +137,32 @@ TEST(EquivalenceGraphTest, RejectsCrossGraphConcreteStateEdge)
             throw;
         },
         std::runtime_error);
+}
+
+TEST(EquivalenceGraphTest, ReusesColorsAcrossProblems)
+{
+    const auto root = benchmark_path("classical/tests/gripper");
+    auto contexts = make_ground_contexts(root / "domain.pddl", { root / "test-1.pddl", root / "test-1.pddl" });
+    auto factory = datasets::ColorRepositoryFactory {};
+    auto colors = factory.create(contexts.front()->task->get_domain().get_repository());
+    auto num_colors = std::size_t { 0 };
+
+    for (std::size_t iteration = 0; iteration < contexts.size(); ++iteration)
+    {
+        auto problem_contexts = datasets::TaskSearchContextList<tyr::GroundTag> { contexts[iteration] };
+        auto options = datasets::EquivalenceGraphGenerationOptions {};
+        options.policy_mode = datasets::EquivalencePolicyMode::GI;
+        const auto result = datasets::generate_equivalence_graph(problem_contexts, options, *colors);
+
+        EXPECT_EQ(result.graph->get_forward_graph().get_num_vertices(), 18);
+        EXPECT_EQ(result.graph->get_forward_graph().get_num_edges(), 60);
+        if (iteration == 0)
+            num_colors = colors->size<datasets::Color>();
+        else
+            EXPECT_EQ(colors->size<datasets::Color>(), num_colors);
+    }
+
+    EXPECT_GT(num_colors, 0);
 }
 
 INSTANTIATE_TEST_SUITE_P(RunirDatasets,

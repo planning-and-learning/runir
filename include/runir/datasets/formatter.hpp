@@ -13,54 +13,31 @@
 #include <tyr/formalism/planning/formatter.hpp>
 #include <utility>
 #include <variant>
+#include <yggdrasil/formatting/cista_formatters.hpp>
 
 namespace fmt
 {
 
-template<>
-struct formatter<runir::datasets::StateObjectGraphVertexLabelEntry, char> : formatter<std::string_view>
+template<::tyr::formalism::FactKind T>
+struct formatter<ygg::View<ygg::Index<runir::datasets::PredicateColor<T>>, runir::datasets::ColorRepository>, char> : formatter<std::string_view>
 {
     template<typename FormatContext>
-    auto format(const runir::datasets::StateObjectGraphVertexLabelEntry& entry, FormatContext& ctx) const
+    auto format(const ygg::View<ygg::Index<runir::datasets::PredicateColor<T>>, runir::datasets::ColorRepository>& color, FormatContext& ctx) const
     {
-        const auto text = std::visit([&](const auto& predicate)
-                                     { return fmt::format("state:{}/{}[{}]", predicate.get_name().str(), predicate.get_arity(), entry.argument_position); },
-                                     entry.predicate);
+        const auto predicate = color.get_predicate();
+        const auto context = color.get_predicate_context() == runir::datasets::PredicateContext::STATE ? "state" : "goal";
+        const auto text = fmt::format("{}:{}[{}]", context, predicate, color.get_argument_position());
         return formatter<std::string_view>::format(text, ctx);
     }
 };
 
 template<>
-struct formatter<runir::datasets::GoalObjectGraphVertexLabelEntry, char> : formatter<std::string_view>
+struct formatter<runir::datasets::ColorView, char> : formatter<std::string_view>
 {
     template<typename FormatContext>
-    auto format(const runir::datasets::GoalObjectGraphVertexLabelEntry& entry, FormatContext& ctx) const
+    auto format(const runir::datasets::ColorView& color, FormatContext& ctx) const
     {
-        const auto text = std::visit([&](const auto& predicate)
-                                     { return fmt::format("goal:{}/{}[{}]", predicate.get_name().str(), predicate.get_arity(), entry.argument_position); },
-                                     entry.predicate);
-        return formatter<std::string_view>::format(text, ctx);
-    }
-};
-
-template<>
-struct formatter<runir::datasets::ObjectGraphVertexLabelEntry, char> : formatter<std::string_view>
-{
-    template<typename FormatContext>
-    auto format(const runir::datasets::ObjectGraphVertexLabelEntry& entry, FormatContext& ctx) const
-    {
-        const auto text = std::visit([](const auto& alternative) { return fmt::format("{}", alternative); }, entry);
-        return formatter<std::string_view>::format(text, ctx);
-    }
-};
-
-template<>
-struct formatter<runir::datasets::ObjectGraphVertexLabel, char> : formatter<std::string_view>
-{
-    template<typename FormatContext>
-    auto format(const runir::datasets::ObjectGraphVertexLabel& label, FormatContext& ctx) const
-    {
-        const auto text = fmt::format("{}", fmt::join(label.labels, "\n"));
+        const auto text = fmt::format("{}", color.get_colors());
         return formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -99,9 +76,7 @@ struct formatter<runir::datasets::StateGraphEdgeLabel, char> : formatter<std::st
     template<typename FormatContext>
     auto format(const runir::datasets::StateGraphEdgeLabel& label, FormatContext& ctx) const
     {
-        const auto text = fmt::format("{}\ncost={}",
-                                      std::make_pair(label.action, tyr::formalism::planning::PlanFormatting {}),
-                                      label.cost);
+        const auto text = fmt::format("{}\ncost={}", std::make_pair(label.action, tyr::formalism::planning::PlanFormatting {}), label.cost);
         return formatter<std::string_view>::format(text, ctx);
     }
 };

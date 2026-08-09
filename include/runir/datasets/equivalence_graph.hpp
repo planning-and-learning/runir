@@ -18,9 +18,9 @@
 #ifndef RUNIR_DATASETS_EQUIVALENCE_GRAPH_HPP_
 #define RUNIR_DATASETS_EQUIVALENCE_GRAPH_HPP_
 
-#include <yggdrasil/core/config.hpp>
 #include "runir/datasets/config.hpp"
 #include "runir/datasets/equivalence_policy.hpp"
+#include "runir/datasets/object_graph.hpp"
 #include "runir/datasets/state_graph.hpp"
 #include "runir/datasets/task_class.hpp"
 #include "runir/graphs/bidirectional_static_graph.hpp"
@@ -33,6 +33,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::datasets
@@ -147,6 +148,11 @@ auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, Equivalen
 template<tyr::TaskKind Kind>
 auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts, const EquivalenceGraphGenerationOptions& options = EquivalenceGraphGenerationOptions())
     -> EquivalenceGraphConstructionResult<Kind>;
+
+template<tyr::TaskKind Kind>
+auto generate_equivalence_graph(TaskSearchContextList<Kind>& contexts,
+                                const EquivalenceGraphGenerationOptions& options,
+                                ColorRepository& color_repository) -> EquivalenceGraphConstructionResult<Kind>;
 
 }  // namespace runir::datasets
 

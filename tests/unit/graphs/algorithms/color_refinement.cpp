@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <tuple>
 #include <utility>
 #include <vector>
 #include <yggdrasil/serialization/json.hpp>
@@ -21,8 +22,20 @@ namespace runir::tests
 namespace
 {
 
-using GraphBuilder = graphs::StaticGraphBuilder<std::string>;
-using Graph = graphs::StaticGraph<std::string>;
+struct VertexColor : ygg::comparison::Mixin<VertexColor>
+{
+    ygg::uint_t value = 0;
+
+    VertexColor() = default;
+    explicit VertexColor(ygg::uint_t value_) : value(value_) {}
+
+    auto identifying_members() const noexcept { return std::tie(value); }
+};
+
+using GraphBuilder = graphs::StaticGraphBuilder<VertexColor>;
+using Graph = graphs::StaticGraph<VertexColor>;
+
+auto get_vertex_color(graphs::Vertex<Graph, VertexColor> vertex) -> ygg::uint_t { return vertex.get_property().value; }
 
 auto graph_cases() -> const boost::json::array&
 {
@@ -49,7 +62,7 @@ auto make_graph(const boost::json::object& object) -> Graph
     const auto num_vertices = ygg::common::as_size(object, "num_vertices", "graph");
     vertices.reserve(num_vertices);
     for (std::size_t i = 0; i < num_vertices; ++i)
-        vertices.push_back(builder.add_vertex(std::string("x")));
+        vertices.push_back(builder.add_vertex(VertexColor {}));
 
     for (const auto& edge_value : ygg::common::as_array(ygg::common::require_member(object, "edges", "graph"), "graph.edges"))
     {
@@ -149,6 +162,32 @@ TEST(RunirTests, NautyCanonicalizationIsThreadSafe)
     }
 
     EXPECT_TRUE(matches.load(std::memory_order_relaxed));
+}
+
+TEST(RunirTests, NautyCanonicalizationAcceptsSemanticColors)
+{
+    auto first_builder = GraphBuilder {};
+    const auto first_center = first_builder.add_vertex(VertexColor { 0 });
+    const auto first_blue = first_builder.add_vertex(VertexColor { 1 });
+    const auto first_green = first_builder.add_vertex(VertexColor { 2 });
+    first_builder.add_undirected_edge(first_center, first_blue);
+    first_builder.add_undirected_edge(first_center, first_green);
+    const auto first = Graph(std::move(first_builder));
+
+    auto second_builder = GraphBuilder {};
+    const auto second_blue = second_builder.add_vertex(VertexColor { 1 });
+    const auto second_center = second_builder.add_vertex(VertexColor { 0 });
+    const auto second_green = second_builder.add_vertex(VertexColor { 2 });
+    second_builder.add_undirected_edge(second_center, second_blue);
+    second_builder.add_undirected_edge(second_center, second_green);
+    const auto second = Graph(std::move(second_builder));
+
+    auto first_certificate = graphs::nauty::SparseGraph(first);
+    auto second_certificate = graphs::nauty::SparseGraph(second);
+    first_certificate.canonize();
+    second_certificate.canonize();
+
+    EXPECT_EQ(first_certificate, second_certificate);
 }
 
 }  // namespace runir::tests
