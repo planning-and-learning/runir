@@ -3,6 +3,6 @@
 namespace runir::kr::dl::ext
 {
 
-void bind_parser(nb::module_& m) {}
+void bind_parser(nb::module_&) {}
 
 }  // namespace runir::kr::dl::ext

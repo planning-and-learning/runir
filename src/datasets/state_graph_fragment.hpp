@@ -118,7 +118,10 @@ class StateGraphEventHandler final : public tyr::planning::astar_eager::EventHan
 public:
     explicit StateGraphEventHandler(const tyr::planning::StateView<Kind>& start) : m_workers(1), m_start(m_root.locate(start)) {}
 
-    void on_start_search(const tyr::planning::Node<Kind>& node, ygg::float_t) override { assert(m_start == m_root.locate(node.get_state())); }
+    void on_start_search([[maybe_unused]] const tyr::planning::Node<Kind>& node, ygg::float_t) override
+    {
+        assert(m_start == m_root.locate(node.get_state()));
+    }
 
     void on_end_search(tyr::planning::SearchStatus, const tyr::planning::Statistics&) override {}
     void on_solved(const tyr::planning::Plan<Kind>&) override {}
