@@ -1,7 +1,6 @@
 #ifndef RUNIR_GRAMMAR_FORMATTER_HPP_
 #define RUNIR_GRAMMAR_FORMATTER_HPP_
 
-#include <yggdrasil/core/config.hpp>
 #include "runir/formatter.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/grammar/grammar_view.hpp"
@@ -12,11 +11,12 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/formatting/cista_formatters.hpp>
 #include <yggdrasil/formatting/formatter.hpp>
 
-namespace runir::kr::dl::grammar::format
+namespace runir::kr::dl::grammar
 {
 
 inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
@@ -243,7 +243,7 @@ std::string grammar(View view)
     return text;
 }
 
-}  // namespace runir::kr::dl::grammar::format
+}  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
     requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
@@ -252,7 +252,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::grammar::Concept<Famil
     using View = ygg::View<ygg::Index<runir::kr::dl::grammar::Concept<Family, Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        const auto text = fmt::format("({})", runir::kr::dl::grammar::format::concept_constructor(view));
+        const auto text = fmt::format("({})", runir::kr::dl::grammar::concept_constructor(view));
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -264,7 +264,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::grammar::Role<Family, 
     using View = ygg::View<ygg::Index<runir::kr::dl::grammar::Role<Family, Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        const auto text = fmt::format("({})", runir::kr::dl::grammar::format::role(view));
+        const auto text = fmt::format("({})", runir::kr::dl::grammar::role(view));
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -276,7 +276,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::grammar::Boolean<Famil
     using View = ygg::View<ygg::Index<runir::kr::dl::grammar::Boolean<Family, Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        const auto text = fmt::format("({})", runir::kr::dl::grammar::format::boolean_constructor(view));
+        const auto text = fmt::format("({})", runir::kr::dl::grammar::boolean_constructor(view));
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -288,7 +288,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::grammar::Numerical<Fam
     using View = ygg::View<ygg::Index<runir::kr::dl::grammar::Numerical<Family, Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        const auto text = fmt::format("({})", runir::kr::dl::grammar::format::numerical(view));
+        const auto text = fmt::format("({})", runir::kr::dl::grammar::numerical(view));
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -299,7 +299,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::grammar::Constructor<F
     using View = ygg::View<ygg::Index<runir::kr::dl::grammar::Constructor<Family, Category>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        const auto text = fmt::format("({})", runir::kr::dl::grammar::format::constructor_body(view));
+        const auto text = fmt::format("({})", runir::kr::dl::grammar::constructor_body(view));
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -322,14 +322,14 @@ template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, t
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::grammar::DerivationRule<Family, Category>>, C>> : fmt::formatter<std::string_view>
 {
     using View = ygg::View<ygg::Index<runir::kr::dl::grammar::DerivationRule<Family, Category>>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::grammar::format::rule(view), ctx); }
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::grammar::rule(view), ctx); }
 };
 
 template<runir::kr::dl::FamilyTag Family, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::grammar::GrammarTag<Family>>, C>> : fmt::formatter<std::string_view>
 {
     using View = ygg::View<ygg::Index<runir::kr::dl::grammar::GrammarTag<Family>>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::grammar::format::grammar(view), ctx); }
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::grammar::grammar(view), ctx); }
 };
 
 #endif

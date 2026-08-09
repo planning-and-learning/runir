@@ -15,7 +15,7 @@
 #include <string_view>
 #include <yggdrasil/formatting/formatter.hpp>
 
-namespace runir::graphs::format
+namespace runir::graphs
 {
 
 inline auto dot_escape(std::string_view text) -> std::string
@@ -83,7 +83,7 @@ auto dot(const G& graph, std::string_view name = "G") -> std::string
     return text;
 }
 
-}  // namespace runir::graphs::format
+}  // namespace runir::graphs
 
 namespace fmt
 {
@@ -117,7 +117,7 @@ struct formatter<Graph, char> : formatter<std::string_view>
     template<typename FormatContext>
     auto format(const Graph& graph, FormatContext& ctx) const
     {
-        const auto text = runir::graphs::format::dot(graph);
+        const auto text = runir::graphs::dot(graph);
         return formatter<std::string_view>::format(text, ctx);
     }
 };
@@ -128,7 +128,7 @@ struct formatter<runir::graphs::BidirectionalStaticGraph<VertexProperty, EdgePro
     template<typename FormatContext>
     auto format(const runir::graphs::BidirectionalStaticGraph<VertexProperty, EdgeProperty>& graph, FormatContext& ctx) const
     {
-        const auto text = runir::graphs::format::dot(graph.get_forward_graph());
+        const auto text = runir::graphs::dot(graph.get_forward_graph());
         return formatter<std::string_view>::format(text, ctx);
     }
 };

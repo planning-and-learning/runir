@@ -19,7 +19,7 @@
 #include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 #include <yggdrasil/formatting/formatter.hpp>
 
-namespace runir::kr::dl::semantics::format
+namespace runir::kr::dl::semantics
 {
 
 inline std::string boolean(bool value) { return value ? runir::kr::dl::TrueTag::keyword : runir::kr::dl::FalseTag::keyword; }
@@ -230,7 +230,7 @@ std::string numerical(ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family
     }
 }
 
-}  // namespace runir::kr::dl::semantics::format
+}  // namespace runir::kr::dl::semantics
 
 namespace ygg
 {
@@ -266,7 +266,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyConcept<Family, 
     using View = ygg::View<ygg::Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::format::concept_constructor(view), ctx);
+        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::concept_constructor(view), ctx);
     }
 };
 
@@ -275,7 +275,7 @@ template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>> : fmt::formatter<std::string_view>
 {
     using View = ygg::View<ygg::Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::format::role(view), ctx); }
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::role(view), ctx); }
 };
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
@@ -285,7 +285,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyBoolean<Family, 
     using View = ygg::View<ygg::Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C>;
     auto format(View view, format_context& ctx) const
     {
-        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::format::boolean_constructor(view), ctx);
+        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::boolean_constructor(view), ctx);
     }
 };
 
@@ -294,10 +294,7 @@ template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C>> : fmt::formatter<std::string_view>
 {
     using View = ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C>;
-    auto format(View view, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::format::numerical(view), ctx);
-    }
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::numerical(view), ctx); }
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
@@ -311,10 +308,7 @@ template<runir::kr::dl::CategoryTag Category, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::semantics::Denotation<Category>>, C>> : fmt::formatter<std::string_view>
 {
     using View = ygg::View<ygg::Index<runir::kr::dl::semantics::Denotation<Category>>, C>;
-    auto format(View view, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::format::denotation(view), ctx);
-    }
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::denotation(view), ctx); }
 };
 
 #endif

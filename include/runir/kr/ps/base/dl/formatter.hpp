@@ -19,7 +19,7 @@
 #include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
-namespace runir::kr::ps::base::dl::format
+namespace runir::kr::ps::base::dl
 {
 
 inline std::string symbol_section(std::string_view value) { return fmt::format("(:symbol {})", value); }
@@ -58,14 +58,14 @@ std::string effect(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr:
     return fmt::format("({} {})", ObservationTag::keyword, view.get_feature().get_symbol().str());
 }
 
-}  // namespace runir::kr::ps::base::dl::format
+}  // namespace runir::kr::ps::base::dl
 
 template<typename FeatureTag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C>> :
     fmt::formatter<std::string_view>
 {
     using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::dl::format::feature(view), ctx); }
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::dl::feature(view), ctx); }
 };
 
 template<typename FeatureTag, typename ObservationTag, typename C>
@@ -73,10 +73,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runi
     fmt::formatter<std::string_view>
 {
     using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>;
-    auto format(View view, format_context& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::base::dl::format::condition(view), ctx);
-    }
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::dl::condition(view), ctx); }
 };
 
 template<typename FeatureTag, typename ObservationTag, typename C>
@@ -84,7 +81,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::
     fmt::formatter<std::string_view>
 {
     using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::dl::format::effect(view), ctx); }
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::dl::effect(view), ctx); }
 };
 
 template<>

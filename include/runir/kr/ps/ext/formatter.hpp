@@ -19,7 +19,7 @@
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
-namespace runir::kr::ps::ext::format
+namespace runir::kr::ps::ext
 {
 
 template<typename FeatureTag>
@@ -306,7 +306,7 @@ std::string module_program(ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgra
     return os.str();
 }
 
-}  // namespace runir::kr::ps::ext::format
+}  // namespace runir::kr::ps::ext
 
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::MemoryState>, C>>
@@ -325,83 +325,74 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleSymbol>, C>
 template<typename FeatureTag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C>> : fmt::formatter<std::string_view>
 {
-    auto format(auto view, format_context& context) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::feature(view), context);
-    }
+    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::feature(view), context); }
 };
 
 template<typename FeatureTag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C>> :
     fmt::formatter<std::string_view>
 {
-    auto format(auto view, format_context& context) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::feature(view), context);
-    }
+    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::feature(view), context); }
 };
 
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(auto view, format_context& context) const { return runir::kr::ps::ext::format::condition(view, context.out()); }
+    auto format(auto view, format_context& context) const { return runir::kr::ps::ext::condition(view, context.out()); }
 };
 
 template<typename LanguageTag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(auto view, format_context& context) const { return runir::kr::ps::ext::format::condition(view, context.out()); }
+    auto format(auto view, format_context& context) const { return runir::kr::ps::ext::condition(view, context.out()); }
 };
 
 template<typename LanguageTag, typename FeatureTag, typename ObservationTag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, LanguageTag, FeatureTag, ObservationTag>>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(auto view, format_context& context) const { return runir::kr::ps::ext::format::condition(view, context.out()); }
+    auto format(auto view, format_context& context) const { return runir::kr::ps::ext::condition(view, context.out()); }
 };
 
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(auto view, format_context& context) const { return runir::kr::ps::ext::format::effect(view, context.out()); }
+    auto format(auto view, format_context& context) const { return runir::kr::ps::ext::effect(view, context.out()); }
 };
 
 template<typename LanguageTag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(auto view, format_context& context) const { return runir::kr::ps::ext::format::effect(view, context.out()); }
+    auto format(auto view, format_context& context) const { return runir::kr::ps::ext::effect(view, context.out()); }
 };
 
 template<typename LanguageTag, typename FeatureTag, typename ObservationTag, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, LanguageTag, FeatureTag, ObservationTag>>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(auto view, format_context& context) const { return runir::kr::ps::ext::format::effect(view, context.out()); }
+    auto format(auto view, format_context& context) const { return runir::kr::ps::ext::effect(view, context.out()); }
 };
 
 template<runir::kr::ps::ext::RuleKind Kind, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C>> : fmt::formatter<std::string_view>
 {
-    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::rule(view), context); }
+    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::rule(view), context); }
 };
 
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::RuleVariant>, C>> : fmt::formatter<std::string_view>
 {
-    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::rule(view), context); }
+    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::rule(view), context); }
 };
 
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C>> : fmt::formatter<std::string_view>
 {
-    auto format(auto view, format_context& context) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::module(view), context);
-    }
+    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::module(view), context); }
 };
 
 template<typename C>
@@ -409,7 +400,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgram>, C
 {
     auto format(auto view, format_context& context) const
     {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::format::module_program(view), context);
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::module_program(view), context);
     }
 };
 
