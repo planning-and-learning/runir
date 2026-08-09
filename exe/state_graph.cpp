@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     auto program = argparse::ArgumentParser("Generate a planning task state graph in Graphviz DOT format.");
     program.add_argument("-D", "--domain-filepath").required().help("The path to the PDDL domain file.");
     program.add_argument("-P", "--problem-filepath").required().help("The path to the PDDL problem file.");
-    program.add_argument("-N", "--num-worker-threads").default_value(std::size_t(1)).scan<'u', std::size_t>().help("The number of worker threads.");
+    program.add_argument("-N", "--num-datalog-threads").default_value(std::size_t(1)).scan<'u', std::size_t>().help("The number of Datalog threads.");
     program.add_argument("-G", "--instantiate-ground-task")
         .default_value(false)
         .implicit_value(true)
@@ -70,14 +70,14 @@ int main(int argc, char** argv)
 
     const auto domain_filepath = program.get<std::string>("--domain-filepath");
     const auto problem_filepath = program.get<std::string>("--problem-filepath");
-    const auto num_worker_threads = program.get<std::size_t>("--num-worker-threads");
+    const auto num_datalog_threads = program.get<std::size_t>("--num-datalog-threads");
     const auto instantiate_ground_task = program.get<bool>("--instantiate-ground-task");
     const auto disable_invariant_synthesis = program.get<bool>("--disable-invariant-synthesis");
 
     auto parser_options = loki::ParserOptions();
     auto parser = tyr::formalism::planning::Parser(domain_filepath, parser_options);
     auto lifted_task = tyr::planning::Task<tyr::LiftedTag>::create(parser.parse_task(problem_filepath));
-    auto execution_context = ygg::ExecutionContext::create(num_worker_threads);
+    auto execution_context = ygg::ExecutionContext::create(num_datalog_threads);
 
     if (!instantiate_ground_task)
     {

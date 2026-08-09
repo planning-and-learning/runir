@@ -77,24 +77,28 @@ auto create_astar_options(const StateGraphGenerationOptions& generation_options)
     auto options = tyr::planning::astar_eager::Options<Kind> {};
     options.max_num_states = generation_options.max_num_states;
     options.max_time = generation_options.max_time;
-    options.num_search_workers = generation_options.num_search_workers;
+    options.num_search_workers = 1;
     return options;
 }
 
 template<tyr::TaskKind Kind>
 auto generate_state_graph_result(TaskSearchContext<Kind>& context, const StateGraphGenerationOptions& generation_options) -> StateGraphGenerationResult<Kind>
 {
-    detail::validate_num_search_workers(generation_options.num_search_workers);
-
     auto heuristic = tyr::planning::BlindHeuristic<Kind> {};
-    auto event_handler = std::make_shared<detail::StateGraphEventHandler<Kind>>(generation_options.num_search_workers);
+    const auto initial_node = context.successor_generator->get_initial_node(*context.state_repository, *context.axiom_evaluator);
+    auto event_handler = std::make_shared<detail::StateGraphEventHandler<Kind>>(initial_node.get_state());
     auto options = create_astar_options<Kind>(generation_options);
     options.event_handler = event_handler;
     options.goal_strategy = tyr::planning::ExhaustiveGoalStrategy<Kind>::create();
 
-    const auto result = tyr::planning::astar_eager::find_solution(*context.task, *context.successor_generator, heuristic, options);
+    const auto result = tyr::planning::astar_eager::find_solution(*context.task,
+                                                                  *context.state_repository,
+                                                                  *context.axiom_evaluator,
+                                                                  *context.successor_generator,
+                                                                  heuristic,
+                                                                  options);
 
-    return { detail::build_state_graph(*event_handler, *context.state_repository), result.status };
+    return { detail::build_state_graph(*event_handler, *context.state_repository, *context.axiom_evaluator), result.status };
 }
 
 template<tyr::TaskKind Kind>
@@ -111,7 +115,7 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context,
     const auto& forward_graph = graph.get_forward_graph();
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
     const auto static_goal_satisfied = goal_strategy.is_static_goal_satisfied(*context.task);
-    const auto initial_state = context.successor_generator->get_initial_node().get_state();
+    const auto initial_state = context.successor_generator->get_initial_node(*context.state_repository, *context.axiom_evaluator).get_state();
 
     auto is_goal = std::vector<bool>(forward_graph.get_num_vertices(), false);
     auto goal_vertices = std::vector<graphs::VertexIndex> {};

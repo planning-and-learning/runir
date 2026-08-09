@@ -101,22 +101,6 @@ TEST_P(EquivalenceGraphTest, MatchesExpectedProperties)
         EXPECT_GT(state_graph_result.graph->get_forward_graph().get_num_vertices(), 0);
     }
 
-    auto parallel_contexts = make_ground_contexts(param.domain_file, param.task_files);
-    options.state_graph_options.num_search_workers = 4;
-    const auto parallel = datasets::generate_equivalence_graph(parallel_contexts, options);
-    EXPECT_EQ(parallel.graph->get_forward_graph().get_num_vertices(), result.graph->get_forward_graph().get_num_vertices());
-    EXPECT_EQ(parallel.graph->get_forward_graph().get_num_edges(), result.graph->get_forward_graph().get_num_edges());
-    ASSERT_EQ(parallel.state_graph_results.size(), result.state_graph_results.size());
-    for (size_t i = 0; i < parallel.state_graph_results.size(); ++i)
-    {
-        const auto& parallel_graph = parallel.state_graph_results[i].graph->get_forward_graph();
-        const auto& sequential_graph = result.state_graph_results[i].graph->get_forward_graph();
-        EXPECT_EQ(parallel_graph.get_num_vertices(), sequential_graph.get_num_vertices());
-        EXPECT_EQ(parallel_graph.get_num_edges(), sequential_graph.get_num_edges());
-        for (const auto vertex : parallel_graph.get_vertex_indices())
-            EXPECT_EQ(parallel_graph.get_vertex(vertex).get_property().state.get_state_repository(), parallel_contexts[i]->state_repository);
-    }
-
     if (param.equivalence_policy == datasets::EquivalencePolicyMode::GI && result.state_graph_results.size() == 1)
     {
         EXPECT_EQ(result.state_graph_results.front().graph->get_forward_graph().get_num_vertices(), result.graph->get_forward_graph().get_num_vertices());
@@ -139,22 +123,12 @@ TEST(EquivalenceGraphTest, RejectsUnsupportedPolicyMode)
         std::runtime_error);
 }
 
-TEST(EquivalenceGraphTest, RejectsZeroSearchWorkersWithoutContexts)
-{
-    auto contexts = datasets::TaskSearchContextList<tyr::GroundTag> {};
-    auto options = datasets::EquivalenceGraphGenerationOptions {};
-    options.state_graph_options.num_search_workers = 0;
-
-    EXPECT_THROW(static_cast<void>(datasets::generate_equivalence_graph(contexts, options)), std::invalid_argument);
-}
-
 TEST(EquivalenceGraphTest, RejectsCrossGraphConcreteStateEdge)
 {
     const auto root = benchmark_path("classical/tests/gripper");
     auto contexts = make_ground_contexts(root / "domain.pddl", { root / "test-1.pddl", root / "test-1.pddl" });
     auto options = datasets::EquivalenceGraphGenerationOptions {};
     options.policy_mode = datasets::EquivalencePolicyMode::GI;
-    options.state_graph_options.num_search_workers = 4;
 
     EXPECT_THROW(
         try { static_cast<void>(datasets::generate_equivalence_graph(contexts, options)); } catch (const std::runtime_error& error) {

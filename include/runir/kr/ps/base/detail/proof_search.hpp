@@ -33,7 +33,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
     auto state_to_vertex = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*search_context.task);
     auto expander = SuccessorExpander<Kind>(task_context, sketch);
-    const auto initial_node = search_context.successor_generator->get_initial_node();
+    const auto initial_node = search_context.successor_generator->get_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
     const auto initial_state = initial_node.get_state();
     const auto static_goal_satisfied = goal_strategy.is_static_goal_satisfied(*search_context.task);
     const auto started_at = std::chrono::steady_clock::now();

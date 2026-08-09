@@ -21,7 +21,7 @@ TEST(RunirTests, UnsClassifierClassifies)
     auto repository = kr::uns::RepositoryFactory().create(dl_repository);
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/positive.classifier"), search->task->get_domain().get_domain(), *repository);
 
-    const auto state = search->state_repository->get_initial_state();
+    const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
     auto builder = sem::Builder();
     auto denotation_repository = sem::DenotationRepositoryFactory().create(search->task->get_repository());
     auto context = sem::EvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(state, builder, denotation_repository);

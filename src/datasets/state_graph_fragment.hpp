@@ -21,7 +21,6 @@
 #include "runir/datasets/state_graph.hpp"
 
 #include <cassert>
-#include <limits>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -37,14 +36,6 @@ namespace runir::datasets::detail
 {
 
 using StateGraphEdgeKey = std::tuple<graphs::VertexIndex, graphs::VertexIndex, tyr::formalism::planning::ActionBindingView, ygg::float_t>;
-
-inline void validate_num_search_workers(size_t num_workers)
-{
-    if (num_workers == 0)
-        throw std::invalid_argument("State graph generation requires at least one search worker.");
-    if (num_workers > std::numeric_limits<ygg::uint_t>::max())
-        throw std::invalid_argument("State graph generation worker count exceeds the worker index range.");
-}
 
 template<tyr::TaskKind Kind>
 struct StateLocator : ygg::comparison::Mixin<StateLocator<Kind>>
@@ -125,13 +116,9 @@ template<tyr::TaskKind Kind>
 class StateGraphEventHandler final : public tyr::planning::astar_eager::EventHandler<Kind>
 {
 public:
-    explicit StateGraphEventHandler(size_t num_workers) : m_workers(num_workers) {}
+    explicit StateGraphEventHandler(const tyr::planning::StateView<Kind>& start) : m_workers(1), m_start(m_root.locate(start)) {}
 
-    void on_start_search(const tyr::planning::Node<Kind>& node, ygg::float_t) override
-    {
-        assert(!m_start);
-        m_start = m_root.locate(node.get_state());
-    }
+    void on_start_search(const tyr::planning::Node<Kind>& node, ygg::float_t) override { assert(m_start == m_root.locate(node.get_state())); }
 
     void on_end_search(tyr::planning::SearchStatus, const tyr::planning::Statistics&) override {}
     void on_solved(const tyr::planning::Plan<Kind>&) override {}
@@ -172,16 +159,19 @@ private:
 template<tyr::TaskKind Kind>
 tyr::planning::StateView<Kind> materialize_state(const StateLocator<Kind>& locator,
                                                  const typename StateGraphFragment<Kind>::RepositoryMap& repositories,
-                                                 tyr::planning::StateRepository<Kind>& target)
+                                                 tyr::planning::StateRepository<Kind>& target,
+                                                 tyr::planning::AxiomEvaluator<Kind>& axiom_evaluator)
 {
     const auto it = repositories.find(locator.repository);
     if (it == repositories.end())
         throw std::logic_error("State graph fragment references an unknown state repository.");
-    return tyr::planning::materialize_state(it->second->get_registered_state(locator.state), target);
+    return tyr::planning::materialize_state(it->second->get_registered_state(locator.state), target, axiom_evaluator);
 }
 
 template<tyr::TaskKind Kind>
-std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler<Kind>& events, tyr::planning::StateRepository<Kind>& target_repository)
+std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler<Kind>& events,
+                                                    tyr::planning::StateRepository<Kind>& target_repository,
+                                                    tyr::planning::AxiomEvaluator<Kind>& axiom_evaluator)
 {
     if (!events.get_start())
         throw std::logic_error("State graph search did not report its initial state.");
@@ -196,7 +186,7 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
         if (const auto it = locator_to_vertex.find(locator); it != locator_to_vertex.end())
             return it->second;
 
-        auto state = materialize_state(locator, repositories, target_repository);
+        auto state = materialize_state(locator, repositories, target_repository, axiom_evaluator);
         auto vertex = graphs::VertexIndex {};
         if (const auto it = state_to_vertex.find(state); it != state_to_vertex.end())
             vertex = it->second;

@@ -82,7 +82,6 @@ def _make_ground_contexts(case: EquivalenceGraphFixture) -> list[GroundTaskSearc
 def test_ground_state_graph_builder_can_copy_generated_graph_labels(ground_gripper_search_context: GroundTaskSearchContext) -> None:
     options = StateGraphGenerationOptions()
     options.max_num_states = 4
-    options.num_search_workers = 4
 
     graph = generate_ground_state_graph(ground_gripper_search_context, options)
     forward_graph = graph.get_forward_graph()
@@ -125,7 +124,6 @@ def test_lifted_state_graph_edges_store_action_bindings(gripper_data_dir: Path) 
     context = LiftedTaskSearchContext(task, ExecutionContext(1))
     options = StateGraphGenerationOptions()
     options.max_num_states = 4
-    options.num_search_workers = 4
 
     graph = generate_lifted_state_graph(context, options).get_forward_graph()
     edge_label = graph.get_edge_property(next(iter(graph.get_edge_indices())))
@@ -185,7 +183,6 @@ def test_generate_ground_equivalence_graph_exposes_owned_result_graphs(ground_gr
     options = EquivalenceGraphGenerationOptions()
     options.policy_mode = EquivalencePolicyMode.IDENTITY
     options.state_graph_options.max_num_states = 4
-    options.state_graph_options.num_search_workers = 4
 
     result = generate_ground_equivalence_graph([ground_gripper_search_context], options)
 

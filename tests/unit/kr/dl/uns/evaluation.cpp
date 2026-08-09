@@ -84,7 +84,7 @@ TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
 {
     auto search = make_gripper_ground_context();
     const auto& task = search->task;
-    const auto state = search->state_repository->get_initial_state();
+    const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
 
     auto repository = dl::ConstructorRepositoryFactoryFor<kr::UnsFamilyTag>().create(task->get_repository());
     auto& repo = *repository;
@@ -148,7 +148,7 @@ TEST(RunirTests, UnsFamilyArithmeticLogicalOperatorsEvaluateAndFormat)
 {
     auto search = make_gripper_ground_context();
     const auto& task = search->task;
-    const auto state = search->state_repository->get_initial_state();
+    const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
 
     auto repository = dl::ConstructorRepositoryFactoryFor<kr::UnsFamilyTag>().create(task->get_repository());
     auto& repo = *repository;

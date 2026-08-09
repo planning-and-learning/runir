@@ -69,8 +69,12 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     assert str(reparsed_sketch) == sketch_description
     assert syntactic_complexity(sketch) == 13
 
-    initial_node = search_context.successor_generator.get_initial_node()
-    labeled_successor = search_context.successor_generator.get_labeled_successor_nodes(initial_node)[0]
+    initial_node = search_context.successor_generator.get_initial_node(
+        search_context.state_repository, search_context.axiom_evaluator
+    )
+    labeled_successor = search_context.successor_generator.get_labeled_successor_nodes(
+        initial_node, search_context.state_repository, search_context.axiom_evaluator
+    )[0]
     source_state = initial_node.get_state()
     target_state = labeled_successor.node.get_state()
     dl_builder = task_context.dl_builder

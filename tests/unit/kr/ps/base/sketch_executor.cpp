@@ -82,7 +82,8 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_LE(fragment.graph->get_num_vertices(), result.graph->get_num_vertices()) << test_case.domain;
 
         auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, sketch);
-        auto evaluation_context = expander.context_at(context->successor_generator->get_initial_node().get_state());
+        auto evaluation_context =
+            expander.context_at(context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state());
         EXPECT_EQ(task_context->search_context.get(), context.get());
         EXPECT_EQ(task_context->search_context, context);
         EXPECT_EQ(dl_builder, &task_context->dl_builder);
@@ -105,7 +106,8 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/executor/any_transition.sketch"), task->get_domain().get_domain(), *repository);
 
     auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, sketch);
-    auto context = expander.context_at(search_context->successor_generator->get_initial_node().get_state());
+    auto context = expander.context_at(
+        search_context->successor_generator->get_initial_node(*search_context->state_repository, *search_context->axiom_evaluator).get_state());
     const auto immediate = expander.labeled_successors(context);
     const auto accepted = expander.accepted_successors(context, immediate);
     ASSERT_GT(accepted.size(), 1);
@@ -140,7 +142,8 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
         task->get_domain().get_domain(),
         *repository);
     auto two_step_expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, two_step_only);
-    auto two_step_context = two_step_expander.context_at(search_context->successor_generator->get_initial_node().get_state());
+    auto two_step_context = two_step_expander.context_at(
+        search_context->successor_generator->get_initial_node(*search_context->state_repository, *search_context->axiom_evaluator).get_state());
     const auto two_step_successors = two_step_expander.labeled_successors(two_step_context);
     EXPECT_TRUE(two_step_expander.accepted_successors(two_step_context, two_step_successors).empty());
 

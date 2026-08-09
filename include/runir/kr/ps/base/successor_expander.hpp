@@ -72,9 +72,10 @@ public:
 
     std::vector<LabeledNode> labeled_successors(const EvaluationContext<Kind>& context)
     {
-        auto& successor_generator = *m_task_context->search_context->successor_generator;
-        const auto node = successor_generator.get_node(context.get_state().get_index());
-        return successor_generator.get_labeled_successor_nodes(node);
+        auto& search_context = *m_task_context->search_context;
+        auto& successor_generator = *search_context.successor_generator;
+        const auto node = successor_generator.get_node(*search_context.state_repository, context.get_state().get_index());
+        return successor_generator.get_labeled_successor_nodes(node, *search_context.state_repository, *search_context.axiom_evaluator);
     }
 
     std::vector<AcceptedSuccessor> accepted_successors(EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors)

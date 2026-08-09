@@ -77,8 +77,8 @@ private:
         state_repository_factory(),
         successor_generator_factory(),
         axiom_evaluator(axiom_evaluator_factory.create(task, execution_context)),
-        state_repository(state_repository_factory.create(task, axiom_evaluator)),
-        successor_generator(successor_generator_factory.create(task, execution_context, state_repository))
+        state_repository(state_repository_factory.create(task)),
+        successor_generator(successor_generator_factory.create(task, execution_context))
     {
     }
 };

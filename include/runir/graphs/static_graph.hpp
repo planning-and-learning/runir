@@ -59,29 +59,18 @@ private:
             m_vertices.emplace_back(vertex.get_index(), property_index, *this);
         }
 
-        m_out_edge_offsets.assign(m_vertices.size() + 1, 0);
-
-        for (const auto& edge : builder.get_edges())
-        {
-            assert(edge.get_source() < m_vertices.size());
-            ++m_out_edge_offsets[edge.get_source() + 1];
-        }
-
-        for (std::size_t i = 1; i < m_out_edge_offsets.size(); ++i)
-            m_out_edge_offsets[i] += m_out_edge_offsets[i - 1];
-
+        m_out_edge_offsets.resize(m_vertices.size() + 1);
         EdgeIndex index = 0;
         for (auto source : get_vertex_indices())
         {
-            for (const auto& edge : builder.get_edges())
+            m_out_edge_offsets[source] = index;
+            for (const auto& edge : builder.get_out_edges(source))
             {
-                if (edge.get_source() != source)
-                    continue;
-
                 auto [property_index, _] = m_edge_properties.get_or_create(ygg::Data<EdgeProperty<EP>>(edge.get_property()));
-                m_edges.emplace_back(index++, edge.get_source(), edge.get_target(), property_index, *this);
+                m_edges.emplace_back(index++, source, edge.get_target(), property_index, *this);
             }
         }
+        m_out_edge_offsets.back() = index;
 
         assert(m_edges.size() == builder.get_num_edges());
     }

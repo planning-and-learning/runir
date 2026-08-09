@@ -20,7 +20,8 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                    ModuleProgramView program,
                    const ModuleProgramSearchOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
 {
-    const auto initial_node = task_context->search_context->successor_generator->get_initial_node();
+    const auto& search_context = *task_context->search_context;
+    const auto initial_node = search_context.successor_generator->get_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
     auto proof = detail::ModuleProgramProofBuilder<Kind>(std::move(task_context), program, options.classifier);
     auto open = std::vector<std::pair<ExecutionStateView<Kind>, graphs::VertexIndex>> {};
     auto plan_steps = tyr::planning::LabeledNodeList<Kind> {};

@@ -129,7 +129,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     EXPECT_EQ(pair.get_first().get_index(), ygg::Index<tyr::formalism::Object>(0));
     EXPECT_EQ(pair.get_second().get_index(), ygg::Index<tyr::formalism::Object>(1));
 
-    const auto state = search_context->successor_generator->get_initial_node().get_state();
+    const auto state = search_context->successor_generator->get_initial_node(*search_context->state_repository, *search_context->axiom_evaluator).get_state();
     const auto returned_state = [&]()
     {
         auto data = execution_builder.get_builder<kr::ps::ext::ExecutionState<tyr::GroundTag>>();

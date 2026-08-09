@@ -170,6 +170,10 @@ endif()
 
 # Targets
 
+if(RUNIR_BUILD_TESTS)
+    enable_testing()
+endif()
+
 add_subdirectory(src)
 
 if(RUNIR_BUILD_EXECUTABLES)
@@ -185,7 +189,6 @@ if(RUNIR_BUILD_PYRUNIR)
 endif()
 
 if(RUNIR_BUILD_TESTS)
-    enable_testing()
     add_subdirectory(tests)
 endif()
 

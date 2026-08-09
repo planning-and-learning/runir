@@ -14,7 +14,7 @@ TEST(ObjectGraphTest, InitialStateObjectGraphIsSimpleAndCanonicalizesVertexLabel
 {
     auto context = make_gripper_ground_context();
 
-    const auto initial_state = context->successor_generator->get_initial_node().get_state();
+    const auto initial_state = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state();
     const auto graph = datasets::create_object_graph(initial_state);
 
     ASSERT_GT(graph->get_num_vertices(), 0);

@@ -26,7 +26,6 @@
 #include "runir/graphs/static_graph_builder.hpp"
 
 #include <chrono>
-#include <cstddef>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -119,7 +118,6 @@ struct StateGraphGenerationOptions
 {
     ygg::uint_t max_num_states = std::numeric_limits<ygg::uint_t>::max();
     std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
-    std::size_t num_search_workers = 1;
 };
 
 template<tyr::TaskKind Kind>

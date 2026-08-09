@@ -41,7 +41,9 @@ public:
         m_task_context(task_context ? std::move(task_context) : throw std::invalid_argument("SuccessorExpander requires a task context.")),
         m_program(program),
         m_goal_strategy(*m_task_context->search_context->task),
-        m_initial_state(m_task_context->search_context->successor_generator->get_initial_node().get_state()),
+        m_initial_state(m_task_context->search_context->successor_generator
+                            ->get_initial_node(*m_task_context->search_context->state_repository, *m_task_context->search_context->axiom_evaluator)
+                            .get_state()),
         m_static_goal_satisfied(m_goal_strategy.is_static_goal_satisfied(*m_task_context->search_context->task)),
         m_environment(*m_task_context, m_program)
     {
@@ -102,9 +104,10 @@ public:
 
     void labeled_successors(ExecutionStateView<Kind> state, std::vector<LabeledNode>& out_successors)
     {
-        auto& successor_generator = *m_task_context->search_context->successor_generator;
-        const auto node = successor_generator.get_node(state.get_state().get_index());
-        successor_generator.get_labeled_successor_nodes(node, out_successors);
+        auto& search_context = *m_task_context->search_context;
+        auto& successor_generator = *search_context.successor_generator;
+        const auto node = successor_generator.get_node(*search_context.state_repository, state.get_state().get_index());
+        successor_generator.get_labeled_successor_nodes(node, *search_context.state_repository, *search_context.axiom_evaluator, out_successors);
     }
 
     std::vector<Step> control_steps(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors)

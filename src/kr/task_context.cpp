@@ -18,7 +18,7 @@ namespace runir::kr
 template<tyr::TaskKind Kind>
 std::shared_ptr<TaskContext<Kind>> TaskContext<Kind>::create(runir::datasets::TaskSearchContextPtr<Kind> search_context)
 {
-    if (!search_context || !search_context->task || !search_context->execution_context || !search_context->state_repository
+    if (!search_context || !search_context->task || !search_context->execution_context || !search_context->axiom_evaluator || !search_context->state_repository
         || !search_context->successor_generator)
         throw std::invalid_argument("TaskContext requires a fully initialized search context.");
     return std::shared_ptr<TaskContext>(new TaskContext(std::move(search_context)));
