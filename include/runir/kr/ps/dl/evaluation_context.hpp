@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_DL_EVALUATION_CONTEXT_HPP_
 #define RUNIR_KR_PS_DL_EVALUATION_CONTEXT_HPP_
 
-#include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/evaluation_context.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"

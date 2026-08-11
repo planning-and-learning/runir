@@ -4,6 +4,7 @@
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/ps/ext/execution_canonicalization.hpp"
+#include "runir/kr/ps/ext/execution_data.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 
 #include <cassert>
@@ -13,6 +14,7 @@
 #include <tyr/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
 namespace runir::kr::ps::ext
@@ -20,6 +22,20 @@ namespace runir::kr::ps::ext
 
 template<tyr::TaskKind Kind>
 using ExecutionSymbolRepository = ygg::formalism::SymbolRepository<RegisterValues, CallArguments, CallStack, ExecutionState<Kind>>;
+
+template<tyr::TaskKind Kind>
+class ExecutionBuilder
+{
+private:
+    ygg::formalism::BuilderStorage<RegisterValues, CallArguments, CallStack, ExecutionState<Kind>> m_storage;
+
+public:
+    template<typename T>
+    [[nodiscard]] auto get_builder()
+    {
+        return m_storage.template get_builder<T>();
+    }
+};
 
 template<tyr::TaskKind Kind>
 class ExecutionRepository
@@ -73,7 +89,6 @@ public:
     template<typename T>
     std::pair<ygg::View<ygg::Index<T>, ExecutionRepository>, bool> get_or_create(ygg::Data<T>& data)
     {
-        canonicalize(data);
         assert(is_canonical(data));
         const auto [index, success] = m_symbol_repository.template get_or_create_local<T>(data);
         return { ygg::View<ygg::Index<T>, ExecutionRepository>(index, *this), success };
@@ -114,6 +129,21 @@ public:
             new ExecutionRepository<Kind>(m_next_index++, std::move(state_repository), std::move(denotation_repository), std::move(program_repository)));
     }
 };
+
+template<tyr::TaskKind Kind, typename T>
+[[nodiscard]] auto get_or_create(ExecutionRepository<Kind>& repository, ygg::Data<T>& data)
+{
+    canonicalize(data);
+    return repository.get_or_create(data);
+}
+
+template<typename T, tyr::TaskKind Kind>
+[[nodiscard]] auto checkout(ExecutionBuilder<Kind>& builder)
+{
+    auto data = builder.template get_builder<T>();
+    data->clear();
+    return data;
+}
 
 }  // namespace runir::kr::ps::ext
 

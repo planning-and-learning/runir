@@ -2,8 +2,8 @@
 #define RUNIR_SEMANTICS_EVALUATION_CONTEXT_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
 
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>

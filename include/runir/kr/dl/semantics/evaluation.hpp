@@ -1,7 +1,6 @@
 #ifndef RUNIR_SEMANTICS_EVALUATION_HPP_
 #define RUNIR_SEMANTICS_EVALUATION_HPP_
 
-#include <yggdrasil/core/config.hpp>
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
@@ -21,6 +20,7 @@
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <yggdrasil/containers/dynamic_bitset.hpp>
+#include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/types.hpp>
 
@@ -909,14 +909,14 @@ auto evaluate(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> cons
               EvaluationWorkspace& workspace)
 {
     auto result = evaluate_impl(constructor, context, workspace);
-    auto data = context.get_builder().template get_data<Denotation<Category>>();
+    auto data = runir::kr::dl::semantics::checkout<Denotation<Category>>(context.get_builder());
     make_data(*result, *data);
 
     auto& repository = context.get_denotation_repository();
     if constexpr (std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
         data->vec_index = repository.get_vector_repository().insert(result->blocks);
 
-    auto view = repository.get_or_create(*data).first;
+    auto view = get_or_create(repository, *data).first;
     result->index = view.get_index();
     return view;
 }

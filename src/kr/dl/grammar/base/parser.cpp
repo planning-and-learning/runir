@@ -14,6 +14,7 @@
 #include <string>
 #include <type_traits>
 #include <tyr/formalism/planning/repository.hpp>
+#include <utility>
 
 namespace runir::kr::dl::grammar
 {
@@ -21,6 +22,13 @@ namespace
 {
 
 using DiagnosticContext = runir::kr::parser::DiagnosticContext;
+using Repository = ConstructorRepositoryFor<runir::kr::BaseFamilyTag>;
+
+struct ParserState
+{
+    Repository& repository;
+    Builder<runir::kr::BaseFamilyTag> builder;
+};
 
 template<typename T>
 struct IsForwardAst : std::false_type
@@ -41,48 +49,49 @@ decltype(auto) unwrap(const T& value) noexcept
         return (value);
 }  // namespace runir::kr::dl::grammar
 
-template<typename T>
-auto intern(ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository, ygg::Data<T>& data)
+template<typename T, typename Initialize>
+auto intern(ParserState& state, Initialize&& initialize)
 {
-    canonicalize(data);
-    return repository.get_or_create(data).first;
+    auto data = runir::kr::dl::grammar::checkout<T>(state.builder);
+    std::forward<Initialize>(initialize)(*data);
+    return runir::kr::dl::grammar::get_or_create(state.repository, *data).first;
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename T>
-auto intern_constructor(ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository, ygg::Index<T> index)
+auto intern_constructor(ParserState& state, ygg::Index<T> index)
 {
-    ygg::Data<Constructor<Family, Category>> data(index);
-    return intern(repository, data);
+    return intern<Constructor<Family, Category>>(state, [&](auto& data) { data.value = index; });
 }  // namespace runir::kr::dl::grammar
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename T, typename Initialize>
+auto intern_concrete(ParserState& state, Initialize&& initialize)
+{
+    return intern_constructor<Family, Category>(state, intern<T>(state, std::forward<Initialize>(initialize)).get_index());
+}
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 auto parse(const ast::Constructor<Family, Category>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics);
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
-auto parse(const ast::NonTerminal<Family, Category>& node,
-           tyr::formalism::planning::DomainView,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext&)
+auto parse(const ast::NonTerminal<Family, Category>& node, tyr::formalism::planning::DomainView, ParserState& repository, const DiagnosticContext&)
 {
-    ygg::Data<NonTerminal<Family, Category>> data(node.name.text);
-    return intern(repository, data);
+    return intern<NonTerminal<Family, Category>>(repository, [&](auto& data) { data.name = node.name.text; });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 auto parse(const ast::ConstructorOrNonTerminal<Family, Category>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
     const auto index = boost::apply_visitor([&](const auto& arg) -> ygg::Data<ConstructorOrNonTerminal<Family, Category>>::Variant
                                             { return parse(unwrap(arg), domain, repository, diagnostics).get_index(); },
                                             node.get());
 
-    ygg::Data<ConstructorOrNonTerminal<Family, Category>> data(index);
-    return intern(repository, data);
+    return intern<ConstructorOrNonTerminal<Family, Category>>(repository, [&](auto& data) { data.value = index; });
 }  // namespace runir::kr::dl::grammar
 
 template<tyr::formalism::FactKind T>
@@ -139,38 +148,33 @@ auto require_object(tyr::formalism::planning::DomainView domain, const ast::Iden
     diagnostics.throw_at(name, runir::kr::UndefinedSymbolError("constant", name.text));
 }
 
-auto require_objects(tyr::formalism::planning::DomainView domain, const std::vector<ast::Identifier>& names, const DiagnosticContext& diagnostics)
+void append_objects(tyr::formalism::planning::DomainView domain,
+                    const std::vector<ast::Identifier>& names,
+                    const DiagnosticContext& diagnostics,
+                    ygg::IndexList<tyr::formalism::Object>& objects)
 {
-    auto objects = ygg::IndexList<tyr::formalism::Object> {};
     for (const auto& name : names)
         objects.push_back(require_object(domain, name, diagnostics));
-    return objects;
 }
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::ConceptBot<Family>&,
-           tyr::formalism::planning::DomainView,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext&)
+auto parse(const ast::ConceptBot<Family>&, tyr::formalism::planning::DomainView, ParserState& repository, const DiagnosticContext&)
 {
-    ygg::Data<Concept<Family, BotTag>> data;
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto concrete = intern<Concept<Family, BotTag>>(repository, [](auto&) {});
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::ConceptTop<Family>&,
-           tyr::formalism::planning::DomainView,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext&)
+auto parse(const ast::ConceptTop<Family>&, tyr::formalism::planning::DomainView, ParserState& repository, const DiagnosticContext&)
 {
-    ygg::Data<Concept<Family, TopTag>> data;
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto concrete = intern<Concept<Family, TopTag>>(repository, [](auto&) {});
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptAtomicState<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
     return resolve_predicate(domain,
@@ -181,15 +185,20 @@ auto parse(const ast::ConceptAtomicState<Family>& node,
                              [&](auto tag, auto predicate)
                              {
                                  using T = decltype(tag);
-                                 ygg::Data<Concept<Family, AtomicStateTag<T>>> data(predicate);
-                                 return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+                                 const auto concrete = intern<Concept<Family, AtomicStateTag<T>>>(repository,
+                                                                                                  [&](auto& data)
+                                                                                                  {
+                                                                                                      data.predicate = predicate;
+                                                                                                      data.polarity = true;
+                                                                                                  });
+                                 return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
                              });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptAtomicGoal<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
     return resolve_predicate(domain,
@@ -200,199 +209,265 @@ auto parse(const ast::ConceptAtomicGoal<Family>& node,
                              [&](auto tag, auto predicate)
                              {
                                  using T = decltype(tag);
-                                 ygg::Data<Concept<Family, AtomicGoalTag<T>>> data(predicate, node.polarity);
-                                 return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+                                 const auto concrete = intern<Concept<Family, AtomicGoalTag<T>>>(repository,
+                                                                                                 [&](auto& data)
+                                                                                                 {
+                                                                                                     data.predicate = predicate;
+                                                                                                     data.polarity = node.polarity;
+                                                                                                 });
+                                 return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
                              });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptIntersection<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, IntersectionTag>> data(parse(node.lhs, domain, repository, diagnostics).get_index(),
-                                                     parse(node.rhs, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto lhs = parse(node.lhs, domain, repository, diagnostics).get_index();
+    const auto rhs = parse(node.rhs, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, IntersectionTag>>(repository,
+                                                                   [&](auto& data)
+                                                                   {
+                                                                       data.lhs = lhs;
+                                                                       data.rhs = rhs;
+                                                                   });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::ConceptUnion<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::ConceptUnion<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, UnionTag>> data(parse(node.lhs, domain, repository, diagnostics).get_index(),
-                                              parse(node.rhs, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto lhs = parse(node.lhs, domain, repository, diagnostics).get_index();
+    const auto rhs = parse(node.rhs, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, UnionTag>>(repository,
+                                                            [&](auto& data)
+                                                            {
+                                                                data.lhs = lhs;
+                                                                data.rhs = rhs;
+                                                            });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::ConceptNegation<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::ConceptNegation<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, NegationTag>> data(parse(node.arg, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto arg = parse(node.arg, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, NegationTag>>(repository, [&](auto& data) { data.arg = arg; });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptValueRestriction<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, ValueRestrictionTag>> data(parse(node.lhs, domain, repository, diagnostics).get_index(),
-                                                         parse(node.rhs, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto lhs = parse(node.lhs, domain, repository, diagnostics).get_index();
+    const auto rhs = parse(node.rhs, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, ValueRestrictionTag>>(repository,
+                                                                       [&](auto& data)
+                                                                       {
+                                                                           data.lhs = lhs;
+                                                                           data.rhs = rhs;
+                                                                       });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptExistentialQuantification<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, ExistentialQuantificationTag>> data(parse(node.lhs, domain, repository, diagnostics).get_index(),
-                                                                  parse(node.rhs, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto lhs = parse(node.lhs, domain, repository, diagnostics).get_index();
+    const auto rhs = parse(node.rhs, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, ExistentialQuantificationTag>>(repository,
+                                                                                [&](auto& data)
+                                                                                {
+                                                                                    data.lhs = lhs;
+                                                                                    data.rhs = rhs;
+                                                                                });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptAtLeastNumberRestriction<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, AtLeastNumberRestrictionTag>> data(node.n, parse(node.role, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto role = parse(node.role, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, AtLeastNumberRestrictionTag>>(repository,
+                                                                               [&](auto& data)
+                                                                               {
+                                                                                   data.n = node.n;
+                                                                                   data.role = role;
+                                                                               });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptAtMostNumberRestriction<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, AtMostNumberRestrictionTag>> data(node.n, parse(node.role, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto role = parse(node.role, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, AtMostNumberRestrictionTag>>(repository,
+                                                                              [&](auto& data)
+                                                                              {
+                                                                                  data.n = node.n;
+                                                                                  data.role = role;
+                                                                              });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptExactNumberRestriction<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, ExactNumberRestrictionTag>> data(node.n, parse(node.role, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto role = parse(node.role, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, ExactNumberRestrictionTag>>(repository,
+                                                                             [&](auto& data)
+                                                                             {
+                                                                                 data.n = node.n;
+                                                                                 data.role = role;
+                                                                             });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptQualifiedAtLeastNumberRestriction<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, QualifiedAtLeastNumberRestrictionTag>> data(node.n,
-                                                                          parse(node.role, domain, repository, diagnostics).get_index(),
-                                                                          parse(node.concept_, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto role = parse(node.role, domain, repository, diagnostics).get_index();
+    const auto concept_index = parse(node.concept_, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, QualifiedAtLeastNumberRestrictionTag>>(repository,
+                                                                                        [&](auto& data)
+                                                                                        {
+                                                                                            data.n = node.n;
+                                                                                            data.role = role;
+                                                                                            data.concept_ = concept_index;
+                                                                                        });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptQualifiedAtMostNumberRestriction<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, QualifiedAtMostNumberRestrictionTag>> data(node.n,
-                                                                         parse(node.role, domain, repository, diagnostics).get_index(),
-                                                                         parse(node.concept_, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto role = parse(node.role, domain, repository, diagnostics).get_index();
+    const auto concept_index = parse(node.concept_, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, QualifiedAtMostNumberRestrictionTag>>(repository,
+                                                                                       [&](auto& data)
+                                                                                       {
+                                                                                           data.n = node.n;
+                                                                                           data.role = role;
+                                                                                           data.concept_ = concept_index;
+                                                                                       });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptQualifiedExactNumberRestriction<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, QualifiedExactNumberRestrictionTag>> data(node.n,
-                                                                        parse(node.role, domain, repository, diagnostics).get_index(),
-                                                                        parse(node.concept_, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto role = parse(node.role, domain, repository, diagnostics).get_index();
+    const auto concept_index = parse(node.concept_, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, QualifiedExactNumberRestrictionTag>>(repository,
+                                                                                      [&](auto& data)
+                                                                                      {
+                                                                                          data.n = node.n;
+                                                                                          data.role = role;
+                                                                                          data.concept_ = concept_index;
+                                                                                      });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptRoleValueMap<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, RoleValueMapTag>> data(parse(node.lhs, domain, repository, diagnostics).get_index(),
-                                                     parse(node.rhs, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto lhs = parse(node.lhs, domain, repository, diagnostics).get_index();
+    const auto rhs = parse(node.rhs, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, RoleValueMapTag>>(repository,
+                                                                   [&](auto& data)
+                                                                   {
+                                                                       data.lhs = lhs;
+                                                                       data.rhs = rhs;
+                                                                   });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptAgreement<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, AgreementTag>> data(parse(node.lhs, domain, repository, diagnostics).get_index(),
-                                                  parse(node.rhs, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto lhs = parse(node.lhs, domain, repository, diagnostics).get_index();
+    const auto rhs = parse(node.rhs, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, AgreementTag>>(repository,
+                                                                [&](auto& data)
+                                                                {
+                                                                    data.lhs = lhs;
+                                                                    data.rhs = rhs;
+                                                                });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::ConceptRoleFillers<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, RoleFillersTag>> data(parse(node.role, domain, repository, diagnostics).get_index(),
-                                                    require_objects(domain, node.object_names, diagnostics));
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto role = parse(node.role, domain, repository, diagnostics).get_index();
+    const auto concrete = intern<Concept<Family, RoleFillersTag>>(repository,
+                                                                  [&](auto& data)
+                                                                  {
+                                                                      data.role = role;
+                                                                      append_objects(domain, node.object_names, diagnostics, data.objects);
+                                                                  });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::ConceptOneOf<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::ConceptOneOf<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, OneOfTag>> data(require_objects(domain, node.object_names, diagnostics));
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto concrete =
+        intern<Concept<Family, OneOfTag>>(repository, [&](auto& data) { append_objects(domain, node.object_names, diagnostics, data.objects); });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::ConceptNominal<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::ConceptNominal<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Concept<Family, NominalTag>> data(require_object(domain, node.object_name, diagnostics));
-    return intern_constructor<Family, ConceptTag>(repository, intern(repository, data).get_index());
+    const auto object = require_object(domain, node.object_name, diagnostics);
+    const auto concrete = intern<Concept<Family, NominalTag>>(repository, [&](auto& data) { data.object = object; });
+    return intern_constructor<Family, ConceptTag>(repository, concrete.get_index());
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::RoleUniversal<Family>&,
-           tyr::formalism::planning::DomainView,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext&)
+auto parse(const ast::RoleUniversal<Family>&, tyr::formalism::planning::DomainView, ParserState& repository, const DiagnosticContext&)
 {
-    ygg::Data<Role<Family, UniversalTag>> data;
-    return intern_constructor<Family, RoleTag>(repository, intern(repository, data).get_index());
+    return intern_concrete<Family, RoleTag, Role<Family, UniversalTag>>(repository, [](auto&) {});
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::RoleAtomicState<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::RoleAtomicState<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
     return resolve_predicate(domain,
                              node.predicate_name,
@@ -402,16 +477,17 @@ auto parse(const ast::RoleAtomicState<Family>& node,
                              [&](auto tag, auto predicate)
                              {
                                  using T = decltype(tag);
-                                 ygg::Data<Role<Family, AtomicStateTag<T>>> data(predicate);
-                                 return intern_constructor<Family, RoleTag>(repository, intern(repository, data).get_index());
+                                 return intern_concrete<Family, RoleTag, Role<Family, AtomicStateTag<T>>>(repository,
+                                                                                                          [&](auto& data)
+                                                                                                          {
+                                                                                                              data.predicate = predicate;
+                                                                                                              data.polarity = true;
+                                                                                                          });
                              });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::RoleAtomicGoal<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::RoleAtomicGoal<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
     return resolve_predicate(domain,
                              node.predicate_name,
@@ -421,109 +497,115 @@ auto parse(const ast::RoleAtomicGoal<Family>& node,
                              [&](auto tag, auto predicate)
                              {
                                  using T = decltype(tag);
-                                 ygg::Data<Role<Family, AtomicGoalTag<T>>> data(predicate, node.polarity);
-                                 return intern_constructor<Family, RoleTag>(repository, intern(repository, data).get_index());
+                                 return intern_concrete<Family, RoleTag, Role<Family, AtomicGoalTag<T>>>(repository,
+                                                                                                         [&](auto& data)
+                                                                                                         {
+                                                                                                             data.predicate = predicate;
+                                                                                                             data.polarity = node.polarity;
+                                                                                                         });
                              });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::RoleIntersection<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Role<Family, IntersectionTag>> data(parse(node.lhs, domain, repository, diagnostics).get_index(),
-                                                  parse(node.rhs, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, RoleTag>(repository, intern(repository, data).get_index());
+    const auto lhs = parse(node.lhs, domain, repository, diagnostics).get_index();
+    const auto rhs = parse(node.rhs, domain, repository, diagnostics).get_index();
+    return intern_concrete<Family, RoleTag, Role<Family, IntersectionTag>>(repository,
+                                                                           [&](auto& data)
+                                                                           {
+                                                                               data.lhs = lhs;
+                                                                               data.rhs = rhs;
+                                                                           });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::RoleUnion<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::RoleUnion<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Role<Family, UnionTag>> data(parse(node.lhs, domain, repository, diagnostics).get_index(),
-                                           parse(node.rhs, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, RoleTag>(repository, intern(repository, data).get_index());
+    const auto lhs = parse(node.lhs, domain, repository, diagnostics).get_index();
+    const auto rhs = parse(node.rhs, domain, repository, diagnostics).get_index();
+    return intern_concrete<Family, RoleTag, Role<Family, UnionTag>>(repository,
+                                                                    [&](auto& data)
+                                                                    {
+                                                                        data.lhs = lhs;
+                                                                        data.rhs = rhs;
+                                                                    });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::RoleComplement<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::RoleComplement<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Role<Family, ComplementTag>> data(parse(node.arg, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, RoleTag>(repository, intern(repository, data).get_index());
+    const auto arg = parse(node.arg, domain, repository, diagnostics).get_index();
+    return intern_concrete<Family, RoleTag, Role<Family, ComplementTag>>(repository, [&](auto& data) { data.arg = arg; });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::RoleInverse<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::RoleInverse<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Role<Family, InverseTag>> data(parse(node.arg, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, RoleTag>(repository, intern(repository, data).get_index());
+    const auto arg = parse(node.arg, domain, repository, diagnostics).get_index();
+    return intern_concrete<Family, RoleTag, Role<Family, InverseTag>>(repository, [&](auto& data) { data.arg = arg; });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::RoleComposition<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::RoleComposition<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Role<Family, CompositionTag>> data(parse(node.lhs, domain, repository, diagnostics).get_index(),
-                                                 parse(node.rhs, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, RoleTag>(repository, intern(repository, data).get_index());
+    const auto lhs = parse(node.lhs, domain, repository, diagnostics).get_index();
+    const auto rhs = parse(node.rhs, domain, repository, diagnostics).get_index();
+    return intern_concrete<Family, RoleTag, Role<Family, CompositionTag>>(repository,
+                                                                          [&](auto& data)
+                                                                          {
+                                                                              data.lhs = lhs;
+                                                                              data.rhs = rhs;
+                                                                          });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::RoleTransitiveClosure<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Role<Family, TransitiveClosureTag>> data(parse(node.arg, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, RoleTag>(repository, intern(repository, data).get_index());
+    const auto arg = parse(node.arg, domain, repository, diagnostics).get_index();
+    return intern_concrete<Family, RoleTag, Role<Family, TransitiveClosureTag>>(repository, [&](auto& data) { data.arg = arg; });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::RoleReflexiveTransitiveClosure<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Role<Family, ReflexiveTransitiveClosureTag>> data(parse(node.arg, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, RoleTag>(repository, intern(repository, data).get_index());
+    const auto arg = parse(node.arg, domain, repository, diagnostics).get_index();
+    return intern_concrete<Family, RoleTag, Role<Family, ReflexiveTransitiveClosureTag>>(repository, [&](auto& data) { data.arg = arg; });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::RoleRestriction<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::RoleRestriction<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Role<Family, RestrictionTag>> data(parse(node.lhs, domain, repository, diagnostics).get_index(),
-                                                 parse(node.rhs, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, RoleTag>(repository, intern(repository, data).get_index());
+    const auto lhs = parse(node.lhs, domain, repository, diagnostics).get_index();
+    const auto rhs = parse(node.rhs, domain, repository, diagnostics).get_index();
+    return intern_concrete<Family, RoleTag, Role<Family, RestrictionTag>>(repository,
+                                                                          [&](auto& data)
+                                                                          {
+                                                                              data.lhs = lhs;
+                                                                              data.rhs = rhs;
+                                                                          });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::RoleIdentity<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::RoleIdentity<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Role<Family, IdentityTag>> data(parse(node.arg, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, RoleTag>(repository, intern(repository, data).get_index());
+    const auto arg = parse(node.arg, domain, repository, diagnostics).get_index();
+    return intern_concrete<Family, RoleTag, Role<Family, IdentityTag>>(repository, [&](auto& data) { data.arg = arg; });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::BooleanAtomicState<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
     return resolve_predicate(domain,
@@ -534,15 +616,19 @@ auto parse(const ast::BooleanAtomicState<Family>& node,
                              [&](auto tag, auto predicate)
                              {
                                  using T = decltype(tag);
-                                 ygg::Data<Boolean<Family, AtomicStateTag<T>>> data(predicate, node.polarity);
-                                 return intern_constructor<Family, BooleanTag>(repository, intern(repository, data).get_index());
+                                 return intern_concrete<Family, BooleanTag, Boolean<Family, AtomicStateTag<T>>>(repository,
+                                                                                                                [&](auto& data)
+                                                                                                                {
+                                                                                                                    data.predicate = predicate;
+                                                                                                                    data.polarity = node.polarity;
+                                                                                                                });
                              });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::BooleanAtomicGoal<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
     return resolve_predicate(domain,
@@ -553,55 +639,57 @@ auto parse(const ast::BooleanAtomicGoal<Family>& node,
                              [&](auto tag, auto predicate)
                              {
                                  using T = decltype(tag);
-                                 ygg::Data<Boolean<Family, AtomicGoalTag<T>>> data(predicate, node.polarity);
-                                 return intern_constructor<Family, BooleanTag>(repository, intern(repository, data).get_index());
+                                 return intern_concrete<Family, BooleanTag, Boolean<Family, AtomicGoalTag<T>>>(repository,
+                                                                                                               [&](auto& data)
+                                                                                                               {
+                                                                                                                   data.predicate = predicate;
+                                                                                                                   data.polarity = node.polarity;
+                                                                                                               });
                              });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::BooleanNonempty<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::BooleanNonempty<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
     const auto arg = boost::apply_visitor([&](const auto& value) -> ygg::Data<Boolean<Family, NonemptyTag>>::Arg
                                           { return parse(unwrap(value), domain, repository, diagnostics).get_index(); },
                                           node.arg.get());
 
-    ygg::Data<Boolean<Family, NonemptyTag>> data(arg);
-    return intern_constructor<Family, BooleanTag>(repository, intern(repository, data).get_index());
+    return intern_concrete<Family, BooleanTag, Boolean<Family, NonemptyTag>>(repository, [&](auto& data) { data.arg = arg; });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse(const ast::NumericalCount<Family>& node,
-           tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-           const DiagnosticContext& diagnostics)
+auto parse(const ast::NumericalCount<Family>& node, tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
     const auto arg = boost::apply_visitor([&](const auto& value) -> ygg::Data<Numerical<Family, CountTag>>::Arg
                                           { return parse(unwrap(value), domain, repository, diagnostics).get_index(); },
                                           node.arg.get());
 
-    ygg::Data<Numerical<Family, CountTag>> data(arg);
-    return intern_constructor<Family, NumericalTag>(repository, intern(repository, data).get_index());
+    return intern_concrete<Family, NumericalTag, Numerical<Family, CountTag>>(repository, [&](auto& data) { data.arg = arg; });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family>
 auto parse(const ast::NumericalDistance<Family>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    ygg::Data<Numerical<Family, DistanceTag>> data(parse(node.lhs, domain, repository, diagnostics).get_index(),
-                                                   parse(node.mid, domain, repository, diagnostics).get_index(),
-                                                   parse(node.rhs, domain, repository, diagnostics).get_index());
-    return intern_constructor<Family, NumericalTag>(repository, intern(repository, data).get_index());
+    const auto lhs = parse(node.lhs, domain, repository, diagnostics).get_index();
+    const auto mid = parse(node.mid, domain, repository, diagnostics).get_index();
+    const auto rhs = parse(node.rhs, domain, repository, diagnostics).get_index();
+    return intern_concrete<Family, NumericalTag, Numerical<Family, DistanceTag>>(repository,
+                                                                                 [&](auto& data)
+                                                                                 {
+                                                                                     data.lhs = lhs;
+                                                                                     data.mid = mid;
+                                                                                     data.rhs = rhs;
+                                                                                 });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 auto parse(const ast::Constructor<Family, Category>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor([&](const auto& arg) { return parse(unwrap(arg), domain, repository, diagnostics); }, node.get());
@@ -610,22 +698,23 @@ auto parse(const ast::Constructor<Family, Category>& node,
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 auto parse(const ast::DerivationRule<Family, Category>& node,
            tyr::formalism::planning::DomainView domain,
-           ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+           ParserState& repository,
            const DiagnosticContext& diagnostics)
 {
-    auto rhs = ygg::IndexList<ConstructorOrNonTerminal<Family, Category>> {};
-    for (const auto& symbol : node.rhs)
-        rhs.push_back(parse(symbol, domain, repository, diagnostics).get_index());
-
-    ygg::Data<DerivationRule<Family, Category>> data(parse(node.lhs, domain, repository, diagnostics).get_index(), std::move(rhs));
-    return intern(repository, data);
+    return intern<DerivationRule<Family, Category>>(repository,
+                                                    [&](auto& data)
+                                                    {
+                                                        for (const auto& symbol : node.rhs)
+                                                            data.rhs.push_back(parse(symbol, domain, repository, diagnostics).get_index());
+                                                        data.lhs = parse(node.lhs, domain, repository, diagnostics).get_index();
+                                                    });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 void append_derivation_rule(ygg::IndexList<DerivationRule<Family, Category>>& rules,
                             const ast::DerivationRule<Family, Category>& node,
                             tyr::formalism::planning::DomainView domain,
-                            ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+                            ParserState& repository,
                             const DiagnosticContext& diagnostics)
 {
     rules.push_back(parse(node, domain, repository, diagnostics).get_index());
@@ -635,7 +724,7 @@ template<runir::kr::dl::FamilyTag Family>
 void append_derivation_rule(ygg::Data<GrammarTag<Family>>& data,
                             const ast::DerivationRuleVariant<Family>& node,
                             tyr::formalism::planning::DomainView domain,
-                            ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
+                            ParserState& repository,
                             const DiagnosticContext& diagnostics)
 {
     boost::apply_visitor(
@@ -669,18 +758,14 @@ auto fixed_start_name()
 }
 
 template<runir::kr::dl::CategoryTag Category>
-auto parse_fixed_start(tyr::formalism::planning::DomainView domain,
-                       ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository,
-                       const DiagnosticContext& diagnostics)
+auto parse_fixed_start(tyr::formalism::planning::DomainView domain, ParserState& repository, const DiagnosticContext& diagnostics)
 {
     ast::NonTerminal<runir::kr::BaseFamilyTag, Category> start;
     start.name.text = fixed_start_name<Category>();
     return parse(start, domain, repository, diagnostics).get_index();
 }
 
-auto parse_grammar_impl(const std::string& description,
-                        tyr::formalism::planning::DomainView domain,
-                        ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository)
+auto parse_grammar_impl(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
 {
     auto errors = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), errors);
@@ -688,26 +773,25 @@ auto parse_grammar_impl(const std::string& description,
     parser::parse_grammar_ast(description, ast, error_handler);
     auto diagnostics = DiagnosticContext {};
     const auto scope = DiagnosticContext::Scope(diagnostics, error_handler);
+    auto state = ParserState { repository, {} };
 
-    ygg::Data<GrammarTag<runir::kr::BaseFamilyTag>> data;
+    auto data = runir::kr::dl::grammar::checkout<GrammarTag<runir::kr::BaseFamilyTag>>(state.builder);
 
-    data.concept_start = parse_fixed_start<ConceptTag>(domain, repository, diagnostics);
-    data.role_start = parse_fixed_start<RoleTag>(domain, repository, diagnostics);
-    data.boolean_start = parse_fixed_start<BooleanTag>(domain, repository, diagnostics);
-    data.numerical_start = parse_fixed_start<NumericalTag>(domain, repository, diagnostics);
+    data->concept_start = parse_fixed_start<ConceptTag>(domain, state, diagnostics);
+    data->role_start = parse_fixed_start<RoleTag>(domain, state, diagnostics);
+    data->boolean_start = parse_fixed_start<BooleanTag>(domain, state, diagnostics);
+    data->numerical_start = parse_fixed_start<NumericalTag>(domain, state, diagnostics);
 
     for (const auto& rule : ast.rules)
-        append_derivation_rule(data, rule, domain, repository, diagnostics);
+        append_derivation_rule(*data, rule, domain, state, diagnostics);
 
-    data.domain = domain.get_index();
-    canonicalize(data);
-    return intern(repository, data);
+    data->domain = domain.get_index();
+    return runir::kr::dl::grammar::get_or_create(repository, *data).first;
 }
 
 }  // namespace
 
-FamilyGrammarView<runir::kr::BaseFamilyTag>
-parse_grammar(const std::string& description, tyr::formalism::planning::DomainView domain, ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository)
+FamilyGrammarView<runir::kr::BaseFamilyTag> parse_grammar(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
 {
     return parse_grammar_impl(description, domain, repository);
 }

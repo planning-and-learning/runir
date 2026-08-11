@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_EXT_EXECUTION_HPP_
 #define RUNIR_KR_PS_EXT_EXECUTION_HPP_
 
-#include "runir/kr/ps/ext/execution_builder.hpp"
 #include "runir/kr/ps/ext/execution_canonicalization.hpp"
 #include "runir/kr/ps/ext/execution_data.hpp"
 #include "runir/kr/ps/ext/execution_declarations.hpp"

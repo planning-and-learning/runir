@@ -1,8 +1,10 @@
 #ifndef RUNIR_CANONICALIZATION_HPP_
 #define RUNIR_CANONICALIZATION_HPP_
 
+#include "runir/kr/dl/concept_data.hpp"
 #include "runir/kr/dl/constructors.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/role_data.hpp"
 
 #include <type_traits>
 #include <utility>
@@ -113,6 +115,66 @@ template<CategoryTag Category>
 void canonicalize(ygg::Data<Register<Category>>&) noexcept
 {
     // Trivially canonical
+}
+
+template<FamilyTag Family>
+inline bool is_canonical(const ygg::Data<FamilyConcept<Family, IntersectionTag>>& data) noexcept
+{
+    return data.lhs <= data.rhs;
+}
+
+template<FamilyTag Family>
+inline bool is_canonical(const ygg::Data<FamilyConcept<Family, UnionTag>>& data) noexcept
+{
+    return data.lhs <= data.rhs;
+}
+
+template<FamilyTag Family>
+inline bool is_canonical(const ygg::Data<FamilyConcept<Family, AgreementTag>>& data) noexcept
+{
+    return data.lhs <= data.rhs;
+}
+
+template<FamilyTag Family>
+inline bool is_canonical(const ygg::Data<FamilyRole<Family, IntersectionTag>>& data) noexcept
+{
+    return data.lhs <= data.rhs;
+}
+
+template<FamilyTag Family>
+inline bool is_canonical(const ygg::Data<FamilyRole<Family, UnionTag>>& data) noexcept
+{
+    return data.lhs <= data.rhs;
+}
+
+template<FamilyTag Family>
+inline void canonicalize(ygg::Data<FamilyConcept<Family, IntersectionTag>>& data) noexcept
+{
+    canonicalize_commutative_binary(data);
+}
+
+template<FamilyTag Family>
+inline void canonicalize(ygg::Data<FamilyConcept<Family, UnionTag>>& data) noexcept
+{
+    canonicalize_commutative_binary(data);
+}
+
+template<FamilyTag Family>
+inline void canonicalize(ygg::Data<FamilyConcept<Family, AgreementTag>>& data) noexcept
+{
+    canonicalize_commutative_binary(data);
+}
+
+template<FamilyTag Family>
+inline void canonicalize(ygg::Data<FamilyRole<Family, IntersectionTag>>& data) noexcept
+{
+    canonicalize_commutative_binary(data);
+}
+
+template<FamilyTag Family>
+inline void canonicalize(ygg::Data<FamilyRole<Family, UnionTag>>& data) noexcept
+{
+    canonicalize_commutative_binary(data);
 }
 
 }  // namespace runir

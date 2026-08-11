@@ -13,6 +13,7 @@
 #include <utility>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
 namespace runir::kr::dl::grammar
@@ -58,6 +59,37 @@ using FamilyConstructorRepositoryTypes = ygg::ConcatTypeListsT<FamilyConceptType
 
 template<runir::kr::dl::FamilyTag Family>
 using FamilyConstructorSymbolRepository = ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, FamilyConstructorRepositoryTypes<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using Builder = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, FamilyConstructorRepositoryTypes<Family>>;
+
+using BaseBuilder = Builder<runir::kr::BaseFamilyTag>;
+using ExtBuilder = Builder<runir::kr::ExtFamilyTag>;
+using UnsBuilder = Builder<runir::kr::UnsFamilyTag>;
+
+template<typename T>
+[[nodiscard]] auto checkout(BaseBuilder& builder)
+{
+    auto data = builder.template get_builder<T>();
+    data->clear();
+    return data;
+}
+
+template<typename T>
+[[nodiscard]] auto checkout(ExtBuilder& builder)
+{
+    auto data = builder.template get_builder<T>();
+    data->clear();
+    return data;
+}
+
+template<typename T>
+[[nodiscard]] auto checkout(UnsBuilder& builder)
+{
+    auto data = builder.template get_builder<T>();
+    data->clear();
+    return data;
+}
 
 template<runir::kr::dl::FamilyTag Family>
 class BasicConstructorRepository
@@ -161,6 +193,13 @@ template<runir::kr::dl::FamilyTag Family>
 inline ConstructorRepositoryFor<Family>& get_repository(ConstructorRepositoryFor<Family>& repository) noexcept
 {
     return repository;
+}
+
+template<runir::kr::dl::FamilyTag Family, typename T>
+[[nodiscard]] auto get_or_create(BasicConstructorRepository<Family>& repository, ygg::Data<T>& data)
+{
+    canonicalize(data);
+    return repository.get_or_create(data);
 }
 
 }  // namespace runir::kr::dl::grammar

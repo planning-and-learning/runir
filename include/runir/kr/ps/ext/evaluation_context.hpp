@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/ext/evaluation_context.hpp"
-#include "runir/kr/ps/ext/execution_builder.hpp"
+#include "runir/kr/ps/ext/execution_repository.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 
 #include <cassert>
@@ -129,7 +129,7 @@ private:
 
     auto intern_registers()
     {
-        auto data = m_builder->template get_builder<RegisterValues>();
+        auto data = runir::kr::ps::ext::checkout<RegisterValues>(*m_builder);
         const auto& concepts = m_registers.template get<runir::kr::dl::ConceptTag>();
         const auto& roles = m_registers.template get<runir::kr::dl::RoleTag>();
         for (size_t i = 0; i < concepts.size(); ++i)
@@ -142,18 +142,16 @@ private:
                 ygg::set(roles[i]->second, pair.second);
             }
         }
-        canonicalize(*data);
-        auto [view, created] = m_repository->get_or_create(*data);
+        auto [view, created] = get_or_create(*m_repository, *data);
         static_cast<void>(created);
         return view;
     }
 
     auto intern_arguments()
     {
-        auto data = m_builder->template get_builder<CallArguments>();
+        auto data = runir::kr::ps::ext::checkout<CallArguments>(*m_builder);
         m_arguments.write(*data);
-        canonicalize(*data);
-        auto [view, created] = m_repository->get_or_create(*data);
+        auto [view, created] = get_or_create(*m_repository, *data);
         static_cast<void>(created);
         return view;
     }
@@ -214,14 +212,13 @@ public:
 
     CallStackView<Kind> intern(MemoryStateView memory_state)
     {
-        auto data = m_builder->template get_builder<CallStack>();
+        auto data = runir::kr::ps::ext::checkout<CallStack>(*m_builder);
         ygg::set(m_module, data->module);
         ygg::set(memory_state, data->memory_state);
         ygg::set(intern_registers(), data->registers);
         ygg::set(intern_arguments(), data->arguments);
         ygg::set(m_caller, data->caller);
-        canonicalize(*data);
-        auto [view, created] = m_repository->get_or_create(*data);
+        auto [view, created] = get_or_create(*m_repository, *data);
         static_cast<void>(created);
         return view;
     }
@@ -306,13 +303,12 @@ public:
     ExecutionStateView<Kind> intern(ExecutionPhase phase)
     {
         const auto call_stack = m_call_stack.intern();
-        auto data = m_builder->template get_builder<ExecutionState<Kind>>();
+        auto data = runir::kr::ps::ext::checkout<ExecutionState<Kind>>(*m_builder);
         ygg::set(m_program, data->program);
         ygg::set(m_state, data->state);
         ygg::set(call_stack, data->call_stack);
         data->phase = phase;
-        canonicalize(*data);
-        auto [view, created] = m_repository->get_or_create(*data);
+        auto [view, created] = get_or_create(*m_repository, *data);
         static_cast<void>(created);
         return view;
     }

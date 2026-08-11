@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_EXT_EVALUATION_ENVIRONMENT_HPP_
 #define RUNIR_KR_PS_EXT_EVALUATION_ENVIRONMENT_HPP_
 
-#include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 #include "runir/kr/dl/semantics/ext/evaluation_context.hpp"

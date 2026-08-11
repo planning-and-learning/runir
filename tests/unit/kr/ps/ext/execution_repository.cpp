@@ -4,7 +4,6 @@
 #include <cista/serialization.h>
 #include <gtest/gtest.h>
 #include <optional>
-#include <runir/kr/ps/ext/execution_builder.hpp>
 #include <runir/kr/ps/ext/execution_repository.hpp>
 #include <runir/kr/ps/ext/execution_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>

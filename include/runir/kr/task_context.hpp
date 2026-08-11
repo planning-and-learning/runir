@@ -3,12 +3,12 @@
 
 #include "runir/datasets/task_class.hpp"
 #include "runir/kr/dl/declarations.hpp"
-#include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"
-#include "runir/kr/ps/ext/execution_builder.hpp"
 #include "runir/kr/ps/ext/execution_declarations.hpp"
+#include "runir/kr/ps/ext/execution_repository.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
 #include <memory>

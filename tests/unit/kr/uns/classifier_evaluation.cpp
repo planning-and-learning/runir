@@ -3,7 +3,6 @@
 
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/uns/classify.hpp>
 #include <runir/kr/uns/dl/parser.hpp>

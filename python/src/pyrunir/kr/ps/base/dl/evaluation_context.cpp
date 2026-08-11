@@ -1,6 +1,5 @@
 #include "bindings.hpp"
 
-#include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/base/dl/evaluation_context.hpp>
 #include <tyr/planning/ground/state_view.hpp>

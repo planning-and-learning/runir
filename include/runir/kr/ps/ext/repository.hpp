@@ -27,4 +27,26 @@
 #include "runir/kr/ps/ext/rule_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
+namespace runir::kr::ps::ext
+{
+
+using Builder = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, RepositoryTypes>;
+
+template<typename T>
+[[nodiscard]] auto checkout(Builder& builder)
+{
+    auto data = builder.template get_builder<T>();
+    data->clear();
+    return data;
+}
+
+template<typename T>
+[[nodiscard]] auto get_or_create(Repository& repository, ygg::Data<T>& data)
+{
+    canonicalize(data);
+    return repository.get_or_create(data);
+}
+
+}
+
 #endif

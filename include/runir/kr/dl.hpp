@@ -16,7 +16,6 @@
 #include "runir/kr/dl/grammar/views.hpp"
 #include "runir/kr/dl/indices.hpp"
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotations.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/formatter.hpp"
