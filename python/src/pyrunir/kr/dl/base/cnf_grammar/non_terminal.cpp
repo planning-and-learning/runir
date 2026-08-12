@@ -1,10 +1,10 @@
 #include "bindings.hpp"
 
-#include <nanobind/stl/string.h>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/formatter.hpp>
 #include <runir/kr/dl/cnf_grammar/non_terminal_view.hpp>
 #include <yggdrasil/python/bindings.hpp>
+#include <yggdrasil/python/type_casters/string.hpp>
 
 namespace runir::kr::dl::base
 {

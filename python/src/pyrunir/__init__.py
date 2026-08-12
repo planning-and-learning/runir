@@ -1,10 +1,11 @@
+from importlib import import_module as _import_module
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
-# Load public native dependency packages before this package loads native extensions.
-import pypddl as pypddl
-import pytyr as pytyr
-import pyyggdrasil as pyyggdrasil
+# Load native dependency packages before this package loads native extensions.
+_import_module("pypddl")
+_import_module("pytyr")
+_import_module("pyyggdrasil")
 
 from . import (
     datasets as datasets,
