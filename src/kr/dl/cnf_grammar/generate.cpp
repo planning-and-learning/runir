@@ -287,10 +287,14 @@ private:
         if (m_complexity < 3)
             return true;
 
+        bool operands_are_interchangeable = false;
+        if constexpr (std::same_as<LhsCategory, RhsCategory>)
+            operands_are_interchangeable = child_lhs.get_index() == child_rhs.get_index();
+
         for (size_t i = 1; i < m_complexity - 1; ++i)
         {
             const auto j = m_complexity - i - 1;
-            if (commutative && i > j)
+            if (commutative && operands_are_interchangeable && i > j)
                 continue;
 
             for (auto lhs_constructor : m_sentences.get(child_lhs, i))

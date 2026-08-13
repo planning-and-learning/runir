@@ -33,7 +33,9 @@ public:
     template<typename T>
     [[nodiscard]] auto get_builder()
     {
-        return m_storage.template get_builder<T>();
+        auto data = m_storage.template get_builder<T>();
+        data->clear();
+        return data;
     }
 };
 
