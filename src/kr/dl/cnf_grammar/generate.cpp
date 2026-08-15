@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/containers/associative_containers.hpp>
+#include <yggdrasil/containers/raw_array_set.hpp>
 #include <yggdrasil/core/chrono.hpp>
 
 namespace runir::kr::dl::cnf_grammar
@@ -104,17 +105,41 @@ public:
     bool has_finished() const { return m_stopwatch && m_stopwatch->has_finished(); }
 };
 
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+struct SeenDenotationsFor
+{
+    using Constructor = runir::kr::dl::FamilyConstructorView<Family, Category>;
+    using Denotation = runir::kr::dl::semantics::DenotationView<Category>;
+    using NonTerminal = FamilyNonTerminalView<Family, Category>;
+
+    ygg::RawArraySet<Denotation> vectors;
+    ygg::UnorderedSet<std::pair<NonTerminal, ygg::uint_t>> signatures;
+    ygg::UnorderedSet<std::pair<NonTerminal, Constructor>> constructors;
+    std::vector<Denotation> scratch;
+
+    explicit SeenDenotationsFor(size_t num_states) : vectors(num_states), signatures(), constructors(), scratch() { scratch.reserve(num_states); }
+};
+
+template<runir::kr::dl::FamilyTag Family>
 struct SeenDenotations
 {
     template<runir::kr::dl::CategoryTag Category>
-    using Set = ygg::UnorderedSet<runir::kr::dl::semantics::DenotationView<Category>>;
+    using Seen = SeenDenotationsFor<Family, Category>;
 
-    std::tuple<Set<runir::kr::dl::ConceptTag>, Set<runir::kr::dl::RoleTag>, Set<runir::kr::dl::BooleanTag>, Set<runir::kr::dl::NumericalTag>> values;
+    std::tuple<Seen<runir::kr::dl::ConceptTag>, Seen<runir::kr::dl::RoleTag>, Seen<runir::kr::dl::BooleanTag>, Seen<runir::kr::dl::NumericalTag>> values;
+
+    explicit SeenDenotations(size_t num_states) :
+        values(Seen<runir::kr::dl::ConceptTag>(num_states),
+               Seen<runir::kr::dl::RoleTag>(num_states),
+               Seen<runir::kr::dl::BooleanTag>(num_states),
+               Seen<runir::kr::dl::NumericalTag>(num_states))
+    {
+    }
 
     template<runir::kr::dl::CategoryTag Category>
     auto& get() noexcept
     {
-        return std::get<Set<Category>>(values);
+        return std::get<Seen<Category>>(values);
     }
 };
 
@@ -128,7 +153,7 @@ private:
     runir::kr::dl::semantics::DenotationRepository m_denotation_repository;
     std::vector<runir::kr::dl::semantics::DenotationCaches<Family>> m_denotation_caches;
     runir::kr::dl::semantics::EvaluationWorkspace m_workspace;
-    SeenDenotations m_seen_denotations;
+    SeenDenotations<Family> m_seen_denotations;
 
 public:
     Pruning(const std::vector<tyr::planning::StateView<Kind>>& states, const runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository) :
@@ -138,25 +163,28 @@ public:
         m_denotation_repository(m_denotation_repository_factory.create(output_repository.get_planning_repository_ptr())),
         m_denotation_caches(states.size()),
         m_workspace(),
-        m_seen_denotations()
+        m_seen_denotations(states.size())
     {
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    bool should_prune(runir::kr::dl::FamilyConstructorView<Family, Category> constructor)
+    bool should_prune(FamilyNonTerminalView<Family, Category> lhs, runir::kr::dl::FamilyConstructorView<Family, Category> constructor)
     {
+        auto& seen = m_seen_denotations.template get<Category>();
         if (m_states.empty())
-            return false;
+            return !seen.constructors.insert(std::pair(lhs, constructor)).second;
 
         const auto was_cached = m_denotation_caches.front().template get<Category>().contains(constructor);
-        auto is_novel = false;
+        seen.scratch.clear();
 
         for (size_t i = 0; i < m_states.size(); ++i)
         {
             auto context = runir::kr::dl::semantics::EvaluationContext<Family, Kind>(m_states[i], m_builder, m_denotation_repository);
-            const auto denotation = runir::kr::dl::semantics::evaluate(constructor, context, m_workspace, m_denotation_caches[i]);
-            is_novel |= m_seen_denotations.get<Category>().insert(denotation).second;
+            seen.scratch.push_back(runir::kr::dl::semantics::evaluate(constructor, context, m_workspace, m_denotation_caches[i]));
         }
+
+        const auto vector = seen.vectors.insert(seen.scratch);
+        const auto is_novel = seen.signatures.insert(std::pair(lhs, vector)).second;
 
         if (!is_novel && !was_cached)
             for (auto& caches : m_denotation_caches)
@@ -247,7 +275,7 @@ private:
     {
         ++m_result.statistics.num_generated;
 
-        if (m_pruning.should_prune(constructor))
+        if (m_pruning.should_prune(lhs, constructor))
         {
             ++m_result.statistics.num_pruned;
             return false;
@@ -308,6 +336,10 @@ private:
             {
                 for (auto rhs_constructor : m_sentences.get(child_rhs, j))
                 {
+                    if constexpr (std::same_as<LhsCategory, RhsCategory>)
+                        if (commutative && operands_are_interchangeable && i == j && rhs_constructor < lhs_constructor)
+                            continue;
+
                     maybe_keep(lhs, std::forward<F>(make)(lhs_constructor, rhs_constructor));
                     if (out_of_time())
                         return false;
@@ -359,11 +391,25 @@ private:
     }
 
     template<runir::kr::dl::CategoryTag Category>
-    bool generate_rule(FamilySubstitutionRuleView<Family, Category> rule)
+    bool propagate(FamilySubstitutionRuleView<Family, Category> rule, bool& changed)
     {
+        if (rule.get_lhs().get_index() == rule.get_rhs().get_index())
+            return !out_of_time();
+
         const auto& source = m_sentences.get(rule.get_rhs(), m_complexity);
-        auto& target = m_sentences.get(rule.get_lhs(), m_complexity);
-        target.insert(target.end(), source.begin(), source.end());
+        for (auto constructor : source)
+        {
+            auto view = runir::kr::dl::FamilyConstructorView<Family, Category>(constructor, m_output_repository);
+            if (!m_pruning.should_prune(rule.get_lhs(), view))
+            {
+                keep(rule.get_lhs(), constructor);
+                changed = true;
+            }
+
+            if (out_of_time())
+                return false;
+        }
+
         return !out_of_time();
     }
 
@@ -786,11 +832,15 @@ private:
                 return false;
         }
 
-        for (auto rule : m_grammar.template get_substitution_rules<Category>())
+        // ponytail: rescan unit rules; use a worklist only if substitution-heavy grammars profile poorly.
+        auto changed = false;
+        do
         {
-            if (!generate_rule(rule))
-                return false;
-        }
+            changed = false;
+            for (auto rule : m_grammar.template get_substitution_rules<Category>())
+                if (!propagate(rule, changed))
+                    return false;
+        } while (changed);
 
         return true;
     }

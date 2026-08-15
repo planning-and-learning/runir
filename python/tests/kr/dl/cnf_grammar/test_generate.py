@@ -9,7 +9,7 @@ from pyrunir.kr.dl.base import cnf_grammar, semantics
 from pyrunir.kr.dl.base.grammar import ConstructorRepositoryFactory
 
 
-def test_generate_ground_and_cached_evaluation(gripper_data_dir) -> None:
+def _make_gripper_context(gripper_data_dir):
     parser_options = ParserOptions()
     parser = Parser(gripper_data_dir / "domain.pddl", parser_options)
     gripper_planning_domain = parser.get_domain()
@@ -19,23 +19,37 @@ def test_generate_ground_and_cached_evaluation(gripper_data_dir) -> None:
     ).task
     search_context = GroundTaskSearchContext(task, execution_context)
     task_context = GroundTaskContext(search_context)
-    state = search_context.state_repository.get_initial_state()
+    return gripper_planning_domain, search_context, task_context
 
-    grammar_repository = ConstructorRepositoryFactory().create(gripper_planning_domain)
-    grammar = base.parse_grammar(
-        "((c_0 (c_top))(r_0 (r_universal))(b_0 (b_nonempty c_0))(n_0 (n_count c_0)))",
-        gripper_planning_domain.get_domain(),
-        grammar_repository,
-    )
-    cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(gripper_planning_domain)
+
+def _generate(grammar_description, states, planning_domain, task_context, max_syntactic_complexity):
+    grammar_repository = ConstructorRepositoryFactory().create(planning_domain)
+    grammar = base.parse_grammar(grammar_description, planning_domain.get_domain(), grammar_repository)
+    cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)
     cnf = cnf_grammar.translate(grammar, cnf_repository)
     options = cnf_grammar.GenerateOptions()
-    options.max_syntactic_complexity = 2
-    result = cnf_grammar.generate_ground(
-        cnf,
+    options.max_syntactic_complexity = max_syntactic_complexity
+    return cnf_grammar.generate_ground(cnf, states, task_context.base_dl_repository, options)
+
+
+def _concept_vector(concept, states, task_context):
+    result = []
+    for state in states:
+        context = semantics.GroundEvaluationContext(state, task_context.dl_builder, task_context.dl_denotation_repository)
+        result.append(tuple(sorted(object_.get_name() for object_ in concept.evaluate(context))))
+    return tuple(result)
+
+
+def test_generate_ground_and_cached_evaluation(gripper_data_dir) -> None:
+    gripper_planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
+    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator)
+
+    result = _generate(
+        "((c_0 (c_top))(r_0 (r_universal))(b_0 (b_nonempty c_0))(n_0 (n_count c_0)))",
         [state],
-        task_context.base_dl_repository,
-        options,
+        gripper_planning_domain,
+        task_context,
+        2,
     )
 
     assert result.statistics.num_generated == 4
@@ -48,3 +62,108 @@ def test_generate_ground_and_cached_evaluation(gripper_data_dir) -> None:
     assert len(list(result.roles[0].evaluate(context, cache))) == 36
     assert result.booleans[0].evaluate(context, cache).get() is True
     assert result.numericals[0].evaluate(context, cache).get() == 6
+
+
+def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir) -> None:
+    planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
+    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator)
+
+    result = _generate(
+        '((c_1 (c_nominal "rooma"))(c_2 (c_nominal "roomb"))(c_3 (c_bot))(r_1 (r_universal))'
+        "(n_0 (n_distance c_1 r_1 c_2))(n_0 (n_distance c_1 r_1 c_1))(n_0 (n_distance c_3 r_1 c_2)))",
+        [state],
+        planning_domain,
+        task_context,
+        4,
+    )
+
+    context = semantics.GroundEvaluationContext(state, task_context.dl_builder, task_context.dl_denotation_repository)
+    values = [feature.evaluate(context).get() for feature in result.numericals]
+    cache = semantics.DenotationCaches()
+    cached_values = [feature.evaluate(context, cache).get() for feature in result.numericals]
+
+    assert values == [1, 0, 2**32 - 1]
+    assert cached_values == values
+
+
+def test_generate_distinguishes_ordered_state_denotation_vectors(gripper_data_dir) -> None:
+    planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
+    initial_node = search_context.successor_generator.get_initial_node(
+        search_context.state_repository, search_context.axiom_evaluator
+    )
+    move_to_roomb = next(
+        successor
+        for successor in search_context.successor_generator.get_labeled_successor_nodes(
+            initial_node, search_context.state_repository, search_context.axiom_evaluator
+        )
+        if successor.label.get_relation().get_name() == "move"
+        and [object_.get_name() for object_ in successor.label.get_objects()] == ["rooma", "roomb"]
+    )
+    states = [initial_node.get_state(), move_to_roomb.node.get_state()]
+
+    result = _generate(
+        '((c_0 (c_atomic_state "room"))(c_0 (c_atomic_state "at-robby"))(c_0 (c_not c_0))(c_0 (c_and c_0 c_0)))',
+        states,
+        planning_domain,
+        task_context,
+        4,
+    )
+    vectors = [_concept_vector(concept, states, task_context) for concept in result.concepts]
+
+    assert vectors.count((("rooma",), ("roomb",))) == 1
+    assert vectors.count((("roomb",), ("rooma",))) == 1
+
+
+def test_generate_keeps_equal_denotations_in_distinct_nonterminals(gripper_data_dir) -> None:
+    planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
+    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator)
+
+    result = _generate("((c_1 (c_top))(c_0 (c_and c_1 c_1)))", [state], planning_domain, task_context, 3)
+
+    assert result.statistics.num_generated == 2
+    assert result.statistics.num_pruned == 0
+    assert result.statistics.num_kept == 2
+    assert len(result.concepts) == 1
+    assert result.concepts[0].syntactic_complexity() == 3
+
+
+def test_generate_computes_substitution_closure_independent_of_rule_order(gripper_data_dir) -> None:
+    planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
+    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator)
+
+    result = _generate("((c_0 (c_1))(c_1 (c_2))(c_2 (c_top)))", [state], planning_domain, task_context, 1)
+
+    assert result.statistics.num_generated == 1
+    assert result.statistics.num_pruned == 0
+    assert result.statistics.num_kept == 1
+    assert [str(concept) for concept in result.concepts] == ["(c_top)"]
+
+
+def test_generate_deduplicates_commutative_candidates(gripper_data_dir) -> None:
+    planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
+    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator)
+
+    result = _generate(
+        '((c_0 (c_atomic_state "ball"))(c_0 (c_atomic_state "at-robby"))(c_0 (c_and c_0 c_0)))',
+        [state],
+        planning_domain,
+        task_context,
+        3,
+    )
+
+    assert len(result.concepts) == 3
+    assert result.statistics.num_generated == 5
+    assert result.statistics.num_pruned == 2
+    assert result.statistics.num_kept == 3
+    assert sum(concept.syntactic_complexity() == 3 for concept in result.concepts) == 1
+
+
+def test_generate_terminates_substitution_closure_cycle_without_states(gripper_data_dir) -> None:
+    planning_domain, _, task_context = _make_gripper_context(gripper_data_dir)
+
+    result = _generate("((c_0 (c_1))(c_1 (c_2))(c_2 (c_0))(c_2 (c_top)))", [], planning_domain, task_context, 1)
+
+    assert result.statistics.num_generated == 1
+    assert result.statistics.num_pruned == 0
+    assert result.statistics.num_kept == 1
+    assert [str(concept) for concept in result.concepts] == ["(c_top)"]

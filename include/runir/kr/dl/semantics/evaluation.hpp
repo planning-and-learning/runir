@@ -884,59 +884,55 @@ auto evaluate_numerical(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> c
     }
     else if constexpr (std::same_as<Tag, DistanceTag>)
     {
+        constexpr auto infinity = std::numeric_limits<ygg::uint_t>::max();
+
         const auto lhs = evaluate_child(constructor.get_lhs());
-        const auto role = evaluate_child(constructor.get_mid());
-        const auto rhs = evaluate_child(constructor.get_rhs());
-        [[maybe_unused]] const auto num_objects = detail::num_objects(context);
-
-        result_value = std::numeric_limits<ygg::uint_t>::max();
-
         const auto lhs_bitset = detail::deref(lhs).get();
-        const auto rhs_bitset = detail::deref(rhs).get();
+        result_value = infinity;
 
-        if (lhs_bitset.any() && rhs_bitset.any())
+        if (lhs_bitset.any())
         {
-            if (lhs_bitset.intersects(rhs_bitset))
-            {
-                result_value = 0;
-            }
-            else
-            {
-                workspace.prepare_distance(num_objects);
-                auto& queue = workspace.get_distance_queue();
-                auto& distances = workspace.get_distance_values();
-                size_t queue_pos = 0;
+            const auto rhs = evaluate_child(constructor.get_rhs());
+            const auto rhs_bitset = detail::deref(rhs).get();
 
-                for (auto object = lhs_bitset.find_first(); object != decltype(lhs_bitset)::npos; object = lhs_bitset.find_next(object))
+            if (rhs_bitset.any())
+            {
+                if (lhs_bitset.intersects(rhs_bitset))
                 {
-                    queue.push_back(static_cast<ygg::uint_t>(object));
-                    distances[object] = 0;
+                    result_value = 0;
                 }
-
-                while (queue_pos < queue.size())
+                else
                 {
-                    const auto source = queue[queue_pos++];
+                    const auto role = evaluate_child(constructor.get_mid());
+                    workspace.prepare_distance(static_cast<ygg::uint_t>(lhs_bitset.size()));
+                    auto& queue = workspace.get_distance_queue();
+                    auto& distances = workspace.get_distance_values();
+                    size_t queue_pos = 0;
 
-                    const auto source_distance = distances[source];
-                    assert(source_distance != std::numeric_limits<ygg::uint_t>::max());
-
-                    const auto row = detail::deref(role).get(source);
-                    for (auto target = row.find_first(); target != decltype(row)::npos; target = row.find_next(target))
+                    for (auto object = lhs_bitset.find_first(); object != decltype(lhs_bitset)::npos; object = lhs_bitset.find_next(object))
                     {
-                        const auto new_distance = source_distance + 1;
-                        auto& target_distance = distances[target];
+                        queue.push_back(static_cast<ygg::uint_t>(object));
+                        distances[object] = 0;
+                    }
 
-                        if (new_distance < target_distance)
+                    while (queue_pos < queue.size())
+                    {
+                        const auto source = queue[queue_pos++];
+                        const auto source_distance = distances[source];
+                        assert(source_distance != infinity);
+
+                        const auto row = detail::deref(role).get(source);
+                        for (auto target = row.find_first(); target != decltype(row)::npos; target = row.find_next(target))
                         {
-                            target_distance = new_distance;
+                            auto& target_distance = distances[target];
+                            if (target_distance != infinity)
+                                continue;
+
+                            target_distance = source_distance + 1;
+                            if (rhs_bitset[target])
+                                return context.get_builder().template get_builder<Denotation<NumericalTag>>(target_distance);
+
                             queue.push_back(static_cast<ygg::uint_t>(target));
-                        }
-
-                        if (rhs_bitset[target])
-                        {
-                            result_value = target_distance;
-                            queue_pos = queue.size();
-                            break;
                         }
                     }
                 }
