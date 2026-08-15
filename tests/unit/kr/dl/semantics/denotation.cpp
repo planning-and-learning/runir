@@ -37,8 +37,9 @@ using ScalarDenotations = ygg::TypeList<Denotation<kr::dl::BooleanTag>, Denotati
 template<typename T>
 consteval bool scalar_denotation()
 {
-    return requires(ygg::Data<T>& data, const ygg::View<ygg::Index<T>, kr::dl::semantics::DenotationRepository>& view) {
+    return requires(ygg::Data<T>& data, const ygg::Builder<T>& builder, const ygg::View<ygg::Index<T>, kr::dl::semantics::DenotationRepository>& view) {
         data.value;
+        builder.get();
         view.get();
     } && std::same_as<decltype(std::declval<ygg::Data<T>&>().get_data()), decltype((std::declval<ygg::Data<T>&>().value))>
            && std::same_as<decltype(std::declval<const ygg::Data<T>&>().get_data()), decltype((std::declval<const ygg::Data<T>&>().value))>;
@@ -60,19 +61,29 @@ consteval bool view_aliases(ygg::TypeList<Categories...>)
 static_assert(scalar_denotations(ScalarDenotations {}));
 using Concept = Denotation<kr::dl::ConceptTag>;
 using ConceptView = kr::dl::semantics::DenotationView<kr::dl::ConceptTag>;
-static_assert(requires(ygg::Data<Concept>& data, const ConceptView& view) {
+static_assert(requires(ygg::Data<Concept>& data, const ygg::Builder<Concept>& builder, const ConceptView& view) {
     data.num_objects;
     data.vec_index;
+    builder.get();
     view.get();
     view.begin();
     view.end();
 });
 using Role = Denotation<kr::dl::RoleTag>;
 using RoleView = kr::dl::semantics::DenotationView<kr::dl::RoleTag>;
-static_assert(requires(ygg::Data<Role>& data, const RoleView& view, ygg::Index<tyr::formalism::Object> object) {
+static_assert(requires(ygg::Data<Role>& data, const ygg::Builder<Role>& builder, const RoleView& view, ygg::Index<tyr::formalism::Object> object) {
     data.num_objects;
     data.vec_index;
+    builder.get(object);
+    builder.get(ygg::uint_t {});
+    builder.get_num_objects();
+    builder.any();
+    builder.count();
     view.get(object);
+    view.get(ygg::uint_t {});
+    view.get_num_objects();
+    view.any();
+    view.count();
     view.begin();
     view.end();
 });
@@ -93,6 +104,30 @@ TEST(RunirKrDlSemanticsDenotation, ExposesScalarValues)
     auto numerical_data = ygg::Data<semantics::Denotation<dl::NumericalTag>>(9);
     EXPECT_TRUE(repository.get_or_create(boolean_data).first.get());
     EXPECT_EQ(repository.get_or_create(numerical_data).first.get(), 9);
+}
+
+TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
+{
+    namespace dl = kr::dl;
+    namespace semantics = dl::semantics;
+
+    auto builder = ygg::Builder<semantics::Denotation<dl::RoleTag>>(3);
+    EXPECT_FALSE(builder.any());
+    EXPECT_EQ(builder.count(), 0);
+
+    builder.get(0).set(1);
+    builder.get(2).set(0);
+    EXPECT_TRUE(builder.any());
+    EXPECT_EQ(builder.count(), 2);
+
+    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto repository = semantics::DenotationRepositoryFactory().create(planning_repository);
+    const auto vec_index = repository.get_vector_repository().insert(builder.blocks);
+    auto data = ygg::Data<semantics::Denotation<dl::RoleTag>>(builder.get_num_objects(), vec_index);
+    const auto view = repository.get_or_create(data).first;
+
+    EXPECT_TRUE(view.any());
+    EXPECT_EQ(view.count(), 2);
 }
 
 }

@@ -4,6 +4,7 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/base/evaluation_context.hpp>
+#include <runir/kr/dl/semantics/denotation_caches.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_context.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
@@ -36,6 +37,11 @@ void bind_evaluation_context(nb::module_& m, const char* name)
 void bind_semantics_repositories(nb::module_& m)
 {
     nb::class_<runir::kr::dl::semantics::Builder>(m, "Builder").def(nb::init<>());
+
+    using DenotationCaches = runir::kr::dl::semantics::DenotationCaches<runir::kr::BaseFamilyTag>;
+    nb::class_<DenotationCaches>(m, "DenotationCaches", "Constructor denotations cached for one fixed evaluation state.")
+        .def(nb::init<>())
+        .def("clear", &DenotationCaches::clear);
 
     nb::class_<runir::kr::dl::semantics::DenotationRepository>(m, "DenotationRepository")
         .def("get_index", &runir::kr::dl::semantics::DenotationRepository::get_index);

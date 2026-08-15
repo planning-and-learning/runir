@@ -5,11 +5,10 @@
 
 #include <concepts>
 #include <tuple>
-#include <yggdrasil/containers/optional.hpp>
-#include <yggdrasil/core/dependent_false.hpp>
-#include <yggdrasil/core/types.hpp>
-#include <yggdrasil/containers/vector.hpp>
 #include <tyr/formalism/planning/domain_view.hpp>
+#include <yggdrasil/containers/optional.hpp>
+#include <yggdrasil/containers/vector.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {
@@ -34,52 +33,19 @@ public:
     template<runir::kr::dl::CategoryTag Category>
     auto get_start() const noexcept
     {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(get_data().concept_start, *m_context);
-        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return make_view(get_data().role_start, *m_context);
-        else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return make_view(get_data().boolean_start, *m_context);
-        else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return make_view(get_data().numerical_start, *m_context);
-        else
-        {
-            static_assert(ygg::dependent_false<Category>::value, "unhandled DL category in get_start");
-        }
+        return make_view(get_data().template get_start<Category>(), *m_context);
     }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_derivation_rules() const noexcept
     {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(get_data().concept_derivation_rules, *m_context);
-        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return make_view(get_data().role_derivation_rules, *m_context);
-        else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return make_view(get_data().boolean_derivation_rules, *m_context);
-        else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return make_view(get_data().numerical_derivation_rules, *m_context);
-        else
-        {
-            static_assert(ygg::dependent_false<Category>::value, "unhandled DL category in get_derivation_rules");
-        }
+        return make_view(get_data().template get_derivation_rules<Category>(), *m_context);
     }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_substitution_rules() const noexcept
     {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(get_data().concept_substitution_rules, *m_context);
-        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return make_view(get_data().role_substitution_rules, *m_context);
-        else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return make_view(get_data().boolean_substitution_rules, *m_context);
-        else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return make_view(get_data().numerical_substitution_rules, *m_context);
-        else
-        {
-            static_assert(ygg::dependent_false<Category>::value, "unhandled DL category in get_substitution_rules");
-        }
+        return make_view(get_data().template get_substitution_rules<Category>(), *m_context);
     }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }

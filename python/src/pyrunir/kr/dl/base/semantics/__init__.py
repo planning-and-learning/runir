@@ -107,6 +107,7 @@ from ....._pyrunir.kr.dl.base.semantics import (
     ConceptValueRestrictionIndex,
     ConstructorRepository,
     ConstructorRepositoryFactory,
+    DenotationCaches,
     DenotationRepository,
     DenotationRepositoryFactory,
     GroundEvaluationContext,

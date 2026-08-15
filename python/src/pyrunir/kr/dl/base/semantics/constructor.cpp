@@ -3,6 +3,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/base/evaluation_context.hpp>
 #include <runir/kr/dl/semantics/constructor_view.hpp>
+#include <runir/kr/dl/semantics/denotation_caches.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
@@ -31,6 +32,7 @@ void bind_constructor_view(nb::module_& m, const char* name)
     using View = ygg::View<ygg::Index<Type>, runir::kr::dl::BaseConstructorRepository>;
     using GroundContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
     using LiftedContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
+    using DenotationCaches = runir::kr::dl::semantics::DenotationCaches<runir::kr::BaseFamilyTag>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(cls);
     ygg::add_comparison(cls);
@@ -38,11 +40,29 @@ void bind_constructor_view(nb::module_& m, const char* name)
     cls.def(
            "evaluate",
            [](View view, GroundContext& context) { return runir::kr::dl::semantics::evaluate(view, context); },
-           nb::arg("context"))
+           nb::arg("context"),
+           nb::keep_alive<0, 2>())
         .def(
             "evaluate",
             [](View view, LiftedContext& context) { return runir::kr::dl::semantics::evaluate(view, context); },
-            nb::arg("context"))
+            nb::arg("context"),
+            nb::keep_alive<0, 2>())
+        .def(
+            "evaluate",
+            [](View view, GroundContext& context, DenotationCaches& caches) { return runir::kr::dl::semantics::evaluate(view, context, caches); },
+            nb::arg("context"),
+            nb::arg("denotation_caches"),
+            nb::keep_alive<0, 2>(),
+            nb::keep_alive<3, 1>(),
+            nb::keep_alive<3, 2>())
+        .def(
+            "evaluate",
+            [](View view, LiftedContext& context, DenotationCaches& caches) { return runir::kr::dl::semantics::evaluate(view, context, caches); },
+            nb::arg("context"),
+            nb::arg("denotation_caches"),
+            nb::keep_alive<0, 2>(),
+            nb::keep_alive<3, 1>(),
+            nb::keep_alive<3, 2>())
         .def("syntactic_complexity", [](View view) { return runir::kr::dl::semantics::syntactic_complexity(view); });
     m.def("syntactic_complexity", [](View view) { return runir::kr::dl::semantics::syntactic_complexity(view); }, nb::arg("constructor"));
 }

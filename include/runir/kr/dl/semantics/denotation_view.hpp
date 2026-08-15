@@ -5,6 +5,7 @@
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 #include "runir/kr/dl/semantics/denotation_index.hpp"
 
+#include <bit>
 #include <cassert>
 #include <concepts>
 #include <tuple>
@@ -207,6 +208,36 @@ public:
         assert(ygg::uint_t(object) < data.num_objects);
 
         return Bitset(vector.data() + Layout::row_block_offset(object, data.num_objects), data.num_objects);
+    }
+
+    auto get(ygg::uint_t object) const noexcept
+        requires(std::same_as<Category, runir::kr::dl::RoleTag>)
+    {
+        return get(Index<::tyr::formalism::Object>(object));
+    }
+
+    auto get_num_objects() const noexcept
+        requires(std::same_as<Category, runir::kr::dl::RoleTag>)
+    {
+        return get_data().num_objects;
+    }
+
+    bool any() const noexcept
+        requires(std::same_as<Category, runir::kr::dl::RoleTag>)
+    {
+        for (const auto block : get_vector())
+            if (block != ygg::uint_t { 0 })
+                return true;
+        return false;
+    }
+
+    auto count() const noexcept -> size_t
+        requires(std::same_as<Category, runir::kr::dl::RoleTag>)
+    {
+        auto result = size_t { 0 };
+        for (const auto block : get_vector())
+            result += std::popcount(block);
+        return result;
     }
 
     auto begin() const noexcept

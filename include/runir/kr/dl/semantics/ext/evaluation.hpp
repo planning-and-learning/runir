@@ -17,7 +17,7 @@ namespace detail
 template<CategoryTag Category, tyr::TaskKind Kind>
 auto copy_argument_denotation(EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                               const ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>& view)
-    -> EvaluationBuilderT<Category, runir::kr::ExtFamilyTag, Kind>
+    -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>
 {
     if constexpr (std::same_as<Category, BooleanTag> || std::same_as<Category, NumericalTag>)
     {
@@ -26,14 +26,14 @@ auto copy_argument_denotation(EvaluationContext<runir::kr::ExtFamilyTag, Kind>& 
     else if constexpr (std::same_as<Category, ConceptTag>)
     {
         auto result = make_concept_builder(context);
-        result->get_bitset().copy_from(view.get());
+        result->get().copy_from(view.get());
         return result;
     }
     else if constexpr (std::same_as<Category, RoleTag>)
     {
         auto result = make_role_builder(context);
         for (ygg::uint_t object = 0; object < result->num_objects; ++object)
-            row(result, object).copy_from(view.get(ygg::Index<tyr::formalism::Object>(object)));
+            result->get(object).copy_from(view.get(object));
         return result;
     }
     else
@@ -47,10 +47,10 @@ auto copy_argument_denotation(EvaluationContext<runir::kr::ExtFamilyTag, Kind>& 
 template<tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
-                   EvaluationWorkspace&) -> EvaluationBuilderT<ConceptTag, runir::kr::ExtFamilyTag, Kind>
+                   EvaluationWorkspace&) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<ConceptTag>>>
 {
     auto result = detail::make_concept_builder(context);
-    auto result_bitset = result->get_bitset();
+    auto result_bitset = result->get();
 
     const auto& object = context.registers().at(constructor.get_register().get_identifier());
     if (object)
@@ -62,7 +62,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, R
 template<tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
-                   EvaluationWorkspace&) -> EvaluationBuilderT<RoleTag, runir::kr::ExtFamilyTag, Kind>
+                   EvaluationWorkspace&) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<RoleTag>>>
 {
     auto result = detail::make_role_builder(context);
 
@@ -70,7 +70,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, Regi
     if (value)
     {
         const auto& [source, target] = *value;
-        detail::row(result, source.get_index()).set(ygg::uint_t(target.get_index()));
+        result->get(source.get_index()).set(ygg::uint_t(target.get_index()));
     }
 
     return result;
@@ -79,7 +79,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, Regi
 template<tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, ArgumentTag<ConceptTag>>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
-                   EvaluationWorkspace&) -> EvaluationBuilderT<ConceptTag, runir::kr::ExtFamilyTag, Kind>
+                   EvaluationWorkspace&) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<ConceptTag>>>
 {
     return detail::copy_argument_denotation<ConceptTag>(context, context.arguments().at(constructor.get_argument().get_identifier()));
 }
@@ -87,7 +87,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, A
 template<tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, ArgumentTag<RoleTag>>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
-                   EvaluationWorkspace&) -> EvaluationBuilderT<RoleTag, runir::kr::ExtFamilyTag, Kind>
+                   EvaluationWorkspace&) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<RoleTag>>>
 {
     return detail::copy_argument_denotation<RoleTag>(context, context.arguments().at(constructor.get_argument().get_identifier()));
 }
@@ -95,7 +95,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, Argu
 template<tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<runir::kr::ExtFamilyTag, ArgumentTag<BooleanTag>>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
-                   EvaluationWorkspace&) -> EvaluationBuilderT<BooleanTag, runir::kr::ExtFamilyTag, Kind>
+                   EvaluationWorkspace&) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<BooleanTag>>>
 {
     return detail::copy_argument_denotation<BooleanTag>(context, context.arguments().at(constructor.get_argument().get_identifier()));
 }
@@ -103,7 +103,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<runir::kr::ExtFamilyTag, A
 template<tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<runir::kr::ExtFamilyTag, ArgumentTag<NumericalTag>>>, C> constructor,
                    EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
-                   EvaluationWorkspace&) -> EvaluationBuilderT<NumericalTag, runir::kr::ExtFamilyTag, Kind>
+                   EvaluationWorkspace&) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<NumericalTag>>>
 {
     return detail::copy_argument_denotation<NumericalTag>(context, context.arguments().at(constructor.get_argument().get_identifier()));
 }

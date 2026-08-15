@@ -5,6 +5,7 @@
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/base/evaluation_context.hpp"
+#include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
@@ -14,6 +15,8 @@
 #include <cstdint>
 #include <map>
 #include <optional>
+#include <stdexcept>
+#include <tuple>
 #include <type_traits>
 #include <tyr/planning/ground/state_repository.hpp>
 #include <tyr/planning/ground/state_view.hpp>
@@ -23,6 +26,7 @@
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <vector>
+#include <yggdrasil/containers/associative_containers.hpp>
 #include <yggdrasil/core/chrono.hpp>
 
 namespace runir::kr::dl::cnf_grammar
@@ -43,35 +47,22 @@ private:
     template<runir::kr::dl::CategoryTag Category>
     using ConstructorsByNonTerminal = std::map<std::uint64_t, ConstructorsByComplexity<Category>>;
 
-    ConstructorsByNonTerminal<runir::kr::dl::ConceptTag> m_concepts;
-    ConstructorsByNonTerminal<runir::kr::dl::RoleTag> m_roles;
-    ConstructorsByNonTerminal<runir::kr::dl::BooleanTag> m_booleans;
-    ConstructorsByNonTerminal<runir::kr::dl::NumericalTag> m_numericals;
+    std::tuple<ConstructorsByNonTerminal<runir::kr::dl::ConceptTag>,
+               ConstructorsByNonTerminal<runir::kr::dl::RoleTag>,
+               ConstructorsByNonTerminal<runir::kr::dl::BooleanTag>,
+               ConstructorsByNonTerminal<runir::kr::dl::NumericalTag>>
+        m_maps;
 
     template<runir::kr::dl::CategoryTag Category>
     auto& get_map() noexcept
     {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return m_concepts;
-        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return m_roles;
-        else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return m_booleans;
-        else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return m_numericals;
+        return std::get<ConstructorsByNonTerminal<Category>>(m_maps);
     }
 
     template<runir::kr::dl::CategoryTag Category>
     const auto& get_map() const noexcept
     {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return m_concepts;
-        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return m_roles;
-        else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return m_booleans;
-        else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return m_numericals;
+        return std::get<ConstructorsByNonTerminal<Category>>(m_maps);
     }
 
     template<runir::kr::dl::CategoryTag Category>
@@ -113,6 +104,20 @@ public:
     bool has_finished() const { return m_stopwatch && m_stopwatch->has_finished(); }
 };
 
+struct SeenDenotations
+{
+    template<runir::kr::dl::CategoryTag Category>
+    using Set = ygg::UnorderedSet<runir::kr::dl::semantics::DenotationView<Category>>;
+
+    std::tuple<Set<runir::kr::dl::ConceptTag>, Set<runir::kr::dl::RoleTag>, Set<runir::kr::dl::BooleanTag>, Set<runir::kr::dl::NumericalTag>> values;
+
+    template<runir::kr::dl::CategoryTag Category>
+    auto& get() noexcept
+    {
+        return std::get<Set<Category>>(values);
+    }
+};
+
 template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 class Pruning
 {
@@ -121,7 +126,9 @@ private:
     runir::kr::dl::semantics::Builder m_builder;
     runir::kr::dl::semantics::DenotationRepositoryFactory m_denotation_repository_factory;
     runir::kr::dl::semantics::DenotationRepository m_denotation_repository;
+    std::vector<runir::kr::dl::semantics::DenotationCaches<Family>> m_denotation_caches;
     runir::kr::dl::semantics::EvaluationWorkspace m_workspace;
+    SeenDenotations m_seen_denotations;
 
 public:
     Pruning(const std::vector<tyr::planning::StateView<Kind>>& states, const runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository) :
@@ -129,7 +136,9 @@ public:
         m_builder(),
         m_denotation_repository_factory(),
         m_denotation_repository(m_denotation_repository_factory.create(output_repository.get_planning_repository_ptr())),
-        m_workspace()
+        m_denotation_caches(states.size()),
+        m_workspace(),
+        m_seen_denotations()
     {
     }
 
@@ -139,23 +148,21 @@ public:
         if (m_states.empty())
             return false;
 
-        auto created = false;
+        const auto was_cached = m_denotation_caches.front().template get<Category>().contains(constructor);
+        auto is_novel = false;
 
-        for (auto state : m_states)
+        for (size_t i = 0; i < m_states.size(); ++i)
         {
-            auto context = runir::kr::dl::semantics::EvaluationContext<Family, Kind>(state, m_builder, m_denotation_repository);
-            auto denotation = runir::kr::dl::semantics::evaluate_impl(constructor, context, m_workspace);
-            auto data = runir::kr::dl::semantics::checkout<runir::kr::dl::semantics::Denotation<Category>>(m_builder);
-            runir::kr::dl::semantics::make_data(*denotation, *data);
-            if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
-                data->vec_index = m_denotation_repository.get_vector_repository().insert(denotation->blocks);
-
-            const auto [view, was_created] = runir::kr::dl::semantics::get_or_create(context.get_denotation_repository(), *data);
-            denotation->index = view.get_index();
-            created |= was_created;
+            auto context = runir::kr::dl::semantics::EvaluationContext<Family, Kind>(m_states[i], m_builder, m_denotation_repository);
+            const auto denotation = runir::kr::dl::semantics::evaluate(constructor, context, m_workspace, m_denotation_caches[i]);
+            is_novel |= m_seen_denotations.get<Category>().insert(denotation).second;
         }
 
-        return !created;
+        if (!is_novel && !was_cached)
+            for (auto& caches : m_denotation_caches)
+                caches.template get<Category>().erase(constructor);
+
+        return !is_novel;
     }
 };
 
@@ -846,15 +853,6 @@ public:
     }
 };
 
-template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
-GenerateResultsFor<Family> generate_impl(FamilyGrammarView<Family> grammar,
-                                         const std::vector<tyr::planning::StateView<Kind>>& states,
-                                         runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,
-                                         const GenerateOptions& options)
-{
-    return Generator<Family, Kind>(grammar, states, output_repository, options).run();
-}
-
 }  // namespace
 template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
@@ -862,7 +860,12 @@ GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
                                     runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,
                                     const GenerateOptions& options)
 {
-    return generate_impl<Family, Kind>(grammar, states, output_repository, options);
+    const auto* planning_repository = &output_repository.get_planning_repository();
+    for (const auto& state : states)
+        if (state.get_repository().get() != planning_repository)
+            throw std::invalid_argument("generate requires states and repositories for the same planning repository");
+
+    return Generator<Family, Kind>(grammar, states, output_repository, options).run();
 }
 
 template GenerateResultsFor<runir::kr::BaseFamilyTag>
