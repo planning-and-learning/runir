@@ -1,5 +1,7 @@
 #include "detail.hpp"
+#include "runir/graphs/declarations.hpp"
 
+#include <limits>
 #include <utility>
 
 namespace runir::kr::ps::detail
@@ -111,7 +113,12 @@ void append_rule_edges(const QualitativePolicy& policy, std::size_t rule_positio
 {
     enumerate_rule_edges(policy.rule_profiles[rule_position],
                          policy,
-                         [&](std::size_t source, std::size_t target) { edges.push_back(PolicyEdge { source, target, rule_position }); });
+                         [&](std::size_t source, std::size_t target)
+                         {
+                             if (edges.size() == std::numeric_limits<graphs::EdgeIndex>::max())
+                                 throw std::invalid_argument("structural_termination: an expanded policy graph has too many edges");
+                             edges.push_back(PolicyEdge { source, target, rule_position });
+                         });
 }
 
 std::vector<std::size_t> positions(const boost::dynamic_bitset<>& selected)

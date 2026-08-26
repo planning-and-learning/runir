@@ -35,12 +35,6 @@ std::vector<bool> materialize(const boost::dynamic_bitset<>& values)
 
 void bind_structural_termination(nb::module_& m)
 {
-    nb::enum_<NumericalChange>(m, "NumericalChange")
-        .value("UNCONSTRAINED", NumericalChange::UNCONSTRAINED)
-        .value("INCREASES", NumericalChange::INCREASES)
-        .value("DECREASES", NumericalChange::DECREASES)
-        .value("UNCHANGED", NumericalChange::UNCHANGED);
-
     nb::enum_<StructuralTerminationStatus>(m, "StructuralTerminationStatus")
         .value("TERMINATING", StructuralTerminationStatus::TERMINATING)
         .value("NON_TERMINATING", StructuralTerminationStatus::NON_TERMINATING);
@@ -49,11 +43,6 @@ void bind_structural_termination(nb::module_& m)
                             .def_prop_ro("boolean_values", [](const PolicyGraphVertexLabel& self) { return materialize(self.boolean_values); })
                             .def_prop_ro("numerical_values", [](const PolicyGraphVertexLabel& self) { return materialize(self.numerical_values); });
     ygg::add_comparison(vertex_label);
-
-    auto edge_label = nb::class_<PolicyGraphEdgeLabel>(m, "PolicyGraphEdgeLabel")
-                          .def_ro("rule", &PolicyGraphEdgeLabel::rule)
-                          .def_ro("numerical_changes", &PolicyGraphEdgeLabel::numerical_changes);
-    ygg::add_comparison(edge_label);
 
     auto policy_graph = nb::class_<PolicyGraph>(m, "PolicyGraph");
     bind_readable_graph_methods(policy_graph);

@@ -48,9 +48,7 @@ StructuralTerminationResult make_result(SketchView sketch, const SketchAnalysis&
                 continue;
             const auto rule_position = projected.rule_positions[edge.rule_position];
             counterexample_builder.add_directed_edge(
-                map_vertex(edge.source),
-                map_vertex(edge.target),
-                PolicyGraphEdgeLabel(analysis.rules[rule_position], analysis.policy.rule_profiles[rule_position].numerical_changes));
+                map_vertex(edge.source), map_vertex(edge.target), analysis.rules[rule_position]);
         }
     }
     result.counterexample = std::make_shared<PolicyGraph>(std::move(counterexample_builder));

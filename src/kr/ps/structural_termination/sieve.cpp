@@ -4,6 +4,7 @@
 #include "runir/graphs/static_graph_builder.hpp"
 
 #include <algorithm>
+#include <limits>
 
 namespace runir::kr::ps::detail
 {
@@ -100,6 +101,11 @@ bool contains_cycle(const std::vector<PolicyEdge>& edges, const StrongComponents
 
 StrongComponents find_strong_components(const std::vector<PolicyEdge>& edges, std::size_t num_vertices)
 {
+    if (num_vertices > std::numeric_limits<graphs::VertexIndex>::max())
+        throw std::invalid_argument("structural_termination: a policy graph has too many vertices");
+    if (edges.size() > std::numeric_limits<graphs::EdgeIndex>::max())
+        throw std::invalid_argument("structural_termination: a policy graph has too many edges");
+
     auto builder = graphs::StaticGraphBuilder<> {};
     for (std::size_t vertex = 0; vertex < num_vertices; ++vertex)
         builder.add_vertex();
@@ -139,8 +145,12 @@ PolicySieveResult sieve_policy_for_rules(const QualitativePolicy& policy, std::s
         result.scc_feature_positions->push_back(SccFeaturePositions { projected.boolean_positions, projected.numerical_positions });
 
     for (const auto& projected : projected_components)
-        if (projected.policy.num_booleans + projected.policy.num_numericals > max_features)
+    {
+        if (projected.policy.num_booleans > max_features || projected.policy.num_numericals > max_features - projected.policy.num_booleans)
             throw std::invalid_argument("structural_termination: a residual memory component has too many relevant features.");
+        if (projected.policy.num_vertices() > std::numeric_limits<graphs::VertexIndex>::max())
+            throw std::invalid_argument("structural_termination: a residual policy graph has too many vertices");
+    }
 
     for (auto& projected : projected_components)
     {

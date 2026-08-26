@@ -4,10 +4,9 @@
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
-#include "runir/kr/ps/ext/declarations.hpp"
 #include "runir/kr/ps/ext/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/ext/memory_state_view.hpp"
-#include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/ps/ext/repository.hpp"
 
 #include <boost/dynamic_bitset.hpp>
 #include <memory>
@@ -26,8 +25,6 @@ enum class StructuralTerminationStatus
     TERMINATING,
     NON_TERMINATING,
 };
-
-using NumericalChange = runir::kr::ps::dl::NumericalChange;
 
 /// Feature valuation paired with a memory state. Boolean and numerical bits
 /// follow the originating module's declared feature order. A numerical bit
@@ -49,28 +46,8 @@ struct ModulePolicyGraphVertexLabel : ygg::comparison::Mixin<ModulePolicyGraphVe
     auto identifying_members() const noexcept { return std::tie(boolean_values, numerical_values, memory_state); }
 };
 
-/// Rule labeling an edge together with its qualitative numerical feature
-/// changes, aligned with the originating module's declared numerical feature
-/// order.
-struct ModulePolicyGraphEdgeLabel : ygg::comparison::Mixin<ModulePolicyGraphEdgeLabel>
-{
-    RuleVariantView rule;
-    std::vector<NumericalChange> numerical_changes;
-
-    ModulePolicyGraphEdgeLabel(RuleVariantView rule_, std::vector<NumericalChange> numerical_changes_) noexcept :
-        rule(rule_),
-        numerical_changes(std::move(numerical_changes_))
-    {
-    }
-
-    auto cista_members() noexcept { return std::tie(rule, numerical_changes); }
-
-    // The changes are determined by the rule.
-    auto identifying_members() const noexcept { return std::tie(rule); }
-};
-
-using ModulePolicyGraphBuilder = graphs::StaticGraphBuilder<ModulePolicyGraphVertexLabel, ModulePolicyGraphEdgeLabel>;
-using ModulePolicyGraph = graphs::StaticGraph<ModulePolicyGraphVertexLabel, ModulePolicyGraphEdgeLabel>;
+using ModulePolicyGraphBuilder = graphs::StaticGraphBuilder<ModulePolicyGraphVertexLabel, RuleVariantView>;
+using ModulePolicyGraph = graphs::StaticGraph<ModulePolicyGraphVertexLabel, RuleVariantView>;
 using SccStructuralTerminationResult = runir::kr::ps::dl::SccStructuralTerminationResult<runir::kr::ExtFamilyTag, runir::kr::ps::ext::Repository>;
 
 struct ModuleStructuralTerminationResult

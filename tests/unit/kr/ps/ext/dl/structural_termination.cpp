@@ -162,7 +162,7 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
     // The counterexample cycle uses both rules and spans both memory states.
     auto rule_indices = std::set<ygg::Index<kr::ps::ext::RuleVariant>> {};
     for (const auto& edge : result.counterexample->get_edges())
-        rule_indices.insert(edge.get_property().rule.get_index());
+        rule_indices.insert(edge.get_property().get_index());
     EXPECT_EQ(rule_indices.size(), 2);
 
     auto memory_state_indices = std::set<ygg::Index<kr::ps::ext::MemoryState>> {};
@@ -190,7 +190,7 @@ TEST(RunirTests, ExtStructuralTerminationIgnoresOneWayBridgeBetweenMemoryCycles)
 
     auto rules = std::set<ygg::Index<kr::ps::ext::RuleVariant>> {};
     for (const auto& edge : result.counterexample->get_edges())
-        rules.insert(edge.get_property().rule.get_index());
+        rules.insert(edge.get_property().get_index());
     EXPECT_EQ(rules.size(), 2);
 
     auto memory_states = std::set<std::string> {};
@@ -271,27 +271,7 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
 
     auto rule_symbols = std::set<std::string> {};
     for (const auto& edge : result.counterexample->get_edges())
-    {
-        const auto& label = edge.get_property();
-        const auto symbol = std::string(label.rule.get_symbol());
-        rule_symbols.emplace(symbol);
-        EXPECT_EQ(label.numerical_changes.size(), numericals.size());
-        if (symbol == "keep_n0")
-        {
-            EXPECT_EQ(label.numerical_changes[0], kr::ps::dl::NumericalChange::UNCHANGED);
-            EXPECT_EQ(label.numerical_changes[1], kr::ps::dl::NumericalChange::UNCONSTRAINED);
-        }
-        else if (symbol == "keep_n1")
-        {
-            EXPECT_EQ(label.numerical_changes[0], kr::ps::dl::NumericalChange::UNCONSTRAINED);
-            EXPECT_EQ(label.numerical_changes[1], kr::ps::dl::NumericalChange::UNCHANGED);
-        }
-        else
-        {
-            EXPECT_EQ(label.numerical_changes[0], kr::ps::dl::NumericalChange::UNCONSTRAINED);
-            EXPECT_EQ(label.numerical_changes[1], kr::ps::dl::NumericalChange::UNCONSTRAINED);
-        }
-    }
+        rule_symbols.emplace(edge.get_property().get_symbol());
     EXPECT_EQ(rule_symbols, (std::set<std::string> { "keep_n0", "keep_n1", "to_false", "to_true" }));
 }
 

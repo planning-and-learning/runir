@@ -8,7 +8,6 @@
 #include "runir/kr/ps/base/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/base/dl/structural_termination_data.hpp"
 #include "runir/kr/ps/base/repository.hpp"
-#include "runir/kr/ps/dl/formatter.hpp"
 
 #include <fmt/format.h>
 #include <iterator>
@@ -91,17 +90,6 @@ struct fmt::formatter<runir::kr::ps::base::dl::PolicyGraphVertexLabel, char> : f
     auto format(const runir::kr::ps::base::dl::PolicyGraphVertexLabel& label, FormatContext& ctx) const
     {
         const auto text = fmt::format("(booleans={}, numericals={})", label.boolean_values, label.numerical_values);
-        return fmt::formatter<std::string_view>::format(text, ctx);
-    }
-};
-
-template<>
-struct fmt::formatter<runir::kr::ps::base::dl::PolicyGraphEdgeLabel, char> : fmt::formatter<std::string_view>
-{
-    template<typename FormatContext>
-    auto format(const runir::kr::ps::base::dl::PolicyGraphEdgeLabel& label, FormatContext& ctx) const
-    {
-        const auto text = fmt::format("(rule={}, numerical_changes={})", label.rule.get_symbol(), label.numerical_changes);
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };

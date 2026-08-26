@@ -51,9 +51,7 @@ ModuleStructuralTerminationResult make_result(ModuleView module_, const ModuleAn
                 continue;
             const auto rule_position = projected.rule_positions[edge.rule_position];
             counterexample_builder.add_directed_edge(
-                map_vertex(edge.source),
-                map_vertex(edge.target),
-                ModulePolicyGraphEdgeLabel(analysis.rules[rule_position], analysis.policy.rule_profiles[rule_position].numerical_changes));
+                map_vertex(edge.source), map_vertex(edge.target), analysis.rules[rule_position]);
         }
     }
     result.counterexample = std::make_shared<ModulePolicyGraph>(std::move(counterexample_builder));

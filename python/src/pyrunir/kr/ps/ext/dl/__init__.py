@@ -49,7 +49,6 @@ from ....._pyrunir.kr.ps.ext.dl import (
     ModuleFactory,
     ModuleIncompleteStructuralTerminationResult,
     ModulePolicyGraph,
-    ModulePolicyGraphEdgeLabel,
     ModulePolicyGraphVertexLabel,
     ModuleProgramIncompleteStructuralTerminationResult,
     ModuleProgramStructuralTerminationResult,

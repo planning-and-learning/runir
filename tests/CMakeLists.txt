@@ -94,6 +94,7 @@ add_runir_test(runir_kr_ps_types "${RUNIR_KR_PS_TYPE_TEST_SOURCES}" runir::kr)
 
 add_runir_test(runir_kr_ps_abstract_structural_termination unit/kr/ps/structural_termination.cpp runir::kr)
 target_include_directories(runir_kr_ps_abstract_structural_termination PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_runir_test(runir_kr_ps_public_structural_termination unit/kr/ps/public_structural_termination.cpp runir::kr)
 add_runir_test(
     runir_kr_ps_dl_parser
     "unit/kr/ps/base/dl/parser.cpp;unit/kr/ps/ext/dl/parser.cpp"

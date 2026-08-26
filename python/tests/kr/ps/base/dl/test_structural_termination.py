@@ -8,7 +8,6 @@ from pyrunir.kr.ps.base import Repository, RepositoryFactory
 from pyrunir.kr.ps.base.dl import (
     BooleanFeature,
     IncompleteStructuralTerminationStatus,
-    NumericalChange,
     SccStructuralTerminationResult,
     incomplete_structural_termination,
     parse_sketch,
@@ -99,20 +98,15 @@ def test_structural_termination_oscillator_counterexample_has_positional_valuati
         hash(first_vertex)
 
     # The two-cycle uses both rules; each edge flips b1.
-    rules = {counterexample.get_edge_property(edge).rule.get_index() for edge in counterexample.get_edge_indices()}
+    rules = {counterexample.get_edge_property(edge).get_index() for edge in counterexample.get_edge_indices()}
     assert rules == {rule.get_index() for rule in sketch.get_rules()}
-    first_edge = counterexample.get_edge_property(next(iter(counterexample.get_edge_indices())))
-    assert first_edge == first_edge
-    assert first_edge >= first_edge
-    with pytest.raises(TypeError):
-        hash(first_edge)
     for edge in counterexample.get_edge_indices():
         source = counterexample.get_vertex_property(counterexample.get_source(edge)).boolean_values[0]
         target = counterexample.get_vertex_property(counterexample.get_target(edge)).boolean_values[0]
         assert source != target
 
 
-def test_structural_termination_edge_changes_are_positional(gripper_planning_domain: PlanningDomain) -> None:
+def test_structural_termination_numerical_cycle_counterexample_uses_both_rules(gripper_planning_domain: PlanningDomain) -> None:
     repository = make_repository(gripper_planning_domain)
     sketch = parse_sketch(NUMERICAL_CYCLE, gripper_planning_domain, repository)
 
@@ -122,8 +116,8 @@ def test_structural_termination_edge_changes_are_positional(gripper_planning_dom
     assert len(sketch.get_numerical_features()) == 1
     counterexample = result.counterexample
     assert counterexample is not None
-    changes = {counterexample.get_edge_property(edge).numerical_changes[0] for edge in counterexample.get_edge_indices()}
-    assert changes == {NumericalChange.DECREASES, NumericalChange.INCREASES}
+    rules = {counterexample.get_edge_property(edge).get_index() for edge in counterexample.get_edge_indices()}
+    assert rules == {rule.get_index() for rule in sketch.get_rules()}
 
 
 def test_incomplete_structural_termination_reports_blocking_reasons(gripper_planning_domain: PlanningDomain) -> None:

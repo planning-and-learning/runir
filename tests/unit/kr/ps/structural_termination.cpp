@@ -90,16 +90,6 @@ void expect_universe_matches_monolithic(const std::vector<kr::ps::detail::RulePr
 
 TEST(RunirTests, QualitativePolicyRequiresMemoryState) { EXPECT_THROW((void) kr::ps::detail::QualitativePolicy(0, 0, 0), std::invalid_argument); }
 
-TEST(RunirTests, NumericalChangeToString)
-{
-    using kr::ps::dl::NumericalChange;
-    EXPECT_EQ(kr::ps::dl::to_string(NumericalChange::UNCONSTRAINED), "?");
-    EXPECT_EQ(kr::ps::dl::to_string(NumericalChange::INCREASES), "inc");
-    EXPECT_EQ(kr::ps::dl::to_string(NumericalChange::DECREASES), "dec");
-    EXPECT_EQ(kr::ps::dl::to_string(NumericalChange::UNCHANGED), "unchanged");
-    EXPECT_THROW((void) kr::ps::dl::to_string(static_cast<NumericalChange>(255)), std::invalid_argument);
-}
-
 TEST(RunirTests, CommonSieveEliminatesUnopposedDecrease)
 {
     auto policy = kr::ps::detail::QualitativePolicy(1, 0, 1);
@@ -357,19 +347,24 @@ TEST(RunirTests, SccRefinementForestInheritsMarksAcrossSplits)
     const auto component_of = std::vector<std::size_t> { 0, 0, 0 };
     auto forest = kr::ps::detail::SccRefinementForest(component_of, 1, 1, 1);
     const auto root = forest.roots().front();
-    forest.mark_numerical(root, 0);
+    forest.mark_numerical(root, 0, 0);
+    forest.mark_numerical(root, 0, 2);
+    forest.mark_numerical(root, 0, 0);
 
     const auto partitions = std::vector<std::vector<std::size_t>> { { 0 }, { 1, 2 } };
     const auto children = forest.split(root, partitions);
-    forest.mark_boolean(children[1], 0);
+    forest.mark_boolean(children[1], 0, 1);
 
     const auto first_marks = forest.effective_marks(children[0]);
     EXPECT_TRUE(first_marks.numericals.test(0));
     EXPECT_FALSE(first_marks.booleans.test(0));
+    EXPECT_EQ(first_marks.numerical_witnessing_rule_positions[0], std::vector<std::size_t>({ 0, 2 }));
 
     const auto second_marks = forest.effective_marks(children[1]);
     EXPECT_TRUE(second_marks.numericals.test(0));
     EXPECT_TRUE(second_marks.booleans.test(0));
+    EXPECT_EQ(second_marks.numerical_witnessing_rule_positions[0], std::vector<std::size_t>({ 0, 2 }));
+    EXPECT_EQ(second_marks.boolean_witnessing_rule_positions[0], std::vector<std::size_t>({ 1 }));
 }
 
 TEST(RunirTests, CommonIncompleteSieveOnlyEliminatesAcyclicMemoryRuleWithSccScope)

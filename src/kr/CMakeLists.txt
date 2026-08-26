@@ -32,6 +32,7 @@ add_library(kr SHARED
     ps/ext/dl/structural_termination/incomplete_result.cpp
     ps/ext/dl/structural_termination/result.cpp
     ps/ext/module_program_executor.cpp
+    ps/structural_termination.cpp
     ps/structural_termination/incomplete.cpp
     ps/structural_termination/policy_graph.cpp
     ps/structural_termination/scc_refinement_forest.cpp

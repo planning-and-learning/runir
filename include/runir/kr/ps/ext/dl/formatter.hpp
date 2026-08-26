@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_EXT_DL_FORMATTER_HPP_
 #define RUNIR_KR_PS_EXT_DL_FORMATTER_HPP_
 
-#include "runir/kr/ps/dl/formatter.hpp"
 #include "runir/kr/ps/ext/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/ext/dl/structural_termination_data.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
@@ -22,17 +21,6 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ModulePolicyGraphVertexLabel>
                               label.boolean_values,
                               label.numerical_values,
                               label.memory_state.get_name());
-    }
-};
-
-template<>
-struct fmt::formatter<runir::kr::ps::ext::dl::ModulePolicyGraphEdgeLabel>
-{
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-
-    auto format(const runir::kr::ps::ext::dl::ModulePolicyGraphEdgeLabel& label, format_context& context) const
-    {
-        return fmt::format_to(context.out(), "(rule={}, numerical_changes={})", label.rule.get_symbol(), label.numerical_changes);
     }
 };
 

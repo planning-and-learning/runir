@@ -21,7 +21,7 @@ auto counterexample_rules(const kr::ps::base::dl::StructuralTerminationResult& r
 {
     auto rules = std::set<ygg::Index<kr::ps::base::Rule>> {};
     for (const auto& edge : result.counterexample->get_edges())
-        rules.insert(edge.get_property().rule.get_index());
+        rules.insert(edge.get_property().get_index());
     return rules;
 }
 

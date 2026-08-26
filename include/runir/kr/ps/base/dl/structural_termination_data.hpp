@@ -3,9 +3,8 @@
 
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
-#include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/base/dl/incomplete_structural_termination_data.hpp"
-#include "runir/kr/ps/base/rule_view.hpp"
+#include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
 
 #include <boost/dynamic_bitset.hpp>
@@ -26,8 +25,6 @@ enum class StructuralTerminationStatus
     NON_TERMINATING,
 };
 
-using NumericalChange = runir::kr::ps::dl::NumericalChange;
-
 /// Feature valuation; bit i corresponds to position i in the originating
 /// sketch's declared Boolean (resp. numerical) feature order. A numerical bit
 /// encodes n > 0.
@@ -46,27 +43,8 @@ struct PolicyGraphVertexLabel : ygg::comparison::Mixin<PolicyGraphVertexLabel>
     auto identifying_members() const noexcept { return std::tie(boolean_values, numerical_values); }
 };
 
-/// Rule labeling an edge together with its qualitative numerical changes,
-/// aligned with the originating sketch's declared numerical feature order.
-struct PolicyGraphEdgeLabel : ygg::comparison::Mixin<PolicyGraphEdgeLabel>
-{
-    RuleView rule;
-    std::vector<NumericalChange> numerical_changes;
-
-    PolicyGraphEdgeLabel(RuleView rule_, std::vector<NumericalChange> numerical_changes_) noexcept :
-        rule(rule_),
-        numerical_changes(std::move(numerical_changes_))
-    {
-    }
-
-    auto cista_members() noexcept { return std::tie(rule, numerical_changes); }
-
-    // The changes are determined by the rule.
-    auto identifying_members() const noexcept { return std::tie(rule); }
-};
-
-using PolicyGraphBuilder = graphs::StaticGraphBuilder<PolicyGraphVertexLabel, PolicyGraphEdgeLabel>;
-using PolicyGraph = graphs::StaticGraph<PolicyGraphVertexLabel, PolicyGraphEdgeLabel>;
+using PolicyGraphBuilder = graphs::StaticGraphBuilder<PolicyGraphVertexLabel, RuleView>;
+using PolicyGraph = graphs::StaticGraph<PolicyGraphVertexLabel, RuleView>;
 using SccStructuralTerminationResult = runir::kr::ps::dl::SccStructuralTerminationResult<runir::kr::BaseFamilyTag, runir::kr::ps::base::Repository>;
 
 struct StructuralTerminationResult

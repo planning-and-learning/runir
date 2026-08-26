@@ -69,11 +69,6 @@ void bind_structural_termination(nb::module_& m)
                             .def_ro("memory_state", &ModulePolicyGraphVertexLabel::memory_state);
     ygg::add_comparison(vertex_label);
 
-    auto edge_label = nb::class_<ModulePolicyGraphEdgeLabel>(m, "ModulePolicyGraphEdgeLabel")
-                          .def_ro("rule", &ModulePolicyGraphEdgeLabel::rule)
-                          .def_ro("numerical_changes", &ModulePolicyGraphEdgeLabel::numerical_changes);
-    ygg::add_comparison(edge_label);
-
     auto graph = nb::class_<ModulePolicyGraph>(m, "ModulePolicyGraph");
     bind_readable_graph_methods(graph);
     bind_forward_graph(graph);

@@ -1,6 +1,8 @@
 #include "detail.hpp"
 #include "scc_refinement_forest.hpp"
 
+#include <algorithm>
+
 namespace runir::kr::ps::detail
 {
 
@@ -215,12 +217,40 @@ SieveState run_sieve(const QualitativePolicy& policy, bool use_memory_scc_scope)
     }
 }
 
+std::vector<IncompletePolicyResult::ResidualMemoryScope> make_residual_scopes(const SieveState& state)
+{
+    const auto& forest = state.memory_sccs.refinement_forest();
+    auto result = std::vector<IncompletePolicyResult::ResidualMemoryScope> {};
+    for (SccRefinementForest::NodeIndex node_position = 0; node_position < forest.nodes().size(); ++node_position)
+    {
+        const auto& node = forest.node(node_position);
+        if (!node.is_leaf())
+            continue;
+
+        auto scope = IncompletePolicyResult::ResidualMemoryScope { node.memory_positions, {} };
+        const auto marks = forest.effective_marks(node_position);
+        for (std::size_t feature_position = 0; feature_position < marks.booleans.size(); ++feature_position)
+            if (marks.booleans.test(feature_position))
+                scope.marked_features.push_back(IncompletePolicyResult::MarkedFeature { IncompletePolicyResult::FeatureKind::BOOLEAN,
+                                                                                        feature_position,
+                                                                                        marks.boolean_witnessing_rule_positions[feature_position] });
+        for (std::size_t feature_position = 0; feature_position < marks.numericals.size(); ++feature_position)
+            if (marks.numericals.test(feature_position))
+                scope.marked_features.push_back(IncompletePolicyResult::MarkedFeature { IncompletePolicyResult::FeatureKind::NUMERICAL,
+                                                                                        feature_position,
+                                                                                        marks.numerical_witnessing_rule_positions[feature_position] });
+        result.push_back(std::move(scope));
+    }
+    std::ranges::sort(result, {}, [](const auto& scope) -> const auto& { return scope.memory_positions; });
+    return result;
+}
+
 }  // namespace
 
 IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy, bool use_memory_scc_scope)
 {
     const auto state = run_sieve(policy, use_memory_scc_scope);
-    auto result = IncompletePolicyResult {};
+    auto result = IncompletePolicyResult { make_residual_scopes(state), {} };
     for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
     {
         if (!state.remaining[rule_position])

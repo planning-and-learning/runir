@@ -11,9 +11,8 @@
 // A leaf's effective marks are the union of its local marks and the local
 // marks of all its ancestors.
 
-#include <boost/dynamic_bitset.hpp>
-
 #include <algorithm>
+#include <boost/dynamic_bitset.hpp>
 #include <cstddef>
 #include <optional>
 #include <span>
@@ -21,10 +20,13 @@
 #include <utility>
 #include <vector>
 
+namespace runir::kr::ps::dl
+{
+struct QualitativePolicy;
+}
+
 namespace runir::kr::ps::detail
 {
-
-struct QualitativePolicy;
 
 class SccRefinementForest
 {
@@ -35,10 +37,14 @@ public:
     {
         boost::dynamic_bitset<> booleans;
         boost::dynamic_bitset<> numericals;
+        std::vector<std::vector<std::size_t>> boolean_witnessing_rule_positions;
+        std::vector<std::vector<std::size_t>> numerical_witnessing_rule_positions;
 
         Marks(std::size_t num_booleans, std::size_t num_numericals) :
             booleans(num_booleans),
-            numericals(num_numericals)
+            numericals(num_numericals),
+            boolean_witnessing_rule_positions(num_booleans),
+            numerical_witnessing_rule_positions(num_numericals)
         {
         }
 
@@ -46,7 +52,33 @@ public:
         {
             booleans |= other.booleans;
             numericals |= other.numericals;
+            for (std::size_t position = 0; position < boolean_witnessing_rule_positions.size(); ++position)
+                for (const auto rule_position : other.boolean_witnessing_rule_positions[position])
+                    insert_witness(boolean_witnessing_rule_positions[position], rule_position);
+            for (std::size_t position = 0; position < numerical_witnessing_rule_positions.size(); ++position)
+                for (const auto rule_position : other.numerical_witnessing_rule_positions[position])
+                    insert_witness(numerical_witnessing_rule_positions[position], rule_position);
             return *this;
+        }
+
+        void mark_boolean(std::size_t feature_position, std::size_t witnessing_rule_position)
+        {
+            booleans.set(feature_position);
+            insert_witness(boolean_witnessing_rule_positions.at(feature_position), witnessing_rule_position);
+        }
+
+        void mark_numerical(std::size_t feature_position, std::size_t witnessing_rule_position)
+        {
+            numericals.set(feature_position);
+            insert_witness(numerical_witnessing_rule_positions.at(feature_position), witnessing_rule_position);
+        }
+
+    private:
+        static void insert_witness(std::vector<std::size_t>& positions, std::size_t rule_position)
+        {
+            const auto insertion = std::lower_bound(positions.begin(), positions.end(), rule_position);
+            if (insertion == positions.end() || *insertion != rule_position)
+                positions.insert(insertion, rule_position);
         }
     };
 
@@ -62,10 +94,7 @@ public:
         // remain represented by ancestors rather than being copied.
         Marks local_marks;
 
-        Node(std::optional<NodeIndex> parent_,
-             std::vector<std::size_t> memory_positions_,
-             std::size_t num_booleans,
-             std::size_t num_numericals) :
+        Node(std::optional<NodeIndex> parent_, std::vector<std::size_t> memory_positions_, std::size_t num_booleans, std::size_t num_numericals) :
             parent(parent_),
             memory_positions(std::move(memory_positions_)),
             local_marks(num_booleans, num_numericals)
@@ -76,10 +105,7 @@ public:
     };
 
     // `component_of[m]` identifies the initial SCC containing memory state m.
-    explicit SccRefinementForest(std::span<const std::size_t> component_of,
-                                 std::size_t num_components,
-                                 std::size_t num_booleans,
-                                 std::size_t num_numericals) :
+    explicit SccRefinementForest(std::span<const std::size_t> component_of, std::size_t num_components, std::size_t num_booleans, std::size_t num_numericals) :
         num_booleans_(num_booleans),
         num_numericals_(num_numericals),
         leaf_of_memory_(component_of.size())
@@ -107,23 +133,20 @@ public:
     const std::vector<NodeIndex>& roots() const noexcept { return roots_; }
     const std::vector<Node>& nodes() const noexcept { return nodes_; }
 
-    NodeIndex leaf_of_memory(std::size_t memory_position) const
-    {
-        return leaf_of_memory_.at(memory_position);
-    }
+    NodeIndex leaf_of_memory(std::size_t memory_position) const { return leaf_of_memory_.at(memory_position); }
 
     const Node& node(NodeIndex index) const { return nodes_.at(index); }
 
-    void mark_boolean(NodeIndex leaf, std::size_t feature_position)
+    void mark_boolean(NodeIndex leaf, std::size_t feature_position, std::size_t witnessing_rule_position)
     {
         auto& current = require_leaf(leaf);
-        current.local_marks.booleans.set(feature_position);
+        current.local_marks.mark_boolean(feature_position, witnessing_rule_position);
     }
 
-    void mark_numerical(NodeIndex leaf, std::size_t feature_position)
+    void mark_numerical(NodeIndex leaf, std::size_t feature_position, std::size_t witnessing_rule_position)
     {
         auto& current = require_leaf(leaf);
-        current.local_marks.numericals.set(feature_position);
+        current.local_marks.mark_numerical(feature_position, witnessing_rule_position);
     }
 
     Marks effective_marks(NodeIndex node_index) const
@@ -184,8 +207,7 @@ private:
             leaf_of_memory_.at(memory_position) = leaf;
     }
 
-    static void validate_partition(std::span<const std::size_t> parent,
-                                   std::span<const std::vector<std::size_t>> children)
+    static void validate_partition(std::span<const std::size_t> parent, std::span<const std::vector<std::size_t>> children)
     {
         auto expected = boost::dynamic_bitset<>(parent.empty() ? 0 : (*std::max_element(parent.begin(), parent.end()) + 1));
         for (const auto memory_position : parent)
@@ -239,7 +261,7 @@ private:
 class ResidualMemorySccs
 {
 public:
-    explicit ResidualMemorySccs(const QualitativePolicy& policy, bool use_memory_scc_scope);
+    explicit ResidualMemorySccs(const dl::QualitativePolicy& policy, bool use_memory_scc_scope);
 
     bool refine(std::span<const std::size_t> remaining_rule_positions);
 
@@ -256,7 +278,7 @@ public:
 private:
     SccRefinementForest::NodeIndex scc_for_rule(std::size_t rule_position) const;
 
-    const QualitativePolicy& policy_;
+    const dl::QualitativePolicy& policy_;
     bool use_memory_scc_scope_;
     std::optional<SccRefinementForest> forest_;
 };

@@ -3,7 +3,6 @@ import pytest
 from fixture_utils import read_fixture
 from pyrunir.kr.dl import ext as dl_ext
 from pyrunir.kr.ps import ext
-from pyrunir.kr.ps.base.dl import NumericalChange
 from pyrunir.kr.ps.ext import dl
 from pytyr.formalism.planning import PlanningDomain
 
@@ -53,8 +52,6 @@ def test_ext_structural_termination_counterexample_spans_memory_states(gripper_p
     assert not result.is_terminating()
     counterexample = result.counterexample
     assert counterexample is not None
-    (feature,) = numericals
-
     vertices = [counterexample.get_vertex_property(vertex) for vertex in counterexample.get_vertex_indices()]
     assert {vertex.memory_state.get_name() for vertex in vertices} == {"m0", "m1"}
     assert vertices[0] == vertices[0]
@@ -66,13 +63,7 @@ def test_ext_structural_termination_counterexample_spans_memory_states(gripper_p
         assert len(vertex.numerical_values) == len(numericals)
 
     edges = [counterexample.get_edge_property(edge) for edge in counterexample.get_edge_indices()]
-    assert len({edge.rule.get_index() for edge in edges}) == 2
-    assert edges[0] == edges[0]
-    assert edges[0] >= edges[0]
-    with pytest.raises(TypeError):
-        hash(edges[0])
-    changes = {dict(zip(numericals, edge.numerical_changes))[feature] for edge in edges}
-    assert changes == {NumericalChange.UNCHANGED}
+    assert len({edge.get_index() for edge in edges}) == 2
 
 
 def test_ext_structural_termination_lifts_projected_components(gripper_planning_domain: PlanningDomain) -> None:
@@ -122,16 +113,7 @@ def test_ext_structural_termination_lifts_projected_components(gripper_planning_
     assert positive_n1
 
     edges = [result.counterexample.get_edge_property(edge) for edge in result.counterexample.get_edge_indices()]
-    assert {edge.rule.get_symbol() for edge in edges} == {"keep_n0", "keep_n1", "to_false", "to_true"}
-    assert all(len(edge.numerical_changes) == len(numericals) for edge in edges)
-    expected_changes = {
-        "keep_n0": [NumericalChange.UNCHANGED, NumericalChange.UNCONSTRAINED],
-        "keep_n1": [NumericalChange.UNCONSTRAINED, NumericalChange.UNCHANGED],
-        "to_false": [NumericalChange.UNCONSTRAINED, NumericalChange.UNCONSTRAINED],
-        "to_true": [NumericalChange.UNCONSTRAINED, NumericalChange.UNCONSTRAINED],
-    }
-    for edge in edges:
-        assert edge.numerical_changes == expected_changes[edge.rule.get_symbol()]
+    assert {edge.get_symbol() for edge in edges} == {"keep_n0", "keep_n1", "to_false", "to_true"}
 
 
 def test_ext_incomplete_structural_termination_uses_memory_components(gripper_planning_domain: PlanningDomain) -> None:
