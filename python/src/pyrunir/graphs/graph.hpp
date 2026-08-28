@@ -241,7 +241,7 @@ template<typename Graph>
 class PyTraversalVisitor : public graphs::bgl::TraversalVisitor<Graph>
 {
 public:
-    NB_TRAMPOLINE(graphs::bgl::TraversalVisitor<Graph>, 12);
+    NB_TRAMPOLINE(graphs::bgl::TraversalVisitor<Graph>);
 
     void initialize_vertex(graphs::VertexIndex vertex) override { NB_OVERRIDE(initialize_vertex, vertex); }
     void start_vertex(graphs::VertexIndex vertex) override { NB_OVERRIDE(start_vertex, vertex); }

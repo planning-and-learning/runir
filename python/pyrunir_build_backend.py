@@ -6,4 +6,5 @@ ProviderBackend(
     package="pyrunir",
     providers=("pypddl", "pytyr", "pyyggdrasil"),
     jobs_env="RUNIR_JOBS",
+    strip_env="RUNIR_STRIP_WHEEL",
 ).install_hooks(globals())

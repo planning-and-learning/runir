@@ -35,8 +35,8 @@ jobs:
           python -m pip install --no-cache-dir --upgrade pip
         env:
           PIP_NO_CACHE_DIR: 1
-          PYYGGDRASIL_JOBS: 2
-          PYPDDL_JOBS: 2
+          YGGDRASIL_JOBS: 2
+          LOKI_JOBS: 2
           TYR_JOBS: 2
 
       - name: Build and install
@@ -45,8 +45,8 @@ jobs:
           PIP_NO_CACHE_DIR: 1
           RUNIR_JOBS: 2
           TYR_JOBS: 2
-          PYYGGDRASIL_JOBS: 2
-          PYPDDL_JOBS: 2
+          YGGDRASIL_JOBS: 2
+          LOKI_JOBS: 2
 
       - name: Test
         run: pytest python/tests

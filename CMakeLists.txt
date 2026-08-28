@@ -98,8 +98,8 @@ endif()
 
 # Dependencies
 
-set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.0.27)
-set(RUNIR_TYR_REQUIRED_VERSION 0.0.34)
+set(RUNIR_YGGDRASIL_REQUIRED_VERSION 0.1.0)
+set(RUNIR_TYR_REQUIRED_VERSION 0.1.0)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -115,9 +115,9 @@ if(yggdrasil_FOUND)
     message(STATUS "Found yggdrasil: ${yggdrasil_DIR} (found version ${yggdrasil_VERSION})")
 endif()
 
-yggdrasil_find_python_native_prefix(pypddl PYPDDL_NATIVE_PREFIX)
+yggdrasil_find_python_native_prefix(pypddl LOKI_NATIVE_PREFIX)
 yggdrasil_find_python_native_prefix(pytyr TYR_NATIVE_PREFIX)
-yggdrasil_register_python_native_runtime_prefix("pypddl/native" "${PYPDDL_NATIVE_PREFIX}")
+yggdrasil_register_python_native_runtime_prefix("pypddl/native" "${LOKI_NATIVE_PREFIX}")
 yggdrasil_register_python_native_runtime_prefix("pytyr/native" "${TYR_NATIVE_PREFIX}")
 yggdrasil_register_python_native_runtime_prefix("pyyggdrasil" "${YGGDRASIL_NATIVE_PREFIX}")
 

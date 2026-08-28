@@ -1,5 +1,5 @@
 find_package(
-    Python 3.9 REQUIRED
+    Python 3.10 REQUIRED
     COMPONENTS Interpreter Development.Module
     OPTIONAL_COMPONENTS Development.SABIModule
 )
@@ -16,7 +16,7 @@ file(
 )
 
 nanobind_add_module(
-    _pyrunir NB_SHARED
+    _pyrunir
     module.cpp
     pyrunir/module.cpp
     pyrunir/datasets/config.cpp
@@ -26,6 +26,7 @@ nanobind_add_module(
     pyrunir/datasets/task_class.cpp
     pyrunir/graphs/module.cpp
     ${PYRUNIR_KR_SOURCES}
+    BACKEND_MODULE nanobind_backend
 )
 
 target_link_libraries(_pyrunir PRIVATE runir::core)
@@ -97,7 +98,7 @@ yggdrasil_install_python_files(
 
 yggdrasil_install_provider_env(
     PYRUNIR pyrunir
-    PREFIXES "${PYPDDL_NATIVE_PREFIX}" "${TYR_NATIVE_PREFIX}" "${YGGDRASIL_NATIVE_PREFIX}"
+    PREFIXES "${LOKI_NATIVE_PREFIX}" "${TYR_NATIVE_PREFIX}" "${YGGDRASIL_NATIVE_PREFIX}"
 )
 
 yggdrasil_install_python_stubs(
