@@ -1,4 +1,5 @@
 import gc
+from collections import Counter
 
 from fixture_utils import read_fixture
 from pyrunir.datasets import GroundTaskSearchContext
@@ -41,6 +42,34 @@ def test_base_sketch_exposes_declared_features(gripper_planning_domain: Planning
     assert [feature.get_variant().get_symbol() for feature in sketch.get_boolean_features()] == []
     assert [feature.get_variant().get_symbol() for feature in sketch.get_numerical_features()] == ["n_balls", "n_held"]
 
+
+
+def test_base_labeled_successors_include_transitions_rejected_by_the_sketch(
+    ground_gripper_search_context: GroundTaskSearchContext, gripper_planning_domain: PlanningDomain
+) -> None:
+    search = ground_gripper_search_context
+    task_context = GroundTaskContext(DomainContext(gripper_planning_domain), search)
+    sketch = SketchFactory.create_empty(task_context.domain_context.base_repository)
+    expander = SuccessorExpander(task_context, sketch)
+    initial = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
+    initial_successors = search.successor_generator.get_labeled_successor_nodes(
+        initial, search.state_repository, search.axiom_evaluator
+    )
+    assert initial_successors
+
+    for state in (initial.get_state(), initial_successors[0].node.get_state()):
+        context = expander.context_at(state)
+        node = search.successor_generator.get_node(search.state_repository, state.get_index())
+        expected = search.successor_generator.get_labeled_successor_nodes(
+            node, search.state_repository, search.axiom_evaluator
+        )
+        actual = expander.labeled_successors(context)
+
+        assert actual
+        assert Counter((step.label, step.node.get_state()) for step in actual) == Counter(
+            (step.label, step.node.get_state()) for step in expected
+        )
+        assert all(expander.matching_rule(context, step.node.get_state()) is None for step in actual)
 
 
 def test_france_et_al_aaai2021_policy_executor_for_gripper_task(

@@ -1,4 +1,5 @@
 import gc
+from collections import Counter
 from pathlib import Path
 from typing import TypedDict, cast
 
@@ -425,6 +426,48 @@ def test_lifted_executor_binding_reports_failure_status() -> None:
 
     assert result.status == ext.ModuleProgramProofStatus.FAILURE
     assert not result.is_successful()
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+def test_labeled_successors_are_unfiltered_and_own_their_native_values(kind: str) -> None:
+    planning_task, planning_domain = _planning_task_and_domain()
+    execution_context = ExecutionContext(1)
+    lifted_task = Task(planning_task)
+    if kind == "ground":
+        task = lifted_task.instantiate_ground_task(execution_context, GroundTaskInstantiationOptions()).task
+        assert task is not None
+        search = GroundTaskSearchContext(task, execution_context)
+        context = GroundTaskContext(DomainContext(planning_domain), search)
+        expander_type = ext.GroundSuccessorExpander
+    else:
+        task = lifted_task
+        search = LiftedTaskSearchContext(task, execution_context)
+        context = LiftedTaskContext(DomainContext(planning_domain), search)
+        expander_type = ext.LiftedSuccessorExpander
+    program = dl.parse_module_program(
+        read_fixture("kr/ps/ext/execution/empty.program"), planning_domain, context.domain_context.ext_repository
+    )
+    expander = expander_type(context, program)
+    initial = expander.initial_state()
+    node = search.successor_generator.get_node(search.state_repository, initial.state.get_index())
+    expected = search.successor_generator.get_labeled_successor_nodes(
+        node, search.state_repository, search.axiom_evaluator
+    )
+
+    actual = expander.labeled_successors(initial)
+
+    assert actual
+    assert Counter((step.label, step.node.get_state()) for step in actual) == Counter(
+        (step.label, step.node.get_state()) for step in expected
+    )
+    assert all(expander.matching_rule(initial, step.label, step.node.get_state()) is None for step in actual)
+    retained = actual[0]
+    signature = (str(retained.label), str(retained.node.get_state()))
+    del actual, expected, node, initial, expander, program, context, search, task, lifted_task
+    del planning_task, planning_domain, execution_context
+    gc.collect()
+
+    assert (str(retained.label), str(retained.node.get_state())) == signature
 
 
 def test_ground_execution_views_own_their_task_and_program_contexts() -> None:

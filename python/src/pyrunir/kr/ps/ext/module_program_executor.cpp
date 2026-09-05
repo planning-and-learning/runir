@@ -121,6 +121,10 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def(nb::init<runir::kr::TaskContextPtr<Kind>, ModuleProgramView>(), "task_context"_a, "program"_a)
         .def("initial_state", &Expander::initial_state, nb::keep_alive<0, 1>())
         .def(
+            "labeled_successors",
+            [](Expander& self, StateView state) { return self.labeled_successors(std::move(state)); },
+            "state"_a)
+        .def(
             "load_steps",
             [](Expander& self, StateView state) { return self.load_steps(std::move(state)); },
             "state"_a)
