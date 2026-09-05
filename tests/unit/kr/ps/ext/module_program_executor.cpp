@@ -50,18 +50,18 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
     const auto module =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_treats_classifier_matches_as_terminal_failures/module.module"),
                                       task->get_domain().get_domain(),
                                       *repository);
     const auto program = create_module_program(*repository, module, { module });
 
-    auto classifier_dl_repository = task_context->uns_dl_repository;
-    auto classifier_repository = task_context->uns_repository;
+    auto classifier_dl_repository = task_context->domain_context->uns_repository->get_dl_repository_ptr();
+    auto classifier_repository = task_context->domain_context->uns_repository;
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/always.classifier"), task->get_domain().get_domain(), *classifier_repository);
 
     auto options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
@@ -90,10 +90,10 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     const auto task_file = benchmark_path("classical/profiling/blocksworld-large-simple/p-100-2.pddl");
     auto search_context = make_ground_context(domain, task_file);
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
 
     const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(task->get_domain().get_domain(), *repository);
     ASSERT_EQ(program.get_modules().size(), 5);
@@ -133,10 +133,10 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
     const auto module = kr::ps::ext::dl::parse_module(
         read_fixture("kr/ps/ext/executor/ext_sketch_uses_only_immediate_outcomes_and_universal_preserves_parallel_edges/module.module"),
         task->get_domain().get_domain(),
@@ -191,10 +191,10 @@ TEST(RunirTests, ExtFindSolutionReportsTheCompleteThreeStateCycle)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
     const auto module = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_reports_the_complete_three_state_cycle/module.module"),
                                                       task->get_domain().get_domain(),
                                                       *repository);
@@ -219,7 +219,7 @@ TEST(RunirTests, ExtExecutorFixtureOutcomesMatch)
     const auto task_file = benchmark_path("classical/profiling/blocksworld-large-simple/p-100-2.pddl");
     auto search_context = make_ground_context(domain, task_file);
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
     const auto suite = load_fixture_json("kr/ps/ext/execution.json");
     const auto& cases = ygg::common::as_array(ygg::common::require_member(ygg::common::as_object(suite, "suite"), "cases", "suite"), "suite.cases");
 
@@ -228,7 +228,7 @@ TEST(RunirTests, ExtExecutorFixtureOutcomesMatch)
         const auto& test_case = ygg::common::as_object(value, "case");
         const auto program = kr::ps::ext::dl::parse_module_program(read_fixture(ygg::common::as_string(test_case, "program_file", "case")),
                                                                    task->get_domain().get_domain(),
-                                                                   *task_context->ext_repository);
+                                                                   *task_context->domain_context->ext_repository);
         auto options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag>();
         options.universal = ygg::common::as_bool(test_case, "universal", "case");
 

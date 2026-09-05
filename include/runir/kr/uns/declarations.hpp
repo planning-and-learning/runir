@@ -4,7 +4,7 @@
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/declarations.hpp"
-#include "runir/kr/uns/dl/declarations.hpp"
+#include "runir/kr/ps/dl/declarations.hpp"
 
 #include <memory>
 #include <yggdrasil/core/type_list.hpp>
@@ -12,13 +12,6 @@
 
 namespace runir::kr::uns
 {
-
-// Language-agnostic wrapper around a concrete feature specialization. The wrapper's variant lists the
-// available feature languages (currently only the DL one in kr/uns/dl), so different feature languages
-// can be used without templating the classifier on a feature-language family.
-struct Feature
-{
-};
 
 // A literal of the classifier DNF: a boolean feature together with a polarity.
 struct ClassifierLiteral
@@ -36,8 +29,8 @@ struct Classifier
     static constexpr auto keyword = "classifier";
 };
 
-using RepositoryTypes = ygg::TypeList<runir::kr::uns::dl::Feature,
-                                      runir::kr::uns::Feature,
+using RepositoryTypes = ygg::TypeList<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
+                                      runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>,
                                       runir::kr::uns::ClassifierLiteral,
                                       runir::kr::uns::ClassifierClause,
                                       runir::kr::uns::Classifier>;
@@ -47,12 +40,19 @@ using RepositoryPtr = std::shared_ptr<Repository>;
 using RepositoryFactory =
     runir::kr::ps::BasicRepositoryFactory<runir::kr::UnsFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::UnsFamilyTag>>;
 
-using ConcreteFeatureView = ygg::View<ygg::Index<runir::kr::uns::dl::Feature>, Repository>;
-using FeatureView = ygg::View<ygg::Index<runir::kr::uns::Feature>, Repository>;
 using ClassifierLiteralView = ygg::View<ygg::Index<runir::kr::uns::ClassifierLiteral>, Repository>;
 using ClassifierClauseView = ygg::View<ygg::Index<runir::kr::uns::ClassifierClause>, Repository>;
 using ClassifierView = ygg::View<ygg::Index<runir::kr::uns::Classifier>, Repository>;
 
 }  // namespace runir::kr::uns
+
+namespace runir::kr::uns::dl
+{
+
+using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>, Repository>;
+using ConcreteBooleanFeatureView =
+    ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>, Repository>;
+
+}  // namespace runir::kr::uns::dl
 
 #endif

@@ -939,12 +939,13 @@ auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
                    const DiagnosticContext& diagnostics)
 {
     const auto feature = parse_constructor(node.feature, domain, repository.get_dl_repository(), dl_builder, diagnostics);
-    auto concrete_data = runir::kr::uns::checkout<runir::kr::uns::dl::Feature>(builder);
+    auto concrete_data =
+        runir::kr::uns::checkout<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>(builder);
     concrete_data->feature = feature.get_index();
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *concrete_data);
 
-    auto data = runir::kr::uns::checkout<runir::kr::uns::Feature>(builder);
+    auto data = runir::kr::uns::checkout<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>(builder);
     data->value = concrete.get_index();
     return intern(repository, *data);
 }
@@ -969,7 +970,7 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
     data->symbol = ast.symbol.text;
     data->features.reserve(ast.features.size());
     data->clauses.reserve(ast.expression.clauses.size());
-    auto symbol_to_feature = std::unordered_map<std::string, ygg::Index<runir::kr::uns::Feature>> {};
+    auto symbol_to_feature = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>> {};
     symbol_to_feature.reserve(ast.features.size());
 
     for (const auto& feature : ast.features)

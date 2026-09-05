@@ -32,10 +32,10 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
 
     const auto caller_entry = create_memory_state(*repository, "caller_entry");
     const auto caller_return = create_memory_state(*repository, "caller_return");

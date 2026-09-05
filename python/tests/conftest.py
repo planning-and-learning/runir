@@ -16,16 +16,18 @@ def gripper_data_dir() -> Path:
 
 
 @pytest.fixture
-def gripper_planning_domain(gripper_data_dir: Path):
-    parser = Parser(gripper_data_dir / "domain.pddl", ParserOptions())
-    return parser.get_domain()
+def gripper_parser(gripper_data_dir: Path) -> Parser:
+    return Parser(gripper_data_dir / "domain.pddl", ParserOptions())
 
 
 @pytest.fixture
-def ground_gripper_search_context(gripper_data_dir: Path):
-    parser_options = ParserOptions()
-    parser = Parser(gripper_data_dir / "domain.pddl", parser_options)
-    planning_task = parser.parse_task(gripper_data_dir / "test-1.pddl", parser_options)
+def gripper_planning_domain(gripper_parser: Parser):
+    return gripper_parser.get_domain()
+
+
+@pytest.fixture
+def ground_gripper_search_context(gripper_data_dir: Path, gripper_parser: Parser):
+    planning_task = gripper_parser.parse_task(gripper_data_dir / "test-1.pddl", ParserOptions())
 
     execution_context = ExecutionContext(1)
     lifted_task = Task(planning_task)

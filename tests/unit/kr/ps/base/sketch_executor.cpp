@@ -29,8 +29,6 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
 {
     namespace p = tyr::planning;
 
-    EXPECT_THROW(kr::TaskContext<tyr::GroundTag>::create(datasets::TaskSearchContextPtr<tyr::GroundTag> {}), std::invalid_argument);
-
     struct Case
     {
         std::filesystem::path domain;
@@ -57,9 +55,12 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
     {
         auto context = make_ground_context(test_case.domain, test_case.task);
         auto task = context->task;
-        auto task_context = kr::TaskContext<tyr::GroundTag>::create(context);
-        auto dl_repository = task_context->base_dl_repository;
-        auto repository = task_context->base_repository;
+        auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), context);
+        EXPECT_THROW(kr::TaskContext<tyr::GroundTag>::create(task_context->domain_context, datasets::TaskSearchContextPtr<tyr::GroundTag> {}),
+                     std::invalid_argument);
+        EXPECT_THROW(kr::TaskContext<tyr::GroundTag>::create(kr::DomainContextPtr {}, context), std::invalid_argument);
+        auto dl_repository = task_context->domain_context->base_repository->get_dl_repository_ptr();
+        auto repository = task_context->domain_context->base_repository;
         const auto sketch = kr::ps::base::dl::SketchFactory::create(test_case.specification, task->get_domain().get_domain(), *repository);
         const auto* dl_builder = &task_context->dl_builder;
         const auto* dl_denotation_repository = task_context->dl_denotation_repository.get();
@@ -99,10 +100,10 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->base_dl_repository;
-    auto repository = task_context->base_repository;
+    auto dl_repository = task_context->domain_context->base_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->base_repository;
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/executor/any_transition.sketch"), task->get_domain().get_domain(), *repository);
 
     auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, sketch);

@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
+#include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/ps/ext/execution_canonicalization.hpp"
 #include "runir/kr/ps/ext/execution_data.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
@@ -76,7 +77,7 @@ public:
     auto& get_state_repository() const noexcept { return *m_state_repository; }
     const auto& get_denotation_repository() const noexcept { return *m_denotation_repository; }
     const auto& get_program_repository() const noexcept { return *m_program_repository; }
-    const auto& get_formalism_repository() const noexcept { return m_program_repository->get_dl_repository().get_planning_repository(); }
+    const auto& get_formalism_repository() const noexcept { return m_denotation_repository->get_formalism_repository(); }
     void clear() noexcept { m_symbol_repository.clear(); }
 
     template<typename T>

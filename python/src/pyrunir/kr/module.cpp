@@ -25,6 +25,7 @@ void bind_errors(nb::module_& m)
 void bind_module_definitions(nb::module_& m)
 {
     bind_errors(m);
+    bind_domain_context(m);
     bind_task_context(m);
     auto dl = m.def_submodule("dl");
     runir::kr::dl::bind_module_definitions(dl);

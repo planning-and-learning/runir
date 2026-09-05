@@ -7,7 +7,7 @@ from typing import TypedDict, cast
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
 from pyrunir.datasets import GroundTaskSearchContext
-from pyrunir.kr import GroundTaskContext
+from pyrunir.kr import DomainContext, GroundTaskContext
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pyyggdrasil.execution import ExecutionContext
@@ -43,11 +43,11 @@ def main() -> None:
     planning_domain = parser.get_domain()
     execution_context = ExecutionContext(1)
     task = Task(planning_task).instantiate_ground_task(execution_context, GroundTaskInstantiationOptions()).task
-    task_context = GroundTaskContext(GroundTaskSearchContext(task, execution_context))
+    task_context = GroundTaskContext(DomainContext(planning_domain), GroundTaskSearchContext(task, execution_context))
 
     for case in suite["cases"]:
         description = (ROOT / "tests/fixtures" / case["program_file"]).read_text(encoding="utf-8")
-        program = dl.parse_module_program(description, planning_domain, task_context.ext_repository)
+        program = dl.parse_module_program(description, planning_domain, task_context.domain_context.ext_repository)
         options = ext.GroundModuleProgramSearchOptions()
         options.universal = case["universal"]
         result = ext.find_ground_solution(task_context, program, options)

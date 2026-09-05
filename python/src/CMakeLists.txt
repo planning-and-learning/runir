@@ -1,5 +1,5 @@
 find_package(
-    Python 3.10 REQUIRED
+    Python 3.11 REQUIRED
     COMPONENTS Interpreter Development.Module
     OPTIONAL_COMPONENTS Development.SABIModule
 )
@@ -94,6 +94,9 @@ yggdrasil_install_python_files(
         pyrunir/kr/dl/uns/semantics/__init__.py
         pyrunir/kr/uns/__init__.py
         pyrunir/kr/uns/dl/__init__.py
+        pyrunir/tools/__init__.py
+        pyrunir/tools/dictionaries.py
+        pyrunir/tools/output.py
 )
 
 yggdrasil_install_provider_env(

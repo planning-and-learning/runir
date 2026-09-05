@@ -1,9 +1,12 @@
 # Import all classes and functions for better IDE support
 
 from ...._pyrunir.kr.uns.dl import (
+    BooleanFeature,
+    BooleanFeatureData,
+    BooleanFeatureIndex,
     ClassifierFactory,
-    Feature,
-    FeatureData,
-    FeatureIndex,
+    ConcreteBooleanFeature,
+    ConcreteBooleanFeatureData,
+    ConcreteBooleanFeatureIndex,
     parse_classifier,
 )

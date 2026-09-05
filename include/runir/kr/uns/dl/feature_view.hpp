@@ -11,14 +11,19 @@ namespace ygg
 {
 
 template<typename C>
-class View<Index<runir::kr::uns::dl::Feature>, C>
+class View<Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::uns::dl::Feature> m_handle;
+    Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>> m_handle;
 
 public:
-    View(Index<runir::kr::uns::dl::Feature> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>> handle, const C& context) noexcept
+        :
+        m_context(&context),
+        m_handle(handle)
+    {
+    }
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

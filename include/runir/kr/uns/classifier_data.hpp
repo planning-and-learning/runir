@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_UNS_CLASSIFIER_DATA_HPP_
 #define RUNIR_KR_UNS_CLASSIFIER_DATA_HPP_
 
+#include "runir/kr/ps/feature_index.hpp"
 #include "runir/kr/uns/classifier_index.hpp"
-#include "runir/kr/uns/feature_index.hpp"
 
 #include <cista/containers/string.h>
 #include <cista/containers/variant.h>
@@ -20,7 +20,7 @@ namespace ygg
 template<>
 struct Data<runir::kr::uns::ClassifierLiteral>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::uns::Feature>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>>;
 
     Index<runir::kr::uns::ClassifierLiteral> index;
     Variant value;
@@ -63,7 +63,7 @@ struct Data<runir::kr::uns::Classifier>
 {
     Index<runir::kr::uns::Classifier> index;
     ::cista::offset::string symbol;
-    IndexList<runir::kr::uns::Feature> features;
+    IndexList<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>> features;
     IndexList<runir::kr::uns::ClassifierClause> clauses;
 
     Data() = default;

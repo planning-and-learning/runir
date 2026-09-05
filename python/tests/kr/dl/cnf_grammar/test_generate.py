@@ -3,7 +3,7 @@ from pyyggdrasil.execution import ExecutionContext
 from pytyr.formalism.planning import Parser
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 from pyrunir.datasets import GroundTaskSearchContext
-from pyrunir.kr import GroundTaskContext
+from pyrunir.kr import DomainContext, GroundTaskContext
 from pyrunir.kr.dl import base
 from pyrunir.kr.dl.base import cnf_grammar, semantics
 from pyrunir.kr.dl.base.grammar import ConstructorRepositoryFactory
@@ -18,7 +18,7 @@ def _make_gripper_context(gripper_data_dir):
         execution_context, GroundTaskInstantiationOptions()
     ).task
     search_context = GroundTaskSearchContext(task, execution_context)
-    task_context = GroundTaskContext(search_context)
+    task_context = GroundTaskContext(DomainContext(gripper_planning_domain), search_context)
     return gripper_planning_domain, search_context, task_context
 
 
@@ -29,7 +29,7 @@ def _generate(grammar_description, states, planning_domain, task_context, max_sy
     cnf = cnf_grammar.translate(grammar, cnf_repository)
     options = cnf_grammar.GenerateOptions()
     options.max_syntactic_complexity = max_syntactic_complexity
-    return cnf_grammar.generate_ground(cnf, states, task_context.base_dl_repository, options)
+    return cnf_grammar.generate_ground(cnf, states, task_context.domain_context.base_repository.get_dl_repository(), options)
 
 
 def _concept_vector(concept, states, task_context):

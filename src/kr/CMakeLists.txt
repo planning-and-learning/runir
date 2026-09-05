@@ -1,4 +1,5 @@
 add_library(kr SHARED
+    domain_context.cpp
     task_context.cpp
     dl/repository.cpp
     dl/cnf_grammar/constructor_repository.cpp

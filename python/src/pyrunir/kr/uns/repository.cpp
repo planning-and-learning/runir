@@ -10,9 +10,8 @@ namespace runir::kr::uns
 
 using namespace nanobind::literals;
 
-void bind_repository(nb::module_& m)
+void bind_repository(nb::module_& m, RepositoryBinding& repository)
 {
-    auto repository = nb::class_<Repository>(m, "Repository");
     repository.def("clear", &Repository::clear)
         .def("get_index", &Repository::get_index)
         .def("get_dl_repository", [](Repository& self) -> auto& { return self.get_dl_repository(); }, nb::rv_policy::reference_internal);

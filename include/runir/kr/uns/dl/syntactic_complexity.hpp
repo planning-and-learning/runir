@@ -11,7 +11,8 @@ namespace runir::kr::uns::dl
 {
 
 template<typename C>
-std::size_t syntactic_complexity(ygg::View<ygg::Index<Feature>, C> view)
+std::size_t syntactic_complexity(
+    ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>, C> view)
 {
     return runir::kr::dl::semantics::syntactic_complexity(view.get_feature());
 }

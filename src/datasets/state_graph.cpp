@@ -75,8 +75,7 @@ template<tyr::TaskKind Kind>
 auto create_astar_options(const StateGraphGenerationOptions& generation_options)
 {
     auto options = tyr::planning::astar_eager::Options<Kind> {};
-    options.max_num_states = generation_options.max_num_states;
-    options.max_time = generation_options.max_time;
+    options.search_budget = { generation_options.max_num_states, generation_options.max_time };
     options.num_search_workers = 1;
     return options;
 }

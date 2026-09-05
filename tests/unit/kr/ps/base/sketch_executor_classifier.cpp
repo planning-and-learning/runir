@@ -20,14 +20,14 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->base_dl_repository;
-    auto repository = task_context->base_repository;
+    auto dl_repository = task_context->domain_context->base_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->base_repository;
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/executor/any_transition.sketch"), task->get_domain().get_domain(), *repository);
 
-    auto classifier_dl_repository = task_context->uns_dl_repository;
-    auto classifier_repository = task_context->uns_repository;
+    auto classifier_dl_repository = task_context->domain_context->uns_repository->get_dl_repository_ptr();
+    auto classifier_repository = task_context->domain_context->uns_repository;
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/always.classifier"), task->get_domain().get_domain(), *classifier_repository);
 
     auto options = kr::ps::base::SketchSearchOptions<tyr::GroundTag> {};

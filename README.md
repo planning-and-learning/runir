@@ -26,6 +26,7 @@ The native CMake package exports `runir::core` as the aggregate target and compo
 
 ## Dependencies
 
+- Python 3.11 or newer.
 - `pyyggdrasil >= 0.1, < 0.2` for shared third-party native dependencies.
 - `pytyr >= 0.1, < 0.2` for Tyr planning, formalism, search, and C++ headers/libraries.
 - `pypddl >= 1.1, < 1.2` through Tyr/PDDL parsing infrastructure.
@@ -96,6 +97,11 @@ cmake --install build --prefix=<path/to/installation-directory>
 python -m pip install .[test]
 pytest python/tests
 ```
+
+## Python Tools
+
+`pyrunir.tools` provides compressed representations of native Runir entities
+and shared dictionaries. See the [representation reference](docs/tools/index.md).
 
 ## CMake Integration
 

@@ -2,6 +2,7 @@
 
 from .._pyrunir.kr import (
     ArityMismatchError as ArityMismatchError,
+    DomainContext as DomainContext,
     DuplicateDefinitionError as DuplicateDefinitionError,
     GroundTaskContext as GroundTaskContext,
     InvalidExpressionError as InvalidExpressionError,

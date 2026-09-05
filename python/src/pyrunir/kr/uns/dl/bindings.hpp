@@ -6,7 +6,7 @@
 namespace runir::kr::uns::dl
 {
 
-void bind_feature(nb::module_& m);
+void bind_boolean_feature(nb::module_& m, RepositoryBinding& repository);
 void bind_parser(nb::module_& m);
 void bind_classifier_factory(nb::module_& m);
 

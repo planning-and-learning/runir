@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/semantics/uns/evaluation_context.hpp"
 #include "runir/kr/uns/classifier_view.hpp"
-#include "runir/kr/uns/evaluation.hpp"
+#include "runir/kr/uns/dl/evaluation.hpp"
 
 #include <tyr/planning/declarations.hpp>
 #include <yggdrasil/containers/variant.hpp>
@@ -24,7 +24,7 @@ bool classify(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> classifier,
         bool satisfied = true;
         for (auto literal : clause.get_literals())
         {
-            const bool value = ygg::visit([&](auto feature) { return runir::kr::uns::evaluate(feature, context); }, literal.get_feature());
+            const bool value = ygg::visit([&](auto feature) { return runir::kr::ps::evaluate(feature, context); }, literal.get_feature());
             if (literal.get_polarity() ? !value : value)
             {
                 satisfied = false;

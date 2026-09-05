@@ -14,7 +14,7 @@ name = "pyrunir"
 version = "0.1.0"
 description = "Runir description logic feature library"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [
     {name = "Dominik Drexler", email = "dominik.drexler@liu.se"},
 ]
@@ -28,7 +28,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest",
-    "pypddl-datasets>=0.0.9,<0.1; python_version >= '3.10'",
+    "pypddl-datasets>=0.0.9,<0.1",
 ]
 
 [project.urls]
@@ -42,7 +42,7 @@ build.targets = ["pyrunir_wheel"]
 cmake.build-type = "Release"
 install.components = ["pyrunir"]
 wheel.packages = []
-wheel.py-api = "cp310"
+wheel.py-api = "cp311"
 
 [tool.scikit-build.sdist]
 include = [
@@ -51,6 +51,7 @@ include = [
     "README.md",
     "pyproject.toml",
     "cmake/**",
+    "docs/tools/**",
     "include/**",
     "python/**",
     "src/**",
@@ -69,7 +70,7 @@ RUNIR_ENABLE_LTO = {env = "RUNIR_ENABLE_LTO", default = false}
 CMAKE_INSTALL_LIBDIR = "lib"
 
 [tool.cibuildwheel]
-build = "cp310-*"
+build = "cp311-*"
 container-engine = "docker"
 # Build in the cibuildwheel environment (not a fresh isolated env) so the
 # provider install below — which retries to absorb TestPyPI index-propagation

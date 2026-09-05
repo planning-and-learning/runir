@@ -47,8 +47,8 @@ public:
         m_static_goal_satisfied(m_goal_strategy.is_static_goal_satisfied(*m_task_context->search_context->task)),
         m_environment(*m_task_context, m_program)
     {
-        if (&m_program.get_context() != m_task_context->ext_repository.get())
-            throw std::invalid_argument("SuccessorExpander requires a program from the task context repository.");
+        if (&m_program.get_context() != m_task_context->domain_context->ext_repository.get())
+            throw std::invalid_argument("SuccessorExpander requires a program from the domain context repository.");
     }
 
     const auto& get_task_context() const noexcept { return m_task_context; }

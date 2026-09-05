@@ -7,8 +7,6 @@ from ..._pyrunir.kr.uns import (
     ClassifierIndex,
     ClassifierLiteral,
     ClassifierLiteralIndex,
-    Feature,
-    FeatureIndex,
     Repository,
     RepositoryFactory,
     classify,

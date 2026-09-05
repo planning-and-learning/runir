@@ -4,7 +4,7 @@ from fixture_utils import read_fixture
 from pyrunir.datasets import GroundTaskSearchContext
 from pytyr.formalism.planning import ActionBinding, PlanningDomain
 
-from pyrunir.kr import GroundTaskContext
+from pyrunir.kr import DomainContext, GroundTaskContext
 from pyrunir.kr.dl.base.semantics import (
     ConstructorRepositoryFactory,
     GroundEvaluationContext as GroundDLEvaluationContext,
@@ -47,12 +47,12 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     ground_gripper_search_context: GroundTaskSearchContext, gripper_planning_domain: PlanningDomain
 ) -> None:
     search_context = ground_gripper_search_context
-    task_context = GroundTaskContext(search_context)
+    task_context = GroundTaskContext(DomainContext(gripper_planning_domain), search_context)
     assert task_context.search_context is search_context
     planning_domain = gripper_planning_domain
 
-    _dl_repository = task_context.base_dl_repository
-    sketch_repository = task_context.base_repository
+    _dl_repository = task_context.domain_context.base_repository.get_dl_repository()
+    sketch_repository = task_context.domain_context.base_repository
     empty_sketch = SketchFactory.create_empty(sketch_repository)
     empty_sketch_description = str(empty_sketch)
     assert empty_sketch_description == str(parse_sketch(empty_sketch_description, planning_domain, sketch_repository))
@@ -154,8 +154,8 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     assert search_result.open_states == []
     assert search_result.cycle == []
 
-    classifier_dl_repository = task_context.uns_dl_repository
-    classifier_repository = task_context.uns_repository
+    classifier_dl_repository = task_context.domain_context.uns_repository.get_dl_repository()
+    classifier_repository = task_context.domain_context.uns_repository
     classifier = parse_classifier(read_fixture("kr/uns/always.classifier"), planning_domain, classifier_repository)
     classifier_feature = classifier.get_features()[0]
     concrete_classifier_feature = classifier_feature.get_variant()

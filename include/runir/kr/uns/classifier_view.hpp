@@ -1,8 +1,9 @@
 #ifndef RUNIR_KR_UNS_CLASSIFIER_VIEW_HPP_
 #define RUNIR_KR_UNS_CLASSIFIER_VIEW_HPP_
 
+#include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/uns/classifier_data.hpp"
-#include "runir/kr/uns/feature_view.hpp"
+#include "runir/kr/uns/dl/feature_view.hpp"
 
 #include <tuple>
 #include <yggdrasil/containers/variant.hpp>

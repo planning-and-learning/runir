@@ -9,6 +9,7 @@ import pytest
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import (
     ArityMismatchError,
+    DomainContext,
     DuplicateDefinitionError,
     GroundTaskContext,
     InvalidExpressionError,
@@ -82,7 +83,7 @@ def _ground_context_and_domain() -> tuple[GroundTaskContext, PlanningDomain, Gro
     lifted_task = Task(planning_task)
     ground_task = lifted_task.instantiate_ground_task(execution_context, GroundTaskInstantiationOptions()).task
     search_context = GroundTaskSearchContext(ground_task, execution_context)
-    return GroundTaskContext(search_context), planning_domain, ground_task
+    return GroundTaskContext(DomainContext(planning_domain), search_context), planning_domain, ground_task
 
 
 def _repositories() -> tuple[PlanningDomain, ext.Repository]:
@@ -291,8 +292,8 @@ def test_empty_module_factory_uses_ext_repositories() -> None:
 
 def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> None:
     task_context, planning_domain, _ground_task = _ground_context_and_domain()
-    _dl_repository = task_context.ext_dl_repository
-    repository = task_context.ext_repository
+    _dl_repository = task_context.domain_context.ext_repository.get_dl_repository()
+    repository = task_context.domain_context.ext_repository
 
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
@@ -314,8 +315,8 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     assert search_result.plan is not None
     assert search_result.plan.get_length() == 4
 
-    classifier_dl_repository = task_context.uns_dl_repository
-    classifier_repository = task_context.uns_repository
+    classifier_dl_repository = task_context.domain_context.uns_repository.get_dl_repository()
+    classifier_repository = task_context.domain_context.uns_repository
     classifier = parse_classifier(read_fixture("kr/uns/always.classifier"), planning_domain, classifier_repository)
     classified_options = ext.GroundModuleProgramSearchOptions()
     classified_options.classifier = classifier
@@ -368,7 +369,7 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
 def test_executor_fixture(case: ExecutionFixture) -> None:
     task_context, planning_domain, _ground_task = _ground_context_and_domain()
     program = dl.parse_module_program(
-        read_fixture(case["program_file"]), planning_domain, task_context.ext_repository
+        read_fixture(case["program_file"]), planning_domain, task_context.domain_context.ext_repository
     )
     options = ext.GroundModuleProgramSearchOptions()
     options.universal = case["universal"]
@@ -397,7 +398,7 @@ def test_module_program_parser_rejects_missing_action() -> None:
         dl.parse_module_program(
             read_fixture("kr/ps/ext/execution/missing_action.program"),
             planning_domain,
-            task_context.ext_repository,
+            task_context.domain_context.ext_repository,
         )
 
 
@@ -406,9 +407,9 @@ def test_lifted_executor_binding_reports_failure_status() -> None:
     execution_context = ExecutionContext(1)
     lifted_task = Task(planning_task)
     search_context = LiftedTaskSearchContext(lifted_task, execution_context)
-    task_context = LiftedTaskContext(search_context)
-    _dl_repository = task_context.ext_dl_repository
-    repository = task_context.ext_repository
+    task_context = LiftedTaskContext(DomainContext(planning_domain), search_context)
+    _dl_repository = task_context.domain_context.ext_repository.get_dl_repository()
+    repository = task_context.domain_context.ext_repository
 
     program = dl.parse_module_program(read_fixture("kr/ps/ext/execution/empty.program"), planning_domain, repository)
     options = ext.LiftedModuleProgramSearchOptions()
@@ -422,8 +423,8 @@ def test_lifted_executor_binding_reports_failure_status() -> None:
 
 def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
     task_context, planning_domain, _ground_task = _ground_context_and_domain()
-    dl_repository = task_context.ext_dl_repository
-    repository = task_context.ext_repository
+    dl_repository = task_context.domain_context.ext_repository.get_dl_repository()
+    repository = task_context.domain_context.ext_repository
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
     expander = ext.GroundSuccessorExpander(task_context, program)
@@ -461,9 +462,9 @@ def test_lifted_execution_views_and_proof_labels_survive_owner_destruction() -> 
     execution_context = ExecutionContext(1)
     lifted_task = Task(planning_task)
     search_context = LiftedTaskSearchContext(lifted_task, execution_context)
-    task_context = LiftedTaskContext(search_context)
-    dl_repository = task_context.ext_dl_repository
-    repository = task_context.ext_repository
+    task_context = LiftedTaskContext(DomainContext(planning_domain), search_context)
+    dl_repository = task_context.domain_context.ext_repository.get_dl_repository()
+    repository = task_context.domain_context.ext_repository
     program = dl.parse_module_program(read_fixture("kr/ps/ext/execution/empty.program"), planning_domain, repository)
 
     expander = ext.LiftedSuccessorExpander(task_context, program)

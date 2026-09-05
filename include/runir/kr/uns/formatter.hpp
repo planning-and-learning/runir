@@ -1,9 +1,9 @@
 #ifndef RUNIR_KR_UNS_FORMATTER_HPP_
 #define RUNIR_KR_UNS_FORMATTER_HPP_
 
+#include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/uns/classifier_view.hpp"
 #include "runir/kr/uns/dl/formatter.hpp"
-#include "runir/kr/uns/feature_view.hpp"
 
 #include <fmt/format.h>
 #include <ostream>
@@ -17,7 +17,7 @@ namespace runir::kr::uns
 {
 
 template<typename C>
-std::string feature(ygg::View<ygg::Index<runir::kr::uns::Feature>, C> view)
+std::string feature(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>, C> view)
 {
     return ygg::visit([](auto concrete) { return runir::kr::uns::dl::feature(concrete); }, view.get_variant());
 }
@@ -88,9 +88,10 @@ std::string classifier(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> view
 }  // namespace runir::kr::uns
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::uns::Feature>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>, C>> :
+    fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::uns::Feature>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::uns::feature(view), ctx); }
 };
 

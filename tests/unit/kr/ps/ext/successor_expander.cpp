@@ -51,10 +51,12 @@ auto create_concept_feature(kr::ps::ext::Repository& repository,
 template<tyr::TaskKind Kind>
 auto create_task_context(const std::filesystem::path& domain, const std::filesystem::path& task_file)
 {
+    datasets::TaskSearchContextPtr<Kind> search_context;
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
-        return kr::TaskContext<Kind>::create(make_ground_context(domain, task_file));
+        search_context = make_ground_context(domain, task_file);
     else
-        return kr::TaskContext<Kind>::create(make_lifted_context(domain, task_file));
+        search_context = make_lifted_context(domain, task_file);
+    return kr::TaskContext<Kind>::create(kr::DomainContext::create(search_context->task->get_domain()), search_context);
 }
 
 template<tyr::TaskKind Kind>
@@ -63,8 +65,8 @@ void expect_initial_execution_state_uses_expander_repository()
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
     const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
     auto task_context = create_task_context<Kind>(domain, task_file);
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
     const auto entry = create_memory_state(*repository, "entry");
     const auto module = create_module(*repository, "module", entry, { entry });
     const auto program = create_module_program(*repository, module, { module });
@@ -87,10 +89,10 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationReusesTaskContextCache)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
     const auto module =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_distance_feature_evaluation_reuses_task_context_cache/distance.module"),
                                       task->get_domain().get_domain(),
@@ -123,10 +125,10 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
 
     const auto source = create_memory_state(*repository, "source");
     const auto target = create_memory_state(*repository, "target");
@@ -230,10 +232,10 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
 
     const auto module =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_role_load_rule_enumerates_all_pairs_and_advances_memory/module.module"),
@@ -276,9 +278,9 @@ TEST(RunirTests, ExtSuccessorEnumerationCombinesAllApplicableRuleKinds)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto repository = task_context->ext_repository;
+    auto repository = task_context->domain_context->ext_repository;
     const auto module =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_successor_enumeration_combines_all_applicable_rule_kinds/module.module"),
                                       task->get_domain().get_domain(),
@@ -342,10 +344,10 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
 
     const auto caller_entry = create_memory_state(*repository, "caller_entry");
     const auto caller_return = create_memory_state(*repository, "caller_return");
@@ -462,10 +464,10 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
 
     const auto caller_entry = create_memory_state(*repository, "caller_entry");
     const auto caller_return = create_memory_state(*repository, "caller_return");
@@ -507,10 +509,10 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
 
     const auto source = create_memory_state(*repository, "source");
     const auto target = create_memory_state(*repository, "target");
@@ -599,10 +601,10 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
 
     const auto module =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_do_rule_rejects_action_with_incompatible_declared_effects/module.module"),
@@ -633,10 +635,10 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
 
     auto search_context = make_gripper_ground_context();
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(search_context);
+    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
-    auto dl_repository = task_context->ext_dl_repository;
-    auto repository = task_context->ext_repository;
+    auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
+    auto repository = task_context->domain_context->ext_repository;
 
     const auto source = create_memory_state(*repository, "source");
     const auto move_target = create_memory_state(*repository, "move_target");

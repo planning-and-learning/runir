@@ -8,6 +8,9 @@
 namespace runir::kr
 {
 
+struct DomainContext;
+using DomainContextPtr = std::shared_ptr<DomainContext>;
+
 template<tyr::TaskKind Kind>
 struct TaskContext;
 
