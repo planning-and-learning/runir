@@ -147,7 +147,9 @@ TEST(RunirTests, UnsClassifierRejectsUnknownFeatureSymbol)
         const auto message = std::string(error.what());
         EXPECT_NE(message.find("In line 15:"), std::string::npos) << message;
         EXPECT_NE(message.find("                (and b)"), std::string::npos) << message;
-        EXPECT_NE(message.find(std::string(21, '_') + "^_"), std::string::npos) << message;
+        ASSERT_TRUE(error.diagnostic().location.has_value());
+        EXPECT_EQ(error.diagnostic().location->column(), 22);
+        EXPECT_EQ(error.diagnostic().location->end() - error.diagnostic().location->begin(), 1);
     }
 }
 

@@ -5,6 +5,8 @@
 #include "pyrunir/kr/uns/module.hpp"
 #include "runir/kr/errors.hpp"
 
+#include <yggdrasil/python/diagnostics.hpp>
+
 namespace runir::kr
 {
 namespace
@@ -12,12 +14,12 @@ namespace
 
 void bind_errors(nb::module_& m)
 {
-    auto semantic_error = nb::exception<SemanticError>(m, "SemanticError");
-    nb::exception<ParseError>(m, "ParseError", semantic_error.ptr());
-    nb::exception<UndefinedSymbolError>(m, "UndefinedSymbolError", semantic_error.ptr());
-    nb::exception<DuplicateDefinitionError>(m, "DuplicateDefinitionError", semantic_error.ptr());
-    nb::exception<ArityMismatchError>(m, "ArityMismatchError", semantic_error.ptr());
-    nb::exception<InvalidExpressionError>(m, "InvalidExpressionError", semantic_error.ptr());
+    auto semantic_error = ygg::bind_diagnostic_exception<SemanticError>(m, "SemanticError");
+    ygg::bind_diagnostic_exception<ParseError>(m, "ParseError", semantic_error.ptr());
+    ygg::bind_diagnostic_exception<UndefinedSymbolError>(m, "UndefinedSymbolError", semantic_error.ptr());
+    ygg::bind_diagnostic_exception<DuplicateDefinitionError>(m, "DuplicateDefinitionError", semantic_error.ptr());
+    ygg::bind_diagnostic_exception<ArityMismatchError>(m, "ArityMismatchError", semantic_error.ptr());
+    ygg::bind_diagnostic_exception<InvalidExpressionError>(m, "InvalidExpressionError", semantic_error.ptr());
 }
 
 }  // namespace

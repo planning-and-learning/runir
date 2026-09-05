@@ -3,13 +3,19 @@
 
 #include <string>
 
+namespace ygg::diagnostics
+{
+template<typename It>
+class ErrorHandler;
+}
+
 namespace runir::kr::parser
 {
 
 using Iterator = std::string::const_iterator;
 
 template<typename It>
-class ErrorHandler;
+using ErrorHandler = ygg::diagnostics::ErrorHandler<It>;
 
 using ErrorHandlerType = ErrorHandler<Iterator>;
 

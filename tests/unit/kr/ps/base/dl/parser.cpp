@@ -79,7 +79,10 @@ TEST(RunirTests, PolicyParserSemanticErrorPointsAtExactIdentifier)
         const auto message = std::string(error.what());
         EXPECT_NE(message.find("In line 4:"), std::string::npos) << message;
         EXPECT_NE(message.find("(:numerical (:symbol same)"), std::string::npos) << message;
-        EXPECT_NE(message.find(std::string(column, '_') + "^_"), std::string::npos) << message;
+        ASSERT_TRUE(error.diagnostic().location.has_value());
+        EXPECT_EQ(error.diagnostic().location->begin(), second_same);
+        EXPECT_EQ(error.diagnostic().location->end(), second_same + 4);
+        EXPECT_EQ(error.diagnostic().location->column(), column + 1);
     }
 }
 

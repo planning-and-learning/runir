@@ -100,6 +100,7 @@ add_runir_test(
     "unit/kr/ps/base/dl/parser.cpp;unit/kr/ps/ext/dl/parser.cpp"
     runir::kr
 )
+add_runir_test(runir_kr_parser_diagnostics unit/kr/parser_diagnostics.cpp runir::kr)
 add_runir_test(
     runir_kr_ps_sketch_executor
     "unit/kr/ps/base/sketch_executor.cpp;unit/kr/ps/base/sketch_executor_classifier.cpp"

@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <yggdrasil/diagnostics/diagnostic.hpp>
 
 #if defined(__clang__) || defined(__GNUC__)
 #define RUNIR_KR_ERROR_API __attribute__((visibility("default")))
@@ -18,14 +19,20 @@ namespace runir::kr
 class RUNIR_KR_ERROR_API SemanticError : public std::runtime_error
 {
 public:
-    explicit SemanticError(std::string message) : std::runtime_error(message), m_message(std::move(message)), m_display_message(m_message) {}
+    explicit SemanticError(std::string message) : std::runtime_error(message), m_diagnostic { std::move(message) }, m_display_message(m_diagnostic.message) {}
 
     const char* what() const noexcept override { return m_display_message.c_str(); }
-    const std::string& message() const noexcept { return m_message; }
+    const std::string& message() const noexcept { return m_diagnostic.message; }
+    const ygg::diagnostics::Diagnostic& diagnostic() const noexcept { return m_diagnostic; }
     void set_display_message(std::string display_message) { m_display_message = std::move(display_message); }
+    void set_diagnostic(ygg::diagnostics::Diagnostic diagnostic)
+    {
+        m_diagnostic = std::move(diagnostic);
+        m_display_message = ygg::diagnostics::format_diagnostic(m_diagnostic);
+    }
 
 private:
-    std::string m_message;
+    ygg::diagnostics::Diagnostic m_diagnostic;
     std::string m_display_message;
 };
 

@@ -101,7 +101,12 @@ def _assert_diagnostic_at(error: SemanticError, source: str, marker: str) -> Non
         line_end = len(source)
     message = str(error)
     assert f"In line {source.count(chr(10), 0, offset) + 1}:" in message
-    assert f"{source[line_start:line_end]}\n{'_' * (offset - line_start)}^_" in message
+    assert source[line_start:line_end] in message
+    location = error.diagnostic.location
+    assert location is not None
+    assert location.source.text == source
+    assert location.begin == len(source[:offset].encode("utf-8"))
+    assert location.line == source.count(chr(10), 0, offset) + 1
 
 
 def test_paper_module_factory_descriptions_parse_and_format_round_trip() -> None:
@@ -182,12 +187,13 @@ def test_module_program_parser_reports_x3_syntax_position() -> None:
     planning_domain, repository = _repositories()
     source = '(:program (:entry root)'
 
-    with pytest.raises(ParseError, match="Error! Expecting:.*here") as raised:
+    with pytest.raises(ParseError, match="Expected .* while parsing program") as raised:
         dl.parse_module_program(source, planning_domain, repository)
 
     assert "In line 1:" in str(raised.value)
     assert source in str(raised.value)
     assert "^_" in str(raised.value)
+    assert raised.value.diagnostic.notes[0].message == "program starts here"
 
 
 def test_module_parser_composes_dl_grammar_and_reports_symbolic_reference_position() -> None:

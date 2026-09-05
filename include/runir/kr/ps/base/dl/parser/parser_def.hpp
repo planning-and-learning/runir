@@ -15,11 +15,13 @@ namespace runir::kr::ps::base::dl::parser
 {
 namespace x3 = boost::spirit::x3;
 
+using runir::kr::parser::keyword;
 using x3::attr;
 using x3::eoi;
 using x3::lexeme;
 using x3::lit;
 using x3::raw;
+using ygg::diagnostics::context;
 
 using x3::ascii::alnum;
 using x3::ascii::alpha;
@@ -58,42 +60,43 @@ const auto identifier_def = x3::rule<IdentifierText, std::string> { "identifier_
     raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
 
 const auto symbol_value_def = identifier;
-const auto symbol_section_def = lit("(") > lit(":symbol") > symbol_value_def > lit(")");
-const auto boolean_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::boolean_parser<runir::kr::BaseFamilyTag>()
-                                            > lit(")");
-const auto numerical_expression_section_def = lit("(") > lit(":expression") > runir::kr::dl::grammar::parser::numerical_parser<runir::kr::BaseFamilyTag>()
-                                              > lit(")");
+const auto symbol_section_def = context(":symbol")[(lit("(") >> keyword(":symbol")) > symbol_value_def > lit(")")];
+const auto boolean_expression_section_def =
+    context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::boolean_parser<runir::kr::BaseFamilyTag>() > lit(")")];
+const auto numerical_expression_section_def =
+    context(":expression")[(lit("(") >> keyword(":expression")) > runir::kr::dl::grammar::parser::numerical_parser<runir::kr::BaseFamilyTag>() > lit(")")];
 
-const auto boolean_feature_def = (lit("(") >> lit(":") >> lit(runir::kr::ps::dl::BooleanFeature::keyword)) > symbol_section_def > boolean_expression_section_def
-                                 > lit(")");
-const auto numerical_feature_def = (lit("(") >> lit(":") >> lit(runir::kr::ps::dl::NumericalFeature::keyword)) > symbol_section_def
-                                   > numerical_expression_section_def > lit(")");
+const auto boolean_feature_def = context("boolean feature")[(lit("(") >> lit(":") >> keyword(runir::kr::ps::dl::BooleanFeature::keyword)) > symbol_section_def
+                                                            > boolean_expression_section_def > lit(")")];
+const auto numerical_feature_def = context("numerical feature")[(lit("(") >> lit(":") >> keyword(runir::kr::ps::dl::NumericalFeature::keyword))
+                                                                > symbol_section_def > numerical_expression_section_def > lit(")")];
 const auto feature_def = boolean_feature | numerical_feature;
 
-const auto positive_condition_def = lit(runir::kr::ps::dl::Positive::keyword) >> attr(ast::Positive {});
-const auto negative_condition_def = lit(runir::kr::ps::dl::Negative::keyword) >> attr(ast::Negative {});
-const auto equal_zero_condition_def = lit(runir::kr::ps::dl::EqualZero::keyword) >> attr(ast::EqualZero {});
-const auto greater_zero_condition_def = lit(runir::kr::ps::dl::GreaterZero::keyword) >> attr(ast::GreaterZero {});
+const auto positive_condition_def = keyword(runir::kr::ps::dl::Positive::keyword) >> attr(ast::Positive {});
+const auto negative_condition_def = keyword(runir::kr::ps::dl::Negative::keyword) >> attr(ast::Negative {});
+const auto equal_zero_condition_def = keyword(runir::kr::ps::dl::EqualZero::keyword) >> attr(ast::EqualZero {});
+const auto greater_zero_condition_def = keyword(runir::kr::ps::dl::GreaterZero::keyword) >> attr(ast::GreaterZero {});
 const auto condition_observation_def = positive_condition | negative_condition | equal_zero_condition | greater_zero_condition;
-const auto condition_def = (lit("(") >> condition_observation) > identifier > lit(")");
+const auto condition_def = context("condition")[(lit("(") >> condition_observation) > identifier > lit(")")];
 
-const auto positive_effect_def = lit(runir::kr::ps::dl::Positive::keyword) >> attr(ast::Positive {});
-const auto negative_effect_def = lit(runir::kr::ps::dl::Negative::keyword) >> attr(ast::Negative {});
-const auto unchanged_effect_def = lit(runir::kr::ps::dl::Unchanged::keyword) >> attr(ast::Unchanged {});
-const auto increases_effect_def = lit(runir::kr::ps::dl::Increases::keyword) >> attr(ast::Increases {});
-const auto decreases_effect_def = lit(runir::kr::ps::dl::Decreases::keyword) >> attr(ast::Decreases {});
+const auto positive_effect_def = keyword(runir::kr::ps::dl::Positive::keyword) >> attr(ast::Positive {});
+const auto negative_effect_def = keyword(runir::kr::ps::dl::Negative::keyword) >> attr(ast::Negative {});
+const auto unchanged_effect_def = keyword(runir::kr::ps::dl::Unchanged::keyword) >> attr(ast::Unchanged {});
+const auto increases_effect_def = keyword(runir::kr::ps::dl::Increases::keyword) >> attr(ast::Increases {});
+const auto decreases_effect_def = keyword(runir::kr::ps::dl::Decreases::keyword) >> attr(ast::Decreases {});
 const auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
-const auto effect_def = (lit("(") >> effect_observation) > identifier > lit(")");
+const auto effect_def = context("effect")[(lit("(") >> effect_observation) > identifier > lit(")")];
 
-const auto conditions_section_def = lit("(") > lit(":conditions") > *condition > lit(")");
-const auto effects_section_def = lit("(") > lit(":effects") > *effect > lit(")");
-const auto rule_expression_section_def = lit("(") > lit(":expression") > conditions_section_def > effects_section_def > lit(")");
-const auto features_section_def = lit("(") > lit(":features") > *feature > lit(")");
-const auto rules_section_def = lit("(") > lit(":rules") > *rule > lit(")");
+const auto conditions_section_def = context(":conditions")[(lit("(") >> keyword(":conditions")) > *condition > lit(")")];
+const auto effects_section_def = context(":effects")[(lit("(") >> keyword(":effects")) > *effect > lit(")")];
+const auto rule_expression_section_def =
+    context("rule expression")[(lit("(") >> keyword(":expression")) > conditions_section_def > effects_section_def > lit(")")];
+const auto features_section_def = context(":features")[(lit("(") >> keyword(":features")) > *feature > lit(")")];
+const auto rules_section_def = context(":rules")[(lit("(") >> keyword(":rules")) > *rule > lit(")")];
 
-const auto rule_def = (lit("(") >> lit(":rule")) > symbol_section_def > rule_expression_section_def > lit(")");
-const auto sketch_def = (lit("(") >> lit(":sketch")) > features_section_def > rules_section_def > lit(")");
-const auto sketch_root_def = sketch > eoi;
+const auto rule_def = context("rule")[(lit("(") >> keyword(":rule")) > symbol_section_def > rule_expression_section_def > lit(")")];
+const auto sketch_def = context("sketch")[(lit("(") >> keyword(":sketch")) > features_section_def > rules_section_def > lit(")")];
+const auto sketch_root_def = context("sketch")[sketch > eoi];
 
 BOOST_SPIRIT_DEFINE(identifier, boolean_feature, numerical_feature, feature)
 BOOST_SPIRIT_DEFINE(positive_condition, negative_condition, equal_zero_condition, greater_zero_condition, condition_observation, condition)
