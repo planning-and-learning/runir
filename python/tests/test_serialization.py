@@ -91,15 +91,16 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     constant = domain.get_repository().create(fp.FunctionExpressionData(3.5))
     assert dictionaries.serialize(constant) == "x0"
     assert dictionaries.table(fp.FunctionExpression) == [{"kind": "constant", "value": 3.5}]
-    assert dictionaries.serialize(initial.state) == "s0"
     assert serialize(dictionaries, initial) == "e0"
+    assert dictionaries.serialize(initial.state) == "s0"
     assert serialize(dictionaries, step.target) == "e1"
     assert serialize(dictionaries, initial) == "e0"
     first, second = table(dictionaries, ext.GroundExecutionState)
     assert isinstance(first, dict) and isinstance(second, dict)
     assert first["state"] == second["state"] == "s0"
     assert first["call_stack"] != second["call_stack"]
-    assert len(dictionaries.table(ground.State)) == 1
+    state, = dictionaries.table(ground.State)
+    assert set(state) == {"fluent_ground_atoms", "derived_ground_atoms", "fluent_ground_function_term_values"}
     assert dictionaries.tables()["execution_states"]["rows"] == [first, second]
 
     assert first["phase"] == initial.phase.name
