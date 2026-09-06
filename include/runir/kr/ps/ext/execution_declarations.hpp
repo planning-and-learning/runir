@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <stdexcept>
+#include <string_view>
 #include <tyr/planning/declarations.hpp>
 #include <yggdrasil/core/types.hpp>
 
@@ -26,6 +28,18 @@ enum class ExecutionPhase : std::uint8_t
     INTERNAL,
     EXTERNAL,
 };
+
+constexpr std::string_view to_string(ExecutionPhase phase)
+{
+    switch (phase)
+    {
+        case ExecutionPhase::INTERNAL:
+            return "INTERNAL";
+        case ExecutionPhase::EXTERNAL:
+            return "EXTERNAL";
+    }
+    throw std::invalid_argument("invalid ExecutionPhase");
+}
 
 template<tyr::TaskKind Kind>
 struct ExecutionState

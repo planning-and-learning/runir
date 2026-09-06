@@ -97,7 +97,7 @@ void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::base::Rul
     os << ygg::print_indent << "(:rule\n";
     {
         ygg::IndentScope scope(os);
-        os << ygg::print_indent << runir::kr::ps::base::dl::symbol_section(std::string(view.get_symbol().str())) << "\n";
+        os << ygg::print_indent << runir::kr::ps::base::dl::symbol_section(view.get_symbol()) << "\n";
         os << ygg::print_indent << "(:expression\n";
         {
             ygg::IndentScope expression_scope(os);
@@ -240,12 +240,22 @@ struct fmt::formatter<runir::kr::ps::base::SketchProofResults<Kind>> : fmt::form
     }
 };
 
+template<tyr::TaskKind Kind>
+struct fmt::formatter<runir::kr::ps::base::SketchProofVertexLabel<Kind>> : fmt::formatter<std::string_view>
+{
+    auto format(const runir::kr::ps::base::SketchProofVertexLabel<Kind>& label, format_context& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "state={} initial={} goal={} alive={} unsolvable={}",
+                              label.state.get_index(), label.is_initial, label.is_goal, label.is_alive, label.is_unsolvable);
+    }
+};
+
 template<>
 struct fmt::formatter<runir::kr::ps::base::SketchProofEdgeLabel> : fmt::formatter<std::string_view>
 {
     auto format(const runir::kr::ps::base::SketchProofEdgeLabel& label, format_context& ctx) const
     {
-        const auto text = fmt::format("rule={} transition={}", std::string(label.rule.get_symbol().str()), label.transition);
+        const auto text = fmt::format("rule={} transition={}", label.rule.get_symbol(), label.transition);
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };

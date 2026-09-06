@@ -4,6 +4,7 @@
 #include <runir/kr/dl/register_data.hpp>
 #include <runir/kr/dl/register_view.hpp>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/formatter.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -38,6 +39,7 @@ void bind_register_view(nb::module_& m, const char* name)
                     .def("get_index", &View::get_index)
                     .def("get_name", &View::get_name)
                     .def("get_identifier", &View::get_identifier);
+    ygg::add_print(view);
     ygg::add_comparison(view);
     ygg::add_hash(view);
 }

@@ -26,7 +26,7 @@ template<typename C>
 std::string literal(ygg::View<ygg::Index<runir::kr::uns::ClassifierLiteral>, C> view)
 {
     const auto symbol = ygg::visit([](auto feature) { return feature.get_symbol(); }, view.get_feature());
-    return view.get_polarity() ? std::string(symbol.str()) : fmt::format("(not {})", symbol.str());
+    return view.get_polarity() ? symbol.str() : fmt::format("(not {})", symbol);
 }
 
 template<typename C>
@@ -47,7 +47,7 @@ std::string classifier(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> view
     os << "(:classifier\n";
     {
         ygg::IndentScope scope(os);
-        os << ygg::print_indent << fmt::format("(:symbol {})", std::string(view.get_symbol().str())) << "\n";
+        os << ygg::print_indent << fmt::format("(:symbol {})", view.get_symbol()) << "\n";
 
         os << ygg::print_indent << "(:features\n";
         {

@@ -89,6 +89,7 @@ namespace fmt
 {
 
 template<runir::graphs::IsVertex Vertex>
+    requires (!runir::graphs::IsEdge<Vertex>)
 struct formatter<Vertex, char> : formatter<std::string_view>
 {
     template<typename FormatContext>

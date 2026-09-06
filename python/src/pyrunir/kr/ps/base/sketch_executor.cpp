@@ -36,6 +36,7 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
                             .def_ro("is_goal", &VertexLabel::is_goal)
                             .def_ro("is_alive", &VertexLabel::is_alive)
                             .def_ro("is_unsolvable", &VertexLabel::is_unsolvable);
+    ygg::add_print(vertex_label);
     ygg::add_comparison(vertex_label);
     ygg::add_hash(vertex_label);
 

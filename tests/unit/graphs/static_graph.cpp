@@ -95,6 +95,14 @@ void expect_forward_adjacency(const Graph& graph)
 
 }  // namespace
 
+TEST(GraphContainersTest, VertexAndEdgeFormattersUseTheirOwnStructure)
+{
+    const auto graph = StaticGraph(make_static_builder());
+
+    EXPECT_EQ(fmt::format("{}", graph.get_vertex(0)), "Vertex(index=0, property=source)");
+    EXPECT_EQ(fmt::format("{}", graph.get_edge(0)), "Edge(index=0, source=0, target=1, property=edge)");
+}
+
 TEST(GraphContainersTest, DotFormatterEscapesVertexAndEdgeLabels)
 {
     auto builder = Builder();

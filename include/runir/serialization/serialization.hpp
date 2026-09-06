@@ -1,6 +1,9 @@
 #ifndef RUNIR_SERIALIZATION_SERIALIZATION_HPP_
 #define RUNIR_SERIALIZATION_SERIALIZATION_HPP_
 
+#include "runir/kr/ps/base/formatter.hpp"
+#include "runir/kr/ps/ext/formatter.hpp"
+#include "runir/kr/uns/formatter.hpp"
 #include "runir/serialization/datasets/state_graph.hpp"
 #include "runir/serialization/kr/dl/semantics/constructor_view.hpp"
 #include "runir/serialization/kr/dl/semantics/denotation_view.hpp"

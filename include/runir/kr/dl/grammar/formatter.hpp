@@ -26,7 +26,7 @@ std::vector<std::string> quoted_object_names(Objects objects)
 {
     auto result = std::vector<std::string> {};
     for (auto object : objects)
-        result.push_back(fmt::format("{:?}", std::string(object.get_name().str())));
+        result.push_back(fmt::format("{:?}", object.get_name().view()));
     return result;
 }
 
@@ -41,11 +41,11 @@ std::string concept_constructor(ygg::View<ygg::Index<Concept<Family, Tag>>, C> v
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {}",
                            runir::kr::dl::ConceptAtomicStateSyntaxTag::keyword,
-                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())));
+                           fmt::format("{:?}", view.get_predicate().get_name().view()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("{} {} {}",
                            runir::kr::dl::ConceptAtomicGoalSyntaxTag::keyword,
-                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
+                           fmt::format("{:?}", view.get_predicate().get_name().view()),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
         return fmt::format("{} {} {}", runir::kr::dl::ConceptIntersectionSyntaxTag::keyword, view.get_lhs(), view.get_rhs());
@@ -78,7 +78,7 @@ std::string concept_constructor(ygg::View<ygg::Index<Concept<Family, Tag>>, C> v
     else if constexpr (std::same_as<Tag, runir::kr::dl::OneOfTag>)
         return fmt::format("{} {}", runir::kr::dl::OneOfTag::keyword, fmt::join(quoted_object_names(view.get_objects()), " "));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NominalTag>)
-        return fmt::format("{} {}", runir::kr::dl::NominalTag::keyword, fmt::format("{:?}", std::string(view.get_object().get_name().str())));
+        return fmt::format("{} {}", runir::kr::dl::NominalTag::keyword, fmt::format("{:?}", view.get_object().get_name().view()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::RegisterTag>)
         return fmt::format("{} {}", runir::kr::dl::ConceptRegisterSyntaxTag::keyword, ygg::uint_t(view.get_identifier()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>)
@@ -96,11 +96,11 @@ std::string role(ygg::View<ygg::Index<Role<Family, Tag>>, C> view)
     if constexpr (std::same_as<Tag, runir::kr::dl::UniversalTag>)
         return fmt::format("{}", runir::kr::dl::UniversalTag::keyword);
     else if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-        return fmt::format("{} {}", runir::kr::dl::RoleAtomicStateSyntaxTag::keyword, fmt::format("{:?}", std::string(view.get_predicate().get_name().str())));
+        return fmt::format("{} {}", runir::kr::dl::RoleAtomicStateSyntaxTag::keyword, fmt::format("{:?}", view.get_predicate().get_name().view()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("{} {} {}",
                            runir::kr::dl::RoleAtomicGoalSyntaxTag::keyword,
-                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
+                           fmt::format("{:?}", view.get_predicate().get_name().view()),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
         return fmt::format("{} {} {}", runir::kr::dl::RoleIntersectionSyntaxTag::keyword, view.get_lhs(), view.get_rhs());
@@ -137,12 +137,12 @@ std::string boolean_constructor(ygg::View<ygg::Index<Boolean<Family, Tag>>, C> v
     if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
         return fmt::format("{} {} {}",
                            runir::kr::dl::BooleanAtomicStateSyntaxTag::keyword,
-                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
+                           fmt::format("{:?}", view.get_predicate().get_name().view()),
                            boolean(view.get_polarity()));
     else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
         return fmt::format("{} {} {}",
                            runir::kr::dl::BooleanAtomicGoalSyntaxTag::keyword,
-                           fmt::format("{:?}", std::string(view.get_predicate().get_name().str())),
+                           fmt::format("{:?}", view.get_predicate().get_name().view()),
                            boolean(view.get_polarity()));
     else if constexpr (std::same_as<Tag, runir::kr::dl::NonemptyTag>)
         return fmt::format("{} {}", runir::kr::dl::NonemptyTag::keyword, view.get_arg());

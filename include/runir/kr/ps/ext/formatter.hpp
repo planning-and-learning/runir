@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/semantics/formatter.hpp"
 #include "runir/kr/ps/ext/dl/formatter.hpp"
+#include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
@@ -10,11 +11,13 @@
 
 #include <concepts>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <iterator>
 #include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <tyr/formalism/planning/formatter.hpp>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/io/iostream.hpp>
@@ -39,7 +42,7 @@ void append_feature(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::Concre
     os << ygg::print_indent << "(:" << feature_type<FeatureTag>() << "\n";
     {
         ygg::IndentScope scope(os);
-        os << ygg::print_indent << "(:symbol " << std::string(view.get_symbol()) << ")\n";
+        os << ygg::print_indent << "(:symbol " << view.get_symbol() << ")\n";
         os << ygg::print_indent << "(:expression ";
         fmt::format_to(std::ostream_iterator<char>(os), "{}", view.get_expression());
         os << ")\n";
@@ -64,7 +67,7 @@ std::string feature(View view)
 template<typename Out, typename FeatureTag, typename ObservationTag, typename C>
 Out condition(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view, Out out)
 {
-    return fmt::format_to(out, "({} {})", ObservationTag::keyword, std::string(view.get_feature().get_symbol()));
+    return fmt::format_to(out, "({} {})", ObservationTag::keyword, view.get_feature().get_symbol());
 }
 
 template<typename Out, typename LanguageTag, typename C>
@@ -82,7 +85,7 @@ Out condition(ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::Ex
 template<typename Out, typename FeatureTag, typename ObservationTag, typename C>
 Out effect(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view, Out out)
 {
-    return fmt::format_to(out, "({} {})", ObservationTag::keyword, std::string(view.get_feature().get_symbol()));
+    return fmt::format_to(out, "({} {})", ObservationTag::keyword, view.get_feature().get_symbol());
 }
 
 template<typename Out, typename LanguageTag, typename C>
@@ -130,11 +133,11 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext:
     {
         using Category =
             std::conditional_t<std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>, runir::kr::dl::ConceptTag, runir::kr::dl::RoleTag>;
-        os << ygg::print_indent << "(:" << Category::name << ' ' << std::string(view.get_feature().get_symbol()) << ")\n";
+        os << ygg::print_indent << "(:" << Category::name << ' ' << view.get_feature().get_symbol() << ")\n";
         os << ygg::print_indent << "(:register\n";
         {
             ygg::IndentScope scope(os);
-            os << ygg::print_indent << "(:" << Category::name << ' ' << std::string(view.get_register().get_name()) << ")\n";
+            os << ygg::print_indent << "(:" << Category::name << ' ' << view.get_register().get_name() << ")\n";
         }
         os << ygg::print_indent << ")\n";
     }
@@ -144,18 +147,18 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext:
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::DoTag>)
     {
-        os << ygg::print_indent << "(:action " << fmt::format("{:?}", std::string(view.get_action_name())) << ")\n";
+        os << ygg::print_indent << "(:action " << fmt::format("{:?}", view.get_action_name().view()) << ")\n";
         append_inline_section(os,
                               "arguments",
                               view.get_action_arguments(),
-                              [](std::ostream& output, auto argument) { output << std::string(argument.get_symbol()); });
+                              [](std::ostream& output, auto argument) { output << argument.get_symbol(); });
         append_effects(os, view.get_effects());
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::CallTag>)
     {
-        os << ygg::print_indent << "(:callee " << std::string(view.get_callee().get_name()) << ")\n";
+        os << ygg::print_indent << "(:callee " << view.get_callee().get_name() << ")\n";
         os << ygg::print_indent << "(:arguments";
-        view.for_each_call_argument([&](auto argument) { os << ' ' << std::string(argument.get_symbol()); });
+        view.for_each_call_argument([&](auto argument) { os << ' ' << argument.get_symbol(); });
         os << ")\n";
     }
 }
@@ -189,7 +192,7 @@ template<runir::kr::dl::CategoryTag Category, typename Arguments>
 void append_declarations(std::ostream& os, Arguments arguments)
 {
     for (auto argument : arguments)
-        os << " (:" << Category::name << ' ' << std::string(argument.get_name()) << ')';
+        os << " (:" << Category::name << ' ' << argument.get_name() << ')';
 }
 
 template<typename C>
@@ -198,7 +201,7 @@ void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Mo
     os << ygg::print_indent << "(:module\n";
     {
         ygg::IndentScope scope(os);
-        os << ygg::print_indent << "(:symbol " << std::string(view.get_name()) << ")\n";
+        os << ygg::print_indent << "(:symbol " << view.get_name() << ")\n";
 
         os << ygg::print_indent << "(:arguments";
         append_declarations<runir::kr::dl::ConceptTag>(os, view.template get_arguments<runir::kr::dl::ConceptTag>());
@@ -212,10 +215,10 @@ void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Mo
         append_declarations<runir::kr::dl::RoleTag>(os, view.template get_registers<runir::kr::dl::RoleTag>());
         os << ")\n";
 
-        os << ygg::print_indent << "(:entry " << std::string(view.get_entry_memory_state().get_name()) << ")\n";
+        os << ygg::print_indent << "(:entry " << view.get_entry_memory_state().get_name() << ")\n";
         os << ygg::print_indent << "(:memory";
         for (auto state : view.get_memory_states())
-            os << ' ' << std::string(state.get_name());
+            os << ' ' << state.get_name();
         os << ")\n";
 
         os << ygg::print_indent << "(:features\n";
@@ -247,15 +250,15 @@ void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Mo
                 os << ygg::print_indent << "(:rule\n";
                 {
                     ygg::IndentScope rule_scope(os);
-                    os << ygg::print_indent << "(:symbol " << std::string(first.get_symbol()) << ")\n";
+                    os << ygg::print_indent << "(:symbol " << first.get_symbol() << ")\n";
                     os << ygg::print_indent << "(:expression\n";
                     {
                         ygg::IndentScope expression_scope(os);
                         ygg::visit(
                             [&](auto first_rule)
                             {
-                                os << ygg::print_indent << "(:source-memory " << std::string(first_rule.get_source().get_name()) << ")\n";
-                                os << ygg::print_indent << "(:target-memory " << std::string(first_rule.get_target().get_name()) << ")\n";
+                                os << ygg::print_indent << "(:source-memory " << first_rule.get_source().get_name() << ")\n";
+                                os << ygg::print_indent << "(:target-memory " << first_rule.get_target().get_name() << ")\n";
                             },
                             first.get_variant());
                         for (auto item : transition)
@@ -288,7 +291,7 @@ void append_module_program(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps:
     os << ygg::print_indent << "(:program\n";
     {
         ygg::IndentScope scope(os);
-        os << ygg::print_indent << "(:entry " << std::string(view.get_entry_module().get_name()) << ")\n";
+        os << ygg::print_indent << "(:entry " << view.get_entry_module().get_name() << ")\n";
         for (auto module : view.get_modules())
         {
             append_module(os, module);
@@ -312,14 +315,14 @@ template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::MemoryState>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", std::string(view.get_name())); }
+    auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
 };
 
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleSymbol>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", std::string(view.get_name())); }
+    auto format(auto view, format_context& context) const { return fmt::format_to(context.out(), "{}", view.get_name()); }
 };
 
 template<typename FeatureTag, typename C>
@@ -404,6 +407,72 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgram>, C
     }
 };
 
+template<typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::RegisterValues>, C>>
+{
+    constexpr auto parse(format_parse_context& context) { return context.begin(); }
+    auto format(const auto& value, format_context& context) const
+    {
+        return fmt::format_to(context.out(), "RegisterValues(concepts=[{}], roles=[{}])",
+                              fmt::join(value.get_concept_values(), ", "), fmt::join(value.get_role_values(), ", "));
+    }
+};
+
+template<typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::CallArguments>, C>>
+{
+    constexpr auto parse(format_parse_context& context) { return context.begin(); }
+    auto format(const auto& value, format_context& context) const
+    {
+        return fmt::format_to(context.out(), "CallArguments(concepts={}, roles={}, booleans={}, numericals={})",
+                              value.template get<runir::kr::dl::ConceptTag>(), value.template get<runir::kr::dl::RoleTag>(),
+                              value.template get<runir::kr::dl::BooleanTag>(), value.template get<runir::kr::dl::NumericalTag>());
+    }
+};
+
+template<typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::CallStack>, C>>
+{
+    constexpr auto parse(format_parse_context& context) { return context.begin(); }
+    auto format(const auto& value, format_context& context) const -> format_context::iterator
+    {
+        return fmt::format_to(context.out(), "CallStack(module={}, memory_state={}, registers={}, arguments={}, caller={})",
+                              value.get_module().get_name(), value.get_memory_state(), value.get_registers(),
+                              value.get_arguments(), value.get_caller());
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::ext::ExecutionPhase> : fmt::formatter<std::string_view>
+{
+    auto format(runir::kr::ps::ext::ExecutionPhase phase, format_context& context) const
+    {
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::to_string(phase), context);
+    }
+};
+
+template<tyr::TaskKind Kind, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ExecutionState<Kind>>, C>>
+{
+    constexpr auto parse(format_parse_context& context) { return context.begin(); }
+    auto format(const auto& value, format_context& context) const
+    {
+        return fmt::format_to(context.out(), "ExecutionState(state={}, program={}, phase={}, call_stack={})",
+                              value.get_state().get_index(), value.get_program().get_index(),
+                              value.get_phase(), value.get_call_stack());
+    }
+};
+
+template<>
+struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofStateTransition>
+{
+    constexpr auto parse(format_parse_context& context) { return context.begin(); }
+    auto format(const auto& value, format_context& context) const
+    {
+        return fmt::format_to(context.out(), "action={} cost={}", value.action, value.cost);
+    }
+};
+
 template<tyr::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>
 {
@@ -413,8 +482,8 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>
         const auto state = label.execution_state;
         return fmt::format_to(context.out(),
                               "state={} module={} initial={} goal={} alive={} unsolvable={}",
-                              ygg::uint_t(state.get_state().get_index()),
-                              std::string(state.get_call_stack().get_module().get_name()),
+                              state.get_state().get_index(),
+                              state.get_call_stack().get_module().get_name(),
                               label.is_initial,
                               label.is_goal,
                               label.is_alive,
@@ -429,7 +498,7 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofEdgeLabel>
     auto format(const auto& label, format_context& context) const
     {
         if (label.rule)
-            return fmt::format_to(context.out(), "rule={}", std::string(label.rule->get_symbol()));
+            return fmt::format_to(context.out(), "rule={}", label.rule->get_symbol());
         return fmt::format_to(context.out(), "rule=<none>");
     }
 };

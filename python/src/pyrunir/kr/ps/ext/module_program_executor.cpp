@@ -45,6 +45,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     auto register_values = nb::class_<RegisterView>(m, (std::string(prefix) + "RegisterValues").c_str())
                                .def_prop_ro("concept_values", &RegisterView::get_concept_values)
                                .def_prop_ro("role_values", &RegisterView::get_role_values);
+    ygg::add_print(register_values);
     ygg::add_comparison(register_values);
     ygg::add_hash(register_values);
 
@@ -53,6 +54,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
                               .def_prop_ro("role_arguments", [](const ArgumentsView& self) { return self.template get<runir::kr::dl::RoleTag>(); })
                               .def_prop_ro("boolean_arguments", [](const ArgumentsView& self) { return self.template get<runir::kr::dl::BooleanTag>(); })
                               .def_prop_ro("numerical_arguments", [](const ArgumentsView& self) { return self.template get<runir::kr::dl::NumericalTag>(); });
+    ygg::add_print(call_arguments);
     ygg::add_comparison(call_arguments);
     ygg::add_hash(call_arguments);
 
@@ -63,6 +65,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
                           .def_prop_ro("arguments", &StackView::get_arguments, nb::keep_alive<0, 1>())
                           .def_prop_ro("caller", &StackView::get_caller, nb::keep_alive<0, 1>())
                           .def_prop_ro("has_caller", [](const StackView& self) { return self.get_data().caller.has_value(); });
+    ygg::add_print(call_stack);
     ygg::add_comparison(call_stack);
     ygg::add_hash(call_stack);
 
@@ -71,6 +74,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
                                .def_prop_ro("program", &StateView::get_program, nb::keep_alive<0, 1>())
                                .def_prop_ro("phase", &StateView::get_phase)
                                .def_prop_ro("call_stack", &StateView::get_call_stack, nb::keep_alive<0, 1>());
+    ygg::add_print(execution_state);
     ygg::add_comparison(execution_state);
     ygg::add_hash(execution_state);
 
@@ -151,6 +155,7 @@ void bind_module_program_executor(nb::module_& m)
     auto state_transition = nb::class_<ModuleProgramProofStateTransition>(m, "ModuleProgramProofStateTransition")
                                 .def_ro("action", &ModuleProgramProofStateTransition::action)
                                 .def_ro("cost", &ModuleProgramProofStateTransition::cost);
+    ygg::add_print(state_transition);
     ygg::add_comparison(state_transition);
     ygg::add_hash(state_transition);
 

@@ -29,7 +29,7 @@ void append_feature(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::Concre
     os << "(:" << FeatureTag::keyword << "\n";
     {
         ygg::IndentScope scope(os);
-        os << ygg::print_indent << symbol_section(std::string(view.get_symbol().str())) << "\n";
+        os << ygg::print_indent << symbol_section(view.get_symbol()) << "\n";
         os << ygg::print_indent << "(:expression ";
         fmt::format_to(std::ostream_iterator<char>(os), "{}", view.get_expression());
         os << ")\n";
@@ -48,13 +48,13 @@ std::string feature(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::k
 template<typename FeatureTag, typename ObservationTag, typename C>
 std::string condition(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
 {
-    return fmt::format("({} {})", ObservationTag::keyword, view.get_feature().get_symbol().str());
+    return fmt::format("({} {})", ObservationTag::keyword, view.get_feature().get_symbol());
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C>
 std::string effect(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
 {
-    return fmt::format("({} {})", ObservationTag::keyword, view.get_feature().get_symbol().str());
+    return fmt::format("({} {})", ObservationTag::keyword, view.get_feature().get_symbol());
 }
 
 }  // namespace runir::kr::ps::base::dl
