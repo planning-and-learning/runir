@@ -30,7 +30,10 @@ def test_nonempty_uses_native_operand_text(gripper_planning_domain, operand):
     expression = feature.get_expression()
     assert serialize(dictionaries, expression) == str(expression)
     assert table(dictionaries, semantics.BooleanNonempty) == []
-    assert serialize(dictionaries, expression.get_variant()) == "b0"
+    dictionaries = Dictionaries()
+    register_table(dictionaries, semantics.Boolean, "booleans", "x")
+    register_table(dictionaries, semantics.BooleanNonempty, "nonempty", "b")
+    assert serialize(dictionaries, expression) == "x0"
     assert table(dictionaries, semantics.BooleanNonempty) == [{"arg": f"({operand})"}]
 
 
