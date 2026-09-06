@@ -1,19 +1,19 @@
 # Integration notes
 
-## Python tools
+## Python serialization
 
-`pytyr.tools` and `pyrunir.tools` provide compressed representations of native
-entities. Runir reuses Tyr's planning dictionaries and adds its own symbolic
-definitions. Shared dictionary instances let multiple representations reuse
-the same aliases and definitions.
+`pytyr.serialization` and `pyrunir.serialization` provide structured native
+representations using a shared dictionary registry. Callers select the entity
+types to deduplicate and assign table names and reference prefixes.
 
 Search, execution, and validation use the native APIs directly. Downstream
 applications combine the representations and choose how to render and save
-them. Output documentation lives under each repository's `docs/tools/`
+them. Output documentation lives under each repository's `docs/serialization/`
 directory.
 
 ## Table rendering
 
-Use `tabulate` directly where tables are needed. We do not need a custom table
-renderer or a `pyyggdrasil.tables` module. The requirement is compact output;
-reproducing the exact legacy formatting is unnecessary.
+`pyyggdrasil.serialization.render_table` adapts serialized rows to `tabulate`,
+encoding nested JSON cells compactly and optionally adding dictionary
+references. `tabulate` provides the layouts and scalar formatting. Applications
+choose their columns and files.

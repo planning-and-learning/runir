@@ -141,17 +141,17 @@ void bind_readable_graph_methods(nb::class_<Graph>& cls)
     bind_readable_graph_methods<KeepPropertyOwnerAlive>(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>);
 }
 
-template<typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
+template<bool KeepPropertyOwnerAlive = false, typename Graph, typename VertexPropertyGetter, typename EdgePropertyGetter>
 void bind_readable_graph(nb::class_<Graph>& cls, VertexPropertyGetter vertex_property_getter, EdgePropertyGetter edge_property_getter)
 {
     ygg::add_print(cls);
-    bind_readable_graph_methods(cls, vertex_property_getter, edge_property_getter);
+    bind_readable_graph_methods<KeepPropertyOwnerAlive>(cls, vertex_property_getter, edge_property_getter);
 }
 
-template<typename Graph>
+template<bool KeepPropertyOwnerAlive = false, typename Graph>
 void bind_readable_graph(nb::class_<Graph>& cls)
 {
-    bind_readable_graph(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>);
+    bind_readable_graph<KeepPropertyOwnerAlive>(cls, &get_vertex_property<Graph>, &get_edge_property<Graph>);
 }
 
 template<typename Range>
@@ -395,11 +395,11 @@ void bind_constructible_graph(nb::class_<Graph>& cls)
             "property"_a = nb::none());
 }
 
-template<typename Graph>
+template<bool KeepPropertyOwnerAlive = false, typename Graph>
 void bind_labeled_dynamic_graph(nb::class_<Graph>& cls)
 {
     cls.def(nb::init<>()).def("clear", &Graph::clear);
-    bind_readable_graph(cls);
+    bind_readable_graph<KeepPropertyOwnerAlive>(cls);
     bind_forward_graph(cls);
     bind_bidirectional_graph(cls);
     bind_labeled_constructible_graph(cls);

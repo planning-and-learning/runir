@@ -25,6 +25,7 @@ nanobind_add_module(
     pyrunir/datasets/state_graph.cpp
     pyrunir/datasets/task_class.cpp
     pyrunir/graphs/module.cpp
+    pyrunir/serialization/module.cpp
     ${PYRUNIR_KR_SOURCES}
     BACKEND_MODULE nanobind_backend
 )
@@ -94,9 +95,8 @@ yggdrasil_install_python_files(
         pyrunir/kr/dl/uns/semantics/__init__.py
         pyrunir/kr/uns/__init__.py
         pyrunir/kr/uns/dl/__init__.py
-        pyrunir/tools/__init__.py
-        pyrunir/tools/dictionaries.py
-        pyrunir/tools/output.py
+        pyrunir/serialization/__init__.py
+        pyrunir/serialization/__init__.pyi
 )
 
 yggdrasil_install_provider_env(

@@ -72,7 +72,7 @@ public:
     void add_object(ObjectView object) { static_cast<void>(get_or_create_vertex(object)); }
 
     template<PredicateContext Context, tyr::formalism::FactKind T>
-    void add_atom(tyr::formalism::planning::GroundAtomView<T> atom)
+    void add_atom(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom)
     {
         const auto objects = atom.get_row().get_objects();
         auto vertices = std::vector<graphs::VertexIndex> {};

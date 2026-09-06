@@ -23,14 +23,17 @@ struct DlTag
 
 struct BaseFamilyTag
 {
+    static constexpr auto name = "Base";
 };
 
 struct ExtFamilyTag
 {
+    static constexpr auto name = "Ext";
 };
 
 struct UnsFamilyTag
 {
+    static constexpr auto name = "Uns";
 };
 
 template<typename T>

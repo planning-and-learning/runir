@@ -98,10 +98,10 @@ python -m pip install .[test]
 pytest python/tests
 ```
 
-## Python Tools
+## Python Serialization
 
-`pyrunir.tools` provides compressed representations of native Runir entities
-and shared dictionaries. See the [representation reference](docs/tools/index.md).
+`pyrunir.serialization` exposes the native serializers with caller-selected
+dictionary tables shared with Tyr. See the [serialization output reference](docs/serialization/index.md).
 
 ## CMake Integration
 

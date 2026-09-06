@@ -51,7 +51,7 @@ include = [
     "README.md",
     "pyproject.toml",
     "cmake/**",
-    "docs/tools/**",
+    "docs/serialization/**",
     "include/**",
     "python/**",
     "src/**",

@@ -3,6 +3,7 @@
 #include "pyrunir/datasets/module.hpp"
 #include "pyrunir/graphs/module.hpp"
 #include "pyrunir/kr/module.hpp"
+#include "pyrunir/serialization/module.hpp"
 
 namespace runir
 {
@@ -17,6 +18,9 @@ void bind_module_definitions(nb::module_& m)
 
     auto kr = m.def_submodule("kr");
     kr::bind_module_definitions(kr);
+
+    auto serialization = m.def_submodule("serialization");
+    serialization::bind_module_definitions(serialization);
 }
 
 }  // namespace runir

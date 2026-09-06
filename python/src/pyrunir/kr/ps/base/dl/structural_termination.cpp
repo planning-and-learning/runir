@@ -45,7 +45,7 @@ void bind_structural_termination(nb::module_& m)
     ygg::add_comparison(vertex_label);
 
     auto policy_graph = nb::class_<PolicyGraph>(m, "PolicyGraph");
-    bind_readable_graph_methods(policy_graph);
+    bind_readable_graph_methods<true>(policy_graph);
     bind_forward_graph(policy_graph);
 
     nb::class_<SccStructuralTerminationResult>(m, "SccStructuralTerminationResult")

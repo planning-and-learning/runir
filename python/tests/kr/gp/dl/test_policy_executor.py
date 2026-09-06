@@ -1,4 +1,5 @@
 import gc
+import sys
 from collections import Counter
 
 from fixture_utils import read_fixture
@@ -31,6 +32,33 @@ from pyrunir.kr.ps.base.dl import (
     parse_sketch,
 )
 from pyrunir.kr.uns.dl import ClassifierFactory, parse_classifier
+
+
+def test_base_proof_properties_keep_the_graph_and_sketch_alive(
+    ground_gripper_search_context: GroundTaskSearchContext, gripper_planning_domain: PlanningDomain
+) -> None:
+    context = GroundTaskContext(DomainContext(gripper_planning_domain), ground_gripper_search_context)
+    sketch = SketchFactory.create(
+        SketchSpecification.GRIPPER_FRANCE_ET_AL_AAAI2021,
+        gripper_planning_domain,
+        context.domain_context.base_repository,
+    )
+    proof = find_ground_solution(context, sketch, GroundSketchSearchOptions())
+    graph = proof.graph
+    references = sys.getrefcount(graph)
+    vertex = graph.get_vertex_property(next(iter(graph.get_vertex_indices())))
+    assert sys.getrefcount(graph) > references
+    references = sys.getrefcount(graph)
+    edge = graph.get_edge_property(next(iter(graph.get_edge_indices())))
+    assert sys.getrefcount(graph) > references
+    rule = edge.rule
+    action = edge.transition.action
+    expected = (str(rule), str(action), str(vertex.state))
+
+    del edge, graph, proof, sketch, context
+    gc.collect()
+
+    assert (str(rule), str(action), str(vertex.state)) == expected
 
 
 def test_base_sketch_exposes_declared_features(gripper_planning_domain: PlanningDomain) -> None:

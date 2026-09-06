@@ -15,7 +15,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <tyr/formalism/object_index.hpp>
-#include <tyr/formalism/planning/ground_conjunctive_condition_view.hpp>
+#include <tyr/formalism/planning/conjunctive_condition_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/ground/state_repository.hpp>
 #include <tyr/planning/ground/task.hpp>
@@ -190,7 +190,7 @@ void for_each_current_atom(EvaluationContext<Family, Kind>& context, F&& f)
 }
 
 template<tyr::formalism::FactKind T, FamilyTag Family, tyr::TaskKind Kind>
-void for_each_goal_atom(EvaluationContext<Family, Kind>& context, bool polarity, std::invocable<tyr::formalism::planning::GroundAtomView<T>> auto&& f)
+void for_each_goal_atom(EvaluationContext<Family, Kind>& context, bool polarity, std::invocable<tyr::formalism::planning::AtomView<::tyr::GroundTag, T>> auto&& f)
 {
     const auto goal = context.get_state().get_state_repository()->get_task()->get_task().get_goal();
     if constexpr (std::same_as<T, tyr::formalism::FluentTag>)
@@ -209,7 +209,7 @@ void for_each_goal_atom(EvaluationContext<Family, Kind>& context, bool polarity,
 }
 
 template<tyr::formalism::FactKind T>
-auto object_index(tyr::formalism::planning::GroundAtomView<T> atom, size_t position) noexcept -> ygg::Index<tyr::formalism::Object>
+auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, size_t position) noexcept -> ygg::Index<tyr::formalism::Object>
 {
     return atom.get_row().get_objects()[position].get_index();
 }

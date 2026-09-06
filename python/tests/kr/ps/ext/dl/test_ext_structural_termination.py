@@ -1,3 +1,6 @@
+import gc
+import sys
+
 import pytest
 
 from fixture_utils import read_fixture
@@ -15,6 +18,31 @@ PROJECTED_COMPONENTS_MODULE = read_fixture("kr/ps/ext/dl/projected_components.mo
 def _repository(planning_domain: PlanningDomain) -> ext.Repository:
     dl_repository = dl_ext.ConstructorRepositoryFactory().create(planning_domain)
     return ext.RepositoryFactory().create(dl_repository)
+
+
+@pytest.mark.parametrize("vertex_property", [False, True])
+def test_counterexample_properties_keep_the_graph_alive(
+    gripper_planning_domain: PlanningDomain, vertex_property: bool
+) -> None:
+    repository = _repository(gripper_planning_domain)
+    module = dl.parse_module(NON_TERMINATING_MODULE, gripper_planning_domain, repository)
+    result = dl.structural_termination(module)
+    graph = result.counterexample
+    assert graph is not None
+    references = sys.getrefcount(graph)
+    if vertex_property:
+        label = graph.get_vertex_property(next(iter(graph.get_vertex_indices())))
+        read_property = label.memory_state.get_name
+    else:
+        label = graph.get_edge_property(next(iter(graph.get_edge_indices())))
+        read_property = lambda: str(label)
+    assert sys.getrefcount(graph) > references
+    expected = read_property()
+
+    del graph, result, module
+    gc.collect()
+
+    assert read_property() == expected
 
 
 def test_ext_structural_termination_is_terminating(gripper_planning_domain: PlanningDomain) -> None:

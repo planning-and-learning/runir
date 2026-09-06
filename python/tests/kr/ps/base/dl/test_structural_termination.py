@@ -1,3 +1,5 @@
+import gc
+import sys
 from typing import TypedDict, cast
 
 import pytest
@@ -32,6 +34,23 @@ TPP = read_fixture("kr/ps/base/dl/tpp.sketch")
 def make_repository(planning_domain: PlanningDomain) -> Repository:
     dl_repository = ConstructorRepositoryFactory().create(planning_domain)
     return RepositoryFactory().create(dl_repository)
+
+
+def test_counterexample_rule_keeps_the_graph_alive(gripper_planning_domain: PlanningDomain) -> None:
+    repository = make_repository(gripper_planning_domain)
+    sketch = parse_sketch(OSCILLATOR, gripper_planning_domain, repository)
+    result = structural_termination(sketch)
+    graph = result.counterexample
+    assert graph is not None
+    references = sys.getrefcount(graph)
+    rule = graph.get_edge_property(next(iter(graph.get_edge_indices())))
+    assert sys.getrefcount(graph) > references
+    expected = str(rule)
+
+    del graph, result, sketch
+    gc.collect()
+
+    assert str(rule) == expected
 
 
 @pytest.mark.parametrize("case", BASE_CASES, ids=[case["name"] for case in BASE_CASES])

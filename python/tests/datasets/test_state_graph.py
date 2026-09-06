@@ -1,3 +1,5 @@
+import gc
+import sys
 from pathlib import Path
 from typing import TypedDict, cast
 
@@ -78,6 +80,36 @@ def _make_ground_contexts(case: EquivalenceGraphFixture) -> list[GroundTaskSearc
         task = Task(planning_task).instantiate_ground_task(execution_context, GroundTaskInstantiationOptions()).task
         contexts.append(GroundTaskSearchContext(task, execution_context))
     return contexts
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_state_graph_properties_keep_the_graph_alive(
+    ground_gripper_search_context: GroundTaskSearchContext, dynamic: bool
+) -> None:
+    options = StateGraphGenerationOptions()
+    options.max_num_states = 4
+    generated = generate_ground_state_graph(ground_gripper_search_context, options)
+    original = generated.get_forward_graph()
+    graph = GroundDynamicStateGraph() if dynamic else GroundStateGraphBuilder()
+    original_edge = next(iter(original.get_edge_indices()))
+    source = graph.add_vertex(original.get_vertex_property(original.get_source(original_edge)))
+    target = graph.add_vertex(original.get_vertex_property(original.get_target(original_edge)))
+    edge_index = graph.add_directed_edge(source, target, original.get_edge_property(original_edge))
+
+    references = sys.getrefcount(graph)
+    vertex = graph.get_vertex_property(source)
+    assert sys.getrefcount(graph) > references
+    references = sys.getrefcount(graph)
+    edge = graph.get_edge_property(edge_index)
+    assert sys.getrefcount(graph) > references
+    state = vertex.state
+    action = edge.action
+    expected = (str(state), str(action))
+
+    del vertex, edge, graph, original, generated
+    gc.collect()
+
+    assert (str(state), str(action)) == expected
 
 
 def test_ground_state_graph_builder_can_copy_generated_graph_labels(ground_gripper_search_context: GroundTaskSearchContext) -> None:

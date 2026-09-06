@@ -41,7 +41,7 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
 
     auto graph = nb::class_<Graph>(m, (std::string(prefix) + "SketchProofGraph").c_str());
     graph.def(nb::init<>());
-    bind_readable_graph_methods(graph);
+    bind_readable_graph_methods<true>(graph);
     bind_forward_graph(graph);
 
     nb::class_<Results>(m, (std::string(prefix) + "SketchProofResults").c_str())

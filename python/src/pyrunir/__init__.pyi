@@ -4,6 +4,7 @@ from . import (
     datasets as datasets,
     graphs as graphs,
     kr as kr,
+    serialization as serialization,
 )
 
 

@@ -60,17 +60,17 @@ void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const c
 
     auto builder = nb::class_<Builder>(m, (std::string(class_prefix) + "StateGraphBuilder").c_str());
     builder.def(nb::init<>()).def("clear", &Builder::clear);
-    bind_readable_graph(builder);
+    bind_readable_graph<true>(builder);
     bind_materialized_bidirectional_graph(builder);
     bind_labeled_constructible_graph(builder);
 
     auto static_graph = nb::class_<StaticGraph>(m, (std::string(class_prefix) + "StaticStateGraph").c_str());
     static_graph.def(nb::init<>()).def(nb::init<const Builder&>());
-    bind_readable_graph(static_graph);
+    bind_readable_graph<true>(static_graph);
     bind_forward_graph(static_graph);
 
     auto backward_graph = nb::class_<BackwardGraph>(m, (std::string(class_prefix) + "BackwardStateGraphView").c_str());
-    bind_readable_graph(backward_graph);
+    bind_readable_graph<true>(backward_graph);
     bind_forward_graph(backward_graph);
 
     auto graph = nb::class_<Graph>(m, (std::string(class_prefix) + "StateGraph").c_str());
@@ -78,21 +78,21 @@ void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const c
     bind_bidirectional_static_graph(graph);
 
     auto dynamic_graph = nb::class_<DynamicGraph>(m, (std::string(class_prefix) + "DynamicStateGraph").c_str());
-    bind_labeled_dynamic_graph(dynamic_graph);
+    bind_labeled_dynamic_graph<true>(dynamic_graph);
 
     auto annotated_builder = nb::class_<AnnotatedBuilder>(m, (std::string(class_prefix) + "AnnotatedStateGraphBuilder").c_str());
     annotated_builder.def(nb::init<>()).def("clear", &AnnotatedBuilder::clear);
-    bind_readable_graph(annotated_builder);
+    bind_readable_graph<true>(annotated_builder);
     bind_materialized_bidirectional_graph(annotated_builder);
     bind_labeled_constructible_graph(annotated_builder);
 
     auto static_annotated_graph = nb::class_<StaticAnnotatedGraph>(m, (std::string(class_prefix) + "StaticAnnotatedStateGraph").c_str());
     static_annotated_graph.def(nb::init<>()).def(nb::init<const AnnotatedBuilder&>());
-    bind_readable_graph(static_annotated_graph);
+    bind_readable_graph<true>(static_annotated_graph);
     bind_forward_graph(static_annotated_graph);
 
     auto backward_annotated_graph = nb::class_<BackwardAnnotatedGraph>(m, (std::string(class_prefix) + "BackwardAnnotatedStateGraphView").c_str());
-    bind_readable_graph(backward_annotated_graph);
+    bind_readable_graph<true>(backward_annotated_graph);
     bind_forward_graph(backward_annotated_graph);
 
     auto annotated_graph = nb::class_<AnnotatedGraph>(m, (std::string(class_prefix) + "AnnotatedStateGraph").c_str());
@@ -100,7 +100,7 @@ void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const c
     bind_bidirectional_static_graph(annotated_graph);
 
     auto dynamic_annotated_graph = nb::class_<DynamicAnnotatedGraph>(m, (std::string(class_prefix) + "DynamicAnnotatedStateGraph").c_str());
-    bind_labeled_dynamic_graph(dynamic_annotated_graph);
+    bind_labeled_dynamic_graph<true>(dynamic_annotated_graph);
 
     nb::class_<Result>(m, (std::string(class_prefix) + "StateGraphGenerationResult").c_str())
         .def_prop_ro(
