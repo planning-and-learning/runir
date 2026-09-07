@@ -34,7 +34,7 @@ void bind_numerical_feature(nb::module_& m, RepositoryBinding& repository)
     ygg::bind_index<ygg::Index<ConcreteFeature>>(m, "ConcreteNumericalFeatureIndex");
 
     auto feature_data =
-        nb::class_<FeatureData>(m, "NumericalFeatureData").def(nb::init<>()).def_rw("index", &FeatureData::index).def_rw("value", &FeatureData::value);
+        nb::class_<FeatureData>(m, "NumericalFeatureData").def(nb::init<>()).def_rw("index", &FeatureData::index).def_rw("variant", &FeatureData::variant);
     ygg::add_comparison(feature_data);
 
     auto concrete_feature_data = nb::class_<ConcreteFeatureData>(m, "ConcreteNumericalFeatureData")

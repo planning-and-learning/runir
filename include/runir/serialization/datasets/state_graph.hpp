@@ -10,23 +10,11 @@
 namespace ygg::serialization
 {
 
-template<::tyr::TaskKind Kind>
-struct TypeName<::runir::datasets::StateGraphVertexLabel<Kind>>
-{
-    static std::string get() { return std::string(Kind::name) + "StateGraphVertexLabel"; }
-};
-
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::datasets::StateGraphVertexLabel<Kind>>)
 {
     ar.field("state", [](const auto& value) -> decltype(auto) { return (value.state); });
 }
-
-template<::tyr::TaskKind Kind>
-struct TypeName<::runir::datasets::AnnotatedStateGraphVertexLabel<Kind>>
-{
-    static std::string get() { return std::string(Kind::name) + "AnnotatedStateGraphVertexLabel"; }
-};
 
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::datasets::AnnotatedStateGraphVertexLabel<Kind>>)
@@ -38,12 +26,6 @@ void describe_fields(Archive& ar, std::type_identity<::runir::datasets::Annotate
     ar.field("is_alive", [](const auto& value) -> decltype(auto) { return (value.is_alive); });
     ar.field("is_unsolvable", [](const auto& value) -> decltype(auto) { return (value.is_unsolvable); });
 }
-
-template<>
-struct TypeName<::runir::datasets::StateGraphEdgeLabel>
-{
-    static std::string get() { return "StateGraphEdgeLabel"; }
-};
 
 template<typename Archive>
 void describe_fields(Archive& ar, std::type_identity<::runir::datasets::StateGraphEdgeLabel>)

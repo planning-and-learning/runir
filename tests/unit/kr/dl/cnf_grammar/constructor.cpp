@@ -17,7 +17,7 @@ concept IndexedDataView =
     && ygg::Identifiable<ygg::View<ygg::Index<T>, Repository>> && std::totally_ordered<ygg::Index<T>> && std::totally_ordered<ygg::Data<T>>
     && std::totally_ordered<ygg::View<ygg::Index<T>, Repository>> && requires(ygg::Data<T>& data, const ygg::View<ygg::Index<T>, Repository>& view) {
            data.index;
-           data.value;
+           data.variant;
            data.clear();
            view.get_index();
            view.get_variant();

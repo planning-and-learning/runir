@@ -32,7 +32,7 @@ using Classifier = kr::uns::Classifier;
 static_assert(IndexedDataView<Literal> && std::same_as<View<Literal>, kr::uns::ClassifierLiteralView>
               && requires(ygg::Data<Literal>& data, const View<Literal>& view) {
                      data.index;
-                     data.value;
+                     data.variant;
                      data.polarity;
                      data.clear();
                      view.get_index();

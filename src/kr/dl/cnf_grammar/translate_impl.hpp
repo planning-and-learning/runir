@@ -75,7 +75,7 @@ private:
     template<typename T>
     auto intern_constructor(ygg::Index<T> index)
     {
-        return intern<Constructor<Family, Category>>([&](auto& data) { data.value = index; });
+        return intern<Constructor<Family, Category>>([&](auto& data) { data.variant = index; });
     }
 
     template<typename T, typename Initialize>

@@ -9,12 +9,6 @@
 namespace ygg::serialization
 {
 
-template<typename C>
-struct TypeName<View<Index<runir::kr::uns::ClassifierLiteral>, C>>
-{
-    static std::string get() { return "Uns.ClassifierLiteral"; }
-};
-
 template<typename Archive, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::uns::ClassifierLiteral>, C>>)
 {
@@ -23,23 +17,11 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::uns::
     ar.field("polarity", [](const auto& value) -> decltype(auto) { return (value.get_polarity()); });
 }
 
-template<typename C>
-struct TypeName<View<Index<runir::kr::uns::ClassifierClause>, C>>
-{
-    static std::string get() { return "Uns.ClassifierClause"; }
-};
-
 template<typename Archive, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::uns::ClassifierClause>, C>>)
 {
     ar.field("literals", [](const auto& value) -> decltype(auto) { return (value.get_literals()); });
 }
-
-template<typename C>
-struct TypeName<View<Index<runir::kr::uns::Classifier>, C>>
-{
-    static std::string get() { return "Uns.Classifier"; }
-};
 
 template<typename Archive, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::uns::Classifier>, C>>)

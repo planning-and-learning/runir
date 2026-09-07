@@ -34,7 +34,7 @@ void bind_boolean_feature(nb::module_& m, RepositoryBinding& repository)
     ygg::bind_index<ygg::Index<ConcreteFeature>>(m, "ConcreteBooleanFeatureIndex");
 
     auto feature_data =
-        nb::class_<FeatureData>(m, "BooleanFeatureData").def(nb::init<>()).def_rw("index", &FeatureData::index).def_rw("value", &FeatureData::value);
+        nb::class_<FeatureData>(m, "BooleanFeatureData").def(nb::init<>()).def_rw("index", &FeatureData::index).def_rw("variant", &FeatureData::variant);
     ygg::add_comparison(feature_data);
 
     auto concrete_feature_data = nb::class_<ConcreteFeatureData>(m, "ConcreteBooleanFeatureData")

@@ -104,7 +104,7 @@ template<dl_::CategoryTag Category, typename T>
 auto intern_constructor(runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository, DlBuilder& builder, ygg::Index<T> index)
 {
     auto data = runir::kr::dl::checkout<dl_::Constructor<runir::kr::ExtFamilyTag, Category>>(builder);
-    data->value = index;
+    data->variant = index;
     return intern_dl(repository, *data);
 }
 
@@ -1093,7 +1093,7 @@ auto intern_dl_feature(Repository& repository,
     concrete_data->symbol = symbol;
     const auto concrete = intern(repository, *concrete_data);
     auto feature_data = runir::kr::ps::ext::checkout<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>(builder);
-    feature_data->value = concrete.get_index();
+    feature_data->variant = concrete.get_index();
     return intern(repository, *feature_data);
 }
 
@@ -1159,10 +1159,10 @@ auto make_condition(Repository& repository, PsBuilder& builder, ygg::Index<runir
     concrete_data->feature = feature;
     const auto concrete = intern(repository, *concrete_data);
     auto concrete_variant_data = runir::kr::ps::ext::checkout<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>(builder);
-    concrete_variant_data->value = concrete.get_index();
+    concrete_variant_data->variant = concrete.get_index();
     const auto concrete_variant = intern(repository, *concrete_variant_data);
     auto variant_data = runir::kr::ps::ext::checkout<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>(builder);
-    variant_data->value = concrete_variant.get_index();
+    variant_data->variant = concrete_variant.get_index();
     return intern(repository, *variant_data);
 }
 
@@ -1174,10 +1174,10 @@ auto make_effect(Repository& repository, PsBuilder& builder, ygg::Index<runir::k
     concrete_data->feature = feature;
     const auto concrete = intern(repository, *concrete_data);
     auto concrete_variant_data = runir::kr::ps::ext::checkout<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>(builder);
-    concrete_variant_data->value = concrete.get_index();
+    concrete_variant_data->variant = concrete.get_index();
     const auto concrete_variant = intern(repository, *concrete_variant_data);
     auto variant_data = runir::kr::ps::ext::checkout<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>(builder);
-    variant_data->value = concrete_variant.get_index();
+    variant_data->variant = concrete_variant.get_index();
     return intern(repository, *variant_data);
 }
 
@@ -1422,7 +1422,7 @@ auto intern_rule_variant(Repository& repository, PsBuilder& builder, ygg::Data<R
     const auto rule = intern(repository, data);
     auto variant_data = runir::kr::ps::ext::checkout<RuleVariant>(builder);
     variant_data->symbol = symbol;
-    variant_data->value = rule.get_index();
+    variant_data->variant = rule.get_index();
     return intern(repository, *variant_data);
 }
 

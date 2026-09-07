@@ -25,7 +25,7 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
 
     auto get_index() const noexcept { return m_handle; }
-    auto get_variant() const noexcept { return make_view(get_data().value, *m_context); }
+    auto get_variant() const noexcept { return make_view(get_data().variant, *m_context); }
     auto get_symbol() const noexcept
     {
         return ygg::visit([](auto feature) { return feature.get_symbol(); }, get_variant());

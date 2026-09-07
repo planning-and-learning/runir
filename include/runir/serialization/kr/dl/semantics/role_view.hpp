@@ -12,28 +12,6 @@
 namespace ygg::serialization
 {
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-struct TypeName<View<Index<runir::kr::dl::Role<Family, Tag>>, C>>
-{
-    static std::string get()
-    {
-        const auto prefix = std::string(Family::name) + "." + runir::kr::dl::RoleTag::name + ".";
-        if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-            return prefix + Tag::FactKind::name + "." + runir::kr::dl::RoleAtomicStateSyntaxTag::keyword;
-        else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-            return prefix + Tag::FactKind::name + "." + runir::kr::dl::RoleAtomicGoalSyntaxTag::keyword;
-        else if constexpr (std::same_as<Tag, runir::kr::dl::RegisterTag>)
-            return prefix + runir::kr::dl::RoleRegisterSyntaxTag::keyword;
-        else if constexpr (std::same_as<Tag, runir::kr::dl::IntersectionTag>)
-            return prefix + runir::kr::dl::RoleIntersectionSyntaxTag::keyword;
-        else if constexpr (std::same_as<Tag, runir::kr::dl::UnionTag>)
-            return prefix + runir::kr::dl::RoleUnionSyntaxTag::keyword;
-        else
-            return prefix + Tag::keyword;
-    }
-};
-
 template<typename Archive, runir::kr::dl::FamilyTag Family, typename Tag, typename C>
     requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Role<Family, Tag>>, C>>)

@@ -21,7 +21,7 @@ using ConditionVariant = kr::ps::ConcreteConditionVariant<kr::BaseFamilyTag, kr:
 
 static_assert(IndexedDataView<ConditionVariant> && requires(ygg::Data<ConditionVariant>& data, const View<ConditionVariant>& view) {
     data.index;
-    data.value;
+    data.variant;
     data.clear();
     view.get_index();
     view.get_variant();

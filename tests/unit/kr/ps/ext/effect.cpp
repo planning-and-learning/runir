@@ -18,7 +18,7 @@ static_assert(std::totally_ordered<Data>);
 static_assert(std::totally_ordered<View>);
 static_assert(requires(Data& data) {
     data.index;
-    data.value;
+    data.variant;
     data.clear();
 });
 static_assert(requires(const View& view) {

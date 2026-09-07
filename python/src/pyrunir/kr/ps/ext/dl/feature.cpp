@@ -24,7 +24,7 @@ template<typename T>
 void bind_feature_data(nb::module_& m, const char* name)
 {
     using Data = ygg::Data<T>;
-    auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index).def_rw("value", &Data::value);
+    auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index).def_rw("variant", &Data::variant);
     ygg::add_comparison(cls);
 }
 

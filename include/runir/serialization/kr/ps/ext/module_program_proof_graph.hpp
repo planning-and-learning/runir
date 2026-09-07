@@ -11,12 +11,6 @@
 namespace ygg::serialization
 {
 
-template<::tyr::TaskKind Kind>
-struct TypeName<::runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>
-{
-    static std::string get() { return std::string(Kind::name) + "ModuleProgramProofVertexLabel"; }
-};
-
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>)
 {
@@ -27,24 +21,12 @@ void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::Modul
     ar.field("is_unsolvable", [](const auto& value) -> decltype(auto) { return (value.is_unsolvable); });
 }
 
-template<>
-struct TypeName<::runir::kr::ps::ext::ModuleProgramProofStateTransition>
-{
-    static std::string get() { return "ModuleProgramProofStateTransition"; }
-};
-
 template<typename Archive>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleProgramProofStateTransition>)
 {
     ar.field("action", [](const auto& value) -> decltype(auto) { return (value.action); });
     ar.field("cost", [](const auto& value) -> decltype(auto) { return (value.cost); });
 }
-
-template<>
-struct TypeName<::runir::kr::ps::ext::ModuleProgramProofEdgeLabel>
-{
-    static std::string get() { return "ModuleProgramProofEdgeLabel"; }
-};
 
 template<typename Archive>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleProgramProofEdgeLabel>)

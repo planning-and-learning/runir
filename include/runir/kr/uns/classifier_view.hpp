@@ -27,7 +27,7 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
 
     auto get_index() const noexcept { return m_handle; }
-    auto get_feature() const noexcept { return make_view(get_data().value, *m_context); }
+    auto get_feature() const noexcept { return make_view(get_data().variant, *m_context); }
     auto get_polarity() const noexcept { return get_data().polarity; }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }

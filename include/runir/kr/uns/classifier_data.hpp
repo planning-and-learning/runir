@@ -23,21 +23,21 @@ struct Data<runir::kr::uns::ClassifierLiteral>
     using Variant = ::cista::offset::variant<Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>>;
 
     Index<runir::kr::uns::ClassifierLiteral> index;
-    Variant value;
+    Variant variant;
     bool polarity = true;
 
     Data() = default;
-    Data(Variant value_, bool polarity_) : index(), value(std::move(value_)), polarity(polarity_) {}
+    Data(Variant variant_, bool polarity_) : index(), variant(std::move(variant_)), polarity(polarity_) {}
 
     void clear() noexcept
     {
         ygg::clear(index);
-        ygg::clear(value);
+        ygg::clear(variant);
         ygg::clear(polarity);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, value, polarity); }
-    auto identifying_members() const noexcept { return std::tie(value, polarity); }
+    auto cista_members() const noexcept { return std::tie(index, variant, polarity); }
+    auto identifying_members() const noexcept { return std::tie(variant, polarity); }
 };
 
 // A clause: a conjunction of literals.

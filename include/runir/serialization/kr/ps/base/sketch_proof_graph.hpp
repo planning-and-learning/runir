@@ -9,12 +9,6 @@
 namespace ygg::serialization
 {
 
-template<::tyr::TaskKind Kind>
-struct TypeName<::runir::kr::ps::base::SketchProofVertexLabel<Kind>>
-{
-    static std::string get() { return std::string(Kind::name) + "SketchProofVertexLabel"; }
-};
-
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::base::SketchProofVertexLabel<Kind>>)
 {
@@ -24,12 +18,6 @@ void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::base::Sket
     ar.field("is_alive", [](const auto& value) -> decltype(auto) { return (value.is_alive); });
     ar.field("is_unsolvable", [](const auto& value) -> decltype(auto) { return (value.is_unsolvable); });
 }
-
-template<>
-struct TypeName<::runir::kr::ps::base::SketchProofEdgeLabel>
-{
-    static std::string get() { return "SketchProofEdgeLabel"; }
-};
 
 template<typename Archive>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::base::SketchProofEdgeLabel>)

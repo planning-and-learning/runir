@@ -10,23 +10,11 @@
 namespace ygg::serialization
 {
 
-template<runir::kr::FamilyTag Family, typename C>
-struct TypeName<View<Index<runir::kr::ps::EffectVariant<Family>>, C>>
-{
-    static std::string get() { return std::string(Family::name) + ".Effect"; }
-};
-
 template<typename Archive, runir::kr::FamilyTag Family, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::EffectVariant<Family>>, C>>)
 {
     ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
 }
-
-template<runir::kr::FamilyTag Family, typename C>
-struct TypeName<View<Index<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>>, C>>
-{
-    static std::string get() { return std::string(Family::name) + ".DL.Effect"; }
-};
 
 template<typename Archive, runir::kr::FamilyTag Family, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>>, C>>)

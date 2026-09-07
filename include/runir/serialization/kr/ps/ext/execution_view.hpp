@@ -13,24 +13,12 @@
 namespace ygg::serialization
 {
 
-template<::tyr::TaskKind Kind>
-struct TypeName<::runir::kr::ps::ext::RegisterValuesView<Kind>>
-{
-    static std::string get() { return std::string(Kind::name) + "RegisterValues"; }
-};
-
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::RegisterValuesView<Kind>>)
 {
     ar.field("concept_values", [](const auto& value) -> decltype(auto) { return (value.get_concept_values()); });
     ar.field("role_values", [](const auto& value) -> decltype(auto) { return (value.get_role_values()); });
 }
-
-template<::tyr::TaskKind Kind>
-struct TypeName<::runir::kr::ps::ext::CallArgumentsView<Kind>>
-{
-    static std::string get() { return std::string(Kind::name) + "CallArguments"; }
-};
 
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallArgumentsView<Kind>>)
@@ -41,12 +29,6 @@ void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallA
     ar.field("numerical_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::NumericalTag>()); });
 }
 
-template<::tyr::TaskKind Kind>
-struct TypeName<::runir::kr::ps::ext::CallStackView<Kind>>
-{
-    static std::string get() { return std::string(Kind::name) + "CallStack"; }
-};
-
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallStackView<Kind>>)
 {
@@ -56,12 +38,6 @@ void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallS
     ar.field("arguments", [](const auto& value) -> decltype(auto) { return (value.get_arguments()); });
     ar.field("caller", [](const auto& value) -> decltype(auto) { return (value.get_caller()); });
 }
-
-template<::tyr::TaskKind Kind>
-struct TypeName<::runir::kr::ps::ext::ExecutionStateView<Kind>>
-{
-    static std::string get() { return std::string(Kind::name) + "ExecutionState"; }
-};
 
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ExecutionStateView<Kind>>)

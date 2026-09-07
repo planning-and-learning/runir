@@ -68,19 +68,19 @@ struct Data<runir::kr::dl::cnf_grammar::Constructor<Family, Category>>
     using Variant = runir::kr::dl::cnf_grammar::detail::ConstructorDataVariant<Family, Category>;
 
     Index<runir::kr::dl::cnf_grammar::Constructor<Family, Category>> index;
-    Variant value;
+    Variant variant;
 
     Data() = default;
-    explicit Data(Variant value_) : index(), value(std::move(value_)) {}
+    explicit Data(Variant variant_) : index(), variant(std::move(variant_)) {}
 
     void clear() noexcept
     {
         ygg::clear(index);
-        ygg::clear(value);
+        ygg::clear(variant);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, value); }
-    auto identifying_members() const noexcept { return std::tie(value); }
+    auto cista_members() const noexcept { return std::tie(index, variant); }
+    auto identifying_members() const noexcept { return std::tie(variant); }
 };
 
 }  // namespace ygg

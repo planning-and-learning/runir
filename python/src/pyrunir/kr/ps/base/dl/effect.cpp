@@ -70,7 +70,7 @@ void bind_effect(nb::module_& m, RepositoryBinding& repository)
     auto data = nb::class_<VariantData>(m, "ConcreteEffectVariantData")
                     .def(nb::init<>())
                     .def_rw("index", &VariantData::index)
-                    .def_rw("value", &VariantData::value);
+                    .def_rw("variant", &VariantData::variant);
     ygg::add_comparison(data);
     bind_effect_data<PositiveBoolean>(m, "PositiveBooleanEffectData");
     bind_effect_data<NegativeBoolean>(m, "NegativeBooleanEffectData");

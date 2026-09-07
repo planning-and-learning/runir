@@ -226,7 +226,7 @@ private:
         const auto concrete = runir::kr::dl::get_or_create(m_output_repository, *data).first;
 
         auto wrapper = runir::kr::dl::checkout<runir::kr::dl::Constructor<Family, Category>>(m_builder);
-        wrapper->value = concrete.get_index();
+        wrapper->variant = concrete.get_index();
         return runir::kr::dl::get_or_create(m_output_repository, *wrapper).first;
     }
 

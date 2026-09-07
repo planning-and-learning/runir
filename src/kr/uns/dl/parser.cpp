@@ -60,7 +60,7 @@ template<runir::kr::dl::CategoryTag Category, typename T>
 auto intern_constructor(runir::kr::dl::ConstructorRepositoryFor<runir::kr::UnsFamilyTag>& repository, DlBuilder& builder, ygg::Index<T> index)
 {
     auto data = runir::kr::dl::checkout<runir::kr::dl::Constructor<runir::kr::UnsFamilyTag, Category>>(builder);
-    data->value = index;
+    data->variant = index;
     return intern(repository, *data);
 }
 
@@ -946,7 +946,7 @@ auto parse_feature(const runir::kr::uns::dl::ast::BooleanFeature& node,
     const auto concrete = intern(repository, *concrete_data);
 
     auto data = runir::kr::uns::checkout<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>(builder);
-    data->value = concrete.get_index();
+    data->variant = concrete.get_index();
     return intern(repository, *data);
 }
 
@@ -990,7 +990,7 @@ ClassifierView parse_classifier(const std::string& description, tyr::formalism::
 
         constexpr auto polarity = std::same_as<Literal, runir::kr::uns::dl::ast::PositiveLiteral>;
         auto literal_data = runir::kr::uns::checkout<runir::kr::uns::ClassifierLiteral>(builder);
-        literal_data->value = it->second;
+        literal_data->variant = it->second;
         literal_data->polarity = polarity;
         return intern(repository, *literal_data).get_index();
     };

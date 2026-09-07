@@ -18,7 +18,7 @@ concept FeatureContract =
     std::constructible_from<ygg::Index<Entity>, ygg::uint_t> && std::totally_ordered<ygg::Index<Entity>> && std::totally_ordered<ygg::Data<Entity>>
     && std::totally_ordered<View<Entity>> && requires(ygg::Data<Entity>& data, const View<Entity>& view) {
            data.index;
-           data.value;
+           data.variant;
            data.clear();
            view.get_index();
            view.get_variant();

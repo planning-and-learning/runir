@@ -12,18 +12,6 @@
 namespace ygg::serialization
 {
 
-template<runir::kr::FamilyTag Family, typename FeatureTag, typename C>
-struct TypeName<View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C>>
-{
-    static std::string get()
-    {
-        if constexpr (requires { FeatureTag::keyword; })
-            return std::string(Family::name) + "." + FeatureTag::keyword + ".Feature";
-        else
-            return std::string(Family::name) + "." + FeatureTag::name + ".Feature";
-    }
-};
-
 template<typename Archive, runir::kr::FamilyTag Family, typename FeatureTag, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C>>)
 {

@@ -36,7 +36,7 @@ def test_uns_features_construct_programmatically(gripper_planning_domain: Planni
     concrete = repository.get_or_create(concrete_data)
     assert concrete == feature.get_variant()
     data = uns_dl.BooleanFeatureData()
-    data.value = concrete.get_index()
+    data.variant = concrete.get_index()
     assert repository.get_or_create(data) == feature
 
 

@@ -23,7 +23,7 @@ void bind_rule_variant(nb::module_& m, RepositoryBinding& repository)
                     .def(nb::init<>())
                     .def_rw("index", &Data::index)
                     .def_rw("symbol", &Data::symbol)
-                    .def_rw("value", &Data::value);
+                    .def_rw("variant", &Data::variant);
     ygg::add_comparison(data);
     auto view = nb::class_<View>(m, "RuleVariant")
                     .def("get_index", &View::get_index)

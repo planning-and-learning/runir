@@ -9,12 +9,6 @@
 namespace ygg::serialization
 {
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-struct TypeName<View<Index<runir::kr::dl::Register<Category>>, C>>
-{
-    static std::string get() { return std::string(Category::name) + "Register"; }
-};
-
 template<typename Archive, runir::kr::dl::CategoryTag Category, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Register<Category>>, C>>)
 {

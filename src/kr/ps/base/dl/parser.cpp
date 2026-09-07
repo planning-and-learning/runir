@@ -81,7 +81,7 @@ template<runir::kr::dl::CategoryTag Category, typename T>
 auto intern_constructor(runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>& repository, DlBuilder& builder, ygg::Index<T> index)
 {
     auto data = runir::kr::dl::checkout<runir::kr::dl::Constructor<runir::kr::BaseFamilyTag, Category>>(builder);
-    data->value = index;
+    data->variant = index;
     return intern(repository, *data);
 }
 
@@ -689,7 +689,7 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::BooleanFeature<runir::kr:
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *concrete_data);
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>(builders.ps);
-    data->value = concrete.get_index();
+    data->variant = concrete.get_index();
     const auto feature = intern(repository, *data);
     boolean_features.emplace(node.symbol.text, feature.get_index());
     sketch_data.boolean_features.push_back(feature.get_index());
@@ -712,7 +712,7 @@ auto parse_feature(const runir::kr::ps::base::dl::ast::NumericalFeature<runir::k
     concrete_data->symbol = node.symbol.text;
     const auto concrete = intern(repository, *concrete_data);
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>(builders.ps);
-    data->value = concrete.get_index();
+    data->variant = concrete.get_index();
     const auto feature = intern(repository, *data);
     numerical_features.emplace(node.symbol.text, feature.get_index());
     sketch_data.numerical_features.push_back(feature.get_index());
@@ -737,10 +737,10 @@ auto make_condition(ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, 
     concrete_data->feature = feature;
     const auto concrete = intern(repository, *concrete_data);
     auto variant_data = runir::kr::ps::base::checkout<runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>(builder);
-    variant_data->value = concrete.get_index();
+    variant_data->variant = concrete.get_index();
     const auto variant = intern(repository, *variant_data);
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>(builder);
-    data->value = variant.get_index();
+    data->variant = variant.get_index();
     return intern(repository, *data);
 }
 
@@ -752,10 +752,10 @@ auto make_effect(ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, Fea
     concrete_data->feature = feature;
     const auto concrete = intern(repository, *concrete_data);
     auto variant_data = runir::kr::ps::base::checkout<runir::kr::ps::ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>(builder);
-    variant_data->value = concrete.get_index();
+    variant_data->variant = concrete.get_index();
     const auto variant = intern(repository, *variant_data);
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>(builder);
-    data->value = variant.get_index();
+    data->variant = variant.get_index();
     return intern(repository, *data);
 }
 

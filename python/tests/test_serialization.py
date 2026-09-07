@@ -20,7 +20,7 @@ from pyrunir.serialization import register_table, serialize, table
 
 def test_fields_describe_native_layouts_without_instances():
     assert list(base.Rule.Fields.__members__) == ["symbol", "conditions", "effects"]
-    assert list(ext.RuleVariant.Fields.__members__) == ["symbol", "kind", "value"]
+    assert list(ext.RuleVariant.Fields.__members__) == ["symbol", "variant"]
     assert list(semantics.BooleanNonempty.Fields.__members__) == ["arg"]
     assert list(fp.FluentPredicateBinding.Fields.__members__) == ["relation", "objects"]
 
@@ -70,13 +70,13 @@ def test_nonempty_requires_registered_operands_or_an_explicit_text_projection(gr
     dictionaries = Dictionaries()
     register_table(dictionaries, semantics.BooleanNonempty, "nonempty", "b")
     expression = feature.get_expression()
-    with pytest.raises(ValueError, match=r"^Unregistered serialization type: Base\.boolean\.Constructor$"):
+    with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*Constructor.*BooleanTag"):
         serialize(dictionaries, expression)
 
     dictionaries = Dictionaries()
     register_table(dictionaries, semantics.Boolean, "booleans", "x")
     register_table(dictionaries, semantics.BooleanNonempty, "nonempty", "b")
-    with pytest.raises(ValueError, match=r"^Unregistered serialization type: Base\.ConceptOrRole$"):
+    with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*ConceptTag.*RoleTag"):
         serialize(dictionaries, expression)
 
     dictionaries = Dictionaries()
@@ -86,6 +86,7 @@ def test_nonempty_requires_registered_operands_or_an_explicit_text_projection(gr
         project=lambda nonempty: {"arg": str(nonempty.get_arg())},
     )
     assert serialize(dictionaries, expression) == "x0"
+    assert table(dictionaries, semantics.Boolean) == [{"variant": "b0"}]
     assert table(dictionaries, semantics.BooleanNonempty) == [{"arg": f"({operand})"}]
 
 
@@ -100,12 +101,12 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain):
     feature = policy.get_numerical_features()[0].get_variant()
     dictionaries = Dictionaries()
     register_table(dictionaries, base.Rule, "rules", "r")
-    with pytest.raises(ValueError, match=r"^Unregistered serialization type: Base\.Sketch$"):
+    with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*Sketch"):
         serialize(dictionaries, policy)
 
     dictionaries = Dictionaries()
     register_table(dictionaries, base.Rule, "rules", "r")
-    with pytest.raises(ValueError, match=r"^Unregistered serialization type: Base\.Condition$"):
+    with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*ConditionVariant"):
         serialize(dictionaries, rule)
 
     dictionaries = Dictionaries()
@@ -154,9 +155,9 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     expander = ext.GroundSuccessorExpander(context, program)
     initial = expander.initial_state()
     step, = expander.control_steps(initial)
-    with pytest.raises(ValueError, match="^Unregistered serialization type: GroundExecutionState$"):
+    with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*ExecutionState.*GroundTag"):
         serialize(Dictionaries(), initial)
-    with pytest.raises(ValueError, match="^Unregistered serialization type: PlanningDomain$"):
+    with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*PlanningDomain"):
         serialize(Dictionaries(), domain)
 
     dictionaries = Dictionaries()
@@ -175,7 +176,7 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
 
     constant = domain.get_repository().create(fp.FunctionExpressionData(3.5))
     assert serialize(dictionaries, constant) == "x0"
-    assert table(dictionaries, fp.FunctionExpression) == [{"kind": "constant", "value": 3.5}]
+    assert table(dictionaries, fp.FunctionExpression) == [{"variant": 3.5}]
     assert serialize(dictionaries, initial) == "e0"
     assert serialize(dictionaries, initial.state) == "s0"
     assert tyr_serialization.serialize(dictionaries, initial.state) == "s0"

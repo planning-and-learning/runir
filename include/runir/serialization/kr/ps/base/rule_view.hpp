@@ -10,12 +10,6 @@
 namespace ygg::serialization
 {
 
-template<typename C>
-struct TypeName<View<Index<runir::kr::ps::base::Rule>, C>>
-{
-    static std::string get() { return "Base.Rule"; }
-};
-
 template<typename Archive, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::base::Rule>, C>>)
 {

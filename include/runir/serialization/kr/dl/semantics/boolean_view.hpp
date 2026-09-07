@@ -11,22 +11,6 @@
 namespace ygg::serialization
 {
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
-struct TypeName<View<Index<runir::kr::dl::Boolean<Family, Tag>>, C>>
-{
-    static std::string get()
-    {
-        const auto prefix = std::string(Family::name) + "." + runir::kr::dl::BooleanTag::name + ".";
-        if constexpr (runir::kr::dl::is_atomic_state_tag_v<Tag>)
-            return prefix + Tag::FactKind::name + "." + runir::kr::dl::BooleanAtomicStateSyntaxTag::keyword;
-        else if constexpr (runir::kr::dl::is_atomic_goal_tag_v<Tag>)
-            return prefix + Tag::FactKind::name + "." + runir::kr::dl::BooleanAtomicGoalSyntaxTag::keyword;
-        else
-            return prefix + Tag::keyword;
-    }
-};
-
 template<typename Archive, runir::kr::dl::FamilyTag Family, typename Tag, typename C>
     requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Boolean<Family, Tag>>, C>>)

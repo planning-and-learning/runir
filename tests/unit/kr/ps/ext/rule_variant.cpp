@@ -20,7 +20,7 @@ static_assert(std::same_as<View, kr::ps::ext::RuleVariantView>);
 static_assert(requires(Data& data) {
     data.index;
     data.symbol;
-    data.value;
+    data.variant;
     data.clear();
 });
 static_assert(requires(const View& view) {

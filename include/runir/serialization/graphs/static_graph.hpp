@@ -9,12 +9,6 @@
 namespace ygg::serialization
 {
 
-template<::runir::graphs::Property VP, ::runir::graphs::Property EP>
-struct TypeName<::runir::graphs::StaticGraph<VP, EP>>
-{
-    static std::string get() { return "StaticGraph"; }
-};
-
 template<typename Archive, ::runir::graphs::Property VP, ::runir::graphs::Property EP>
 void describe_fields(Archive& ar, std::type_identity<::runir::graphs::StaticGraph<VP, EP>>)
 {

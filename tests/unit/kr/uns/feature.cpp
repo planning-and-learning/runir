@@ -21,7 +21,7 @@ static_assert(std::totally_ordered<View>);
 static_assert(std::same_as<View, kr::uns::dl::BooleanFeatureView>);
 static_assert(requires(Data& data) {
     data.index;
-    data.value;
+    data.variant;
     data.clear();
     { canonicalize(data) } -> std::same_as<void>;
     { is_canonical(data) } -> std::same_as<bool>;

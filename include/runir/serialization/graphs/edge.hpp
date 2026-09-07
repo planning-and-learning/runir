@@ -7,12 +7,6 @@
 namespace ygg::serialization
 {
 
-template<typename G, ::runir::graphs::Property P>
-struct TypeName<::runir::graphs::Edge<G, P>>
-{
-    static std::string get() { return "Edge"; }
-};
-
 template<typename Archive, typename G, ::runir::graphs::Property P>
 void describe_fields(Archive& ar, std::type_identity<::runir::graphs::Edge<G, P>>)
 {

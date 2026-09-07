@@ -19,7 +19,7 @@ void bind_condition(nb::module_& m, RepositoryBinding& repository)
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
     ygg::bind_index<ygg::Index<T>>(m, "ConditionVariantIndex");
-    auto data = nb::class_<Data>(m, "ConditionVariantData").def(nb::init<>()).def_rw("index", &Data::index).def_rw("value", &Data::value);
+    auto data = nb::class_<Data>(m, "ConditionVariantData").def(nb::init<>()).def_rw("index", &Data::index).def_rw("variant", &Data::variant);
     ygg::add_comparison(data);
     auto view = nb::class_<View>(m, "ConditionVariant").def("get_index", &View::get_index).def("get_variant", &View::get_variant);
     ygg::add_print(view);

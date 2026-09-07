@@ -60,7 +60,7 @@ auto intern(ParserState& state, Initialize&& initialize)
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename T>
 auto intern_constructor(ParserState& state, ygg::Index<T> index)
 {
-    return intern<Constructor<Family, Category>>(state, [&](auto& data) { data.value = index; });
+    return intern<Constructor<Family, Category>>(state, [&](auto& data) { data.variant = index; });
 }  // namespace runir::kr::dl::grammar
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename T, typename Initialize>
@@ -91,7 +91,7 @@ auto parse(const ast::ConstructorOrNonTerminal<Family, Category>& node,
                                             { return parse(unwrap(arg), domain, repository, diagnostics).get_index(); },
                                             node.get());
 
-    return intern<ConstructorOrNonTerminal<Family, Category>>(repository, [&](auto& data) { data.value = index; });
+    return intern<ConstructorOrNonTerminal<Family, Category>>(repository, [&](auto& data) { data.variant = index; });
 }  // namespace runir::kr::dl::grammar
 
 template<tyr::formalism::FactKind T>

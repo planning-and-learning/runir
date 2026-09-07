@@ -13,24 +13,11 @@
 namespace ygg::serialization
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-struct TypeName<View<Index<runir::kr::dl::Constructor<Family, Category>>, C>>
-{
-    static std::string get() { return std::string(Family::name) + "." + Category::name + ".Constructor"; }
-};
-
 template<typename Archive, runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Constructor<Family, Category>>, C>>)
 {
     ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
 }
-
-template<runir::kr::dl::FamilyTag Family, typename C>
-struct TypeName<View<cista::offset::variant<Index<runir::kr::dl::Constructor<Family, runir::kr::dl::ConceptTag>>,
-                                           Index<runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>>>, C>>
-{
-    static std::string get() { return std::string(Family::name) + ".ConceptOrRole"; }
-};
 
 template<typename Archive, runir::kr::dl::FamilyTag Family, typename C>
 void describe_fields(Archive& ar,

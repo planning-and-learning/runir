@@ -21,7 +21,7 @@ using EffectVariant = kr::ps::ConcreteEffectVariant<kr::ExtFamilyTag, kr::DlTag>
 
 static_assert(IndexedDataView<EffectVariant> && requires(ygg::Data<EffectVariant>& data, const View<EffectVariant>& view) {
     data.index;
-    data.value;
+    data.variant;
     data.clear();
     view.get_index();
     view.get_variant();

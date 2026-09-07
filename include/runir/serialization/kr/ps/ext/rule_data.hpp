@@ -9,12 +9,6 @@
 namespace ygg::serialization
 {
 
-template<typename C>
-struct TypeName<View<runir::kr::ps::ext::CallArgument, C>>
-{
-    static std::string get() { return "Ext.CallArgument"; }
-};
-
 template<typename Archive, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<runir::kr::ps::ext::CallArgument, C>>)
 {

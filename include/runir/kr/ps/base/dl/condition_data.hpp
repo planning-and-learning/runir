@@ -24,19 +24,19 @@ struct Data<runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, ru
             runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>>;
 
     Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>> index;
-    Variant value;
+    Variant variant;
 
     Data() = default;
-    Data(Variant value_) : index(), value(std::move(value_)) {}
+    Data(Variant variant_) : index(), variant(std::move(variant_)) {}
 
     void clear() noexcept
     {
         ygg::clear(index);
-        ygg::clear(value);
+        ygg::clear(variant);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, value); }
-    auto identifying_members() const noexcept { return std::tie(value); }
+    auto cista_members() const noexcept { return std::tie(index, variant); }
+    auto identifying_members() const noexcept { return std::tie(variant); }
 };
 
 template<typename FeatureTag, typename ObservationTag>

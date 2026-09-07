@@ -10,17 +10,6 @@
 namespace ygg::serialization
 {
 
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-struct TypeName<View<Index<runir::kr::dl::Numerical<Family, Tag>>, C>>
-{
-    static std::string get()
-    {
-        const auto prefix = std::string(Family::name) + "." + runir::kr::dl::NumericalTag::name + ".";
-        return prefix + Tag::keyword;
-    }
-};
-
 template<typename Archive, runir::kr::dl::FamilyTag Family, typename Tag, typename C>
     requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Numerical<Family, Tag>>, C>>)

@@ -14,20 +14,6 @@
 namespace ygg::serialization
 {
 
-template<runir::kr::ps::ext::RuleKind Kind, typename C>
-struct TypeName<View<Index<runir::kr::ps::ext::Rule<Kind>>, C>>
-{
-    static std::string get()
-    {
-        auto prefix = std::string(runir::kr::ExtFamilyTag::name);
-        if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>)
-            prefix += std::string(".") + runir::kr::dl::ConceptTag::name;
-        else if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::RoleTag>>)
-            prefix += std::string(".") + runir::kr::dl::RoleTag::name;
-        return prefix + "." + Kind::keyword + ".Rule";
-    }
-};
-
 template<typename Archive, runir::kr::ps::ext::RuleKind Kind, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ext::Rule<Kind>>, C>>)
 {

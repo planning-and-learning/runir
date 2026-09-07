@@ -5,6 +5,7 @@ a native type assigns its values references such as `f0` or `r0` and stores
 their declared fields in table rows. Every encountered native entity type
 must be registered. An unregistered type raises `ValueError` in Python
 (`std::invalid_argument` in C++) with `Unregistered serialization type: ...`.
+The diagnostic uses native C++ type information.
 Table names and prefixes are supplied by the caller.
 Rows follow first encounter order, and repeated native values reuse their row.
 
@@ -24,14 +25,14 @@ state from the same `states` table:
 The row position supplies the integer part of its reference. References remain
 stable across Tyr and Runir serialization calls on the same registry. Enum
 fields use their native text, such as `EXTERNAL`. Registered variants store the
-native alternative's type name directly in `kind`. Ordinary numeric data,
-including graph indices and feature values, remains numeric.
+selected alternative in `variant`, without a separate type label. Ordinary
+numeric data, including graph indices and feature values, remains numeric.
 
 For example, a registered rule stores its symbol and lists of condition and
 effect references. Their types, including any intervening variants, must also
 be registered unless the corresponding fields are omitted or explicitly
-converted to text in a projection. Registered variant rows contain `kind` and
-`value`.
+converted to text in a projection. Other declared fields remain alongside
+`variant`; an extended rule variant retains its `symbol`, for example.
 
 Registering a descendant alone does not make its parents serializable. Lists
 remain arrays, ordinary numeric values remain numbers, and absent optional

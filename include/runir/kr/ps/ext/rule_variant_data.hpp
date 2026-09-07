@@ -26,22 +26,22 @@ struct Data<runir::kr::ps::ext::RuleVariant>
 
     Index<runir::kr::ps::ext::RuleVariant> index;
     ::cista::offset::string symbol;
-    Variant value;
+    Variant variant;
 
     Data() = default;
-    Data(Variant value_) : index(), value(std::move(value_)) {}
-    Data(::cista::offset::string symbol_, Variant value_) : index(), symbol(std::move(symbol_)), value(std::move(value_)) {}
-    Data(const std::string& symbol_, Variant value_) : index(), symbol(symbol_), value(std::move(value_)) {}
+    Data(Variant variant_) : index(), variant(std::move(variant_)) {}
+    Data(::cista::offset::string symbol_, Variant variant_) : index(), symbol(std::move(symbol_)), variant(std::move(variant_)) {}
+    Data(const std::string& symbol_, Variant variant_) : index(), symbol(symbol_), variant(std::move(variant_)) {}
 
     void clear() noexcept
     {
         ygg::clear(index);
         ygg::clear(symbol);
-        ygg::clear(value);
+        ygg::clear(variant);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, symbol, value); }
-    auto identifying_members() const noexcept { return std::tie(symbol, value); }
+    auto cista_members() const noexcept { return std::tie(index, symbol, variant); }
+    auto identifying_members() const noexcept { return std::tie(symbol, variant); }
 };
 
 }  // namespace ygg

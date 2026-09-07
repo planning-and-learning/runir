@@ -20,7 +20,7 @@ concept IndexedDataView = std::constructible_from<ygg::Index<Entity>, ygg::uint_
 template<typename Entity>
 concept FeatureContract = IndexedDataView<Entity> && requires(ygg::Data<Entity>& data, const View<Entity>& view) {
     data.index;
-    data.value;
+    data.variant;
     data.clear();
     view.get_index();
     view.get_variant();

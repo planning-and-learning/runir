@@ -66,7 +66,7 @@ void bind_condition(nb::module_& m, RepositoryBinding& repository)
     auto data = nb::class_<VariantData>(m, "ConcreteConditionVariantData")
                     .def(nb::init<>())
                     .def_rw("index", &VariantData::index)
-                    .def_rw("value", &VariantData::value);
+                    .def_rw("variant", &VariantData::variant);
     ygg::add_comparison(data);
     bind_condition_data<PositiveBoolean>(m, "PositiveBooleanConditionData");
     bind_condition_data<NegativeBoolean>(m, "NegativeBooleanConditionData");
