@@ -46,17 +46,54 @@ are available by serializing the task separately. Runir register values and
 denotations also use Tyr serializers for their objects and object pairs.
 
 The native entry point is `<runir/serialization/serialization.hpp>`. In Python,
-`pyrunir.serialization` re-exports Tyr's `Dictionaries` and provides
-`register_table(dictionaries, native_type, name, prefix)`,
-`serialize(dictionaries, value)`, and `table(dictionaries, native_type)` for
-Runir entities. Tyr entities use the registry's corresponding methods.
-Both paths populate the same `tables()` output.
+import the shared `Dictionaries` registry from `pyyggdrasil.serialization`.
+Runir provides `register_table(dictionaries, native_type, name, prefix, fields=None, project=None)`,
+`serialize(dictionaries, value)`, and `table(dictionaries, native_type)` in
+`pyrunir.serialization`. These functions support both Runir and Tyr entities.
+Tyr's corresponding free functions support Tyr entities and can use the same
+registry. Its `tables()` method returns the collected snapshots.
 
-Yggdrasil provides shared snapshot types and rendering through
-`pyyggdrasil.serialization`:
+The optional `fields` sequence selects immediate schema fields before recursive
+serialization. Omitted fields do not collect descendants. `None` keeps all
+fields; an empty sequence creates empty rows. Retained fields follow schema
+order, regardless of selection order. For example,
+`register_table(dictionaries, Rule, "rules", "r", fields=["symbol", "conditions"])`
+omits effects.
+
+The optional `project` callable receives a native entity and returns a complete
+row dictionary with arbitrary column names and transformed values. Its output
+replaces the declared fields. Returned native Runir and Tyr entities are
+recursively serialized through the same registry. When both options are given,
+`fields` selects projected names before recursive conversion, preserving the
+callable's column order. Without `project`, the native schema is unchanged.
+For example, represent a Tyr action binding with only its name and objects:
 
 ```python
-from pyyggdrasil.serialization import render_table
+from pyrunir.serialization import register_table
+from pytyr.formalism import planning as fp
+from pyyggdrasil.serialization import Dictionaries
+
+dictionaries = Dictionaries()
+register_table(
+    dictionaries,
+    fp.ActionBinding,
+    "actions",
+    "a",
+    project=lambda binding: {
+        "name": binding.get_relation().get_name(),
+        "objects": binding.get_objects(),
+    },
+)
+```
+
+`table()` and `tables()` expose generic rows to accommodate selected and
+projected columns.
+
+Yggdrasil provides shared snapshot types and rendering through
+`pyyggdrasil.serialization.table`:
+
+```python
+from pyyggdrasil.serialization.table import render_table
 
 for name, snapshot in dictionaries.tables().items():
     print(name)

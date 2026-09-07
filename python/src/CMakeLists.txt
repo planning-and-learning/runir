@@ -96,7 +96,6 @@ yggdrasil_install_python_files(
         pyrunir/kr/uns/__init__.py
         pyrunir/kr/uns/dl/__init__.py
         pyrunir/serialization/__init__.py
-        pyrunir/serialization/__init__.pyi
 )
 
 yggdrasil_install_provider_env(

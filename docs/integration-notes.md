@@ -13,7 +13,7 @@ directory.
 
 ## Table rendering
 
-`pyyggdrasil.serialization.render_table` adapts serialized rows to `tabulate`,
+`pyyggdrasil.serialization.table.render_table` adapts serialized rows to `tabulate`,
 encoding nested JSON cells compactly and optionally adding dictionary
 references. `tabulate` provides the layouts and scalar formatting. Applications
 choose their columns and files.
