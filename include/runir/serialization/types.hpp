@@ -12,6 +12,7 @@
 #include "runir/kr/uns/repository.hpp"
 
 #include <type_traits>
+#include <tyr/serialization/types.hpp>
 #include <yggdrasil/core/concepts.hpp>
 #include <yggdrasil/core/type_list.hpp>
 
@@ -74,12 +75,16 @@ using EntityTypes = ygg::ConcatTypeListsT<DlViews<kr::BaseFamilyTag>,
                                          ExecutionViews<tyr::LiftedTag>,
                                          GraphProperties>;
 
-using SerializedTypes = ygg::ConcatTypeListsT<EntityTypes, Graphs>;
+using SerializedTypes = ygg::ConcatTypeListsT<EntityTypes, Graphs, tyr::serialization::SerializedTypes>;
 
 template<typename T>
 using HashableTypeList = std::conditional_t<ygg::Hashable<T>, ygg::TypeList<T>, ygg::TypeList<>>;
 
-using RegisteredTypes = ygg::ApplyTypeListT<ygg::ConcatTypeListsT, ygg::MapTypeListT<HashableTypeList, EntityTypes>>;
+using RegisteredTypes = ygg::ConcatTypeListsT<
+    ygg::ApplyTypeListT<ygg::ConcatTypeListsT, ygg::MapTypeListT<HashableTypeList, EntityTypes>>,
+    tyr::serialization::RegisteredTypes>;
+
+using ProjectionTypes = ygg::ConcatTypeListsT<EntityTypes, Graphs, tyr::serialization::ProjectionTypes, ygg::TypeList<kr::ps::ext::ExecutionPhase>>;
 
 }  // namespace runir::serialization
 
