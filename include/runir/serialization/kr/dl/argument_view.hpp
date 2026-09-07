@@ -15,17 +15,11 @@ struct TypeName<View<Index<runir::kr::dl::Argument<Category>>, C>>
     static std::string get() { return std::string(Category::name) + "Argument"; }
 };
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::dl::Argument<Category>>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, runir::kr::dl::CategoryTag Category, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Argument<Category>>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("name", value.get_name());
-        ar.field("identifier", uint_t(value.get_identifier()));
-    });
+    ar.field("name", [](const auto& value) -> decltype(auto) { return (value.get_name()); });
+    ar.field("identifier", [](const auto& value) -> decltype(auto) { return (uint_t(value.get_identifier())); });
 }
 
 }

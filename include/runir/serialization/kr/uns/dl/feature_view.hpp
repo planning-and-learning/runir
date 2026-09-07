@@ -16,17 +16,11 @@ struct TypeName<View<Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTa
     static std::string get() { return std::string(runir::kr::UnsFamilyTag::name) + ".DL." + runir::kr::ps::dl::BooleanFeature::keyword + ".Feature"; }
 };
 
-template<typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("symbol", value.get_symbol());
-        ar.field("expression", value.get_expression());
-    });
+    ar.field("symbol", [](const auto& value) -> decltype(auto) { return (value.get_symbol()); });
+    ar.field("expression", [](const auto& value) -> decltype(auto) { return (value.get_expression()); });
 }
 
 }

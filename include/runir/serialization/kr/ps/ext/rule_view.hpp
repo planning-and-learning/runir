@@ -28,35 +28,31 @@ struct TypeName<View<Index<runir::kr::ps::ext::Rule<Kind>>, C>>
     }
 };
 
-template<runir::kr::ps::ext::RuleKind Kind, typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::ps::ext::Rule<Kind>>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, runir::kr::ps::ext::RuleKind Kind, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ext::Rule<Kind>>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
+    using Value = View<Index<runir::kr::ps::ext::Rule<Kind>>, C>;
+
+    ar.field("source", [](const auto& value) -> decltype(auto) { return (value.get_source()); });
+    ar.field("target", [](const auto& value) -> decltype(auto) { return (value.get_target()); });
+    ar.field("conditions", [](const auto& value) -> decltype(auto) { return (value.get_conditions()); });
+    if constexpr (requires(const Value& value) { value.get_effects(); })
+        ar.field("effects", [](const auto& value) -> decltype(auto) { return (value.get_effects()); });
+    if constexpr (requires(const Value& value) { value.get_feature(); })
     {
-        ar.field("source", value.get_source());
-        ar.field("target", value.get_target());
-        ar.field("conditions", value.get_conditions());
-        if constexpr (requires { value.get_effects(); })
-            ar.field("effects", value.get_effects());
-        if constexpr (requires { value.get_feature(); })
-        {
-            ar.field("feature", value.get_feature());
-            ar.field("register", value.get_register());
-        }
-        if constexpr (requires { value.get_action_name(); })
-        {
-            ar.field("action_name", value.get_action_name());
-            ar.field("arguments", value.get_action_arguments());
-        }
-        if constexpr (requires { value.get_callee(); })
-        {
-            ar.field("callee", value.get_callee());
-            ar.field("arguments", make_view(value.get_data().arguments, value.get_context()));
-        }
-    });
+        ar.field("feature", [](const auto& value) -> decltype(auto) { return (value.get_feature()); });
+        ar.field("register", [](const auto& value) -> decltype(auto) { return (value.get_register()); });
+    }
+    if constexpr (requires(const Value& value) { value.get_action_name(); })
+    {
+        ar.field("action_name", [](const auto& value) -> decltype(auto) { return (value.get_action_name()); });
+        ar.field("arguments", [](const auto& value) -> decltype(auto) { return (value.get_action_arguments()); });
+    }
+    if constexpr (requires(const Value& value) { value.get_callee(); })
+    {
+        ar.field("callee", [](const auto& value) -> decltype(auto) { return (value.get_callee()); });
+        ar.field("arguments", [](const auto& value) -> decltype(auto) { return (make_view(value.get_data().arguments, value.get_context())); });
+    }
 }
 
 }

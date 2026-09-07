@@ -13,15 +13,11 @@ struct TypeName<::runir::graphs::Vertex<G, P>>
     static std::string get() { return "Vertex"; }
 };
 
-template<typename G, ::runir::graphs::Property P>
-void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::graphs::Vertex<G, P>& value, Dictionaries* dictionaries)
+template<typename Archive, typename G, ::runir::graphs::Property P>
+void describe_fields(Archive& ar, std::type_identity<::runir::graphs::Vertex<G, P>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("index", value.get_index());
-        ar.field("property", value.get_property());
-    });
+    ar.field("index", [](const auto& value) -> decltype(auto) { return (value.get_index()); });
+    ar.field("property", [](const auto& value) -> decltype(auto) { return (value.get_property()); });
 }
 
 }

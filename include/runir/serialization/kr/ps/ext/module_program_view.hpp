@@ -15,17 +15,11 @@ struct TypeName<View<Index<runir::kr::ps::ext::ModuleProgram>, C>>
     static std::string get() { return "Ext.ModuleProgram"; }
 };
 
-template<typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::ps::ext::ModuleProgram>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ext::ModuleProgram>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("entry_module", value.get_entry_module());
-        ar.field("modules", value.get_modules());
-    });
+    ar.field("entry_module", [](const auto& value) -> decltype(auto) { return (value.get_entry_module()); });
+    ar.field("modules", [](const auto& value) -> decltype(auto) { return (value.get_modules()); });
 }
 
 }

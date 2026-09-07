@@ -16,18 +16,12 @@ struct TypeName<View<Index<runir::kr::ps::base::Rule>, C>>
     static std::string get() { return "Base.Rule"; }
 };
 
-template<typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::ps::base::Rule>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::base::Rule>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("symbol", value.get_symbol());
-        ar.field("conditions", value.get_conditions());
-        ar.field("effects", value.get_effects());
-    });
+    ar.field("symbol", [](const auto& value) -> decltype(auto) { return (value.get_symbol()); });
+    ar.field("conditions", [](const auto& value) -> decltype(auto) { return (value.get_conditions()); });
+    ar.field("effects", [](const auto& value) -> decltype(auto) { return (value.get_effects()); });
 }
 
 }

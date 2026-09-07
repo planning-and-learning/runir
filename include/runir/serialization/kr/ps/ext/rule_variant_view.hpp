@@ -15,17 +15,11 @@ struct TypeName<View<Index<runir::kr::ps::ext::RuleVariant>, C>>
     static std::string get() { return "Ext.Rule"; }
 };
 
-template<typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::ps::ext::RuleVariant>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ext::RuleVariant>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("symbol", value.get_symbol());
-        ar.variant(value.get_variant());
-    });
+    ar.field("symbol", [](const auto& value) -> decltype(auto) { return (value.get_symbol()); });
+    ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
 }
 
 }

@@ -18,16 +18,10 @@ struct TypeName<View<Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag
     }
 };
 
-template<typename FeatureTag, typename ObservationTag, typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, typename FeatureTag, typename ObservationTag, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("feature", value.get_feature());
-    });
+    ar.field("feature", [](const auto& value) -> decltype(auto) { return (value.get_feature()); });
 }
 
 }

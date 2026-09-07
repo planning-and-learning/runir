@@ -16,14 +16,10 @@ struct TypeName<::runir::datasets::StateGraphVertexLabel<Kind>>
     static std::string get() { return std::string(Kind::name) + "StateGraphVertexLabel"; }
 };
 
-template<::tyr::TaskKind Kind>
-void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::datasets::StateGraphVertexLabel<Kind>& value, Dictionaries* dictionaries)
+template<typename Archive, ::tyr::TaskKind Kind>
+void describe_fields(Archive& ar, std::type_identity<::runir::datasets::StateGraphVertexLabel<Kind>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("state", value.state);
-    });
+    ar.field("state", [](const auto& value) -> decltype(auto) { return (value.state); });
 }
 
 template<::tyr::TaskKind Kind>
@@ -32,19 +28,15 @@ struct TypeName<::runir::datasets::AnnotatedStateGraphVertexLabel<Kind>>
     static std::string get() { return std::string(Kind::name) + "AnnotatedStateGraphVertexLabel"; }
 };
 
-template<::tyr::TaskKind Kind>
-void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::datasets::AnnotatedStateGraphVertexLabel<Kind>& value, Dictionaries* dictionaries)
+template<typename Archive, ::tyr::TaskKind Kind>
+void describe_fields(Archive& ar, std::type_identity<::runir::datasets::AnnotatedStateGraphVertexLabel<Kind>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("state", value.state);
-        ar.field("goal_distance", value.goal_distance);
-        ar.field("is_initial", value.is_initial);
-        ar.field("is_goal", value.is_goal);
-        ar.field("is_alive", value.is_alive);
-        ar.field("is_unsolvable", value.is_unsolvable);
-    });
+    ar.field("state", [](const auto& value) -> decltype(auto) { return (value.state); });
+    ar.field("goal_distance", [](const auto& value) -> decltype(auto) { return (value.goal_distance); });
+    ar.field("is_initial", [](const auto& value) -> decltype(auto) { return (value.is_initial); });
+    ar.field("is_goal", [](const auto& value) -> decltype(auto) { return (value.is_goal); });
+    ar.field("is_alive", [](const auto& value) -> decltype(auto) { return (value.is_alive); });
+    ar.field("is_unsolvable", [](const auto& value) -> decltype(auto) { return (value.is_unsolvable); });
 }
 
 template<>
@@ -53,14 +45,11 @@ struct TypeName<::runir::datasets::StateGraphEdgeLabel>
     static std::string get() { return "StateGraphEdgeLabel"; }
 };
 
-inline void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::datasets::StateGraphEdgeLabel& value, Dictionaries* dictionaries)
+template<typename Archive>
+void describe_fields(Archive& ar, std::type_identity<::runir::datasets::StateGraphEdgeLabel>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("action", value.action);
-        ar.field("cost", value.cost);
-    });
+    ar.field("action", [](const auto& value) -> decltype(auto) { return (value.action); });
+    ar.field("cost", [](const auto& value) -> decltype(auto) { return (value.cost); });
 }
 
 }

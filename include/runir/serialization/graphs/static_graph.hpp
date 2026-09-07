@@ -15,15 +15,11 @@ struct TypeName<::runir::graphs::StaticGraph<VP, EP>>
     static std::string get() { return "StaticGraph"; }
 };
 
-template<::runir::graphs::Property VP, ::runir::graphs::Property EP>
-void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::graphs::StaticGraph<VP, EP>& value, Dictionaries* dictionaries)
+template<typename Archive, ::runir::graphs::Property VP, ::runir::graphs::Property EP>
+void describe_fields(Archive& ar, std::type_identity<::runir::graphs::StaticGraph<VP, EP>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("vertices", value.get_vertices());
-        ar.field("edges", value.get_edges());
-    });
+    ar.field("vertices", [](const auto& value) -> decltype(auto) { return (value.get_vertices()); });
+    ar.field("edges", [](const auto& value) -> decltype(auto) { return (value.get_edges()); });
 }
 
 }

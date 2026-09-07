@@ -8,6 +8,13 @@
 namespace ygg::serialization
 {
 
+template<typename Archive, ::runir::graphs::Property VP, ::runir::graphs::Property EP>
+void describe_fields(Archive& ar, std::type_identity<::runir::graphs::BidirectionalStaticGraph<VP, EP>>)
+{
+    using ForwardGraph = typename ::runir::graphs::BidirectionalStaticGraph<VP, EP>::ForwardGraphType;
+    describe_fields(ar, std::type_identity<ForwardGraph> {});
+}
+
 template<::runir::graphs::Property VP, ::runir::graphs::Property EP>
 void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
                 const ::runir::graphs::BidirectionalStaticGraph<VP, EP>& value, Dictionaries* dictionaries)

@@ -16,16 +16,10 @@ struct TypeName<View<Index<runir::kr::ps::EffectVariant<Family>>, C>>
     static std::string get() { return std::string(Family::name) + ".Effect"; }
 };
 
-template<runir::kr::FamilyTag Family, typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::ps::EffectVariant<Family>>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, runir::kr::FamilyTag Family, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::EffectVariant<Family>>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.variant(value.get_variant());
-    });
+    ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
 }
 
 template<runir::kr::FamilyTag Family, typename C>
@@ -34,16 +28,10 @@ struct TypeName<View<Index<runir::kr::ps::ConcreteEffectVariant<Family, runir::k
     static std::string get() { return std::string(Family::name) + ".DL.Effect"; }
 };
 
-template<runir::kr::FamilyTag Family, typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, runir::kr::FamilyTag Family, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.variant(value.get_variant());
-    });
+    ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
 }
 
 }

@@ -24,16 +24,10 @@ struct TypeName<View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C>>
     }
 };
 
-template<runir::kr::FamilyTag Family, typename FeatureTag, typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, runir::kr::FamilyTag Family, typename FeatureTag, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.variant(value.get_variant());
-    });
+    ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
 }
 
 }

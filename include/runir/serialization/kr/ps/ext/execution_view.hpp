@@ -19,15 +19,11 @@ struct TypeName<::runir::kr::ps::ext::RegisterValuesView<Kind>>
     static std::string get() { return std::string(Kind::name) + "RegisterValues"; }
 };
 
-template<::tyr::TaskKind Kind>
-void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::kr::ps::ext::RegisterValuesView<Kind>& value, Dictionaries* dictionaries)
+template<typename Archive, ::tyr::TaskKind Kind>
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::RegisterValuesView<Kind>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("concept_values", value.get_concept_values());
-        ar.field("role_values", value.get_role_values());
-    });
+    ar.field("concept_values", [](const auto& value) -> decltype(auto) { return (value.get_concept_values()); });
+    ar.field("role_values", [](const auto& value) -> decltype(auto) { return (value.get_role_values()); });
 }
 
 template<::tyr::TaskKind Kind>
@@ -36,17 +32,13 @@ struct TypeName<::runir::kr::ps::ext::CallArgumentsView<Kind>>
     static std::string get() { return std::string(Kind::name) + "CallArguments"; }
 };
 
-template<::tyr::TaskKind Kind>
-void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::kr::ps::ext::CallArgumentsView<Kind>& value, Dictionaries* dictionaries)
+template<typename Archive, ::tyr::TaskKind Kind>
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallArgumentsView<Kind>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("concept_arguments", value.template get<::runir::kr::dl::ConceptTag>());
-        ar.field("role_arguments", value.template get<::runir::kr::dl::RoleTag>());
-        ar.field("boolean_arguments", value.template get<::runir::kr::dl::BooleanTag>());
-        ar.field("numerical_arguments", value.template get<::runir::kr::dl::NumericalTag>());
-    });
+    ar.field("concept_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::ConceptTag>()); });
+    ar.field("role_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::RoleTag>()); });
+    ar.field("boolean_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::BooleanTag>()); });
+    ar.field("numerical_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::NumericalTag>()); });
 }
 
 template<::tyr::TaskKind Kind>
@@ -55,18 +47,14 @@ struct TypeName<::runir::kr::ps::ext::CallStackView<Kind>>
     static std::string get() { return std::string(Kind::name) + "CallStack"; }
 };
 
-template<::tyr::TaskKind Kind>
-void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::kr::ps::ext::CallStackView<Kind>& value, Dictionaries* dictionaries)
+template<typename Archive, ::tyr::TaskKind Kind>
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallStackView<Kind>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("module", value.get_module());
-        ar.field("memory_state", value.get_memory_state());
-        ar.field("registers", value.get_registers());
-        ar.field("arguments", value.get_arguments());
-        ar.field("caller", value.get_caller());
-    });
+    ar.field("module", [](const auto& value) -> decltype(auto) { return (value.get_module()); });
+    ar.field("memory_state", [](const auto& value) -> decltype(auto) { return (value.get_memory_state()); });
+    ar.field("registers", [](const auto& value) -> decltype(auto) { return (value.get_registers()); });
+    ar.field("arguments", [](const auto& value) -> decltype(auto) { return (value.get_arguments()); });
+    ar.field("caller", [](const auto& value) -> decltype(auto) { return (value.get_caller()); });
 }
 
 template<::tyr::TaskKind Kind>
@@ -75,17 +63,13 @@ struct TypeName<::runir::kr::ps::ext::ExecutionStateView<Kind>>
     static std::string get() { return std::string(Kind::name) + "ExecutionState"; }
 };
 
-template<::tyr::TaskKind Kind>
-void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::kr::ps::ext::ExecutionStateView<Kind>& value, Dictionaries* dictionaries)
+template<typename Archive, ::tyr::TaskKind Kind>
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ExecutionStateView<Kind>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("state", value.get_state());
-        ar.field("program", value.get_program());
-        ar.field("phase", value.get_phase());
-        ar.field("call_stack", value.get_call_stack());
-    });
+    ar.field("state", [](const auto& value) -> decltype(auto) { return (value.get_state()); });
+    ar.field("program", [](const auto& value) -> decltype(auto) { return (value.get_program()); });
+    ar.field("phase", [](const auto& value) -> decltype(auto) { return (value.get_phase()); });
+    ar.field("call_stack", [](const auto& value) -> decltype(auto) { return (value.get_call_stack()); });
 }
 
 

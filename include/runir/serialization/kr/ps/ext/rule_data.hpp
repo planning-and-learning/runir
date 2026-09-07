@@ -15,16 +15,10 @@ struct TypeName<View<runir::kr::ps::ext::CallArgument, C>>
     static std::string get() { return "Ext.CallArgument"; }
 };
 
-template<typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<runir::kr::ps::ext::CallArgument, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<runir::kr::ps::ext::CallArgument, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.variant(value);
-    });
+    ar.variant([](const auto& value) -> decltype(auto) { return (value); });
 }
 
 }

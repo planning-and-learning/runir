@@ -17,29 +17,23 @@ struct TypeName<View<Index<runir::kr::ps::ext::Module>, C>>
     static std::string get() { return "Ext.Module"; }
 };
 
-template<typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::ps::ext::Module>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ext::Module>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("symbol", value.get_symbol());
-        ar.field("concept_arguments", value.template get_arguments<runir::kr::dl::ConceptTag>());
-        ar.field("role_arguments", value.template get_arguments<runir::kr::dl::RoleTag>());
-        ar.field("boolean_arguments", value.template get_arguments<runir::kr::dl::BooleanTag>());
-        ar.field("numerical_arguments", value.template get_arguments<runir::kr::dl::NumericalTag>());
-        ar.field("concept_registers", value.template get_registers<runir::kr::dl::ConceptTag>());
-        ar.field("role_registers", value.template get_registers<runir::kr::dl::RoleTag>());
-        ar.field("concept_features", value.template get_features<runir::kr::dl::ConceptTag>());
-        ar.field("role_features", value.template get_features<runir::kr::dl::RoleTag>());
-        ar.field("boolean_features", value.template get_features<runir::kr::ps::dl::BooleanFeature>());
-        ar.field("numerical_features", value.template get_features<runir::kr::ps::dl::NumericalFeature>());
-        ar.field("entry_memory_state", value.get_entry_memory_state());
-        ar.field("memory_states", value.get_memory_states());
-        ar.field("memory_transitions", value.get_memory_transitions());
-    });
+    ar.field("symbol", [](const auto& value) -> decltype(auto) { return (value.get_symbol()); });
+    ar.field("concept_arguments", [](const auto& value) -> decltype(auto) { return (value.template get_arguments<runir::kr::dl::ConceptTag>()); });
+    ar.field("role_arguments", [](const auto& value) -> decltype(auto) { return (value.template get_arguments<runir::kr::dl::RoleTag>()); });
+    ar.field("boolean_arguments", [](const auto& value) -> decltype(auto) { return (value.template get_arguments<runir::kr::dl::BooleanTag>()); });
+    ar.field("numerical_arguments", [](const auto& value) -> decltype(auto) { return (value.template get_arguments<runir::kr::dl::NumericalTag>()); });
+    ar.field("concept_registers", [](const auto& value) -> decltype(auto) { return (value.template get_registers<runir::kr::dl::ConceptTag>()); });
+    ar.field("role_registers", [](const auto& value) -> decltype(auto) { return (value.template get_registers<runir::kr::dl::RoleTag>()); });
+    ar.field("concept_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::dl::ConceptTag>()); });
+    ar.field("role_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::dl::RoleTag>()); });
+    ar.field("boolean_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::ps::dl::BooleanFeature>()); });
+    ar.field("numerical_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::ps::dl::NumericalFeature>()); });
+    ar.field("entry_memory_state", [](const auto& value) -> decltype(auto) { return (value.get_entry_memory_state()); });
+    ar.field("memory_states", [](const auto& value) -> decltype(auto) { return (value.get_memory_states()); });
+    ar.field("memory_transitions", [](const auto& value) -> decltype(auto) { return (value.get_memory_transitions()); });
 }
 
 }

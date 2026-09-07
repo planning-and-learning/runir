@@ -17,18 +17,14 @@ struct TypeName<::runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>
     static std::string get() { return std::string(Kind::name) + "ModuleProgramProofVertexLabel"; }
 };
 
-template<::tyr::TaskKind Kind>
-void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>& value, Dictionaries* dictionaries)
+template<typename Archive, ::tyr::TaskKind Kind>
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("execution_state", value.execution_state);
-        ar.field("is_initial", value.is_initial);
-        ar.field("is_goal", value.is_goal);
-        ar.field("is_alive", value.is_alive);
-        ar.field("is_unsolvable", value.is_unsolvable);
-    });
+    ar.field("execution_state", [](const auto& value) -> decltype(auto) { return (value.execution_state); });
+    ar.field("is_initial", [](const auto& value) -> decltype(auto) { return (value.is_initial); });
+    ar.field("is_goal", [](const auto& value) -> decltype(auto) { return (value.is_goal); });
+    ar.field("is_alive", [](const auto& value) -> decltype(auto) { return (value.is_alive); });
+    ar.field("is_unsolvable", [](const auto& value) -> decltype(auto) { return (value.is_unsolvable); });
 }
 
 template<>
@@ -37,14 +33,11 @@ struct TypeName<::runir::kr::ps::ext::ModuleProgramProofStateTransition>
     static std::string get() { return "ModuleProgramProofStateTransition"; }
 };
 
-inline void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::kr::ps::ext::ModuleProgramProofStateTransition& value, Dictionaries* dictionaries)
+template<typename Archive>
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleProgramProofStateTransition>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("action", value.action);
-        ar.field("cost", value.cost);
-    });
+    ar.field("action", [](const auto& value) -> decltype(auto) { return (value.action); });
+    ar.field("cost", [](const auto& value) -> decltype(auto) { return (value.cost); });
 }
 
 template<>
@@ -53,14 +46,11 @@ struct TypeName<::runir::kr::ps::ext::ModuleProgramProofEdgeLabel>
     static std::string get() { return "ModuleProgramProofEdgeLabel"; }
 };
 
-inline void tag_invoke(boost::json::value_from_tag, boost::json::value& result,
-                const ::runir::kr::ps::ext::ModuleProgramProofEdgeLabel& value, Dictionaries* dictionaries)
+template<typename Archive>
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleProgramProofEdgeLabel>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("state_transition", value.state_transition);
-        ar.field("rule", value.rule);
-    });
+    ar.field("state_transition", [](const auto& value) -> decltype(auto) { return (value.state_transition); });
+    ar.field("rule", [](const auto& value) -> decltype(auto) { return (value.rule); });
 }
 
 }

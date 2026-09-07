@@ -17,26 +17,23 @@ struct TypeName<View<Index<runir::kr::dl::semantics::Denotation<Category>>, C>>
     static std::string get() { return std::string(Category::name) + "Denotation"; }
 };
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::dl::semantics::Denotation<Category>>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, runir::kr::dl::CategoryTag Category, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::semantics::Denotation<Category>>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
+    if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag> || std::same_as<Category, runir::kr::dl::NumericalTag>)
     {
-        if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag> || std::same_as<Category, runir::kr::dl::NumericalTag>)
-        {
-            ar.field("value", value.get());
-        }
-        else
+        ar.field("value", [](const auto& value) -> decltype(auto) { return (value.get()); });
+    }
+    else
+    {
+        ar.field("values", [](const auto& value)
         {
             auto elements = std::vector<runir::kr::dl::semantics::DenotationElement<Category, C>> {};
             for (auto element : value)
                 elements.push_back(element);
-            ar.field("values", elements);
-        }
-    });
+            return elements;
+        });
+    }
 }
 
 }

@@ -19,13 +19,10 @@ struct TypeName<View<Index<runir::kr::dl::Constructor<Family, Category>>, C>>
     static std::string get() { return std::string(Family::name) + "." + Category::name + ".Constructor"; }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::dl::Constructor<Family, Category>>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Constructor<Family, Category>>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar) { ar.variant(value.get_variant()); });
+    ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });
 }
 
 template<runir::kr::dl::FamilyTag Family, typename C>
@@ -35,14 +32,12 @@ struct TypeName<View<cista::offset::variant<Index<runir::kr::dl::Constructor<Fam
     static std::string get() { return std::string(Family::name) + ".ConceptOrRole"; }
 };
 
-template<runir::kr::dl::FamilyTag Family, typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<cista::offset::variant<Index<runir::kr::dl::Constructor<Family, runir::kr::dl::ConceptTag>>,
-                                                 Index<runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>>>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, runir::kr::dl::FamilyTag Family, typename C>
+void describe_fields(Archive& ar,
+                     std::type_identity<View<cista::offset::variant<Index<runir::kr::dl::Constructor<Family, runir::kr::dl::ConceptTag>>,
+                                                                    Index<runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>>>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar) { ar.variant(value); });
+    ar.variant([](const auto& value) -> decltype(auto) { return (value); });
 }
 
 }

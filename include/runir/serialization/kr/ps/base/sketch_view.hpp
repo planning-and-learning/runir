@@ -15,18 +15,12 @@ struct TypeName<View<Index<runir::kr::ps::base::Sketch>, C>>
     static std::string get() { return "Base.Sketch"; }
 };
 
-template<typename C>
-void tag_invoke(boost::json::value_from_tag,
-                boost::json::value& result,
-                const View<Index<runir::kr::ps::base::Sketch>, C>& value,
-                Dictionaries* dictionaries)
+template<typename Archive, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::base::Sketch>, C>>)
 {
-    dictionaries->object(result, value, [&](auto& ar)
-    {
-        ar.field("boolean_features", value.template get_features<runir::kr::ps::dl::BooleanFeature>());
-        ar.field("numerical_features", value.template get_features<runir::kr::ps::dl::NumericalFeature>());
-        ar.field("rules", value.get_rules());
-    });
+    ar.field("boolean_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::ps::dl::BooleanFeature>()); });
+    ar.field("numerical_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::ps::dl::NumericalFeature>()); });
+    ar.field("rules", [](const auto& value) -> decltype(auto) { return (value.get_rules()); });
 }
 
 }

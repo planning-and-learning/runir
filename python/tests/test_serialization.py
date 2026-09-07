@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 
 import pytest
 
@@ -13,7 +15,47 @@ from pyrunir.kr.dl.base import semantics
 from pyrunir.kr.ps import base, ext
 from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_module_program
-from pyrunir.serialization import register_table, serialize, table
+from pyrunir.serialization import fields, register_table, serialize, table
+
+
+def test_fields_describe_native_layouts_without_instances():
+    assert fields(base.Rule) == ["symbol", "conditions", "effects"]
+    assert fields(ext.RuleVariant) == ["symbol", "kind", "value"]
+    assert fields(semantics.BooleanNonempty) == ["arg"]
+    assert fields(fp.FluentPredicateBinding) == ["relation", "objects"]
+    with pytest.raises(TypeError):
+        fields(str)
+
+
+def test_runir_preserves_tyr_field_enum_identity():
+    subprocess.run(
+        [sys.executable, "-c", """
+from pytyr.formalism import planning as fp
+import pytyr.serialization
+fields = fp.ActionBinding.Fields
+import pyrunir.serialization
+assert fp.ActionBinding.Fields is fields
+"""],
+        check=True,
+    )
+
+
+@pytest.mark.parametrize("native_type, selected", [
+    (base.Rule, base.Rule.Fields.symbol),
+    (fp.ActionBinding, fp.ActionBinding.Fields.objects),
+    (fp.FluentPredicateBinding, fp.FluentPredicateBinding.Fields.relation),
+])
+def test_matching_field_enums_are_accepted_for_both_libraries(native_type, selected):
+    dictionaries = Dictionaries()
+    register_table(dictionaries, native_type, "selected", "s", fields=[selected])
+    assert table(dictionaries, native_type) == []
+
+
+def test_field_enums_from_another_native_type_are_rejected():
+    with pytest.raises(TypeError):
+        register_table(
+            Dictionaries(), base.Rule, "rules", "r", fields=[fp.ActionBinding.Fields.objects],
+        )
 
 
 @pytest.mark.parametrize("operand", ["c_top", "r_universal"])
@@ -54,6 +96,7 @@ def test_registered_rule_keeps_conditions_and_effects_as_native_text(gripper_pla
     assert serialize(dictionaries, policy) == str(policy)
     assert table(dictionaries, base.Rule) == []
     assert serialize(dictionaries, rule) == "r0"
+    assert list(table(dictionaries, base.Rule)[0]) == fields(base.Rule)
     assert table(dictionaries, base.Rule) == [{
         "symbol": rule.get_symbol(),
         "conditions": [str(condition) for condition in rule.get_conditions()],
@@ -64,6 +107,18 @@ def test_registered_rule_keeps_conditions_and_effects_as_native_text(gripper_pla
     assert table(dictionaries, base.dl.ConcreteNumericalFeature) == [{
         "symbol": feature.get_symbol(), "expression": str(feature.get_expression()),
     }]
+
+    selected = Dictionaries()
+    register_table(
+        selected, base.Rule, "rules", "r", fields=[base.Rule.Fields.conditions, base.Rule.Fields.symbol],
+    )
+    assert serialize(selected, rule) == "r0"
+    row, = table(selected, base.Rule)
+    assert list(row) == ["symbol", "conditions"]
+    assert row == {
+        "symbol": rule.get_symbol(),
+        "conditions": [str(condition) for condition in rule.get_conditions()],
+    }
 
 
 def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context):

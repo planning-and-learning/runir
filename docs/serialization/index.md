@@ -53,12 +53,56 @@ Runir provides `register_table(dictionaries, native_type, name, prefix, fields=N
 Tyr's corresponding free functions support Tyr entities and can use the same
 registry. Its `tables()` method returns the collected snapshots.
 
+Use `fields(native_type)` to discover the default native columns without an
+instance or registry. The result follows declaration order:
+
+```python
+from pyrunir.kr.ps import base
+from pyrunir.serialization import fields
+
+assert fields(base.Rule) == ["symbol", "conditions", "effects"]
+```
+
+The same C++ declaration provides both these names and the accessors used when
+serializing a registered value:
+
+```cpp
+namespace ygg::serialization
+{
+template<typename Archive, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::base::Rule>, C>>)
+{
+    ar.field("symbol", [](const auto& value) -> decltype(auto) { return (value.get_symbol()); });
+    ar.field("conditions", [](const auto& value) -> decltype(auto) { return (value.get_conditions()); });
+    ar.field("effects", [](const auto& value) -> decltype(auto) { return (value.get_effects()); });
+}
+}
+```
+
+Discovery does not invoke the accessors. It describes the default layout only;
+registration selections and `project` callbacks do not change its result.
+
 The optional `fields` sequence selects immediate schema fields before recursive
 serialization. Omitted fields do not collect descendants. `None` keeps all
 fields; an empty sequence creates empty rows. Retained fields follow schema
-order, regardless of selection order. For example,
-`register_table(dictionaries, Rule, "rules", "r", fields=["symbol", "conditions"])`
-omits effects.
+order, regardless of selection order. Each native type exposes a `Fields` enum
+from the same declaration. For example, this registration omits effects:
+
+```python
+from pyrunir.serialization import register_table
+from pyyggdrasil.serialization import Dictionaries
+
+dictionaries = Dictionaries()
+register_table(
+    dictionaries, base.Rule, "rules", "r",
+    fields=[base.Rule.Fields.symbol, base.Rule.Fields.conditions],
+)
+```
+
+Generated overloads associate each native type with its own `Fields` enum so
+type checkers can detect selections from another type. Runir accepts Tyr's
+existing field enums when registering Tyr entities. String selections remain
+available, including arbitrary column names returned by a projection.
 
 The optional `project` callable receives a native entity and returns a complete
 row dictionary with arbitrary column names and transformed values. Its output
