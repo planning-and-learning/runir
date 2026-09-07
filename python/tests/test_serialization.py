@@ -59,7 +59,7 @@ def test_field_enums_from_another_native_type_are_rejected():
 
 
 @pytest.mark.parametrize("operand", ["c_top", "r_universal"])
-def test_nonempty_uses_native_operand_text(gripper_planning_domain, operand):
+def test_nonempty_requires_registered_operands_or_an_explicit_text_projection(gripper_planning_domain, operand):
     context = DomainContext(gripper_planning_domain)
     policy = parse_sketch(
         "(:sketch (:features (:boolean (:symbol b) (:expression "
@@ -72,16 +72,26 @@ def test_nonempty_uses_native_operand_text(gripper_planning_domain, operand):
     dictionaries = Dictionaries()
     register_table(dictionaries, semantics.BooleanNonempty, "nonempty", "b")
     expression = feature.get_expression()
-    assert serialize(dictionaries, expression) == str(expression)
-    assert table(dictionaries, semantics.BooleanNonempty) == []
+    with pytest.raises(ValueError, match=r"^Unregistered serialization type: Base\.boolean\.Constructor$"):
+        serialize(dictionaries, expression)
+
     dictionaries = Dictionaries()
     register_table(dictionaries, semantics.Boolean, "booleans", "x")
     register_table(dictionaries, semantics.BooleanNonempty, "nonempty", "b")
+    with pytest.raises(ValueError, match=r"^Unregistered serialization type: Base\.ConceptOrRole$"):
+        serialize(dictionaries, expression)
+
+    dictionaries = Dictionaries()
+    register_table(dictionaries, semantics.Boolean, "booleans", "x")
+    register_table(
+        dictionaries, semantics.BooleanNonempty, "nonempty", "b",
+        project=lambda nonempty: {"arg": str(nonempty.get_arg())},
+    )
     assert serialize(dictionaries, expression) == "x0"
     assert table(dictionaries, semantics.BooleanNonempty) == [{"arg": f"({operand})"}]
 
 
-def test_registered_rule_keeps_conditions_and_effects_as_native_text(gripper_planning_domain):
+def test_rule_text_requires_an_explicit_projection(gripper_planning_domain):
     context = DomainContext(gripper_planning_domain)
     policy = parse_sketch(
         read_fixture("kr/ps/base/dl/declared_features.sketch"),
@@ -92,9 +102,27 @@ def test_registered_rule_keeps_conditions_and_effects_as_native_text(gripper_pla
     feature = policy.get_numerical_features()[0].get_variant()
     dictionaries = Dictionaries()
     register_table(dictionaries, base.Rule, "rules", "r")
-    register_table(dictionaries, base.dl.ConcreteNumericalFeature, "features", "f")
-    assert serialize(dictionaries, policy) == str(policy)
-    assert table(dictionaries, base.Rule) == []
+    with pytest.raises(ValueError, match=r"^Unregistered serialization type: Base\.Sketch$"):
+        serialize(dictionaries, policy)
+
+    dictionaries = Dictionaries()
+    register_table(dictionaries, base.Rule, "rules", "r")
+    with pytest.raises(ValueError, match=r"^Unregistered serialization type: Base\.Condition$"):
+        serialize(dictionaries, rule)
+
+    dictionaries = Dictionaries()
+    register_table(
+        dictionaries, base.Rule, "rules", "r",
+        project=lambda value: {
+            "symbol": value.get_symbol(),
+            "conditions": [str(condition) for condition in value.get_conditions()],
+            "effects": [str(effect) for effect in value.get_effects()],
+        },
+    )
+    register_table(
+        dictionaries, base.dl.ConcreteNumericalFeature, "features", "f",
+        project=lambda value: {"symbol": value.get_symbol(), "expression": str(value.get_expression())},
+    )
     assert serialize(dictionaries, rule) == "r0"
     assert list(table(dictionaries, base.Rule)[0]) == fields(base.Rule)
     assert table(dictionaries, base.Rule) == [{
@@ -110,15 +138,11 @@ def test_registered_rule_keeps_conditions_and_effects_as_native_text(gripper_pla
 
     selected = Dictionaries()
     register_table(
-        selected, base.Rule, "rules", "r", fields=[base.Rule.Fields.conditions, base.Rule.Fields.symbol],
+        selected, base.Rule, "rules", "r", fields=[base.Rule.Fields.symbol],
     )
     assert serialize(selected, rule) == "r0"
     row, = table(selected, base.Rule)
-    assert list(row) == ["symbol", "conditions"]
-    assert row == {
-        "symbol": rule.get_symbol(),
-        "conditions": [str(condition) for condition in rule.get_conditions()],
-    }
+    assert row == {"symbol": rule.get_symbol()}
 
 
 def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context):
@@ -132,19 +156,25 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     expander = ext.GroundSuccessorExpander(context, program)
     initial = expander.initial_state()
     step, = expander.control_steps(initial)
-    inline = Dictionaries()
-    assert serialize(inline, initial) == str(initial)
-    assert inline.tables() == {}
+    with pytest.raises(ValueError, match="^Unregistered serialization type: GroundExecutionState$"):
+        serialize(Dictionaries(), initial)
+    with pytest.raises(ValueError, match="^Unregistered serialization type: PlanningDomain$"):
+        serialize(Dictionaries(), domain)
 
     dictionaries = Dictionaries()
     register_table(dictionaries, ground.State, "states", "s")
+    register_table(dictionaries, fp.FluentGroundAtom, "atoms", "a", fields=())
     register_table(dictionaries, fp.FunctionExpression, "expressions", "x")
     register_table(dictionaries, ext.GroundExecutionState, "execution_states", "e")
-    register_table(dictionaries, ext.GroundCallStack, "call_stacks", "c")
-    register_table(dictionaries, ext.ModuleProgram, "programs", "p")
+    register_table(dictionaries, ext.GroundCallStack, "call_stacks", "c", fields=("caller",))
+    register_table(
+        dictionaries, ext.ModuleProgram, "programs", "p",
+        project=lambda value: {
+            "entry_module": str(value.get_entry_module()),
+            "modules": [str(module) for module in value.get_modules()],
+        },
+    )
 
-    encoded_domain = serialize(dictionaries, domain)
-    assert encoded_domain == str(domain)
     constant = domain.get_repository().create(fp.FunctionExpressionData(3.5))
     assert serialize(dictionaries, constant) == "x0"
     assert table(dictionaries, fp.FunctionExpression) == [{"kind": "constant", "value": 3.5}]
@@ -159,13 +189,13 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     assert first["call_stack"] != second["call_stack"]
     state, = table(dictionaries, ground.State)
     assert set(state) == {"fluent_ground_atoms", "derived_ground_atoms", "fluent_ground_function_term_values"}
+    assert state["fluent_ground_atoms"] == [f"a{index}" for index in range(len(table(dictionaries, fp.FluentGroundAtom)))]
     assert dictionaries.tables()["execution_states"]["rows"] == [first, second]
 
     assert first["phase"] == initial.phase.name
     assert table(dictionaries, ext.ModuleProgram)[0]["modules"] == [str(module) for module in program.get_modules()]
     snapshot = dictionaries.tables()
     assert json.loads(json.dumps(snapshot)) == snapshot
-    assert serialize(dictionaries, domain) == encoded_domain
     assert serialize(dictionaries, initial) == "e0"
     assert dictionaries.tables() == snapshot
 
