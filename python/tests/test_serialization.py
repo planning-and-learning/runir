@@ -15,16 +15,14 @@ from pyrunir.kr.dl.base import semantics
 from pyrunir.kr.ps import base, ext
 from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_module_program
-from pyrunir.serialization import fields, register_table, serialize, table
+from pyrunir.serialization import register_table, serialize, table
 
 
 def test_fields_describe_native_layouts_without_instances():
-    assert fields(base.Rule) == ["symbol", "conditions", "effects"]
-    assert fields(ext.RuleVariant) == ["symbol", "kind", "value"]
-    assert fields(semantics.BooleanNonempty) == ["arg"]
-    assert fields(fp.FluentPredicateBinding) == ["relation", "objects"]
-    with pytest.raises(TypeError):
-        fields(str)
+    assert list(base.Rule.Fields.__members__) == ["symbol", "conditions", "effects"]
+    assert list(ext.RuleVariant.Fields.__members__) == ["symbol", "kind", "value"]
+    assert list(semantics.BooleanNonempty.Fields.__members__) == ["arg"]
+    assert list(fp.FluentPredicateBinding.Fields.__members__) == ["relation", "objects"]
 
 
 def test_runir_preserves_tyr_field_enum_identity():
@@ -124,7 +122,7 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain):
         project=lambda value: {"symbol": value.get_symbol(), "expression": str(value.get_expression())},
     )
     assert serialize(dictionaries, rule) == "r0"
-    assert list(table(dictionaries, base.Rule)[0]) == fields(base.Rule)
+    assert list(table(dictionaries, base.Rule)[0]) == list(base.Rule.Fields.__members__)
     assert table(dictionaries, base.Rule) == [{
         "symbol": rule.get_symbol(),
         "conditions": [str(condition) for condition in rule.get_conditions()],

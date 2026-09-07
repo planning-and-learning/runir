@@ -54,14 +54,13 @@ Runir provides `register_table(dictionaries, native_type, name, prefix, fields=N
 Tyr's corresponding free functions support Tyr entities and can use the same
 registry. Its `tables()` method returns the collected snapshots.
 
-Use `fields(native_type)` to discover the default native columns without an
+Use a native type's `Fields` enum to discover the default columns without an
 instance or registry. The result follows declaration order:
 
 ```python
 from pyrunir.kr.ps import base
-from pyrunir.serialization import fields
 
-assert fields(base.Rule) == ["symbol", "conditions", "effects"]
+assert list(base.Rule.Fields.__members__) == ["symbol", "conditions", "effects"]
 ```
 
 The same C++ declaration provides both these names and the accessors used when
