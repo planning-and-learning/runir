@@ -162,7 +162,7 @@ for name, snapshot in dictionaries.tables().items():
 ```
 
 Nested dictionaries expand into columns with grouped headers. Simple lists use
-comma-separated cells; empty, nested, or ambiguous lists use compact JSON.
+brackets and commas, such as `[a0,a1]`; nested or ambiguous lists use compact JSON.
 The default layout uses unpadded pipe separators; pass `aligned=True` to pad
 columns. Neither layout adds decorative lines. Callers can add
 columns to snapshot rows before rendering. Match annotations by reference,
