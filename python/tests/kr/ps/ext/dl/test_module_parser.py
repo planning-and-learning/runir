@@ -25,7 +25,7 @@ from pyrunir.kr.ps.ext import dl
 from pyrunir.kr.uns.dl import parse_classifier
 from pyyggdrasil.execution import ExecutionContext
 from pypddl.formalism import ParserOptions
-from pytyr.formalism.planning import ActionBinding, Parser, PlanningDomain, PlanningTask
+from pytyr.formalism.planning import ActionBinding, LiftedPlanningTask, Parser, PlanningDomain
 from pytyr.planning.ground import Task as GroundTask
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
@@ -71,7 +71,7 @@ def _blocksworld_data_dir() -> Path:
     return data_root() / "classical" / "profiling" / "blocksworld-large-simple"
 
 
-def _planning_task_and_domain() -> tuple[PlanningTask, PlanningDomain]:
+def _planning_task_and_domain() -> tuple[LiftedPlanningTask, PlanningDomain]:
     data_dir = _blocksworld_data_dir()
     parser = Parser(data_dir / "domain.pddl", ParserOptions())
     planning_task = parser.parse_task(data_dir / "p-100-2.pddl", ParserOptions())
