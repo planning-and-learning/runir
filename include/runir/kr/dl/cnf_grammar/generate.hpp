@@ -4,6 +4,7 @@
 #include "runir/kr/dl/cnf_grammar/declarations.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
+#include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <chrono>
 #include <concepts>
@@ -77,6 +78,7 @@ template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
                                     const std::vector<tyr::planning::StateView<Kind>>& states,
                                     runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,
+                                    runir::kr::dl::semantics::DenotationRepository& denotation_repository,
                                     const GenerateOptions& options);
 
 }

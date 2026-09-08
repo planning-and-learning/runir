@@ -1,9 +1,11 @@
+import pytest
+
 from pypddl.formalism import ParserOptions
 from pyyggdrasil.execution import ExecutionContext
 from pytyr.formalism.planning import Parser
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
-from pyrunir.datasets import GroundTaskSearchContext
-from pyrunir.kr import DomainContext, GroundTaskContext
+from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
+from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
 from pyrunir.kr.dl import base
 from pyrunir.kr.dl.base import cnf_grammar, semantics
 from pyrunir.kr.dl.base.grammar import ConstructorRepositoryFactory
@@ -29,7 +31,9 @@ def _generate(grammar_description, states, planning_domain, task_context, max_sy
     cnf = cnf_grammar.translate(grammar, cnf_repository)
     options = cnf_grammar.GenerateOptions()
     options.max_syntactic_complexity = max_syntactic_complexity
-    return cnf_grammar.generate_ground(cnf, states, task_context.domain_context.base_repository.get_dl_repository(), options)
+    return cnf_grammar.generate_ground(
+        cnf, states, task_context.domain_context.base_repository.get_dl_repository(), task_context.dl_denotation_repository, options
+    )
 
 
 def _concept_vector(concept, states, task_context):
@@ -62,6 +66,52 @@ def test_generate_ground_and_cached_evaluation(gripper_data_dir) -> None:
     assert len(list(result.roles[0].evaluate(context, cache))) == 36
     assert result.booleans[0].evaluate(context, cache).get() is True
     assert result.numericals[0].evaluate(context, cache).get() == 6
+
+
+def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_data_dir) -> None:
+    parser = Parser(gripper_data_dir / "domain.pddl", ParserOptions())
+    planning_domain = parser.get_domain()
+    execution = ExecutionContext(1)
+    task = Task(parser.parse_task(gripper_data_dir / "test-1.pddl", ParserOptions()))
+    search = LiftedTaskSearchContext(task, execution)
+    task_context = LiftedTaskContext(DomainContext(planning_domain), search)
+    state = search.state_repository.get_initial_state(search.axiom_evaluator)
+    output_repository = task_context.domain_context.base_repository.get_dl_repository()
+    grammar_repository = ConstructorRepositoryFactory().create(planning_domain)
+    grammar = base.parse_grammar(
+        "((c_0 (c_top))(n_0 (n_count c_0)))", planning_domain.get_domain(), grammar_repository
+    )
+    cnf_repository = cnf_grammar.ConstructorRepositoryFactory().create(planning_domain)
+    cnf = cnf_grammar.translate(grammar, cnf_repository)
+    options = cnf_grammar.GenerateOptions()
+    options.max_syntactic_complexity = 2
+
+    denotation_repository = task_context.dl_denotation_repository
+    result = cnf_grammar.generate_lifted(cnf, [state], output_repository, denotation_repository, options)
+    context = semantics.LiftedEvaluationContext(state, task_context.dl_builder, task_context.dl_denotation_repository)
+    assert len(list(result.concepts[0].evaluate(context))) == 6
+    assert result.numericals[0].evaluate(context).get() == 6
+
+    other_task = Task(parser.parse_task(gripper_data_dir / "test-1.pddl", ParserOptions()))
+    other_search = LiftedTaskSearchContext(other_task, execution)
+    other_state = other_search.state_repository.get_initial_state(other_search.axiom_evaluator)
+    with pytest.raises(ValueError, match="states and denotation repository for the same planning task"):
+        cnf_grammar.generate_lifted(cnf, [state, other_state], output_repository, denotation_repository, options)
+
+    other_context = LiftedTaskContext(task_context.domain_context, other_search)
+    with pytest.raises(ValueError, match="states and denotation repository for the same planning task"):
+        cnf_grammar.generate_lifted(cnf, [state], output_repository, other_context.dl_denotation_repository, options)
+
+    foreign_parser = Parser(gripper_data_dir / "domain.pddl", ParserOptions())
+    foreign_task = Task(foreign_parser.parse_task(gripper_data_dir / "test-1.pddl", ParserOptions()))
+    foreign_search = LiftedTaskSearchContext(foreign_task, execution)
+    foreign_state = foreign_search.state_repository.get_initial_state(foreign_search.axiom_evaluator)
+    with pytest.raises(ValueError, match="states and output repository for the same planning domain"):
+        cnf_grammar.generate_lifted(cnf, [foreign_state], output_repository, denotation_repository, options)
+
+    foreign_repository = semantics.ConstructorRepositoryFactory().create(foreign_parser.get_domain())
+    with pytest.raises(ValueError, match="grammar and output repository for the same planning domain"):
+        cnf_grammar.generate_lifted(cnf, [], foreign_repository, denotation_repository, options)
 
 
 def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir) -> None:

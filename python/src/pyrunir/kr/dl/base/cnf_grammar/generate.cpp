@@ -7,6 +7,7 @@
 #include <runir/kr/dl/cnf_grammar/generate.hpp>
 #include <runir/kr/dl/datas.hpp>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <tyr/planning/ground/state_view.hpp>
 #include <tyr/planning/lifted/state_view.hpp>
 
@@ -43,6 +44,7 @@ void bind_cnf_grammar_generate(nb::module_& m)
           nb::arg("grammar"),
           nb::arg("states"),
           nb::arg("output_repository"),
+          nb::arg("denotation_repository"),
           nb::arg("options"),
           nb::keep_alive<0, 3>());
     m.def("generate_lifted",
@@ -50,6 +52,7 @@ void bind_cnf_grammar_generate(nb::module_& m)
           nb::arg("grammar"),
           nb::arg("states"),
           nb::arg("output_repository"),
+          nb::arg("denotation_repository"),
           nb::arg("options"),
           nb::keep_alive<0, 3>());
 }
