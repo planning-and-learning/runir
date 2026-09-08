@@ -29,15 +29,7 @@ StructuralTerminationResult make_result(SketchView sketch, const SketchAnalysis&
         {
             if (vertex_remap[vertex] == std::numeric_limits<std::size_t>::max())
             {
-                auto booleans = boost::dynamic_bitset<>(analysis.policy.num_booleans);
-                const auto local_booleans = runir::kr::ps::detail::vertex_booleans(vertex, projected.policy);
-                for (std::size_t local = 0; local < projected.boolean_positions.size(); ++local)
-                    booleans.set(projected.boolean_positions[local], local_booleans.test(local));
-
-                auto numericals = boost::dynamic_bitset<>(analysis.policy.num_numericals);
-                const auto local_numericals = runir::kr::ps::detail::vertex_numericals(vertex, projected.policy);
-                for (std::size_t local = 0; local < projected.numerical_positions.size(); ++local)
-                    numericals.set(projected.numerical_positions[local], local_numericals.test(local));
+                auto [booleans, numericals] = runir::kr::ps::detail::unproject_vertex(vertex, projected, analysis.policy);
                 vertex_remap[vertex] = counterexample_builder.add_vertex(PolicyGraphVertexLabel(std::move(booleans), std::move(numericals)));
             }
             return static_cast<graphs::VertexIndex>(vertex_remap[vertex]);

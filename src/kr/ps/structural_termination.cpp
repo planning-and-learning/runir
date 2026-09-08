@@ -60,15 +60,7 @@ void validate_policy(const QualitativePolicy& policy)
 
 CounterexampleVertex materialize_vertex(std::size_t vertex, const detail::ProjectedPolicyComponent& projected, const QualitativePolicy& policy)
 {
-    auto boolean_values = boost::dynamic_bitset<>(policy.num_booleans);
-    const auto local_booleans = detail::vertex_booleans(vertex, projected.policy);
-    for (std::size_t local = 0; local < projected.boolean_positions.size(); ++local)
-        boolean_values.set(projected.boolean_positions[local], local_booleans.test(local));
-
-    auto numerical_values = boost::dynamic_bitset<>(policy.num_numericals);
-    const auto local_numericals = detail::vertex_numericals(vertex, projected.policy);
-    for (std::size_t local = 0; local < projected.numerical_positions.size(); ++local)
-        numerical_values.set(projected.numerical_positions[local], local_numericals.test(local));
+    auto [boolean_values, numerical_values] = detail::unproject_vertex(vertex, projected, policy);
 
     return CounterexampleVertex {
         projected.memory_positions[vertex % projected.policy.num_memory_states],

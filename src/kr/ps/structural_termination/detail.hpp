@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <optional>
 #include <span>
+#include <utility>
 #include <vector>
 
 namespace runir::kr::ps::detail
@@ -92,6 +93,8 @@ auto materialize_scc_results(const std::optional<std::vector<SccFeaturePositions
 
 boost::dynamic_bitset<> vertex_booleans(std::size_t vertex, const QualitativePolicy& policy);
 boost::dynamic_bitset<> vertex_numericals(std::size_t vertex, const QualitativePolicy& policy);
+std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>
+unproject_vertex(std::size_t vertex, const ProjectedPolicyComponent& projected, const QualitativePolicy& policy);
 std::vector<PolicyEdge> build_policy_edges(const QualitativePolicy& policy);
 StrongComponents find_strong_components(const std::vector<PolicyEdge>& edges, std::size_t num_vertices);
 std::vector<ProjectedPolicyComponent> project_policy_components(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions);

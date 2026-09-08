@@ -25,6 +25,22 @@ boost::dynamic_bitset<> vertex_numericals(std::size_t vertex, const QualitativeP
     return values;
 }
 
+std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>
+unproject_vertex(std::size_t vertex, const ProjectedPolicyComponent& projected, const QualitativePolicy& policy)
+{
+    auto booleans = boost::dynamic_bitset<>(policy.num_booleans);
+    const auto local_booleans = vertex_booleans(vertex, projected.policy);
+    for (std::size_t local = 0; local < projected.boolean_positions.size(); ++local)
+        booleans.set(projected.boolean_positions[local], local_booleans.test(local));
+
+    auto numericals = boost::dynamic_bitset<>(policy.num_numericals);
+    const auto local_numericals = vertex_numericals(vertex, projected.policy);
+    for (std::size_t local = 0; local < projected.numerical_positions.size(); ++local)
+        numericals.set(projected.numerical_positions[local], local_numericals.test(local));
+
+    return { std::move(booleans), std::move(numericals) };
+}
+
 namespace
 {
 

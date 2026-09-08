@@ -254,6 +254,27 @@ TEST(RunirTests, CommonSieveProjectsTestedAndChangedFeatures)
     EXPECT_EQ(projected.front().numerical_positions, std::vector<std::size_t>({ 0, 2 }));
 }
 
+TEST(RunirTests, UnprojectVertexRestoresOriginalFeaturePositions)
+{
+    const auto policy = kr::ps::detail::QualitativePolicy(4, 5, 6);
+    const auto projected = kr::ps::detail::ProjectedPolicyComponent { kr::ps::detail::QualitativePolicy(2, 2, 2), { 3, 1 }, { 4, 1 }, { 5, 2 }, {} };
+    for (const auto memory_position : { 0u, 1u })
+    {
+        // Local Boolean bits 01 and numerical bits 10, followed by the memory position.
+        const auto [booleans, numericals] = kr::ps::detail::unproject_vertex(0b1001 * 2 + memory_position, projected, policy);
+        EXPECT_EQ(booleans, boost::dynamic_bitset<>(5, 1u << 4));
+        EXPECT_EQ(numericals, boost::dynamic_bitset<>(6, 1u << 2));
+    }
+
+    const auto empty = kr::ps::detail::ProjectedPolicyComponent { kr::ps::detail::QualitativePolicy(2, 0, 0), { 3, 1 }, {}, {}, {} };
+    const auto [booleans, numericals] = kr::ps::detail::unproject_vertex(1, empty, policy);
+    EXPECT_EQ(booleans, boost::dynamic_bitset<>(5));
+    EXPECT_EQ(numericals, boost::dynamic_bitset<>(6));
+    const auto [no_booleans, no_numericals] = kr::ps::detail::unproject_vertex(1, empty, kr::ps::detail::QualitativePolicy(4, 0, 0));
+    EXPECT_TRUE(no_booleans.empty());
+    EXPECT_TRUE(no_numericals.empty());
+}
+
 TEST(RunirTests, CommonSieveAppliesFeatureLimitPerResidualComponent)
 {
     using NumericalChange = kr::ps::dl::NumericalChange;
