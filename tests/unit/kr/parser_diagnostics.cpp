@@ -1,13 +1,26 @@
+#include "fixtures.hpp"
+
 #include <boost/variant/get.hpp>
 #include <gtest/gtest.h>
 #include <optional>
+#include <runir/kr/dl/grammar/constructor_repository.hpp>
+#include <runir/kr/dl/grammar/parser.hpp>
 #include <runir/kr/dl/grammar/parser/parser.hpp>
+#include <runir/kr/domain_context.hpp>
 #include <runir/kr/errors.hpp>
+#include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/parser/parser.hpp>
+#include <runir/kr/ps/base/repository.hpp>
+#include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/dl/parser/parser.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
+#include <runir/kr/uns/dl/parser.hpp>
 #include <runir/kr/uns/dl/parser/parser.hpp>
+#include <runir/kr/uns/repository.hpp>
 #include <string>
 #include <tuple>
+#include <typeinfo>
+#include <tyr/formalism/planning/parser.hpp>
 
 namespace runir::tests
 {
@@ -160,6 +173,51 @@ TEST(RunirTests, ParserDiagnosticsCoverSketchModuleAndClassifier)
     expect_diagnostic(parse_module, module + ")", "module", module.size(), 0);
     expect_diagnostic(parse_classifier, classifier.substr(0, classifier.size() - 1), "classifier", classifier.size() - 1, 0);
     expect_diagnostic(parse_classifier, classifier + ")", "classifier", classifier.size(), 0);
+}
+
+TEST(RunirTests, LookupErrorsPreserveIdentifierSpansAcrossLanguages)
+{
+    const auto planning_domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    const auto domain = planning_domain.get_domain();
+    const auto context = kr::DomainContext::create(planning_domain);
+    const auto grammar_repository = kr::dl::grammar::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
+    const auto prefix = std::string("; UTF-8 é\n");
+    for (const auto& [expression, name, message] : {
+             std::tuple { "(c_atomic_state \"missing\")", "missing", "Undefined predicate: missing" },
+             std::tuple { "(c_atomic_state \"at\")", "at", "Arity mismatch for ConceptAtomicState: expected 1, got 2" },
+             std::tuple { "(c_nominal \"missing\")", "missing", "Undefined constant: missing" },
+         })
+    {
+        const auto feature = std::string("(:boolean (:symbol b) (:expression (b_nonempty ") + expression + ")))";
+        const auto check = [&](const std::string& source, auto&& parse)
+        {
+            SCOPED_TRACE(source);
+            try
+            {
+                parse(source);
+                FAIL() << "Expected lookup to fail";
+            }
+            catch (const kr::SemanticError& error)
+            {
+                EXPECT_EQ(typeid(error), std::string(name) == "at" ? typeid(kr::ArityMismatchError) : typeid(kr::UndefinedSymbolError));
+                const auto& diagnostic = error.diagnostic();
+                EXPECT_EQ(diagnostic.message, message);
+                ASSERT_TRUE(diagnostic.location.has_value());
+                const auto begin = source.find(std::string("\"") + name + "\"") + 1;
+                EXPECT_EQ(diagnostic.location->begin(), begin);
+                EXPECT_EQ(diagnostic.location->end(), begin + std::string(name).size());
+                EXPECT_EQ(diagnostic.location->source()->text(), source);
+            }
+        };
+        check(prefix + "((c_0 " + expression + "))",
+              [&](const auto& source) { static_cast<void>(kr::dl::grammar::parse_grammar(source, domain, *grammar_repository)); });
+        check(prefix + "(:sketch (:features " + feature + ") (:rules))",
+              [&](const auto& source) { static_cast<void>(kr::ps::base::dl::parse_sketch(source, domain, *context->base_repository)); });
+        check(prefix + "(:module (:symbol m) (:arguments) (:registers) (:entry s) (:memory s) (:features " + feature + ") (:rules))",
+              [&](const auto& source) { static_cast<void>(kr::ps::ext::dl::parse_module(source, domain, *context->ext_repository)); });
+        check(prefix + "(:classifier (:symbol c) (:features " + feature + ") (:expression (or)))",
+              [&](const auto& source) { static_cast<void>(kr::uns::dl::parse_classifier(source, domain, *context->uns_repository)); });
+    }
 }
 
 TEST(RunirTests, ParserDiagnosticsPreserveTheInnermostContext)

@@ -1,5 +1,6 @@
 #include "runir/kr/ps/ext/dl/parser.hpp"
 
+#include "kr/parser/resolution.hpp"
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/grammar/parser/parser.hpp"
 #include "runir/kr/dl/repository.hpp"
@@ -28,11 +29,6 @@ namespace runir::kr::ps::ext::dl
 {
 namespace
 {
-namespace dl_ = runir::kr::dl;
-namespace dl_ast = runir::kr::dl::grammar::ast;
-using DiagnosticContext = runir::kr::parser::DiagnosticContext;
-using DlBuilder = runir::kr::dl::ExtBuilder;
-using PsBuilder = runir::kr::ps::ext::Builder;
 template<typename Entity>
 struct ReferenceTable
 {
@@ -42,31 +38,26 @@ struct ReferenceTable
 
 struct ModuleReferences
 {
-    ReferenceTable<dl_::Argument<dl_::ConceptTag>> concept_arguments;
-    ReferenceTable<dl_::Argument<dl_::RoleTag>> role_arguments;
-    ReferenceTable<dl_::Argument<dl_::BooleanTag>> boolean_arguments;
-    ReferenceTable<dl_::Argument<dl_::NumericalTag>> numerical_arguments;
-    ReferenceTable<dl_::Register<dl_::ConceptTag>> concept_registers;
-    ReferenceTable<dl_::Register<dl_::RoleTag>> role_registers;
+    ReferenceTable<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>> concept_arguments;
+    ReferenceTable<runir::kr::dl::Argument<runir::kr::dl::RoleTag>> role_arguments;
+    ReferenceTable<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>> boolean_arguments;
+    ReferenceTable<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>> numerical_arguments;
+    ReferenceTable<runir::kr::dl::Register<runir::kr::dl::ConceptTag>> concept_registers;
+    ReferenceTable<runir::kr::dl::Register<runir::kr::dl::RoleTag>> role_registers;
 };
 
 struct ConstructorContext
 {
-    const DiagnosticContext& diagnostics;
-    DlBuilder& builder;
+    runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository;
+    runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder;
+    const runir::kr::parser::DiagnosticContext& diagnostics;
     const ModuleReferences* references;
-
-    template<typename Position, typename Error>
-    [[noreturn]] void throw_at(const Position& position, Error error) const
-    {
-        diagnostics.throw_at(position, std::move(error));
-    }
 };
 
-struct BuildContext
+struct Builders
 {
-    DlBuilder& dl;
-    PsBuilder& ps;
+    runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& dl;
+    runir::kr::ps::ext::Builder& ps;
 };
 
 template<typename T>
@@ -95,153 +86,97 @@ auto intern(Repository& repository, ygg::Data<T>& data)
 }
 
 template<typename T>
-auto intern_dl(runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository, ygg::Data<T>& data)
+auto intern(const ConstructorContext& context, ygg::Data<T>& data)
 {
-    return runir::kr::dl::get_or_create(repository, data).first;
+    return runir::kr::dl::get_or_create(context.repository, data).first;
 }
 
-template<dl_::CategoryTag Category, typename T>
-auto intern_constructor(runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository, DlBuilder& builder, ygg::Index<T> index)
+template<runir::kr::dl::CategoryTag Category, typename T>
+auto intern_constructor(const ConstructorContext& context, ygg::Index<T> index)
 {
-    auto data = runir::kr::dl::checkout<dl_::Constructor<runir::kr::ExtFamilyTag, Category>>(builder);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, Category>>(context.builder);
     data->variant = index;
-    return intern_dl(repository, *data);
+    return intern(context, *data);
 }
 
 auto parse_concept(const std::string& description,
                    tyr::formalism::planning::DomainView domain,
                    runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                   DlBuilder& builder,
-                   DiagnosticContext& diagnostics) -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>;
+                   runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder,
+                   runir::kr::parser::DiagnosticContext& diagnostics)
+    -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>;
 
 auto parse_role(const std::string& description,
                 tyr::formalism::planning::DomainView domain,
                 runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                DlBuilder& builder,
-                DiagnosticContext& diagnostics) -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>;
+                runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder,
+                runir::kr::parser::DiagnosticContext& diagnostics) -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>;
 
 auto parse_boolean(const std::string& description,
                    tyr::formalism::planning::DomainView domain,
                    runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                   DlBuilder& builder,
-                   DiagnosticContext& diagnostics) -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>;
+                   runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder,
+                   runir::kr::parser::DiagnosticContext& diagnostics)
+    -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>;
 
 auto parse_numerical(const std::string& description,
                      tyr::formalism::planning::DomainView domain,
                      runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                     DlBuilder& builder,
-                     DiagnosticContext& diagnostics) -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>;
+                     runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder,
+                     runir::kr::parser::DiagnosticContext& diagnostics)
+    -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>;
 
-template<dl_::CategoryTag Category>
-auto parse_constructor(const dl_ast::Constructor<runir::kr::ExtFamilyTag, Category>& node,
+template<runir::kr::dl::CategoryTag Category>
+auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<runir::kr::ExtFamilyTag, Category>& node,
                        tyr::formalism::planning::DomainView domain,
-                       runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                       const ConstructorContext& diagnostics) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>;
+                       const ConstructorContext& context) -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>;
 
-template<dl_::CategoryTag Category>
-auto parse_constructor(const dl_ast::Constructor<runir::kr::ExtFamilyTag, Category>& node,
-                       tyr::formalism::planning::DomainView domain,
-                       runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                       const DiagnosticContext& diagnostics,
-                       DlBuilder& builder,
-                       const ModuleReferences* references = nullptr) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>;
-
-template<dl_::CategoryTag Category>
-auto parse_choice(const dl_ast::ConstructorOrNonTerminal<runir::kr::ExtFamilyTag, Category>& node,
-                  tyr::formalism::planning::DomainView domain,
-                  runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                  const ConstructorContext& diagnostics) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
+template<runir::kr::dl::CategoryTag Category>
+auto parse_constructor_or_non_terminal(const runir::kr::dl::grammar::ast::ConstructorOrNonTerminal<runir::kr::ExtFamilyTag, Category>& node,
+                                       tyr::formalism::planning::DomainView domain,
+                                       const ConstructorContext& context) -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
 {
     return boost::apply_visitor(
-        [&](const auto& value) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
+        [&](const auto& value) -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
         {
             const auto& unwrapped = unwrap(value);
-            if constexpr (std::same_as<std::remove_cvref_t<decltype(unwrapped)>, dl_ast::NonTerminal<runir::kr::ExtFamilyTag, Category>>)
-                diagnostics.throw_at(unwrapped.name,
-                                     runir::kr::InvalidExpressionError("Ext module DL expressions cannot reference "
-                                                                       "grammar nonterminals."));
+            if constexpr (std::same_as<std::remove_cvref_t<decltype(unwrapped)>, runir::kr::dl::grammar::ast::NonTerminal<runir::kr::ExtFamilyTag, Category>>)
+                context.diagnostics.throw_at(unwrapped.name,
+                                             runir::kr::InvalidExpressionError("Ext module DL expressions cannot reference "
+                                                                               "grammar nonterminals."));
             else
-                return parse_constructor(unwrapped, domain, repository, diagnostics);
+                return parse_constructor(unwrapped, domain, context);
         },
         node.get());
 }
 
-template<tyr::formalism::FactKind T>
-auto find_predicate(tyr::formalism::planning::DomainView domain, const std::string& name)
-{
-    for (auto predicate : domain.template get_predicates<T>())
-        if (predicate.get_name() == name)
-            return std::optional(predicate);
-    return std::optional<tyr::formalism::planning::PredicateView<T>> {};
-}
-
-template<tyr::formalism::FactKind T, typename Position>
-auto require_predicate(tyr::formalism::planning::DomainView domain,
-                       const std::string& name,
-                       size_t arity,
-                       const char* constructor_name,
-                       const Position& position,
-                       const ConstructorContext& diagnostics)
-{
-    auto predicate = find_predicate<T>(domain, name);
-    if (!predicate)
-        return std::optional<ygg::Index<tyr::formalism::Predicate<T>>> {};
-
-    if (predicate->get_arity() != arity)
-        diagnostics.throw_at(position, runir::kr::ArityMismatchError(constructor_name, arity, predicate->get_arity()));
-
-    return std::optional(predicate->get_index());
-}
-
-template<typename Position, typename Make>
-auto resolve_predicate(tyr::formalism::planning::DomainView domain,
-                       const std::string& name,
-                       size_t arity,
-                       const char* constructor_name,
-                       const Position& position,
-                       const ConstructorContext& diagnostics,
-                       Make&& make)
-{
-    if (auto predicate = require_predicate<tyr::formalism::StaticTag>(domain, name, arity, constructor_name, position, diagnostics))
-        return make(tyr::formalism::StaticTag {}, *predicate);
-    if (auto predicate = require_predicate<tyr::formalism::FluentTag>(domain, name, arity, constructor_name, position, diagnostics))
-        return make(tyr::formalism::FluentTag {}, *predicate);
-    if (auto predicate = require_predicate<tyr::formalism::DerivedTag>(domain, name, arity, constructor_name, position, diagnostics))
-        return make(tyr::formalism::DerivedTag {}, *predicate);
-
-    diagnostics.throw_at(position, runir::kr::UndefinedSymbolError("predicate", name));
-}
-
 template<typename Entity, typename Identifier, typename Reference>
-ygg::Index<Entity> resolve_reference(const Reference& reference,
-                                     const ReferenceTable<Entity>* declarations,
-                                     const char* kind,
-                                     runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                                     const ConstructorContext& diagnostics)
+ygg::Index<Entity>
+resolve_reference(const Reference& reference, const ReferenceTable<Entity>* declarations, const char* kind, const ConstructorContext& context)
 {
     return boost::apply_visitor(
         [&](const auto& concrete) -> ygg::Index<Entity>
         {
             using Concrete = std::remove_cvref_t<decltype(concrete)>;
-            if constexpr (std::same_as<Concrete, dl_ast::NumericReference>)
+            if constexpr (std::same_as<Concrete, runir::kr::dl::grammar::ast::NumericReference>)
             {
                 if (declarations)
                 {
                     if (concrete.value >= declarations->by_identifier.size())
-                        diagnostics.throw_at(concrete, runir::kr::UndefinedSymbolError(kind, std::to_string(concrete.value)));
+                        context.diagnostics.throw_at(concrete, runir::kr::UndefinedSymbolError(kind, std::to_string(concrete.value)));
                     return declarations->by_identifier[concrete.value];
                 }
 
                 try
                 {
-                    auto data = runir::kr::dl::checkout<Entity>(diagnostics.builder);
+                    auto data = runir::kr::dl::checkout<Entity>(context.builder);
                     data->name = std::to_string(concrete.value);
                     data->identifier = Identifier(concrete.value);
-                    return intern_dl(repository, *data).get_index();
+                    return intern(context, *data).get_index();
                 }
                 catch (const std::out_of_range&)
                 {
-                    diagnostics.throw_at(concrete, runir::kr::UndefinedSymbolError(kind, std::to_string(concrete.value)));
+                    context.diagnostics.throw_at(concrete, runir::kr::UndefinedSymbolError(kind, std::to_string(concrete.value)));
                 }
             }
             else
@@ -251,623 +186,526 @@ ygg::Index<Entity> resolve_reference(const Reference& reference,
                     const auto it = declarations->by_name.find(concrete.text);
                     if (it != declarations->by_name.end())
                         return it->second;
-                    diagnostics.throw_at(concrete, runir::kr::UndefinedSymbolError(kind, concrete.text));
+                    context.diagnostics.throw_at(concrete, runir::kr::UndefinedSymbolError(kind, concrete.text));
                 }
-                diagnostics.throw_at(concrete, runir::kr::InvalidExpressionError("Expected numeric DL reference: " + concrete.text));
+                context.diagnostics.throw_at(concrete, runir::kr::InvalidExpressionError("Expected numeric DL reference: " + concrete.text));
             }
         },
         reference.get());
 }
 
-auto require_object(tyr::formalism::planning::DomainView domain, const dl_ast::Identifier& name, const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptBot<runir::kr::ExtFamilyTag>&, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
-    for (auto object : domain.get_constants())
-        if (object.get_name() == name.text)
-            return object.get_index();
-    diagnostics.throw_at(name, runir::kr::UndefinedSymbolError("constant", name.text));
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::BotTag>>(context.builder);
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
-void append_objects(tyr::formalism::planning::DomainView domain,
-                    const std::vector<dl_ast::Identifier>& names,
-                    const ConstructorContext& diagnostics,
-                    ygg::IndexList<tyr::formalism::Object>& result)
+auto parse(const runir::kr::dl::grammar::ast::ConceptTop<runir::kr::ExtFamilyTag>&, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
-    result.reserve(result.size() + names.size());
-    for (const auto& name : names)
-        result.push_back(require_object(domain, name, diagnostics));
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::TopTag>>(context.builder);
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::ConceptBot<runir::kr::ExtFamilyTag>&,
-              tyr::formalism::planning::DomainView,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicState<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, dl_::BotTag>>(diagnostics.builder);
-    return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    return runir::kr::parser::resolve_predicate(
+        domain,
+        node.predicate_name,
+        1,
+        "ConceptAtomicState",
+        context.diagnostics,
+        [&](auto tag, auto predicate)
+        {
+            using T = decltype(tag);
+            auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::AtomicStateTag<T>>>(context.builder);
+            data->predicate = predicate;
+            data->polarity = true;
+            return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
+        });
 }
 
-auto parse_dl(const dl_ast::ConceptTop<runir::kr::ExtFamilyTag>&,
-              tyr::formalism::planning::DomainView,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtomicGoal<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, dl_::TopTag>>(diagnostics.builder);
-    return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
-}
-
-auto parse_dl(const dl_ast::ConceptAtomicState<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
-{
-    return resolve_predicate(domain,
-                             node.predicate_name.text,
-                             1,
-                             "ConceptAtomicState",
-                             node.predicate_name,
-                             diagnostics,
-                             [&](auto tag, auto predicate)
-                             {
-                                 using T = decltype(tag);
-                                 auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, dl_::AtomicStateTag<T>>>(diagnostics.builder);
-                                 data->predicate = predicate;
-                                 data->polarity = true;
-                                 return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
-                             });
-}
-
-auto parse_dl(const dl_ast::ConceptAtomicGoal<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
-{
-    return resolve_predicate(domain,
-                             node.predicate_name.text,
-                             1,
-                             "ConceptAtomicGoal",
-                             node.predicate_name,
-                             diagnostics,
-                             [&](auto tag, auto predicate)
-                             {
-                                 using T = decltype(tag);
-                                 auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, dl_::AtomicGoalTag<T>>>(diagnostics.builder);
-                                 data->predicate = predicate;
-                                 data->polarity = node.polarity;
-                                 return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
-                             });
+    return runir::kr::parser::resolve_predicate(
+        domain,
+        node.predicate_name,
+        1,
+        "ConceptAtomicGoal",
+        context.diagnostics,
+        [&](auto tag, auto predicate)
+        {
+            using T = decltype(tag);
+            auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::AtomicGoalTag<T>>>(context.builder);
+            data->predicate = predicate;
+            data->polarity = node.polarity;
+            return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
+        });
 }
 
 template<typename Tag, typename Ast>
-auto parse_binary_concept(const Ast& node,
-                          tyr::formalism::planning::DomainView domain,
-                          runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                          const ConstructorContext& diagnostics)
+auto parse_binary_concept(const Ast& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
 {
-    const auto lhs = parse_choice(node.lhs, domain, repository, diagnostics);
-    const auto rhs = parse_choice(node.rhs, domain, repository, diagnostics);
-    auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, Tag>>(diagnostics.builder);
+    const auto lhs = parse_constructor_or_non_terminal(node.lhs, domain, context);
+    const auto rhs = parse_constructor_or_non_terminal(node.rhs, domain, context);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, Tag>>(context.builder);
     data->lhs = lhs.get_index();
     data->rhs = rhs.get_index();
-    return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::ConceptIntersection<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptIntersection<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_binary_concept<dl_::IntersectionTag>(node, domain, repository, diagnostics);
+    return parse_binary_concept<runir::kr::dl::IntersectionTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::ConceptUnion<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptUnion<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_binary_concept<dl_::UnionTag>(node, domain, repository, diagnostics);
+    return parse_binary_concept<runir::kr::dl::UnionTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::ConceptValueRestriction<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptValueRestriction<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_binary_concept<dl_::ValueRestrictionTag>(node, domain, repository, diagnostics);
+    return parse_binary_concept<runir::kr::dl::ValueRestrictionTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::ConceptExistentialQuantification<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptExistentialQuantification<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_binary_concept<dl_::ExistentialQuantificationTag>(node, domain, repository, diagnostics);
+    return parse_binary_concept<runir::kr::dl::ExistentialQuantificationTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::ConceptNegation<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptNegation<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    const auto arg = parse_choice(node.arg, domain, repository, diagnostics);
-    auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, dl_::NegationTag>>(diagnostics.builder);
+    const auto arg = parse_constructor_or_non_terminal(node.arg, domain, context);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::NegationTag>>(context.builder);
     data->arg = arg.get_index();
-    return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
 template<typename Tag, typename Ast>
-auto parse_number_restriction(const Ast& node,
-                              tyr::formalism::planning::DomainView domain,
-                              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                              const ConstructorContext& diagnostics)
+auto parse_number_restriction(const Ast& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
 {
-    const auto role = parse_choice(node.role, domain, repository, diagnostics);
-    auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, Tag>>(diagnostics.builder);
+    const auto role = parse_constructor_or_non_terminal(node.role, domain, context);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, Tag>>(context.builder);
     data->n = node.n;
     data->role = role.get_index();
-    return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::ConceptAtLeastNumberRestriction<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtLeastNumberRestriction<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_number_restriction<dl_::AtLeastNumberRestrictionTag>(node, domain, repository, diagnostics);
+    return parse_number_restriction<runir::kr::dl::AtLeastNumberRestrictionTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::ConceptAtMostNumberRestriction<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptAtMostNumberRestriction<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_number_restriction<dl_::AtMostNumberRestrictionTag>(node, domain, repository, diagnostics);
+    return parse_number_restriction<runir::kr::dl::AtMostNumberRestrictionTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::ConceptExactNumberRestriction<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptExactNumberRestriction<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_number_restriction<dl_::ExactNumberRestrictionTag>(node, domain, repository, diagnostics);
+    return parse_number_restriction<runir::kr::dl::ExactNumberRestrictionTag>(node, domain, context);
 }
 
 template<typename Tag, typename Ast>
-auto parse_qualified_number_restriction(const Ast& node,
-                                        tyr::formalism::planning::DomainView domain,
-                                        runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                                        const ConstructorContext& diagnostics)
+auto parse_qualified_number_restriction(const Ast& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
 {
-    const auto role = parse_choice(node.role, domain, repository, diagnostics);
-    const auto concept_view = parse_choice(node.concept_, domain, repository, diagnostics);
-    auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, Tag>>(diagnostics.builder);
+    const auto role = parse_constructor_or_non_terminal(node.role, domain, context);
+    const auto concept_view = parse_constructor_or_non_terminal(node.concept_, domain, context);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, Tag>>(context.builder);
     data->n = node.n;
     data->role = role.get_index();
     data->concept_ = concept_view.get_index();
-    return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::ConceptQualifiedAtLeastNumberRestriction<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtLeastNumberRestriction<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_qualified_number_restriction<dl_::QualifiedAtLeastNumberRestrictionTag>(node, domain, repository, diagnostics);
+    return parse_qualified_number_restriction<runir::kr::dl::QualifiedAtLeastNumberRestrictionTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::ConceptQualifiedAtMostNumberRestriction<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedAtMostNumberRestriction<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_qualified_number_restriction<dl_::QualifiedAtMostNumberRestrictionTag>(node, domain, repository, diagnostics);
+    return parse_qualified_number_restriction<runir::kr::dl::QualifiedAtMostNumberRestrictionTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::ConceptQualifiedExactNumberRestriction<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptQualifiedExactNumberRestriction<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_qualified_number_restriction<dl_::QualifiedExactNumberRestrictionTag>(node, domain, repository, diagnostics);
+    return parse_qualified_number_restriction<runir::kr::dl::QualifiedExactNumberRestrictionTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::ConceptRoleValueMap<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptRoleValueMap<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_binary_concept<dl_::RoleValueMapTag>(node, domain, repository, diagnostics);
+    return parse_binary_concept<runir::kr::dl::RoleValueMapTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::ConceptAgreement<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptAgreement<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_binary_concept<dl_::AgreementTag>(node, domain, repository, diagnostics);
+    return parse_binary_concept<runir::kr::dl::AgreementTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::ConceptRoleFillers<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptRoleFillers<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    const auto role = parse_choice(node.role, domain, repository, diagnostics);
-    auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, dl_::RoleFillersTag>>(diagnostics.builder);
+    const auto role = parse_constructor_or_non_terminal(node.role, domain, context);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RoleFillersTag>>(context.builder);
     data->role = role.get_index();
-    append_objects(domain, node.object_names, diagnostics, data->objects);
-    return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    runir::kr::parser::append_objects(domain, node.object_names, context.diagnostics, data->objects);
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::ConceptOneOf<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptOneOf<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, dl_::OneOfTag>>(diagnostics.builder);
-    append_objects(domain, node.object_names, diagnostics, data->objects);
-    return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::OneOfTag>>(context.builder);
+    runir::kr::parser::append_objects(domain, node.object_names, context.diagnostics, data->objects);
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::ConceptNominal<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptNominal<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, dl_::NominalTag>>(diagnostics.builder);
-    data->object = require_object(domain, node.object_name, diagnostics);
-    return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::NominalTag>>(context.builder);
+    data->object = runir::kr::parser::require_object(domain, node.object_name, context.diagnostics);
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::ConceptRegister<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptRegister<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView,
+           const ConstructorContext& context)
 {
-    auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, dl_::RegisterTag>>(diagnostics.builder);
-    data->reference = resolve_reference<dl_::Register<dl_::ConceptTag>, dl_::RegisterIdentifier<dl_::ConceptTag>>(
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>>(context.builder);
+    data->reference = resolve_reference<runir::kr::dl::Register<runir::kr::dl::ConceptTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>(
         node.reference,
-        diagnostics.references ? &diagnostics.references->concept_registers : nullptr,
+        context.references ? &context.references->concept_registers : nullptr,
         "concept register",
-        repository,
-        diagnostics);
-    return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+        context);
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::ConceptArgument<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::ConceptArgument<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView,
+           const ConstructorContext& context)
 {
-    auto data = runir::kr::dl::checkout<dl_::Concept<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::ConceptTag>>>(diagnostics.builder);
-    data->reference = resolve_reference<dl_::Argument<dl_::ConceptTag>, dl_::ArgumentIdentifier<dl_::ConceptTag>>(
+    auto data =
+        runir::kr::dl::checkout<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>>(context.builder);
+    data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::ConceptTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>(
         node.reference,
-        diagnostics.references ? &diagnostics.references->concept_arguments : nullptr,
+        context.references ? &context.references->concept_arguments : nullptr,
         "concept argument",
-        repository,
-        diagnostics);
-    return intern_constructor<dl_::ConceptTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+        context);
+    return intern_constructor<runir::kr::dl::ConceptTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::RoleUniversal<runir::kr::ExtFamilyTag>&,
-              tyr::formalism::planning::DomainView,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleUniversal<runir::kr::ExtFamilyTag>&, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
-    auto data = runir::kr::dl::checkout<dl_::Role<runir::kr::ExtFamilyTag, dl_::UniversalTag>>(diagnostics.builder);
-    return intern_constructor<dl_::RoleTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::UniversalTag>>(context.builder);
+    return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::RoleAtomicState<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleAtomicState<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return resolve_predicate(domain,
-                             node.predicate_name.text,
-                             2,
-                             "RoleAtomicState",
-                             node.predicate_name,
-                             diagnostics,
-                             [&](auto tag, auto predicate)
-                             {
-                                 using T = decltype(tag);
-                                 auto data = runir::kr::dl::checkout<dl_::Role<runir::kr::ExtFamilyTag, dl_::AtomicStateTag<T>>>(diagnostics.builder);
-                                 data->predicate = predicate;
-                                 data->polarity = true;
-                                 return intern_constructor<dl_::RoleTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
-                             });
+    return runir::kr::parser::resolve_predicate(
+        domain,
+        node.predicate_name,
+        2,
+        "RoleAtomicState",
+        context.diagnostics,
+        [&](auto tag, auto predicate)
+        {
+            using T = decltype(tag);
+            auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::AtomicStateTag<T>>>(context.builder);
+            data->predicate = predicate;
+            data->polarity = true;
+            return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
+        });
 }
 
-auto parse_dl(const dl_ast::RoleAtomicGoal<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleAtomicGoal<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return resolve_predicate(domain,
-                             node.predicate_name.text,
-                             2,
-                             "RoleAtomicGoal",
-                             node.predicate_name,
-                             diagnostics,
-                             [&](auto tag, auto predicate)
-                             {
-                                 using T = decltype(tag);
-                                 auto data = runir::kr::dl::checkout<dl_::Role<runir::kr::ExtFamilyTag, dl_::AtomicGoalTag<T>>>(diagnostics.builder);
-                                 data->predicate = predicate;
-                                 data->polarity = node.polarity;
-                                 return intern_constructor<dl_::RoleTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
-                             });
+    return runir::kr::parser::resolve_predicate(
+        domain,
+        node.predicate_name,
+        2,
+        "RoleAtomicGoal",
+        context.diagnostics,
+        [&](auto tag, auto predicate)
+        {
+            using T = decltype(tag);
+            auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::AtomicGoalTag<T>>>(context.builder);
+            data->predicate = predicate;
+            data->polarity = node.polarity;
+            return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
+        });
 }
 
 template<typename Tag, typename Ast>
-auto parse_binary_role(const Ast& node,
-                       tyr::formalism::planning::DomainView domain,
-                       runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                       const ConstructorContext& diagnostics)
+auto parse_binary_role(const Ast& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
 {
-    const auto lhs = parse_choice(node.lhs, domain, repository, diagnostics);
-    const auto rhs = parse_choice(node.rhs, domain, repository, diagnostics);
-    auto data = runir::kr::dl::checkout<dl_::Role<runir::kr::ExtFamilyTag, Tag>>(diagnostics.builder);
+    const auto lhs = parse_constructor_or_non_terminal(node.lhs, domain, context);
+    const auto rhs = parse_constructor_or_non_terminal(node.rhs, domain, context);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::ExtFamilyTag, Tag>>(context.builder);
     data->lhs = lhs.get_index();
     data->rhs = rhs.get_index();
-    return intern_constructor<dl_::RoleTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::RoleIntersection<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleIntersection<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_binary_role<dl_::IntersectionTag>(node, domain, repository, diagnostics);
+    return parse_binary_role<runir::kr::dl::IntersectionTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::RoleUnion<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleUnion<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_binary_role<dl_::UnionTag>(node, domain, repository, diagnostics);
+    return parse_binary_role<runir::kr::dl::UnionTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::RoleComposition<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleComposition<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_binary_role<dl_::CompositionTag>(node, domain, repository, diagnostics);
+    return parse_binary_role<runir::kr::dl::CompositionTag>(node, domain, context);
 }
 
 template<typename Tag, typename Ast>
-auto parse_unary_role(const Ast& node,
-                      tyr::formalism::planning::DomainView domain,
-                      runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                      const ConstructorContext& diagnostics)
+auto parse_unary_role(const Ast& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
 {
-    const auto arg = parse_choice(node.arg, domain, repository, diagnostics);
-    auto data = runir::kr::dl::checkout<dl_::Role<runir::kr::ExtFamilyTag, Tag>>(diagnostics.builder);
+    const auto arg = parse_constructor_or_non_terminal(node.arg, domain, context);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::ExtFamilyTag, Tag>>(context.builder);
     data->arg = arg.get_index();
-    return intern_constructor<dl_::RoleTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::RoleComplement<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleComplement<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_unary_role<dl_::ComplementTag>(node, domain, repository, diagnostics);
+    return parse_unary_role<runir::kr::dl::ComplementTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::RoleInverse<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleInverse<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_unary_role<dl_::InverseTag>(node, domain, repository, diagnostics);
+    return parse_unary_role<runir::kr::dl::InverseTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::RoleTransitiveClosure<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleTransitiveClosure<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_unary_role<dl_::TransitiveClosureTag>(node, domain, repository, diagnostics);
+    return parse_unary_role<runir::kr::dl::TransitiveClosureTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::RoleReflexiveTransitiveClosure<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleReflexiveTransitiveClosure<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return parse_unary_role<dl_::ReflexiveTransitiveClosureTag>(node, domain, repository, diagnostics);
+    return parse_unary_role<runir::kr::dl::ReflexiveTransitiveClosureTag>(node, domain, context);
 }
 
-auto parse_dl(const dl_ast::RoleRestriction<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleRestriction<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    const auto lhs = parse_choice(node.lhs, domain, repository, diagnostics);
-    const auto rhs = parse_choice(node.rhs, domain, repository, diagnostics);
-    auto data = runir::kr::dl::checkout<dl_::Role<runir::kr::ExtFamilyTag, dl_::RestrictionTag>>(diagnostics.builder);
+    const auto lhs = parse_constructor_or_non_terminal(node.lhs, domain, context);
+    const auto rhs = parse_constructor_or_non_terminal(node.rhs, domain, context);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::RestrictionTag>>(context.builder);
     data->lhs = lhs.get_index();
     data->rhs = rhs.get_index();
-    return intern_constructor<dl_::RoleTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::RoleIdentity<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleIdentity<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    const auto arg = parse_choice(node.arg, domain, repository, diagnostics);
-    auto data = runir::kr::dl::checkout<dl_::Role<runir::kr::ExtFamilyTag, dl_::IdentityTag>>(diagnostics.builder);
+    const auto arg = parse_constructor_or_non_terminal(node.arg, domain, context);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::IdentityTag>>(context.builder);
     data->arg = arg.get_index();
-    return intern_constructor<dl_::RoleTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::RoleRegister<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleRegister<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView,
+           const ConstructorContext& context)
 {
-    auto data = runir::kr::dl::checkout<dl_::Role<runir::kr::ExtFamilyTag, dl_::RegisterTag>>(diagnostics.builder);
-    data->reference = resolve_reference<dl_::Register<dl_::RoleTag>, dl_::RegisterIdentifier<dl_::RoleTag>>(
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>>(context.builder);
+    data->reference = resolve_reference<runir::kr::dl::Register<runir::kr::dl::RoleTag>, runir::kr::dl::RegisterIdentifier<runir::kr::dl::RoleTag>>(
         node.reference,
-        diagnostics.references ? &diagnostics.references->role_registers : nullptr,
+        context.references ? &context.references->role_registers : nullptr,
         "role register",
-        repository,
-        diagnostics);
-    return intern_constructor<dl_::RoleTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+        context);
+    return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::RoleArgument<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::RoleArgument<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView,
+           const ConstructorContext& context)
 {
-    auto data = runir::kr::dl::checkout<dl_::Role<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::RoleTag>>>(diagnostics.builder);
-    data->reference = resolve_reference<dl_::Argument<dl_::RoleTag>, dl_::ArgumentIdentifier<dl_::RoleTag>>(
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::RoleTag>>>(context.builder);
+    data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::RoleTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::RoleTag>>(
         node.reference,
-        diagnostics.references ? &diagnostics.references->role_arguments : nullptr,
+        context.references ? &context.references->role_arguments : nullptr,
         "role argument",
-        repository,
-        diagnostics);
-    return intern_constructor<dl_::RoleTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+        context);
+    return intern_constructor<runir::kr::dl::RoleTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::BooleanAtomicState<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicState<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return resolve_predicate(domain,
-                             node.predicate_name.text,
-                             0,
-                             "BooleanAtomicState",
-                             node.predicate_name,
-                             diagnostics,
-                             [&](auto tag, auto predicate)
-                             {
-                                 using T = decltype(tag);
-                                 auto data = runir::kr::dl::checkout<dl_::Boolean<runir::kr::ExtFamilyTag, dl_::AtomicStateTag<T>>>(diagnostics.builder);
-                                 data->predicate = predicate;
-                                 data->polarity = node.polarity;
-                                 return intern_constructor<dl_::BooleanTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
-                             });
+    return runir::kr::parser::resolve_predicate(
+        domain,
+        node.predicate_name,
+        0,
+        "BooleanAtomicState",
+        context.diagnostics,
+        [&](auto tag, auto predicate)
+        {
+            using T = decltype(tag);
+            auto data = runir::kr::dl::checkout<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::AtomicStateTag<T>>>(context.builder);
+            data->predicate = predicate;
+            data->polarity = node.polarity;
+            return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).get_index());
+        });
 }
 
-auto parse_dl(const dl_ast::BooleanAtomicGoal<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::BooleanAtomicGoal<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    return resolve_predicate(domain,
-                             node.predicate_name.text,
-                             0,
-                             "BooleanAtomicGoal",
-                             node.predicate_name,
-                             diagnostics,
-                             [&](auto tag, auto predicate)
-                             {
-                                 using T = decltype(tag);
-                                 auto data = runir::kr::dl::checkout<dl_::Boolean<runir::kr::ExtFamilyTag, dl_::AtomicGoalTag<T>>>(diagnostics.builder);
-                                 data->predicate = predicate;
-                                 data->polarity = node.polarity;
-                                 return intern_constructor<dl_::BooleanTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
-                             });
+    return runir::kr::parser::resolve_predicate(
+        domain,
+        node.predicate_name,
+        0,
+        "BooleanAtomicGoal",
+        context.diagnostics,
+        [&](auto tag, auto predicate)
+        {
+            using T = decltype(tag);
+            auto data = runir::kr::dl::checkout<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::AtomicGoalTag<T>>>(context.builder);
+            data->predicate = predicate;
+            data->polarity = node.polarity;
+            return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).get_index());
+        });
 }
 
-auto parse_dl(const dl_ast::BooleanNonempty<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::BooleanNonempty<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    using Data = ygg::Data<dl_::Boolean<runir::kr::ExtFamilyTag, dl_::NonemptyTag>>;
+    using Data = ygg::Data<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::NonemptyTag>>;
     const auto arg = boost::apply_visitor([&](const auto& value) -> typename Data::ConstructorVariant
-                                          { return parse_choice(unwrap(value), domain, repository, diagnostics).get_index(); },
+                                          { return parse_constructor_or_non_terminal(unwrap(value), domain, context).get_index(); },
                                           node.arg.get());
-    auto data = runir::kr::dl::checkout<dl_::Boolean<runir::kr::ExtFamilyTag, dl_::NonemptyTag>>(diagnostics.builder);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::NonemptyTag>>(context.builder);
     data->arg = arg;
-    return intern_constructor<dl_::BooleanTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::BooleanArgument<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::BooleanArgument<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView,
+           const ConstructorContext& context)
 {
-    auto data = runir::kr::dl::checkout<dl_::Boolean<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::BooleanTag>>>(diagnostics.builder);
-    data->reference = resolve_reference<dl_::Argument<dl_::BooleanTag>, dl_::ArgumentIdentifier<dl_::BooleanTag>>(
+    auto data =
+        runir::kr::dl::checkout<runir::kr::dl::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>>(context.builder);
+    data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::BooleanTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>(
         node.reference,
-        diagnostics.references ? &diagnostics.references->boolean_arguments : nullptr,
+        context.references ? &context.references->boolean_arguments : nullptr,
         "boolean argument",
-        repository,
-        diagnostics);
-    return intern_constructor<dl_::BooleanTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+        context);
+    return intern_constructor<runir::kr::dl::BooleanTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::NumericalCount<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::NumericalCount<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    using Data = ygg::Data<dl_::Numerical<runir::kr::ExtFamilyTag, dl_::CountTag>>;
+    using Data = ygg::Data<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::CountTag>>;
     const auto arg = boost::apply_visitor([&](const auto& value) -> typename Data::ConstructorVariant
-                                          { return parse_choice(unwrap(value), domain, repository, diagnostics).get_index(); },
+                                          { return parse_constructor_or_non_terminal(unwrap(value), domain, context).get_index(); },
                                           node.arg.get());
-    auto data = runir::kr::dl::checkout<dl_::Numerical<runir::kr::ExtFamilyTag, dl_::CountTag>>(diagnostics.builder);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::CountTag>>(context.builder);
     data->arg = arg;
-    return intern_constructor<dl_::NumericalTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::NumericalDistance<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView domain,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::NumericalDistance<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView domain,
+           const ConstructorContext& context)
 {
-    const auto lhs = parse_choice(node.lhs, domain, repository, diagnostics);
-    const auto mid = parse_choice(node.mid, domain, repository, diagnostics);
-    const auto rhs = parse_choice(node.rhs, domain, repository, diagnostics);
-    auto data = runir::kr::dl::checkout<dl_::Numerical<runir::kr::ExtFamilyTag, dl_::DistanceTag>>(diagnostics.builder);
+    const auto lhs = parse_constructor_or_non_terminal(node.lhs, domain, context);
+    const auto mid = parse_constructor_or_non_terminal(node.mid, domain, context);
+    const auto rhs = parse_constructor_or_non_terminal(node.rhs, domain, context);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::DistanceTag>>(context.builder);
     data->lhs = lhs.get_index();
     data->mid = mid.get_index();
     data->rhs = rhs.get_index();
-    return intern_constructor<dl_::NumericalTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+    return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).get_index());
 }
 
-auto parse_dl(const dl_ast::NumericalArgument<runir::kr::ExtFamilyTag>& node,
-              tyr::formalism::planning::DomainView,
-              runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              const ConstructorContext& diagnostics)
+auto parse(const runir::kr::dl::grammar::ast::NumericalArgument<runir::kr::ExtFamilyTag>& node,
+           tyr::formalism::planning::DomainView,
+           const ConstructorContext& context)
 {
-    auto data = runir::kr::dl::checkout<dl_::Numerical<runir::kr::ExtFamilyTag, dl_::ArgumentTag<dl_::NumericalTag>>>(diagnostics.builder);
-    data->reference = resolve_reference<dl_::Argument<dl_::NumericalTag>, dl_::ArgumentIdentifier<dl_::NumericalTag>>(
+    auto data =
+        runir::kr::dl::checkout<runir::kr::dl::Numerical<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::NumericalTag>>>(context.builder);
+    data->reference = resolve_reference<runir::kr::dl::Argument<runir::kr::dl::NumericalTag>, runir::kr::dl::ArgumentIdentifier<runir::kr::dl::NumericalTag>>(
         node.reference,
-        diagnostics.references ? &diagnostics.references->numerical_arguments : nullptr,
+        context.references ? &context.references->numerical_arguments : nullptr,
         "numerical argument",
-        repository,
-        diagnostics);
-    return intern_constructor<dl_::NumericalTag>(repository, diagnostics.builder, intern_dl(repository, *data).get_index());
+        context);
+    return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).get_index());
 }
 
-template<dl_::CategoryTag Category>
-auto parse_constructor(const dl_ast::Constructor<runir::kr::ExtFamilyTag, Category>& node,
+template<runir::kr::dl::CategoryTag Category>
+auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<runir::kr::ExtFamilyTag, Category>& node,
                        tyr::formalism::planning::DomainView domain,
-                       runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                       const ConstructorContext& diagnostics) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
+                       const ConstructorContext& context) -> runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
 {
-    return boost::apply_visitor([&](const auto& arg) { return parse_dl(unwrap(arg), domain, repository, diagnostics); }, node.get());
-}
-
-template<dl_::CategoryTag Category>
-auto parse_constructor(const dl_ast::Constructor<runir::kr::ExtFamilyTag, Category>& node,
-                       tyr::formalism::planning::DomainView domain,
-                       runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                       const DiagnosticContext& diagnostics,
-                       DlBuilder& builder,
-                       const ModuleReferences* references) -> dl_::FamilyConstructorView<runir::kr::ExtFamilyTag, Category>
-{
-    return parse_constructor(node, domain, repository, ConstructorContext { diagnostics, builder, references });
+    return boost::apply_visitor([&](const auto& arg) { return parse(unwrap(arg), domain, context); }, node.get());
 }
 
 template<typename T>
@@ -875,46 +713,41 @@ struct AstCategory
 {
 };
 
-template<dl_::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 struct AstCategory<ast::Argument<Category>>
 {
     using Type = Category;
 };
 
-template<dl_::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 struct AstCategory<ast::Register<Category>>
 {
     using Type = Category;
 };
 
-template<dl_::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 struct AstCategory<ast::Feature<Category>>
 {
     using Type = Category;
 };
 
-template<dl_::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 struct AstCategory<ast::LoadRule<Category>>
 {
     using Type = Category;
 };
 
-template<dl_::CategoryTag Category>
-auto intern_argument(Repository& repository, DlBuilder& builder, const ast::Argument<Category>& argument, ygg::uint_t identifier)
+template<runir::kr::dl::CategoryTag Category>
+auto intern_argument(Repository& repository,
+                     runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder,
+                     const ast::Argument<Category>& argument,
+                     ygg::uint_t identifier)
 {
-    auto data = runir::kr::dl::checkout<dl_::Argument<Category>>(builder);
+    auto data = runir::kr::dl::checkout<runir::kr::dl::Argument<Category>>(builder);
     data->name = argument.symbol.text;
     data->identifier = runir::kr::dl::ArgumentIdentifier<Category>(identifier);
-    return intern_dl(repository.get_dl_repository(), *data);
+    return runir::kr::dl::get_or_create(repository.get_dl_repository(), *data).first;
 }
-
-using ConceptFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>;
-using RoleFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>;
-using BooleanFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>;
-using NumericalFeatureMap = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>;
-using MemoryStateMap = std::unordered_map<std::string, ygg::Index<MemoryState>>;
-using ModuleSymbolMap = std::unordered_map<std::string, ygg::Index<ModuleSymbol>>;
-using ModuleMap = std::unordered_map<std::string, ygg::Index<Module>>;
 
 struct SignatureCounts
 {
@@ -932,16 +765,16 @@ std::string signature_text(const SignatureCounts& counts)
            + ", numerical=" + std::to_string(counts.numericals);
 }
 
-template<dl_::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 void increment(SignatureCounts& counts)
 {
-    if constexpr (std::same_as<Category, dl_::ConceptTag>)
+    if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
         ++counts.concepts;
-    else if constexpr (std::same_as<Category, dl_::RoleTag>)
+    else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
         ++counts.roles;
-    else if constexpr (std::same_as<Category, dl_::BooleanTag>)
+    else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
         ++counts.booleans;
-    else if constexpr (std::same_as<Category, dl_::NumericalTag>)
+    else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
         ++counts.numericals;
 }
 
@@ -954,8 +787,8 @@ SignatureCounts signature_counts(const ast::Module& module)
     return result;
 }
 
-template<dl_::CategoryTag Category>
-void validate_unique_names(const std::vector<ast::Register<Category>>& declarations, const char* kind, const DiagnosticContext& diagnostics)
+template<runir::kr::dl::CategoryTag Category>
+void validate_unique_names(const std::vector<ast::Register<Category>>& declarations, const char* kind, const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     if (declarations.size() > runir::kr::dl::num_registers)
         diagnostics.throw_at(declarations[runir::kr::dl::num_registers],
@@ -968,7 +801,7 @@ void validate_unique_names(const std::vector<ast::Register<Category>>& declarati
             diagnostics.throw_at(declaration.symbol, runir::kr::DuplicateDefinitionError(std::string(kind) + " register", declaration.symbol.text));
 }
 
-template<dl_::CategoryTag Category>
+template<runir::kr::dl::CategoryTag Category>
 std::vector<ast::Register<Category>> collect_registers(const std::vector<ast::RegisterVariant>& registers)
 {
     auto result = std::vector<ast::Register<Category>> {};
@@ -986,7 +819,7 @@ std::vector<ast::Register<Category>> collect_registers(const std::vector<ast::Re
     return result;
 }
 
-void validate_module_declarations(const ast::Module& module, const DiagnosticContext& diagnostics)
+void validate_module_declarations(const ast::Module& module, const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto concept_arguments = std::unordered_set<std::string> {};
     auto role_arguments = std::unordered_set<std::string> {};
@@ -1005,20 +838,20 @@ void validate_module_declarations(const ast::Module& module, const DiagnosticCon
             [&](const auto& concrete)
             {
                 using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
-                if constexpr (std::same_as<Category, dl_::ConceptTag>)
+                if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
                     add_argument(concept_arguments, concrete.symbol, "concept");
-                else if constexpr (std::same_as<Category, dl_::RoleTag>)
+                else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
                     add_argument(role_arguments, concrete.symbol, "role");
-                else if constexpr (std::same_as<Category, dl_::BooleanTag>)
+                else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
                     add_argument(boolean_arguments, concrete.symbol, "boolean");
-                else if constexpr (std::same_as<Category, dl_::NumericalTag>)
+                else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
                     add_argument(numerical_arguments, concrete.symbol, "numerical");
             },
             argument.get());
     }
 
-    validate_unique_names(collect_registers<dl_::ConceptTag>(module.registers), "concept", diagnostics);
-    validate_unique_names(collect_registers<dl_::RoleTag>(module.registers), "role", diagnostics);
+    validate_unique_names(collect_registers<runir::kr::dl::ConceptTag>(module.registers), "concept", diagnostics);
+    validate_unique_names(collect_registers<runir::kr::dl::RoleTag>(module.registers), "role", diagnostics);
 
     auto feature_symbols = std::unordered_set<std::string> {};
     for (const auto& feature : module.features)
@@ -1037,7 +870,7 @@ void validate_module_declarations(const ast::Module& module, const DiagnosticCon
 }
 
 void append_argument(Repository& repository,
-                     DlBuilder& builder,
+                     runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder,
                      ygg::Data<Module>& data,
                      ModuleReferences& references,
                      const ast::ArgumentVariant& argument,
@@ -1050,28 +883,28 @@ void append_argument(Repository& repository,
         [&](const auto& concrete)
         {
             using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
-            if constexpr (std::same_as<Category, dl_::ConceptTag>)
+            if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
             {
                 const auto index = intern_argument<Category>(repository, builder, concrete, concept_identifier++).get_index();
                 data.concept_arguments.push_back(index);
                 references.concept_arguments.by_name.emplace(concrete.symbol.text, index);
                 references.concept_arguments.by_identifier.push_back(index);
             }
-            else if constexpr (std::same_as<Category, dl_::RoleTag>)
+            else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
             {
                 const auto index = intern_argument<Category>(repository, builder, concrete, role_identifier++).get_index();
                 data.role_arguments.push_back(index);
                 references.role_arguments.by_name.emplace(concrete.symbol.text, index);
                 references.role_arguments.by_identifier.push_back(index);
             }
-            else if constexpr (std::same_as<Category, dl_::BooleanTag>)
+            else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
             {
                 const auto index = intern_argument<Category>(repository, builder, concrete, boolean_identifier++).get_index();
                 data.boolean_arguments.push_back(index);
                 references.boolean_arguments.by_name.emplace(concrete.symbol.text, index);
                 references.boolean_arguments.by_identifier.push_back(index);
             }
-            else if constexpr (std::same_as<Category, dl_::NumericalTag>)
+            else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
             {
                 const auto index = intern_argument<Category>(repository, builder, concrete, numerical_identifier++).get_index();
                 data.numerical_arguments.push_back(index);
@@ -1084,7 +917,7 @@ void append_argument(Repository& repository,
 
 template<typename FeatureTag, typename ConcreteFeatureTag>
 auto intern_dl_feature(Repository& repository,
-                       PsBuilder& builder,
+                       runir::kr::ps::ext::Builder& builder,
                        ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, ConcreteFeatureTag>> constructor,
                        const std::string& symbol)
 {
@@ -1097,43 +930,42 @@ auto intern_dl_feature(Repository& repository,
     return intern(repository, *feature_data);
 }
 
-template<dl_::CategoryTag Category>
-void append_feature(Repository& repository,
-                    BuildContext& builders,
-                    ygg::Data<Module>& module_data,
-                    const ast::Feature<Category>& feature,
-                    tyr::formalism::planning::DomainView domain,
-                    ConceptFeatureMap& concept_features,
-                    RoleFeatureMap& role_features,
-                    BooleanFeatureMap& boolean_features,
-                    NumericalFeatureMap& numerical_features,
-                    const ModuleReferences& references,
-                    DiagnosticContext& diagnostics)
+template<runir::kr::dl::CategoryTag Category>
+void append_feature(
+    Repository& repository,
+    Builders& builders,
+    ygg::Data<Module>& module_data,
+    const ast::Feature<Category>& feature,
+    tyr::formalism::planning::DomainView domain,
+    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
+    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>& role_features,
+    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
+    std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const ModuleReferences& references,
+    runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    if constexpr (std::same_as<Category, dl_::ConceptTag>)
+    const auto context = ConstructorContext { repository.get_dl_repository(), builders.dl, diagnostics, &references };
+    const auto constructor = parse_constructor(feature.expression, domain, context);
+    if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
-        const auto constructor = parse_constructor(feature.expression, domain, repository.get_dl_repository(), diagnostics, builders.dl, &references);
         const auto view = intern_dl_feature<runir::kr::dl::ConceptTag>(repository, builders.ps, constructor.get_index(), feature.symbol.text);
         concept_features.emplace(feature.symbol.text, view.get_index());
         module_data.concept_features.push_back(view.get_index());
     }
-    else if constexpr (std::same_as<Category, dl_::RoleTag>)
+    else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
     {
-        const auto constructor = parse_constructor(feature.expression, domain, repository.get_dl_repository(), diagnostics, builders.dl, &references);
         const auto view = intern_dl_feature<runir::kr::dl::RoleTag>(repository, builders.ps, constructor.get_index(), feature.symbol.text);
         role_features.emplace(feature.symbol.text, view.get_index());
         module_data.role_features.push_back(view.get_index());
     }
-    else if constexpr (std::same_as<Category, dl_::BooleanTag>)
+    else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
     {
-        const auto constructor = parse_constructor(feature.expression, domain, repository.get_dl_repository(), diagnostics, builders.dl, &references);
         const auto view = intern_dl_feature<runir::kr::ps::dl::BooleanFeature>(repository, builders.ps, constructor.get_index(), feature.symbol.text);
         boolean_features.emplace(feature.symbol.text, view.get_index());
         module_data.boolean_features.push_back(view.get_index());
     }
-    else if constexpr (std::same_as<Category, dl_::NumericalTag>)
+    else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
     {
-        const auto constructor = parse_constructor(feature.expression, domain, repository.get_dl_repository(), diagnostics, builders.dl, &references);
         const auto view = intern_dl_feature<runir::kr::ps::dl::NumericalFeature>(repository, builders.ps, constructor.get_index(), feature.symbol.text);
         numerical_features.emplace(feature.symbol.text, view.get_index());
         module_data.numerical_features.push_back(view.get_index());
@@ -1143,7 +975,7 @@ void append_feature(Repository& repository,
 template<typename FeatureTag>
 auto require_feature(const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>>& features,
                      const ast::Identifier& name,
-                     const DiagnosticContext& diagnostics)
+                     const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     const auto it = features.find(name.text);
     if (it == features.end())
@@ -1152,7 +984,9 @@ auto require_feature(const std::unordered_map<std::string, ygg::Index<runir::kr:
 }
 
 template<typename FeatureTag, typename ObservationTag>
-auto make_condition(Repository& repository, PsBuilder& builder, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature)
+auto make_condition(Repository& repository,
+                    runir::kr::ps::ext::Builder& builder,
+                    ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature)
 {
     auto concrete_data =
         runir::kr::ps::ext::checkout<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>(builder);
@@ -1167,7 +1001,7 @@ auto make_condition(Repository& repository, PsBuilder& builder, ygg::Index<runir
 }
 
 template<typename FeatureTag, typename ObservationTag>
-auto make_effect(Repository& repository, PsBuilder& builder, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature)
+auto make_effect(Repository& repository, runir::kr::ps::ext::Builder& builder, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>> feature)
 {
     auto concrete_data =
         runir::kr::ps::ext::checkout<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>(builder);
@@ -1181,12 +1015,13 @@ auto make_effect(Repository& repository, PsBuilder& builder, ygg::Index<runir::k
     return intern(repository, *variant_data);
 }
 
-auto parse_condition(Repository& repository,
-                     PsBuilder& builder,
-                     const ast::Condition& condition,
-                     const BooleanFeatureMap& boolean_features,
-                     const NumericalFeatureMap& numerical_features,
-                     const DiagnosticContext& diagnostics)
+auto parse_condition(
+    Repository& repository,
+    runir::kr::ps::ext::Builder& builder,
+    const ast::Condition& condition,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor(
         [&](const auto& observation)
@@ -1224,12 +1059,13 @@ auto parse_condition(Repository& repository,
         condition.observation.get());
 }
 
-auto parse_effect(Repository& repository,
-                  PsBuilder& builder,
-                  const ast::Effect& effect,
-                  const BooleanFeatureMap& boolean_features,
-                  const NumericalFeatureMap& numerical_features,
-                  const DiagnosticContext& diagnostics)
+auto parse_effect(
+    Repository& repository,
+    runir::kr::ps::ext::Builder& builder,
+    const ast::Effect& effect,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor(
         [&](const auto& observation)
@@ -1279,43 +1115,49 @@ auto parse_effect(Repository& repository,
         effect.observation.get());
 }
 
-void append_conditions(Repository& repository,
-                       PsBuilder& builder,
-                       const std::vector<ast::Condition>& observations,
-                       const BooleanFeatureMap& boolean_features,
-                       const NumericalFeatureMap& numerical_features,
-                       const DiagnosticContext& diagnostics,
-                       ygg::IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>& result)
+void append_conditions(
+    Repository& repository,
+    runir::kr::ps::ext::Builder& builder,
+    const std::vector<ast::Condition>& observations,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const runir::kr::parser::DiagnosticContext& diagnostics,
+    ygg::IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>& result)
 {
     result.reserve(result.size() + observations.size());
     for (const auto& observation : observations)
         result.push_back(parse_condition(repository, builder, observation, boolean_features, numerical_features, diagnostics).get_index());
 }
 
-void append_effects(Repository& repository,
-                    PsBuilder& builder,
-                    const std::vector<ast::Effect>& observations,
-                    const BooleanFeatureMap& boolean_features,
-                    const NumericalFeatureMap& numerical_features,
-                    const DiagnosticContext& diagnostics,
-                    ygg::IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>& result)
+void append_effects(
+    Repository& repository,
+    runir::kr::ps::ext::Builder& builder,
+    const std::vector<ast::Effect>& observations,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const runir::kr::parser::DiagnosticContext& diagnostics,
+    ygg::IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>& result)
 {
     result.reserve(result.size() + observations.size());
     for (const auto& observation : observations)
         result.push_back(parse_effect(repository, builder, observation, boolean_features, numerical_features, diagnostics).get_index());
 }
 
-auto parse_do_argument(const ast::SymbolExpression& expression, const ConceptFeatureMap& concept_features, const DiagnosticContext& diagnostics)
+auto parse_do_argument(
+    const ast::SymbolExpression& expression,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
+    const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return require_feature(concept_features, expression.symbol, diagnostics);
 }
 
-auto parse_call_argument(const ast::SymbolExpression& expression,
-                         const ConceptFeatureMap& concept_features,
-                         const RoleFeatureMap& role_features,
-                         const BooleanFeatureMap& boolean_features,
-                         const NumericalFeatureMap& numerical_features,
-                         const DiagnosticContext& diagnostics) -> CallArgument
+auto parse_call_argument(
+    const ast::SymbolExpression& expression,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>& role_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const runir::kr::parser::DiagnosticContext& diagnostics) -> CallArgument
 {
     const auto& name = expression.symbol.text;
     auto matches = 0;
@@ -1365,13 +1207,13 @@ FeatureSymbolSets feature_symbols(const ast::Module& module)
             [&](const auto& concrete)
             {
                 using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
-                if constexpr (std::same_as<Category, dl_::ConceptTag>)
+                if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
                     result.concepts.emplace(concrete.symbol.text);
-                else if constexpr (std::same_as<Category, dl_::RoleTag>)
+                else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
                     result.roles.emplace(concrete.symbol.text);
-                else if constexpr (std::same_as<Category, dl_::BooleanTag>)
+                else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
                     result.booleans.emplace(concrete.symbol.text);
-                else if constexpr (std::same_as<Category, dl_::NumericalTag>)
+                else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
                     result.numericals.emplace(concrete.symbol.text);
             },
             feature.get());
@@ -1379,7 +1221,10 @@ FeatureSymbolSets feature_symbols(const ast::Module& module)
     return result;
 }
 
-void increment_signature_count(SignatureCounts& counts, const FeatureSymbolSets& features, const ast::Identifier& symbol, const DiagnosticContext& diagnostics)
+void increment_signature_count(SignatureCounts& counts,
+                               const FeatureSymbolSets& features,
+                               const ast::Identifier& symbol,
+                               const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto matches = 0;
     if (features.concepts.contains(symbol.text))
@@ -1408,7 +1253,8 @@ void increment_signature_count(SignatureCounts& counts, const FeatureSymbolSets&
         diagnostics.throw_at(symbol, runir::kr::InvalidExpressionError("Ambiguous call-rule argument feature: " + symbol.text));
 }
 
-SignatureCounts call_argument_signature_counts(const ast::CallRule& rule, const FeatureSymbolSets& features, const DiagnosticContext& diagnostics)
+SignatureCounts
+call_argument_signature_counts(const ast::CallRule& rule, const FeatureSymbolSets& features, const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto result = SignatureCounts {};
     for (const auto& argument : rule.arguments)
@@ -1417,7 +1263,7 @@ SignatureCounts call_argument_signature_counts(const ast::CallRule& rule, const 
 }
 
 template<RuleKind Kind>
-auto intern_rule_variant(Repository& repository, PsBuilder& builder, ygg::Data<Rule<Kind>>& data, const std::string& symbol)
+auto intern_rule_variant(Repository& repository, runir::kr::ps::ext::Builder& builder, ygg::Data<Rule<Kind>>& data, const std::string& symbol)
 {
     const auto rule = intern(repository, data);
     auto variant_data = runir::kr::ps::ext::checkout<RuleVariant>(builder);
@@ -1426,7 +1272,9 @@ auto intern_rule_variant(Repository& repository, PsBuilder& builder, ygg::Data<R
     return intern(repository, *variant_data);
 }
 
-auto require_memory_state(const MemoryStateMap& memory_states, const ast::Identifier& name, const DiagnosticContext& diagnostics)
+auto require_memory_state(const std::unordered_map<std::string, ygg::Index<MemoryState>>& memory_states,
+                          const ast::Identifier& name,
+                          const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     const auto it = memory_states.find(name.text);
     if (it == memory_states.end())
@@ -1435,7 +1283,7 @@ auto require_memory_state(const MemoryStateMap& memory_states, const ast::Identi
 }
 
 template<typename RegisterMap>
-auto require_register(const RegisterMap& registers, const ast::Identifier& name, const DiagnosticContext& diagnostics)
+auto require_register(const RegisterMap& registers, const ast::Identifier& name, const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     const auto it = registers.find(name.text);
     if (it == registers.end())
@@ -1443,7 +1291,7 @@ auto require_register(const RegisterMap& registers, const ast::Identifier& name,
     return it->second;
 }
 
-auto find_module(const ModuleSymbolMap& modules, const std::string& name)
+auto find_module(const std::unordered_map<std::string, ygg::Index<ModuleSymbol>>& modules, const std::string& name)
 {
     const auto it = modules.find(name);
     return it == modules.end() ? std::optional<ygg::Index<ModuleSymbol>> {} : std::optional(it->second);
@@ -1457,7 +1305,7 @@ auto find_action_arity(tyr::formalism::planning::DomainView domain, const std::s
     return std::optional<ygg::uint_t> {};
 }
 
-void validate_do_action(tyr::formalism::planning::DomainView domain, const ast::DoRule& rule, const DiagnosticContext& diagnostics)
+void validate_do_action(tyr::formalism::planning::DomainView domain, const ast::DoRule& rule, const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     const auto arity = find_action_arity(domain, rule.action.text);
     if (!arity)
@@ -1468,24 +1316,25 @@ void validate_do_action(tyr::formalism::planning::DomainView domain, const ast::
 }
 
 template<runir::kr::dl::CategoryTag Category>
-auto parse_load_rule(Repository& repository,
-                     PsBuilder& builder,
-                     const ast::LoadRule<Category>& rule,
-                     ygg::Index<MemoryState> source,
-                     ygg::Index<MemoryState> target,
-                     const ConceptFeatureMap& concept_features,
-                     const RoleFeatureMap& role_features,
-                     const BooleanFeatureMap& boolean_features,
-                     const NumericalFeatureMap& numerical_features,
-                     const ModuleReferences& references,
-                     const std::string& symbol,
-                     DiagnosticContext& diagnostics)
+auto parse_load_rule(
+    Repository& repository,
+    runir::kr::ps::ext::Builder& builder,
+    const ast::LoadRule<Category>& rule,
+    ygg::Index<MemoryState> source,
+    ygg::Index<MemoryState> target,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>& role_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const ModuleReferences& references,
+    const std::string& symbol,
+    runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto data = runir::kr::ps::ext::checkout<Rule<LoadTag<Category>>>(builder);
     data->source = source;
     data->target = target;
     append_conditions(repository, builder, rule.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
-    if constexpr (std::same_as<Category, dl_::ConceptTag>)
+    if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
         data->feature = require_feature(concept_features, rule.feature, diagnostics);
         data->reg = require_register(references.concept_registers.by_name, rule.reg, diagnostics);
@@ -1498,20 +1347,21 @@ auto parse_load_rule(Repository& repository,
     return intern_rule_variant(repository, builder, *data, symbol);
 }
 
-auto parse_rule(Repository& repository,
-                PsBuilder& builder,
-                const ast::Rule& rule,
-                ygg::Index<MemoryState> source,
-                ygg::Index<MemoryState> target,
-                tyr::formalism::planning::DomainView domain,
-                const ModuleSymbolMap& modules,
-                const ConceptFeatureMap& concept_features,
-                const RoleFeatureMap& role_features,
-                const BooleanFeatureMap& boolean_features,
-                const NumericalFeatureMap& numerical_features,
-                const ModuleReferences& references,
-                const std::string& symbol,
-                DiagnosticContext& diagnostics)
+auto parse_rule(
+    Repository& repository,
+    runir::kr::ps::ext::Builder& builder,
+    const ast::Rule& rule,
+    ygg::Index<MemoryState> source,
+    ygg::Index<MemoryState> target,
+    tyr::formalism::planning::DomainView domain,
+    const std::unordered_map<std::string, ygg::Index<ModuleSymbol>>& modules,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>& role_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const ModuleReferences& references,
+    const std::string& symbol,
+    runir::kr::parser::DiagnosticContext& diagnostics)
 {
     return boost::apply_visitor(
         [&](const auto& concrete) -> RuleVariantView
@@ -1589,60 +1439,60 @@ runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::Con
 parse_concept(const std::string& description,
               tyr::formalism::planning::DomainView domain,
               runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              DlBuilder& builder,
-              DiagnosticContext& diagnostics)
+              runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder,
+              runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto diagnostic_output = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), diagnostic_output);
-    auto scope = DiagnosticContext::Scope(diagnostics, error_handler);
-    auto result = dl_ast::ConceptConstructor<runir::kr::ExtFamilyTag> {};
+    auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);
+    auto result = runir::kr::dl::grammar::ast::ConceptConstructor<runir::kr::ExtFamilyTag> {};
     runir::kr::dl::grammar::parser::parse_concept_ast(description, result, error_handler);
-    return parse_constructor(result, domain, repository, diagnostics, builder);
+    return parse_constructor(result, domain, ConstructorContext { repository, builder, diagnostics, nullptr });
 }
 
 runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>
 parse_role(const std::string& description,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-           DlBuilder& builder,
-           DiagnosticContext& diagnostics)
+           runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder,
+           runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto diagnostic_output = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), diagnostic_output);
-    auto scope = DiagnosticContext::Scope(diagnostics, error_handler);
-    auto result = dl_ast::RoleConstructor<runir::kr::ExtFamilyTag> {};
+    auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);
+    auto result = runir::kr::dl::grammar::ast::RoleConstructor<runir::kr::ExtFamilyTag> {};
     runir::kr::dl::grammar::parser::parse_role_ast(description, result, error_handler);
-    return parse_constructor(result, domain, repository, diagnostics, builder);
+    return parse_constructor(result, domain, ConstructorContext { repository, builder, diagnostics, nullptr });
 }
 
 runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::BooleanTag>
 parse_boolean(const std::string& description,
               tyr::formalism::planning::DomainView domain,
               runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-              DlBuilder& builder,
-              DiagnosticContext& diagnostics)
+              runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder,
+              runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto diagnostic_output = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), diagnostic_output);
-    auto scope = DiagnosticContext::Scope(diagnostics, error_handler);
-    auto result = dl_ast::BooleanConstructor<runir::kr::ExtFamilyTag> {};
+    auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);
+    auto result = runir::kr::dl::grammar::ast::BooleanConstructor<runir::kr::ExtFamilyTag> {};
     runir::kr::dl::grammar::parser::parse_boolean_ast(description, result, error_handler);
-    return parse_constructor(result, domain, repository, diagnostics, builder);
+    return parse_constructor(result, domain, ConstructorContext { repository, builder, diagnostics, nullptr });
 }
 
 runir::kr::dl::FamilyConstructorView<runir::kr::ExtFamilyTag, runir::kr::dl::NumericalTag>
 parse_numerical(const std::string& description,
                 tyr::formalism::planning::DomainView domain,
                 runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository,
-                DlBuilder& builder,
-                DiagnosticContext& diagnostics)
+                runir::kr::dl::Builder<runir::kr::ExtFamilyTag>& builder,
+                runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto diagnostic_output = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), diagnostic_output);
-    auto scope = DiagnosticContext::Scope(diagnostics, error_handler);
-    auto result = dl_ast::NumericalConstructor<runir::kr::ExtFamilyTag> {};
+    auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);
+    auto result = runir::kr::dl::grammar::ast::NumericalConstructor<runir::kr::ExtFamilyTag> {};
     runir::kr::dl::grammar::parser::parse_numerical_ast(description, result, error_handler);
-    return parse_constructor(result, domain, repository, diagnostics, builder);
+    return parse_constructor(result, domain, ConstructorContext { repository, builder, diagnostics, nullptr });
 }
 
 }  // namespace
@@ -1652,8 +1502,8 @@ parse_concept(const std::string& description,
               tyr::formalism::planning::DomainView domain,
               runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository)
 {
-    auto diagnostics = DiagnosticContext {};
-    auto builder = DlBuilder {};
+    auto diagnostics = runir::kr::parser::DiagnosticContext {};
+    auto builder = runir::kr::dl::Builder<runir::kr::ExtFamilyTag> {};
     return parse_concept(description, domain, repository, builder, diagnostics);
 }
 
@@ -1662,8 +1512,8 @@ parse_role(const std::string& description,
            tyr::formalism::planning::DomainView domain,
            runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository)
 {
-    auto diagnostics = DiagnosticContext {};
-    auto builder = DlBuilder {};
+    auto diagnostics = runir::kr::parser::DiagnosticContext {};
+    auto builder = runir::kr::dl::Builder<runir::kr::ExtFamilyTag> {};
     return parse_role(description, domain, repository, builder, diagnostics);
 }
 
@@ -1672,8 +1522,8 @@ parse_boolean(const std::string& description,
               tyr::formalism::planning::DomainView domain,
               runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository)
 {
-    auto diagnostics = DiagnosticContext {};
-    auto builder = DlBuilder {};
+    auto diagnostics = runir::kr::parser::DiagnosticContext {};
+    auto builder = runir::kr::dl::Builder<runir::kr::ExtFamilyTag> {};
     return parse_boolean(description, domain, repository, builder, diagnostics);
 }
 
@@ -1682,22 +1532,22 @@ parse_numerical(const std::string& description,
                 tyr::formalism::planning::DomainView domain,
                 runir::kr::dl::ConstructorRepositoryFor<runir::kr::ExtFamilyTag>& repository)
 {
-    auto diagnostics = DiagnosticContext {};
-    auto builder = DlBuilder {};
+    auto diagnostics = runir::kr::parser::DiagnosticContext {};
+    auto builder = runir::kr::dl::Builder<runir::kr::ExtFamilyTag> {};
     return parse_numerical(description, domain, repository, builder, diagnostics);
 }
 
 ModuleView lower_module(const ast::Module& ast,
                         tyr::formalism::planning::DomainView domain,
                         Repository& repository,
-                        BuildContext& builders,
-                        DiagnosticContext& diagnostics,
-                        const ModuleSymbolMap& module_symbols)
+                        Builders& builders,
+                        runir::kr::parser::DiagnosticContext& diagnostics,
+                        const std::unordered_map<std::string, ygg::Index<ModuleSymbol>>& module_symbols)
 {
     validate_module_declarations(ast, diagnostics);
     auto references = ModuleReferences {};
 
-    auto memory_states = MemoryStateMap {};
+    auto memory_states = std::unordered_map<std::string, ygg::Index<MemoryState>> {};
     for (const auto& state : ast.memory_states)
     {
         auto state_data = runir::kr::ps::ext::checkout<MemoryState>(builders.ps);
@@ -1729,22 +1579,22 @@ ModuleView lower_module(const ast::Module& ast,
             [&](const auto& concrete)
             {
                 using Category = typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type;
-                if constexpr (std::same_as<Category, dl_::ConceptTag>)
+                if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
                 {
-                    auto reg_data = runir::kr::dl::checkout<dl_::Register<Category>>(builders.dl);
+                    auto reg_data = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(builders.dl);
                     reg_data->name = concrete.symbol.text;
                     reg_data->identifier = runir::kr::dl::RegisterIdentifier<Category>(concept_register++);
-                    const auto index = intern_dl(repository.get_dl_repository(), *reg_data).get_index();
+                    const auto index = runir::kr::dl::get_or_create(repository.get_dl_repository(), *reg_data).first.get_index();
                     data->concept_registers.push_back(index);
                     references.concept_registers.by_name.emplace(concrete.symbol.text, index);
                     references.concept_registers.by_identifier.push_back(index);
                 }
-                else if constexpr (std::same_as<Category, dl_::RoleTag>)
+                else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
                 {
-                    auto reg_data = runir::kr::dl::checkout<dl_::Register<Category>>(builders.dl);
+                    auto reg_data = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(builders.dl);
                     reg_data->name = concrete.symbol.text;
                     reg_data->identifier = runir::kr::dl::RegisterIdentifier<Category>(role_register++);
-                    const auto index = intern_dl(repository.get_dl_repository(), *reg_data).get_index();
+                    const auto index = runir::kr::dl::get_or_create(repository.get_dl_repository(), *reg_data).first.get_index();
                     data->role_registers.push_back(index);
                     references.role_registers.by_name.emplace(concrete.symbol.text, index);
                     references.role_registers.by_identifier.push_back(index);
@@ -1756,10 +1606,11 @@ ModuleView lower_module(const ast::Module& ast,
     for (const auto& state : ast.memory_states)
         data->memory_states.push_back(memory_states.at(state.value.text));
 
-    auto concept_features = ConceptFeatureMap {};
-    auto role_features = RoleFeatureMap {};
-    auto boolean_features = BooleanFeatureMap {};
-    auto numerical_features = NumericalFeatureMap {};
+    auto concept_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>> {};
+    auto role_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>> {};
+    auto boolean_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>> {};
+    auto numerical_features =
+        std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>> {};
     for (const auto& feature : ast.features)
     {
         boost::apply_visitor(
@@ -1811,11 +1662,11 @@ ModuleView lower_module(const ast::Module& ast,
 }
 
 template<typename Function>
-void with_diagnostic_scope(DiagnosticContext& diagnostics, const runir::kr::parser::ErrorHandlerType* error_handler, Function&& function)
+void with_diagnostic_scope(runir::kr::parser::DiagnosticContext& diagnostics, const runir::kr::parser::ErrorHandlerType* error_handler, Function&& function)
 {
     if (error_handler)
     {
-        auto scope = DiagnosticContext::Scope(diagnostics, *error_handler);
+        auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, *error_handler);
         std::forward<Function>(function)();
     }
     else
@@ -1825,7 +1676,7 @@ void with_diagnostic_scope(DiagnosticContext& diagnostics, const runir::kr::pars
 }
 
 void validate_module_set(const std::vector<ast::Module>& modules,
-                         DiagnosticContext& diagnostics,
+                         runir::kr::parser::DiagnosticContext& diagnostics,
                          const std::vector<std::unique_ptr<runir::kr::parser::ErrorHandlerType>>* error_handlers = nullptr)
 {
     auto signatures_by_name = std::unordered_map<std::string, SignatureCounts> {};
@@ -1884,7 +1735,7 @@ void validate_module_set(const std::vector<ast::Module>& modules,
     }
 }
 
-void validate_module_program(const ast::ModuleProgram& program, DiagnosticContext& diagnostics)
+void validate_module_program(const ast::ModuleProgram& program, runir::kr::parser::DiagnosticContext& diagnostics)
 {
     validate_module_set(program.modules, diagnostics);
 
@@ -1907,16 +1758,16 @@ ModuleView parse_module(const std::string& description, tyr::formalism::planning
 {
     auto diagnostic_output = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), diagnostic_output);
-    auto diagnostics = DiagnosticContext {};
-    auto scope = DiagnosticContext::Scope(diagnostics, error_handler);
+    auto diagnostics = runir::kr::parser::DiagnosticContext {};
+    auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);
     auto ast = runir::kr::ps::ext::dl::ast::Module {};
     parser::parse_module_ast(description, ast, error_handler);
-    auto dl_builder = DlBuilder {};
-    auto ps_builder = PsBuilder {};
-    auto builders = BuildContext { dl_builder, ps_builder };
+    auto dl_builder = runir::kr::dl::Builder<runir::kr::ExtFamilyTag> {};
+    auto ps_builder = runir::kr::ps::ext::Builder {};
+    auto builders = Builders { dl_builder, ps_builder };
     auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol>(ps_builder);
     symbol_data->name = ast.name.text;
-    auto module_symbols = ModuleSymbolMap { { ast.name.text, intern(repository, *symbol_data).get_index() } };
+    auto module_symbols = std::unordered_map<std::string, ygg::Index<ModuleSymbol>> { { ast.name.text, intern(repository, *symbol_data).get_index() } };
     return lower_module(ast, domain, repository, builders, diagnostics, module_symbols);
 }
 
@@ -1924,23 +1775,23 @@ ModuleProgramView parse_module_program(const std::string& description, tyr::form
 {
     auto diagnostic_output = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), diagnostic_output);
-    auto diagnostics = DiagnosticContext {};
-    auto scope = DiagnosticContext::Scope(diagnostics, error_handler);
+    auto diagnostics = runir::kr::parser::DiagnosticContext {};
+    auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);
     auto ast = runir::kr::ps::ext::dl::ast::ModuleProgram {};
     parser::parse_module_program_ast(description, ast, error_handler);
     validate_module_program(ast, diagnostics);
 
-    auto dl_builder = DlBuilder {};
-    auto ps_builder = PsBuilder {};
-    auto builders = BuildContext { dl_builder, ps_builder };
-    auto module_symbols = ModuleSymbolMap {};
+    auto dl_builder = runir::kr::dl::Builder<runir::kr::ExtFamilyTag> {};
+    auto ps_builder = runir::kr::ps::ext::Builder {};
+    auto builders = Builders { dl_builder, ps_builder };
+    auto module_symbols = std::unordered_map<std::string, ygg::Index<ModuleSymbol>> {};
     for (const auto& module : ast.modules)
     {
         auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol>(ps_builder);
         symbol_data->name = module.name.text;
         module_symbols.emplace(module.name.text, intern(repository, *symbol_data).get_index());
     }
-    auto module_indices_by_name = ModuleMap {};
+    auto module_indices_by_name = std::unordered_map<std::string, ygg::Index<Module>> {};
     auto data = runir::kr::ps::ext::checkout<ModuleProgram>(ps_builder);
     data->modules.reserve(ast.modules.size());
 
@@ -1959,7 +1810,7 @@ std::vector<ModuleView> parse_modules(const std::vector<std::string>& descriptio
 {
     auto asts = std::vector<ast::Module>(descriptions.size());
     auto diagnostic_outputs = std::vector<std::ostringstream>(descriptions.size());
-    auto diagnostics = DiagnosticContext {};
+    auto diagnostics = runir::kr::parser::DiagnosticContext {};
     auto error_handlers = std::vector<std::unique_ptr<runir::kr::parser::ErrorHandlerType>> {};
     error_handlers.reserve(descriptions.size());
 
@@ -1967,18 +1818,18 @@ std::vector<ModuleView> parse_modules(const std::vector<std::string>& descriptio
     {
         error_handlers.push_back(
             std::make_unique<runir::kr::parser::ErrorHandlerType>(descriptions[i].cbegin(), descriptions[i].cend(), diagnostic_outputs[i]));
-        auto scope = DiagnosticContext::Scope(diagnostics, *error_handlers.back());
+        auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, *error_handlers.back());
         parser::parse_module_ast(descriptions[i], asts[i], *error_handlers.back());
     }
 
     validate_module_set(asts, diagnostics, &error_handlers);
 
-    auto dl_builder = DlBuilder {};
-    auto ps_builder = PsBuilder {};
-    auto builders = BuildContext { dl_builder, ps_builder };
+    auto dl_builder = runir::kr::dl::Builder<runir::kr::ExtFamilyTag> {};
+    auto ps_builder = runir::kr::ps::ext::Builder {};
+    auto builders = Builders { dl_builder, ps_builder };
     auto result = std::vector<ModuleView> {};
     result.reserve(asts.size());
-    auto module_symbols = ModuleSymbolMap {};
+    auto module_symbols = std::unordered_map<std::string, ygg::Index<ModuleSymbol>> {};
     for (const auto& ast : asts)
     {
         auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol>(ps_builder);
@@ -1987,7 +1838,7 @@ std::vector<ModuleView> parse_modules(const std::vector<std::string>& descriptio
     }
     for (std::size_t i = 0; i < asts.size(); ++i)
     {
-        auto scope = DiagnosticContext::Scope(diagnostics, *error_handlers[i]);
+        auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, *error_handlers[i]);
         auto view = lower_module(asts[i], domain, repository, builders, diagnostics, module_symbols);
         result.push_back(view);
     }

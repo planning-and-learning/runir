@@ -178,8 +178,8 @@ void add_numerical_distance(std::stringstream& out,
     heads.push_back(head);
     add_rule(out,
              head,
-             std::string(runir::kr::dl::DistanceTag::keyword) + " " + concept_ + " " + runir::kr::dl::RestrictionTag::keyword + " " + role_primitive + " "
-                 + concept_primitive + " " + concept_);
+             std::string(runir::kr::dl::DistanceTag::keyword) + " " + concept_ + " (" + runir::kr::dl::RestrictionTag::keyword + " " + role_primitive + " "
+                 + concept_primitive + ") " + concept_);
     add_rule(out, head, std::string(runir::kr::dl::DistanceTag::keyword) + " " + concept_ + " " + role_primitive + " " + concept_);
 }
 
