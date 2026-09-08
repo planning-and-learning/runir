@@ -144,7 +144,8 @@ def test_rule_text_requires_an_explicit_projection(gripper_planning_domain):
     assert row == {"symbol": rule.get_symbol()}
 
 
-def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context):
+@pytest.mark.parametrize("register_planning_table", [register_table, tyr_serialization.register_table], ids=["runir", "tyr"])
+def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context, register_planning_table):
     search = ground_gripper_search_context
     domain = search.task.get_formalism_task().get_domain()
     domain_context = DomainContext(domain)
@@ -161,9 +162,9 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         serialize(Dictionaries(), domain)
 
     dictionaries = Dictionaries()
-    register_table(dictionaries, ground.State, "states", "s")
-    register_table(dictionaries, fp.FluentGroundAtom, "atoms", "a", fields=())
-    register_table(dictionaries, fp.FunctionExpression, "expressions", "x")
+    register_planning_table(dictionaries, ground.State, "states", "s")
+    register_planning_table(dictionaries, fp.FluentGroundAtom, "atoms", "a", fields=())
+    register_planning_table(dictionaries, fp.FunctionExpression, "expressions", "x")
     register_table(dictionaries, ext.GroundExecutionState, "execution_states", "e")
     register_table(dictionaries, ext.GroundCallStack, "call_stacks", "c", fields=("caller",))
     register_table(
@@ -180,6 +181,7 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     assert serialize(dictionaries, initial) == "e0"
     assert serialize(dictionaries, initial.state) == "s0"
     assert tyr_serialization.serialize(dictionaries, initial.state) == "s0"
+    assert tyr_serialization.table(dictionaries, ground.State) == table(dictionaries, ground.State)
     assert serialize(dictionaries, step.target) == "e1"
     assert serialize(dictionaries, initial) == "e0"
     first, second = table(dictionaries, ext.GroundExecutionState)
@@ -232,6 +234,7 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         reverse, ground.State, "states", "s", project=lambda _state: {"execution_state": initial},
     )
     register_table(reverse, ext.GroundExecutionState, "execution_states", "e", fields=("state",))
+    assert tyr_serialization.serialize(reverse, initial.state) == "s0"
     assert serialize(reverse, initial.state) == "s0"
     assert table(reverse, ground.State) == [{"execution_state": "e0"}]
     assert table(reverse, ext.GroundExecutionState) == [{"state": "s0"}]
