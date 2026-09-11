@@ -32,7 +32,12 @@ void bind_task_context_for_kind(nb::module_& m, const char* prefix)
             "dl_builder",
             [](TaskContextT& self) -> auto& { return self.dl_builder; },
             nb::rv_policy::reference_internal)
-        .def_prop_ro("dl_denotation_repository", [](TaskContextT& self) -> auto& { return *self.dl_denotation_repository; }, nb::rv_policy::reference_internal);
+        .def_prop_ro("dl_denotation_repository", [](TaskContextT& self) -> auto& { return *self.dl_denotation_repository; }, nb::rv_policy::reference_internal)
+        .def_prop_ro(
+            "execution_repository",
+            [](TaskContextT& self) -> auto& { return *self.execution_repository; },
+            nb::rv_policy::reference_internal)
+        .def_prop_ro("execution_builder", [](TaskContextT& self) -> auto& { return self.execution_builder; }, nb::rv_policy::reference_internal);
 }
 
 }  // namespace

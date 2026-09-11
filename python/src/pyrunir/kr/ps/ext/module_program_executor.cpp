@@ -1,5 +1,6 @@
 #include "pyrunir/kr/ps/ext/module.hpp"
 
+#include <concepts>
 #include <nanobind/stl/chrono.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
@@ -8,6 +9,7 @@
 #include <nanobind/stl/vector.h>
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
+#include <runir/kr/ps/ext/evaluation.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/module_program_executor.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
@@ -28,6 +30,28 @@ using runir::graphs::bind_readable_graph_methods;
 namespace
 {
 
+template<tyr::TaskKind Kind, typename FeatureTag>
+void bind_feature_evaluation(nb::module_& m)
+{
+    using FeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, Repository>;
+
+    m.def("evaluate_feature_denotation",
+          &evaluate_feature_denotation<FeatureTag, Repository, Kind>,
+          "feature"_a,
+          "context"_a,
+          "environment"_a,
+          nb::keep_alive<0, 3>());
+
+    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> || std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
+        m.def(
+            "evaluate",
+            [](FeatureView feature, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
+            { return evaluate(feature, context, environment); },
+            "feature"_a,
+            "context"_a,
+            "environment"_a);
+}
+
 template<tyr::TaskKind Kind>
 void bind_execution_types(nb::module_& m, const char* prefix)
 {
@@ -41,6 +65,36 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using Options = ModuleProgramSearchOptions<Kind>;
     using Step = detail::ModuleProgramStep<Kind>;
     using Expander = SuccessorExpander<Kind>;
+    using Context = EvaluationContext<Kind>;
+    using Environment = EvaluationEnvironment<Kind>;
+
+    nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
+    nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
+
+    nb::class_<Context>(m, (std::string(prefix) + "EvaluationContext").c_str())
+        .def(nb::init<ExecutionRepository<Kind>*, ExecutionBuilder<Kind>*, ModuleProgramView, StateView>(),
+             "repository"_a,
+             "builder"_a,
+             "program"_a,
+             "state"_a,
+             nb::keep_alive<1, 2>(),
+             nb::keep_alive<1, 3>(),
+             nb::keep_alive<1, 4>(),
+             nb::keep_alive<1, 5>())
+        .def_prop_rw(
+            "state",
+            [](const Context& self) { return self.get_state(); },
+            [](Context& self, tyr::planning::StateView<Kind> state) { self.get_state() = std::move(state); })
+        .def_prop_ro("program", &Context::get_program, nb::keep_alive<0, 1>())
+        .def("intern", &Context::intern, "phase"_a, nb::keep_alive<0, 1>());
+
+    nb::class_<Environment>(m, (std::string(prefix) + "EvaluationEnvironment").c_str())
+        .def(nb::init<runir::kr::TaskContext<Kind>&, ModuleProgramView>(), "task_context"_a, "program"_a, nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>());
+
+    bind_feature_evaluation<Kind, runir::kr::dl::ConceptTag>(m);
+    bind_feature_evaluation<Kind, runir::kr::dl::RoleTag>(m);
+    bind_feature_evaluation<Kind, runir::kr::ps::dl::BooleanFeature>(m);
+    bind_feature_evaluation<Kind, runir::kr::ps::dl::NumericalFeature>(m);
 
     auto register_values = nb::class_<RegisterView>(m, (std::string(prefix) + "RegisterValues").c_str())
                                .def_prop_ro("concept_values", &RegisterView::get_concept_values)
