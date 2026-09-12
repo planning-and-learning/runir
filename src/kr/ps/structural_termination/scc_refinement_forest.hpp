@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <span>
 #include <stdexcept>
@@ -35,14 +36,12 @@ public:
 
     struct Marks
     {
-        boost::dynamic_bitset<> booleans;
-        boost::dynamic_bitset<> numericals;
+        std::uint64_t booleans = 0;
+        std::uint64_t numericals = 0;
         std::vector<std::vector<std::size_t>> boolean_witnessing_rule_positions;
         std::vector<std::vector<std::size_t>> numerical_witnessing_rule_positions;
 
         Marks(std::size_t num_booleans, std::size_t num_numericals) :
-            booleans(num_booleans),
-            numericals(num_numericals),
             boolean_witnessing_rule_positions(num_booleans),
             numerical_witnessing_rule_positions(num_numericals)
         {
@@ -63,14 +62,16 @@ public:
 
         void mark_boolean(std::size_t feature_position, std::size_t witnessing_rule_position)
         {
-            booleans.set(feature_position);
-            insert_witness(boolean_witnessing_rule_positions.at(feature_position), witnessing_rule_position);
+            auto& witnesses = boolean_witnessing_rule_positions.at(feature_position);
+            booleans |= std::uint64_t { 1 } << feature_position;
+            insert_witness(witnesses, witnessing_rule_position);
         }
 
         void mark_numerical(std::size_t feature_position, std::size_t witnessing_rule_position)
         {
-            numericals.set(feature_position);
-            insert_witness(numerical_witnessing_rule_positions.at(feature_position), witnessing_rule_position);
+            auto& witnesses = numerical_witnessing_rule_positions.at(feature_position);
+            numericals |= std::uint64_t { 1 } << feature_position;
+            insert_witness(witnesses, witnessing_rule_position);
         }
 
     private:

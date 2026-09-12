@@ -92,7 +92,7 @@ void append_list_section(std::ostream& os, std::string_view name, Values values,
 }
 
 template<typename C>
-void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::base::Rule>, C> view)
+void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> view)
 {
     os << ygg::print_indent << "(:rule\n";
     {
@@ -110,7 +110,7 @@ void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::base::Rul
 }
 
 template<typename C>
-std::string rule(ygg::View<ygg::Index<runir::kr::ps::base::Rule>, C> view)
+std::string rule(ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> view)
 {
     auto os = std::ostringstream {};
     append_rule(os, view);
@@ -209,9 +209,9 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteEffectVariant<
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::base::Rule>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>> : fmt::formatter<std::string_view>
 {
-    using View = ygg::View<ygg::Index<runir::kr::ps::base::Rule>, C>;
+    using View = ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::rule(view), ctx); }
 };
 

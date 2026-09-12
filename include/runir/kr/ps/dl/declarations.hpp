@@ -49,6 +49,11 @@ struct Unchanged
     static constexpr auto keyword = "unchanged";
 };
 
+struct Unconstrained
+{
+    static constexpr auto keyword = "unconstrained";
+};
+
 }  // namespace runir::kr::ps::dl
 
 #endif

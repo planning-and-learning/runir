@@ -8,6 +8,7 @@
 #include "runir/graphs/bgl/graph_traits.hpp"
 #include "runir/graphs/bgl/property_maps.hpp"
 #include "runir/graphs/bidirectional_static_graph.hpp"
+#include "runir/graphs/cycle.hpp"
 #include "runir/graphs/declarations.hpp"
 #include "runir/graphs/dynamic_graph.hpp"
 #include "runir/graphs/edge.hpp"

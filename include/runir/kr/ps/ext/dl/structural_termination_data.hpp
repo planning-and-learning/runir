@@ -8,14 +8,12 @@
 #include "runir/kr/ps/ext/memory_state_view.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 
-#include <boost/dynamic_bitset.hpp>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
-#include <yggdrasil/containers/dynamic_bitset.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
-#include <yggdrasil/semantics/containers/dynamic_bitset_hash.hpp>
 
 namespace runir::kr::ps::ext::dl
 {
@@ -31,13 +29,13 @@ enum class StructuralTerminationStatus
 /// encodes a value greater than zero.
 struct ModulePolicyGraphVertexLabel : ygg::comparison::Mixin<ModulePolicyGraphVertexLabel>
 {
-    boost::dynamic_bitset<> boolean_values;
-    boost::dynamic_bitset<> numerical_values;
+    std::uint64_t boolean_values;
+    std::uint64_t numerical_values;
     MemoryStateView memory_state;
 
-    ModulePolicyGraphVertexLabel(boost::dynamic_bitset<> boolean_values_, boost::dynamic_bitset<> numerical_values_, MemoryStateView memory_state_) noexcept :
-        boolean_values(std::move(boolean_values_)),
-        numerical_values(std::move(numerical_values_)),
+    ModulePolicyGraphVertexLabel(std::uint64_t boolean_values_, std::uint64_t numerical_values_, MemoryStateView memory_state_) noexcept :
+        boolean_values(boolean_values_),
+        numerical_values(numerical_values_),
         memory_state(memory_state_)
     {
     }
@@ -50,12 +48,22 @@ using ModulePolicyGraphBuilder = graphs::StaticGraphBuilder<ModulePolicyGraphVer
 using ModulePolicyGraph = graphs::StaticGraph<ModulePolicyGraphVertexLabel, RuleVariantView>;
 using SccStructuralTerminationResult = runir::kr::ps::dl::SccStructuralTerminationResult<runir::kr::ExtFamilyTag, runir::kr::ps::ext::Repository>;
 
+struct ModuleSieveStructuralTerminationResult
+{
+    std::shared_ptr<ModulePolicyGraph> counterexample;  ///< nullptr iff terminating.
+    std::vector<SccStructuralTerminationResult> scc_results;
+
+    /// Distinct rules labeling all retained policy-graph edges; empty if terminating.
+    std::vector<RuleVariantView> surviving_rules;
+
+    bool is_terminating() const noexcept { return !counterexample; }
+};
+
 struct ModuleStructuralTerminationResult
 {
     StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
-    std::shared_ptr<ModulePolicyGraph> counterexample;                             ///< nullptr iff terminating.
     std::optional<ModuleIncompleteStructuralTerminationResult> incomplete_result;  ///< Populated iff incomplete preprocessing was enabled.
-    std::optional<std::vector<SccStructuralTerminationResult>> scc_results;        ///< Populated iff complete SIEVE was run.
+    std::optional<ModuleSieveStructuralTerminationResult> sieve_result;            ///< Populated iff complete SIEVE was run.
 
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
 };

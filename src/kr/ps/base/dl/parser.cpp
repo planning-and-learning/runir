@@ -806,7 +806,7 @@ auto parse_rule(
         numerical_features,
     const runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    auto data = runir::kr::ps::base::checkout<runir::kr::ps::base::Rule>(builder);
+    auto data = runir::kr::ps::base::checkout<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>(builder);
     data->symbol = node.symbol.text;
     data->conditions.reserve(node.conditions.size());
     for (const auto& condition : node.conditions)

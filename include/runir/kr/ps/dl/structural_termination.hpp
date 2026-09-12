@@ -4,7 +4,6 @@
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
-#include <boost/dynamic_bitset.hpp>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
@@ -12,51 +11,49 @@
 #include <optional>
 #include <stdexcept>
 #include <vector>
+#include <yggdrasil/containers/dynamic_bitset.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
 
 namespace runir::kr::ps::dl
 {
 
 static constexpr std::size_t default_max_features = 10;
+static constexpr std::size_t max_supported_features = 64;
 static constexpr bool default_use_incomplete_preprocessing = true;
 static constexpr bool default_use_memory_scc_scope = true;
 
-/// Qualitative constraint on one numerical feature in a normalized policy rule.
-enum class NumericalChange : std::uint8_t
+inline void validate_feature_capacity(std::size_t num_booleans, std::size_t num_numericals)
 {
-    UNCONSTRAINED = 0,
-    INCREASES = 1,
-    DECREASES = 2,
-    UNCHANGED = 3,
-};
+    if (num_booleans > max_supported_features || num_numericals > max_supported_features - num_booleans)
+        throw std::invalid_argument("structural_termination: a policy supports at most 64 Boolean and numerical features in total");
+}
 
-/// Qualitative conditions and effects for one policy rule. A Boolean effect
-/// absent from all three effect bitsets is unconstrained, not unchanged.
+/// Qualitative conditions and effects in the policy's per-kind feature order.
+/// Each feature belongs to exactly one of its four effect masks.
 struct RuleProfile
 {
-    std::size_t source_memory_position;
-    std::size_t target_memory_position;
-    boost::dynamic_bitset<> boolean_positive_conditions;
-    boost::dynamic_bitset<> boolean_negative_conditions;
-    boost::dynamic_bitset<> numerical_greater_conditions;
-    boost::dynamic_bitset<> numerical_zero_conditions;
-    boost::dynamic_bitset<> boolean_positive_effects;
-    boost::dynamic_bitset<> boolean_negative_effects;
-    boost::dynamic_bitset<> boolean_unchanged_effects;
-    std::vector<NumericalChange> numerical_changes;
+    std::size_t source_memory_position = 0;
+    std::size_t target_memory_position = 0;
+    std::uint64_t boolean_positive_conditions = 0;
+    std::uint64_t boolean_negative_conditions = 0;
+    std::uint64_t numerical_greater_conditions = 0;
+    std::uint64_t numerical_zero_conditions = 0;
+    std::uint64_t boolean_positive_effects = 0;
+    std::uint64_t boolean_negative_effects = 0;
+    std::uint64_t boolean_unchanged_effects = 0;
+    std::uint64_t boolean_unconstrained_effects = 0;
+    std::uint64_t numerical_increase_effects = 0;
+    std::uint64_t numerical_decrease_effects = 0;
+    std::uint64_t numerical_unchanged_effects = 0;
+    std::uint64_t numerical_unconstrained_effects = 0;
 
     RuleProfile(std::size_t num_booleans, std::size_t num_numericals, std::size_t source_memory_position_ = 0, std::size_t target_memory_position_ = 0) :
         source_memory_position(source_memory_position_),
-        target_memory_position(target_memory_position_),
-        boolean_positive_conditions(num_booleans),
-        boolean_negative_conditions(num_booleans),
-        numerical_greater_conditions(num_numericals),
-        numerical_zero_conditions(num_numericals),
-        boolean_positive_effects(num_booleans),
-        boolean_negative_effects(num_booleans),
-        boolean_unchanged_effects(num_booleans),
-        numerical_changes(num_numericals, NumericalChange::UNCONSTRAINED)
+        target_memory_position(target_memory_position_)
     {
+        validate_feature_capacity(num_booleans, num_numericals);
+        ygg::BitsetSpan<std::uint64_t>(&boolean_unconstrained_effects, num_booleans).set();
+        ygg::BitsetSpan<std::uint64_t>(&numerical_unconstrained_effects, num_numericals).set();
     }
 
     template<typename ObservationTag>
@@ -74,30 +71,27 @@ struct RuleProfile
             static_assert(ygg::dependent_false<ObservationTag>::value, "unhandled condition observation tag");
     }
 
-    template<typename ObservationTag>
+    template<typename FeatureTag, typename ObservationTag>
     auto& effects() noexcept
     {
-        if constexpr (std::same_as<ObservationTag, Positive>)
+        if constexpr (std::same_as<FeatureTag, BooleanFeature> && std::same_as<ObservationTag, Positive>)
             return boolean_positive_effects;
-        else if constexpr (std::same_as<ObservationTag, Negative>)
+        else if constexpr (std::same_as<FeatureTag, BooleanFeature> && std::same_as<ObservationTag, Negative>)
             return boolean_negative_effects;
-        else if constexpr (std::same_as<ObservationTag, Unchanged>)
+        else if constexpr (std::same_as<FeatureTag, BooleanFeature> && std::same_as<ObservationTag, Unchanged>)
             return boolean_unchanged_effects;
+        else if constexpr (std::same_as<FeatureTag, BooleanFeature> && std::same_as<ObservationTag, Unconstrained>)
+            return boolean_unconstrained_effects;
+        else if constexpr (std::same_as<FeatureTag, NumericalFeature> && std::same_as<ObservationTag, Increases>)
+            return numerical_increase_effects;
+        else if constexpr (std::same_as<FeatureTag, NumericalFeature> && std::same_as<ObservationTag, Decreases>)
+            return numerical_decrease_effects;
+        else if constexpr (std::same_as<FeatureTag, NumericalFeature> && std::same_as<ObservationTag, Unchanged>)
+            return numerical_unchanged_effects;
+        else if constexpr (std::same_as<FeatureTag, NumericalFeature> && std::same_as<ObservationTag, Unconstrained>)
+            return numerical_unconstrained_effects;
         else
-            static_assert(ygg::dependent_false<ObservationTag>::value, "unhandled Boolean effect observation tag");
-    }
-
-    template<typename ObservationTag>
-    static constexpr NumericalChange numerical_change() noexcept
-    {
-        if constexpr (std::same_as<ObservationTag, Increases>)
-            return NumericalChange::INCREASES;
-        else if constexpr (std::same_as<ObservationTag, Decreases>)
-            return NumericalChange::DECREASES;
-        else if constexpr (std::same_as<ObservationTag, Unchanged>)
-            return NumericalChange::UNCHANGED;
-        else
-            static_assert(ygg::dependent_false<ObservationTag>::value, "unhandled numerical effect observation tag");
+            static_assert(ygg::dependent_false<ObservationTag>::value, "unhandled effect feature or observation tag");
     }
 };
 
@@ -115,7 +109,10 @@ struct QualitativePolicy
     {
         if (num_memory_states == 0)
             throw std::invalid_argument("a qualitative policy requires at least one memory state");
+        validate_feature_capacity();
     }
+
+    void validate_feature_capacity() const { dl::validate_feature_capacity(num_booleans, num_numericals); }
 
     std::size_t num_valuations() const
     {
@@ -175,6 +172,8 @@ struct IncompletePolicyResult
     std::vector<SurvivingRule> surviving_rules;
 
     bool is_terminating() const noexcept { return surviving_rules.empty(); }
+    /// Original rule positions not ruled out by incomplete elimination.
+    std::vector<std::size_t> get_cyclic_rule_positions() const;
 };
 
 enum class StructuralTerminationStatus
@@ -188,8 +187,8 @@ struct CounterexampleVertex
     /// Original memory position.
     std::size_t memory_position;
     /// Full-policy axes; only the component's listed feature positions are meaningful.
-    boost::dynamic_bitset<> boolean_values;
-    boost::dynamic_bitset<> numerical_values;
+    std::uint64_t boolean_values;
+    std::uint64_t numerical_values;
 };
 
 struct CounterexampleEdge
@@ -207,6 +206,9 @@ struct CounterexampleComponent
     std::vector<std::size_t> numerical_positions;
     std::vector<CounterexampleVertex> vertices;
     std::vector<CounterexampleEdge> edges;
+
+    /// One closed path of positions into edges, preserving the rule labels.
+    std::vector<std::size_t> get_cycle() const;
 };
 
 struct StructuralTerminationResult
@@ -218,13 +220,19 @@ struct StructuralTerminationResult
     std::vector<CounterexampleComponent> counterexample_components;
 
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
+    /// Sorted unique original rule positions on any final residual cycle.
+    /// Hybrid results use the final SIEVE frontier, not the incomplete prefix.
+    std::vector<std::size_t> get_cyclic_rule_positions() const;
 };
+
+/// Sound incomplete elimination; surviving rules are potentially cyclic.
+IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy& policy, bool use_memory_scc_scope = default_use_memory_scc_scope);
 
 /// Decides structural termination using incomplete elimination followed by
 /// complete SIEVE. A non-terminating result contains only the stable failure
-/// frontier, not the algorithm's recursive trace. Valuation capacity and
-/// max_features apply per projected residual component, not to unused global
-/// feature axes.
+/// frontier, not the algorithm's recursive trace. Policies support at most
+/// 64 features in total; max_features and enumeration limits apply per
+/// projected residual component.
 StructuralTerminationResult structural_termination(const QualitativePolicy& policy,
                                                    std::size_t max_features = default_max_features,
                                                    bool use_incomplete_preprocessing = default_use_incomplete_preprocessing,

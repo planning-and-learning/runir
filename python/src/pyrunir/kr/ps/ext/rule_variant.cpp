@@ -15,7 +15,7 @@ using namespace nanobind::literals;
 
 void bind_rule_variant(nb::module_& m, RepositoryBinding& repository)
 {
-    using T = RuleVariant;
+    using T = runir::kr::ps::Rule<runir::kr::ExtFamilyTag>;
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
     ygg::bind_index<ygg::Index<T>>(m, "RuleVariantIndex");

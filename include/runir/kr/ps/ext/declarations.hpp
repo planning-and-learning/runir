@@ -55,10 +55,6 @@ struct Rule
 {
 };
 
-struct RuleVariant
-{
-};
-
 struct Module
 {
 };
@@ -70,7 +66,7 @@ struct ModuleProgram
 using LoadRuleTypes = ygg::TypeList<Rule<LoadTag<runir::kr::dl::ConceptTag>>, Rule<LoadTag<runir::kr::dl::RoleTag>>>;
 using ControlRuleTypes = ygg::MapTypeListT<Rule, ygg::TypeList<SketchTag, DoTag, CallTag>>;
 using ConcreteRuleTypes = ygg::ConcatTypeListsT<LoadRuleTypes, ControlRuleTypes>;
-using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<RuleVariant>, ConcreteRuleTypes>;
+using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<ps::Rule<ExtFamilyTag>>, ConcreteRuleTypes>;
 using FeatureTypes = runir::kr::ps::PsFeatureTypes<runir::kr::ExtFamilyTag>;
 using ConditionTypes = runir::kr::ps::PsConditionTypes<runir::kr::ExtFamilyTag>;
 using EffectTypes = runir::kr::ps::PsEffectTypes<runir::kr::ExtFamilyTag>;
@@ -88,7 +84,7 @@ using MemoryStateView = ygg::View<ygg::Index<MemoryState>, Repository>;
 using ModuleSymbolView = ygg::View<ygg::Index<ModuleSymbol>, Repository>;
 using ModuleView = ygg::View<ygg::Index<Module>, Repository>;
 using ModuleProgramView = ygg::View<ygg::Index<ModuleProgram>, Repository>;
-using RuleVariantView = ygg::View<ygg::Index<RuleVariant>, Repository>;
+using RuleVariantView = ygg::View<ygg::Index<ps::Rule<ExtFamilyTag>>, Repository>;
 
 template<RuleKind Kind>
 using RuleView = ygg::View<ygg::Index<Rule<Kind>>, Repository>;

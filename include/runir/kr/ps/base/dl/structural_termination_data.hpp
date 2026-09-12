@@ -7,14 +7,12 @@
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/dl/structural_termination.hpp"
 
-#include <boost/dynamic_bitset.hpp>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
-#include <yggdrasil/containers/dynamic_bitset.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
-#include <yggdrasil/semantics/containers/dynamic_bitset_hash.hpp>
 
 namespace runir::kr::ps::base::dl
 {
@@ -30,12 +28,12 @@ enum class StructuralTerminationStatus
 /// encodes n > 0.
 struct PolicyGraphVertexLabel : ygg::comparison::Mixin<PolicyGraphVertexLabel>
 {
-    boost::dynamic_bitset<> boolean_values;
-    boost::dynamic_bitset<> numerical_values;
+    std::uint64_t boolean_values;
+    std::uint64_t numerical_values;
 
-    PolicyGraphVertexLabel(boost::dynamic_bitset<> boolean_values_, boost::dynamic_bitset<> numerical_values_) noexcept :
-        boolean_values(std::move(boolean_values_)),
-        numerical_values(std::move(numerical_values_))
+    PolicyGraphVertexLabel(std::uint64_t boolean_values_, std::uint64_t numerical_values_) noexcept :
+        boolean_values(boolean_values_),
+        numerical_values(numerical_values_)
     {
     }
 
@@ -47,12 +45,22 @@ using PolicyGraphBuilder = graphs::StaticGraphBuilder<PolicyGraphVertexLabel, Ru
 using PolicyGraph = graphs::StaticGraph<PolicyGraphVertexLabel, RuleView>;
 using SccStructuralTerminationResult = runir::kr::ps::dl::SccStructuralTerminationResult<runir::kr::BaseFamilyTag, runir::kr::ps::base::Repository>;
 
+struct SieveStructuralTerminationResult
+{
+    std::shared_ptr<PolicyGraph> counterexample;  ///< nullptr iff terminating; otherwise a surviving counterexample graph.
+    std::vector<SccStructuralTerminationResult> scc_results;
+
+    /// Distinct rules labeling all retained policy-graph edges; empty if terminating.
+    std::vector<RuleView> surviving_rules;
+
+    bool is_terminating() const noexcept { return !counterexample; }
+};
+
 struct StructuralTerminationResult
 {
     StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
-    std::shared_ptr<PolicyGraph> counterexample;                             ///< nullptr iff terminating; otherwise a surviving counterexample graph.
     std::optional<IncompleteStructuralTerminationResult> incomplete_result;  ///< Populated iff incomplete preprocessing was enabled.
-    std::optional<std::vector<SccStructuralTerminationResult>> scc_results;  ///< Populated iff complete SIEVE was run.
+    std::optional<SieveStructuralTerminationResult> sieve_result;            ///< Populated iff complete SIEVE was run.
 
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
 };

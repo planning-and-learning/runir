@@ -194,6 +194,62 @@ def test_bidirectional_static_graph_exposes_forward_and_backward_graphs() -> Non
     assert list(graph.get_backward_graph().get_successor_indices(b)) == [a, c]
 
 
+@pytest.mark.parametrize(
+    "num_vertices, edge_pairs, cycle_length",
+    [
+        pytest.param(0, [], 0, id="empty"),
+        pytest.param(3, [(0, 1), (1, 2)], 0, id="acyclic"),
+        pytest.param(2, [(0, 1), (0, 1)], 0, id="acyclic-parallel"),
+        pytest.param(1, [(0, 0)], 1, id="self-loop"),
+        pytest.param(5, [(0, 1), (2, 3), (3, 4), (4, 2)], 3, id="disconnected-cycle"),
+        pytest.param(2, [(0, 1), (0, 1), (1, 0)], 2, id="parallel-cycle"),
+    ],
+)
+def test_find_edge_cycle_on_readable_graphs(
+    num_vertices: int, edge_pairs: list[tuple[int, int]], cycle_length: int
+) -> None:
+    builder = StaticGraphBuilder()
+    dynamic = DynamicGraph()
+    for graph in (builder, dynamic):
+        vertices = [graph.add_vertex(position) for position in range(num_vertices)]
+        for position, (source, target) in enumerate(edge_pairs):
+            graph.add_directed_edge(vertices[source], vertices[target], position)
+
+    bidirectional = BidirectionalStaticGraph(builder)
+    for graph in (builder, dynamic, StaticGraph(builder), bidirectional.get_forward_graph(), bidirectional.get_backward_graph()):
+        cycle = graph.find_edge_cycle()
+        assert len(cycle) == cycle_length
+        assert len(set(cycle)) == len(cycle)
+        assert set(cycle) <= set(graph.get_edge_indices())
+        for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1]):
+            assert graph.get_target(edge) == graph.get_source(next_edge)
+            assert edge == next(
+                candidate
+                for candidate in graph.get_out_edge_indices(graph.get_source(edge))
+                if graph.get_target(candidate) == graph.get_target(edge)
+            )
+
+
+def test_find_edge_cycle_preserves_sparse_dynamic_indices() -> None:
+    graph = DynamicGraph()
+    vertices = [graph.add_vertex(position) for position in range(5)]
+    graph.add_directed_edge(vertices[0], vertices[1], "removed")
+    first = graph.add_directed_edge(vertices[1], vertices[3], "first")
+    second = graph.add_directed_edge(vertices[3], vertices[4], "second")
+    third = graph.add_directed_edge(vertices[4], vertices[1], "third")
+    graph.remove_vertex(vertices[0])
+    graph.remove_vertex(vertices[2])
+
+    assert set(graph.get_vertex_indices()) == {vertices[1], vertices[3], vertices[4]}
+    assert max(graph.get_vertex_indices()) >= graph.get_num_vertices()
+    assert max(graph.get_edge_indices()) >= graph.get_num_edges()
+    cycle = graph.find_edge_cycle()
+    assert len(cycle) == 3
+    assert set(cycle) == {first, second, third}
+    for edge, next_edge in zip(cycle, cycle[1:] + cycle[:1]):
+        assert graph.get_target(edge) == graph.get_source(next_edge)
+
+
 def test_graph_properties_must_be_hashable() -> None:
     graph = DynamicGraph()
 

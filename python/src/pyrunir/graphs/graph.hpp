@@ -13,6 +13,7 @@
 #include <ranges>
 #include <runir/graphs/algorithms.hpp>
 #include <runir/graphs/bidirectional_static_graph.hpp>
+#include <runir/graphs/cycle.hpp>
 #include <runir/graphs/dynamic_graph.hpp>
 #include <runir/graphs/formatter.hpp>
 #include <runir/graphs/properties.hpp>
@@ -126,7 +127,8 @@ void bind_readable_graph_methods(nb::class_<Graph>& cls, VertexPropertyGetter ve
             [](const Graph& graph) { return make_graph_iterator<Graph>("edge index iterator", graph.get_edge_indices()); },
             nb::keep_alive<0, 1>())
         .def("get_source", &Graph::get_source, "edge"_a)
-        .def("get_target", &Graph::get_target, "edge"_a);
+        .def("get_target", &Graph::get_target, "edge"_a)
+        .def("find_edge_cycle", &graphs::find_edge_cycle<Graph>, "Return one closed path of edge indices, or an empty list if acyclic.");
 
     if constexpr (KeepPropertyOwnerAlive)
         cls.def("get_vertex_property", vertex_property_getter, "vertex"_a, nb::keep_alive<0, 1>())

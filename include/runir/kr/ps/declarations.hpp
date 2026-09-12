@@ -8,6 +8,11 @@ namespace runir::kr::ps
 
 using runir::kr::FamilyTag;
 
+// Rule
+
+template<FamilyTag Family>
+struct Rule;
+
 // Feature
 
 template<FamilyTag Family, typename FeatureTag>

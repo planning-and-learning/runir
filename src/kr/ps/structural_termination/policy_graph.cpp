@@ -1,115 +1,93 @@
 #include "detail.hpp"
 #include "runir/graphs/declarations.hpp"
 
+#include <bit>
 #include <limits>
 #include <utility>
+#include <yggdrasil/containers/dynamic_bitset.hpp>
 
 namespace runir::kr::ps::detail
 {
 
-boost::dynamic_bitset<> vertex_booleans(std::size_t vertex, const QualitativePolicy& policy)
+// Internal Sieve IDs encode both feature categories in one valuation:
+//   valuation = booleans | (numericals << num_booleans)
+//   vertex = valuation * num_memory_states + memory_position
+// Dividing by num_memory_states leaves [numerical bits | Boolean bits].
+// Booleans occupy the low num_booleans bits; numericals require shifting past
+// them. Returned vertex labels store separate masks, unlike this packed ID.
+std::uint64_t vertex_booleans(std::size_t vertex, const QualitativePolicy& policy)
 {
-    const auto valuation = vertex / policy.num_memory_states;
-    auto values = boost::dynamic_bitset<>(policy.num_booleans);
-    for (std::size_t position = 0; position < policy.num_booleans; ++position)
-        values.set(position, (valuation >> position) & std::size_t { 1 });
-    return values;
+    if (policy.num_booleans == 0)
+        return 0;
+    return (vertex / policy.num_memory_states) & ygg::BitsetSpan<const std::uint64_t>::last_mask(policy.num_booleans);
 }
 
-boost::dynamic_bitset<> vertex_numericals(std::size_t vertex, const QualitativePolicy& policy)
+std::uint64_t vertex_numericals(std::size_t vertex, const QualitativePolicy& policy)
 {
-    const auto valuation = vertex / policy.num_memory_states;
-    auto values = boost::dynamic_bitset<>(policy.num_numericals);
-    for (std::size_t position = 0; position < policy.num_numericals; ++position)
-        values.set(position, (valuation >> (policy.num_booleans + position)) & std::size_t { 1 });
-    return values;
+    if (policy.num_numericals == 0)
+        return 0;
+    return static_cast<std::uint64_t>(vertex / policy.num_memory_states) >> policy.num_booleans;
 }
 
-std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>
-unproject_vertex(std::size_t vertex, const ProjectedPolicyComponent& projected, const QualitativePolicy& policy)
+std::pair<std::uint64_t, std::uint64_t> unproject_vertex(std::size_t vertex, const ProjectedPolicyComponent& projected, const QualitativePolicy& policy)
 {
-    auto booleans = boost::dynamic_bitset<>(policy.num_booleans);
+    auto booleans = std::uint64_t { 0 };
+    auto boolean_bits = ygg::BitsetSpan<std::uint64_t>(&booleans, policy.num_booleans);
     const auto local_booleans = vertex_booleans(vertex, projected.policy);
+    const auto local_boolean_bits = ygg::BitsetSpan<const std::uint64_t>(&local_booleans, projected.policy.num_booleans);
     for (std::size_t local = 0; local < projected.boolean_positions.size(); ++local)
-        booleans.set(projected.boolean_positions[local], local_booleans.test(local));
+        boolean_bits.set(projected.boolean_positions[local], local_boolean_bits.test(local));
 
-    auto numericals = boost::dynamic_bitset<>(policy.num_numericals);
+    auto numericals = std::uint64_t { 0 };
+    auto numerical_bits = ygg::BitsetSpan<std::uint64_t>(&numericals, policy.num_numericals);
     const auto local_numericals = vertex_numericals(vertex, projected.policy);
+    const auto local_numerical_bits = ygg::BitsetSpan<const std::uint64_t>(&local_numericals, projected.policy.num_numericals);
     for (std::size_t local = 0; local < projected.numerical_positions.size(); ++local)
-        numericals.set(projected.numerical_positions[local], local_numericals.test(local));
+        numerical_bits.set(projected.numerical_positions[local], local_numerical_bits.test(local));
 
-    return { std::move(booleans), std::move(numericals) };
+    return { booleans, numericals };
 }
 
 namespace
 {
 
-std::size_t
-make_vertex(const boost::dynamic_bitset<>& booleans, const boost::dynamic_bitset<>& numericals, std::size_t memory_position, const QualitativePolicy& policy)
+std::size_t make_vertex(std::uint64_t booleans, std::uint64_t numericals, std::size_t memory_position, const QualitativePolicy& policy)
 {
-    auto valuation = std::size_t { 0 };
-    for (std::size_t position = 0; position < booleans.size(); ++position)
-        if (booleans.test(position))
-            valuation |= std::size_t { 1 } << position;
-    for (std::size_t position = 0; position < numericals.size(); ++position)
-        if (numericals.test(position))
-            valuation |= std::size_t { 1 } << (booleans.size() + position);
+    const auto valuation = booleans | (numericals << policy.num_booleans);
     return valuation * policy.num_memory_states + memory_position;
 }
 
-template<typename Callback>
-void enumerate_rule_edges(const RuleProfile& profile, const QualitativePolicy& policy, Callback&& callback)
+void append_rule_edges(const QualitativePolicy& policy, std::size_t rule_position, std::vector<PolicyEdge>& edges)
 {
+    const auto& profile = policy.rule_profiles[rule_position];
     for (std::size_t source_valuation = 0; source_valuation < policy.num_valuations(); ++source_valuation)
     {
         const auto source = source_valuation * policy.num_memory_states + profile.source_memory_position;
         const auto source_booleans = vertex_booleans(source, policy);
         const auto source_numericals = vertex_numericals(source, policy);
 
-        if (!profile.boolean_positive_conditions.is_subset_of(source_booleans))
-            continue;
-        if (profile.boolean_negative_conditions.intersects(source_booleans))
-            continue;
-        if (!profile.numerical_greater_conditions.is_subset_of(source_numericals))
-            continue;
-        if (profile.numerical_zero_conditions.intersects(source_numericals))
+        if ((profile.boolean_positive_conditions & ~source_booleans) || (profile.boolean_negative_conditions & source_booleans)
+            || (profile.numerical_greater_conditions & ~source_numericals) || (profile.numerical_zero_conditions & source_numericals)
+            || (profile.numerical_decrease_effects & ~source_numericals))
             continue;
 
         auto target_booleans = profile.boolean_positive_effects | (profile.boolean_unchanged_effects & source_booleans);
-        const auto fixed_booleans = profile.boolean_positive_effects | profile.boolean_negative_effects | profile.boolean_unchanged_effects;
+        auto target_boolean_bits = ygg::BitsetSpan<std::uint64_t>(&target_booleans, policy.num_booleans);
+        const auto free_boolean_bits = ygg::BitsetSpan<const std::uint64_t>(&profile.boolean_unconstrained_effects, policy.num_booleans);
 
-        auto target_numericals = boost::dynamic_bitset<>(policy.num_numericals);
-        auto fixed_numericals = boost::dynamic_bitset<>(policy.num_numericals);
-        auto decreases_unsatisfiable = false;
-        for (std::size_t position = 0; position < policy.num_numericals; ++position)
-        {
-            switch (profile.numerical_changes[position])
-            {
-                case dl::NumericalChange::INCREASES:
-                    target_numericals.set(position);
-                    fixed_numericals.set(position);
-                    break;
-                case dl::NumericalChange::DECREASES:
-                    if (!source_numericals.test(position))
-                        decreases_unsatisfiable = true;
-                    break;
-                case dl::NumericalChange::UNCHANGED:
-                    target_numericals.set(position, source_numericals.test(position));
-                    fixed_numericals.set(position);
-                    break;
-                case dl::NumericalChange::UNCONSTRAINED:
-                    break;
-            }
-        }
-        if (decreases_unsatisfiable)
-            continue;
+        // A decrease requires a positive source (checked above), but may end at
+        // either zero or positive, so it remains free in the target valuation.
+        auto target_numericals = profile.numerical_increase_effects | (profile.numerical_unchanged_effects & source_numericals);
+        const auto free_numericals = profile.numerical_decrease_effects | profile.numerical_unconstrained_effects;
+        auto target_numerical_bits = ygg::BitsetSpan<std::uint64_t>(&target_numericals, policy.num_numericals);
+        const auto free_numerical_bits = ygg::BitsetSpan<const std::uint64_t>(&free_numericals, policy.num_numericals);
 
         auto free_positions = std::vector<std::pair<bool, std::size_t>> {};
         for (std::size_t position = 0; position < policy.num_booleans; ++position)
-            if (!fixed_booleans.test(position))
+            if (free_boolean_bits.test(position))
                 free_positions.emplace_back(true, position);
         for (std::size_t position = 0; position < policy.num_numericals; ++position)
-            if (!fixed_numericals.test(position))
+            if (free_numerical_bits.test(position))
                 free_positions.emplace_back(false, position);
 
         for (std::size_t assignment = 0; assignment < (std::size_t { 1 } << free_positions.size()); ++assignment)
@@ -118,37 +96,26 @@ void enumerate_rule_edges(const RuleProfile& profile, const QualitativePolicy& p
             {
                 const auto [is_boolean, position] = free_positions[free];
                 const auto value = static_cast<bool>((assignment >> free) & std::size_t { 1 });
-                (is_boolean ? target_booleans : target_numericals).set(position, value);
+                (is_boolean ? target_boolean_bits : target_numerical_bits).set(position, value);
             }
-            callback(source, make_vertex(target_booleans, target_numericals, profile.target_memory_position, policy));
+            if (edges.size() == std::numeric_limits<graphs::EdgeIndex>::max())
+                throw std::invalid_argument("structural_termination: an expanded policy graph has too many edges");
+            edges.push_back(PolicyEdge { source, make_vertex(target_booleans, target_numericals, profile.target_memory_position, policy), rule_position });
         }
     }
 }
 
-void append_rule_edges(const QualitativePolicy& policy, std::size_t rule_position, std::vector<PolicyEdge>& edges)
-{
-    enumerate_rule_edges(policy.rule_profiles[rule_position],
-                         policy,
-                         [&](std::size_t source, std::size_t target)
-                         {
-                             if (edges.size() == std::numeric_limits<graphs::EdgeIndex>::max())
-                                 throw std::invalid_argument("structural_termination: an expanded policy graph has too many edges");
-                             edges.push_back(PolicyEdge { source, target, rule_position });
-                         });
-}
-
-std::vector<std::size_t> positions(const boost::dynamic_bitset<>& selected)
+std::vector<std::size_t> positions(std::uint64_t selected)
 {
     auto result = std::vector<std::size_t> {};
-    for (std::size_t position = 0; position < selected.size(); ++position)
-        if (selected.test(position))
-            result.push_back(position);
+    for (; selected; selected &= selected - 1)
+        result.push_back(std::countr_zero(selected));
     return result;
 }
 
 std::vector<std::size_t> relevant_booleans(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions)
 {
-    auto selected = boost::dynamic_bitset<>(policy.num_booleans);
+    auto selected = std::uint64_t { 0 };
     for (const auto rule_position : rule_positions)
     {
         const auto& profile = policy.rule_profiles[rule_position];
@@ -160,19 +127,22 @@ std::vector<std::size_t> relevant_booleans(const QualitativePolicy& policy, std:
 
 std::vector<std::size_t> relevant_numericals(const QualitativePolicy& policy, std::span<const std::size_t> rule_positions)
 {
-    auto selected = boost::dynamic_bitset<>(policy.num_numericals);
+    auto selected = std::uint64_t { 0 };
     for (const auto rule_position : rule_positions)
     {
         const auto& profile = policy.rule_profiles[rule_position];
-        selected |= profile.numerical_greater_conditions | profile.numerical_zero_conditions;
-        for (std::size_t position = 0; position < profile.numerical_changes.size(); ++position)
-        {
-            const auto change = profile.numerical_changes[position];
-            if (change == dl::NumericalChange::INCREASES || change == dl::NumericalChange::DECREASES)
-                selected.set(position);
-        }
+        selected |=
+            profile.numerical_greater_conditions | profile.numerical_zero_conditions | profile.numerical_increase_effects | profile.numerical_decrease_effects;
     }
     return positions(selected);
+}
+
+std::uint64_t project_mask(std::uint64_t mask, const std::vector<std::size_t>& positions)
+{
+    auto projected = std::uint64_t { 0 };
+    for (std::size_t local = 0; local < positions.size(); ++local)
+        projected |= ((mask >> positions[local]) & 1) << local;
+    return projected;
 }
 
 RuleProfile project_profile(const RuleProfile& profile,
@@ -184,22 +154,18 @@ RuleProfile project_profile(const RuleProfile& profile,
                                  numerical_positions.size(),
                                  memory_position_map[profile.source_memory_position],
                                  memory_position_map[profile.target_memory_position]);
-    for (std::size_t local = 0; local < boolean_positions.size(); ++local)
-    {
-        const auto global = boolean_positions[local];
-        projected.boolean_positive_conditions.set(local, profile.boolean_positive_conditions.test(global));
-        projected.boolean_negative_conditions.set(local, profile.boolean_negative_conditions.test(global));
-        projected.boolean_positive_effects.set(local, profile.boolean_positive_effects.test(global));
-        projected.boolean_negative_effects.set(local, profile.boolean_negative_effects.test(global));
-        projected.boolean_unchanged_effects.set(local, profile.boolean_unchanged_effects.test(global));
-    }
-    for (std::size_t local = 0; local < numerical_positions.size(); ++local)
-    {
-        const auto global = numerical_positions[local];
-        projected.numerical_greater_conditions.set(local, profile.numerical_greater_conditions.test(global));
-        projected.numerical_zero_conditions.set(local, profile.numerical_zero_conditions.test(global));
-        projected.numerical_changes[local] = profile.numerical_changes[global];
-    }
+    projected.boolean_positive_conditions = project_mask(profile.boolean_positive_conditions, boolean_positions);
+    projected.boolean_negative_conditions = project_mask(profile.boolean_negative_conditions, boolean_positions);
+    projected.numerical_greater_conditions = project_mask(profile.numerical_greater_conditions, numerical_positions);
+    projected.numerical_zero_conditions = project_mask(profile.numerical_zero_conditions, numerical_positions);
+    projected.boolean_positive_effects = project_mask(profile.boolean_positive_effects, boolean_positions);
+    projected.boolean_negative_effects = project_mask(profile.boolean_negative_effects, boolean_positions);
+    projected.boolean_unchanged_effects = project_mask(profile.boolean_unchanged_effects, boolean_positions);
+    projected.boolean_unconstrained_effects = project_mask(profile.boolean_unconstrained_effects, boolean_positions);
+    projected.numerical_increase_effects = project_mask(profile.numerical_increase_effects, numerical_positions);
+    projected.numerical_decrease_effects = project_mask(profile.numerical_decrease_effects, numerical_positions);
+    projected.numerical_unchanged_effects = project_mask(profile.numerical_unchanged_effects, numerical_positions);
+    projected.numerical_unconstrained_effects = project_mask(profile.numerical_unconstrained_effects, numerical_positions);
     return projected;
 }
 

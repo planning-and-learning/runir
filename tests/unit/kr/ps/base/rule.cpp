@@ -7,7 +7,7 @@
 namespace runir::tests
 {
 
-using Entity = kr::ps::base::Rule;
+using Entity = kr::ps::Rule<kr::BaseFamilyTag>;
 using Index = ygg::Index<Entity>;
 using Data = ygg::Data<Entity>;
 using View = ygg::View<Index, kr::ps::base::Repository>;

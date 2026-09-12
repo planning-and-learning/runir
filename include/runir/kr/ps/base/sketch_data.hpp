@@ -20,7 +20,7 @@ struct Data<runir::kr::ps::base::Sketch>
     Index<runir::kr::ps::base::Sketch> index;
     IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>> boolean_features;
     IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>> numerical_features;
-    IndexList<runir::kr::ps::base::Rule> rules;
+    IndexList<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> rules;
 
     void clear() noexcept
     {

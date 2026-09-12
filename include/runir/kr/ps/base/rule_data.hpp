@@ -17,9 +17,9 @@ namespace ygg
 {
 
 template<>
-struct Data<runir::kr::ps::base::Rule>
+struct Data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
 {
-    Index<runir::kr::ps::base::Rule> index;
+    Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> index;
     ::cista::offset::string symbol;
     IndexList<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>> conditions;
     IndexList<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>> effects;

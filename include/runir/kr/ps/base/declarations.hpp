@@ -12,12 +12,6 @@
 namespace runir::kr::ps::base
 {
 
-// Rule
-
-struct Rule
-{
-};
-
 // Sketch
 
 struct Sketch
@@ -27,7 +21,7 @@ struct Sketch
 using FeatureTypes = runir::kr::ps::PsFeatureTypes<runir::kr::BaseFamilyTag>;
 using ConditionTypes = runir::kr::ps::PsConditionTypes<runir::kr::BaseFamilyTag>;
 using EffectTypes = runir::kr::ps::PsEffectTypes<runir::kr::BaseFamilyTag>;
-using SketchTypes = ygg::TypeList<runir::kr::ps::base::Rule, runir::kr::ps::base::Sketch>;
+using SketchTypes = ygg::TypeList<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>, runir::kr::ps::base::Sketch>;
 using RepositoryTypes = ygg::ConcatTypeListsT<FeatureTypes, ConditionTypes, EffectTypes, SketchTypes>;
 using Repository =
     runir::kr::ps::BasicRepository<runir::kr::BaseFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::BaseFamilyTag>>;
@@ -36,7 +30,7 @@ using RepositoryFactory =
     runir::kr::ps::BasicRepositoryFactory<runir::kr::BaseFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::BaseFamilyTag>>;
 
 using SketchView = ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, Repository>;
-using RuleView = ygg::View<ygg::Index<runir::kr::ps::base::Rule>, Repository>;
+using RuleView = ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, Repository>;
 
 }  // namespace runir::kr::ps::base
 

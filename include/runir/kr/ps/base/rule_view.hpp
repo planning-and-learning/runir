@@ -7,21 +7,21 @@
 #include "runir/kr/ps/effect_view.hpp"
 
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/containers/vector.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {
 
 template<typename C>
-class View<Index<runir::kr::ps::base::Rule>, C>
+class View<Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::base::Rule> m_handle;
+    Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::base::Rule> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

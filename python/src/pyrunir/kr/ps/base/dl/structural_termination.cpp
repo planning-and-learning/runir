@@ -1,6 +1,5 @@
 #include "pyrunir/kr/ps/base/dl/module.hpp"
 
-#include <boost/dynamic_bitset.hpp>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/variant.h>
@@ -20,19 +19,6 @@ using namespace nanobind::literals;
 using runir::graphs::bind_forward_graph;
 using runir::graphs::bind_readable_graph_methods;
 
-namespace
-{
-
-std::vector<bool> materialize(const boost::dynamic_bitset<>& values)
-{
-    auto result = std::vector<bool>(values.size());
-    for (std::size_t position = 0; position < values.size(); ++position)
-        result[position] = values.test(position);
-    return result;
-}
-
-}  // namespace
-
 void bind_structural_termination(nb::module_& m)
 {
     nb::enum_<StructuralTerminationStatus>(m, "StructuralTerminationStatus")
@@ -40,8 +26,8 @@ void bind_structural_termination(nb::module_& m)
         .value("NON_TERMINATING", StructuralTerminationStatus::NON_TERMINATING);
 
     auto vertex_label = nb::class_<PolicyGraphVertexLabel>(m, "PolicyGraphVertexLabel")
-                            .def_prop_ro("boolean_values", [](const PolicyGraphVertexLabel& self) { return materialize(self.boolean_values); })
-                            .def_prop_ro("numerical_values", [](const PolicyGraphVertexLabel& self) { return materialize(self.numerical_values); });
+                            .def_ro("boolean_values", &PolicyGraphVertexLabel::boolean_values)
+                            .def_ro("numerical_values", &PolicyGraphVertexLabel::numerical_values);
     ygg::add_comparison(vertex_label);
 
     auto policy_graph = nb::class_<PolicyGraph>(m, "PolicyGraph");
@@ -52,11 +38,16 @@ void bind_structural_termination(nb::module_& m)
         .def_ro("booleans", &SccStructuralTerminationResult::booleans)
         .def_ro("numericals", &SccStructuralTerminationResult::numericals);
 
+    nb::class_<SieveStructuralTerminationResult>(m, "SieveStructuralTerminationResult")
+        .def_ro("scc_results", &SieveStructuralTerminationResult::scc_results)
+        .def_ro("counterexample", &SieveStructuralTerminationResult::counterexample, nb::keep_alive<0, 1>())
+        .def_ro("surviving_rules", &SieveStructuralTerminationResult::surviving_rules)
+        .def("is_terminating", &SieveStructuralTerminationResult::is_terminating);
+
     nb::class_<StructuralTerminationResult>(m, "StructuralTerminationResult")
         .def_ro("status", &StructuralTerminationResult::status)
-        .def_ro("scc_results", &StructuralTerminationResult::scc_results)
         .def_ro("incomplete_result", &StructuralTerminationResult::incomplete_result, nb::keep_alive<0, 1>())
-        .def_ro("counterexample", &StructuralTerminationResult::counterexample, nb::keep_alive<0, 1>())
+        .def_ro("sieve_result", &StructuralTerminationResult::sieve_result, nb::keep_alive<0, 1>())
         .def("is_terminating", &StructuralTerminationResult::is_terminating);
 
     m.def("structural_termination",

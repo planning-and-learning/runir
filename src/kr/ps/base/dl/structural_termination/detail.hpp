@@ -11,17 +11,13 @@
 namespace runir::kr::ps::base::dl::detail
 {
 
-struct SketchAnalysis
-{
-    std::vector<RuleView> rules;
-    runir::kr::ps::detail::QualitativePolicy policy;
-};
+using Analysis = runir::kr::ps::detail::PolicyAnalysis<runir::kr::BaseFamilyTag, Repository>;
 
-SketchAnalysis analyze_sketch(SketchView sketch);
-StructuralTerminationResult make_result(SketchView sketch, const SketchAnalysis& analysis, const runir::kr::ps::detail::PolicySieveResult& sieve_result);
+Analysis analyze_sketch(SketchView sketch);
+StructuralTerminationResult make_result(SketchView sketch, const Analysis& analysis, const runir::kr::ps::detail::PolicySieveResult& sieve_result);
 
 IncompleteStructuralTerminationResult
-make_incomplete_result(SketchView sketch, const SketchAnalysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
+make_incomplete_result(SketchView sketch, const Analysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
 
 }  // namespace runir::kr::ps::base::dl::detail
 

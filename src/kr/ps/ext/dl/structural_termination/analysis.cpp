@@ -2,7 +2,6 @@
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 
-#include <algorithm>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -10,13 +9,8 @@
 namespace runir::kr::ps::ext::dl::detail
 {
 
-template<typename Features, typename Feature>
-std::size_t feature_position(const Features& features, Feature feature)
-{
-    return static_cast<std::size_t>(
-        std::distance(features.begin(),
-                      std::find_if(features.begin(), features.end(), [&](auto candidate) { return candidate.get_index() == feature.get_index(); })));
-}
+using runir::kr::ps::detail::record_condition;
+using runir::kr::ps::detail::record_effect;
 
 template<runir::kr::dl::CategoryTag Category>
 using RegisterConstructor = std::conditional_t<std::same_as<Category, runir::kr::dl::ConceptTag>,
@@ -84,54 +78,22 @@ void record_load_effects(ModuleView module_, runir::kr::ps::detail::RuleProfile&
     const auto numericals = module_.get_features<runir::kr::ps::dl::NumericalFeature>();
     for (std::size_t position = 0; position < booleans.size(); ++position)
         if (!feature_references_register(booleans[position], reg))
-            profile.template effects<runir::kr::ps::dl::Unchanged>().set(position);
+        {
+            profile.boolean_unconstrained_effects &= ~(std::uint64_t { 1 } << position);
+            profile.boolean_unchanged_effects |= std::uint64_t { 1 } << position;
+        }
 
     for (std::size_t position = 0; position < numericals.size(); ++position)
         if (!feature_references_register(numericals[position], reg))
-            profile.numerical_changes[position] = runir::kr::ps::dl::NumericalChange::UNCHANGED;
+        {
+            profile.numerical_unconstrained_effects &= ~(std::uint64_t { 1 } << position);
+            profile.numerical_unchanged_effects |= std::uint64_t { 1 } << position;
+        }
 }
 
-template<typename FeatureTag, typename ObservationTag>
-void record_condition(
-    ModuleView module_,
-    runir::kr::ps::detail::RuleProfile& profile,
-    ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> condition)
+Analysis analyze_module(ModuleView module_)
 {
-    namespace psdl = runir::kr::ps::dl;
-    const auto position = [&]()
-    {
-        if constexpr (std::same_as<FeatureTag, psdl::BooleanFeature>)
-            return feature_position(module_.get_features<psdl::BooleanFeature>(), condition.get_feature());
-        else
-            return feature_position(module_.get_features<psdl::NumericalFeature>(), condition.get_feature());
-    }();
-    profile.template conditions<ObservationTag>().set(position);
-}
-
-template<typename FeatureTag, typename ObservationTag>
-void record_effect(
-    ModuleView module_,
-    runir::kr::ps::detail::RuleProfile& profile,
-    ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, Repository> effect)
-{
-    namespace psdl = runir::kr::ps::dl;
-    if constexpr (std::same_as<FeatureTag, psdl::BooleanFeature>)
-    {
-        const auto position = feature_position(module_.get_features<psdl::BooleanFeature>(), effect.get_feature());
-        profile.template effects<ObservationTag>().set(position);
-    }
-    else
-    {
-        const auto position = feature_position(module_.get_features<psdl::NumericalFeature>(), effect.get_feature());
-        profile.numerical_changes[position] = runir::kr::ps::detail::RuleProfile::template numerical_change<ObservationTag>();
-    }
-}
-
-ModuleAnalysis analyze_module(ModuleView module_)
-{
-    auto memory_states = std::vector<MemoryStateView> {};
-    for (auto memory_state : module_.get_memory_states())
-        memory_states.push_back(memory_state);
+    const auto memory_states = module_.get_memory_states();
 
     auto rules = std::vector<RuleVariantView> {};
     for (auto transition : module_.get_memory_transitions())
@@ -141,20 +103,18 @@ ModuleAnalysis analyze_module(ModuleView module_)
     const auto booleans = module_.get_features<runir::kr::ps::dl::BooleanFeature>();
     const auto numericals = module_.get_features<runir::kr::ps::dl::NumericalFeature>();
     auto policy = runir::kr::ps::detail::QualitativePolicy(memory_states.size(), booleans.size(), numericals.size());
-    auto analysis = ModuleAnalysis { std::move(memory_states), std::move(rules), std::move(policy) };
+    auto analysis = Analysis { std::move(rules), std::move(policy) };
     const auto memory_position = [&](ygg::Index<MemoryState> memory_state)
     {
-        for (std::size_t position = 0; position < analysis.memory_states.size(); ++position)
-            if (analysis.memory_states[position].get_index() == memory_state)
+        for (std::size_t position = 0; position < memory_states.size(); ++position)
+            if (memory_states[position].get_index() == memory_state)
                 return position;
         throw std::logic_error("structural_termination: rule references a memory state not listed in the module.");
     };
 
-    const auto num_booleans = booleans.size();
-    const auto num_numericals = numericals.size();
     for (auto rule : analysis.rules)
     {
-        auto profile = runir::kr::ps::detail::RuleProfile(num_booleans, num_numericals);
+        auto profile = runir::kr::ps::detail::RuleProfile(booleans.size(), numericals.size());
         ygg::visit(
             [&](auto concrete_rule)
             {
@@ -180,6 +140,7 @@ ModuleAnalysis analyze_module(ModuleView module_)
         analysis.policy.rule_profiles.push_back(std::move(profile));
     }
 
+    runir::kr::ps::detail::validate_policy(analysis.policy);
     return analysis;
 }
 

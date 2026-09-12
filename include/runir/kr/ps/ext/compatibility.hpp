@@ -110,7 +110,7 @@ bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationCon
 }
 
 template<typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<RuleVariant>, C> rule, EvaluationContext& context)
+bool is_compatible_with(ygg::View<ygg::Index<ps::Rule<ExtFamilyTag>>, C> rule, EvaluationContext& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context); }, rule.get_variant());
 }

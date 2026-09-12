@@ -35,7 +35,7 @@ struct Data<runir::kr::ps::ext::Module>
     IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>> numerical_features;
     Index<runir::kr::ps::ext::MemoryState> entry_memory_state;
     IndexList<runir::kr::ps::ext::MemoryState> memory_states;
-    IndexMatrix<runir::kr::ps::ext::RuleVariant> memory_transitions;
+    IndexMatrix<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>> memory_transitions;
     Data() = default;
     Data(Index<runir::kr::ps::ext::ModuleSymbol> symbol_) : index(), symbol(symbol_) {}
 

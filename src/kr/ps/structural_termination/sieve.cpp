@@ -13,43 +13,30 @@ namespace
 {
 struct ComponentProfile
 {
-    boost::dynamic_bitset<> numerical_decreased_or_unconstrained;
-    boost::dynamic_bitset<> numerical_increased_or_unconstrained;
-    boost::dynamic_bitset<> boolean_flipped_to_true;
-    boost::dynamic_bitset<> boolean_flipped_to_false;
-
-    ComponentProfile(std::size_t num_booleans, std::size_t num_numericals) :
-        numerical_decreased_or_unconstrained(num_numericals),
-        numerical_increased_or_unconstrained(num_numericals),
-        boolean_flipped_to_true(num_booleans),
-        boolean_flipped_to_false(num_booleans)
-    {
-    }
+    std::uint64_t numerical_decreased_or_unconstrained = 0;
+    std::uint64_t numerical_increased_or_unconstrained = 0;
+    std::uint64_t boolean_flipped_to_true = 0;
+    std::uint64_t boolean_flipped_to_false = 0;
 };
 
 std::vector<ComponentProfile>
 summarize_opposing_changes(const std::vector<PolicyEdge>& edges, const QualitativePolicy& policy, const StrongComponents& components)
 {
-    auto profiles = std::vector<ComponentProfile>(components.count, ComponentProfile(policy.num_booleans, policy.num_numericals));
+    auto profiles = std::vector<ComponentProfile>(components.count);
     for (const auto& edge : edges)
     {
         if (!edge.alive || components.component_of[edge.source] != components.component_of[edge.target])
             continue;
 
         auto& component = profiles[components.component_of[edge.source]];
-        const auto& changes = policy.rule_profiles[edge.rule_position].numerical_changes;
-        for (std::size_t position = 0; position < policy.num_numericals; ++position)
-        {
-            if (changes[position] == dl::NumericalChange::DECREASES || changes[position] == dl::NumericalChange::UNCONSTRAINED)
-                component.numerical_decreased_or_unconstrained.set(position);
-            if (changes[position] == dl::NumericalChange::INCREASES || changes[position] == dl::NumericalChange::UNCONSTRAINED)
-                component.numerical_increased_or_unconstrained.set(position);
-        }
+        const auto& rule = policy.rule_profiles[edge.rule_position];
+        component.numerical_decreased_or_unconstrained |= rule.numerical_decrease_effects | rule.numerical_unconstrained_effects;
+        component.numerical_increased_or_unconstrained |= rule.numerical_increase_effects | rule.numerical_unconstrained_effects;
 
         const auto source_booleans = vertex_booleans(edge.source, policy);
         const auto target_booleans = vertex_booleans(edge.target, policy);
-        component.boolean_flipped_to_true |= target_booleans - source_booleans;
-        component.boolean_flipped_to_false |= source_booleans - target_booleans;
+        component.boolean_flipped_to_true |= target_booleans & ~source_booleans;
+        component.boolean_flipped_to_false |= source_booleans & ~target_booleans;
     }
     return profiles;
 }
@@ -66,22 +53,14 @@ bool remove_unopposed_edges(std::vector<PolicyEdge>& edges,
             continue;
 
         const auto& component = component_profiles[components.component_of[edge.source]];
-        const auto& changes = policy.rule_profiles[edge.rule_position].numerical_changes;
-        auto removable = false;
-        for (std::size_t position = 0; position < changes.size() && !removable; ++position)
-            if (changes[position] == dl::NumericalChange::DECREASES && !component.numerical_increased_or_unconstrained.test(position))
-                removable = true;
-            else if (changes[position] == dl::NumericalChange::INCREASES && !component.numerical_decreased_or_unconstrained.test(position))
-                removable = true;
-
+        const auto& rule = policy.rule_profiles[edge.rule_position];
         const auto source_booleans = vertex_booleans(edge.source, policy);
         const auto target_booleans = vertex_booleans(edge.target, policy);
-        if (((source_booleans - target_booleans) - component.boolean_flipped_to_true).any())
-            removable = true;
-        if (((target_booleans - source_booleans) - component.boolean_flipped_to_false).any())
-            removable = true;
 
-        if (removable)
+        if ((rule.numerical_decrease_effects & ~component.numerical_increased_or_unconstrained)
+            || (rule.numerical_increase_effects & ~component.numerical_decreased_or_unconstrained)
+            || (source_booleans & ~target_booleans & ~component.boolean_flipped_to_true)
+            || (target_booleans & ~source_booleans & ~component.boolean_flipped_to_false))
         {
             edge.alive = false;
             removed = true;
@@ -114,11 +93,8 @@ StrongComponents find_strong_components(const std::vector<PolicyEdge>& edges, st
             builder.add_directed_edge(static_cast<graphs::VertexIndex>(edge.source), static_cast<graphs::VertexIndex>(edge.target));
 
     const auto graph = graphs::StaticGraph<> { std::move(builder) };
-    const auto [num_components, components] = graphs::algorithms::strong_components(graph);
-    auto component_of = std::vector<std::size_t>(num_vertices);
-    for (std::size_t vertex = 0; vertex < num_vertices; ++vertex)
-        component_of[vertex] = components[vertex];
-    return { static_cast<std::size_t>(num_components), std::move(component_of) };
+    auto [num_components, component_of] = graphs::algorithms::strong_components(graph);
+    return { num_components, std::move(component_of) };
 }
 
 SieveResult sieve_policy_graph(std::vector<PolicyEdge>& edges, const QualitativePolicy& policy)
@@ -170,18 +146,14 @@ PolicySieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_
     if (incomplete_result.is_terminating())
         return { .components = {}, .scc_feature_positions = std::nullopt };
 
-    auto rule_positions = std::vector<std::size_t> {};
-    rule_positions.reserve(incomplete_result.surviving_rules.size());
-    for (const auto& surviving : incomplete_result.surviving_rules)
-        rule_positions.push_back(surviving.rule_position);
-    return sieve_policy_for_rules(policy, max_features, rule_positions);
+    return sieve_policy_for_rules(policy, max_features, incomplete_result.get_cyclic_rule_positions());
 }
 
 PolicySieveResult sieve_policy(const QualitativePolicy& policy, std::size_t max_features, bool use_incomplete_preprocessing)
 {
     if (use_incomplete_preprocessing)
     {
-        const auto incomplete_result = incomplete_structural_termination(policy);
+        const auto incomplete_result = detail::incomplete_structural_termination(policy);
         return sieve_policy(policy, max_features, incomplete_result);
     }
 

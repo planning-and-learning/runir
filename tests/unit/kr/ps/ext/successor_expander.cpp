@@ -144,7 +144,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     kr::ps::ext::canonicalize(load_data);
     const auto load = repository->get_or_create(load_data).first;
 
-    auto variant_data = ygg::Data<kr::ps::ext::RuleVariant>(load.get_index());
+    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(load.get_index());
     const auto variant = repository->get_or_create(variant_data).first;
 
     auto module_data = make_module_data(*repository, "module");
@@ -153,7 +153,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     module_data.memory_states.push_back(target.get_index());
     module_data.concept_registers.push_back(reg.get_index());
     module_data.concept_features.push_back(top_feature.get_index());
-    auto transition = ygg::IndexList<kr::ps::ext::RuleVariant>();
+    auto transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>>();
     transition.push_back(variant.get_index());
     ygg::canonicalize(transition);
     module_data.memory_transitions.push_back(std::move(transition));
@@ -396,13 +396,13 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     kr::ps::ext::canonicalize(call_data);
     const auto call = repository->get_or_create(call_data).first;
 
-    auto variant_data = ygg::Data<kr::ps::ext::RuleVariant>(call.get_index());
+    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(call.get_index());
     const auto variant = repository->get_or_create(variant_data).first;
     auto caller_data = make_module_data(*repository, "caller");
     caller_data.entry_memory_state = caller_entry.get_index();
     caller_data.memory_states.push_back(caller_entry.get_index());
     caller_data.memory_states.push_back(caller_return.get_index());
-    auto transition = ygg::IndexList<kr::ps::ext::RuleVariant> {};
+    auto transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>> {};
     transition.push_back(variant.get_index());
     ygg::canonicalize(transition);
     caller_data.memory_transitions.push_back(std::move(transition));
@@ -481,13 +481,13 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     kr::ps::ext::canonicalize(call_data);
     const auto call = repository->get_or_create(call_data).first;
 
-    auto variant_data = ygg::Data<kr::ps::ext::RuleVariant>(call.get_index());
+    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(call.get_index());
     const auto variant = repository->get_or_create(variant_data).first;
     auto caller_data = make_module_data(*repository, "caller");
     caller_data.entry_memory_state = caller_entry.get_index();
     caller_data.memory_states.push_back(caller_entry.get_index());
     caller_data.memory_states.push_back(caller_return.get_index());
-    auto transition = ygg::IndexList<kr::ps::ext::RuleVariant> {};
+    auto transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>> {};
     transition.push_back(variant.get_index());
     ygg::canonicalize(transition);
     caller_data.memory_transitions.push_back(std::move(transition));
@@ -537,14 +537,14 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     do_data.arguments.push_back(gripper_feature.get_index());
     kr::ps::ext::canonicalize(do_data);
     const auto rule = repository->get_or_create(do_data).first;
-    auto variant_data = ygg::Data<kr::ps::ext::RuleVariant>(rule.get_index());
+    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(rule.get_index());
     const auto variant = repository->get_or_create(variant_data).first;
 
     auto module_data = make_module_data(*repository, "module");
     module_data.entry_memory_state = source.get_index();
     module_data.memory_states.push_back(source.get_index());
     module_data.memory_states.push_back(target.get_index());
-    auto transition = ygg::IndexList<kr::ps::ext::RuleVariant> {};
+    auto transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>> {};
     transition.push_back(variant.get_index());
     ygg::canonicalize(transition);
     module_data.memory_transitions.push_back(std::move(transition));
@@ -664,7 +664,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     move_data.arguments.push_back(gripper_feature.get_index());
     kr::ps::ext::canonicalize(move_data);
     const auto move_rule = repository->get_or_create(move_data).first;
-    auto move_variant_data = ygg::Data<kr::ps::ext::RuleVariant>(move_rule.get_index());
+    auto move_variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(move_rule.get_index());
     const auto move_variant = repository->get_or_create(move_variant_data).first;
 
     auto pick_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("pick"));
@@ -675,7 +675,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     pick_data.arguments.push_back(gripper_feature.get_index());
     kr::ps::ext::canonicalize(pick_data);
     const auto pick_rule = repository->get_or_create(pick_data).first;
-    auto pick_variant_data = ygg::Data<kr::ps::ext::RuleVariant>(pick_rule.get_index());
+    auto pick_variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(pick_rule.get_index());
     const auto pick_variant = repository->get_or_create(pick_variant_data).first;
 
     auto module_data = make_module_data(*repository, "module");
@@ -684,12 +684,12 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     module_data.memory_states.push_back(move_target.get_index());
     module_data.memory_states.push_back(pick_target.get_index());
 
-    auto move_transition = ygg::IndexList<kr::ps::ext::RuleVariant>();
+    auto move_transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>>();
     move_transition.push_back(move_variant.get_index());
     ygg::canonicalize(move_transition);
     module_data.memory_transitions.push_back(std::move(move_transition));
 
-    auto pick_transition = ygg::IndexList<kr::ps::ext::RuleVariant>();
+    auto pick_transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>>();
     pick_transition.push_back(pick_variant.get_index());
     ygg::canonicalize(pick_transition);
     module_data.memory_transitions.push_back(std::move(pick_transition));

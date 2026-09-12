@@ -4,21 +4,21 @@
 #include "runir/kr/ps/ext/rule_variant_data.hpp"
 
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/containers/variant.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {
 
 template<typename C>
-class View<Index<runir::kr::ps::ext::RuleVariant>, C>
+class View<Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::ext::RuleVariant> m_handle;
+    Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::ext::RuleVariant> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }

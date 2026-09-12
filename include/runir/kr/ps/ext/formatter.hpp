@@ -175,7 +175,7 @@ void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Rule
 }
 
 template<typename C>
-void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::RuleVariant>, C> view)
+void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>, C> view)
 {
     ygg::visit([&](auto rule) { append_rule(os, rule); }, view.get_variant());
 }
@@ -387,7 +387,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C>> 
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::RuleVariant>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::rule(view), context); }
 };

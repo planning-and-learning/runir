@@ -1266,7 +1266,7 @@ template<RuleKind Kind>
 auto intern_rule_variant(Repository& repository, runir::kr::ps::ext::Builder& builder, ygg::Data<Rule<Kind>>& data, const std::string& symbol)
 {
     const auto rule = intern(repository, data);
-    auto variant_data = runir::kr::ps::ext::checkout<RuleVariant>(builder);
+    auto variant_data = runir::kr::ps::ext::checkout<ps::Rule<ExtFamilyTag>>(builder);
     variant_data->symbol = symbol;
     variant_data->variant = rule.get_index();
     return intern(repository, *variant_data);

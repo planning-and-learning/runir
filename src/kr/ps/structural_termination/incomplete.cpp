@@ -11,14 +11,10 @@ namespace
 
 struct RuleChanges
 {
-    boost::dynamic_bitset<> boolean_to_true;
-    boost::dynamic_bitset<> boolean_to_false;
-    boost::dynamic_bitset<> boolean_may_become_true;
-    boost::dynamic_bitset<> boolean_may_become_false;
-    boost::dynamic_bitset<> numerical_decreases;
-    boost::dynamic_bitset<> numerical_increases;
-    boost::dynamic_bitset<> numerical_decreases_or_unconstrained;
-    boost::dynamic_bitset<> numerical_increases_or_unconstrained;
+    std::uint64_t boolean_to_true = 0;
+    std::uint64_t boolean_to_false = 0;
+    std::uint64_t boolean_may_become_true = 0;
+    std::uint64_t boolean_may_become_false = 0;
 };
 
 struct SieveState
@@ -46,44 +42,18 @@ RuleChanges make_changes(const RuleProfile& profile)
     changes.boolean_to_true = profile.boolean_negative_conditions & profile.boolean_positive_effects;
     changes.boolean_to_false = profile.boolean_positive_conditions & profile.boolean_negative_effects;
 
-    auto unconstrained = boost::dynamic_bitset<>(profile.boolean_positive_effects.size());
-    unconstrained.set();
-    const auto specified = profile.boolean_positive_effects | profile.boolean_negative_effects | profile.boolean_unchanged_effects;
-    unconstrained = unconstrained - specified;
-    changes.boolean_may_become_true = (profile.boolean_positive_effects | unconstrained) - profile.boolean_positive_conditions;
-    changes.boolean_may_become_false = (profile.boolean_negative_effects | unconstrained) - profile.boolean_negative_conditions;
+    changes.boolean_may_become_true = (profile.boolean_positive_effects | profile.boolean_unconstrained_effects) & ~profile.boolean_positive_conditions;
+    changes.boolean_may_become_false = (profile.boolean_negative_effects | profile.boolean_unconstrained_effects) & ~profile.boolean_negative_conditions;
 
-    changes.numerical_decreases.resize(profile.numerical_changes.size());
-    changes.numerical_increases.resize(profile.numerical_changes.size());
-    changes.numerical_decreases_or_unconstrained.resize(profile.numerical_changes.size());
-    changes.numerical_increases_or_unconstrained.resize(profile.numerical_changes.size());
-    for (std::size_t position = 0; position < profile.numerical_changes.size(); ++position)
-    {
-        if (profile.numerical_changes[position] == dl::NumericalChange::DECREASES)
-        {
-            changes.numerical_decreases.set(position);
-            changes.numerical_decreases_or_unconstrained.set(position);
-        }
-        if (profile.numerical_changes[position] == dl::NumericalChange::INCREASES)
-        {
-            changes.numerical_increases.set(position);
-            changes.numerical_increases_or_unconstrained.set(position);
-        }
-        if (profile.numerical_changes[position] == dl::NumericalChange::UNCONSTRAINED)
-        {
-            changes.numerical_decreases_or_unconstrained.set(position);
-            changes.numerical_increases_or_unconstrained.set(position);
-        }
-    }
     return changes;
 }
 
 bool r3_discounts(const RuleProfile& rule, const RuleProfile& opposing, const SccRefinementForest::Marks& marks)
 {
-    return (rule.boolean_positive_conditions & opposing.boolean_negative_conditions & marks.booleans).any()
-           || (rule.boolean_negative_conditions & opposing.boolean_positive_conditions & marks.booleans).any()
-           || (rule.numerical_greater_conditions & opposing.numerical_zero_conditions & marks.numericals).any()
-           || (rule.numerical_zero_conditions & opposing.numerical_greater_conditions & marks.numericals).any();
+    return (rule.boolean_positive_conditions & opposing.boolean_negative_conditions & marks.booleans)
+           || (rule.boolean_negative_conditions & opposing.boolean_positive_conditions & marks.booleans)
+           || (rule.numerical_greater_conditions & opposing.numerical_zero_conditions & marks.numericals)
+           || (rule.numerical_zero_conditions & opposing.numerical_greater_conditions & marks.numericals);
 }
 
 std::vector<std::size_t> remaining_rule_positions(const SieveState& state)
@@ -119,16 +89,19 @@ OpposingRuleSet opposing_rules(const QualitativePolicy& policy,
                                bool towards_positive = false)
 {
     auto opposing = OpposingRuleSet {};
+    const auto feature = std::uint64_t { 1 } << feature_position;
     for (std::size_t other = 0; other < policy.rule_profiles.size(); ++other)
     {
         if (other == rule_position || !state.remaining[other] || !state.memory_sccs.share_opponent_scope(rule_position, other))
             continue;
 
-        const auto opposes = feature_kind == IncompletePolicyResult::FeatureKind::BOOLEAN ?
-                                 (towards_positive ? state.changes[other].boolean_may_become_false.test(feature_position) :
-                                                     state.changes[other].boolean_may_become_true.test(feature_position)) :
-                                 (towards_positive ? state.changes[other].numerical_decreases_or_unconstrained.test(feature_position) :
-                                                     state.changes[other].numerical_increases_or_unconstrained.test(feature_position));
+        const auto& profile = policy.rule_profiles[other];
+        const auto opposes =
+            feature_kind == IncompletePolicyResult::FeatureKind::BOOLEAN ?
+                bool(feature & (towards_positive ? state.changes[other].boolean_may_become_false : state.changes[other].boolean_may_become_true)) :
+                bool(
+                    feature
+                    & ((towards_positive ? profile.numerical_decrease_effects : profile.numerical_increase_effects) | profile.numerical_unconstrained_effects));
         if (!opposes)
             continue;
 
@@ -169,8 +142,9 @@ bool eliminate_one_rule(const QualitativePolicy& policy, SieveState& state, Elim
 
         for (std::size_t position = 0; position < policy.num_numericals; ++position)
         {
-            const auto decreases = state.changes[rule_position].numerical_decreases.test(position);
-            const auto increases = state.changes[rule_position].numerical_increases.test(position);
+            const auto feature = std::uint64_t { 1 } << position;
+            const bool decreases = policy.rule_profiles[rule_position].numerical_decrease_effects & feature;
+            const bool increases = policy.rule_profiles[rule_position].numerical_increase_effects & feature;
             if (!decreases && !increases)
                 continue;
             const auto opposing = opposing_rules(policy, state, rule_position, IncompletePolicyResult::FeatureKind::NUMERICAL, position, increases);
@@ -184,8 +158,9 @@ bool eliminate_one_rule(const QualitativePolicy& policy, SieveState& state, Elim
         }
         for (std::size_t position = 0; position < policy.num_booleans; ++position)
         {
-            const auto to_true = state.changes[rule_position].boolean_to_true.test(position);
-            const auto to_false = state.changes[rule_position].boolean_to_false.test(position);
+            const auto feature = std::uint64_t { 1 } << position;
+            const bool to_true = state.changes[rule_position].boolean_to_true & feature;
+            const bool to_false = state.changes[rule_position].boolean_to_false & feature;
             if (!to_true && !to_false)
                 continue;
             const auto opposing = opposing_rules(policy, state, rule_position, IncompletePolicyResult::FeatureKind::BOOLEAN, position, to_true);
@@ -229,13 +204,13 @@ std::vector<IncompletePolicyResult::ResidualMemoryScope> make_residual_scopes(co
 
         auto scope = IncompletePolicyResult::ResidualMemoryScope { node.memory_positions, {} };
         const auto marks = forest.effective_marks(node_position);
-        for (std::size_t feature_position = 0; feature_position < marks.booleans.size(); ++feature_position)
-            if (marks.booleans.test(feature_position))
+        for (std::size_t feature_position = 0; feature_position < marks.boolean_witnessing_rule_positions.size(); ++feature_position)
+            if (marks.booleans & (std::uint64_t { 1 } << feature_position))
                 scope.marked_features.push_back(IncompletePolicyResult::MarkedFeature { IncompletePolicyResult::FeatureKind::BOOLEAN,
                                                                                         feature_position,
                                                                                         marks.boolean_witnessing_rule_positions[feature_position] });
-        for (std::size_t feature_position = 0; feature_position < marks.numericals.size(); ++feature_position)
-            if (marks.numericals.test(feature_position))
+        for (std::size_t feature_position = 0; feature_position < marks.numerical_witnessing_rule_positions.size(); ++feature_position)
+            if (marks.numericals & (std::uint64_t { 1 } << feature_position))
                 scope.marked_features.push_back(IncompletePolicyResult::MarkedFeature { IncompletePolicyResult::FeatureKind::NUMERICAL,
                                                                                         feature_position,
                                                                                         marks.numerical_witnessing_rule_positions[feature_position] });
@@ -259,8 +234,9 @@ IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy
         auto surviving = IncompletePolicyResult::SurvivingRule { rule_position, {} };
         for (std::size_t position = 0; position < policy.num_numericals; ++position)
         {
-            const auto decreases = state.changes[rule_position].numerical_decreases.test(position);
-            const auto increases = state.changes[rule_position].numerical_increases.test(position);
+            const auto feature = std::uint64_t { 1 } << position;
+            const bool decreases = policy.rule_profiles[rule_position].numerical_decrease_effects & feature;
+            const bool increases = policy.rule_profiles[rule_position].numerical_increase_effects & feature;
             if (!decreases && !increases)
                 continue;
             surviving.blocking_reasons.push_back(IncompletePolicyResult::BlockingReason {
@@ -271,8 +247,9 @@ IncompletePolicyResult incomplete_structural_termination(const QualitativePolicy
         }
         for (std::size_t position = 0; position < policy.num_booleans; ++position)
         {
-            const auto to_true = state.changes[rule_position].boolean_to_true.test(position);
-            const auto to_false = state.changes[rule_position].boolean_to_false.test(position);
+            const auto feature = std::uint64_t { 1 } << position;
+            const bool to_true = state.changes[rule_position].boolean_to_true & feature;
+            const bool to_false = state.changes[rule_position].boolean_to_false & feature;
             if (!to_true && !to_false)
                 continue;
             surviving.blocking_reasons.push_back(IncompletePolicyResult::BlockingReason {

@@ -8,21 +8,26 @@
 
 #include <yggdrasil/semantics/canonicalization.hpp>
 
-namespace runir::kr::ps::base
+namespace runir::kr::ps
 {
 
-inline bool is_canonical(const ygg::Data<Rule>& data) noexcept
+inline bool is_canonical(const ygg::Data<Rule<runir::kr::BaseFamilyTag>>& data) noexcept
 {
     return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects);
 }
 
-inline bool is_canonical(const ygg::Data<Sketch>& data) noexcept { return ygg::is_canonical(data.rules); }
-
-inline void canonicalize(ygg::Data<Rule>& data)
+inline void canonicalize(ygg::Data<Rule<runir::kr::BaseFamilyTag>>& data)
 {
     ygg::canonicalize(data.conditions);
     ygg::canonicalize(data.effects);
 }
+
+}  // namespace runir::kr::ps
+
+namespace runir::kr::ps::base
+{
+
+inline bool is_canonical(const ygg::Data<Sketch>& data) noexcept { return ygg::is_canonical(data.rules); }
 
 inline void canonicalize(ygg::Data<Sketch>& data) { ygg::canonicalize(data.rules); }
 

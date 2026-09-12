@@ -102,8 +102,8 @@ struct fmt::formatter<runir::kr::ps::base::dl::StructuralTerminationResult, char
     {
         const auto text = result.is_terminating() ? std::string { "StructuralTerminationResult(terminating)" } :
                                                     fmt::format("StructuralTerminationResult(non-terminating, counterexample with {} vertices and {} edges)",
-                                                                result.counterexample->get_num_vertices(),
-                                                                result.counterexample->get_num_edges());
+                                                                result.sieve_result->counterexample->get_num_vertices(),
+                                                                result.sieve_result->counterexample->get_num_edges());
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };

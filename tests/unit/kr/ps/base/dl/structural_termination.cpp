@@ -1,6 +1,7 @@
 #include "fixtures.hpp"
 
 #include <gtest/gtest.h>
+#include <runir/graphs/cycle.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
@@ -17,17 +18,22 @@ namespace runir::tests
 namespace
 {
 
-auto counterexample_rules(const kr::ps::base::dl::StructuralTerminationResult& result) -> std::set<ygg::Index<kr::ps::base::Rule>>
+auto counterexample_rules(const kr::ps::base::dl::SieveStructuralTerminationResult& sieve) -> std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>>
 {
-    auto rules = std::set<ygg::Index<kr::ps::base::Rule>> {};
-    for (const auto& edge : result.counterexample->get_edges())
+    auto rules = std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
+    for (const auto& edge : sieve.counterexample->get_edges())
         rules.insert(edge.get_property().get_index());
+    auto surviving = std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
+    for (const auto rule : sieve.surviving_rules)
+        surviving.insert(rule.get_index());
+    EXPECT_EQ(surviving.size(), sieve.surviving_rules.size());
+    EXPECT_EQ(surviving, rules);
     return rules;
 }
 
-auto sketch_rules(kr::ps::base::SketchView sketch) -> std::set<ygg::Index<kr::ps::base::Rule>>
+auto sketch_rules(kr::ps::base::SketchView sketch) -> std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>>
 {
-    auto rules = std::set<ygg::Index<kr::ps::base::Rule>> {};
+    auto rules = std::set<ygg::Index<kr::ps::Rule<kr::BaseFamilyTag>>> {};
     for (auto rule : sketch.get_rules())
         rules.insert(rule.get_index());
     return rules;
@@ -67,12 +73,13 @@ TEST(RunirTests, StructuralTerminationEmptySketchIsTerminating)
     EXPECT_TRUE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
     EXPECT_EQ(result.incomplete_result->status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::TERMINATING);
-    EXPECT_EQ(result.counterexample, nullptr);
-    EXPECT_FALSE(result.scc_results.has_value());
+    EXPECT_FALSE(result.sieve_result.has_value());
     EXPECT_TRUE(without_incomplete.is_terminating());
     EXPECT_FALSE(without_incomplete.incomplete_result.has_value());
-    ASSERT_TRUE(without_incomplete.scc_results.has_value());
-    EXPECT_TRUE(without_incomplete.scc_results->empty());
+    ASSERT_TRUE(without_incomplete.sieve_result.has_value());
+    EXPECT_EQ(without_incomplete.sieve_result->counterexample, nullptr);
+    EXPECT_TRUE(without_incomplete.sieve_result->scc_results.empty());
+    EXPECT_TRUE(without_incomplete.sieve_result->surviving_rules.empty());
 }
 
 TEST(RunirTests, StructuralTerminationBooleanOscillatorCounterexample)
@@ -88,15 +95,15 @@ TEST(RunirTests, StructuralTerminationBooleanOscillatorCounterexample)
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
     EXPECT_EQ(result.incomplete_result->status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::UNKNOWN);
-    ASSERT_NE(result.counterexample, nullptr);
-    EXPECT_EQ(result.counterexample->get_num_vertices(), 2);
-    EXPECT_EQ(result.counterexample->get_num_edges(), 2);
-    EXPECT_EQ(counterexample_rules(result), sketch_rules(sketch));
-    ASSERT_TRUE(result.scc_results.has_value());
-    ASSERT_EQ(result.scc_results->size(), 1);
-    ASSERT_EQ(result.scc_results->front().booleans.size(), 1);
-    EXPECT_EQ(result.scc_results->front().booleans.front(), booleans.front());
-    EXPECT_TRUE(result.scc_results->front().numericals.empty());
+    ASSERT_TRUE(result.sieve_result.has_value());
+    ASSERT_NE(result.sieve_result->counterexample, nullptr);
+    EXPECT_EQ(result.sieve_result->counterexample->get_num_vertices(), 2);
+    EXPECT_EQ(result.sieve_result->counterexample->get_num_edges(), 2);
+    EXPECT_EQ(counterexample_rules(*result.sieve_result), sketch_rules(sketch));
+    ASSERT_EQ(result.sieve_result->scc_results.size(), 1);
+    ASSERT_EQ(result.sieve_result->scc_results.front().booleans.size(), 1);
+    EXPECT_EQ(result.sieve_result->scc_results.front().booleans.front(), booleans.front());
+    EXPECT_TRUE(result.sieve_result->scc_results.front().numericals.empty());
 }
 
 TEST(RunirTests, StructuralTerminationNumericalCycleCounterexample)
@@ -110,14 +117,46 @@ TEST(RunirTests, StructuralTerminationNumericalCycleCounterexample)
     const auto result = kr::ps::base::dl::structural_termination(sketch);
     const auto numericals = sketch.get_features<kr::ps::dl::NumericalFeature>();
     ASSERT_FALSE(result.is_terminating());
-    ASSERT_NE(result.counterexample, nullptr);
-    EXPECT_GE(result.counterexample->get_num_edges(), 2);
-    EXPECT_EQ(counterexample_rules(result), sketch_rules(sketch));
-    ASSERT_TRUE(result.scc_results.has_value());
-    ASSERT_EQ(result.scc_results->size(), 1);
-    EXPECT_TRUE(result.scc_results->front().booleans.empty());
-    ASSERT_EQ(result.scc_results->front().numericals.size(), 1);
-    EXPECT_EQ(result.scc_results->front().numericals.front(), numericals.front());
+    ASSERT_TRUE(result.sieve_result.has_value());
+    ASSERT_NE(result.sieve_result->counterexample, nullptr);
+    EXPECT_GE(result.sieve_result->counterexample->get_num_edges(), 2);
+    EXPECT_EQ(counterexample_rules(*result.sieve_result), sketch_rules(sketch));
+    ASSERT_EQ(result.sieve_result->scc_results.size(), 1);
+    EXPECT_TRUE(result.sieve_result->scc_results.front().booleans.empty());
+    ASSERT_EQ(result.sieve_result->scc_results.front().numericals.size(), 1);
+    EXPECT_EQ(result.sieve_result->scc_results.front().numericals.front(), numericals.front());
+}
+
+TEST(RunirTests, StructuralTerminationSurvivingRulesIncludeDisjointCycles)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto planning_domain = fp::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::BaseFamilyTag>().create(planning_domain.get_repository());
+    auto repository = kr::ps::base::RepositoryFactory().create(dl_repository);
+    const auto sketch = kr::ps::base::dl::parse_sketch(R"((:sketch
+        (:features (:boolean (:symbol b) (:expression (b_nonempty (c_atomic_state "at-robby")))))
+        (:rules
+            (:rule (:symbol shared) (:expression (:conditions) (:effects (unchanged b))))
+            (:rule (:symbol false_loop) (:expression (:conditions (negative b)) (:effects (unchanged b))))
+            (:rule (:symbol true_loop) (:expression (:conditions (positive b)) (:effects (unchanged b))))
+        )))",
+                                                    planning_domain.get_domain(),
+                                                    *repository);
+
+    for (const auto preprocessing : { false, true })
+    {
+        SCOPED_TRACE(preprocessing);
+        const auto result = kr::ps::base::dl::structural_termination(sketch, kr::ps::dl::default_max_features, preprocessing);
+        ASSERT_FALSE(result.is_terminating());
+        ASSERT_TRUE(result.sieve_result.has_value());
+        const auto& sieve = *result.sieve_result;
+        ASSERT_NE(sieve.counterexample, nullptr);
+        EXPECT_EQ(sieve.counterexample->get_num_vertices(), 2);
+        EXPECT_EQ(sieve.counterexample->get_num_edges(), 4);
+        EXPECT_EQ(counterexample_rules(sieve), sketch_rules(sketch));
+        EXPECT_EQ(sieve.surviving_rules.size(), 3);
+        EXPECT_EQ(graphs::find_edge_cycle(*sieve.counterexample).size(), 1);
+    }
 }
 
 TEST(RunirTests, StructuralTerminationTppDetails)
@@ -133,11 +172,13 @@ TEST(RunirTests, StructuralTerminationTppDetails)
     EXPECT_TRUE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
     EXPECT_EQ(result.incomplete_result->status, kr::ps::base::dl::IncompleteStructuralTerminationStatus::TERMINATING);
-    EXPECT_FALSE(result.scc_results.has_value());
-    ASSERT_TRUE(without_incomplete.scc_results.has_value());
-    ASSERT_EQ(without_incomplete.scc_results->size(), 1);
-    EXPECT_TRUE(without_incomplete.scc_results->front().booleans.empty());
-    EXPECT_EQ(without_incomplete.scc_results->front().numericals.size(), 3);
+    EXPECT_FALSE(result.sieve_result.has_value());
+    ASSERT_TRUE(without_incomplete.sieve_result.has_value());
+    EXPECT_EQ(without_incomplete.sieve_result->counterexample, nullptr);
+    EXPECT_TRUE(without_incomplete.sieve_result->surviving_rules.empty());
+    ASSERT_EQ(without_incomplete.sieve_result->scc_results.size(), 1);
+    EXPECT_TRUE(without_incomplete.sieve_result->scc_results.front().booleans.empty());
+    EXPECT_EQ(without_incomplete.sieve_result->scc_results.front().numericals.size(), 3);
 }
 
 TEST(RunirTests, StructuralTerminationGripperFactorySketchIsTerminating)

@@ -53,6 +53,21 @@ auto find_cycle(const Graph& graph) -> VertexIndexList
     return visitor.get_cycle();
 }
 
+/// An ordered closed path of edge indices; empty iff the graph is acyclic.
+/// Parallel edges are resolved to the first matching edge in graph order.
+template<typename Graph>
+auto find_edge_cycle(const Graph& graph) -> EdgeIndexList
+{
+    const auto vertices = find_cycle(graph);
+    auto result = EdgeIndexList {};
+    for (std::size_t position = 1; position < vertices.size(); ++position)
+    {
+        const auto outgoing = graph.get_out_edge_indices(vertices[position - 1]);
+        result.push_back(*std::ranges::find_if(outgoing, [&](auto edge) { return graph.get_target(edge) == vertices[position]; }));
+    }
+    return result;
+}
+
 }  // namespace runir::graphs
 
 #endif

@@ -16,6 +16,15 @@
 #include <algorithm>
 #include <yggdrasil/semantics/canonicalization.hpp>
 
+namespace runir::kr::ps
+{
+
+inline bool is_canonical(const ygg::Data<Rule<runir::kr::ExtFamilyTag>>&) noexcept { return true; }
+
+inline void canonicalize(ygg::Data<Rule<runir::kr::ExtFamilyTag>>&) noexcept {}
+
+}  // namespace runir::kr::ps
+
 namespace runir::kr::ps::ext
 {
 
@@ -67,8 +76,6 @@ bool is_canonical(const ygg::Data<Rule<Kind>>& data) noexcept
     else if constexpr (std::same_as<Kind, CallTag>)
         return ygg::is_canonical(data.conditions);
 }
-
-inline bool is_canonical(const ygg::Data<RuleVariant>&) noexcept { return true; }
 
 inline bool is_canonical(const ygg::Data<Module>& data) noexcept
 {
@@ -132,8 +139,6 @@ void canonicalize(ygg::Data<Rule<Kind>>& data)
         ygg::canonicalize(data.conditions);
     }
 }
-
-inline void canonicalize(ygg::Data<RuleVariant>&) noexcept {}
 
 inline void canonicalize(ygg::Data<Module>& data)
 {

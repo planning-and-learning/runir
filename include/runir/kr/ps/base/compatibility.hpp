@@ -13,7 +13,7 @@ namespace runir::kr::ps::base
 {
 
 template<typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::base::Rule>, C> rule, EvaluationContext& context)
+bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> rule, EvaluationContext& context)
 {
     for (auto condition : rule.get_conditions())
         if (!runir::kr::ps::is_compatible_with(condition, context))

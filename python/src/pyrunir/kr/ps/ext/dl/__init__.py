@@ -52,6 +52,7 @@ from ....._pyrunir.kr.ps.ext.dl import (
     ModulePolicyGraphVertexLabel,
     ModuleProgramIncompleteStructuralTerminationResult,
     ModuleProgramStructuralTerminationResult,
+    ModuleSieveStructuralTerminationResult,
     ModuleSpecification,
     ModuleStructuralTerminationResult,
     NegativeBooleanCondition,

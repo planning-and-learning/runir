@@ -18,7 +18,7 @@ using namespace nanobind::literals;
 
 void bind_rule(nb::module_& m, RepositoryBinding& repository)
 {
-    using T = Rule;
+    using T = runir::kr::ps::Rule<runir::kr::BaseFamilyTag>;
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
     using GroundContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;

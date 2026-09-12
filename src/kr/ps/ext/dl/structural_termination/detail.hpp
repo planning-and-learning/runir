@@ -10,18 +10,13 @@
 namespace runir::kr::ps::ext::dl::detail
 {
 
-struct ModuleAnalysis
-{
-    std::vector<MemoryStateView> memory_states;
-    std::vector<RuleVariantView> rules;
-    runir::kr::ps::detail::QualitativePolicy policy;
-};
+using Analysis = runir::kr::ps::detail::PolicyAnalysis<runir::kr::ExtFamilyTag, Repository>;
 
-ModuleAnalysis analyze_module(ModuleView module_);
+Analysis analyze_module(ModuleView module_);
 
-ModuleStructuralTerminationResult make_result(ModuleView module_, const ModuleAnalysis& analysis, const runir::kr::ps::detail::PolicySieveResult& sieve_result);
+ModuleStructuralTerminationResult make_result(ModuleView module_, const Analysis& analysis, const runir::kr::ps::detail::PolicySieveResult& sieve_result);
 ModuleIncompleteStructuralTerminationResult
-make_incomplete_result(ModuleView module_, const ModuleAnalysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
+make_incomplete_result(ModuleView module_, const Analysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
 
 std::vector<RuleVariantView> find_recursive_call_rules(const std::vector<ModuleView>& modules);
 

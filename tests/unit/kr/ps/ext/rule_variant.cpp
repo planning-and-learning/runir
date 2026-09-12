@@ -7,7 +7,7 @@
 namespace runir::tests
 {
 
-using Entity = kr::ps::ext::RuleVariant;
+using Entity = kr::ps::Rule<kr::ExtFamilyTag>;
 using Index = ygg::Index<Entity>;
 using Data = ygg::Data<Entity>;
 using View = ygg::View<Index, kr::ps::ext::Repository>;
@@ -27,6 +27,16 @@ static_assert(requires(const View& view) {
     view.get_index();
     view.get_symbol();
     view.get_variant();
+});
+
+static_assert(requires(Data& data) {
+    canonicalize(data);
+    { is_canonical(data) } -> std::same_as<bool>;
+});
+static_assert(requires(kr::ps::ext::Repository& repository, ygg::Data<kr::ps::Rule<kr::BaseFamilyTag>>& data) {
+    canonicalize(data);
+    { is_canonical(data) } -> std::same_as<bool>;
+    kr::ps::ext::get_or_create(repository, data);
 });
 
 }

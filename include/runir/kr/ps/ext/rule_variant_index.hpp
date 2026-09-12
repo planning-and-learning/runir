@@ -3,16 +3,16 @@
 
 #include "runir/kr/ps/ext/declarations.hpp"
 
-#include <yggdrasil/ids/index_mixins.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/ids/index_mixins.hpp>
 
 namespace ygg
 {
 
 template<>
-struct Index<runir::kr::ps::ext::RuleVariant> : IndexMixin<Index<runir::kr::ps::ext::RuleVariant>>
+struct Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>> : IndexMixin<Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>
 {
-    using Base = IndexMixin<Index<runir::kr::ps::ext::RuleVariant>>;
+    using Base = IndexMixin<Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>>;
     using Base::Base;
 };
 

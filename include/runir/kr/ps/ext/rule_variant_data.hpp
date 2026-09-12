@@ -16,7 +16,7 @@ namespace ygg
 {
 
 template<>
-struct Data<runir::kr::ps::ext::RuleVariant>
+struct Data<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>
 {
     using Variant = ::cista::offset::variant<Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>>,
                                              Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<runir::kr::dl::RoleTag>>>,
@@ -24,7 +24,7 @@ struct Data<runir::kr::ps::ext::RuleVariant>
                                              Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>,
                                              Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>>;
 
-    Index<runir::kr::ps::ext::RuleVariant> index;
+    Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>> index;
     ::cista::offset::string symbol;
     Variant variant;
 

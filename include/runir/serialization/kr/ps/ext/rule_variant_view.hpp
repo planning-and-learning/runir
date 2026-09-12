@@ -10,7 +10,7 @@ namespace ygg::serialization
 {
 
 template<typename Archive, typename C>
-void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ext::RuleVariant>, C>>)
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>, C>>)
 {
     ar.field("symbol", [](const auto& value) -> decltype(auto) { return (value.get_symbol()); });
     ar.variant([](const auto& value) -> decltype(auto) { return (value.get_variant()); });

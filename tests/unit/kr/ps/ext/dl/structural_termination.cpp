@@ -1,15 +1,20 @@
 #include "fixtures.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
+#include <runir/graphs/cycle.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/ext/dl/incomplete_structural_termination.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/dl/structural_termination.hpp>
+#include <runir/kr/ps/ext/memory_state_data.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <runir/kr/ps/ext/rule_view.hpp>
 #include <set>
 #include <string>
 #include <tyr/formalism/planning/parser.hpp>
+#include <utility>
 #include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::tests
@@ -29,10 +34,11 @@ TEST(RunirTests, ExtStructuralTerminationEmptyModuleIsTerminating)
     const auto without_incomplete = kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, false);
 
     EXPECT_TRUE(result.is_terminating());
-    EXPECT_EQ(result.counterexample, nullptr);
-    EXPECT_FALSE(result.scc_results.has_value());
-    ASSERT_TRUE(without_incomplete.scc_results.has_value());
-    EXPECT_TRUE(without_incomplete.scc_results->empty());
+    EXPECT_FALSE(result.sieve_result.has_value());
+    ASSERT_TRUE(without_incomplete.sieve_result.has_value());
+    EXPECT_EQ(without_incomplete.sieve_result->counterexample, nullptr);
+    EXPECT_TRUE(without_incomplete.sieve_result->scc_results.empty());
+    EXPECT_TRUE(without_incomplete.sieve_result->surviving_rules.empty());
 }
 
 TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminating)
@@ -57,12 +63,14 @@ TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminatin
     EXPECT_EQ(result.incomplete_result->status, incomplete_result.status);
     EXPECT_TRUE(without_incomplete.is_terminating());
     EXPECT_FALSE(without_incomplete.incomplete_result.has_value());
-    EXPECT_FALSE(result.scc_results.has_value());
-    ASSERT_TRUE(without_incomplete.scc_results.has_value());
-    ASSERT_EQ(without_incomplete.scc_results->size(), 1);
-    EXPECT_TRUE(without_incomplete.scc_results->front().booleans.empty());
-    ASSERT_EQ(without_incomplete.scc_results->front().numericals.size(), 1);
-    EXPECT_EQ(without_incomplete.scc_results->front().numericals.front(), numericals.front());
+    EXPECT_FALSE(result.sieve_result.has_value());
+    ASSERT_TRUE(without_incomplete.sieve_result.has_value());
+    EXPECT_EQ(without_incomplete.sieve_result->counterexample, nullptr);
+    EXPECT_TRUE(without_incomplete.sieve_result->surviving_rules.empty());
+    ASSERT_EQ(without_incomplete.sieve_result->scc_results.size(), 1);
+    EXPECT_TRUE(without_incomplete.sieve_result->scc_results.front().booleans.empty());
+    ASSERT_EQ(without_incomplete.sieve_result->scc_results.front().numericals.size(), 1);
+    EXPECT_EQ(without_incomplete.sieve_result->scc_results.front().numericals.front(), numericals.front());
 }
 
 TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
@@ -118,7 +126,8 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRegisterDependentFeatur
     const auto result = kr::ps::ext::dl::structural_termination(module);
 
     ASSERT_FALSE(result.is_terminating());
-    ASSERT_NE(result.counterexample, nullptr);
+    ASSERT_TRUE(result.sieve_result.has_value());
+    ASSERT_NE(result.sieve_result->counterexample, nullptr);
 }
 
 TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRoleRegisterDependentFeature)
@@ -138,7 +147,8 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRoleRegisterDependentFe
     const auto result = kr::ps::ext::dl::structural_termination(module);
 
     ASSERT_FALSE(result.is_terminating());
-    ASSERT_NE(result.counterexample, nullptr);
+    ASSERT_TRUE(result.sieve_result.has_value());
+    ASSERT_NE(result.sieve_result->counterexample, nullptr);
 }
 
 TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
@@ -157,18 +167,61 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
     const auto result = kr::ps::ext::dl::structural_termination(module);
 
     ASSERT_FALSE(result.is_terminating());
-    ASSERT_NE(result.counterexample, nullptr);
+    ASSERT_TRUE(result.sieve_result.has_value());
+    ASSERT_NE(result.sieve_result->counterexample, nullptr);
 
     // The counterexample cycle uses both rules and spans both memory states.
-    auto rule_indices = std::set<ygg::Index<kr::ps::ext::RuleVariant>> {};
-    for (const auto& edge : result.counterexample->get_edges())
+    auto rule_indices = std::set<ygg::Index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
+    for (const auto& edge : result.sieve_result->counterexample->get_edges())
         rule_indices.insert(edge.get_property().get_index());
     EXPECT_EQ(rule_indices.size(), 2);
 
     auto memory_state_indices = std::set<ygg::Index<kr::ps::ext::MemoryState>> {};
-    for (const auto& vertex : result.counterexample->get_vertices())
+    for (const auto& vertex : result.sieve_result->counterexample->get_vertices())
         memory_state_indices.insert(vertex.get_property().memory_state.get_index());
     EXPECT_EQ(memory_state_indices.size(), 2);
+}
+
+TEST(RunirTests, ExtStructuralTerminationPreservesSparseMemoryStateIdentities)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
+    const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    for (const auto* name : { "unused_before", "m1", "unused_between", "m0" })
+    {
+        auto data = ygg::Data<kr::ps::ext::MemoryState>(std::string(name));
+        repository->get_or_create(data);
+    }
+    const auto module =
+        kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/non_terminating.module"), planning_task.get_domain().get_domain(), *repository);
+    const auto memory_states = module.get_memory_states();
+    ASSERT_EQ(memory_states.size(), 2);
+    EXPECT_EQ(memory_states[0].get_index(), ygg::Index<kr::ps::ext::MemoryState>(1));
+    EXPECT_EQ(memory_states[1].get_index(), ygg::Index<kr::ps::ext::MemoryState>(3));
+    EXPECT_EQ(memory_states[0].get_name(), "m1");
+    EXPECT_EQ(memory_states[1].get_name(), "m0");
+
+    for (const auto preprocessing : { false, true })
+    {
+        SCOPED_TRACE(preprocessing);
+        const auto result = kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, preprocessing);
+        ASSERT_FALSE(result.is_terminating());
+        ASSERT_TRUE(result.sieve_result.has_value());
+        ASSERT_NE(result.sieve_result->counterexample, nullptr);
+        const auto& graph = *result.sieve_result->counterexample;
+        ASSERT_GT(graph.get_num_edges(), 0);
+        for (const auto& edge : graph.get_edges())
+            ygg::visit(
+                [&](auto rule)
+                {
+                    EXPECT_EQ(graph.get_vertex(edge.get_source()).get_property().memory_state.get_index(), rule.get_source().get_index());
+                    EXPECT_EQ(graph.get_vertex(edge.get_target()).get_property().memory_state.get_index(), rule.get_target().get_index());
+                },
+                edge.get_property().get_variant());
+    }
 }
 
 TEST(RunirTests, ExtStructuralTerminationIgnoresOneWayBridgeBetweenMemoryCycles)
@@ -186,17 +239,56 @@ TEST(RunirTests, ExtStructuralTerminationIgnoresOneWayBridgeBetweenMemoryCycles)
     const auto result = kr::ps::ext::dl::structural_termination(module);
 
     ASSERT_FALSE(result.is_terminating());
-    ASSERT_NE(result.counterexample, nullptr);
+    ASSERT_TRUE(result.sieve_result.has_value());
+    ASSERT_NE(result.sieve_result->counterexample, nullptr);
 
-    auto rules = std::set<ygg::Index<kr::ps::ext::RuleVariant>> {};
-    for (const auto& edge : result.counterexample->get_edges())
+    auto rules = std::set<ygg::Index<kr::ps::Rule<kr::ExtFamilyTag>>> {};
+    for (const auto& edge : result.sieve_result->counterexample->get_edges())
         rules.insert(edge.get_property().get_index());
     EXPECT_EQ(rules.size(), 2);
 
     auto memory_states = std::set<std::string> {};
-    for (const auto& vertex : result.counterexample->get_vertices())
+    for (const auto& vertex : result.sieve_result->counterexample->get_vertices())
         memory_states.emplace(vertex.get_property().memory_state.get_name());
     EXPECT_EQ(memory_states, (std::set<std::string> { "m2", "m3" }));
+}
+
+TEST(RunirTests, ExtSurvivingRulesRetainOnlyResidualLabelsAcrossRuleVariants)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
+    const auto task_file = benchmark_path("classical/tests/gripper/test-1.pddl");
+    const auto planning_task = fp::Parser(domain).parse_task(task_file);
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    const std::pair<const char*, std::set<std::string>> cases[] = {
+        { "kr/ps/ext/dl/one_way_bridge.module", { "auto31", "auto33" } },
+        { "kr/ps/ext/dl/load_dependent.module", { "auto13", "auto15" } },
+        { "kr/ps/ext/dl/projected_components.module", { "keep_n0", "keep_n1", "to_false", "to_true" } },
+    };
+
+    for (const auto& [fixture, expected] : cases)
+    {
+        SCOPED_TRACE(fixture);
+        const auto module = kr::ps::ext::dl::parse_module(read_fixture(fixture), planning_task.get_domain().get_domain(), *repository);
+        for (const auto preprocessing : { false, true })
+        {
+            SCOPED_TRACE(preprocessing);
+            const auto result = kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, preprocessing);
+            ASSERT_TRUE(result.sieve_result.has_value());
+            const auto& rules = result.sieve_result->surviving_rules;
+            auto symbols = std::set<std::string> {};
+            for (const auto rule : rules)
+                symbols.emplace(rule.get_symbol());
+            EXPECT_EQ(rules.size(), expected.size());
+            EXPECT_EQ(symbols, expected);
+            ASSERT_NE(result.sieve_result->counterexample, nullptr);
+            auto edge_symbols = std::set<std::string> {};
+            for (const auto& edge : result.sieve_result->counterexample->get_edges())
+                edge_symbols.emplace(edge.get_property().get_symbol());
+            EXPECT_EQ(symbols, edge_symbols);
+        }
+    }
 }
 
 TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
@@ -215,14 +307,14 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
     const auto numericals = module.get_features<kr::ps::dl::NumericalFeature>();
 
     ASSERT_FALSE(result.is_terminating());
-    ASSERT_NE(result.counterexample, nullptr);
+    ASSERT_TRUE(result.sieve_result.has_value());
+    ASSERT_NE(result.sieve_result->counterexample, nullptr);
     ASSERT_EQ(booleans.size(), 1);
     ASSERT_EQ(numericals.size(), 2);
-    ASSERT_TRUE(result.scc_results.has_value());
-    ASSERT_EQ(result.scc_results->size(), 3);
+    ASSERT_EQ(result.sieve_result->scc_results.size(), 3);
     auto saw_boolean_component = false;
     auto numerical_components = std::set<std::size_t> {};
-    for (const auto& scc_result : *result.scc_results)
+    for (const auto& scc_result : result.sieve_result->scc_results)
     {
         ASSERT_EQ(scc_result.booleans.size() + scc_result.numericals.size(), 1);
         if (!scc_result.booleans.empty())
@@ -244,25 +336,25 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
     auto memory_states = std::set<std::string> {};
     auto saw_positive_n0 = false;
     auto saw_positive_n1 = false;
-    for (const auto& vertex : result.counterexample->get_vertices())
+    for (const auto& vertex : result.sieve_result->counterexample->get_vertices())
     {
         const auto& label = vertex.get_property();
-        ASSERT_EQ(label.boolean_values.size(), booleans.size());
-        ASSERT_EQ(label.numerical_values.size(), numericals.size());
+        EXPECT_LE(label.boolean_values, 1);
+        EXPECT_LE(label.numerical_values, 3);
         memory_states.emplace(label.memory_state.get_name());
         if (label.memory_state.get_name() == "m0")
-            EXPECT_FALSE(label.numerical_values.any());
+            EXPECT_EQ(label.numerical_values, 0);
         else if (label.memory_state.get_name() == "m1")
         {
-            EXPECT_FALSE(label.boolean_values.any());
-            EXPECT_FALSE(label.numerical_values.test(0));
-            saw_positive_n1 |= label.numerical_values.test(1);
+            EXPECT_EQ(label.boolean_values, 0);
+            EXPECT_EQ(label.numerical_values & 1, 0);
+            saw_positive_n1 |= (label.numerical_values & 2) != 0;
         }
         else
         {
-            EXPECT_FALSE(label.boolean_values.any());
-            EXPECT_FALSE(label.numerical_values.test(1));
-            saw_positive_n0 |= label.numerical_values.test(0);
+            EXPECT_EQ(label.boolean_values, 0);
+            EXPECT_EQ(label.numerical_values & 2, 0);
+            saw_positive_n0 |= (label.numerical_values & 1) != 0;
         }
     }
     EXPECT_EQ(memory_states, (std::set<std::string> { "m0", "m1", "m2" }));
@@ -270,9 +362,11 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
     EXPECT_TRUE(saw_positive_n1);
 
     auto rule_symbols = std::set<std::string> {};
-    for (const auto& edge : result.counterexample->get_edges())
+    for (const auto& edge : result.sieve_result->counterexample->get_edges())
         rule_symbols.emplace(edge.get_property().get_symbol());
     EXPECT_EQ(rule_symbols, (std::set<std::string> { "keep_n0", "keep_n1", "to_false", "to_true" }));
+    EXPECT_EQ(result.sieve_result->surviving_rules.size(), 4);
+    EXPECT_LT(graphs::find_edge_cycle(*result.sieve_result->counterexample).size(), result.sieve_result->surviving_rules.size());
 }
 
 TEST(RunirTests, ExtStructuralTerminationAppliesFeatureLimitPerResidualComponent)
@@ -291,9 +385,10 @@ TEST(RunirTests, ExtStructuralTerminationAppliesFeatureLimitPerResidualComponent
 
     EXPECT_FALSE(result.is_terminating());
     EXPECT_EQ(numericals.size(), 15);
-    ASSERT_NE(result.counterexample, nullptr);
-    for (const auto& vertex : result.counterexample->get_vertices())
-        EXPECT_EQ(vertex.get_property().numerical_values.size(), numericals.size());
+    ASSERT_TRUE(result.sieve_result.has_value());
+    ASSERT_NE(result.sieve_result->counterexample, nullptr);
+    for (const auto& vertex : result.sieve_result->counterexample->get_vertices())
+        EXPECT_LT(vertex.get_property().numerical_values, std::uint64_t { 1 } << 15);
 }
 
 TEST(RunirTests, ExtStructuralTerminationAcyclicModuleProgramCallsAreTerminating)

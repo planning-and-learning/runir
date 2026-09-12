@@ -72,7 +72,7 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
 
     EXPECT_EQ(sketch.get_index(), ygg::Index<kr::ps::base::Sketch>(0));
     EXPECT_EQ(repository->template size<kr::ps::base::Sketch>(), 1);
-    EXPECT_EQ(repository->template size<kr::ps::base::Rule>(), 2);
+    EXPECT_EQ(repository->template size<kr::ps::Rule<kr::BaseFamilyTag>>(), 2);
     EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::BooleanFeature>>()), 2);
     EXPECT_EQ((repository->template size<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::NumericalFeature>>()), 1);
     EXPECT_EQ(repository->template size<kr::ps::ConditionVariant<kr::BaseFamilyTag>>(), 4);
