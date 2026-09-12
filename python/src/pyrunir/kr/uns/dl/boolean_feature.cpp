@@ -5,8 +5,8 @@
 #include <runir/kr/dl/semantics/uns/evaluation_context.hpp>
 #include <runir/kr/ps/feature_view.hpp>
 #include <runir/kr/uns/dl/evaluation.hpp>
-#include <runir/kr/uns/dl/feature_data.hpp>
-#include <runir/kr/uns/dl/feature_view.hpp>
+#include <runir/kr/ps/dl/feature_data.hpp>
+#include <runir/kr/ps/dl/feature_view.hpp>
 #include <runir/kr/uns/dl/syntactic_complexity.hpp>
 #include <runir/kr/uns/formatter.hpp>
 #include <runir/kr/uns/repository.hpp>

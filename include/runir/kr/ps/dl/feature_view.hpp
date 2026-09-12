@@ -1,8 +1,8 @@
-#ifndef RUNIR_KR_UNS_DL_FEATURE_VIEW_HPP_
-#define RUNIR_KR_UNS_DL_FEATURE_VIEW_HPP_
+#ifndef RUNIR_KR_PS_DL_FEATURE_VIEW_HPP_
+#define RUNIR_KR_PS_DL_FEATURE_VIEW_HPP_
 
 #include "runir/kr/dl/semantics/constructor_view.hpp"
-#include "runir/kr/uns/dl/feature_data.hpp"
+#include "runir/kr/ps/dl/feature_data.hpp"
 
 #include <tuple>
 #include <yggdrasil/core/types.hpp>
@@ -10,18 +10,15 @@
 namespace ygg
 {
 
-template<typename C>
-class View<Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>>, C>
+template<runir::kr::FamilyTag Family, typename FeatureTag, typename C>
+class View<Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>> m_handle;
+    Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>> m_handle;
 
 public:
-    View(Index<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>> handle, const C& context) noexcept
-        :
-        m_context(&context),
-        m_handle(handle)
+    View(Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle)
     {
     }
 

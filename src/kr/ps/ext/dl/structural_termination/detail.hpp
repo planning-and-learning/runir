@@ -18,7 +18,7 @@ ModuleStructuralTerminationResult make_result(ModuleView module_, const Analysis
 ModuleIncompleteStructuralTerminationResult
 make_incomplete_result(ModuleView module_, const Analysis& analysis, const runir::kr::ps::detail::IncompletePolicyResult& policy_result);
 
-std::vector<RuleVariantView> find_recursive_call_rules(const std::vector<ModuleView>& modules);
+std::vector<RuleVariantView> find_recursive_call_rules(ModuleProgramView program);
 
 }  // namespace runir::kr::ps::ext::dl::detail
 

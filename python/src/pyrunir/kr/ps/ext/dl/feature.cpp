@@ -1,10 +1,10 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/binding_utils.hpp"
 
-#include <runir/kr/ps/ext/dl/feature_data.hpp>
-#include <runir/kr/ps/ext/dl/feature_view.hpp>
+#include <runir/kr/ps/dl/feature_data.hpp>
+#include <runir/kr/ps/dl/feature_view.hpp>
 #include <runir/kr/ps/ext/dl/syntactic_complexity.hpp>
-#include <runir/kr/ps/ext/feature_data.hpp>
+#include <runir/kr/ps/feature_data.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/syntactic_complexity.hpp>

@@ -3,8 +3,8 @@
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/dl/compatibility.hpp>
-#include <runir/kr/ps/base/dl/effect_data.hpp>
-#include <runir/kr/ps/base/dl/effect_view.hpp>
+#include <runir/kr/ps/dl/effect_data.hpp>
+#include <runir/kr/ps/dl/effect_view.hpp>
 #include <runir/kr/ps/base/dl/evaluation_context.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>

@@ -1,0 +1,35 @@
+(:program
+    (:entry root)
+    (:module
+        (:symbol root) (:arguments) (:registers)
+        (:entry m0) (:memory m0 m1) (:features)
+        (:rules
+            (:rule (:symbol self) (:expression
+                (:source-memory m0) (:target-memory m1)
+                (:call (:conditions) (:callee root) (:arguments))))
+            (:rule (:symbol first) (:expression
+                (:source-memory m0) (:target-memory m1)
+                (:call (:conditions) (:callee leaf) (:arguments))))
+            (:rule (:symbol second) (:expression
+                (:source-memory m0) (:target-memory m1)
+                (:call (:conditions) (:callee leaf) (:arguments))))
+            (:rule (:symbol missing) (:expression
+                (:source-memory m0) (:target-memory m1)
+                (:call (:conditions) (:callee omitted) (:arguments))))))
+    (:module
+        (:symbol leaf) (:arguments) (:registers)
+        (:entry m0) (:memory m0 m1) (:features)
+        (:rules
+            (:rule (:symbol back) (:expression
+                (:source-memory m0) (:target-memory m1)
+                (:call (:conditions) (:callee root) (:arguments))))))
+    (:module
+        (:symbol disconnected) (:arguments) (:registers)
+        (:entry m0) (:memory m0 m1) (:features)
+        (:rules
+            (:rule (:symbol unreachable) (:expression
+                (:source-memory m0) (:target-memory m1)
+                (:call (:conditions) (:callee disconnected) (:arguments))))))
+    (:module
+        (:symbol omitted) (:arguments) (:registers)
+        (:entry m0) (:memory m0) (:features) (:rules)))

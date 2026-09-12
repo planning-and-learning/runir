@@ -1,7 +1,7 @@
-#ifndef RUNIR_KR_PS_EXT_EFFECT_DATA_HPP_
-#define RUNIR_KR_PS_EXT_EFFECT_DATA_HPP_
+#ifndef RUNIR_KR_PS_FEATURE_DATA_HPP_
+#define RUNIR_KR_PS_FEATURE_DATA_HPP_
 
-#include "runir/kr/ps/effect_index.hpp"
+#include "runir/kr/ps/feature_index.hpp"
 
 #include <cista/containers/variant.h>
 #include <tuple>
@@ -12,12 +12,12 @@
 namespace ygg
 {
 
-template<>
-struct Data<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>
+template<runir::kr::FamilyTag Family, typename FeatureTag>
+struct Data<runir::kr::ps::Feature<Family, FeatureTag>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>>;
 
-    Index<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> index;
+    Index<runir::kr::ps::Feature<Family, FeatureTag>> index;
     Variant variant;
 
     Data() = default;

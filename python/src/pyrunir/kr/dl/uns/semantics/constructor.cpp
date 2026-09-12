@@ -2,7 +2,7 @@
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/constructor_view.hpp>
-#include <runir/kr/dl/semantics/uns/evaluation.hpp>
+#include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/uns/evaluation_context.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>

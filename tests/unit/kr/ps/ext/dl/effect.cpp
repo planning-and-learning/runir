@@ -1,7 +1,7 @@
 #include <concepts>
+#include <runir/kr/ps/dl/effect_data.hpp>
+#include <runir/kr/ps/dl/effect_view.hpp>
 #include <runir/kr/ps/effect_index.hpp>
-#include <runir/kr/ps/ext/dl/effect_data.hpp>
-#include <runir/kr/ps/ext/dl/effect_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 
 namespace runir::tests
@@ -38,6 +38,17 @@ concept EffectContract = IndexedDataView<Entity> && requires(ygg::Data<Entity>& 
 
 template<typename Feature, typename Observation>
 using Effect = kr::ps::ConcreteEffect<kr::ExtFamilyTag, kr::DlTag, Feature, Observation>;
+
+using ConcreteTypes = ygg::TypeList<Effect<kr::ps::dl::BooleanFeature, kr::ps::dl::Positive>,
+                                    Effect<kr::ps::dl::BooleanFeature, kr::ps::dl::Negative>,
+                                    Effect<kr::ps::dl::BooleanFeature, kr::ps::dl::Unchanged>,
+                                    Effect<kr::ps::dl::NumericalFeature, kr::ps::dl::Increases>,
+                                    Effect<kr::ps::dl::NumericalFeature, kr::ps::dl::Decreases>,
+                                    Effect<kr::ps::dl::NumericalFeature, kr::ps::dl::Unchanged>>;
+static_assert(
+    std::same_as<typename ygg::Data<EffectVariant>::Variant, ygg::ApplyTypeListT<::cista::offset::variant, ygg::MapTypeListT<ygg::Index, ConcreteTypes>>>);
+static_assert(std::same_as<kr::ps::PsEffectTypes<kr::ExtFamilyTag>,
+                           ygg::ConcatTypeListsT<ygg::TypeList<kr::ps::EffectVariant<kr::ExtFamilyTag>, EffectVariant>, ConcreteTypes>>);
 
 static_assert(EffectContract<Effect<kr::ps::dl::BooleanFeature, kr::ps::dl::Positive>>);
 static_assert(EffectContract<Effect<kr::ps::dl::BooleanFeature, kr::ps::dl::Negative>>);

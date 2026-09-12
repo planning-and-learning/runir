@@ -1,11 +1,11 @@
 #ifndef RUNIR_KR_PS_CONDITION_VIEW_HPP_
 #define RUNIR_KR_PS_CONDITION_VIEW_HPP_
 
-#include "runir/kr/ps/condition_index.hpp"
+#include "runir/kr/ps/condition_data.hpp"
 
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/containers/variant.hpp>
+#include <yggdrasil/core/types.hpp>
 
 namespace ygg
 {

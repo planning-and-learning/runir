@@ -51,12 +51,6 @@ std::pair<std::uint64_t, std::uint64_t> unproject_vertex(std::size_t vertex, con
 namespace
 {
 
-std::size_t make_vertex(std::uint64_t booleans, std::uint64_t numericals, std::size_t memory_position, const QualitativePolicy& policy)
-{
-    const auto valuation = booleans | (numericals << policy.num_booleans);
-    return valuation * policy.num_memory_states + memory_position;
-}
-
 void append_rule_edges(const QualitativePolicy& policy, std::size_t rule_position, std::vector<PolicyEdge>& edges)
 {
     const auto& profile = policy.rule_profiles[rule_position];
@@ -71,36 +65,24 @@ void append_rule_edges(const QualitativePolicy& policy, std::size_t rule_positio
             || (profile.numerical_decrease_effects & ~source_numericals))
             continue;
 
-        auto target_booleans = profile.boolean_positive_effects | (profile.boolean_unchanged_effects & source_booleans);
-        auto target_boolean_bits = ygg::BitsetSpan<std::uint64_t>(&target_booleans, policy.num_booleans);
-        const auto free_boolean_bits = ygg::BitsetSpan<const std::uint64_t>(&profile.boolean_unconstrained_effects, policy.num_booleans);
-
+        const auto target_booleans = profile.boolean_positive_effects | (profile.boolean_unchanged_effects & source_booleans);
         // A decrease requires a positive source (checked above), but may end at
         // either zero or positive, so it remains free in the target valuation.
-        auto target_numericals = profile.numerical_increase_effects | (profile.numerical_unchanged_effects & source_numericals);
+        const auto target_numericals = profile.numerical_increase_effects | (profile.numerical_unchanged_effects & source_numericals);
+        const auto fixed_target = target_booleans | (target_numericals << policy.num_booleans);
         const auto free_numericals = profile.numerical_decrease_effects | profile.numerical_unconstrained_effects;
-        auto target_numerical_bits = ygg::BitsetSpan<std::uint64_t>(&target_numericals, policy.num_numericals);
-        const auto free_numerical_bits = ygg::BitsetSpan<const std::uint64_t>(&free_numericals, policy.num_numericals);
+        const auto free = profile.boolean_unconstrained_effects | (free_numericals << policy.num_booleans);
 
-        auto free_positions = std::vector<std::pair<bool, std::size_t>> {};
-        for (std::size_t position = 0; position < policy.num_booleans; ++position)
-            if (free_boolean_bits.test(position))
-                free_positions.emplace_back(true, position);
-        for (std::size_t position = 0; position < policy.num_numericals; ++position)
-            if (free_numerical_bits.test(position))
-                free_positions.emplace_back(false, position);
-
-        for (std::size_t assignment = 0; assignment < (std::size_t { 1 } << free_positions.size()); ++assignment)
+        // Unsigned subtraction visits subsets in ascending valuation order,
+        // including the single empty assignment when no target bits are free.
+        for (auto subset = std::uint64_t { 0 };; subset = (subset - free) & free)
         {
-            for (std::size_t free = 0; free < free_positions.size(); ++free)
-            {
-                const auto [is_boolean, position] = free_positions[free];
-                const auto value = static_cast<bool>((assignment >> free) & std::size_t { 1 });
-                (is_boolean ? target_boolean_bits : target_numerical_bits).set(position, value);
-            }
             if (edges.size() == std::numeric_limits<graphs::EdgeIndex>::max())
                 throw std::invalid_argument("structural_termination: an expanded policy graph has too many edges");
-            edges.push_back(PolicyEdge { source, make_vertex(target_booleans, target_numericals, profile.target_memory_position, policy), rule_position });
+            const auto target = static_cast<std::size_t>(fixed_target | subset) * policy.num_memory_states + profile.target_memory_position;
+            edges.push_back(PolicyEdge { source, target, rule_position });
+            if (subset == free)
+                break;
         }
     }
 }

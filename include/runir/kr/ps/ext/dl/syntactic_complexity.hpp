@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_EXT_DL_SYNTACTIC_COMPLEXITY_HPP_
 
 #include "runir/kr/dl/semantics/syntactic_complexity.hpp"
-#include "runir/kr/ps/ext/dl/feature_view.hpp"
+#include "runir/kr/ps/dl/feature_view.hpp"
 
 #include <cstddef>
 #include <yggdrasil/core/types.hpp>

@@ -4,8 +4,8 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/base/evaluation_context.hpp>
 #include <runir/kr/ps/base/dl/evaluation.hpp>
-#include <runir/kr/ps/base/dl/feature_data.hpp>
-#include <runir/kr/ps/base/dl/feature_view.hpp>
+#include <runir/kr/ps/dl/feature_data.hpp>
+#include <runir/kr/ps/dl/feature_view.hpp>
 #include <runir/kr/ps/base/dl/syntactic_complexity.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>

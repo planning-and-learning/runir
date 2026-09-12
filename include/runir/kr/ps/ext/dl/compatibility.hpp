@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_PS_EXT_DL_COMPATIBILITY_HPP_
 #define RUNIR_KR_PS_EXT_DL_COMPATIBILITY_HPP_
 
-#include "runir/kr/ps/ext/dl/condition_view.hpp"
-#include "runir/kr/ps/ext/dl/effect_view.hpp"
+#include "runir/kr/ps/dl/condition_view.hpp"
+#include "runir/kr/ps/dl/effect_view.hpp"
 #include "runir/kr/ps/ext/dl/evaluation.hpp"
 #include "runir/kr/ps/ext/evaluation_context.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"

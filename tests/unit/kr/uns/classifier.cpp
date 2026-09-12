@@ -5,7 +5,9 @@
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/errors.hpp>
-#include <runir/kr/uns/classifier.hpp>
+#include <runir/kr/uns/classifier_data.hpp>
+#include <runir/kr/uns/classifier_index.hpp>
+#include <runir/kr/uns/classifier_view.hpp>
 #include <runir/kr/uns/dl/parser.hpp>
 #include <runir/kr/uns/formatter.hpp>
 #include <runir/kr/uns/repository.hpp>

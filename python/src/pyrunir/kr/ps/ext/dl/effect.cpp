@@ -2,8 +2,8 @@
 #include "pyrunir/kr/binding_utils.hpp"
 
 #include <runir/kr/ps/effect_view.hpp>
-#include <runir/kr/ps/ext/dl/effect_data.hpp>
-#include <runir/kr/ps/ext/dl/effect_view.hpp>
+#include <runir/kr/ps/dl/effect_data.hpp>
+#include <runir/kr/ps/dl/effect_view.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <yggdrasil/python/bindings.hpp>

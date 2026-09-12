@@ -11,6 +11,29 @@
 namespace runir::kr::ps
 {
 
+namespace detail
+{
+
+template<runir::kr::FamilyTag Family>
+using PsConditionTypes = ygg::TypeList<ConditionVariant<Family>,
+                                       ConcreteConditionVariant<Family, runir::kr::DlTag>,
+                                       ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
+                                       ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
+                                       ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>,
+                                       ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>;
+
+template<runir::kr::FamilyTag Family>
+using PsEffectTypes = ygg::TypeList<EffectVariant<Family>,
+                                    ConcreteEffectVariant<Family, runir::kr::DlTag>,
+                                    ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
+                                    ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
+                                    ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>,
+                                    ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>,
+                                    ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
+                                    ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
+
+}  // namespace detail
+
 template<runir::kr::FamilyTag Family>
 struct PsFamilyTraits;
 
@@ -27,23 +50,9 @@ struct PsFamilyTraits<runir::kr::BaseFamilyTag>
                                        ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
                                        ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>;
 
-    using ConditionTypes =
-        ygg::TypeList<ConditionVariant<runir::kr::BaseFamilyTag>,
-                      ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>,
-                      ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
-                      ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
-                      ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>,
-                      ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>;
+    using ConditionTypes = detail::PsConditionTypes<runir::kr::BaseFamilyTag>;
 
-    using EffectTypes =
-        ygg::TypeList<EffectVariant<runir::kr::BaseFamilyTag>,
-                      ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>,
-                      ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
-                      ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
-                      ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>,
-                      ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>,
-                      ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
-                      ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
+    using EffectTypes = detail::PsEffectTypes<runir::kr::BaseFamilyTag>;
 };
 
 template<>
@@ -64,23 +73,9 @@ struct PsFamilyTraits<runir::kr::ExtFamilyTag>
                                        ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
                                        ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>;
 
-    using ConditionTypes =
-        ygg::TypeList<ConditionVariant<runir::kr::ExtFamilyTag>,
-                      ConcreteConditionVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>,
-                      ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
-                      ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
-                      ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>,
-                      ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>;
+    using ConditionTypes = detail::PsConditionTypes<runir::kr::ExtFamilyTag>;
 
-    using EffectTypes =
-        ygg::TypeList<EffectVariant<runir::kr::ExtFamilyTag>,
-                      ConcreteEffectVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>,
-                      ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
-                      ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
-                      ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>,
-                      ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>,
-                      ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
-                      ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
+    using EffectTypes = detail::PsEffectTypes<runir::kr::ExtFamilyTag>;
 };
 
 template<runir::kr::FamilyTag Family>

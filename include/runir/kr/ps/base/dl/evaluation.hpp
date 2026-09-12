@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_BASE_DL_EVALUATION_HPP_
 
 #include "runir/kr/dl/semantics/evaluation.hpp"
-#include "runir/kr/ps/base/dl/feature_view.hpp"
+#include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/evaluation.hpp"
 
 #include <yggdrasil/core/types.hpp>

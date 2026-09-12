@@ -2,7 +2,7 @@
 #define RUNIR_KR_UNS_DL_FORMATTER_HPP_
 
 #include "runir/kr/dl/semantics/formatter.hpp"
-#include "runir/kr/uns/dl/feature_view.hpp"
+#include "runir/kr/ps/dl/feature_view.hpp"
 
 #include <fmt/format.h>
 #include <iterator>

@@ -4,7 +4,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
 #include <runir/kr/ps/base/dl/evaluation_context.hpp>
-#include <runir/kr/ps/base/effect_data.hpp>
+#include <runir/kr/ps/effect_data.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <yggdrasil/python/bindings.hpp>

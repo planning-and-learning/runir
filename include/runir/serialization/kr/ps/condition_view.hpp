@@ -2,8 +2,7 @@
 #define RUNIR_SERIALIZATION_KR_PS_CONDITION_VIEW_HPP_
 
 #include "runir/kr/ps/condition_view.hpp"
-#include "runir/serialization/kr/ps/base/dl/condition_view.hpp"
-#include "runir/serialization/kr/ps/ext/dl/condition_view.hpp"
+#include "runir/serialization/kr/ps/dl/condition_view.hpp"
 
 #include <yggdrasil/serialization/dictionaries.hpp>
 

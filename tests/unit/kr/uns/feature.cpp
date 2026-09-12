@@ -1,9 +1,9 @@
 #include <concepts>
+#include <runir/kr/ps/dl/feature_data.hpp>
+#include <runir/kr/ps/dl/feature_view.hpp>
 #include <runir/kr/ps/feature_index.hpp>
 #include <runir/kr/ps/feature_view.hpp>
 #include <runir/kr/uns/dl/evaluation.hpp>
-#include <runir/kr/uns/dl/feature_data.hpp>
-#include <runir/kr/uns/dl/feature_view.hpp>
 #include <runir/kr/uns/repository.hpp>
 
 namespace runir::tests
@@ -13,16 +13,20 @@ using Entity = kr::ps::Feature<kr::UnsFamilyTag, kr::ps::dl::BooleanFeature>;
 using Index = ygg::Index<Entity>;
 using Data = ygg::Data<Entity>;
 using View = ygg::View<Index, kr::uns::Repository>;
+using Concrete = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::ps::dl::BooleanFeature>;
 
 static_assert(std::constructible_from<Index, ygg::uint_t>);
 static_assert(std::totally_ordered<Index>);
 static_assert(std::totally_ordered<Data>);
 static_assert(std::totally_ordered<View>);
 static_assert(std::same_as<View, kr::uns::dl::BooleanFeatureView>);
+static_assert(std::same_as<Data::Variant, ::cista::offset::variant<ygg::Index<Concrete>>>);
 static_assert(requires(Data& data) {
     data.index;
     data.variant;
     data.clear();
+    { data.cista_members() } -> std::same_as<std::tuple<const Index&, const Data::Variant&>>;
+    { data.identifying_members() } -> std::same_as<std::tuple<const Data::Variant&>>;
     { canonicalize(data) } -> std::same_as<void>;
     { is_canonical(data) } -> std::same_as<bool>;
 });

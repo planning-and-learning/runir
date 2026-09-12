@@ -8,8 +8,8 @@
 #include "runir/kr/uns/classifier_data.hpp"
 #include "runir/kr/uns/classifier_view.hpp"
 #include "runir/kr/uns/declarations.hpp"
-#include "runir/kr/uns/dl/feature_data.hpp"
-#include "runir/kr/uns/dl/feature_view.hpp"
+#include "runir/kr/ps/dl/feature_data.hpp"
+#include "runir/kr/ps/dl/feature_view.hpp"
 
 #include <yggdrasil/formalism/builder.hpp>
 

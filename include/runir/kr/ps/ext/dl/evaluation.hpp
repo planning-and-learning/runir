@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_EXT_DL_EVALUATION_HPP_
 
 #include "runir/kr/dl/semantics/evaluation.hpp"
-#include "runir/kr/ps/ext/dl/feature_view.hpp"
+#include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/ext/evaluation.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 

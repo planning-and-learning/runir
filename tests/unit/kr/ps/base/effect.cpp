@@ -1,6 +1,6 @@
 #include <concepts>
-#include <runir/kr/ps/base/effect_data.hpp>
 #include <runir/kr/ps/base/repository.hpp>
+#include <runir/kr/ps/effect_data.hpp>
 #include <runir/kr/ps/effect_index.hpp>
 #include <runir/kr/ps/effect_view.hpp>
 

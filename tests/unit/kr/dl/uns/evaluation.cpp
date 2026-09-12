@@ -5,9 +5,10 @@
 #include <limits>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
-#include <runir/kr/dl/semantics/uns/evaluation.hpp>
+#include <runir/kr/dl/semantics/uns/evaluation_context.hpp>
 #include <string>
 
 namespace runir::tests

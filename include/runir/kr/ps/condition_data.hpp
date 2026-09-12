@@ -1,5 +1,5 @@
-#ifndef RUNIR_KR_PS_EXT_CONDITION_DATA_HPP_
-#define RUNIR_KR_PS_EXT_CONDITION_DATA_HPP_
+#ifndef RUNIR_KR_PS_CONDITION_DATA_HPP_
+#define RUNIR_KR_PS_CONDITION_DATA_HPP_
 
 #include "runir/kr/ps/condition_index.hpp"
 
@@ -12,12 +12,12 @@
 namespace ygg
 {
 
-template<>
-struct Data<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>
+template<runir::kr::FamilyTag Family>
+struct Data<runir::kr::ps::ConditionVariant<Family>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, runir::kr::DlTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteConditionVariant<Family, runir::kr::DlTag>>>;
 
-    Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> index;
+    Index<runir::kr::ps::ConditionVariant<Family>> index;
     Variant variant;
 
     Data() = default;

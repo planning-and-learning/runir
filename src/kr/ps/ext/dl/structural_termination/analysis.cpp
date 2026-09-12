@@ -9,9 +9,6 @@
 namespace runir::kr::ps::ext::dl::detail
 {
 
-using runir::kr::ps::detail::record_condition;
-using runir::kr::ps::detail::record_effect;
-
 template<runir::kr::dl::CategoryTag Category>
 using RegisterConstructor = std::conditional_t<std::same_as<Category, runir::kr::dl::ConceptTag>,
                                                runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>,
@@ -121,15 +118,17 @@ Analysis analyze_module(ModuleView module_)
                 profile.source_memory_position = memory_position(concrete_rule.get_source().get_index());
                 profile.target_memory_position = memory_position(concrete_rule.get_target().get_index());
                 for (auto condition : concrete_rule.get_conditions())
-                    ygg::visit([&](auto concrete_variant)
-                               { ygg::visit([&](auto concrete) { record_condition(module_, profile, concrete); }, concrete_variant.get_variant()); },
-                               condition.get_variant());
+                    ygg::visit(
+                        [&](auto concrete_variant)
+                        { ygg::visit([&](auto concrete) { ps::detail::record_condition(module_, profile, concrete); }, concrete_variant.get_variant()); },
+                        condition.get_variant());
                 if constexpr (requires { concrete_rule.get_effects(); })
                 {
                     for (auto effect : concrete_rule.get_effects())
-                        ygg::visit([&](auto concrete_variant)
-                                   { ygg::visit([&](auto concrete) { record_effect(module_, profile, concrete); }, concrete_variant.get_variant()); },
-                                   effect.get_variant());
+                        ygg::visit(
+                            [&](auto concrete_variant)
+                            { ygg::visit([&](auto concrete) { ps::detail::record_effect(module_, profile, concrete); }, concrete_variant.get_variant()); },
+                            effect.get_variant());
                 }
                 if constexpr (requires { concrete_rule.get_register(); })
                     record_load_effects(module_, profile, concrete_rule.get_register().get_identifier());

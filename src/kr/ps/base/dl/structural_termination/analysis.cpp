@@ -1,25 +1,22 @@
 #include "detail.hpp"
-#include "runir/kr/ps/base/dl/condition_view.hpp"
-#include "runir/kr/ps/base/dl/effect_view.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
+#include "runir/kr/ps/dl/condition_view.hpp"
+#include "runir/kr/ps/dl/effect_view.hpp"
 
 namespace runir::kr::ps::base::dl::detail
 {
 
-using Profile = runir::kr::ps::detail::RuleProfile;
-using runir::kr::ps::detail::record_condition;
-using runir::kr::ps::detail::record_effect;
-
-Profile make_rule_profile(SketchView sketch, RuleView rule)
+ps::dl::RuleProfile make_rule_profile(SketchView sketch, RuleView rule)
 {
-    auto profile = Profile(sketch.get_features<runir::kr::ps::dl::BooleanFeature>().size(), sketch.get_features<runir::kr::ps::dl::NumericalFeature>().size());
+    auto profile = ps::dl::RuleProfile(sketch.get_features<ps::dl::BooleanFeature>().size(), sketch.get_features<ps::dl::NumericalFeature>().size());
     for (auto condition : rule.get_conditions())
         ygg::visit([&](auto concrete_variant)
-                   { ygg::visit([&](auto concrete) { record_condition(sketch, profile, concrete); }, concrete_variant.get_variant()); },
+                   { ygg::visit([&](auto concrete) { ps::detail::record_condition(sketch, profile, concrete); }, concrete_variant.get_variant()); },
                    condition.get_variant());
     for (auto effect : rule.get_effects())
-        ygg::visit([&](auto concrete_variant) { ygg::visit([&](auto concrete) { record_effect(sketch, profile, concrete); }, concrete_variant.get_variant()); },
+        ygg::visit([&](auto concrete_variant)
+                   { ygg::visit([&](auto concrete) { ps::detail::record_effect(sketch, profile, concrete); }, concrete_variant.get_variant()); },
                    effect.get_variant());
     return profile;
 }

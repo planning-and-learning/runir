@@ -17,17 +17,15 @@ ModuleIncompleteStructuralTerminationResult incomplete_structural_termination(Mo
 ModuleProgramIncompleteStructuralTerminationResult incomplete_structural_termination(ModuleProgramView program, bool use_memory_scc_scope)
 {
     auto result = ModuleProgramIncompleteStructuralTerminationResult {};
-    auto modules = std::vector<ModuleView> {};
     for (auto module : program.get_modules())
     {
-        modules.push_back(module);
         auto module_result = incomplete_structural_termination(module, use_memory_scc_scope);
         if (!module_result.is_terminating())
             result.status = IncompleteStructuralTerminationStatus::UNKNOWN;
         result.module_results.push_back(std::move(module_result));
     }
 
-    result.recursive_call_rules = detail::find_recursive_call_rules(modules);
+    result.recursive_call_rules = detail::find_recursive_call_rules(program);
     if (!result.recursive_call_rules.empty())
         result.status = IncompleteStructuralTerminationStatus::UNKNOWN;
     return result;

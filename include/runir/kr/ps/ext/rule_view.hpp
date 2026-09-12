@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_EXT_RULE_VIEW_HPP_
 
 #include "runir/kr/dl/register_view.hpp"
-#include "runir/kr/ps/ext/dl/feature_view.hpp"
+#include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/ext/memory_state_view.hpp"
 #include "runir/kr/ps/ext/module_symbol_view.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"

@@ -4,6 +4,7 @@
 #include <array>
 #include <cstdint>
 #include <gtest/gtest.h>
+#include <tuple>
 
 namespace runir::tests
 {
@@ -14,6 +15,60 @@ kr::ps::detail::RuleProfile explicit_effects(kr::ps::detail::RuleProfile profile
     profile.boolean_unconstrained_effects &= ~(profile.boolean_positive_effects | profile.boolean_negative_effects | profile.boolean_unchanged_effects);
     profile.numerical_unconstrained_effects &= ~(profile.numerical_increase_effects | profile.numerical_decrease_effects | profile.numerical_unchanged_effects);
     return profile;
+}
+
+// Previous per-feature assignment enumeration, retained as an ordered oracle.
+std::vector<kr::ps::detail::PolicyEdge> reference_policy_edges(const kr::ps::detail::QualitativePolicy& policy)
+{
+    auto edges = std::vector<kr::ps::detail::PolicyEdge> {};
+    for (std::size_t rule_position = 0; rule_position < policy.rule_profiles.size(); ++rule_position)
+    {
+        const auto& profile = policy.rule_profiles[rule_position];
+        for (std::size_t valuation = 0; valuation < policy.num_valuations(); ++valuation)
+        {
+            const auto source = valuation * policy.num_memory_states + profile.source_memory_position;
+            const auto booleans = kr::ps::detail::vertex_booleans(source, policy);
+            const auto numericals = kr::ps::detail::vertex_numericals(source, policy);
+            if ((profile.boolean_positive_conditions & ~booleans) || (profile.boolean_negative_conditions & booleans)
+                || (profile.numerical_greater_conditions & ~numericals) || (profile.numerical_zero_conditions & numericals)
+                || (profile.numerical_decrease_effects & ~numericals))
+                continue;
+
+            auto target_booleans = profile.boolean_positive_effects | (profile.boolean_unchanged_effects & booleans);
+            auto target_numericals = profile.numerical_increase_effects | (profile.numerical_unchanged_effects & numericals);
+            auto free_positions = std::vector<std::pair<bool, std::size_t>> {};
+            for (std::size_t position = 0; position < policy.num_booleans; ++position)
+                if (profile.boolean_unconstrained_effects & (std::uint64_t { 1 } << position))
+                    free_positions.emplace_back(true, position);
+            for (std::size_t position = 0; position < policy.num_numericals; ++position)
+                if ((profile.numerical_decrease_effects | profile.numerical_unconstrained_effects) & (std::uint64_t { 1 } << position))
+                    free_positions.emplace_back(false, position);
+
+            for (std::size_t assignment = 0; assignment < (std::size_t { 1 } << free_positions.size()); ++assignment)
+            {
+                for (std::size_t free = 0; free < free_positions.size(); ++free)
+                {
+                    const auto [is_boolean, position] = free_positions[free];
+                    auto& target = is_boolean ? target_booleans : target_numericals;
+                    target &= ~(std::uint64_t { 1 } << position);
+                    target |= std::uint64_t { (assignment >> free) & 1 } << position;
+                }
+                const auto target_valuation = static_cast<std::size_t>(target_booleans | (target_numericals << policy.num_booleans));
+                edges.push_back({ source, target_valuation * policy.num_memory_states + profile.target_memory_position, rule_position });
+            }
+        }
+    }
+    return edges;
+}
+
+void expect_ordered_edges_match_reference(const kr::ps::detail::QualitativePolicy& policy)
+{
+    const auto expected = reference_policy_edges(policy);
+    const auto actual = kr::ps::detail::build_policy_edges(policy);
+    ASSERT_EQ(actual.size(), expected.size());
+    for (std::size_t position = 0; position < actual.size(); ++position)
+        EXPECT_EQ(std::tie(actual[position].source, actual[position].target, actual[position].rule_position, actual[position].alive),
+                  std::tie(expected[position].source, expected[position].target, expected[position].rule_position, expected[position].alive));
 }
 
 bool monolithic_sieve_has_cycle(const kr::ps::detail::QualitativePolicy& policy)
@@ -98,6 +153,57 @@ void expect_universe_matches_monolithic(const std::vector<kr::ps::detail::RulePr
 }  // namespace
 
 TEST(RunirTests, QualitativePolicyRequiresMemoryState) { EXPECT_THROW((void) kr::ps::detail::QualitativePolicy(0, 0, 0), std::invalid_argument); }
+
+TEST(RunirTests, PackedPolicyEdgesPreserveEverySmallConditionEffectCombination)
+{
+    auto policy = kr::ps::detail::QualitativePolicy(2, 1, 1);
+    for (const auto& boolean : boolean_rule_universe())
+        for (const auto& numerical : numerical_rule_universe())
+        {
+            if (boolean.source_memory_position != numerical.source_memory_position || boolean.target_memory_position != numerical.target_memory_position)
+                continue;
+            auto profile = boolean;
+            profile.numerical_greater_conditions = numerical.numerical_greater_conditions;
+            profile.numerical_zero_conditions = numerical.numerical_zero_conditions;
+            profile.numerical_increase_effects = numerical.numerical_increase_effects;
+            profile.numerical_decrease_effects = numerical.numerical_decrease_effects;
+            profile.numerical_unchanged_effects = numerical.numerical_unchanged_effects;
+            profile.numerical_unconstrained_effects = numerical.numerical_unconstrained_effects;
+            policy.rule_profiles.push_back(profile);
+        }
+    expect_ordered_edges_match_reference(policy);
+}
+
+TEST(RunirTests, PackedPolicyEdgesPreserveSparseFreeBitsAndUnchangedBits)
+{
+    for (std::size_t booleans = 0; booleans <= 4; ++booleans)
+        for (std::size_t numericals = 0; numericals <= 4 - booleans; ++numericals)
+        {
+            auto policy = kr::ps::detail::QualitativePolicy(2, booleans, numericals);
+            const auto boolean_mask = (std::uint64_t { 1 } << booleans) - 1;
+            const auto numerical_mask = (std::uint64_t { 1 } << numericals) - 1;
+            for (std::uint64_t free = 0; free < policy.num_valuations(); ++free)
+            {
+                auto profile = kr::ps::detail::RuleProfile(booleans, numericals, 0, 1);
+                profile.boolean_unconstrained_effects = free & boolean_mask;
+                profile.boolean_unchanged_effects = ~free & boolean_mask;
+                profile.numerical_unconstrained_effects = free >> booleans;
+                profile.numerical_unchanged_effects = ~(free >> booleans) & numerical_mask;
+                policy.rule_profiles.push_back(profile);
+            }
+            expect_ordered_edges_match_reference(policy);
+        }
+}
+
+TEST(RunirTests, PackedPolicyEdgesRejectFullWidthBeforePackingValuations)
+{
+    for (const auto booleans : { std::size_t { 0 }, std::size_t { 32 }, std::size_t { 64 } })
+    {
+        auto policy = kr::ps::detail::QualitativePolicy(1, booleans, 64 - booleans);
+        policy.rule_profiles.emplace_back(booleans, 64 - booleans);
+        EXPECT_THROW((void) kr::ps::detail::build_policy_edges(policy), std::invalid_argument);
+    }
+}
 
 TEST(RunirTests, CommonFeaturePositionRejectsUndeclaredFeatureBeforeMaskShift)
 {

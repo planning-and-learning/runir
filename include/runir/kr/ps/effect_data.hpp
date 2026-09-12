@@ -1,22 +1,23 @@
-#ifndef RUNIR_KR_PS_BASE_CONDITION_DATA_HPP_
-#define RUNIR_KR_PS_BASE_CONDITION_DATA_HPP_
+#ifndef RUNIR_KR_PS_EFFECT_DATA_HPP_
+#define RUNIR_KR_PS_EFFECT_DATA_HPP_
 
-#include "runir/kr/ps/condition_index.hpp"
+#include "runir/kr/ps/effect_index.hpp"
 
 #include <cista/containers/variant.h>
 #include <tuple>
+#include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
 namespace ygg
 {
 
-template<>
-struct Data<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>
+template<runir::kr::FamilyTag Family>
+struct Data<runir::kr::ps::EffectVariant<Family>>
 {
-    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>>;
+    using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>>>;
 
-    Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>> index;
+    Index<runir::kr::ps::EffectVariant<Family>> index;
     Variant variant;
 
     Data() = default;

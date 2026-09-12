@@ -1,7 +1,7 @@
 #include <concepts>
+#include <runir/kr/ps/effect_data.hpp>
 #include <runir/kr/ps/effect_index.hpp>
 #include <runir/kr/ps/effect_view.hpp>
-#include <runir/kr/ps/ext/effect_data.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 
 namespace runir::tests

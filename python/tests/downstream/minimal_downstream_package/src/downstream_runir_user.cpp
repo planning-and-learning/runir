@@ -1,5 +1,6 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <runir/kr/uns.hpp>
 #include <runir/runir.hpp>
 #include <string>
 

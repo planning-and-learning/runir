@@ -2,7 +2,7 @@
 #include "pyrunir/kr/binding_utils.hpp"
 
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/ps/base/condition_data.hpp>
+#include <runir/kr/ps/condition_data.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
 #include <runir/kr/ps/base/dl/evaluation_context.hpp>
 #include <runir/kr/ps/base/formatter.hpp>

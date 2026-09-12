@@ -15,6 +15,7 @@
 #include <string>
 #include <tyr/formalism/planning/parser.hpp>
 #include <utility>
+#include <vector>
 #include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::tests
@@ -430,6 +431,40 @@ TEST(RunirTests, ExtStructuralTerminationRecursiveModuleProgramCallsAreNotTermin
     ASSERT_FALSE(result.recursive_call_rules.empty());
     EXPECT_TRUE(result.module_results[0].is_terminating());
     EXPECT_TRUE(result.module_results[1].is_terminating());
+}
+
+TEST(RunirTests, ExtStructuralTerminationPreservesCallLabelsAndOrder)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto planning_domain = fp::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    const auto original = kr::ps::ext::dl::parse_module_program(read_fixture("kr/ps/ext/dl/ordered_calls.program"), planning_domain.get_domain(), *repository);
+
+    for (const auto omit_target : { false, true })
+    {
+        auto data = original.get_data();
+        if (omit_target)
+            data.modules.pop_back();
+        const auto program = repository->get_or_create(data).first;
+        auto expected = std::vector<std::string> { "self", "first", "second", "back", "unreachable" };
+        if (omit_target)
+            expected.insert(expected.begin(), "missing");
+        const auto check = [&](const auto& result)
+        {
+            EXPECT_FALSE(result.is_terminating());
+            EXPECT_EQ(result.module_results.size(), omit_target ? 3 : 4);
+            for (const auto& module_result : result.module_results)
+                EXPECT_TRUE(module_result.is_terminating());
+            auto actual = std::vector<std::string> {};
+            for (const auto& rule : result.recursive_call_rules)
+                actual.emplace_back(rule.get_symbol());
+            EXPECT_EQ(actual, expected);
+        };
+        check(kr::ps::ext::dl::incomplete_structural_termination(program));
+        check(kr::ps::ext::dl::structural_termination(program));
+        check(kr::ps::ext::dl::structural_termination(program, kr::ps::dl::default_max_features, false));
+    }
 }
 
 }  // namespace runir::tests

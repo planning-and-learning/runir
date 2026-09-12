@@ -3,7 +3,7 @@
 
 #include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/uns/classifier_data.hpp"
-#include "runir/kr/uns/dl/feature_view.hpp"
+#include "runir/kr/ps/dl/feature_view.hpp"
 
 #include <tuple>
 #include <yggdrasil/containers/variant.hpp>

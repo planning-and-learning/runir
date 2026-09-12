@@ -2,7 +2,7 @@
 #include "pyrunir/kr/binding_utils.hpp"
 
 #include <runir/kr/ps/condition_view.hpp>
-#include <runir/kr/ps/ext/condition_data.hpp>
+#include <runir/kr/ps/condition_data.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <yggdrasil/python/bindings.hpp>

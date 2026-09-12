@@ -1,7 +1,7 @@
 #include <concepts>
+#include <runir/kr/ps/condition_data.hpp>
 #include <runir/kr/ps/condition_index.hpp>
 #include <runir/kr/ps/condition_view.hpp>
-#include <runir/kr/ps/ext/condition_data.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 
 namespace runir::tests
