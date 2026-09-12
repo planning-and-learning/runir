@@ -96,7 +96,7 @@ struct ProjectedPolicyComponent
 struct SievedPolicyComponent
 {
     ProjectedPolicyComponent projected;
-    std::vector<PolicyEdge> edges;
+    std::vector<PolicyEdge> edges;  // Live intra-SCC edges, in expansion order.
     SieveResult sieve;
 };
 
@@ -174,7 +174,7 @@ Result materialize_incomplete_result(Definition definition, const PolicyAnalysis
 
 std::uint64_t vertex_booleans(std::size_t vertex, const QualitativePolicy& policy);
 std::uint64_t vertex_numericals(std::size_t vertex, const QualitativePolicy& policy);
-std::pair<std::uint64_t, std::uint64_t> unproject_vertex(std::size_t vertex, const ProjectedPolicyComponent& projected, const QualitativePolicy& policy);
+std::pair<std::uint64_t, std::uint64_t> unproject_vertex(std::size_t vertex, const ProjectedPolicyComponent& projected);
 
 template<typename Result, typename Graph, runir::kr::FamilyTag Family, typename C, typename Definition, typename MakeVertexLabel>
 Result materialize_result(Definition definition,
@@ -203,18 +203,14 @@ Result materialize_result(Definition definition,
         {
             if (vertex_remap[vertex] == std::numeric_limits<std::size_t>::max())
             {
-                auto [booleans, numericals] = unproject_vertex(vertex, projected, analysis.policy);
+                auto [booleans, numericals] = unproject_vertex(vertex, projected);
                 const auto memory_position = projected.memory_positions[vertex % projected.policy.num_memory_states];
                 vertex_remap[vertex] = builder.add_vertex(make_vertex_label(booleans, numericals, memory_position));
             }
             return static_cast<graphs::VertexIndex>(vertex_remap[vertex]);
         };
         for (const auto& edge : component.edges)
-        {
-            if (!edge.alive || component.sieve.component_of[edge.source] != component.sieve.component_of[edge.target])
-                continue;
             builder.add_directed_edge(map_vertex(edge.source), map_vertex(edge.target), analysis.rules[projected.rule_positions[edge.rule_position]]);
-        }
     }
     sieve.counterexample = std::make_shared<Graph>(std::move(builder));
     sieve.surviving_rules = surviving_rules(*sieve.counterexample);

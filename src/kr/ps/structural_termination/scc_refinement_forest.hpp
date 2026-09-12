@@ -274,14 +274,14 @@ public:
     void establish_r1_mark(std::size_t witnessing_rule_position, std::size_t numerical_position);
     void establish_r2_mark(std::size_t witnessing_rule_position, std::size_t boolean_position);
 
-    const SccRefinementForest& refinement_forest() const { return *forest_; }
+    const SccRefinementForest& refinement_forest() const { return forest_; }
 
 private:
     SccRefinementForest::NodeIndex scc_for_rule(std::size_t rule_position) const;
 
     const dl::QualitativePolicy& policy_;
     bool use_memory_scc_scope_;
-    std::optional<SccRefinementForest> forest_;
+    SccRefinementForest forest_;
 };
 
 }  // namespace runir::kr::ps::detail

@@ -29,25 +29,6 @@ std::uint64_t vertex_numericals(std::size_t vertex, const QualitativePolicy& pol
     return static_cast<std::uint64_t>(vertex / policy.num_memory_states) >> policy.num_booleans;
 }
 
-std::pair<std::uint64_t, std::uint64_t> unproject_vertex(std::size_t vertex, const ProjectedPolicyComponent& projected, const QualitativePolicy& policy)
-{
-    auto booleans = std::uint64_t { 0 };
-    auto boolean_bits = ygg::BitsetSpan<std::uint64_t>(&booleans, policy.num_booleans);
-    const auto local_booleans = vertex_booleans(vertex, projected.policy);
-    const auto local_boolean_bits = ygg::BitsetSpan<const std::uint64_t>(&local_booleans, projected.policy.num_booleans);
-    for (std::size_t local = 0; local < projected.boolean_positions.size(); ++local)
-        boolean_bits.set(projected.boolean_positions[local], local_boolean_bits.test(local));
-
-    auto numericals = std::uint64_t { 0 };
-    auto numerical_bits = ygg::BitsetSpan<std::uint64_t>(&numericals, policy.num_numericals);
-    const auto local_numericals = vertex_numericals(vertex, projected.policy);
-    const auto local_numerical_bits = ygg::BitsetSpan<const std::uint64_t>(&local_numericals, projected.policy.num_numericals);
-    for (std::size_t local = 0; local < projected.numerical_positions.size(); ++local)
-        numerical_bits.set(projected.numerical_positions[local], local_numerical_bits.test(local));
-
-    return { booleans, numericals };
-}
-
 namespace
 {
 
@@ -127,6 +108,14 @@ std::uint64_t project_mask(std::uint64_t mask, const std::vector<std::size_t>& p
     return projected;
 }
 
+std::uint64_t unproject_mask(std::uint64_t mask, const std::vector<std::size_t>& positions)
+{
+    auto unprojected = std::uint64_t { 0 };
+    for (std::size_t local = 0; local < positions.size(); ++local)
+        unprojected |= ((mask >> local) & 1) << positions[local];
+    return unprojected;
+}
+
 RuleProfile project_profile(const RuleProfile& profile,
                             const std::vector<std::size_t>& memory_position_map,
                             const std::vector<std::size_t>& boolean_positions,
@@ -152,6 +141,12 @@ RuleProfile project_profile(const RuleProfile& profile,
 }
 
 }  // namespace
+
+std::pair<std::uint64_t, std::uint64_t> unproject_vertex(std::size_t vertex, const ProjectedPolicyComponent& projected)
+{
+    return { unproject_mask(vertex_booleans(vertex, projected.policy), projected.boolean_positions),
+             unproject_mask(vertex_numericals(vertex, projected.policy), projected.numerical_positions) };
+}
 
 std::vector<PolicyEdge> build_policy_edges(const QualitativePolicy& policy)
 {

@@ -315,6 +315,13 @@ TEST(RunirTests, CommonSieveStartsWithIncompleteRuleElimination)
     const auto without_preprocessing = kr::ps::detail::sieve_policy(policy, 16, false);
     ASSERT_EQ(without_preprocessing.components.size(), 1);
     EXPECT_EQ(without_preprocessing.components.front().projected.rule_positions, std::vector<std::size_t>({ 0, 1 }));
+    const auto& edges = without_preprocessing.components.front().edges;
+    ASSERT_EQ(edges.size(), 2);
+    for (std::size_t position = 0; position < edges.size(); ++position)
+    {
+        EXPECT_EQ(std::tie(edges[position].source, edges[position].target, edges[position].rule_position), std::tuple(position, position, 1));
+        EXPECT_TRUE(edges[position].alive);
+    }
 }
 
 TEST(RunirTests, CommonSieveSkipsFeatureLimitWhenIncompleteProcedureTerminates)
@@ -380,23 +387,28 @@ TEST(RunirTests, CommonSieveProjectsTestedAndChangedFeatures)
 
 TEST(RunirTests, UnprojectVertexRestoresOriginalFeaturePositions)
 {
-    const auto policy = kr::ps::detail::QualitativePolicy(4, 5, 6);
     const auto projected = kr::ps::detail::ProjectedPolicyComponent { kr::ps::detail::QualitativePolicy(2, 2, 2), { 3, 1 }, { 4, 1 }, { 5, 2 }, {} };
+    constexpr auto expected_booleans = std::array<std::uint64_t, 4> { 0, 16, 2, 18 };
+    constexpr auto expected_numericals = std::array<std::uint64_t, 4> { 0, 32, 4, 36 };
     for (const auto memory_position : { 0u, 1u })
     {
-        // Local Boolean bits 01 and numerical bits 10, followed by the memory position.
-        const auto [booleans, numericals] = kr::ps::detail::unproject_vertex(0b1001 * 2 + memory_position, projected, policy);
-        EXPECT_EQ(booleans, std::uint64_t { 1 } << 4);
-        EXPECT_EQ(numericals, std::uint64_t { 1 } << 2);
+        for (std::size_t valuation = 0; valuation < 16; ++valuation)
+        {
+            const auto [booleans, numericals] = kr::ps::detail::unproject_vertex(valuation * 2 + memory_position, projected);
+            EXPECT_EQ(booleans, expected_booleans[valuation & 3]);
+            EXPECT_EQ(numericals, expected_numericals[valuation >> 2]);
+        }
     }
 
     const auto empty = kr::ps::detail::ProjectedPolicyComponent { kr::ps::detail::QualitativePolicy(2, 0, 0), { 3, 1 }, {}, {}, {} };
-    const auto [booleans, numericals] = kr::ps::detail::unproject_vertex(1, empty, policy);
+    const auto [booleans, numericals] = kr::ps::detail::unproject_vertex(1, empty);
     EXPECT_EQ(booleans, 0);
     EXPECT_EQ(numericals, 0);
-    const auto [no_booleans, no_numericals] = kr::ps::detail::unproject_vertex(1, empty, kr::ps::detail::QualitativePolicy(4, 0, 0));
-    EXPECT_EQ(no_booleans, 0);
-    EXPECT_EQ(no_numericals, 0);
+
+    const auto boolean_high = kr::ps::detail::ProjectedPolicyComponent { kr::ps::detail::QualitativePolicy(1, 1, 0), { 0 }, { 63 }, {}, {} };
+    const auto numerical_high = kr::ps::detail::ProjectedPolicyComponent { kr::ps::detail::QualitativePolicy(1, 0, 1), { 0 }, {}, { 63 }, {} };
+    EXPECT_EQ(kr::ps::detail::unproject_vertex(1, boolean_high), (std::pair<std::uint64_t, std::uint64_t> { std::uint64_t { 1 } << 63, 0 }));
+    EXPECT_EQ(kr::ps::detail::unproject_vertex(1, numerical_high), (std::pair<std::uint64_t, std::uint64_t> { 0, std::uint64_t { 1 } << 63 }));
 }
 
 TEST(RunirTests, CommonSieveAppliesFeatureLimitPerResidualComponent)
@@ -481,6 +493,30 @@ TEST(RunirTests, CommonIncompleteSieveCanUseGlobalOpponentScope)
     ASSERT_EQ(result.surviving_rules.size(), 2);
     EXPECT_EQ(result.surviving_rules[0].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 1 }));
     EXPECT_EQ(result.surviving_rules[1].blocking_reasons[0].opposing_rule_positions, std::vector<std::size_t>({ 0 }));
+}
+
+TEST(RunirTests, GlobalMemoryScopeRefinementPreservesMarks)
+{
+    auto policy = kr::ps::detail::QualitativePolicy(2, 1, 1);
+    policy.rule_profiles.emplace_back(1, 1, 0, 1);
+    auto scopes = kr::ps::detail::ResidualMemorySccs(policy, false);
+    scopes.establish_r1_mark(0, 0);
+    scopes.establish_r2_mark(0, 0);
+
+    constexpr auto remaining = std::array<std::size_t, 1> { 0 };
+    for (const auto rules : { std::span<const std::size_t> {}, std::span<const std::size_t>(remaining) })
+    {
+        EXPECT_FALSE(scopes.refine(rules));
+        const auto& forest = scopes.refinement_forest();
+        ASSERT_EQ(forest.roots().size(), 1);
+        ASSERT_EQ(forest.nodes().size(), 1);
+        EXPECT_EQ(forest.node(forest.roots().front()).memory_positions, std::vector<std::size_t>({ 0, 1 }));
+        const auto marks = scopes.marks_for(0);
+        EXPECT_EQ(marks.booleans, 1);
+        EXPECT_EQ(marks.numericals, 1);
+        EXPECT_EQ(marks.boolean_witnessing_rule_positions[0], std::vector<std::size_t>({ 0 }));
+        EXPECT_EQ(marks.numerical_witnessing_rule_positions[0], std::vector<std::size_t>({ 0 }));
+    }
 }
 
 TEST(RunirTests, SccRefinementForestInheritsMarksAcrossSplits)

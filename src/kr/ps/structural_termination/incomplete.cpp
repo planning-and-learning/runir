@@ -90,6 +90,7 @@ OpposingRuleSet opposing_rules(const QualitativePolicy& policy,
 {
     auto opposing = OpposingRuleSet {};
     const auto feature = std::uint64_t { 1 } << feature_position;
+    const auto marks = state.memory_sccs.marks_for(rule_position);
     for (std::size_t other = 0; other < policy.rule_profiles.size(); ++other)
     {
         if (other == rule_position || !state.remaining[other] || !state.memory_sccs.share_opponent_scope(rule_position, other))
@@ -106,7 +107,6 @@ OpposingRuleSet opposing_rules(const QualitativePolicy& policy,
             continue;
 
         opposing.has_raw_opponent = true;
-        const auto marks = state.memory_sccs.marks_for(rule_position);
         if (!r3_discounts(policy.rule_profiles[rule_position], policy.rule_profiles[other], marks))
             opposing.undiscounted.push_back(other);
     }

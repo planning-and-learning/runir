@@ -133,7 +133,10 @@ PolicySieveResult sieve_policy_for_rules(const QualitativePolicy& policy, std::s
         auto edges = build_policy_edges(projected.policy);
         auto sieve = sieve_policy_graph(edges, projected.policy);
         if (sieve.has_cycle)
+        {
+            std::erase_if(edges, [&](const auto& edge) { return !edge.alive || sieve.component_of[edge.source] != sieve.component_of[edge.target]; });
             result.components.push_back(SievedPolicyComponent { std::move(projected), std::move(edges), std::move(sieve) });
+        }
     }
     return result;
 }

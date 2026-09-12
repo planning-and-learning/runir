@@ -103,9 +103,9 @@ namespace runir::kr::ps::dl
 namespace
 {
 
-CounterexampleVertex materialize_vertex(std::size_t vertex, const detail::ProjectedPolicyComponent& projected, const QualitativePolicy& policy)
+CounterexampleVertex materialize_vertex(std::size_t vertex, const detail::ProjectedPolicyComponent& projected)
 {
-    auto [boolean_values, numerical_values] = detail::unproject_vertex(vertex, projected, policy);
+    auto [boolean_values, numerical_values] = detail::unproject_vertex(vertex, projected);
 
     return CounterexampleVertex {
         projected.memory_positions[vertex % projected.policy.num_memory_states],
@@ -114,7 +114,7 @@ CounterexampleVertex materialize_vertex(std::size_t vertex, const detail::Projec
     };
 }
 
-std::vector<CounterexampleComponent> materialize_counterexamples(const QualitativePolicy& policy, const detail::PolicySieveResult& sieve_result)
+std::vector<CounterexampleComponent> materialize_counterexamples(const detail::PolicySieveResult& sieve_result)
 {
     auto result = std::vector<CounterexampleComponent> {};
     for (const auto& component : sieve_result.components)
@@ -127,8 +127,7 @@ std::vector<CounterexampleComponent> materialize_counterexamples(const Qualitati
         auto vertex_remap = std::vector<std::size_t>(component.sieve.component_of.size(), missing);
 
         for (const auto& edge : component.edges)
-            if (edge.alive && component.sieve.component_of[edge.source] == component.sieve.component_of[edge.target])
-                cyclic_scc[component.sieve.component_of[edge.source]] = true;
+            cyclic_scc[component.sieve.component_of[edge.source]] = true;
 
         for (std::size_t vertex = 0; vertex < component.sieve.component_of.size(); ++vertex)
         {
@@ -148,14 +147,12 @@ std::vector<CounterexampleComponent> materialize_counterexamples(const Qualitati
             }
             auto& counterexample = result[result_of_scc[scc]];
             vertex_remap[vertex] = counterexample.vertices.size();
-            counterexample.vertices.push_back(materialize_vertex(vertex, projected, policy));
+            counterexample.vertices.push_back(materialize_vertex(vertex, projected));
             counterexample.memory_positions.push_back(counterexample.vertices.back().memory_position);
         }
 
         for (const auto& edge : component.edges)
         {
-            if (!edge.alive || component.sieve.component_of[edge.source] != component.sieve.component_of[edge.target])
-                continue;
             auto& counterexample = result[result_of_scc[component.sieve.component_of[edge.source]]];
             counterexample.edges.push_back(CounterexampleEdge {
                 vertex_remap[edge.source],
@@ -242,7 +239,7 @@ structural_termination(const QualitativePolicy& policy, std::size_t max_features
     return StructuralTerminationResult {
         .status = StructuralTerminationStatus::NON_TERMINATING,
         .incomplete_frontier = std::move(incomplete_result),
-        .counterexample_components = materialize_counterexamples(policy, sieve_result),
+        .counterexample_components = materialize_counterexamples(sieve_result),
     };
 }
 
