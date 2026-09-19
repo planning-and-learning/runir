@@ -1,0 +1,6 @@
+(define (problem choose-path-task)
+    (:domain choose-path)
+    (:objects bad good start goal)
+    (:init (at start) (candidate bad) (candidate good) (bad bad)
+           (edge start bad) (edge start good) (edge good goal))
+    (:goal (at goal)))

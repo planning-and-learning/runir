@@ -36,21 +36,20 @@ public:
     auto get_conditions() const noexcept { return make_view(get_data().conditions, *m_context); }
 
     auto get_effects() const noexcept
-        requires(std::same_as<Kind, runir::kr::ps::ext::SketchTag> || std::same_as<Kind, runir::kr::ps::ext::DoTag>)
+        requires(runir::kr::ps::ext::BindingRuleKind<Kind> || std::same_as<Kind, runir::kr::ps::ext::SketchTag>
+                 || std::same_as<Kind, runir::kr::ps::ext::DoTag>)
     {
         return make_view(get_data().effects, *m_context);
     }
 
     auto get_feature() const noexcept
-        requires(std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>
-                 || std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::RoleTag>>)
+        requires runir::kr::ps::ext::BindingRuleKind<Kind>
     {
         return make_view(get_data().feature, *m_context);
     }
 
     auto get_register() const noexcept
-        requires(std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>
-                 || std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::RoleTag>>)
+        requires runir::kr::ps::ext::BindingRuleKind<Kind>
     {
         return make_view(get_data().reg, get_repository(*m_context).get_dl_repository());
     }

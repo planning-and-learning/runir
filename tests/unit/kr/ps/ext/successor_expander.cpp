@@ -81,6 +81,114 @@ void expect_initial_execution_state_uses_expander_repository()
     EXPECT_EQ(state.get_program().get_entry_module().get_name(), "module");
 }
 
+template<tyr::TaskKind Kind>
+void expect_binding_effects_and_empty_choices()
+{
+    const auto task_context = create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"),
+                                                        benchmark_path("classical/tests/gripper/test-1.pddl"));
+    auto& repository = *task_context->domain_context->ext_repository;
+    const auto domain = task_context->search_context->task->get_domain().get_domain();
+    for (const auto role : { false, true })
+        for (const auto choose : { false, true })
+            for (const auto scenario : { 0, 1, 2, 3, 4 })
+            {
+                SCOPED_TRACE(fmt::format("role={}, choose={}, scenario={}", role, choose, scenario));
+                const auto category = role ? "role" : "concept";
+                const auto selected = role ? "(c_some (r_register r) (c_top))" : "(c_register r)";
+                const auto candidates = scenario == 3 ? (role ? "(r_restriction (r_atomic_state \"at\") (c_bot))" : "(c_bot)")
+                                                      : (role ? "(r_atomic_state \"at\")" : "(c_atomic_state \"ball\")");
+                const auto effects = scenario == 1 ? "(:effects (positive goal) (increases size) (unchanged total))"
+                                                  : (scenario == 2 ? "(:effects (decreases size))" : "");
+                const auto source = fmt::format(R"(
+(:module (:symbol binding) (:arguments) (:registers (:{0} r))
+  (:entry source) (:memory source target)
+  (:features
+    (:{0} (:symbol candidates) (:expression {1}))
+    (:boolean (:symbol goal) (:expression
+      (b_nonempty (c_and {2} (c_some (r_atomic_goal "at" true) (c_top))))))
+    (:numerical (:symbol size) (:expression (n_count {2})))
+    (:numerical (:symbol total) (:expression (n_count (c_top)))))
+  (:rules (:rule (:symbol bind) (:expression
+    (:source-memory source) (:target-memory target)
+    (:{3} (:conditions ({4} size) (negative goal))
+      (:{0} candidates) (:register (:{0} r)) {5})))))
+)", category, candidates, selected, choose ? "choose" : "load", scenario == 4 ? "greater_zero" : "equal_zero", effects);
+                const auto module = kr::ps::ext::dl::parse_module(source, domain, repository);
+                const auto program = create_module_program(repository, module, { module });
+                auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
+                const auto initial = expander.initial_state();
+                const auto steps = choose ? expander.choose_steps(initial) : expander.load_steps(initial);
+                const auto all_steps = expander.steps(initial, {});
+                const auto successful = scenario < 2;
+                if (successful)
+                {
+                    ASSERT_EQ(steps.size(), scenario == 0 ? 2 : 1);
+                    ASSERT_EQ(all_steps.size(), steps.size());
+                    for (const auto& step : steps)
+                    {
+                        EXPECT_EQ(step.status, kr::ps::ext::detail::ModuleProgramOutcome::APPLIED);
+                        const auto target = step.get_target();
+                        EXPECT_EQ(target.get_state().get_index(), initial.get_state().get_index());
+                        EXPECT_EQ(target.get_phase(), kr::ps::ext::ExecutionPhase::INTERNAL);
+                        EXPECT_EQ(target.get_call_stack().get_memory_state().get_name(), "target");
+                        EXPECT_TRUE(step.plan_suffix.empty());
+                        ASSERT_TRUE(step.rule);
+                        const auto values = target.get_call_stack().get_registers();
+                        if (role)
+                        {
+                            ASSERT_TRUE(values.get_role_values()[0]);
+                            const auto pair = values.get_role_values()[0].value();
+                            EXPECT_EQ(pair.get_second().get_name(), "rooma");
+                            if (scenario == 1)
+                            {
+                                EXPECT_EQ(pair.get_first().get_name(), "ball2");
+                            }
+                        }
+                        else
+                        {
+                            ASSERT_TRUE(values.get_concept_values()[0]);
+                            if (scenario == 1)
+                            {
+                                EXPECT_EQ(values.get_concept_values()[0].value().get_name(), "ball2");
+                            }
+                        }
+                    }
+                    const auto applied = expander.apply(initial, *steps.front().rule);
+                    ASSERT_TRUE(applied);
+                    EXPECT_EQ(applied->get_target().get_index(), steps.front().get_target().get_index());
+                }
+                else if (choose && scenario != 4)
+                {
+                    ASSERT_EQ(steps.size(), 1);
+                    ASSERT_EQ(all_steps.size(), 1);
+                    EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::FAILURE);
+                    EXPECT_EQ(all_steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::FAILURE);
+                    EXPECT_EQ(steps.front().get_target().get_phase(), kr::ps::ext::ExecutionPhase::INTERNAL);
+                    EXPECT_EQ(steps.front().get_target().get_call_stack().get_index(), initial.get_call_stack().get_index());
+                    ASSERT_TRUE(steps.front().rule);
+                }
+                else
+                {
+                    EXPECT_TRUE(steps.empty());
+                    ASSERT_EQ(all_steps.size(), 1);
+                    EXPECT_EQ(all_steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION);
+                }
+                EXPECT_FALSE(initial.get_call_stack().get_registers().get_concept_values()[0]);
+                EXPECT_FALSE(initial.get_call_stack().get_registers().get_role_values()[0]);
+                EXPECT_EQ(initial.get_call_stack().get_memory_state().get_name(), "source");
+                if (choose)
+                {
+                    EXPECT_TRUE(expander.load_steps(initial).empty());
+                    EXPECT_TRUE(expander.choose_steps_until(initial, [] { return true; }).empty());
+                }
+                else
+                {
+                    EXPECT_TRUE(expander.choose_steps(initial).empty());
+                    EXPECT_TRUE(expander.load_steps_until(initial, [] { return true; }).empty());
+                }
+            }
+}
+
 }  // namespace
 
 TEST(RunirTests, ExtDistanceFeatureEvaluationReusesTaskContextCache)
@@ -117,6 +225,12 @@ TEST(RunirTests, ExtGroundAndLiftedInitialStatesUseExpanderRepository)
 {
     expect_initial_execution_state_uses_expander_repository<tyr::GroundTag>();
     expect_initial_execution_state_uses_expander_repository<tyr::LiftedTag>();
+}
+
+TEST(RunirTests, ExtBindingEffectsFilterGroundAndLiftedLoadsAndChoices)
+{
+    expect_binding_effects_and_empty_choices<tyr::GroundTag>();
+    expect_binding_effects_and_empty_choices<tyr::LiftedTag>();
 }
 
 TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)

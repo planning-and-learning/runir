@@ -10,9 +10,10 @@ namespace runir::kr::ps::ext::dl
 /// Decides structural termination of the extended sketch module with the
 /// incomplete syntactic elimination followed by complete Sieve on projected
 /// residual memory components. The policy graphs have (feature valuation,
-/// memory state) vertices (bonet-et-al-icaps2024.pdf, Theorem 10). Load rules
-/// use the paper's Phi(r) semantics: loading register r only unconstrains
-/// features that mention r. Do and call rules are treated conservatively
+/// memory state) vertices (bonet-et-al-icaps2024.pdf, Theorem 10). Load and choose
+/// rules use explicit effects, then apply Phi(r) preservation to unconstrained
+/// features that do not mention the bound register r. This checks forward
+/// execution termination, not completeness of backtracking search. Do and call rules are treated conservatively
 /// because they may change the planning state or transfer control to another
 /// module. On failure, the result carries a canonical counterexample graph
 /// lifted onto the module's full feature axes. The incomplete preprocessing

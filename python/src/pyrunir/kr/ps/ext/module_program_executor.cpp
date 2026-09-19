@@ -187,6 +187,10 @@ void bind_execution_types(nb::module_& m, const char* prefix)
             [](Expander& self, StateView state) { return self.load_steps(std::move(state)); },
             "state"_a)
         .def(
+            "choose_steps",
+            [](Expander& self, StateView state) { return self.choose_steps(std::move(state)); },
+            "state"_a)
+        .def(
             "control_steps",
             [](Expander& self, StateView state) { return self.control_steps(std::move(state)); },
             "state"_a)

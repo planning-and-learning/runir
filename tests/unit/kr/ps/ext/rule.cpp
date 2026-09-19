@@ -34,21 +34,27 @@ concept RuleContract = kr::ps::ext::RuleKind<Kind> && std::constructible_from<yg
 template<kr::dl::CategoryTag Category>
 using Load = kr::ps::ext::LoadTag<Category>;
 
-template<typename Category>
-concept LoadRuleContract =
-    kr::dl::CategoryTag<Category> && RuleContract<Load<Category>> && requires(ygg::Data<Entity<Load<Category>>>& data, const View<Load<Category>>& view) {
+template<typename Kind>
+concept BindingRuleContract = kr::ps::ext::BindingRuleKind<Kind> && RuleContract<Kind>
+                             && requires(ygg::Data<Entity<Kind>>& data, const View<Kind>& view) {
         data.feature;
         data.reg;
+        data.effects;
         view.get_feature();
         view.get_register();
+        view.get_effects();
     };
 
 using Sketch = kr::ps::ext::SketchTag;
 using Do = kr::ps::ext::DoTag;
 using Call = kr::ps::ext::CallTag;
 
-static_assert(LoadRuleContract<kr::dl::ConceptTag>);
-static_assert(LoadRuleContract<kr::dl::RoleTag>);
+static_assert(BindingRuleContract<Load<kr::dl::ConceptTag>>);
+static_assert(BindingRuleContract<Load<kr::dl::RoleTag>>);
+static_assert(BindingRuleContract<kr::ps::ext::ChooseTag<kr::dl::ConceptTag>>);
+static_assert(BindingRuleContract<kr::ps::ext::ChooseTag<kr::dl::RoleTag>>);
+static_assert(kr::ps::ext::ChooseRuleView<View<kr::ps::ext::ChooseTag<kr::dl::ConceptTag>>>);
+static_assert(!kr::ps::ext::LoadRuleView<View<kr::ps::ext::ChooseTag<kr::dl::RoleTag>>>);
 static_assert(RuleContract<Sketch> && requires(ygg::Data<Entity<Sketch>>& data, const View<Sketch>& view) {
     data.effects;
     view.get_effects();

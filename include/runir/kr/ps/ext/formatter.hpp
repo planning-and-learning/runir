@@ -128,11 +128,9 @@ template<runir::kr::ps::ext::RuleKind Kind, typename C>
 void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Rule<Kind>>, C> view)
 {
     append_conditions(os, view.get_conditions());
-    if constexpr (std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>
-                  || std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::RoleTag>>)
+    if constexpr (runir::kr::ps::ext::BindingRuleKind<Kind>)
     {
-        using Category =
-            std::conditional_t<std::same_as<Kind, runir::kr::ps::ext::LoadTag<runir::kr::dl::ConceptTag>>, runir::kr::dl::ConceptTag, runir::kr::dl::RoleTag>;
+        using Category = typename Kind::Category;
         os << ygg::print_indent << "(:" << Category::name << ' ' << view.get_feature().get_symbol() << ")\n";
         os << ygg::print_indent << "(:register\n";
         {
@@ -140,6 +138,8 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext:
             os << ygg::print_indent << "(:" << Category::name << ' ' << view.get_register().get_name() << ")\n";
         }
         os << ygg::print_indent << ")\n";
+        if (!view.get_effects().empty())
+            append_effects(os, view.get_effects());
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::SketchTag>)
     {

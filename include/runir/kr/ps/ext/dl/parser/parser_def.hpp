@@ -79,6 +79,8 @@ effects_section_type const effects_section = ":effects";
 arguments_expression_section_type const arguments_expression_section = ":arguments";
 concept_load_rule_type const concept_load_rule = "concept_load_rule";
 role_load_rule_type const role_load_rule = "role_load_rule";
+concept_choose_rule_type const concept_choose_rule = "concept_choose_rule";
+role_choose_rule_type const role_choose_rule = "role_choose_rule";
 sketch_rule_type const sketch_rule = "sketch_rule";
 do_rule_type const do_rule = "do_rule";
 call_rule_type const call_rule = "call_rule";
@@ -158,16 +160,25 @@ const auto decreases_effect_def = keyword(runir::kr::ps::dl::Decreases::keyword)
 const auto effect_observation_def = positive_effect | negative_effect | unchanged_effect | increases_effect | decreases_effect;
 const auto effect_def = context("effect")[(lit("(") >> effect_observation) > identifier > lit(")")];
 const auto effects_section_def = context(":effects")[(lit("(") >> keyword(":effects")) > *effect > lit(")")];
+const auto optional_effects_section = effects_section | attr(std::vector<ast::Effect> {});
 
 const auto concept_load_rule_def =
-    context("concept load rule")[(keyword("(:load") >> conditions_section >> concept_feature_section_def) > concept_register_section_def > lit(")")];
+    context("concept load rule")[(keyword("(:load") >> conditions_section >> concept_feature_section_def) > concept_register_section_def
+                                > optional_effects_section > lit(")")];
 const auto role_load_rule_def =
-    context("role load rule")[(keyword("(:load") >> conditions_section >> role_feature_section_def) > role_register_section_def > lit(")")];
+    context("role load rule")[(keyword("(:load") >> conditions_section >> role_feature_section_def) > role_register_section_def
+                             > optional_effects_section > lit(")")];
+const auto concept_choose_rule_def =
+    context("concept choose rule")[(keyword("(:choose") >> conditions_section >> concept_feature_section_def) > concept_register_section_def
+                                  > optional_effects_section > lit(")")];
+const auto role_choose_rule_def =
+    context("role choose rule")[(keyword("(:choose") >> conditions_section >> role_feature_section_def) > role_register_section_def
+                               > optional_effects_section > lit(")")];
 const auto sketch_rule_def = context("sketch rule")[keyword("(:sketch") > conditions_section > effects_section > lit(")")];
 const auto do_rule_def =
     context("action rule")[keyword("(:do") > conditions_section > action_section > arguments_expression_section > effects_section > lit(")")];
 const auto call_rule_def = context("call rule")[keyword("(:call") > conditions_section > callee_section > arguments_expression_section > lit(")")];
-const auto rule_def = concept_load_rule | role_load_rule | sketch_rule | do_rule | call_rule;
+const auto rule_def = concept_load_rule | role_load_rule | sketch_rule | do_rule | call_rule | concept_choose_rule | role_choose_rule;
 const auto required_rules = x3::rule<class RequiredRules, std::vector<ast::Rule>> { "one or more rules" } = +rule;
 
 const auto rule_entry_def = context(
@@ -231,6 +242,8 @@ BOOST_SPIRIT_DEFINE(identifier,
                     arguments_expression_section,
                     concept_load_rule,
                     role_load_rule,
+                    concept_choose_rule,
+                    role_choose_rule,
                     sketch_rule,
                     do_rule,
                     call_rule,
@@ -379,6 +392,12 @@ struct ConceptLoadRuleClass : x3::annotate_on_success
 {
 };
 struct RoleLoadRuleClass : x3::annotate_on_success
+{
+};
+struct ConceptChooseRuleClass : x3::annotate_on_success
+{
+};
+struct RoleChooseRuleClass : x3::annotate_on_success
 {
 };
 struct SketchRuleClass : x3::annotate_on_success

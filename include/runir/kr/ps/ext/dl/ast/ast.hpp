@@ -74,6 +74,16 @@ struct LoadRule : x3::position_tagged
     std::vector<Condition> conditions;
     Identifier feature;
     Identifier reg;
+    std::vector<Effect> effects;
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct ChooseRule : x3::position_tagged
+{
+    std::vector<Condition> conditions;
+    Identifier feature;
+    Identifier reg;
+    std::vector<Effect> effects;
 };
 
 struct SketchRule : x3::position_tagged
@@ -97,7 +107,13 @@ struct CallRule : x3::position_tagged
     std::vector<SymbolExpression> arguments;
 };
 
-using Rule = PositionedVariant<LoadRule<runir::kr::dl::ConceptTag>, LoadRule<runir::kr::dl::RoleTag>, SketchRule, DoRule, CallRule>;
+using Rule = PositionedVariant<LoadRule<runir::kr::dl::ConceptTag>,
+                               LoadRule<runir::kr::dl::RoleTag>,
+                               SketchRule,
+                               DoRule,
+                               CallRule,
+                               ChooseRule<runir::kr::dl::ConceptTag>,
+                               ChooseRule<runir::kr::dl::RoleTag>>;
 
 struct RuleEntry : x3::position_tagged
 {

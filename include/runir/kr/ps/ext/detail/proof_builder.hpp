@@ -107,8 +107,6 @@ public:
         auto graph = std::make_shared<ModuleProgramProofGraph<Kind>>(std::move(m_builder));
         if (m_result.cycle.empty())
             m_result.cycle = graphs::find_cycle(*graph);
-        if (m_result.status == ModuleProgramProofStatus::SUCCESS && !m_result.cycle.empty())
-            m_result.status = ModuleProgramProofStatus::FAILURE;
         m_result.graph = std::move(graph);
         return std::move(m_result);
     }

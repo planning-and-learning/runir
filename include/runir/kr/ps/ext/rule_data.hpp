@@ -33,15 +33,18 @@ using CallArgument = ::cista::offset::variant<
 namespace ygg
 {
 
-template<runir::kr::dl::CategoryTag Category>
-struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
+template<runir::kr::ps::ext::BindingRuleKind Kind>
+struct Data<runir::kr::ps::ext::Rule<Kind>>
 {
-    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>> index;
+    using Category = typename Kind::Category;
+
+    Index<runir::kr::ps::ext::Rule<Kind>> index;
     Index<runir::kr::ps::ext::MemoryState> source;
     Index<runir::kr::ps::ext::MemoryState> target;
     IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
     Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature;
     Index<runir::kr::dl::Register<Category>> reg;
+    IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects;
 
     void clear() noexcept
     {
@@ -51,10 +54,11 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
         ygg::clear(conditions);
         ygg::clear(feature);
         ygg::clear(reg);
+        ygg::clear(effects);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, feature, reg); }
-    auto identifying_members() const noexcept { return std::tie(source, target, conditions, feature, reg); }
+    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, feature, reg, effects); }
+    auto identifying_members() const noexcept { return std::tie(source, target, conditions, feature, reg, effects); }
 };
 
 template<>

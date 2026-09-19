@@ -28,45 +28,28 @@ enum class RuleExecutionStatus
     MALFORMED_CALL
 };
 
-template<runir::kr::dl::CategoryTag Category, typename C, tyr::TaskKind Kind>
-bool has_current_source(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> rule, const EvaluationContext<Kind>& context)
+template<RuleKind RuleKindT, typename C, tyr::TaskKind Kind>
+bool has_current_source(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, const EvaluationContext<Kind>& context)
 {
     return rule.get_source().get_index() == context.get_call_stack().memory_state().get_index();
 }
 
-template<typename C, tyr::TaskKind Kind>
-bool has_current_source(ygg::View<ygg::Index<Rule<SketchTag>>, C> rule, const EvaluationContext<Kind>& context)
-{
-    return rule.get_source().get_index() == context.get_call_stack().memory_state().get_index();
-}
-
-template<typename C, tyr::TaskKind Kind>
-bool has_current_source(ygg::View<ygg::Index<Rule<DoTag>>, C> rule, const EvaluationContext<Kind>& context)
-{
-    return rule.get_source().get_index() == context.get_call_stack().memory_state().get_index();
-}
-
-template<typename C, tyr::TaskKind Kind>
-bool has_current_source(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, const EvaluationContext<Kind>& context)
-{
-    return rule.get_source().get_index() == context.get_call_stack().memory_state().get_index();
-}
-
-template<runir::kr::dl::CategoryTag Category, typename C, tyr::TaskKind Kind>
-bool load_rule_is_applicable(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> rule, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
+template<BindingRuleKind RuleKindT, typename C, tyr::TaskKind Kind>
+bool binding_rule_is_applicable(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
 {
     return has_current_source(rule, context) && conditions_are_compatible(rule, context, environment);
 }
 
-template<runir::kr::dl::CategoryTag Category, typename C, tyr::TaskKind Kind, typename Value>
-void apply_load_binding(ygg::View<ygg::Index<Rule<LoadTag<Category>>>, C> rule, const Value& value, EvaluationContext<Kind>& context)
+template<BindingRuleKind RuleKindT, typename C, tyr::TaskKind Kind, typename Value>
+void apply_binding(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, const Value& value, EvaluationContext<Kind>& context)
 {
+    using Category = typename RuleKindT::Category;
     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
         context.get_call_stack().registers().set(rule.get_register().get_identifier(), value);
     else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
         context.get_call_stack().registers().set(rule.get_register().get_identifier(), value.first, value.second);
     else
-        static_assert(ygg::dependent_false<Category>::value, "unhandled load rule category");
+        static_assert(ygg::dependent_false<Category>::value, "unhandled binding rule category");
     context.get_call_stack().set_memory_state(rule.get_target());
 }
 

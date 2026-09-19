@@ -62,6 +62,13 @@ public:
                                    context.get_call_stack().registers());
     }
 
+    TransitionDlContext make_dl_binding_context(const EvaluationContext<Kind>& source, const EvaluationContext<Kind>& target)
+    {
+        auto transition = make_dl_transition_context(source, source.get_state());
+        transition.get_target_context().registers() = target.get_call_stack().registers();
+        return transition;
+    }
+
 private:
     StateDlContext make_dl_context(const EvaluationContext<Kind>& context, tyr::planning::StateView<Kind> state)
     {

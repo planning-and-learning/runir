@@ -69,19 +69,19 @@ bool feature_references_register(ygg::View<ygg::Index<runir::kr::ps::Feature<run
 }
 
 template<runir::kr::dl::CategoryTag Category>
-void record_load_effects(ModuleView module_, runir::kr::ps::detail::RuleProfile& profile, runir::kr::dl::RegisterIdentifier<Category> reg)
+void record_binding_effects(ModuleView module_, runir::kr::ps::detail::RuleProfile& profile, runir::kr::dl::RegisterIdentifier<Category> reg)
 {
     const auto booleans = module_.get_features<runir::kr::ps::dl::BooleanFeature>();
     const auto numericals = module_.get_features<runir::kr::ps::dl::NumericalFeature>();
     for (std::size_t position = 0; position < booleans.size(); ++position)
-        if (!feature_references_register(booleans[position], reg))
+        if ((profile.boolean_unconstrained_effects & (std::uint64_t { 1 } << position)) && !feature_references_register(booleans[position], reg))
         {
             profile.boolean_unconstrained_effects &= ~(std::uint64_t { 1 } << position);
             profile.boolean_unchanged_effects |= std::uint64_t { 1 } << position;
         }
 
     for (std::size_t position = 0; position < numericals.size(); ++position)
-        if (!feature_references_register(numericals[position], reg))
+        if ((profile.numerical_unconstrained_effects & (std::uint64_t { 1 } << position)) && !feature_references_register(numericals[position], reg))
         {
             profile.numerical_unconstrained_effects &= ~(std::uint64_t { 1 } << position);
             profile.numerical_unchanged_effects |= std::uint64_t { 1 } << position;
@@ -131,9 +131,9 @@ Analysis analyze_module(ModuleView module_)
                             effect.get_variant());
                 }
                 if constexpr (requires { concrete_rule.get_register(); })
-                    record_load_effects(module_, profile, concrete_rule.get_register().get_identifier());
-                // Rules without explicit effect entries leave unmentioned
-                // features unconstrained. Call rules have no effect entries.
+                    record_binding_effects(module_, profile, concrete_rule.get_register().get_identifier());
+                // Other rules leave unmentioned features unconstrained.
+                // Call rules have no effect entries.
             },
             rule.get_variant());
         analysis.policy.rule_profiles.push_back(std::move(profile));

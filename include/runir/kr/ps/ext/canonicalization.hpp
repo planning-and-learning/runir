@@ -67,8 +67,8 @@ inline bool is_canonical(const ygg::Data<runir::kr::ps::ConcreteEffectVariant<ru
 template<RuleKind Kind>
 bool is_canonical(const ygg::Data<Rule<Kind>>& data) noexcept
 {
-    if constexpr (std::same_as<Kind, LoadTag<runir::kr::dl::ConceptTag>> || std::same_as<Kind, LoadTag<runir::kr::dl::RoleTag>>)
-        return ygg::is_canonical(data.conditions);
+    if constexpr (BindingRuleKind<Kind>)
+        return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects);
     else if constexpr (std::same_as<Kind, SketchTag>)
         return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects);
     else if constexpr (std::same_as<Kind, DoTag>)
@@ -120,9 +120,10 @@ inline void canonicalize(ygg::Data<runir::kr::ps::ConcreteEffectVariant<runir::k
 template<RuleKind Kind>
 void canonicalize(ygg::Data<Rule<Kind>>& data)
 {
-    if constexpr (std::same_as<Kind, LoadTag<runir::kr::dl::ConceptTag>> || std::same_as<Kind, LoadTag<runir::kr::dl::RoleTag>>)
+    if constexpr (BindingRuleKind<Kind>)
     {
         ygg::canonicalize(data.conditions);
+        ygg::canonicalize(data.effects);
     }
     else if constexpr (std::same_as<Kind, SketchTag>)
     {

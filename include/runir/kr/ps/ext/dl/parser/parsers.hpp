@@ -58,6 +58,8 @@ struct EffectObservationClass;
 struct EffectClass;
 struct ConceptLoadRuleClass;
 struct RoleLoadRuleClass;
+struct ConceptChooseRuleClass;
+struct RoleChooseRuleClass;
 struct SketchRuleClass;
 struct DoRuleClass;
 struct CallRuleClass;
@@ -112,6 +114,8 @@ using effects_section_type = x3::rule<EffectsSectionClass, std::vector<ast::Effe
 using arguments_expression_section_type = x3::rule<ArgumentsExpressionSectionClass, std::vector<ast::SymbolExpression>>;
 using concept_load_rule_type = x3::rule<ConceptLoadRuleClass, ast::LoadRule<dl_::ConceptTag>>;
 using role_load_rule_type = x3::rule<RoleLoadRuleClass, ast::LoadRule<dl_::RoleTag>>;
+using concept_choose_rule_type = x3::rule<ConceptChooseRuleClass, ast::ChooseRule<dl_::ConceptTag>>;
+using role_choose_rule_type = x3::rule<RoleChooseRuleClass, ast::ChooseRule<dl_::RoleTag>>;
 using sketch_rule_type = x3::rule<SketchRuleClass, ast::SketchRule>;
 using do_rule_type = x3::rule<DoRuleClass, ast::DoRule>;
 using call_rule_type = x3::rule<CallRuleClass, ast::CallRule>;

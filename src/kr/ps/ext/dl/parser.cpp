@@ -735,6 +735,14 @@ template<runir::kr::dl::CategoryTag Category>
 struct AstCategory<ast::LoadRule<Category>>
 {
     using Type = Category;
+    using Kind = LoadTag<Category>;
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct AstCategory<ast::ChooseRule<Category>>
+{
+    using Type = Category;
+    using Kind = ChooseTag<Category>;
 };
 
 template<runir::kr::dl::CategoryTag Category>
@@ -1315,11 +1323,11 @@ void validate_do_action(tyr::formalism::planning::DomainView domain, const ast::
         diagnostics.throw_at(rule.action, runir::kr::ArityMismatchError("action " + rule.action.text, *arity, rule.arguments.size()));
 }
 
-template<runir::kr::dl::CategoryTag Category>
-auto parse_load_rule(
+template<BindingRuleKind Kind, typename RuleAst>
+auto parse_binding_rule(
     Repository& repository,
     runir::kr::ps::ext::Builder& builder,
-    const ast::LoadRule<Category>& rule,
+    const RuleAst& rule,
     ygg::Index<MemoryState> source,
     ygg::Index<MemoryState> target,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
@@ -1330,10 +1338,12 @@ auto parse_load_rule(
     const std::string& symbol,
     runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    auto data = runir::kr::ps::ext::checkout<Rule<LoadTag<Category>>>(builder);
+    using Category = typename Kind::Category;
+    auto data = runir::kr::ps::ext::checkout<Rule<Kind>>(builder);
     data->source = source;
     data->target = target;
     append_conditions(repository, builder, rule.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
+    append_effects(repository, builder, rule.effects, boolean_features, numerical_features, diagnostics, data->effects);
     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
         data->feature = require_feature(concept_features, rule.feature, diagnostics);
@@ -1369,8 +1379,8 @@ auto parse_rule(
             using RuleAst = std::remove_cvref_t<decltype(concrete)>;
             if constexpr (requires { typename AstCategory<RuleAst>::Type; })
             {
-                using Category = typename AstCategory<RuleAst>::Type;
-                return parse_load_rule<Category>(repository,
+                using Kind = typename AstCategory<RuleAst>::Kind;
+                return parse_binding_rule<Kind>(repository,
                                                  builder,
                                                  concrete,
                                                  source,

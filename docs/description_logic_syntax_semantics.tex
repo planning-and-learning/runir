@@ -506,7 +506,7 @@ A proof edge records the transition that changed the planning state and the
 rule that justified the transition.  For sketch proofs the edge label is
 $(e,r)$ with a state-graph edge $e$ and a sketch rule $r$.  For module-program
 proofs the corresponding label is $(e,r_v)$ where $r_v$ is a rule variant
-(load, do, sketch, or call).  Edges that only expose control failure or an open
+(load, choose, do, sketch, or call).  Edges that only expose control failure or an open
 state may omit $e$ or $r_v$ until the parser/executor rejects the corresponding
 ill-formed program earlier.
 
@@ -515,11 +515,62 @@ The intended small-step relation has the form
   (\bar{s},m,\mu,\rho_C,\rho_R) \xrightarrow{r_v,e}
   (\bar{s}',m',\mu',\rho'_C,\rho'_R).
 \]
-Load rules update registers and internal memory, do and sketch rules may change
-$\bar{s}$ through a planning transition, and call rules push the caller frame
-before entering the callee module.  A proof succeeds when the initial extended
-state reaches a goal-annotated state and the constructed proof graph has no
-open states and no directed cycle.
+Load and choose rules update registers and internal memory, do and sketch rules
+may change $\bar{s}$ through a planning transition, and call rules push the caller
+frame before entering the callee module.  Execution configurations also retain
+module arguments and the complete caller stack.
+
+Both binding rules admit an optional trailing \texttt{(:effects ...)} body,
+using the same Boolean and numerical effects as do and sketch rules.  For
+example,
+\begin{verbatim}
+(:choose (:conditions) (:concept candidates)
+  (:register (:concept selected)) (:effects (increases selected_count)))
+\end{verbatim}
+Conditions and the candidate denotation $D$ are evaluated before binding.  The
+admitted candidates are
+\[
+ D_E = \{o\in D\mid E((\bar{s},\rho),(\bar{s},\rho[r\leftarrow o]))\}.
+\]
+The planning state stays unchanged: effects compare features under the old and
+new register valuations.  Concept rules bind one object and role rules bind an
+object pair.  Omitted or empty effects admit every candidate; unmentioned
+features impose no additional constraints.
+
+With \texttt{universal=false}, ordinary successor selection stays greedy.  A
+selected choose rule instead tries its admitted bindings until a complete
+continuation reaches a goal.  With \texttt{universal=true}, every ordinary
+successor must succeed, while each enabled choose rule needs at least one
+successful binding.  Distinct choose rules remain separate obligations.  A
+choose rule whose conditions hold but whose admitted denotation is empty fails;
+it does not silently return from its module.
+
+One worklist executor handles every rule kind.  Ordinary rules keep the existing
+greedy selection or exhaustive universal traversal.  A choose point saves the
+pending work, visitation and transition trails, and current plan length.  On
+downstream failure, execution restores that snapshot, truncates the plan, and
+retries the next binding.  Choice points survive module returns.  A cycle among
+the transitions selected in an attempt rejects that attempt and permits another
+binding.  Time and state limits apply across all retries;
+exhausting a resource reports the corresponding limit rather than a failed
+binding.
+
+The proof graph records explored attempts, including rejected branches.  For
+programs containing choose, its diagnostic deadends or cycles may therefore
+remain even when execution succeeds; success requires an attempt in which every
+required continuation succeeds and the selected transitions are acyclic.  The
+\texttt{deadend\_states} list may include
+the source of a failed choose obligation.  An empty choice has no binding edge
+and needs no synthetic failure state.  Vertex labels \texttt{is\_alive} and
+\texttt{is\_unsolvable} record reached-state and classifier information; neither
+those labels nor the diagnostic lists determine the overall result.  Programs
+without choose retain the existing
+execution semantics.  Structural termination analysis treats choose like load:
+explicit effects constrain register-dependent features, and register-independent
+features still unconstrained by those effects are preserved implicitly.  This
+analyzes forward execution, not solver completeness.  Successful execution on
+training tasks is empirical evidence; it does not prove that the learned
+binding denotations and segments preserve a solution on every instance.
 
 \section*{Source}
 

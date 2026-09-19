@@ -226,3 +226,32 @@ def test_evaluation_context_retains_its_interning_dependencies(
     assert retained.call_stack.registers.concept_values[0].get_name() == "ball1"
     assert retained.call_stack.arguments.boolean_arguments[0].get() is True
     assert retained.call_stack.arguments.numerical_arguments[0].get() == 2
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+def test_choose_steps_filter_effects_against_original_registers(kind: Literal["ground", "lifted"]) -> None:
+    task_context, domain = _task_context(kind)
+    source = PROGRAM.replace("(:load", "(:choose").replace(
+        "(:register (:concept selected))",
+        "(:register (:concept selected)) (:effects (increases concept_register_size))",
+    ).replace(
+        "(:register (:role location))",
+        "(:register (:role location)) (:effects (increases role_register_size))",
+    )
+    program = parse_module_program(source, domain, task_context.domain_context.ext_repository)
+    expander_type = ext.GroundSuccessorExpander if kind == "ground" else ext.LiftedSuccessorExpander
+    expander = expander_type(task_context, program)
+    child = expander.control_steps(expander.initial_state())[0].target
+    concept_steps = expander.choose_steps(child)
+    assert len(concept_steps) == 2
+    assert child.call_stack.registers.concept_values[0] is None
+    assert {
+        step.target.call_stack.registers.concept_values[0].get_name() for step in concept_steps
+    } == {"ball1", "ball2"}
+    for step in concept_steps:
+        role_steps = expander.choose_steps(step.target)
+        assert len(role_steps) == 2
+        assert step.target.call_stack.registers.role_values[0] is None
+        for role_step in role_steps:
+            assert role_step.target.state == child.state
+            assert role_step.target.call_stack.registers.role_values[0] is not None

@@ -27,6 +27,8 @@ auto bind_rule_data(nb::module_& m, const char* name)
                    .def_rw("source", &Data::source)
                    .def_rw("target", &Data::target)
                    .def_rw("conditions", &Data::conditions);
+    if constexpr (requires { &Data::effects; })
+        cls.def_rw("effects", &Data::effects);
     ygg::add_comparison(cls);
     return cls;
 }
@@ -40,6 +42,8 @@ auto bind_rule_view(nb::module_& m, const char* name)
                    .def("get_source", &View::get_source, nb::keep_alive<0, 1>())
                    .def("get_target", &View::get_target, nb::keep_alive<0, 1>())
                    .def("get_conditions", &View::get_conditions);
+    if constexpr (requires { &View::get_effects; })
+        cls.def("get_effects", &View::get_effects);
     ygg::add_print(cls);
     ygg::add_comparison(cls);
     ygg::add_hash(cls);
@@ -52,21 +56,26 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
 {
     using ConceptLoad = Rule<LoadTag<runir::kr::dl::ConceptTag>>;
     using RoleLoad = Rule<LoadTag<runir::kr::dl::RoleTag>>;
+    using ConceptChoose = Rule<ChooseTag<runir::kr::dl::ConceptTag>>;
+    using RoleChoose = Rule<ChooseTag<runir::kr::dl::RoleTag>>;
     using Sketch = Rule<SketchTag>;
     using Do = Rule<DoTag>;
     using Call = Rule<CallTag>;
 
     ygg::bind_index<ygg::Index<ConceptLoad>>(m, "ConceptLoadRuleIndex");
     ygg::bind_index<ygg::Index<RoleLoad>>(m, "RoleLoadRuleIndex");
+    ygg::bind_index<ygg::Index<ConceptChoose>>(m, "ConceptChooseRuleIndex");
+    ygg::bind_index<ygg::Index<RoleChoose>>(m, "RoleChooseRuleIndex");
     ygg::bind_index<ygg::Index<Sketch>>(m, "SketchRuleIndex");
     ygg::bind_index<ygg::Index<Do>>(m, "DoRuleIndex");
     ygg::bind_index<ygg::Index<Call>>(m, "CallRuleIndex");
 
     bind_rule_data<ConceptLoad>(m, "ConceptLoadRuleData").def_rw("feature", &ygg::Data<ConceptLoad>::feature).def_rw("reg", &ygg::Data<ConceptLoad>::reg);
     bind_rule_data<RoleLoad>(m, "RoleLoadRuleData").def_rw("feature", &ygg::Data<RoleLoad>::feature).def_rw("reg", &ygg::Data<RoleLoad>::reg);
-    bind_rule_data<Sketch>(m, "SketchRuleData").def_rw("effects", &ygg::Data<Sketch>::effects);
+    bind_rule_data<ConceptChoose>(m, "ConceptChooseRuleData").def_rw("feature", &ygg::Data<ConceptChoose>::feature).def_rw("reg", &ygg::Data<ConceptChoose>::reg);
+    bind_rule_data<RoleChoose>(m, "RoleChooseRuleData").def_rw("feature", &ygg::Data<RoleChoose>::feature).def_rw("reg", &ygg::Data<RoleChoose>::reg);
+    bind_rule_data<Sketch>(m, "SketchRuleData");
     bind_rule_data<Do>(m, "DoRuleData")
-        .def_rw("effects", &ygg::Data<Do>::effects)
         .def_rw("action_name", &ygg::Data<Do>::action_name)
         .def_rw("arguments", &ygg::Data<Do>::arguments);
     bind_rule_data<Call>(m, "CallRuleData").def_rw("callee", &ygg::Data<Call>::callee).def_rw("arguments", &ygg::Data<Call>::arguments);
@@ -77,9 +86,14 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     bind_rule_view<RoleLoad>(m, "RoleLoadRule")
         .def("get_feature", &ygg::View<ygg::Index<RoleLoad>, Repository>::get_feature, nb::keep_alive<0, 1>())
         .def("get_register", &ygg::View<ygg::Index<RoleLoad>, Repository>::get_register, nb::keep_alive<0, 1>());
-    bind_rule_view<Sketch>(m, "SketchRule").def("get_effects", &ygg::View<ygg::Index<Sketch>, Repository>::get_effects);
+    bind_rule_view<ConceptChoose>(m, "ConceptChooseRule")
+        .def("get_feature", &ygg::View<ygg::Index<ConceptChoose>, Repository>::get_feature, nb::keep_alive<0, 1>())
+        .def("get_register", &ygg::View<ygg::Index<ConceptChoose>, Repository>::get_register, nb::keep_alive<0, 1>());
+    bind_rule_view<RoleChoose>(m, "RoleChooseRule")
+        .def("get_feature", &ygg::View<ygg::Index<RoleChoose>, Repository>::get_feature, nb::keep_alive<0, 1>())
+        .def("get_register", &ygg::View<ygg::Index<RoleChoose>, Repository>::get_register, nb::keep_alive<0, 1>());
+    bind_rule_view<Sketch>(m, "SketchRule");
     bind_rule_view<Do>(m, "DoRule")
-        .def("get_effects", &ygg::View<ygg::Index<Do>, Repository>::get_effects)
         .def("get_action_name", &ygg::View<ygg::Index<Do>, Repository>::get_action_name)
         .def("get_action_arguments", &ygg::View<ygg::Index<Do>, Repository>::get_action_arguments);
     using CallView = ygg::View<ygg::Index<Call>, Repository>;
@@ -97,6 +111,8 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
 
     repository.def("get_or_create", &runir::kr::python::get_or_create_data<ConceptLoad, Repository>, "data"_a, nb::keep_alive<0, 1>());
     repository.def("get_or_create", &runir::kr::python::get_or_create_data<RoleLoad, Repository>, "data"_a, nb::keep_alive<0, 1>());
+    repository.def("get_or_create", &runir::kr::python::get_or_create_data<ConceptChoose, Repository>, "data"_a, nb::keep_alive<0, 1>());
+    repository.def("get_or_create", &runir::kr::python::get_or_create_data<RoleChoose, Repository>, "data"_a, nb::keep_alive<0, 1>());
     repository.def("get_or_create", &runir::kr::python::get_or_create_data<Sketch, Repository>, "data"_a, nb::keep_alive<0, 1>());
     repository.def("get_or_create", &runir::kr::python::get_or_create_data<Do, Repository>, "data"_a, nb::keep_alive<0, 1>());
     repository.def("get_or_create", &runir::kr::python::get_or_create_data<Call, Repository>, "data"_a, nb::keep_alive<0, 1>());

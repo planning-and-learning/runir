@@ -152,6 +152,50 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRoleRegisterDependentFe
     ASSERT_NE(result.sieve_result->counterexample, nullptr);
 }
 
+TEST(RunirTests, ExtStructuralTerminationChoosePreservesBindingSemantics)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto planning_domain = fp::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    for (const auto& fixture : { "load_independent", "load_dependent", "role_load_dependent" })
+    {
+        auto source = read_fixture(std::string("kr/ps/ext/dl/") + fixture + ".module");
+        source.replace(source.find("(:load"), 6, "(:choose");
+        const auto module = kr::ps::ext::dl::parse_module(source, planning_domain.get_domain(), *repository);
+        for (const auto preprocessing : { false, true })
+            EXPECT_EQ(kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, preprocessing).is_terminating(),
+                      std::string(fixture) == "load_independent");
+    }
+}
+
+TEST(RunirTests, ExtStructuralTerminationBindingEffectsOverrideImplicitPreservation)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto planning_domain = fp::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    for (const auto* kind : { "load", "choose" })
+        for (const auto* expression : { "c_top", "c_register selected" })
+            for (const auto* effect : { "increases", "decreases", "unchanged" })
+            {
+                SCOPED_TRACE(::testing::Message() << kind << ": " << expression << ", " << effect);
+                const auto source = std::string("(:module (:symbol binding) (:arguments) (:registers (:concept selected)) ")
+                                    + "(:entry m0) (:memory m0) (:features (:concept (:symbol all) (:expression (c_top))) "
+                                    + "(:boolean (:symbol b) (:expression (b_nonempty (c_top)))) "
+                                    + "(:numerical (:symbol n) (:expression (n_count (" + expression + "))))) "
+                                    + "(:rules (:rule (:symbol bind) (:expression (:source-memory m0) (:target-memory m0) (:" + kind
+                                    + " (:conditions (greater_zero n)) (:concept all) (:register (:concept selected)) "
+                                    + "(:effects (positive b) (" + effect + " n)))))))";
+                const auto module = kr::ps::ext::dl::parse_module(source, planning_domain.get_domain(), *repository);
+                // Counts are bounded on each finite instance, so either unopposed
+                // strict direction terminates; unchanged admits a self-loop.
+                for (const auto preprocessing : { false, true })
+                    EXPECT_EQ(kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, preprocessing).is_terminating(),
+                              std::string(effect) != "unchanged");
+            }
+}
+
 TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
 {
     namespace fp = tyr::formalism::planning;

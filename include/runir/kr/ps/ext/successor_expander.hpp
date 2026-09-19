@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_PS_EXT_SUCCESSOR_EXPANDER_HPP_
 #define RUNIR_KR_PS_EXT_SUCCESSOR_EXPANDER_HPP_
 
-// Single source of module-program execution steps. Universal search explores all returned
-// steps; greedy execution takes the first.
+// Single source of module-program execution steps. Choose bindings are alternative
+// continuations; ordinary successors are checked universally or selected greedily.
 
 #include "runir/datasets/state_graph.hpp"
 #include "runir/kr/ps/ext/detail/execution.hpp"
@@ -95,6 +95,31 @@ public:
         collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>>(context, {}, stop, out_steps);
     }
 
+    std::vector<Step> choose_steps(ExecutionStateView<Kind> state)
+    {
+        auto result = std::vector<Step> {};
+        choose_steps(std::move(state), result);
+        return result;
+    }
+
+    void choose_steps(ExecutionStateView<Kind> state, std::vector<Step>& out_steps)
+    {
+        choose_steps_until(std::move(state), [] { return false; }, out_steps);
+    }
+
+    std::vector<Step> choose_steps_until(ExecutionStateView<Kind> state, auto&& stop)
+    {
+        auto result = std::vector<Step> {};
+        choose_steps_until(std::move(state), stop, result);
+        return result;
+    }
+
+    void choose_steps_until(ExecutionStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
+    {
+        auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
+        collect_steps<ChooseTag<runir::kr::dl::ConceptTag>, ChooseTag<runir::kr::dl::RoleTag>>(context, {}, stop, out_steps);
+    }
+
     std::vector<LabeledNode> labeled_successors(ExecutionStateView<Kind> state)
     {
         auto result = std::vector<LabeledNode> {};
@@ -172,7 +197,8 @@ public:
     void steps_until(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop, std::vector<Step>& out_steps)
     {
         auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
-        collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>, DoTag, CallTag, SketchTag>(context, successors, stop, out_steps);
+        collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>, ChooseTag<runir::kr::dl::ConceptTag>,
+                      ChooseTag<runir::kr::dl::RoleTag>, DoTag, CallTag, SketchTag>(context, successors, stop, out_steps);
         if (!stop() && out_steps.empty())
             out_steps.push_back(fallback(std::move(context)));
     }
@@ -245,21 +271,35 @@ private:
                       std::vector<Step>& result,
                       auto&& stop)
     {
-        if constexpr (LoadRuleView<R>)
+        if constexpr (BindingRuleView<R>)
         {
             auto evaluation_context = context;
-            if (!detail::load_rule_is_applicable(rule, evaluation_context, m_environment))
+            if (!detail::binding_rule_is_applicable(rule, evaluation_context, m_environment))
                 return;
 
+            const auto initial_size = result.size();
             const auto denotation = evaluate_feature_denotation(rule.get_feature(), evaluation_context, m_environment);
             for (const auto value : denotation)
             {
                 if (stop())
                     return;
                 auto target = context;
-                detail::apply_load_binding(rule, value, target);
+                detail::apply_binding(rule, value, target);
+                if (!rule.get_effects().empty())
+                {
+                    auto transition = m_environment.make_dl_binding_context(context, target);
+                    if (!is_compatible_with(rule, transition))
+                        continue;
+                }
                 result.push_back(applied(std::move(target), rule_variant, ExecutionPhase::INTERNAL));
             }
+            if constexpr (ChooseRuleView<R>)
+                if (!stop() && result.size() == initial_size)
+                {
+                    auto failure = make_step(detail::ModuleProgramOutcome::FAILURE, context, ExecutionPhase::INTERNAL);
+                    failure.rule = rule_variant;
+                    result.push_back(std::move(failure));
+                }
         }
         else if constexpr (std::same_as<R, RuleView<DoTag>>)
         {
@@ -354,7 +394,7 @@ private:
                     return detail::sketch_rule_matches_state(concrete, context, m_environment, candidate.node.get_state());
                 else if constexpr (std::same_as<R, RuleView<DoTag>>)
                     return detail::do_rule_matches(concrete, context, m_environment, candidate.label, candidate.node.get_state());
-                else if constexpr (LoadRuleView<R> || std::same_as<R, RuleView<CallTag>>)
+                else if constexpr (BindingRuleView<R> || std::same_as<R, RuleView<CallTag>>)
                     return false;
                 else
                     static_assert(ygg::dependent_false<R>::value, "unhandled rule kind in SuccessorExpander::selects");

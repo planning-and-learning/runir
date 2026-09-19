@@ -643,6 +643,75 @@ TEST(RunirTests, ExtModuleParserLowersSupportedTransitions)
         do_rules[0].get_variant()));
 }
 
+TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto planning_domain = fp::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+
+    for (const auto* keyword : { "load", "choose" })
+        for (const auto* category : { "concept", "role" })
+        {
+            const auto description = [&](const std::string& feature, const std::string& reg_category, const std::string& effects)
+            {
+                return fmt::format(R"((:module (:symbol bindings) (:arguments) (:registers (:{} r)) (:entry m0) (:memory m0 m1)
+                    (:features (:{} (:symbol F) (:expression {}))
+                               (:boolean (:symbol b) (:expression (b_nonempty (c_top))))
+                               (:numerical (:symbol n) (:expression (n_count (c_top)))))
+                    (:rules (:rule (:symbol bind) (:expression (:source-memory m0) (:target-memory m1)
+                        (:{} (:conditions (positive b)) (:{} {}) (:register (:{} r)) {}))))))",
+                                   category,
+                                   category,
+                                   std::string(category) == "concept" ? "(c_top)" : "(r_universal)",
+                                   keyword,
+                                   category,
+                                   feature,
+                                   reg_category,
+                                   effects);
+            };
+            const auto parse = [&](const std::string& text)
+            { return kr::ps::ext::dl::parse_module(text, planning_domain.get_domain(), *repository); };
+
+            for (const auto* effects : { "", "(:effects)", "(:effects (unchanged n) (positive b) (unchanged n))" })
+            {
+                SCOPED_TRACE(fmt::format("{} {} {}", keyword, category, effects));
+                const auto module = parse(description("F", category, effects));
+                const auto expected_effects = std::string(effects).find("unchanged") == std::string::npos ? 0U : 2U;
+                const auto rules = module.get_memory_transitions()[0];
+                ASSERT_EQ(rules.size(), 1U);
+                ygg::visit(
+                    [&](auto rule)
+                    {
+                        using R = decltype(rule);
+                        if constexpr (kr::ps::ext::BindingRuleView<R>)
+                        {
+                            EXPECT_EQ(kr::ps::ext::ChooseRuleView<R>, std::string(keyword) == "choose");
+                            EXPECT_EQ(rule.get_feature().get_symbol(), "F");
+                            EXPECT_EQ(rule.get_register().get_name(), "r");
+                            EXPECT_EQ(rule.get_effects().size(), expected_effects);
+                            auto data = rule.get_data();
+                            EXPECT_TRUE(kr::ps::ext::is_canonical(data));
+                            data.clear();
+                            EXPECT_TRUE(data.effects.empty());
+                        }
+                        else
+                            FAIL() << "Expected a binding rule";
+                    },
+                    rules[0].get_variant());
+                const auto formatted = fmt::format("{}", module);
+                EXPECT_EQ(formatted.find("(:effects") != std::string::npos, expected_effects != 0U);
+                EXPECT_EQ(parse(formatted).get_index(), module.get_index());
+                EXPECT_EQ(fmt::format("{}", parse(formatted)), formatted);
+            }
+
+            EXPECT_THROW(parse(description("missing", category, "")), kr::UndefinedSymbolError);
+            EXPECT_THROW(parse(description("F", category, "(:effects (unchanged missing))")), kr::UndefinedSymbolError);
+            EXPECT_THROW(parse(description("F", category, "(:effects (increases b))")), kr::UndefinedSymbolError);
+            EXPECT_THROW(parse(description("F", std::string(category) == "concept" ? "role" : "concept", "")), kr::ParseError);
+        }
+}
+
 TEST(RunirTests, ExtModuleParserLowersExtDlConceptAndRoleExpressions)
 {
     namespace fp = tyr::formalism::planning;
