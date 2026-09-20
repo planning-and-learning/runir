@@ -158,6 +158,10 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_ro("deadend_states", &Results::deadend_states)
         .def_ro("open_states", &Results::open_states)
         .def_ro("cycle", &Results::cycle)
+        .def_ro("choice_depth", &Results::choice_depth)
+        .def_ro("num_choice_points", &Results::num_choice_points)
+        .def_ro("num_binding_attempts", &Results::num_binding_attempts)
+        .def_ro("num_backtracks", &Results::num_backtracks)
         .def("is_successful", &Results::is_successful);
 
     nb::class_<Options>(m, (std::string(prefix) + "ModuleProgramSearchOptions").c_str())

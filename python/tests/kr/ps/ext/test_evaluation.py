@@ -2,6 +2,7 @@ import gc
 from typing import Literal
 
 import pytest
+from fixture_utils import FIXTURE_ROOT
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
@@ -255,3 +256,55 @@ def test_choose_steps_filter_effects_against_original_registers(kind: Literal["g
         for role_step in role_steps:
             assert role_step.target.state == child.state
             assert role_step.target.call_stack.registers.role_values[0] is not None
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+@pytest.mark.parametrize("universal", [False, True])
+def test_choose_search_statistics_are_read_only(
+    kind: Literal["ground", "lifted"], universal: bool,
+) -> None:
+    directory = FIXTURE_ROOT / "kr/ps/ext/choose"
+    parser = Parser(directory / "domain.pddl", ParserOptions())
+    task = lifted.Task(parser.parse_task(directory / "task.pddl", ParserOptions()))
+    execution = ExecutionContext(1)
+    domain = DomainContext(parser.get_domain())
+    if kind == "ground":
+        context = GroundTaskContext(
+            domain,
+            GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution),
+        )
+        options = ext.GroundModuleProgramSearchOptions()
+        find_solution = ext.find_ground_solution
+    else:
+        context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
+        options = ext.LiftedModuleProgramSearchOptions()
+        find_solution = ext.find_lifted_solution
+    program = parse_module_program(
+        """(:program (:entry search)
+          (:module (:symbol search) (:arguments) (:registers (:concept selected))
+            (:entry m0) (:memory m0 m1 m2 m3)
+            (:features
+              (:concept (:symbol candidates) (:expression (c_atomic_state "candidate")))
+              (:concept (:symbol here) (:expression (c_atomic_state "at")))
+              (:concept (:symbol goal) (:expression (c_atomic_goal "at" true)))
+              (:concept (:symbol target) (:expression (c_register selected))))
+            (:rules
+              (:rule (:symbol select) (:expression (:source-memory m0) (:target-memory m1)
+                (:choose (:conditions) (:concept candidates) (:register (:concept selected)))))
+              (:rule (:symbol move-selected) (:expression (:source-memory m1) (:target-memory m2)
+                (:do (:conditions) (:action "move") (:arguments here target) (:effects))))
+              (:rule (:symbol finish) (:expression (:source-memory m2) (:target-memory m3)
+                (:do (:conditions) (:action "move") (:arguments here goal) (:effects)))))))""",
+        parser.get_domain(),
+        context.domain_context.ext_repository,
+    )
+    options.universal = universal
+    result = find_solution(context, program, options)
+    assert result.is_successful()
+    assert result.choice_depth == 1
+    assert result.num_choice_points == 1
+    assert result.num_binding_attempts == 2
+    assert result.num_backtracks == 1
+    for name in ("choice_depth", "num_choice_points", "num_binding_attempts", "num_backtracks"):
+        with pytest.raises(AttributeError):
+            setattr(result, name, 99)

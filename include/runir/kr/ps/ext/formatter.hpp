@@ -510,13 +510,18 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofResults<Kind>>
     auto format(const auto& result, format_context& context) const
     {
         return fmt::format_to(context.out(),
-                              "ModuleProgramProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={})",
+                              "ModuleProgramProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={}, "
+                              "choice_depth={}, num_choice_points={}, num_binding_attempts={}, num_backtracks={})",
                               runir::kr::ps::ext::to_string(result.status),
                               result.graph ? result.graph->get_num_vertices() : 0,
                               result.graph ? result.graph->get_num_edges() : 0,
                               result.deadend_states.size(),
                               result.open_states.size(),
-                              result.cycle.size());
+                              result.cycle.size(),
+                              result.choice_depth ? std::to_string(*result.choice_depth) : "<none>",
+                              result.num_choice_points,
+                              result.num_binding_attempts,
+                              result.num_backtracks);
     }
 };
 

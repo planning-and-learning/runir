@@ -47,17 +47,9 @@ public:
 
     bool is_unsolvable(graphs::VertexIndex vertex) const { return m_builder.get_vertex(vertex).get_property().is_unsolvable; }
 
-    void labeled_successors(ExecutionStateView<Kind> state, std::vector<tyr::planning::LabeledNode<Kind>>& out_successors)
+    void steps(ExecutionStateView<Kind> state, auto&& stop, std::vector<ModuleProgramStep<Kind>>& out_steps)
     {
-        m_expander.labeled_successors(std::move(state), out_successors);
-    }
-
-    void steps(ExecutionStateView<Kind> state,
-               const std::vector<tyr::planning::LabeledNode<Kind>>& successors,
-               auto&& stop,
-               std::vector<ModuleProgramStep<Kind>>& out_steps)
-    {
-        m_expander.steps_until(std::move(state), successors, std::forward<decltype(stop)>(stop), out_steps);
+        m_expander.steps_until(std::move(state), std::forward<decltype(stop)>(stop), out_steps);
     }
 
     auto get_or_create_vertex(ExecutionStateView<Kind> state, bool is_initial, bool is_alive, bool is_unsolvable, ygg::uint_t max_num_vertices)

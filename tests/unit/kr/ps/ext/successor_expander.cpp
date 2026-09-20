@@ -2,6 +2,7 @@
 #include "module_fixtures.hpp"
 #include "planning_fixtures.hpp"
 
+#include <algorithm>
 #include <concepts>
 #include <filesystem>
 #include <fmt/format.h>
@@ -189,6 +190,178 @@ void expect_binding_effects_and_empty_choices()
             }
 }
 
+template<tyr::TaskKind Kind>
+void expect_lazy_do_successors()
+{
+    namespace ext = kr::ps::ext;
+    for (const auto scenario : { 0, 1, 2, 3, 4 })
+    {
+        SCOPED_TRACE(fmt::format("scenario={}", scenario));
+        const auto task_context = create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"),
+                                                            benchmark_path("classical/tests/gripper/test-1.pddl"));
+        auto& repository = *task_context->domain_context->ext_repository;
+        auto& states = *task_context->search_context->state_repository;
+        const auto domain = task_context->search_context->task->get_domain().get_domain();
+        const auto selected_ball = scenario == 2 ? "(c_bot)" : "(c_some (r_atomic_goal \"at\" true) (c_top))";
+        const auto sketch = scenario == 4 ? R"(
+    (:rule (:symbol move) (:expression
+      (:source-memory source) (:target-memory sketch-target)
+      (:sketch (:conditions) (:effects (unchanged Free)))))
+)" : "";
+        const auto source = fmt::format(R"(
+(:module (:symbol lazy) (:arguments) (:registers)
+  (:entry source) (:memory source do-target sketch-target)
+  (:features
+    (:concept (:symbol Ball) (:expression {0}))
+    (:concept (:symbol Room) (:expression (c_atomic_state "room")))
+    (:concept (:symbol Gripper) (:expression (c_atomic_state "gripper")))
+    (:numerical (:symbol Free) (:expression (n_count (c_atomic_state "free")))))
+  (:rules
+    (:rule (:symbol pick) (:expression
+      (:source-memory source) (:target-memory do-target)
+      (:do (:conditions ({1} Free)) (:action "pick")
+        (:arguments Ball Room Gripper) (:effects ({2} Free)))))
+    {3}))
+)", selected_ball, scenario == 3 ? "equal_zero" : "greater_zero", scenario == 1 ? "increases" : "decreases", sketch);
+        const auto module = ext::dl::parse_module(source, domain, repository);
+        const auto program = create_module_program(repository, module, { module });
+        auto expander = ext::SuccessorExpander<Kind>(task_context, program);
+        const auto initial = expander.initial_state();
+        ASSERT_EQ(states.num_states(), 1);
+        EXPECT_TRUE(expander.steps_until(initial, [] { return true; }).empty());
+        EXPECT_EQ(states.num_states(), 1);
+
+        const auto steps = expander.steps(initial);
+        if (scenario < 2)
+        {
+            // Only ball2's two pick bindings construct states. Other balls and
+            // the unrelated move schema must not be expanded before filtering.
+            EXPECT_EQ(states.num_states(), 3);
+        }
+        else if (scenario < 4)
+        {
+            EXPECT_EQ(states.num_states(), 1);
+        }
+        if (scenario == 0 || scenario == 4)
+        {
+            ASSERT_EQ(steps.size(), scenario == 4 ? 4 : 2);
+            auto moves = std::size_t(0);
+            for (const auto& step : steps)
+            {
+                EXPECT_EQ(step.status, ext::detail::ModuleProgramOutcome::APPLIED);
+                ASSERT_EQ(step.plan_suffix.size(), 1);
+                const auto action = step.plan_suffix.front().label;
+                if (action.get_relation().get_name() == "pick")
+                {
+                    EXPECT_EQ(action.get_objects()[0].get_name(), "ball2");
+                    EXPECT_EQ(step.get_target().get_call_stack().get_memory_state().get_name(), "do-target");
+                }
+                else
+                {
+                    EXPECT_EQ(action.get_relation().get_name(), "move");
+                    EXPECT_EQ(step.get_target().get_call_stack().get_memory_state().get_name(), "sketch-target");
+                    ++moves;
+                }
+            }
+            EXPECT_EQ(moves, scenario == 4 ? 2 : 0);
+        }
+        else
+        {
+            ASSERT_EQ(steps.size(), 1);
+            EXPECT_EQ(steps.front().status, ext::detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION);
+        }
+
+        const auto same_step = [](const auto& left, const auto& right)
+        {
+            return left.status == right.status && left.get_target().get_index() == right.get_target().get_index()
+                   && left.rule.has_value() == right.rule.has_value() && (!left.rule || left.rule->get_index() == right.rule->get_index())
+                   && left.plan_suffix.size() == right.plan_suffix.size()
+                   && (left.plan_suffix.empty() || left.plan_suffix.front().label == right.plan_suffix.front().label);
+        };
+        auto repeated = steps;
+        expander.steps(initial, repeated);
+        EXPECT_TRUE(std::ranges::equal(steps, repeated, same_step));
+        expander.control_steps(initial, repeated);
+        EXPECT_TRUE(std::ranges::equal(steps, repeated, same_step));
+        expander.steps_until(initial, [] { return true; }, repeated);
+        EXPECT_TRUE(repeated.empty());
+
+        // Obtain the full reference only after the state-allocation assertions.
+        auto successors = expander.labeled_successors(initial);
+        const auto reference = expander.steps(initial, successors);
+        EXPECT_TRUE(std::ranges::is_permutation(steps, reference, same_step));
+        if (scenario == 0)
+        {
+            std::ranges::reverse(successors);
+            auto reversed = reference;
+            std::ranges::reverse(reversed);
+            EXPECT_TRUE(std::ranges::equal(expander.steps(initial, successors), reversed, same_step));
+
+            const auto subset = tyr::planning::LabeledNodeList<Kind> { steps.front().plan_suffix.front() };
+            const auto restricted = expander.steps(initial, subset);
+            ASSERT_EQ(restricted.size(), 1);
+            EXPECT_TRUE(same_step(restricted.front(), steps.front()));
+            const auto empty = expander.steps(initial, tyr::planning::LabeledNodeList<Kind> {});
+            ASSERT_EQ(empty.size(), 1);
+            EXPECT_EQ(empty.front().status, ext::detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION);
+            ASSERT_TRUE(steps.front().rule);
+            EXPECT_FALSE(expander.apply(initial, *steps.front().rule));
+        }
+    }
+}
+
+template<tyr::TaskKind Kind>
+void expect_control_only_steps_do_not_generate_planning_successors()
+{
+    namespace ext = kr::ps::ext;
+    const auto task_context = create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"),
+                                                        benchmark_path("classical/tests/gripper/test-1.pddl"));
+    auto& repository = *task_context->domain_context->ext_repository;
+    auto& states = *task_context->search_context->state_repository;
+    const auto program = ext::dl::parse_module_program(R"(
+(:program (:entry root)
+  (:module (:symbol root) (:arguments) (:registers (:concept r))
+    (:entry source) (:memory source loaded chosen called skipped)
+    (:features
+      (:concept (:symbol Ball) (:expression (c_some (r_atomic_goal "at" true) (c_top)))))
+    (:rules
+      (:rule (:symbol load) (:expression
+        (:source-memory source) (:target-memory loaded)
+        (:load (:conditions) (:concept Ball) (:register (:concept r)))))
+      (:rule (:symbol choose) (:expression
+        (:source-memory source) (:target-memory chosen)
+        (:choose (:conditions) (:concept Ball) (:register (:concept r)))))
+      (:rule (:symbol call) (:expression
+        (:source-memory source) (:target-memory called)
+        (:call (:conditions) (:callee leaf) (:arguments))))
+      (:rule (:symbol skip) (:expression
+        (:source-memory source) (:target-memory skipped)
+        (:sketch (:conditions) (:effects))))))
+  (:module (:symbol leaf) (:arguments) (:registers)
+    (:entry source) (:memory source) (:features) (:rules)))
+)", task_context->search_context->task->get_domain().get_domain(), repository);
+    auto expander = ext::SuccessorExpander<Kind>(task_context, program);
+    const auto initial = expander.initial_state();
+    ASSERT_EQ(states.num_states(), 1);
+    const auto steps = expander.steps(initial);
+    ASSERT_EQ(steps.size(), 4);
+    EXPECT_EQ(expander.control_steps(initial).size(), 2);
+    for (const auto& step : steps)
+    {
+        EXPECT_EQ(step.status, ext::detail::ModuleProgramOutcome::APPLIED);
+        EXPECT_EQ(step.get_target().get_state().get_index(), initial.get_state().get_index());
+        EXPECT_TRUE(step.plan_suffix.empty());
+    }
+    EXPECT_EQ(states.num_states(), 1);
+    for (const auto universal : { false, true })
+    {
+        auto options = ext::ModuleProgramSearchOptions<Kind> {};
+        options.universal = universal;
+        EXPECT_EQ(ext::find_solution(task_context, program, options).status, ext::ModuleProgramProofStatus::FAILURE);
+        EXPECT_EQ(states.num_states(), 1);
+    }
+}
+
 }  // namespace
 
 TEST(RunirTests, ExtDistanceFeatureEvaluationReusesTaskContextCache)
@@ -231,6 +404,18 @@ TEST(RunirTests, ExtBindingEffectsFilterGroundAndLiftedLoadsAndChoices)
 {
     expect_binding_effects_and_empty_choices<tyr::GroundTag>();
     expect_binding_effects_and_empty_choices<tyr::LiftedTag>();
+}
+
+TEST(RunirTests, ExtDoSuccessorsFilterArgumentsBeforeConstructingGroundAndLiftedStates)
+{
+    expect_lazy_do_successors<tyr::GroundTag>();
+    expect_lazy_do_successors<tyr::LiftedTag>();
+}
+
+TEST(RunirTests, ExtControlOnlyGroundAndLiftedStepsDoNotGeneratePlanningSuccessors)
+{
+    expect_control_only_steps_do_not_generate_planning_successors<tyr::GroundTag>();
+    expect_control_only_steps_do_not_generate_planning_successors<tyr::LiftedTag>();
 }
 
 TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
@@ -310,12 +495,11 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
+    // Lazy expansion shuffles the selected execution steps once. It no longer
+    // shuffles every PDDL successor first, so the old seeded sequence changes.
     auto random = std::mt19937_64(1);
-    auto expected_successors = expander.labeled_successors(initial_state);
-    ygg::portable_shuffle(expected_successors.begin(), expected_successors.end(), random);
-    auto expected_steps = expander.steps(initial_state, expected_successors);
+    auto expected_steps = expander.steps(initial_state);
     ygg::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
-    ASSERT_NE(expected_steps.front().get_target().get_index(), steps.front().get_target().get_index());
 
     auto shuffled_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     shuffled_options.random_seed = 1;
@@ -689,12 +873,11 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
+    // Lazy expansion shuffles the selected execution steps once. It no longer
+    // shuffles every PDDL successor first, so the old seeded sequence changes.
     auto random = std::mt19937_64(1);
-    auto expected_successors = expander.labeled_successors(initial_state);
-    ygg::portable_shuffle(expected_successors.begin(), expected_successors.end(), random);
-    auto expected_steps = expander.steps(initial_state, expected_successors);
+    auto expected_steps = expander.steps(initial_state);
     ygg::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
-    ASSERT_NE(expected_steps.front().get_target().get_index(), steps.front().get_target().get_index());
 
     auto shuffled_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
     shuffled_options.random_seed = 1;

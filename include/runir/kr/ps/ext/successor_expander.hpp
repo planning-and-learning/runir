@@ -92,7 +92,7 @@ public:
     void load_steps_until(ExecutionStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
     {
         auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
-        collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>>(context, {}, stop, out_steps);
+        collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>>(context, generated_successors(), stop, out_steps);
     }
 
     std::vector<Step> choose_steps(ExecutionStateView<Kind> state)
@@ -117,7 +117,7 @@ public:
     void choose_steps_until(ExecutionStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
     {
         auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
-        collect_steps<ChooseTag<runir::kr::dl::ConceptTag>, ChooseTag<runir::kr::dl::RoleTag>>(context, {}, stop, out_steps);
+        collect_steps<ChooseTag<runir::kr::dl::ConceptTag>, ChooseTag<runir::kr::dl::RoleTag>>(context, generated_successors(), stop, out_steps);
     }
 
     std::vector<LabeledNode> labeled_successors(ExecutionStateView<Kind> state)
@@ -157,7 +157,7 @@ public:
     void control_steps_until(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop, std::vector<Step>& out_steps)
     {
         auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
-        collect_steps<DoTag, CallTag, SketchTag>(context, successors, stop, out_steps);
+        collect_steps<DoTag, CallTag, SketchTag>(context, supplied_successors(successors), stop, out_steps);
         if (!stop() && out_steps.empty())
             out_steps.push_back(fallback(std::move(context)));
     }
@@ -171,8 +171,38 @@ public:
 
     void control_steps(ExecutionStateView<Kind> state, std::vector<Step>& out_steps)
     {
-        auto successors = labeled_successors(state);
-        control_steps(std::move(state), successors, out_steps);
+        auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
+        collect_steps<DoTag, CallTag, SketchTag>(context, generated_successors(), [] { return false; }, out_steps);
+        if (out_steps.empty())
+            out_steps.push_back(fallback(std::move(context)));
+    }
+
+    std::vector<Step> steps(ExecutionStateView<Kind> state)
+    {
+        auto result = std::vector<Step> {};
+        steps(std::move(state), result);
+        return result;
+    }
+
+    void steps(ExecutionStateView<Kind> state, std::vector<Step>& out_steps)
+    {
+        steps_until(std::move(state), [] { return false; }, out_steps);
+    }
+
+    std::vector<Step> steps_until(ExecutionStateView<Kind> state, auto&& stop)
+    {
+        auto result = std::vector<Step> {};
+        steps_until(std::move(state), stop, result);
+        return result;
+    }
+
+    void steps_until(ExecutionStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
+    {
+        auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
+        collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>, ChooseTag<runir::kr::dl::ConceptTag>,
+                      ChooseTag<runir::kr::dl::RoleTag>, DoTag, CallTag, SketchTag>(context, generated_successors(), stop, out_steps);
+        if (!stop() && out_steps.empty())
+            out_steps.push_back(fallback(std::move(context)));
     }
 
     std::vector<Step> steps(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors)
@@ -198,7 +228,7 @@ public:
     {
         auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
         collect_steps<LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>, ChooseTag<runir::kr::dl::ConceptTag>,
-                      ChooseTag<runir::kr::dl::RoleTag>, DoTag, CallTag, SketchTag>(context, successors, stop, out_steps);
+                      ChooseTag<runir::kr::dl::RoleTag>, DoTag, CallTag, SketchTag>(context, supplied_successors(successors), stop, out_steps);
         if (!stop() && out_steps.empty())
             out_steps.push_back(fallback(std::move(context)));
     }
@@ -223,6 +253,72 @@ public:
     }
 
 private:
+    static auto supplied_successors(const std::vector<LabeledNode>& successors)
+    {
+        return [&successors](auto&& emit, auto&& stop, auto&&...)
+        {
+            for (const auto& successor : successors)
+            {
+                if (stop())
+                    return;
+                emit(successor);
+            }
+        };
+    }
+
+    auto generated_successors()
+    {
+        m_all_successors_ready = false;
+        return [this](auto&& emit, auto&& stop, auto rule, auto&&... arguments)
+        { for_each_successor(rule, std::forward<decltype(arguments)>(arguments)..., emit, stop); };
+    }
+
+    void for_each_successor(RuleView<DoTag> rule, const EvaluationContext<Kind>& context, const auto& denotations, auto&& emit, auto&& stop)
+    {
+        if (stop() || std::ranges::any_of(denotations, [](const auto& denotation) { return denotation.get().count() == 0; }))
+            return;
+        if (m_all_successors_ready)
+        {
+            supplied_successors(m_all_successors)(emit, stop);
+            return;
+        }
+
+        auto& search_context = *m_task_context->search_context;
+        auto& generator = *search_context.successor_generator;
+        for (const auto action : search_context.task->get_task().get_domain().get_actions())
+        {
+            if (action.get_name().str() != rule.get_action_name())
+                continue;
+            const auto node = generator.get_node(*search_context.state_repository, context.get_state().get_index());
+            generator.get_applicable_action_bindings(node, action, m_action_bindings);
+            for (const auto binding : m_action_bindings)
+            {
+                if (stop())
+                    return;
+                if (!detail::action_matches_do_arguments(rule, binding, denotations))
+                    continue;
+                emit(LabeledNode { binding,
+                                   generator.get_successor_node(node, binding, *search_context.state_repository, *search_context.axiom_evaluator) });
+            }
+            return;
+        }
+    }
+
+    void for_each_successor(RuleView<SketchTag>, const EvaluationContext<Kind>& context, auto&& emit, auto&& stop)
+    {
+        if (stop())
+            return;
+        if (!m_all_successors_ready)
+        {
+            auto& search_context = *m_task_context->search_context;
+            auto& generator = *search_context.successor_generator;
+            const auto node = generator.get_node(*search_context.state_repository, context.get_state().get_index());
+            generator.get_labeled_successor_nodes(node, *search_context.state_repository, *search_context.axiom_evaluator, m_all_successors);
+            m_all_successors_ready = true;
+        }
+        supplied_successors(m_all_successors)(emit, stop);
+    }
+
     std::optional<RuleVariantView> matching_rule_for_candidate(EvaluationContext<Kind>& context, const LabeledNode& candidate)
     {
         for (const auto& transition : context.get_call_stack().module().get_memory_transitions())
@@ -237,12 +333,12 @@ private:
         const auto successors = candidate ? std::vector<LabeledNode> { *candidate } : std::vector<LabeledNode> {};
         auto steps = std::vector<Step> {};
         const auto stop = [] { return false; };
-        ygg::visit([&](auto concrete) { append_steps(concrete, rule, context, successors, steps, stop); }, rule.get_variant());
+        ygg::visit([&](auto concrete) { append_steps(concrete, rule, context, supplied_successors(successors), steps, stop); }, rule.get_variant());
         return steps.empty() ? std::nullopt : std::optional(std::move(steps.front()));
     }
 
     template<typename... Kinds>
-    void collect_steps(const EvaluationContext<Kind>& context, const std::vector<LabeledNode>& successors, auto&& stop, std::vector<Step>& out_steps)
+    void collect_steps(const EvaluationContext<Kind>& context, auto&& visit_successors, auto&& stop, std::vector<Step>& out_steps)
     {
         out_steps.clear();
         for (const auto& transition : context.get_call_stack().module().get_memory_transitions())
@@ -256,7 +352,7 @@ private:
                     {
                         using R = std::decay_t<decltype(rule)>;
                         if constexpr ((std::same_as<R, RuleView<Kinds>> || ...))
-                            append_steps(rule, rule_variant, context, successors, out_steps, stop);
+                            append_steps(rule, rule_variant, context, visit_successors, out_steps, stop);
                     },
                     rule_variant.get_variant());
             }
@@ -267,7 +363,7 @@ private:
     void append_steps(R rule,
                       RuleVariantView rule_variant,
                       const EvaluationContext<Kind>& context,
-                      const std::vector<LabeledNode>& successors,
+                      auto&& visit_successors,
                       std::vector<Step>& result,
                       auto&& stop)
     {
@@ -308,17 +404,17 @@ private:
                 return;
 
             const auto& denotations = detail::evaluate_do_arguments(rule, evaluation_context, m_environment);
-            for (const auto& successor : successors)
-            {
-                if (stop())
-                    return;
-                if (!detail::do_successor_matches(rule, evaluation_context, m_environment, denotations, successor.label, successor.node.get_state()))
-                    continue;
+            visit_successors(
+                [&](const LabeledNode& successor)
+                {
+                    if (!detail::do_successor_matches(rule, evaluation_context, m_environment, denotations, successor.label, successor.node.get_state()))
+                        return;
 
-                auto target = context;
-                detail::apply_do_successor(rule, successor, target);
-                result.push_back(planning_step(std::move(target), successor, rule_variant));
-            }
+                    auto target = context;
+                    detail::apply_do_successor(rule, successor, target);
+                    result.push_back(planning_step(std::move(target), successor, rule_variant));
+                },
+                stop, rule, evaluation_context, denotations);
         }
         else if constexpr (std::same_as<R, RuleView<CallTag>>)
         {
@@ -333,6 +429,9 @@ private:
         }
         else if constexpr (std::same_as<R, RuleView<SketchTag>>)
         {
+            auto evaluation_context = context;
+            if (!detail::has_current_source(rule, evaluation_context) || !conditions_are_compatible(rule, evaluation_context, m_environment))
+                return;
             if (rule.get_effects().empty())
             {
                 auto target = context;
@@ -341,14 +440,14 @@ private:
                 return;
             }
 
-            for (const auto& successor : successors)
-            {
-                if (stop())
-                    return;
-                auto target = context;
-                if (detail::execute_sketch(rule, target, m_environment, { successor }) == detail::RuleExecutionStatus::APPLIED)
-                    result.push_back(planning_step(std::move(target), successor, rule_variant));
-            }
+            visit_successors(
+                [&](const LabeledNode& successor)
+                {
+                    auto target = context;
+                    if (detail::execute_sketch(rule, target, m_environment, { successor }) == detail::RuleExecutionStatus::APPLIED)
+                        result.push_back(planning_step(std::move(target), successor, rule_variant));
+                },
+                stop, rule, evaluation_context);
         }
         else
         {
@@ -408,6 +507,9 @@ private:
     tyr::planning::StateView<Kind> m_initial_state;
     bool m_static_goal_satisfied;
     EvaluationEnvironment<Kind> m_environment;
+    std::vector<tyr::formalism::planning::ActionBindingView> m_action_bindings;
+    std::vector<LabeledNode> m_all_successors;
+    bool m_all_successors_ready = false;
 };
 
 #ifndef RUNIR_HEADER_INSTANTIATION

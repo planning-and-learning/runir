@@ -66,6 +66,17 @@ struct ModuleProgramProofResults
     runir::graphs::VertexIndexList open_states;
     runir::graphs::VertexIndexList cycle;
 
+    /// Successful execution's non-singleton Choose count; universal mode takes the maximum over successful proof paths.
+    /// Counts bindings after effect filtering, excludes abandoned attempts, and is absent unless the search succeeds.
+    std::optional<ygg::uint_t> choice_depth = std::nullopt;
+    /// Non-singleton Choose frames entered across the whole search, including abandoned and re-entered frames.
+    ygg::uint_t num_choice_points = 0;
+    /// Admitted bindings attempted, including singleton Choose bodies; empty Choose bodies contribute zero.
+    ygg::uint_t num_binding_attempts = 0;
+    /// Attempted binding continuations undone after failure, including singleton and exhausted frames.
+    /// These search-effort counters retain partial counts on failure or resource limits.
+    ygg::uint_t num_backtracks = 0;
+
     bool is_successful() const noexcept { return status == ModuleProgramProofStatus::SUCCESS; }
 };
 
