@@ -166,33 +166,11 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryJoinTag>>
     auto identifying_members() const noexcept { return std::tie(lhs, rhs); }
 };
 
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryUnionTag>>
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+    requires(std::same_as<Tag, runir::kr::dl::QueryUnionTag> || std::same_as<Tag, runir::kr::dl::QueryDifferenceTag>)
+struct Data<runir::kr::dl::Query<Family, Tag>>
 {
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryUnionTag>> index;
-    Index<runir::kr::dl::Query<Family>> lhs {};
-    Index<runir::kr::dl::Query<Family>> rhs {};
-    IndexList<runir::kr::dl::QueryColumn> columns {};
-    ygg::database::Columns schema {};
-
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(lhs);
-        ygg::clear(rhs);
-        ygg::clear(columns);
-        ygg::clear(schema);
-    }
-
-    auto cista_members() noexcept { return std::tie(index, lhs, rhs, columns, schema); }
-    auto cista_members() const noexcept { return std::tie(index, lhs, rhs, columns, schema); }
-    auto identifying_members() const noexcept { return std::tie(lhs, rhs); }
-};
-
-template<runir::kr::dl::FamilyTag Family>
-struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryDifferenceTag>>
-{
-    Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryDifferenceTag>> index;
+    Index<runir::kr::dl::Query<Family, Tag>> index;
     Index<runir::kr::dl::Query<Family>> lhs {};
     Index<runir::kr::dl::Query<Family>> rhs {};
     IndexList<runir::kr::dl::QueryColumn> columns {};

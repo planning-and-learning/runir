@@ -17,7 +17,6 @@ private:
     std::vector<ygg::uint_t> m_distance_values;
     ygg::database::RelationPool<> m_relations;
     ygg::database::Workspace<> m_database_workspace;
-    std::vector<ygg::uint_t> m_query_tuple;
 
 public:
     EvaluationWorkspace() = default;
@@ -33,7 +32,6 @@ public:
     auto& get_distance_values() noexcept { return m_distance_values; }
     auto& get_relations() noexcept { return m_relations; }
     auto& get_database_workspace() noexcept { return m_database_workspace; }
-    auto& get_query_tuple() noexcept { return m_query_tuple; }
 };
 
 }

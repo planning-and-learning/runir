@@ -21,9 +21,6 @@ namespace runir::serialization
 template<typename Context, typename T>
 using IndexView = ygg::View<ygg::Index<T>, Context>;
 
-template<kr::FamilyTag Family>
-using DlViews = ygg::MapTypeListSecondT<IndexView, kr::dl::ConstructorRepositoryFor<Family>, kr::dl::FamilyConstructorRepositoryTypes<Family>>;
-
 using DenotationViews = ygg::MapTypeListT<kr::dl::semantics::DenotationView, kr::dl::CategoryTags>;
 using BaseViews = ygg::MapTypeListSecondT<IndexView, kr::ps::base::Repository, kr::ps::base::RepositoryTypes>;
 using ExtTypes =
@@ -60,23 +57,8 @@ using StateGraphs = ygg::TypeList<datasets::StaticStateGraph<Kind>,
 
 using Graphs = ygg::ConcatTypeListsT<StateGraphs<tyr::GroundTag>, StateGraphs<tyr::LiftedTag>>;
 
-using EntityTypes = ygg::ConcatTypeListsT<DlViews<kr::BaseFamilyTag>,
-                                          DlViews<kr::ExtFamilyTag>,
-                                          DlViews<kr::UnsFamilyTag>,
-                                          DenotationViews,
-                                          BaseViews,
-                                          ExtViews,
-                                          UnsViews,
-                                          ExecutionViews<tyr::GroundTag>,
-                                          ExecutionViews<tyr::LiftedTag>,
-                                          GraphProperties>;
-
-using SerializedTypes = ygg::ConcatTypeListsT<EntityTypes, Graphs>;
-
 template<typename T>
 using HashableTypeList = std::conditional_t<ygg::Hashable<T>, ygg::TypeList<T>, ygg::TypeList<>>;
-
-using RegisteredTypes = ygg::ApplyTypeListT<ygg::ConcatTypeListsT, ygg::MapTypeListT<HashableTypeList, EntityTypes>>;
 
 }  // namespace runir::serialization
 

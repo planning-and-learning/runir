@@ -29,7 +29,7 @@ auto evaluate_query(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
         auto result = workspace.get_relations().get_or_allocate(schema);
         if constexpr (is_atomic_state_tag_v<Tag>)
         {
-            auto& tuple = workspace.get_query_tuple();
+            auto& tuple = workspace.get_database_workspace().row;
             tuple.resize(schema.size());
             detail::for_each_current_atom<typename Tag::FactKind>(context,
                                                                   [&](auto atom)
@@ -43,7 +43,7 @@ auto evaluate_query(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
         }
         else if constexpr (is_atomic_goal_tag_v<Tag>)
         {
-            auto& tuple = workspace.get_query_tuple();
+            auto& tuple = workspace.get_database_workspace().row;
             tuple.resize(schema.size());
             detail::for_each_goal_atom<typename Tag::FactKind>(context,
                                                                constructor.get_polarity(),
