@@ -22,6 +22,41 @@
 \begin{document}
 \maketitle
 
+\section{Used Symbols}
+
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.16\textwidth}
+                  >{\raggedright\arraybackslash}p{0.78\textwidth}}
+\toprule
+Symbol & Meaning \\
+\midrule
+\endhead
+\texttt{C1}, \texttt{R1}, \ldots & concrete-syntax placeholders for concept, role, Boolean, numerical, and query operands \\
+$\I=(\DeltaI,\cdot^{\I})$ & relational structure with finite, possibly empty object universe $\Delta=\DeltaI$ \\
+$s$ & current planning state, represented as the set of true atoms \\
+$\gamma$ & goal literal set, containing positive and negative goal atoms \\
+$a,b,c,d$ & object variables; in object constructors and value selection, $a,a_i$ denote individual names interpreted by $\I$ \\
+$P,G$ & unary or binary predicate symbols, depending on whether they occur as concepts or roles \\
+$p$ & nullary predicate symbol \\
+$H$ & predicate symbol of any arity $\operatorname{arity}(H)=k\geq0$, used in relational queries \\
+$Q,Q_1,Q_2$ & query expressions with finite relations as denotations, ordered named columns, and set semantics \\
+$x,y,x_i$ & unquoted column labels \\
+$\bar u,\bar v,\bar x,\bar y,\bar w$ & ordered lists of column labels; $\operatorname{cols}(Q)=\bar u$ is the schema of $Q$ \\
+$t,\bar d$ & tuples of objects from $\Delta$ \\
+$t_{\bar u}[x],t_{\bar u}[\bar v]$ & the value at label $x$ and the tuple of values at the ordered labels $\bar v$, using schema $\bar u$ \\
+$A,C,D$ & concepts, with denotations in $2^{\DeltaI}$; $A$ is atomic \\
+$R,S$ & roles, with denotations in $2^{\DeltaI\times\DeltaI}$ \\
+$B_i,N_i$ & Boolean and numerical expressions, respectively \\
+$e,e_1,e_2$ & comparison operands of the same category: Boolean or numerical \\
+$b$ & Boolean constant, $b\in\{\mathrm{true},\mathrm{false}\}$ \\
+$n,k,m$ & nonnegative integers in $\Nat=\{0,1,2,\ldots\}$, used as bounds, arities, list lengths, or numerical constants \\
+$\sem{E}$ & denotation of expression $E$ in $\I$ under the current state, goal, and applicable register context \\
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+Constructor symbols are defined in the corresponding tables.
+
 \section{Preliminaries}
 
 Let $\I$ be an interpretation with finite, possibly empty domain $\DeltaI$.
