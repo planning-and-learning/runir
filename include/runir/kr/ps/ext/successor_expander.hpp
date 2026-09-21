@@ -270,7 +270,7 @@ private:
     {
         m_all_successors_ready = false;
         return [this](auto&& emit, auto&& stop, auto rule, auto&&... arguments)
-        { for_each_successor(rule, std::forward<decltype(arguments)>(arguments)..., emit, stop); };
+        { this->for_each_successor(rule, std::forward<decltype(arguments)>(arguments)..., emit, stop); };
     }
 
     void for_each_successor(RuleView<DoTag> rule, const EvaluationContext<Kind>& context, const auto& denotations, auto&& emit, auto&& stop)
