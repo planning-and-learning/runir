@@ -1,0 +1,8 @@
+#include "pyrunir/serialization/binding_utils.hpp"
+
+namespace runir::serialization
+{
+
+void bind_kr_dl_ext_boolean(nb::module_& m) { bind_entity_types(m, DlComponentViews<kr::ExtFamilyTag, kr::dl::FamilyBooleanTypes<kr::ExtFamilyTag>> {}); }
+
+}  // namespace runir::serialization

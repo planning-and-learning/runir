@@ -1,4 +1,4 @@
-"""Serialize Runir values into shared Runir and Tyr reference tables."""
+"""Serialize Runir values with shared reference dictionaries."""
 
 from .._pyrunir.serialization import (
     register_table,

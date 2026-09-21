@@ -51,9 +51,9 @@ The native entry point is `<runir/serialization/serialization.hpp>`. In Python,
 import the shared `Dictionaries` registry from `pyyggdrasil.serialization`.
 Runir provides `register_table(dictionaries, native_type, name, prefix, fields=None, project=None)`,
 `serialize(dictionaries, value)`, and `table(dictionaries, native_type)` in
-`pyrunir.serialization`. These functions support both Runir and Tyr entities.
-Tyr's corresponding free functions support Tyr entities and can use the same
-registry. Its `tables()` method returns the collected snapshots.
+`pyrunir.serialization` for Runir entities. Use the corresponding functions in
+`pytyr.serialization` for Tyr entities, passing the same registry to both
+libraries. Its `tables()` method returns the collected snapshots.
 
 Use a native type's `Fields` enum to discover the default columns without an
 instance or registry. The result follows declaration order:
@@ -101,16 +101,18 @@ register_table(
 ```
 
 Generated overloads associate each native type with its own `Fields` enum so
-type checkers can detect selections from another type. Runir accepts Tyr's
-existing field enums when registering Tyr entities. String selections remain
+type checkers can detect selections from another type. Register Tyr entities
+and their field enums through `pytyr.serialization`. String selections remain
 available, including arbitrary column names returned by a projection.
 
 The optional `project` callable receives a native entity and returns a complete
 row dictionary with arbitrary column names and transformed values. Its output
-replaces the declared fields. Returned native Runir and Tyr entities are
-recursively serialized through the same registry. When both options are given,
-`fields` selects projected names before recursive conversion, preserving the
-callable's column order. Without `project`, the native schema is unchanged.
+replaces the declared fields. Callbacks can return native types whose owning library has installed its
+serialization bindings. Runir and Tyr values are recursively serialized through
+the same registry, including references in either direction between libraries.
+When both options are given, `fields` selects projected names before recursive
+conversion, preserving the callable's column order. Without `project`, the
+native schema is unchanged.
 For example, keep rule conditions and effects as native text without collecting
 their descendants:
 
@@ -129,7 +131,7 @@ register_table(
 Or represent a Tyr action binding with its name and references to objects:
 
 ```python
-from pyrunir.serialization import register_table
+from pytyr.serialization import register_table
 from pytyr.formalism import planning as fp
 from pyyggdrasil.serialization import Dictionaries
 

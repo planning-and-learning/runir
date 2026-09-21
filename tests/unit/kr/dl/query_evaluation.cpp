@@ -254,7 +254,9 @@ void check_cached_queries()
                              {
                                  EXPECT_EQ(decoded.columns, expected_columns);
                                  if constexpr (requires { decoded.schema; })
+                                 {
                                      EXPECT_TRUE(std::ranges::equal(decoded.schema.view(), concrete.get_schema()));
+                                 }
                                  if constexpr (requires { decoded.plan; })
                                  {
                                      EXPECT_TRUE(std::ranges::equal(decoded.plan.output_columns(), concrete.get_schema()));
@@ -268,7 +270,9 @@ void check_cached_queries()
                                      EXPECT_EQ(decoded.rhs_position, 0);
                                  }
                                  if constexpr (requires { decoded.position; })
+                                 {
                                      EXPECT_EQ(decoded.position, 1);
+                                 }
                              });
 
         // Derived columns, plans and positions neither change identity nor override child schemas.
@@ -290,28 +294,40 @@ void check_cached_queries()
         EXPECT_EQ(same.get_index(), concrete.get_index());
         EXPECT_EQ(stale.columns, expected_columns);
         if constexpr (requires { stale.schema; })
+        {
             EXPECT_TRUE(std::ranges::equal(stale.schema.view(), concrete.get_schema()));
+        }
         if constexpr (requires { stale.plan; })
+        {
             EXPECT_TRUE(std::ranges::equal(stale.plan.output_columns(), concrete.get_schema()));
+        }
         if constexpr (requires { stale.lhs_position; })
         {
             EXPECT_EQ(stale.lhs_position, 1);
             EXPECT_EQ(stale.rhs_position, 0);
         }
         if constexpr (requires { stale.position; })
+        {
             EXPECT_EQ(stale.position, 1);
+        }
         stale.clear();
         if constexpr (requires { stale.schema; })
+        {
             EXPECT_TRUE(stale.schema.empty());
+        }
         if constexpr (requires { stale.plan; })
+        {
             EXPECT_TRUE(stale.plan.output_columns().empty());
+        }
         if constexpr (requires { stale.lhs_position; })
         {
             EXPECT_EQ(stale.lhs_position, 0);
             EXPECT_EQ(stale.rhs_position, 0);
         }
         if constexpr (requires { stale.position; })
+        {
             EXPECT_EQ(stale.position, 0);
+        }
 
         query_data.variant = concrete.get_index();
         const auto wrapper = dl::get_or_create(repo, query_data).first;

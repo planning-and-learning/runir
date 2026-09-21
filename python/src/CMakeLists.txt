@@ -15,6 +15,12 @@ file(
     "pyrunir/kr/*.cpp"
 )
 
+file(
+    GLOB_RECURSE PYRUNIR_SERIALIZATION_SOURCES
+    CONFIGURE_DEPENDS
+    "pyrunir/serialization/*.cpp"
+)
+
 nanobind_add_module(
     _pyrunir
     module.cpp
@@ -25,7 +31,7 @@ nanobind_add_module(
     pyrunir/datasets/state_graph.cpp
     pyrunir/datasets/task_class.cpp
     pyrunir/graphs/module.cpp
-    pyrunir/serialization/module.cpp
+    ${PYRUNIR_SERIALIZATION_SOURCES}
     ${PYRUNIR_KR_SOURCES}
     BACKEND_MODULE nanobind_backend
 )

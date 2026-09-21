@@ -24,7 +24,7 @@
 
 \section{Preliminaries}
 
-Let $\I$ be an interpretation with non-empty domain $\DeltaI$.
+Let $\I$ be an interpretation with finite, possibly empty domain $\DeltaI$.
 Each atomic concept $A$ is interpreted as a set
 $\sem{A} \subseteq \DeltaI$, each atomic role $R$ as a binary relation
 $\sem{R} \subseteq \DeltaI \times \DeltaI$, and each individual name $a$
@@ -171,36 +171,6 @@ Nominal & \texttt{(c\_nominal a)} & $\{a\}$ \\
 \bottomrule
 \end{longtable}
 \end{compacttable}
-
-\paragraph{Polarity of atomic state vs.\ goal constructors.}
-Atomic \emph{state} concepts and roles take no polarity argument: the concrete
-syntax is \texttt{(c\_atomic\_state "p")} and \texttt{(r\_atomic\_state "p")},
-and a negated state concept/role is built compositionally with
-\texttt{c\_not}/\texttt{r\_complement}. Atomic \emph{goal} concepts and roles
-carry an explicit polarity, \texttt{(c\_atomic\_goal "p" true)} /
-\texttt{(c\_atomic\_goal "p" false)} (and likewise for \texttt{r\_atomic\_goal}),
-because the goal condition may assert a literal positively or negatively. The
-boolean atomic constructors below also carry a polarity argument and require a
-nullary (0-arity) predicate.
-
-\section{Restrictions on Role Interpretations}
-
-\paragraph{Functional roles.}
-A feature $f$ is interpreted as a functional binary relation:
-\[
-  \forall a,b,c.\,
-  (a,b)\in\sem{f} \land (a,c)\in\sem{f}
-  \Rightarrow b=c.
-\]
-Equivalently, features may be viewed as partial functions.
-
-\paragraph{Transitive roles.}
-A transitive role $R$ is interpreted as a transitive binary relation:
-\[
-  \forall a,b,c.\,
-  (a,b)\in\sem{R} \land (b,c)\in\sem{R}
-  \Rightarrow (a,c)\in\sem{R}.
-\]
 
 \section{Role Constructors}
 
@@ -409,78 +379,161 @@ Role distance & \texttt{(n\_distance C R D)} & $d_R(C,D)$ \\
 
 \section{Relational Query Expressions}
 
-Queries are intermediate finite relations with ordered, named columns and set
-semantics: duplicate tuples are removed. They are available in the base,
-extended, and unsolvability families, while the final feature categories remain
-concept, role, Boolean, and numerical. A query occurs inside a projection,
-\texttt{b\_nonempty}, or \texttt{n\_count}; it is not a standalone feature or
-a grammar-enumeration category.
+Queries are operands of features in the base, extended, and unsolvability families.
+
+Fix the state, goal, and register context, with finite universe
+$\Delta=\Delta^{\mathcal I}$. A query $Q$ has an ordered schema and denotation
+\[
+  \operatorname{cols}(Q)=\bar u=(u_1,\ldots,u_k),\quad
+  k\geq0,\quad u_i\neq u_j\ (1\leq i<j\leq k),\qquad
+  \sem{Q}\subseteq\Delta^k.
+\]
+For $t=(d_1,\ldots,d_k)\in\Delta^k$ and a list
+$\bar v=(v_1,\ldots,v_m)$ of labels from $\bar u$, $m\geq0$, define
+\[
+  t_{\bar u}[u_i]=d_i\ (1\leq i\leq k),\qquad
+  t_{\bar u}[\bar v]=(t_{\bar u}[v_1],\ldots,t_{\bar u}[v_m]).
+\]
+Write $\bar x=(x_1,\ldots,x_m)$, $\bar y=(y_1,\ldots,y_k)$,
+$\bar u_i=\operatorname{cols}(Q_i)$, and
+$\bar w=\bar u_1\cdot(\bar u_2\setminus\bar u_1)$.
+Here $\cdot$ concatenates lists; list difference deletes matching labels without
+reordering. The semantics column gives the denotation of each expression;
+$\operatorname{arity}(H)=k$.
 
 \begin{compacttable}
-\begin{longtable}{>{\raggedright\arraybackslash}p{0.45\textwidth}
-                  >{\raggedright\arraybackslash}p{0.51\textwidth}}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.26\textwidth}
+                  >{\centering\arraybackslash}p{0.15\textwidth}
+                  >{\raggedright\arraybackslash}p{0.55\textwidth}}
 \toprule
-Concrete syntax & Semantics \\
+Name & Syntax & Semantics \\
 \midrule
 \endhead
-\texttt{(q\_atomic\_state "p" (x ...))} &
-Current tuples of predicate $p$, with one distinct column label per argument. \\
-\texttt{(q\_atomic\_goal "p" true (x ...))} &
-Positive goal tuples of $p$; \texttt{false} selects explicitly negative goal tuples. \\
-\texttt{(q\_concept x C)} &
-Lift $C$ into a one-column relation named $x$. \\
-\texttt{(q\_role (x y) R)} &
-Lift $R$ into a two-column relation named $x,y$. \\
-\texttt{(q\_join Q1 Q2)} &
-Natural join on all shared column labels; a Cartesian product if none are shared. \\
-\texttt{(q\_project (x ...) Q)} &
-Keep the named columns in the specified order and eliminate duplicate tuples. \\
-\texttt{(q\_rename (x ...) Q)} &
-Replace all column labels positionally, preserving arity and tuples. \\
-\texttt{(q\_select\_equal x y Q)} &
-Keep tuples whose $x$ and $y$ values are equal, preserving all columns. \\
-\texttt{(q\_select\_value x "a" Q)} &
-Keep tuples whose $x$ value is the domain constant $a$, preserving all columns. \\
-\texttt{(q\_union Q1 Q2)} &
-Set union; both operands must have identical ordered schemas. \\
-\texttt{(q\_difference Q1 Q2)} &
-Set difference; both operands must have identical ordered schemas. \\
-\texttt{(c\_project x Q)} &
-The concept containing the distinct values of column $x$. \\
-\texttt{(r\_project x y Q)} &
-The role containing the distinct ordered pairs of values from columns $x,y$. \\
-\texttt{(b\_nonempty Q)} &
-True exactly when the query has at least one tuple. \\
-\texttt{(n\_count Q)} &
-The number of distinct query tuples. \\
+Atomic state query &
+$\rho_{\bar x}(H_s)$ &
+$\{\bar d\in\Delta^k\mid H(\bar d)\in s\}$ \\
+Positive atomic goal query &
+$\rho_{\bar x}(H_g^+)$ &
+$\{\bar d\in\Delta^k\mid H(\bar d)\in\gamma\}$ \\
+Negative atomic goal query &
+$\rho_{\bar x}(H_g^-)$ &
+$\{\bar d\in\Delta^k\mid\neg H(\bar d)\in\gamma\}$ \\
+Concept lift &
+$\rho_{(x)}(C)$ &
+$\{(d)\mid d\in\sem{C}\}$ \\
+Role lift &
+$\rho_{(x,y)}(R)$ &
+$\sem{R}$ \\
+Natural join &
+$Q_1\bowtie Q_2$ &
+$\{t\in\Delta^{|\bar w|}\mid t_{\bar w}[\bar u_1]\in\sem{Q_1}\land t_{\bar w}[\bar u_2]\in\sem{Q_2}\}$ \\
+Projection &
+$\pi_{\bar x}(Q)$ &
+$\{t_{\bar u}[\bar x]\mid t\in\sem{Q}\}$ \\
+Column renaming &
+$\rho_{\bar y}(Q)$ &
+$\sem{Q}$ \\
+Equality selection &
+$\sigma_{x=y}(Q)$ &
+$\{t\in\sem{Q}\mid t_{\bar u}[x]=t_{\bar u}[y]\}$ \\
+Value selection &
+$\sigma_{x=a}(Q)$ &
+$\{t\in\sem{Q}\mid t_{\bar u}[x]=\sem{a}\}$ \\
+Union &
+$Q_1\cup Q_2$ &
+$\sem{Q_1}\cup\sem{Q_2}$ \\
+Difference &
+$Q_1\setminus Q_2$ &
+$\sem{Q_1}\setminus\sem{Q_2}$ \\
+\midrule
+Concept projection &
+$\pi^{\mathrm C}_{x}(Q)$ &
+$\{t_{\bar u}[x]\mid t\in\sem{Q}\},\quad x\in\{u_1,\ldots,u_k\}$ \\
+Role projection &
+$\pi^{\mathrm R}_{x,y}(Q)$ &
+$\{(t_{\bar u}[x],t_{\bar u}[y])\mid t\in\sem{Q}\},\quad x,y\in\{u_1,\ldots,u_k\},\ x\neq y$ \\
+Non-empty query &
+$Q\neq\emptyset$ &
+$\mathrm{true}$ iff $\sem{Q}\neq\emptyset$ \\
+Query count &
+$|Q|$ &
+$|\sem{Q}|$ \\
 \bottomrule
 \end{longtable}
 \end{compacttable}
 
-Column labels are unquoted identifiers. Referenced columns must exist;
-atomic, lifted, projected, and renamed schemas use distinct labels. Repeated
-predicate arguments are expressed using distinct labels followed by
-\texttt{q\_select\_equal}. Use \texttt{q\_rename} or \texttt{q\_project} to align
-schemas before a union or difference. Selection by value resolves domain
-constants, not problem-specific objects.
+\paragraph{Schemas and side conditions.}
+Column labels are unquoted identifiers matching
+\texttt{[A-Za-z\_][A-Za-z0-9\_-]*}; every schema has distinct labels.
+\[
+\begin{aligned}
+  \operatorname{cols}(\rho_{\bar x}(H_s))
+    &=\operatorname{cols}(\rho_{\bar x}(H_g^\pm))=\bar x,
+    &|\bar x|&=\operatorname{arity}(H),\\
+  \operatorname{cols}(\rho_{(x)}(C))&=(x),
+    &\operatorname{cols}(\rho_{(x,y)}(R))&=(x,y),\quad x\neq y,\\
+  \operatorname{cols}(Q_1\bowtie Q_2)&=\bar w,\\
+  \operatorname{cols}(\pi_{\bar x}(Q))&=\bar x,
+    &\{x_1,\ldots,x_m\}&\subseteq\{u_1,\ldots,u_k\},\\
+  \operatorname{cols}(\rho_{\bar y}(Q))&=\bar y,
+    &|\bar y|&=|\bar u|,\\
+  \operatorname{cols}(\sigma_{x=y}(Q))&=\bar u,
+    &x,y&\in\{u_1,\ldots,u_k\},\\
+  \operatorname{cols}(\sigma_{x=a}(Q))&=\bar u,
+    &x&\in\{u_1,\ldots,u_k\},\quad a\text{ a declared domain constant},\\
+  \operatorname{cols}(Q_1\cup Q_2)
+    &=\operatorname{cols}(Q_1\setminus Q_2)=\bar u_1,
+    &\bar u_1&=\bar u_2.
+\end{aligned}
+\]
+For the empty schema,
+\[
+  \Delta^0=\{()\},\qquad t_{\bar u}[()]=(),\qquad
+  \sem{\pi_{()}(Q)}=
+  \begin{cases}
+    \{()\},&\sem{Q}\neq\emptyset,\\
+    \emptyset,&\sem{Q}=\emptyset.
+  \end{cases}
+\]
 
-Nullary predicates use the empty schema \texttt{()}. A relation on this schema
-is either empty or contains the single empty tuple. Consequently,
-\texttt{(q\_project () Q)} represents existence: its count is zero or one.
-Projection removes duplicate tuples even when discarded columns distinguished
-the input rows.
+\newpage
+\section{Concrete Syntax for Relational Query Constructors}
 
-For example, this concept joins a ternary predicate with a unary concept and
-keeps the first argument:
-\begin{verbatim}
-(c_project item
-  (q_join
-    (q_atomic_state "stored" (item shelf room))
-    (q_concept room (c_atomic_state "accessible"))))
-\end{verbatim}
-Each query operation contributes one to syntactic complexity, as does its
-containing bridge; concept and role children of lifts count recursively.
-Column labels, predicate names, and constant names do not add to complexity.
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.30\textwidth}
+                  >{\raggedright\arraybackslash}p{0.46\textwidth}
+                  >{\raggedright\arraybackslash}p{0.20\textwidth}}
+\toprule
+Name & Concrete syntax & Abstract Syntax \\
+\midrule
+\endhead
+Atomic state query & \texttt{(q\_atomic\_state "H" (x1 ... xk))} & $\rho_{\bar x}(H_s)$ \\
+Positive atomic goal query & \texttt{(q\_atomic\_goal "H" true (x1 ... xk))} & $\rho_{\bar x}(H_g^+)$ \\
+Negative atomic goal query & \texttt{(q\_atomic\_goal "H" false (x1 ... xk))} & $\rho_{\bar x}(H_g^-)$ \\
+Concept lift & \texttt{(q\_concept x C)} & $\rho_{(x)}(C)$ \\
+Role lift & \texttt{(q\_role (x y) R)} & $\rho_{(x,y)}(R)$ \\
+Natural join & \texttt{(q\_join Q1 Q2)} & $Q_1\bowtie Q_2$ \\
+Projection & \texttt{(q\_project (x1 ... xm) Q)} & $\pi_{\bar x}(Q)$ \\
+Column renaming & \texttt{(q\_rename (y1 ... yk) Q)} & $\rho_{\bar y}(Q)$ \\
+Equality selection & \texttt{(q\_select\_equal x y Q)} & $\sigma_{x=y}(Q)$ \\
+Value selection & \texttt{(q\_select\_value x "a" Q)} & $\sigma_{x=a}(Q)$ \\
+Union & \texttt{(q\_union Q1 Q2)} & $Q_1\cup Q_2$ \\
+Difference & \texttt{(q\_difference Q1 Q2)} & $Q_1\setminus Q_2$ \\
+\midrule
+Concept projection & \texttt{(c\_project x Q)} & $\pi^{\mathrm C}_{x}(Q)$ \\
+Role projection & \texttt{(r\_project x y Q)} & $\pi^{\mathrm R}_{x,y}(Q)$ \\
+Non-empty query & \texttt{(b\_nonempty Q)} & $Q\neq\emptyset$ \\
+Query count & \texttt{(n\_count Q)} & $|Q|$ \\
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+For the displayed constructors, syntactic complexity is
+\[
+  \operatorname{size}(\operatorname{op}(E_1,\ldots,E_m;\alpha))
+  =1+\sum_{i=1}^{m}\operatorname{size}(E_i),
+\]
+where $E_i$ are expression operands and $\alpha$ collects non-expression arguments.
 
 \section{Unsolvability Family Constructors}
 
@@ -564,88 +617,6 @@ Numerical constant & \texttt{(n\_const k)} & $k$ \\
 \end{longtable}
 \end{compacttable}
 
-
-\section{Module Programs}
-
-A module program state is an extended state
-\[
-  x = (\bar{s}, m, \mu, \rho_C, \rho_R)
-\]
-where $\bar{s}$ is an annotated planning state, $m$ is the current module,
-$\mu$ is a typed memory state, and $\rho_C,\rho_R$ are the concept and role
-register valuations.  The implementation keeps memory as
-$\mu \in M_{\mathit{int}} \uplus M_{\mathit{ext}}$ so internal control states
-and externally visible module states are not conflated.
-
-A proof edge records the transition that changed the planning state and the
-rule that justified the transition.  For sketch proofs the edge label is
-$(e,r)$ with a state-graph edge $e$ and a sketch rule $r$.  For module-program
-proofs the corresponding label is $(e,r_v)$ where $r_v$ is a rule variant
-(load, choose, do, sketch, or call).  Edges that only expose control failure or an open
-state may omit $e$ or $r_v$ until the parser/executor rejects the corresponding
-ill-formed program earlier.
-
-The intended small-step relation has the form
-\[
-  (\bar{s},m,\mu,\rho_C,\rho_R) \xrightarrow{r_v,e}
-  (\bar{s}',m',\mu',\rho'_C,\rho'_R).
-\]
-Load and choose rules update registers and internal memory, do and sketch rules
-may change $\bar{s}$ through a planning transition, and call rules push the caller
-frame before entering the callee module.  Execution configurations also retain
-module arguments and the complete caller stack.
-
-Both binding rules admit an optional trailing \texttt{(:effects ...)} body,
-using the same Boolean and numerical effects as do and sketch rules.  For
-example,
-\begin{verbatim}
-(:choose (:conditions) (:concept candidates)
-  (:register (:concept selected)) (:effects (increases selected_count)))
-\end{verbatim}
-Conditions and the candidate denotation $D$ are evaluated before binding.  The
-admitted candidates are
-\[
- D_E = \{o\in D\mid E((\bar{s},\rho),(\bar{s},\rho[r\leftarrow o]))\}.
-\]
-The planning state stays unchanged: effects compare features under the old and
-new register valuations.  Concept rules bind one object and role rules bind an
-object pair.  Omitted or empty effects admit every candidate; unmentioned
-features impose no additional constraints.
-
-With \texttt{universal=false}, ordinary successor selection stays greedy.  A
-selected choose rule instead tries its admitted bindings until a complete
-continuation reaches a goal.  With \texttt{universal=true}, every ordinary
-successor must succeed, while each enabled choose rule needs at least one
-successful binding.  Distinct choose rules remain separate obligations.  A
-choose rule whose conditions hold but whose admitted denotation is empty fails;
-it does not silently return from its module.
-
-One worklist executor handles every rule kind.  Ordinary rules keep the existing
-greedy selection or exhaustive universal traversal.  A choose point saves the
-pending work, visitation and transition trails, and current plan length.  On
-downstream failure, execution restores that snapshot, truncates the plan, and
-retries the next binding.  Choice points survive module returns.  A cycle among
-the transitions selected in an attempt rejects that attempt and permits another
-binding.  Time and state limits apply across all retries;
-exhausting a resource reports the corresponding limit rather than a failed
-binding.
-
-The proof graph records explored attempts, including rejected branches.  For
-programs containing choose, its diagnostic deadends or cycles may therefore
-remain even when execution succeeds; success requires an attempt in which every
-required continuation succeeds and the selected transitions are acyclic.  The
-\texttt{deadend\_states} list may include
-the source of a failed choose obligation.  An empty choice has no binding edge
-and needs no synthetic failure state.  Vertex labels \texttt{is\_alive} and
-\texttt{is\_unsolvable} record reached-state and classifier information; neither
-those labels nor the diagnostic lists determine the overall result.  Programs
-without choose retain the existing
-execution semantics.  Structural termination analysis treats choose like load:
-explicit effects constrain register-dependent features, and register-independent
-features still unconstrained by those effects are preserved implicitly.  This
-analyzes forward execution, not solver completeness.  Successful execution on
-training tasks is empirical evidence; it does not prove that the learned
-binding denotations and segments preserve a solution on every instance.
 
 \section*{Source}
 

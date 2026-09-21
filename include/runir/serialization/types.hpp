@@ -12,7 +12,6 @@
 #include "runir/kr/uns/repository.hpp"
 
 #include <type_traits>
-#include <tyr/serialization/types.hpp>
 #include <yggdrasil/core/concepts.hpp>
 #include <yggdrasil/core/type_list.hpp>
 
@@ -27,11 +26,8 @@ using DlViews = ygg::MapTypeListSecondT<IndexView, kr::dl::ConstructorRepository
 
 using DenotationViews = ygg::MapTypeListT<kr::dl::semantics::DenotationView, kr::dl::CategoryTags>;
 using BaseViews = ygg::MapTypeListSecondT<IndexView, kr::ps::base::Repository, kr::ps::base::RepositoryTypes>;
-using ExtTypes = ygg::ConcatTypeListsT<kr::ps::ext::FeatureTypes,
-                                      kr::ps::ext::ConditionTypes,
-                                      kr::ps::ext::EffectTypes,
-                                      kr::ps::ext::RuleTypes,
-                                      kr::ps::ext::ProgramTypes>;
+using ExtTypes =
+    ygg::ConcatTypeListsT<kr::ps::ext::FeatureTypes, kr::ps::ext::ConditionTypes, kr::ps::ext::EffectTypes, kr::ps::ext::RuleTypes, kr::ps::ext::ProgramTypes>;
 using ExtViews = ygg::MapTypeListSecondT<IndexView, kr::ps::ext::Repository, ExtTypes>;
 using UnsViews = ygg::MapTypeListSecondT<IndexView, kr::uns::Repository, kr::uns::RepositoryTypes>;
 
@@ -48,11 +44,11 @@ using StateProperties = ygg::TypeList<datasets::StateGraphVertexLabel<Kind>,
                                       kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>;
 
 using GraphProperties = ygg::ConcatTypeListsT<StateProperties<tyr::GroundTag>,
-                                             StateProperties<tyr::LiftedTag>,
-                                             ygg::TypeList<datasets::StateGraphEdgeLabel,
-                                                           kr::ps::base::SketchProofEdgeLabel,
-                                                           kr::ps::ext::ModuleProgramProofStateTransition,
-                                                           kr::ps::ext::ModuleProgramProofEdgeLabel>>;
+                                              StateProperties<tyr::LiftedTag>,
+                                              ygg::TypeList<datasets::StateGraphEdgeLabel,
+                                                            kr::ps::base::SketchProofEdgeLabel,
+                                                            kr::ps::ext::ModuleProgramProofStateTransition,
+                                                            kr::ps::ext::ModuleProgramProofEdgeLabel>>;
 
 template<tyr::TaskKind Kind>
 using StateGraphs = ygg::TypeList<datasets::StaticStateGraph<Kind>,
@@ -65,26 +61,22 @@ using StateGraphs = ygg::TypeList<datasets::StaticStateGraph<Kind>,
 using Graphs = ygg::ConcatTypeListsT<StateGraphs<tyr::GroundTag>, StateGraphs<tyr::LiftedTag>>;
 
 using EntityTypes = ygg::ConcatTypeListsT<DlViews<kr::BaseFamilyTag>,
-                                         DlViews<kr::ExtFamilyTag>,
-                                         DlViews<kr::UnsFamilyTag>,
-                                         DenotationViews,
-                                         BaseViews,
-                                         ExtViews,
-                                         UnsViews,
-                                         ExecutionViews<tyr::GroundTag>,
-                                         ExecutionViews<tyr::LiftedTag>,
-                                         GraphProperties>;
+                                          DlViews<kr::ExtFamilyTag>,
+                                          DlViews<kr::UnsFamilyTag>,
+                                          DenotationViews,
+                                          BaseViews,
+                                          ExtViews,
+                                          UnsViews,
+                                          ExecutionViews<tyr::GroundTag>,
+                                          ExecutionViews<tyr::LiftedTag>,
+                                          GraphProperties>;
 
-using SerializedTypes = ygg::ConcatTypeListsT<EntityTypes, Graphs, tyr::serialization::SerializedTypes>;
+using SerializedTypes = ygg::ConcatTypeListsT<EntityTypes, Graphs>;
 
 template<typename T>
 using HashableTypeList = std::conditional_t<ygg::Hashable<T>, ygg::TypeList<T>, ygg::TypeList<>>;
 
-using RegisteredTypes = ygg::ConcatTypeListsT<
-    ygg::ApplyTypeListT<ygg::ConcatTypeListsT, ygg::MapTypeListT<HashableTypeList, EntityTypes>>,
-    tyr::serialization::RegisteredTypes>;
-
-using ProjectionTypes = ygg::ConcatTypeListsT<EntityTypes, Graphs, tyr::serialization::ProjectionTypes, ygg::TypeList<kr::ps::ext::ExecutionPhase>>;
+using RegisteredTypes = ygg::ApplyTypeListT<ygg::ConcatTypeListsT, ygg::MapTypeListT<HashableTypeList, EntityTypes>>;
 
 }  // namespace runir::serialization
 
