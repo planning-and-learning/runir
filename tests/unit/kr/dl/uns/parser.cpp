@@ -38,4 +38,15 @@ TEST(RunirTests, UnsFamilyGrammarParserAcceptsComparisonsAndConstants)
     EXPECT_ANY_THROW(parser::parse_boolean_ast<runir::kr::UnsFamilyTag>("(b_not (b_const true) (b_const false))"));
 }
 
+TEST(RunirTests, RelationalSyntaxIsInheritedByAllFamilies)
+{
+    namespace parser = runir::kr::dl::grammar::parser;
+    const auto expression = R"((n_count (q_select_value X "constant" (q_project (X) (q_atomic_goal "triple" true (X Y Z))))))";
+    EXPECT_NO_THROW(parser::parse_numerical_ast<runir::kr::BaseFamilyTag>(expression));
+    EXPECT_NO_THROW(parser::parse_numerical_ast<runir::kr::ExtFamilyTag>(expression));
+    EXPECT_NO_THROW(parser::parse_numerical_ast<runir::kr::UnsFamilyTag>(expression));
+    EXPECT_ANY_THROW(parser::parse_numerical_ast<runir::kr::BaseFamilyTag>("(n_count q_0)"));
+    EXPECT_ANY_THROW(parser::parse_numerical_ast<runir::kr::ExtFamilyTag>("(n_count (q_join (q_concept X (c_top))))"));
+}
+
 }  // namespace runir::tests

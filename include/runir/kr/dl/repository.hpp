@@ -5,6 +5,7 @@
 #include "runir/kr/dl/canonicalization.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/query_construction.hpp"
 #include "runir/kr/dl/register_view.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 
@@ -43,6 +44,9 @@ struct RepositoryConstructorFamily
 
     template<CategoryTag Category>
     using Constructor = FamilyConstructor<Family, Category>;
+
+    template<typename Tag>
+    using Query = runir::kr::dl::Query<Family, Tag>;
 };
 
 template<FamilyTag Family>
@@ -61,18 +65,24 @@ template<FamilyTag Family>
 using FamilyConstructorTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Constructor, CategoryTags>;
 
 template<FamilyTag Family>
+using FamilyQueryTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Query, QueryConstructorTags>;
+
+template<FamilyTag Family>
 using FamilyReferenceTypes = std::conditional_t<
     std::same_as<Family, runir::kr::ExtFamilyTag>,
     ygg::TypeList<Argument<ConceptTag>, Argument<RoleTag>, Argument<BooleanTag>, Argument<NumericalTag>, Register<ConceptTag>, Register<RoleTag>>,
     ygg::TypeList<>>;
 
 template<FamilyTag Family>
-using FamilyConstructorRepositoryTypes = ygg::ConcatTypeListsT<FamilyConceptTypes<Family>,
-                                                               FamilyRoleTypes<Family>,
-                                                               FamilyBooleanTypes<Family>,
-                                                               FamilyNumericalTypes<Family>,
-                                                               FamilyConstructorTypes<Family>,
-                                                               FamilyReferenceTypes<Family>>;
+using FamilyConstructorRepositoryTypes =
+    ygg::ConcatTypeListsT<FamilyConceptTypes<Family>,
+                          FamilyRoleTypes<Family>,
+                          FamilyBooleanTypes<Family>,
+                          FamilyNumericalTypes<Family>,
+                          FamilyConstructorTypes<Family>,
+                          FamilyReferenceTypes<Family>,
+                          FamilyQueryTypes<Family>,
+                          ygg::TypeList<Query<Family>, QueryColumn, QueryProjection<Family, ConceptTag>, QueryProjection<Family, RoleTag>>>;
 
 template<FamilyTag Family>
 using FamilyConstructorSymbolRepository = ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, FamilyConstructorRepositoryTypes<Family>>;
@@ -152,6 +162,7 @@ public:
         return std::nullopt;
     }
 
+    /// Raw symbol interning. Use the free get_or_create() for checked construction.
     template<typename T>
     std::pair<ygg::View<ygg::Index<T>, BasicConstructorRepository>, bool> get_or_create(ygg::Data<T>& data)
     {
@@ -216,6 +227,7 @@ template<FamilyTag Family, typename T>
 [[nodiscard]] auto get_or_create(BasicConstructorRepository<Family>& repository, ygg::Data<T>& data)
 {
     canonicalize(data);
+    detail::prepare(data, repository);
     return repository.get_or_create(data);
 }
 

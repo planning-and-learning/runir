@@ -54,6 +54,8 @@ consteval bool concept_data_view()
     using Data = ygg::Data<Entity>;
     using View = ygg::View<ygg::Index<Entity>, kr::dl::ConstructorRepositoryFor<Family>>;
 
+    static_assert(!requires(const View& view) { view.get_columns(); });
+    static_assert(!requires(const View& view) { view.get_plan(); });
     static_assert(std::same_as<View, kr::dl::FamilyConceptView<Family, Tag>>);
     if constexpr (std::same_as<Family, kr::BaseFamilyTag>)
         static_assert(std::same_as<View, kr::dl::BaseConceptView<Tag>>);

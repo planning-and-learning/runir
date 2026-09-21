@@ -7,6 +7,7 @@ namespace runir::kr::dl::base
 {
 
 void bind_semantics_denotation(nb::module_& m);
+void bind_semantics_query(nb::module_& m);
 void bind_semantics_concept(nb::module_& m);
 void bind_semantics_role(nb::module_& m);
 void bind_semantics_boolean(nb::module_& m);

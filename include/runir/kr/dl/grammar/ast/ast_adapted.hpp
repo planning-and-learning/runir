@@ -6,6 +6,20 @@
 
 #include <boost/fusion/include/adapt_struct.hpp>
 
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryAtomicState)(Family), predicate_name, columns)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryAtomicGoal)(Family), predicate_name, polarity, columns)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryConcept)(Family), columns, arg)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryRole)(Family), columns, arg)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryJoin)(Family), lhs, rhs)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryUnion)(Family), lhs, rhs)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryDifference)(Family), lhs, rhs)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryProject)(Family), columns, arg)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QueryRename)(Family), columns, arg)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QuerySelectEqual)(Family), lhs_column, rhs_column, arg)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::QuerySelectValue)(Family), column, object_name, arg)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::ConceptProject)(Family), columns, arg)
+BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::dl::grammar::ast::RoleProject)(Family), columns, arg)
+
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family) (Category), (runir::kr::dl::grammar::ast::NonTerminal)(Family) (Category), name)
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family) (Category), (runir::kr::dl::grammar::ast::DerivationRule)(Family) (Category), lhs, rhs)
 

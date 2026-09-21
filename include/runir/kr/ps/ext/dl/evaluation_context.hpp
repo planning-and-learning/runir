@@ -19,8 +19,7 @@ class EvaluationContext<runir::kr::ExtFamilyTag, Kind> :
 private:
     using Base = BaseEvaluationContext<EvaluationContext<runir::kr::ExtFamilyTag, Kind>, runir::kr::ExtFamilyTag, Kind>;
 
-    runir::kr::dl::semantics::EvaluationWorkspace m_workspace;
-    runir::kr::dl::semantics::EvaluationWorkspace* m_external_workspace;
+    runir::kr::dl::semantics::EvaluationWorkspace& m_workspace;
 
 public:
     using DlContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>;
@@ -33,8 +32,7 @@ public:
                       runir::kr::dl::semantics::Registers registers = {}) noexcept :
         Base(DlContext(source_state, dl_builder, dl_denotation_repository, arguments, registers),
              DlContext(std::move(target_state), dl_builder, dl_denotation_repository, arguments, std::move(registers))),
-        m_workspace(),
-        m_external_workspace(nullptr)
+        m_workspace(dl_builder.get_workspace())
     {
     }
 
@@ -55,12 +53,11 @@ public:
                        dl_denotation_repository,
                        arguments,
                        std::move(registers))),
-        m_workspace(),
-        m_external_workspace(&workspace)
+        m_workspace(workspace)
     {
     }
 
-    auto& get_workspace() noexcept { return m_external_workspace ? *m_external_workspace : m_workspace; }
+    auto& get_workspace() noexcept { return m_workspace; }
 };
 
 }  // namespace runir::kr::ps::dl

@@ -632,6 +632,90 @@ struct NotTag
     static constexpr auto keyword = "b_not";
 };
 
+// Relational expressions are intermediate queries, not a new feature category.
+struct QueryColumn;
+
+template<FamilyTag Family, typename Tag = void>
+struct Query;
+
+template<FamilyTag Family, CategoryTag Category>
+struct QueryProjection;
+
+struct ProjectTag
+{
+};
+
+struct ConceptProjectSyntaxTag
+{
+    static constexpr auto keyword = "c_project";
+};
+
+struct RoleProjectSyntaxTag
+{
+    static constexpr auto keyword = "r_project";
+};
+
+struct QueryConceptTag
+{
+    static constexpr auto keyword = "q_concept";
+};
+
+struct QueryRoleTag
+{
+    static constexpr auto keyword = "q_role";
+};
+
+struct QueryJoinTag
+{
+    static constexpr auto keyword = "q_join";
+};
+
+struct QueryProjectTag
+{
+    static constexpr auto keyword = "q_project";
+};
+
+struct QueryRenameTag
+{
+    static constexpr auto keyword = "q_rename";
+};
+
+struct QuerySelectEqualTag
+{
+    static constexpr auto keyword = "q_select_equal";
+};
+
+struct QuerySelectValueTag
+{
+    static constexpr auto keyword = "q_select_value";
+};
+
+struct QueryUnionTag
+{
+    static constexpr auto keyword = "q_union";
+};
+
+struct QueryDifferenceTag
+{
+    static constexpr auto keyword = "q_difference";
+};
+
+using QueryConstructorTags = ygg::TypeList<AtomicStateTag<tyr::formalism::StaticTag>,
+                                           AtomicStateTag<tyr::formalism::FluentTag>,
+                                           AtomicStateTag<tyr::formalism::DerivedTag>,
+                                           AtomicGoalTag<tyr::formalism::StaticTag>,
+                                           AtomicGoalTag<tyr::formalism::FluentTag>,
+                                           AtomicGoalTag<tyr::formalism::DerivedTag>,
+                                           QueryConceptTag,
+                                           QueryRoleTag,
+                                           QueryJoinTag,
+                                           QueryProjectTag,
+                                           QueryRenameTag,
+                                           QuerySelectEqualTag,
+                                           QuerySelectValueTag,
+                                           QueryUnionTag,
+                                           QueryDifferenceTag>;
+
 template<typename T, typename List>
 struct TypeListContains : std::false_type
 {

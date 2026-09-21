@@ -7,6 +7,7 @@ namespace runir::kr::dl::uns
 
 void bind_semantics_module_definitions(nb::module_& m)
 {
+    bind_semantics_query(m);
     bind_semantics_concept(m);
     bind_semantics_role(m);
     bind_semantics_boolean(m);

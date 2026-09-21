@@ -31,6 +31,28 @@
 namespace runir::kr::dl::semantics
 {
 
+template<FamilyTag Family, tyr::TaskKind Kind, typename C>
+auto evaluate_impl(ygg::View<ygg::Index<Query<Family>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace) -> ygg::UniqueObjectPoolPtr<ygg::database::Relation<>>;
+
+template<FamilyTag Family, tyr::TaskKind Kind, typename C>
+auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor,
+              EvaluationContext<Family, Kind>& context,
+              EvaluationWorkspace& workspace,
+              DenotationCaches<Family>& caches) -> ygg::UniqueObjectPoolPtr<ygg::database::Relation<>>;
+
+template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind, typename C>
+auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>;
+
+template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind, typename C>
+auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor,
+                   EvaluationContext<Family, Kind>& context,
+                   EvaluationWorkspace& workspace,
+                   DenotationCaches<Family>& caches) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>;
+
 template<CategoryTag Category, FamilyTag Family>
 auto with_cache(FamilyConstructorView<Family, Category> constructor,
                 DenotationCaches<Family>& caches,
@@ -356,15 +378,27 @@ bool evaluate_nonempty(ygg::View<ygg::Index<FamilyConstructor<Family, RoleTag>>,
 }
 
 template<FamilyTag Family, typename C, typename Evaluate>
+bool evaluate_nonempty(ygg::View<ygg::Index<Query<Family>>, C> constructor, Evaluate&& evaluate_child)
+{
+    return !std::forward<Evaluate>(evaluate_child)(constructor)->empty();
+}
+
+template<FamilyTag Family, typename C, typename Evaluate>
 auto evaluate_count(ygg::View<ygg::Index<FamilyConstructor<Family, ConceptTag>>, C> constructor, Evaluate&& evaluate_child) -> ygg::uint_t
 {
-    return static_cast<ygg::uint_t>(detail::deref(std::forward<Evaluate>(evaluate_child)(constructor)).get().count());
+    return ygg::to_uint_t(detail::deref(std::forward<Evaluate>(evaluate_child)(constructor)).get().count());
 }
 
 template<FamilyTag Family, typename C, typename Evaluate>
 auto evaluate_count(ygg::View<ygg::Index<FamilyConstructor<Family, RoleTag>>, C> constructor, Evaluate&& evaluate_child) -> ygg::uint_t
 {
-    return static_cast<ygg::uint_t>(detail::deref(std::forward<Evaluate>(evaluate_child)(constructor)).count());
+    return ygg::to_uint_t(detail::deref(std::forward<Evaluate>(evaluate_child)(constructor)).count());
+}
+
+template<FamilyTag Family, typename C, typename Evaluate>
+auto evaluate_count(ygg::View<ygg::Index<Query<Family>>, C> constructor, Evaluate&& evaluate_child) -> ygg::uint_t
+{
+    return ygg::to_uint_t(std::forward<Evaluate>(evaluate_child)(constructor)->size());
 }
 
 template<ComparisonTag Tag>
@@ -1014,8 +1048,7 @@ auto evaluate(FamilyConstructorView<Family, Category> constructor,
               EvaluationContext<Family, Kind>& context,
               DenotationCaches<Family>& caches) -> DenotationView<Category>
 {
-    auto workspace = EvaluationWorkspace {};
-    return evaluate(constructor, context, workspace, caches);
+    return evaluate(constructor, context, context.get_builder().get_workspace(), caches);
 }
 
 template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind, typename C>
@@ -1030,10 +1063,11 @@ auto evaluate(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> cons
 template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind, typename C>
 auto evaluate(ygg::View<ygg::Index<FamilyConstructor<Family, Category>>, C> constructor, EvaluationContext<Family, Kind>& context)
 {
-    auto workspace = EvaluationWorkspace {};
-    return evaluate(constructor, context, workspace);
+    return evaluate(constructor, context, context.get_builder().get_workspace());
 }
 
 }
+
+#include "runir/kr/dl/semantics/query_evaluation.hpp"
 
 #endif

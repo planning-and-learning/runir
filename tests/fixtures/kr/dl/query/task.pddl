@@ -1,0 +1,12 @@
+(define (problem relational-query-task)
+  (:domain relational-query)
+  (:init
+    (triple a b b) (triple a b c) (triple b c a) (triple b b b)
+    (fixed a b c) (fixed c b a)
+    (assignment a b b a) (assignment a c c b)
+    (assignment b b c a) (assignment b c b b)
+    (required a b c) (required b b c)
+    (marker a) (marker c)
+    (edge a b) (edge b c)
+    (ready))
+  (:goal (and (triple b c a) (not (triple a b b)))))

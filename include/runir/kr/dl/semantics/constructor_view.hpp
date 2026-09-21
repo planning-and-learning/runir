@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/constructor_index.hpp"
 #include "runir/kr/dl/constructors.hpp"
+#include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/semantics/boolean_view.hpp"
 #include "runir/kr/dl/semantics/concept_view.hpp"
 #include "runir/kr/dl/semantics/numerical_view.hpp"

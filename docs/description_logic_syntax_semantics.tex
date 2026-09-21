@@ -407,6 +407,81 @@ Role distance & \texttt{(n\_distance C R D)} & $d_R(C,D)$ \\
 \end{compacttable}
 
 
+\section{Relational Query Expressions}
+
+Queries are intermediate finite relations with ordered, named columns and set
+semantics: duplicate tuples are removed. They are available in the base,
+extended, and unsolvability families, while the final feature categories remain
+concept, role, Boolean, and numerical. A query occurs inside a projection,
+\texttt{b\_nonempty}, or \texttt{n\_count}; it is not a standalone feature or
+a grammar-enumeration category.
+
+\begin{compacttable}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.45\textwidth}
+                  >{\raggedright\arraybackslash}p{0.51\textwidth}}
+\toprule
+Concrete syntax & Semantics \\
+\midrule
+\endhead
+\texttt{(q\_atomic\_state "p" (x ...))} &
+Current tuples of predicate $p$, with one distinct column label per argument. \\
+\texttt{(q\_atomic\_goal "p" true (x ...))} &
+Positive goal tuples of $p$; \texttt{false} selects explicitly negative goal tuples. \\
+\texttt{(q\_concept x C)} &
+Lift $C$ into a one-column relation named $x$. \\
+\texttt{(q\_role (x y) R)} &
+Lift $R$ into a two-column relation named $x,y$. \\
+\texttt{(q\_join Q1 Q2)} &
+Natural join on all shared column labels; a Cartesian product if none are shared. \\
+\texttt{(q\_project (x ...) Q)} &
+Keep the named columns in the specified order and eliminate duplicate tuples. \\
+\texttt{(q\_rename (x ...) Q)} &
+Replace all column labels positionally, preserving arity and tuples. \\
+\texttt{(q\_select\_equal x y Q)} &
+Keep tuples whose $x$ and $y$ values are equal, preserving all columns. \\
+\texttt{(q\_select\_value x "a" Q)} &
+Keep tuples whose $x$ value is the domain constant $a$, preserving all columns. \\
+\texttt{(q\_union Q1 Q2)} &
+Set union; both operands must have identical ordered schemas. \\
+\texttt{(q\_difference Q1 Q2)} &
+Set difference; both operands must have identical ordered schemas. \\
+\texttt{(c\_project x Q)} &
+The concept containing the distinct values of column $x$. \\
+\texttt{(r\_project x y Q)} &
+The role containing the distinct ordered pairs of values from columns $x,y$. \\
+\texttt{(b\_nonempty Q)} &
+True exactly when the query has at least one tuple. \\
+\texttt{(n\_count Q)} &
+The number of distinct query tuples. \\
+\bottomrule
+\end{longtable}
+\end{compacttable}
+
+Column labels are unquoted identifiers. Referenced columns must exist;
+atomic, lifted, projected, and renamed schemas use distinct labels. Repeated
+predicate arguments are expressed using distinct labels followed by
+\texttt{q\_select\_equal}. Use \texttt{q\_rename} or \texttt{q\_project} to align
+schemas before a union or difference. Selection by value resolves domain
+constants, not problem-specific objects.
+
+Nullary predicates use the empty schema \texttt{()}. A relation on this schema
+is either empty or contains the single empty tuple. Consequently,
+\texttt{(q\_project () Q)} represents existence: its count is zero or one.
+Projection removes duplicate tuples even when discarded columns distinguished
+the input rows.
+
+For example, this concept joins a ternary predicate with a unary concept and
+keeps the first argument:
+\begin{verbatim}
+(c_project item
+  (q_join
+    (q_atomic_state "stored" (item shelf room))
+    (q_concept room (c_atomic_state "accessible"))))
+\end{verbatim}
+Each query operation contributes one to syntactic complexity, as does its
+containing bridge; concept and role children of lifts count recursively.
+Column labels, predicate names, and constant names do not add to complexity.
+
 \section{Unsolvability Family Constructors}
 
 The unsolvability family (\texttt{uns}) extends the base family with comparison operators and

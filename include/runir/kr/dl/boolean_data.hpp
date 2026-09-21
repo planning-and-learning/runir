@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_BOOLEAN_DATA_HPP_
 #define RUNIR_KR_DL_BOOLEAN_DATA_HPP_
 
+#include "runir/kr/dl/query_data.hpp"
 #include "runir/kr/dl/role_data.hpp"
 
 #include <cista/containers/variant.h>
@@ -31,7 +32,7 @@ struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>> :
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>>
 {
-    using ConstructorVariant = ::cista::offset::variant<Index<DlConcept<Family>>, Index<DlRole<Family>>>;
+    using ConstructorVariant = ::cista::offset::variant<Index<DlConcept<Family>>, Index<DlRole<Family>>, Index<runir::kr::dl::Query<Family>>>;
 
     Index<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>> index;
     ConstructorVariant arg;

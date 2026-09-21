@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_SYNTACTIC_COMPLEXITY_HPP_
 #define RUNIR_KR_DL_SEMANTICS_SYNTACTIC_COMPLEXITY_HPP_
 
+#include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/semantics/views.hpp"
 
 #include <concepts>
@@ -25,6 +26,12 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::FamilyBoole
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
     requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
 std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C> view);
+
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C> view);
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C> view);
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
 std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::FamilyConstructor<Family, Category>>, C> view)
@@ -105,6 +112,28 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::FamilyNumer
         return 1 + syntactic_complexity(view.get_lhs()) + syntactic_complexity(view.get_rhs());
     else
         return 1;
+}
+
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C> view)
+{
+    if constexpr (std::same_as<Tag, void>)
+        return ygg::visit([](auto child) { return syntactic_complexity(child); }, view.get_variant());
+    else if constexpr (requires { view.get_arg(); })
+        return 1 + syntactic_complexity(view.get_arg());
+    else if constexpr (requires {
+                           view.get_lhs();
+                           view.get_rhs();
+                       })
+        return 1 + syntactic_complexity(view.get_lhs()) + syntactic_complexity(view.get_rhs());
+    else
+        return 1;
+}
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C> view)
+{
+    return 1 + syntactic_complexity(view.get_arg());
 }
 
 }  // namespace runir::kr::dl::semantics

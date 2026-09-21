@@ -5,7 +5,6 @@
 #include "runir/kr/dl/grammar/ast/ast_adapted.hpp"
 #include "runir/kr/dl/grammar/parser/parsers.hpp"
 
-#include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
 #include <string>
 
 namespace runir::kr::dl::grammar::parser
@@ -35,42 +34,6 @@ auto maybe(Parser parser)
     else
         return x3::eps(false);
 }
-
-struct PredicateNameClass : ErrorHandlerBase
-{
-};
-struct ObjectNameClass : ErrorHandlerBase
-{
-};
-struct IdentifierClass : x3::annotate_on_success
-{
-};
-struct NumericReferenceClass : x3::annotate_on_success
-{
-};
-
-template<runir::kr::dl::CategoryTag Category>
-struct NonTerminalNameClass : ErrorHandlerBase
-{
-};
-
-struct PredicateNameTextClass
-{
-};
-struct ObjectNameTextClass
-{
-};
-struct IdentifierTextClass
-{
-};
-struct NumericReferenceTextClass
-{
-};
-
-template<runir::kr::dl::CategoryTag Category>
-struct NonTerminalNameTextClass
-{
-};
 
 predicate_name_type const predicate_name = "predicate name";
 object_name_type const object_name = "object name";
@@ -114,6 +77,11 @@ inline auto object_name_string_parser()
 inline auto object_names_parser()
 {
     return x3::rule<class ObjectNamesClass, std::vector<grammar_ast::Identifier>> { "object names" } = +object_name_string_parser();
+}
+
+inline auto query_columns_parser()
+{
+    return x3::rule<class QueryColumnsClass, std::vector<grammar_ast::Identifier>> { "query columns" } = lit("(") > *identifier > lit(")");
 }
 
 inline auto true_string_parser() { return keyword(runir::kr::dl::TrueTag::keyword) >> x3::attr(true); }
@@ -164,6 +132,7 @@ auto non_terminal_string_parser()
 
 // Try longer arity overloads first; their final operand below remains backtrackable.
 #define RUNIR_CONCEPT_CONSTRUCTORS(Family, prefix, X)                                                                                 \
+    X(Family, prefix, runir::kr::dl::ConceptTag, ProjectTag, concept_project) \
     X(Family, prefix, runir::kr::dl::ConceptTag, BotTag, concept_bot)                                                                 \
     X(Family, prefix, runir::kr::dl::ConceptTag, TopTag, concept_top)                                                                 \
     X(Family, prefix, runir::kr::dl::ConceptTag, ConceptAtomicStateSyntaxTag, concept_atomic_state)                                   \
@@ -188,6 +157,7 @@ auto non_terminal_string_parser()
     X(Family, prefix, runir::kr::dl::ConceptTag, ArgumentTag<runir::kr::dl::ConceptTag>, concept_argument)
 
 #define RUNIR_ROLE_CONSTRUCTORS(Family, prefix, X)                                                              \
+    X(Family, prefix, runir::kr::dl::RoleTag, ProjectTag, role_project) \
     X(Family, prefix, runir::kr::dl::RoleTag, UniversalTag, role_universal)                                     \
     X(Family, prefix, runir::kr::dl::RoleTag, RoleAtomicStateSyntaxTag, role_atomic_state)                      \
     X(Family, prefix, runir::kr::dl::RoleTag, RoleAtomicGoalSyntaxTag, role_atomic_goal)                        \
@@ -244,6 +214,18 @@ auto non_terminal_string_parser()
     | maybe<has_ast_constructor_tag_v<Family, Category, runir::kr::dl::Tag>>(constructor_context<runir::kr::dl::Tag>(#name)[prefix##_##name])
 
 #define RUNIR_DEFINE_FAMILY_PARSER(Family, prefix)                                                                                                             \
+    query_atomic_state_type<Family> const prefix##_query_atomic_state = "query_atomic_state";                                                                  \
+    query_atomic_goal_type<Family> const prefix##_query_atomic_goal = "query_atomic_goal";                                                                     \
+    query_concept_type<Family> const prefix##_query_concept = "query_concept";                                                                                 \
+    query_role_type<Family> const prefix##_query_role = "query_role";                                                                                          \
+    query_join_type<Family> const prefix##_query_join = "query_join";                                                                                          \
+    query_project_type<Family> const prefix##_query_project = "query_project";                                                                                 \
+    query_rename_type<Family> const prefix##_query_rename = "query_rename";                                                                                    \
+    query_select_equal_type<Family> const prefix##_query_select_equal = "query_select_equal";                                                                  \
+    query_select_value_type<Family> const prefix##_query_select_value = "query_select_value";                                                                  \
+    query_union_type<Family> const prefix##_query_union = "query_union";                                                                                       \
+    query_difference_type<Family> const prefix##_query_difference = "query_difference";                                                                        \
+    query_type<Family> const prefix##_query = "query";                                                                                                         \
     constructor_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept = "concept";                                                                    \
     constructor_root_type<Family, runir::kr::dl::ConceptTag> const prefix##_concept_root = "concept_root";                                                     \
     constructor_type<Family, runir::kr::dl::RoleTag> const prefix##_role = "role";                                                                             \
@@ -281,7 +263,7 @@ auto non_terminal_string_parser()
     const auto prefix##_role_root_def = context("role expression")[prefix##_role > eoi];                                                                       \
     const auto prefix##_role_non_terminal_def = non_terminal_string_parser<runir::kr::dl::RoleTag>();                                                          \
     const auto prefix##_role_choice_def = prefix##_role_non_terminal | prefix##_role;                                                                          \
-    const auto prefix##_constructor_or_non_terminal_variant_def = prefix##_concept_choice | prefix##_role_choice;                                              \
+    const auto prefix##_constructor_or_non_terminal_variant_def = prefix##_concept_choice | prefix##_role_choice | prefix##_query;                                              \
     const auto prefix##_boolean_def = x3::eps(false) RUNIR_BOOLEAN_CONSTRUCTORS(Family, prefix, RUNIR_CONSTRUCTOR_ALTERNATIVE);                                \
     const auto prefix##_boolean_root_def = context("boolean expression")[prefix##_boolean > eoi];                                                              \
     const auto prefix##_boolean_non_terminal_def = non_terminal_string_parser<runir::kr::dl::BooleanTag>();                                                    \
@@ -290,6 +272,21 @@ auto non_terminal_string_parser()
     const auto prefix##_numerical_root_def = context("numerical expression")[prefix##_numerical > eoi];                                                        \
     const auto prefix##_numerical_non_terminal_def = non_terminal_string_parser<runir::kr::dl::NumericalTag>();                                                \
     const auto prefix##_numerical_choice_def = prefix##_numerical_non_terminal | prefix##_numerical;                                                           \
+    const auto prefix##_query_atomic_state_def = with_constructor_parentheses(keyword("q_atomic_state") > predicate_name_string_parser() > query_columns_parser()); \
+    const auto prefix##_query_atomic_goal_def = with_constructor_parentheses(keyword("q_atomic_goal") > predicate_name_string_parser() > bool_string_parser() > query_columns_parser()); \
+    const auto prefix##_query_concept_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryConceptTag::keyword) > x3::repeat(1)[identifier] > prefix##_concept_choice); \
+    const auto prefix##_query_role_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryRoleTag::keyword) > query_columns_parser() > prefix##_role_choice); \
+    const auto prefix##_query_join_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryJoinTag::keyword) > prefix##_query > prefix##_query); \
+    const auto prefix##_query_project_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryProjectTag::keyword) > query_columns_parser() > prefix##_query); \
+    const auto prefix##_query_rename_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryRenameTag::keyword) > query_columns_parser() > prefix##_query); \
+    const auto prefix##_query_select_equal_def = with_constructor_parentheses(keyword(runir::kr::dl::QuerySelectEqualTag::keyword) > identifier > identifier > prefix##_query); \
+    const auto prefix##_query_select_value_def = with_constructor_parentheses(keyword(runir::kr::dl::QuerySelectValueTag::keyword) > identifier > object_name_string_parser() > prefix##_query); \
+    const auto prefix##_query_union_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryUnionTag::keyword) > prefix##_query > prefix##_query); \
+    const auto prefix##_query_difference_def = with_constructor_parentheses(keyword(runir::kr::dl::QueryDifferenceTag::keyword) > prefix##_query > prefix##_query); \
+    const auto prefix##_concept_project_def = with_constructor_parentheses(keyword(runir::kr::dl::ConceptProjectSyntaxTag::keyword) > x3::repeat(1)[identifier] > prefix##_query); \
+    const auto prefix##_role_project_def = with_constructor_parentheses(keyword(runir::kr::dl::RoleProjectSyntaxTag::keyword) > x3::repeat(2)[identifier] > prefix##_query); \
+    const auto prefix##_query_def = prefix##_query_atomic_state | prefix##_query_atomic_goal | prefix##_query_concept | prefix##_query_role | prefix##_query_join | prefix##_query_project | prefix##_query_rename | prefix##_query_select_equal | prefix##_query_select_value | prefix##_query_union | prefix##_query_difference; \
+    BOOST_SPIRIT_DEFINE(prefix##_query_atomic_state, prefix##_query_atomic_goal, prefix##_query_concept, prefix##_query_role, prefix##_query_join, prefix##_query_project, prefix##_query_rename, prefix##_query_select_equal, prefix##_query_select_value, prefix##_query_union, prefix##_query_difference, prefix##_query, prefix##_concept_project, prefix##_role_project) \
     const auto prefix##_concept_bot_def =                                                                                                                      \
         with_constructor_parentheses(keyword(runir::kr::dl::BotTag::keyword) >> x3::attr(grammar_ast::ConceptBot<Family> {}));                                 \
     const auto prefix##_concept_top_def =                                                                                                                      \

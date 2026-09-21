@@ -88,6 +88,7 @@ struct Data<runir::kr::dl::Role<runir::kr::ExtFamilyTag, runir::kr::dl::Argument
     using Base::Base;
 };
 
+
 }  // namespace ygg
 
 #endif

@@ -131,6 +131,27 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRegisterDependentFeatur
     ASSERT_NE(result.sieve_result->counterexample, nullptr);
 }
 
+TEST(RunirTests, ExtStructuralTerminationFindsRegistersInsideQueries)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto domain = fp::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(domain.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    for (const auto* expression : { "c_top", "c_register r0" })
+    {
+        auto source = read_fixture("kr/ps/ext/dl/load_dependent.module");
+        const auto position = source.find("(c_register r0)");
+        ASSERT_NE(position, std::string::npos);
+        source.replace(position,
+                       std::string("(c_register r0)").size(),
+                       std::string("(c_project x (q_project (x) (q_join (q_concept x (c_top)) (q_concept x (") + expression + ")))))");
+        const auto module = kr::ps::ext::dl::parse_module(source, domain.get_domain(), *repository);
+        for (const auto preprocessing : { false, true })
+            EXPECT_EQ(kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, preprocessing).is_terminating(),
+                      std::string(expression) == "c_top");
+    }
+}
+
 TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRoleRegisterDependentFeature)
 {
     namespace fp = tyr::formalism::planning;
@@ -182,11 +203,10 @@ TEST(RunirTests, ExtStructuralTerminationBindingEffectsOverrideImplicitPreservat
                 SCOPED_TRACE(::testing::Message() << kind << ": " << expression << ", " << effect);
                 const auto source = std::string("(:module (:symbol binding) (:arguments) (:registers (:concept selected)) ")
                                     + "(:entry m0) (:memory m0) (:features (:concept (:symbol all) (:expression (c_top))) "
-                                    + "(:boolean (:symbol b) (:expression (b_nonempty (c_top)))) "
-                                    + "(:numerical (:symbol n) (:expression (n_count (" + expression + "))))) "
-                                    + "(:rules (:rule (:symbol bind) (:expression (:source-memory m0) (:target-memory m0) (:" + kind
-                                    + " (:conditions (greater_zero n)) (:concept all) (:register (:concept selected)) "
-                                    + "(:effects (positive b) (" + effect + " n)))))))";
+                                    + "(:boolean (:symbol b) (:expression (b_nonempty (c_top)))) " + "(:numerical (:symbol n) (:expression (n_count ("
+                                    + expression + "))))) " + "(:rules (:rule (:symbol bind) (:expression (:source-memory m0) (:target-memory m0) (:" + kind
+                                    + " (:conditions (greater_zero n)) (:concept all) (:register (:concept selected)) " + "(:effects (positive b) (" + effect
+                                    + " n)))))))";
                 const auto module = kr::ps::ext::dl::parse_module(source, planning_domain.get_domain(), *repository);
                 // Counts are bounded on each finite instance, so either unopposed
                 // strict direction terminates; unchanged admits a self-loop.

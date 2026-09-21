@@ -1,0 +1,18 @@
+(define (domain relational-query)
+  (:requirements :strips :negative-preconditions :derived-predicates)
+  (:constants a b c)
+  (:predicates
+    (triple ?x ?y ?z)
+    (fixed ?x ?y ?z)
+    (copied ?x ?y ?z)
+    (assignment ?x ?y ?z ?w)
+    (required ?x ?y ?z)
+    (marker ?x)
+    (edge ?x ?y)
+    (ready)
+    (missing))
+  (:derived (copied ?x ?y ?z) (triple ?x ?y ?z))
+  (:action remove
+    :parameters (?x ?y ?z)
+    :precondition (triple ?x ?y ?z)
+    :effect (and (not (triple ?x ?y ?z)) (not (ready)))))

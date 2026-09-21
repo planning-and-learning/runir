@@ -7,6 +7,7 @@
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 #include "runir/kr/dl/semantics/denotation_index.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
+#include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 
 #include <cassert>
 #include <memory>
@@ -51,8 +52,12 @@ private:
 
     DenotationBuilderStorage m_builders;
     DenotationDataStorage m_data;
+    EvaluationWorkspace m_workspace;
 
 public:
+    /// Default evaluation workspace, retaining mutable buffers across states.
+    auto& get_workspace() noexcept { return m_workspace; }
+
     template<typename T>
     [[nodiscard]] auto get_builder()
     {

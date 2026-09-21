@@ -2,6 +2,7 @@
 #define RUNIR_KR_DL_CONSTRUCTOR_DATA_HPP_
 
 #include "runir/kr/dl/numerical_data.hpp"
+#include "runir/kr/dl/query_data.hpp"
 
 #include <cista/containers/variant.h>
 #include <tuple>
@@ -23,6 +24,8 @@ struct ConstructorDataTraits<Family, ConceptTag>
 
     template<typename Tag>
     using Index = ygg::Index<Concept<Family, Tag>>;
+
+    using Indices = ygg::ConcatTypeListsT<ygg::MapTypeListT<Index, Tags>, ygg::TypeList<ygg::Index<QueryProjection<Family, ConceptTag>>>>;
 };
 
 template<FamilyTag Family>
@@ -32,6 +35,8 @@ struct ConstructorDataTraits<Family, RoleTag>
 
     template<typename Tag>
     using Index = ygg::Index<Role<Family, Tag>>;
+
+    using Indices = ygg::ConcatTypeListsT<ygg::MapTypeListT<Index, Tags>, ygg::TypeList<ygg::Index<QueryProjection<Family, RoleTag>>>>;
 };
 
 template<FamilyTag Family>
@@ -41,6 +46,8 @@ struct ConstructorDataTraits<Family, BooleanTag>
 
     template<typename Tag>
     using Index = ygg::Index<Boolean<Family, Tag>>;
+
+    using Indices = ygg::MapTypeListT<Index, Tags>;
 };
 
 template<FamilyTag Family>
@@ -50,12 +57,12 @@ struct ConstructorDataTraits<Family, NumericalTag>
 
     template<typename Tag>
     using Index = ygg::Index<Numerical<Family, Tag>>;
+
+    using Indices = ygg::MapTypeListT<Index, Tags>;
 };
 
 template<FamilyTag Family, CategoryTag Category>
-using ConstructorDataVariant =
-    ygg::ApplyTypeListT<::cista::offset::variant,
-                        ygg::MapTypeListT<ConstructorDataTraits<Family, Category>::template Index, typename ConstructorDataTraits<Family, Category>::Tags>>;
+using ConstructorDataVariant = ygg::ApplyTypeListT<::cista::offset::variant, typename ConstructorDataTraits<Family, Category>::Indices>;
 
 }  // namespace runir::kr::dl::detail
 

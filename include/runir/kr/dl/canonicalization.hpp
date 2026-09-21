@@ -14,6 +14,28 @@
 namespace runir::kr::dl
 {
 
+template<FamilyTag Family, CategoryTag Category>
+void canonicalize(ygg::Data<QueryProjection<Family, Category>>&) noexcept
+{
+}
+template<FamilyTag Family, CategoryTag Category>
+bool is_canonical(const ygg::Data<QueryProjection<Family, Category>>&) noexcept
+{
+    return true;
+}
+
+inline void canonicalize(ygg::Data<QueryColumn>&) noexcept {}
+inline bool is_canonical(const ygg::Data<QueryColumn>&) noexcept { return true; }
+template<FamilyTag Family, typename Tag>
+void canonicalize(ygg::Data<Query<Family, Tag>>&) noexcept
+{
+}
+template<FamilyTag Family, typename Tag>
+bool is_canonical(const ygg::Data<Query<Family, Tag>>&) noexcept
+{
+    return true;
+}
+
 template<typename Data>
 void canonicalize_commutative_binary(Data& data) noexcept
 {

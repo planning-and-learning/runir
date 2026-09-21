@@ -33,7 +33,7 @@ void bind_constructor_view(nb::module_& m, const char* name)
     using GroundContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
     using LiftedContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
     using DenotationCaches = runir::kr::dl::semantics::DenotationCaches<runir::kr::BaseFamilyTag>;
-    auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
+    auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index).def("get_variant", &View::get_variant, nb::keep_alive<0, 1>());
     ygg::add_print(cls);
     ygg::add_comparison(cls);
     ygg::add_hash(cls);

@@ -17,10 +17,47 @@ using iterator_type = runir::kr::parser::Iterator;
 using context_type = runir::kr::parser::Context;
 using ErrorHandlerBase = runir::kr::parser::ErrorHandlerBase;
 
-struct PredicateNameClass;
-struct ObjectNameClass;
-struct IdentifierClass;
-struct NumericReferenceClass;
+template<typename Ast>
+struct QueryClass : x3::annotate_on_success
+{
+};
+
+struct PredicateNameClass : ErrorHandlerBase
+{
+};
+
+struct ObjectNameClass : ErrorHandlerBase
+{
+};
+
+struct IdentifierClass : x3::annotate_on_success
+{
+};
+
+struct NumericReferenceClass : x3::annotate_on_success
+{
+};
+
+struct PredicateNameTextClass
+{
+};
+
+struct ObjectNameTextClass
+{
+};
+
+struct IdentifierTextClass
+{
+};
+
+struct NumericReferenceTextClass
+{
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct NonTerminalNameTextClass
+{
+};
 
 template<runir::kr::dl::CategoryTag Category>
 struct ArgumentReferenceClass : x3::annotate_on_success
@@ -33,7 +70,9 @@ struct RegisterReferenceClass : x3::annotate_on_success
 };
 
 template<runir::kr::dl::CategoryTag Category>
-struct NonTerminalNameClass;
+struct NonTerminalNameClass : ErrorHandlerBase
+{
+};
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 struct ConstructorClass : x3::annotate_on_success
@@ -118,6 +157,42 @@ using derivation_rule_type = x3::rule<DerivationRuleClass<Family, Category>, ast
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename Tag>
 using constructor_tag_type = x3::rule<ConstructorTagClass<Family, Category, Tag>, ast::Constructor<Family, Category, Tag>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using query_atomic_state_type = x3::rule<QueryClass<ast::QueryAtomicState<Family>>, ast::QueryAtomicState<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using query_atomic_goal_type = x3::rule<QueryClass<ast::QueryAtomicGoal<Family>>, ast::QueryAtomicGoal<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using query_concept_type = x3::rule<QueryClass<ast::QueryConcept<Family>>, ast::QueryConcept<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using query_role_type = x3::rule<QueryClass<ast::QueryRole<Family>>, ast::QueryRole<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using query_join_type = x3::rule<QueryClass<ast::QueryJoin<Family>>, ast::QueryJoin<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using query_project_type = x3::rule<QueryClass<ast::QueryProject<Family>>, ast::QueryProject<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using query_rename_type = x3::rule<QueryClass<ast::QueryRename<Family>>, ast::QueryRename<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using query_select_equal_type = x3::rule<QueryClass<ast::QuerySelectEqual<Family>>, ast::QuerySelectEqual<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using query_select_value_type = x3::rule<QueryClass<ast::QuerySelectValue<Family>>, ast::QuerySelectValue<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using query_union_type = x3::rule<QueryClass<ast::QueryUnion<Family>>, ast::QueryUnion<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using query_difference_type = x3::rule<QueryClass<ast::QueryDifference<Family>>, ast::QueryDifference<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using query_type = x3::rule<QueryClass<ast::Query<Family>>, ast::Query<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
 using constructor_or_non_terminal_variant_type = x3::rule<ConstructorOrNonTerminalVariantClass<Family>, ast::ConstructorOrNonTerminalVariant<Family>>;

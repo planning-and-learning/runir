@@ -176,6 +176,7 @@ struct Data<runir::kr::dl::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::Argum
     using Base::Base;
 };
 
+
 }  // namespace ygg
 
 #endif

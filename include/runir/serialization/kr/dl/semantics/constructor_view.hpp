@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
+#include "runir/serialization/kr/dl/query_view.hpp"
 #include "runir/serialization/kr/dl/semantics/boolean_view.hpp"
 #include "runir/serialization/kr/dl/semantics/concept_view.hpp"
 #include "runir/serialization/kr/dl/semantics/numerical_view.hpp"
@@ -22,7 +23,9 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::C
 template<typename Archive, runir::kr::dl::FamilyTag Family, typename C>
 void describe_fields(Archive& ar,
                      std::type_identity<View<cista::offset::variant<Index<runir::kr::dl::Constructor<Family, runir::kr::dl::ConceptTag>>,
-                                                                    Index<runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>>>, C>>)
+                                                                    Index<runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>>,
+                                                                    Index<runir::kr::dl::Query<Family>>>,
+                                             C>>)
 {
     ar.variant([](const auto& value) -> decltype(auto) { return (value); });
 }

@@ -15,7 +15,7 @@ namespace ygg
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Numerical<Family, runir::kr::dl::CountTag>>
 {
-    using ConstructorVariant = ::cista::offset::variant<Index<DlConcept<Family>>, Index<DlRole<Family>>>;
+    using ConstructorVariant = ::cista::offset::variant<Index<DlConcept<Family>>, Index<DlRole<Family>>, Index<runir::kr::dl::Query<Family>>>;
 
     Index<runir::kr::dl::Numerical<Family, runir::kr::dl::CountTag>> index;
     ConstructorVariant arg;

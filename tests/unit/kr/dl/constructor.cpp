@@ -48,6 +48,33 @@ consteval bool view_aliases(ygg::TypeList<Categories...>)
     return (view_alias<Family, Categories>() && ...);
 }
 
+template<typename Family, typename Category>
+consteval bool query_projection_contract()
+{
+    using Entity = kr::dl::QueryProjection<Family, Category>;
+    using Repository = kr::dl::ConstructorRepositoryFor<Family>;
+    using View = ygg::View<ygg::Index<Entity>, Repository>;
+    return ygg::ViewConcept<ygg::Index<Entity>, Repository> && requires(ygg::Data<Entity>& data, const View& view) {
+        data.arg;
+        data.columns;
+        view.get_arg();
+        view.get_columns();
+    } && !requires(const View& view) { view.get_plan(); };
+}
+
+template<typename Family, typename... Tags>
+consteval bool query_view_contracts(ygg::TypeList<Tags...>)
+{
+    using Repository = kr::dl::ConstructorRepositoryFor<Family>;
+    return ygg::ViewConcept<ygg::Index<kr::dl::QueryColumn>, Repository> && ygg::ViewConcept<ygg::Index<kr::dl::Query<Family>>, Repository>
+           && query_projection_contract<Family, kr::dl::ConceptTag>() && query_projection_contract<Family, kr::dl::RoleTag>()
+           && (ygg::ViewConcept<ygg::Index<kr::dl::Query<Family, Tags>>, Repository> && ...);
+}
+
+static_assert(query_view_contracts<kr::BaseFamilyTag>(kr::dl::QueryConstructorTags {}));
+static_assert(query_view_contracts<kr::ExtFamilyTag>(kr::dl::QueryConstructorTags {}));
+static_assert(query_view_contracts<kr::UnsFamilyTag>(kr::dl::QueryConstructorTags {}));
+
 static_assert(indexed_data_views<kr::BaseFamilyTag>(kr::dl::FamilyConstructorTypes<kr::BaseFamilyTag> {}));
 static_assert(indexed_data_views<kr::ExtFamilyTag>(kr::dl::FamilyConstructorTypes<kr::ExtFamilyTag> {}));
 static_assert(indexed_data_views<kr::UnsFamilyTag>(kr::dl::FamilyConstructorTypes<kr::UnsFamilyTag> {}));

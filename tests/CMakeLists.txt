@@ -157,3 +157,8 @@ add_runir_test(runir_kr_uns_classifier
     runir::kr
     runir_test_planning_fixtures
 )
+
+add_runir_test(runir_kr_dl_query_evaluation unit/kr/dl/query_evaluation.cpp runir::kr runir::datasets runir_test_planning_fixtures)
+
+# Keep allocation replacements isolated from all other test executables.
+add_runir_test(runir_kr_dl_query_allocations unit/kr/dl/query_allocations.cpp runir::kr runir::datasets runir_test_planning_fixtures)

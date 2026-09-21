@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/argument_view.hpp"
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/register_view.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
@@ -56,6 +57,59 @@ std::string constructor_with_objects(std::string_view keyword, Head&& head, Obje
         os << ' ' << fmt::format("{:?}", object.get_name().view());
     os << ')';
     return os.str();
+}
+
+template<typename Columns>
+std::string query_columns(Columns columns)
+{
+    return fmt::format("({})", fmt::join(columns, " "));
+}
+
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+std::string query(ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C> view)
+{
+    using namespace runir::kr::dl;
+    if constexpr (std::same_as<Tag, void>)
+        return fmt::format("{}", view.get_variant());
+    else if constexpr (is_atomic_state_tag_v<Tag>)
+        return constructor("q_atomic_state", fmt::format("{:?}", view.get_predicate().get_name().view()), query_columns(view.get_columns()));
+    else if constexpr (is_atomic_goal_tag_v<Tag>)
+        return constructor("q_atomic_goal",
+                           fmt::format("{:?}", view.get_predicate().get_name().view()),
+                           boolean(view.get_polarity()),
+                           query_columns(view.get_columns()));
+    else if constexpr (std::same_as<Tag, QueryConceptTag>)
+        return constructor(QueryConceptTag::keyword, *view.get_columns().begin(), view.get_arg());
+    else if constexpr (std::same_as<Tag, QueryRoleTag>)
+        return constructor(QueryRoleTag::keyword, query_columns(view.get_columns()), view.get_arg());
+    else if constexpr (std::same_as<Tag, QueryProjectTag>)
+        return constructor(QueryProjectTag::keyword, query_columns(view.get_columns()), view.get_arg());
+    else if constexpr (std::same_as<Tag, QueryRenameTag>)
+        return constructor(QueryRenameTag::keyword, query_columns(view.get_columns()), view.get_arg());
+    else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
+        return constructor(QuerySelectEqualTag::keyword, view.get_lhs_column(), view.get_rhs_column(), view.get_arg());
+    else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
+        return constructor(QuerySelectValueTag::keyword, view.get_column(), fmt::format("{:?}", view.get_object().get_name().view()), view.get_arg());
+    else if constexpr (std::same_as<Tag, QueryJoinTag>)
+        return constructor(QueryJoinTag::keyword, view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, QueryUnionTag>)
+        return constructor(QueryUnionTag::keyword, view.get_lhs(), view.get_rhs());
+    else if constexpr (std::same_as<Tag, QueryDifferenceTag>)
+        return constructor(QueryDifferenceTag::keyword, view.get_lhs(), view.get_rhs());
+    else
+        static_assert(ygg::dependent_false<Tag>::value, "unhandled DL query constructor tag");
+}
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+std::string query_projection(ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C> view)
+{
+    auto columns = view.get_columns();
+    auto it = columns.begin();
+    auto lhs = *it++;
+    if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+        return constructor(runir::kr::dl::ConceptProjectSyntaxTag::keyword, lhs, view.get_arg());
+    else
+        return constructor(runir::kr::dl::RoleProjectSyntaxTag::keyword, lhs, *it, view.get_arg());
 }
 
 template<runir::kr::dl::CategoryTag Category, typename C>
@@ -259,6 +313,32 @@ class View<Index<runir::kr::dl::semantics::Denotation<Category>>, C>;
 template<runir::kr::dl::CategoryTag Category, typename C, typename Char>
 struct fmt::range_format_kind<ygg::View<ygg::Index<runir::kr::dl::semantics::Denotation<Category>>, C>, Char, void> : std::false_type
 {
+};
+
+template<typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::QueryColumn>, C>> : fmt::formatter<std::string_view>
+{
+    auto format(const ygg::View<ygg::Index<runir::kr::dl::QueryColumn>, C>& value, format_context& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}", value.get_name());
+    }
+};
+
+template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C>> : fmt::formatter<std::string_view>
+{
+    using View = ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C>;
+    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query(view), ctx); }
+};
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C>> : fmt::formatter<std::string_view>
+{
+    using View = ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C>;
+    auto format(View view, format_context& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query_projection(view), ctx);
+    }
 };
 
 template<runir::kr::dl::CategoryTag Category, typename C>

@@ -100,9 +100,132 @@ template<runir::kr::dl::FamilyTag Family>
 using NumericalChoice = ConstructorOrNonTerminal<Family, runir::kr::dl::NumericalTag>;
 
 template<runir::kr::dl::FamilyTag Family>
-struct ConstructorOrNonTerminalVariant : PositionedVariant<ConceptChoice<Family>, RoleChoice<Family>>
+struct Query;
+
+template<runir::kr::dl::FamilyTag Family>
+struct QueryAtomicState : x3::position_tagged
 {
-    using Base = PositionedVariant<ConceptChoice<Family>, RoleChoice<Family>>;
+    Identifier predicate_name;
+    std::vector<Identifier> columns;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct QueryAtomicGoal : x3::position_tagged
+{
+    Identifier predicate_name;
+    bool polarity;
+    std::vector<Identifier> columns;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct QueryConcept : x3::position_tagged
+{
+    std::vector<Identifier> columns;
+    ConceptChoice<Family> arg;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct QueryRole : x3::position_tagged
+{
+    std::vector<Identifier> columns;
+    RoleChoice<Family> arg;
+};
+
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+struct QueryBinary : x3::position_tagged
+{
+    using ConstructorTag = Tag;
+
+    x3::forward_ast<Query<Family>> lhs;
+    x3::forward_ast<Query<Family>> rhs;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+using QueryJoin = QueryBinary<Family, runir::kr::dl::QueryJoinTag>;
+
+template<runir::kr::dl::FamilyTag Family>
+using QueryUnion = QueryBinary<Family, runir::kr::dl::QueryUnionTag>;
+
+template<runir::kr::dl::FamilyTag Family>
+using QueryDifference = QueryBinary<Family, runir::kr::dl::QueryDifferenceTag>;
+
+template<runir::kr::dl::FamilyTag Family, typename Tag>
+struct QueryColumns : x3::position_tagged
+{
+    using ConstructorTag = Tag;
+
+    std::vector<Identifier> columns;
+    x3::forward_ast<Query<Family>> arg;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+using QueryProject = QueryColumns<Family, runir::kr::dl::QueryProjectTag>;
+
+template<runir::kr::dl::FamilyTag Family>
+using QueryRename = QueryColumns<Family, runir::kr::dl::QueryRenameTag>;
+
+template<runir::kr::dl::FamilyTag Family>
+struct QuerySelectEqual : x3::position_tagged
+{
+    Identifier lhs_column;
+    Identifier rhs_column;
+    x3::forward_ast<Query<Family>> arg;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct QuerySelectValue : x3::position_tagged
+{
+    Identifier column;
+    Identifier object_name;
+    x3::forward_ast<Query<Family>> arg;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+struct Query :
+    PositionedVariant<QueryAtomicState<Family>,
+                      QueryAtomicGoal<Family>,
+                      x3::forward_ast<QueryConcept<Family>>,
+                      x3::forward_ast<QueryRole<Family>>,
+                      QueryJoin<Family>,
+                      QueryProject<Family>,
+                      QueryRename<Family>,
+                      QuerySelectEqual<Family>,
+                      QuerySelectValue<Family>,
+                      QueryUnion<Family>,
+                      QueryDifference<Family>>
+{
+    using Base = PositionedVariant<QueryAtomicState<Family>,
+                                   QueryAtomicGoal<Family>,
+                                   x3::forward_ast<QueryConcept<Family>>,
+                                   x3::forward_ast<QueryRole<Family>>,
+                                   QueryJoin<Family>,
+                                   QueryProject<Family>,
+                                   QueryRename<Family>,
+                                   QuerySelectEqual<Family>,
+                                   QuerySelectValue<Family>,
+                                   QueryUnion<Family>,
+                                   QueryDifference<Family>>;
+    using Base::Base;
+    using Base::operator=;
+};
+
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+struct Constructor<Family, Category, runir::kr::dl::ProjectTag> : x3::position_tagged
+{
+    std::vector<Identifier> columns;
+    Query<Family> arg;
+};
+
+template<runir::kr::dl::FamilyTag Family>
+using ConceptProject = Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::ProjectTag>;
+
+template<runir::kr::dl::FamilyTag Family>
+using RoleProject = Constructor<Family, runir::kr::dl::RoleTag, runir::kr::dl::ProjectTag>;
+
+template<runir::kr::dl::FamilyTag Family>
+struct ConstructorOrNonTerminalVariant : PositionedVariant<ConceptChoice<Family>, RoleChoice<Family>, Query<Family>>
+{
+    using Base = PositionedVariant<ConceptChoice<Family>, RoleChoice<Family>, Query<Family>>;
     using Base::Base;
     using Base::operator=;
 };
@@ -324,7 +447,8 @@ using BaseAstConceptConstructorTags = ygg::TypeList<runir::kr::dl::BotTag,
                                                     runir::kr::dl::AgreementTag,
                                                     runir::kr::dl::RoleFillersTag,
                                                     runir::kr::dl::OneOfTag,
-                                                    runir::kr::dl::NominalTag>;
+                                                    runir::kr::dl::NominalTag,
+                                                    runir::kr::dl::ProjectTag>;
 
 using BaseAstRoleConstructorTags = ygg::TypeList<runir::kr::dl::UniversalTag,
                                                  runir::kr::dl::RoleAtomicStateSyntaxTag,
@@ -337,7 +461,8 @@ using BaseAstRoleConstructorTags = ygg::TypeList<runir::kr::dl::UniversalTag,
                                                  runir::kr::dl::TransitiveClosureTag,
                                                  runir::kr::dl::ReflexiveTransitiveClosureTag,
                                                  runir::kr::dl::RestrictionTag,
-                                                 runir::kr::dl::IdentityTag>;
+                                                 runir::kr::dl::IdentityTag,
+                                                 runir::kr::dl::ProjectTag>;
 
 using BaseAstBooleanConstructorTags =
     ygg::TypeList<runir::kr::dl::BooleanAtomicStateSyntaxTag, runir::kr::dl::BooleanAtomicGoalSyntaxTag, runir::kr::dl::NonemptyTag>;
