@@ -16,6 +16,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <tyr/formalism/planning/formatter.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/dependent_false.hpp>
