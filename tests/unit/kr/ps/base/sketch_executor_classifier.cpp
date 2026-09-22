@@ -44,7 +44,7 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     EXPECT_FALSE(label.is_goal);
     EXPECT_FALSE(label.is_alive);
     EXPECT_TRUE(label.is_unsolvable);
-    EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::BooleanTag>(), 0);
+    EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(), 0);
 
     const auto goal_classifier = kr::uns::dl::parse_classifier(
         read_fixture("kr/ps/base/executor/base_find_solution_treats_classifier_matches_as_terminal_failures/goal_classifier.classifier"),

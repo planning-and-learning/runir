@@ -81,7 +81,7 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     EXPECT_FALSE(label.is_alive);
     EXPECT_TRUE(label.is_unsolvable);
     EXPECT_EQ(label.execution_state.get_call_stack().get_memory_state().get_name(), "source");
-    EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::BooleanTag>(), 0);
+    EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(), 0);
 }
 
 TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
