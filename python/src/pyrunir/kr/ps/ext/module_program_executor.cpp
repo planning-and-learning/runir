@@ -1,6 +1,5 @@
 #include "pyrunir/kr/ps/ext/module.hpp"
 
-#include <concepts>
 #include <nanobind/stl/chrono.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
@@ -36,42 +35,14 @@ void bind_feature_evaluation(nb::module_& m)
 {
     using FeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, Repository>;
 
-    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::QueryFeature>)
-        m.def(
-            "evaluate_feature_denotation",
-            [](FeatureView feature, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
-            {
-                const auto relation = evaluate_feature_denotation<FeatureTag, Repository, Kind>(feature, context, environment);
-                auto rows = nb::list();
-                for (std::size_t position = 0; position < relation->size(); ++position)
-                {
-                    auto values = nb::list();
-                    for (const auto object : (*relation)[position])
-                        values.append(nb::int_(object));
-                    rows.append(nb::tuple(values));
-                }
-                return nb::tuple(rows);
-            },
-            "feature"_a,
-            "context"_a,
-            "environment"_a,
-            "Return an owned tuple of object-index tuples in query column order; a true nullary query is ((),).");
-    else
-        m.def("evaluate_feature_denotation",
-              &evaluate_feature_denotation<FeatureTag, Repository, Kind>,
-              "feature"_a,
-              "context"_a,
-              "environment"_a,
-              nb::keep_alive<0, 3>());
-
-    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> || std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
-        m.def(
-            "evaluate",
-            [](FeatureView feature, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
-            { return evaluate(feature, context, environment); },
-            "feature"_a,
-            "context"_a,
-            "environment"_a);
+    m.def(
+        "evaluate",
+        [](FeatureView feature, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
+        { return evaluate(feature, context, environment); },
+        "feature"_a,
+        "context"_a,
+        "environment"_a,
+        nb::keep_alive<0, 3>());
 }
 
 template<tyr::TaskKind Kind>

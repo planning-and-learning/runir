@@ -10,6 +10,7 @@ from pyrunir.kr.ps.ext import dl
 from pyrunir.serialization import register_table, serialize, table
 from pytyr.formalism.planning import Parser
 from pytyr.planning import lifted
+from pyyggdrasil.database import Relation, RelationPtr, RelationRow
 from pyyggdrasil.execution import ExecutionContext
 from pyyggdrasil.serialization import Dictionaries
 
@@ -108,23 +109,30 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize():
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_query_snapshot_preserves_tuples_column_order_and_nullary_truth(kind):
+def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(kind):
     task_context, program, expander, state, context, environment = _runtime(kind)
     features = {feature.get_symbol(): feature for feature in program.get_entry_module().get_query_features()}
-    rows = ext.evaluate_feature_denotation(features["selected"], context, environment)
-    assert isinstance(rows, tuple)
-    assert len(rows) == 2
-    assert all(isinstance(row, tuple) and len(row) == 2 for row in rows)
+    handle = ext.evaluate(features["selected"], context, environment)
+    assert isinstance(handle, RelationPtr)
+    relation = handle.get()
+    assert isinstance(relation, Relation)
+    assert len(relation) == 2
+    assert relation.arity() == 2
+    assert all(isinstance(row, RelationRow) and len(row) == 2 for row in relation)
+    rows = {tuple(row) for row in relation}
     assert all(type(value) is int for row in rows for value in row)
-    assert set(ext.evaluate_feature_denotation(features["reversed"], context, environment)) == {
+    assert {tuple(row) for row in ext.evaluate(features["reversed"], context, environment).get()} == {
         (target, source) for source, target in rows
     }
-    assert ext.evaluate_feature_denotation(features["truth"], context, environment) == ((),)
-    assert ext.evaluate_feature_denotation(features["empty"], context, environment) == ()
+    truth = ext.evaluate(features["truth"], context, environment).get()
+    empty = ext.evaluate(features["empty"], context, environment).get()
+    assert truth.arity() == empty.arity() == 0
+    assert [tuple(row) for row in truth] == [()]
+    assert empty.empty()
 
     steps = expander.control_steps(state)
     assert len(steps) == 2
-    assert set(rows) == {
+    assert rows == {
         tuple(int(object_.get_index()) for object_ in step.state_transition.action.get_objects())
         for step in steps
     }
@@ -136,13 +144,16 @@ def test_query_snapshot_preserves_tuples_column_order_and_nullary_truth(kind):
         assert expander.apply(state, step.rule, action, target).target == step.target
     good_step = next(step for step in steps if step.state_transition.action.get_objects()[1].get_name() == "good")
     context.state = good_step.target.state
-    assert len(ext.evaluate_feature_denotation(features["selected"], context, environment)) == 1
-    assert len(rows) == 2
-    snapshot = rows
-    del rows, steps, good_step, action, target, step, features, environment, context, state, expander, program, task_context
+    assert len(ext.evaluate(features["selected"], context, environment).get()) == 1
+    assert {tuple(row) for row in relation} == rows
+    row = relation.at(0)
+    expected_row = tuple(row)
+    del handle, truth, empty, steps, good_step, action, target, step, features, environment, context, state, expander, program, task_context
     gc.collect()
-    assert len(snapshot) == 2
-    assert all(type(value) is int for row in snapshot for value in row)
+    assert {tuple(value) for value in relation} == rows
+    del relation
+    gc.collect()
+    assert tuple(row) == expected_row
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -197,13 +208,13 @@ def test_static_query_role_closure_query_composition(kind):
     closure = '(q_role (from to) (r_transitive_closure (r_project from to (q_atomic_state "edge" (from to)))))'
     task_context, program, expander, state, context, environment = _runtime(kind, _program(query=closure))
     features = {feature.get_symbol(): feature for feature in program.get_entry_module().get_query_features()}
-    edges = set(ext.evaluate_feature_denotation(features["edges"], context, environment))
-    rows = set(ext.evaluate_feature_denotation(features["selected"], context, environment))
+    edges = {tuple(row) for row in ext.evaluate(features["edges"], context, environment).get()}
+    rows = {tuple(row) for row in ext.evaluate(features["selected"], context, environment).get()}
     assert len(edges) == 3
     assert len(rows) == 4
     assert rows == edges | {(source, target) for source, middle in edges for other, target in edges if middle == other}
     context.state = expander.labeled_successors(state)[0].node.get_state()
-    assert set(ext.evaluate_feature_denotation(features["selected"], context, environment)) == rows
+    assert {tuple(row) for row in ext.evaluate(features["selected"], context, environment).get()} == rows
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -238,15 +249,16 @@ def test_query_features_follow_module_arguments_and_registers_in_the_same_state(
     all_candidates = {row for selected in expected for row in selected}
     assert expected[0] != expected[1]
 
-    snapshots = []
+    relations = []
     for position in (0, 1, 0):
         context = contexts[position]
-        assert set(ext.evaluate_feature_denotation(features["argument"], context, environment)) == all_candidates
-        selected = ext.evaluate_feature_denotation(features["register"], context, environment)
-        assert selected == expected[position]
-        assert ext.evaluate_feature_denotation(features["intersection"], context, environment) == selected
-        snapshots.append(selected)
-    assert snapshots == [expected[0], expected[1], expected[0]]
+        assert {tuple(row) for row in ext.evaluate(features["argument"], context, environment).get()} == all_candidates
+        selected = ext.evaluate(features["register"], context, environment).get()
+        assert tuple(tuple(row) for row in selected) == expected[position]
+        intersection = ext.evaluate(features["intersection"], context, environment).get()
+        assert tuple(tuple(row) for row in intersection) == expected[position]
+        relations.append(selected)
+    assert [tuple(tuple(row) for row in relation) for relation in relations] == [expected[0], expected[1], expected[0]]
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])

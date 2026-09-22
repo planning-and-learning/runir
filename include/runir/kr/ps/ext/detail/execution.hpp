@@ -192,7 +192,7 @@ void append_call_argument(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr:
                           EvaluationEnvironment<Kind>& environment,
                           EvaluationArguments& target)
 {
-    const auto denotation = evaluate_feature_denotation(argument, context, environment);
+    const auto denotation = evaluate(argument, context, environment);
     if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
         target.get<runir::kr::dl::ConceptTag>().push_back(denotation);
     else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)

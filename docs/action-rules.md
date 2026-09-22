@@ -89,19 +89,28 @@ choice ordering.
 `module.get_query_features()` returns named `ext.dl.QueryFeature` values.
 `ActionRule.get_query_feature()` returns the selector, and
 `feature.get_expression().get_columns()` exposes its output schema.
+`ext.evaluate(feature, context, environment)` returns the feature's native
+denotation for every category. Boolean and numerical denotations expose their
+scalar value through `.get()`; concept and role denotations are iterable.
 
 ```python
 from pyrunir.kr.ps import ext
 
 feature = module.get_query_features()[0]
 columns = tuple(column.get_name() for column in feature.get_expression().get_columns())
-rows = ext.evaluate_feature_denotation(feature, context, environment)
+result = ext.evaluate(feature, context, environment)
+relation = result.get()
 ```
 
-`rows` is an owned `tuple[tuple[int, ...], ...]` containing Tyr object indices,
-with values ordered by `columns`. It remains valid after further evaluations,
-changes to the evaluation context, and destruction of the context/environment.
-An empty result is `()`; a true zero-column query is `((),)`.
+`result` is a `pyyggdrasil.database.RelationPtr`; `relation` is its pooled
+`Relation`. Iterating the relation yields read-only `RelationRow` views of Tyr
+object indices, with values ordered by `columns`. The handle keeps the
+evaluation environment alive, and relations, rows, and iterators retain their
+owners. They remain valid after further evaluations, changes to the evaluation
+context, and deletion of the caller's context/environment references.
+`len(relation)` is the row count and `relation.arity()` is the column count.
+A zero-column query has no rows when false and one empty row when true.
+For a Python snapshot, use `tuple(tuple(row) for row in relation)`.
 
 Action rule serialization exposes `source`, `target`, `conditions`, `effects`,
 `action_name`, and `query_feature`. Register the referenced types using the

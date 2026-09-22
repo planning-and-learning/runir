@@ -477,7 +477,7 @@ private:
                 return;
 
             const auto initial_size = result.size();
-            const auto denotation = evaluate_feature_denotation(rule.get_feature(), evaluation_context, m_environment);
+            const auto denotation = evaluate(rule.get_feature(), evaluation_context, m_environment);
             for (const auto value : denotation)
             {
                 if (stop())
@@ -524,7 +524,7 @@ private:
             auto evaluation_context = context;
             if (!detail::has_current_source(rule, evaluation_context) || !conditions_are_compatible(rule, evaluation_context, m_environment))
                 return;
-            const auto query = evaluate_feature_denotation(rule.get_query_feature(), evaluation_context, m_environment);
+            const auto query = evaluate(rule.get_query_feature(), evaluation_context, m_environment);
             m_action_rule_evaluator.action(rule, context.get_state(), query->arity());
             visit_successors(
                 [&](const LabeledNode& successor, bool binding_checked = false)
@@ -619,7 +619,7 @@ private:
                 {
                     if (!detail::has_current_source(concrete, context) || !conditions_are_compatible(concrete, context, m_environment))
                         return false;
-                    const auto query = evaluate_feature_denotation(concrete.get_query_feature(), context, m_environment);
+                    const auto query = evaluate(concrete.get_query_feature(), context, m_environment);
                     m_action_rule_evaluator.action(concrete, context.get_state(), query->arity());
                     return action_successor_matches(concrete, context, *query, candidate);
                 }

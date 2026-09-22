@@ -84,7 +84,6 @@ from ...._pyrunir.kr.ps.ext import (
     SketchRuleData,
     SketchRuleIndex,
     evaluate,
-    evaluate_feature_denotation,
     find_ground_solution,
     find_lifted_solution,
 )

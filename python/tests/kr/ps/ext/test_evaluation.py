@@ -153,23 +153,23 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         "selected_goal_ball": False,
     }
     assert {
-        name: ext.evaluate(feature, context, environment)
+        name: ext.evaluate(feature, context, environment).get()
         for name, feature in booleans.items()
     } == expected_booleans
     assert {
-        name: ext.evaluate(feature, context, environment)
+        name: ext.evaluate(feature, context, environment).get()
         for name, feature in numericals.items()
     } == expected
-    concept = ext.evaluate_feature_denotation(
+    concept = ext.evaluate(
         frame.module.get_concept_features()[0], context, environment
     )
-    role = ext.evaluate_feature_denotation(
+    role = ext.evaluate(
         frame.module.get_role_features()[0], context, environment
     )
-    boolean = ext.evaluate_feature_denotation(
+    boolean = ext.evaluate(
         booleans["argument_flag"], context, environment
     )
-    numerical = ext.evaluate_feature_denotation(
+    numerical = ext.evaluate(
         numericals["argument_count"], context, environment
     )
     child = expander.control_steps(expander.initial_state())[0].target
@@ -178,8 +178,8 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         task_context.execution_repository, task_context.execution_builder, program, other_frame
     )
     assert other_context.state == context.state
-    assert ext.evaluate(booleans["selected_goal_ball"], other_context, environment) is True
-    assert ext.evaluate(booleans["selected_goal_ball"], context, environment) is False
+    assert ext.evaluate(booleans["selected_goal_ball"], other_context, environment).get() is True
+    assert ext.evaluate(booleans["selected_goal_ball"], context, environment).get() is False
     del child, other_frame, other_context
 
     original = context.state
@@ -190,24 +190,24 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         and successor.label.get_objects()[-1].get_name() == "roomb"
     )
     context.state = moved
-    assert ext.evaluate(numericals["nearby_balls"], context, environment) == 0
-    assert ext.evaluate(numericals["argument_count"], context, environment) == 2
+    assert ext.evaluate(numericals["nearby_balls"], context, environment).get() == 0
+    assert ext.evaluate(numericals["argument_count"], context, environment).get() == 2
     assert {
-        name: ext.evaluate(feature, context, environment)
+        name: ext.evaluate(feature, context, environment).get()
         for name, feature in booleans.items()
     } == expected_booleans
     context.state = original
-    assert ext.evaluate(numericals["nearby_balls"], context, environment) == 2
+    assert ext.evaluate(numericals["nearby_balls"], context, environment).get() == 2
 
     del task_context, program, expander, loaded, frame
     del original, moved
     gc.collect()
     assert {
-        name: ext.evaluate(feature, context, environment)
+        name: ext.evaluate(feature, context, environment).get()
         for name, feature in numericals.items()
     } == expected
     assert {
-        name: ext.evaluate(feature, context, environment)
+        name: ext.evaluate(feature, context, environment).get()
         for name, feature in booleans.items()
     } == expected_booleans
     del context, environment, booleans, numericals
