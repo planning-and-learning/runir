@@ -133,10 +133,16 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     auto options = kr::ps::base::SketchSearchOptions<tyr::GroundTag> {};
     options.max_num_states = 1;
     options.universal = true;
-    const auto bounded = kr::ps::base::find_solution(task_context, sketch, options);
+    auto bounded_search = datasets::TaskSearchContext<tyr::GroundTag>::create(task, ygg::ExecutionContext::create(1));
+    auto bounded_context = kr::TaskContext<tyr::GroundTag>::create(task_context->domain_context, bounded_search);
+    const auto bounded = kr::ps::base::find_solution(bounded_context, sketch, options);
     EXPECT_EQ(bounded.status, kr::ps::base::SketchProofStatus::OUT_OF_STATES);
     ASSERT_TRUE(bounded.graph);
     EXPECT_EQ(bounded.graph->get_num_vertices(), 1);
+    EXPECT_EQ(bounded_search->state_repository->num_states(), 2);
+    const auto& packed_state = bounded.graph->get_vertex(0).get_property().state;
+    EXPECT_EQ(packed_state.get_index(), context.get_state().get_index());
+    EXPECT_EQ(packed_state.unpack().pack(), packed_state);
 
     const auto two_step_only = kr::ps::base::dl::parse_sketch(
         read_fixture("kr/ps/base/executor/base_find_solution_uses_only_immediate_outcomes_and_universal_uses_all/two_step_only.sketch"),

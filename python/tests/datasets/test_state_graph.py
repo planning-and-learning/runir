@@ -36,7 +36,9 @@ from pyrunir.datasets import (
 )
 from pyyggdrasil.execution import ExecutionContext
 from pytyr.formalism.planning import ActionBinding, Parser
+from pytyr.planning.ground import PackedState as GroundPackedState
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
+from pytyr.planning.lifted import PackedState as LiftedPackedState
 
 
 class EquivalenceGraphFixture(TypedDict):
@@ -103,13 +105,14 @@ def test_state_graph_properties_keep_the_graph_alive(
     edge = graph.get_edge_property(edge_index)
     assert sys.getrefcount(graph) > references
     state = vertex.state
+    assert isinstance(state, GroundPackedState)
     action = edge.action
-    expected = (str(state), str(action))
+    expected = (str(state.unpack()), str(action))
 
     del vertex, edge, graph, original, generated
     gc.collect()
 
-    assert (str(state), str(action)) == expected
+    assert (str(state.unpack()), str(action)) == expected
 
 
 def test_ground_state_graph_builder_can_copy_generated_graph_labels(ground_gripper_search_context: GroundTaskSearchContext) -> None:
@@ -150,21 +153,34 @@ def test_ground_state_graph_builder_can_copy_generated_graph_labels(ground_gripp
     assert list(copied_graph.get_successor_indices(first_vertex)) == builder.get_successor_indices(first_vertex)
 
 
-def test_lifted_state_graph_edges_store_action_bindings(gripper_data_dir: Path) -> None:
+@pytest.mark.parametrize("ground", [False, True])
+def test_state_graph_labels_own_packed_states_and_action_bindings(gripper_data_dir: Path, ground: bool) -> None:
     parser_options = ParserOptions()
     parser = Parser(gripper_data_dir / "domain.pddl", parser_options)
     task = Task(parser.parse_task(gripper_data_dir / "test-1.pddl", parser_options))
-    context = LiftedTaskSearchContext(task, ExecutionContext(1))
+    execution_context = ExecutionContext(1)
+    if ground:
+        task = task.instantiate_ground_task(execution_context, GroundTaskInstantiationOptions()).task
+    context = (GroundTaskSearchContext if ground else LiftedTaskSearchContext)(task, execution_context)
     options = StateGraphGenerationOptions()
     options.max_num_states = 4
 
-    graph = generate_lifted_state_graph(context, options).get_forward_graph()
+    graph = (generate_ground_state_graph if ground else generate_lifted_state_graph)(context, options).get_forward_graph()
     edge_label = graph.get_edge_property(next(iter(graph.get_edge_indices())))
 
     assert isinstance(edge_label, StateGraphEdgeLabel)
     assert isinstance(edge_label.action, ActionBinding)
     for vertex in graph.get_vertex_indices():
-        assert graph.get_vertex_property(vertex).state.get_state_repository().get_index() == context.state_repository.get_index()
+        state = graph.get_vertex_property(vertex).state
+        assert isinstance(state, GroundPackedState if ground else LiftedPackedState)
+        assert state.get_state_repository().get_index() == context.state_repository.get_index()
+
+    expected = str(state.unpack())
+    del edge_label, graph, context, task, parser
+    gc.collect()
+
+    assert str(state.unpack()) == expected
+    assert state.unpack().pack() == state
 
 
 def test_equivalence_graph_builder_can_construct_static_graph_from_labels() -> None:
@@ -355,6 +371,7 @@ def test_ground_annotated_state_dynamic_graph_binding_can_copy_annotated_labels(
     assert graph.contains_edge(copied_edge)
     assert graph.get_successor_indices(copied_source) == [copied_target]
     assert graph.get_vertex_property(copied_source).is_initial == annotated.get_vertex_property(source).is_initial
+    assert isinstance(graph.get_vertex_property(copied_source).state, GroundPackedState)
 
     graph.remove_vertex(copied_target)
     assert not graph.contains_vertex(copied_target)

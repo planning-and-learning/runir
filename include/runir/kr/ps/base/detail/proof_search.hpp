@@ -30,7 +30,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
     auto result = SketchProofResults<Kind> {};
     result.task_context_owner = task_context_owner;
     auto builder = SketchProofGraphBuilder<Kind> {};
-    auto state_to_vertex = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
+    auto state_to_vertex = ygg::UnorderedMap<tyr::planning::PackedStateView<Kind>, graphs::VertexIndex> {};
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*search_context.task);
     auto expander = SuccessorExpander<Kind>(task_context, sketch);
     const auto initial_node = search_context.successor_generator->get_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
@@ -55,18 +55,19 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
                                                                                                       *task_context.dl_denotation_repository);
             unsolvable = runir::kr::uns::classify(*options.classifier, context);
         }
-        return SketchProofVertexLabel<Kind> { state, state.get_index() == initial_state.get_index(), goal, !unsolvable, unsolvable };
+        return SketchProofVertexLabel<Kind> { state.pack(), state.get_index() == initial_state.get_index(), goal, !unsolvable, unsolvable };
     };
 
     const auto get_or_create_vertex = [&](const tyr::planning::StateView<Kind>& state) -> std::optional<std::pair<graphs::VertexIndex, bool>>
     {
-        if (const auto it = state_to_vertex.find(state); it != state_to_vertex.end())
+        const auto packed_state = state.pack();
+        if (const auto it = state_to_vertex.find(packed_state); it != state_to_vertex.end())
             return std::pair(it->second, false);
         if (state_to_vertex.size() >= options.max_num_states)
             return std::nullopt;
 
         const auto vertex = builder.add_vertex(make_label(state));
-        state_to_vertex.emplace(state, vertex);
+        state_to_vertex.emplace(packed_state, vertex);
         return std::pair(vertex, true);
     };
 
@@ -101,7 +102,6 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
             continue;
 
         const auto& source_label = builder.get_vertex(source).get_property();
-        const auto& source_state = source_label.state;
         if (source_label.is_goal)
             continue;
         if (source_label.is_unsolvable)
@@ -110,36 +110,65 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
             continue;
         }
 
-        auto context = expander.context_at(source_state);
-        auto successors = expander.labeled_successors(context);
-        if (out_of_time())
-            return finish(SketchProofStatus::OUT_OF_TIME);
-        if (options.shuffle_choice_points)
-            ygg::portable_shuffle(successors.begin(), successors.end(), random);
-
-        auto accepted = expander.accepted_successors(context, successors, out_of_time);
-        if (out_of_time())
-            return finish(SketchProofStatus::OUT_OF_TIME);
-        if (accepted.empty())
-        {
-            result.open_states.push_back(source);
-            continue;
-        }
-        if (!options.universal)
-            accepted.erase(accepted.begin() + 1, accepted.end());
-
-        for (const auto& [successor, rule] : accepted)
+        auto context = expander.context_at(source_label.state.unpack());
+        auto expansion_status = SketchProofStatus::SUCCESS;
+        auto has_accepted_successor = false;
+        const auto accept_successor = [&](const tyr::planning::LabeledNode<Kind>& successor, RuleView rule)
         {
             if (out_of_time())
-                return finish(SketchProofStatus::OUT_OF_TIME);
+            {
+                expansion_status = SketchProofStatus::OUT_OF_TIME;
+                return false;
+            }
             const auto target_result = get_or_create_vertex(successor.node.get_state());
             if (!target_result)
-                return finish(SketchProofStatus::OUT_OF_STATES);
+            {
+                expansion_status = SketchProofStatus::OUT_OF_STATES;
+                return false;
+            }
             const auto [target, created] = *target_result;
             builder.add_directed_edge(source, target, SketchProofEdgeLabel { datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) }, rule });
             if (created || !explored.contains(target))
                 open.push_back(target);
+            has_accepted_successor = true;
+            return options.universal;
+        };
+
+        if (options.shuffle_choice_points)
+        {
+            auto successors = expander.labeled_successors(context);
+            if (out_of_time())
+                return finish(SketchProofStatus::OUT_OF_TIME);
+            ygg::portable_shuffle(successors.begin(), successors.end(), random);
+            const auto accepted = expander.accepted_successors(context, successors, out_of_time);
+            if (out_of_time())
+                return finish(SketchProofStatus::OUT_OF_TIME);
+            for (const auto& [successor, rule] : accepted)
+                if (!accept_successor(successor, rule))
+                    break;
         }
+        else
+        {
+            auto& generator = *search_context.successor_generator;
+            const auto node = generator.get_node(*search_context.state_repository, context.get_state().get_index());
+            generator.for_each_labeled_successor_node(node, *search_context.state_repository, *search_context.axiom_evaluator,
+                [&](const auto& successor)
+                {
+                    const auto rule = expander.matching_rule_until(context, successor.node.get_state(), out_of_time);
+                    if (out_of_time())
+                    {
+                        expansion_status = SketchProofStatus::OUT_OF_TIME;
+                        return false;
+                    }
+                    return !rule || accept_successor(successor, *rule);
+                });
+        }
+        if (expansion_status != SketchProofStatus::SUCCESS)
+            return finish(expansion_status);
+        if (out_of_time())
+            return finish(SketchProofStatus::OUT_OF_TIME);
+        if (!has_accepted_successor)
+            result.open_states.push_back(source);
     }
 
     return finish(result.deadend_states.empty() && result.open_states.empty() ? SketchProofStatus::SUCCESS : SketchProofStatus::FAILURE);

@@ -31,7 +31,7 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
     using VertexLabel = SketchProofVertexLabel<Kind>;
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "SketchProofVertexLabel").c_str())
-                            .def_ro("state", &VertexLabel::state)
+                            .def_ro("state", &VertexLabel::state, nb::rv_policy::copy)
                             .def_ro("is_initial", &VertexLabel::is_initial)
                             .def_ro("is_goal", &VertexLabel::is_goal)
                             .def_ro("is_alive", &VertexLabel::is_alive)

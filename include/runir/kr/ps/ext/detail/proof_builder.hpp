@@ -92,7 +92,7 @@ public:
 
     void add_deadend_state(graphs::VertexIndex vertex) { m_result.deadend_states.push_back(vertex); }
     void add_open_state(graphs::VertexIndex vertex) { m_result.open_states.push_back(vertex); }
-    void set_plan(tyr::planning::Plan<Kind> plan) { m_result.plan = std::move(plan); }
+    void set_plan(tyr::planning::PackedPlan<Kind> plan) { m_result.plan = std::move(plan); }
 
     auto finish(ModuleProgramProofStatus status) -> ModuleProgramProofResults<Kind>
     {

@@ -115,13 +115,14 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context,
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*context.task);
     const auto static_goal_satisfied = goal_strategy.is_static_goal_satisfied(*context.task);
     const auto initial_state = context.successor_generator->get_initial_node(*context.state_repository, *context.axiom_evaluator).get_state();
+    const auto packed_initial_state = initial_state.pack();
 
     auto is_goal = std::vector<bool>(forward_graph.get_num_vertices(), false);
     auto goal_vertices = std::vector<graphs::VertexIndex> {};
 
     for (auto vertex_index : forward_graph.get_vertex_indices())
     {
-        const auto& state = forward_graph.get_vertex(vertex_index).get_property().state;
+        const auto state = forward_graph.get_vertex(vertex_index).get_property().state.unpack();
         is_goal[vertex_index] = static_goal_satisfied && goal_strategy.is_dynamic_goal_satisfied(initial_state, state);
         if (is_goal[vertex_index])
             goal_vertices.push_back(vertex_index);
@@ -134,8 +135,12 @@ auto annotate_state_graph(TaskSearchContext<Kind>& context,
     {
         const auto& state = forward_graph.get_vertex(vertex_index).get_property().state;
         const auto is_alive = goal_distance[vertex_index] != std::numeric_limits<ygg::float_t>::infinity();
-        [[maybe_unused]] const auto added = builder.add_vertex(
-            AnnotatedStateGraphVertexLabel<Kind> { state, goal_distance[vertex_index], state == initial_state, is_goal[vertex_index], is_alive, !is_alive });
+        [[maybe_unused]] const auto added = builder.add_vertex(AnnotatedStateGraphVertexLabel<Kind> { state,
+                                                                                                      goal_distance[vertex_index],
+                                                                                                      state == packed_initial_state,
+                                                                                                      is_goal[vertex_index],
+                                                                                                      is_alive,
+                                                                                                      !is_alive });
         assert(added == vertex_index);
     }
 

@@ -39,14 +39,14 @@ def _generate(grammar_description, states, planning_domain, task_context, max_sy
 def _concept_vector(concept, states, task_context):
     result = []
     for state in states:
-        context = semantics.GroundEvaluationContext(state, task_context.dl_builder, task_context.dl_denotation_repository)
+        context = semantics.GroundEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository)
         result.append(tuple(sorted(object_.get_name() for object_ in concept.evaluate(context))))
     return tuple(result)
 
 
 def test_generate_ground_and_cached_evaluation(gripper_data_dir) -> None:
     gripper_planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
-    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator)
+    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator).pack()
 
     result = _generate(
         "((c_0 (c_top))(r_0 (r_universal))(b_0 (b_nonempty c_0))(n_0 (n_count c_0)))",
@@ -61,7 +61,7 @@ def test_generate_ground_and_cached_evaluation(gripper_data_dir) -> None:
     assert result.statistics.num_kept == 4
 
     cache = semantics.DenotationCaches()
-    context = semantics.GroundEvaluationContext(state, task_context.dl_builder, task_context.dl_denotation_repository)
+    context = semantics.GroundEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository)
     assert len(list(result.concepts[0].evaluate(context, cache))) == 6
     assert len(list(result.roles[0].evaluate(context, cache))) == 36
     assert result.booleans[0].evaluate(context, cache).get() is True
@@ -75,7 +75,7 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
     task = Task(parser.parse_task(gripper_data_dir / "test-1.pddl", ParserOptions()))
     search = LiftedTaskSearchContext(task, execution)
     task_context = LiftedTaskContext(DomainContext(planning_domain), search)
-    state = search.state_repository.get_initial_state(search.axiom_evaluator)
+    state = search.state_repository.get_initial_state(search.axiom_evaluator).pack()
     output_repository = task_context.domain_context.base_repository.get_dl_repository()
     grammar_repository = ConstructorRepositoryFactory().create(planning_domain)
     grammar = base.parse_grammar(
@@ -88,13 +88,13 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
 
     denotation_repository = task_context.dl_denotation_repository
     result = cnf_grammar.generate_lifted(cnf, [state], output_repository, denotation_repository, options)
-    context = semantics.LiftedEvaluationContext(state, task_context.dl_builder, task_context.dl_denotation_repository)
+    context = semantics.LiftedEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository)
     assert len(list(result.concepts[0].evaluate(context))) == 6
     assert result.numericals[0].evaluate(context).get() == 6
 
     other_task = Task(parser.parse_task(gripper_data_dir / "test-1.pddl", ParserOptions()))
     other_search = LiftedTaskSearchContext(other_task, execution)
-    other_state = other_search.state_repository.get_initial_state(other_search.axiom_evaluator)
+    other_state = other_search.state_repository.get_initial_state(other_search.axiom_evaluator).pack()
     with pytest.raises(ValueError, match="states and denotation repository for the same planning task"):
         cnf_grammar.generate_lifted(cnf, [state, other_state], output_repository, denotation_repository, options)
 
@@ -105,7 +105,7 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
     foreign_parser = Parser(gripper_data_dir / "domain.pddl", ParserOptions())
     foreign_task = Task(foreign_parser.parse_task(gripper_data_dir / "test-1.pddl", ParserOptions()))
     foreign_search = LiftedTaskSearchContext(foreign_task, execution)
-    foreign_state = foreign_search.state_repository.get_initial_state(foreign_search.axiom_evaluator)
+    foreign_state = foreign_search.state_repository.get_initial_state(foreign_search.axiom_evaluator).pack()
     with pytest.raises(ValueError, match="states and output repository for the same planning domain"):
         cnf_grammar.generate_lifted(cnf, [foreign_state], output_repository, denotation_repository, options)
 
@@ -116,7 +116,7 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
 
 def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir) -> None:
     planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
-    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator)
+    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator).pack()
 
     result = _generate(
         '((c_1 (c_nominal "rooma"))(c_2 (c_nominal "roomb"))(c_3 (c_bot))(r_1 (r_universal))'
@@ -127,7 +127,7 @@ def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir
         4,
     )
 
-    context = semantics.GroundEvaluationContext(state, task_context.dl_builder, task_context.dl_denotation_repository)
+    context = semantics.GroundEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository)
     values = [feature.evaluate(context).get() for feature in result.numericals]
     cache = semantics.DenotationCaches()
     cached_values = [feature.evaluate(context, cache).get() for feature in result.numericals]
@@ -149,7 +149,7 @@ def test_generate_distinguishes_ordered_state_denotation_vectors(gripper_data_di
         if successor.label.get_relation().get_name() == "move"
         and [object_.get_name() for object_ in successor.label.get_objects()] == ["rooma", "roomb"]
     )
-    states = [initial_node.get_state(), move_to_roomb.node.get_state()]
+    states = [initial_node.get_state().pack(), move_to_roomb.node.get_state().pack()]
 
     result = _generate(
         '((c_0 (c_atomic_state "room"))(c_0 (c_atomic_state "at-robby"))(c_0 (c_not c_0))(c_0 (c_and c_0 c_0)))',
@@ -166,7 +166,7 @@ def test_generate_distinguishes_ordered_state_denotation_vectors(gripper_data_di
 
 def test_generate_keeps_equal_denotations_in_distinct_nonterminals(gripper_data_dir) -> None:
     planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
-    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator)
+    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator).pack()
 
     result = _generate("((c_1 (c_top))(c_0 (c_and c_1 c_1)))", [state], planning_domain, task_context, 3)
 
@@ -179,7 +179,7 @@ def test_generate_keeps_equal_denotations_in_distinct_nonterminals(gripper_data_
 
 def test_generate_computes_substitution_closure_independent_of_rule_order(gripper_data_dir) -> None:
     planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
-    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator)
+    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator).pack()
 
     result = _generate("((c_0 (c_1))(c_1 (c_2))(c_2 (c_top)))", [state], planning_domain, task_context, 1)
 
@@ -191,7 +191,7 @@ def test_generate_computes_substitution_closure_independent_of_rule_order(grippe
 
 def test_generate_deduplicates_commutative_candidates(gripper_data_dir) -> None:
     planning_domain, search_context, task_context = _make_gripper_context(gripper_data_dir)
-    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator)
+    state = search_context.state_repository.get_initial_state(search_context.axiom_evaluator).pack()
 
     result = _generate(
         '((c_0 (c_atomic_state "ball"))(c_0 (c_atomic_state "at-robby"))(c_0 (c_and c_0 c_0)))',

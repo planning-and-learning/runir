@@ -13,13 +13,13 @@ namespace ygg::serialization
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::datasets::StateGraphVertexLabel<Kind>>)
 {
-    ar.field("state", [](const auto& value) -> decltype(auto) { return (value.state); });
+    ar.field("state", [](const auto& value) { return value.state.unpack(); });
 }
 
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::datasets::AnnotatedStateGraphVertexLabel<Kind>>)
 {
-    ar.field("state", [](const auto& value) -> decltype(auto) { return (value.state); });
+    ar.field("state", [](const auto& value) { return value.state.unpack(); });
     ar.field("goal_distance", [](const auto& value) -> decltype(auto) { return (value.goal_distance); });
     ar.field("is_initial", [](const auto& value) -> decltype(auto) { return (value.is_initial); });
     ar.field("is_goal", [](const auto& value) -> decltype(auto) { return (value.is_goal); });

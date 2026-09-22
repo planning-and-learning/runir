@@ -61,14 +61,14 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
     };
 
     const auto& search_context = *task_context->search_context;
-    const auto initial_node = search_context.successor_generator->get_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
+    const auto initial_node = search_context.successor_generator->get_packed_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
     auto proof = detail::ModuleProgramProofBuilder<Kind>(std::move(task_context), program, options.classifier);
     auto expansions = std::deque<Expansion> {};
     auto open = std::vector<Work> {};
     auto choices = std::vector<ChoiceFrame> {};
     auto visited = graphs::VertexIndexList {};
     auto selected_edges = std::vector<std::tuple<graphs::VertexIndex, graphs::VertexIndex, ygg::uint_t>> {};
-    auto plan_steps = tyr::planning::LabeledNodeList<Kind> {};
+    auto plan_steps = tyr::planning::PackedLabeledNodeList<Kind> {};
     auto failed = false;
     auto num_choice_points = ygg::uint_t(0);
     auto num_binding_attempts = ygg::uint_t(0);
@@ -243,7 +243,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
         {
             if (!options.universal)
             {
-                proof.set_plan(tyr::planning::Plan<Kind>(initial_node, std::move(plan_steps)));
+                proof.set_plan(tyr::planning::PackedPlan<Kind>(initial_node, std::move(plan_steps)));
                 return finish(Status::SUCCESS, choice_depth(*initial_vertex));
             }
             continue;

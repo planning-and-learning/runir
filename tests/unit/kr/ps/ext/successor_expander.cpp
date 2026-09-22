@@ -299,7 +299,7 @@ void expect_lazy_do_successors()
             std::ranges::reverse(reversed);
             EXPECT_TRUE(std::ranges::equal(expander.steps(initial, successors), reversed, same_step));
 
-            const auto subset = tyr::planning::LabeledNodeList<Kind> { steps.front().plan_suffix.front() };
+            const auto subset = tyr::planning::LabeledNodeList<Kind> { steps.front().plan_suffix.front().unpack() };
             const auto restricted = expander.steps(initial, subset);
             ASSERT_EQ(restricted.size(), 1);
             EXPECT_TRUE(same_step(restricted.front(), steps.front()));
@@ -1101,7 +1101,7 @@ void expect_query_action_contracts()
         for (const auto& step : steps)
         {
             ASSERT_EQ(step.plan_suffix.size(), 1);
-            const auto& candidate = step.plan_suffix.front();
+            const auto candidate = step.plan_suffix.front().unpack();
             EXPECT_EQ(candidate.label.get_objects()[0].get_name(), "start");
             EXPECT_EQ(step.get_target().get_call_stack().get_memory_state().get_name(), "target");
             const auto matching = expander.matching_rule(initial, candidate.label, candidate.node.get_state());
@@ -1111,7 +1111,7 @@ void expect_query_action_contracts()
             ASSERT_TRUE(applied);
             EXPECT_EQ(applied->get_target().get_index(), step.get_target().get_index());
         }
-        auto supplied = tyr::planning::LabeledNodeList<Kind> { steps.back().plan_suffix.front() };
+        auto supplied = tyr::planning::LabeledNodeList<Kind> { steps.back().plan_suffix.front().unpack() };
         const auto subset = expander.steps(initial, supplied);
         ASSERT_EQ(subset.size(), 1);
         EXPECT_EQ(subset.front().get_target().get_index(), steps.back().get_target().get_index());
@@ -1310,6 +1310,7 @@ void expect_eager_lazy_expansion_counts()
 )", body);
         auto counts = std::vector<size_t> {};
         auto state_counts = std::vector<size_t> {};
+        auto binding_counts = std::vector<size_t> {};
         auto durations = std::vector<long long> {};
         auto first_bindings = std::vector<std::vector<std::string>> {};
         for (const auto eager : { true, false })
@@ -1330,6 +1331,14 @@ void expect_eager_lazy_expansion_counts()
             durations.push_back(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - started).count());
             counts.push_back(steps.size());
             state_counts.push_back(task_context->search_context->state_repository->num_states() - 1);
+            if constexpr (std::same_as<Kind, tyr::LiftedTag>)
+            {
+                const auto& task = task_context->search_context->task;
+                size_t count = 0;
+                for (const auto action : task->get_domain().get_domain().get_actions())
+                    count += task->get_repository()->size(action.get_index());
+                binding_counts.push_back(count);
+            }
             ASSERT_FALSE(steps.empty());
             EXPECT_EQ(steps.front().status, ext::detail::ModuleProgramOutcome::APPLIED);
             auto first = std::vector<std::string> {};
@@ -1351,10 +1360,19 @@ void expect_eager_lazy_expansion_counts()
         else
         {
             EXPECT_LT(state_counts[1], state_counts[0]);
+            if constexpr (std::same_as<Kind, tyr::LiftedTag>)
+            {
+                EXPECT_LT(binding_counts[1], binding_counts[0]);
+            }
             if (std::string(rule_kind) == "do")
             {
                 EXPECT_EQ(state_counts[0], 4);
                 EXPECT_EQ(state_counts[1], 1);
+                if constexpr (std::same_as<Kind, tyr::LiftedTag>)
+                {
+                    EXPECT_EQ(binding_counts[0], 4);
+                    EXPECT_EQ(binding_counts[1], 1);
+                }
             }
         }
         std::cout << "Expansion comparison " << (std::same_as<Kind, tyr::GroundTag> ? "ground " : "lifted ") << rule_kind

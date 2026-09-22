@@ -42,13 +42,13 @@ void bind_state_graph_for_kind(nb::module_& m, const char* class_prefix, const c
     using Result = StateGraphGenerationResult<Kind>;
 
     auto vertex_label = nb::class_<VertexLabel>(m, (std::string(class_prefix) + "StateGraphVertexLabel").c_str())  //
-                            .def_ro("state", &VertexLabel::state);
+                            .def_ro("state", &VertexLabel::state, nb::rv_policy::copy);
     ygg::add_print(vertex_label);
     ygg::add_comparison(vertex_label);
     ygg::add_hash(vertex_label);
 
     auto annotated_vertex_label = nb::class_<AnnotatedVertexLabel>(m, (std::string(class_prefix) + "AnnotatedStateGraphVertexLabel").c_str())  //
-                                      .def_ro("state", &AnnotatedVertexLabel::state)
+                                      .def_ro("state", &AnnotatedVertexLabel::state, nb::rv_policy::copy)
                                       .def_ro("goal_distance", &AnnotatedVertexLabel::goal_distance)
                                       .def_ro("is_initial", &AnnotatedVertexLabel::is_initial)
                                       .def_ro("is_goal", &AnnotatedVertexLabel::is_goal)

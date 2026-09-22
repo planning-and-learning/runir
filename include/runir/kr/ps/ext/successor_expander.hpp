@@ -95,7 +95,7 @@ public:
     void load_steps_until(ExecutionStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
     {
         auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
-        collect_steps<EagerExpansionPolicy, LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>>(context, generated_successors<EagerExpansionPolicy>(), stop, out_steps);
+        collect_steps<EagerExpansionPolicy, LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>>(context, generated_successors(), stop, out_steps);
     }
 
     std::vector<Step> choose_steps(ExecutionStateView<Kind> state)
@@ -120,7 +120,7 @@ public:
     void choose_steps_until(ExecutionStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
     {
         auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
-        collect_steps<EagerExpansionPolicy, ChooseTag<runir::kr::dl::ConceptTag>, ChooseTag<runir::kr::dl::RoleTag>>(context, generated_successors<EagerExpansionPolicy>(), stop, out_steps);
+        collect_steps<EagerExpansionPolicy, ChooseTag<runir::kr::dl::ConceptTag>, ChooseTag<runir::kr::dl::RoleTag>>(context, generated_successors(), stop, out_steps);
     }
 
     std::vector<LabeledNode> labeled_successors(ExecutionStateView<Kind> state)
@@ -175,7 +175,7 @@ public:
     void control_steps(ExecutionStateView<Kind> state, std::vector<Step>& out_steps)
     {
         auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
-        collect_steps<EagerExpansionPolicy, DoTag, ActionTag, CallTag, SketchTag>(context, generated_successors<EagerExpansionPolicy>(), [] { return false; }, out_steps);
+        collect_steps<EagerExpansionPolicy, DoTag, ActionTag, CallTag, SketchTag>(context, generated_successors(), [] { return false; }, out_steps);
         if (out_steps.empty())
             out_steps.push_back(fallback(std::move(context)));
     }
@@ -204,7 +204,7 @@ public:
     {
         auto context = EvaluationContext<Kind>(m_task_context->execution_repository.get(), &m_task_context->execution_builder, m_program, state);
         collect_steps<Policy, LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>, ChooseTag<runir::kr::dl::ConceptTag>,
-                      ChooseTag<runir::kr::dl::RoleTag>, DoTag, ActionTag, CallTag, SketchTag>(context, generated_successors<Policy>(), stop, out_steps);
+                      ChooseTag<runir::kr::dl::RoleTag>, DoTag, ActionTag, CallTag, SketchTag>(context, generated_successors(), stop, out_steps);
         if (!stop() && out_steps.empty())
             out_steps.push_back(fallback(std::move(context)));
     }
@@ -271,98 +271,76 @@ private:
         };
     }
 
-    template<ExpansionPolicy Policy>
     auto generated_successors()
     {
         m_all_successors_ready = false;
-        m_all_action_bindings_ready = false;
         m_all_successors.clear();
         return [this](auto&& emit, auto&& stop, auto rule, auto&&... arguments)
-        { this->template for_each_successor<Policy>(rule, std::forward<decltype(arguments)>(arguments)..., emit, stop); };
+        { for_each_successor(rule, std::forward<decltype(arguments)>(arguments)..., emit, stop); };
     }
 
-    template<ExpansionPolicy Policy>
+    void for_each_cached_successor(auto&& emit, auto&& stop)
+    {
+        for (const auto& successor : m_all_successors)
+        {
+            if (stop())
+                return;
+            emit(successor.unpack());
+        }
+    }
+
     void for_each_successor(RuleView<DoTag> rule, const EvaluationContext<Kind>& context, const auto& denotations, auto&& emit, auto&& stop)
     {
         if (stop() || std::ranges::any_of(denotations, [](const auto& denotation) { return denotation.get().count() == 0; }))
             return;
         if (m_all_successors_ready)
         {
-            supplied_successors(m_all_successors)(emit, stop);
+            for_each_cached_successor(emit, stop);
             return;
         }
 
         auto& search_context = *m_task_context->search_context;
         auto& generator = *search_context.successor_generator;
-        if constexpr (std::same_as<Policy, LazyExpansionPolicy>)
-        {
-            if (m_all_action_bindings_ready)
-            {
-                const auto node = generator.get_node(*search_context.state_repository, context.get_state().get_index());
-                for (const auto binding : m_all_action_bindings)
-                {
-                    if (stop())
-                        return;
-                    if (detail::action_matches_do_arguments(rule, binding, denotations))
-                        emit(LabeledNode { binding, generator.get_successor_node(node, binding, *search_context.state_repository, *search_context.axiom_evaluator) });
-                }
-                return;
-            }
-        }
         for (const auto action : search_context.task->get_task().get_domain().get_actions())
         {
             if (action.get_name().str() != rule.get_action_name())
                 continue;
             const auto node = generator.get_node(*search_context.state_repository, context.get_state().get_index());
-            generator.get_applicable_action_bindings(node, action, m_action_bindings);
-            for (const auto binding : m_action_bindings)
+            generator.for_each_applicable_action_binding(node, action, [&](auto binding)
             {
                 if (stop())
-                    return;
-                if (!detail::action_matches_do_arguments(rule, binding, denotations))
-                    continue;
-                emit(LabeledNode { binding,
-                                   generator.get_successor_node(node, binding, *search_context.state_repository, *search_context.axiom_evaluator) });
-            }
+                    return false;
+                if (detail::action_matches_do_arguments(rule, binding, denotations))
+                    emit(LabeledNode { binding, generator.get_successor_node(node, binding, *search_context.state_repository, *search_context.axiom_evaluator) });
+                return !stop();
+            });
             return;
         }
     }
 
-    template<ExpansionPolicy Policy>
     void for_each_successor(RuleView<SketchTag>, const EvaluationContext<Kind>& context, auto&& emit, auto&& stop)
     {
         if (stop())
             return;
+        if (m_all_successors_ready)
+        {
+            for_each_cached_successor(emit, stop);
+            return;
+        }
         auto& search_context = *m_task_context->search_context;
         auto& generator = *search_context.successor_generator;
-        if constexpr (std::same_as<Policy, LazyExpansionPolicy>)
-        {
-            const auto node = generator.get_node(*search_context.state_repository, context.get_state().get_index());
-            if (!m_all_action_bindings_ready)
-            {
-                generator.get_applicable_action_bindings(node, m_all_action_bindings);
-                m_all_action_bindings_ready = true;
-            }
-            for (const auto binding : m_all_action_bindings)
+        const auto node = generator.get_node(*search_context.state_repository, context.get_state().get_index());
+        m_all_successors_ready = generator.for_each_labeled_successor_node(node, *search_context.state_repository, *search_context.axiom_evaluator,
+            [&](LabeledNode successor)
             {
                 if (stop())
-                    return;
-                emit(LabeledNode { binding, generator.get_successor_node(node, binding, *search_context.state_repository, *search_context.axiom_evaluator) });
-            }
-        }
-        else
-        {
-            if (!m_all_successors_ready)
-            {
-                const auto node = generator.get_node(*search_context.state_repository, context.get_state().get_index());
-                generator.get_labeled_successor_nodes(node, *search_context.state_repository, *search_context.axiom_evaluator, m_all_successors);
-                m_all_successors_ready = true;
-            }
-            supplied_successors(m_all_successors)(emit, stop);
-        }
+                    return false;
+                m_all_successors.push_back(successor.pack());
+                emit(successor);
+                return !stop();
+            });
     }
 
-    template<ExpansionPolicy Policy>
     void for_each_successor(RuleView<ActionTag> rule,
                             const EvaluationContext<Kind>& context,
                             const ygg::database::Relation<>& query,
@@ -600,7 +578,7 @@ private:
     Step planning_step(EvaluationContext<Kind> context, const LabeledNode& successor, RuleVariantView rule)
     {
         auto step = applied(std::move(context), rule, ExecutionPhase::EXTERNAL);
-        step.plan_suffix.push_back(successor);
+        step.plan_suffix.push_back(successor.pack());
         step.state_transition = runir::datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) };
         return step;
     }
@@ -639,10 +617,7 @@ private:
     EvaluationEnvironment<Kind> m_environment;
     detail::ActionRuleEvaluator<Kind> m_action_rule_evaluator;
     std::vector<ygg::uint_t> m_action_tuple;
-    std::vector<tyr::formalism::planning::ActionBindingView> m_action_bindings;
-    std::vector<tyr::formalism::planning::ActionBindingView> m_all_action_bindings;
-    bool m_all_action_bindings_ready = false;
-    std::vector<LabeledNode> m_all_successors;
+    tyr::planning::PackedLabeledNodeList<Kind> m_all_successors;
     bool m_all_successors_ready = false;
 };
 

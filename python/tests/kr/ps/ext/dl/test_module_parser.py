@@ -26,6 +26,7 @@ from pyrunir.kr.uns.dl import parse_classifier
 from pyyggdrasil.execution import ExecutionContext
 from pypddl.formalism import ParserOptions
 from pytyr.formalism.planning import ActionBinding, LiftedPlanningTask, Parser, PlanningDomain
+from pytyr.planning.ground import PackedPlan as GroundPackedPlan
 from pytyr.planning.ground import Task as GroundTask
 from pytyr.planning.lifted import GroundTaskInstantiationOptions, Task
 
@@ -319,7 +320,7 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     search_result = ext.find_ground_solution(task_context, program, search_options)
     assert search_result.status == ext.ModuleProgramProofStatus.SUCCESS
     assert search_result.is_successful()
-    assert search_result.plan is not None
+    assert isinstance(search_result.plan, GroundPackedPlan)
     assert search_result.plan.get_length() == 4
     assert search_result.choice_depth == 0
     assert search_result.num_choice_points == 0
@@ -378,6 +379,26 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     assert len(proof.deadend_states) == 0
     assert len(proof.open_states) == 0
     assert len(proof.cycle) > 0
+
+
+def test_packed_solution_plan_owns_states_after_result_release() -> None:
+    def solve():
+        task_context, planning_domain, _ground_task = _ground_context_and_domain()
+        program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(
+            planning_domain, task_context.domain_context.ext_repository
+        )
+        result = ext.find_ground_solution(task_context, program, ext.GroundModuleProgramSearchOptions())
+        assert result.is_successful()
+        plan = result.plan
+        assert isinstance(plan, GroundPackedPlan)
+        return plan, str(plan), str(plan.get_labeled_succ_nodes()[-1].node.get_state().unpack())
+
+    plan, text, final_state_text = solve()
+    gc.collect()
+    assert plan.get_length() == 4
+    assert str(plan) == text
+    assert str(plan.get_labeled_succ_nodes()[-1].node.get_state().unpack()) == final_state_text
+    assert plan.unpack().get_length() == 4
 
 
 @pytest.mark.parametrize("case", EXECUTION_CASES, ids=[case["name"] for case in EXECUTION_CASES])

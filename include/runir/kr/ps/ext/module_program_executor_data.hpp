@@ -61,7 +61,7 @@ struct ModuleProgramProofResults
     ModuleProgramProofStatus status = ModuleProgramProofStatus::SUCCESS;
     runir::kr::TaskContextPtr<Kind> task_context_owner;
     std::shared_ptr<ModuleProgramProofGraph<Kind>> graph;
-    std::optional<tyr::planning::Plan<Kind>> plan = std::nullopt;
+    std::optional<tyr::planning::PackedPlan<Kind>> plan = std::nullopt;
     runir::graphs::VertexIndexList deadend_states;
     runir::graphs::VertexIndexList open_states;
     runir::graphs::VertexIndexList cycle;

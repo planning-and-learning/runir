@@ -182,14 +182,14 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(const StateGraphEventHandler
     const auto repositories = events.collect_repositories();
     auto builder = StateGraphBuilder<Kind> {};
     auto locator_to_vertex = ygg::UnorderedMap<StateLocator<Kind>, graphs::VertexIndex> {};
-    auto state_to_vertex = ygg::UnorderedMap<tyr::planning::StateView<Kind>, graphs::VertexIndex> {};
+    auto state_to_vertex = ygg::UnorderedMap<tyr::planning::PackedStateView<Kind>, graphs::VertexIndex> {};
     auto edges = ygg::UnorderedSet<StateGraphEdgeKey> {};
     auto get_or_create_vertex = [&](StateLocator<Kind> locator)
     {
         if (const auto it = locator_to_vertex.find(locator); it != locator_to_vertex.end())
             return it->second;
 
-        auto state = materialize_state(locator, repositories, target_repository, axiom_evaluator);
+        auto state = materialize_state(locator, repositories, target_repository, axiom_evaluator).pack();
         auto vertex = graphs::VertexIndex {};
         if (const auto it = state_to_vertex.find(state); it != state_to_vertex.end())
             vertex = it->second;

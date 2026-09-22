@@ -59,7 +59,7 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
         const auto& goal_label = goal_result.graph->get_vertex(vertex).get_property();
         if (!goal_label.is_goal)
             continue;
-        auto context = kr::dl::semantics::EvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(goal_label.state,
+        auto context = kr::dl::semantics::EvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(goal_label.state.unpack(),
                                                                                             task_context->dl_builder,
                                                                                             *task_context->dl_denotation_repository);
         EXPECT_TRUE(kr::uns::classify(goal_classifier, context));

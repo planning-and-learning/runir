@@ -18,13 +18,13 @@ namespace runir::kr::ps::base
 template<tyr::TaskKind Kind>
 struct SketchProofVertexLabel : ygg::comparison::Mixin<SketchProofVertexLabel<Kind>>
 {
-    tyr::planning::StateView<Kind> state;
+    tyr::planning::PackedStateView<Kind> state;
     bool is_initial = false;
     bool is_goal = false;
     bool is_alive = false;
     bool is_unsolvable = false;
 
-    SketchProofVertexLabel(tyr::planning::StateView<Kind> state_, bool is_initial_, bool is_goal_, bool is_alive_, bool is_unsolvable_) noexcept :
+    SketchProofVertexLabel(tyr::planning::PackedStateView<Kind> state_, bool is_initial_, bool is_goal_, bool is_alive_, bool is_unsolvable_) noexcept :
         state(std::move(state_)),
         is_initial(is_initial_),
         is_goal(is_goal_),

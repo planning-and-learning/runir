@@ -70,7 +70,7 @@ public:
     ExecutionStateView<Kind> target;
     std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
     std::optional<RuleVariantView> rule = std::nullopt;
-    tyr::planning::LabeledNodeList<Kind> plan_suffix;
+    tyr::planning::PackedLabeledNodeList<Kind> plan_suffix;
 
     ModuleProgramStep(ModuleProgramOutcome status_, ExecutionStateView<Kind> target_, runir::kr::TaskContextPtr<Kind> task_context) :
         m_task_context(std::move(task_context)),

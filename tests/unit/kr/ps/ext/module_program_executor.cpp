@@ -322,7 +322,7 @@ void check_choice_execution()
         {
             ASSERT_TRUE(result.plan);
             EXPECT_EQ(result.plan->get_length(), 2);
-            EXPECT_TRUE(expander.is_goal(result.plan->get_labeled_succ_nodes().back().node.get_state()));
+            EXPECT_TRUE(expander.is_goal(result.plan->get_labeled_succ_nodes().back().node.get_state().unpack()));
             EXPECT_EQ(result.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
         }
 

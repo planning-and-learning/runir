@@ -5,6 +5,7 @@ from collections import Counter
 from fixture_utils import read_fixture
 from pyrunir.datasets import GroundTaskSearchContext
 from pytyr.formalism.planning import ActionBinding, PlanningDomain
+from pytyr.planning.ground import PackedState
 
 from pyrunir.kr import DomainContext, GroundTaskContext
 from pyrunir.kr.dl.base.semantics import (
@@ -47,18 +48,24 @@ def test_base_proof_properties_keep_the_graph_and_sketch_alive(
     graph = proof.graph
     references = sys.getrefcount(graph)
     vertex = graph.get_vertex_property(next(iter(graph.get_vertex_indices())))
+    assert isinstance(vertex.state, PackedState)
+    assert vertex.state.unpack().pack() == vertex.state
     assert sys.getrefcount(graph) > references
+    references = sys.getrefcount(vertex)
+    state = vertex.state
+    assert sys.getrefcount(vertex) == references
+    assert state == vertex.state
     references = sys.getrefcount(graph)
     edge = graph.get_edge_property(next(iter(graph.get_edge_indices())))
     assert sys.getrefcount(graph) > references
     rule = edge.rule
     action = edge.transition.action
-    expected = (str(rule), str(action), str(vertex.state))
+    expected = (str(rule), str(action), str(vertex.state.unpack()))
 
     del edge, graph, proof, sketch, context
     gc.collect()
 
-    assert (str(rule), str(action), str(vertex.state)) == expected
+    assert (str(rule), str(action), str(vertex.state.unpack())) == expected
 
 
 def test_base_sketch_exposes_declared_features(gripper_planning_domain: PlanningDomain) -> None:

@@ -247,7 +247,7 @@ std::unique_ptr<StateGraph<Kind>> build_state_graph(TaskSearchContext<Kind>& con
     {
         if (!concrete_states[vertex])
             throw std::logic_error("Equivalence graph construction left a hole in the state vertex indices.");
-        auto state = detail::materialize_state(*concrete_states[vertex], repositories, *context.state_repository, *context.axiom_evaluator);
+        auto state = detail::materialize_state(*concrete_states[vertex], repositories, *context.state_repository, *context.axiom_evaluator).pack();
         [[maybe_unused]] const auto added = state_builder.add_vertex(StateGraphVertexLabel<Kind> { std::move(state) });
         assert(added == vertex);
         state_to_equivalence.push_back(get_or_create_equivalence_vertex(get_assignment(*concrete_states[vertex]).representative));

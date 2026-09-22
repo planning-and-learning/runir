@@ -102,7 +102,6 @@ public:
         return matching_rule_until(context, target_state, [] { return false; });
     }
 
-private:
     std::optional<RuleView> matching_rule_until(EvaluationContext<Kind>& context, const tyr::planning::StateView<Kind>& target_state, auto&& stop)
     {
         if (context.get_state().get_index() == target_state.get_index())

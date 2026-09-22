@@ -147,7 +147,7 @@ template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 class Pruning
 {
 private:
-    const std::vector<tyr::planning::StateView<Kind>>& m_states;
+    const std::vector<tyr::planning::PackedStateView<Kind>>& m_states;
     runir::kr::dl::semantics::Builder m_builder;
     runir::kr::dl::semantics::DenotationRepository& m_denotation_repository;
     std::vector<runir::kr::dl::semantics::DenotationCaches<Family>> m_denotation_caches;
@@ -155,7 +155,7 @@ private:
     SeenDenotations<Family> m_seen_denotations;
 
 public:
-    Pruning(const std::vector<tyr::planning::StateView<Kind>>& states, runir::kr::dl::semantics::DenotationRepository& denotation_repository) :
+    Pruning(const std::vector<tyr::planning::PackedStateView<Kind>>& states, runir::kr::dl::semantics::DenotationRepository& denotation_repository) :
         m_states(states),
         m_builder(),
         m_denotation_repository(denotation_repository),
@@ -177,7 +177,7 @@ public:
 
         for (size_t i = 0; i < m_states.size(); ++i)
         {
-            auto context = runir::kr::dl::semantics::EvaluationContext<Family, Kind>(m_states[i], m_builder, m_denotation_repository);
+            auto context = runir::kr::dl::semantics::EvaluationContext<Family, Kind>(m_states[i].unpack(), m_builder, m_denotation_repository);
             seen.scratch.push_back(runir::kr::dl::semantics::evaluate(constructor, context, m_workspace, m_denotation_caches[i]));
         }
 
@@ -197,7 +197,7 @@ class Generator
 {
 private:
     FamilyGrammarView<Family> m_grammar;
-    const std::vector<tyr::planning::StateView<Kind>>& m_states;
+    const std::vector<tyr::planning::PackedStateView<Kind>>& m_states;
     runir::kr::dl::ConstructorRepositoryFor<Family>& m_output_repository;
     const GenerateOptions& m_options;
     runir::kr::dl::Builder<Family> m_builder;
@@ -857,7 +857,7 @@ private:
 
 public:
     Generator(FamilyGrammarView<Family> grammar,
-              const std::vector<tyr::planning::StateView<Kind>>& states,
+              const std::vector<tyr::planning::PackedStateView<Kind>>& states,
               runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,
               runir::kr::dl::semantics::DenotationRepository& denotation_repository,
               const GenerateOptions& options) :
@@ -905,7 +905,7 @@ public:
 }  // namespace
 template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
-                                    const std::vector<tyr::planning::StateView<Kind>>& states,
+                                    const std::vector<tyr::planning::PackedStateView<Kind>>& states,
                                     runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,
                                     runir::kr::dl::semantics::DenotationRepository& denotation_repository,
                                     const GenerateOptions& options)
@@ -916,10 +916,10 @@ GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
 
     for (const auto& state : states)
     {
-        if (state.get_repository() != planning_repository
-            && state.get_state_repository()->get_task()->get_domain().get_repository() != planning_repository)
+        const auto& task = state.get_state_repository()->get_task();
+        if (task->get_repository() != planning_repository && task->get_domain().get_repository() != planning_repository)
             throw std::invalid_argument("generate requires states and output repository for the same planning domain");
-        if (state.get_repository().get() != &denotation_repository.get_formalism_repository())
+        if (task->get_repository().get() != &denotation_repository.get_formalism_repository())
             throw std::invalid_argument("generate requires states and denotation repository for the same planning task");
     }
 
@@ -928,14 +928,14 @@ GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
 
 template GenerateResultsFor<runir::kr::BaseFamilyTag>
 generate<runir::kr::BaseFamilyTag, tyr::GroundTag>(FamilyGrammarView<runir::kr::BaseFamilyTag>,
-                                                   const std::vector<tyr::planning::StateView<tyr::GroundTag>>&,
+                                                   const std::vector<tyr::planning::PackedStateView<tyr::GroundTag>>&,
                                                    runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>&,
                                                    runir::kr::dl::semantics::DenotationRepository&,
                                                    const GenerateOptions&);
 
 template GenerateResultsFor<runir::kr::BaseFamilyTag>
 generate<runir::kr::BaseFamilyTag, tyr::LiftedTag>(FamilyGrammarView<runir::kr::BaseFamilyTag>,
-                                                   const std::vector<tyr::planning::StateView<tyr::LiftedTag>>&,
+                                                   const std::vector<tyr::planning::PackedStateView<tyr::LiftedTag>>&,
                                                    runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>&,
                                                    runir::kr::dl::semantics::DenotationRepository&,
                                                    const GenerateOptions&);

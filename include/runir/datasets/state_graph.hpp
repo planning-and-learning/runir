@@ -41,9 +41,9 @@ namespace runir::datasets
 template<tyr::TaskKind Kind>
 struct StateGraphVertexLabel : ygg::comparison::Mixin<StateGraphVertexLabel<Kind>>
 {
-    tyr::planning::StateView<Kind> state;
+    tyr::planning::PackedStateView<Kind> state;
 
-    explicit StateGraphVertexLabel(tyr::planning::StateView<Kind> state_) noexcept : state(std::move(state_)) {}
+    explicit StateGraphVertexLabel(tyr::planning::PackedStateView<Kind> state_) noexcept : state(std::move(state_)) {}
 
     auto cista_members() noexcept { return std::tie(state); }
     auto identifying_members() const noexcept { return std::tie(state); }
@@ -52,14 +52,14 @@ struct StateGraphVertexLabel : ygg::comparison::Mixin<StateGraphVertexLabel<Kind
 template<tyr::TaskKind Kind>
 struct AnnotatedStateGraphVertexLabel : ygg::comparison::Mixin<AnnotatedStateGraphVertexLabel<Kind>>
 {
-    tyr::planning::StateView<Kind> state;
+    tyr::planning::PackedStateView<Kind> state;
     ygg::float_t goal_distance = std::numeric_limits<ygg::float_t>::infinity();
     bool is_initial = false;
     bool is_goal = false;
     bool is_alive = false;
     bool is_unsolvable = false;
 
-    AnnotatedStateGraphVertexLabel(tyr::planning::StateView<Kind> state_,
+    AnnotatedStateGraphVertexLabel(tyr::planning::PackedStateView<Kind> state_,
                                    ygg::float_t goal_distance_,
                                    bool is_initial_,
                                    bool is_goal_,
