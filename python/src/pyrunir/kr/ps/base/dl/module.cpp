@@ -13,7 +13,7 @@ void bind_module_definitions(nb::module_& m, RepositoryBinding& repository)
     bind_numerical_feature(m, repository);
     runir::kr::ps::base::dl::bind_condition(m, repository);
     runir::kr::ps::base::dl::bind_effect(m, repository);
-    bind_evaluation_contexts(m);
+    bind_transition_evaluation_contexts(m);
     bind_parser(m);
     bind_sketch_factory(m);
     bind_structural_termination(m);

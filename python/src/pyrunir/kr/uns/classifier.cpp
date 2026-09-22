@@ -1,7 +1,7 @@
 #include "bindings.hpp"
 
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/uns/evaluation_context.hpp>
+#include <runir/kr/dl/semantics/uns/state_evaluation_context.hpp>
 #include <runir/kr/uns/classifier_index.hpp>
 #include <runir/kr/uns/classifier_view.hpp>
 #include <runir/kr/uns/classify.hpp>
@@ -35,13 +35,13 @@ void bind_classifier(nb::module_& m)
 
     m.def(
         "classify",
-        [](ClassifierView classifier, runir::kr::dl::semantics::EvaluationContext<Family, tyr::GroundTag>& context)
+        [](const ClassifierView& classifier, runir::kr::dl::semantics::StateEvaluationContext<Family, tyr::GroundTag>& context)
         { return runir::kr::uns::classify(classifier, context); },
         "classifier"_a,
         "context"_a);
     m.def(
         "classify",
-        [](ClassifierView classifier, runir::kr::dl::semantics::EvaluationContext<Family, tyr::LiftedTag>& context)
+        [](const ClassifierView& classifier, runir::kr::dl::semantics::StateEvaluationContext<Family, tyr::LiftedTag>& context)
         { return runir::kr::uns::classify(classifier, context); },
         "classifier"_a,
         "context"_a);

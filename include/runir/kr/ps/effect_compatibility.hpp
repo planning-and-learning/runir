@@ -10,23 +10,23 @@
 namespace runir::kr::ps
 {
 
-template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
-concept IsEffectVariantView = IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-                              && requires(ygg::View<ygg::Index<EffectVariant<Family>>, StorageContext> effect, EvaluationContext& context) {
+template<typename Family, typename LanguageTag, typename Context, typename StorageContext>
+concept IsEffectVariantView = IsTransitionEvaluationContext<Family, LanguageTag, Context>
+                              && requires(ygg::View<ygg::Index<EffectVariant<Family>>, StorageContext> effect, Context& context) {
                                      { runir::kr::ps::is_compatible_with(effect, context) } -> std::same_as<bool>;
                                  };
 
-template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
+template<typename Family, typename LanguageTag, typename Context, typename StorageContext>
 concept IsConcreteEffectVariantView =
-    IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-    && requires(ygg::View<ygg::Index<ConcreteEffectVariant<Family, LanguageTag>>, StorageContext> effect, EvaluationContext& context) {
+    IsTransitionEvaluationContext<Family, LanguageTag, Context>
+    && requires(ygg::View<ygg::Index<ConcreteEffectVariant<Family, LanguageTag>>, StorageContext> effect, Context& context) {
            { runir::kr::ps::is_compatible_with(effect, context) } -> std::same_as<bool>;
        };
 
-template<typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename EvaluationContext, typename StorageContext>
+template<typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename Context, typename StorageContext>
 concept IsConcreteEffectView =
-    IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-    && requires(ygg::View<ygg::Index<ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>>, StorageContext> effect, EvaluationContext& context) {
+    IsTransitionEvaluationContext<Family, LanguageTag, Context>
+    && requires(ygg::View<ygg::Index<ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>>, StorageContext> effect, Context& context) {
            { runir::kr::ps::is_compatible_with(effect, context) } -> std::same_as<bool>;
        };
 

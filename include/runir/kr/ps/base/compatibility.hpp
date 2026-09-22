@@ -12,8 +12,8 @@
 namespace runir::kr::ps::base
 {
 
-template<typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> rule, EvaluationContext& context)
+template<typename C, typename Context>
+bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> rule, Context& context)
 {
     for (auto condition : rule.get_conditions())
         if (!runir::kr::ps::is_compatible_with(condition, context))
@@ -26,8 +26,8 @@ bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::Base
     return true;
 }
 
-template<typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> sketch, EvaluationContext& context)
+template<typename C, typename Context>
+bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> sketch, Context& context)
 {
     for (auto rule : sketch.get_rules())
         if (runir::kr::ps::base::is_compatible_with(rule, context))

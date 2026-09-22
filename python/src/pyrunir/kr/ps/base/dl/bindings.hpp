@@ -10,7 +10,7 @@ void bind_boolean_feature(nb::module_& m, RepositoryBinding& repository);
 void bind_numerical_feature(nb::module_& m, RepositoryBinding& repository);
 void bind_condition(nb::module_& m, RepositoryBinding& repository);
 void bind_effect(nb::module_& m, RepositoryBinding& repository);
-void bind_evaluation_contexts(nb::module_& m);
+void bind_transition_evaluation_contexts(nb::module_& m);
 void bind_parser(nb::module_& m);
 void bind_sketch_factory(nb::module_& m);
 void bind_structural_termination(nb::module_& m);

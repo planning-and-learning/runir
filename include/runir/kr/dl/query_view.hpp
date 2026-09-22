@@ -51,6 +51,12 @@ public:
         return make_view(get_data().variant, *m_context);
     }
 
+    bool is_static() const noexcept
+        requires std::same_as<Tag, void>
+    {
+        return get_data().is_static;
+    }
+
     auto get_arg() const noexcept
         requires(std::same_as<Tag, runir::kr::dl::QueryConceptTag> || std::same_as<Tag, runir::kr::dl::QueryRoleTag>
                  || std::same_as<Tag, runir::kr::dl::QueryProjectTag> || std::same_as<Tag, runir::kr::dl::QueryRenameTag>

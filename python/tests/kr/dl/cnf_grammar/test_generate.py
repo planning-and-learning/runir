@@ -38,8 +38,10 @@ def _generate(grammar_description, states, planning_domain, task_context, max_sy
 
 def _concept_vector(concept, states, task_context):
     result = []
+    cache = semantics.DenotationCaches()
     for state in states:
-        context = semantics.GroundEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository)
+        cache.clear(False)
+        context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository, cache)
         result.append(tuple(sorted(object_.get_name() for object_ in concept.evaluate(context))))
     return tuple(result)
 
@@ -61,11 +63,11 @@ def test_generate_ground_and_cached_evaluation(gripper_data_dir) -> None:
     assert result.statistics.num_kept == 4
 
     cache = semantics.DenotationCaches()
-    context = semantics.GroundEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository)
-    assert len(list(result.concepts[0].evaluate(context, cache))) == 6
-    assert len(list(result.roles[0].evaluate(context, cache))) == 36
-    assert result.booleans[0].evaluate(context, cache).get() is True
-    assert result.numericals[0].evaluate(context, cache).get() == 6
+    context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository, cache)
+    assert len(list(result.concepts[0].evaluate(context))) == 6
+    assert len(list(result.roles[0].evaluate(context))) == 36
+    assert result.booleans[0].evaluate(context).get() is True
+    assert result.numericals[0].evaluate(context).get() == 6
 
 
 def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_data_dir) -> None:
@@ -88,7 +90,8 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
 
     denotation_repository = task_context.dl_denotation_repository
     result = cnf_grammar.generate_lifted(cnf, [state], output_repository, denotation_repository, options)
-    context = semantics.LiftedEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository)
+    cache = semantics.DenotationCaches()
+    context = semantics.LiftedStateEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository, cache)
     assert len(list(result.concepts[0].evaluate(context))) == 6
     assert result.numericals[0].evaluate(context).get() == 6
 
@@ -127,13 +130,14 @@ def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir
         4,
     )
 
-    context = semantics.GroundEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository)
-    values = [feature.evaluate(context).get() for feature in result.numericals]
     cache = semantics.DenotationCaches()
-    cached_values = [feature.evaluate(context, cache).get() for feature in result.numericals]
+    context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository, cache)
+    values = [feature.evaluate(context).get() for feature in result.numericals]
+    cache.clear()
+    refreshed_values = [feature.evaluate(context).get() for feature in result.numericals]
 
     assert values == [1, 0, 2**32 - 1]
-    assert cached_values == values
+    assert refreshed_values == values
 
 
 def test_generate_distinguishes_ordered_state_denotation_vectors(gripper_data_dir) -> None:

@@ -4,7 +4,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/condition_data.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
-#include <runir/kr/ps/base/dl/evaluation_context.hpp>
+#include <runir/kr/ps/base/dl/transition_evaluation_context.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <yggdrasil/python/bindings.hpp>
@@ -20,8 +20,8 @@ void bind_condition(nb::module_& m, RepositoryBinding& repository)
     using T = runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>;
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
-    using GroundContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
-    using LiftedContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
+    using GroundContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
+    using LiftedContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
 
     ygg::bind_index<ygg::Index<T>>(m, "ConditionVariantIndex");
 

@@ -14,16 +14,6 @@
 namespace runir::kr::dl::python
 {
 
-template<typename View>
-nb::object query_columns(nb::handle self)
-{
-    auto result = nb::cast(nb::cast<const View&>(self).get_columns());
-    // The list caster copies views, not their repository; each element must retain its parent.
-    for (auto column : nb::borrow<nb::list>(result))
-        NB_CALL(keep_alive_py)(NB_CTX, column.ptr(), self.ptr());
-    return result;
-}
-
 template<FamilyTag Family, typename Tag>
 void bind_query(nb::module_& m, const char* name)
 {
@@ -65,7 +55,7 @@ void bind_query(nb::module_& m, const char* name)
         view.def("get_predicate", &View::get_predicate, nb::keep_alive<0, 1>());
     if constexpr (requires(View value) { value.get_polarity(); })
         view.def("get_polarity", &View::get_polarity);
-    view.def("get_columns", &query_columns<View>);
+    view.def("get_columns", &View::get_columns);
     if constexpr (requires(View value) { value.get_arg(); })
         view.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
     if constexpr (requires(View value) { value.get_lhs(); })
@@ -92,7 +82,7 @@ void bind_query_projection(nb::module_& m, const char* name)
     auto view = nb::class_<View>(m, name)
                     .def("get_index", &View::get_index)
                     .def("get_arg", &View::get_arg, nb::keep_alive<0, 1>())
-                    .def("get_columns", &query_columns<View>)
+                    .def("get_columns", &View::get_columns)
                     .def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); });
     ygg::add_print(view);
     ygg::add_comparison(view);

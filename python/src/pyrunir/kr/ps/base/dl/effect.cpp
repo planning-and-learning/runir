@@ -5,7 +5,7 @@
 #include <runir/kr/ps/base/dl/compatibility.hpp>
 #include <runir/kr/ps/dl/effect_data.hpp>
 #include <runir/kr/ps/dl/effect_view.hpp>
-#include <runir/kr/ps/base/dl/evaluation_context.hpp>
+#include <runir/kr/ps/base/dl/transition_evaluation_context.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/compatibility.hpp>
@@ -33,8 +33,8 @@ template<typename T>
 void bind_effect_view(nb::module_& m, const char* name)
 {
     using View = ygg::View<ygg::Index<T>, Repository>;
-    using GroundContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
-    using LiftedContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
+    using GroundContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
+    using LiftedContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
     auto cls = nb::class_<View>(m, name)
                    .def("get_index", &View::get_index)
                    .def("get_feature", &View::get_feature, nb::keep_alive<0, 1>())

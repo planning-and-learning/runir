@@ -4,7 +4,7 @@
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/dl/semantics/base/evaluation_context.hpp"
+#include "runir/kr/dl/semantics/base/state_evaluation_context.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
@@ -150,8 +150,8 @@ private:
     const std::vector<tyr::planning::PackedStateView<Kind>>& m_states;
     runir::kr::dl::semantics::Builder m_builder;
     runir::kr::dl::semantics::DenotationRepository& m_denotation_repository;
-    std::vector<runir::kr::dl::semantics::DenotationCaches<Family>> m_denotation_caches;
     runir::kr::dl::semantics::EvaluationWorkspace m_workspace;
+    std::vector<runir::kr::dl::semantics::DenotationCaches<Family>> m_denotation_caches;
     SeenDenotations<Family> m_seen_denotations;
 
 public:
@@ -159,8 +159,8 @@ public:
         m_states(states),
         m_builder(),
         m_denotation_repository(denotation_repository),
-        m_denotation_caches(states.size()),
         m_workspace(),
+        m_denotation_caches(states.size()),
         m_seen_denotations(states.size())
     {
     }
@@ -172,13 +172,14 @@ public:
         if (m_states.empty())
             return !seen.constructors.insert(std::pair(lhs, constructor)).second;
 
-        const auto was_cached = m_denotation_caches.front().template get<Category>().contains(constructor);
+        const auto was_cached = m_denotation_caches.front().template get<Category>(constructor.is_static()).contains(constructor);
         seen.scratch.clear();
 
         for (size_t i = 0; i < m_states.size(); ++i)
         {
-            auto context = runir::kr::dl::semantics::EvaluationContext<Family, Kind>(m_states[i].unpack(), m_builder, m_denotation_repository);
-            seen.scratch.push_back(runir::kr::dl::semantics::evaluate(constructor, context, m_workspace, m_denotation_caches[i]));
+            auto context = runir::kr::dl::semantics::StateEvaluationContext<Family, Kind>(
+                m_states[i].unpack(), m_builder, m_denotation_repository, m_workspace, m_denotation_caches[i]);
+            seen.scratch.push_back(runir::kr::dl::semantics::evaluate(constructor, context));
         }
 
         const auto vector = seen.vectors.insert(seen.scratch);
@@ -186,7 +187,7 @@ public:
 
         if (!is_novel && !was_cached)
             for (auto& caches : m_denotation_caches)
-                caches.template get<Category>().erase(constructor);
+                caches.template get<Category>(constructor.is_static()).erase(constructor);
 
         return !is_novel;
     }

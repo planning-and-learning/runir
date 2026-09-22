@@ -21,13 +21,10 @@ struct Feature;
 template<FamilyTag Family, typename LanguageTag, typename FeatureTag>
 struct ConcreteFeature;
 
-// EvaluationContext
-
-template<FamilyTag Family, typename LanguageTag>
-struct EvaluationContext;
+// Transition evaluation
 
 template<typename Family, typename LanguageTag, typename Context>
-concept IsEvaluationContext = FamilyTag<Family> && requires(const Context& context) {
+concept IsTransitionEvaluationContext = FamilyTag<Family> && requires(const Context& context) {
     context.get_source_state();
     context.get_target_state();
 };

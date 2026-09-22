@@ -3,6 +3,7 @@
 
 #include "runir/kr/dl/argument_view.hpp"
 #include "runir/kr/dl/canonicalization.hpp"
+#include "runir/kr/dl/construction_metadata.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/query_construction.hpp"
@@ -162,7 +163,7 @@ public:
         return std::nullopt;
     }
 
-    /// Raw symbol interning. Use the free get_or_create() for checked construction.
+    /// Raw symbol interning. Use the free get_or_create() to derive schemas and staticness.
     template<typename T>
     std::pair<ygg::View<ygg::Index<T>, BasicConstructorRepository>, bool> get_or_create(ygg::Data<T>& data)
     {

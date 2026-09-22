@@ -1,4 +1,5 @@
 import gc
+import sys
 from typing import Literal
 
 import pytest
@@ -62,7 +63,10 @@ PROGRAM = """(:program
         (:load (:conditions) (:concept balls) (:register (:concept selected)))))
       (:rule (:symbol load_location) (:expression
         (:source-memory m1) (:target-memory m2)
-        (:load (:conditions) (:role locations) (:register (:role location))))))))
+        (:load (:conditions) (:role locations) (:register (:role location)))))
+      (:rule (:symbol move_away) (:expression
+        (:source-memory m2) (:target-memory m2)
+        (:sketch (:conditions) (:effects (decreases nearby_balls))))))))
 """
 
 
@@ -120,10 +124,8 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
 ) -> None:
     task_context, program, expander, loaded = _loaded_frame(kind)
     if kind == "ground":
-        context_type = ext.GroundEvaluationContext
         environment_type = ext.GroundEvaluationEnvironment
     else:
-        context_type = ext.LiftedEvaluationContext
         environment_type = ext.LiftedEvaluationEnvironment
     frame = loaded.call_stack
     assert len(frame.arguments.concept_arguments) == 1
@@ -133,10 +135,15 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     assert frame.registers.concept_values[0] is not None
     assert frame.registers.role_values[0] is not None
 
-    context = context_type(
-        task_context.execution_repository, task_context.execution_builder, program, loaded
-    )
     environment = environment_type(task_context, program)
+    references = sys.getrefcount(environment)
+    caches = environment.get_dl_caches()
+    target_caches = environment.get_dl_target_caches()
+    assert caches is not target_caches
+    assert sys.getrefcount(environment) > references
+    del caches, target_caches
+    arguments = ext.EvaluationArguments(loaded.call_stack.arguments)
+    dl_context = environment.make_dl_context(loaded, arguments)
     booleans = {feature.get_symbol(): feature for feature in frame.module.get_boolean_features()}
     numericals = {feature.get_symbol(): feature for feature in frame.module.get_numerical_features()}
     expected = {
@@ -153,64 +160,68 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         "selected_goal_ball": False,
     }
     assert {
-        name: ext.evaluate(feature, context, environment).get()
+        name: ext.evaluate(feature, dl_context).get()
         for name, feature in booleans.items()
     } == expected_booleans
     assert {
-        name: ext.evaluate(feature, context, environment).get()
+        name: ext.evaluate(feature, dl_context).get()
         for name, feature in numericals.items()
     } == expected
     concept = ext.evaluate(
-        frame.module.get_concept_features()[0], context, environment
+        frame.module.get_concept_features()[0], dl_context
     )
     role = ext.evaluate(
-        frame.module.get_role_features()[0], context, environment
+        frame.module.get_role_features()[0], dl_context
     )
     boolean = ext.evaluate(
-        booleans["argument_flag"], context, environment
+        booleans["argument_flag"], dl_context
     )
     numerical = ext.evaluate(
-        numericals["argument_count"], context, environment
+        numericals["argument_count"], dl_context
     )
     child = expander.control_steps(expander.initial_state())[0].target
     other_frame = expander.load_steps(expander.load_steps(child)[1].target)[0].target
-    other_context = context_type(
-        task_context.execution_repository, task_context.execution_builder, program, other_frame
-    )
-    assert other_context.state == context.state
-    assert ext.evaluate(booleans["selected_goal_ball"], other_context, environment).get() is True
-    assert ext.evaluate(booleans["selected_goal_ball"], context, environment).get() is False
-    del child, other_frame, other_context
+    assert other_frame.state == loaded.state
+    environment.get_dl_caches().clear(False)
+    other_arguments = ext.EvaluationArguments(other_frame.call_stack.arguments)
+    other_dl_context = environment.make_dl_context(other_frame, other_arguments)
+    assert ext.evaluate(booleans["selected_goal_ball"], other_dl_context).get() is True
+    environment.get_dl_caches().clear(False)
+    assert ext.evaluate(booleans["selected_goal_ball"], dl_context).get() is False
+    del child, other_frame, other_dl_context, other_arguments
 
-    original = context.state
     moved = next(
-        successor.node.get_state()
-        for successor in expander.labeled_successors(loaded)
-        if successor.label.get_relation().get_name() == "move"
-        and successor.label.get_objects()[-1].get_name() == "roomb"
+        step.target
+        for step in expander.control_steps(loaded)
+        if step.state_transition.action.get_relation().get_name() == "move"
+        and step.state_transition.action.get_objects()[-1].get_name() == "roomb"
     )
-    context.state = moved
-    assert ext.evaluate(numericals["nearby_balls"], context, environment).get() == 0
-    assert ext.evaluate(numericals["argument_count"], context, environment).get() == 2
+    environment.get_dl_caches().clear(False)
+    arguments = ext.EvaluationArguments(moved.call_stack.arguments)
+    dl_context = environment.make_dl_context(moved, arguments)
+    assert ext.evaluate(numericals["nearby_balls"], dl_context).get() == 0
+    assert ext.evaluate(numericals["argument_count"], dl_context).get() == 2
     assert {
-        name: ext.evaluate(feature, context, environment).get()
+        name: ext.evaluate(feature, dl_context).get()
         for name, feature in booleans.items()
     } == expected_booleans
-    context.state = original
-    assert ext.evaluate(numericals["nearby_balls"], context, environment).get() == 2
+    environment.get_dl_caches().clear(False)
+    arguments = ext.EvaluationArguments(loaded.call_stack.arguments)
+    dl_context = environment.make_dl_context(loaded, arguments)
+    assert ext.evaluate(numericals["nearby_balls"], dl_context).get() == 2
 
     del task_context, program, expander, loaded, frame
-    del original, moved
+    del moved
     gc.collect()
     assert {
-        name: ext.evaluate(feature, context, environment).get()
+        name: ext.evaluate(feature, dl_context).get()
         for name, feature in numericals.items()
     } == expected
     assert {
-        name: ext.evaluate(feature, context, environment).get()
+        name: ext.evaluate(feature, dl_context).get()
         for name, feature in booleans.items()
     } == expected_booleans
-    del context, environment, booleans, numericals
+    del dl_context, arguments, environment, booleans, numericals
     gc.collect()
     assert {obj.get_name() for obj in concept} == {"ball1", "ball2"}
     assert {(first.get_name(), second.get_name()) for first, second in role} == {
@@ -221,26 +232,52 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_evaluation_context_retains_its_interning_dependencies(
+def test_state_evaluation_context_retains_execution_state_and_environment(
     kind: Literal["ground", "lifted"],
 ) -> None:
     task_context, program, expander, loaded = _loaded_frame(kind)
-    context_type = (
-        ext.GroundEvaluationContext if kind == "ground" else ext.LiftedEvaluationContext
+    environment_type = (
+        ext.GroundEvaluationEnvironment if kind == "ground" else ext.LiftedEvaluationEnvironment
     )
-    context = context_type(
-        task_context.execution_repository, task_context.execution_builder, program, loaded
-    )
-    del task_context, program, expander, loaded
+    environment = environment_type(task_context, program)
+    state_references = sys.getrefcount(loaded)
+    environment_references = sys.getrefcount(environment)
+    arguments = ext.EvaluationArguments(loaded.call_stack.arguments)
+    argument_references = sys.getrefcount(arguments)
+    context = environment.make_dl_context(loaded, arguments)
+    assert sys.getrefcount(arguments) > argument_references
+    assert sys.getrefcount(loaded) > state_references
+    assert sys.getrefcount(environment) > environment_references
+    boolean = loaded.call_stack.module.get_boolean_features()[0]
+    numerical = loaded.call_stack.module.get_numerical_features()[0]
+    del task_context, program, expander, loaded, environment, arguments
     gc.collect()
-    assert context.program.get_entry_module().get_name() == "root"
-    retained = context.intern(ext.ExecutionPhase.EXTERNAL)
-    del context
+    assert ext.evaluate(boolean, context).get() is True
+    assert ext.evaluate(numerical, context).get() == 2
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+def test_state_evaluation_contexts_keep_distinct_argument_owners(
+    kind: Literal["ground", "lifted"],
+) -> None:
+    task_context, program, expander, loaded = _loaded_frame(kind)
+    initial = expander.initial_state()
+    environment = getattr(ext, f"{kind.title()}EvaluationEnvironment")(task_context, program)
+    arguments = ext.EvaluationArguments(loaded.call_stack.arguments)
+    other_arguments = ext.EvaluationArguments(initial.call_stack.arguments)
+    contexts = [
+        environment.make_dl_context(loaded, arguments),
+        environment.make_dl_context(initial, other_arguments),
+    ]
+    features = [
+        loaded.call_stack.module.get_numerical_features()[0],
+        initial.call_stack.module.get_numerical_features()[0],
+    ]
+    del arguments, other_arguments, loaded, initial
     gc.collect()
-    assert retained.call_stack.module.get_name() == "child"
-    assert retained.call_stack.registers.concept_values[0].get_name() == "ball1"
-    assert retained.call_stack.arguments.boolean_arguments[0].get() is True
-    assert retained.call_stack.arguments.numerical_arguments[0].get() == 2
+    for position in (0, 1, 0):
+        environment.get_dl_caches().clear(False)
+        assert ext.evaluate(features[position], contexts[position]).get() == 2
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])

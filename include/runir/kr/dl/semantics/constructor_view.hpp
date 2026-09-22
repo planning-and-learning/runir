@@ -32,6 +32,7 @@ public:
 
     auto get_index() const noexcept { return m_handle; }
     auto get_variant() const noexcept { return make_view(get_data().variant, *m_context); }
+    bool is_static() const noexcept { return get_data().is_static; }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };

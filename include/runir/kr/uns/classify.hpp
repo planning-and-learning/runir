@@ -1,9 +1,9 @@
 #ifndef RUNIR_KR_UNS_CLASSIFY_HPP_
 #define RUNIR_KR_UNS_CLASSIFY_HPP_
 
-#include "runir/kr/dl/semantics/uns/evaluation_context.hpp"
+#include "runir/kr/dl/semantics/uns/state_evaluation_context.hpp"
+#include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/uns/classifier_view.hpp"
-#include "runir/kr/uns/dl/evaluation.hpp"
 
 #include <tyr/planning/declarations.hpp>
 #include <yggdrasil/containers/variant.hpp>
@@ -17,14 +17,14 @@ namespace runir::kr::uns
 // empty AND evaluates to true.
 template<typename C, tyr::TaskKind Kind>
 bool classify(ygg::View<ygg::Index<runir::kr::uns::Classifier>, C> classifier,
-              runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, Kind>& context)
+              runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, Kind>& context)
 {
     for (auto clause : classifier.get_clauses())
     {
         bool satisfied = true;
         for (auto literal : clause.get_literals())
         {
-            const bool value = ygg::visit([&](auto feature) { return runir::kr::ps::evaluate(feature, context); }, literal.get_feature());
+            const bool value = ygg::visit([&](auto feature) { return runir::kr::ps::evaluate(feature, context).get(); }, literal.get_feature());
             if (literal.get_polarity() ? !value : value)
             {
                 satisfied = false;

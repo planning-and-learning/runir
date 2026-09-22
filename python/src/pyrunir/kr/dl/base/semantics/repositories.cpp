@@ -3,10 +3,10 @@
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/base/evaluation_context.hpp>
+#include <runir/kr/dl/semantics/base/state_evaluation_context.hpp>
 #include <runir/kr/dl/semantics/denotation_caches.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <runir/kr/dl/semantics/evaluation_context.hpp>
+#include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 #include <tyr/planning/ground/state_view.hpp>
 #include <tyr/planning/lifted/state_view.hpp>
@@ -18,17 +18,27 @@ namespace
 {
 
 template<tyr::TaskKind Kind>
-void bind_evaluation_context(nb::module_& m, const char* name)
+void bind_state_evaluation_context(nb::module_& m, const char* name)
 {
-    using Context = runir::kr::dl::semantics::EvaluationContext<runir::kr::BaseFamilyTag, Kind>;
+    using Context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::BaseFamilyTag, Kind>;
+    using DenotationCaches = runir::kr::dl::semantics::DenotationCaches<runir::kr::BaseFamilyTag>;
 
     nb::class_<Context>(m, name)
-        .def(nb::init<tyr::planning::StateView<Kind>, runir::kr::dl::semantics::Builder&, runir::kr::dl::semantics::DenotationRepository&>(),
-             nb::arg("state"),
-             nb::arg("builder"),
-             nb::arg("denotation_repository"),
-             nb::keep_alive<1, 3>(),
-             nb::keep_alive<1, 4>())
+        .def(
+            nb::new_([](tyr::planning::StateView<Kind> state,
+                        runir::kr::dl::semantics::Builder& builder,
+                        runir::kr::dl::semantics::DenotationRepository& denotation_repository,
+                        DenotationCaches& caches)
+                     { return Context(state, builder, denotation_repository, builder.get_workspace(), caches); }),
+            nb::arg("state"),
+            nb::arg("builder"),
+            nb::arg("denotation_repository"),
+            nb::arg("denotation_caches"),
+            nb::keep_alive<0, 3>(),
+            nb::keep_alive<0, 4>(),
+            nb::keep_alive<0, 5>(),
+            nb::keep_alive<5, 3>(),
+            nb::keep_alive<5, 4>())
         .def("get_state", &Context::get_state, nb::rv_policy::copy, nb::keep_alive<0, 1>());
 }
 
@@ -39,9 +49,10 @@ void bind_semantics_repositories(nb::module_& m)
     nb::class_<runir::kr::dl::semantics::Builder>(m, "Builder").def(nb::init<>());
 
     using DenotationCaches = runir::kr::dl::semantics::DenotationCaches<runir::kr::BaseFamilyTag>;
-    nb::class_<DenotationCaches>(m, "DenotationCaches", "Constructor denotations cached for one fixed evaluation state.")
+    nb::class_<DenotationCaches>(m, "DenotationCaches", "Clear dynamic denotations between contexts; clear all denotations between tasks or repositories.")
         .def(nb::init<>())
-        .def("clear", &DenotationCaches::clear);
+        .def("clear", nb::overload_cast<>(&DenotationCaches::clear))
+        .def("clear", nb::overload_cast<bool>(&DenotationCaches::clear), nb::arg("is_static"));
 
     nb::class_<runir::kr::dl::semantics::DenotationRepository>(m, "DenotationRepository")
         .def("get_index", &runir::kr::dl::semantics::DenotationRepository::get_index);
@@ -54,8 +65,8 @@ void bind_semantics_repositories(nb::module_& m)
             { return self.create_shared(planning_domain.get_repository()); },
             nb::arg("planning_domain"));
 
-    bind_evaluation_context<tyr::GroundTag>(m, "GroundEvaluationContext");
-    bind_evaluation_context<tyr::LiftedTag>(m, "LiftedEvaluationContext");
+    bind_state_evaluation_context<tyr::GroundTag>(m, "GroundStateEvaluationContext");
+    bind_state_evaluation_context<tyr::LiftedTag>(m, "LiftedStateEvaluationContext");
 
     auto cls = nb::class_<runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>(m, "ConstructorRepository");
     cls.def("clear", &runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>::clear)

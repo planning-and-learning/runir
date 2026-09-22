@@ -5,8 +5,6 @@
 namespace runir::kr::ps::base
 {
 
-template class EvaluationContext<tyr::GroundTag>;
-template class EvaluationContext<tyr::LiftedTag>;
 template class SuccessorExpander<tyr::GroundTag>;
 template class SuccessorExpander<tyr::LiftedTag>;
 

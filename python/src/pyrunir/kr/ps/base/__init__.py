@@ -7,7 +7,6 @@ from ...._pyrunir.kr.ps.base import (
     EffectVariant,
     EffectVariantData,
     EffectVariantIndex,
-    ExecutionContext,
     GroundSketchProofGraph,
     GroundSketchProofResults,
     GroundSketchProofVertexLabel,

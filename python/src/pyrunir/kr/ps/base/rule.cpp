@@ -3,7 +3,7 @@
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
-#include <runir/kr/ps/base/dl/evaluation_context.hpp>
+#include <runir/kr/ps/base/dl/transition_evaluation_context.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/rule_data.hpp>
@@ -21,8 +21,8 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     using T = runir::kr::ps::Rule<runir::kr::BaseFamilyTag>;
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
-    using GroundContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
-    using LiftedContext = runir::kr::ps::dl::EvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
+    using GroundContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::GroundTag>;
+    using LiftedContext = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, tyr::LiftedTag>;
 
     ygg::bind_index<ygg::Index<T>>(m, "RuleIndex");
 

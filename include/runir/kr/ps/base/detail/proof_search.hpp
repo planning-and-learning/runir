@@ -3,7 +3,7 @@
 
 #include "runir/graphs/cycle.hpp"
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/dl/semantics/uns/evaluation_context.hpp"
+#include "runir/kr/dl/semantics/uns/state_evaluation_context.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/sketch_executor.hpp"
 #include "runir/kr/ps/base/successor_expander.hpp"
@@ -33,6 +33,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
     auto state_to_vertex = ygg::UnorderedMap<tyr::planning::PackedStateView<Kind>, graphs::VertexIndex> {};
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*search_context.task);
     auto expander = SuccessorExpander<Kind>(task_context, sketch);
+    auto classifier_caches = runir::kr::dl::semantics::DenotationCaches<runir::kr::UnsFamilyTag> {};
     const auto initial_node = search_context.successor_generator->get_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
     const auto initial_state = initial_node.get_state();
     const auto static_goal_satisfied = goal_strategy.is_static_goal_satisfied(*search_context.task);
@@ -50,9 +51,12 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
         auto unsolvable = false;
         if (!goal && options.classifier)
         {
-            auto context = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, Kind>(state,
+            classifier_caches.clear(false);
+            auto context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, Kind>(state,
                                                                                                       task_context.dl_builder,
-                                                                                                      *task_context.dl_denotation_repository);
+                                                                                                      *task_context.dl_denotation_repository,
+                                                                                                      task_context.dl_builder.get_workspace(),
+                                                                                                      classifier_caches);
             unsolvable = runir::kr::uns::classify(*options.classifier, context);
         }
         return SketchProofVertexLabel<Kind> { state.pack(), state.get_index() == initial_state.get_index(), goal, !unsolvable, unsolvable };
@@ -110,7 +114,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
             continue;
         }
 
-        auto context = expander.context_at(source_label.state.unpack());
+        const auto source_state = source_label.state.unpack();
         auto expansion_status = SketchProofStatus::SUCCESS;
         auto has_accepted_successor = false;
         const auto accept_successor = [&](const tyr::planning::LabeledNode<Kind>& successor, RuleView rule)
@@ -136,11 +140,11 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
 
         if (options.shuffle_choice_points)
         {
-            auto successors = expander.labeled_successors(context);
+            auto successors = expander.labeled_successors(source_state);
             if (out_of_time())
                 return finish(SketchProofStatus::OUT_OF_TIME);
             ygg::portable_shuffle(successors.begin(), successors.end(), random);
-            const auto accepted = expander.accepted_successors(context, successors, out_of_time);
+            const auto accepted = expander.accepted_successors(source_state, successors, out_of_time);
             if (out_of_time())
                 return finish(SketchProofStatus::OUT_OF_TIME);
             for (const auto& [successor, rule] : accepted)
@@ -149,12 +153,13 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
         }
         else
         {
+            expander.get_environment().get_dl_caches().clear(false);
             auto& generator = *search_context.successor_generator;
-            const auto node = generator.get_node(*search_context.state_repository, context.get_state().get_index());
+            const auto node = generator.get_node(*search_context.state_repository, source_state.get_index());
             generator.for_each_labeled_successor_node(node, *search_context.state_repository, *search_context.axiom_evaluator,
                 [&](const auto& successor)
                 {
-                    const auto rule = expander.matching_rule_until(context, successor.node.get_state(), out_of_time);
+                    const auto rule = expander.matching_rule_until(source_state, successor.node.get_state(), out_of_time);
                     if (out_of_time())
                     {
                         expansion_status = SketchProofStatus::OUT_OF_TIME;

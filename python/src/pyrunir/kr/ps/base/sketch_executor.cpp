@@ -92,18 +92,12 @@ void bind_sketch_executor(nb::module_& m)
     bind_sketch_search_options<tyr::LiftedTag>(m, "LiftedSketchSearchOptions");
 
     using Kind = tyr::GroundTag;
-    using Context = EvaluationContext<Kind>;
     using Expander = SuccessorExpander<Kind>;
-
-    auto execution_context = nb::class_<Context>(m, "ExecutionContext").def_prop_ro("state", &Context::get_state, nb::keep_alive<0, 1>());
-    ygg::add_comparison(execution_context);
-    ygg::add_hash(execution_context);
 
     nb::class_<Expander>(m, "SuccessorExpander")
         .def(nb::init<runir::kr::TaskContext<Kind>&, SketchView>(), "task_context"_a, "sketch"_a, nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
-        .def("context_at", &Expander::context_at, "state"_a, nb::keep_alive<0, 1>())
-        .def("labeled_successors", &Expander::labeled_successors, "context"_a)
-        .def("matching_rule", &Expander::matching_rule, "context"_a, "target_state"_a);
+        .def("labeled_successors", &Expander::labeled_successors, "state"_a)
+        .def("matching_rule", &Expander::matching_rule, "source_state"_a, "target_state"_a);
 
     m.def(
         "find_ground_solution",

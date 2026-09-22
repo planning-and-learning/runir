@@ -10,7 +10,7 @@ from pyrunir.kr.ps.ext import dl
 from pyrunir.serialization import register_table, serialize, table
 from pytyr.formalism.planning import Parser
 from pytyr.planning import lifted
-from pyyggdrasil.database import Relation, RelationPtr, RelationRow
+from pyyggdrasil.database import RelationRow, RelationView
 from pyyggdrasil.execution import ExecutionContext
 from pyyggdrasil.serialization import Dictionaries
 
@@ -54,11 +54,8 @@ def _runtime(kind, source=None):
     prefix = kind.title()
     expander = getattr(ext, f"{prefix}SuccessorExpander")(task_context, program)
     state = expander.initial_state()
-    context = getattr(ext, f"{prefix}EvaluationContext")(
-        task_context.execution_repository, task_context.execution_builder, program, state,
-    )
     environment = getattr(ext, f"{prefix}EvaluationEnvironment")(task_context, program)
-    return task_context, program, expander, state, context, environment
+    return task_context, program, expander, state, environment
 
 
 def test_action_and_query_feature_bindings_round_trip_and_serialize():
@@ -110,25 +107,27 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize():
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(kind):
-    task_context, program, expander, state, context, environment = _runtime(kind)
+    task_context, program, expander, state, environment = _runtime(kind)
     features = {feature.get_symbol(): feature for feature in program.get_entry_module().get_query_features()}
-    handle = ext.evaluate(features["selected"], context, environment)
-    assert isinstance(handle, RelationPtr)
-    relation = handle.get()
-    assert isinstance(relation, Relation)
+    arguments = ext.EvaluationArguments(state.call_stack.arguments)
+    dl_context = environment.make_dl_context(state, arguments)
+    relation = ext.evaluate(features["selected"], dl_context)
+    assert isinstance(relation, RelationView)
     assert len(relation) == 2
     assert relation.arity() == 2
     assert all(isinstance(row, RelationRow) and len(row) == 2 for row in relation)
     rows = {tuple(row) for row in relation}
     assert all(type(value) is int for row in rows for value in row)
-    assert {tuple(row) for row in ext.evaluate(features["reversed"], context, environment).get()} == {
+    assert {tuple(row) for row in ext.evaluate(features["reversed"], dl_context)} == {
         (target, source) for source, target in rows
     }
-    truth = ext.evaluate(features["truth"], context, environment).get()
-    empty = ext.evaluate(features["empty"], context, environment).get()
+    truth = ext.evaluate(features["truth"], dl_context)
+    empty = ext.evaluate(features["empty"], dl_context)
     assert truth.arity() == empty.arity() == 0
     assert [tuple(row) for row in truth] == [()]
     assert empty.empty()
+    assert {tuple(row) for row in ext.evaluate(features["selected"], dl_context)} == rows
+    assert {tuple(row) for row in relation} == rows
 
     steps = expander.control_steps(state)
     assert len(steps) == 2
@@ -143,14 +142,19 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
         assert expander.matching_rule(state, action, target) == step.rule
         assert expander.apply(state, step.rule, action, target).target == step.target
     good_step = next(step for step in steps if step.state_transition.action.get_objects()[1].get_name() == "good")
-    context.state = good_step.target.state
-    assert len(ext.evaluate(features["selected"], context, environment).get()) == 1
-    assert {tuple(row) for row in relation} == rows
+    del relation, truth, empty
+    state = good_step.target
+    environment.get_dl_caches().clear(False)
+    arguments = ext.EvaluationArguments(state.call_stack.arguments)
+    dl_context = environment.make_dl_context(state, arguments)
+    relation = ext.evaluate(features["selected"], dl_context)
+    assert len(relation) == 1
+    new_rows = {tuple(row) for row in relation}
     row = relation.at(0)
     expected_row = tuple(row)
-    del handle, truth, empty, steps, good_step, action, target, step, features, environment, context, state, expander, program, task_context
+    del steps, good_step, action, target, step, features, environment, dl_context, arguments, state, expander, program, task_context
     gc.collect()
-    assert {tuple(value) for value in relation} == rows
+    assert {tuple(value) for value in relation} == new_rows
     del relation
     gc.collect()
     assert tuple(row) == expected_row
@@ -158,7 +162,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 def test_action_effect_contract_violation_is_an_exception(kind):
-    task_context, program, expander, state, context, environment = _runtime(kind, _program(effects="(decreases count)"))
+    task_context, program, expander, state, environment = _runtime(kind, _program(effects="(decreases count)"))
     with pytest.raises(ext.ActionRuleContractError):
         expander.control_steps(state)
     options = getattr(ext, f"{kind.title()}ModuleProgramSearchOptions")()
@@ -196,7 +200,7 @@ def test_action_structural_counterexample_retains_query_rule(preprocessing):
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 def test_action_rejects_visited_inapplicable_query_tuple(kind):
-    task_context, program, expander, state, context, environment = _runtime(
+    task_context, program, expander, state, environment = _runtime(
         kind, _program(query='(q_atomic_state "edge" (from to))'),
     )
     with pytest.raises(ext.ActionRuleContractError):
@@ -206,15 +210,23 @@ def test_action_rejects_visited_inapplicable_query_tuple(kind):
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 def test_static_query_role_closure_query_composition(kind):
     closure = '(q_role (from to) (r_transitive_closure (r_project from to (q_atomic_state "edge" (from to)))))'
-    task_context, program, expander, state, context, environment = _runtime(kind, _program(query=closure))
+    task_context, program, expander, state, environment = _runtime(kind, _program(query=closure))
     features = {feature.get_symbol(): feature for feature in program.get_entry_module().get_query_features()}
-    edges = {tuple(row) for row in ext.evaluate(features["edges"], context, environment).get()}
-    rows = {tuple(row) for row in ext.evaluate(features["selected"], context, environment).get()}
+    arguments = ext.EvaluationArguments(state.call_stack.arguments)
+    dl_context = environment.make_dl_context(state, arguments)
+    edges = {tuple(row) for row in ext.evaluate(features["edges"], dl_context)}
+    rows = {tuple(row) for row in ext.evaluate(features["selected"], dl_context)}
     assert len(edges) == 3
     assert len(rows) == 4
     assert rows == edges | {(source, target) for source, middle in edges for other, target in edges if middle == other}
-    context.state = expander.labeled_successors(state)[0].node.get_state()
-    assert {tuple(row) for row in ext.evaluate(features["selected"], context, environment).get()} == rows
+    successor = expander.labeled_successors(state)[0]
+    rule = expander.matching_rule(state, successor.label, successor.node.get_state())
+    assert rule is not None
+    state = expander.apply(state, rule, successor.label, successor.node.get_state()).target
+    environment.get_dl_caches().clear(False)
+    arguments = ext.EvaluationArguments(state.call_stack.arguments)
+    dl_context = environment.make_dl_context(state, arguments)
+    assert {tuple(row) for row in ext.evaluate(features["selected"], dl_context)} == rows
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -237,28 +249,30 @@ def test_query_features_follow_module_arguments_and_registers_in_the_same_state(
         (:rules (:rule (:symbol bind) (:expression
           (:source-memory m0) (:target-memory m1)
           (:load (:conditions) (:concept candidates) (:register (:concept selected))))))))"""
-    task_context, program, expander, initial, _, environment = _runtime(kind, source)
+    task_context, program, expander, initial, environment = _runtime(kind, source)
     child = expander.control_steps(initial)[0].target
     choices = [step.target for step in expander.load_steps(child)]
     assert len(choices) == 2
     assert choices[0].state == choices[1].state == initial.state
-    context_type = getattr(ext, f"{kind.title()}EvaluationContext")
-    contexts = [context_type(task_context.execution_repository, task_context.execution_builder, program, state) for state in choices]
     features = {feature.get_symbol(): feature for feature in child.call_stack.module.get_query_features()}
     expected = [((int(state.call_stack.registers.concept_values[0].get_index()),),) for state in choices]
     all_candidates = {row for selected in expected for row in selected}
     assert expected[0] != expected[1]
 
-    relations = []
+    snapshots = []
     for position in (0, 1, 0):
-        context = contexts[position]
-        assert {tuple(row) for row in ext.evaluate(features["argument"], context, environment).get()} == all_candidates
-        selected = ext.evaluate(features["register"], context, environment).get()
+        state = choices[position]
+        environment.get_dl_caches().clear(False)
+        arguments = ext.EvaluationArguments(state.call_stack.arguments)
+        dl_context = environment.make_dl_context(state, arguments)
+        assert {tuple(row) for row in ext.evaluate(features["argument"], dl_context)} == all_candidates
+        selected = ext.evaluate(features["register"], dl_context)
         assert tuple(tuple(row) for row in selected) == expected[position]
-        intersection = ext.evaluate(features["intersection"], context, environment).get()
+        intersection = ext.evaluate(features["intersection"], dl_context)
         assert tuple(tuple(row) for row in intersection) == expected[position]
-        relations.append(selected)
-    assert [tuple(tuple(row) for row in relation) for relation in relations] == [expected[0], expected[1], expected[0]]
+        snapshots.append(tuple(tuple(row) for row in selected))
+        del selected, intersection
+    assert snapshots == [expected[0], expected[1], expected[0]]
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])

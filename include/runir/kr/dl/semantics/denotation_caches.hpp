@@ -4,43 +4,91 @@
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 
-#include <concepts>
+#include <array>
 #include <tuple>
+#include <utility>
+#include <vector>
 #include <yggdrasil/containers/associative_containers.hpp>
+#include <yggdrasil/containers/unique_object_pool.hpp>
+#include <yggdrasil/database/relation.hpp>
 #include <yggdrasil/semantics/equal_to.hpp>
 #include <yggdrasil/semantics/hash.hpp>
 
 namespace runir::kr::dl::semantics
 {
 
-/// Constructor denotations for one fixed evaluation state.
-/// The referenced constructor and denotation repositories must outlive the cache entries.
-/// Ext denotations also depend on mutable registers and arguments, which are not part of the key.
+/// Denotations for one fixed task and constructor repository factory. Static entries
+/// survive changes to the evaluation context; clear(false) before changing state,
+/// registers, or arguments. Clear everything before changing tasks or factories,
+/// or clearing either repository.
+/// Borrowed query results remain valid until their partition is cleared. Constructor
+/// and denotation repositories must outlive the entries; renamed views borrow schemas.
+/// Relation workspaces must outlive the cache. Clearing static entries also clears
+/// dynamic entries, which may borrow their rows through a rename.
 template<FamilyTag Family>
-    requires(!std::same_as<Family, runir::kr::ExtFamilyTag>)
 struct DenotationCaches
 {
     template<CategoryTag Category>
     using Cache = ygg::UnorderedMap<FamilyConstructorView<Family, Category>, DenotationView<Category>>;
 
-    std::tuple<Cache<ConceptTag>, Cache<RoleTag>, Cache<BooleanTag>, Cache<NumericalTag>> values;
+    using QueryCache = ygg::UnorderedMap<FamilyQueryView<Family>, ygg::database::RelationView<>>;
+
+private:
+    struct Partition
+    {
+        std::tuple<Cache<ConceptTag>, Cache<RoleTag>, Cache<BooleanTag>, Cache<NumericalTag>> values;
+        QueryCache queries;
+        std::vector<ygg::UniqueObjectPoolPtr<ygg::database::Relation<>>> relations;
+
+        void clear() noexcept
+        {
+            std::apply([](auto&... caches) { (caches.clear(), ...); }, values);
+            queries.clear();
+            relations.clear();
+        }
+    };
+
+    std::array<Partition, 2> m_partitions;
+
+public:
+    DenotationCaches() = default;
+    DenotationCaches(const DenotationCaches&) = delete;
+    DenotationCaches& operator=(const DenotationCaches&) = delete;
+    DenotationCaches(DenotationCaches&&) = default;
+    DenotationCaches& operator=(DenotationCaches&&) = default;
 
     template<CategoryTag Category>
-    auto& get() noexcept
+    auto& get(bool is_static) noexcept
     {
-        return std::get<Cache<Category>>(values);
+        return std::get<Cache<Category>>(m_partitions[is_static].values);
     }
 
     template<CategoryTag Category>
-    const auto& get() const noexcept
+    const auto& get(bool is_static) const noexcept
     {
-        return std::get<Cache<Category>>(values);
+        return std::get<Cache<Category>>(m_partitions[is_static].values);
     }
 
-    void clear() noexcept
+    auto& get_queries(bool is_static) noexcept { return m_partitions[is_static].queries; }
+    const auto& get_queries(bool is_static) const noexcept { return m_partitions[is_static].queries; }
+
+    auto retain(bool is_static, ygg::UniqueObjectPoolPtr<ygg::database::Relation<>> relation)
     {
-        std::apply([](auto&... caches) { (caches.clear(), ...); }, values);
+        const auto view = relation->view();
+        m_partitions[is_static].relations.push_back(std::move(relation));
+        return view;
     }
+
+    auto retain(bool, ygg::database::RelationView<> relation) noexcept { return relation; }
+
+    void clear(bool is_static) noexcept
+    {
+        if (is_static)
+            m_partitions[false].clear();
+        m_partitions[is_static].clear();
+    }
+
+    void clear() noexcept { clear(true); }
 };
 
 }  // namespace runir::kr::dl::semantics

@@ -9,7 +9,7 @@
 #include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
-#include "runir/kr/ps/dl/evaluation_context.hpp"
+#include "runir/kr/ps/dl/transition_evaluation_context.hpp"
 #include "runir/kr/ps/effect_compatibility.hpp"
 #include "runir/kr/ps/effect_index.hpp"
 #include "runir/kr/ps/effect_view.hpp"

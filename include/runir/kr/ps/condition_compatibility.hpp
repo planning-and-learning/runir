@@ -10,24 +10,24 @@
 namespace runir::kr::ps
 {
 
-template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
-concept IsConditionVariantView = IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-                                 && requires(ygg::View<ygg::Index<ConditionVariant<Family>>, StorageContext> condition, EvaluationContext& context) {
+template<typename Family, typename LanguageTag, typename Context, typename StorageContext>
+concept IsConditionVariantView = IsTransitionEvaluationContext<Family, LanguageTag, Context>
+                                 && requires(ygg::View<ygg::Index<ConditionVariant<Family>>, StorageContext> condition, Context& context) {
                                         { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
                                     };
 
-template<typename Family, typename LanguageTag, typename EvaluationContext, typename StorageContext>
+template<typename Family, typename LanguageTag, typename Context, typename StorageContext>
 concept IsConcreteConditionVariantView =
-    IsEvaluationContext<Family, LanguageTag, EvaluationContext>
-    && requires(ygg::View<ygg::Index<ConcreteConditionVariant<Family, LanguageTag>>, StorageContext> condition, EvaluationContext& context) {
+    IsTransitionEvaluationContext<Family, LanguageTag, Context>
+    && requires(ygg::View<ygg::Index<ConcreteConditionVariant<Family, LanguageTag>>, StorageContext> condition, Context& context) {
            { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
        };
 
-template<typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename EvaluationContext, typename StorageContext>
+template<typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename Context, typename StorageContext>
 concept IsConcreteConditionView =
-    IsEvaluationContext<Family, LanguageTag, EvaluationContext>
+    IsTransitionEvaluationContext<Family, LanguageTag, Context>
     && requires(ygg::View<ygg::Index<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>, StorageContext> condition,
-                EvaluationContext& context) {
+                Context& context) {
            { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
        };
 

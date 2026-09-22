@@ -76,6 +76,7 @@ struct Data<runir::kr::dl::Constructor<Family, Category>>
 
     Index<runir::kr::dl::Constructor<Family, Category>> index;
     Variant variant;
+    bool is_static = false;
 
     Data() = default;
     explicit Data(Variant variant_) : index(), variant(std::move(variant_)) {}
@@ -84,9 +85,10 @@ struct Data<runir::kr::dl::Constructor<Family, Category>>
     {
         ygg::clear(index);
         ygg::clear(variant);
+        ygg::clear(is_static);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, variant); }
+    auto cista_members() const noexcept { return std::tie(index, variant, is_static); }
     auto identifying_members() const noexcept { return std::tie(variant); }
 };
 

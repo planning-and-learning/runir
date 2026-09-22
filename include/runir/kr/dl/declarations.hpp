@@ -849,6 +849,9 @@ using FamilyNumericalView = ygg::View<ygg::Index<Numerical<Family, Tag>>, Constr
 template<FamilyTag Family, CategoryTag Category>
 using FamilyConstructorView = ygg::View<ygg::Index<Constructor<Family, Category>>, ConstructorRepositoryFor<Family>>;
 
+template<FamilyTag Family, typename Tag = void>
+using FamilyQueryView = ygg::View<ygg::Index<Query<Family, Tag>>, ConstructorRepositoryFor<Family>>;
+
 using BaseConstructorRepository = ConstructorRepositoryFor<runir::kr::BaseFamilyTag>;
 using BaseConstructorRepositoryPtr = ConstructorRepositoryPtrFor<runir::kr::BaseFamilyTag>;
 using BaseConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::kr::BaseFamilyTag>;

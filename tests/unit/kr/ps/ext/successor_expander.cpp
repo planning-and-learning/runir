@@ -85,6 +85,65 @@ void expect_initial_execution_state_uses_expander_repository()
 }
 
 template<tyr::TaskKind Kind>
+void expect_borrowed_query_evaluation()
+{
+    namespace ext = kr::ps::ext;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
+    auto& repository = *task_context->domain_context->ext_repository;
+    auto& search = *task_context->search_context;
+    const auto module = ext::dl::parse_module(
+        R"((:module (:symbol queries) (:arguments) (:registers)
+            (:entry source) (:memory source)
+            (:features (:query (:symbol At) (:expression (q_rename (location) (q_atomic_state "at" (x))))))
+            (:rules)))",
+        search.task->get_domain().get_domain(),
+        repository);
+    const auto program = create_module_program(repository, module, { module });
+    const auto initial = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
+    auto expander = ext::SuccessorExpander<Kind>(task_context, program);
+    const auto state = expander.initial_state();
+    const auto arguments = ext::EvaluationArguments(state.get_call_stack().get_arguments());
+    auto environment = ext::EvaluationEnvironment<Kind>(*task_context, program);
+    auto state_context = environment.make_dl_context(state, arguments);
+    const auto feature = module.get_query_features()[0];
+    const auto query = feature.get_expression();
+    {
+        const auto rows = kr::ps::evaluate(feature, state_context);
+        ASSERT_EQ(rows.size(), 1);
+        EXPECT_EQ(&kr::ps::evaluate(feature, state_context).storage(), &rows.storage());
+        const auto& cached = environment.get_dl_caches().get_queries(false).at(query);
+        EXPECT_EQ(&rows.storage(), &cached.storage());
+        EXPECT_EQ(rows.columns().data(), cached.columns().data());
+        EXPECT_TRUE(std::ranges::equal(rows.columns(), query.get_schema()));
+
+        const auto successors = search.successor_generator->get_successor_nodes(initial, *search.state_repository, *search.axiom_evaluator);
+        ASSERT_FALSE(successors.empty());
+        const auto stack = state.get_call_stack();
+        auto transition = environment.make_dl_transition_context(state.get_state(),
+                                                                 successors.front().get_state(),
+                                                                 arguments.view(),
+                                                                 ext::EvaluationEnvironment<Kind>::make_registers(stack.get_registers()));
+        {
+            const auto target_rows = kr::ps::evaluate(feature, transition.get_target_context());
+            ASSERT_EQ(target_rows.size(), 1);
+            EXPECT_NE(target_rows[0][0], rows[0][0]);
+            EXPECT_NE(&target_rows.storage(), &rows.storage());
+        }
+        EXPECT_TRUE(environment.get_dl_target_caches().get_queries(false).contains(query));
+        environment.get_dl_target_caches().clear(false);
+        EXPECT_TRUE(environment.get_dl_caches().get_queries(false).contains(query));
+        EXPECT_EQ(rows.size(), 1);
+        EXPECT_EQ(&kr::ps::evaluate(feature, state_context).storage(), &rows.storage());
+    }
+    environment.get_dl_caches().clear(false);
+    EXPECT_TRUE(environment.get_dl_caches().get_queries(false).empty());
+    const auto rebuilt = kr::ps::evaluate(feature, state_context);
+    EXPECT_EQ(rebuilt.size(), 1);
+    EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), query.get_schema()));
+}
+
+template<tyr::TaskKind Kind>
 void expect_binding_effects_and_empty_choices()
 {
     const auto task_context = create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"),
@@ -400,6 +459,12 @@ TEST(RunirTests, ExtGroundAndLiftedInitialStatesUseExpanderRepository)
 {
     expect_initial_execution_state_uses_expander_repository<tyr::GroundTag>();
     expect_initial_execution_state_uses_expander_repository<tyr::LiftedTag>();
+}
+
+TEST(RunirTests, ExtGroundAndLiftedQueryEvaluationBorrowsIndependentSourceAndTargetCaches)
+{
+    expect_borrowed_query_evaluation<tyr::GroundTag>();
+    expect_borrowed_query_evaluation<tyr::LiftedTag>();
 }
 
 TEST(RunirTests, ExtBindingEffectsFilterGroundAndLiftedLoadsAndChoices)
@@ -742,6 +807,26 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
 
     EXPECT_TRUE(boolean_arguments.front().get());
     EXPECT_GT(numerical_arguments.front().get(), 0);
+
+    // Contexts borrow each caller's vectors; preparing another context does not replace them.
+    const auto evaluation_arguments = kr::ps::ext::EvaluationArguments(arguments);
+    auto environment = kr::ps::ext::EvaluationEnvironment<tyr::GroundTag>(*task_context, program);
+    auto evaluation_context = environment.make_dl_context(call_target, evaluation_arguments);
+    const auto initial_arguments = kr::ps::ext::EvaluationArguments(initial_state.get_call_stack().get_arguments());
+    const auto initial_context = environment.make_dl_context(initial_state, initial_arguments);
+    EXPECT_TRUE(initial_context.arguments().concept_arguments.empty());
+    EXPECT_EQ(evaluation_context.arguments().concept_arguments.data(), evaluation_arguments.concept_arguments.data());
+    EXPECT_EQ(evaluation_context.arguments().role_arguments.data(), evaluation_arguments.role_arguments.data());
+    EXPECT_EQ(evaluation_context.arguments().boolean_arguments.data(), evaluation_arguments.boolean_arguments.data());
+    EXPECT_EQ(evaluation_context.arguments().numerical_arguments.data(), evaluation_arguments.numerical_arguments.data());
+    EXPECT_EQ(evaluation_context.arguments().concept_arguments.front().get_index(), concept_arguments.front().get_index());
+    EXPECT_TRUE(evaluation_context.arguments().boolean_arguments.front().get());
+    EXPECT_EQ(evaluation_context.arguments().numerical_arguments.front().get(), numerical_arguments.front().get());
+
+    auto evaluation_transition =
+        environment.make_dl_transition_context(call_target.get_state(), call_target.get_state(), evaluation_arguments.view(), evaluation_context.registers());
+    EXPECT_EQ(evaluation_transition.get_source_context().arguments().concept_arguments.data(), evaluation_arguments.concept_arguments.data());
+    EXPECT_EQ(evaluation_transition.get_target_context().arguments().concept_arguments.data(), evaluation_arguments.concept_arguments.data());
 
     const auto caller_frame = call_stack.get_caller();
     ASSERT_TRUE(caller_frame);

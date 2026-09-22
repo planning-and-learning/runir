@@ -10,28 +10,28 @@
 namespace runir::kr::ps
 {
 
-template<runir::kr::FamilyTag Family, typename LanguageTag, typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<ConcreteConditionVariant<Family, LanguageTag>>, C> condition, EvaluationContext& context)
-    requires runir::kr::ps::IsEvaluationContext<Family, LanguageTag, EvaluationContext>
+template<runir::kr::FamilyTag Family, typename LanguageTag, typename C, typename Context>
+bool is_compatible_with(ygg::View<ygg::Index<ConcreteConditionVariant<Family, LanguageTag>>, C> condition, Context& context)
+    requires runir::kr::ps::IsTransitionEvaluationContext<Family, LanguageTag, Context>
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::is_compatible_with(child, context); }, condition.get_variant());
 }
 
-template<runir::kr::FamilyTag Family, typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<ConditionVariant<Family>>, C> condition, EvaluationContext& context)
+template<runir::kr::FamilyTag Family, typename C, typename Context>
+bool is_compatible_with(ygg::View<ygg::Index<ConditionVariant<Family>>, C> condition, Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::is_compatible_with(child, context); }, condition.get_variant());
 }
 
-template<runir::kr::FamilyTag Family, typename LanguageTag, typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<ConcreteEffectVariant<Family, LanguageTag>>, C> effect, EvaluationContext& context)
-    requires runir::kr::ps::IsEvaluationContext<Family, LanguageTag, EvaluationContext>
+template<runir::kr::FamilyTag Family, typename LanguageTag, typename C, typename Context>
+bool is_compatible_with(ygg::View<ygg::Index<ConcreteEffectVariant<Family, LanguageTag>>, C> effect, Context& context)
+    requires runir::kr::ps::IsTransitionEvaluationContext<Family, LanguageTag, Context>
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::is_compatible_with(child, context); }, effect.get_variant());
 }
 
-template<runir::kr::FamilyTag Family, typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<EffectVariant<Family>>, C> effect, EvaluationContext& context)
+template<runir::kr::FamilyTag Family, typename C, typename Context>
+bool is_compatible_with(ygg::View<ygg::Index<EffectVariant<Family>>, C> effect, Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::is_compatible_with(child, context); }, effect.get_variant());
 }

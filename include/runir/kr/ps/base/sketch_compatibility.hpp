@@ -11,9 +11,9 @@
 namespace runir::kr::ps::base
 {
 
-template<typename LanguageTag, typename EvaluationContext, typename StorageContext>
-concept IsSketchView = runir::kr::ps::IsEvaluationContext<runir::kr::BaseFamilyTag, LanguageTag, EvaluationContext>
-                       && requires(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, StorageContext> sketch, EvaluationContext& context) {
+template<typename LanguageTag, typename Context, typename StorageContext>
+concept IsSketchView = runir::kr::ps::IsTransitionEvaluationContext<runir::kr::BaseFamilyTag, LanguageTag, Context>
+                       && requires(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, StorageContext> sketch, Context& context) {
                               { runir::kr::ps::base::is_compatible_with(sketch, context) } -> std::same_as<bool>;
                           };
 

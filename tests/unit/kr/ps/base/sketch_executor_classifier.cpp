@@ -54,14 +54,18 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     options.classifier = goal_classifier;
     const auto goal_result = kr::ps::base::find_solution(task_context, sketch, options);
     auto found_goal = false;
+    auto caches = kr::dl::semantics::DenotationCaches<kr::UnsFamilyTag>();
     for (const auto vertex : goal_result.graph->get_vertex_indices())
     {
         const auto& goal_label = goal_result.graph->get_vertex(vertex).get_property();
         if (!goal_label.is_goal)
             continue;
-        auto context = kr::dl::semantics::EvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(goal_label.state.unpack(),
+        auto context = kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(goal_label.state.unpack(),
                                                                                             task_context->dl_builder,
-                                                                                            *task_context->dl_denotation_repository);
+                                                                                            *task_context->dl_denotation_repository,
+                                                                                            task_context->dl_builder.get_workspace(),
+                                                                                            caches);
+        caches.clear(false);
         EXPECT_TRUE(kr::uns::classify(goal_classifier, context));
         EXPECT_FALSE(goal_label.is_unsolvable);
         found_goal = true;

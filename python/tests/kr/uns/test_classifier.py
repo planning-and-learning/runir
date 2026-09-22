@@ -4,7 +4,9 @@ from typing import NotRequired, TypedDict, cast
 import pytest
 
 from fixture_utils import load_fixture, read_fixture
-from pyrunir.kr import DomainContext, SemanticError
+from pyrunir.kr import DomainContext, GroundTaskContext, SemanticError
+from pyrunir.kr.dl.uns import semantics
+from pyrunir.kr.uns import classify
 from pyrunir.kr.uns.dl import BooleanFeature, ConcreteBooleanFeature, parse_classifier
 from pytyr.formalism.planning import PlanningDomain
 
@@ -49,3 +51,19 @@ def test_classifier_fixture(
         assert isinstance(error, str)
         with pytest.raises(SemanticError, match=re.escape(error)):
             parse_classifier(description, gripper_planning_domain, domain_context.uns_repository)
+
+
+def test_classifier_and_features_use_the_context_cache(gripper_planning_domain, ground_gripper_search_context):
+    domain = DomainContext(gripper_planning_domain)
+    task = GroundTaskContext(domain, ground_gripper_search_context)
+    state = ground_gripper_search_context.state_repository.get_initial_state(ground_gripper_search_context.axiom_evaluator)
+    caches = semantics.DenotationCaches()
+    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository, caches)
+    classifier = parse_classifier(read_fixture("kr/uns/always.classifier"), gripper_planning_domain, domain.uns_repository)
+    feature = classifier.get_features()[0]
+
+    assert classify(classifier, context) is True
+    assert feature.evaluate(context).get() is True
+    assert feature.get_variant().evaluate(context).get() is True
+    caches.clear()
+    assert classify(classifier, context) is True

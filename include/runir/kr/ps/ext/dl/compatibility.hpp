@@ -1,11 +1,11 @@
 #ifndef RUNIR_KR_PS_EXT_DL_COMPATIBILITY_HPP_
 #define RUNIR_KR_PS_EXT_DL_COMPATIBILITY_HPP_
 
+#include "runir/kr/dl/semantics/ext/evaluation.hpp"
 #include "runir/kr/ps/dl/condition_view.hpp"
 #include "runir/kr/ps/dl/effect_view.hpp"
-#include "runir/kr/ps/ext/dl/evaluation.hpp"
-#include "runir/kr/ps/ext/evaluation_context.hpp"
-#include "runir/kr/ps/ext/evaluation_environment.hpp"
+#include "runir/kr/ps/dl/evaluation.hpp"
+#include "runir/kr/ps/ext/dl/transition_evaluation_context.hpp"
 
 #include <concepts>
 #include <tyr/planning/declarations.hpp>
@@ -33,44 +33,27 @@ bool condition_matches(const Value& value)
 }  // namespace detail
 
 template<typename FeatureTag, typename ObservationTag, typename C, tyr::TaskKind Kind>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
-                        runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
+bool is_compatible_with(
+    ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
+    runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {
-    const auto value = evaluate(condition.get_feature(), context);
+    const auto value = runir::kr::ps::evaluate(condition.get_feature(), context).get();
     return detail::condition_matches<FeatureTag, ObservationTag>(value);
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C, tyr::TaskKind Kind>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
-                        runir::kr::dl::semantics::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
-                        runir::kr::dl::semantics::EvaluationWorkspace& workspace)
+bool is_compatible_with(
+    ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
+    runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {
-    const auto value = evaluate(condition.get_feature(), context, workspace);
-    return detail::condition_matches<FeatureTag, ObservationTag>(value);
-}
-
-template<typename FeatureTag, typename ObservationTag, typename C, tyr::TaskKind Kind>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
-                        runir::kr::ps::dl::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
-{
-    return is_compatible_with(condition, context.get_source_context(), context.get_workspace());
-}
-
-template<typename FeatureTag, typename ObservationTag, typename C, tyr::TaskKind Kind>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
-                        runir::kr::ps::ext::EvaluationContext<Kind>& context,
-                        runir::kr::ps::ext::EvaluationEnvironment<Kind>& environment)
-{
-    auto dl_context = environment.make_dl_context(context);
-    return is_compatible_with(condition, dl_context, environment.get_dl_workspace());
+    return is_compatible_with(condition, context.get_source_context());
 }
 
 template<typename FeatureTag, typename ObservationTag, typename C, tyr::TaskKind Kind>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> effect,
-                        runir::kr::ps::dl::EvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
+                        runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context)
 {
-    auto& workspace = context.get_workspace();
-    const auto target = evaluate(effect.get_feature(), context.get_target_context(), workspace);
+    const auto target = runir::kr::ps::evaluate(effect.get_feature(), context.get_target_context()).get();
 
     if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Positive>)
         return target;
@@ -78,7 +61,7 @@ bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir
         return !target;
     else
     {
-        const auto source = evaluate(effect.get_feature(), context.get_source_context(), workspace);
+        const auto source = runir::kr::ps::evaluate(effect.get_feature(), context.get_source_context()).get();
 
         if constexpr (std::same_as<ObservationTag, runir::kr::ps::dl::Unchanged>)
             return source == target;

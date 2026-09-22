@@ -1,9 +1,10 @@
 #include <concepts>
+#include <runir/kr/dl/semantics/uns/state_evaluation_context.hpp>
+#include <runir/kr/ps/dl/evaluation.hpp>
 #include <runir/kr/ps/dl/feature_data.hpp>
 #include <runir/kr/ps/dl/feature_view.hpp>
 #include <runir/kr/ps/feature_index.hpp>
 #include <runir/kr/ps/feature_view.hpp>
-#include <runir/kr/uns/dl/evaluation.hpp>
 #include <runir/kr/uns/repository.hpp>
 
 namespace runir::tests
@@ -40,11 +41,11 @@ static_assert(requires(const View& view) {
     view.get_symbol();
 });
 
-static_assert(requires(View feature, kr::dl::semantics::EvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>& context) {
-    { kr::ps::evaluate(feature, context) } -> std::same_as<bool>;
+static_assert(requires(View feature, kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>& context) {
+    { kr::ps::evaluate(feature, context) } -> std::same_as<kr::dl::semantics::DenotationView<kr::dl::BooleanTag>>;
 });
-static_assert(requires(View feature, kr::dl::semantics::EvaluationContext<kr::UnsFamilyTag, tyr::LiftedTag>& context) {
-    { kr::ps::evaluate(feature, context) } -> std::same_as<bool>;
+static_assert(requires(View feature, kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, tyr::LiftedTag>& context) {
+    { kr::ps::evaluate(feature, context) } -> std::same_as<kr::dl::semantics::DenotationView<kr::dl::BooleanTag>>;
 });
 
 }

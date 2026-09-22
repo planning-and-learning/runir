@@ -99,7 +99,7 @@ auto parse_constructor(const runir::kr::dl::grammar::ast::Constructor<Family, Ca
                        const Context& context) -> typename Context::Target::template ConstructorView<Category>;
 
 template<runir::kr::dl::FamilyTag Family>
-using QueryView = ygg::View<ygg::Index<runir::kr::dl::Query<Family>>, runir::kr::dl::ConstructorRepositoryFor<Family>>;
+using QueryView = runir::kr::dl::FamilyQueryView<Family>;
 
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename Context>
 auto intern_query(const Context& context, ygg::Index<runir::kr::dl::Query<Family, Tag>> index)

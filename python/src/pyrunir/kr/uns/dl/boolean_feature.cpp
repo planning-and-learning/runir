@@ -2,11 +2,11 @@
 #include "pyrunir/kr/binding_utils.hpp"
 
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/uns/evaluation_context.hpp>
-#include <runir/kr/ps/feature_view.hpp>
-#include <runir/kr/uns/dl/evaluation.hpp>
+#include <runir/kr/dl/semantics/uns/state_evaluation_context.hpp>
+#include <runir/kr/ps/dl/evaluation.hpp>
 #include <runir/kr/ps/dl/feature_data.hpp>
 #include <runir/kr/ps/dl/feature_view.hpp>
+#include <runir/kr/ps/feature_view.hpp>
 #include <runir/kr/uns/dl/syntactic_complexity.hpp>
 #include <runir/kr/uns/formatter.hpp>
 #include <runir/kr/uns/repository.hpp>
@@ -27,8 +27,8 @@ void bind_boolean_feature(nb::module_& m, RepositoryBinding& repository)
     using ConcreteFeature = runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>;
     using ConcreteFeatureData = ygg::Data<ConcreteFeature>;
     using ConcreteFeatureView = ygg::View<ygg::Index<ConcreteFeature>, Repository>;
-    using GroundContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag>;
-    using LiftedContext = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag>;
+    using GroundContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::GroundTag>;
+    using LiftedContext = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, tyr::LiftedTag>;
 
     ygg::bind_index<ygg::Index<Feature>>(m, "BooleanFeatureIndex");
     ygg::bind_index<ygg::Index<ConcreteFeature>>(m, "ConcreteBooleanFeatureIndex");
@@ -52,12 +52,14 @@ void bind_boolean_feature(nb::module_& m, RepositoryBinding& repository)
                        .def("get_symbol", &FeatureView::get_symbol)
                        .def(
                            "evaluate",
-                           [](FeatureView value, GroundContext& context) { return runir::kr::ps::evaluate(value, context); },
-                           "context"_a)
+                           [](const FeatureView& value, GroundContext& context) { return runir::kr::ps::evaluate(value, context); },
+                           "context"_a,
+                           nb::keep_alive<0, 2>())
                        .def(
                            "evaluate",
-                           [](FeatureView value, LiftedContext& context) { return runir::kr::ps::evaluate(value, context); },
-                           "context"_a)
+                           [](const FeatureView& value, LiftedContext& context) { return runir::kr::ps::evaluate(value, context); },
+                           "context"_a,
+                           nb::keep_alive<0, 2>())
                        .def("syntactic_complexity", [](FeatureView value) { return runir::kr::uns::syntactic_complexity(value); });
     ygg::add_print(feature);
     ygg::add_comparison(feature);
@@ -70,12 +72,14 @@ void bind_boolean_feature(nb::module_& m, RepositoryBinding& repository)
                                 .def("get_symbol", &ConcreteFeatureView::get_symbol)
                                 .def(
                                     "evaluate",
-                                    [](ConcreteFeatureView value, GroundContext& context) { return runir::kr::ps::evaluate(value, context); },
-                                    "context"_a)
+                                    [](const ConcreteFeatureView& value, GroundContext& context) { return runir::kr::ps::evaluate(value, context); },
+                                    "context"_a,
+                                    nb::keep_alive<0, 2>())
                                 .def(
                                     "evaluate",
-                                    [](ConcreteFeatureView value, LiftedContext& context) { return runir::kr::ps::evaluate(value, context); },
-                                    "context"_a)
+                                    [](const ConcreteFeatureView& value, LiftedContext& context) { return runir::kr::ps::evaluate(value, context); },
+                                    "context"_a,
+                                    nb::keep_alive<0, 2>())
                                 .def("syntactic_complexity", [](ConcreteFeatureView value) { return runir::kr::uns::dl::syntactic_complexity(value); });
     ygg::add_print(concrete_feature);
     ygg::add_comparison(concrete_feature);

@@ -2,8 +2,9 @@
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/constructor_view.hpp>
+#include <runir/kr/dl/semantics/denotation_caches.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
-#include <runir/kr/dl/semantics/ext/evaluation_context.hpp>
+#include <runir/kr/dl/semantics/ext/state_evaluation_context.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <tyr/planning/ground/state_view.hpp>
@@ -29,20 +30,22 @@ void bind_constructor_view(nb::module_& m, const char* name)
 {
     using Type = Constructor<runir::kr::ExtFamilyTag, Category>;
     using View = ygg::View<ygg::Index<Type>, ExtConstructorRepository>;
-    using GroundContext = semantics::EvaluationContext<runir::kr::ExtFamilyTag, tyr::GroundTag>;
-    using LiftedContext = semantics::EvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag>;
+    using GroundContext = semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::GroundTag>;
+    using LiftedContext = semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, tyr::LiftedTag>;
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index).def("get_variant", &View::get_variant, nb::keep_alive<0, 1>());
     ygg::add_print(cls);
     ygg::add_comparison(cls);
     ygg::add_hash(cls);
     cls.def(
            "evaluate",
-           [](View view, GroundContext& context) { return semantics::evaluate(view, context); },
-           nb::arg("context"))
+           [](const View& view, GroundContext& context) { return semantics::evaluate(view, context); },
+           nb::arg("context"),
+           nb::keep_alive<0, 2>())
         .def(
             "evaluate",
-            [](View view, LiftedContext& context) { return semantics::evaluate(view, context); },
-            nb::arg("context"))
+            [](const View& view, LiftedContext& context) { return semantics::evaluate(view, context); },
+            nb::arg("context"),
+            nb::keep_alive<0, 2>())
         .def("syntactic_complexity", [](View view) { return semantics::syntactic_complexity(view); });
     m.def("syntactic_complexity", [](View view) { return semantics::syntactic_complexity(view); }, nb::arg("constructor"));
 }

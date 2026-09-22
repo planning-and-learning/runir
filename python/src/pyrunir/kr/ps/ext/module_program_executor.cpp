@@ -8,8 +8,10 @@
 #include <nanobind/stl/vector.h>
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
+#include <runir/kr/dl/semantics/ext/evaluation.hpp>
+#include <runir/kr/ps/dl/evaluation.hpp>
 #include <runir/kr/ps/ext/action_rule_contract_error.hpp>
-#include <runir/kr/ps/ext/evaluation.hpp>
+#include <runir/kr/ps/ext/evaluation_environment.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/module_program_executor.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
@@ -34,15 +36,14 @@ template<tyr::TaskKind Kind, typename FeatureTag>
 void bind_feature_evaluation(nb::module_& m)
 {
     using FeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, Repository>;
+    using Context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>;
 
     m.def(
         "evaluate",
-        [](FeatureView feature, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
-        { return evaluate(feature, context, environment); },
+        [](const FeatureView& feature, Context& context) { return runir::kr::ps::evaluate(feature, context); },
         "feature"_a,
         "context"_a,
-        "environment"_a,
-        nb::keep_alive<0, 3>());
+        nb::keep_alive<0, 2>());
 }
 
 template<tyr::TaskKind Kind>
@@ -58,31 +59,23 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using Options = ModuleProgramSearchOptions<Kind>;
     using Step = detail::ModuleProgramStep<Kind>;
     using Expander = SuccessorExpander<Kind>;
-    using Context = EvaluationContext<Kind>;
     using Environment = EvaluationEnvironment<Kind>;
 
     nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
     nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
 
-    nb::class_<Context>(m, (std::string(prefix) + "EvaluationContext").c_str())
-        .def(nb::init<ExecutionRepository<Kind>*, ExecutionBuilder<Kind>*, ModuleProgramView, StateView>(),
-             "repository"_a,
-             "builder"_a,
-             "program"_a,
-             "state"_a,
-             nb::keep_alive<1, 2>(),
-             nb::keep_alive<1, 3>(),
-             nb::keep_alive<1, 4>(),
-             nb::keep_alive<1, 5>())
-        .def_prop_rw(
-            "state",
-            [](const Context& self) { return self.get_state(); },
-            [](Context& self, tyr::planning::StateView<Kind> state) { self.get_state() = std::move(state); })
-        .def_prop_ro("program", &Context::get_program, nb::keep_alive<0, 1>())
-        .def("intern", &Context::intern, "phase"_a, nb::keep_alive<0, 1>());
-
     nb::class_<Environment>(m, (std::string(prefix) + "EvaluationEnvironment").c_str())
-        .def(nb::init<runir::kr::TaskContext<Kind>&, ModuleProgramView>(), "task_context"_a, "program"_a, nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>());
+        .def(nb::init<runir::kr::TaskContext<Kind>&, ModuleProgramView>(), "task_context"_a, "program"_a, nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
+        .def(
+            "make_dl_context",
+            [](Environment& self, StateView state, const EvaluationArguments& arguments) { return self.make_dl_context(state, arguments); },
+            "execution_state"_a,
+            "arguments"_a,
+            nb::keep_alive<0, 1>(),
+            nb::keep_alive<0, 2>(),
+            nb::keep_alive<0, 3>())
+        .def("get_dl_caches", &Environment::get_dl_caches, nb::rv_policy::reference_internal)
+        .def("get_dl_target_caches", &Environment::get_dl_target_caches, nb::rv_policy::reference_internal);
 
     bind_feature_evaluation<Kind, runir::kr::dl::ConceptTag>(m);
     bind_feature_evaluation<Kind, runir::kr::dl::RoleTag>(m);
@@ -226,23 +219,24 @@ void bind_module_program_executor(nb::module_& m)
     m.attr("GroundModuleProgramProofEdgeLabel") = edge_label;
     m.attr("LiftedModuleProgramProofEdgeLabel") = edge_label;
 
+    auto evaluation_arguments = nb::class_<EvaluationArguments>(m, "EvaluationArguments").def(nb::init<>());
     bind_execution_types<tyr::GroundTag>(m, "Ground");
     bind_execution_types<tyr::LiftedTag>(m, "Lifted");
+    evaluation_arguments.def(nb::init<CallArgumentsView<tyr::GroundTag>>(), "arguments"_a, nb::keep_alive<1, 2>())
+        .def(nb::init<CallArgumentsView<tyr::LiftedTag>>(), "arguments"_a, nb::keep_alive<1, 2>());
 
     m.def(
         "find_ground_solution",
-        [](runir::kr::TaskContextPtr<tyr::GroundTag> task_context,
-           ModuleProgramView program,
-           const ModuleProgramSearchOptions<tyr::GroundTag>& options) { return find_solution(std::move(task_context), program, options); },
+        [](runir::kr::TaskContextPtr<tyr::GroundTag> task_context, ModuleProgramView program, const ModuleProgramSearchOptions<tyr::GroundTag>& options)
+        { return find_solution(std::move(task_context), program, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         "task_context"_a,
         "program"_a,
         "options"_a);
     m.def(
         "find_lifted_solution",
-        [](runir::kr::TaskContextPtr<tyr::LiftedTag> task_context,
-           ModuleProgramView program,
-           const ModuleProgramSearchOptions<tyr::LiftedTag>& options) { return find_solution(std::move(task_context), program, options); },
+        [](runir::kr::TaskContextPtr<tyr::LiftedTag> task_context, ModuleProgramView program, const ModuleProgramSearchOptions<tyr::LiftedTag>& options)
+        { return find_solution(std::move(task_context), program, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         "task_context"_a,
         "program"_a,

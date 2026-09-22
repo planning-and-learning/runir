@@ -1,5 +1,4 @@
 import gc
-import sys
 import pytest
 
 from pyrunir.kr import DomainContext, GroundTaskContext, UndefinedSymbolError
@@ -23,7 +22,9 @@ def _sketch(expression, category, domain, context):
 
 
 @pytest.mark.parametrize("family", ["base", "ext", "uns"])
-def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(gripper_planning_domain, family):
+def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
+    gripper_planning_domain, ground_gripper_search_context, family
+):
     context = DomainContext(gripper_planning_domain)
     source = '(b_nonempty (q_project (ball) (q_atomic_state "at" (ball room))))'
     feature = f"(:boolean (:symbol value) (:expression {source}))"
@@ -54,6 +55,18 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(gri
         )
         expression = owner.get_features()[0].get_expression()
         module = uns_semantics
+
+    task = GroundTaskContext(context, ground_gripper_search_context)
+    state = ground_gripper_search_context.state_repository.get_initial_state(ground_gripper_search_context.axiom_evaluator)
+    caches = module.DenotationCaches()
+    with pytest.raises(TypeError):
+        module.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository)
+    evaluation_context = module.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository, caches)
+    assert expression.evaluate(evaluation_context).get() is True
+    caches.clear(False)
+    assert expression.evaluate(evaluation_context).get() is True
+    caches.clear(True)
+    assert expression.evaluate(evaluation_context).get() is True
 
     formatted = str(owner)
     assert source in formatted
@@ -183,7 +196,8 @@ def test_query_count_evaluation(gripper_planning_domain, ground_gripper_search_c
     search = ground_gripper_search_context
     task = GroundTaskContext(domain, search)
     state = search.state_repository.get_initial_state(search.axiom_evaluator)
-    context = semantics.GroundEvaluationContext(state, task.dl_builder, task.dl_denotation_repository)
+    caches = semantics.DenotationCaches()
+    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository, caches)
     owner = _sketch(f"(n_count {query})", "numerical", gripper_planning_domain, domain)
     expression = owner.get_numerical_features()[0].get_expression()
     assert expression.evaluate(context).get() == expected
@@ -195,7 +209,8 @@ def test_concept_and_role_projection_bindings(gripper_planning_domain, ground_gr
     search = ground_gripper_search_context
     task = GroundTaskContext(domain, search)
     state = search.state_repository.get_initial_state(search.axiom_evaluator)
-    context = semantics.GroundEvaluationContext(state, task.dl_builder, task.dl_denotation_repository)
+    caches = semantics.DenotationCaches()
+    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository, caches)
     atom = '(q_atomic_state "at" (ball room))'
     owner = parse_sketch(
         "(:sketch (:features "
@@ -222,7 +237,7 @@ def test_concept_and_role_projection_bindings(gripper_planning_domain, ground_gr
     assert str(role) == f"(r_project room ball {atom})"
 
 
-def test_query_column_views_retain_their_parent(gripper_planning_domain):
+def test_query_column_views_use_caller_owned_repository(gripper_planning_domain):
     context = DomainContext(gripper_planning_domain)
 
     def columns_after_owner_scope():
@@ -236,9 +251,7 @@ def test_query_column_views_retain_their_parent(gripper_planning_domain):
         atom_view = project.get_arg().get_variant()
         selected = []
         for view in (concept, role, project, atom_view):
-            references = sys.getrefcount(view)
             columns = view.get_columns()
-            assert sys.getrefcount(view) == references + len(columns)
             selected.append(columns[0])
         return selected
 

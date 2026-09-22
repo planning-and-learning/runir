@@ -184,22 +184,28 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     auto repository = dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(search->task->get_repository());
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto context = sem::EvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(), builder, denotations);
+    auto caches = sem::DenotationCaches<kr::ExtFamilyTag>();
+    auto context = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(), builder, denotations, builder.get_workspace(), caches);
     const auto expression = kr::ps::ext::dl::parse_numerical(
         R"((n_count (q_rename (source target)
                 (q_project (x z)
                     (q_join (q_atomic_state "triple" (x y z)) (q_atomic_state "edge" (x y)))))))",
         search->task->get_domain().get_domain(), *repository);
 
-    // The default overload must reuse Builder's retained workspace. Ext evaluation
-    // recomputes the query, so this measures operators and pooled returns, not a cache hit.
+    // Clearing dynamic results measures query recomputation and pooled returns.
     for (size_t i = 0; i < 8; ++i)
+    {
+        caches.clear(false);
         ASSERT_EQ(sem::evaluate(expression, context).get(), 3);
+    }
 
     bool valid = true;
     allocation_tracking::Scope measured;
     for (size_t i = 0; i < 1000; ++i)
+    {
+        caches.clear(false);
         valid &= sem::evaluate(expression, context).get() == 3;
+    }
     const auto counts = measured.finish();
 
     EXPECT_TRUE(valid);

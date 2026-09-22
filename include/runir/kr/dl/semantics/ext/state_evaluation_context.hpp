@@ -1,10 +1,10 @@
-#ifndef RUNIR_KR_DL_SEMANTICS_EXT_EVALUATION_CONTEXT_HPP_
-#define RUNIR_KR_DL_SEMANTICS_EXT_EVALUATION_CONTEXT_HPP_
+#ifndef RUNIR_KR_DL_SEMANTICS_EXT_STATE_EVALUATION_CONTEXT_HPP_
+#define RUNIR_KR_DL_SEMANTICS_EXT_STATE_EVALUATION_CONTEXT_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/register_index.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
-#include "runir/kr/dl/semantics/evaluation_context.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <array>
 #include <optional>
@@ -26,17 +26,6 @@ struct Arguments
     std::span<const DenotationView<RoleTag>> role_arguments;
     std::span<const DenotationView<BooleanTag>> boolean_arguments;
     std::span<const DenotationView<NumericalTag>> numerical_arguments;
-
-    Arguments() noexcept = default;
-
-    template<typename Source>
-    explicit Arguments(const Source& source) noexcept :
-        concept_arguments(source.template get<ConceptTag>()),
-        role_arguments(source.template get<RoleTag>()),
-        boolean_arguments(source.template get<BooleanTag>()),
-        numerical_arguments(source.template get<NumericalTag>())
-    {
-    }
 
     template<CategoryTag Category>
     const auto& get() const noexcept
@@ -152,21 +141,23 @@ private:
 };
 
 template<tyr::TaskKind Kind>
-class EvaluationContext<runir::kr::ExtFamilyTag, Kind> : public BaseEvaluationContext<EvaluationContext<runir::kr::ExtFamilyTag, Kind>, Kind>
+class StateEvaluationContext<runir::kr::ExtFamilyTag, Kind> : public BaseStateEvaluationContext<runir::kr::ExtFamilyTag, Kind>
 {
 private:
-    using Base = BaseEvaluationContext<EvaluationContext<runir::kr::ExtFamilyTag, Kind>, Kind>;
+    using Base = BaseStateEvaluationContext<runir::kr::ExtFamilyTag, Kind>;
 
     Registers m_registers;
     Arguments m_arguments;
 
 public:
-    EvaluationContext(tyr::planning::StateView<Kind> state,
-                      Builder& builder,
-                      DenotationRepository& denotation_repository,
-                      Arguments arguments = {},
-                      Registers registers = {}) noexcept :
-        Base(std::move(state), builder, denotation_repository),
+    StateEvaluationContext(tyr::planning::StateView<Kind> state,
+                           Builder& builder,
+                           DenotationRepository& denotation_repository,
+                           EvaluationWorkspace& workspace,
+                           DenotationCaches<runir::kr::ExtFamilyTag>& caches,
+                           Arguments arguments = {},
+                           Registers registers = {}) noexcept :
+        Base(std::move(state), builder, denotation_repository, workspace, caches),
         m_registers(std::move(registers)),
         m_arguments(arguments)
     {

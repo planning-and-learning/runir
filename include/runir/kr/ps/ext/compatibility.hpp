@@ -4,8 +4,6 @@
 #include "runir/kr/ps/condition_view.hpp"
 #include "runir/kr/ps/effect_view.hpp"
 #include "runir/kr/ps/ext/dl/compatibility.hpp"
-#include "runir/kr/ps/ext/evaluation_context.hpp"
-#include "runir/kr/ps/ext/evaluation_environment.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
 
@@ -16,75 +14,33 @@
 namespace runir::kr::ps::ext
 {
 
-template<typename LanguageTag, typename C, tyr::TaskKind Kind>
+template<typename LanguageTag, typename C, typename Context>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C> condition,
-                        EvaluationContext<Kind>& context,
-                        EvaluationEnvironment<Kind>& environment)
-{
-    return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context, environment); }, condition.get_variant());
-}
-
-template<typename C, tyr::TaskKind Kind>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C> condition,
-                        EvaluationContext<Kind>& context,
-                        EvaluationEnvironment<Kind>& environment)
-{
-    return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context, environment); }, condition.get_variant());
-}
-
-template<RuleKind Kind, typename C, tyr::TaskKind TaskKind>
-bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationContext<TaskKind>& context, EvaluationEnvironment<TaskKind>& environment)
-{
-    for (auto condition : rule.get_conditions())
-        if (!runir::kr::ps::ext::is_compatible_with(condition, context, environment))
-            return false;
-
-    return true;
-}
-
-template<RuleKind Kind, typename C, tyr::TaskKind TaskKind>
-bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationContext<TaskKind>& context, EvaluationEnvironment<TaskKind>& environment)
-{
-    if (!conditions_are_compatible(rule, context, environment))
-        return false;
-
-    if constexpr (requires { rule.get_effects(); })
-    {
-        for (auto effect : rule.get_effects())
-            if (!runir::kr::ps::ext::is_compatible_with(effect, context, environment))
-                return false;
-    }
-
-    return true;
-}
-
-template<typename LanguageTag, typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C> condition,
-                        EvaluationContext& context)
+                        Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context); }, condition.get_variant());
 }
 
-template<typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C> condition, EvaluationContext& context)
+template<typename C, typename Context>
+bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>>, C> condition, Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context); }, condition.get_variant());
 }
 
-template<typename LanguageTag, typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C> effect, EvaluationContext& context)
+template<typename LanguageTag, typename C, typename Context>
+bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffectVariant<runir::kr::ExtFamilyTag, LanguageTag>>, C> effect, Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context); }, effect.get_variant());
 }
 
-template<typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>, C> effect, EvaluationContext& context)
+template<typename C, typename Context>
+bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>>, C> effect, Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context); }, effect.get_variant());
 }
 
-template<RuleKind Kind, typename C, typename EvaluationContext>
-bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationContext& context)
+template<RuleKind Kind, typename C, typename Context>
+bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, Context& context)
 {
     for (auto condition : rule.get_conditions())
         if (!runir::kr::ps::ext::is_compatible_with(condition, context))
@@ -93,8 +49,8 @@ bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, Evalua
     return true;
 }
 
-template<RuleKind Kind, typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationContext& context)
+template<RuleKind Kind, typename C, typename Context>
+bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind>>, C> rule, Context& context)
 {
     if (!conditions_are_compatible(rule, context))
         return false;
@@ -109,8 +65,8 @@ bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind>>, C> rule, EvaluationCon
     return true;
 }
 
-template<typename C, typename EvaluationContext>
-bool is_compatible_with(ygg::View<ygg::Index<ps::Rule<ExtFamilyTag>>, C> rule, EvaluationContext& context)
+template<typename C, typename Context>
+bool is_compatible_with(ygg::View<ygg::Index<ps::Rule<ExtFamilyTag>>, C> rule, Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context); }, rule.get_variant());
 }

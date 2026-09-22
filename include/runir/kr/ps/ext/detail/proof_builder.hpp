@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_EXT_DETAIL_PROOF_BUILDER_HPP_
 
 #include "runir/graphs/cycle.hpp"
-#include "runir/kr/dl/semantics/uns/evaluation_context.hpp"
+#include "runir/kr/dl/semantics/uns/state_evaluation_context.hpp"
 #include "runir/kr/ps/ext/module_program_executor_data.hpp"
 #include "runir/kr/ps/ext/successor_expander.hpp"
 #include "runir/kr/task_context.hpp"
@@ -27,6 +27,7 @@ private:
     ygg::UnorderedMap<ygg::Index<ExecutionState<Kind>>, graphs::VertexIndex> m_vertex_to_index;
     SuccessorExpander<Kind> m_expander;
     std::optional<runir::kr::uns::ClassifierView> m_classifier;
+    runir::kr::dl::semantics::DenotationCaches<runir::kr::UnsFamilyTag> m_classifier_caches;
 
 public:
     ModuleProgramProofBuilder(runir::kr::TaskContextPtr<Kind> task_context,
@@ -65,9 +66,12 @@ public:
         if (!goal && m_classifier)
         {
             auto& task_context = *m_expander.get_task_context();
-            auto context = runir::kr::dl::semantics::EvaluationContext<runir::kr::UnsFamilyTag, Kind>(state.get_state(),
+            m_classifier_caches.clear(false);
+            auto context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, Kind>(state.get_state(),
                                                                                                       task_context.dl_builder,
-                                                                                                      *task_context.dl_denotation_repository);
+                                                                                                      *task_context.dl_denotation_repository,
+                                                                                                      task_context.dl_builder.get_workspace(),
+                                                                                                      m_classifier_caches);
             is_unsolvable |= runir::kr::uns::classify(*m_classifier, context);
             is_alive &= !is_unsolvable;
         }

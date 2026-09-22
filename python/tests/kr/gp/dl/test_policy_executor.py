@@ -10,8 +10,9 @@ from pytyr.planning.ground import PackedState
 from pyrunir.kr import DomainContext, GroundTaskContext
 from pyrunir.kr.dl.base.semantics import (
     ConstructorRepositoryFactory,
-    GroundEvaluationContext as GroundDLEvaluationContext,
-    LiftedEvaluationContext as LiftedDLEvaluationContext,
+    DenotationCaches,
+    GroundStateEvaluationContext,
+    LiftedStateEvaluationContext,
     syntactic_complexity as dl_syntactic_complexity,
 )
 from pyrunir.kr.ps.base import (
@@ -26,8 +27,8 @@ from pyrunir.kr.ps.base import (
 )
 from pyrunir.kr.ps.base import RepositoryFactory as SketchRepositoryFactory
 from pyrunir.kr.ps.base.dl import (
-    GroundEvaluationContext,
-    LiftedEvaluationContext,
+    GroundTransitionEvaluationContext,
+    LiftedTransitionEvaluationContext,
     SketchFactory,
     SketchSpecification,
     parse_sketch,
@@ -93,18 +94,17 @@ def test_base_labeled_successors_include_transitions_rejected_by_the_sketch(
     assert initial_successors
 
     for state in (initial.get_state(), initial_successors[0].node.get_state()):
-        context = expander.context_at(state)
         node = search.successor_generator.get_node(search.state_repository, state.get_index())
         expected = search.successor_generator.get_labeled_successor_nodes(
             node, search.state_repository, search.axiom_evaluator
         )
-        actual = expander.labeled_successors(context)
+        actual = expander.labeled_successors(state)
 
         assert actual
         assert Counter((step.label, step.node.get_state()) for step in actual) == Counter(
             (step.label, step.node.get_state()) for step in expected
         )
-        assert all(expander.matching_rule(context, step.node.get_state()) is None for step in actual)
+        assert all(expander.matching_rule(state, step.node.get_state()) is None for step in actual)
 
 
 def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
@@ -146,26 +146,28 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     assert dl_builder is task_context.dl_builder
     assert dl_denotation_repository is task_context.dl_denotation_repository
     expander = SuccessorExpander(task_context, sketch)
-    expander_context = expander.context_at(source_state)
-    assert expander_context.state == source_state
-    expander.matching_rule(expander_context, target_state)
-    evaluation_context = GroundEvaluationContext(source_state, target_state, dl_builder, dl_denotation_repository)
-    dl_evaluation_context = GroundDLEvaluationContext(source_state, dl_builder, dl_denotation_repository)
-    assert LiftedEvaluationContext is not None
-    assert LiftedDLEvaluationContext is not None
+    expander.matching_rule(source_state, target_state)
+    source_caches, target_caches = DenotationCaches(), DenotationCaches()
+    transition_context = GroundTransitionEvaluationContext(
+        source_state, target_state, dl_builder, dl_denotation_repository, source_caches, target_caches
+    )
+    state_context = GroundStateEvaluationContext(source_state, dl_builder, dl_denotation_repository, source_caches)
+    assert LiftedTransitionEvaluationContext is not None
+    assert LiftedStateEvaluationContext is not None
 
-    assert isinstance(sketch.is_compatible_with(evaluation_context), bool)
+    assert isinstance(sketch.is_compatible_with(transition_context), bool)
     rule = next(iter(sketch.get_rules()))
-    assert isinstance(rule.is_compatible_with(evaluation_context), bool)
+    assert isinstance(rule.is_compatible_with(transition_context), bool)
     condition = next(iter(rule.get_conditions()))
-    assert isinstance(condition.is_compatible_with(evaluation_context), bool)
+    assert isinstance(condition.is_compatible_with(transition_context), bool)
     concrete_condition_variant = condition.get_variant()
     concrete_condition = concrete_condition_variant.get_variant()
     feature = concrete_condition.get_feature()
     concrete_feature = feature.get_variant()
     dl_constructor = concrete_feature.get_feature()
-    dl_denotation = dl_constructor.evaluate(dl_evaluation_context)
-    assert isinstance(feature.evaluate(dl_evaluation_context), bool)
+    dl_denotation = dl_constructor.evaluate(state_context)
+    assert isinstance(feature.evaluate(state_context).get(), bool)
+    assert concrete_feature.evaluate(state_context) == dl_denotation
     assert dl_syntactic_complexity(dl_constructor) == dl_constructor.syntactic_complexity()
     assert feature.syntactic_complexity() == concrete_feature.syntactic_complexity()
     assert syntactic_complexity(sketch) == sketch.syntactic_complexity()
