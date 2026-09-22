@@ -259,7 +259,10 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
 
         if (!expansion.expanded)
         {
-            proof.steps(expansion.state, out_of_time, expansion.steps);
+            if (options.universal || options.shuffle_choice_points)
+                proof.template steps<EagerExpansionPolicy>(expansion.state, out_of_time, expansion.steps);
+            else
+                proof.template steps<LazyExpansionPolicy>(expansion.state, out_of_time, expansion.steps);
             if (out_of_time())
                 return finish(Status::OUT_OF_TIME);
             if (options.shuffle_choice_points)

@@ -60,6 +60,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     using RoleChoose = Rule<ChooseTag<runir::kr::dl::RoleTag>>;
     using Sketch = Rule<SketchTag>;
     using Do = Rule<DoTag>;
+    using Action = Rule<ActionTag>;
     using Call = Rule<CallTag>;
 
     ygg::bind_index<ygg::Index<ConceptLoad>>(m, "ConceptLoadRuleIndex");
@@ -68,6 +69,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     ygg::bind_index<ygg::Index<RoleChoose>>(m, "RoleChooseRuleIndex");
     ygg::bind_index<ygg::Index<Sketch>>(m, "SketchRuleIndex");
     ygg::bind_index<ygg::Index<Do>>(m, "DoRuleIndex");
+    ygg::bind_index<ygg::Index<Action>>(m, "ActionRuleIndex");
     ygg::bind_index<ygg::Index<Call>>(m, "CallRuleIndex");
 
     bind_rule_data<ConceptLoad>(m, "ConceptLoadRuleData").def_rw("feature", &ygg::Data<ConceptLoad>::feature).def_rw("reg", &ygg::Data<ConceptLoad>::reg);
@@ -75,6 +77,9 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     bind_rule_data<ConceptChoose>(m, "ConceptChooseRuleData").def_rw("feature", &ygg::Data<ConceptChoose>::feature).def_rw("reg", &ygg::Data<ConceptChoose>::reg);
     bind_rule_data<RoleChoose>(m, "RoleChooseRuleData").def_rw("feature", &ygg::Data<RoleChoose>::feature).def_rw("reg", &ygg::Data<RoleChoose>::reg);
     bind_rule_data<Sketch>(m, "SketchRuleData");
+    bind_rule_data<Action>(m, "ActionRuleData")
+        .def_rw("action_name", &ygg::Data<Action>::action_name)
+        .def_rw("query_feature", &ygg::Data<Action>::query_feature);
     bind_rule_data<Do>(m, "DoRuleData")
         .def_rw("action_name", &ygg::Data<Do>::action_name)
         .def_rw("arguments", &ygg::Data<Do>::arguments);
@@ -93,21 +98,16 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
         .def("get_feature", &ygg::View<ygg::Index<RoleChoose>, Repository>::get_feature, nb::keep_alive<0, 1>())
         .def("get_register", &ygg::View<ygg::Index<RoleChoose>, Repository>::get_register, nb::keep_alive<0, 1>());
     bind_rule_view<Sketch>(m, "SketchRule");
+    bind_rule_view<Action>(m, "ActionRule")
+        .def("get_action_name", &ygg::View<ygg::Index<Action>, Repository>::get_action_name)
+        .def("get_query_feature", &ygg::View<ygg::Index<Action>, Repository>::get_query_feature, nb::keep_alive<0, 1>());
     bind_rule_view<Do>(m, "DoRule")
         .def("get_action_name", &ygg::View<ygg::Index<Do>, Repository>::get_action_name)
         .def("get_action_arguments", &ygg::View<ygg::Index<Do>, Repository>::get_action_arguments);
     using CallView = ygg::View<ygg::Index<Call>, Repository>;
     bind_rule_view<Call>(m, "CallRule")
         .def("get_callee", &CallView::get_callee, nb::keep_alive<0, 1>())
-        .def(
-            "get_call_arguments",
-            [](const CallView& view)
-            {
-                nb::list result;
-                view.for_each_call_argument([&](auto argument) { result.append(nb::cast(argument)); });
-                return result;
-            },
-            nb::keep_alive<0, 1>());
+        .def("get_call_arguments", &CallView::get_call_arguments);
 
     repository.def("get_or_create", &runir::kr::python::get_or_create_data<ConceptLoad, Repository>, "data"_a, nb::keep_alive<0, 1>());
     repository.def("get_or_create", &runir::kr::python::get_or_create_data<RoleLoad, Repository>, "data"_a, nb::keep_alive<0, 1>());
@@ -115,6 +115,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     repository.def("get_or_create", &runir::kr::python::get_or_create_data<RoleChoose, Repository>, "data"_a, nb::keep_alive<0, 1>());
     repository.def("get_or_create", &runir::kr::python::get_or_create_data<Sketch, Repository>, "data"_a, nb::keep_alive<0, 1>());
     repository.def("get_or_create", &runir::kr::python::get_or_create_data<Do, Repository>, "data"_a, nb::keep_alive<0, 1>());
+    repository.def("get_or_create", &runir::kr::python::get_or_create_data<Action, Repository>, "data"_a, nb::keep_alive<0, 1>());
     repository.def("get_or_create", &runir::kr::python::get_or_create_data<Call, Repository>, "data"_a, nb::keep_alive<0, 1>());
 }
 

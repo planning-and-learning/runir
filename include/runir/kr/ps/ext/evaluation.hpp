@@ -30,12 +30,24 @@ auto evaluate(ygg::View<ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::E
     return runir::kr::dl::semantics::evaluate(constructor, dl_context, environment.get_dl_workspace());
 }
 
+template<typename C, tyr::TaskKind Kind>
+auto evaluate(ygg::View<ygg::Index<runir::kr::dl::Query<runir::kr::ExtFamilyTag>>, C> query,
+              EvaluationContext<Kind>& context,
+              EvaluationEnvironment<Kind>& environment)
+{
+    auto dl_context = environment.make_dl_context(context);
+    return runir::kr::dl::semantics::evaluate_impl(query, dl_context, environment.get_dl_workspace());
+}
+
 template<typename FeatureTag, typename C, tyr::TaskKind Kind>
 auto evaluate(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>, C> feature,
               EvaluationContext<Kind>& context,
               EvaluationEnvironment<Kind>& environment)
 {
-    return runir::kr::ps::ext::evaluate(feature.get_feature(), context, environment).get();
+    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::QueryFeature>)
+        return runir::kr::ps::ext::evaluate(feature.get_feature(), context, environment);
+    else
+        return runir::kr::ps::ext::evaluate(feature.get_feature(), context, environment).get();
 }
 
 template<typename FeatureTag, typename C, tyr::TaskKind Kind>

@@ -270,6 +270,12 @@ struct AstCategory<ast::Feature<Category>>
     using Type = Category;
 };
 
+template<>
+struct AstCategory<ast::QueryFeature>
+{
+    using Type = runir::kr::ps::dl::QueryFeature;
+};
+
 template<runir::kr::dl::CategoryTag Category>
 struct AstCategory<ast::LoadRule<Category>>
 {
@@ -462,10 +468,10 @@ void append_argument(Repository& repository,
         argument.get());
 }
 
-template<typename FeatureTag, typename ConcreteFeatureTag>
+template<typename FeatureTag, typename Expression>
 auto intern_dl_feature(Repository& repository,
                        runir::kr::ps::ext::Builder& builder,
-                       ygg::Index<runir::kr::dl::FamilyConstructor<runir::kr::ExtFamilyTag, ConcreteFeatureTag>> constructor,
+                       ygg::Index<Expression> constructor,
                        const std::string& symbol)
 {
     auto concrete_data = runir::kr::ps::ext::checkout<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>(builder);
@@ -844,22 +850,22 @@ auto find_module(const std::unordered_map<std::string, ygg::Index<ModuleSymbol>>
     return it == modules.end() ? std::optional<ygg::Index<ModuleSymbol>> {} : std::optional(it->second);
 }
 
-auto find_action_arity(tyr::formalism::planning::DomainView domain, const std::string& name)
+auto find_action(tyr::formalism::planning::DomainView domain, const std::string& name)
 {
     for (const auto action : domain.get_actions())
         if (action.get_name() == name)
-            return std::optional<ygg::uint_t>(action.get_original_arity());
-    return std::optional<ygg::uint_t> {};
+            return std::optional(action);
+    return std::optional<tyr::formalism::planning::ActionView<tyr::LiftedTag>> {};
 }
 
 void validate_do_action(tyr::formalism::planning::DomainView domain, const ast::DoRule& rule, const runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    const auto arity = find_action_arity(domain, rule.action.text);
-    if (!arity)
+    const auto action = find_action(domain, rule.action.text);
+    if (!action)
         diagnostics.throw_at(rule.action, runir::kr::UndefinedSymbolError("action", rule.action.text));
 
-    if (rule.arguments.size() != *arity)
-        diagnostics.throw_at(rule.action, runir::kr::ArityMismatchError("action " + rule.action.text, *arity, rule.arguments.size()));
+    if (rule.arguments.size() != action->get_original_arity())
+        diagnostics.throw_at(rule.action, runir::kr::ArityMismatchError("action " + rule.action.text, action->get_original_arity(), rule.arguments.size()));
 }
 
 template<BindingRuleKind Kind, typename RuleAst>
@@ -908,6 +914,7 @@ auto parse_rule(
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>>& role_features,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>& numerical_features,
+    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>>& query_features,
     const ModuleReferences& references,
     const std::string& symbol,
     runir::kr::parser::DiagnosticContext& diagnostics)
@@ -953,6 +960,25 @@ auto parse_rule(
                 data->arguments.reserve(concrete.arguments.size());
                 for (const auto& argument : concrete.arguments)
                     data->arguments.push_back(parse_do_argument(argument, concept_features, diagnostics));
+                return intern_rule_variant(repository, builder, *data, symbol);
+            }
+            else if constexpr (std::same_as<RuleAst, ast::ActionRule>)
+            {
+                const auto action = find_action(domain, concrete.action.text);
+                if (!action)
+                    diagnostics.throw_at(concrete.action, runir::kr::UndefinedSymbolError("action", concrete.action.text));
+                const auto query_feature = require_feature(query_features, concrete.query_feature, diagnostics);
+                const auto query_arity = ygg::make_view(query_feature, repository).get_expression().get_schema().size();
+                if (query_arity != action->get_arity())
+                    diagnostics.throw_at(concrete.query_feature,
+                                         runir::kr::ArityMismatchError("action " + concrete.action.text, action->get_arity(), query_arity));
+                auto data = runir::kr::ps::ext::checkout<Rule<ActionTag>>(builder);
+                data->source = source;
+                data->target = target;
+                data->action_name = concrete.action.text;
+                data->query_feature = query_feature;
+                append_conditions(repository, builder, concrete.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
+                append_effects(repository, builder, concrete.effects, boolean_features, numerical_features, diagnostics, data->effects);
                 return intern_rule_variant(repository, builder, *data, symbol);
             }
             else if constexpr (std::same_as<RuleAst, ast::CallRule>)
@@ -1160,22 +1186,33 @@ ModuleView lower_module(const ast::Module& ast,
     auto boolean_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>> {};
     auto numerical_features =
         std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>> {};
+    auto query_features =
+        std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>> {};
     for (const auto& feature : ast.features)
     {
         boost::apply_visitor(
             [&](const auto& concrete)
             {
-                append_feature(repository,
-                               builders,
-                               *data,
-                               concrete,
-                               domain,
-                               concept_features,
-                               role_features,
-                               boolean_features,
-                               numerical_features,
-                               references,
-                               diagnostics);
+                if constexpr (std::same_as<std::remove_cvref_t<decltype(concrete)>, ast::QueryFeature>)
+                {
+                    const auto context = ConstructorContext { repository.get_dl_repository(), builders.dl, diagnostics, &references };
+                    const auto query = parse(concrete.expression, domain, context);
+                    const auto view = intern_dl_feature<runir::kr::ps::dl::QueryFeature>(repository, builders.ps, query.get_index(), concrete.symbol.text);
+                    query_features.emplace(concrete.symbol.text, view.get_index());
+                    data->query_features.push_back(view.get_index());
+                }
+                else
+                    append_feature(repository,
+                                   builders,
+                                   *data,
+                                   concrete,
+                                   domain,
+                                   concept_features,
+                                   role_features,
+                                   boolean_features,
+                                   numerical_features,
+                                   references,
+                                   diagnostics);
             },
             feature.get());
     }
@@ -1200,6 +1237,7 @@ ModuleView lower_module(const ast::Module& ast,
                                                    role_features,
                                                    boolean_features,
                                                    numerical_features,
+                                                   query_features,
                                                    references,
                                                    transition.symbol.text,
                                                    diagnostics)

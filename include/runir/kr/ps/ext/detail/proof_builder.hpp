@@ -47,9 +47,10 @@ public:
 
     bool is_unsolvable(graphs::VertexIndex vertex) const { return m_builder.get_vertex(vertex).get_property().is_unsolvable; }
 
+    template<ExpansionPolicy Policy>
     void steps(ExecutionStateView<Kind> state, auto&& stop, std::vector<ModuleProgramStep<Kind>>& out_steps)
     {
-        m_expander.steps_until(std::move(state), std::forward<decltype(stop)>(stop), out_steps);
+        m_expander.template steps_until<Policy>(std::move(state), std::forward<decltype(stop)>(stop), out_steps);
     }
 
     auto get_or_create_vertex(ExecutionStateView<Kind> state, bool is_initial, bool is_alive, bool is_unsolvable, ygg::uint_t max_num_vertices)

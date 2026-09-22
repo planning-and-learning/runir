@@ -88,7 +88,7 @@ void bind_structural_termination(nb::module_& m)
           "use_incomplete_preprocessing"_a = runir::kr::ps::dl::default_use_incomplete_preprocessing,
           "use_memory_scc_scope"_a = runir::kr::ps::dl::default_use_memory_scc_scope,
           nb::keep_alive<0, 1>(),
-          "Decide structural termination with configurable feature limit and optional memory-SCC-scoped incomplete preprocessing.");
+          "Decide structural termination with configurable feature limit and optional memory-SCC-scoped incomplete preprocessing. For Action rules, concrete forward termination assumes every selected applicable tuple satisfies the declared effects; runtime checks only visited transitions.");
 
     m.def("structural_termination",
           nb::overload_cast<ModuleProgramView, std::size_t, bool, bool>(&structural_termination),
@@ -97,21 +97,21 @@ void bind_structural_termination(nb::module_& m)
           "use_incomplete_preprocessing"_a = runir::kr::ps::dl::default_use_incomplete_preprocessing,
           "use_memory_scc_scope"_a = runir::kr::ps::dl::default_use_memory_scc_scope,
           nb::keep_alive<0, 1>(),
-          "Conservatively decide structural termination of a module program, including inter-module call graph cycles.");
+          "Conservatively decide structural termination of a module program, including inter-module call graph cycles. Concrete Action-rule termination assumes the declared universal applicability/effect contract.");
 
     m.def("incomplete_structural_termination",
           nb::overload_cast<ModuleView, bool>(&incomplete_structural_termination),
           "module"_a,
           "use_memory_scc_scope"_a = runir::kr::ps::dl::default_use_memory_scc_scope,
           nb::keep_alive<0, 1>(),
-          "Apply the sound incomplete termination proof within residual memory SCCs by default.");
+          "Apply the incomplete termination proof within residual memory SCCs by default, assuming Action-rule effects cover every selected applicable tuple.");
 
     m.def("incomplete_structural_termination",
           nb::overload_cast<ModuleProgramView, bool>(&incomplete_structural_termination),
           "program"_a,
           "use_memory_scc_scope"_a = runir::kr::ps::dl::default_use_memory_scc_scope,
           nb::keep_alive<0, 1>(),
-          "Apply the incomplete proof to every module using residual memory SCCs by default and reject recursive or unresolved calls.");
+          "Apply the incomplete proof to every module using residual memory SCCs by default and reject recursive or unresolved calls. Action rules assume their declared universal applicability/effect contract.");
 }
 
 }  // namespace runir::kr::ps::ext::dl

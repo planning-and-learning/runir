@@ -10,6 +10,7 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Argument
 BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Register)(Category), symbol)
 BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::Feature)(Category), symbol, expression)
 
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::QueryFeature, symbol, expression)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::SymbolExpression, symbol)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::NamedValue, value)
 
@@ -17,6 +18,7 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::LoadRule
 BOOST_FUSION_ADAPT_TPL_STRUCT((Category), (runir::kr::ps::ext::dl::ast::ChooseRule)(Category), conditions, feature, reg, effects)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::SketchRule, conditions, effects)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::DoRule, conditions, action, arguments, effects)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::ActionRule, conditions, action, query_feature, effects)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::CallRule, conditions, callee, arguments)
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::RuleEntry, symbol, source, target, rules)

@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_DL_FEATURE_VIEW_HPP_
 
 #include "runir/kr/dl/semantics/constructor_view.hpp"
+#include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/ps/dl/feature_data.hpp"
 
 #include <tuple>

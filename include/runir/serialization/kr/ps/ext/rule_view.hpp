@@ -30,10 +30,11 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::e
         ar.field("register", [](const auto& value) -> decltype(auto) { return (value.get_register()); });
     }
     if constexpr (requires(const Value& value) { value.get_action_name(); })
-    {
         ar.field("action_name", [](const auto& value) -> decltype(auto) { return (value.get_action_name()); });
+    if constexpr (requires(const Value& value) { value.get_action_arguments(); })
         ar.field("arguments", [](const auto& value) -> decltype(auto) { return (value.get_action_arguments()); });
-    }
+    if constexpr (requires(const Value& value) { value.get_query_feature(); })
+        ar.field("query_feature", [](const auto& value) -> decltype(auto) { return (value.get_query_feature()); });
     if constexpr (requires(const Value& value) { value.get_callee(); })
     {
         ar.field("callee", [](const auto& value) -> decltype(auto) { return (value.get_callee()); });

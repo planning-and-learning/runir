@@ -49,6 +49,11 @@ struct DoTag
     static constexpr auto keyword = "do";
 };
 
+struct ActionTag
+{
+    static constexpr auto keyword = "action";
+};
+
 struct CallTag
 {
     static constexpr auto keyword = "call";
@@ -59,7 +64,7 @@ concept BindingRuleKind = std::same_as<T, LoadTag<runir::kr::dl::ConceptTag>> ||
                           || std::same_as<T, ChooseTag<runir::kr::dl::ConceptTag>> || std::same_as<T, ChooseTag<runir::kr::dl::RoleTag>>;
 
 template<typename T>
-concept RuleKind = BindingRuleKind<T> || std::same_as<T, SketchTag> || std::same_as<T, DoTag> || std::same_as<T, CallTag>;
+concept RuleKind = BindingRuleKind<T> || std::same_as<T, SketchTag> || std::same_as<T, DoTag> || std::same_as<T, CallTag> || std::same_as<T, ActionTag>;
 
 template<RuleKind Kind>
 struct Rule
@@ -76,7 +81,7 @@ struct ModuleProgram
 
 using LoadRuleTypes = ygg::TypeList<Rule<LoadTag<runir::kr::dl::ConceptTag>>, Rule<LoadTag<runir::kr::dl::RoleTag>>>;
 using ChooseRuleTypes = ygg::TypeList<Rule<ChooseTag<runir::kr::dl::ConceptTag>>, Rule<ChooseTag<runir::kr::dl::RoleTag>>>;
-using ControlRuleTypes = ygg::MapTypeListT<Rule, ygg::TypeList<SketchTag, DoTag, CallTag>>;
+using ControlRuleTypes = ygg::MapTypeListT<Rule, ygg::TypeList<SketchTag, DoTag, CallTag, ActionTag>>;
 using ConcreteRuleTypes = ygg::ConcatTypeListsT<LoadRuleTypes, ControlRuleTypes, ChooseRuleTypes>;
 using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<ps::Rule<ExtFamilyTag>>, ConcreteRuleTypes>;
 using FeatureTypes = runir::kr::ps::PsFeatureTypes<runir::kr::ExtFamilyTag>;
@@ -117,6 +122,7 @@ namespace runir::kr::ps::ext::dl
 
 using BooleanFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>, Repository>;
 using NumericalFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>, Repository>;
+using QueryFeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>, Repository>;
 
 }  // namespace runir::kr::ps::ext::dl
 

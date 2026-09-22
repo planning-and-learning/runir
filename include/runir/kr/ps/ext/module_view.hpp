@@ -69,11 +69,15 @@ public:
             return make_view(get_data().boolean_features, *m_context);
         else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
             return make_view(get_data().numerical_features, *m_context);
+        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::QueryFeature>)
+            return make_view(get_data().query_features, *m_context);
         else
         {
             static_assert(ygg::dependent_false<FeatureTag>::value, "unhandled feature tag in Module::get_features");
         }
     }
+
+    auto get_query_features() const noexcept { return get_features<runir::kr::ps::dl::QueryFeature>(); }
 
     auto get_entry_memory_state() const noexcept { return make_view(get_data().entry_memory_state, *m_context); }
     auto get_memory_states() const noexcept { return make_view(get_data().memory_states, *m_context); }

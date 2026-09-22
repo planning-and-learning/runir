@@ -100,6 +100,20 @@ def _loaded_frame(kind: Literal["ground", "lifted"]):
     return task_context, program, expander, loaded
 
 
+def test_call_rule_arguments_preserve_feature_views_and_order() -> None:
+    task_context, program, expander, loaded = _loaded_frame("lifted")
+    module = program.get_entry_module()
+    rule = module.get_memory_transitions()[0][0].get_variant()
+    arguments = rule.get_call_arguments()
+    assert isinstance(arguments, list)
+    assert arguments == [
+        module.get_concept_features()[0],
+        module.get_role_features()[0],
+        module.get_boolean_features()[0],
+        module.get_numerical_features()[0],
+    ]
+
+
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     kind: Literal["ground", "lifted"],

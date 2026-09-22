@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_DL_FEATURE_DATA_HPP_
 
 #include "runir/kr/dl/constructor_index.hpp"
+#include "runir/kr/dl/query_index.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/feature_data.hpp"
 
@@ -22,6 +23,18 @@ using FeatureCategory = std::conditional_t<std::same_as<FeatureTag, BooleanFeatu
                                            runir::kr::dl::BooleanTag,
                                            std::conditional_t<std::same_as<FeatureTag, NumericalFeature>, runir::kr::dl::NumericalTag, FeatureTag>>;
 
+template<runir::kr::FamilyTag Family, typename FeatureTag>
+struct FeatureExpression
+{
+    using Type = runir::kr::dl::Constructor<Family, FeatureCategory<FeatureTag>>;
+};
+
+template<>
+struct FeatureExpression<runir::kr::ExtFamilyTag, QueryFeature>
+{
+    using Type = runir::kr::dl::Query<runir::kr::ExtFamilyTag>;
+};
+
 }  // namespace runir::kr::ps::dl
 
 namespace ygg
@@ -30,7 +43,7 @@ namespace ygg
 template<runir::kr::FamilyTag Family, typename FeatureTag>
 struct Data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>
 {
-    using Expression = runir::kr::dl::Constructor<Family, runir::kr::ps::dl::FeatureCategory<FeatureTag>>;
+    using Expression = typename runir::kr::ps::dl::FeatureExpression<Family, FeatureTag>::Type;
 
     Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>> index;
     Index<Expression> feature;

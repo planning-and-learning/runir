@@ -58,10 +58,16 @@ struct Feature : x3::position_tagged
     runir::kr::dl::grammar::ast::Constructor<runir::kr::ExtFamilyTag, Category> expression;
 };
 
+struct QueryFeature : x3::position_tagged
+{
+    Identifier symbol;
+    runir::kr::dl::grammar::ast::Query<runir::kr::ExtFamilyTag> expression;
+};
+
 using FeatureVariant = PositionedVariant<Feature<runir::kr::dl::ConceptTag>,
                                          Feature<runir::kr::dl::RoleTag>,
                                          Feature<runir::kr::dl::BooleanTag>,
-                                         Feature<runir::kr::dl::NumericalTag>>;
+                                         Feature<runir::kr::dl::NumericalTag>, QueryFeature>;
 
 struct NamedValue : x3::position_tagged
 {
@@ -100,6 +106,14 @@ struct DoRule : x3::position_tagged
     std::vector<Effect> effects;
 };
 
+struct ActionRule : x3::position_tagged
+{
+    std::vector<Condition> conditions;
+    Identifier action;
+    Identifier query_feature;
+    std::vector<Effect> effects;
+};
+
 struct CallRule : x3::position_tagged
 {
     std::vector<Condition> conditions;
@@ -113,7 +127,7 @@ using Rule = PositionedVariant<LoadRule<runir::kr::dl::ConceptTag>,
                                DoRule,
                                CallRule,
                                ChooseRule<runir::kr::dl::ConceptTag>,
-                               ChooseRule<runir::kr::dl::RoleTag>>;
+                               ChooseRule<runir::kr::dl::RoleTag>, ActionRule>;
 
 struct RuleEntry : x3::position_tagged
 {

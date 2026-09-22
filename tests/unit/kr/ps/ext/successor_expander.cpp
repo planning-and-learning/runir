@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <concepts>
+#include <chrono>
+#include <iostream>
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
@@ -495,8 +497,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
-    // Lazy expansion shuffles the selected execution steps once. It no longer
-    // shuffles every PDDL successor first, so the old seeded sequence changes.
+    // Eager expansion shuffles the complete execution-step list once.
     auto random = std::mt19937_64(1);
     auto expected_steps = expander.steps(initial_state);
     ygg::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
@@ -873,8 +874,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
-    // Lazy expansion shuffles the selected execution steps once. It no longer
-    // shuffles every PDDL successor first, so the old seeded sequence changes.
+    // Eager expansion shuffles the complete execution-step list once.
     auto random = std::mt19937_64(1);
     auto expected_steps = expander.steps(initial_state);
     ygg::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
@@ -1022,5 +1022,361 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 }
+
+namespace
+{
+
+template<tyr::TaskKind Kind>
+void expect_query_action_contracts()
+{
+    namespace ext = kr::ps::ext;
+    const auto valid_query = std::string(R"((q_join (q_atomic_state "edge" (from to)) (q_atomic_state "at" (from))))");
+    for (const auto scenario : { 0, 1, 2, 3, 4 })
+    {
+        SCOPED_TRACE(fmt::format("query action scenario={}", scenario));
+        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+        const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
+        auto& repository = *task_context->domain_context->ext_repository;
+        const auto query = scenario == 1 ? "(q_difference " + valid_query + " " + valid_query + ")"
+                         : scenario == 3 ? "(q_union " + valid_query + R"( (q_atomic_state "edge" (from to))))"
+                         : scenario == 4 ? "(q_project (to from) " + valid_query + ")"
+                                         : valid_query;
+        const auto source = fmt::format(R"(
+(:module (:symbol actions) (:arguments) (:registers)
+  (:entry source) (:memory source target)
+  (:features
+    (:query (:symbol Moves) (:expression {0}))
+    (:numerical (:symbol N) (:expression (n_count (c_atomic_state "at")))))
+  (:rules (:rule (:symbol move) (:expression
+    (:source-memory source) (:target-memory target)
+    (:action (:conditions) (:action "move") (:query Moves) (:effects ({1} N)))))))
+)", query, scenario == 2 ? "decreases" : "unchanged");
+        const auto module = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
+        const auto program = create_module_program(repository, module, { module });
+        auto expander = ext::SuccessorExpander<Kind>(task_context, program);
+        const auto initial = expander.initial_state();
+        const auto rule = module.get_memory_transitions()[0][0];
+        auto lazy = std::vector<typename ext::SuccessorExpander<Kind>::Step> {};
+        if (scenario == 2 || scenario == 4)
+        {
+            EXPECT_THROW(expander.control_steps(initial), ext::ActionRuleContractError);
+            EXPECT_THROW(expander.template steps_until<ext::LazyExpansionPolicy>(initial, [] { return false; }, lazy), ext::ActionRuleContractError);
+            if (scenario == 2)
+            {
+                const auto successors = expander.labeled_successors(initial);
+                ASSERT_FALSE(successors.empty());
+                const auto& candidate = successors.front();
+                EXPECT_THROW(expander.matching_rule(initial, candidate.label, candidate.node.get_state()), ext::ActionRuleContractError);
+                EXPECT_THROW(expander.apply(initial, rule, candidate.label, candidate.node.get_state()), ext::ActionRuleContractError);
+                EXPECT_THROW(expander.steps(initial, successors), ext::ActionRuleContractError);
+            }
+            continue;
+        }
+        if (scenario == 3)
+        {
+            // Only the first two rows are applicable; the third is unvisited by
+            // greedy execution and remains a contract violation exhaustively.
+            expander.template steps_until<ext::LazyExpansionPolicy>(initial, [] { return false; }, lazy);
+            ASSERT_EQ(lazy.size(), 1);
+            EXPECT_EQ(lazy.front().status, ext::detail::ModuleProgramOutcome::APPLIED);
+            auto options = ext::ModuleProgramSearchOptions<Kind> {};
+            EXPECT_NO_THROW(ext::find_solution(task_context, program, options));
+            options.universal = true;
+            EXPECT_THROW(ext::find_solution(task_context, program, options), ext::ActionRuleContractError);
+            options.universal = false;
+            options.shuffle_choice_points = true;
+            EXPECT_THROW(ext::find_solution(task_context, program, options), ext::ActionRuleContractError);
+            EXPECT_THROW(expander.control_steps(initial), ext::ActionRuleContractError);
+            continue;
+        }
+        const auto steps = expander.control_steps(initial);
+        if (scenario == 1)
+        {
+            ASSERT_EQ(steps.size(), 1);
+            EXPECT_EQ(steps.front().status, ext::detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION);
+            EXPECT_EQ(task_context->search_context->state_repository->num_states(), 1);
+            continue;
+        }
+        ASSERT_EQ(steps.size(), 2);
+        for (const auto& step : steps)
+        {
+            ASSERT_EQ(step.plan_suffix.size(), 1);
+            const auto& candidate = step.plan_suffix.front();
+            EXPECT_EQ(candidate.label.get_objects()[0].get_name(), "start");
+            EXPECT_EQ(step.get_target().get_call_stack().get_memory_state().get_name(), "target");
+            const auto matching = expander.matching_rule(initial, candidate.label, candidate.node.get_state());
+            ASSERT_TRUE(matching);
+            EXPECT_EQ(matching->get_index(), rule.get_index());
+            const auto applied = expander.apply(initial, rule, candidate.label, candidate.node.get_state());
+            ASSERT_TRUE(applied);
+            EXPECT_EQ(applied->get_target().get_index(), step.get_target().get_index());
+        }
+        auto supplied = tyr::planning::LabeledNodeList<Kind> { steps.back().plan_suffix.front() };
+        const auto subset = expander.steps(initial, supplied);
+        ASSERT_EQ(subset.size(), 1);
+        EXPECT_EQ(subset.front().get_target().get_index(), steps.back().get_target().get_index());
+        expander.template steps_until<ext::LazyExpansionPolicy>(initial, supplied, [] { return false; }, lazy);
+        ASSERT_EQ(lazy.size(), 1);
+        EXPECT_EQ(lazy.front().get_target().get_index(), subset.front().get_target().get_index());
+        supplied.clear();
+        EXPECT_EQ(expander.steps(initial, supplied).front().status, ext::detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION);
+        EXPECT_FALSE(expander.apply(initial, rule));
+    }
+}
+
+template<tyr::TaskKind Kind>
+void expect_lazy_selection_stops_after_selected_rule()
+{
+    namespace ext = kr::ps::ext;
+    for (const auto choose : { false, true })
+    {
+        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+        const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
+        auto& repository = *task_context->domain_context->ext_repository;
+        const auto source = fmt::format(R"(
+(:module (:symbol selection) (:arguments) (:registers (:concept r))
+  (:entry source) (:memory source selected invalid)
+  (:features
+    (:concept (:symbol Candidates) (:expression (c_atomic_state "candidate")))
+    (:query (:symbol Invalid) (:expression (q_atomic_state "edge" (from to)))))
+  (:rules
+    (:rule (:symbol first) (:expression (:source-memory source) (:target-memory selected)
+      (:{0} (:conditions) (:concept Candidates) (:register (:concept r)))))
+    (:rule (:symbol later) (:expression (:source-memory source) (:target-memory invalid)
+      (:action (:conditions) (:action "move") (:query Invalid) (:effects))))))
+)", choose ? "choose" : "load");
+        const auto module = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
+        const auto program = create_module_program(repository, module, { module });
+        auto expander = ext::SuccessorExpander<Kind>(task_context, program);
+        const auto initial = expander.initial_state();
+        auto steps = std::vector<typename ext::SuccessorExpander<Kind>::Step> {};
+        expander.template steps_until<ext::LazyExpansionPolicy>(initial, [] { return false; }, steps);
+        ASSERT_EQ(steps.size(), choose ? 2 : 1);
+        for (const auto& step : steps)
+            EXPECT_EQ(step.get_target().get_call_stack().get_memory_state().get_name(), "selected");
+        EXPECT_EQ(task_context->search_context->state_repository->num_states(), 1);
+        EXPECT_THROW(expander.steps(initial), ext::ActionRuleContractError);
+    }
+}
+
+template<tyr::TaskKind Kind>
+void expect_lazy_sketch_order_and_cancellation()
+{
+    namespace ext = kr::ps::ext;
+    const auto source = std::string(R"(
+(:module (:symbol order) (:arguments) (:registers)
+  (:entry source) (:memory source impossible picked)
+  (:features
+    (:concept (:symbol Ball) (:expression (c_atomic_state "ball")))
+    (:concept (:symbol Room) (:expression (c_atomic_state "room")))
+    (:concept (:symbol Gripper) (:expression (c_atomic_state "gripper")))
+    (:numerical (:symbol Free) (:expression (n_count (c_atomic_state "free")))))
+  (:rules
+    (:rule (:symbol rejected) (:expression (:source-memory source) (:target-memory impossible)
+      (:sketch (:conditions) (:effects (increases Free)))))
+    (:rule (:symbol next) (:expression (:source-memory source) (:target-memory picked)
+      (:do (:conditions) (:action "pick") (:arguments Ball Room Gripper) (:effects (decreases Free)))))))
+)");
+    for (const auto cancelled : { true, false })
+    {
+        const auto task_context = create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"),
+                                                            benchmark_path("classical/tests/gripper/test-1.pddl"));
+        auto& repository = *task_context->domain_context->ext_repository;
+        auto& states = *task_context->search_context->state_repository;
+        const auto module = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
+        const auto program = create_module_program(repository, module, { module });
+        auto expander = ext::SuccessorExpander<Kind>(task_context, program);
+        const auto initial = expander.initial_state();
+        auto lazy = std::vector<typename ext::SuccessorExpander<Kind>::Step> {};
+        expander.template steps_until<ext::LazyExpansionPolicy>(initial, [] { return true; }, lazy);
+        EXPECT_TRUE(lazy.empty());
+        EXPECT_EQ(states.num_states(), 1);
+        const auto stop = [&] { return cancelled && states.num_states() > 1; };
+        expander.template steps_until<ext::LazyExpansionPolicy>(initial, stop, lazy);
+        if (cancelled)
+        {
+            EXPECT_TRUE(lazy.empty());
+            EXPECT_EQ(states.num_states(), 2);
+            continue;
+        }
+        const auto eager = expander.steps(initial);
+        ASSERT_GT(eager.size(), 1);
+        ASSERT_EQ(lazy.size(), 1);
+        EXPECT_EQ(lazy.front().get_target().get_index(), eager.front().get_target().get_index());
+        EXPECT_EQ(lazy.front().plan_suffix.front().label, eager.front().plan_suffix.front().label);
+        auto supplied = expander.labeled_successors(initial);
+        std::ranges::reverse(supplied);
+        const auto supplied_eager = expander.steps(initial, supplied);
+        expander.template steps_until<ext::LazyExpansionPolicy>(initial, supplied, [] { return false; }, lazy);
+        ASSERT_EQ(lazy.size(), 1);
+        EXPECT_EQ(lazy.front().get_target().get_index(), supplied_eager.front().get_target().get_index());
+    }
+}
+
+template<tyr::TaskKind Kind>
+void expect_query_action_existential_binding()
+{
+    namespace ext = kr::ps::ext;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/action_existential";
+    const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
+    auto& repository = *task_context->domain_context->ext_repository;
+    const auto domain = task_context->search_context->task->get_domain().get_domain();
+    ASSERT_EQ(domain.get_actions().size(), 1);
+    const auto action = domain.get_actions()[0];
+    ASSERT_EQ(action.get_arity(), 2);
+    const auto module = ext::dl::parse_module(R"(
+(:module (:symbol witness) (:arguments) (:registers)
+  (:entry source) (:memory source target)
+  (:features (:query (:symbol Bindings) (:expression (q_atomic_state "supports" (x witness)))))
+  (:rules (:rule (:symbol finish) (:expression
+    (:source-memory source) (:target-memory target)
+    (:action (:conditions) (:action "finish") (:query Bindings) (:effects))))))
+)", domain, repository);
+    const auto program = create_module_program(repository, module, { module });
+    auto expander = ext::SuccessorExpander<Kind>(task_context, program);
+    const auto steps = expander.control_steps(expander.initial_state());
+    ASSERT_EQ(steps.size(), 1);
+    ASSERT_EQ(steps.front().plan_suffix.size(), 1);
+    const auto objects = steps.front().plan_suffix.front().label.get_objects();
+    ASSERT_EQ(objects.size(), 2);
+    EXPECT_EQ(objects[0].get_name(), "start");
+    EXPECT_EQ(objects[1].get_name(), "proof");
+    EXPECT_TRUE(expander.is_goal(steps.front().get_target()));
+    EXPECT_TRUE(ext::find_solution(task_context, program, ext::ModuleProgramSearchOptions<Kind> {}).is_successful());
+}
+
+template<tyr::TaskKind Kind>
+void expect_query_action_nullary_binding()
+{
+    namespace ext = kr::ps::ext;
+    for (const auto empty : { false, true })
+    {
+        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/action_nullary";
+        const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
+        auto& repository = *task_context->domain_context->ext_repository;
+        const auto truth = std::string(R"((q_atomic_state "truth" ()))");
+        const auto query = empty ? "(q_difference " + truth + " " + truth + ")" : truth;
+        const auto source = fmt::format(R"(
+(:module (:symbol nullary) (:arguments) (:registers)
+  (:entry source) (:memory source)
+  (:features (:query (:symbol Bindings) (:expression {0})))
+  (:rules (:rule (:symbol finish) (:expression
+    (:source-memory source) (:target-memory source)
+    (:action (:conditions) (:action "finish") (:query Bindings) (:effects))))))
+)", query);
+        const auto module = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
+        const auto program = create_module_program(repository, module, { module });
+        auto expander = ext::SuccessorExpander<Kind>(task_context, program);
+        const auto initial = expander.initial_state();
+        const auto steps = expander.control_steps(initial);
+        ASSERT_EQ(steps.size(), 1);
+        if (empty)
+        {
+            EXPECT_EQ(steps.front().status, ext::detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION);
+            EXPECT_EQ(task_context->search_context->state_repository->num_states(), 1);
+        }
+        else
+        {
+            EXPECT_EQ(steps.front().status, ext::detail::ModuleProgramOutcome::APPLIED);
+            ASSERT_EQ(steps.front().plan_suffix.size(), 1);
+            EXPECT_TRUE(steps.front().plan_suffix.front().label.get_objects().empty());
+            EXPECT_TRUE(expander.is_goal(steps.front().get_target()));
+            EXPECT_THROW(expander.control_steps(steps.front().get_target()), ext::ActionRuleContractError);
+            EXPECT_TRUE(ext::find_solution(task_context, program, ext::ModuleProgramSearchOptions<Kind> {}).is_successful());
+        }
+    }
+}
+
+template<tyr::TaskKind Kind>
+void expect_eager_lazy_expansion_counts()
+{
+    namespace ext = kr::ps::ext;
+    for (const auto rule_kind : { "load", "choose", "do", "sketch" })
+    {
+        SCOPED_TRACE(rule_kind);
+        const auto binding = std::string(rule_kind) == "load" || std::string(rule_kind) == "choose";
+        const auto body = binding ? fmt::format("(:{} (:conditions) (:concept Ball) (:register (:concept r)))", rule_kind)
+                        : std::string(rule_kind) == "do" ? R"((:do (:conditions) (:action "pick") (:arguments Ball Room Gripper) (:effects (decreases Free))))"
+                                                           : R"((:sketch (:conditions) (:effects (decreases Free))))";
+        const auto source = fmt::format(R"(
+(:module (:symbol selection) (:arguments) (:registers (:concept r))
+  (:entry source) (:memory source target)
+  (:features
+    (:concept (:symbol Ball) (:expression (c_atomic_state "ball")))
+    (:concept (:symbol Room) (:expression (c_atomic_state "room")))
+    (:concept (:symbol Gripper) (:expression (c_atomic_state "gripper")))
+    (:numerical (:symbol Free) (:expression (n_count (c_atomic_state "free")))))
+  (:rules (:rule (:symbol select) (:expression (:source-memory source) (:target-memory target) {0}))))
+)", body);
+        auto counts = std::vector<size_t> {};
+        auto state_counts = std::vector<size_t> {};
+        auto durations = std::vector<long long> {};
+        auto first_bindings = std::vector<std::vector<std::string>> {};
+        for (const auto eager : { true, false })
+        {
+            const auto task_context = create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"),
+                                                                benchmark_path("classical/tests/gripper/test-1.pddl"));
+            auto& repository = *task_context->domain_context->ext_repository;
+            const auto module = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
+            const auto program = create_module_program(repository, module, { module });
+            auto expander = ext::SuccessorExpander<Kind>(task_context, program);
+            const auto initial = expander.initial_state();
+            auto steps = std::vector<typename ext::SuccessorExpander<Kind>::Step> {};
+            const auto started = std::chrono::steady_clock::now();
+            if (eager)
+                expander.template steps_until<ext::EagerExpansionPolicy>(initial, [] { return false; }, steps);
+            else
+                expander.template steps_until<ext::LazyExpansionPolicy>(initial, [] { return false; }, steps);
+            durations.push_back(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - started).count());
+            counts.push_back(steps.size());
+            state_counts.push_back(task_context->search_context->state_repository->num_states() - 1);
+            ASSERT_FALSE(steps.empty());
+            EXPECT_EQ(steps.front().status, ext::detail::ModuleProgramOutcome::APPLIED);
+            auto first = std::vector<std::string> {};
+            if (binding)
+                first.push_back(std::string(steps.front().get_target().get_call_stack().get_registers().get_concept_values()[0].value().get_name().str()));
+            else
+                for (const auto object : steps.front().plan_suffix.front().label.get_objects())
+                    first.push_back(std::string(object.get_name().str()));
+            first_bindings.push_back(std::move(first));
+        }
+        EXPECT_EQ(first_bindings[0], first_bindings[1]);
+        EXPECT_GT(counts[0], 1);
+        EXPECT_EQ(counts[1], std::string(rule_kind) == "choose" ? counts[0] : 1);
+        if (binding)
+        {
+            EXPECT_EQ(state_counts[0], 0);
+            EXPECT_EQ(state_counts[1], 0);
+        }
+        else
+        {
+            EXPECT_LT(state_counts[1], state_counts[0]);
+            if (std::string(rule_kind) == "do")
+            {
+                EXPECT_EQ(state_counts[0], 4);
+                EXPECT_EQ(state_counts[1], 1);
+            }
+        }
+        std::cout << "Expansion comparison " << (std::same_as<Kind, tyr::GroundTag> ? "ground " : "lifted ") << rule_kind
+                  << ": eager_steps=" << counts[0] << " lazy_steps=" << counts[1]
+                  << " eager_new_states=" << state_counts[0] << " lazy_new_states=" << state_counts[1]
+                  << " eager_us=" << durations[0] << " lazy_us=" << durations[1] << '\n';
+    }
+}
+
+}  // namespace
+
+TEST(RunirTests, ExtQueryActionContractsGround) { expect_query_action_contracts<tyr::GroundTag>(); }
+TEST(RunirTests, ExtQueryActionContractsLifted) { expect_query_action_contracts<tyr::LiftedTag>(); }
+TEST(RunirTests, ExtLazySelectionStopsAfterSelectedRuleGround) { expect_lazy_selection_stops_after_selected_rule<tyr::GroundTag>(); }
+TEST(RunirTests, ExtLazySelectionStopsAfterSelectedRuleLifted) { expect_lazy_selection_stops_after_selected_rule<tyr::LiftedTag>(); }
+TEST(RunirTests, ExtLazySketchOrderAndCancellationGround) { expect_lazy_sketch_order_and_cancellation<tyr::GroundTag>(); }
+TEST(RunirTests, ExtLazySketchOrderAndCancellationLifted) { expect_lazy_sketch_order_and_cancellation<tyr::LiftedTag>(); }
+TEST(RunirTests, ExtQueryActionExistentialBindingGround) { expect_query_action_existential_binding<tyr::GroundTag>(); }
+TEST(RunirTests, ExtQueryActionExistentialBindingLifted) { expect_query_action_existential_binding<tyr::LiftedTag>(); }
+TEST(RunirTests, ExtQueryActionNullaryBindingGround) { expect_query_action_nullary_binding<tyr::GroundTag>(); }
+TEST(RunirTests, ExtQueryActionNullaryBindingLifted) { expect_query_action_nullary_binding<tyr::LiftedTag>(); }
+TEST(RunirTests, ExtEagerLazyExpansionCountsGround) { expect_eager_lazy_expansion_counts<tyr::GroundTag>(); }
+TEST(RunirTests, ExtEagerLazyExpansionCountsLifted) { expect_eager_lazy_expansion_counts<tyr::LiftedTag>(); }
 
 }  // namespace runir::tests

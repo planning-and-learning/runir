@@ -33,6 +33,7 @@ struct Data<runir::kr::ps::ext::Module>
     IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>> role_features;
     IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>> boolean_features;
     IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>> numerical_features;
+    IndexList<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_features;
     Index<runir::kr::ps::ext::MemoryState> entry_memory_state;
     IndexList<runir::kr::ps::ext::MemoryState> memory_states;
     IndexMatrix<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>> memory_transitions;
@@ -53,6 +54,7 @@ struct Data<runir::kr::ps::ext::Module>
         ygg::clear(role_features);
         ygg::clear(boolean_features);
         ygg::clear(numerical_features);
+        ygg::clear(query_features);
         ygg::clear(entry_memory_state);
         ygg::clear(memory_states);
         ygg::clear(memory_transitions);
@@ -72,6 +74,7 @@ struct Data<runir::kr::ps::ext::Module>
                         role_features,
                         boolean_features,
                         numerical_features,
+                        query_features,
                         entry_memory_state,
                         memory_states,
                         memory_transitions);
@@ -89,6 +92,7 @@ struct Data<runir::kr::ps::ext::Module>
                         role_features,
                         boolean_features,
                         numerical_features,
+                        query_features,
                         entry_memory_state,
                         memory_states,
                         memory_transitions);

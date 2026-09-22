@@ -9,6 +9,7 @@
 #include <nanobind/stl/vector.h>
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
+#include <runir/kr/ps/ext/action_rule_contract_error.hpp>
 #include <runir/kr/ps/ext/evaluation.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/module_program_executor.hpp>
@@ -35,12 +36,33 @@ void bind_feature_evaluation(nb::module_& m)
 {
     using FeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, Repository>;
 
-    m.def("evaluate_feature_denotation",
-          &evaluate_feature_denotation<FeatureTag, Repository, Kind>,
-          "feature"_a,
-          "context"_a,
-          "environment"_a,
-          nb::keep_alive<0, 3>());
+    if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::QueryFeature>)
+        m.def(
+            "evaluate_feature_denotation",
+            [](FeatureView feature, EvaluationContext<Kind>& context, EvaluationEnvironment<Kind>& environment)
+            {
+                const auto relation = evaluate_feature_denotation<FeatureTag, Repository, Kind>(feature, context, environment);
+                auto rows = nb::list();
+                for (std::size_t position = 0; position < relation->size(); ++position)
+                {
+                    auto values = nb::list();
+                    for (const auto object : (*relation)[position])
+                        values.append(nb::int_(object));
+                    rows.append(nb::tuple(values));
+                }
+                return nb::tuple(rows);
+            },
+            "feature"_a,
+            "context"_a,
+            "environment"_a,
+            "Return an owned tuple of object-index tuples in query column order; a true nullary query is ((),).");
+    else
+        m.def("evaluate_feature_denotation",
+              &evaluate_feature_denotation<FeatureTag, Repository, Kind>,
+              "feature"_a,
+              "context"_a,
+              "environment"_a,
+              nb::keep_alive<0, 3>());
 
     if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> || std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
         m.def(
@@ -95,6 +117,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     bind_feature_evaluation<Kind, runir::kr::dl::RoleTag>(m);
     bind_feature_evaluation<Kind, runir::kr::ps::dl::BooleanFeature>(m);
     bind_feature_evaluation<Kind, runir::kr::ps::dl::NumericalFeature>(m);
+    bind_feature_evaluation<Kind, runir::kr::ps::dl::QueryFeature>(m);
 
     auto register_values = nb::class_<RegisterView>(m, (std::string(prefix) + "RegisterValues").c_str())
                                .def_prop_ro("concept_values", &RegisterView::get_concept_values)
@@ -206,6 +229,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
 void bind_module_program_executor(nb::module_& m)
 {
+    nb::exception<ActionRuleContractError>(m, "ActionRuleContractError", PyExc_RuntimeError);
+
     nb::enum_<ExecutionPhase>(m, "ExecutionPhase").value("INTERNAL", ExecutionPhase::INTERNAL).value("EXTERNAL", ExecutionPhase::EXTERNAL);
 
     nb::enum_<ModuleProgramProofStatus>(m, "ModuleProgramProofStatus")

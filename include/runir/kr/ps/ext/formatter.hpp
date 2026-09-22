@@ -154,6 +154,12 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext:
                               [](std::ostream& output, auto argument) { output << argument.get_symbol(); });
         append_effects(os, view.get_effects());
     }
+    else if constexpr (std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
+    {
+        os << ygg::print_indent << "(:action " << fmt::format("{:?}", view.get_action_name().view()) << ")\n";
+        os << ygg::print_indent << "(:query " << view.get_query_feature().get_symbol() << ")\n";
+        append_effects(os, view.get_effects());
+    }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::CallTag>)
     {
         os << ygg::print_indent << "(:callee " << view.get_callee().get_name() << ")\n";
@@ -236,6 +242,7 @@ void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Mo
             append_features(view.template get_features<runir::kr::dl::RoleTag>());
             append_features(view.template get_features<runir::kr::ps::dl::BooleanFeature>());
             append_features(view.template get_features<runir::kr::ps::dl::NumericalFeature>());
+            append_features(view.get_query_features());
         }
         os << ygg::print_indent << ")\n";
 

@@ -246,6 +246,7 @@ using numerical_root_type = constructor_root_type<Family, runir::kr::dl::Numeric
     using Prefix##_role_choice_type = choice_type<Family, runir::kr::dl::RoleTag>;                   \
     using Prefix##_boolean_choice_type = choice_type<Family, runir::kr::dl::BooleanTag>;             \
     using Prefix##_numerical_choice_type = choice_type<Family, runir::kr::dl::NumericalTag>;         \
+    using Prefix##_query_type = query_type<Family>; \
     using Prefix##_grammar_root_type = grammar_root_type<Family>;
 
 RUNIR_DECLARE_RULE_ALIASES(base_family, runir::kr::BaseFamilyTag)
@@ -266,6 +267,7 @@ BOOST_SPIRIT_DECLARE(base_family_concept_root_type,
                      base_family_role_choice_type,
                      base_family_boolean_choice_type,
                      base_family_numerical_choice_type,
+                     base_family_query_type,
                      base_family_grammar_root_type)
 
 BOOST_SPIRIT_DECLARE(ext_family_concept_root_type,
@@ -280,6 +282,7 @@ BOOST_SPIRIT_DECLARE(ext_family_concept_root_type,
                      ext_family_role_choice_type,
                      ext_family_boolean_choice_type,
                      ext_family_numerical_choice_type,
+                     ext_family_query_type,
                      ext_family_grammar_root_type)
 
 BOOST_SPIRIT_DECLARE(uns_family_concept_root_type,
@@ -294,6 +297,7 @@ BOOST_SPIRIT_DECLARE(uns_family_concept_root_type,
                      uns_family_role_choice_type,
                      uns_family_boolean_choice_type,
                      uns_family_numerical_choice_type,
+                     uns_family_query_type,
                      uns_family_grammar_root_type)
 
 template<runir::kr::dl::FamilyTag Family>
@@ -321,6 +325,9 @@ template<runir::kr::dl::FamilyTag Family>
 numerical_root_type<Family> const& numerical_root_parser();
 
 template<runir::kr::dl::FamilyTag Family>
+query_type<Family> const& query_parser();
+
+template<runir::kr::dl::FamilyTag Family>
 grammar_root_type<Family> const& grammar_root_parser();
 
 #define RUNIR_DECLARE_PARSER_ACCESSORS(Family)                          \
@@ -341,6 +348,8 @@ grammar_root_type<Family> const& grammar_root_parser();
     template<>                                                          \
     numerical_root_type<Family> const& numerical_root_parser<Family>(); \
     template<>                                                          \
+    query_type<Family> const& query_parser<Family>(); \
+    template<> \
     grammar_root_type<Family> const& grammar_root_parser<Family>();
 
 RUNIR_DECLARE_PARSER_ACCESSORS(runir::kr::BaseFamilyTag)

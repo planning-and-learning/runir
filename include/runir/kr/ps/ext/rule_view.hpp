@@ -10,6 +10,7 @@
 
 #include <concepts>
 #include <tuple>
+#include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/containers/vector.hpp>
 #include <yggdrasil/core/types.hpp>
 
@@ -37,7 +38,7 @@ public:
 
     auto get_effects() const noexcept
         requires(runir::kr::ps::ext::BindingRuleKind<Kind> || std::same_as<Kind, runir::kr::ps::ext::SketchTag>
-                 || std::same_as<Kind, runir::kr::ps::ext::DoTag>)
+                 || std::same_as<Kind, runir::kr::ps::ext::DoTag> || std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
     {
         return make_view(get_data().effects, *m_context);
     }
@@ -55,7 +56,7 @@ public:
     }
 
     const auto& get_action_name() const noexcept
-        requires std::same_as<Kind, runir::kr::ps::ext::DoTag>
+        requires(std::same_as<Kind, runir::kr::ps::ext::DoTag> || std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
     {
         return get_data().action_name;
     }
@@ -66,10 +67,22 @@ public:
         return make_view(get_data().arguments, *m_context);
     }
 
+    auto get_query_feature() const noexcept
+        requires std::same_as<Kind, runir::kr::ps::ext::ActionTag>
+    {
+        return make_view(get_data().query_feature, *m_context);
+    }
+
     auto get_callee() const noexcept
         requires std::same_as<Kind, runir::kr::ps::ext::CallTag>
     {
         return View<Index<runir::kr::ps::ext::ModuleSymbol>, C>(get_data().callee, *m_context);
+    }
+
+    auto get_call_arguments() const noexcept
+        requires std::same_as<Kind, runir::kr::ps::ext::CallTag>
+    {
+        return make_view(get_data().arguments, *m_context);
     }
 
     template<typename F>

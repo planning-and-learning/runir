@@ -47,6 +47,7 @@ concept BindingRuleContract = kr::ps::ext::BindingRuleKind<Kind> && RuleContract
 
 using Sketch = kr::ps::ext::SketchTag;
 using Do = kr::ps::ext::DoTag;
+using Action = kr::ps::ext::ActionTag;
 using Call = kr::ps::ext::CallTag;
 
 static_assert(BindingRuleContract<Load<kr::dl::ConceptTag>>);
@@ -66,6 +67,14 @@ static_assert(RuleContract<Do> && requires(ygg::Data<Entity<Do>>& data, const Vi
     view.get_effects();
     view.get_action_name();
     view.get_action_arguments();
+});
+static_assert(RuleContract<Action> && requires(ygg::Data<Entity<Action>>& data, const View<Action>& view) {
+    data.effects;
+    data.action_name;
+    data.query_feature;
+    view.get_effects();
+    view.get_action_name();
+    view.get_query_feature();
 });
 static_assert(RuleContract<Call> && requires(ygg::Data<Entity<Call>>& data, const View<Call>& view) {
     data.callee;

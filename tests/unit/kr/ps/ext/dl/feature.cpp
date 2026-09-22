@@ -39,6 +39,8 @@ static_assert(ConcreteFeatureContract<ConcreteFeature<kr::dl::RoleTag>, kr::dl::
 static_assert(ConcreteFeatureContract<ConcreteFeature<kr::ps::dl::BooleanFeature>, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::BooleanTag>>);
 static_assert(ConcreteFeatureContract<ConcreteFeature<kr::ps::dl::NumericalFeature>, kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::NumericalTag>>);
 
+static_assert(ConcreteFeatureContract<ConcreteFeature<kr::ps::dl::QueryFeature>, kr::dl::Query<kr::ExtFamilyTag>>);
+
 }  // namespace
 
 }

@@ -71,7 +71,7 @@ bool is_canonical(const ygg::Data<Rule<Kind>>& data) noexcept
         return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects);
     else if constexpr (std::same_as<Kind, SketchTag>)
         return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects);
-    else if constexpr (std::same_as<Kind, DoTag>)
+    else if constexpr (std::same_as<Kind, DoTag> || std::same_as<Kind, ActionTag>)
         return ygg::is_canonical(data.conditions) && ygg::is_canonical(data.effects);
     else if constexpr (std::same_as<Kind, CallTag>)
         return ygg::is_canonical(data.conditions);
@@ -80,7 +80,7 @@ bool is_canonical(const ygg::Data<Rule<Kind>>& data) noexcept
 inline bool is_canonical(const ygg::Data<Module>& data) noexcept
 {
     return ygg::is_canonical(data.concept_features) && ygg::is_canonical(data.role_features) && ygg::is_canonical(data.boolean_features)
-           && ygg::is_canonical(data.numerical_features) && ygg::is_canonical(data.memory_states);
+           && ygg::is_canonical(data.numerical_features) && ygg::is_canonical(data.query_features) && ygg::is_canonical(data.memory_states);
 }
 
 inline bool is_canonical(const ygg::Data<ModuleProgram>&) noexcept { return true; }
@@ -130,7 +130,7 @@ void canonicalize(ygg::Data<Rule<Kind>>& data)
         ygg::canonicalize(data.conditions);
         ygg::canonicalize(data.effects);
     }
-    else if constexpr (std::same_as<Kind, DoTag>)
+    else if constexpr (std::same_as<Kind, DoTag> || std::same_as<Kind, ActionTag>)
     {
         ygg::canonicalize(data.conditions);
         ygg::canonicalize(data.effects);
@@ -147,6 +147,7 @@ inline void canonicalize(ygg::Data<Module>& data)
     ygg::canonicalize(data.role_features);
     ygg::canonicalize(data.boolean_features);
     ygg::canonicalize(data.numerical_features);
+    ygg::canonicalize(data.query_features);
     ygg::canonicalize(data.memory_states);
 }
 

@@ -43,6 +43,11 @@ Types that cannot be registered, including graphs and some native owners,
 must be projected through their supported components or converted to text
 explicitly. Structural-termination policy graphs are not serialized yet.
 
+Extended modules expose their named query features through `query_features`.
+An `ActionRule` stores `action_name` and `query_feature` alongside its memory
+endpoints, conditions, and effects. Query feature expressions use the existing
+query serializers; see [query features and Action rules](../action-rules.md).
+
 Tyr state rows contain changing state facts. Task metadata and static facts
 are available from a registered formalism task view. Runir register values and
 denotations also use Tyr serializers for their objects and object pairs.

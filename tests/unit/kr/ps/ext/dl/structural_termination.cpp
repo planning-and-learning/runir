@@ -1,6 +1,7 @@
 #include "fixtures.hpp"
 
 #include <cstdint>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <runir/graphs/cycle.hpp>
 #include <runir/kr/dl/repository.hpp>
@@ -90,6 +91,75 @@ TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
     const auto result = kr::ps::ext::dl::structural_termination(module);
 
     EXPECT_TRUE(result.is_terminating());
+}
+
+TEST(RunirTests, ExtStructuralTerminationActionRulesUseEffectOverapproximation)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto domain = fp::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(domain.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+
+    for (const auto& [effect, terminating] : std::vector<std::pair<std::string, bool>> {
+             { "(unchanged n)", true }, { "(decreases n)", true }, { "(increases n)", false }, { "", false } })
+    {
+        SCOPED_TRACE(effect);
+        const auto module_source = [&](bool action_rule)
+        {
+            return fmt::format(R"(
+(:module (:symbol worker) (:arguments) (:registers (:role selected))
+  (:entry m0) (:memory m0 m1)
+  (:features
+    (:concept (:symbol All) (:expression (c_top)))
+    (:query (:symbol Moves) (:expression (q_role (from to) (r_register selected))))
+    (:numerical (:symbol n) (:expression (n_count (c_atomic_state "ball"))))
+  )
+  (:rules
+    (:rule (:symbol outward)
+      (:expression (:source-memory m0) (:target-memory m1)
+        ({0} (:conditions (greater_zero n)) (:action "move") {1} (:effects {2}))
+      )
+    )
+    (:rule (:symbol backward)
+      (:expression (:source-memory m1) (:target-memory m0)
+        (:sketch (:conditions (greater_zero n)) (:effects (decreases n)))
+      )
+    )
+  )
+))", action_rule ? ":action" : ":do", action_rule ? "(:query Moves)" : "(:arguments All All)", effect);
+        };
+        const auto action = kr::ps::ext::dl::parse_module(module_source(true), domain.get_domain(), *repository);
+        const auto do_rule = kr::ps::ext::dl::parse_module(module_source(false), domain.get_domain(), *repository);
+        for (const auto preprocessing : { false, true })
+        {
+            const auto action_result = kr::ps::ext::dl::structural_termination(action, kr::ps::dl::default_max_features, preprocessing);
+            const auto do_result = kr::ps::ext::dl::structural_termination(do_rule, kr::ps::dl::default_max_features, preprocessing);
+            EXPECT_EQ(action_result.is_terminating(), terminating);
+            EXPECT_EQ(action_result.status, do_result.status);
+        }
+        const auto action_incomplete = kr::ps::ext::dl::incomplete_structural_termination(action);
+        const auto do_incomplete = kr::ps::ext::dl::incomplete_structural_termination(do_rule);
+        EXPECT_EQ(action_incomplete.is_terminating(), terminating);
+        EXPECT_EQ(action_incomplete.status, do_incomplete.status);
+        EXPECT_EQ(action_incomplete.surviving_rules.size(), do_incomplete.surviving_rules.size());
+
+        const auto program_source = fmt::format(R"(
+(:program (:entry root)
+  (:module (:symbol root) (:arguments) (:registers) (:entry start) (:memory start done) (:features)
+    (:rules
+      (:rule (:symbol invoke)
+        (:expression (:source-memory start) (:target-memory done)
+          (:call (:conditions) (:callee worker) (:arguments))
+        )
+      )
+    )
+  )
+  {0}
+))", module_source(true));
+        const auto program = kr::ps::ext::dl::parse_module_program(program_source, domain.get_domain(), *repository);
+        EXPECT_EQ(kr::ps::ext::dl::structural_termination(program).is_terminating(), terminating);
+        EXPECT_EQ(kr::ps::ext::dl::incomplete_structural_termination(program).is_terminating(), terminating);
+    }
 }
 
 TEST(RunirTests, ExtStructuralTerminationLoadPreservesRegisterIndependentFeature)

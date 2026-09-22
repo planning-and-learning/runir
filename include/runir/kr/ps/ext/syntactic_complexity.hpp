@@ -29,6 +29,8 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<Module>, C> view)
         result += syntactic_complexity(feature);
     for (auto feature : view.template get_features<runir::kr::ps::dl::NumericalFeature>())
         result += syntactic_complexity(feature);
+    for (auto feature : view.get_query_features())
+        result += syntactic_complexity(feature);
     return result;
 }
 

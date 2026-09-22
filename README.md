@@ -134,4 +134,7 @@ Runir is designed for experiments where a learning system needs structured acces
 4. Build or parse a generalized policy over those features.
 5. Execute the policy on examples and inspect failures or counterexamples.
 
+Extended policies support [query features and Action rules](docs/action-rules.md)
+for selecting complete action tuples and checking declared effect contracts.
+
 This keeps low-level planning mechanics in Tyr while giving learning code a high-level, typed interface for representations, abstractions, and policy evaluation.

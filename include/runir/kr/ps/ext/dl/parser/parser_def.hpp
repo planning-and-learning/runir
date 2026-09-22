@@ -57,6 +57,7 @@ concept_feature_type const concept_feature = "concept_feature";
 role_feature_type const role_feature = "role_feature";
 boolean_feature_type const boolean_feature = "boolean_feature";
 numerical_feature_type const numerical_feature = "numerical_feature";
+query_feature_type const query_feature = "query_feature";
 feature_type const feature = "feature";
 features_section_type const features_section = ":features";
 symbol_expression_type const symbol_expression = "symbol_expression";
@@ -84,6 +85,7 @@ role_choose_rule_type const role_choose_rule = "role_choose_rule";
 sketch_rule_type const sketch_rule = "sketch_rule";
 do_rule_type const do_rule = "do_rule";
 call_rule_type const call_rule = "call_rule";
+action_rule_type const action_rule = "action_rule";
 rule_type const rule = "rule";
 rule_entry_type const rule_entry = "rule_entry";
 rules_section_type const rules_section = ":rules";
@@ -132,12 +134,17 @@ const auto numerical_feature_def = context(
     "numerical feature")[keyword("(:numerical") > symbol_section
                          > context(":expression")[(lit("(") >> keyword(":expression")) > dl_parser::numerical_parser<runir::kr::ExtFamilyTag>() > lit(")")]
                          > lit(")")];
-const auto feature_def = concept_feature | role_feature | boolean_feature | numerical_feature;
+const auto query_feature_def = context(
+    "query feature")[keyword("(:query") > symbol_section
+                     > context(":expression")[(lit("(") >> keyword(":expression")) > dl_parser::query_parser<runir::kr::ExtFamilyTag>() > lit(")")]
+                     > lit(")")];
+const auto feature_def = concept_feature | role_feature | boolean_feature | numerical_feature | query_feature;
 const auto features_section_def = context(":features")[(lit("(") >> keyword(":features")) > *feature > lit(")")];
 
 const auto symbol_expression_def = identifier;
 const auto concept_feature_section_def = context("concept feature reference")[keyword("(:concept") > identifier > lit(")")];
 const auto role_feature_section_def = context("role feature reference")[keyword("(:role") > identifier > lit(")")];
+const auto query_feature_section_def = context("query feature reference")[keyword("(:query") > identifier > lit(")")];
 const auto concept_register_section_def =
     context("concept register reference")[(lit("(") >> keyword(":register") >> keyword("(:concept")) > identifier > lit(")") > lit(")")];
 const auto role_register_section_def =
@@ -177,8 +184,10 @@ const auto role_choose_rule_def =
 const auto sketch_rule_def = context("sketch rule")[keyword("(:sketch") > conditions_section > effects_section > lit(")")];
 const auto do_rule_def =
     context("action rule")[keyword("(:do") > conditions_section > action_section > arguments_expression_section > effects_section > lit(")")];
+const auto action_rule_def =
+    context("query action rule")[keyword("(:action") > conditions_section > action_section > query_feature_section_def > effects_section > lit(")")];
 const auto call_rule_def = context("call rule")[keyword("(:call") > conditions_section > callee_section > arguments_expression_section > lit(")")];
-const auto rule_def = concept_load_rule | role_load_rule | sketch_rule | do_rule | call_rule | concept_choose_rule | role_choose_rule;
+const auto rule_def = concept_load_rule | role_load_rule | sketch_rule | do_rule | call_rule | concept_choose_rule | role_choose_rule | action_rule;
 const auto required_rules = x3::rule<class RequiredRules, std::vector<ast::Rule>> { "one or more rules" } = +rule;
 
 const auto rule_entry_def = context(
@@ -220,6 +229,7 @@ BOOST_SPIRIT_DEFINE(identifier,
                     role_feature,
                     boolean_feature,
                     numerical_feature,
+                    query_feature,
                     feature,
                     features_section,
                     symbol_expression,
@@ -246,6 +256,7 @@ BOOST_SPIRIT_DEFINE(identifier,
                     role_choose_rule,
                     sketch_rule,
                     do_rule,
+                    action_rule,
                     call_rule,
                     rule,
                     rule_entry,
@@ -340,6 +351,9 @@ struct BooleanFeatureClass : x3::annotate_on_success
 struct NumericalFeatureClass : x3::annotate_on_success
 {
 };
+struct QueryFeatureClass : x3::annotate_on_success
+{
+};
 struct FeatureClass : x3::annotate_on_success
 {
 };
@@ -407,6 +421,9 @@ struct DoRuleClass : x3::annotate_on_success
 {
 };
 struct CallRuleClass : x3::annotate_on_success
+{
+};
+struct ActionRuleClass : x3::annotate_on_success
 {
 };
 struct RuleClass : x3::annotate_on_success

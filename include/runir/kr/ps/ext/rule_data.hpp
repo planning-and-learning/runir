@@ -114,6 +114,32 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::DoTag>>
 };
 
 template<>
+struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>
+{
+    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>> index;
+    Index<runir::kr::ps::ext::MemoryState> source;
+    Index<runir::kr::ps::ext::MemoryState> target;
+    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
+    IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects;
+    ::cista::offset::string action_name;
+    Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>> query_feature;
+
+    void clear() noexcept
+    {
+        ygg::clear(index);
+        ygg::clear(source);
+        ygg::clear(target);
+        ygg::clear(conditions);
+        ygg::clear(effects);
+        ygg::clear(action_name);
+        ygg::clear(query_feature);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, effects, action_name, query_feature); }
+    auto identifying_members() const noexcept { return std::tie(source, target, conditions, effects, action_name, query_feature); }
+};
+
+template<>
 struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
 {
     Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>> index;

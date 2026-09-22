@@ -17,6 +17,7 @@ namespace runir::kr::dl::grammar::parser
     using Prefix##_role_choice_type = choice_type<Family, runir::kr::dl::RoleTag>;                   \
     using Prefix##_boolean_choice_type = choice_type<Family, runir::kr::dl::BooleanTag>;             \
     using Prefix##_numerical_choice_type = choice_type<Family, runir::kr::dl::NumericalTag>;         \
+    using Prefix##_query_type = query_type<Family>; \
     using Prefix##_grammar_root_type = grammar_root_type<Family>;
 
 RUNIR_DEFINE_INSTANTIATION_TYPES(base_family, runir::kr::BaseFamilyTag)
@@ -35,6 +36,7 @@ RUNIR_INSTANTIATE_ALIAS(base_family_concept_choice_type)
 RUNIR_INSTANTIATE_ALIAS(base_family_role_choice_type)
 RUNIR_INSTANTIATE_ALIAS(base_family_boolean_choice_type)
 RUNIR_INSTANTIATE_ALIAS(base_family_numerical_choice_type)
+RUNIR_INSTANTIATE_ALIAS(base_family_query_type)
 RUNIR_INSTANTIATE_ALIAS(base_family_grammar_root_type)
 
 RUNIR_INSTANTIATE_ALIAS(ext_family_concept_root_type)
@@ -49,6 +51,7 @@ RUNIR_INSTANTIATE_ALIAS(ext_family_concept_choice_type)
 RUNIR_INSTANTIATE_ALIAS(ext_family_role_choice_type)
 RUNIR_INSTANTIATE_ALIAS(ext_family_boolean_choice_type)
 RUNIR_INSTANTIATE_ALIAS(ext_family_numerical_choice_type)
+RUNIR_INSTANTIATE_ALIAS(ext_family_query_type)
 RUNIR_INSTANTIATE_ALIAS(ext_family_grammar_root_type)
 
 RUNIR_INSTANTIATE_ALIAS(uns_family_concept_root_type)
@@ -63,6 +66,7 @@ RUNIR_INSTANTIATE_ALIAS(uns_family_concept_choice_type)
 RUNIR_INSTANTIATE_ALIAS(uns_family_role_choice_type)
 RUNIR_INSTANTIATE_ALIAS(uns_family_boolean_choice_type)
 RUNIR_INSTANTIATE_ALIAS(uns_family_numerical_choice_type)
+RUNIR_INSTANTIATE_ALIAS(uns_family_query_type)
 RUNIR_INSTANTIATE_ALIAS(uns_family_grammar_root_type)
 
 #undef RUNIR_DEFINE_INSTANTIATION_TYPES
@@ -110,6 +114,11 @@ RUNIR_INSTANTIATE_ALIAS(uns_family_grammar_root_type)
         return Prefix##_numerical_root;                                \
     }                                                                  \
     template<>                                                         \
+    query_type<Family> const& query_parser<Family>() \
+    { \
+        return Prefix##_query; \
+    } \
+    template<> \
     grammar_root_type<Family> const& grammar_root_parser<Family>()     \
     {                                                                  \
         return Prefix##_grammar_root;                                  \

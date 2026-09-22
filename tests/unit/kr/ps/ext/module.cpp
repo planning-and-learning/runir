@@ -32,6 +32,7 @@ static_assert(requires(Data& data) {
     data.role_features;
     data.boolean_features;
     data.numerical_features;
+    data.query_features;
     data.entry_memory_state;
     data.memory_states;
     data.memory_transitions;
@@ -51,6 +52,8 @@ static_assert(requires(const View& view) {
     view.template get_features<kr::dl::RoleTag>();
     view.template get_features<kr::ps::dl::BooleanFeature>();
     view.template get_features<kr::ps::dl::NumericalFeature>();
+    view.template get_features<kr::ps::dl::QueryFeature>();
+    view.get_query_features();
     view.get_entry_memory_state();
     view.get_memory_states();
     view.get_memory_transitions();

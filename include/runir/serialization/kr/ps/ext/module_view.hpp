@@ -25,6 +25,7 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::e
     ar.field("role_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::dl::RoleTag>()); });
     ar.field("boolean_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::ps::dl::BooleanFeature>()); });
     ar.field("numerical_features", [](const auto& value) -> decltype(auto) { return (value.template get_features<runir::kr::ps::dl::NumericalFeature>()); });
+    ar.field("query_features", [](const auto& value) -> decltype(auto) { return (value.get_query_features()); });
     ar.field("entry_memory_state", [](const auto& value) -> decltype(auto) { return (value.get_entry_memory_state()); });
     ar.field("memory_states", [](const auto& value) -> decltype(auto) { return (value.get_memory_states()); });
     ar.field("memory_transitions", [](const auto& value) -> decltype(auto) { return (value.get_memory_transitions()); });

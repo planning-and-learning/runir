@@ -1,6 +1,12 @@
 # Import all classes and functions for better IDE support
 
 from ....._pyrunir.kr.ps.ext.dl import (
+    QueryFeature,
+    QueryFeatureData,
+    QueryFeatureIndex,
+    ConcreteQueryFeature,
+    ConcreteQueryFeatureData,
+    ConcreteQueryFeatureIndex,
     BooleanFeature,
     BooleanFeatureData,
     BooleanFeatureIndex,

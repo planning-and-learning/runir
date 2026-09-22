@@ -1,0 +1,5 @@
+(define (problem action-existential-task)
+    (:domain action-existential)
+    (:objects start proof)
+    (:init (at start) (supports start proof))
+    (:goal (done)))

@@ -14,6 +14,11 @@ struct NumericalFeature
     static constexpr auto keyword = "numerical";
 };
 
+struct QueryFeature
+{
+    static constexpr auto keyword = "query";
+};
+
 struct Positive
 {
     static constexpr auto keyword = "positive";
