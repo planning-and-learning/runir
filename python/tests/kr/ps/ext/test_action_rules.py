@@ -109,8 +109,8 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize():
 def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(kind):
     task_context, program, expander, state, environment = _runtime(kind)
     features = {feature.get_symbol(): feature for feature in program.get_entry_module().get_query_features()}
-    arguments = ext.EvaluationArguments(state.call_stack.arguments)
-    dl_context = environment.make_dl_context(state, arguments)
+
+    dl_context = environment.make_dl_context(state)
     relation = ext.evaluate(features["selected"], dl_context)
     assert isinstance(relation, RelationView)
     assert len(relation) == 2
@@ -145,14 +145,13 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     del relation, truth, empty
     state = good_step.target
     environment.get_dl_caches().clear(False)
-    arguments = ext.EvaluationArguments(state.call_stack.arguments)
-    dl_context = environment.make_dl_context(state, arguments)
+    dl_context = environment.make_dl_context(state)
     relation = ext.evaluate(features["selected"], dl_context)
     assert len(relation) == 1
     new_rows = {tuple(row) for row in relation}
     row = relation.at(0)
     expected_row = tuple(row)
-    del steps, good_step, action, target, step, features, environment, dl_context, arguments, state, expander, program, task_context
+    del steps, good_step, action, target, step, features, environment, dl_context, state, expander, program, task_context
     gc.collect()
     assert {tuple(value) for value in relation} == new_rows
     del relation
@@ -212,8 +211,8 @@ def test_static_query_role_closure_query_composition(kind):
     closure = '(q_role (from to) (r_transitive_closure (r_project from to (q_atomic_state "edge" (from to)))))'
     task_context, program, expander, state, environment = _runtime(kind, _program(query=closure))
     features = {feature.get_symbol(): feature for feature in program.get_entry_module().get_query_features()}
-    arguments = ext.EvaluationArguments(state.call_stack.arguments)
-    dl_context = environment.make_dl_context(state, arguments)
+
+    dl_context = environment.make_dl_context(state)
     edges = {tuple(row) for row in ext.evaluate(features["edges"], dl_context)}
     rows = {tuple(row) for row in ext.evaluate(features["selected"], dl_context)}
     assert len(edges) == 3
@@ -224,8 +223,7 @@ def test_static_query_role_closure_query_composition(kind):
     assert rule is not None
     state = expander.apply(state, rule, successor.label, successor.node.get_state()).target
     environment.get_dl_caches().clear(False)
-    arguments = ext.EvaluationArguments(state.call_stack.arguments)
-    dl_context = environment.make_dl_context(state, arguments)
+    dl_context = environment.make_dl_context(state)
     assert {tuple(row) for row in ext.evaluate(features["selected"], dl_context)} == rows
 
 
@@ -263,8 +261,7 @@ def test_query_features_follow_module_arguments_and_registers_in_the_same_state(
     for position in (0, 1, 0):
         state = choices[position]
         environment.get_dl_caches().clear(False)
-        arguments = ext.EvaluationArguments(state.call_stack.arguments)
-        dl_context = environment.make_dl_context(state, arguments)
+        dl_context = environment.make_dl_context(state)
         assert {tuple(row) for row in ext.evaluate(features["argument"], dl_context)} == all_candidates
         selected = ext.evaluate(features["register"], dl_context)
         assert tuple(tuple(row) for row in selected) == expected[position]

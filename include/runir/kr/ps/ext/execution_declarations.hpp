@@ -1,6 +1,8 @@
 #ifndef RUNIR_KR_PS_EXT_EXECUTION_DECLARATIONS_HPP_
 #define RUNIR_KR_PS_EXT_EXECUTION_DECLARATIONS_HPP_
 
+#include "runir/kr/dl/semantics/declarations.hpp"
+
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
@@ -10,14 +12,6 @@
 
 namespace runir::kr::ps::ext
 {
-
-struct RegisterValues
-{
-};
-
-struct CallArguments
-{
-};
 
 struct CallStack
 {
@@ -57,12 +51,6 @@ using ExecutionRepositoryPtr = std::shared_ptr<ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
 using ExecutionRepositoryFactoryPtr = std::shared_ptr<ExecutionRepositoryFactory<Kind>>;
-
-template<tyr::TaskKind Kind>
-using RegisterValuesView = ygg::View<ygg::Index<RegisterValues>, ExecutionRepository<Kind>>;
-
-template<tyr::TaskKind Kind>
-using CallArgumentsView = ygg::View<ygg::Index<CallArguments>, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
 using CallStackView = ygg::View<ygg::Index<CallStack>, ExecutionRepository<Kind>>;

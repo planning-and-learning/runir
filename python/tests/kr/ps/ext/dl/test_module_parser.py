@@ -20,6 +20,7 @@ from pyrunir.kr import (
     UndefinedSymbolError,
 )
 from pyrunir.kr.dl import ext as dl_ext
+from pyrunir.kr.dl.base.semantics import CallArguments, RegisterValues
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext import dl
 from pyrunir.kr.uns.dl import parse_classifier
@@ -235,14 +236,13 @@ def test_load_rules_require_named_features_of_the_matching_category() -> None:
     _assert_diagnostic_at(category_error.value, wrong_category, "shared )")
 
 
-def test_module_parser_reports_fifth_register_position() -> None:
+@pytest.mark.parametrize("category", ["concept", "role"])
+def test_module_parser_accepts_more_than_four_registers(category: str) -> None:
     planning_domain, repository = _repositories()
-    source = read_fixture("kr/ps/ext/python/module_parser_reports_fifth_register_position/source.module")
+    source = read_fixture("kr/ps/ext/python/module_parser_reports_fifth_register_position/source.module").replace(":concept", f":{category}")
 
-    with pytest.raises(InvalidExpressionError, match=r"supported maximum of 4") as raised:
-        dl.parse_module(source, planning_domain, repository)
-
-    _assert_diagnostic_at(raised.value, source, "(:concept r4)")
+    module = dl.parse_module(source, planning_domain, repository)
+    assert len(getattr(module, f"get_{category}_registers")()) == 5
 
 
 def test_parser_exception_hierarchy_matches_cpp_categories() -> None:
@@ -374,8 +374,9 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
         assert isinstance(edge_label.state_transition.action, ActionBinding)
     vertex_label = proof.graph.get_vertex_property(vertex)
     assert vertex_label.execution_state.call_stack.memory_state is not None
-    assert len(vertex_label.execution_state.call_stack.registers.concept_values) > 0
-    assert len(vertex_label.execution_state.call_stack.registers.role_values) > 0
+    frame = vertex_label.execution_state.call_stack
+    assert len(frame.registers.concept_values) == len(frame.module.get_concept_registers())
+    assert len(frame.registers.role_values) == len(frame.module.get_role_registers())
     assert len(proof.deadend_states) == 0
     assert len(proof.open_states) == 0
     assert len(proof.cycle) > 0
@@ -515,8 +516,8 @@ def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
     assert isinstance(initial, ext.GroundExecutionState)
     assert initial.phase == ext.ExecutionPhase.EXTERNAL
     assert isinstance(initial.call_stack, ext.GroundCallStack)
-    assert isinstance(initial.call_stack.registers, ext.GroundRegisterValues)
-    assert isinstance(initial.call_stack.arguments, ext.GroundCallArguments)
+    assert isinstance(initial.call_stack.registers, RegisterValues)
+    assert isinstance(initial.call_stack.arguments, CallArguments)
     assert initial.call_stack.arguments.concept_arguments == []
     assert initial == duplicate_initial
     assert initial.call_stack == duplicate_initial.call_stack

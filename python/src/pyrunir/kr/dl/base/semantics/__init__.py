@@ -1,6 +1,12 @@
 # Import all classes for better IDE support
 
 from ....._pyrunir.kr.dl.base.semantics import (
+    CallArguments,
+    CallArgumentsData,
+    CallArgumentsIndex,
+    RegisterValues,
+    RegisterValuesData,
+    RegisterValuesIndex,
     QueryColumn,
     QueryColumnData,
     QueryColumnIndex,

@@ -1,15 +1,14 @@
 #ifndef RUNIR_KR_PS_EXT_EXECUTION_DATA_HPP_
 #define RUNIR_KR_PS_EXT_EXECUTION_DATA_HPP_
 
-#include "runir/kr/dl/semantics/denotation_index.hpp"
+#include "runir/kr/dl/semantics/call_arguments_data.hpp"
+#include "runir/kr/dl/semantics/register_values_data.hpp"
 #include "runir/kr/ps/ext/execution_index.hpp"
 #include "runir/kr/ps/ext/memory_state_index.hpp"
 #include "runir/kr/ps/ext/module_index.hpp"
 #include "runir/kr/ps/ext/module_program_index.hpp"
 
-#include <cista/containers/array.h>
 #include <cista/containers/optional.h>
-#include <cista/containers/pair.h>
 #include <tuple>
 #include <tyr/formalism/object_index.hpp>
 #include <tyr/planning/state_index.hpp>
@@ -22,62 +21,20 @@ namespace ygg
 {
 
 template<>
-struct Data<runir::kr::ps::ext::RegisterValues>
-{
-    Index<runir::kr::ps::ext::RegisterValues> index;
-    ::cista::array<::cista::optional<Index<tyr::formalism::Object>>, runir::kr::dl::num_registers> concept_values;
-    ::cista::array<::cista::optional<::cista::pair<Index<tyr::formalism::Object>, Index<tyr::formalism::Object>>>, runir::kr::dl::num_registers> role_values;
-
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(concept_values);
-        ygg::clear(role_values);
-    }
-
-    auto cista_members() const noexcept { return std::tie(index, concept_values, role_values); }
-    auto identifying_members() const noexcept { return std::tie(concept_values, role_values); }
-};
-
-template<>
-struct Data<runir::kr::ps::ext::CallArguments>
-{
-    Index<runir::kr::ps::ext::CallArguments> index;
-    IndexList<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> concept_arguments;
-    IndexList<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>> role_arguments;
-    IndexList<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>> boolean_arguments;
-    IndexList<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>> numerical_arguments;
-
-    Data() = default;
-
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(concept_arguments);
-        ygg::clear(role_arguments);
-        ygg::clear(boolean_arguments);
-        ygg::clear(numerical_arguments);
-    }
-
-    auto cista_members() const noexcept { return std::tie(index, concept_arguments, role_arguments, boolean_arguments, numerical_arguments); }
-    auto identifying_members() const noexcept { return std::tie(concept_arguments, role_arguments, boolean_arguments, numerical_arguments); }
-};
-
-template<>
 struct Data<runir::kr::ps::ext::CallStack>
 {
     Index<runir::kr::ps::ext::CallStack> index;
     Index<runir::kr::ps::ext::Module> module;
     Index<runir::kr::ps::ext::MemoryState> memory_state;
-    Index<runir::kr::ps::ext::RegisterValues> registers;
-    Index<runir::kr::ps::ext::CallArguments> arguments;
+    Index<runir::kr::dl::semantics::RegisterValues> registers;
+    Index<runir::kr::dl::semantics::CallArguments> arguments;
     ::cista::optional<Index<runir::kr::ps::ext::CallStack>> caller;
 
     Data() = default;
     Data(Index<runir::kr::ps::ext::Module> module_,
          Index<runir::kr::ps::ext::MemoryState> memory_state_,
-         Index<runir::kr::ps::ext::RegisterValues> registers_,
-         Index<runir::kr::ps::ext::CallArguments> arguments_,
+         Index<runir::kr::dl::semantics::RegisterValues> registers_,
+         Index<runir::kr::dl::semantics::CallArguments> arguments_,
          ::cista::optional<Index<runir::kr::ps::ext::CallStack>> caller_ = {}) noexcept :
         module(module_),
         memory_state(memory_state_),

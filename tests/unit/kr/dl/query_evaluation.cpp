@@ -74,7 +74,17 @@ void check_queries()
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
     auto caches = sem::DenotationCaches<Ext>();
-    auto context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(), builder, denotations, builder.get_workspace(), caches);
+    auto empty_arguments = ygg::Data<sem::CallArguments>();
+    auto registers = ygg::Data<sem::RegisterValues>();
+    registers.concept_values.resize(1);
+    registers.role_values.resize(1);
+    auto context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
+                                                          builder,
+                                                          denotations,
+                                                          builder.get_workspace(),
+                                                          caches,
+                                                          sem::get_or_create(denotations, empty_arguments).first,
+                                                          sem::get_or_create(denotations, registers).first);
 
     const auto triple = std::string(R"((q_atomic_state "triple" (x y z)))");
     const auto fixed = std::string(R"((q_atomic_state "fixed" (x y z)))");
@@ -152,44 +162,77 @@ void check_queries()
     EXPECT_TRUE(witnesses[ygg::uint_t(b.get_index())]);
     EXPECT_FALSE(witnesses[ygg::uint_t(a.get_index())]);
 
+    const auto evaluate_register = [&](auto expression)
+    {
+        auto updated = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
+                                                              builder,
+                                                              denotations,
+                                                              builder.get_workspace(),
+                                                              caches,
+                                                              sem::get_or_create(denotations, empty_arguments).first,
+                                                              sem::get_or_create(denotations, registers).first);
+        return sem::evaluate(expression, updated);
+    };
     const auto register_count = parser::parse_numerical("(n_count (q_join " + triple + " (q_concept x (c_register 0))))", domain, *repository);
-    EXPECT_EQ(sem::evaluate(register_count, context).get(), 0);
-    context.registers().set(dl::RegisterIdentifier<dl::ConceptTag>(0), a);
+    EXPECT_EQ(evaluate_register(register_count).get(), 0);
+    registers.concept_values[0] = a.get_index();
     caches.clear(false);
-    EXPECT_EQ(sem::evaluate(register_count, context).get(), 2);
-    context.registers().set(dl::RegisterIdentifier<dl::ConceptTag>(0), c);
+    EXPECT_EQ(evaluate_register(register_count).get(), 2);
+    registers.concept_values[0] = c.get_index();
     caches.clear(false);
-    EXPECT_EQ(sem::evaluate(register_count, context).get(), 0);
-    context.registers().clear(dl::RegisterIdentifier<dl::ConceptTag>(0));
+    EXPECT_EQ(evaluate_register(register_count).get(), 0);
+    registers.concept_values[0].reset();
     caches.clear(false);
-    EXPECT_EQ(sem::evaluate(register_count, context).get(), 0);
+    EXPECT_EQ(evaluate_register(register_count).get(), 0);
 
     const auto role_register_count = parser::parse_numerical("(n_count (q_join " + triple + " (q_role (x y) (r_register 0))))", domain, *repository);
-    context.registers().set(dl::RegisterIdentifier<dl::RoleTag>(0), a, b);
+    registers.role_values[0] = ::cista::pair(a.get_index(), b.get_index());
     caches.clear(false);
-    EXPECT_EQ(sem::evaluate(role_register_count, context).get(), 2);
-    context.registers().set(dl::RegisterIdentifier<dl::RoleTag>(0), b, c);
+    EXPECT_EQ(evaluate_register(role_register_count).get(), 2);
+    registers.role_values[0] = ::cista::pair(b.get_index(), c.get_index());
     caches.clear(false);
-    EXPECT_EQ(sem::evaluate(role_register_count, context).get(), 1);
+    EXPECT_EQ(evaluate_register(role_register_count).get(), 1);
+
+    EXPECT_FALSE(context.registers().template get<dl::ConceptTag>()[0]);
+    EXPECT_FALSE(context.registers().template get<dl::RoleTag>()[0]);
 
     const auto a_set = sem::evaluate(parser::parse_concept(R"((c_nominal "a"))", domain, *repository), context);
     const auto c_set = sem::evaluate(parser::parse_concept(R"((c_nominal "c"))", domain, *repository), context);
-    auto arguments = std::array { a_set };
-    auto argument_values = sem::Arguments();
-    argument_values.concept_arguments = arguments;
-    auto argument_context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(), builder, denotations, builder.get_workspace(), caches, argument_values);
+    auto argument_values = ygg::Data<sem::CallArguments>();
+    argument_values.concept_arguments.push_back(a_set.get_index());
+    auto argument_context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
+                                                                   builder,
+                                                                   denotations,
+                                                                   builder.get_workspace(),
+                                                                   caches,
+                                                                   sem::get_or_create(denotations, argument_values).first,
+                                                                   sem::get_or_create(denotations, registers).first);
     const auto argument_count = parser::parse_numerical("(n_count (q_join " + triple + " (q_concept x (c_argument 0))))", domain, *repository);
     // An invalid Ext argument must propagate through DL/query variant dispatch, not terminate.
     EXPECT_THROW(sem::evaluate(argument_count, context), std::out_of_range);
     caches.clear(false);
     EXPECT_EQ(sem::evaluate(argument_count, argument_context).get(), 2);
-    arguments[0] = c_set;
+    argument_values.concept_arguments[0] = c_set.get_index();
+    auto other_argument_context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
+                                                                         builder,
+                                                                         denotations,
+                                                                         builder.get_workspace(),
+                                                                         caches,
+                                                                         sem::get_or_create(denotations, argument_values).first,
+                                                                         sem::get_or_create(denotations, registers).first);
     caches.clear(false);
-    EXPECT_EQ(sem::evaluate(argument_count, argument_context).get(), 0);
+    EXPECT_EQ(sem::evaluate(argument_count, other_argument_context).get(), 0);
+    EXPECT_EQ(argument_context.arguments().template get<dl::ConceptTag>()[0].get_index(), a_set.get_index());
 
     const auto successors = search->successor_generator->get_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
     ASSERT_FALSE(successors.empty());
-    auto next = sem::StateEvaluationContext<Ext, Kind>(successors.front().get_state(), builder, denotations, builder.get_workspace(), caches);
+    auto next = sem::StateEvaluationContext<Ext, Kind>(successors.front().get_state(),
+                                                       builder,
+                                                       denotations,
+                                                       builder.get_workspace(),
+                                                       caches,
+                                                       sem::get_or_create(denotations, empty_arguments).first,
+                                                       sem::get_or_create(denotations, registers).first);
     const auto triple_count = parser::parse_numerical("(n_count " + triple + ")", domain, *repository);
     const auto derived_count = parser::parse_numerical(R"((n_count (q_atomic_state "copied" (x y z))))", domain, *repository);
     const auto ready_test = parser::parse_boolean("(b_nonempty " + ready + ")", domain, *repository);
@@ -507,7 +550,17 @@ void check_query_cache_across_states()
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
     auto caches = sem::DenotationCaches<Ext>();
-    auto context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(), builder, denotations, builder.get_workspace(), caches);
+    auto empty_arguments = ygg::Data<sem::CallArguments>();
+    auto registers = ygg::Data<sem::RegisterValues>();
+    registers.concept_values.resize(1);
+    registers.role_values.resize(1);
+    auto context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
+                                                          builder,
+                                                          denotations,
+                                                          builder.get_workspace(),
+                                                          caches,
+                                                          sem::get_or_create(denotations, empty_arguments).first,
+                                                          sem::get_or_create(denotations, registers).first);
     const auto fixed = parse_query(R"((q_atomic_state "fixed" (x y z)))", domain, *repository);
     const auto goal = parse_query(R"((q_atomic_goal "triple" false (x y z)))", domain, *repository);
     const auto derived = parse_query(R"((q_atomic_state "copied" (x y z)))", domain, *repository);
@@ -527,7 +580,13 @@ void check_query_cache_across_states()
 
     const auto successors = search->successor_generator->get_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
     ASSERT_FALSE(successors.empty());
-    auto next = sem::StateEvaluationContext<Ext, Kind>(successors.front().get_state(), builder, denotations, builder.get_workspace(), caches);
+    auto next = sem::StateEvaluationContext<Ext, Kind>(successors.front().get_state(),
+                                                       builder,
+                                                       denotations,
+                                                       builder.get_workspace(),
+                                                       caches,
+                                                       sem::get_or_create(denotations, empty_arguments).first,
+                                                       sem::get_or_create(denotations, registers).first);
     caches.clear(false);
     EXPECT_TRUE(caches.get_queries(false).empty());
     EXPECT_TRUE(caches.template get<dl::NumericalTag>(false).empty());
@@ -559,18 +618,37 @@ void check_query_cache_across_bindings()
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
     auto caches = sem::DenotationCaches<Ext>();
-    auto context = sem::StateEvaluationContext<Ext, Kind>(state, builder, denotations, builder.get_workspace(), caches);
+    auto empty_arguments = ygg::Data<sem::CallArguments>();
+    auto registers = ygg::Data<sem::RegisterValues>();
+    registers.concept_values.resize(1);
+    registers.role_values.resize(1);
+    auto context = sem::StateEvaluationContext<Ext, Kind>(state,
+                                                          builder,
+                                                          denotations,
+                                                          builder.get_workspace(),
+                                                          caches,
+                                                          sem::get_or_create(denotations, empty_arguments).first,
+                                                          sem::get_or_create(denotations, registers).first);
     const auto a = domain.get_constants()[0];
     const auto b = domain.get_constants()[1];
     const auto c = domain.get_constants()[2];
     const auto a_set = sem::evaluate(parser::parse_concept(R"((c_nominal "a"))", domain, *repository), context);
     const auto b_set = sem::evaluate(parser::parse_concept(R"((c_nominal "b"))", domain, *repository), context);
-    auto arguments = std::array { a_set };
-    auto argument_values = sem::Arguments();
-    argument_values.concept_arguments = arguments;
-    auto bound = sem::StateEvaluationContext<Ext, Kind>(state, builder, denotations, builder.get_workspace(), caches, argument_values);
-    bound.registers().set(dl::RegisterIdentifier<dl::ConceptTag>(0), a);
-    bound.registers().set(dl::RegisterIdentifier<dl::RoleTag>(0), a, b);
+    auto argument_values = ygg::Data<sem::CallArguments>();
+    argument_values.concept_arguments.push_back(a_set.get_index());
+    const auto make_bound = [&]
+    {
+        return sem::StateEvaluationContext<Ext, Kind>(state,
+                                                      builder,
+                                                      denotations,
+                                                      builder.get_workspace(),
+                                                      caches,
+                                                      sem::get_or_create(denotations, argument_values).first,
+                                                      sem::get_or_create(denotations, registers).first);
+    };
+    registers.concept_values[0] = a.get_index();
+    registers.role_values[0] = ::cista::pair(a.get_index(), b.get_index());
+    auto bound = make_bound();
     const auto fixed = parse_query(R"((q_atomic_state "fixed" (x y z)))", domain, *repository);
     const auto register_count =
         parser::parse_numerical(R"((n_count (q_join (q_atomic_state "fixed" (x y z)) (q_concept x (c_register 0)))))", domain, *repository);
@@ -581,24 +659,30 @@ void check_query_cache_across_bindings()
     EXPECT_EQ(sem::evaluate(register_count, bound).get(), 1);
     EXPECT_EQ(sem::evaluate(argument, bound).size(), 1);
     EXPECT_EQ(sem::evaluate(role_register, bound).size(), 1);
-    bound.registers().set(dl::RegisterIdentifier<dl::ConceptTag>(0), b);
-    bound.registers().set(dl::RegisterIdentifier<dl::RoleTag>(0), b, c);
-    arguments[0] = b_set;
+    registers.concept_values[0] = b.get_index();
+    registers.role_values[0] = ::cista::pair(b.get_index(), c.get_index());
+    argument_values.concept_arguments[0] = b_set.get_index();
+    auto rebound = make_bound();
     caches.clear(false);
-    EXPECT_EQ(&sem::evaluate(fixed, bound).storage(), &fixed_rows.storage());
-    EXPECT_EQ(sem::evaluate(register_count, bound).get(), 0);
-    EXPECT_TRUE(sem::evaluate(argument, bound).empty());
-    EXPECT_TRUE(sem::evaluate(role_register, bound).empty());
+    EXPECT_EQ(&sem::evaluate(fixed, rebound).storage(), &fixed_rows.storage());
+    EXPECT_EQ(sem::evaluate(register_count, rebound).get(), 0);
+    EXPECT_TRUE(sem::evaluate(argument, rebound).empty());
+    EXPECT_TRUE(sem::evaluate(role_register, rebound).empty());
     EXPECT_TRUE(caches.template get<dl::NumericalTag>(false).contains(register_count));
     EXPECT_FALSE(caches.template get<dl::NumericalTag>(true).contains(register_count));
 
-    bound.registers().clear(dl::RegisterIdentifier<dl::ConceptTag>(0));
-    bound.registers().clear(dl::RegisterIdentifier<dl::RoleTag>(0));
-    arguments[0] = a_set;
+    registers.concept_values[0].reset();
+    registers.role_values[0].reset();
+    argument_values.concept_arguments[0] = a_set.get_index();
+    auto cleared = make_bound();
     caches.clear(false);
-    EXPECT_EQ(sem::evaluate(register_count, bound).get(), 0);
-    EXPECT_EQ(sem::evaluate(argument, bound).size(), 1);
-    EXPECT_TRUE(sem::evaluate(role_register, bound).empty());
+    EXPECT_EQ(sem::evaluate(register_count, cleared).get(), 0);
+    EXPECT_EQ(sem::evaluate(argument, cleared).size(), 1);
+    EXPECT_TRUE(sem::evaluate(role_register, cleared).empty());
+    EXPECT_EQ(bound.registers().template get<dl::ConceptTag>()[0].value().get_index(), a.get_index());
+    EXPECT_EQ(bound.arguments().template get<dl::ConceptTag>()[0].get_index(), a_set.get_index());
+    EXPECT_EQ(rebound.registers().template get<dl::ConceptTag>()[0].value().get_index(), b.get_index());
+    EXPECT_EQ(rebound.arguments().template get<dl::ConceptTag>()[0].get_index(), b_set.get_index());
 }
 
 }  // namespace
@@ -679,7 +763,17 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
     auto caches = sem::DenotationCaches<Ext>();
-    auto context = sem::StateEvaluationContext<Ext, tyr::GroundTag>(state, builder, denotations, builder.get_workspace(), caches);
+    auto empty_arguments = ygg::Data<sem::CallArguments>();
+    auto registers = ygg::Data<sem::RegisterValues>();
+    registers.concept_values.resize(1);
+    registers.role_values.resize(1);
+    auto context = sem::StateEvaluationContext<Ext, tyr::GroundTag>(state,
+                                                                    builder,
+                                                                    denotations,
+                                                                    builder.get_workspace(),
+                                                                    caches,
+                                                                    sem::get_or_create(denotations, empty_arguments).first,
+                                                                    sem::get_or_create(denotations, registers).first);
     const auto description = std::string(R"((q_atomic_state "fixed" (x y z)))");
     const auto query = parse_query(description, domain, *repository);
     const auto renamed = parse_query("(q_rename (u v w) " + description + ")", domain, *repository);

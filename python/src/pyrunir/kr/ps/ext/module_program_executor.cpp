@@ -49,8 +49,6 @@ void bind_feature_evaluation(nb::module_& m)
 template<tyr::TaskKind Kind>
 void bind_execution_types(nb::module_& m, const char* prefix)
 {
-    using RegisterView = RegisterValuesView<Kind>;
-    using ArgumentsView = CallArgumentsView<Kind>;
     using StackView = CallStackView<Kind>;
     using StateView = ExecutionStateView<Kind>;
     using VertexLabel = ModuleProgramProofVertexLabel<Kind>;
@@ -68,12 +66,10 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def(nb::init<runir::kr::TaskContext<Kind>&, ModuleProgramView>(), "task_context"_a, "program"_a, nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
         .def(
             "make_dl_context",
-            [](Environment& self, StateView state, const EvaluationArguments& arguments) { return self.make_dl_context(state, arguments); },
+            [](Environment& self, StateView state) { return self.make_dl_context(state); },
             "execution_state"_a,
-            "arguments"_a,
             nb::keep_alive<0, 1>(),
-            nb::keep_alive<0, 2>(),
-            nb::keep_alive<0, 3>())
+            nb::keep_alive<0, 2>())
         .def("get_dl_caches", &Environment::get_dl_caches, nb::rv_policy::reference_internal)
         .def("get_dl_target_caches", &Environment::get_dl_target_caches, nb::rv_policy::reference_internal);
 
@@ -82,22 +78,6 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     bind_feature_evaluation<Kind, runir::kr::ps::dl::BooleanFeature>(m);
     bind_feature_evaluation<Kind, runir::kr::ps::dl::NumericalFeature>(m);
     bind_feature_evaluation<Kind, runir::kr::ps::dl::QueryFeature>(m);
-
-    auto register_values = nb::class_<RegisterView>(m, (std::string(prefix) + "RegisterValues").c_str())
-                               .def_prop_ro("concept_values", &RegisterView::get_concept_values)
-                               .def_prop_ro("role_values", &RegisterView::get_role_values);
-    ygg::add_print(register_values);
-    ygg::add_comparison(register_values);
-    ygg::add_hash(register_values);
-
-    auto call_arguments = nb::class_<ArgumentsView>(m, (std::string(prefix) + "CallArguments").c_str())
-                              .def_prop_ro("concept_arguments", [](const ArgumentsView& self) { return self.template get<runir::kr::dl::ConceptTag>(); })
-                              .def_prop_ro("role_arguments", [](const ArgumentsView& self) { return self.template get<runir::kr::dl::RoleTag>(); })
-                              .def_prop_ro("boolean_arguments", [](const ArgumentsView& self) { return self.template get<runir::kr::dl::BooleanTag>(); })
-                              .def_prop_ro("numerical_arguments", [](const ArgumentsView& self) { return self.template get<runir::kr::dl::NumericalTag>(); });
-    ygg::add_print(call_arguments);
-    ygg::add_comparison(call_arguments);
-    ygg::add_hash(call_arguments);
 
     auto call_stack = nb::class_<StackView>(m, (std::string(prefix) + "CallStack").c_str())
                           .def_prop_ro("module", &StackView::get_module, nb::keep_alive<0, 1>())
@@ -219,11 +199,8 @@ void bind_module_program_executor(nb::module_& m)
     m.attr("GroundModuleProgramProofEdgeLabel") = edge_label;
     m.attr("LiftedModuleProgramProofEdgeLabel") = edge_label;
 
-    auto evaluation_arguments = nb::class_<EvaluationArguments>(m, "EvaluationArguments").def(nb::init<>());
     bind_execution_types<tyr::GroundTag>(m, "Ground");
     bind_execution_types<tyr::LiftedTag>(m, "Lifted");
-    evaluation_arguments.def(nb::init<CallArgumentsView<tyr::GroundTag>>(), "arguments"_a, nb::keep_alive<1, 2>())
-        .def(nb::init<CallArgumentsView<tyr::LiftedTag>>(), "arguments"_a, nb::keep_alive<1, 2>());
 
     m.def(
         "find_ground_solution",

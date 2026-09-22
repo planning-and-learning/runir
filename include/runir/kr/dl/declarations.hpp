@@ -343,23 +343,11 @@ struct ArgumentTag
     }();
 };
 
-inline constexpr size_t num_registers = 4;
-
 template<CategoryTag Category>
 struct RegisterIdentifier : ygg::IndexMixin<RegisterIdentifier<Category>>
 {
     using Base = ygg::IndexMixin<RegisterIdentifier<Category>>;
-
-    constexpr RegisterIdentifier() noexcept = default;
-    explicit RegisterIdentifier(ygg::uint_t value) : Base(check_bounds(value)) {}
-
-private:
-    static constexpr ygg::uint_t check_bounds(ygg::uint_t value)
-    {
-        if (value != Base::MAX && value >= num_registers)
-            throw std::out_of_range("Register identifier index is out of range.");
-        return value;
-    }
+    using Base::Base;
 };
 
 template<CategoryTag Category>

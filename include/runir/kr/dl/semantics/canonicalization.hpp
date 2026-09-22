@@ -5,8 +5,10 @@
 #include "runir/kr/dl/concept_data.hpp"
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/role_data.hpp"
+#include "runir/kr/dl/semantics/call_arguments_data.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_data.hpp"
+#include "runir/kr/dl/semantics/register_values_data.hpp"
 
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
@@ -22,6 +24,20 @@ bool is_canonical(const ygg::Data<Denotation<Category>>&) noexcept
 
 template<CategoryTag Category>
 void canonicalize(ygg::Data<Denotation<Category>>&) noexcept
+{
+    // Trivially canonical
+}
+
+inline bool is_canonical(const ygg::Data<RegisterValues>&) noexcept { return true; }
+
+inline void canonicalize(ygg::Data<RegisterValues>&) noexcept
+{
+    // Trivially canonical
+}
+
+inline bool is_canonical(const ygg::Data<CallArguments>&) noexcept { return true; }
+
+inline void canonicalize(ygg::Data<CallArguments>&) noexcept
 {
     // Trivially canonical
 }

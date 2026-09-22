@@ -185,12 +185,31 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
     auto caches = sem::DenotationCaches<kr::ExtFamilyTag>();
-    auto context = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(), builder, denotations, builder.get_workspace(), caches);
+    auto arguments = ygg::Data<sem::CallArguments>();
+    auto registers = ygg::Data<sem::RegisterValues>();
+    registers.concept_values.resize(8);
+    registers.role_values.resize(8);
+    const auto object = search->task->get_domain().get_domain().get_constants()[0];
+    registers.concept_values[5] = object.get_index();
+    registers.role_values[7] = ::cista::pair(object.get_index(), object.get_index());
+    const auto empty_arguments = sem::get_or_create(denotations, arguments).first;
+    const auto register_values = sem::get_or_create(denotations, registers).first;
+    auto context = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(),
+                                                                                 builder,
+                                                                                 denotations,
+                                                                                 builder.get_workspace(),
+                                                                                 caches,
+                                                                                 empty_arguments,
+                                                                                 register_values);
+    const auto nominal = kr::ps::ext::dl::parse_concept(R"((c_nominal "a"))", search->task->get_domain().get_domain(), *repository);
+    arguments.concept_arguments.push_back(sem::evaluate(nominal, context).get_index());
+    const auto argument_values = sem::get_or_create(denotations, arguments).first;
     const auto expression = kr::ps::ext::dl::parse_numerical(
         R"((n_count (q_rename (source target)
                 (q_project (x z)
                     (q_join (q_atomic_state "triple" (x y z)) (q_atomic_state "edge" (x y)))))))",
-        search->task->get_domain().get_domain(), *repository);
+        search->task->get_domain().get_domain(),
+        *repository);
 
     // Clearing dynamic results measures query recomputation and pooled returns.
     for (size_t i = 0; i < 8; ++i)
@@ -203,8 +222,21 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     allocation_tracking::Scope measured;
     for (size_t i = 0; i < 1000; ++i)
     {
+        auto borrowed = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(),
+                                                                                      builder,
+                                                                                      denotations,
+                                                                                      builder.get_workspace(),
+                                                                                      caches,
+                                                                                      argument_values,
+                                                                                      register_values);
+        auto copied = borrowed;
+        valid &= &copied.registers().get_data() == &register_values.get_data();
+        valid &= &copied.arguments().get_data() == &argument_values.get_data();
+        valid &= copied.registers().at(dl::RegisterIdentifier<dl::ConceptTag>(5)).value().get_index() == object.get_index();
+        valid &= copied.registers().at(dl::RegisterIdentifier<dl::RoleTag>(7)).value().get_second().get_index() == object.get_index();
+        valid &= copied.arguments().at(dl::ArgumentIdentifier<dl::ConceptTag>(0)).get().count() == 1;
         caches.clear(false);
-        valid &= sem::evaluate(expression, context).get() == 3;
+        valid &= sem::evaluate(expression, copied).get() == 3;
     }
     const auto counts = measured.finish();
 

@@ -93,9 +93,8 @@ corresponding `GroundEvaluationEnvironment` or `LiftedEvaluationEnvironment`.
 `module.get_query_features()` returns named `ext.dl.QueryFeature` values.
 `ActionRule.get_query_feature()` returns the selector, and
 `feature.get_expression().get_columns()` exposes its output schema.
-Create an argument owner with
-`ext.EvaluationArguments(execution_state.call_stack.arguments)`, then create a
-state evaluation context with `environment.make_dl_context(execution_state, arguments)`.
+Create a state evaluation context with `environment.make_dl_context(execution_state)`.
+It borrows the registers and call arguments stored in that execution state.
 `ext.evaluate(feature, state_context)` returns the feature's native
 denotation for every category. Boolean and numerical denotations expose their
 scalar value through `.get()`; concept and role denotations are iterable.
@@ -105,8 +104,7 @@ from pyrunir.kr.ps import ext
 
 feature = module.get_query_features()[0]
 columns = tuple(column.get_name() for column in feature.get_expression().get_columns())
-arguments = ext.EvaluationArguments(execution_state.call_stack.arguments)
-state_context = environment.make_dl_context(execution_state, arguments)
+state_context = environment.make_dl_context(execution_state)
 relation = ext.evaluate(feature, state_context)
 snapshot = tuple(tuple(row) for row in relation)
 ```
@@ -120,8 +118,18 @@ before changing tasks or constructor repositories. Evaluation does not clear
 caches automatically. Constructor repositories remain caller-owned: keep them alive
 and unchanged while their entries are cached or their views are in use.
 Create a new state context from the next execution state
-after advancing execution, with an argument owner for that state's call arguments.
-Each state context retains its argument owner, execution state, and environment.
+after advancing execution. Each state context retains its execution state and environment.
+
+Low-level `pyrunir.kr.dl.ext.semantics` contexts take
+`(state, builder, denotation_repository, caches, arguments, registers)`.
+Create `CallArgumentsData` for the four lists of denotation indices and
+`RegisterValuesData` for optional object indices or pairs of object indices.
+Intern each with `denotation_repository.get_or_create(data)` and pass the
+returned `CallArguments` and `RegisterValues` views to the context. These types
+are defined in `pyrunir.kr.dl.base.semantics`. Changing the source data does not
+change an interned value; intern the updated data and create a new context.
+Clear dynamic cache entries before evaluating the new context. Register storage
+is sized from the module's declarations.
 
 Relations, rows, and iterators retain the evaluation environment, but clearing
 their cache invalidates them. Do not access an old view after clearing; evaluate

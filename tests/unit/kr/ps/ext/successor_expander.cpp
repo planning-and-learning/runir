@@ -3,12 +3,12 @@
 #include "planning_fixtures.hpp"
 
 #include <algorithm>
-#include <concepts>
 #include <chrono>
-#include <iostream>
+#include <concepts>
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <iostream>
 #include <random>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
@@ -103,9 +103,8 @@ void expect_borrowed_query_evaluation()
     const auto initial = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
     auto expander = ext::SuccessorExpander<Kind>(task_context, program);
     const auto state = expander.initial_state();
-    const auto arguments = ext::EvaluationArguments(state.get_call_stack().get_arguments());
     auto environment = ext::EvaluationEnvironment<Kind>(*task_context, program);
-    auto state_context = environment.make_dl_context(state, arguments);
+    auto state_context = environment.make_dl_context(state);
     const auto feature = module.get_query_features()[0];
     const auto query = feature.get_expression();
     {
@@ -122,8 +121,9 @@ void expect_borrowed_query_evaluation()
         const auto stack = state.get_call_stack();
         auto transition = environment.make_dl_transition_context(state.get_state(),
                                                                  successors.front().get_state(),
-                                                                 arguments.view(),
-                                                                 ext::EvaluationEnvironment<Kind>::make_registers(stack.get_registers()));
+                                                                 stack.get_arguments(),
+                                                                 stack.get_registers(),
+                                                                 stack.get_registers());
         {
             const auto target_rows = kr::ps::evaluate(feature, transition.get_target_context());
             ASSERT_EQ(target_rows.size(), 1);
@@ -146,8 +146,8 @@ void expect_borrowed_query_evaluation()
 template<tyr::TaskKind Kind>
 void expect_binding_effects_and_empty_choices()
 {
-    const auto task_context = create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"),
-                                                        benchmark_path("classical/tests/gripper/test-1.pddl"));
+    const auto task_context =
+        create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"), benchmark_path("classical/tests/gripper/test-1.pddl"));
     auto& repository = *task_context->domain_context->ext_repository;
     const auto domain = task_context->search_context->task->get_domain().get_domain();
     for (const auto role : { false, true })
@@ -157,10 +157,10 @@ void expect_binding_effects_and_empty_choices()
                 SCOPED_TRACE(fmt::format("role={}, choose={}, scenario={}", role, choose, scenario));
                 const auto category = role ? "role" : "concept";
                 const auto selected = role ? "(c_some (r_register r) (c_top))" : "(c_register r)";
-                const auto candidates = scenario == 3 ? (role ? "(r_restriction (r_atomic_state \"at\") (c_bot))" : "(c_bot)")
-                                                      : (role ? "(r_atomic_state \"at\")" : "(c_atomic_state \"ball\")");
-                const auto effects = scenario == 1 ? "(:effects (positive goal) (increases size) (unchanged total))"
-                                                  : (scenario == 2 ? "(:effects (decreases size))" : "");
+                const auto candidates = scenario == 3 ? (role ? "(r_restriction (r_atomic_state \"at\") (c_bot))" : "(c_bot)") :
+                                                        (role ? "(r_atomic_state \"at\")" : "(c_atomic_state \"ball\")");
+                const auto effects =
+                    scenario == 1 ? "(:effects (positive goal) (increases size) (unchanged total))" : (scenario == 2 ? "(:effects (decreases size))" : "");
                 const auto source = fmt::format(R"(
 (:module (:symbol binding) (:arguments) (:registers (:{0} r))
   (:entry source) (:memory source target)
@@ -174,7 +174,13 @@ void expect_binding_effects_and_empty_choices()
     (:source-memory source) (:target-memory target)
     (:{3} (:conditions ({4} size) (negative goal))
       (:{0} candidates) (:register (:{0} r)) {5})))))
-)", category, candidates, selected, choose ? "choose" : "load", scenario == 4 ? "greater_zero" : "equal_zero", effects);
+)",
+                                                category,
+                                                candidates,
+                                                selected,
+                                                choose ? "choose" : "load",
+                                                scenario == 4 ? "greater_zero" : "equal_zero",
+                                                effects);
                 const auto module = kr::ps::ext::dl::parse_module(source, domain, repository);
                 const auto program = create_module_program(repository, module, { module });
                 auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
@@ -235,8 +241,10 @@ void expect_binding_effects_and_empty_choices()
                     ASSERT_EQ(all_steps.size(), 1);
                     EXPECT_EQ(all_steps.front().status, kr::ps::ext::detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION);
                 }
-                EXPECT_FALSE(initial.get_call_stack().get_registers().get_concept_values()[0]);
-                EXPECT_FALSE(initial.get_call_stack().get_registers().get_role_values()[0]);
+                for (const auto value : initial.get_call_stack().get_registers().get_concept_values())
+                    EXPECT_FALSE(value);
+                for (const auto value : initial.get_call_stack().get_registers().get_role_values())
+                    EXPECT_FALSE(value);
                 EXPECT_EQ(initial.get_call_stack().get_memory_state().get_name(), "source");
                 if (choose)
                 {
@@ -258,8 +266,8 @@ void expect_lazy_do_successors()
     for (const auto scenario : { 0, 1, 2, 3, 4 })
     {
         SCOPED_TRACE(fmt::format("scenario={}", scenario));
-        const auto task_context = create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"),
-                                                            benchmark_path("classical/tests/gripper/test-1.pddl"));
+        const auto task_context =
+            create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"), benchmark_path("classical/tests/gripper/test-1.pddl"));
         auto& repository = *task_context->domain_context->ext_repository;
         auto& states = *task_context->search_context->state_repository;
         const auto domain = task_context->search_context->task->get_domain().get_domain();
@@ -268,7 +276,8 @@ void expect_lazy_do_successors()
     (:rule (:symbol move) (:expression
       (:source-memory source) (:target-memory sketch-target)
       (:sketch (:conditions) (:effects (unchanged Free)))))
-)" : "";
+)" :
+                                            "";
         const auto source = fmt::format(R"(
 (:module (:symbol lazy) (:arguments) (:registers)
   (:entry source) (:memory source do-target sketch-target)
@@ -283,7 +292,11 @@ void expect_lazy_do_successors()
       (:do (:conditions ({1} Free)) (:action "pick")
         (:arguments Ball Room Gripper) (:effects ({2} Free)))))
     {3}))
-)", selected_ball, scenario == 3 ? "equal_zero" : "greater_zero", scenario == 1 ? "increases" : "decreases", sketch);
+)",
+                                        selected_ball,
+                                        scenario == 3 ? "equal_zero" : "greater_zero",
+                                        scenario == 1 ? "increases" : "decreases",
+                                        sketch);
         const auto module = ext::dl::parse_module(source, domain, repository);
         const auto program = create_module_program(repository, module, { module });
         auto expander = ext::SuccessorExpander<Kind>(task_context, program);
@@ -375,8 +388,8 @@ template<tyr::TaskKind Kind>
 void expect_control_only_steps_do_not_generate_planning_successors()
 {
     namespace ext = kr::ps::ext;
-    const auto task_context = create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"),
-                                                        benchmark_path("classical/tests/gripper/test-1.pddl"));
+    const auto task_context =
+        create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"), benchmark_path("classical/tests/gripper/test-1.pddl"));
     auto& repository = *task_context->domain_context->ext_repository;
     auto& states = *task_context->search_context->state_repository;
     const auto program = ext::dl::parse_module_program(R"(
@@ -400,7 +413,9 @@ void expect_control_only_steps_do_not_generate_planning_successors()
         (:sketch (:conditions) (:effects))))))
   (:module (:symbol leaf) (:arguments) (:registers)
     (:entry source) (:memory source) (:features) (:rules)))
-)", task_context->search_context->task->get_domain().get_domain(), repository);
+)",
+                                                       task_context->search_context->task->get_domain().get_domain(),
+                                                       repository);
     auto expander = ext::SuccessorExpander<Kind>(task_context, program);
     const auto initial = expander.initial_state();
     ASSERT_EQ(states.num_states(), 1);
@@ -793,40 +808,39 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     ASSERT_EQ(boolean_arguments.size(), 1);
     ASSERT_EQ(numerical_arguments.size(), 1);
 
-    const auto concept_denotation = concept_arguments.front();
+    const auto concept_denotation = concept_arguments[0];
     const auto concept_first = concept_denotation.begin();
     ASSERT_NE(concept_first, concept_denotation.end());
     EXPECT_EQ((*concept_first).get_index(), ygg::Index<tyr::formalism::Object>(0));
 
-    const auto role_denotation = role_arguments.front();
+    const auto role_denotation = role_arguments[0];
     const auto role_first = role_denotation.begin();
     ASSERT_NE(role_first, role_denotation.end());
     const auto role_pair = *role_first;
     EXPECT_EQ(role_pair.first.get_index(), ygg::Index<tyr::formalism::Object>(0));
     EXPECT_EQ(role_pair.second.get_index(), ygg::Index<tyr::formalism::Object>(0));
 
-    EXPECT_TRUE(boolean_arguments.front().get());
-    EXPECT_GT(numerical_arguments.front().get(), 0);
+    EXPECT_TRUE(boolean_arguments[0].get());
+    EXPECT_GT(numerical_arguments[0].get(), 0);
 
-    // Contexts borrow each caller's vectors; preparing another context does not replace them.
-    const auto evaluation_arguments = kr::ps::ext::EvaluationArguments(arguments);
+    // Contexts borrow the persistent data; preparing another context does not replace it.
     auto environment = kr::ps::ext::EvaluationEnvironment<tyr::GroundTag>(*task_context, program);
-    auto evaluation_context = environment.make_dl_context(call_target, evaluation_arguments);
-    const auto initial_arguments = kr::ps::ext::EvaluationArguments(initial_state.get_call_stack().get_arguments());
-    const auto initial_context = environment.make_dl_context(initial_state, initial_arguments);
-    EXPECT_TRUE(initial_context.arguments().concept_arguments.empty());
-    EXPECT_EQ(evaluation_context.arguments().concept_arguments.data(), evaluation_arguments.concept_arguments.data());
-    EXPECT_EQ(evaluation_context.arguments().role_arguments.data(), evaluation_arguments.role_arguments.data());
-    EXPECT_EQ(evaluation_context.arguments().boolean_arguments.data(), evaluation_arguments.boolean_arguments.data());
-    EXPECT_EQ(evaluation_context.arguments().numerical_arguments.data(), evaluation_arguments.numerical_arguments.data());
-    EXPECT_EQ(evaluation_context.arguments().concept_arguments.front().get_index(), concept_arguments.front().get_index());
-    EXPECT_TRUE(evaluation_context.arguments().boolean_arguments.front().get());
-    EXPECT_EQ(evaluation_context.arguments().numerical_arguments.front().get(), numerical_arguments.front().get());
+    auto evaluation_context = environment.make_dl_context(call_target);
+    const auto initial_context = environment.make_dl_context(initial_state);
+    EXPECT_TRUE(initial_context.arguments().template get<kr::dl::ConceptTag>().empty());
+    EXPECT_EQ(&evaluation_context.arguments().get_data(), &arguments.get_data());
+    EXPECT_EQ(&evaluation_context.registers().get_data(), &call_stack.get_registers().get_data());
+    EXPECT_EQ(evaluation_context.arguments().template get<kr::dl::ConceptTag>()[0].get_index(), concept_arguments[0].get_index());
+    EXPECT_TRUE(evaluation_context.arguments().template get<kr::dl::BooleanTag>()[0].get());
+    EXPECT_EQ(evaluation_context.arguments().template get<kr::dl::NumericalTag>()[0].get(), numerical_arguments[0].get());
 
-    auto evaluation_transition =
-        environment.make_dl_transition_context(call_target.get_state(), call_target.get_state(), evaluation_arguments.view(), evaluation_context.registers());
-    EXPECT_EQ(evaluation_transition.get_source_context().arguments().concept_arguments.data(), evaluation_arguments.concept_arguments.data());
-    EXPECT_EQ(evaluation_transition.get_target_context().arguments().concept_arguments.data(), evaluation_arguments.concept_arguments.data());
+    auto evaluation_transition = environment.make_dl_transition_context(call_target.get_state(),
+                                                                        call_target.get_state(),
+                                                                        arguments,
+                                                                        call_stack.get_registers(),
+                                                                        call_stack.get_registers());
+    EXPECT_EQ(&evaluation_transition.get_source_context().arguments().get_data(), &arguments.get_data());
+    EXPECT_EQ(&evaluation_transition.get_target_context().arguments().get_data(), &arguments.get_data());
 
     const auto caller_frame = call_stack.get_caller();
     ASSERT_TRUE(caller_frame);
@@ -1122,10 +1136,10 @@ void expect_query_action_contracts()
         const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
         const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
         auto& repository = *task_context->domain_context->ext_repository;
-        const auto query = scenario == 1 ? "(q_difference " + valid_query + " " + valid_query + ")"
-                         : scenario == 3 ? "(q_union " + valid_query + R"( (q_atomic_state "edge" (from to))))"
-                         : scenario == 4 ? "(q_project (to from) " + valid_query + ")"
-                                         : valid_query;
+        const auto query = scenario == 1 ? "(q_difference " + valid_query + " " + valid_query + ")" :
+                           scenario == 3 ? "(q_union " + valid_query + R"( (q_atomic_state "edge" (from to))))" :
+                           scenario == 4 ? "(q_project (to from) " + valid_query + ")" :
+                                           valid_query;
         const auto source = fmt::format(R"(
 (:module (:symbol actions) (:arguments) (:registers)
   (:entry source) (:memory source target)
@@ -1135,7 +1149,9 @@ void expect_query_action_contracts()
   (:rules (:rule (:symbol move) (:expression
     (:source-memory source) (:target-memory target)
     (:action (:conditions) (:action "move") (:query Moves) (:effects ({1} N)))))))
-)", query, scenario == 2 ? "decreases" : "unchanged");
+)",
+                                        query,
+                                        scenario == 2 ? "decreases" : "unchanged");
         const auto module = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
         const auto program = create_module_program(repository, module, { module });
         auto expander = ext::SuccessorExpander<Kind>(task_context, program);
@@ -1229,7 +1245,8 @@ void expect_lazy_selection_stops_after_selected_rule()
       (:{0} (:conditions) (:concept Candidates) (:register (:concept r)))))
     (:rule (:symbol later) (:expression (:source-memory source) (:target-memory invalid)
       (:action (:conditions) (:action "move") (:query Invalid) (:effects))))))
-)", choose ? "choose" : "load");
+)",
+                                        choose ? "choose" : "load");
         const auto module = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
         const auto program = create_module_program(repository, module, { module });
         auto expander = ext::SuccessorExpander<Kind>(task_context, program);
@@ -1264,8 +1281,8 @@ void expect_lazy_sketch_order_and_cancellation()
 )");
     for (const auto cancelled : { true, false })
     {
-        const auto task_context = create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"),
-                                                            benchmark_path("classical/tests/gripper/test-1.pddl"));
+        const auto task_context =
+            create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"), benchmark_path("classical/tests/gripper/test-1.pddl"));
         auto& repository = *task_context->domain_context->ext_repository;
         auto& states = *task_context->search_context->state_repository;
         const auto module = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
@@ -1316,7 +1333,9 @@ void expect_query_action_existential_binding()
   (:rules (:rule (:symbol finish) (:expression
     (:source-memory source) (:target-memory target)
     (:action (:conditions) (:action "finish") (:query Bindings) (:effects))))))
-)", domain, repository);
+)",
+                                              domain,
+                                              repository);
     const auto program = create_module_program(repository, module, { module });
     auto expander = ext::SuccessorExpander<Kind>(task_context, program);
     const auto steps = expander.control_steps(expander.initial_state());
@@ -1348,7 +1367,8 @@ void expect_query_action_nullary_binding()
   (:rules (:rule (:symbol finish) (:expression
     (:source-memory source) (:target-memory source)
     (:action (:conditions) (:action "finish") (:query Bindings) (:effects))))))
-)", query);
+)",
+                                        query);
         const auto module = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
         const auto program = create_module_program(repository, module, { module });
         auto expander = ext::SuccessorExpander<Kind>(task_context, program);
@@ -1380,9 +1400,10 @@ void expect_eager_lazy_expansion_counts()
     {
         SCOPED_TRACE(rule_kind);
         const auto binding = std::string(rule_kind) == "load" || std::string(rule_kind) == "choose";
-        const auto body = binding ? fmt::format("(:{} (:conditions) (:concept Ball) (:register (:concept r)))", rule_kind)
-                        : std::string(rule_kind) == "do" ? R"((:do (:conditions) (:action "pick") (:arguments Ball Room Gripper) (:effects (decreases Free))))"
-                                                           : R"((:sketch (:conditions) (:effects (decreases Free))))";
+        const auto body = binding ? fmt::format("(:{} (:conditions) (:concept Ball) (:register (:concept r)))", rule_kind) :
+                          std::string(rule_kind) == "do" ?
+                                    R"((:do (:conditions) (:action "pick") (:arguments Ball Room Gripper) (:effects (decreases Free))))" :
+                                    R"((:sketch (:conditions) (:effects (decreases Free))))";
         const auto source = fmt::format(R"(
 (:module (:symbol selection) (:arguments) (:registers (:concept r))
   (:entry source) (:memory source target)
@@ -1392,7 +1413,8 @@ void expect_eager_lazy_expansion_counts()
     (:concept (:symbol Gripper) (:expression (c_atomic_state "gripper")))
     (:numerical (:symbol Free) (:expression (n_count (c_atomic_state "free")))))
   (:rules (:rule (:symbol select) (:expression (:source-memory source) (:target-memory target) {0}))))
-)", body);
+)",
+                                        body);
         auto counts = std::vector<size_t> {};
         auto state_counts = std::vector<size_t> {};
         auto binding_counts = std::vector<size_t> {};
@@ -1400,8 +1422,8 @@ void expect_eager_lazy_expansion_counts()
         auto first_bindings = std::vector<std::vector<std::string>> {};
         for (const auto eager : { true, false })
         {
-            const auto task_context = create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"),
-                                                                benchmark_path("classical/tests/gripper/test-1.pddl"));
+            const auto task_context =
+                create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"), benchmark_path("classical/tests/gripper/test-1.pddl"));
             auto& repository = *task_context->domain_context->ext_repository;
             const auto module = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
             const auto program = create_module_program(repository, module, { module });
@@ -1460,9 +1482,8 @@ void expect_eager_lazy_expansion_counts()
                 }
             }
         }
-        std::cout << "Expansion comparison " << (std::same_as<Kind, tyr::GroundTag> ? "ground " : "lifted ") << rule_kind
-                  << ": eager_steps=" << counts[0] << " lazy_steps=" << counts[1]
-                  << " eager_new_states=" << state_counts[0] << " lazy_new_states=" << state_counts[1]
+        std::cout << "Expansion comparison " << (std::same_as<Kind, tyr::GroundTag> ? "ground " : "lifted ") << rule_kind << ": eager_steps=" << counts[0]
+                  << " lazy_steps=" << counts[1] << " eager_new_states=" << state_counts[0] << " lazy_new_states=" << state_counts[1]
                   << " eager_us=" << durations[0] << " lazy_us=" << durations[1] << '\n';
     }
 }

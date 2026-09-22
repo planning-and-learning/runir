@@ -2,12 +2,14 @@
 #define RUNIR_SEMANTICS_DENOTATION_REPOSITORY_HPP_
 
 #include "runir/kr/dl/semantics/canonicalization.hpp"
+#include "runir/kr/dl/semantics/call_arguments_view.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 #include "runir/kr/dl/semantics/denotation_index.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
+#include "runir/kr/dl/semantics/register_values_view.hpp"
 
 #include <cassert>
 #include <memory>
@@ -48,7 +50,12 @@ private:
                                                 BasicBuilder<Denotation<NumericalTag>>,
                                                 BasicBuilder<Denotation<ConceptTag>>,
                                                 BasicBuilder<Denotation<RoleTag>>>;
-    using DenotationDataStorage = ygg::formalism::BuilderStorage<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>>;
+    using DenotationDataStorage = ygg::formalism::BuilderStorage<Denotation<BooleanTag>,
+                                                                Denotation<NumericalTag>,
+                                                                Denotation<ConceptTag>,
+                                                                Denotation<RoleTag>,
+                                                                RegisterValues,
+                                                                CallArguments>;
 
     DenotationBuilderStorage m_builders;
     DenotationDataStorage m_data;
@@ -114,7 +121,12 @@ class DenotationRepository
     friend class DenotationRepositoryFactory;
 
 public:
-    using SymbolRepository = ygg::formalism::SymbolRepository<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>>;
+    using SymbolRepository = ygg::formalism::SymbolRepository<Denotation<BooleanTag>,
+                                                              Denotation<NumericalTag>,
+                                                              Denotation<ConceptTag>,
+                                                              Denotation<RoleTag>,
+                                                              RegisterValues,
+                                                              CallArguments>;
     using VectorRepository = ygg::RawVectorSet<ygg::uint_t, ygg::uint_t>;
 
 private:
@@ -152,36 +164,36 @@ public:
         m_vector_repository.clear();
     }
 
-    template<CategoryTag Category>
-    std::optional<ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>> find(const ygg::Data<Denotation<Category>>& data) const noexcept
+    template<typename T>
+    std::optional<ygg::View<ygg::Index<T>, DenotationRepository>> find(const ygg::Data<T>& data) const noexcept
     {
-        if (auto index = m_symbol_repository.template find_local<Denotation<Category>>(data))
-            return ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>(*index, *this);
+        if (auto index = m_symbol_repository.template find_local<T>(data))
+            return ygg::View<ygg::Index<T>, DenotationRepository>(*index, *this);
         return std::nullopt;
     }
 
-    template<CategoryTag Category>
-    std::pair<ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>, bool> get_or_create(ygg::Data<Denotation<Category>>& data)
+    template<typename T>
+    std::pair<ygg::View<ygg::Index<T>, DenotationRepository>, bool> get_or_create(ygg::Data<T>& data)
     {
-        const auto [index, created] = m_symbol_repository.template get_or_create_local<Denotation<Category>>(data);
-        return { ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>(index, *this), created };
+        const auto [index, created] = m_symbol_repository.template get_or_create_local<T>(data);
+        return { ygg::View<ygg::Index<T>, DenotationRepository>(index, *this), created };
     }
 
-    template<CategoryTag Category>
-    const ygg::Data<Denotation<Category>>& operator[](ygg::Index<Denotation<Category>> index) const noexcept
+    template<typename T>
+    const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
     {
-        assert(m_symbol_repository.template is_local<Denotation<Category>>(index));
-        return m_symbol_repository.template at_local<Denotation<Category>>(index);
+        assert(m_symbol_repository.template is_local<T>(index));
+        return m_symbol_repository.template at_local<T>(index);
     }
 
-    template<CategoryTag Category>
+    template<typename T>
     size_t size() const noexcept
     {
-        return m_symbol_repository.template local_size<Denotation<Category>>();
+        return m_symbol_repository.template local_size<T>();
     }
 
-    template<CategoryTag Category>
-    const DenotationRepository& get_canonical_context(ygg::Index<Denotation<Category>>) const noexcept
+    template<typename T>
+    const DenotationRepository& get_canonical_context(ygg::Index<T>) const noexcept
     {
         return *this;
     }
@@ -221,8 +233,8 @@ inline DenotationRepository::VectorRepository& get_denotation_vector_repository(
     return repository.get_vector_repository();
 }
 
-template<CategoryTag Category>
-[[nodiscard]] auto get_or_create(DenotationRepository& repository, ygg::Data<Denotation<Category>>& data)
+template<typename T>
+[[nodiscard]] auto get_or_create(DenotationRepository& repository, ygg::Data<T>& data)
 {
     canonicalize(data);
     return repository.get_or_create(data);

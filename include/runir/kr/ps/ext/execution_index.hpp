@@ -1,6 +1,8 @@
 #ifndef RUNIR_KR_PS_EXT_EXECUTION_INDEX_HPP_
 #define RUNIR_KR_PS_EXT_EXECUTION_INDEX_HPP_
 
+#include "runir/kr/dl/semantics/call_arguments_index.hpp"
+#include "runir/kr/dl/semantics/register_values_index.hpp"
 #include "runir/kr/ps/ext/execution_declarations.hpp"
 
 #include <yggdrasil/core/types.hpp>
@@ -8,20 +10,6 @@
 
 namespace ygg
 {
-
-template<>
-struct Index<runir::kr::ps::ext::RegisterValues> : IndexMixin<Index<runir::kr::ps::ext::RegisterValues>>
-{
-    using Base = IndexMixin<Index<runir::kr::ps::ext::RegisterValues>>;
-    using Base::Base;
-};
-
-template<>
-struct Index<runir::kr::ps::ext::CallArguments> : IndexMixin<Index<runir::kr::ps::ext::CallArguments>>
-{
-    using Base = IndexMixin<Index<runir::kr::ps::ext::CallArguments>>;
-    using Base::Base;
-};
 
 template<>
 struct Index<runir::kr::ps::ext::CallStack> : IndexMixin<Index<runir::kr::ps::ext::CallStack>>

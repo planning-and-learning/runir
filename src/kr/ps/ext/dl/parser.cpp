@@ -343,11 +343,6 @@ SignatureCounts signature_counts(const ast::Module& module)
 template<runir::kr::dl::CategoryTag Category>
 void validate_unique_names(const std::vector<ast::Register<Category>>& declarations, const char* kind, const runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    if (declarations.size() > runir::kr::dl::num_registers)
-        diagnostics.throw_at(declarations[runir::kr::dl::num_registers],
-                             runir::kr::InvalidExpressionError(std::string(kind) + " declares more registers than the supported maximum of "
-                                                               + std::to_string(runir::kr::dl::num_registers)));
-
     auto names = std::unordered_set<std::string> {};
     for (const auto& declaration : declarations)
         if (!names.emplace(declaration.symbol.text).second)

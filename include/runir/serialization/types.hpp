@@ -3,7 +3,9 @@
 
 #include "runir/datasets/state_graph.hpp"
 #include "runir/kr/dl/repository.hpp"
+#include "runir/kr/dl/semantics/call_arguments_view.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
+#include "runir/kr/dl/semantics/register_values_view.hpp"
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
@@ -21,7 +23,8 @@ namespace runir::serialization
 template<typename Context, typename T>
 using IndexView = ygg::View<ygg::Index<T>, Context>;
 
-using DenotationViews = ygg::MapTypeListT<kr::dl::semantics::DenotationView, kr::dl::CategoryTags>;
+using DenotationViews = ygg::ConcatTypeListsT<ygg::MapTypeListT<kr::dl::semantics::DenotationView, kr::dl::CategoryTags>,
+                                              ygg::TypeList<kr::dl::semantics::RegisterValuesView, kr::dl::semantics::CallArgumentsView>>;
 using BaseViews = ygg::MapTypeListSecondT<IndexView, kr::ps::base::Repository, kr::ps::base::RepositoryTypes>;
 using ExtTypes =
     ygg::ConcatTypeListsT<kr::ps::ext::FeatureTypes, kr::ps::ext::ConditionTypes, kr::ps::ext::EffectTypes, kr::ps::ext::RuleTypes, kr::ps::ext::ProgramTypes>;
@@ -29,10 +32,7 @@ using ExtViews = ygg::MapTypeListSecondT<IndexView, kr::ps::ext::Repository, Ext
 using UnsViews = ygg::MapTypeListSecondT<IndexView, kr::uns::Repository, kr::uns::RepositoryTypes>;
 
 template<tyr::TaskKind Kind>
-using ExecutionViews = ygg::TypeList<kr::ps::ext::RegisterValuesView<Kind>,
-                                     kr::ps::ext::CallArgumentsView<Kind>,
-                                     kr::ps::ext::CallStackView<Kind>,
-                                     kr::ps::ext::ExecutionStateView<Kind>>;
+using ExecutionViews = ygg::TypeList<kr::ps::ext::CallStackView<Kind>, kr::ps::ext::ExecutionStateView<Kind>>;
 
 template<tyr::TaskKind Kind>
 using StateProperties = ygg::TypeList<datasets::StateGraphVertexLabel<Kind>,

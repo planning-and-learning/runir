@@ -4,8 +4,8 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <runir/kr/dl/semantics/denotation_caches.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/dl/semantics/ext/state_evaluation_context.hpp>
+#include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 #include <tyr/planning/ground/state_view.hpp>
 #include <tyr/planning/lifted/state_view.hpp>
@@ -23,21 +23,26 @@ void bind_state_evaluation_context(nb::module_& m, const char* name)
     using DenotationCaches = runir::kr::dl::semantics::DenotationCaches<runir::kr::ExtFamilyTag>;
 
     nb::class_<Context>(m, name)
-        .def(
-            nb::new_([](tyr::planning::StateView<Kind> state,
-                        runir::kr::dl::semantics::Builder& builder,
-                        runir::kr::dl::semantics::DenotationRepository& denotation_repository,
-                        DenotationCaches& caches)
-                     { return Context(state, builder, denotation_repository, builder.get_workspace(), caches); }),
-            nb::arg("state"),
-            nb::arg("builder"),
-            nb::arg("denotation_repository"),
-            nb::arg("denotation_caches"),
-            nb::keep_alive<0, 3>(),
-            nb::keep_alive<0, 4>(),
-            nb::keep_alive<0, 5>(),
-            nb::keep_alive<5, 3>(),
-            nb::keep_alive<5, 4>())
+        .def(nb::new_([](tyr::planning::StateView<Kind> state,
+                         runir::kr::dl::semantics::Builder& builder,
+                         runir::kr::dl::semantics::DenotationRepository& denotation_repository,
+                         DenotationCaches& caches,
+                         semantics::CallArgumentsView arguments,
+                         semantics::RegisterValuesView registers)
+                      { return Context(state, builder, denotation_repository, builder.get_workspace(), caches, arguments, registers); }),
+             nb::arg("state"),
+             nb::arg("builder"),
+             nb::arg("denotation_repository"),
+             nb::arg("denotation_caches"),
+             nb::arg("arguments"),
+             nb::arg("registers"),
+             nb::keep_alive<0, 3>(),
+             nb::keep_alive<0, 4>(),
+             nb::keep_alive<0, 5>(),
+             nb::keep_alive<0, 6>(),
+             nb::keep_alive<0, 7>(),
+             nb::keep_alive<5, 3>(),
+             nb::keep_alive<5, 4>())
         .def("get_state", &Context::get_state, nb::rv_policy::copy, nb::keep_alive<0, 1>());
 }
 

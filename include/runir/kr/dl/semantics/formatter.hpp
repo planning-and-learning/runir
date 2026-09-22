@@ -5,8 +5,10 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/register_view.hpp"
+#include "runir/kr/dl/semantics/call_arguments_view.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
+#include "runir/kr/dl/semantics/register_values_view.hpp"
 
 #include <cstddef>
 #include <fmt/format.h>
@@ -409,6 +411,34 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::semantics::Denotation<
 {
     using View = ygg::View<ygg::Index<runir::kr::dl::semantics::Denotation<Category>>, C>;
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::denotation(view), ctx); }
+};
+
+template<typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::semantics::RegisterValues>, C>>
+{
+    constexpr auto parse(format_parse_context& context) { return context.begin(); }
+    auto format(const auto& value, format_context& context) const
+    {
+        return fmt::format_to(context.out(),
+                              "RegisterValues(concepts=[{}], roles=[{}])",
+                              fmt::join(value.get_concept_values(), ", "),
+                              fmt::join(value.get_role_values(), ", "));
+    }
+};
+
+template<typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::semantics::CallArguments>, C>>
+{
+    constexpr auto parse(format_parse_context& context) { return context.begin(); }
+    auto format(const auto& value, format_context& context) const
+    {
+        return fmt::format_to(context.out(),
+                              "CallArguments(concepts={}, roles={}, booleans={}, numericals={})",
+                              value.template get<runir::kr::dl::ConceptTag>(),
+                              value.template get<runir::kr::dl::RoleTag>(),
+                              value.template get<runir::kr::dl::BooleanTag>(),
+                              value.template get<runir::kr::dl::NumericalTag>());
+    }
 };
 
 #endif

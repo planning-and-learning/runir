@@ -15,8 +15,8 @@ namespace detail
 {
 
 template<CategoryTag Category, tyr::TaskKind Kind>
-auto copy_argument_denotation(StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context, DenotationView<Category> view)
-    -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>
+auto copy_argument_denotation(StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
+                              DenotationView<Category> view) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>
 {
     if constexpr (std::same_as<Category, BooleanTag> || std::same_as<Category, NumericalTag>)
     {
@@ -50,9 +50,9 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, R
     auto result = detail::make_concept_builder(context);
     auto result_bitset = result->get();
 
-    const auto& object = context.registers().at(constructor.get_register().get_identifier());
+    const auto object = context.registers().at(constructor.get_register().get_identifier());
     if (object)
-        result_bitset.set(ygg::uint_t(object->get_index()));
+        result_bitset.set(ygg::uint_t(object.value().get_index()));
 
     return result;
 }
@@ -63,11 +63,11 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, Regi
 {
     auto result = detail::make_role_builder(context);
 
-    const auto& value = context.registers().at(constructor.get_register().get_identifier());
+    const auto value = context.registers().at(constructor.get_register().get_identifier());
     if (value)
     {
-        const auto& [source, target] = *value;
-        result->get(source.get_index()).set(ygg::uint_t(target.get_index()));
+        const auto pair = value.value();
+        result->get(pair.get_first().get_index()).set(ygg::uint_t(pair.get_second().get_index()));
     }
 
     return result;

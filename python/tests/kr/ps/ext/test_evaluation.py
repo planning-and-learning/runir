@@ -8,6 +8,8 @@ from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
 from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
+from pyrunir.kr.dl.base.semantics import CallArguments, CallArgumentsData, RegisterValues, RegisterValuesData
+from pyrunir.kr.dl.ext import semantics
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext.dl import parse_module_program
 from pytyr.formalism.planning import Parser, PlanningDomain
@@ -86,10 +88,10 @@ def _task_context(
     return LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution)), parser.get_domain()
 
 
-def _loaded_frame(kind: Literal["ground", "lifted"]):
+def _loaded_frame(kind: Literal["ground", "lifted"], source: str = PROGRAM):
     task_context, domain = _task_context(kind)
     program = parse_module_program(
-        PROGRAM,
+        source,
         domain,
         task_context.domain_context.ext_repository,
     )
@@ -142,8 +144,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     assert caches is not target_caches
     assert sys.getrefcount(environment) > references
     del caches, target_caches
-    arguments = ext.EvaluationArguments(loaded.call_stack.arguments)
-    dl_context = environment.make_dl_context(loaded, arguments)
+    dl_context = environment.make_dl_context(loaded)
     booleans = {feature.get_symbol(): feature for feature in frame.module.get_boolean_features()}
     numericals = {feature.get_symbol(): feature for feature in frame.module.get_numerical_features()}
     expected = {
@@ -183,12 +184,11 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     other_frame = expander.load_steps(expander.load_steps(child)[1].target)[0].target
     assert other_frame.state == loaded.state
     environment.get_dl_caches().clear(False)
-    other_arguments = ext.EvaluationArguments(other_frame.call_stack.arguments)
-    other_dl_context = environment.make_dl_context(other_frame, other_arguments)
+    other_dl_context = environment.make_dl_context(other_frame)
     assert ext.evaluate(booleans["selected_goal_ball"], other_dl_context).get() is True
     environment.get_dl_caches().clear(False)
     assert ext.evaluate(booleans["selected_goal_ball"], dl_context).get() is False
-    del child, other_frame, other_dl_context, other_arguments
+    del child, other_frame, other_dl_context
 
     moved = next(
         step.target
@@ -197,8 +197,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         and step.state_transition.action.get_objects()[-1].get_name() == "roomb"
     )
     environment.get_dl_caches().clear(False)
-    arguments = ext.EvaluationArguments(moved.call_stack.arguments)
-    dl_context = environment.make_dl_context(moved, arguments)
+    dl_context = environment.make_dl_context(moved)
     assert ext.evaluate(numericals["nearby_balls"], dl_context).get() == 0
     assert ext.evaluate(numericals["argument_count"], dl_context).get() == 2
     assert {
@@ -206,8 +205,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         for name, feature in booleans.items()
     } == expected_booleans
     environment.get_dl_caches().clear(False)
-    arguments = ext.EvaluationArguments(loaded.call_stack.arguments)
-    dl_context = environment.make_dl_context(loaded, arguments)
+    dl_context = environment.make_dl_context(loaded)
     assert ext.evaluate(numericals["nearby_balls"], dl_context).get() == 2
 
     del task_context, program, expander, loaded, frame
@@ -221,7 +219,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         name: ext.evaluate(feature, dl_context).get()
         for name, feature in booleans.items()
     } == expected_booleans
-    del dl_context, arguments, environment, booleans, numericals
+    del dl_context, environment, booleans, numericals
     gc.collect()
     assert {obj.get_name() for obj in concept} == {"ball1", "ball2"}
     assert {(first.get_name(), second.get_name()) for first, second in role} == {
@@ -242,42 +240,101 @@ def test_state_evaluation_context_retains_execution_state_and_environment(
     environment = environment_type(task_context, program)
     state_references = sys.getrefcount(loaded)
     environment_references = sys.getrefcount(environment)
-    arguments = ext.EvaluationArguments(loaded.call_stack.arguments)
-    argument_references = sys.getrefcount(arguments)
-    context = environment.make_dl_context(loaded, arguments)
-    assert sys.getrefcount(arguments) > argument_references
+
+    context = environment.make_dl_context(loaded)
     assert sys.getrefcount(loaded) > state_references
     assert sys.getrefcount(environment) > environment_references
     boolean = loaded.call_stack.module.get_boolean_features()[0]
     numerical = loaded.call_stack.module.get_numerical_features()[0]
-    del task_context, program, expander, loaded, environment, arguments
+    del task_context, program, expander, loaded, environment
     gc.collect()
     assert ext.evaluate(boolean, context).get() is True
     assert ext.evaluate(numerical, context).get() == 2
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_state_evaluation_contexts_keep_distinct_argument_owners(
+def test_state_evaluation_contexts_borrow_distinct_call_arguments(
     kind: Literal["ground", "lifted"],
 ) -> None:
     task_context, program, expander, loaded = _loaded_frame(kind)
     initial = expander.initial_state()
     environment = getattr(ext, f"{kind.title()}EvaluationEnvironment")(task_context, program)
-    arguments = ext.EvaluationArguments(loaded.call_stack.arguments)
-    other_arguments = ext.EvaluationArguments(initial.call_stack.arguments)
     contexts = [
-        environment.make_dl_context(loaded, arguments),
-        environment.make_dl_context(initial, other_arguments),
+        environment.make_dl_context(loaded),
+        environment.make_dl_context(initial),
     ]
     features = [
         loaded.call_stack.module.get_numerical_features()[0],
         initial.call_stack.module.get_numerical_features()[0],
     ]
-    del arguments, other_arguments, loaded, initial
+    del loaded, initial
     gc.collect()
     for position in (0, 1, 0):
         environment.get_dl_caches().clear(False)
         assert ext.evaluate(features[position], contexts[position]).get() == 2
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+def test_more_than_four_registers_and_interned_binding_views(kind: Literal["ground", "lifted"]) -> None:
+    declarations = " ".join(f"(:concept spare{i}) (:role spare_role{i})" for i in range(5))
+    source = PROGRAM.replace(
+        "(:registers (:concept selected) (:role location))",
+        f"(:registers {declarations} (:concept selected) (:role location))",
+    )
+    task_context, program, expander, loaded = _loaded_frame(kind, source)
+    concept_values = loaded.call_stack.registers.concept_values
+    role_values = loaded.call_stack.registers.role_values
+    assert len(concept_values) == len(role_values) == 6
+    assert concept_values[:5] == role_values[:5] == [None] * 5
+    assert concept_values[5] is not None and role_values[5] is not None
+    features = {feature.get_symbol(): feature for feature in loaded.call_stack.module.get_numerical_features()}
+    environment = getattr(ext, f"{kind.title()}EvaluationEnvironment")(task_context, program)
+    context = environment.make_dl_context(loaded)
+    assert ext.evaluate(features["concept_register_size"], context).get() == 1
+    assert ext.evaluate(features["role_register_size"], context).get() == 1
+
+    arguments = CallArgumentsData()
+    for category in ("concept", "role", "boolean", "numerical"):
+        field = f"{category}_arguments"
+        setattr(arguments, field, [value.get_index() for value in getattr(loaded.call_stack.arguments, field)])
+    registers = RegisterValuesData()
+    registers.concept_values = [None] * 5 + [concept_values[5].get_index()]
+    expected_roles = [None] * 5 + [tuple(value.get_index() for value in role_values[5])]
+    registers.role_values = expected_roles
+    assert registers.role_values == expected_roles
+    repository = task_context.dl_denotation_repository
+    argument_view = repository.get_or_create(arguments)
+    register_view = repository.get_or_create(registers)
+    assert isinstance(argument_view, CallArguments)
+    assert isinstance(register_view, RegisterValues)
+    assert repository.get_or_create(arguments) == argument_view == loaded.call_stack.arguments
+    assert repository.get_or_create(registers) == register_view == loaded.call_stack.registers
+    assert len({argument_view, loaded.call_stack.arguments}) == 1
+    assert len({register_view, loaded.call_stack.registers}) == 1
+    caches = semantics.DenotationCaches()
+    context = getattr(semantics, f"{kind.title()}StateEvaluationContext")(
+        loaded.state, task_context.dl_builder, repository, caches, argument_view, register_view,
+    )
+    assert ext.evaluate(features["argument_count"], context).get() == 2
+    assert ext.evaluate(features["concept_register_size"], context).get() == 1
+    assert ext.evaluate(features["role_register_size"], context).get() == 1
+    registers.concept_values = [None] * 6
+    registers.role_values = [None] * 6
+    empty_register_view = repository.get_or_create(registers)
+    assert empty_register_view != register_view
+    caches.clear(False)
+    assert ext.evaluate(features["concept_register_size"], context).get() == 1
+    assert ext.evaluate(features["role_register_size"], context).get() == 1
+    context = getattr(semantics, f"{kind.title()}StateEvaluationContext")(
+        loaded.state, task_context.dl_builder, repository, caches, argument_view, empty_register_view,
+    )
+    caches.clear(False)
+    assert ext.evaluate(features["concept_register_size"], context).get() == 0
+    assert ext.evaluate(features["role_register_size"], context).get() == 0
+    del arguments, registers, argument_view, register_view, empty_register_view
+    gc.collect()
+    caches.clear(False)
+    assert ext.evaluate(features["argument_count"], context).get() == 2
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])

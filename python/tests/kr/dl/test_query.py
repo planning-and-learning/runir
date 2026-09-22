@@ -61,7 +61,11 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     caches = module.DenotationCaches()
     with pytest.raises(TypeError):
         module.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository)
-    evaluation_context = module.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository, caches)
+    bindings = (
+        task.dl_denotation_repository.get_or_create(semantics.CallArgumentsData()),
+        task.dl_denotation_repository.get_or_create(semantics.RegisterValuesData()),
+    ) if family == "ext" else ()
+    evaluation_context = module.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository, caches, *bindings)
     assert expression.evaluate(evaluation_context).get() is True
     caches.clear(False)
     assert expression.evaluate(evaluation_context).get() is True

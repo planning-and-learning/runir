@@ -10,6 +10,14 @@
 namespace runir::kr::dl::semantics
 {
 
+struct RegisterValues
+{
+};
+
+struct CallArguments
+{
+};
+
 template<CategoryTag Category>
 struct Denotation;
 
@@ -18,6 +26,9 @@ struct IndexCoder;
 
 class DenotationRepository;
 class DenotationRepositoryFactory;
+
+using RegisterValuesView = ygg::View<ygg::Index<RegisterValues>, DenotationRepository>;
+using CallArgumentsView = ygg::View<ygg::Index<CallArguments>, DenotationRepository>;
 
 template<CategoryTag Category>
 using DenotationView = ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>;

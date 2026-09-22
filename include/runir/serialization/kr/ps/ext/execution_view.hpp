@@ -2,7 +2,9 @@
 #define RUNIR_SERIALIZATION_KR_PS_EXT_EXECUTION_VIEW_HPP_
 
 #include "runir/kr/ps/ext/execution_view.hpp"
+#include "runir/serialization/kr/dl/semantics/call_arguments_view.hpp"
 #include "runir/serialization/kr/dl/semantics/denotation_view.hpp"
+#include "runir/serialization/kr/dl/semantics/register_values_view.hpp"
 #include "runir/serialization/kr/ps/ext/execution_declarations.hpp"
 #include "runir/serialization/kr/ps/ext/module_program_view.hpp"
 #include "tyr/planning/state_repository.hpp"
@@ -12,22 +14,6 @@
 
 namespace ygg::serialization
 {
-
-template<typename Archive, ::tyr::TaskKind Kind>
-void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::RegisterValuesView<Kind>>)
-{
-    ar.field("concept_values", [](const auto& value) -> decltype(auto) { return (value.get_concept_values()); });
-    ar.field("role_values", [](const auto& value) -> decltype(auto) { return (value.get_role_values()); });
-}
-
-template<typename Archive, ::tyr::TaskKind Kind>
-void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallArgumentsView<Kind>>)
-{
-    ar.field("concept_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::ConceptTag>()); });
-    ar.field("role_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::RoleTag>()); });
-    ar.field("boolean_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::BooleanTag>()); });
-    ar.field("numerical_arguments", [](const auto& value) -> decltype(auto) { return (value.template get<::runir::kr::dl::NumericalTag>()); });
-}
 
 template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallStackView<Kind>>)

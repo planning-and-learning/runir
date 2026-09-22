@@ -415,29 +415,6 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgram>, C
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::RegisterValues>, C>>
-{
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(const auto& value, format_context& context) const
-    {
-        return fmt::format_to(context.out(), "RegisterValues(concepts=[{}], roles=[{}])",
-                              fmt::join(value.get_concept_values(), ", "), fmt::join(value.get_role_values(), ", "));
-    }
-};
-
-template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::CallArguments>, C>>
-{
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(const auto& value, format_context& context) const
-    {
-        return fmt::format_to(context.out(), "CallArguments(concepts={}, roles={}, booleans={}, numericals={})",
-                              value.template get<runir::kr::dl::ConceptTag>(), value.template get<runir::kr::dl::RoleTag>(),
-                              value.template get<runir::kr::dl::BooleanTag>(), value.template get<runir::kr::dl::NumericalTag>());
-    }
-};
-
-template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::CallStack>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }

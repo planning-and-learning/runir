@@ -42,9 +42,8 @@ private:
         tyr::planning::StateView<Kind> state;
         ModuleView module;
         MemoryStateView memory_state;
-        runir::kr::dl::semantics::Registers registers;
-        CallArgumentsView<Kind> arguments;
-        EvaluationArguments argument_values;
+        runir::kr::dl::semantics::RegisterValuesView registers;
+        runir::kr::dl::semantics::CallArgumentsView arguments;
         std::optional<CallStackView<Kind>> caller;
     };
 
@@ -78,14 +77,13 @@ public:
 
     ExecutionStateView<Kind> initial_state()
     {
-        auto arguments = checkout<CallArguments>(m_task_context->execution_builder);
+        auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_task_context->dl_builder);
         const auto module = m_program.get_entry_module();
         const auto frame = Frame { m_initial_state,
                                    module,
                                    module.get_entry_memory_state(),
-                                   {},
-                                   get_or_create(*m_task_context->execution_repository, *arguments).first,
-                                   {},
+                                   empty_registers(module),
+                                   get_or_create(*m_task_context->dl_denotation_repository, *arguments).first,
                                    std::nullopt };
         return intern(frame, ExecutionPhase::EXTERNAL);
     }
@@ -289,31 +287,16 @@ private:
         if (&program.get_context() != &m_program.get_context() || program.get_index() != m_program.get_index())
             throw std::invalid_argument("SuccessorExpander requires an execution state from the selected program.");
         const auto call_stack = state.get_call_stack();
-        return Frame { state.get_state(),
-                       call_stack.get_module(),
-                       call_stack.get_memory_state(),
-                       EvaluationEnvironment<Kind>::make_registers(call_stack.get_registers()),
-                       call_stack.get_arguments(),
-                       EvaluationArguments(call_stack.get_arguments()),
-                       call_stack.get_caller() };
+        return Frame { state.get_state(),          call_stack.get_module(),    call_stack.get_memory_state(),
+                       call_stack.get_registers(), call_stack.get_arguments(), call_stack.get_caller() };
     }
 
-    RegisterValuesView<Kind> intern_registers(const runir::kr::dl::semantics::Registers& registers)
+    runir::kr::dl::semantics::RegisterValuesView empty_registers(ModuleView module)
     {
-        auto data = checkout<RegisterValues>(m_task_context->execution_builder);
-        const auto& concepts = registers.template get<runir::kr::dl::ConceptTag>();
-        const auto& roles = registers.template get<runir::kr::dl::RoleTag>();
-        for (size_t i = 0; i < concepts.size(); ++i)
-        {
-            ygg::set(concepts[i], data->concept_values[i]);
-            if (roles[i])
-            {
-                auto& pair = data->role_values[i].emplace();
-                ygg::set(roles[i]->first, pair.first);
-                ygg::set(roles[i]->second, pair.second);
-            }
-        }
-        return get_or_create(*m_task_context->execution_repository, *data).first;
+        auto data = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
+        data->concept_values.resize(module.template get_registers<runir::kr::dl::ConceptTag>().size());
+        data->role_values.resize(module.template get_registers<runir::kr::dl::RoleTag>().size());
+        return get_or_create(*m_task_context->dl_denotation_repository, *data).first;
     }
 
     CallStackView<Kind> intern_call_stack(const Frame& frame, MemoryStateView memory_state)
@@ -321,7 +304,7 @@ private:
         auto data = checkout<CallStack>(m_task_context->execution_builder);
         ygg::set(frame.module, data->module);
         ygg::set(memory_state, data->memory_state);
-        ygg::set(intern_registers(frame.registers), data->registers);
+        ygg::set(frame.registers, data->registers);
         ygg::set(frame.arguments, data->arguments);
         ygg::set(frame.caller, data->caller);
         return get_or_create(*m_task_context->execution_repository, *data).first;
@@ -337,14 +320,13 @@ private:
         return get_or_create(*m_task_context->execution_repository, *data).first;
     }
 
-    void enter_module(Frame& frame, ModuleView module, MemoryStateView return_memory_state, CallArgumentsView<Kind> arguments)
+    void enter_module(Frame& frame, ModuleView module, MemoryStateView return_memory_state, runir::kr::dl::semantics::CallArgumentsView arguments)
     {
         frame.caller = intern_call_stack(frame, return_memory_state);
         frame.module = module;
         frame.memory_state = module.get_entry_memory_state();
-        frame.registers = {};
+        frame.registers = empty_registers(module);
         frame.arguments = arguments;
-        frame.argument_values = EvaluationArguments(arguments);
     }
 
     bool restore_caller(Frame& frame)
@@ -354,9 +336,8 @@ private:
         const auto caller = *frame.caller;
         frame.module = caller.get_module();
         frame.memory_state = caller.get_memory_state();
-        frame.registers = EvaluationEnvironment<Kind>::make_registers(caller.get_registers());
+        frame.registers = caller.get_registers();
         frame.arguments = caller.get_arguments();
-        frame.argument_values = EvaluationArguments(frame.arguments);
         frame.caller = caller.get_caller();
         return true;
     }
@@ -370,7 +351,7 @@ private:
     template<RuleKind RuleKindT, typename C>
     bool conditions_are_compatible(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, const Frame& frame)
     {
-        auto state_context = m_environment.make_dl_context(frame.state, frame.argument_values.view(), frame.registers);
+        auto state_context = m_environment.make_dl_context(frame.state, frame.arguments, frame.registers);
         return runir::kr::ps::ext::conditions_are_compatible(rule, state_context);
     }
 
@@ -381,16 +362,15 @@ private:
     }
 
     template<BindingRuleKind RuleKindT, typename C, typename Value>
-    static void apply_binding(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, const Value& value, Frame& frame)
+    static void
+    apply_binding(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, const Value& value, ygg::Data<runir::kr::dl::semantics::RegisterValues>& registers)
     {
+        const auto index = size_t(ygg::uint_t(rule.get_register().get_identifier()));
         using Category = typename RuleKindT::Category;
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            frame.registers.set(rule.get_register().get_identifier(), value);
+            registers.concept_values.at(index) = value.get_index();
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            frame.registers.set(rule.get_register().get_identifier(), value.first, value.second);
-        else
-            static_assert(ygg::dependent_false<Category>::value, "unhandled binding rule category");
-        frame.memory_state = rule.get_target();
+            registers.role_values.at(index) = ::cista::pair(value.first.get_index(), value.second.get_index());
     }
 
     template<typename C>
@@ -398,7 +378,7 @@ private:
     {
         const auto arguments = rule.get_action_arguments();
         auto& denotations = m_environment.prepare_do_argument_denotations(arguments.size());
-        auto state_context = m_environment.make_dl_context(frame.state, frame.argument_values.view(), frame.registers);
+        auto state_context = m_environment.make_dl_context(frame.state, frame.arguments, frame.registers);
         for (auto argument : arguments)
             denotations.push_back(evaluate(argument, state_context));
         return denotations;
@@ -429,7 +409,11 @@ private:
     {
         if (!action_matches_do_arguments(rule, action, denotations))
             return false;
-        auto transition = m_environment.make_dl_transition_context(frame.state, target_state, frame.argument_values.view(), frame.registers);
+        auto transition = m_environment.make_dl_transition_context(frame.state,
+                                                                   target_state,
+                                                                   frame.arguments,
+                                                                   frame.registers,
+                                                                   frame.registers);
         return is_compatible_with(rule, transition);
     }
 
@@ -459,7 +443,11 @@ private:
     {
         if (!has_current_source(rule, frame))
             return false;
-        auto transition = m_environment.make_dl_transition_context(frame.state, target_state, frame.argument_values.view(), frame.registers);
+        auto transition = m_environment.make_dl_transition_context(frame.state,
+                                                                   target_state,
+                                                                   frame.arguments,
+                                                                   frame.registers,
+                                                                   frame.registers);
         return is_compatible_with(rule, transition);
     }
 
@@ -491,7 +479,7 @@ private:
     template<typename FeatureTag, typename C>
     static void append_call_argument(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> argument,
                                      runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
-                                     ygg::Data<CallArguments>& target)
+                                     ygg::Data<runir::kr::dl::semantics::CallArguments>& target)
     {
         const auto denotation = evaluate(argument, context);
         if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
@@ -507,13 +495,13 @@ private:
     template<typename C>
     auto evaluate_call_arguments(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, const Frame& frame)
     {
-        auto result = checkout<CallArguments>(m_task_context->execution_builder);
-        auto state_context = m_environment.make_dl_context(frame.state, frame.argument_values.view(), frame.registers);
+        auto result = checkout<runir::kr::dl::semantics::CallArguments>(m_task_context->dl_builder);
+        auto state_context = m_environment.make_dl_context(frame.state, frame.arguments, frame.registers);
         rule.for_each_call_argument([&](auto argument) { append_call_argument(argument, state_context, *result); });
         return result;
     }
 
-    static bool call_arguments_match_signature(ModuleView callee, const ygg::Data<CallArguments>& arguments)
+    static bool call_arguments_match_signature(ModuleView callee, const ygg::Data<runir::kr::dl::semantics::CallArguments>& arguments)
     {
         return arguments.concept_arguments.size() == callee.template get_arguments<runir::kr::dl::ConceptTag>().size()
                && arguments.role_arguments.size() == callee.template get_arguments<runir::kr::dl::RoleTag>().size()
@@ -530,7 +518,7 @@ private:
         const auto callee = m_program.find_module(rule.get_callee().get_index());
         if (!callee || !call_arguments_match_signature(*callee, *arguments))
             return RuleExecutionStatus::MALFORMED_CALL;
-        enter_module(frame, *callee, rule.get_target(), get_or_create(*m_task_context->execution_repository, *arguments).first);
+        enter_module(frame, *callee, rule.get_target(), get_or_create(*m_task_context->dl_denotation_repository, *arguments).first);
         return RuleExecutionStatus::APPLIED;
     }
 
@@ -656,7 +644,11 @@ private:
             const auto node = search_context.successor_generator->get_node(*search_context.state_repository, context.state.get_index());
             m_action_rule_evaluator.applicable_binding(rule, node, m_action_tuple);
         }
-        auto transition = m_environment.make_dl_transition_context(context.state, candidate.node.get_state(), context.argument_values.view(), context.registers);
+        auto transition = m_environment.make_dl_transition_context(context.state,
+                                                                   candidate.node.get_state(),
+                                                                   context.arguments,
+                                                                   context.registers,
+                                                                   context.registers);
         for (const auto effect : rule.get_effects())
             if (!is_compatible_with(effect, transition))
                 detail::action_rule_contract_error(rule, context.state, m_action_tuple, "offered transition violates declared effects");
@@ -734,22 +726,31 @@ private:
                 return;
 
             const auto initial_size = result.size();
-            auto state_context = m_environment.make_dl_context(context.state, context.argument_values.view(), context.registers);
+            auto state_context = m_environment.make_dl_context(context.state, context.arguments, context.registers);
             const auto denotation = evaluate(rule.get_feature(), state_context);
+            auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
             for (const auto value : denotation)
             {
                 if (stop())
                     return;
-                auto target = context;
-                apply_binding(rule, value, target);
+                registers->concept_values = context.registers.get_data().concept_values;
+                registers->role_values = context.registers.get_data().role_values;
+                apply_binding(rule, value, *registers);
+                const auto target_registers = get_or_create(*m_task_context->dl_denotation_repository, *registers).first;
                 if (!rule.get_effects().empty())
                 {
                     m_environment.get_dl_target_caches().clear(false);
-                    auto transition = m_environment.make_dl_transition_context(context.state, context.state, context.argument_values.view(), context.registers);
-                    transition.get_target_context().registers() = target.registers;
+                    auto transition = m_environment.make_dl_transition_context(context.state,
+                                                                               context.state,
+                                                                               context.arguments,
+                                                                               context.registers,
+                                                                               target_registers);
                     if (!is_compatible_with(rule, transition))
                         continue;
                 }
+                auto target = context;
+                target.registers = target_registers;
+                target.memory_state = rule.get_target();
                 result.push_back(applied(std::move(target), rule_variant, ExecutionPhase::INTERNAL));
             }
             if constexpr (ChooseRuleView<R>)
@@ -783,7 +784,7 @@ private:
         {
             if (!rule_is_applicable(rule, context))
                 return;
-            auto state_context = m_environment.make_dl_context(context.state, context.argument_values.view(), context.registers);
+            auto state_context = m_environment.make_dl_context(context.state, context.arguments, context.registers);
             const auto query = evaluate(rule.get_query_feature(), state_context);
             m_action_rule_evaluator.action(rule, context.state, query.arity());
             visit_successors(
@@ -878,7 +879,7 @@ private:
                 {
                     if (!rule_is_applicable(concrete, context))
                         return false;
-                    auto state_context = m_environment.make_dl_context(context.state, context.argument_values.view(), context.registers);
+                    auto state_context = m_environment.make_dl_context(context.state, context.arguments, context.registers);
                     const auto query = evaluate(concrete.get_query_feature(), state_context);
                     m_action_rule_evaluator.action(concrete, context.state, query.arity());
                     return action_successor_matches(concrete, context, query, candidate);

@@ -46,56 +46,90 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
 
     const auto program = create_module_program(*repository, caller, { caller, callee });
     auto& execution_builder = task_context->execution_builder;
+    auto& dl_builder = task_context->dl_builder;
+    auto& denotations = *task_context->dl_denotation_repository;
     auto execution_repository = task_context->execution_repository;
 
     const void* scratch_address = nullptr;
     {
-        auto scratch = execution_builder.get_builder<kr::ps::ext::RegisterValues>();
+        auto scratch = kr::dl::semantics::checkout<kr::dl::semantics::RegisterValues>(dl_builder);
         scratch_address = scratch.get();
-        EXPECT_EQ(scratch->concept_values.size(), kr::dl::num_registers);
-        EXPECT_EQ(scratch->role_values.size(), kr::dl::num_registers);
-        EXPECT_TRUE(kr::ps::ext::is_canonical(*scratch));
+        EXPECT_TRUE(scratch->concept_values.empty());
+        EXPECT_TRUE(scratch->role_values.empty());
+        EXPECT_TRUE(kr::dl::semantics::is_canonical(*scratch));
+        scratch->concept_values.resize(6);
         scratch->concept_values[0] = ygg::Index<tyr::formalism::Object>(0);
     }
     {
-        auto scratch = execution_builder.get_builder<kr::ps::ext::RegisterValues>();
+        auto scratch = kr::dl::semantics::checkout<kr::dl::semantics::RegisterValues>(dl_builder);
         EXPECT_EQ(scratch.get(), scratch_address);
-        EXPECT_FALSE(scratch->concept_values[0]);
-        EXPECT_FALSE(scratch->role_values[0]);
+        EXPECT_TRUE(scratch->concept_values.empty());
+        EXPECT_TRUE(scratch->role_values.empty());
     }
 
     const auto registers = [&]()
     {
-        auto data = execution_builder.get_builder<kr::ps::ext::RegisterValues>();
+        auto data = kr::dl::semantics::checkout<kr::dl::semantics::RegisterValues>(dl_builder);
+        data->concept_values.resize(6);
+        data->role_values.resize(7);
         data->concept_values[0] = ygg::Index<tyr::formalism::Object>(0);
         auto& role = data->role_values[0].emplace();
         role.first = ygg::Index<tyr::formalism::Object>(0);
         role.second = ygg::Index<tyr::formalism::Object>(1);
-        kr::ps::ext::canonicalize(*data);
-        return execution_repository->get_or_create(*data).first;
+        canonicalize(*data);
+        return denotations.get_or_create(*data).first;
     }();
 
     {
-        auto data = execution_builder.get_builder<kr::ps::ext::RegisterValues>();
+        auto data = kr::dl::semantics::checkout<kr::dl::semantics::RegisterValues>(dl_builder);
+        data->concept_values.resize(6);
+        data->role_values.resize(7);
         data->concept_values[0] = ygg::Index<tyr::formalism::Object>(0);
         auto& role = data->role_values[0].emplace();
         role.first = ygg::Index<tyr::formalism::Object>(0);
         role.second = ygg::Index<tyr::formalism::Object>(1);
-        kr::ps::ext::canonicalize(*data);
-        const auto found = execution_repository->find(*data);
+        canonicalize(*data);
+        const auto found = denotations.find(*data);
         ASSERT_TRUE(found);
         EXPECT_EQ(found->get_index(), registers.get_index());
-        const auto [duplicate, created] = execution_repository->get_or_create(*data);
+        const auto [duplicate, created] = denotations.get_or_create(*data);
         EXPECT_FALSE(created);
         EXPECT_EQ(duplicate.get_index(), registers.get_index());
+        EXPECT_EQ(&duplicate.get_context(), &denotations);
+        data->concept_values[0] = ygg::Index<tyr::formalism::Object>(1);
+        const auto changed = denotations.get_or_create(*data).first;
+        EXPECT_NE(changed.get_index(), registers.get_index());
+        data->clear();
+        EXPECT_EQ(changed.get_concept_values()[0].value().get_index(), ygg::Index<tyr::formalism::Object>(1));
+        EXPECT_EQ(registers.get_concept_values()[0].value().get_index(), ygg::Index<tyr::formalism::Object>(0));
+        EXPECT_EQ(denotations.size<kr::dl::semantics::RegisterValues>(), 2);
     }
 
     const auto arguments = [&]()
     {
-        auto data = execution_builder.get_builder<kr::ps::ext::CallArguments>();
-        kr::ps::ext::canonicalize(*data);
-        return execution_repository->get_or_create(*data).first;
+        auto data = kr::dl::semantics::checkout<kr::dl::semantics::CallArguments>(dl_builder);
+        auto boolean = ygg::Data<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>();
+        boolean.value = true;
+        data->boolean_arguments.push_back(denotations.get_or_create(boolean).first.get_index());
+        canonicalize(*data);
+        return denotations.get_or_create(*data).first;
     }();
+    {
+        auto data = kr::dl::semantics::checkout<kr::dl::semantics::CallArguments>(dl_builder);
+        data->boolean_arguments = arguments.get_data().boolean_arguments;
+        const auto found = denotations.find(*data);
+        ASSERT_TRUE(found);
+        EXPECT_EQ(found->get_index(), arguments.get_index());
+        const auto [duplicate, created] = denotations.get_or_create(*data);
+        EXPECT_FALSE(created);
+        EXPECT_EQ(duplicate.get_index(), arguments.get_index());
+        EXPECT_EQ(&duplicate.get_context(), &denotations);
+        data->clear();
+        const auto empty = denotations.get_or_create(*data).first;
+        EXPECT_TRUE(empty.get<kr::dl::BooleanTag>().empty());
+        EXPECT_TRUE(arguments.get<kr::dl::BooleanTag>()[0].get());
+        EXPECT_EQ(denotations.size<kr::dl::semantics::CallArguments>(), 2);
+    }
 
     const auto caller_frame = [&]()
     {
@@ -104,7 +138,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         ygg::set(caller_return, data->memory_state);
         ygg::set(registers, data->registers);
         ygg::set(arguments, data->arguments);
-        kr::ps::ext::canonicalize(*data);
+        canonicalize(*data);
         return execution_repository->get_or_create(*data).first;
     }();
 
@@ -116,7 +150,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         ygg::set(registers, data->registers);
         ygg::set(arguments, data->arguments);
         ygg::set(std::optional { caller_frame }, data->caller);
-        kr::ps::ext::canonicalize(*data);
+        canonicalize(*data);
         return execution_repository->get_or_create(*data).first;
     }();
 
@@ -137,7 +171,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         ygg::set(program, data->program);
         ygg::set(caller_frame, data->call_stack);
         data->phase = kr::ps::ext::ExecutionPhase::EXTERNAL;
-        kr::ps::ext::canonicalize(*data);
+        canonicalize(*data);
         return execution_repository->get_or_create(*data).first;
     }();
     EXPECT_EQ(returned_state.get_call_stack().get_module().get_name(), "caller");
@@ -149,26 +183,33 @@ TEST(RunirTests, ExtExecutionRecordsAreCistaCompatible)
     namespace p = tyr::planning;
 
     auto builder = kr::ps::ext::ExecutionBuilder<tyr::GroundTag>();
+    auto dl_builder = kr::dl::semantics::Builder();
     {
-        auto data = builder.get_builder<kr::ps::ext::RegisterValues>();
-        EXPECT_EQ(data->concept_values.size(), kr::dl::num_registers);
-        EXPECT_EQ(data->role_values.size(), kr::dl::num_registers);
+        auto data = kr::dl::semantics::checkout<kr::dl::semantics::RegisterValues>(dl_builder);
+        data->concept_values.resize(6);
+        data->role_values.resize(7);
         data->concept_values[0] = ygg::Index<tyr::formalism::Object>(3);
         auto& role = data->role_values[0].emplace();
         role.first = ygg::Index<tyr::formalism::Object>(4);
         role.second = ygg::Index<tyr::formalism::Object>(5);
+        data->concept_values[5] = ygg::Index<tyr::formalism::Object>(6);
+        data->role_values[6] = role;
         expect_cista_round_trip(*data);
     }
     {
-        auto data = builder.get_builder<kr::ps::ext::CallArguments>();
+        auto data = kr::dl::semantics::checkout<kr::dl::semantics::CallArguments>(dl_builder);
+        data->concept_arguments.push_back(ygg::Index<kr::dl::semantics::Denotation<kr::dl::ConceptTag>>(1));
+        data->role_arguments.push_back(ygg::Index<kr::dl::semantics::Denotation<kr::dl::RoleTag>>(2));
+        data->boolean_arguments.push_back(ygg::Index<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(3));
+        data->numerical_arguments.push_back(ygg::Index<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(4));
         expect_cista_round_trip(*data);
     }
     {
         auto data = builder.get_builder<kr::ps::ext::CallStack>();
         data->module = ygg::Index<kr::ps::ext::Module>(1);
         data->memory_state = ygg::Index<kr::ps::ext::MemoryState>(2);
-        data->registers = ygg::Index<kr::ps::ext::RegisterValues>(3);
-        data->arguments = ygg::Index<kr::ps::ext::CallArguments>(4);
+        data->registers = ygg::Index<kr::dl::semantics::RegisterValues>(3);
+        data->arguments = ygg::Index<kr::dl::semantics::CallArguments>(4);
         expect_cista_round_trip(*data);
     }
     {

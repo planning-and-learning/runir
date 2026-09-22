@@ -29,10 +29,11 @@ public:
                                 runir::kr::dl::semantics::EvaluationWorkspace& workspace,
                                 runir::kr::dl::semantics::DenotationCaches<runir::kr::ExtFamilyTag>& source_caches,
                                 runir::kr::dl::semantics::DenotationCaches<runir::kr::ExtFamilyTag>& target_caches,
-                                runir::kr::dl::semantics::Arguments arguments = {},
-                                runir::kr::dl::semantics::Registers registers = {}) noexcept :
-        Base(DlContext(source_state, dl_builder, dl_denotation_repository, workspace, source_caches, arguments, registers),
-             DlContext(std::move(target_state), dl_builder, dl_denotation_repository, workspace, target_caches, arguments, std::move(registers)))
+                                runir::kr::dl::semantics::CallArgumentsView arguments,
+                                runir::kr::dl::semantics::RegisterValuesView source_registers,
+                                runir::kr::dl::semantics::RegisterValuesView target_registers) noexcept :
+        Base(DlContext(source_state, dl_builder, dl_denotation_repository, workspace, source_caches, arguments, source_registers),
+             DlContext(std::move(target_state), dl_builder, dl_denotation_repository, workspace, target_caches, arguments, target_registers))
     {
     }
 };
