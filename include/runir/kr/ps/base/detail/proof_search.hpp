@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_BASE_DETAIL_PROOF_SEARCH_HPP_
 #define RUNIR_KR_PS_BASE_DETAIL_PROOF_SEARCH_HPP_
 
-#include "runir/kr/ps/base/binding_order.hpp"
 #include "runir/kr/ps/base/detail/proof_graph.hpp"
 #include "runir/kr/ps/base/detail/search_space.hpp"
 #include "runir/kr/ps/base/repository.hpp"
@@ -12,7 +11,6 @@
 
 #include <limits>
 #include <optional>
-#include <random>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
 #include <vector>
@@ -25,11 +23,10 @@ namespace runir::kr::ps::base
 namespace detail
 {
 
-template<tyr::TaskKind Kind, typename BindingOrder, typename Unsolvability>
+template<tyr::TaskKind Kind, typename Unsolvability>
 auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
                    SketchView sketch,
                    const SketchSearchOptions<Kind>& options,
-                   BindingOrder order,
                    Unsolvability& classifier) -> SketchProofResults<Kind>
 {
     constexpr auto unreached = SearchNode<Kind>::unreached;
@@ -134,7 +131,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
             return options.universal;
         };
 
-        expander.for_each_successor(node, result.statistics, order, accept_successor, out_of_time);
+        expander.for_each_successor(node, result.statistics, accept_successor, out_of_time);
         if (expansion_status != SketchProofStatus::SUCCESS)
             return finish(expansion_status);
         if (out_of_time())
@@ -150,24 +147,14 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
 template<tyr::TaskKind Kind>
 auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options) -> SketchProofResults<Kind>
 {
-    const auto search = [&](auto& classifier)
-    {
-        // Retain the task until the classifier's caches are destroyed, including on exceptions.
-        if (options.shuffle_choice_points)
-        {
-            auto random = std::mt19937_64(options.random_seed);
-            return detail::find_solution(task_context_owner, sketch, options, Shuffled(random), classifier);
-        }
-        return detail::find_solution(task_context_owner, sketch, options, InOrder {}, classifier);
-    };
-
+    // Retain the task until the classifier's caches are destroyed, including on exceptions.
     if (options.classifier)
     {
         auto classifier = ClassifierUnsolvability<Kind>(*task_context_owner, *options.classifier);
-        return search(classifier);
+        return detail::find_solution(task_context_owner, sketch, options, classifier);
     }
     auto classifier = NoUnsolvability {};
-    return search(classifier);
+    return detail::find_solution(task_context_owner, sketch, options, classifier);
 }
 
 }  // namespace runir::kr::ps::base

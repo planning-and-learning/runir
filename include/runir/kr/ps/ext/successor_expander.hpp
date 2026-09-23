@@ -3,7 +3,6 @@
 
 #include "runir/datasets/state_graph.hpp"
 #include "runir/kr/ps/dl/evaluation.hpp"
-#include "runir/kr/ps/ext/binding_order.hpp"
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/action_rule.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
@@ -15,9 +14,12 @@
 
 #include <algorithm>
 #include <concepts>
+#include <cstddef>
+#include <functional>
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <tyr/formalism/planning/action_view.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/node.hpp>
 #include <utility>
@@ -61,17 +63,12 @@ public:
         return intern(data, std::nullopt);
     }
 
-    /// Emit a program step or a compact Choose obligation, in the requested order.
+    /// Emit a program step or a compact Choose obligation in natural rule and binding order.
     /// Return true on exhaustion; emit returning false or stop returning true ends enumeration.
     /// Count applied successors and caller returns, not Choice descriptors or failure markers.
     /// Callbacks must not reenter this expander or its successor generator. Apply choices after enumeration.
-    template<typename BindingOrder, typename Emit, typename Stop>
-    bool for_each_successor(ProgramStateView<Kind> state,
-                            const tyr::planning::Node<Kind>& node,
-                            ProgramSearchStatistics& statistics,
-                            BindingOrder& order,
-                            Emit&& emit,
-                            Stop&& stop)
+    template<typename Emit, typename Stop>
+    bool for_each_successor(ProgramStateView<Kind> state, const tyr::planning::Node<Kind>& node, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop)
     {
         if (stop())
             return false;
@@ -85,12 +82,15 @@ public:
                 statistics.num_generated += step->status == detail::ProgramOutcome::APPLIED || step->status == detail::ProgramOutcome::RESTORED_CALLER;
             return emit(std::move(expansion));
         };
-        const auto complete = order.for_each_rule(
-            state.get_module_state().get_module(),
-            [&](RuleVariantView rule)
-            { return ygg::visit([&](auto concrete) { return emit_rule(concrete, rule, state, node, order, emit_expansion, stop); }, rule.get_variant()); },
-            stop);
-        if (!complete || stop())
+        for (const auto transition : state.get_module_state().get_module().get_memory_transitions())
+            for (const auto rule : transition)
+            {
+                if (stop())
+                    return false;
+                if (!ygg::visit([&](auto concrete) { return emit_rule(concrete, rule, state, node, emit_expansion, stop); }, rule.get_variant()))
+                    return false;
+            }
+        if (stop())
             return false;
         return emitted || emit_expansion(fallback(state));
     }
@@ -347,12 +347,11 @@ private:
         return applied(intern(target, state.get_call_stack()), choice.rule);
     }
 
-    template<runir::kr::dl::CategoryTag Category, typename BindingOrder, typename Emit, typename Stop>
+    template<runir::kr::dl::CategoryTag Category, typename Emit, typename Stop>
     bool emit_rule(RuleView<LoadTag<Category>> rule,
                    RuleVariantView rule_variant,
                    ProgramStateView<Kind> state,
                    const tyr::planning::Node<Kind>& node,
-                   BindingOrder& order,
                    Emit&& emit,
                    Stop&& stop)
     {
@@ -362,27 +361,27 @@ private:
             m_environment.make_dl_context(node.get_state(), state.get_module_state().get_arguments(), state.get_module_state().get_registers());
         const auto denotation = evaluate(rule.get_feature(), state_context);
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
-        return order.for_each_value(
-            denotation,
-            [&](const auto& value)
-            {
-                const auto target_registers = bound_registers(rule, state, value, *registers);
-                if (!binding_effects_match(rule, state, node, target_registers))
-                    return true;
-                auto target = state.get_module_state().get_data();
-                ygg::set(target_registers, target.registers);
-                ygg::set(rule.get_target(), target.memory_state);
-                return emit(applied(intern(target, state.get_call_stack()), rule_variant));
-            },
-            stop);
+        for (const auto value : denotation)
+        {
+            if (stop())
+                return false;
+            const auto target_registers = bound_registers(rule, state, value, *registers);
+            if (!binding_effects_match(rule, state, node, target_registers))
+                continue;
+            auto target = state.get_module_state().get_data();
+            ygg::set(target_registers, target.registers);
+            ygg::set(rule.get_target(), target.memory_state);
+            if (!emit(applied(intern(target, state.get_call_stack()), rule_variant)))
+                return false;
+        }
+        return true;
     }
 
-    template<runir::kr::dl::CategoryTag Category, typename BindingOrder, typename Emit, typename Stop>
+    template<runir::kr::dl::CategoryTag Category, typename Emit, typename Stop>
     bool emit_rule(RuleView<ChooseTag<Category>> rule,
                    RuleVariantView rule_variant,
                    ProgramStateView<Kind> state,
                    const tyr::planning::Node<Kind>& node,
-                   BindingOrder&,
                    Emit&& emit,
                    Stop&& stop)
     {
@@ -421,14 +420,9 @@ private:
         return { binding, search.successor_generator->get_successor_node(node, binding, *search.state_repository, *search.axiom_evaluator) };
     }
 
-    template<typename BindingOrder, typename Emit, typename Stop>
-    bool emit_rule(RuleView<DoTag> rule,
-                   RuleVariantView rule_variant,
-                   ProgramStateView<Kind> state,
-                   const tyr::planning::Node<Kind>& node,
-                   BindingOrder& order,
-                   Emit&& emit,
-                   Stop&& stop)
+    template<typename Emit, typename Stop>
+    bool
+    emit_rule(RuleView<DoTag> rule, RuleVariantView rule_variant, ProgramStateView<Kind> state, const tyr::planning::Node<Kind>& node, Emit&& emit, Stop&& stop)
     {
         if (!rule_is_applicable(rule, state, node))
             return true;
@@ -440,21 +434,19 @@ private:
         {
             if (action.get_name().str() != rule.get_action_name())
                 continue;
-            return order.for_each_binding(
-                *search.successor_generator,
-                node,
-                action,
-                [&](auto binding)
-                {
-                    if (!action_matches_do_arguments(rule, binding, denotations))
-                        return true;
-                    const auto candidate = successor(node, binding);
-                    m_environment.get_dl_target_caches().clear(false);
-                    if (!do_effects_match(rule, state, node, candidate.node.get_state()))
-                        return true;
-                    return emit(planning_step(state, candidate, rule_variant, rule.get_target()));
-                },
-                stop);
+            const auto visit = [&](tyr::formalism::planning::ActionBindingView binding)
+            {
+                if (stop())
+                    return false;
+                if (!action_matches_do_arguments(rule, binding, denotations))
+                    return true;
+                const auto candidate = successor(node, binding);
+                m_environment.get_dl_target_caches().clear(false);
+                if (!do_effects_match(rule, state, node, candidate.node.get_state()))
+                    return true;
+                return emit(planning_step(state, candidate, rule_variant, rule.get_target()));
+            };
+            return search.successor_generator->for_each_applicable_action_binding(node, action, std::ref(visit));
         }
         return true;
     }
@@ -476,12 +468,11 @@ private:
                 detail::action_rule_contract_error(rule, node.get_state(), tuple, "offered transition violates declared effects");
     }
 
-    template<typename BindingOrder, typename Emit, typename Stop>
+    template<typename Emit, typename Stop>
     bool emit_rule(RuleView<ActionTag> rule,
                    RuleVariantView rule_variant,
                    ProgramStateView<Kind> state,
                    const tyr::planning::Node<Kind>& node,
-                   BindingOrder& order,
                    Emit&& emit,
                    Stop&& stop)
     {
@@ -491,24 +482,25 @@ private:
             m_environment.make_dl_context(node.get_state(), state.get_module_state().get_arguments(), state.get_module_state().get_registers());
         const auto query = evaluate(rule.get_query_feature(), state_context);
         m_action_rule_evaluator.action(rule, node.get_state(), query.arity());
-        return order.for_each_row(
-            query,
-            [&](auto tuple)
-            {
-                const auto binding = m_action_rule_evaluator.applicable_binding(rule, node, tuple);
-                const auto candidate = successor(node, binding);
-                check_action_effects(rule, state, node, candidate, tuple);
-                return emit(planning_step(state, candidate, rule_variant, rule.get_target()));
-            },
-            stop);
+        for (std::size_t i = 0; i < query.size(); ++i)
+        {
+            if (stop())
+                return false;
+            const auto tuple = query[i];
+            const auto binding = m_action_rule_evaluator.applicable_binding(rule, node, tuple);
+            const auto candidate = successor(node, binding);
+            check_action_effects(rule, state, node, candidate, tuple);
+            if (!emit(planning_step(state, candidate, rule_variant, rule.get_target())))
+                return false;
+        }
+        return true;
     }
 
-    template<typename BindingOrder, typename Emit, typename Stop>
+    template<typename Emit, typename Stop>
     bool emit_rule(RuleView<SketchTag> rule,
                    RuleVariantView rule_variant,
                    ProgramStateView<Kind> state,
                    const tyr::planning::Node<Kind>& node,
-                   BindingOrder& order,
                    Emit&& emit,
                    Stop&& stop)
     {
@@ -523,26 +515,24 @@ private:
             return emit(applied(intern(target, state.get_call_stack()), rule_variant));
         }
         auto& generator = *m_task_context->search_context->successor_generator;
-        return order.for_each_binding(
-            generator,
-            node,
-            [&](auto binding)
-            {
-                const auto candidate = successor(node, binding);
-                m_environment.get_dl_target_caches().clear(false);
-                if (!sketch_rule_matches_state(rule, state, node, candidate.node.get_state()))
-                    return true;
-                return emit(planning_step(state, candidate, rule_variant, rule.get_target()));
-            },
-            stop);
+        const auto visit = [&](tyr::formalism::planning::ActionBindingView binding)
+        {
+            if (stop())
+                return false;
+            const auto candidate = successor(node, binding);
+            m_environment.get_dl_target_caches().clear(false);
+            if (!sketch_rule_matches_state(rule, state, node, candidate.node.get_state()))
+                return true;
+            return emit(planning_step(state, candidate, rule_variant, rule.get_target()));
+        };
+        return generator.for_each_applicable_action_binding(node, std::ref(visit));
     }
 
-    template<typename BindingOrder, typename Emit, typename Stop>
+    template<typename Emit, typename Stop>
     bool emit_rule(RuleView<CallTag> rule,
                    RuleVariantView rule_variant,
                    ProgramStateView<Kind> state,
                    const tyr::planning::Node<Kind>& node,
-                   BindingOrder&,
                    Emit&& emit,
                    Stop&& stop)
     {
@@ -609,13 +599,11 @@ private:
                                    const std::optional<LabeledNode>&)
     {
         auto result = std::optional<Expansion> {};
-        auto order = InOrder {};
         emit_rule(
             rule,
             rule_variant,
             state,
             node,
-            order,
             [&](Expansion expansion)
             {
                 result = std::move(expansion);

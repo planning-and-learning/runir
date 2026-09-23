@@ -65,7 +65,7 @@ and forward termination does not establish completeness of backtracking search.
 
 ## Enumeration and search
 
-`SuccessorExpander::for_each_successor(state, node, statistics, order, emit, stop)`
+`SuccessorExpander::for_each_successor(state, node, statistics, emit, stop)`
 visits immediate outcomes without collecting successor states. The source combines
 an interned `ProgramState` with the corresponding Tyr `Node`; the node carries
 the accumulated planning metric. The callback returns `true` to continue and
@@ -81,13 +81,11 @@ their action schema and filter arguments before constructing successor states.
 
 Nonuniversal execution stops ordinary expansion at its first compatible
 outcome. Universal execution requires every ordinary outcome and one successful
-binding for each Choose rule. `InOrder` visits rules and bindings in their
-natural order. `Shuffled` stores a reference to its random generator and
-shuffles rule and binding candidates before constructing successor states.
-Both orders support early termination. Action applicability and effect
-contracts are checked only for visited tuples, so unvisited invalid tuples
-remain unchecked even with shuffling. Query evaluation still materializes the
-selected relation.
+binding for each Choose rule. Rules and bindings are visited in their natural
+order, and enumeration supports early termination. Choose bindings follow
+their denotation order. Action applicability and effect contracts are checked
+only for visited tuples, so unvisited invalid tuples remain unchecked.
+Query evaluation still materializes the selected relation.
 
 `statistics.num_generated` counts emitted extended successors, including caller
 returns and attempted Choose bindings. Rejected planning candidates, failure
@@ -99,8 +97,7 @@ markers, and unattempted Choose bindings do not contribute. The search owns
 Module evaluation uses persistent `ext.GroundProgramState` or
 `ext.LiftedProgramState` values produced by the successor expander, with the
 corresponding `GroundEvaluationEnvironment` or `LiftedEvaluationEnvironment`.
-Call `ext.create_initial_state(task_context, program, node)` with the Tyr initial
-node. The returned program state retains its task context. Python exposes
+Call `expander.initial_state(node)` with the Tyr initial node. Python exposes
 `expander.for_each_successor(state, node, statistics, emit, stop)` in natural
 order, with a constructible `ext.ProgramSearchStatistics` object.
 

@@ -313,8 +313,6 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     assert not hasattr(search_options, "max_arity")
     assert search_options.max_num_states > 0
     assert search_options.max_time is None
-    assert search_options.random_seed == 0
-    assert search_options.shuffle_choice_points is False
     assert search_options.universal is False
     assert search_options.classifier is None
 
@@ -492,7 +490,7 @@ def test_successor_callbacks_stop_and_own_their_native_steps(kind: str) -> None:
     )
     expander = expander_type(context, program)
     node = initial_node(context)
-    initial = ext.create_initial_state(context, program, node)
+    initial = expander.initial_state(node)
     statistics = ext.ProgramSearchStatistics()
     actual = []
 
@@ -539,8 +537,8 @@ def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
     expander = ext.GroundSuccessorExpander(task_context, program)
-    initial = ext.create_initial_state(task_context, program, initial_node(task_context))
-    duplicate_initial = ext.create_initial_state(task_context, program, initial_node(task_context))
+    initial = expander.initial_state(initial_node(task_context))
+    duplicate_initial = expander.initial_state(initial_node(task_context))
     assert isinstance(initial, ext.GroundProgramState)
     assert initial.call_stack is None
     assert isinstance(initial.module_state, ext.GroundModuleState)
@@ -579,7 +577,7 @@ def test_lifted_execution_views_and_proof_labels_survive_owner_destruction() -> 
     program = dl.parse_program(read_fixture("kr/ps/ext/execution/empty.program"), planning_domain, repository)
 
     expander = ext.LiftedSuccessorExpander(task_context, program)
-    initial = ext.create_initial_state(task_context, program, initial_node(task_context))
+    initial = expander.initial_state(initial_node(task_context))
     assert isinstance(initial, ext.LiftedProgramState)
     assert initial.call_stack is None
     assert isinstance(initial.module_state, ext.LiftedModuleState)

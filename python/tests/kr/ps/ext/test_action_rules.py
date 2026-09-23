@@ -54,7 +54,7 @@ def _runtime(kind, source=None):
     program = dl.parse_program(source or _program(), domain, task_context.domain_context.ext_repository)
     prefix = kind.title()
     expander = getattr(ext, f"{prefix}SuccessorExpander")(task_context, program)
-    state = ext.create_initial_state(task_context, program, initial_node(task_context))
+    state = expander.initial_state(initial_node(task_context))
     environment = getattr(ext, f"{prefix}EvaluationEnvironment")(task_context, program)
     return task_context, program, expander, state, environment
 
@@ -71,7 +71,7 @@ def test_expander_rejects_mismatched_source_nodes(kind, foreign):
         wrong_node = initial_node(foreign_context)
         message = "selected task's state repository"
         with pytest.raises(ValueError, match=message):
-            ext.create_initial_state(task_context, program, wrong_node)
+            expander.initial_state(wrong_node)
     else:
         wrong_node = successor.node
         assert wrong_node.get_state().get_index() != state.state.get_index()
@@ -336,7 +336,7 @@ def test_action_query_preserves_correlated_parameter_tuples(kind, tmp_path):
         parser.get_domain(), domain.ext_repository,
     )
     expander = getattr(ext, f"{kind.title()}SuccessorExpander")(task_context, program)
-    state = ext.create_initial_state(task_context, program, initial_node(task_context))
+    state = expander.initial_state(initial_node(task_context))
 
     def arguments(action):
         return tuple(object_.get_name() for object_ in action.get_objects())

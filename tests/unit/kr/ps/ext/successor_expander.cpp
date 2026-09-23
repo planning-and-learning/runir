@@ -8,7 +8,6 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <random>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/execution_repository.hpp>
@@ -19,6 +18,7 @@
 #include <runir/kr/task_context.hpp>
 #include <set>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 namespace runir::tests
@@ -530,6 +530,67 @@ TEST(RunirTests, ExtGroundAndLiftedInitialStatesUseExpanderRepository)
     expect_initial_program_state_uses_expander_repository<tyr::LiftedTag>();
 }
 
+TEST(RunirTests, ExtChooseUsesNaturalDenotationCursors)
+{
+    namespace ext = kr::ps::ext;
+    using Expander = ext::SuccessorExpander<tyr::GroundTag>;
+    auto search = make_gripper_ground_context();
+    auto context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(search->task->get_domain()), search);
+    auto& repository = *context->domain_context->ext_repository;
+    const auto module_ = ext::dl::parse_module(R"(
+(:module (:symbol cursors) (:arguments) (:registers (:concept c) (:role r))
+  (:entry source) (:memory source target)
+  (:features
+    (:concept (:symbol Balls) (:expression (c_atomic_state "ball")))
+    (:concept (:symbol Empty) (:expression (c_bot)))
+    (:concept (:symbol One) (:expression (c_some (r_atomic_goal "at" true) (c_top))))
+    (:role (:symbol At) (:expression (r_atomic_state "at")))
+    (:role (:symbol NoPairs) (:expression (r_restriction (r_atomic_state "at") (c_bot))))
+    (:role (:symbol OnePair) (:expression (r_restriction (r_inverse (r_atomic_state "at")) (c_some (r_atomic_goal "at" true) (c_top))))))
+  (:rules
+    (:rule (:symbol balls) (:expression (:source-memory source) (:target-memory target) (:choose (:conditions) (:concept Balls) (:register (:concept c)))))
+    (:rule (:symbol empty) (:expression (:source-memory source) (:target-memory target) (:choose (:conditions) (:concept Empty) (:register (:concept c)))))
+    (:rule (:symbol one) (:expression (:source-memory source) (:target-memory target) (:choose (:conditions) (:concept One) (:register (:concept c)))))
+    (:rule (:symbol at) (:expression (:source-memory source) (:target-memory target) (:choose (:conditions) (:role At) (:register (:role r)))))
+    (:rule (:symbol no-pairs) (:expression (:source-memory source) (:target-memory target) (:choose (:conditions) (:role NoPairs) (:register (:role r)))))
+    (:rule (:symbol one-pair) (:expression (:source-memory source) (:target-memory target) (:choose (:conditions) (:role OnePair) (:register (:role r)))))))
+)", search->task->get_domain().get_domain(), repository);
+    const auto program = create_program(repository, module_, { module_ });
+    auto expander = Expander(context, program);
+    const auto node = initial_planning_node(expander);
+    const auto state = expander.initial_state(node);
+    auto statistics = ext::ProgramSearchStatistics {};
+    auto counts = std::vector<std::size_t> {};
+    ASSERT_TRUE(expander.for_each_successor(state, node, statistics, [&](auto expansion)
+    {
+        std::visit([&](auto choice)
+        {
+            if constexpr (std::same_as<decltype(choice), Expander::Step>)
+                ADD_FAILURE() << "Expected a compact Choice descriptor";
+            else
+            {
+                counts.push_back(choice.count());
+                EXPECT_EQ(choice.has_alternatives(), choice.count() > 1);
+                auto expected = choice.denotation.begin();
+                std::size_t visited = 0;
+                while (!choice.exhausted())
+                {
+                    EXPECT_EQ(choice.cursor, expected);
+                    ++expected;
+                    ++visited;
+                    choice.advance();
+                }
+                EXPECT_EQ(expected, choice.denotation.end());
+                EXPECT_EQ(visited, choice.count());
+            }
+        }, std::move(expansion));
+        return true;
+    }, [] { return false; }));
+    EXPECT_EQ(statistics.num_generated, 0);
+    std::ranges::sort(counts);
+    EXPECT_EQ(counts, (std::vector<std::size_t> { 0, 0, 1, 1, 2, 2 }));
+}
+
 TEST(RunirTests, ExtGroundAndLiftedModuleReturnsPreserveCalleePlanningState)
 {
     expect_module_return_preserves_callee_planning_state<tyr::GroundTag>();
@@ -635,23 +696,13 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
-    EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
+    ASSERT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
-    auto random = std::mt19937_64(1);
-    auto order = kr::ps::ext::Shuffled(random);
-    const auto expected_steps = collect_steps(expander, initial_state, planning_node, order, true);
-
-    auto shuffled_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
-    shuffled_options.random_seed = 1;
-    shuffled_options.shuffle_choice_points = true;
-    const auto shuffled = kr::ps::ext::find_solution(task_context, program, shuffled_options);
-    ASSERT_TRUE(shuffled.graph);
-    ASSERT_EQ(shuffled.graph->get_out_degree(0), 1);
-    const auto shuffled_edge = shuffled.graph->get_out_edge_indices(0).front();
-    const auto shuffled_target = shuffled.graph->get_vertex(shuffled.graph->get_target(shuffled_edge)).get_property().program_state;
-    const auto actual_loaded = shuffled_target.get_module_state().get_registers().get_concept_values()[0];
-    const auto expected_loaded = expected_steps.front().get_target().get_module_state().get_registers().get_concept_values()[0];
+    const auto edge = greedy.graph->get_out_edge_indices(0).front();
+    const auto selected = greedy.graph->get_vertex(greedy.graph->get_target(edge)).get_property().program_state;
+    const auto actual_loaded = selected.get_module_state().get_registers().get_concept_values()[0];
+    const auto expected_loaded = steps.front().get_target().get_module_state().get_registers().get_concept_values()[0];
     ASSERT_TRUE(actual_loaded);
     ASSERT_TRUE(expected_loaded);
     EXPECT_EQ(actual_loaded.value().get_index(), expected_loaded.value().get_index());
@@ -768,7 +819,7 @@ TEST(RunirTests, ExtSuccessorEnumerationCombinesAllApplicableRuleKinds)
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
-    EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
+    ASSERT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 }
 
@@ -1028,24 +1079,13 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
-    EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
+    ASSERT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
-    auto random = std::mt19937_64(1);
-    auto order = kr::ps::ext::Shuffled(random);
-    const auto expected_steps = collect_steps(expander, initial_state, planning_node, order, true);
-
-    auto shuffled_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
-    shuffled_options.random_seed = 1;
-    shuffled_options.shuffle_choice_points = true;
-    const auto shuffled = kr::ps::ext::find_solution(task_context, program, shuffled_options);
-    ASSERT_TRUE(shuffled.graph);
-    ASSERT_EQ(shuffled.graph->get_out_degree(0), 1);
-    const auto shuffled_edge = shuffled.graph->get_out_edge_indices(0).front();
-    const auto shuffled_target = shuffled.graph->get_vertex(shuffled.graph->get_target(shuffled_edge)).get_property().program_state;
-    EXPECT_EQ(shuffled_target.get_state().get_index(), expected_steps.front().get_target().get_state().get_index());
-    EXPECT_EQ(shuffled_target.get_module_state().get_memory_state().get_index(),
-              expected_steps.front().get_target().get_module_state().get_memory_state().get_index());
+    const auto edge = greedy.graph->get_out_edge_indices(0).front();
+    const auto selected = greedy.graph->get_vertex(greedy.graph->get_target(edge)).get_property().program_state;
+    EXPECT_EQ(selected.get_state().get_index(), steps.front().get_target().get_state().get_index());
+    EXPECT_EQ(selected.get_module_state().get_memory_state().get_index(), steps.front().get_target().get_module_state().get_memory_state().get_index());
 }
 
 TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
@@ -1177,7 +1217,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
-    EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
+    ASSERT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 }
 
@@ -1342,19 +1382,18 @@ void expect_callback_sketch_order_and_cancellation()
         using Step = typename ext::SuccessorExpander<Kind>::Step;
         auto selected = std::vector<Step> {};
         auto statistics = ext::ProgramSearchStatistics {};
-        auto order = ext::InOrder {};
         const auto emit = [&](const auto& expansion)
         {
             EXPECT_GT(statistics.num_generated, 0);
             selected.push_back(std::get<Step>(expansion));
             return false;
         };
-        EXPECT_FALSE(expander.for_each_successor(initial, planning_node, statistics, order, emit, [] { return true; }));
+        EXPECT_FALSE(expander.for_each_successor(initial, planning_node, statistics, emit, [] { return true; }));
         EXPECT_TRUE(selected.empty());
         EXPECT_EQ(statistics.num_generated, 0);
         EXPECT_EQ(states.num_states(), 1);
         const auto stop = [&] { return cancelled && states.num_states() > 1; };
-        EXPECT_FALSE(expander.for_each_successor(initial, planning_node, statistics, order, emit, stop));
+        EXPECT_FALSE(expander.for_each_successor(initial, planning_node, statistics, emit, stop));
         if (cancelled)
         {
             EXPECT_TRUE(selected.empty());
@@ -1366,7 +1405,6 @@ void expect_callback_sketch_order_and_cancellation()
             initial,
             planning_node,
             statistics,
-            order,
             [&](const auto& expansion)
             {
                 complete.push_back(std::get<Step>(expansion));

@@ -104,6 +104,12 @@ struct Choice
     auto current() const noexcept { return *cursor; }
     void advance() noexcept { ++cursor; }
 
+    bool has_alternatives() const noexcept
+    {
+        auto first = denotation.begin();
+        return first != denotation.end() && ++first != denotation.end();
+    }
+
     size_t count() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)

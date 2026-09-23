@@ -54,11 +54,9 @@ def _context(tmp_path, kind, initial_goal=False, *, action_costs=False):
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-@pytest.mark.parametrize("shuffle", [False, True])
-def test_search_statistics_count_generation_before_filtering_and_deduplication(tmp_path, kind, shuffle):
+def test_search_statistics_count_generation_before_filtering_and_deduplication(tmp_path, kind):
     context, sketch = _context(tmp_path, kind)
     options = getattr(base, f"{kind.title()}SketchSearchOptions")()
-    options.shuffle_choice_points = shuffle
     find_solution = getattr(base, f"find_{kind}_solution")
 
     greedy = find_solution(context, sketch, options)
@@ -124,11 +122,9 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-@pytest.mark.parametrize("shuffle", [False, True])
-def test_search_preserves_cumulative_node_metrics(tmp_path, kind, shuffle):
+def test_search_preserves_cumulative_node_metrics(tmp_path, kind):
     context, sketch = _context(tmp_path, kind, action_costs=True)
     options = getattr(base, f"{kind.title()}SketchSearchOptions")()
-    options.shuffle_choice_points = shuffle
     result = getattr(base, f"find_{kind}_solution")(context, sketch, options)
 
     assert result.status == base.SketchProofStatus.SUCCESS

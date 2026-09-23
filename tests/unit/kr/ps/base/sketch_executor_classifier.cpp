@@ -19,7 +19,7 @@ namespace
 {
 
 template<tyr::TaskKind Kind>
-void check_classifier_failures(datasets::TaskSearchContextPtr<Kind> search_context, bool shuffle)
+void check_classifier_failures(datasets::TaskSearchContextPtr<Kind> search_context)
 {
     auto task = search_context->task;
     auto task_context = kr::TaskContext<Kind>::create(kr::DomainContext::create(task->get_domain()), search_context);
@@ -33,7 +33,6 @@ void check_classifier_failures(datasets::TaskSearchContextPtr<Kind> search_conte
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/always.classifier"), task->get_domain().get_domain(), *classifier_repository);
 
     auto options = kr::ps::base::SketchSearchOptions<Kind> {};
-    options.shuffle_choice_points = shuffle;
     options.classifier = classifier;
     const auto result = kr::ps::base::find_solution(task_context, sketch, options);
 
@@ -92,21 +91,13 @@ void check_classifier_failures(datasets::TaskSearchContextPtr<Kind> search_conte
 
 TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
 {
-    for (const auto shuffle : { false, true })
-    {
-        SCOPED_TRACE(shuffle);
-        check_classifier_failures(make_gripper_ground_context(), shuffle);
-    }
+    check_classifier_failures(make_gripper_ground_context());
 }
 
 TEST(RunirTests, BaseLiftedFindSolutionTreatsClassifierMatchesAsTerminalFailures)
 {
-    for (const auto shuffle : { false, true })
-    {
-        SCOPED_TRACE(shuffle);
-        check_classifier_failures(
-            make_lifted_context(benchmark_path("classical/tests/gripper/domain.pddl"), benchmark_path("classical/tests/gripper/test-1.pddl")), shuffle);
-    }
+    check_classifier_failures(
+        make_lifted_context(benchmark_path("classical/tests/gripper/domain.pddl"), benchmark_path("classical/tests/gripper/test-1.pddl")));
 }
 
 }  // namespace runir::tests

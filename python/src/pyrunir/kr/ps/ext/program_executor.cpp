@@ -15,9 +15,7 @@
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
 #include <runir/kr/ps/ext/action_rule_contract_error.hpp>
-#include <runir/kr/ps/ext/binding_order.hpp>
 #include <runir/kr/ps/ext/evaluation_environment.hpp>
-#include <runir/kr/ps/ext/execution_construction.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
@@ -176,9 +174,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_rw("universal", &Options::universal)
         .def_rw("classifier", &Options::classifier, nb::for_setter(nb::keep_alive<1, 2>()))
         .def_rw("max_num_states", &Options::max_num_states)
-        .def_rw("max_time", &Options::max_time)
-        .def_rw("random_seed", &Options::random_seed)
-        .def_rw("shuffle_choice_points", &Options::shuffle_choice_points);
+        .def_rw("max_time", &Options::max_time);
 
     nb::class_<Step>(m, (std::string(prefix) + "ProgramExecutionStep").c_str())
         .def_prop_ro("status", &Step::get_status_name)
@@ -187,10 +183,9 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_prop_ro("rule", &Step::get_rule, nb::keep_alive<0, 1>())
         .def_ro("planning_successor", &Step::planning_successor, nb::rv_policy::copy);
 
-    m.def("create_initial_state", &create_initial_state<Kind>, "task_context"_a, "program"_a, "node"_a, nb::keep_alive<0, 1>());
-
     nb::class_<Expander>(m, (std::string(prefix) + "SuccessorExpander").c_str())
         .def(nb::init<runir::kr::TaskContextPtr<Kind>, ProgramView>(), "task_context"_a, "program"_a)
+        .def("initial_state", &Expander::initial_state, "node"_a, nb::keep_alive<0, 1>())
         .def(
             "for_each_successor",
             [](Expander& self,
@@ -199,10 +194,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
                ProgramSearchStatistics& statistics,
                const std::function<bool(Expansion)>& emit,
                const std::function<bool()>& stop)
-            {
-                auto order = InOrder {};
-                return self.for_each_successor(state, node, statistics, order, emit, stop);
-            },
+            { return self.for_each_successor(state, node, statistics, emit, stop); },
             "state"_a,
             "node"_a,
             "statistics"_a,

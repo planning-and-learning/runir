@@ -3,7 +3,6 @@
 
 #include <concepts>
 #include <functional>
-#include <runir/kr/ps/ext/binding_order.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
@@ -20,12 +19,11 @@ auto initial_planning_node(const kr::ps::ext::SuccessorExpander<Kind>& expander)
     return search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
 }
 
-template<tyr::TaskKind Kind, typename Order>
+template<tyr::TaskKind Kind>
 auto collect_steps(
     kr::ps::ext::SuccessorExpander<Kind>& expander,
     kr::ps::ext::ProgramStateView<Kind> state,
     const tyr::planning::Node<Kind>& node,
-    Order& order,
     bool first_only = false,
     const std::function<bool()>& stop = [] { return false; })
 {
@@ -36,7 +34,6 @@ auto collect_steps(
         state,
         node,
         statistics,
-        order,
         [&](auto expansion)
         {
             expansions.push_back(std::move(expansion));
@@ -58,18 +55,6 @@ auto collect_steps(
             },
             expansion);
     return result;
-}
-
-template<tyr::TaskKind Kind>
-auto collect_steps(
-    kr::ps::ext::SuccessorExpander<Kind>& expander,
-    kr::ps::ext::ProgramStateView<Kind> state,
-    const tyr::planning::Node<Kind>& node,
-    bool first_only = false,
-    const std::function<bool()>& stop = [] { return false; })
-{
-    auto order = kr::ps::ext::InOrder {};
-    return collect_steps(expander, state, node, order, first_only, stop);
 }
 
 template<tyr::TaskKind Kind>

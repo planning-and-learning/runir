@@ -51,8 +51,6 @@ struct ProgramSearchOptions
     std::optional<runir::kr::uns::ClassifierView> classifier = std::nullopt;
     ygg::uint_t max_num_states = std::numeric_limits<ygg::uint_t>::max();
     std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
-    uint64_t random_seed = 0;
-    bool shuffle_choice_points = false;
 };
 
 struct ProgramSearchStatistics

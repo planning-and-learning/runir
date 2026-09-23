@@ -9,7 +9,6 @@
 #include <nanobind/stl/vector.h>
 #include <pyrunir/graphs/graph.hpp>
 #include <runir/datasets/state_graph.hpp>
-#include <runir/kr/ps/base/binding_order.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
 #include <runir/kr/ps/base/successor_expander.hpp>
@@ -69,9 +68,7 @@ void bind_sketch_search_options(nb::module_& m, const char* name)
         .def_rw("universal", &Options::universal)
         .def_rw("classifier", &Options::classifier, nb::for_setter(nb::keep_alive<1, 2>()))
         .def_rw("max_num_states", &Options::max_num_states)
-        .def_rw("max_time", &Options::max_time)
-        .def_rw("random_seed", &Options::random_seed)
-        .def_rw("shuffle_choice_points", &Options::shuffle_choice_points);
+        .def_rw("max_time", &Options::max_time);
 }
 
 }  // namespace
@@ -110,10 +107,7 @@ void bind_sketch_executor(nb::module_& m)
             "for_each_successor",
             [](Expander& self, const tyr::planning::Node<Kind>& node, SketchSearchStatistics& statistics,
                const std::function<bool(Expander::LabeledNode, RuleView)>& emit, const std::function<bool()>& stop)
-            {
-                auto order = InOrder {};
-                return self.for_each_successor(node, statistics, order, emit, stop);
-            },
+            { return self.for_each_successor(node, statistics, emit, stop); },
             "node"_a,
             "statistics"_a,
             "emit"_a,

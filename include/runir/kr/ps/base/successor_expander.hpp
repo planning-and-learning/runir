@@ -7,6 +7,7 @@
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/task_context.hpp"
 
+#include <functional>
 #include <optional>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/node.hpp>
@@ -37,12 +38,11 @@ public:
 
     /// Call emit(successor, rule) for each successor permitted by its first matching rule.
     /// emit returning false or stop returning true ends enumeration; stop is also checked for rejected candidates.
-    /// The ordering policy visits applicable bindings and checks stop before each visit.
     /// Increment statistics.num_generated for every generated successor, including rejected and duplicate targets.
     /// Return true if enumeration completed, false if stopped.
     /// Callbacks must not reenter this expander or its generator.
-    template<typename BindingOrder, typename Emit, typename Stop>
-    bool for_each_successor(const tyr::planning::Node<Kind>& node, SketchSearchStatistics& statistics, BindingOrder& order, Emit&& emit, Stop&& stop)
+    template<typename Emit, typename Stop>
+    bool for_each_successor(const tyr::planning::Node<Kind>& node, SketchSearchStatistics& statistics, Emit&& emit, Stop&& stop)
     {
         if (stop())
             return false;
@@ -54,6 +54,8 @@ public:
 
         const auto visit_binding = [&](tyr::formalism::planning::ActionBindingView binding)
         {
+            if (stop())
+                return false;
             const auto successor =
                 LabeledNode { binding, generator.get_successor_node(node, binding, *search_context.state_repository, *search_context.axiom_evaluator) };
             ++statistics.num_generated;
@@ -66,7 +68,7 @@ public:
             return emit(successor, *rule);
         };
 
-        return order.for_each_binding(generator, node, visit_binding, stop);
+        return generator.for_each_applicable_action_binding(node, std::ref(visit_binding));
     }
 
     std::optional<RuleView> matching_rule(const tyr::planning::StateView<Kind>& source_state, const tyr::planning::StateView<Kind>& target_state)

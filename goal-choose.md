@@ -293,9 +293,7 @@ Store `plan_length` so the plan prefix can be truncated on backtrack; today
 Add to `ProgramSearchOptions`:
 
 - `max_backtracks` (default unlimited) for the executor;
-- `use_nogoods` (default true), section 4.5;
-- `shuffle_choice_points` already exists and applies to binding order if
-  set; the default order stays object index order.
+- `use_nogoods` (default true), section 4.5.
 
 Add to `ProgramProofResults`:
 

@@ -101,7 +101,7 @@ def _loaded_frame(kind: Literal["ground", "lifted"], source: str = PROGRAM):
     else:
         expander = ext.LiftedSuccessorExpander(task_context, program)
     node = initial_node(task_context)
-    initial = ext.create_initial_state(task_context, program, node)
+    initial = expander.initial_state(node)
     child = collect_steps(expander, initial, node)[0].target
     with_concept = collect_steps(expander, child, node)[0].target
     loaded = collect_steps(expander, with_concept, node)[0].target
@@ -209,7 +209,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         numericals["argument_count"], dl_context
     )
     node = initial_node(task_context)
-    child = collect_steps(expander, ext.create_initial_state(task_context, program, node), node)[0].target
+    child = collect_steps(expander, expander.initial_state(node), node)[0].target
     other_concept = collect_steps(expander, child, node)[1].target
     other_frame = collect_steps(expander, other_concept, node)[0].target
     assert other_frame.state == loaded.state
@@ -287,7 +287,7 @@ def test_state_evaluation_contexts_borrow_distinct_call_arguments(
     kind: Literal["ground", "lifted"],
 ) -> None:
     task_context, program, expander, loaded = _loaded_frame(kind)
-    initial = ext.create_initial_state(task_context, program, initial_node(task_context))
+    initial = expander.initial_state(initial_node(task_context))
     environment = getattr(ext, f"{kind.title()}EvaluationEnvironment")(task_context, program)
     contexts = [
         environment.make_dl_context(loaded),
@@ -381,7 +381,7 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
     expander_type = ext.GroundSuccessorExpander if kind == "ground" else ext.LiftedSuccessorExpander
     expander = expander_type(task_context, program)
     node = initial_node(task_context)
-    child = collect_steps(expander, ext.create_initial_state(task_context, program, node), node)[0].target
+    child = collect_steps(expander, expander.initial_state(node), node)[0].target
     statistics = ext.ProgramSearchStatistics()
 
     def bindings(state, choice_type):

@@ -169,7 +169,7 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
     )
     expander = ext.GroundSuccessorExpander(context, program)
     node = initial_node(context)
-    initial = ext.create_initial_state(context, program, node)
+    initial = expander.initial_state(node)
     step, = collect_steps(expander, initial, node)
     with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*ProgramState.*GroundTag"):
         serialize(Dictionaries(), initial)

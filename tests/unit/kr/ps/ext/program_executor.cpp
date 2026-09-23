@@ -533,26 +533,27 @@ void check_choice_execution()
         EXPECT_EQ(time_limited.statistics.num_expanded, 0);
         EXPECT_EQ(time_limited.statistics.num_generated, 0);
 
-        auto shuffled = options;
-        shuffled.shuffle_choice_points = true;
-        shuffled.random_seed = 42;
-        const auto first = ext::find_solution(context, program, shuffled);
-        const auto second = ext::find_solution(context, program, shuffled);
+        const auto& first = result;
+        const auto second = ext::find_solution(context, program, options);
         EXPECT_EQ(first.status, Status::SUCCESS);
+        EXPECT_EQ(first.statistics.num_expanded, second.statistics.num_expanded);
+        EXPECT_EQ(first.statistics.num_generated, second.statistics.num_generated);
         EXPECT_EQ(first.status, second.status);
+        EXPECT_EQ(first.statistics.num_binding_attempts, second.statistics.num_binding_attempts);
+        EXPECT_EQ(first.statistics.num_backtracks, second.statistics.num_backtracks);
         EXPECT_EQ(first.graph->get_num_vertices(), second.graph->get_num_vertices());
         EXPECT_EQ(first.graph->get_num_edges(), second.graph->get_num_edges());
 
-        // All alternatives fail, forcing the shared suffix to be regenerated regardless of the shuffle.
+        // All alternatives fail, forcing the shared suffix to be regenerated.
         const auto replayed = make_program(choice_module(
             "replayed-failure",
             choice_rule("outer", "m0", "m1", choose_candidates)
                 + choice_rule("inner", "m1", "m4", "(:choose (:conditions) (:concept Candidates) (:register (:concept r1)))")
                 + choice_rule("deepest", "m4", "m5", "(:choose (:conditions) (:concept Candidates) (:register (:concept r1)))")
                 + choice_rule("shared-suffix", "m5", "m6", "(:load (:conditions) (:concept Goal) (:register (:concept r1)))")));
-        const auto replay_first = ext::find_solution(context, replayed, shuffled);
+        const auto replay_first = ext::find_solution(context, replayed, options);
         const auto interned_states = context->execution_repository->template size<ext::ProgramState<Kind>>();
-        const auto replay_second = ext::find_solution(context, replayed, shuffled);
+        const auto replay_second = ext::find_solution(context, replayed, options);
         EXPECT_EQ(replay_first.status, Status::FAILURE);
         EXPECT_EQ(replay_second.status, replay_first.status);
         EXPECT_EQ(context->execution_repository->template size<ext::ProgramState<Kind>>(), interned_states);
@@ -602,6 +603,20 @@ void check_choice_execution()
     ASSERT_TRUE(parallel_result.graph);
     EXPECT_EQ(context->execution_repository->template size<ext::ProgramState<Kind>>() - states_before_parallel,
               parallel_result.graph->get_num_vertices());  // Untried bindings do not intern program states.
+
+    // Both choices are queued before activation. Retrying the right choice must replay the exhausted left sibling.
+    const auto replayed_sibling = make_program(choice_module(
+        "replayed-sibling",
+        choice_rule("left", "m0", "m1", choose_candidates) + choice_rule("right", "m0", "m2", choose_candidates)
+            + choice_rule("move-left", "m1", "m3", move_to_register) + choice_rule("move-right", "m2", "m4", move_to_register)
+            + choice_rule("finish-left", "m3", "m5", move_to_goal) + choice_rule("finish-right", "m4", "m6", move_to_goal)));
+    const auto replayed_sibling_result = ext::find_solution(context, replayed_sibling, universal);
+    EXPECT_EQ(replayed_sibling_result.status, Status::SUCCESS);
+    EXPECT_EQ(replayed_sibling_result.statistics.choice_depth, 1);
+    EXPECT_EQ(replayed_sibling_result.statistics.max_choice_depth, 1);
+    EXPECT_EQ(replayed_sibling_result.statistics.num_choice_points, 3);
+    EXPECT_EQ(replayed_sibling_result.statistics.num_binding_attempts, 6);
+    EXPECT_EQ(replayed_sibling_result.statistics.num_backtracks, 4);
 
     const auto reconverged_rules =
         // The LIFO frontier expands the short route and its suffix before the longer route reaches the join.
@@ -708,7 +723,6 @@ void check_ordinary_execution_keeps_complete_graph()
         {
             SCOPED_TRACE(classify);
             options.classifier = classify ? std::optional(classifier) : std::nullopt;
-            options.shuffle_choice_points = false;
             const auto complete = ext::find_solution(context, program, options);
             EXPECT_EQ(complete.status, ext::ProgramProofStatus::FAILURE);
             ASSERT_TRUE(complete.graph);
@@ -731,16 +745,11 @@ void check_ordinary_execution_keeps_complete_graph()
             EXPECT_EQ(failure.is_unsolvable, classify);
             EXPECT_EQ(failure.program_state.get_module_state().get_registers().get_concept_values()[0].value().get_name(), "bad");
 
-            options.shuffle_choice_points = true;
-            options.random_seed = 42;
-            const auto first = ext::find_solution(context, program, options);
+            const auto& first = complete;
             const auto second = ext::find_solution(context, program, options);
-            EXPECT_EQ(first.status, complete.status);
             EXPECT_EQ(second.status, first.status);
             ASSERT_TRUE(first.graph);
             ASSERT_TRUE(second.graph);
-            EXPECT_EQ(first.graph->get_num_vertices(), complete.graph->get_num_vertices());
-            EXPECT_EQ(first.graph->get_num_edges(), complete.graph->get_num_edges());
             ASSERT_EQ(first.graph->get_num_vertices(), second.graph->get_num_vertices());
             ASSERT_EQ(first.graph->get_num_edges(), second.graph->get_num_edges());
             EXPECT_EQ(first.open_states, second.open_states);

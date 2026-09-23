@@ -23,11 +23,14 @@ struct SearchNode
 {
     static constexpr auto unreached = std::numeric_limits<std::size_t>::max();
 
-    // First incoming transition in the current attempt; replaced when revisited after rollback.
+    // First incoming transition in the current attempt; cleared on rollback.
+    // Except for the initial state, an absent parent means the state is outside the attempt.
     ygg::Index<ProgramState<Kind>> parent_state = ygg::Index<ProgramState<Kind>>::max();
     std::optional<tyr::planning::PackedLabeledNode<Kind>> planning_successor = std::nullopt;
+    // Path data is assigned when this state is scheduled in the current attempt.
+    ygg::float_t metric = 0;
+    ygg::uint_t choice_depth = 0;
     std::size_t step = unreached;
-    bool visited = false;
     bool is_goal = false;
     bool is_unsolvable = false;
     bool is_deadend = false;
