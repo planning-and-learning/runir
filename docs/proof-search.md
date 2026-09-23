@@ -8,7 +8,7 @@ The Ext executor separates depth-first exploration from proof resolution:
 
 The diagnostic graph and optional plan are constructed afterward. The graph retains rejected alternatives, so a cycle in that graph does not by itself invalidate a successful proof.
 
-An expansion records its ordinary transitions consecutively before descending. Each DFS frame walks that interval in reverse, preserving the existing traversal order without a separate outgoing-edge index. Incoming dependencies are indexed only for propagation.
+[`Predecessors`](../include/runir/kr/ps/ext/detail/predecessors.hpp) owns the append-only transition records. Its typed `EdgeId` identifies an edge independently of vector reallocations. An expansion records its ordinary transitions consecutively before descending. Each DFS frame walks that interval in reverse using `EdgeId` boundaries, preserving the existing traversal order without a separate outgoing-edge index. Incoming dependencies use optional `EdgeId` links for propagation.
 
 ## AND/OR semantics
 
@@ -25,7 +25,9 @@ With `universal=false`, enumeration retains the first ordinary outcome or select
 
 ## Incremental resolution
 
-Each state has a remaining-requirements counter and a seal marking complete enumeration. Each Choose has a permanent satisfied flag, independent of its temporary cursor. A new success is queued once and visits only incoming dependencies. An ordinary dependency decrements its source counter; a Choose dependency does so only on that obligation's first success. A sealed, unblocked state whose counter reaches zero succeeds.
+Each state has a remaining-requirements counter and a seal marking complete enumeration. [`ChoiceProofs`](../include/runir/kr/ps/ext/detail/choice_proofs.hpp) owns each Choose's permanent satisfied flag, independent of its temporary cursor. Frames and dependencies identify that flag with a `ChoiceId`, a distinct integer type. `satisfy(id)` returns true only on its first success.
+
+A new state success is queued once and visits only incoming dependencies. An ordinary dependency decrements its source counter; a Choose dependency does so only on that obligation's first success. A sealed, unblocked state whose counter reaches zero succeeds.
 
 A dependency registered after its target succeeds is credited immediately and is **not** linked for a second notification. Sealing prevents a successful early child from proving its parent before the parent's other requirements are known.
 

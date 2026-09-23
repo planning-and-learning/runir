@@ -1,11 +1,11 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_PROOF_PROPAGATION_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_PROOF_PROPAGATION_HPP_
 
-#include "runir/kr/ps/ext/detail/search_node.hpp"
+#include "runir/kr/ps/ext/detail/choice_proofs.hpp"
+#include "runir/kr/ps/ext/detail/predecessors.hpp"
 
 #include <cassert>
 #include <cstddef>
-#include <limits>
 #include <optional>
 #include <vector>
 
@@ -33,61 +33,53 @@ template<tyr::TaskKind Kind>
 class ProofPropagation
 {
 private:
-    static constexpr auto no_edge = std::numeric_limits<std::size_t>::max();
-
     struct State
     {
         std::size_t remaining = 0;
-        std::size_t first_incoming = no_edge;
+        std::optional<EdgeId> first_incoming;
         bool sealed = false;
     };
 
-    // Indexed exactly like the diagnostic predecessor vector; source/target are not duplicated.
+    // Indexed exactly like Predecessors; source/target are not duplicated.
     struct Dependency
     {
-        std::size_t next = no_edge;
-        std::optional<std::size_t> choice;
+        std::optional<EdgeId> next;
+        std::optional<ChoiceId> choice_id;
     };
 
     ygg::SegmentedVector<SearchNode<Kind>>& m_nodes;
-    const std::vector<Predecessor<Kind>>& m_predecessors;
+    const Predecessors<Kind>& m_predecessors;
     std::vector<State> m_states;
     std::vector<Dependency> m_dependencies;
-    std::vector<bool> m_satisfied_choices;
+    ChoiceProofs m_choice_proofs;
     std::vector<ProgramStateView<Kind>> m_ready;
 
 public:
-    ProofPropagation(ygg::SegmentedVector<SearchNode<Kind>>& nodes, const std::vector<Predecessor<Kind>>& predecessors) :
-        m_nodes(nodes),
-        m_predecessors(predecessors)
-    {
-    }
+    ProofPropagation(ygg::SegmentedVector<SearchNode<Kind>>& nodes, const Predecessors<Kind>& predecessors) : m_nodes(nodes), m_predecessors(predecessors) {}
 
     /// Each enabled Choose is a distinct requirement, including an empty one that can never succeed.
-    std::size_t add_choice(ProgramStateView<Kind> state)
+    ChoiceId add_choice(ProgramStateView<Kind> state)
     {
         auto& proof = state_for(state);
         assert(!proof.sealed);
         ++proof.remaining;
-        const auto index = m_satisfied_choices.size();
-        m_satisfied_choices.push_back(false);
-        return index;
+        return m_choice_proofs.create();
     }
 
-    bool choice_succeeded(std::size_t choice) const { return m_satisfied_choices[choice]; }
+    bool choice_succeeded(ChoiceId choice_id) const { return m_choice_proofs.is_satisfied(choice_id); }
 
     /// Register one diagnostic edge as an ordinary requirement or a binding of an existing Choose.
-    void add_transition(std::size_t edge, std::optional<std::size_t> choice)
+    void add_transition(EdgeId edge, std::optional<ChoiceId> choice_id)
     {
-        assert(edge == m_dependencies.size());
+        assert(static_cast<ygg::uint_t>(edge) == m_dependencies.size());
         const auto& transition = m_predecessors[edge];
-        if (!choice)
+        if (!choice_id)
         {
             auto& source = state_for(transition.source);
             assert(!source.sealed);
             ++source.remaining;
         }
-        m_dependencies.push_back({ no_edge, choice });
+        m_dependencies.push_back({ std::nullopt, choice_id });
         if (m_nodes[ygg::uint_t(transition.target.get_index())].status == SearchStatus::SUCCESS)
         {
             // Its success event may still be queued. Credit now WITHOUT linking it again.
@@ -127,11 +119,11 @@ public:
         {
             if (stop())
                 return false;
-            for (auto edge = state_for(m_ready[i]).first_incoming; edge != no_edge; edge = m_dependencies[edge].next)
+            for (auto edge = state_for(m_ready[i]).first_incoming; edge; edge = m_dependencies[static_cast<ygg::uint_t>(*edge)].next)
             {
                 if (stop())
                     return false;
-                satisfy(edge);
+                satisfy(*edge);
             }
         }
         m_ready.clear();
@@ -146,14 +138,10 @@ private:
         return m_states[ygg::uint_t(state.get_index())];
     }
 
-    void satisfy(std::size_t edge)
+    void satisfy(EdgeId edge)
     {
-        if (const auto choice = m_dependencies[edge].choice)
-        {
-            if (m_satisfied_choices[*choice])
-                return;
-            m_satisfied_choices[*choice] = true;
-        }
+        if (const auto choice_id = m_dependencies[static_cast<ygg::uint_t>(edge)].choice_id; choice_id && !m_choice_proofs.satisfy(*choice_id))
+            return;
         const auto source = m_predecessors[edge].source;
         auto& state = state_for(source);
         assert(state.remaining != 0);

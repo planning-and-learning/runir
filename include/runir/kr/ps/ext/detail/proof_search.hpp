@@ -25,8 +25,8 @@ template<tyr::TaskKind Kind>
 struct SearchFrame
 {
     ProgramStateView<Kind> state;
-    std::size_t begin;
-    std::size_t next;
+    EdgeId begin;
+    EdgeId next;
 };
 
 /// DFS schedules generation; ProofPropagation resolves the AND/OR dependencies independently.
@@ -67,11 +67,11 @@ depth_first_search(ExecutionState<Kind, Unsolvability>& execution, ProgramStateV
                 continue;
             }
             node.status = SearchStatus::ACTIVE;
-            const auto begin = execution.predecessors().size();
+            const auto begin = execution.predecessors().end_id();
             if (const auto limit = execution.expand(state))
                 return *limit;
             // Snapshot ordinary edges before any lazy bindings are recorded for this state.
-            stack.push({ state, begin, execution.predecessors().size() });
+            stack.push({ state, begin, execution.predecessors().end_id() });
             continue;
         }
 
@@ -82,7 +82,8 @@ depth_first_search(ExecutionState<Kind, Unsolvability>& execution, ProgramStateV
         auto& frame = stack.top();
         if (frame.next != frame.begin)
         {
-            next = execution.predecessors()[--frame.next].target;
+            frame.next = Predecessors<Kind>::previous(frame.next);
+            next = execution.predecessors()[frame.next].target;
             continue;
         }
 
@@ -90,12 +91,12 @@ depth_first_search(ExecutionState<Kind, Unsolvability>& execution, ProgramStateV
         if (!choices.empty() && choices.top().state == frame.state)
         {
             const auto& choice = choices.top();
-            if (!execution.proof().choice_succeeded(choice.obligation))
+            if (!execution.proof().choice_succeeded(choice.choice_id))
             {
                 if (const auto step = execution.next_binding())
                 {
                     const auto non_singleton = std::visit([](const auto& binding) { return binding.has_alternatives(); }, choice.choice);
-                    if (const auto limit = execution.record_transition(frame.state, *step, non_singleton, choice.obligation))
+                    if (const auto limit = execution.record_transition(frame.state, *step, non_singleton, choice.choice_id))
                         return *limit;
                     next = step->get_target();
                     continue;

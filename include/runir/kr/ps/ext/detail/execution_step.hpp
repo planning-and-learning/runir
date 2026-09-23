@@ -4,6 +4,7 @@
 #include "runir/datasets/state_graph.hpp"
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
+#include "runir/kr/ps/ext/detail/choice_proofs.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/program_executor_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
@@ -111,8 +112,8 @@ struct ChoiceFrame
 {
     ProgramStateView<Kind> state;
     std::variant<Choice<runir::kr::dl::ConceptTag>, Choice<runir::kr::dl::RoleTag>> choice;
-    // Stable OR requirement; its proof survives after this cursor has been popped.
-    std::size_t obligation;
+    // Identifies the persistent proof flag for the bindings produced by this frame.
+    ChoiceId choice_id;
 };
 
 }  // namespace runir::kr::ps::ext::detail

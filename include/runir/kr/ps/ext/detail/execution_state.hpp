@@ -31,7 +31,7 @@ private:
     const std::optional<ygg::CountdownWatch>& m_stopwatch;
 
     ygg::SegmentedVector<SearchNode<Kind>> m_nodes;
-    std::vector<Predecessor<Kind>> m_predecessors;
+    Predecessors<Kind> m_predecessors;
     ProofPropagation<Kind> m_proof { m_nodes, m_predecessors };
     std::size_t m_num_reached = 0;
     std::stack<ChoiceFrame<Kind>, std::vector<ChoiceFrame<Kind>>> m_choices;
@@ -80,7 +80,7 @@ public:
     std::optional<ProgramProofStatus> record_transition(ProgramStateView<Kind> source,
                                                         const ProgramStep<Kind>& step,
                                                         bool non_singleton_choice = false,
-                                                        std::optional<std::size_t> choice = std::nullopt)
+                                                        std::optional<ChoiceId> choice_id = std::nullopt)
     {
         const auto depth = search_node(source).choice_depth + ygg::uint_t(non_singleton_choice);
         const auto target = step.get_target();
@@ -90,15 +90,14 @@ public:
             return ProgramProofStatus::OUT_OF_STATES;
         const auto& transition = step.get_state_transition();
         const auto action = transition ? std::optional(transition->action) : std::nullopt;
-        const auto edge = m_predecessors.size();
-        m_predecessors.push_back({ source, target, action, step.rule });
+        const auto edge = m_predecessors.append({ source, target, action, step.rule });
         if (created)
         {
             node.parent_state = source;
             node.action = action;
             node.choice_depth = depth;
         }
-        m_proof.add_transition(edge, choice);
+        m_proof.add_transition(edge, choice_id);
         return std::nullopt;
     }
 
@@ -153,8 +152,8 @@ private:
     {
         if (choice.exhausted())
             search_node(state).is_deadend = true;
-        const auto obligation = m_proof.add_choice(state);
-        m_choices.push({ state, std::move(choice), obligation });
+        const auto choice_id = m_proof.add_choice(state);
+        m_choices.push({ state, std::move(choice), choice_id });
         return std::nullopt;
     }
 
