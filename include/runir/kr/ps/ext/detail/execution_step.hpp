@@ -119,6 +119,13 @@ struct Choice
     }
 };
 
+template<tyr::TaskKind Kind>
+struct ChoiceFrame
+{
+    ygg::Index<ProgramState<Kind>> state;
+    std::variant<Choice<runir::kr::dl::ConceptTag>, Choice<runir::kr::dl::RoleTag>> choice;
+};
+
 inline ProgramProofStatus translate_proof_status(ProgramOutcome status)
 {
     switch (status)

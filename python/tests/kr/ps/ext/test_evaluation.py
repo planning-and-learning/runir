@@ -476,10 +476,6 @@ def test_choose_search_statistics_are_read_only(
     assert result.statistics.num_expanded == 5
     assert result.statistics.num_generated == 5
     assert result.statistics.choice_depth == 1
-    assert result.statistics.max_choice_depth == 1
-    assert result.statistics.num_choice_points == 1
-    assert result.statistics.num_binding_attempts == 2
-    assert result.statistics.num_backtracks == 1
-    for name in ("num_expanded", "num_generated", "choice_depth", "max_choice_depth", "num_choice_points", "num_binding_attempts", "num_backtracks"):
+    for name in ("num_expanded", "num_generated", "choice_depth"):
         with pytest.raises(AttributeError):
             setattr(result.statistics, name, 99)

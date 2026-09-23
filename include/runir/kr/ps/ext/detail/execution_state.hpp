@@ -1,37 +1,25 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_EXECUTION_STATE_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_EXECUTION_STATE_HPP_
 
-#include "runir/kr/ps/ext/detail/execution_attempt.hpp"
-#include "runir/kr/ps/ext/detail/execution_frontier.hpp"
+#include "runir/kr/ps/ext/detail/proof_analysis.hpp"
 #include "runir/kr/ps/ext/detail/proof_graph.hpp"
 #include "runir/kr/ps/ext/detail/search_space.hpp"
 #include "runir/kr/ps/ext/successor_expander.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <optional>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
+#include <vector>
 #include <yggdrasil/core/chrono.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
 
-/// Independent frontier and attempt snapshots. Restore nested choices in LIFO order.
-template<tyr::TaskKind Kind>
-struct ExecutionCheckpoint
-{
-    typename ExecutionFrontier<Kind>::Checkpoint frontier;
-    typename ExecutionAttempt<Kind>::Checkpoint attempt;
-};
-
-/// Shared search data and reversible bookkeeping, independent of binding selection and traversal policy.
+/// Discovery and first predecessors are permanent; Choose cursors never require state rollback.
 template<tyr::TaskKind Kind, typename Unsolvability>
 class ExecutionState
 {
-public:
-    using Work = typename ExecutionFrontier<Kind>::Work;
-
 private:
     runir::kr::TaskContextPtr<Kind> m_task_context;
     const ProgramSearchOptions<Kind>& m_options;
@@ -44,12 +32,13 @@ private:
     std::optional<ygg::CountdownWatch> m_stopwatch;
 
     ygg::SegmentedVector<SearchNode<Kind>> m_nodes;
-    ygg::UnorderedSet<Predecessor<Kind>> m_predecessors;
+    std::vector<Predecessor<Kind>> m_predecessors;
     std::size_t m_num_reached = 0;
     std::optional<ygg::Index<ProgramState<Kind>>> m_initial;
     std::optional<ygg::Index<ProgramState<Kind>>> m_goal;
-    ExecutionFrontier<Kind> m_frontier;
-    ExecutionAttempt<Kind> m_attempt;
+    std::vector<ygg::Index<ProgramState<Kind>>> m_frontier;
+    std::vector<ChoiceFrame<Kind>> m_choices;
+    ProofAnalysis<Kind> m_analysis;
     ProgramSearchStatistics m_statistics;
 
 public:
@@ -69,15 +58,11 @@ public:
 
     bool initialize()
     {
-        if (!m_initial)
-        {
-            const auto initial = m_expander.initial_state(m_initial_node.unpack());
-            if (!discover(initial))
-                return false;
-            m_initial = initial.get_index();
-            search_node(*m_initial).metric = m_initial_node.get_metric();
-            push(*m_initial);
-        }
+        const auto initial = m_expander.initial_state(m_initial_node.unpack());
+        if (!discover(initial))
+            return false;
+        m_initial = initial.get_index();
+        m_frontier.push_back(*m_initial);
         return true;
     }
 
@@ -85,101 +70,90 @@ public:
     bool universal() const { return m_options.universal; }
     SuccessorExpander<Kind>& expander() { return m_expander; }
     ProgramSearchStatistics& statistics() { return m_statistics; }
+    auto& choices() { return m_choices; }
+    bool choice_is_proved(std::size_t index) const { return m_analysis.choice_is_proved(index); }
     ProgramStateView<Kind> state_view(ygg::Index<ProgramState<Kind>> state) const { return { state, *m_task_context->execution_repository }; }
     SearchNode<Kind>& search_node(ygg::Index<ProgramState<Kind>> state) { return get_or_create_search_node(state, m_nodes); }
 
     bool has_pending() const { return !m_frontier.empty(); }
-    void push(Work work) { m_frontier.push(std::move(work)); }
-    Work pop() { return m_frontier.pop(); }
 
-    ExecutionCheckpoint<Kind> checkpoint() const { return { m_frontier.checkpoint(), m_attempt.checkpoint() }; }
-
-    void restore(const ExecutionCheckpoint<Kind>& checkpoint)
+    ygg::Index<ProgramState<Kind>> pop()
     {
-        m_frontier.restore(checkpoint.frontier);
-        m_attempt.restore(checkpoint.attempt, m_nodes);
+        const auto state = m_frontier.back();
+        m_frontier.pop_back();
+        return state;
     }
 
-    void mark_deadend(ygg::Index<ProgramState<Kind>> state)
+    void mark_deadend(ygg::Index<ProgramState<Kind>> state) { search_node(state).is_deadend = true; }
+    void mark_open(ygg::Index<ProgramState<Kind>> state) { search_node(state).is_open = true; }
+
+    template<runir::kr::dl::CategoryTag Category>
+    void add_choice(ygg::Index<ProgramState<Kind>> state, Choice<Category> choice)
     {
-        search_node(state).is_deadend = true;
-        m_attempt.mark_failed();
+        if (choice.exhausted())
+            mark_deadend(state);
+        m_choices.push_back({ state, std::move(choice) });
     }
 
-    void mark_open(ygg::Index<ProgramState<Kind>> state)
+    std::optional<ProgramProofStatus>
+    record_transition(ProgramStateView<Kind> source, const ProgramStep<Kind>& step, std::optional<std::size_t> choice = std::nullopt)
     {
-        search_node(state).is_open = true;
-        m_attempt.mark_failed();
-    }
-
-    std::optional<ProgramProofStatus> record_transition(ProgramStateView<Kind> source, const ProgramStep<Kind>& step, ygg::uint_t weight)
-    {
-        const auto& source_node = m_nodes[ygg::uint_t(source.get_index())];
-        const auto depth = source_node.choice_depth + weight;
-        m_statistics.max_choice_depth = std::max(m_statistics.max_choice_depth, depth);
-        const auto target = step.get_target().get_index();
-        if (!discover(step.get_target()))
+        const auto weight = choice ? std::visit([](const auto& value) { return ygg::uint_t(value.has_alternatives()); }, m_choices[*choice].choice) : 0;
+        const auto depth = search_node(source.get_index()).choice_depth + weight;
+        const auto created = discover(step.get_target());
+        if (!created)
             return ProgramProofStatus::OUT_OF_STATES;
+        const auto target = step.get_target().get_index();
         const auto& transition = step.get_state_transition();
-        m_predecessors.emplace(source.get_index(),
-                               target,
-                               transition ? std::optional(transition->action) : std::nullopt,
-                               transition ? transition->cost : ygg::float_t(0),
-                               step.rule,
-                               m_predecessors.size());
-        m_attempt.record_transition(source.get_index(), target, weight);
-        auto& node = get_or_create_search_node(target, m_nodes);
-        // The root has no predecessor; every other scheduled state has one until rollback.
-        if (target != *m_initial && node.parent_state == ygg::Index<ProgramState<Kind>>::max())
+        m_predecessors.push_back({ source.get_index(), target, transition ? std::optional(transition->action) : std::nullopt, step.rule, choice });
+        if (*created)
         {
+            auto& node = search_node(target);
             node.parent_state = source.get_index();
             node.planning_successor = step.planning_successor;
-            node.metric = step.planning_successor ? step.planning_successor->node.get_metric() : source_node.metric;
             node.choice_depth = depth;
-            m_attempt.record_reached(target);
-            push(target);
+            m_frontier.push_back(target);
         }
         return std::nullopt;
     }
 
     void select_goal(ygg::Index<ProgramState<Kind>> state)
     {
-        m_goal = state;
-        m_statistics.choice_depth = m_attempt.assess(m_nodes.size(), m_statistics).value();
+        if (!m_goal)
+            m_goal = state;
     }
 
-    ProgramProofStatus assess_attempt()
+    bool assess()
     {
-        const auto depth = m_attempt.assess(m_nodes.size(), m_statistics);
-        if (m_attempt.has_failed() || !depth)
-            return ProgramProofStatus::FAILURE;
-        m_statistics.choice_depth = *depth;
-        return ProgramProofStatus::SUCCESS;
+        return m_analysis.assess(m_nodes, m_predecessors, m_choices, *m_initial, [&] { return out_of_time(); });
     }
 
     ProgramProofResults<Kind> finish(ProgramProofStatus status)
     {
-        if (status != ProgramProofStatus::SUCCESS)
-            m_attempt.assess(m_nodes.size(), m_statistics);
         auto result = ProgramProofResults<Kind> {};
         result.task_context_owner = m_task_context;
         result.status = status;
         build_proof_graph(result, m_nodes, m_predecessors, m_initial);
         if (status == ProgramProofStatus::SUCCESS && m_goal)
-            result.plan = extract_total_ordered_plan(*m_goal, m_nodes, m_initial_node);
+        {
+            m_statistics.choice_depth = search_node(*m_goal).choice_depth;
+            if (!universal())
+                result.plan = extract_total_ordered_plan(*m_goal, m_nodes, m_initial_node, *m_task_context);
+        }
         result.statistics = m_statistics;
         return result;
     }
 
 private:
-    bool discover(ProgramStateView<Kind> state)
+    std::optional<bool> discover(ProgramStateView<Kind> state)
     {
-        auto& node = get_or_create_search_node(state.get_index(), m_nodes);
-        if (node.step != SearchNode<Kind>::unreached)
-            return true;
-        if (m_num_reached >= m_options.max_num_states)
+        const auto index = state.get_index();
+        auto& node = search_node(index);
+        if (m_initial == index || node.parent_state != ygg::Index<ProgramState<Kind>>::max())
             return false;
-        node.step = m_num_reached++;
+        if (m_num_reached >= m_options.max_num_states)
+            return std::nullopt;
+        ++m_num_reached;
         const auto planning_state = state.get_state();
         node.is_goal = m_static_goal_satisfied && m_goal_strategy.is_dynamic_goal_satisfied(m_initial_planning_state, planning_state);
         node.is_unsolvable = !node.is_goal && m_classifier.is_unsolvable(planning_state);

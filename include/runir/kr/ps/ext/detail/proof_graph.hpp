@@ -6,7 +6,6 @@
 #include "runir/kr/ps/ext/program_executor_data.hpp"
 #include "runir/kr/task_context.hpp"
 
-#include <algorithm>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -15,7 +14,6 @@
 #include <utility>
 #include <vector>
 #include <yggdrasil/containers/segmented_vector.hpp>
-#include <yggdrasil/containers/unordered_set.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -23,25 +21,20 @@ namespace runir::kr::ps::ext::detail
 template<tyr::TaskKind Kind>
 void build_proof_graph(ProgramProofResults<Kind>& result,
                        const ygg::SegmentedVector<SearchNode<Kind>>& nodes,
-                       const ygg::UnorderedSet<Predecessor<Kind>>& predecessors,
+                       const std::vector<Predecessor<Kind>>& predecessors,
                        std::optional<ygg::Index<ProgramState<Kind>>> initial)
 {
     using VertexLabel = ProgramProofVertexLabel<Kind>;
     using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel>;
     constexpr auto no_vertex = std::numeric_limits<graphs::VertexIndex>::max();
-    constexpr auto unreached = SearchNode<Kind>::unreached;
 
     auto graph_indices = std::vector<graphs::VertexIndex>(nodes.size(), no_vertex);
     auto states = std::vector<ygg::Index<ProgramState<Kind>>> {};
-    auto records = std::vector<const Predecessor<Kind>*> {};
+    if (initial)
+        states.push_back(*initial);
     for (std::size_t i = 0; i < nodes.size(); ++i)
-        if (nodes[i].step != unreached)
+        if (nodes[i].parent_state != ygg::Index<ProgramState<Kind>>::max())
             states.emplace_back(static_cast<ygg::uint_t>(i));
-    for (const auto& predecessor : predecessors)
-        records.push_back(&predecessor);
-
-    std::ranges::sort(states, {}, [&](auto state) { return nodes[ygg::uint_t(state)].step; });
-    std::ranges::sort(records, {}, [](const auto* predecessor) { return predecessor->order; });
     auto vertices = std::vector<VertexLabel> {};
     vertices.reserve(states.size());
     result.deadend_states.clear();
@@ -62,15 +55,15 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
                               node.is_unsolvable);
     }
     auto edges = std::vector<Edge> {};
-    edges.reserve(records.size());
-    for (const auto* predecessor : records)
+    edges.reserve(predecessors.size());
+    for (const auto& predecessor : predecessors)
     {
         auto label = ProgramProofEdgeLabel {};
-        if (predecessor->action)
-            label.state_transition = ProgramProofStateTransition(*predecessor->action, predecessor->cost);
-        if (predecessor->rule)
-            label.rule = *predecessor->rule;
-        edges.emplace_back(graph_indices[ygg::uint_t(predecessor->source)], graph_indices[ygg::uint_t(predecessor->target)], std::move(label));
+        if (predecessor.action)
+            label.state_transition = ProgramProofStateTransition(*predecessor.action, ygg::float_t(1));
+        if (predecessor.rule)
+            label.rule = *predecessor.rule;
+        edges.emplace_back(graph_indices[ygg::uint_t(predecessor.source)], graph_indices[ygg::uint_t(predecessor.target)], std::move(label));
     }
     result.graph = std::make_shared<ProgramProofGraph<Kind>>(std::span<const VertexLabel>(vertices), std::span<const Edge>(edges));
     result.cycle = graphs::find_cycle(*result.graph);

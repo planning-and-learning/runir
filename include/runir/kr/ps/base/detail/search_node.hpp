@@ -3,8 +3,6 @@
 
 #include "runir/kr/ps/base/rule_view.hpp"
 
-#include <cstddef>
-#include <limits>
 #include <optional>
 #include <tyr/formalism/binding_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
@@ -18,11 +16,8 @@ namespace runir::kr::ps::base::detail
 template<tyr::TaskKind Kind>
 struct SearchNode
 {
-    static constexpr auto unreached = std::numeric_limits<std::size_t>::max();
-
     std::optional<tyr::planning::PackedNode<Kind>> parent_node = std::nullopt;
     std::optional<tyr::formalism::planning::ActionBindingView> action = std::nullopt;
-    std::size_t step = unreached;
     bool is_goal = false;
     bool is_unsolvable = false;
     bool is_deadend = false;
@@ -44,7 +39,6 @@ struct Predecessor
     ygg::Index<tyr::planning::State<Kind>> source;
     ygg::Index<tyr::planning::State<Kind>> target;
     tyr::formalism::planning::ActionBindingView action;
-    ygg::float_t cost;
     RuleView rule;
 };
 

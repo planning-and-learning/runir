@@ -322,9 +322,6 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     assert isinstance(search_result.plan, GroundPackedPlan)
     assert search_result.plan.get_length() == 4
     assert search_result.statistics.choice_depth == 0
-    assert search_result.statistics.num_choice_points == 0
-    assert search_result.statistics.num_binding_attempts == 0
-    assert search_result.statistics.num_backtracks == 0
 
     classifier_dl_repository = task_context.domain_context.uns_repository.get_dl_repository()
     classifier_repository = task_context.domain_context.uns_repository
@@ -349,9 +346,6 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     assert not classified_label.is_alive
     assert classified_label.is_unsolvable
     assert classified_result.statistics.choice_depth == 0
-    assert classified_result.statistics.num_choice_points == 0
-    assert classified_result.statistics.num_binding_attempts == 0
-    assert classified_result.statistics.num_backtracks == 0
 
     proof_options = ext.GroundProgramSearchOptions()
     proof_options.universal = True
@@ -456,9 +450,6 @@ def test_lifted_executor_binding_reports_failure_status() -> None:
     assert result.status == ext.ProgramProofStatus.FAILURE
     assert not result.is_successful()
     assert result.statistics.choice_depth == 0
-    assert result.statistics.num_choice_points == 0
-    assert result.statistics.num_binding_attempts == 0
-    assert result.statistics.num_backtracks == 0
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])

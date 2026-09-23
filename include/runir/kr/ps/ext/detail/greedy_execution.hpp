@@ -11,9 +11,6 @@
 namespace runir::kr::ps::ext::detail
 {
 
-template<tyr::TaskKind Kind>
-using ExecutionOutcome = std::variant<PendingChoice<Kind>, ProgramProofStatus>;
-
 template<tyr::TaskKind Kind, typename Unsolvability>
 std::optional<ProgramProofStatus>
 apply_greedy_step(ExecutionState<Kind, Unsolvability>& execution, ProgramStateView<Kind> source, const ProgramStep<Kind>& step)
@@ -23,41 +20,27 @@ apply_greedy_step(ExecutionState<Kind, Unsolvability>& execution, ProgramStateVi
     if (step.status == ProgramOutcome::OUT_OF_STATES)
         return ProgramProofStatus::OUT_OF_STATES;
     if (step.status == ProgramOutcome::APPLIED || step.status == ProgramOutcome::RESTORED_CALLER)
-        return execution.record_transition(source, step, 0);
+        return execution.record_transition(source, step);
     execution.mark_open(source.get_index());
     return std::nullopt;
 }
 
-/// Execute ordinary work until a pending choice, a completed attempt, or a resource limit.
+/// Drain ordinary states once, retaining encountered Choose cursors separately.
 template<tyr::TaskKind Kind, typename Unsolvability>
-ExecutionOutcome<Kind> run_greedy(ExecutionState<Kind, Unsolvability>& execution)
+std::optional<ProgramProofStatus> run_greedy(ExecutionState<Kind, Unsolvability>& execution)
 {
-    if (!execution.initialize())
-        return ProgramProofStatus::OUT_OF_STATES;
-    if (execution.out_of_time())
-        return ProgramProofStatus::OUT_OF_TIME;
-
     while (execution.has_pending())
     {
         if (execution.out_of_time())
             return ProgramProofStatus::OUT_OF_TIME;
 
-        const auto pending = execution.pop();
-        if (const auto* choice = std::get_if<PendingChoice<Kind>>(&pending))
-        {
-            if (execution.out_of_time())
-                return ProgramProofStatus::OUT_OF_TIME;
-            return *choice;
-        }
-        const auto state = execution.state_view(std::get<ygg::Index<ProgramState<Kind>>>(pending));
-        auto& node = execution.search_node(state.get_index());
+        const auto state = execution.state_view(execution.pop());
+        const auto& node = execution.search_node(state.get_index());
         if (node.is_goal)
         {
+            execution.select_goal(state.get_index());
             if (!execution.universal())
-            {
-                execution.select_goal(state.get_index());
                 return ProgramProofStatus::SUCCESS;
-            }
             continue;
         }
         if (node.is_unsolvable)
@@ -70,7 +53,7 @@ ExecutionOutcome<Kind> run_greedy(ExecutionState<Kind, Unsolvability>& execution
         auto limit = std::optional<ProgramProofStatus> {};
         execution.expander().for_each_successor(
             state,
-            tyr::planning::Node<Kind>(state.get_state(), node.metric),
+            tyr::planning::Node<Kind>(state.get_state(), 0),
             execution.statistics(),
             [&](const typename SuccessorExpander<Kind>::Expansion& expansion)
             {
@@ -85,21 +68,18 @@ ExecutionOutcome<Kind> run_greedy(ExecutionState<Kind, Unsolvability>& execution
                         if constexpr (std::same_as<std::decay_t<decltype(value)>, ProgramStep<Kind>>)
                             limit = apply_greedy_step(execution, state, value);
                         else
-                            execution.push(PendingChoice<Kind> { state.get_index(), value });
+                            execution.add_choice(state.get_index(), value);
                     },
                     expansion);
                 return !limit && execution.universal();
             },
             [&] { return execution.out_of_time(); });
         if (limit)
-            return *limit;
-        if (execution.out_of_time())
-            return ProgramProofStatus::OUT_OF_TIME;
+            return limit;
     }
-
     if (execution.out_of_time())
         return ProgramProofStatus::OUT_OF_TIME;
-    return execution.assess_attempt();
+    return std::nullopt;
 }
 
 }  // namespace runir::kr::ps::ext::detail

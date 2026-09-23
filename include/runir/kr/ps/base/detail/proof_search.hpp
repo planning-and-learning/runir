@@ -9,7 +9,6 @@
 #include "runir/kr/ps/unsolvability.hpp"
 #include "runir/kr/task_context.hpp"
 
-#include <limits>
 #include <optional>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
@@ -24,12 +23,9 @@ namespace detail
 {
 
 template<tyr::TaskKind Kind, typename Unsolvability>
-auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
-                   SketchView sketch,
-                   const SketchSearchOptions<Kind>& options,
-                   Unsolvability& classifier) -> SketchProofResults<Kind>
+auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchView sketch, const SketchSearchOptions<Kind>& options, Unsolvability& classifier)
+    -> SketchProofResults<Kind>
 {
-    constexpr auto unreached = SearchNode<Kind>::unreached;
     auto& task_context = *task_context_owner;
     const auto& search_context = *task_context.search_context;
     auto result = SketchProofResults<Kind> {};
@@ -53,12 +49,12 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
     {
         const auto index = state.get_index();
         const auto position = std::size_t(ygg::uint_t(index));
-        if (position < nodes.size() && nodes[position].step != unreached)
+        if ((num_reached > 0 && index == initial_state.get_index()) || (position < nodes.size() && nodes[position].parent_node))
             return std::pair(index, false);
         if (num_reached >= options.max_num_states)
             return std::nullopt;
         auto& node = detail::get_or_create_search_node(index, nodes);
-        node.step = num_reached++;
+        ++num_reached;
         node.is_goal = is_goal(state);
         node.is_unsolvable = !node.is_goal && classifier.is_unsolvable(state);
         return std::pair(index, true);
@@ -67,7 +63,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
     auto finish = [&](SketchProofStatus status, std::optional<tyr::planning::PackedNode<Kind>> goal = std::nullopt)
     {
         result.status = status;
-        detail::build_proof_graph<Kind>(result, nodes, predecessors, initial_state.get_index());
+        detail::build_proof_graph<Kind>(result, nodes, predecessors, num_reached > 0 ? std::optional(initial_state.get_index()) : std::nullopt);
         if (result.status == SketchProofStatus::SUCCESS && (!result.deadend_states.empty() || !result.open_states.empty() || !result.cycle.empty()))
             result.status = SketchProofStatus::FAILURE;
         if (goal && result.is_successful())
@@ -119,7 +115,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
                 return false;
             }
             const auto [target, created] = *target_result;
-            predecessors.push_back({ source, target, successor.label, ygg::float_t(1), rule });
+            predecessors.push_back({ source, target, successor.label, rule });
             if (created)
             {
                 auto& target_node = detail::get_or_create_search_node(target, nodes);

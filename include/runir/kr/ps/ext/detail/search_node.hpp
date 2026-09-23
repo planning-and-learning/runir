@@ -5,15 +5,10 @@
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 
 #include <cstddef>
-#include <limits>
 #include <optional>
-#include <tuple>
 #include <tyr/formalism/binding_view.hpp>
-#include <tyr/formalism/planning/declarations.hpp>
 #include <tyr/planning/node.hpp>
-#include <utility>
 #include <yggdrasil/containers/segmented_vector.hpp>
-#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -21,16 +16,11 @@ namespace runir::kr::ps::ext::detail
 template<tyr::TaskKind Kind>
 struct SearchNode
 {
-    static constexpr auto unreached = std::numeric_limits<std::size_t>::max();
-
-    // First incoming transition in the current attempt; cleared on rollback.
-    // Except for the initial state, an absent parent means the state is outside the attempt.
+    // First arrival is permanent. The initial state is tracked separately.
     ygg::Index<ProgramState<Kind>> parent_state = ygg::Index<ProgramState<Kind>>::max();
     std::optional<tyr::planning::PackedLabeledNode<Kind>> planning_successor = std::nullopt;
-    // Path data is assigned when this state is scheduled in the current attempt.
-    ygg::float_t metric = 0;
+    // Number of non-singleton Choose bindings on the first-parent path.
     ygg::uint_t choice_depth = 0;
-    std::size_t step = unreached;
     bool is_goal = false;
     bool is_unsolvable = false;
     bool is_deadend = false;
@@ -47,31 +37,14 @@ SearchNode<Kind>& get_or_create_search_node(ygg::Index<ProgramState<Kind>> state
 }
 
 template<tyr::TaskKind Kind>
-struct Predecessor : ygg::comparison::Mixin<Predecessor<Kind>>
+struct Predecessor
 {
     ygg::Index<ProgramState<Kind>> source;
     ygg::Index<ProgramState<Kind>> target;
     std::optional<tyr::formalism::planning::ActionBindingView> action;
-    ygg::float_t cost;
     std::optional<RuleVariantView> rule;
-    std::size_t order;
-
-    Predecessor(ygg::Index<ProgramState<Kind>> source_,
-                ygg::Index<ProgramState<Kind>> target_,
-                std::optional<tyr::formalism::planning::ActionBindingView> action_,
-                ygg::float_t cost_,
-                std::optional<RuleVariantView> rule_,
-                std::size_t order_) :
-        source(source_),
-        target(target_),
-        action(action_),
-        cost(cost_),
-        rule(rule_),
-        order(order_)
-    {
-    }
-
-    auto identifying_members() const noexcept { return std::tie(source, target, action, cost, rule); }
+    // Bindings of the same Choose rule at the same state share one existential obligation.
+    std::optional<std::size_t> choice = std::nullopt;
 };
 
 }  // namespace runir::kr::ps::ext::detail

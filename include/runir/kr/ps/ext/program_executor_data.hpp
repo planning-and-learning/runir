@@ -55,26 +55,17 @@ struct ProgramSearchOptions
 
 struct ProgramSearchStatistics
 {
-    /// Extended-state expansions started, including revisits after backtracking and those yielding no successors.
+    /// Distinct extended-state expansions started, including those yielding no successors.
+    /// Each program state is expanded at most once per search.
     uint64_t num_expanded = 0;
     /// Extended successors emitted before selection and duplicate detection; Choose emits only attempted bindings.
     /// Counts applied rules and caller returns, not rejected planning candidates or failure markers.
     /// The initial state is excluded; both counters retain work from abandoned branches and resource-limited searches.
     uint64_t num_generated = 0;
 
-    /// Successful execution's non-singleton Choose count; universal mode takes the maximum over successful proof paths.
-    /// Counts bindings after effect filtering, excludes abandoned attempts, and is zero unless the search succeeds.
+    /// Non-singleton Choose count on the first discovered goal's predecessor path.
+    /// Counts bindings after effect filtering and is zero unless the search succeeds.
     ygg::uint_t choice_depth = 0;
-    /// Maximum non-singleton Choose depth reached, including abandoned attempts and resource-limited searches.
-    /// Acyclic attempts include shared continuations; cyclic attempts retain the depth actually traversed.
-    ygg::uint_t max_choice_depth = 0;
-    /// Non-singleton Choose frames entered across the whole search, including abandoned and re-entered frames.
-    ygg::uint_t num_choice_points = 0;
-    /// Admitted bindings attempted, including singleton Choose bodies; empty Choose bodies contribute zero.
-    ygg::uint_t num_binding_attempts = 0;
-    /// Attempted binding continuations undone after failure, including singleton and exhausted frames.
-    /// These search-effort counters retain partial counts on failure or resource limits.
-    ygg::uint_t num_backtracks = 0;
 };
 
 template<tyr::TaskKind Kind>

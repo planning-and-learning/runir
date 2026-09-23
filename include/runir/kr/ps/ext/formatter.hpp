@@ -497,7 +497,7 @@ struct fmt::formatter<runir::kr::ps::ext::ProgramProofResults<Kind>>
     {
         return fmt::format_to(context.out(),
                               "ProgramProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={}, "
-                              "num_expanded={}, num_generated={}, choice_depth={}, max_choice_depth={}, num_choice_points={}, num_binding_attempts={}, num_backtracks={})",
+                              "num_expanded={}, num_generated={}, choice_depth={})",
                               runir::kr::ps::ext::to_string(result.status),
                               result.graph ? result.graph->get_num_vertices() : 0,
                               result.graph ? result.graph->get_num_edges() : 0,
@@ -506,11 +506,7 @@ struct fmt::formatter<runir::kr::ps::ext::ProgramProofResults<Kind>>
                               result.cycle.size(),
                               result.statistics.num_expanded,
                               result.statistics.num_generated,
-                              result.statistics.choice_depth,
-                              result.statistics.max_choice_depth,
-                              result.statistics.num_choice_points,
-                              result.statistics.num_binding_attempts,
-                              result.statistics.num_backtracks);
+                              result.statistics.choice_depth);
     }
 };
 

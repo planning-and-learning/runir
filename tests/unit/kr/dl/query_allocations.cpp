@@ -302,7 +302,7 @@ TEST(RunirSearch, ProgramSearchAllocationsGrowWithContainerCapacity)
                 ASSERT_TRUE(result.is_successful());
                 EXPECT_EQ(result.statistics.num_expanded, length + 2);
                 EXPECT_EQ(result.statistics.num_generated, length + 2);
-                EXPECT_EQ(result.statistics.num_choice_points, choose ? length : 0);
+                EXPECT_EQ(result.statistics.choice_depth, choose ? length : 0);
             }
             // Eight times as many steps must not cause per-step or per-Choose allocations.
             // The allowance covers geometric growth of independent search/graph containers across allocators.
