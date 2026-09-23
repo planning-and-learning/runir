@@ -185,25 +185,23 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
     nb::class_<Expander>(m, (std::string(prefix) + "SuccessorExpander").c_str())
         .def(nb::init<runir::kr::TaskContextPtr<Kind>, ProgramView>(), "task_context"_a, "program"_a)
-        .def("initial_state", &Expander::initial_state, "node"_a, nb::keep_alive<0, 1>())
+        .def("initial_state", &Expander::initial_state, "state"_a, nb::keep_alive<0, 1>())
         .def(
             "for_each_successor",
             [](Expander& self,
                StateView state,
-               const tyr::planning::Node<Kind>& node,
                ProgramSearchStatistics& statistics,
                const std::function<bool(Expansion)>& emit,
                const std::function<bool()>& stop)
-            { return self.for_each_successor(state, node, statistics, emit, stop); },
+            { return self.for_each_successor(state, statistics, emit, stop); },
             "state"_a,
-            "node"_a,
             "statistics"_a,
             "emit"_a,
             "stop"_a)
-        .def("apply_choice", &Expander::template apply_choice<runir::kr::dl::ConceptTag>, "state"_a, "node"_a, "choice"_a, "statistics"_a)
-        .def("apply_choice", &Expander::template apply_choice<runir::kr::dl::RoleTag>, "state"_a, "node"_a, "choice"_a, "statistics"_a)
-        .def("matching_rule", &Expander::matching_rule, "state"_a, "node"_a, "successor"_a, nb::keep_alive<0, 1>())
-        .def("apply", &Expander::apply, "state"_a, "node"_a, "rule"_a, "successor"_a = std::nullopt);
+        .def("apply_choice", &Expander::template apply_choice<runir::kr::dl::ConceptTag>, "state"_a, "choice"_a, "statistics"_a)
+        .def("apply_choice", &Expander::template apply_choice<runir::kr::dl::RoleTag>, "state"_a, "choice"_a, "statistics"_a)
+        .def("matching_rule", &Expander::matching_rule, "state"_a, "successor"_a, nb::keep_alive<0, 1>())
+        .def("apply", &Expander::apply, "state"_a, "rule"_a, "successor"_a = std::nullopt);
 }
 
 }  // namespace

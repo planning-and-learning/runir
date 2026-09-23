@@ -480,7 +480,7 @@ def test_successor_callbacks_stop_and_own_their_native_steps(kind: str) -> None:
     )
     expander = expander_type(context, program)
     node = initial_node(context)
-    initial = expander.initial_state(node)
+    initial = expander.initial_state(node.get_state())
     statistics = ext.ProgramSearchStatistics()
     actual = []
 
@@ -488,7 +488,7 @@ def test_successor_callbacks_stop_and_own_their_native_steps(kind: str) -> None:
         actual.append(step)
         return True
 
-    assert not expander.for_each_successor(initial, node, statistics, emit, lambda: True)
+    assert not expander.for_each_successor(initial, statistics, emit, lambda: True)
     assert actual == []
     assert statistics.num_generated == statistics.num_expanded == 0
 
@@ -496,10 +496,10 @@ def test_successor_callbacks_stop_and_own_their_native_steps(kind: str) -> None:
         actual.append(step)
         return False
 
-    assert not expander.for_each_successor(initial, node, statistics, first, lambda: False)
+    assert not expander.for_each_successor(initial, statistics, first, lambda: False)
     assert len(actual) == statistics.num_generated == 1
     actual.clear()
-    assert expander.for_each_successor(initial, node, statistics, emit, lambda: False)
+    assert expander.for_each_successor(initial, statistics, emit, lambda: False)
     assert len(actual) > 1
     assert statistics.num_generated == len(actual) + 1
     assert statistics.num_expanded == 0
@@ -508,7 +508,7 @@ def test_successor_callbacks_stop_and_own_their_native_steps(kind: str) -> None:
     )
     assert Counter((step.state_transition.action, step.target.state.get_index()) for step in actual) == Counter(
         (step.label, step.node.get_state().get_index()) for step in expected
-        if expander.matching_rule(initial, node, step) is not None
+        if expander.matching_rule(initial, step) is not None
     )
     retained = actual[0]
     signature = (str(retained.state_transition.action), str(retained.target.state))
@@ -517,7 +517,7 @@ def test_successor_callbacks_stop_and_own_their_native_steps(kind: str) -> None:
     gc.collect()
 
     assert (str(retained.state_transition.action), str(retained.target.state)) == signature
-    assert retained.planning_successor.node.get_metric() == 1
+    assert retained.planning_successor.node.get_state().unpack() == retained.target.state
 
 
 def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
@@ -527,8 +527,8 @@ def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
     expander = ext.GroundSuccessorExpander(task_context, program)
-    initial = expander.initial_state(initial_node(task_context))
-    duplicate_initial = expander.initial_state(initial_node(task_context))
+    initial = expander.initial_state(initial_node(task_context).get_state())
+    duplicate_initial = expander.initial_state(initial_node(task_context).get_state())
     assert isinstance(initial, ext.GroundProgramState)
     assert initial.call_stack is None
     assert isinstance(initial.module_state, ext.GroundModuleState)
@@ -541,7 +541,7 @@ def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
     assert initial.module_state.arguments == duplicate_initial.module_state.arguments
     assert len({initial, duplicate_initial}) == 1
 
-    steps = collect_steps(expander, initial, initial_node(task_context))
+    steps = collect_steps(expander, initial)
     assert steps
     assert isinstance(steps[0], ext.GroundProgramExecutionStep)
     target = steps[0].target
@@ -567,7 +567,7 @@ def test_lifted_execution_views_and_proof_labels_survive_owner_destruction() -> 
     program = dl.parse_program(read_fixture("kr/ps/ext/execution/empty.program"), planning_domain, repository)
 
     expander = ext.LiftedSuccessorExpander(task_context, program)
-    initial = expander.initial_state(initial_node(task_context))
+    initial = expander.initial_state(initial_node(task_context).get_state())
     assert isinstance(initial, ext.LiftedProgramState)
     assert initial.call_stack is None
     assert isinstance(initial.module_state, ext.LiftedModuleState)

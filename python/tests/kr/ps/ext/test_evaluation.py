@@ -103,10 +103,10 @@ def _loaded_frame(kind: Literal["ground", "lifted"], source: str = PROGRAM):
     else:
         expander = ext.LiftedSuccessorExpander(task_context, program)
     node = initial_node(task_context)
-    initial = expander.initial_state(node)
-    child = collect_steps(expander, initial, node)[0].target
-    with_concept = collect_steps(expander, child, node)[0].target
-    loaded = collect_steps(expander, with_concept, node)[0].target
+    initial = expander.initial_state(node.get_state())
+    child = collect_steps(expander, initial)[0].target
+    with_concept = collect_steps(expander, child)[0].target
+    loaded = collect_steps(expander, with_concept)[0].target
     return task_context, program, expander, loaded
 
 
@@ -211,9 +211,9 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         numericals["argument_count"], dl_context
     )
     node = initial_node(task_context)
-    child = collect_steps(expander, expander.initial_state(node), node)[0].target
-    other_concept = collect_steps(expander, child, node)[1].target
-    other_frame = collect_steps(expander, other_concept, node)[0].target
+    child = collect_steps(expander, expander.initial_state(node.get_state()))[0].target
+    other_concept = collect_steps(expander, child)[1].target
+    other_frame = collect_steps(expander, other_concept)[0].target
     assert other_frame.state == loaded.state
     environment.get_dl_caches().clear(False)
     other_dl_context = environment.make_dl_context(other_frame)
@@ -224,7 +224,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
 
     moved = next(
         step.target
-        for step in collect_steps(expander, loaded, node)
+        for step in collect_steps(expander, loaded)
         if step.state_transition.action.get_relation().get_name() == "move"
         and step.state_transition.action.get_objects()[-1].get_name() == "roomb"
     )
@@ -289,7 +289,7 @@ def test_state_evaluation_contexts_borrow_distinct_call_arguments(
     kind: Literal["ground", "lifted"],
 ) -> None:
     task_context, program, expander, loaded = _loaded_frame(kind)
-    initial = expander.initial_state(initial_node(task_context))
+    initial = expander.initial_state(initial_node(task_context).get_state())
     environment = getattr(ext, f"{kind.title()}EvaluationEnvironment")(task_context, program)
     contexts = [
         environment.make_dl_context(loaded),
@@ -383,7 +383,7 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
     expander_type = ext.GroundSuccessorExpander if kind == "ground" else ext.LiftedSuccessorExpander
     expander = expander_type(task_context, program)
     node = initial_node(task_context)
-    child = collect_steps(expander, expander.initial_state(node), node)[0].target
+    child = collect_steps(expander, expander.initial_state(node.get_state()))[0].target
     statistics = ext.ProgramSearchStatistics()
 
     def bindings(state, choice_type):
@@ -394,7 +394,7 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
             return True
 
         generated = statistics.num_generated
-        assert expander.for_each_successor(state, node, statistics, emit, lambda: False)
+        assert expander.for_each_successor(state, statistics, emit, lambda: False)
         assert statistics.num_generated == generated
         choice, = choices
         assert isinstance(choice, choice_type)
@@ -405,7 +405,7 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
         for value in expected:
             assert not choice.exhausted()
             assert choice.current() == value
-            result.append(expander.apply_choice(state, node, choice, statistics))
+            result.append(expander.apply_choice(state, choice, statistics))
             choice.advance()
         assert choice.exhausted()
         assert list(choice.denotation) == expected

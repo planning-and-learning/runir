@@ -27,7 +27,7 @@ namespace detail
 template<tyr::TaskKind Kind, typename Unsolvability>
 SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
                                      SuccessorExpander<Kind>& expander,
-                                     const tyr::planning::PackedNode<Kind>& initial_node,
+                                     const tyr::planning::PackedStateView<Kind>& initial,
                                      const SketchSearchOptions<Kind>& options,
                                      Unsolvability& classifier,
                                      ygg::SegmentedVector<SearchNode<Kind>>& nodes,
@@ -38,7 +38,7 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
     const auto& search_context = *task_context.search_context;
     auto num_reached = std::size_t(0);
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*search_context.task);
-    const auto initial_state = initial_node.get_state().unpack();
+    const auto initial_state = initial.unpack();
     const auto static_goal_satisfied = goal_strategy.is_static_goal_satisfied(*search_context.task);
     const auto stopwatch = options.max_time ? std::optional<ygg::CountdownWatch>(*options.max_time) : std::nullopt;
 
@@ -61,19 +61,18 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
         return true;
     };
 
-    const auto initial = get_or_create_state(initial_state);
-    if (!initial)
+    const auto admitted = get_or_create_state(initial_state);
+    if (!admitted)
         return SketchProofStatus::OUT_OF_STATES;
-    auto open = tyr::planning::PackedNodeList<Kind> { initial_node };
+    auto open = std::vector<tyr::planning::PackedStateView<Kind>> { initial };
 
     while (!open.empty())
     {
         if (out_of_time())
             return SketchProofStatus::OUT_OF_TIME;
 
-        const auto packed_node = std::move(open.back());
+        const auto source = std::move(open.back());
         open.pop_back();
-        const auto& source = packed_node.get_state();
         auto& source_node = detail::get_or_create_search_node(source, nodes);
         if (source_node.is_goal)
         {
@@ -91,7 +90,7 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
         }
 
         ++statistics.num_expanded;
-        const auto node = packed_node.unpack();
+        const auto state = source.unpack();
         auto expansion_status = SketchProofStatus::SUCCESS;
         bool is_open = true;
         const auto accept_successor = [&](const tyr::planning::LabeledNode<Kind>& successor, RuleView rule)
@@ -114,13 +113,13 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
                 auto& target_node = detail::get_or_create_search_node(target, nodes);
                 target_node.parent_state = source;
                 target_node.action = successor.label;
-                open.push_back(successor.node.pack());
+                open.push_back(target);
             }
             is_open = false;
             return options.universal;
         };
 
-        expander.for_each_successor(node, statistics, accept_successor, out_of_time);
+        expander.for_each_successor(state, statistics, accept_successor, out_of_time);
         if (expansion_status != SketchProofStatus::SUCCESS)
             return expansion_status;
         if (out_of_time())
@@ -145,7 +144,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
     auto statistics = SketchSearchStatistics {};
     auto goal = std::optional<tyr::planning::PackedStateView<Kind>> {};
 
-    const auto status = depth_first_search(task_context, expander, initial_node, options, classifier, nodes, predecessors, statistics, goal);
+    const auto status = depth_first_search(task_context, expander, initial_node.get_state(), options, classifier, nodes, predecessors, statistics, goal);
 
     auto result = SketchProofResults<Kind> {};
     result.task_context_owner = task_context_owner;

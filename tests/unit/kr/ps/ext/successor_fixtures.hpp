@@ -23,7 +23,6 @@ template<tyr::TaskKind Kind>
 auto collect_steps(
     kr::ps::ext::SuccessorExpander<Kind>& expander,
     kr::ps::ext::ProgramStateView<Kind> state,
-    const tyr::planning::Node<Kind>& node,
     bool first_only = false,
     const std::function<bool()>& stop = [] { return false; })
 {
@@ -32,7 +31,6 @@ auto collect_steps(
     auto expansions = std::vector<typename Expander::Expansion> {};
     expander.for_each_successor(
         state,
-        node,
         statistics,
         [&](auto expansion)
         {
@@ -48,10 +46,10 @@ auto collect_steps(
                 if constexpr (std::same_as<decltype(candidate), typename Expander::Step>)
                     result.push_back(std::move(candidate));
                 else if (candidate.exhausted())
-                    result.push_back(expander.apply_choice(state, node, candidate, statistics));
+                    result.push_back(expander.apply_choice(state, candidate, statistics));
                 else
                     for (; !candidate.exhausted(); candidate.advance())
-                        result.push_back(expander.apply_choice(state, node, candidate, statistics));
+                        result.push_back(expander.apply_choice(state, candidate, statistics));
             },
             expansion);
     return result;

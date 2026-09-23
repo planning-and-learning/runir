@@ -120,7 +120,7 @@ auto find_solution(SuccessorExpander<Kind>& expander, const ProgramSearchOptions
     const auto& search_context = *task_context->search_context;
     const auto initial_node = search_context.successor_generator->get_packed_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
     const auto stopwatch = options.max_time ? std::optional<ygg::CountdownWatch>(*options.max_time) : std::nullopt;
-    const auto initial = expander.initial_state(initial_node.unpack());
+    const auto initial = expander.initial_state(initial_node.get_state().unpack());
     auto execution = ExecutionState<Kind, Unsolvability>(expander, initial, options, classifier, stopwatch);
     const auto admitted = execution.discover(initial);
     auto goal = std::optional<ProgramStateView<Kind>> {};

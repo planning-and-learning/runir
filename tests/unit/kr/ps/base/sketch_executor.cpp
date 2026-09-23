@@ -135,7 +135,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     auto num_accepted = uint64_t(0);
     auto statistics = kr::ps::base::SketchSearchStatistics {};
     EXPECT_TRUE(expander.for_each_successor(
-        initial,
+        initial.get_state(),
         statistics,
         [&](const auto&, auto)
         {
@@ -191,7 +191,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     auto two_step_expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, two_step_only);
     auto rejected_statistics = kr::ps::base::SketchSearchStatistics {};
     EXPECT_TRUE(two_step_expander.for_each_successor(
-        initial,
+        initial.get_state(),
         rejected_statistics,
         [](const auto&, auto)
         {
@@ -255,18 +255,18 @@ void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> protot
         return false;
     };
 
-    EXPECT_FALSE(expander.for_each_successor(initial, statistics, emit_one, [] { return true; }));
+    EXPECT_FALSE(expander.for_each_successor(initial.get_state(), statistics, emit_one, [] { return true; }));
     EXPECT_EQ(statistics.num_generated, 0);
     EXPECT_EQ(num_emitted, 0);
     EXPECT_EQ(search->state_repository->num_states(), 1);
 
     auto stop_polls = 0;
-    EXPECT_FALSE(expander.for_each_successor(initial, statistics, emit_one, [&] { return ++stop_polls >= 2; }));
+    EXPECT_FALSE(expander.for_each_successor(initial.get_state(), statistics, emit_one, [&] { return ++stop_polls >= 2; }));
     EXPECT_EQ(statistics.num_generated, 0);
     EXPECT_EQ(num_emitted, 0);
     EXPECT_EQ(search->state_repository->num_states(), 1);
 
-    EXPECT_FALSE(expander.for_each_successor(initial, statistics, emit_one, [] { return false; }));
+    EXPECT_FALSE(expander.for_each_successor(initial.get_state(), statistics, emit_one, [] { return false; }));
     const auto generated = statistics.num_generated;
     EXPECT_EQ(num_emitted, 1);
     EXPECT_GE(generated, 1);
@@ -275,7 +275,7 @@ void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> protot
 
     num_emitted = 0;
     EXPECT_TRUE(expander.for_each_successor(
-        initial,
+        initial.get_state(),
         statistics,
         [&](const auto&, auto)
         {
@@ -295,7 +295,7 @@ void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> protot
         rejected_search->successor_generator->get_initial_node(*rejected_search->state_repository, *rejected_search->axiom_evaluator);
     auto rejected_statistics = kr::ps::base::SketchSearchStatistics {};
     EXPECT_FALSE(rejecting_expander.for_each_successor(
-        rejected_initial,
+        rejected_initial.get_state(),
         rejected_statistics,
         [](const auto&, auto)
         {

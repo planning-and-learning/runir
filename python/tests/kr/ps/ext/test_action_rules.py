@@ -54,36 +54,46 @@ def _runtime(kind, source=None):
     program = dl.parse_program(source or _program(), domain, task_context.domain_context.ext_repository)
     prefix = kind.title()
     expander = getattr(ext, f"{prefix}SuccessorExpander")(task_context, program)
-    state = expander.initial_state(initial_node(task_context))
+    state = expander.initial_state(initial_node(task_context).get_state())
     environment = getattr(ext, f"{prefix}EvaluationEnvironment")(task_context, program)
     return task_context, program, expander, state, environment
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-@pytest.mark.parametrize("foreign", [False, True])
-def test_expander_rejects_mismatched_source_nodes(kind, foreign):
-    task_context, program, expander, state, environment = _runtime(kind)
-    node = initial_node(task_context)
-    step = collect_steps(expander, state, node)[0]
+def test_expander_rejects_foreign_states_programs_and_candidates(kind):
+    task_context, domain = _context(kind)
+    repository = task_context.domain_context.ext_repository
+    program = dl.parse_program(_program(), domain, repository)
+    expander_type = getattr(ext, f"{kind.title()}SuccessorExpander")
+    expander = expander_type(task_context, program)
+    planning_state = initial_node(task_context).get_state()
+    state = expander.initial_state(planning_state)
+    step = collect_steps(expander, state)[0]
     successor = step.planning_successor.unpack()
-    if foreign:
-        foreign_context, _ = _context(kind)
-        wrong_node = initial_node(foreign_context)
-        message = "selected task's state repository"
+    foreign_context, foreign_program, foreign_expander, foreign_state, foreign_environment = _runtime(kind)
+    other_program = dl.parse_program(_program(effects=""), domain, repository)
+    other_expander = expander_type(task_context, other_program)
+    other_state = other_expander.initial_state(planning_state)
+
+    with pytest.raises(ValueError, match="domain context repository"):
+        expander_type(task_context, foreign_program)
+    with pytest.raises(ValueError, match="selected task's state repository"):
+        expander.initial_state(foreign_state.state)
+    for wrong_state, message in ((foreign_state, "selected task"), (other_state, "selected program")):
+        statistics = ext.ProgramSearchStatistics()
         with pytest.raises(ValueError, match=message):
-            expander.initial_state(wrong_node)
-    else:
-        wrong_node = successor.node
-        assert wrong_node.get_state().get_index() != state.state.get_index()
-        message = "same planning state"
-    statistics = ext.ProgramSearchStatistics()
-    with pytest.raises(ValueError, match=message):
-        expander.for_each_successor(state, wrong_node, statistics, lambda _: True, lambda: False)
-    assert statistics.num_generated == statistics.num_expanded == 0
-    with pytest.raises(ValueError, match=message):
-        expander.matching_rule(state, wrong_node, successor)
-    with pytest.raises(ValueError, match=message):
-        expander.apply(state, wrong_node, step.rule, successor)
+            expander.for_each_successor(wrong_state, statistics, lambda _: True, lambda: False)
+        assert statistics.num_generated == statistics.num_expanded == 0
+        with pytest.raises(ValueError, match=message):
+            expander.matching_rule(wrong_state, successor)
+        with pytest.raises(ValueError, match=message):
+            expander.apply(wrong_state, step.rule, successor)
+
+    foreign_successor = collect_steps(foreign_expander, foreign_state)[0].planning_successor.unpack()
+    with pytest.raises(ValueError, match="selected task's state repository"):
+        expander.matching_rule(state, foreign_successor)
+    with pytest.raises(ValueError, match="selected task's state repository"):
+        expander.apply(state, step.rule, foreign_successor)
 
 
 def test_action_and_query_feature_bindings_round_trip_and_serialize():
@@ -157,7 +167,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     assert {tuple(row) for row in ext.evaluate(features["selected"], dl_context)} == rows
     assert {tuple(row) for row in relation} == rows
 
-    steps = collect_steps(expander, state, initial_node(task_context))
+    steps = collect_steps(expander, state)
     assert len(steps) == 2
     assert rows == {
         tuple(int(object_.get_index()) for object_ in step.state_transition.action.get_objects())
@@ -166,9 +176,8 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     for step in steps:
         assert isinstance(step.rule.get_variant(), ext.ActionRule)
         successor = step.planning_successor.unpack()
-        node = initial_node(task_context)
-        assert expander.matching_rule(state, node, successor) == step.rule
-        assert expander.apply(state, node, step.rule, successor).target == step.target
+        assert expander.matching_rule(state, successor) == step.rule
+        assert expander.apply(state, step.rule, successor).target == step.target
     good_step = next(step for step in steps if step.state_transition.action.get_objects()[1].get_name() == "good")
     del relation, truth, empty
     state = good_step.target
@@ -179,7 +188,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     new_rows = {tuple(row) for row in relation}
     row = relation.at(0)
     expected_row = tuple(row)
-    del steps, good_step, successor, node, step, features, environment, dl_context, state, expander, program, task_context
+    del steps, good_step, successor, step, features, environment, dl_context, state, expander, program, task_context
     gc.collect()
     assert {tuple(value) for value in relation} == new_rows
     del relation
@@ -191,7 +200,7 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
 def test_action_effect_contract_violation_is_an_exception(kind):
     task_context, program, expander, state, environment = _runtime(kind, _program(effects="(decreases count)"))
     with pytest.raises(ext.ActionRuleContractError):
-        collect_steps(expander, state, initial_node(task_context))
+        collect_steps(expander, state)
     options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
     with pytest.raises(ext.ActionRuleContractError):
         getattr(ext, f"find_{kind}_solution")(task_context, program, options)
@@ -231,7 +240,7 @@ def test_action_rejects_visited_inapplicable_query_tuple(kind):
         kind, _program(query='(q_atomic_state "edge" (from to))'),
     )
     with pytest.raises(ext.ActionRuleContractError):
-        collect_steps(expander, state, initial_node(task_context))
+        collect_steps(expander, state)
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -251,9 +260,9 @@ def test_static_query_role_closure_query_composition(kind):
     successor = search.successor_generator.get_labeled_successor_nodes(
         node, search.state_repository, search.axiom_evaluator,
     )[0]
-    rule = expander.matching_rule(state, node, successor)
+    rule = expander.matching_rule(state, successor)
     assert rule is not None
-    state = expander.apply(state, node, rule, successor).target
+    state = expander.apply(state, rule, successor).target
     environment.get_dl_caches().clear(False)
     dl_context = environment.make_dl_context(state)
     assert {tuple(row) for row in ext.evaluate(features["selected"], dl_context)} == rows
@@ -280,8 +289,8 @@ def test_query_features_follow_module_arguments_and_registers_in_the_same_state(
           (:source-memory m0) (:target-memory m1)
           (:load (:conditions) (:concept candidates) (:register (:concept selected))))))))"""
     task_context, program, expander, initial, environment = _runtime(kind, source)
-    child = collect_steps(expander, initial, initial_node(task_context))[0].target
-    choices = [step.target for step in collect_steps(expander, child, initial_node(task_context))]
+    child = collect_steps(expander, initial)[0].target
+    choices = [step.target for step in collect_steps(expander, child)]
     assert len(choices) == 2
     assert choices[0].state == choices[1].state == initial.state
     features = {feature.get_symbol(): feature for feature in child.module_state.module.get_query_features()}
@@ -336,7 +345,7 @@ def test_action_query_preserves_correlated_parameter_tuples(kind, tmp_path):
         parser.get_domain(), domain.ext_repository,
     )
     expander = getattr(ext, f"{kind.title()}SuccessorExpander")(task_context, program)
-    state = expander.initial_state(initial_node(task_context))
+    state = expander.initial_state(initial_node(task_context).get_state())
 
     def arguments(action):
         return tuple(object_.get_name() for object_ in action.get_objects())
@@ -350,16 +359,16 @@ def test_action_query_preserves_correlated_parameter_tuples(kind, tmp_path):
         ("a", "c"), ("a", "d"), ("b", "c"), ("b", "d"),
     }
     allowed = {("a", "c"), ("b", "d")}
-    steps = collect_steps(expander, state, initial_node(task_context))
+    steps = collect_steps(expander, state)
     assert len(steps) == 2
     assert {arguments(step.state_transition.action) for step in steps} == allowed
     rule = program.get_entry_module().get_memory_transitions()[0][0]
     matched = set()
     applied = set()
     for successor in broad:
-        if expander.matching_rule(state, node, successor) is not None:
+        if expander.matching_rule(state, successor) is not None:
             matched.add(arguments(successor.label))
-        result = expander.apply(state, node, rule, successor)
+        result = expander.apply(state, rule, successor)
         if result is not None:
             applied.add(arguments(result.state_transition.action))
     assert matched == applied == allowed

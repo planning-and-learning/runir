@@ -114,7 +114,7 @@ def test_base_successor_callbacks_filter_and_stop_generation(
             actual.append((step, rule))
             return True
 
-        assert expander.for_each_successor(node, statistics, emit, lambda: False) is True
+        assert expander.for_each_successor(state, statistics, emit, lambda: False) is True
         generated = len(expected)
         assert statistics.num_generated == generated
         assert Counter((step.label, step.node.get_state()) for step, _ in actual) == Counter(
@@ -122,22 +122,22 @@ def test_base_successor_callbacks_filter_and_stop_generation(
         )
         assert all(expander.matching_rule(state, step.node.get_state()) == rule for step, rule in actual)
         first_accepted = next(i for i, step in enumerate(expected) if step.node.get_state().get_index() != state.get_index())
-        assert expander.for_each_successor(node, statistics, lambda step, rule: False, lambda: False) is False
+        assert expander.for_each_successor(state, statistics, lambda step, rule: False, lambda: False) is False
         generated += first_accepted + 1
         assert statistics.num_generated == generated
 
         actual.clear()
-        assert expander.for_each_successor(node, statistics, emit, lambda: True) is False
+        assert expander.for_each_successor(state, statistics, emit, lambda: True) is False
         assert statistics.num_generated == generated
         assert actual == []
-        assert rejecting_expander.for_each_successor(node, statistics, emit, lambda: False) is True
+        assert rejecting_expander.for_each_successor(state, statistics, emit, lambda: False) is True
         generated += len(expected)
         assert statistics.num_generated == generated
         assert actual == []
         assert all(rejecting_expander.matching_rule(state, step.node.get_state()) is None for step in expected)
 
         assert rejecting_expander.for_each_successor(
-            node, statistics, emit, lambda: statistics.num_generated > generated
+            state, statistics, emit, lambda: statistics.num_generated > generated
         ) is False
         assert statistics.num_generated == generated + 1
         assert statistics.num_expanded == 0

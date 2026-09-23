@@ -65,10 +65,10 @@ and forward termination does not establish completeness of backtracking search.
 
 ## Enumeration and search
 
-`SuccessorExpander::for_each_successor(state, node, statistics, emit, stop)`
-visits immediate outcomes without collecting successor states. The source combines
-an interned `ProgramState` with the corresponding Tyr `Node`; the node carries
-the accumulated planning metric. The callback returns `true` to continue and
+`SuccessorExpander::for_each_successor(state, statistics, emit, stop)`
+visits immediate outcomes without collecting successor states. The interned
+`ProgramState` contains the planning state and the module's control, registers,
+arguments, and call stack. The callback returns `true` to continue and
 `false` to stop. Enumeration returns `true` only when exhausted; cancellation
 or callback termination returns `false`.
 
@@ -104,25 +104,25 @@ It describes one solution path, including in universal mode.
 Module evaluation uses persistent `ext.GroundProgramState` or
 `ext.LiftedProgramState` values produced by the successor expander, with the
 corresponding `GroundEvaluationEnvironment` or `LiftedEvaluationEnvironment`.
-Call `expander.initial_state(node)` with the Tyr initial node. Python exposes
-`expander.for_each_successor(state, node, statistics, emit, stop)` in natural
+Call `expander.initial_state(planning_state)` with a Tyr planning state, such as
+`initial_node.get_state()`. Python exposes
+`expander.for_each_successor(state, statistics, emit, stop)` in natural
 order, with a constructible `ext.ProgramSearchStatistics` object.
 
 Each callback receives a step or a `ConceptChoice`/`RoleChoice` by value.
 Choices expose `rule`, `denotation`, `current()`, `advance()`, `exhausted()`,
 and `count()`. After enumeration returns, use
-`expander.apply_choice(state, node, choice, statistics)` to apply the current
+`expander.apply_choice(state, choice, statistics)` to apply the current
 binding, then advance the cursor to try another. Do not reenter the same
 expander from its callback. A choice borrows its repositories; keep the task
 context and program alive while using it. Accessing or advancing an exhausted
 Python choice raises `IndexError`.
 
-A planning step exposes its owned `planning_successor`; pass
-`step.planning_successor.node.unpack()` with `step.target` to continue.
-For a control-only step, keep the source node and use `step.target`. This
-preserves accumulated metrics across Load, Choose, calls, and returns.
-`matching_rule(state, node, successor)` and
-`apply(state, node, rule, successor)` accept a Tyr labeled successor.
+Continue execution with `step.target` for both planning and control-only steps.
+A planning step also exposes its owned `planning_successor`.
+`matching_rule(state, successor)` and `apply(state, rule, successor)` accept a
+Tyr labeled successor. Ext expansion uses states without accumulated metrics;
+successful plans obtain cumulative metrics when their actions are replayed by Tyr.
 
 `module.get_query_features()` returns named `ext.dl.QueryFeature` values.
 `ActionRule.get_query_feature()` returns the selector, and

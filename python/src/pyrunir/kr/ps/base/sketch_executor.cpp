@@ -103,10 +103,10 @@ void bind_sketch_executor(nb::module_& m)
         .def(nb::init<runir::kr::TaskContext<Kind>&, SketchView>(), "task_context"_a, "sketch"_a, nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
         .def(
             "for_each_successor",
-            [](Expander& self, const tyr::planning::Node<Kind>& node, SketchSearchStatistics& statistics,
+            [](Expander& self, tyr::planning::StateView<Kind> state, SketchSearchStatistics& statistics,
                const std::function<bool(Expander::LabeledNode, RuleView)>& emit, const std::function<bool()>& stop)
-            { return self.for_each_successor(node, statistics, emit, stop); },
-            "node"_a,
+            { return self.for_each_successor(state, statistics, emit, stop); },
+            "state"_a,
             "statistics"_a,
             "emit"_a,
             "stop"_a)

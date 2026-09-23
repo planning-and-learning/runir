@@ -10,15 +10,15 @@
 #include <span>
 #include <sstream>
 #include <string_view>
-#include <utility>
-#include <vector>
 #include <tyr/formalism/planning/grounder_decl.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/action_executor.hpp>
 #include <tyr/planning/applicability.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
-#include <tyr/planning/node.hpp>
+#include <tyr/planning/state_view.hpp>
+#include <utility>
+#include <vector>
 #include <yggdrasil/containers/associative_containers.hpp>
 
 namespace runir::kr::ps::ext::detail
@@ -95,9 +95,9 @@ public:
         return action_info(rule, state, arity).schema;
     }
 
-    Binding applicable_binding(RuleView<ActionTag> rule, const tyr::planning::Node<Kind>& node, std::span<const ygg::uint_t> tuple)
+    Binding applicable_binding(RuleView<ActionTag> rule, const tyr::planning::StateView<Kind>& planning_state, std::span<const ygg::uint_t> tuple)
     {
-        const auto& info = action_info(rule, node.get_state(), tuple.size());
+        const auto& info = action_info(rule, planning_state, tuple.size());
         const auto schema = info.schema;
         const auto& domains = info.parameter_domains;
         m_binding.relation = schema.get_index();
@@ -107,10 +107,11 @@ public:
             const auto object = ygg::Index<tyr::formalism::Object>(tuple[i]);
             if constexpr (std::same_as<Kind, tyr::LiftedTag>)
                 if (i >= domains.size() || !domains[i].contains(object))
-                    action_rule_contract_error(rule, node.get_state(), tuple, "object is outside the action parameter domain");
+                    action_rule_contract_error(rule, planning_state, tuple, "object is outside the action parameter domain");
             m_binding.objects.push_back(object);
         }
-        const auto state = tyr::planning::StateContext<Kind>(*m_task, node.get_state().get_state_builder(), node.get_metric());
+        // Policy applicability depends on the planning state, without a carried path metric.
+        const auto state = tyr::planning::StateContext<Kind>(*m_task, planning_state.get_state_builder(), 0);
         if constexpr (std::same_as<Kind, tyr::GroundTag>)
         {
             if (!m_ground_actions_ready)
@@ -122,14 +123,14 @@ public:
             const auto binding = tyr::formalism::planning::get_or_create(*m_task->get_repository(), m_binding).first;
             const auto it = m_ground_actions.find(binding);
             if (it == m_ground_actions.end() || !m_executor.is_applicable(it->second, state))
-                action_rule_contract_error(rule, node.get_state(), tuple, "offered action is not applicable");
+                action_rule_contract_error(rule, planning_state, tuple, "offered action is not applicable");
             return binding;
         }
         else
         {
             auto grounder = tyr::formalism::planning::GrounderContext { m_builder, *m_task->get_repository(), m_binding.objects };
             if (!m_executor.is_applicable(schema, state, grounder, *m_task->get_fdr_context()))
-                action_rule_contract_error(rule, node.get_state(), tuple, "offered action is not applicable");
+                action_rule_contract_error(rule, planning_state, tuple, "offered action is not applicable");
             return tyr::formalism::planning::get_or_create(*m_task->get_repository(), m_binding).first;
         }
     }

@@ -42,7 +42,7 @@ public:
     /// Return true if enumeration completed, false if stopped.
     /// Callbacks must not reenter this expander or its generator.
     template<typename Emit, typename Stop>
-    bool for_each_successor(const tyr::planning::Node<Kind>& node, SketchSearchStatistics& statistics, Emit&& emit, Stop&& stop)
+    bool for_each_successor(const tyr::planning::StateView<Kind>& state, SketchSearchStatistics& statistics, Emit&& emit, Stop&& stop)
     {
         if (stop())
             return false;
@@ -51,6 +51,8 @@ public:
         m_environment.get_dl_caches().clear(false);
         auto& search_context = *m_task_context.search_context;
         auto& generator = *search_context.successor_generator;
+        // Tyr requires a Node, but policy expansion does not carry a path metric.
+        const auto node = tyr::planning::Node<Kind>(state, 0);
 
         const auto visit_binding = [&](tyr::formalism::planning::ActionBindingView binding)
         {
@@ -60,7 +62,7 @@ public:
                 LabeledNode { binding, generator.get_successor_node(node, binding, *search_context.state_repository, *search_context.axiom_evaluator) };
             ++statistics.num_generated;
 
-            const auto rule = matching_rule_until(node.get_state(), successor.node.get_state(), stop);
+            const auto rule = matching_rule_until(state, successor.node.get_state(), stop);
             if (stop())
                 return false;
             if (!rule)

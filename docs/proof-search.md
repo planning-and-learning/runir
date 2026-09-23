@@ -25,11 +25,11 @@ With `universal=false`, enumeration retains the first ordinary outcome or select
 
 ## Incremental resolution
 
-Each state has a remaining-requirements counter and a seal marking complete enumeration. [`ChoiceProofs`](../include/runir/kr/ps/ext/detail/choice_proofs.hpp) owns each Choose's permanent satisfied flag, independent of its temporary cursor. Frames and dependencies identify that flag with a `ChoiceId`, a distinct integer type. `satisfy(id)` returns true only on its first success.
+Each program state's `StateProof` records `remaining_requirements` (one per unsatisfied ordinary edge or Choose rule), `first_incoming_edge` (the dependencies to notify when this state succeeds), and `enumeration_complete` (all requirements have been declared). Choose bindings can still be generated afterward because they satisfy an existing requirement. [`ChoiceProofs`](../include/runir/kr/ps/ext/detail/choice_proofs.hpp) owns each Choose's permanent satisfied flag, independent of its temporary cursor. Frames and dependencies identify that flag with a `ChoiceId`, a distinct integer type. `satisfy(id)` returns true only on its first success.
 
-A new state success is queued once and visits only incoming dependencies. An ordinary dependency decrements its source counter; a Choose dependency does so only on that obligation's first success. A sealed, unblocked state whose counter reaches zero succeeds.
+A new state success is queued once and visits only incoming dependencies. An ordinary dependency decrements its source counter; a Choose dependency does so only on that obligation's first success. An unblocked state succeeds when enumeration is complete and its counter reaches zero.
 
-A dependency registered after its target succeeds is credited immediately and is **not** linked for a second notification. Sealing prevents a successful early child from proving its parent before the parent's other requirements are known.
+A dependency registered after its target succeeds is credited immediately and is **not** linked for a second notification. Waiting for complete enumeration prevents a successful early child from proving its parent before the parent's other requirements are known.
 
 DFS tries another binding when the previous one remains unresolved; it does not wait for cyclic dependencies to become failures. For example, if `A` chooses `B` or Goal and `B` continues to `A`, proving `A` through Goal subsequently proves `B` through notification. There is no replay or repeated expansion. A cycle without a finite exit produces no success.
 

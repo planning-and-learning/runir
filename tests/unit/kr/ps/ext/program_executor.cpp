@@ -135,10 +135,10 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto planning_node = initial_planning_node(expander);
-    const auto initial_state = expander.initial_state(planning_node);
+    const auto initial_state = expander.initial_state(planning_node.get_state());
     const auto immediate =
         search_context->successor_generator->get_labeled_successor_nodes(planning_node, *search_context->state_repository, *search_context->axiom_evaluator);
-    const auto steps = collect_steps(expander, initial_state, planning_node);
+    const auto steps = collect_steps(expander, initial_state);
     ASSERT_GT(immediate.size(), 1);
     ASSERT_EQ(steps.size(), immediate.size() * 2);
     for (const auto& step : steps)
@@ -165,8 +165,8 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
         *repository);
     const auto two_step_program = create_program(*repository, two_step_module, { two_step_module });
     auto two_step_expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, two_step_program);
-    const auto two_step_state = two_step_expander.initial_state(planning_node);
-    const auto two_step_outcomes = collect_steps(two_step_expander, two_step_state, planning_node);
+    const auto two_step_state = two_step_expander.initial_state(planning_node.get_state());
+    const auto two_step_outcomes = collect_steps(two_step_expander, two_step_state);
     ASSERT_EQ(two_step_outcomes.size(), 1);
     EXPECT_EQ(two_step_outcomes.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
 
@@ -307,7 +307,7 @@ void check_choice_execution()
     const auto program = make_program(choice_module("choose", choice_rule("select", "m0", "m1", choose_candidates) + move_rules));
     auto expander = ext::SuccessorExpander<Kind>(context, program);
     const auto planning_node = initial_planning_node(expander);
-    const auto bindings = collect_steps(expander, expander.initial_state(planning_node), planning_node);
+    const auto bindings = collect_steps(expander, expander.initial_state(planning_node.get_state()));
     ASSERT_EQ(bindings.size(), 2);
     EXPECT_EQ(bindings[0].target.get_module_state().get_registers().get_concept_values()[0].value().get_name(), "bad");
 

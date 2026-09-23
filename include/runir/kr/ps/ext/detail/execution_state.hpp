@@ -109,7 +109,6 @@ public:
         auto limit = std::optional<ProgramProofStatus> {};
         m_expander.for_each_successor(
             state,
-            tyr::planning::Node<Kind>(state.get_state(), 0),
             m_statistics,
             [&](const typename SuccessorExpander<Kind>::Expansion& expansion)
             {
@@ -126,7 +125,7 @@ public:
             return limit;
         if (out_of_time())
             return ProgramProofStatus::OUT_OF_TIME;
-        m_proof.seal(state);
+        m_proof.finish_enumeration(state);
         return std::nullopt;
     }
 
@@ -139,7 +138,7 @@ public:
             {
                 if (choice.exhausted())
                     return std::nullopt;
-                auto step = m_expander.apply_choice(frame.state, tyr::planning::Node<Kind>(frame.state.get_state(), 0), choice, m_statistics);
+                auto step = m_expander.apply_choice(frame.state, choice, m_statistics);
                 choice.advance();
                 return step;
             },

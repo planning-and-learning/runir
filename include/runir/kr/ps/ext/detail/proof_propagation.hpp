@@ -24,8 +24,8 @@ namespace runir::kr::ps::ext::detail
 /// See also the reachability-game formulation, Algorithm 1:
 /// https://lsv.ens-paris-saclay.fr/~dwb/gtc.pdf
 ///
-/// Only sealed nonterminal states can succeed: enumeration must finish before their AND requirements
-/// are complete. Choose alternatives may remain lazy because one proved binding suffices.
+/// Nonterminal states can succeed only after all requirements selected by the execution mode
+/// have been declared and satisfied. Choose alternatives may remain lazy because one proved binding suffices.
 /// Every state becomes successful at most once and each recorded dependency is credited
 /// at most once. Resolution takes O(V + E + C) time and space for indexed state slots,
 /// recorded edges and Choose obligations, excluding successor generation.
@@ -33,23 +33,28 @@ template<tyr::TaskKind Kind>
 class ProofPropagation
 {
 private:
-    struct State
+    /// Proof requirements and reverse dependencies of one program state.
+    struct StateProof
     {
-        std::size_t remaining = 0;
-        std::optional<EdgeId> first_incoming;
-        bool sealed = false;
+        // Unsatisfied requirements: one per ordinary edge and one per Choose rule, not per binding.
+        std::size_t remaining_requirements = 0;
+        // Incoming dependencies to notify when this state succeeds; linked by Dependency::next_incoming_edge.
+        std::optional<EdgeId> first_incoming_edge;
+        // All requirements have been declared. Zero remaining during enumeration is not yet conclusive:
+        // an already-successful child may satisfy an edge before further requirements are added.
+        bool enumeration_complete = false;
     };
 
     // Indexed exactly like Predecessors; source/target are not duplicated.
     struct Dependency
     {
-        std::optional<EdgeId> next;
+        std::optional<EdgeId> next_incoming_edge;
         std::optional<ChoiceId> choice_id;
     };
 
     ygg::SegmentedVector<SearchNode<Kind>>& m_nodes;
     const Predecessors<Kind>& m_predecessors;
-    std::vector<State> m_states;
+    std::vector<StateProof> m_state_proofs;
     std::vector<Dependency> m_dependencies;
     ChoiceProofs m_choice_proofs;
     std::vector<ProgramStateView<Kind>> m_ready;
@@ -60,9 +65,9 @@ public:
     /// Each enabled Choose is a distinct requirement, including an empty one that can never succeed.
     ChoiceId add_choice(ProgramStateView<Kind> state)
     {
-        auto& proof = state_for(state);
-        assert(!proof.sealed);
-        ++proof.remaining;
+        auto& proof = proof_for(state);
+        assert(!proof.enumeration_complete);
+        ++proof.remaining_requirements;
         return m_choice_proofs.create();
     }
 
@@ -75,9 +80,9 @@ public:
         const auto& transition = m_predecessors[edge];
         if (!choice_id)
         {
-            auto& source = state_for(transition.source);
-            assert(!source.sealed);
-            ++source.remaining;
+            auto& source = proof_for(transition.source);
+            assert(!source.enumeration_complete);
+            ++source.remaining_requirements;
         }
         m_dependencies.push_back({ std::nullopt, choice_id });
         if (m_nodes[ygg::uint_t(transition.target.get_index())].status == SearchStatus::SUCCESS)
@@ -87,16 +92,17 @@ public:
         }
         else
         {
-            auto& target = state_for(transition.target);
-            m_dependencies.back().next = target.first_incoming;
-            target.first_incoming = edge;
+            auto& target = proof_for(transition.target);
+            m_dependencies.back().next_incoming_edge = target.first_incoming_edge;
+            target.first_incoming_edge = edge;
         }
     }
 
-    /// Enumeration has finished; no further ordinary edges or Choose requirements will be added.
-    void seal(ProgramStateView<Kind> state)
+    /// All ordinary and Choose requirements selected by the execution mode have been declared.
+    /// Later Choose bindings can still satisfy their already-declared requirement.
+    void finish_enumeration(ProgramStateView<Kind> state)
     {
-        state_for(state).sealed = true;
+        proof_for(state).enumeration_complete = true;
         try_prove(state);
     }
 
@@ -119,7 +125,7 @@ public:
         {
             if (stop())
                 return false;
-            for (auto edge = state_for(m_ready[i]).first_incoming; edge; edge = m_dependencies[static_cast<ygg::uint_t>(*edge)].next)
+            for (auto edge = proof_for(m_ready[i]).first_incoming_edge; edge; edge = m_dependencies[static_cast<ygg::uint_t>(*edge)].next_incoming_edge)
             {
                 if (stop())
                     return false;
@@ -131,11 +137,11 @@ public:
     }
 
 private:
-    State& state_for(ProgramStateView<Kind> state)
+    StateProof& proof_for(ProgramStateView<Kind> state)
     {
-        if (m_states.size() < m_nodes.size())
-            m_states.resize(m_nodes.size());
-        return m_states[ygg::uint_t(state.get_index())];
+        if (m_state_proofs.size() < m_nodes.size())
+            m_state_proofs.resize(m_nodes.size());
+        return m_state_proofs[ygg::uint_t(state.get_index())];
     }
 
     void satisfy(EdgeId edge)
@@ -143,17 +149,17 @@ private:
         if (const auto choice_id = m_dependencies[static_cast<ygg::uint_t>(edge)].choice_id; choice_id && !m_choice_proofs.satisfy(*choice_id))
             return;
         const auto source = m_predecessors[edge].source;
-        auto& state = state_for(source);
-        assert(state.remaining != 0);
-        --state.remaining;
+        auto& proof = proof_for(source);
+        assert(proof.remaining_requirements != 0);
+        --proof.remaining_requirements;
         try_prove(source);
     }
 
     void try_prove(ProgramStateView<Kind> state)
     {
-        const auto& proof = state_for(state);
+        const auto& proof = proof_for(state);
         const auto& node = m_nodes[ygg::uint_t(state.get_index())];
-        if (proof.sealed && proof.remaining == 0 && !node.is_open && !node.is_deadend && !node.is_unsolvable)
+        if (proof.enumeration_complete && proof.remaining_requirements == 0 && !node.is_open && !node.is_deadend && !node.is_unsolvable)
             succeed(state);
     }
 };
