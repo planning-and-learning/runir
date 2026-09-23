@@ -25,16 +25,14 @@ struct SearchFrame
     {
         ORDINARY,
         CHOOSE,
-        BINDING,
     };
 
     ProgramStateView<Kind> state;
     std::size_t successors_begin;
     std::size_t successor;
-    std::size_t choices_begin;
-    std::size_t choice;
     bool replay;
-    std::size_t binding = 0;
+    std::size_t replay_edge = 0;
+    std::optional<RuleVariantView> replay_rule = std::nullopt;
     Phase phase = Phase::ORDINARY;
     SearchStatus result = SearchStatus::SUCCESS;
     SearchStatus choice_result = SearchStatus::FAILURE;
@@ -50,12 +48,7 @@ struct SearchFrame
     {
         if (phase == Phase::ORDINARY)
             require(child);
-        else if (child == SearchStatus::SUCCESS)
-        {
-            --choice;
-            phase = Phase::CHOOSE;
-        }
-        else if (child == SearchStatus::PENDING)
+        else if (child == SearchStatus::SUCCESS || (child == SearchStatus::PENDING && choice_result == SearchStatus::FAILURE))
             choice_result = child;
     }
 };
@@ -71,7 +64,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
     const auto stopwatch = options.max_time ? std::optional<ygg::CountdownWatch>(*options.max_time) : std::nullopt;
     const auto initial = expander.initial_state(initial_node.unpack());
     auto execution = ExecutionState<Kind, Unsolvability>(expander, initial, options, classifier, stopwatch);
-    const auto admitted = execution.discover(initial).has_value();
+    const auto admitted = execution.discover(initial);
     auto goal = std::optional<ProgramStateView<Kind>> {};
 
     const auto finish = [&](ProgramProofStatus status)
@@ -113,8 +106,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
             }
             const auto replay = node.status == SearchStatus::PENDING;
             const auto successors_begin = replay ? 0 : execution.predecessors().size();
-            const auto choices_begin = replay ? 0 : execution.choices().size();
-            if (node.status == SearchStatus::NEW)
+            if (node.status == SearchStatus::DISCOVERED)
             {
                 if (node.is_goal)
                 {
@@ -124,7 +116,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
                 }
                 else if (node.is_unsolvable)
                 {
-                    execution.mark_deadend(state);
+                    node.is_deadend = true;
                     node.status = SearchStatus::FAILURE;
                 }
                 else if (const auto limit = execution.expand(state))
@@ -136,7 +128,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
                 continue;
             }
             node.status = SearchStatus::ACTIVE;
-            stack.push_back({ state, successors_begin, execution.predecessors().size(), choices_begin, execution.choices().size(), replay });
+            stack.push_back({ state, successors_begin, execution.predecessors().size(), replay, replay ? execution.predecessors().size() : 0 });
             if (node.is_open)
                 stack.back().result = SearchStatus::FAILURE;
         }
@@ -171,54 +163,61 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
             }
             frame.phase = Phase::CHOOSE;
         }
-        if (frame.choice != frame.choices_begin)
+        if (frame.replay)
         {
-            const auto index = frame.choice - 1;
-            const auto& choice_frame = execution.choices()[index];
-            if (choice_frame.state != frame.state)
+            // A pending state exhausted every unresolved Choose before unwinding. Its recorded bindings suffice for replay.
+            // After filtering by source, each rule's bindings form one consecutive group: replay never generates new edges.
+            // ponytail: scan existing records; add an outgoing index only if profiling warrants it.
+            if (frame.replay_edge != 0)
             {
-                --frame.choice;
-                continue;
-            }
-            if (frame.phase == Phase::CHOOSE)
-            {
-                frame.choice_result = SearchStatus::FAILURE;
-                // ponytail: pending cyclic revisits scan existing records; add an outgoing index only if profiling warrants it.
-                frame.binding = frame.replay ? execution.predecessors().size() : 0;
-                frame.phase = Phase::BINDING;
-            }
-            if (frame.binding != 0)
-            {
-                const auto& edge = execution.predecessors()[--frame.binding];
-                if (edge.source == frame.state)
-                    std::visit(
-                        [&](const auto& choice)
+                const auto& edge = execution.predecessors()[--frame.replay_edge];
+                if (edge.source == frame.state && edge.rule)
+                    ygg::visit(
+                        [&](auto rule)
                         {
-                            if (edge.rule == choice.rule)
-                                next = edge.target;
+                            if constexpr (ChooseRuleView<decltype(rule)>)
+                            {
+                                if (frame.replay_rule != edge.rule)
+                                {
+                                    if (frame.replay_rule)
+                                        frame.require(frame.choice_result);
+                                    frame.replay_rule = edge.rule;
+                                    frame.choice_result = SearchStatus::FAILURE;
+                                }
+                                if (frame.choice_result != SearchStatus::SUCCESS)
+                                    next = edge.target;
+                            }
                         },
-                        choice_frame.choice);
+                        edge.rule->get_variant());
                 continue;
             }
-            if (const auto step = execution.next_binding(index))
+            if (frame.replay_rule)
+                frame.require(frame.choice_result);
+        }
+        else if (!execution.choices().empty() && execution.choices().top().state == frame.state)
+        {
+            if (frame.choice_result != SearchStatus::SUCCESS)
             {
-                if (step->status == ProgramOutcome::OUT_OF_TIME)
-                    return finish(ProgramProofStatus::OUT_OF_TIME);
-                if (step->status == ProgramOutcome::OUT_OF_STATES)
-                    return finish(ProgramProofStatus::OUT_OF_STATES);
-                if (step->status == ProgramOutcome::APPLIED)
+                if (const auto step = execution.next_binding())
                 {
-                    const auto non_singleton = std::visit([](const auto& choice) { return choice.has_alternatives(); }, choice_frame.choice);
-                    if (const auto limit = execution.record_transition(frame.state, *step, non_singleton))
-                        return finish(*limit);
-                    next = step->get_target();
-                    continue;
+                    if (step->status == ProgramOutcome::OUT_OF_TIME)
+                        return finish(ProgramProofStatus::OUT_OF_TIME);
+                    if (step->status == ProgramOutcome::OUT_OF_STATES)
+                        return finish(ProgramProofStatus::OUT_OF_STATES);
+                    if (step->status == ProgramOutcome::APPLIED)
+                    {
+                        const auto non_singleton = std::visit([](const auto& choice) { return choice.has_alternatives(); }, execution.choices().top().choice);
+                        if (const auto limit = execution.record_transition(frame.state, *step, non_singleton))
+                            return finish(*limit);
+                        next = step->get_target();
+                        continue;
+                    }
+                    node.is_deadend = true;
                 }
-                execution.mark_deadend(frame.state);
             }
             frame.require(frame.choice_result);
-            frame.phase = Phase::CHOOSE;
-            --frame.choice;
+            execution.choices().pop();
+            frame.choice_result = SearchStatus::FAILURE;
             continue;
         }
         node.status = frame.result;

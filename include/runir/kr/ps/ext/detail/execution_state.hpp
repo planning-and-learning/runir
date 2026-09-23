@@ -7,6 +7,7 @@
 #include <concepts>
 #include <cstddef>
 #include <optional>
+#include <stack>
 #include <type_traits>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
@@ -18,6 +19,7 @@ namespace runir::kr::ps::ext::detail
 {
 
 /// Discovery and first predecessors are permanent; Choose cursors never require state rollback.
+/// Only active Choose obligations retain their denotations and cursors on the stack.
 template<tyr::TaskKind Kind, typename Unsolvability>
 class ExecutionState
 {
@@ -26,7 +28,6 @@ private:
     Unsolvability& m_classifier;
     SuccessorExpander<Kind>& m_expander;
     ProgramStateView<Kind> m_initial;
-    tyr::planning::StateView<Kind> m_initial_planning_state;
     tyr::planning::ConjunctiveGoalStrategy<Kind> m_goal_strategy;
     bool m_static_goal_satisfied;
     const std::optional<ygg::CountdownWatch>& m_stopwatch;
@@ -34,7 +35,7 @@ private:
     ygg::SegmentedVector<SearchNode<Kind>> m_nodes;
     std::vector<Predecessor<Kind>> m_predecessors;
     std::size_t m_num_reached = 0;
-    std::vector<ChoiceFrame<Kind>> m_choices;
+    std::stack<ChoiceFrame<Kind>, std::vector<ChoiceFrame<Kind>>> m_choices;
     ProgramSearchStatistics m_statistics;
 
 public:
@@ -47,7 +48,6 @@ public:
         m_classifier(classifier),
         m_expander(expander),
         m_initial(initial),
-        m_initial_planning_state(initial.get_state()),
         m_goal_strategy(*expander.get_task_context()->search_context->task),
         m_static_goal_satisfied(m_goal_strategy.is_static_goal_satisfied(*expander.get_task_context()->search_context->task)),
         m_stopwatch(stopwatch)
@@ -57,22 +57,20 @@ public:
     bool out_of_time() const { return m_stopwatch && m_stopwatch->has_finished(); }
     ProgramSearchStatistics& statistics() { return m_statistics; }
     const auto& nodes() const { return m_nodes; }
-    const auto& choices() const { return m_choices; }
+    auto& choices() { return m_choices; }
     const auto& predecessors() const { return m_predecessors; }
     SearchNode<Kind>& search_node(ProgramStateView<Kind> state) { return get_or_create_search_node(state, m_nodes); }
 
-    void mark_deadend(ProgramStateView<Kind> state) { search_node(state).is_deadend = true; }
-
-    std::optional<bool> discover(ProgramStateView<Kind> state)
+    /// Admit a NEW state; return false only when the state limit prevents admission.
+    bool discover(ProgramStateView<Kind> state)
     {
-        auto& node = search_node(state);
-        if ((m_num_reached != 0 && state == m_initial) || node.parent_state)
-            return false;
         if (m_num_reached >= m_options.max_num_states)
-            return std::nullopt;
+            return false;
+        auto& node = search_node(state);
+        node.status = SearchStatus::DISCOVERED;
         ++m_num_reached;
         const auto planning_state = state.get_state();
-        node.is_goal = m_static_goal_satisfied && m_goal_strategy.is_dynamic_goal_satisfied(m_initial_planning_state, planning_state);
+        node.is_goal = m_static_goal_satisfied && m_goal_strategy.is_dynamic_goal_satisfied(m_initial.get_state(), planning_state);
         node.is_unsolvable = !node.is_goal && m_classifier.is_unsolvable(planning_state);
         return true;
     }
@@ -80,16 +78,16 @@ public:
     std::optional<ProgramProofStatus> record_transition(ProgramStateView<Kind> source, const ProgramStep<Kind>& step, bool non_singleton_choice = false)
     {
         const auto depth = search_node(source).choice_depth + ygg::uint_t(non_singleton_choice);
-        const auto created = discover(step.get_target());
-        if (!created)
-            return ProgramProofStatus::OUT_OF_STATES;
         const auto target = step.get_target();
+        auto& node = search_node(target);
+        const bool created = node.status == SearchStatus::NEW;
+        if (created && !discover(target))
+            return ProgramProofStatus::OUT_OF_STATES;
         const auto& transition = step.get_state_transition();
         const auto action = transition ? std::optional(transition->action) : std::nullopt;
         m_predecessors.push_back({ source, target, action, step.rule });
-        if (*created)
+        if (created)
         {
-            auto& node = search_node(target);
             node.parent_state = source;
             node.action = action;
             node.choice_depth = depth;
@@ -133,9 +131,9 @@ public:
     }
 
     /// An empty result means the binding cursor is exhausted; otherwise the step carries its target and outcome.
-    std::optional<ProgramStep<Kind>> next_binding(std::size_t index)
+    std::optional<ProgramStep<Kind>> next_binding()
     {
-        auto& frame = m_choices[index];
+        auto& frame = m_choices.top();
         return std::visit(
             [&](auto& choice) -> std::optional<ProgramStep<Kind>>
             {
@@ -153,8 +151,8 @@ private:
     void add_choice(ProgramStateView<Kind> state, Choice<Category> choice)
     {
         if (choice.exhausted())
-            mark_deadend(state);
-        m_choices.push_back({ state, std::move(choice) });
+            search_node(state).is_deadend = true;
+        m_choices.push({ state, std::move(choice) });
     }
 
     std::optional<ProgramProofStatus> record_step(ProgramStateView<Kind> source, const ProgramStep<Kind>& step)

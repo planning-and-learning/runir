@@ -27,7 +27,8 @@ namespace runir::kr::ps::ext::detail
 // that state's status.
 enum class SearchStatus
 {
-    NEW,
+    NEW,         // Not yet admitted to this search.
+    DISCOVERED,  // Admitted, awaiting expansion.
     ACTIVE,
     PENDING,  // Depends on an active ancestor; not a cached failure.
     SUCCESS,
@@ -37,7 +38,7 @@ enum class SearchStatus
 template<tyr::TaskKind Kind>
 struct SearchNode
 {
-    // First arrival is permanent. The initial state is tracked separately.
+    // First arrival is permanent; the initial state has no parent.
     std::optional<ProgramStateView<Kind>> parent_state = std::nullopt;
     std::optional<tyr::formalism::planning::ActionBindingView> action = std::nullopt;
     // Number of non-singleton Choose bindings on the first-parent path.

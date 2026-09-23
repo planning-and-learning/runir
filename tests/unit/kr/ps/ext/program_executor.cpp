@@ -641,18 +641,41 @@ void check_choice_execution()
         SCOPED_TRACE(reverse);
         const auto root_a = choice_rule("root-A", "m1", "m2", load_goal);
         const auto root_b = choice_rule("root-B", "m1", "m3", load_goal);
-        const auto pending_singleton = make_program(choice_module(
-            reverse ? "pending-singleton-B-first" : "pending-singleton-A-first",
-            choice_rule("init", "m0", "m1", load_goal) + (reverse ? root_b + root_a : root_a + root_b)
-                + choice_rule("A", "m2", "m4", choose_candidates)
-                + choice_rule("B", "m3", "m2", "(:choose (:conditions) (:concept Goal) (:register (:concept r0)))")
-                + choice_rule("bad-to-B", "m4", "m3", "(:load (:conditions (positive Bad)) (:concept Goal) (:register (:concept r0)))")
-                + choice_rule("good-move", "m4", "m5", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
-                + choice_rule("finish", "m5", "m0", move_to_goal)));
+        const auto pending_rules =
+            choice_rule("init", "m0", "m1", load_goal) + (reverse ? root_b + root_a : root_a + root_b) + choice_rule("A", "m2", "m4", choose_candidates)
+            + choice_rule("B", "m3", "m2", "(:choose (:conditions) (:concept Goal) (:register (:concept r0)))")
+            + choice_rule("bad-to-B", "m4", "m3", "(:load (:conditions (positive Bad)) (:concept Goal) (:register (:concept r0)))")
+            + choice_rule("good-move", "m4", "m5", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
+            + choice_rule("finish", "m5", "m0", move_to_goal);
+        const auto pending_singleton = make_program(choice_module(reverse ? "pending-singleton-B-first" : "pending-singleton-A-first", pending_rules));
         const auto pending_singleton_result = ext::find_solution(context, pending_singleton, universal);
         EXPECT_EQ(pending_singleton_result.status, Status::SUCCESS);
         EXPECT_FALSE(pending_singleton_result.cycle.empty());
         expect_single_expansion(pending_singleton_result);
+
+        // B also has a proved Choose; replay must satisfy both recorded rule groups after their cursors are gone.
+        const auto pending_choices =
+            make_program(choice_module(reverse ? "pending-choices-B-first" : "pending-choices-A-first",
+                                       pending_rules
+                                           + choice_rule("B-independent",
+                                                         "m3",
+                                                         "m4",
+                                                         "(:choose (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))")));
+        const auto pending_choices_result = ext::find_solution(context, pending_choices, universal);
+        EXPECT_EQ(pending_choices_result.status, Status::SUCCESS);
+        EXPECT_FALSE(pending_choices_result.cycle.empty());
+        expect_single_expansion(pending_choices_result);
+        ASSERT_TRUE(pending_choices_result.graph);
+        auto dependent_bindings = 0;
+        auto independent_bindings = 0;
+        for (const auto edge : pending_choices_result.graph->get_edge_indices())
+        {
+            const auto& rule = pending_choices_result.graph->get_edge(edge).get_property().rule;
+            dependent_bindings += rule && rule->get_symbol() == "B";
+            independent_bindings += rule && rule->get_symbol() == "B-independent";
+        }
+        EXPECT_EQ(dependent_bindings, 1);
+        EXPECT_EQ(independent_bindings, 1);
     }
 
     // Returning from the successful ordinary continuation must still evaluate the failing Choose obligation.
