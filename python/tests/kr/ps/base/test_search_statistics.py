@@ -120,6 +120,19 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     assert expired.deadend_states == []
     assert expired.open_states == []
 
+    # Initial admission precedes the deadline check and must not leave a phantom root.
+    options.max_num_states = 0
+    unadmitted = find_solution(context, sketch, options)
+    assert unadmitted.status == base.SketchProofStatus.OUT_OF_STATES
+    assert unadmitted.plan is None
+    assert unadmitted.graph.get_num_vertices() == 0
+    assert unadmitted.graph.get_num_edges() == 0
+    assert unadmitted.statistics.num_expanded == 0
+    assert unadmitted.statistics.num_generated == 0
+    assert unadmitted.deadend_states == []
+    assert unadmitted.open_states == []
+    assert unadmitted.cycle == []
+
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 def test_search_preserves_cumulative_node_metrics(tmp_path, kind):
