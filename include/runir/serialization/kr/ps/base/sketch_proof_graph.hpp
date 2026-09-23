@@ -2,8 +2,10 @@
 #define RUNIR_SERIALIZATION_KR_PS_BASE_SKETCH_PROOF_GRAPH_HPP_
 
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
-#include "runir/serialization/datasets/state_graph.hpp"
+#include "runir/serialization/graphs/static_graph.hpp"
 #include "runir/serialization/kr/ps/base/rule_view.hpp"
+#include "tyr/serialization/formalism/binding_view.hpp"
+#include "tyr/serialization/planning/state_view.hpp"
 #include "yggdrasil/serialization/dictionaries.hpp"
 
 namespace ygg::serialization
@@ -22,7 +24,7 @@ void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::base::Sket
 template<typename Archive>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::base::SketchProofEdgeLabel>)
 {
-    ar.field("transition", [](const auto& value) -> decltype(auto) { return (value.transition); });
+    ar.field("action", [](const auto& value) -> decltype(auto) { return (value.action); });
     ar.field("rule", [](const auto& value) -> decltype(auto) { return (value.rule); });
 }
 

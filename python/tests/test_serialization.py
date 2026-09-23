@@ -11,6 +11,7 @@ from pytyr.planning import ground
 import pytyr.serialization as tyr_serialization
 from pyyggdrasil.serialization import Dictionaries
 
+from pyrunir.datasets import StateGraphEdgeLabel
 from pyrunir.kr import DomainContext, GroundTaskContext
 from pyrunir.kr.dl.base import semantics
 from pyrunir.kr.ps import base, ext
@@ -23,6 +24,9 @@ from pyrunir.serialization import register_table, serialize, table
 def test_fields_describe_native_layouts_without_instances():
     assert list(base.Rule.Fields.__members__) == ["symbol", "conditions", "effects"]
     assert list(ext.RuleVariant.Fields.__members__) == ["symbol", "variant"]
+    assert list(base.SketchProofEdgeLabel.Fields.__members__) == ["action", "rule"]
+    assert list(ext.ProgramProofEdgeLabel.Fields.__members__) == ["action", "rule"]
+    assert list(StateGraphEdgeLabel.Fields.__members__) == ["action", "cost"]
     assert list(semantics.BooleanNonempty.Fields.__members__) == ["arg"]
     assert list(fp.FluentPredicateBinding.Fields.__members__) == ["relation", "objects"]
     for prefix in ("Ground", "Lifted"):

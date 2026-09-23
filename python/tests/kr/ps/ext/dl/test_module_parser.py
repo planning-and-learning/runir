@@ -362,9 +362,8 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     edge_label = proof.graph.get_edge_property(edge)
     assert ext.ProgramProofEdgeLabel is ext.GroundProgramProofEdgeLabel
     assert isinstance(edge_label, ext.ProgramProofEdgeLabel)
-    if edge_label.state_transition is not None:
-        assert isinstance(edge_label.state_transition, ext.ProgramProofStateTransition)
-        assert isinstance(edge_label.state_transition.action, ActionBinding)
+    if edge_label.action is not None:
+        assert isinstance(edge_label.action, ActionBinding)
     vertex_label = proof.graph.get_vertex_property(vertex)
     assert vertex_label.program_state.module_state.memory_state is not None
     frame = vertex_label.program_state.module_state

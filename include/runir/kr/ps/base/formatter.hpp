@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_FORMATTER_HPP_
 #define RUNIR_KR_PS_BASE_FORMATTER_HPP_
 
-#include "runir/datasets/formatter.hpp"
+#include "runir/graphs/formatter.hpp"
 #include "runir/kr/ps/base/dl/formatter.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
 #include "runir/kr/ps/base/sketch_executor_data.hpp"
@@ -17,6 +17,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <tyr/formalism/planning/formatter.hpp>
 #include <yggdrasil/io/iostream.hpp>
 
 namespace runir::kr::ps::base
@@ -258,7 +259,7 @@ struct fmt::formatter<runir::kr::ps::base::SketchProofEdgeLabel> : fmt::formatte
 {
     auto format(const runir::kr::ps::base::SketchProofEdgeLabel& label, format_context& ctx) const
     {
-        const auto text = fmt::format("rule={} transition={}", label.rule.get_symbol(), label.transition);
+        const auto text = fmt::format("rule={} action={}", label.rule.get_symbol(), label.action);
         return fmt::formatter<std::string_view>::format(text, ctx);
     }
 };

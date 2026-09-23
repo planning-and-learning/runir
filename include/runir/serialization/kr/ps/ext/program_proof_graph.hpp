@@ -22,16 +22,9 @@ void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::Progr
 }
 
 template<typename Archive>
-void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ProgramProofStateTransition>)
-{
-    ar.field("action", [](const auto& value) -> decltype(auto) { return (value.action); });
-    ar.field("cost", [](const auto& value) -> decltype(auto) { return (value.cost); });
-}
-
-template<typename Archive>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ProgramProofEdgeLabel>)
 {
-    ar.field("state_transition", [](const auto& value) -> decltype(auto) { return (value.state_transition); });
+    ar.field("action", [](const auto& value) -> decltype(auto) { return (value.action); });
     ar.field("rule", [](const auto& value) -> decltype(auto) { return (value.rule); });
 }
 

@@ -54,7 +54,7 @@ void build_proof_graph(SketchProofResults<Kind>& result,
     {
         const auto source = add_vertex(predecessor.source);
         const auto target = add_vertex(predecessor.target);
-        edges.emplace_back(source, target, SketchProofEdgeLabel(datasets::StateGraphEdgeLabel(predecessor.action, ygg::float_t(1)), predecessor.rule));
+        edges.emplace_back(source, target, SketchProofEdgeLabel(predecessor.action, predecessor.rule));
     }
     result.graph = std::make_shared<SketchProofGraph<Kind>>(std::span<const VertexLabel>(vertices), std::span<const Edge>(edges));
     result.cycle = graphs::find_cycle(*result.graph);

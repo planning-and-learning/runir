@@ -449,16 +449,6 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ProgramState<Kind
     }
 };
 
-template<>
-struct fmt::formatter<runir::kr::ps::ext::ProgramProofStateTransition>
-{
-    constexpr auto parse(format_parse_context& context) { return context.begin(); }
-    auto format(const auto& value, format_context& context) const
-    {
-        return fmt::format_to(context.out(), "action={} cost={}", value.action, value.cost);
-    }
-};
-
 template<tyr::TaskKind Kind>
 struct fmt::formatter<runir::kr::ps::ext::ProgramProofVertexLabel<Kind>>
 {

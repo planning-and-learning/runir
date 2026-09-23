@@ -227,15 +227,8 @@ void bind_program_executor(nb::module_& m)
         .value("OUT_OF_TIME", ProgramProofStatus::OUT_OF_TIME)
         .value("OUT_OF_STATES", ProgramProofStatus::OUT_OF_STATES);
 
-    auto state_transition = nb::class_<ProgramProofStateTransition>(m, "ProgramProofStateTransition")
-                                .def_ro("action", &ProgramProofStateTransition::action)
-                                .def_ro("cost", &ProgramProofStateTransition::cost);
-    ygg::add_print(state_transition);
-    ygg::add_comparison(state_transition);
-    ygg::add_hash(state_transition);
-
     auto edge_label = nb::class_<ProgramProofEdgeLabel>(m, "ProgramProofEdgeLabel")
-                          .def_ro("state_transition", &ProgramProofEdgeLabel::state_transition)
+                          .def_ro("action", &ProgramProofEdgeLabel::action)
                           .def_ro("rule", &ProgramProofEdgeLabel::rule);
     ygg::add_print(edge_label);
     ygg::add_comparison(edge_label);

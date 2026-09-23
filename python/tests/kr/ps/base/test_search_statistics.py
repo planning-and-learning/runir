@@ -72,7 +72,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     target = greedy.graph.get_vertex_property(greedy.graph.get_target(edge))
     assert greedy.plan.get_start_node().get_state() == source.state
     assert step.node.get_state() == target.state
-    assert step.label == greedy.graph.get_edge_property(edge).transition.action
+    assert step.label == greedy.graph.get_edge_property(edge).action
     assert target.is_goal
     assert greedy.plan.get_cost() == step.node.get_metric()
     with pytest.raises(AttributeError):
@@ -87,7 +87,7 @@ def test_search_statistics_count_generation_before_filtering_and_deduplication(t
     assert universal.statistics.num_expanded == 1
     assert universal.statistics.num_generated == 2
     assert universal.graph.get_num_vertices() == 2
-    actions = [universal.graph.get_edge_property(edge).transition.action for edge in universal.graph.get_edge_indices()]
+    actions = [universal.graph.get_edge_property(edge).action for edge in universal.graph.get_edge_indices()]
     assert len(actions) == 2
     assert actions[0] != actions[1]
 

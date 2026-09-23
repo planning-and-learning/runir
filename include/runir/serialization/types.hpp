@@ -44,7 +44,6 @@ using GraphProperties = ygg::ConcatTypeListsT<StateProperties<tyr::GroundTag>,
                                               StateProperties<tyr::LiftedTag>,
                                               ygg::TypeList<datasets::StateGraphEdgeLabel,
                                                             kr::ps::base::SketchProofEdgeLabel,
-                                                            kr::ps::ext::ProgramProofStateTransition,
                                                             kr::ps::ext::ProgramProofEdgeLabel>>;
 
 template<tyr::TaskKind Kind>

@@ -58,7 +58,7 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
         const auto target = add_vertex(predecessor.target);
         auto label = ProgramProofEdgeLabel {};
         if (predecessor.action)
-            label.state_transition = ProgramProofStateTransition(*predecessor.action, ygg::float_t(1));
+            label.action = *predecessor.action;
         if (predecessor.rule)
             label.rule = *predecessor.rule;
         edges.emplace_back(source, target, std::move(label));

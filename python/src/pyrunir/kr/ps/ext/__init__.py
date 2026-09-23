@@ -70,7 +70,6 @@ from ...._pyrunir.kr.ps.ext import (
     ProgramData,
     ProgramIndex,
     ProgramProofEdgeLabel,
-    ProgramProofStateTransition,
     ProgramProofStatus,
     ProgramSearchStatistics,
     Repository,

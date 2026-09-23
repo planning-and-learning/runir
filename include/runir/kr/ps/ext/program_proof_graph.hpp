@@ -7,6 +7,7 @@
 
 #include <cista/containers/optional.h>
 #include <tuple>
+#include <tyr/formalism/binding_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <utility>
@@ -39,31 +40,20 @@ struct ProgramProofVertexLabel : ygg::comparison::Mixin<ProgramProofVertexLabel<
     auto identifying_members() const noexcept { return std::make_tuple(program_state, is_initial, is_goal, is_alive, is_unsolvable); }
 };
 
-struct ProgramProofStateTransition : ygg::comparison::Mixin<ProgramProofStateTransition>
-{
-    tyr::formalism::planning::ActionBindingView action;
-    ygg::float_t cost = 0;
-
-    ProgramProofStateTransition(tyr::formalism::planning::ActionBindingView action_, ygg::float_t cost_) noexcept : action(action_), cost(cost_) {}
-
-    auto cista_members() noexcept { return std::tie(action, cost); }
-    auto identifying_members() const noexcept { return std::make_tuple(action, cost); }
-};
-
 struct ProgramProofEdgeLabel : ygg::comparison::Mixin<ProgramProofEdgeLabel>
 {
-    ::cista::optional<ProgramProofStateTransition> state_transition;
+    ::cista::optional<tyr::formalism::planning::ActionBindingView> action;
     ::cista::optional<RuleVariantView> rule;
 
     ProgramProofEdgeLabel() = default;
-    ProgramProofEdgeLabel(::cista::optional<ProgramProofStateTransition> state_transition_, ::cista::optional<RuleVariantView> rule_) :
-        state_transition(std::move(state_transition_)),
+    ProgramProofEdgeLabel(::cista::optional<tyr::formalism::planning::ActionBindingView> action_, ::cista::optional<RuleVariantView> rule_) :
+        action(std::move(action_)),
         rule(std::move(rule_))
     {
     }
 
-    auto cista_members() noexcept { return std::tie(state_transition, rule); }
-    auto identifying_members() const noexcept { return std::tie(state_transition, rule); }
+    auto cista_members() noexcept { return std::tie(action, rule); }
+    auto identifying_members() const noexcept { return std::tie(action, rule); }
 };
 
 template<tyr::TaskKind Kind>

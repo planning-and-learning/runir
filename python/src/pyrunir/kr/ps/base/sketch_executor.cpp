@@ -8,7 +8,6 @@
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 #include <pyrunir/graphs/graph.hpp>
-#include <runir/datasets/state_graph.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
 #include <runir/kr/ps/base/successor_expander.hpp>
@@ -80,9 +79,8 @@ void bind_sketch_executor(nb::module_& m)
         .def_ro("num_expanded", &SketchSearchStatistics::num_expanded)
         .def_ro("num_generated", &SketchSearchStatistics::num_generated);
 
-    auto edge_label = nb::class_<SketchProofEdgeLabel>(m, "SketchProofEdgeLabel")
-                          .def_ro("transition", &SketchProofEdgeLabel::transition)
-                          .def_ro("rule", &SketchProofEdgeLabel::rule);
+    auto edge_label =
+        nb::class_<SketchProofEdgeLabel>(m, "SketchProofEdgeLabel").def_ro("action", &SketchProofEdgeLabel::action).def_ro("rule", &SketchProofEdgeLabel::rule);
     ygg::add_print(edge_label);
     ygg::add_comparison(edge_label);
     ygg::add_hash(edge_label);

@@ -61,7 +61,7 @@ def test_base_proof_properties_keep_the_graph_and_sketch_alive(
     edge = graph.get_edge_property(next(iter(graph.get_edge_indices())))
     assert sys.getrefcount(graph) > references
     rule = edge.rule
-    action = edge.transition.action
+    action = edge.action
     expected = (str(rule), str(action), str(vertex.state.unpack()))
 
     del edge, graph, proof, sketch, context
@@ -247,7 +247,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
         assert edge in proof_result.graph.get_out_edge_indices(proof_result.graph.get_source(edge))
         edge_label = proof_result.graph.get_edge_property(edge)
         assert isinstance(edge_label, SketchProofEdgeLabel)
-        assert isinstance(edge_label.transition.action, ActionBinding)
+        assert isinstance(edge_label.action, ActionBinding)
 
     search_options = GroundSketchSearchOptions()
     search_result = find_ground_solution(task_context, sketch, search_options)
