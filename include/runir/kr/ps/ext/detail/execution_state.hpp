@@ -148,7 +148,7 @@ public:
         return std::nullopt;
     }
 
-    /// An empty result means the binding cursor is exhausted; otherwise the step carries its target and outcome.
+    /// Return the next applied binding, or an empty result when the cursor is exhausted.
     std::optional<ProgramStep<Kind>> next_binding()
     {
         auto& frame = m_choices.top();

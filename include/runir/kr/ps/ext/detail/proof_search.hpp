@@ -24,34 +24,19 @@ struct SearchFrame
 {
     ProgramStateView<Kind> state;
     std::size_t edge;
-    // A state frame requires every rule; a rule frame combines its own continuations.
+    // State frames combine required continuations with AND; Choose frames combine bindings with OR.
     std::optional<RuleVariantView> rule = std::nullopt;
     SearchStatus result = SearchStatus::SUCCESS;
 
-    // Ordinary continuations are conjunctive; one pending child cannot override a definite failure.
-    void require(SearchStatus child)
-    {
-        if (child == SearchStatus::FAILURE || (child == SearchStatus::PENDING && result == SearchStatus::SUCCESS))
-            result = child;
-    }
-
     void accept(SearchStatus child)
     {
-        if (!rule)
-            require(child);
-        else
-            ygg::visit(
-                [&](auto concrete)
-                {
-                    if constexpr (ChooseRuleView<decltype(concrete)>)
-                    {
-                        if (child == SearchStatus::SUCCESS || (child == SearchStatus::PENDING && result == SearchStatus::FAILURE))
-                            result = child;
-                    }
-                    else
-                        require(child);
-                },
-                rule->get_variant());
+        if (rule)
+        {
+            if (child == SearchStatus::SUCCESS || (child == SearchStatus::PENDING && result == SearchStatus::FAILURE))
+                result = child;
+        }
+        else if (child == SearchStatus::FAILURE || (child == SearchStatus::PENDING && result == SearchStatus::SUCCESS))
+            result = child;
     }
 };
 
@@ -145,49 +130,30 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
         auto& frame = stack.top();
         if (frame.rule)
         {
-            const auto limit = ygg::visit(
-                [&](auto rule) -> std::optional<ProgramProofStatus>
+            auto& choices = execution.choices();
+            const auto active = !choices.empty() && choices.top().state == frame.state;
+            if (frame.result != SearchStatus::SUCCESS)
+            {
+                if (active)
                 {
-                    if constexpr (ChooseRuleView<decltype(rule)>)
+                    if (const auto step = execution.next_binding())
                     {
-                        if (!execution.choices().empty() && execution.choices().top().state == frame.state)
-                        {
-                            if (frame.result != SearchStatus::SUCCESS)
-                                if (const auto step = execution.next_binding())
-                                {
-                                    if (step->status == ProgramOutcome::OUT_OF_TIME)
-                                        return ProgramProofStatus::OUT_OF_TIME;
-                                    if (step->status == ProgramOutcome::OUT_OF_STATES)
-                                        return ProgramProofStatus::OUT_OF_STATES;
-                                    if (step->status == ProgramOutcome::APPLIED)
-                                    {
-                                        const auto non_singleton =
-                                            std::visit([](const auto& choice) { return choice.has_alternatives(); }, execution.choices().top().choice);
-                                        if (const auto limit = execution.record_transition(frame.state, *step, non_singleton))
-                                            return limit;
-                                        next = step->get_target();
-                                        return std::nullopt;
-                                    }
-                                    execution.search_node(frame.state).is_deadend = true;
-                                }
-                            execution.choices().pop();
-                            return std::nullopt;
-                        }
-                        if (frame.result == SearchStatus::SUCCESS)
-                            return std::nullopt;
+                        const auto non_singleton = std::visit([](const auto& choice) { return choice.has_alternatives(); }, choices.top().choice);
+                        if (const auto limit = execution.record_transition(frame.state, *step, non_singleton))
+                            return finish(*limit);
+                        next = step->get_target();
+                        continue;
                     }
-                    if (frame.edge != no_edge && execution.predecessors()[frame.edge].rule == frame.rule)
-                    {
-                        next = execution.predecessors()[frame.edge].target;
-                        frame.edge = execution.next_outgoing(frame.edge);
-                    }
-                    return std::nullopt;
-                },
-                frame.rule->get_variant());
-            if (limit)
-                return finish(*limit);
-            if (next)
-                continue;
+                }
+                else if (frame.edge != no_edge && execution.predecessors()[frame.edge].rule == frame.rule)
+                {
+                    next = execution.predecessors()[frame.edge].target;
+                    frame.edge = execution.next_outgoing(frame.edge);
+                    continue;
+                }
+            }
+            if (active)
+                choices.pop();
 
             // Skip untried recorded bindings after a successful Choose, then resume the parent state's next rule.
             while (frame.edge != no_edge && execution.predecessors()[frame.edge].rule == frame.rule)
@@ -200,7 +166,6 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
         }
         if (frame.edge != no_edge)
         {
-            // A rule frame consumes one consecutive group and returns the next group's cursor to this state frame.
             const auto& edge = execution.predecessors()[frame.edge];
             if (!edge.rule)
             {
@@ -210,7 +175,15 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
             else
                 ygg::visit(
                     [&](auto rule)
-                    { stack.push({ frame.state, frame.edge, edge.rule, ChooseRuleView<decltype(rule)> ? SearchStatus::FAILURE : SearchStatus::SUCCESS }); },
+                    {
+                        if constexpr (ChooseRuleView<decltype(rule)>)
+                            stack.push({ frame.state, frame.edge, edge.rule, SearchStatus::FAILURE });
+                        else
+                        {
+                            frame.edge = execution.next_outgoing(frame.edge);
+                            next = edge.target;
+                        }
+                    },
                     edge.rule->get_variant());
             continue;
         }
