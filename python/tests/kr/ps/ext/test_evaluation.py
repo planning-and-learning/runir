@@ -3,6 +3,7 @@ import sys
 from typing import Literal
 
 import pytest
+from ext_execution_utils import collect_steps, initial_node
 from fixture_utils import FIXTURE_ROOT
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
@@ -99,10 +100,11 @@ def _loaded_frame(kind: Literal["ground", "lifted"], source: str = PROGRAM):
         expander = ext.GroundSuccessorExpander(task_context, program)
     else:
         expander = ext.LiftedSuccessorExpander(task_context, program)
-    initial = expander.initial_state()
-    child = expander.control_steps(initial)[0].target
-    with_concept = expander.load_steps(child)[0].target
-    loaded = expander.load_steps(with_concept)[0].target
+    node = initial_node(task_context)
+    initial = ext.create_initial_state(task_context, program, node)
+    child = collect_steps(expander, initial, node)[0].target
+    with_concept = collect_steps(expander, child, node)[0].target
+    loaded = collect_steps(expander, with_concept, node)[0].target
     return task_context, program, expander, loaded
 
 
@@ -206,19 +208,21 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     numerical = ext.evaluate(
         numericals["argument_count"], dl_context
     )
-    child = expander.control_steps(expander.initial_state())[0].target
-    other_frame = expander.load_steps(expander.load_steps(child)[1].target)[0].target
+    node = initial_node(task_context)
+    child = collect_steps(expander, ext.create_initial_state(task_context, program, node), node)[0].target
+    other_concept = collect_steps(expander, child, node)[1].target
+    other_frame = collect_steps(expander, other_concept, node)[0].target
     assert other_frame.state == loaded.state
     environment.get_dl_caches().clear(False)
     other_dl_context = environment.make_dl_context(other_frame)
     assert ext.evaluate(booleans["selected_goal_ball"], other_dl_context).get() is True
     environment.get_dl_caches().clear(False)
     assert ext.evaluate(booleans["selected_goal_ball"], dl_context).get() is False
-    del child, other_frame, other_dl_context
+    del child, other_concept, other_frame, other_dl_context
 
     moved = next(
         step.target
-        for step in expander.control_steps(loaded)
+        for step in collect_steps(expander, loaded, node)
         if step.state_transition.action.get_relation().get_name() == "move"
         and step.state_transition.action.get_objects()[-1].get_name() == "roomb"
     )
@@ -283,7 +287,7 @@ def test_state_evaluation_contexts_borrow_distinct_call_arguments(
     kind: Literal["ground", "lifted"],
 ) -> None:
     task_context, program, expander, loaded = _loaded_frame(kind)
-    initial = expander.initial_state()
+    initial = ext.create_initial_state(task_context, program, initial_node(task_context))
     environment = getattr(ext, f"{kind.title()}EvaluationEnvironment")(task_context, program)
     contexts = [
         environment.make_dl_context(loaded),
@@ -364,7 +368,7 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_choose_steps_filter_effects_against_original_registers(kind: Literal["ground", "lifted"]) -> None:
+def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Literal["ground", "lifted"]) -> None:
     task_context, domain = _task_context(kind)
     source = PROGRAM.replace("(:load", "(:choose").replace(
         "(:register (:concept selected))",
@@ -376,15 +380,48 @@ def test_choose_steps_filter_effects_against_original_registers(kind: Literal["g
     program = parse_program(source, domain, task_context.domain_context.ext_repository)
     expander_type = ext.GroundSuccessorExpander if kind == "ground" else ext.LiftedSuccessorExpander
     expander = expander_type(task_context, program)
-    child = expander.control_steps(expander.initial_state())[0].target
-    concept_steps = expander.choose_steps(child)
+    node = initial_node(task_context)
+    child = collect_steps(expander, ext.create_initial_state(task_context, program, node), node)[0].target
+    statistics = ext.ProgramSearchStatistics()
+
+    def bindings(state, choice_type):
+        choices = []
+
+        def emit(choice):
+            choices.append(choice)
+            return True
+
+        generated = statistics.num_generated
+        assert expander.for_each_successor(state, node, statistics, emit, lambda: False)
+        assert statistics.num_generated == generated
+        choice, = choices
+        assert isinstance(choice, choice_type)
+        assert choice.rule is not None
+        assert choice.count() == 2
+        expected = list(choice.denotation)
+        result = []
+        for value in expected:
+            assert not choice.exhausted()
+            assert choice.current() == value
+            result.append(expander.apply_choice(state, node, choice, statistics))
+            choice.advance()
+        assert choice.exhausted()
+        assert list(choice.denotation) == expected
+        assert statistics.num_generated == generated + len(result)
+        with pytest.raises(IndexError):
+            choice.current()
+        with pytest.raises(IndexError):
+            choice.advance()
+        return result
+
+    concept_steps = bindings(child, ext.ConceptChoice)
     assert len(concept_steps) == 2
     assert child.module_state.registers.concept_values[0] is None
     assert {
         step.target.module_state.registers.concept_values[0].get_name() for step in concept_steps
     } == {"ball1", "ball2"}
     for step in concept_steps:
-        role_steps = expander.choose_steps(step.target)
+        role_steps = bindings(step.target, ext.RoleChoice)
         assert len(role_steps) == 2
         assert step.target.module_state.registers.role_values[0] is None
         for role_step in role_steps:

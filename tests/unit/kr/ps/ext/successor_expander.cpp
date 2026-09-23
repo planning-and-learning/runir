@@ -1,14 +1,13 @@
 #include "fixtures.hpp"
 #include "module_fixtures.hpp"
 #include "planning_fixtures.hpp"
+#include "successor_fixtures.hpp"
 
 #include <algorithm>
-#include <chrono>
 #include <concepts>
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <iostream>
 #include <random>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
@@ -21,7 +20,6 @@
 #include <set>
 #include <string>
 #include <utility>
-#include <yggdrasil/core/portable_shuffle.hpp>
 
 namespace runir::tests
 {
@@ -74,7 +72,8 @@ void expect_initial_program_state_uses_expander_repository()
     const auto module_ = create_module(*repository, "module", entry, { entry });
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
-    const auto state = expander.initial_state();
+    const auto planning_node = initial_planning_node(expander);
+    const auto state = expander.initial_state(planning_node);
 
     task_context.reset();
     repository.reset();
@@ -117,32 +116,38 @@ void expect_module_return_preserves_callee_planning_state()
                                                        context->search_context->task->get_domain().get_domain(),
                                                        *context->domain_context->ext_repository);
     auto expander = ext::SuccessorExpander<Kind>(context, program);
-    const auto initial = expander.initial_state();
+    const auto planning_node = tyr::planning::Node<Kind>(initial_planning_node(expander).get_state(), 7);
+    const auto initial = expander.initial_state(planning_node);
     EXPECT_FALSE(initial.get_call_stack());
-    const auto loads = expander.load_steps(initial);
+    const auto loads = collect_steps(expander, initial, planning_node);
     ASSERT_EQ(loads.size(), 1);
-    const auto calls = expander.control_steps(loads.front().get_target());
+    const auto calls = collect_steps(expander, loads.front().get_target(), planning_node);
     ASSERT_EQ(calls.size(), 1);
     const auto callee = calls.front().get_target();
     const auto suspended = callee.get_call_stack();
     ASSERT_TRUE(suspended);
     EXPECT_FALSE(suspended->get_caller());
-    const auto nested_calls = expander.control_steps(callee);
+    const auto nested_calls = collect_steps(expander, callee, planning_node);
     ASSERT_EQ(nested_calls.size(), 1);
     const auto leaf = nested_calls.front().get_target();
     const auto suspended_callee = leaf.get_call_stack();
     ASSERT_TRUE(suspended_callee);
     EXPECT_EQ(suspended_callee->get_caller(), suspended);
     EXPECT_NE(leaf.get_module_state().get_arguments(), callee.get_module_state().get_arguments());
-    const auto moves = expander.control_steps(leaf);
+    const auto moves = collect_steps(expander, leaf, planning_node);
     ASSERT_EQ(moves.size(), 2);
     for (const auto& move : moves)
     {
         const auto moved = move.get_target();
+        ASSERT_TRUE(move.planning_successor);
+        EXPECT_EQ(move.planning_successor->node.get_metric(), 8);
         ASSERT_NE(moved.get_state().get_index(), initial.get_state().get_index());
-        const auto returns = expander.control_steps(moved);
+        const auto moved_node = move.planning_successor->node.unpack();
+        EXPECT_EQ(moved_node.pack(), move.planning_successor->node);
+        const auto returns = collect_steps(expander, moved, moved_node);
         ASSERT_EQ(returns.size(), 1);
         EXPECT_EQ(returns.front().status, ext::detail::ProgramOutcome::RESTORED_CALLER);
+        EXPECT_FALSE(returns.front().planning_successor);
         const auto returned = returns.front().get_target();
         EXPECT_EQ(returned.get_state().get_index(), moved.get_state().get_index());
         EXPECT_EQ(returned.get_module_state().get_module(), suspended_callee->get_module());
@@ -151,9 +156,10 @@ void expect_module_return_preserves_callee_planning_state()
         EXPECT_EQ(returned.get_module_state().get_arguments(), callee.get_module_state().get_arguments());
         EXPECT_EQ(returned.get_call_stack(), suspended);
 
-        const auto outer_returns = expander.control_steps(returned);
+        const auto outer_returns = collect_steps(expander, returned, moved_node);
         ASSERT_EQ(outer_returns.size(), 1);
         EXPECT_EQ(outer_returns.front().status, ext::detail::ProgramOutcome::RESTORED_CALLER);
+        EXPECT_FALSE(outer_returns.front().planning_successor);
         const auto caller = outer_returns.front().get_target();
         EXPECT_EQ(caller.get_state().get_index(), moved.get_state().get_index());
         EXPECT_EQ(caller.get_module_state().get_module(), suspended->get_module());
@@ -183,7 +189,8 @@ void expect_borrowed_query_evaluation()
     const auto program = create_program(repository, module_, { module_ });
     const auto initial = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
     auto expander = ext::SuccessorExpander<Kind>(task_context, program);
-    const auto state = expander.initial_state();
+    const auto planning_node = initial_planning_node(expander);
+    const auto state = expander.initial_state(planning_node);
     auto environment = ext::EvaluationEnvironment<Kind>(*task_context, program);
     auto state_context = environment.make_dl_context(state);
     const auto feature = module_.get_query_features()[0];
@@ -265,14 +272,13 @@ void expect_binding_effects_and_empty_choices()
                 const auto module_ = kr::ps::ext::dl::parse_module(source, domain, repository);
                 const auto program = create_program(repository, module_, { module_ });
                 auto expander = kr::ps::ext::SuccessorExpander<Kind>(task_context, program);
-                const auto initial = expander.initial_state();
-                const auto steps = choose ? expander.choose_steps(initial) : expander.load_steps(initial);
-                const auto all_steps = expander.steps(initial, {});
+                const auto planning_node = initial_planning_node(expander);
+                const auto initial = expander.initial_state(planning_node);
+                const auto steps = collect_steps(expander, initial, planning_node);
                 const auto successful = scenario < 2;
                 if (successful)
                 {
                     ASSERT_EQ(steps.size(), scenario == 0 ? 2 : 1);
-                    ASSERT_EQ(all_steps.size(), steps.size());
                     for (const auto& step : steps)
                     {
                         EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
@@ -301,40 +307,28 @@ void expect_binding_effects_and_empty_choices()
                             }
                         }
                     }
-                    const auto applied = expander.apply(initial, *steps.front().rule);
+                    const auto applied = expander.apply(initial, planning_node, *steps.front().rule);
                     ASSERT_TRUE(applied);
                     EXPECT_EQ(applied->get_target().get_index(), steps.front().get_target().get_index());
                 }
                 else if (choose && scenario != 4)
                 {
                     ASSERT_EQ(steps.size(), 1);
-                    ASSERT_EQ(all_steps.size(), 1);
                     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::FAILURE);
-                    EXPECT_EQ(all_steps.front().status, kr::ps::ext::detail::ProgramOutcome::FAILURE);
                     EXPECT_EQ(steps.front().get_target().get_index(), initial.get_index());
                     ASSERT_TRUE(steps.front().rule);
                 }
                 else
                 {
-                    EXPECT_TRUE(steps.empty());
-                    ASSERT_EQ(all_steps.size(), 1);
-                    EXPECT_EQ(all_steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
+                    ASSERT_EQ(steps.size(), 1);
+                    EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
                 }
                 for (const auto value : initial.get_module_state().get_registers().get_concept_values())
                     EXPECT_FALSE(value);
                 for (const auto value : initial.get_module_state().get_registers().get_role_values())
                     EXPECT_FALSE(value);
                 EXPECT_EQ(initial.get_module_state().get_memory_state().get_name(), "source");
-                if (choose)
-                {
-                    EXPECT_TRUE(expander.load_steps(initial).empty());
-                    EXPECT_TRUE(expander.choose_steps_until(initial, [] { return true; }).empty());
-                }
-                else
-                {
-                    EXPECT_TRUE(expander.choose_steps(initial).empty());
-                    EXPECT_TRUE(expander.load_steps_until(initial, [] { return true; }).empty());
-                }
+                EXPECT_TRUE(collect_steps(expander, initial, planning_node, false, [] { return true; }).empty());
             }
 }
 
@@ -379,12 +373,13 @@ void expect_lazy_do_successors()
         const auto module_ = ext::dl::parse_module(source, domain, repository);
         const auto program = create_program(repository, module_, { module_ });
         auto expander = ext::SuccessorExpander<Kind>(task_context, program);
-        const auto initial = expander.initial_state();
+        const auto planning_node = initial_planning_node(expander);
+        const auto initial = expander.initial_state(planning_node);
         ASSERT_EQ(states.num_states(), 1);
-        EXPECT_TRUE(expander.steps_until(initial, [] { return true; }).empty());
+        EXPECT_TRUE(collect_steps(expander, initial, planning_node, false, [] { return true; }).empty());
         EXPECT_EQ(states.num_states(), 1);
 
-        const auto steps = expander.steps(initial);
+        const auto steps = collect_steps(expander, initial, planning_node);
         if (scenario < 2)
         {
             // Only ball2's two pick bindings construct states. Other balls and
@@ -431,34 +426,13 @@ void expect_lazy_do_successors()
                    && left.planning_successor.has_value() == right.planning_successor.has_value()
                    && (!left.planning_successor.has_value() || left.planning_successor->label == right.planning_successor->label);
         };
-        auto repeated = steps;
-        expander.steps(initial, repeated);
+        const auto repeated = collect_steps(expander, initial, planning_node);
         EXPECT_TRUE(std::ranges::equal(steps, repeated, same_step));
-        expander.control_steps(initial, repeated);
-        EXPECT_TRUE(std::ranges::equal(steps, repeated, same_step));
-        expander.steps_until(initial, [] { return true; }, repeated);
-        EXPECT_TRUE(repeated.empty());
-
-        // Obtain the full reference only after the state-allocation assertions.
-        auto successors = expander.labeled_successors(initial);
-        const auto reference = expander.steps(initial, successors);
-        EXPECT_TRUE(std::ranges::is_permutation(steps, reference, same_step));
+        EXPECT_TRUE(collect_steps(expander, initial, planning_node, false, [] { return true; }).empty());
         if (scenario == 0)
         {
-            std::ranges::reverse(successors);
-            auto reversed = reference;
-            std::ranges::reverse(reversed);
-            EXPECT_TRUE(std::ranges::equal(expander.steps(initial, successors), reversed, same_step));
-
-            const auto subset = tyr::planning::LabeledNodeList<Kind> { steps.front().planning_successor->unpack() };
-            const auto restricted = expander.steps(initial, subset);
-            ASSERT_EQ(restricted.size(), 1);
-            EXPECT_TRUE(same_step(restricted.front(), steps.front()));
-            const auto empty = expander.steps(initial, tyr::planning::LabeledNodeList<Kind> {});
-            ASSERT_EQ(empty.size(), 1);
-            EXPECT_EQ(empty.front().status, ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
             ASSERT_TRUE(steps.front().rule);
-            EXPECT_FALSE(expander.apply(initial, *steps.front().rule));
+            EXPECT_FALSE(expander.apply(initial, planning_node, *steps.front().rule));
         }
     }
 }
@@ -496,11 +470,11 @@ void expect_control_only_steps_do_not_generate_planning_successors()
                                                        task_context->search_context->task->get_domain().get_domain(),
                                                        repository);
     auto expander = ext::SuccessorExpander<Kind>(task_context, program);
-    const auto initial = expander.initial_state();
+    const auto planning_node = initial_planning_node(expander);
+    const auto initial = expander.initial_state(planning_node);
     ASSERT_EQ(states.num_states(), 1);
-    const auto steps = expander.steps(initial);
+    const auto steps = collect_steps(expander, initial, planning_node);
     ASSERT_EQ(steps.size(), 4);
-    EXPECT_EQ(expander.control_steps(initial).size(), 2);
     for (const auto& step : steps)
     {
         EXPECT_EQ(step.status, ext::detail::ProgramOutcome::APPLIED);
@@ -535,14 +509,15 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationReusesTaskContextCache)
                                       *repository);
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
-    const auto initial_state = expander.initial_state();
-    const auto first = expander.control_steps(initial_state);
+    const auto planning_node = initial_planning_node(expander);
+    const auto initial_state = expander.initial_state(planning_node);
+    const auto first = collect_steps(expander, initial_state, planning_node);
     ASSERT_EQ(first.size(), 1);
     EXPECT_EQ(first.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
     EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(), 0);
     const auto cached_denotations = task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>();
 
-    const auto second = expander.control_steps(initial_state);
+    const auto second = collect_steps(expander, initial_state, planning_node);
     ASSERT_EQ(second.size(), 1);
     EXPECT_EQ(second.front().get_target().get_index(), first.front().get_target().get_index());
     EXPECT_EQ(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(), cached_denotations);
@@ -635,8 +610,9 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
 
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
-    const auto initial_state = expander.initial_state();
-    const auto steps = expander.load_steps(initial_state);
+    const auto planning_node = initial_planning_node(expander);
+    const auto initial_state = expander.initial_state(planning_node);
+    const auto steps = collect_steps(expander, initial_state, planning_node);
     ASSERT_GT(steps.size(), 1);
 
     auto loaded_objects = std::set<ygg::uint_t> {};
@@ -662,10 +638,9 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
-    // Eager expansion shuffles the complete execution-step list once.
     auto random = std::mt19937_64(1);
-    auto expected_steps = expander.steps(initial_state);
-    ygg::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
+    auto order = kr::ps::ext::Shuffled(random);
+    const auto expected_steps = collect_steps(expander, initial_state, planning_node, order, true);
 
     auto shuffled_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     shuffled_options.random_seed = 1;
@@ -717,8 +692,9 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
 
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
-    const auto initial_state = expander.initial_state();
-    const auto steps = expander.load_steps(initial_state);
+    const auto planning_node = initial_planning_node(expander);
+    const auto initial_state = expander.initial_state(planning_node);
+    const auto steps = collect_steps(expander, initial_state, planning_node);
     ASSERT_GT(steps.size(), 1);
 
     auto loaded_pairs = std::set<std::pair<ygg::uint_t, ygg::uint_t>> {};
@@ -751,9 +727,9 @@ TEST(RunirTests, ExtSuccessorEnumerationCombinesAllApplicableRuleKinds)
                                       *repository);
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
-    const auto initial_state = expander.initial_state();
-    const auto successors = expander.labeled_successors(initial_state);
-    const auto steps = expander.steps(initial_state, successors);
+    const auto planning_node = initial_planning_node(expander);
+    const auto initial_state = expander.initial_state(planning_node);
+    const auto steps = collect_steps(expander, initial_state, planning_node);
 
     auto load_steps = std::size_t(0);
     auto do_steps = std::size_t(0);
@@ -784,9 +760,6 @@ TEST(RunirTests, ExtSuccessorEnumerationCombinesAllApplicableRuleKinds)
     EXPECT_GT(do_steps, 0);
     EXPECT_EQ(sketch_steps, 1);
     EXPECT_EQ(steps.size(), load_steps + do_steps + sketch_steps);
-
-    const auto control_steps = expander.control_steps(initial_state, successors);
-    EXPECT_EQ(control_steps.size(), do_steps + sketch_steps);
 
     auto greedy_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
@@ -872,8 +845,9 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
 
     const auto program = create_program(*repository, caller, { caller, callee });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
-    const auto initial_state = expander.initial_state();
-    const auto call_steps = expander.control_steps(initial_state);
+    const auto planning_node = initial_planning_node(expander);
+    const auto initial_state = expander.initial_state(planning_node);
+    const auto call_steps = collect_steps(expander, initial_state, planning_node);
     ASSERT_EQ(call_steps.size(), 1);
     EXPECT_EQ(call_steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
     const auto call_target = call_steps.front().get_target();
@@ -926,14 +900,14 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
 
     const auto caller_frame = call_target.get_call_stack();
     ASSERT_TRUE(caller_frame);
-    const auto return_steps = expander.control_steps(call_target);
+    const auto return_steps = collect_steps(expander, call_target, planning_node);
     ASSERT_EQ(return_steps.size(), 1);
     EXPECT_EQ(return_steps.front().status, kr::ps::ext::detail::ProgramOutcome::RESTORED_CALLER);
     EXPECT_EQ(return_steps.front().get_target().get_call_stack(), caller_frame->get_caller());
     EXPECT_EQ(return_steps.front().get_target().get_module_state().get_module().get_index(), caller.get_index());
     EXPECT_EQ(return_steps.front().get_target().get_module_state().get_memory_state().get_index(), caller_return.get_index());
 
-    const auto repeated_call_steps = expander.control_steps(initial_state);
+    const auto repeated_call_steps = collect_steps(expander, initial_state, planning_node);
     ASSERT_EQ(repeated_call_steps.size(), 1);
     EXPECT_EQ(repeated_call_steps.front().get_target().get_index(), call_target.get_index());
 }
@@ -976,7 +950,8 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
 
     const auto program = create_program(*repository, caller, { caller, callee });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
-    const auto steps = expander.control_steps(expander.initial_state());
+    const auto planning_node = initial_planning_node(expander);
+    const auto steps = collect_steps(expander, expander.initial_state(planning_node), planning_node);
     ASSERT_EQ(steps.size(), 1);
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
     EXPECT_EQ(steps.front().get_target().get_module_state().get_module().get_index(), callee.get_index());
@@ -1032,8 +1007,9 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     const auto module_ = repository->get_or_create(module_data).first;
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
-    const auto initial_state = expander.initial_state();
-    const auto steps = expander.control_steps(initial_state);
+    const auto planning_node = initial_planning_node(expander);
+    const auto initial_state = expander.initial_state(planning_node);
+    const auto steps = collect_steps(expander, initial_state, planning_node);
     ASSERT_GT(steps.size(), 1);
 
     for (const auto& step : steps)
@@ -1055,10 +1031,9 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
 
-    // Eager expansion shuffles the complete execution-step list once.
     auto random = std::mt19937_64(1);
-    auto expected_steps = expander.steps(initial_state);
-    ygg::portable_shuffle(expected_steps.begin(), expected_steps.end(), random);
+    auto order = kr::ps::ext::Shuffled(random);
+    const auto expected_steps = collect_steps(expander, initial_state, planning_node, order, true);
 
     auto shuffled_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     shuffled_options.random_seed = 1;
@@ -1090,8 +1065,9 @@ TEST(RunirTests, ExtDoRuleRejectsActionWithIncompatibleDeclaredEffects)
                                       *repository);
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
-    const auto initial_state = expander.initial_state();
-    const auto steps = expander.control_steps(initial_state);
+    const auto planning_node = initial_planning_node(expander);
+    const auto initial_state = expander.initial_state(planning_node);
+    const auto steps = collect_steps(expander, initial_state, planning_node);
     ASSERT_EQ(steps.size(), 1);
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
     EXPECT_EQ(steps.front().get_target().get_state().get_index(), initial_state.get_state().get_index());
@@ -1177,7 +1153,8 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
 
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
-    const auto steps = expander.control_steps(expander.initial_state());
+    const auto planning_node = initial_planning_node(expander);
+    const auto steps = collect_steps(expander, expander.initial_state(planning_node), planning_node);
     ASSERT_GT(steps.size(), 2);
     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
     EXPECT_EQ(steps.front().get_target().get_module_state().get_memory_state().get_index(), move_target.get_index());
@@ -1237,21 +1214,23 @@ void expect_query_action_contracts()
         const auto module_ = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
         const auto program = create_program(repository, module_, { module_ });
         auto expander = ext::SuccessorExpander<Kind>(task_context, program);
-        const auto initial = expander.initial_state();
+        const auto planning_node = initial_planning_node(expander);
+        const auto initial = expander.initial_state(planning_node);
         const auto rule = module_.get_memory_transitions()[0][0];
         auto lazy = std::vector<typename ext::SuccessorExpander<Kind>::Step> {};
         if (scenario == 2 || scenario == 4)
         {
-            EXPECT_THROW(expander.control_steps(initial), ext::ActionRuleContractError);
-            EXPECT_THROW(expander.template steps_until<ext::LazyExpansionPolicy>(initial, [] { return false; }, lazy), ext::ActionRuleContractError);
+            EXPECT_THROW(collect_steps(expander, initial, planning_node), ext::ActionRuleContractError);
+            EXPECT_THROW(lazy = collect_steps(expander, initial, planning_node, true), ext::ActionRuleContractError);
             if (scenario == 2)
             {
-                const auto successors = expander.labeled_successors(initial);
+                auto& search = *task_context->search_context;
+                const auto successors =
+                    search.successor_generator->get_labeled_successor_nodes(planning_node, *search.state_repository, *search.axiom_evaluator);
                 ASSERT_FALSE(successors.empty());
                 const auto& candidate = successors.front();
-                EXPECT_THROW(expander.matching_rule(initial, candidate.label, candidate.node.get_state()), ext::ActionRuleContractError);
-                EXPECT_THROW(expander.apply(initial, rule, candidate.label, candidate.node.get_state()), ext::ActionRuleContractError);
-                EXPECT_THROW(expander.steps(initial, successors), ext::ActionRuleContractError);
+                EXPECT_THROW(expander.matching_rule(initial, planning_node, candidate), ext::ActionRuleContractError);
+                EXPECT_THROW(expander.apply(initial, planning_node, rule, candidate), ext::ActionRuleContractError);
             }
             continue;
         }
@@ -1259,20 +1238,17 @@ void expect_query_action_contracts()
         {
             // Only the first two rows are applicable; the third is unvisited by
             // greedy execution and remains a contract violation exhaustively.
-            expander.template steps_until<ext::LazyExpansionPolicy>(initial, [] { return false; }, lazy);
+            lazy = collect_steps(expander, initial, planning_node, true);
             ASSERT_EQ(lazy.size(), 1);
             EXPECT_EQ(lazy.front().status, ext::detail::ProgramOutcome::APPLIED);
             auto options = ext::ProgramSearchOptions<Kind> {};
             EXPECT_NO_THROW(ext::find_solution(task_context, program, options));
             options.universal = true;
             EXPECT_THROW(ext::find_solution(task_context, program, options), ext::ActionRuleContractError);
-            options.universal = false;
-            options.shuffle_choice_points = true;
-            EXPECT_THROW(ext::find_solution(task_context, program, options), ext::ActionRuleContractError);
-            EXPECT_THROW(expander.control_steps(initial), ext::ActionRuleContractError);
+            EXPECT_THROW(collect_steps(expander, initial, planning_node), ext::ActionRuleContractError);
             continue;
         }
-        const auto steps = expander.control_steps(initial);
+        const auto steps = collect_steps(expander, initial, planning_node);
         if (scenario == 1)
         {
             ASSERT_EQ(steps.size(), 1);
@@ -1287,28 +1263,19 @@ void expect_query_action_contracts()
             const auto candidate = step.planning_successor->unpack();
             EXPECT_EQ(candidate.label.get_objects()[0].get_name(), "start");
             EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_name(), "target");
-            const auto matching = expander.matching_rule(initial, candidate.label, candidate.node.get_state());
+            const auto matching = expander.matching_rule(initial, planning_node, candidate);
             ASSERT_TRUE(matching);
             EXPECT_EQ(matching->get_index(), rule.get_index());
-            const auto applied = expander.apply(initial, rule, candidate.label, candidate.node.get_state());
+            const auto applied = expander.apply(initial, planning_node, rule, candidate);
             ASSERT_TRUE(applied);
             EXPECT_EQ(applied->get_target().get_index(), step.get_target().get_index());
         }
-        auto supplied = tyr::planning::LabeledNodeList<Kind> { steps.back().planning_successor->unpack() };
-        const auto subset = expander.steps(initial, supplied);
-        ASSERT_EQ(subset.size(), 1);
-        EXPECT_EQ(subset.front().get_target().get_index(), steps.back().get_target().get_index());
-        expander.template steps_until<ext::LazyExpansionPolicy>(initial, supplied, [] { return false; }, lazy);
-        ASSERT_EQ(lazy.size(), 1);
-        EXPECT_EQ(lazy.front().get_target().get_index(), subset.front().get_target().get_index());
-        supplied.clear();
-        EXPECT_EQ(expander.steps(initial, supplied).front().status, ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
-        EXPECT_FALSE(expander.apply(initial, rule));
+        EXPECT_FALSE(expander.apply(initial, planning_node, rule));
     }
 }
 
 template<tyr::TaskKind Kind>
-void expect_lazy_selection_stops_after_selected_rule()
+void expect_callback_selection_stops_after_selected_rule()
 {
     namespace ext = kr::ps::ext;
     for (const auto choose : { false, true })
@@ -1332,19 +1299,19 @@ void expect_lazy_selection_stops_after_selected_rule()
         const auto module_ = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
         const auto program = create_program(repository, module_, { module_ });
         auto expander = ext::SuccessorExpander<Kind>(task_context, program);
-        const auto initial = expander.initial_state();
-        auto steps = std::vector<typename ext::SuccessorExpander<Kind>::Step> {};
-        expander.template steps_until<ext::LazyExpansionPolicy>(initial, [] { return false; }, steps);
+        const auto planning_node = initial_planning_node(expander);
+        const auto initial = expander.initial_state(planning_node);
+        const auto steps = collect_steps(expander, initial, planning_node, true);
         ASSERT_EQ(steps.size(), choose ? 2 : 1);
         for (const auto& step : steps)
             EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_name(), "selected");
         EXPECT_EQ(task_context->search_context->state_repository->num_states(), 1);
-        EXPECT_THROW(expander.steps(initial), ext::ActionRuleContractError);
+        EXPECT_THROW(collect_steps(expander, initial, planning_node), ext::ActionRuleContractError);
     }
 }
 
 template<tyr::TaskKind Kind>
-void expect_lazy_sketch_order_and_cancellation()
+void expect_callback_sketch_order_and_cancellation()
 {
     namespace ext = kr::ps::ext;
     const auto source = std::string(R"(
@@ -1370,30 +1337,47 @@ void expect_lazy_sketch_order_and_cancellation()
         const auto module_ = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
         const auto program = create_program(repository, module_, { module_ });
         auto expander = ext::SuccessorExpander<Kind>(task_context, program);
-        const auto initial = expander.initial_state();
-        auto lazy = std::vector<typename ext::SuccessorExpander<Kind>::Step> {};
-        expander.template steps_until<ext::LazyExpansionPolicy>(initial, [] { return true; }, lazy);
-        EXPECT_TRUE(lazy.empty());
+        const auto planning_node = initial_planning_node(expander);
+        const auto initial = expander.initial_state(planning_node);
+        using Step = typename ext::SuccessorExpander<Kind>::Step;
+        auto selected = std::vector<Step> {};
+        auto statistics = ext::ProgramSearchStatistics {};
+        auto order = ext::InOrder {};
+        const auto emit = [&](const auto& expansion)
+        {
+            EXPECT_GT(statistics.num_generated, 0);
+            selected.push_back(std::get<Step>(expansion));
+            return false;
+        };
+        EXPECT_FALSE(expander.for_each_successor(initial, planning_node, statistics, order, emit, [] { return true; }));
+        EXPECT_TRUE(selected.empty());
+        EXPECT_EQ(statistics.num_generated, 0);
         EXPECT_EQ(states.num_states(), 1);
         const auto stop = [&] { return cancelled && states.num_states() > 1; };
-        expander.template steps_until<ext::LazyExpansionPolicy>(initial, stop, lazy);
+        EXPECT_FALSE(expander.for_each_successor(initial, planning_node, statistics, order, emit, stop));
         if (cancelled)
         {
-            EXPECT_TRUE(lazy.empty());
+            EXPECT_TRUE(selected.empty());
             EXPECT_EQ(states.num_states(), 2);
             continue;
         }
-        const auto eager = expander.steps(initial);
-        ASSERT_GT(eager.size(), 1);
-        ASSERT_EQ(lazy.size(), 1);
-        EXPECT_EQ(lazy.front().get_target().get_index(), eager.front().get_target().get_index());
-        EXPECT_EQ(lazy.front().planning_successor->label, eager.front().planning_successor->label);
-        auto supplied = expander.labeled_successors(initial);
-        std::ranges::reverse(supplied);
-        const auto supplied_eager = expander.steps(initial, supplied);
-        expander.template steps_until<ext::LazyExpansionPolicy>(initial, supplied, [] { return false; }, lazy);
-        ASSERT_EQ(lazy.size(), 1);
-        EXPECT_EQ(lazy.front().get_target().get_index(), supplied_eager.front().get_target().get_index());
+        auto complete = std::vector<Step> {};
+        EXPECT_TRUE(expander.for_each_successor(
+            initial,
+            planning_node,
+            statistics,
+            order,
+            [&](const auto& expansion)
+            {
+                complete.push_back(std::get<Step>(expansion));
+                return true;
+            },
+            [] { return false; }));
+        ASSERT_GT(complete.size(), 1);
+        ASSERT_EQ(selected.size(), 1);
+        EXPECT_EQ(selected.front().get_target().get_index(), complete.front().get_target().get_index());
+        EXPECT_EQ(selected.front().planning_successor->label, complete.front().planning_successor->label);
+        EXPECT_EQ(statistics.num_expanded, 0);
     }
 }
 
@@ -1420,14 +1404,15 @@ void expect_query_action_existential_binding()
                                               repository);
     const auto program = create_program(repository, module_, { module_ });
     auto expander = ext::SuccessorExpander<Kind>(task_context, program);
-    const auto steps = expander.control_steps(expander.initial_state());
+    const auto planning_node = initial_planning_node(expander);
+    const auto steps = collect_steps(expander, expander.initial_state(planning_node), planning_node);
     ASSERT_EQ(steps.size(), 1);
     ASSERT_TRUE(steps.front().planning_successor.has_value());
     const auto objects = steps.front().planning_successor->label.get_objects();
     ASSERT_EQ(objects.size(), 2);
     EXPECT_EQ(objects[0].get_name(), "start");
     EXPECT_EQ(objects[1].get_name(), "proof");
-    EXPECT_TRUE(expander.is_goal(steps.front().get_target()));
+    EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_state()));
     EXPECT_TRUE(ext::find_solution(task_context, program, ext::ProgramSearchOptions<Kind> {}).is_successful());
 }
 
@@ -1454,8 +1439,9 @@ void expect_query_action_nullary_binding()
         const auto module_ = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
         const auto program = create_program(repository, module_, { module_ });
         auto expander = ext::SuccessorExpander<Kind>(task_context, program);
-        const auto initial = expander.initial_state();
-        const auto steps = expander.control_steps(initial);
+        const auto planning_node = initial_planning_node(expander);
+        const auto initial = expander.initial_state(planning_node);
+        const auto steps = collect_steps(expander, initial, planning_node);
         ASSERT_EQ(steps.size(), 1);
         if (empty)
         {
@@ -1467,15 +1453,15 @@ void expect_query_action_nullary_binding()
             EXPECT_EQ(steps.front().status, ext::detail::ProgramOutcome::APPLIED);
             ASSERT_TRUE(steps.front().planning_successor.has_value());
             EXPECT_TRUE(steps.front().planning_successor->label.get_objects().empty());
-            EXPECT_TRUE(expander.is_goal(steps.front().get_target()));
-            EXPECT_THROW(expander.control_steps(steps.front().get_target()), ext::ActionRuleContractError);
+            EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_state()));
+            EXPECT_THROW(collect_steps(expander, steps.front().get_target(), steps.front().planning_successor->node.unpack()), ext::ActionRuleContractError);
             EXPECT_TRUE(ext::find_solution(task_context, program, ext::ProgramSearchOptions<Kind> {}).is_successful());
         }
     }
 }
 
 template<tyr::TaskKind Kind>
-void expect_eager_lazy_expansion_counts()
+void expect_callback_expansion_counts()
 {
     namespace ext = kr::ps::ext;
     for (const auto rule_kind : { "load", "choose", "do", "sketch" })
@@ -1500,9 +1486,8 @@ void expect_eager_lazy_expansion_counts()
         auto counts = std::vector<size_t> {};
         auto state_counts = std::vector<size_t> {};
         auto binding_counts = std::vector<size_t> {};
-        auto durations = std::vector<long long> {};
         auto first_bindings = std::vector<std::vector<std::string>> {};
-        for (const auto eager : { true, false })
+        for (const auto complete : { true, false })
         {
             const auto task_context =
                 create_task_context<Kind>(benchmark_path("classical/tests/gripper/domain.pddl"), benchmark_path("classical/tests/gripper/test-1.pddl"));
@@ -1510,14 +1495,9 @@ void expect_eager_lazy_expansion_counts()
             const auto module_ = ext::dl::parse_module(source, task_context->search_context->task->get_domain().get_domain(), repository);
             const auto program = create_program(repository, module_, { module_ });
             auto expander = ext::SuccessorExpander<Kind>(task_context, program);
-            const auto initial = expander.initial_state();
-            auto steps = std::vector<typename ext::SuccessorExpander<Kind>::Step> {};
-            const auto started = std::chrono::steady_clock::now();
-            if (eager)
-                expander.template steps_until<ext::EagerExpansionPolicy>(initial, [] { return false; }, steps);
-            else
-                expander.template steps_until<ext::LazyExpansionPolicy>(initial, [] { return false; }, steps);
-            durations.push_back(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - started).count());
+            const auto planning_node = initial_planning_node(expander);
+            const auto initial = expander.initial_state(planning_node);
+            const auto steps = collect_steps(expander, initial, planning_node, !complete);
             counts.push_back(steps.size());
             state_counts.push_back(task_context->search_context->state_repository->num_states() - 1);
             if constexpr (std::same_as<Kind, tyr::LiftedTag>)
@@ -1564,9 +1544,6 @@ void expect_eager_lazy_expansion_counts()
                 }
             }
         }
-        std::cout << "Expansion comparison " << (std::same_as<Kind, tyr::GroundTag> ? "ground " : "lifted ") << rule_kind << ": eager_steps=" << counts[0]
-                  << " lazy_steps=" << counts[1] << " eager_new_states=" << state_counts[0] << " lazy_new_states=" << state_counts[1]
-                  << " eager_us=" << durations[0] << " lazy_us=" << durations[1] << '\n';
     }
 }
 
@@ -1574,15 +1551,15 @@ void expect_eager_lazy_expansion_counts()
 
 TEST(RunirTests, ExtQueryActionContractsGround) { expect_query_action_contracts<tyr::GroundTag>(); }
 TEST(RunirTests, ExtQueryActionContractsLifted) { expect_query_action_contracts<tyr::LiftedTag>(); }
-TEST(RunirTests, ExtLazySelectionStopsAfterSelectedRuleGround) { expect_lazy_selection_stops_after_selected_rule<tyr::GroundTag>(); }
-TEST(RunirTests, ExtLazySelectionStopsAfterSelectedRuleLifted) { expect_lazy_selection_stops_after_selected_rule<tyr::LiftedTag>(); }
-TEST(RunirTests, ExtLazySketchOrderAndCancellationGround) { expect_lazy_sketch_order_and_cancellation<tyr::GroundTag>(); }
-TEST(RunirTests, ExtLazySketchOrderAndCancellationLifted) { expect_lazy_sketch_order_and_cancellation<tyr::LiftedTag>(); }
+TEST(RunirTests, ExtCallbackSelectionStopsAfterSelectedRuleGround) { expect_callback_selection_stops_after_selected_rule<tyr::GroundTag>(); }
+TEST(RunirTests, ExtCallbackSelectionStopsAfterSelectedRuleLifted) { expect_callback_selection_stops_after_selected_rule<tyr::LiftedTag>(); }
+TEST(RunirTests, ExtCallbackSketchOrderAndCancellationGround) { expect_callback_sketch_order_and_cancellation<tyr::GroundTag>(); }
+TEST(RunirTests, ExtCallbackSketchOrderAndCancellationLifted) { expect_callback_sketch_order_and_cancellation<tyr::LiftedTag>(); }
 TEST(RunirTests, ExtQueryActionExistentialBindingGround) { expect_query_action_existential_binding<tyr::GroundTag>(); }
 TEST(RunirTests, ExtQueryActionExistentialBindingLifted) { expect_query_action_existential_binding<tyr::LiftedTag>(); }
 TEST(RunirTests, ExtQueryActionNullaryBindingGround) { expect_query_action_nullary_binding<tyr::GroundTag>(); }
 TEST(RunirTests, ExtQueryActionNullaryBindingLifted) { expect_query_action_nullary_binding<tyr::LiftedTag>(); }
-TEST(RunirTests, ExtEagerLazyExpansionCountsGround) { expect_eager_lazy_expansion_counts<tyr::GroundTag>(); }
-TEST(RunirTests, ExtEagerLazyExpansionCountsLifted) { expect_eager_lazy_expansion_counts<tyr::LiftedTag>(); }
+TEST(RunirTests, ExtCallbackExpansionCountsGround) { expect_callback_expansion_counts<tyr::GroundTag>(); }
+TEST(RunirTests, ExtCallbackExpansionCountsLifted) { expect_callback_expansion_counts<tyr::LiftedTag>(); }
 
 }  // namespace runir::tests

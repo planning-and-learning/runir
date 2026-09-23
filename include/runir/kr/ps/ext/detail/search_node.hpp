@@ -10,6 +10,7 @@
 #include <tuple>
 #include <tyr/formalism/binding_view.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
+#include <tyr/planning/node.hpp>
 #include <utility>
 #include <yggdrasil/containers/segmented_vector.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
@@ -24,16 +25,13 @@ struct SearchNode
 
     // First incoming transition in the current attempt; replaced when revisited after rollback.
     ygg::Index<ProgramState<Kind>> parent_state = ygg::Index<ProgramState<Kind>>::max();
-    std::optional<tyr::formalism::planning::ActionBindingView> action = std::nullopt;
-    ygg::float_t metric = 0;
-    std::size_t discovery_order = unreached;
+    std::optional<tyr::planning::PackedLabeledNode<Kind>> planning_successor = std::nullopt;
+    std::size_t step = unreached;
     bool visited = false;
     bool is_goal = false;
     bool is_unsolvable = false;
-    bool has_successor = false;
-    bool boundary = false;
-    bool reported_deadend = false;
-    bool reported_open = false;
+    bool is_deadend = false;
+    bool is_open = false;
 };
 
 template<tyr::TaskKind Kind>

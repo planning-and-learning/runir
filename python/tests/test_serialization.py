@@ -4,6 +4,7 @@ import sys
 
 import pytest
 
+from ext_execution_utils import collect_steps, initial_node
 from fixture_utils import read_fixture
 from pytyr.formalism import planning as fp
 from pytyr.planning import ground
@@ -167,8 +168,9 @@ def test_runir_and_tyr_share_dictionary_references(ground_gripper_search_context
         read_fixture("kr/ps/ext/dl/acyclic_calls.program"), domain, domain_context.ext_repository,
     )
     expander = ext.GroundSuccessorExpander(context, program)
-    initial = expander.initial_state()
-    step, = expander.control_steps(initial)
+    node = initial_node(context)
+    initial = ext.create_initial_state(context, program, node)
+    step, = collect_steps(expander, initial, node)
     with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*ProgramState.*GroundTag"):
         serialize(Dictionaries(), initial)
     with pytest.raises(ValueError, match=r"^Unregistered serialization type: .*PlanningDomain"):

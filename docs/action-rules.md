@@ -65,30 +65,60 @@ and forward termination does not establish completeness of backtracking search.
 
 ## Enumeration and search
 
-Public `control_steps` and `steps` enumerate all applicable rule outcomes. They
-validate every selected Action tuple they visit. Query evaluation still produces
-the selected relation; successor-state construction can stop earlier during
-search.
+`SuccessorExpander::for_each_successor(state, node, statistics, order, emit, stop)`
+visits immediate outcomes without collecting successor states. The source combines
+an interned `ProgramState` with the corresponding Tyr `Node`; the node carries
+the accumulated planning metric. The callback returns `true` to continue and
+`false` to stop. Enumeration returns `true` only when exhausted; cancellation
+or callback termination returns `false`.
 
-The expansion layer specializes `EagerExpansionPolicy` and
-`LazyExpansionPolicy` while sharing the executor state and proof search. C++
-callers can select a policy through
-`expander.steps_until<LazyExpansionPolicy>(state, stop, steps)`; calls without
-an explicit policy use `EagerExpansionPolicy`.
+An ordinary outcome is a `ProgramExecutionStep`. A Choose rule emits a
+`ConceptChoice` or `RoleChoice`, retaining its effect-filtered denotation and a
+cursor. Applying a choice constructs only its current binding's successor.
+An enabled empty Choose remains a failed obligation. Each Choose rule keeps
+its own obligation in universal search. Do rules enumerate bindings only for
+their action schema and filter arguments before constructing successor states.
 
-Nonuniversal execution with `shuffle_choice_points=False` stops ordinary rule
-expansion after its first compatible outcome, across Load, Do, Sketch, and
-Action rules. Choose rules retain the selected rule's full binding alternatives
-for backtracking. Later rule outcomes are left unevaluated, so a later invalid
-Action tuple can remain unvisited. Universal execution and execution with
-shuffling use eager expansion. Shuffle behavior retains the existing seeded
-choice ordering.
+Nonuniversal execution stops ordinary expansion at its first compatible
+outcome. Universal execution requires every ordinary outcome and one successful
+binding for each Choose rule. `InOrder` visits rules and bindings in their
+natural order. `Shuffled` stores a reference to its random generator and
+shuffles rule and binding candidates before constructing successor states.
+Both orders support early termination. Action applicability and effect
+contracts are checked only for visited tuples, so unvisited invalid tuples
+remain unchecked even with shuffling. Query evaluation still materializes the
+selected relation.
+
+`statistics.num_generated` counts emitted extended successors, including caller
+returns and attempted Choose bindings. Rejected planning candidates, failure
+markers, and unattempted Choose bindings do not contribute. The search owns
+`num_expanded`; direct expander calls do not increment it.
 
 ## Python access
 
 Module evaluation uses persistent `ext.GroundProgramState` or
 `ext.LiftedProgramState` values produced by the successor expander, with the
 corresponding `GroundEvaluationEnvironment` or `LiftedEvaluationEnvironment`.
+Call `ext.create_initial_state(task_context, program, node)` with the Tyr initial
+node. The returned program state retains its task context. Python exposes
+`expander.for_each_successor(state, node, statistics, emit, stop)` in natural
+order, with a constructible `ext.ProgramSearchStatistics` object.
+
+Each callback receives a step or a `ConceptChoice`/`RoleChoice` by value.
+Choices expose `rule`, `denotation`, `current()`, `advance()`, `exhausted()`,
+and `count()`. After enumeration returns, use
+`expander.apply_choice(state, node, choice, statistics)` to apply the current
+binding, then advance the cursor to try another. Do not reenter the same
+expander from its callback. A choice borrows its repositories; keep the task
+context and program alive while using it. Accessing or advancing an exhausted
+Python choice raises `IndexError`.
+
+A planning step exposes its owned `planning_successor`; pass
+`step.planning_successor.node.unpack()` with `step.target` to continue.
+For a control-only step, keep the source node and use `step.target`. This
+preserves accumulated metrics across Load, Choose, calls, and returns.
+`matching_rule(state, node, successor)` and
+`apply(state, node, rule, successor)` accept a Tyr labeled successor.
 
 `module.get_query_features()` returns named `ext.dl.QueryFeature` values.
 `ActionRule.get_query_feature()` returns the selector, and

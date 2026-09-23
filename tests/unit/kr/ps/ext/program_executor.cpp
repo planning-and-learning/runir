@@ -1,6 +1,7 @@
 #include "fixtures.hpp"
 #include "module_fixtures.hpp"
 #include "planning_fixtures.hpp"
+#include "successor_fixtures.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -136,9 +137,11 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
         *repository);
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
-    const auto initial_state = expander.initial_state();
-    const auto immediate = expander.labeled_successors(initial_state);
-    const auto steps = expander.control_steps(initial_state, immediate);
+    const auto planning_node = initial_planning_node(expander);
+    const auto initial_state = expander.initial_state(planning_node);
+    const auto immediate =
+        search_context->successor_generator->get_labeled_successor_nodes(planning_node, *search_context->state_repository, *search_context->axiom_evaluator);
+    const auto steps = collect_steps(expander, initial_state, planning_node);
     ASSERT_GT(immediate.size(), 1);
     ASSERT_EQ(steps.size(), immediate.size() * 2);
     for (const auto& step : steps)
@@ -165,8 +168,8 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
         *repository);
     const auto two_step_program = create_program(*repository, two_step_module, { two_step_module });
     auto two_step_expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, two_step_program);
-    const auto two_step_state = two_step_expander.initial_state();
-    const auto two_step_outcomes = two_step_expander.control_steps(two_step_state);
+    const auto two_step_state = two_step_expander.initial_state(planning_node);
+    const auto two_step_outcomes = collect_steps(two_step_expander, two_step_state, planning_node);
     ASSERT_EQ(two_step_outcomes.size(), 1);
     EXPECT_EQ(two_step_outcomes.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
 
@@ -295,7 +298,8 @@ void check_choice_execution()
     };
     const auto program = make_program(choice_module("choose", choice_rule("select", "m0", "m1", choose_candidates) + move_rules));
     auto expander = ext::SuccessorExpander<Kind>(context, program);
-    const auto bindings = expander.choose_steps(expander.initial_state());
+    const auto planning_node = initial_planning_node(expander);
+    const auto bindings = collect_steps(expander, expander.initial_state(planning_node), planning_node);
     ASSERT_EQ(bindings.size(), 2);
     EXPECT_EQ(bindings[0].target.get_module_state().get_registers().get_concept_values()[0].value().get_name(), "bad");
 
@@ -316,25 +320,23 @@ void check_choice_execution()
     const auto& plan = *plan_result.plan;
     ASSERT_EQ(plan.get_length(), 2);
     const auto& plan_steps = plan.get_labeled_succ_nodes();
+    EXPECT_EQ(plan.get_start_node().get_metric(), 0);
+    EXPECT_EQ(plan_steps[0].node.get_metric(), 1);
+    EXPECT_EQ(plan_steps[1].node.get_metric(), 2);
     EXPECT_EQ(plan_steps[0].label.get_objects()[0].get_name(), "start");
     EXPECT_EQ(plan_steps[0].label.get_objects()[1].get_name(), "good");
     EXPECT_EQ(plan_steps[1].label.get_objects()[0].get_name(), "good");
     EXPECT_EQ(plan_steps[1].label.get_objects()[1].get_name(), "goal");
-    auto expected_state = expander.initial_state().get_state().get_index();
-    EXPECT_EQ(plan.get_start_node().get_state().get_index(), expected_state);
-    auto expected_metric = plan.get_start_node().get_metric();
+    auto expected_node = planning_node;
+    EXPECT_EQ(plan.get_start_node(), expected_node.pack());
     for (const auto& step : plan_steps)
     {
         auto& generator = *search_context->successor_generator;
-        const auto source = generator.get_node(*search_context->state_repository, expected_state);
-        const auto successor = generator.get_successor_node(source, step.label, *search_context->state_repository, *search_context->axiom_evaluator);
-        expected_state = successor.get_state().get_index();
-        expected_metric = successor.get_metric();
-        EXPECT_EQ(step.node.get_state().get_index(), expected_state);
-        EXPECT_EQ(step.node.get_metric(), expected_metric);
+        expected_node = generator.get_successor_node(expected_node, step.label, *search_context->state_repository, *search_context->axiom_evaluator);
+        EXPECT_EQ(step.node, expected_node.pack());
     }
-    EXPECT_EQ(plan.get_cost(), expected_metric);
-    EXPECT_TRUE(expander.is_goal(plan_steps.back().node.get_state().unpack()));
+    EXPECT_EQ(plan.get_cost(), expected_node.get_metric());
+    EXPECT_TRUE(is_planning_goal(expander, plan_steps.back().node.get_state().unpack()));
 
     for (const auto universal : { false, true })
     {
@@ -355,7 +357,7 @@ void check_choice_execution()
         {
             ASSERT_TRUE(result.plan);
             EXPECT_EQ(result.plan->get_length(), 2);
-            EXPECT_TRUE(expander.is_goal(result.plan->get_labeled_succ_nodes().back().node.get_state().unpack()));
+            EXPECT_TRUE(is_planning_goal(expander, result.plan->get_labeled_succ_nodes().back().node.get_state().unpack()));
             EXPECT_EQ(result.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
         }
 

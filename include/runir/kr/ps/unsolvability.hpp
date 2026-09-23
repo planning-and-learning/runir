@@ -1,11 +1,11 @@
-#ifndef RUNIR_KR_PS_BASE_UNSOLVABILITY_HPP_
-#define RUNIR_KR_PS_BASE_UNSOLVABILITY_HPP_
+#ifndef RUNIR_KR_PS_UNSOLVABILITY_HPP_
+#define RUNIR_KR_PS_UNSOLVABILITY_HPP_
 
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/task_context.hpp"
 #include "runir/kr/uns/classify.hpp"
 
-namespace runir::kr::ps::base
+namespace runir::kr::ps
 {
 
 struct NoUnsolvability
@@ -36,14 +36,14 @@ public:
     {
         m_caches.clear(false);
         auto context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, Kind>(state,
-                                                                                                  m_task_context.dl_builder,
-                                                                                                  *m_task_context.dl_denotation_repository,
-                                                                                                  m_task_context.dl_builder.get_workspace(),
-                                                                                                  m_caches);
+                                                                                                       m_task_context.dl_builder,
+                                                                                                       *m_task_context.dl_denotation_repository,
+                                                                                                       m_task_context.dl_builder.get_workspace(),
+                                                                                                       m_caches);
         return runir::kr::uns::classify(m_classifier, context);
     }
 };
 
-}  // namespace runir::kr::ps::base
+}  // namespace runir::kr::ps
 
 #endif

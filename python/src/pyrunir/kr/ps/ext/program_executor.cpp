@@ -1,17 +1,23 @@
 #include "pyrunir/kr/ps/ext/module.hpp"
 
+#include <functional>
 #include <nanobind/stl/chrono.h>
+#include <nanobind/stl/function.h>
 #include <nanobind/stl/optional.h>
+#include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/string_view.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
 #include <runir/kr/ps/ext/action_rule_contract_error.hpp>
+#include <runir/kr/ps/ext/binding_order.hpp>
 #include <runir/kr/ps/ext/evaluation_environment.hpp>
+#include <runir/kr/ps/ext/execution_construction.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
@@ -46,6 +52,31 @@ void bind_feature_evaluation(nb::module_& m)
         nb::keep_alive<0, 2>());
 }
 
+template<runir::kr::dl::CategoryTag Category>
+void bind_choice(nb::module_& m, const char* name)
+{
+    using Choice = detail::Choice<Category>;
+    nb::class_<Choice>(m, name)
+        .def_ro("rule", &Choice::rule)
+        .def_ro("denotation", &Choice::denotation)
+        .def("exhausted", &Choice::exhausted)
+        .def("count", &Choice::count)
+        .def("current",
+             [](const Choice& self)
+             {
+                 if (self.exhausted())
+                     throw nb::index_error("Choice is exhausted.");
+                 return self.current();
+             })
+        .def("advance",
+             [](Choice& self)
+             {
+                 if (self.exhausted())
+                     throw nb::index_error("Choice is exhausted.");
+                 self.advance();
+             });
+}
+
 template<tyr::TaskKind Kind>
 void bind_execution_types(nb::module_& m, const char* prefix)
 {
@@ -59,6 +90,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using Step = detail::ProgramStep<Kind>;
     using Expander = SuccessorExpander<Kind>;
     using Environment = EvaluationEnvironment<Kind>;
+    using Expansion = typename Expander::Expansion;
 
     nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
     nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
@@ -152,29 +184,34 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_prop_ro("status", &Step::get_status_name)
         .def_prop_ro("target", &Step::get_target, nb::keep_alive<0, 1>())
         .def_prop_ro("state_transition", &Step::get_state_transition, nb::keep_alive<0, 1>())
-        .def_prop_ro("rule", &Step::get_rule, nb::keep_alive<0, 1>());
+        .def_prop_ro("rule", &Step::get_rule, nb::keep_alive<0, 1>())
+        .def_ro("planning_successor", &Step::planning_successor, nb::rv_policy::copy);
+
+    m.def("create_initial_state", &create_initial_state<Kind>, "task_context"_a, "program"_a, "node"_a, nb::keep_alive<0, 1>());
 
     nb::class_<Expander>(m, (std::string(prefix) + "SuccessorExpander").c_str())
         .def(nb::init<runir::kr::TaskContextPtr<Kind>, ProgramView>(), "task_context"_a, "program"_a)
-        .def("initial_state", &Expander::initial_state, nb::keep_alive<0, 1>())
         .def(
-            "labeled_successors",
-            [](Expander& self, StateView state) { return self.labeled_successors(std::move(state)); },
-            "state"_a)
-        .def(
-            "load_steps",
-            [](Expander& self, StateView state) { return self.load_steps(std::move(state)); },
-            "state"_a)
-        .def(
-            "choose_steps",
-            [](Expander& self, StateView state) { return self.choose_steps(std::move(state)); },
-            "state"_a)
-        .def(
-            "control_steps",
-            [](Expander& self, StateView state) { return self.control_steps(std::move(state)); },
-            "state"_a)
-        .def("matching_rule", &Expander::matching_rule, "state"_a, "action"_a, "target_state"_a, nb::keep_alive<0, 1>())
-        .def("apply", &Expander::apply, "state"_a, "rule"_a, "action"_a = std::nullopt, "target_state"_a = std::nullopt);
+            "for_each_successor",
+            [](Expander& self,
+               StateView state,
+               const tyr::planning::Node<Kind>& node,
+               ProgramSearchStatistics& statistics,
+               const std::function<bool(Expansion)>& emit,
+               const std::function<bool()>& stop)
+            {
+                auto order = InOrder {};
+                return self.for_each_successor(state, node, statistics, order, emit, stop);
+            },
+            "state"_a,
+            "node"_a,
+            "statistics"_a,
+            "emit"_a,
+            "stop"_a)
+        .def("apply_choice", &Expander::template apply_choice<runir::kr::dl::ConceptTag>, "state"_a, "node"_a, "choice"_a, "statistics"_a)
+        .def("apply_choice", &Expander::template apply_choice<runir::kr::dl::RoleTag>, "state"_a, "node"_a, "choice"_a, "statistics"_a)
+        .def("matching_rule", &Expander::matching_rule, "state"_a, "node"_a, "successor"_a, nb::keep_alive<0, 1>())
+        .def("apply", &Expander::apply, "state"_a, "node"_a, "rule"_a, "successor"_a = std::nullopt);
 }
 
 }  // namespace
@@ -183,7 +220,11 @@ void bind_program_executor(nb::module_& m)
 {
     nb::exception<ActionRuleContractError>(m, "ActionRuleContractError", PyExc_RuntimeError);
 
+    bind_choice<runir::kr::dl::ConceptTag>(m, "ConceptChoice");
+    bind_choice<runir::kr::dl::RoleTag>(m, "RoleChoice");
+
     nb::class_<ProgramSearchStatistics>(m, "ProgramSearchStatistics")
+        .def(nb::init<>())
         .def_ro("num_expanded", &ProgramSearchStatistics::num_expanded)
         .def_ro("num_generated", &ProgramSearchStatistics::num_generated)
         .def_ro("choice_depth", &ProgramSearchStatistics::choice_depth)
