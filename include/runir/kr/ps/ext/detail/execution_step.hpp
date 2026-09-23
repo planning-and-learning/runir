@@ -111,6 +111,8 @@ struct ChoiceFrame
 {
     ProgramStateView<Kind> state;
     std::variant<Choice<runir::kr::dl::ConceptTag>, Choice<runir::kr::dl::RoleTag>> choice;
+    // Stable OR requirement; its proof survives after this cursor has been popped.
+    std::size_t obligation;
 };
 
 }  // namespace runir::kr::ps::ext::detail

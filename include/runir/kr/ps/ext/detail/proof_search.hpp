@@ -19,159 +19,94 @@ namespace runir::kr::ps::ext
 namespace detail
 {
 
-/// A suspended state (AND) or one of its Choose rules (OR), with one accumulated child result.
+/// One expansion appends a contiguous run of ordinary diagnostic edges before DFS descends.
+/// Consume that run in reverse order, preserving the existing LIFO traversal without an outgoing index.
 template<tyr::TaskKind Kind>
 struct SearchFrame
 {
     ProgramStateView<Kind> state;
-    std::size_t edge;
-    // State frames combine required continuations with AND; Choose frames combine bindings with OR.
-    std::optional<RuleVariantView> rule = std::nullopt;
-    SearchStatus result = SearchStatus::SUCCESS;
-
-    /// A conclusive failure dominates AND; a conclusive success dominates OR. PENDING preserves cyclic dependencies.
-    void accept(SearchStatus child)
-    {
-        const auto decisive = rule ? SearchStatus::SUCCESS : SearchStatus::FAILURE;
-        if (child == decisive || (child == SearchStatus::PENDING && result != decisive))
-            result = child;
-    }
+    std::size_t begin;
+    std::size_t next;
 };
 
-/// Resolve ordinary continuations conjunctively and each Choose rule existentially.
-/// Expand each program state once; revisit only recorded dependencies that remain PENDING.
-/// Report the first visited goal for plan reconstruction and choice-depth statistics.
-// ponytail: dense cycles can force repeated walks of simple paths; use SCC resolution if cyclic replay becomes a bottleneck.
+/// DFS schedules generation; ProofPropagation resolves the AND/OR dependencies independently.
+/// Expand a state once, visit ordinary edges, then try each Choose until proved or exhausted.
+/// Reaching a previously expanded state adds a dependency but never replays its outgoing edges.
+/// An unresolved binding must not block the next alternative: a later exit can prove the cycle.
+/// Only after all scheduled work and success notifications drain is an unresolved root a failure.
+/// Resource limits instead return their limit status, retaining the explored graph and counters.
 template<tyr::TaskKind Kind, typename Unsolvability>
 ProgramProofStatus
 depth_first_search(ExecutionState<Kind, Unsolvability>& execution, ProgramStateView<Kind> initial, std::optional<ProgramStateView<Kind>>& goal)
 {
-    constexpr auto no_edge = ExecutionState<Kind, Unsolvability>::no_edge;
     auto stack = std::stack<SearchFrame<Kind>, std::vector<SearchFrame<Kind>>> {};
     auto next = std::optional(initial);
-    auto returned = std::optional<SearchStatus> {};
     while (true)
     {
-        if (execution.out_of_time())
+        if (execution.out_of_time() || !execution.proof().propagate([&] { return execution.out_of_time(); }))
             return ProgramProofStatus::OUT_OF_TIME;
 
-        // Enter a child: cached results return immediately; an active ancestor is an unresolved dependency.
         if (next)
         {
             const auto state = *next;
             next.reset();
             auto& node = execution.search_node(state);
-            if (node.status == SearchStatus::ACTIVE)
+            if (node.status != SearchStatus::DISCOVERED)
+                continue;
+            if (node.is_goal)
             {
-                returned = SearchStatus::PENDING;
+                if (!goal)
+                    goal = state;
+                execution.proof().succeed(state);
                 continue;
             }
-            if (node.status == SearchStatus::DISCOVERED)
+            if (node.is_unsolvable)
             {
-                if (node.is_goal)
-                {
-                    if (!goal)
-                        goal = state;
-                    node.status = SearchStatus::SUCCESS;
-                }
-                else if (node.is_unsolvable)
-                {
-                    node.is_deadend = true;
-                    node.status = SearchStatus::FAILURE;
-                }
-                else if (const auto limit = execution.expand(state))
-                    return *limit;
-            }
-            if (node.status == SearchStatus::SUCCESS || node.status == SearchStatus::FAILURE)
-            {
-                returned = node.status;
+                node.is_deadend = true;
+                node.status = SearchStatus::FAILURE;
                 continue;
             }
             node.status = SearchStatus::ACTIVE;
-            // Snapshot only the already recorded edges. Later bindings are handled by the active choice stack.
-            const auto first_edge = execution.first_outgoing(state);
-            stack.push({ state, first_edge });
-            if (node.is_open)
-                stack.top().result = SearchStatus::FAILURE;
+            const auto begin = execution.predecessors().size();
+            if (const auto limit = execution.expand(state))
+                return *limit;
+            // Snapshot ordinary edges before any lazy bindings are recorded for this state.
+            stack.push({ state, begin, execution.predecessors().size() });
+            continue;
         }
-        // Unwind exactly one obligation, leaving the parent's other continuations scheduled.
-        if (returned)
-        {
-            if (stack.empty())
-                return *returned == SearchStatus::SUCCESS ? ProgramProofStatus::SUCCESS : ProgramProofStatus::FAILURE;
-            stack.top().accept(*returned);
-            returned.reset();
-        }
+
+        // Propagation above also runs after the final frame/goal, so no success event is lost.
+        if (stack.empty())
+            return execution.search_node(initial).status == SearchStatus::SUCCESS ? ProgramProofStatus::SUCCESS : ProgramProofStatus::FAILURE;
 
         auto& frame = stack.top();
-        // Try bindings until this Choose succeeds or exhausts its alternatives.
-        if (frame.rule)
+        if (frame.next != frame.begin)
         {
-            auto& choices = execution.choices();
-            if (!choices.empty() && choices.top().state == frame.state)
-            {
-                if (frame.result != SearchStatus::SUCCESS)
-                {
-                    if (const auto step = execution.next_binding())
-                    {
-                        const auto non_singleton = std::visit([](const auto& choice) { return choice.has_alternatives(); }, choices.top().choice);
-                        if (const auto limit = execution.record_transition(frame.state, *step, non_singleton))
-                            return *limit;
-                        next = step->get_target();
-                        continue;
-                    }
-                }
-                choices.pop();
-            }
-            else if (frame.edge != no_edge && execution.predecessors()[frame.edge].rule == frame.rule)
-            {
-                // A revisited state uses recorded bindings. After success, skip the rest of this rule's group.
-                if (frame.result != SearchStatus::SUCCESS)
-                    next = execution.predecessors()[frame.edge].target;
-                frame.edge = execution.next_outgoing(frame.edge);
-                continue;
-            }
+            next = execution.predecessors()[--frame.next].target;
+            continue;
+        }
 
-            // Return the OR result and the next rule's cursor to the enclosing state frame.
-            const auto edge = frame.edge;
-            returned = frame.result;
-            stack.pop();
-            stack.top().edge = edge;
-            continue;
-        }
-        // Ordinary outcomes are AND children; recorded Choose groups open their own OR frame.
-        if (frame.edge != no_edge)
+        auto& choices = execution.choices();
+        if (!choices.empty() && choices.top().state == frame.state)
         {
-            const auto& edge = execution.predecessors()[frame.edge];
-            if (!edge.rule)
+            const auto& choice = choices.top();
+            if (!execution.proof().choice_succeeded(choice.obligation))
             {
-                frame.edge = execution.next_outgoing(frame.edge);
-                next = edge.target;
+                if (const auto step = execution.next_binding())
+                {
+                    const auto non_singleton = std::visit([](const auto& binding) { return binding.has_alternatives(); }, choice.choice);
+                    if (const auto limit = execution.record_transition(frame.state, *step, non_singleton, choice.obligation))
+                        return *limit;
+                    next = step->get_target();
+                    continue;
+                }
             }
-            else
-                ygg::visit(
-                    [&](auto rule)
-                    {
-                        if constexpr (ChooseRuleView<decltype(rule)>)
-                            stack.push({ frame.state, frame.edge, edge.rule, SearchStatus::FAILURE });
-                        else
-                        {
-                            frame.edge = execution.next_outgoing(frame.edge);
-                            next = edge.target;
-                        }
-                    },
-                    edge.rule->get_variant());
+            choices.pop();
             continue;
         }
-        // First expansions keep untried Choose denotations on the binding stack, separate from recorded edges.
-        if (!execution.choices().empty() && execution.choices().top().state == frame.state)
-        {
-            std::visit([&](const auto& choice) { stack.push({ frame.state, no_edge, choice.rule, SearchStatus::FAILURE }); }, execution.choices().top().choice);
-            continue;
-        }
-        // Every required continuation has returned. Cache conclusive results, or retain PENDING for later visits.
-        execution.search_node(frame.state).status = frame.result;
-        returned = frame.result;
+        auto& node = execution.search_node(frame.state);
+        if (node.status == SearchStatus::ACTIVE)
+            node.status = SearchStatus::PENDING;
         stack.pop();
     }
 }

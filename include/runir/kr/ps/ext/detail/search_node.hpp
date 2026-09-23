@@ -12,25 +12,19 @@
 namespace runir::kr::ps::ext::detail
 {
 
-// Reaching an ACTIVE ancestor returns PENDING to the caller without changing
-// the ancestor's status. A frame stores PENDING when it unwinds with an unresolved
-// cyclic dependency instead of an established success or definite failure.
-//
-// For example, A chooses B or Goal, and B continues to A:
-// 1. A and then B become ACTIVE.
-// 2. B reaches active A and receives PENDING; A remains ACTIVE.
-// 3. B unwinds as PENDING because its continuation is unresolved.
-// 4. A tries Goal and becomes SUCCESS.
-// A later visit to B can now succeed through A. It reconsiders recorded
-// continuations without generating B's successors again. Therefore PENDING
-// cannot be cached as FAILURE; encountering a duplicate alone does not change
-// that state's status.
+// ACTIVE states have a DFS frame; PENDING states have finished forward exploration
+// but still depend on an unresolved proof. Neither status causes re-expansion.
+// ProofPropagation can establish SUCCESS before or after the frame is popped.
+// For example, A chooses B or Goal and B continues to A: B becomes PENDING,
+// then A's Goal binding proves A and immediately notifies B through its incoming
+// dependency. No replay is needed. If exploration and propagation both drain,
+// an unresolved initial state has no finite proof and the search returns FAILURE.
 enum class SearchStatus
 {
     NEW,         // Not yet admitted to this search.
     DISCOVERED,  // Admitted, awaiting expansion.
     ACTIVE,
-    PENDING,  // Depends on an active ancestor; not a cached failure.
+    PENDING,  // Forward exploration complete; proof dependencies remain unresolved.
     SUCCESS,
     FAILURE,
 };

@@ -589,6 +589,34 @@ void check_choice_execution()
     EXPECT_EQ(context->execution_repository->template size<ext::ProgramState<Kind>>() - states_before_parallel,
               parallel_result.graph->get_num_vertices());  // Untried bindings do not intern program states.
 
+    // A second Choose must satisfy its own obligation when its first binding reaches an already proved child.
+    const auto shared_choice =
+        make_program(choice_module("shared-choice-target",
+                                   choice_rule("left", "m0", "m1", choose_candidates) + choice_rule("right", "m0", "m1", choose_candidates)
+                                       + choice_rule("normalize", "m1", "m2", load_good) + choice_rule("move", "m2", "m3", move_to_register)
+                                       + choice_rule("finish", "m3", "m4", move_to_goal)));
+    const auto states_before_shared_choice = context->execution_repository->template size<ext::ProgramState<Kind>>();
+    const auto shared_choice_result = ext::find_solution(context, shared_choice, universal);
+    EXPECT_EQ(shared_choice_result.status, Status::SUCCESS);
+    EXPECT_EQ(shared_choice_result.statistics.num_expanded, 4);
+    EXPECT_EQ(shared_choice_result.statistics.num_generated, 5);
+    expect_single_expansion(shared_choice_result);
+    ASSERT_TRUE(shared_choice_result.graph);
+    EXPECT_EQ(shared_choice_result.graph->get_num_vertices(), 5);
+    EXPECT_EQ(shared_choice_result.graph->get_out_degree(0), 2);
+    auto shared_targets = std::set<graphs::VertexIndex> {};
+    auto shared_rules = std::set<std::string> {};
+    for (const auto edge : shared_choice_result.graph->get_out_edge_indices(0))
+    {
+        shared_targets.insert(shared_choice_result.graph->get_target(edge));
+        const auto& rule = shared_choice_result.graph->get_edge(edge).get_property().rule;
+        ASSERT_TRUE(rule);
+        shared_rules.insert(std::string(rule->get_symbol()));
+    }
+    EXPECT_EQ(shared_targets.size(), 1);
+    EXPECT_EQ(shared_rules, (std::set<std::string> { "left", "right" }));
+    EXPECT_EQ(context->execution_repository->template size<ext::ProgramState<Kind>>() - states_before_shared_choice, 5);
+
     // Both choices retain their own cursor; retrying one does not repeat the other sibling's attempts.
     const auto replayed_sibling = make_program(choice_module(
         "replayed-sibling",
@@ -632,7 +660,7 @@ void check_choice_execution()
     EXPECT_FALSE(revisited_result.cycle.empty());
     expect_single_expansion(revisited_result);
 
-    // B exhausts its singleton binding while A is active; a later visit must retry that recorded target after A succeeds.
+    // B exhausts its singleton binding while A is active; A's success must notify B after B's cursor is gone.
     for (const auto reverse : { false, true })
     {
         SCOPED_TRACE(reverse);
@@ -650,7 +678,7 @@ void check_choice_execution()
         EXPECT_FALSE(pending_singleton_result.cycle.empty());
         expect_single_expansion(pending_singleton_result);
 
-        // B also has a proved Choose; replay must satisfy both recorded rule groups after their cursors are gone.
+        // B also has a proved Choose; both obligations remain tracked after their cursors are gone.
         const auto pending_choices =
             make_program(choice_module(reverse ? "pending-choices-B-first" : "pending-choices-A-first",
                                        pending_rules
