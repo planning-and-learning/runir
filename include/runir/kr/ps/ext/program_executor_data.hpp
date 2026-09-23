@@ -57,9 +57,9 @@ struct ProgramSearchOptions
 
 struct ProgramSearchStatistics
 {
-    /// Extended-state expansions started, including those yielding no successors; cached replay is excluded.
+    /// Extended-state expansions started, including revisits after backtracking and those yielding no successors.
     uint64_t num_expanded = 0;
-    /// Extended successors emitted before selection and duplicate detection, including untried Choose bindings.
+    /// Extended successors emitted before selection and duplicate detection; Choose emits only attempted bindings.
     /// Counts applied rules and caller returns, not rejected planning candidates or failure markers.
     /// The initial state is excluded; both counters retain work from abandoned branches and resource-limited searches.
     uint64_t num_generated = 0;

@@ -15,6 +15,7 @@
 #include <stdexcept>
 #include <string_view>
 #include <tyr/planning/declarations.hpp>
+#include <tyr/planning/plan.hpp>
 
 namespace runir::kr::ps::base
 {
@@ -58,6 +59,7 @@ struct SketchProofResults
     SketchProofStatus status = SketchProofStatus::SUCCESS;
     runir::kr::TaskContextPtr<Kind> task_context_owner;
     std::shared_ptr<SketchProofGraph<Kind>> graph;
+    std::optional<tyr::planning::PackedPlan<Kind>> plan = std::nullopt;
     runir::graphs::VertexIndexList deadend_states;
     runir::graphs::VertexIndexList open_states;
     runir::graphs::VertexIndexList cycle;

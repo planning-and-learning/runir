@@ -73,33 +73,33 @@ public:
     class ConceptIterator
     {
     private:
-        const View* m_view = nullptr;
-        const tyr::formalism::planning::Repository* m_formalism_repository = nullptr;
+        Index<runir::kr::dl::semantics::Denotation<Category>> m_handle;
+        const C* m_context = nullptr;
         size_t m_object = npos;
 
     public:
         ConceptIterator() = default;
         ConceptIterator(const View& view, size_t object) noexcept :
-            m_view(&view),
-            m_formalism_repository(&view.get_context().get_formalism_repository()),
+            m_handle(view.get_handle()),
+            m_context(&view.get_context()),
             m_object(object)
         {
         }
 
         auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElement<runir::kr::dl::ConceptTag, C>
         {
-            return make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_object)), *m_formalism_repository);
+            return make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_object)), m_context->get_formalism_repository());
         }
 
         ConceptIterator& operator++() noexcept
         {
-            m_object = m_view->get().find_next(m_object);
+            m_object = View(m_handle, *m_context).get().find_next(m_object);
             return *this;
         }
 
         friend bool operator==(const ConceptIterator& lhs, const ConceptIterator& rhs) noexcept
         {
-            return lhs.m_view == rhs.m_view && lhs.m_object == rhs.m_object;
+            return lhs.m_handle == rhs.m_handle && lhs.m_context == rhs.m_context && lhs.m_object == rhs.m_object;
         }
 
         friend bool operator!=(const ConceptIterator& lhs, const ConceptIterator& rhs) noexcept { return !(lhs == rhs); }
@@ -108,17 +108,18 @@ public:
     class RoleIterator
     {
     private:
-        const View* m_view = nullptr;
-        const tyr::formalism::planning::Repository* m_formalism_repository = nullptr;
+        Index<runir::kr::dl::semantics::Denotation<Category>> m_handle;
+        const C* m_context = nullptr;
         size_t m_source = npos;
         size_t m_target = npos;
 
         void advance_to_next_nonempty_row() noexcept
         {
-            const auto num_objects = m_view->get_data().num_objects;
+            const auto view = View(m_handle, *m_context);
+            const auto num_objects = view.get_data().num_objects;
             while (m_source < num_objects)
             {
-                const auto row = m_view->get(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)));
+                const auto row = view.get(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)));
                 m_target = row.find_first();
                 if (m_target != npos)
                     return;
@@ -132,8 +133,8 @@ public:
     public:
         RoleIterator() = default;
         RoleIterator(const View& view, size_t source, size_t target) noexcept :
-            m_view(&view),
-            m_formalism_repository(&view.get_context().get_formalism_repository()),
+            m_handle(view.get_handle()),
+            m_context(&view.get_context()),
             m_source(source),
             m_target(target)
         {
@@ -143,13 +144,13 @@ public:
 
         auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElement<runir::kr::dl::RoleTag, C>
         {
-            return std::pair(make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)), *m_formalism_repository),
-                             make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_target)), *m_formalism_repository));
+            return std::pair(make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)), m_context->get_formalism_repository()),
+                             make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_target)), m_context->get_formalism_repository()));
         }
 
         RoleIterator& operator++() noexcept
         {
-            const auto row = m_view->get(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)));
+            const auto row = View(m_handle, *m_context).get(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)));
             m_target = row.find_next(m_target);
             if (m_target == npos)
             {
@@ -161,7 +162,7 @@ public:
 
         friend bool operator==(const RoleIterator& lhs, const RoleIterator& rhs) noexcept
         {
-            return lhs.m_view == rhs.m_view && lhs.m_source == rhs.m_source && lhs.m_target == rhs.m_target;
+            return lhs.m_handle == rhs.m_handle && lhs.m_context == rhs.m_context && lhs.m_source == rhs.m_source && lhs.m_target == rhs.m_target;
         }
 
         friend bool operator!=(const RoleIterator& lhs, const RoleIterator& rhs) noexcept { return !(lhs == rhs); }

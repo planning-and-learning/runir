@@ -73,6 +73,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_TRUE(result.deadend_states.empty()) << test_case.domain;
         EXPECT_TRUE(result.open_states.empty()) << test_case.domain;
         EXPECT_TRUE(result.cycle.empty()) << test_case.domain;
+        EXPECT_FALSE(result.plan) << test_case.domain;
         EXPECT_GT(result.graph->get_num_vertices(), 0) << test_case.domain;
 
         auto search_options = kr::ps::base::SketchSearchOptions<tyr::GroundTag> {};
@@ -82,6 +83,24 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_GT(fragment.graph->get_num_vertices(), 0) << test_case.domain;
         EXPECT_EQ(fragment.graph->get_num_edges() + 1, fragment.graph->get_num_vertices()) << test_case.domain;
         EXPECT_LE(fragment.graph->get_num_vertices(), result.graph->get_num_vertices()) << test_case.domain;
+        ASSERT_TRUE(fragment.plan) << test_case.domain;
+        const auto& plan = *fragment.plan;
+        EXPECT_EQ(plan.get_length(), fragment.graph->get_num_edges()) << test_case.domain;
+        auto& generator = *context->successor_generator;
+        auto replay = generator.get_initial_node(*context->state_repository, *context->axiom_evaluator);
+        EXPECT_EQ(plan.get_start_node().get_state().get_index(), replay.get_state().get_index());
+        EXPECT_EQ(plan.get_start_node().get_metric(), replay.get_metric());
+        for (const auto& step : plan.get_labeled_succ_nodes())
+        {
+            const auto source = generator.get_node(*context->state_repository, replay.get_state().get_index());
+            replay = generator.get_successor_node(source, step.label, *context->state_repository, *context->axiom_evaluator);
+            EXPECT_EQ(step.node.get_state().get_index(), replay.get_state().get_index());
+            EXPECT_EQ(step.node.get_metric(), replay.get_metric());
+        }
+        EXPECT_EQ(plan.get_cost(), replay.get_metric());
+        const auto& terminal = fragment.graph->get_vertex(fragment.graph->get_num_vertices() - 1).get_property();
+        EXPECT_TRUE(terminal.is_goal);
+        EXPECT_EQ(replay.get_state().get_index(), terminal.state.get_index());
 
         auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, sketch);
         const auto state = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state();
@@ -137,6 +156,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     auto bounded_context = kr::TaskContext<tyr::GroundTag>::create(task_context->domain_context, bounded_search);
     const auto bounded = kr::ps::base::find_solution(bounded_context, sketch, options);
     EXPECT_EQ(bounded.status, kr::ps::base::SketchProofStatus::OUT_OF_STATES);
+    EXPECT_FALSE(bounded.plan);
     ASSERT_TRUE(bounded.graph);
     EXPECT_EQ(bounded.graph->get_num_vertices(), 1);
     EXPECT_EQ(bounded_search->state_repository->num_states(), 2);
@@ -161,6 +181,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
         rejected_options.shuffle_choice_points = shuffle;
         const auto rejected = kr::ps::base::find_solution(task_context, two_step_only, rejected_options);
         EXPECT_EQ(rejected.status, kr::ps::base::SketchProofStatus::FAILURE);
+        EXPECT_FALSE(rejected.plan);
         ASSERT_TRUE(rejected.graph);
         EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
         EXPECT_EQ(rejected.graph->get_num_edges(), 0);
@@ -172,6 +193,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
         rejected_options.max_time = std::chrono::steady_clock::duration::zero();
         const auto timed_out = kr::ps::base::find_solution(task_context, two_step_only, rejected_options);
         EXPECT_EQ(timed_out.status, kr::ps::base::SketchProofStatus::OUT_OF_TIME);
+        EXPECT_FALSE(timed_out.plan);
         EXPECT_EQ(timed_out.statistics.num_expanded, 0);
         EXPECT_EQ(timed_out.statistics.num_generated, 0);
     }

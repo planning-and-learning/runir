@@ -279,7 +279,7 @@ void expect_binding_effects_and_empty_choices()
                         const auto target = step.get_target();
                         EXPECT_EQ(target.get_state().get_index(), initial.get_state().get_index());
                         EXPECT_EQ(target.get_module_state().get_memory_state().get_name(), "target");
-                        EXPECT_TRUE(step.plan_suffix.empty());
+                        EXPECT_FALSE(step.planning_successor.has_value());
                         ASSERT_TRUE(step.rule);
                         const auto values = target.get_module_state().get_registers();
                         if (role)
@@ -402,8 +402,8 @@ void expect_lazy_do_successors()
             for (const auto& step : steps)
             {
                 EXPECT_EQ(step.status, ext::detail::ProgramOutcome::APPLIED);
-                ASSERT_EQ(step.plan_suffix.size(), 1);
-                const auto action = step.plan_suffix.front().label;
+                ASSERT_TRUE(step.planning_successor.has_value());
+                const auto action = step.planning_successor->label;
                 if (action.get_relation().get_name() == "pick")
                 {
                     EXPECT_EQ(action.get_objects()[0].get_name(), "ball2");
@@ -428,8 +428,8 @@ void expect_lazy_do_successors()
         {
             return left.status == right.status && left.get_target().get_index() == right.get_target().get_index()
                    && left.rule.has_value() == right.rule.has_value() && (!left.rule || left.rule->get_index() == right.rule->get_index())
-                   && left.plan_suffix.size() == right.plan_suffix.size()
-                   && (left.plan_suffix.empty() || left.plan_suffix.front().label == right.plan_suffix.front().label);
+                   && left.planning_successor.has_value() == right.planning_successor.has_value()
+                   && (!left.planning_successor.has_value() || left.planning_successor->label == right.planning_successor->label);
         };
         auto repeated = steps;
         expander.steps(initial, repeated);
@@ -450,7 +450,7 @@ void expect_lazy_do_successors()
             std::ranges::reverse(reversed);
             EXPECT_TRUE(std::ranges::equal(expander.steps(initial, successors), reversed, same_step));
 
-            const auto subset = tyr::planning::LabeledNodeList<Kind> { steps.front().plan_suffix.front().unpack() };
+            const auto subset = tyr::planning::LabeledNodeList<Kind> { steps.front().planning_successor->unpack() };
             const auto restricted = expander.steps(initial, subset);
             ASSERT_EQ(restricted.size(), 1);
             EXPECT_TRUE(same_step(restricted.front(), steps.front()));
@@ -505,7 +505,7 @@ void expect_control_only_steps_do_not_generate_planning_successors()
     {
         EXPECT_EQ(step.status, ext::detail::ProgramOutcome::APPLIED);
         EXPECT_EQ(step.get_target().get_state().get_index(), initial.get_state().get_index());
-        EXPECT_TRUE(step.plan_suffix.empty());
+        EXPECT_FALSE(step.planning_successor.has_value());
     }
     EXPECT_EQ(states.num_states(), 1);
     for (const auto universal : { false, true })
@@ -1039,8 +1039,8 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     for (const auto& step : steps)
     {
         EXPECT_EQ(step.status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
-        ASSERT_EQ(step.plan_suffix.size(), 1);
-        EXPECT_EQ(step.plan_suffix.front().label.get_relation().get_name(), "pick");
+        ASSERT_TRUE(step.planning_successor.has_value());
+        EXPECT_EQ(step.planning_successor->label.get_relation().get_name(), "pick");
         EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_index(), target.get_index());
         EXPECT_NE(step.get_target().get_state().get_index(), initial_state.get_state().get_index());
     }
@@ -1186,7 +1186,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     auto reached_pick_target = false;
     for (const auto& step : steps)
     {
-        ASSERT_EQ(step.plan_suffix.size(), 1);
+        ASSERT_TRUE(step.planning_successor.has_value());
         reached_move_target |= step.get_target().get_module_state().get_memory_state().get_index() == move_target.get_index();
         reached_pick_target |= step.get_target().get_module_state().get_memory_state().get_index() == pick_target.get_index();
     }
@@ -1283,8 +1283,8 @@ void expect_query_action_contracts()
         ASSERT_EQ(steps.size(), 2);
         for (const auto& step : steps)
         {
-            ASSERT_EQ(step.plan_suffix.size(), 1);
-            const auto candidate = step.plan_suffix.front().unpack();
+            ASSERT_TRUE(step.planning_successor.has_value());
+            const auto candidate = step.planning_successor->unpack();
             EXPECT_EQ(candidate.label.get_objects()[0].get_name(), "start");
             EXPECT_EQ(step.get_target().get_module_state().get_memory_state().get_name(), "target");
             const auto matching = expander.matching_rule(initial, candidate.label, candidate.node.get_state());
@@ -1294,7 +1294,7 @@ void expect_query_action_contracts()
             ASSERT_TRUE(applied);
             EXPECT_EQ(applied->get_target().get_index(), step.get_target().get_index());
         }
-        auto supplied = tyr::planning::LabeledNodeList<Kind> { steps.back().plan_suffix.front().unpack() };
+        auto supplied = tyr::planning::LabeledNodeList<Kind> { steps.back().planning_successor->unpack() };
         const auto subset = expander.steps(initial, supplied);
         ASSERT_EQ(subset.size(), 1);
         EXPECT_EQ(subset.front().get_target().get_index(), steps.back().get_target().get_index());
@@ -1387,7 +1387,7 @@ void expect_lazy_sketch_order_and_cancellation()
         ASSERT_GT(eager.size(), 1);
         ASSERT_EQ(lazy.size(), 1);
         EXPECT_EQ(lazy.front().get_target().get_index(), eager.front().get_target().get_index());
-        EXPECT_EQ(lazy.front().plan_suffix.front().label, eager.front().plan_suffix.front().label);
+        EXPECT_EQ(lazy.front().planning_successor->label, eager.front().planning_successor->label);
         auto supplied = expander.labeled_successors(initial);
         std::ranges::reverse(supplied);
         const auto supplied_eager = expander.steps(initial, supplied);
@@ -1422,8 +1422,8 @@ void expect_query_action_existential_binding()
     auto expander = ext::SuccessorExpander<Kind>(task_context, program);
     const auto steps = expander.control_steps(expander.initial_state());
     ASSERT_EQ(steps.size(), 1);
-    ASSERT_EQ(steps.front().plan_suffix.size(), 1);
-    const auto objects = steps.front().plan_suffix.front().label.get_objects();
+    ASSERT_TRUE(steps.front().planning_successor.has_value());
+    const auto objects = steps.front().planning_successor->label.get_objects();
     ASSERT_EQ(objects.size(), 2);
     EXPECT_EQ(objects[0].get_name(), "start");
     EXPECT_EQ(objects[1].get_name(), "proof");
@@ -1465,8 +1465,8 @@ void expect_query_action_nullary_binding()
         else
         {
             EXPECT_EQ(steps.front().status, ext::detail::ProgramOutcome::APPLIED);
-            ASSERT_EQ(steps.front().plan_suffix.size(), 1);
-            EXPECT_TRUE(steps.front().plan_suffix.front().label.get_objects().empty());
+            ASSERT_TRUE(steps.front().planning_successor.has_value());
+            EXPECT_TRUE(steps.front().planning_successor->label.get_objects().empty());
             EXPECT_TRUE(expander.is_goal(steps.front().get_target()));
             EXPECT_THROW(expander.control_steps(steps.front().get_target()), ext::ActionRuleContractError);
             EXPECT_TRUE(ext::find_solution(task_context, program, ext::ProgramSearchOptions<Kind> {}).is_successful());
@@ -1534,7 +1534,7 @@ void expect_eager_lazy_expansion_counts()
             if (binding)
                 first.push_back(std::string(steps.front().get_target().get_module_state().get_registers().get_concept_values()[0].value().get_name().str()));
             else
-                for (const auto object : steps.front().plan_suffix.front().label.get_objects())
+                for (const auto object : steps.front().planning_successor->label.get_objects())
                     first.push_back(std::string(object.get_name().str()));
             first_bindings.push_back(std::move(first));
         }

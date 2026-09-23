@@ -52,10 +52,9 @@ public:
     auto& get_dl_caches() noexcept { return m_dl_caches; }
     auto& get_dl_target_caches() noexcept { return m_dl_target_caches; }
 
-    auto& prepare_do_argument_denotations(size_t size)
+    auto& prepare_do_argument_denotations()
     {
         m_do_argument_denotations.clear();
-        m_do_argument_denotations.reserve(size);
         return m_do_argument_denotations;
     }
 

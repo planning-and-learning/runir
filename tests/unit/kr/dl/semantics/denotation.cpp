@@ -1,6 +1,8 @@
 #include <concepts>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <string>
+#include <tyr/formalism/object_data.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
 #include <yggdrasil/core/concepts.hpp>
@@ -128,6 +130,51 @@ TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
 
     EXPECT_TRUE(view.any());
     EXPECT_EQ(view.count(), 2);
+}
+
+TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
+{
+    namespace dl = kr::dl;
+    namespace semantics = dl::semantics;
+    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    for (const auto* name : { "a", "b", "c" })
+    {
+        auto data = ygg::Data<tyr::formalism::Object>(std::string(name));
+        (void) planning_repository->get_or_create(data);
+    }
+    auto repository = semantics::DenotationRepositoryFactory().create(planning_repository);
+
+    auto concept_builder = ygg::Builder<semantics::Denotation<dl::ConceptTag>>(3);
+    concept_builder.get().set(0);
+    concept_builder.get().set(2);
+    auto concept_data = ygg::Data<semantics::Denotation<dl::ConceptTag>>(3, repository.get_vector_repository().insert(concept_builder.blocks));
+    const auto concept_view = repository.get_or_create(concept_data).first;
+    const auto concept_copy = concept_view;
+    EXPECT_TRUE(concept_view.begin() == concept_copy.begin());
+    auto concept_iterator = ConceptView(concept_view).begin();  // The temporary wrapper is gone before iteration.
+    const auto concept_end = ConceptView(concept_view).end();
+    ASSERT_TRUE(concept_iterator != concept_end);
+    EXPECT_EQ((*concept_iterator).get_index(), ygg::Index<tyr::formalism::Object>(0));
+    ASSERT_TRUE(++concept_iterator != concept_end);
+    EXPECT_EQ((*concept_iterator).get_index(), ygg::Index<tyr::formalism::Object>(2));
+    EXPECT_TRUE(++concept_iterator == concept_end);
+
+    auto role_builder = ygg::Builder<semantics::Denotation<dl::RoleTag>>(3);
+    role_builder.get(0).set(1);
+    role_builder.get(2).set(0);
+    auto role_data = ygg::Data<semantics::Denotation<dl::RoleTag>>(3, repository.get_vector_repository().insert(role_builder.blocks));
+    const auto role_view = repository.get_or_create(role_data).first;
+    const auto role_copy = role_view;
+    EXPECT_TRUE(role_view.begin() == role_copy.begin());
+    auto role_iterator = RoleView(role_view).begin();
+    const auto role_end = RoleView(role_view).end();
+    ASSERT_TRUE(role_iterator != role_end);
+    EXPECT_EQ((*role_iterator).first.get_index(), ygg::Index<tyr::formalism::Object>(0));
+    EXPECT_EQ((*role_iterator).second.get_index(), ygg::Index<tyr::formalism::Object>(1));
+    ASSERT_TRUE(++role_iterator != role_end);
+    EXPECT_EQ((*role_iterator).first.get_index(), ygg::Index<tyr::formalism::Object>(2));
+    EXPECT_EQ((*role_iterator).second.get_index(), ygg::Index<tyr::formalism::Object>(0));
+    EXPECT_TRUE(++role_iterator == role_end);
 }
 
 }

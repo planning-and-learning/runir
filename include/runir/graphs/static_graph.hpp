@@ -4,7 +4,10 @@
 #include "runir/graphs/static_graph_builder.hpp"
 
 #include <cassert>
+#include <limits>
 #include <ranges>
+#include <span>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -109,6 +112,42 @@ public:
     explicit StaticGraph(const StaticGraphBuilder<VP, EP>& builder) { initialize(builder); }
 
     explicit StaticGraph(StaticGraphBuilder<VP, EP>&& builder) { initialize(builder); }
+
+    StaticGraph(std::span<const VP> vertices, std::span<const std::tuple<VertexIndex, VertexIndex, EP>> edges) :
+        m_out_edge_offsets(vertices.size() + 1, 0)
+    {
+        assert(vertices.size() <= static_cast<std::size_t>(std::numeric_limits<VertexIndex>::max()));
+        assert(edges.size() <= static_cast<std::size_t>(std::numeric_limits<EdgeIndex>::max()));
+
+        m_vertices.reserve(vertices.size());
+        m_edges.reserve(edges.size());
+        for (const auto& property : vertices)
+        {
+            auto [property_index, _] = m_vertex_properties.get_or_create(ygg::Data<VertexProperty<VP>>(property));
+            m_vertices.emplace_back(static_cast<VertexIndex>(m_vertices.size()), property_index, *this);
+        }
+
+        for (const auto& [source, target, property] : edges)
+        {
+            assert_valid_vertex(source);
+            assert_valid_vertex(target);
+            ++m_out_edge_offsets[source + 1];
+        }
+        for (std::size_t i = 1; i < m_out_edge_offsets.size(); ++i)
+            m_out_edge_offsets[i] += m_out_edge_offsets[i - 1];
+
+        auto next_offsets = m_out_edge_offsets;
+        auto ordered_edges = EdgeIndexList(edges.size());
+        for (std::size_t i = 0; i < edges.size(); ++i)
+            ordered_edges[next_offsets[std::get<0>(edges[i])]++] = static_cast<EdgeIndex>(i);
+
+        for (auto input_index : ordered_edges)
+        {
+            const auto& [source, target, property] = edges[input_index];
+            auto [property_index, _] = m_edge_properties.get_or_create(ygg::Data<EdgeProperty<EP>>(property));
+            m_edges.emplace_back(static_cast<EdgeIndex>(m_edges.size()), source, target, property_index, *this);
+        }
+    }
 
     auto get_vertices() const noexcept -> const VertexList& { return m_vertices; }
     auto get_edges() const noexcept -> const EdgeList& { return m_edges; }

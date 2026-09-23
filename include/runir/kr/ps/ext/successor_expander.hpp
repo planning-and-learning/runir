@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cassert>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <type_traits>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
@@ -57,6 +58,7 @@ private:
 public:
     using LabeledNode = tyr::planning::LabeledNode<Kind>;
     using Step = detail::ProgramStep<Kind>;
+    using Expansion = std::variant<Step, detail::Choice<runir::kr::dl::ConceptTag>, detail::Choice<runir::kr::dl::RoleTag>>;
 
     SuccessorExpander(runir::kr::TaskContextPtr<Kind> task_context, ProgramView program) :
         m_task_context(task_context ? std::move(task_context) : throw std::invalid_argument("SuccessorExpander requires a task context.")),
@@ -231,6 +233,36 @@ public:
             out_steps.push_back(fallback(std::move(context)));
     }
 
+    template<ExpansionPolicy Policy = EagerExpansionPolicy>
+    void expand_until(ProgramStateView<Kind> state, auto&& stop, std::vector<Expansion>& out_steps)
+    {
+        auto context = materialize(state);
+        collect_steps<Policy, LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>, ChooseTag<runir::kr::dl::ConceptTag>,
+                      ChooseTag<runir::kr::dl::RoleTag>, DoTag, ActionTag, CallTag, SketchTag>(context, generated_successors(), stop, out_steps);
+        if (!stop() && out_steps.empty())
+            out_steps.push_back(fallback(std::move(context)));
+    }
+
+    template<runir::kr::dl::CategoryTag Category>
+    Step apply_choice(ProgramStateView<Kind> state, const detail::Choice<Category>& choice)
+    {
+        auto context = materialize(state);
+        if (choice.exhausted())
+        {
+            auto failure = make_step(detail::ProgramOutcome::FAILURE, std::move(context));
+            failure.rule = choice.rule;
+            return failure;
+        }
+        const auto rule = choice.rule.get_variant().template get<ygg::Index<Rule<ChooseTag<Category>>>>();
+        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
+        registers->concept_values = context.registers.get_data().concept_values;
+        registers->role_values = context.registers.get_data().role_values;
+        apply_binding(rule, choice.current(), *registers);
+        context.registers = get_or_create(*m_task_context->dl_denotation_repository, *registers).first;
+        context.memory_state = rule.get_target();
+        return applied(std::move(context), choice.rule);
+    }
+
     std::vector<Step> steps(ProgramStateView<Kind> state, const std::vector<LabeledNode>& successors)
     {
         auto result = std::vector<Step> {};
@@ -383,7 +415,7 @@ private:
     auto& evaluate_do_arguments(ygg::View<ygg::Index<Rule<DoTag>>, C> rule, const Frame& frame)
     {
         const auto arguments = rule.get_action_arguments();
-        auto& denotations = m_environment.prepare_do_argument_denotations(arguments.size());
+        auto& denotations = m_environment.prepare_do_argument_denotations();
         auto state_context = m_environment.make_dl_context(frame.state, frame.arguments, frame.registers);
         for (auto argument : arguments)
             denotations.push_back(evaluate(argument, state_context));
@@ -460,7 +492,7 @@ private:
     template<typename C>
     RuleExecutionStatus execute_sketch(ygg::View<ygg::Index<Rule<SketchTag>>, C> rule,
                                        Frame& frame,
-                                       const std::vector<LabeledNode>& successors)
+                                       std::span<const LabeledNode> successors)
     {
         if (!has_current_source(rule, frame))
             return RuleExecutionStatus::NOT_APPLICABLE;
@@ -528,9 +560,9 @@ private:
         return RuleExecutionStatus::APPLIED;
     }
 
-    static auto supplied_successors(const std::vector<LabeledNode>& successors)
+    static auto supplied_successors(std::span<const LabeledNode> successors)
     {
-        return [&successors](auto&& emit, auto&& stop, auto&&...)
+        return [successors](auto&& emit, auto&& stop, auto&&...)
         {
             for (const auto& successor : successors)
             {
@@ -675,7 +707,7 @@ private:
     std::optional<Step> apply_rule(const Frame& context, RuleVariantView rule, std::optional<LabeledNode> candidate = std::nullopt)
     {
         m_environment.get_dl_caches().clear(false);
-        const auto successors = candidate ? std::vector<LabeledNode> { *candidate } : std::vector<LabeledNode> {};
+        const auto successors = candidate ? std::span<const LabeledNode>(&*candidate, 1) : std::span<const LabeledNode> {};
         auto steps = std::vector<Step> {};
         const auto stop = [] { return false; };
         ygg::visit([&](auto concrete) { append_steps<EagerExpansionPolicy>(concrete, rule, context, supplied_successors(successors), steps, stop); }, rule.get_variant());
@@ -683,7 +715,7 @@ private:
     }
 
     template<ExpansionPolicy Policy, typename... Kinds>
-    void collect_steps(const Frame& context, auto&& visit_successors, auto&& stop, std::vector<Step>& out_steps)
+    void collect_steps(const Frame& context, auto&& visit_successors, auto&& stop, auto& out_steps)
     {
         m_environment.get_dl_caches().clear(false);
         out_steps.clear();
@@ -718,55 +750,91 @@ private:
         }
     }
 
-    template<ExpansionPolicy Policy, typename R>
-    void append_steps(R rule,
-                      RuleVariantView rule_variant,
-                      const Frame& context,
-                      auto&& visit_successors,
-                      std::vector<Step>& result,
-                      auto&& stop)
+    template<BindingRuleKind RuleKindT, typename Output>
+    void append_bindings(RuleView<RuleKindT> rule, RuleVariantView rule_variant, const Frame& context, std::vector<Output>& result, auto&& stop)
     {
-        if constexpr (BindingRuleView<R>)
-        {
-            if (!rule_is_applicable(rule, context))
-                return;
+        using Category = typename RuleKindT::Category;
+        constexpr auto compact_choice = std::same_as<RuleKindT, ChooseTag<Category>> && std::same_as<Output, Expansion>;
+        if (!rule_is_applicable(rule, context))
+            return;
 
-            const auto initial_size = result.size();
-            auto state_context = m_environment.make_dl_context(context.state, context.arguments, context.registers);
-            const auto denotation = evaluate(rule.get_feature(), state_context);
-            auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
-            for (const auto value : denotation)
+        const auto initial_size = result.size();
+        auto state_context = m_environment.make_dl_context(context.state, context.arguments, context.registers);
+        const auto denotation = evaluate(rule.get_feature(), state_context);
+        if constexpr (compact_choice)
+        {
+            if (rule.get_effects().empty())
             {
-                if (stop())
-                    return;
-                registers->concept_values = context.registers.get_data().concept_values;
-                registers->role_values = context.registers.get_data().role_values;
-                apply_binding(rule, value, *registers);
-                const auto target_registers = get_or_create(*m_task_context->dl_denotation_repository, *registers).first;
-                if (!rule.get_effects().empty())
-                {
-                    m_environment.get_dl_target_caches().clear(false);
-                    auto transition = m_environment.make_dl_transition_context(context.state,
-                                                                               context.state,
-                                                                               context.arguments,
-                                                                               context.registers,
-                                                                               target_registers);
-                    if (!is_compatible_with(rule, transition))
-                        continue;
-                }
+                if (!stop())
+                    result.push_back(detail::Choice<Category>(rule_variant, denotation));
+                return;
+            }
+        }
+
+        auto admitted = ygg::UniqueObjectPoolPtr<ygg::Builder<runir::kr::dl::semantics::Denotation<Category>>> {};
+        if constexpr (compact_choice)
+            admitted = m_task_context->dl_builder.template get_builder<runir::kr::dl::semantics::Denotation<Category>>(denotation.get_data().num_objects);
+        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
+        for (const auto value : denotation)
+        {
+            if (stop())
+                return;
+            registers->concept_values = context.registers.get_data().concept_values;
+            registers->role_values = context.registers.get_data().role_values;
+            apply_binding(rule, value, *registers);
+            const auto target_registers = get_or_create(*m_task_context->dl_denotation_repository, *registers).first;
+            if (!rule.get_effects().empty())
+            {
+                m_environment.get_dl_target_caches().clear(false);
+                auto transition = m_environment.make_dl_transition_context(context.state,
+                                                                           context.state,
+                                                                           context.arguments,
+                                                                           context.registers,
+                                                                           target_registers);
+                if (!is_compatible_with(rule, transition))
+                    continue;
+            }
+            if constexpr (compact_choice)
+            {
+                if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+                    admitted->get().set(ygg::uint_t(value.get_index()));
+                else
+                    admitted->get(value.first.get_index()).set(ygg::uint_t(value.second.get_index()));
+            }
+            else
+            {
                 auto target = context;
                 target.registers = target_registers;
                 target.memory_state = rule.get_target();
                 result.push_back(applied(std::move(target), rule_variant));
             }
-            if constexpr (ChooseRuleView<R>)
-                if (!stop() && result.size() == initial_size)
-                {
-                    auto failure = make_step(detail::ProgramOutcome::FAILURE, context);
-                    failure.rule = rule_variant;
-                    result.push_back(std::move(failure));
-                }
         }
+        if constexpr (compact_choice)
+        {
+            if (!stop())
+                result.push_back(detail::Choice<Category>(rule_variant, runir::kr::dl::semantics::detail::materialize_denotation(admitted, state_context).first));
+        }
+        else if constexpr (std::same_as<RuleKindT, ChooseTag<Category>>)
+        {
+            if (!stop() && result.size() == initial_size)
+            {
+                auto failure = make_step(detail::ProgramOutcome::FAILURE, context);
+                failure.rule = rule_variant;
+                result.push_back(std::move(failure));
+            }
+        }
+    }
+
+    template<ExpansionPolicy Policy, typename R>
+    void append_steps(R rule,
+                      RuleVariantView rule_variant,
+                      const Frame& context,
+                      auto&& visit_successors,
+                      auto& result,
+                      auto&& stop)
+    {
+        if constexpr (BindingRuleView<R>)
+            append_bindings(rule, rule_variant, context, result, stop);
         else if constexpr (std::same_as<R, RuleView<DoTag>>)
         {
             if (!rule_is_applicable(rule, context))
@@ -833,7 +901,7 @@ private:
                 [&](const LabeledNode& successor)
                 {
                     auto target = context;
-                    if (execute_sketch(rule, target, { successor }) == RuleExecutionStatus::APPLIED)
+                    if (execute_sketch(rule, target, std::span(&successor, 1)) == RuleExecutionStatus::APPLIED)
                         result.push_back(planning_step(std::move(target), successor, rule_variant));
                 },
                 stop, rule, context);
@@ -866,7 +934,7 @@ private:
     Step planning_step(Frame context, const LabeledNode& successor, RuleVariantView rule)
     {
         auto step = applied(std::move(context), rule);
-        step.plan_suffix.push_back(successor.pack());
+        step.planning_successor = successor.pack();
         step.state_transition = runir::datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) };
         return step;
     }

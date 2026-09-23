@@ -1,5 +1,6 @@
 #include "planning_fixtures.hpp"
 
+#include <array>
 #include <cstddef>
 #include <cstdlib>
 #include <filesystem>
@@ -8,6 +9,10 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
+#include <runir/kr/ps/ext/program_executor.hpp>
+#include <runir/kr/ps/ext/repository.hpp>
+#include <runir/kr/task_context.hpp>
+#include <string>
 #include <tyr/planning/ground/successor_generator.hpp>
 
 #if defined(_MSC_VER)
@@ -243,6 +248,66 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     EXPECT_TRUE(valid);
     EXPECT_EQ(counts.allocated, 0);
     EXPECT_EQ(counts.deallocated, 0);
+}
+
+TEST(RunirSearch, ProgramSearchAllocationsGrowWithContainerCapacity)
+{
+    namespace ext = kr::ps::ext;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/ps/ext/choose";
+    const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
+    auto context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(search->task->get_domain()), search);
+
+    for (const auto choose : { false, true })
+        for (const auto universal : { false, true })
+        {
+            SCOPED_TRACE(choose);
+            SCOPED_TRACE(universal);
+            auto allocations = std::array<size_t, 2> {};
+            for (size_t scale = 0; scale < allocations.size(); ++scale)
+            {
+                const auto length = scale == 0 ? size_t(64) : size_t(512);
+                auto text = std::string(R"((:program (:entry chain)
+                    (:module (:symbol chain) (:arguments) (:registers (:concept selected))
+                        (:entry m0) (:memory)");
+                for (size_t i = 0; i <= length + 2; ++i)
+                    text += " m" + std::to_string(i);
+                text += R"()
+                        (:features
+                            (:concept (:symbol Candidates) (:expression (c_atomic_state "candidate")))
+                            (:concept (:symbol Good) (:expression (c_and (c_atomic_state "candidate") (c_not (c_atomic_state "bad")))))
+                            (:concept (:symbol Here) (:expression (c_atomic_state "at")))
+                            (:concept (:symbol Goal) (:expression (c_atomic_goal "at" true))))
+                        (:rules )";
+                for (size_t i = 0; i < length + 2; ++i)
+                {
+                    text += "(:rule (:symbol r" + std::to_string(i) + ") (:expression (:source-memory m" + std::to_string(i)
+                            + ") (:target-memory m" + std::to_string(i + 1) + ") ";
+                    if (i < length)
+                        text += choose ? "(:choose (:conditions) (:concept Candidates) (:register (:concept selected)))"
+                                       : "(:load (:conditions) (:concept Goal) (:register (:concept selected)))";
+                    else
+                        text += std::string(R"((:do (:conditions) (:action "move") (:arguments Here )")
+                                + (i == length ? "Good" : "Goal") + ") (:effects))";
+                    text += "))";
+                }
+                text += ")))";
+                const auto program = ext::dl::parse_program(text, search->task->get_domain().get_domain(), *context->domain_context->ext_repository);
+                auto options = ext::ProgramSearchOptions<tyr::GroundTag> {};
+                options.universal = universal;
+                // Retain interned execution states and warm the shared builders before measuring search bookkeeping.
+                ASSERT_TRUE(ext::find_solution(context, program, options).is_successful());
+                allocation_tracking::Scope measured;
+                const auto result = ext::find_solution(context, program, options);
+                allocations[scale] = measured.finish().allocated;
+                ASSERT_TRUE(result.is_successful());
+                EXPECT_EQ(result.statistics.num_expanded, length + 2);
+                EXPECT_EQ(result.statistics.num_generated, length + 2);
+                EXPECT_EQ(result.statistics.num_choice_points, choose ? length : 0);
+            }
+            // Eight times as many steps must not cause per-step or per-Choose allocations.
+            // The allowance covers geometric growth of independent search/graph containers across allocators.
+            EXPECT_LE(allocations[1], allocations[0] + 128) << "small=" << allocations[0] << ", large=" << allocations[1];
+        }
 }
 
 }  // namespace runir::tests

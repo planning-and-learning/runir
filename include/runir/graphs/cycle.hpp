@@ -4,7 +4,6 @@
 #include "runir/graphs/algorithms.hpp"
 
 #include <algorithm>
-#include <unordered_map>
 
 namespace runir::graphs
 {
@@ -14,11 +13,11 @@ class CycleVisitor : public bgl::TraversalVisitor<Graph>
 {
 private:
     const Graph& m_graph;
-    std::unordered_map<VertexIndex, VertexIndex> m_parent;
+    bgl::VertexMapStorage<Graph, VertexIndex> m_parent;
     VertexIndexList m_cycle;
 
 public:
-    explicit CycleVisitor(const Graph& graph) : m_graph(graph) {}
+    explicit CycleVisitor(const Graph& graph) : m_graph(graph), m_parent(bgl::make_vertex_map_storage(graph, VertexIndex {})) {}
 
     void tree_edge(EdgeIndex edge) override { m_parent[m_graph.get_target(edge)] = m_graph.get_source(edge); }
 
