@@ -34,16 +34,11 @@ TEST(RunirTests, ProgramStatusesToString)
     EXPECT_THROW((void) kr::ps::ext::to_string(static_cast<ProgramProofStatus>(255)), std::invalid_argument);
 
     using kr::ps::ext::detail::ProgramOutcome;
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::SUCCESS), "success");
     EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::APPLIED), "applied");
     EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::RESTORED_CALLER), "restored_caller");
     EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::FAILURE), "failure");
     EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::NO_APPLICABLE_ACTION), "no_applicable_action");
     EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::MALFORMED_CALL), "malformed_call");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::SEARCH_FAILURE), "search_failure");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::OUT_OF_TIME), "out_of_time");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::OUT_OF_STATES), "out_of_states");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::CYCLE), "cycle");
     EXPECT_THROW((void) kr::ps::ext::detail::to_string(static_cast<ProgramOutcome>(255)), std::invalid_argument);
 }
 
@@ -68,7 +63,9 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/always.classifier"), task->get_domain().get_domain(), *classifier_repository);
 
     auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
+    EXPECT_THROW((void) kr::ps::ext::find_solution(kr::TaskContextPtr<tyr::GroundTag> {}, program, options), std::invalid_argument);
     options.classifier = classifier;
+    EXPECT_THROW((void) kr::ps::ext::find_solution(kr::TaskContextPtr<tyr::GroundTag> {}, program, options), std::invalid_argument);
     const auto result = kr::ps::ext::find_solution(task_context, program, options);
 
     EXPECT_EQ(result.status, kr::ps::ext::ProgramProofStatus::FAILURE);

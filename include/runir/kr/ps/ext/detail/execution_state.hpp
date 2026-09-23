@@ -4,12 +4,10 @@
 #include "runir/kr/ps/ext/detail/search_node.hpp"
 #include "runir/kr/ps/ext/successor_expander.hpp"
 
-#include <concepts>
 #include <cstddef>
 #include <limits>
 #include <optional>
 #include <stack>
-#include <type_traits>
 #include <tyr/planning/algorithms/strategies/goal.hpp>
 #include <utility>
 #include <variant>
@@ -87,6 +85,8 @@ public:
         return true;
     }
 
+    /// Record every admitted transition, including repeated targets; assign path data only on first arrival.
+    /// An admission limit leaves the transition unrecorded, but its generation is already counted.
     std::optional<ProgramProofStatus> record_transition(ProgramStateView<Kind> source, const ProgramStep<Kind>& step, bool non_singleton_choice = false)
     {
         const auto depth = search_node(source).choice_depth + ygg::uint_t(non_singleton_choice);
@@ -114,6 +114,7 @@ public:
     }
 
     /// Enumerate one state before descending: successor generation is not reentrant.
+    /// Greedy mode keeps the first outcome; universal mode records every ordinary outcome and Choose obligation.
     std::optional<ProgramProofStatus> expand(ProgramStateView<Kind> state)
     {
         ++m_statistics.num_expanded;
@@ -129,15 +130,7 @@ public:
                     limit = ProgramProofStatus::OUT_OF_TIME;
                     return false;
                 }
-                std::visit(
-                    [&](const auto& value)
-                    {
-                        if constexpr (std::same_as<std::decay_t<decltype(value)>, ProgramStep<Kind>>)
-                            limit = record_step(state, value);
-                        else
-                            add_choice(state, value);
-                    },
-                    expansion);
+                limit = std::visit([&](const auto& value) { return record_expansion(state, value); }, expansion);
                 return !limit && m_options.universal;
             },
             [&] { return out_of_time(); });
@@ -166,19 +159,16 @@ public:
 
 private:
     template<runir::kr::dl::CategoryTag Category>
-    void add_choice(ProgramStateView<Kind> state, Choice<Category> choice)
+    std::optional<ProgramProofStatus> record_expansion(ProgramStateView<Kind> state, Choice<Category> choice)
     {
         if (choice.exhausted())
             search_node(state).is_deadend = true;
         m_choices.push({ state, std::move(choice) });
+        return std::nullopt;
     }
 
-    std::optional<ProgramProofStatus> record_step(ProgramStateView<Kind> source, const ProgramStep<Kind>& step)
+    std::optional<ProgramProofStatus> record_expansion(ProgramStateView<Kind> source, const ProgramStep<Kind>& step)
     {
-        if (step.status == ProgramOutcome::OUT_OF_TIME)
-            return ProgramProofStatus::OUT_OF_TIME;
-        if (step.status == ProgramOutcome::OUT_OF_STATES)
-            return ProgramProofStatus::OUT_OF_STATES;
         if (step.status == ProgramOutcome::APPLIED || step.status == ProgramOutcome::RESTORED_CALLER)
             return record_transition(source, step);
         search_node(source).is_open = true;

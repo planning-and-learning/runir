@@ -17,6 +17,8 @@
 namespace runir::kr::ps::ext::detail
 {
 
+/// Materialize every recorded transition in discovery order, preserving parallel edges and rejected branches.
+/// Open/deadend/cycle diagnostics describe the explored graph; they do not override the search's AND/OR result.
 template<tyr::TaskKind Kind>
 void build_proof_graph(ProgramProofResults<Kind>& result,
                        const ygg::SegmentedVector<SearchNode<Kind>>& nodes,

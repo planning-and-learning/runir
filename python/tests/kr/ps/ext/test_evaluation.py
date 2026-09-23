@@ -1,10 +1,11 @@
 import gc
 import sys
+from datetime import timedelta
 from typing import Literal
 
 import pytest
 from ext_execution_utils import collect_steps, initial_node
-from fixture_utils import FIXTURE_ROOT
+from fixture_utils import FIXTURE_ROOT, read_fixture
 from pypddl.formalism import ParserOptions
 from pypddl_datasets import data_root
 from pyrunir.datasets import GroundTaskSearchContext, LiftedTaskSearchContext
@@ -13,6 +14,7 @@ from pyrunir.kr.dl.base.semantics import CallArguments, CallArgumentsData, Regis
 from pyrunir.kr.dl.ext import semantics
 from pyrunir.kr.ps import ext
 from pyrunir.kr.ps.ext.dl import parse_program
+from pyrunir.kr.uns.dl import parse_classifier
 from pytyr.formalism.planning import Parser, PlanningDomain
 from pytyr.planning import lifted
 from pyyggdrasil.execution import ExecutionContext
@@ -427,6 +429,64 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
         for role_step in role_steps:
             assert role_step.target.state == child.state
             assert role_step.target.module_state.registers.role_values[0] is not None
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+@pytest.mark.parametrize("universal", [False, True])
+@pytest.mark.parametrize("static_goal_satisfied", [False, True])
+def test_initial_goal_classifier_and_zero_time_results(
+    tmp_path, kind: Literal["ground", "lifted"], universal: bool, static_goal_satisfied: bool,
+) -> None:
+    directory = FIXTURE_ROOT / "kr/ps/ext/choose"
+    goal = "(at start)" if static_goal_satisfied else "(and (at start) (bad start))"
+    task_path = tmp_path / "task.pddl"
+    task_path.write_text(read_fixture("kr/ps/ext/choose/task.pddl").replace("(:goal (at goal))", f"(:goal {goal})"))
+    parser = Parser(directory / "domain.pddl", ParserOptions())
+    task = lifted.Task(parser.parse_task(task_path, ParserOptions()))
+    execution = ExecutionContext(1)
+    domain = DomainContext(parser.get_domain())
+    if kind == "ground":
+        context = GroundTaskContext(
+            domain,
+            GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution),
+        )
+    else:
+        context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
+    program = parse_program(
+        read_fixture("kr/ps/ext/execution/empty.program"), parser.get_domain(), domain.ext_repository,
+    )
+    options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
+    options.universal = universal
+    options.classifier = parse_classifier(
+        read_fixture("kr/uns/always.classifier"), parser.get_domain(), domain.uns_repository,
+    )
+    find_solution = getattr(ext, f"find_{kind}_solution")
+    result = find_solution(context, program, options)
+    assert result.status == (ext.ProgramProofStatus.SUCCESS if static_goal_satisfied else ext.ProgramProofStatus.FAILURE)
+    assert result.deadend_states == ([] if static_goal_satisfied else [0])
+    if static_goal_satisfied and not universal:
+        assert result.plan is not None
+        assert result.plan.empty()
+        assert result.plan.get_start_node() == initial_node(context).pack()
+    else:
+        assert result.plan is None
+
+    options.max_time = timedelta(0)
+    expired = find_solution(context, program, options)
+    assert expired.status == ext.ProgramProofStatus.OUT_OF_TIME
+    assert expired.plan is None
+    assert expired.deadend_states == []
+    for proof in (result, expired):
+        assert proof.statistics.num_expanded == 0
+        assert proof.statistics.num_generated == 0
+        assert proof.statistics.choice_depth == 0
+        assert proof.open_states == []
+        assert proof.graph.get_num_vertices() == 1
+        assert proof.graph.get_num_edges() == 0
+        label = proof.graph.get_vertex_property(0)
+        assert label.is_initial
+        assert label.is_goal == static_goal_satisfied
+        assert label.is_unsolvable == (not static_goal_satisfied)
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])

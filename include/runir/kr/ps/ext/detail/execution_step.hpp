@@ -19,26 +19,20 @@
 namespace runir::kr::ps::ext::detail
 {
 
+/// Local rule and caller-return outcomes; whole-search completion and limits use ProgramProofStatus.
 enum class ProgramOutcome
 {
-    SUCCESS,
     APPLIED,
     RESTORED_CALLER,
     FAILURE,
     NO_APPLICABLE_ACTION,
     MALFORMED_CALL,
-    SEARCH_FAILURE,
-    OUT_OF_TIME,
-    OUT_OF_STATES,
-    CYCLE,
 };
 
 constexpr std::string_view to_string(ProgramOutcome outcome)
 {
     switch (outcome)
     {
-        case ProgramOutcome::SUCCESS:
-            return "success";
         case ProgramOutcome::APPLIED:
             return "applied";
         case ProgramOutcome::RESTORED_CALLER:
@@ -49,19 +43,12 @@ constexpr std::string_view to_string(ProgramOutcome outcome)
             return "no_applicable_action";
         case ProgramOutcome::MALFORMED_CALL:
             return "malformed_call";
-        case ProgramOutcome::SEARCH_FAILURE:
-            return "search_failure";
-        case ProgramOutcome::OUT_OF_TIME:
-            return "out_of_time";
-        case ProgramOutcome::OUT_OF_STATES:
-            return "out_of_states";
-        case ProgramOutcome::CYCLE:
-            return "cycle";
     }
     throw std::invalid_argument("invalid ProgramOutcome");
 }
 
-/// One canonical execution successor plus the rule and optional planning transition that produced it.
+/// One rule application or caller return, including local failures whose target remains the source state.
+/// Search completion and resource limits are reported separately from these steps.
 template<tyr::TaskKind Kind>
 struct ProgramStep
 {
@@ -125,30 +112,6 @@ struct ChoiceFrame
     ProgramStateView<Kind> state;
     std::variant<Choice<runir::kr::dl::ConceptTag>, Choice<runir::kr::dl::RoleTag>> choice;
 };
-
-inline ProgramProofStatus translate_proof_status(ProgramOutcome status)
-{
-    switch (status)
-    {
-        case ProgramOutcome::SUCCESS:
-            return ProgramProofStatus::SUCCESS;
-        case ProgramOutcome::APPLIED:
-        case ProgramOutcome::RESTORED_CALLER:
-            return ProgramProofStatus::FAILURE;
-        case ProgramOutcome::OUT_OF_TIME:
-            return ProgramProofStatus::OUT_OF_TIME;
-        case ProgramOutcome::OUT_OF_STATES:
-            return ProgramProofStatus::OUT_OF_STATES;
-        case ProgramOutcome::CYCLE:
-        case ProgramOutcome::FAILURE:
-        case ProgramOutcome::NO_APPLICABLE_ACTION:
-        case ProgramOutcome::MALFORMED_CALL:
-        case ProgramOutcome::SEARCH_FAILURE:
-            return ProgramProofStatus::FAILURE;
-    }
-
-    return ProgramProofStatus::FAILURE;
-}
 
 }  // namespace runir::kr::ps::ext::detail
 

@@ -7,6 +7,10 @@
 
 namespace runir::kr::ps::ext
 {
+/// Execute greedily, or require all ordinary continuations when options.universal is true.
+/// Every selected Choose rule needs one successful binding; distinct Choose rules remain separate obligations.
+/// Each program state is expanded at most once, and limits count work across all attempted bindings.
+/// The returned graph includes rejected branches; only successful non-universal searches return a plan.
 template<tyr::TaskKind Kind>
 auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                    ProgramView program,

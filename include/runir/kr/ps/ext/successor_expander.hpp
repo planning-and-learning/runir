@@ -50,6 +50,7 @@ public:
 
     const auto& get_task_context() const noexcept { return m_task_context; }
 
+    /// Intern the entry module with empty registers and arguments, and no caller.
     ProgramStateView<Kind> initial_state(const tyr::planning::Node<Kind>& node)
     {
         validate_node(node);
@@ -95,6 +96,7 @@ public:
         return emitted || emit_expansion(fallback(state));
     }
 
+    /// Apply the current admitted binding without advancing its cursor; an exhausted choice reports FAILURE.
     template<runir::kr::dl::CategoryTag Category>
     Step apply_choice(ProgramStateView<Kind> state,
                       const tyr::planning::Node<Kind>& node,
@@ -107,6 +109,7 @@ public:
         return step;
     }
 
+    /// Find the first rule that admits this planning successor; control-only rules do not match planning actions.
     std::optional<RuleVariantView> matching_rule(ProgramStateView<Kind> state, const tyr::planning::Node<Kind>& node, const LabeledNode& candidate)
     {
         validate_source(state, node);
@@ -120,6 +123,8 @@ public:
         return std::nullopt;
     }
 
+    /// Apply one rule, using a supplied planning successor for Do, Action, or a Sketch with effects.
+    /// Load, Choose, Call, and empty-effect Sketch rules derive their own control transition.
     std::optional<Step>
     apply(ProgramStateView<Kind> state, const tyr::planning::Node<Kind>& node, RuleVariantView rule, std::optional<LabeledNode> candidate = std::nullopt)
     {
@@ -132,6 +137,7 @@ public:
     }
 
 private:
+    // Validate borrowed views before evaluating features or modifying the execution repository.
     void validate_node(const tyr::planning::Node<Kind>& node) const
     {
         if (node.get_state().get_state_repository().get() != m_task_context->search_context->state_repository.get())
@@ -166,6 +172,7 @@ private:
         return get_or_create(*m_task_context->execution_repository, data).first;
     }
 
+    // Rule admission and argument/effect evaluation share the environment's reusable denotation caches.
     template<RuleKind RuleKindT, typename C>
     static bool has_current_source(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, ProgramStateView<Kind> state)
     {
@@ -173,17 +180,13 @@ private:
     }
 
     template<RuleKind RuleKindT, typename C>
-    bool conditions_are_compatible(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, ProgramStateView<Kind> state, const tyr::planning::Node<Kind>& node)
+    bool rule_is_applicable(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, ProgramStateView<Kind> state, const tyr::planning::Node<Kind>& node)
     {
+        if (!has_current_source(rule, state))
+            return false;
         auto state_context =
             m_environment.make_dl_context(node.get_state(), state.get_module_state().get_arguments(), state.get_module_state().get_registers());
         return runir::kr::ps::ext::conditions_are_compatible(rule, state_context);
-    }
-
-    template<RuleKind RuleKindT, typename C>
-    bool rule_is_applicable(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, ProgramStateView<Kind> state, const tyr::planning::Node<Kind>& node)
-    {
-        return has_current_source(rule, state) && conditions_are_compatible(rule, state, node);
     }
 
     template<BindingRuleKind RuleKindT, typename C, typename Value>
@@ -330,6 +333,7 @@ private:
         return is_compatible_with(rule, transition);
     }
 
+    /// Bind a register and move memory while preserving the planning state and caller stack.
     template<runir::kr::dl::CategoryTag Category>
     Step choice_step(ProgramStateView<Kind> state, const detail::Choice<Category>& choice)
     {
@@ -569,7 +573,7 @@ private:
 
     bool matches(RuleView<SketchTag> rule, ProgramStateView<Kind> state, const tyr::planning::Node<Kind>& node, const LabeledNode& candidate)
     {
-        return sketch_rule_matches_state(rule, state, node, candidate.node.get_state());
+        return !rule.get_effects().empty() && sketch_rule_matches_state(rule, state, node, candidate.node.get_state());
     }
 
     bool matches(RuleView<ActionTag> rule, ProgramStateView<Kind> state, const tyr::planning::Node<Kind>& node, const LabeledNode& candidate)
@@ -626,11 +630,11 @@ private:
                                    const tyr::planning::Node<Kind>& node,
                                    const std::optional<LabeledNode>& candidate)
     {
-        if (!rule_is_applicable(rule, state, node))
-            return std::nullopt;
         if constexpr (std::same_as<Tag, SketchTag>)
             if (rule.get_effects().empty())
             {
+                if (!rule_is_applicable(rule, state, node))
+                    return std::nullopt;
                 auto target = state.get_module_state().get_data();
                 ygg::set(rule.get_target(), target.memory_state);
                 return applied(intern(target, state.get_call_stack()), rule_variant);
@@ -642,6 +646,8 @@ private:
 
     Step make_step(detail::ProgramOutcome status, ProgramStateView<Kind> state) { return Step(status, state, m_task_context); }
 
+    /// With no emitted rule outcome, return to the caller or report an open top-level state.
+    /// Restore caller control and bindings while retaining the planning state reached by the callee.
     Step fallback(ProgramStateView<Kind> state)
     {
         if (const auto caller = state.get_call_stack())

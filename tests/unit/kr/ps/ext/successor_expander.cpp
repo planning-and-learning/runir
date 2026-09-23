@@ -489,6 +489,10 @@ void expect_control_only_steps_do_not_generate_planning_successors()
         EXPECT_EQ(ext::find_solution(task_context, program, options).status, ext::ProgramProofStatus::FAILURE);
         EXPECT_EQ(states.num_states(), 1);
     }
+    auto& search = *task_context->search_context;
+    const auto successors = search.successor_generator->get_labeled_successor_nodes(planning_node, states, *search.axiom_evaluator);
+    ASSERT_FALSE(successors.empty());
+    EXPECT_FALSE(expander.matching_rule(initial, planning_node, successors.front()));
 }
 
 }  // namespace
