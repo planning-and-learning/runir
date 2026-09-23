@@ -1,7 +1,8 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_PROOF_SEARCH_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_PROOF_SEARCH_HPP_
 
-#include "runir/kr/ps/ext/detail/execution.hpp"
+#include "runir/kr/ps/ext/detail/choice_execution.hpp"
+#include "runir/kr/ps/ext/detail/greedy_execution.hpp"
 #include "runir/kr/ps/ext/program_executor.hpp"
 #include "runir/kr/ps/unsolvability.hpp"
 
@@ -18,15 +19,21 @@ template<tyr::TaskKind Kind, typename Unsolvability>
 auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView program, const ProgramSearchOptions<Kind>& options, Unsolvability& classifier)
     -> ProgramProofResults<Kind>
 {
-    auto execution = Execution<Kind, Unsolvability>(std::move(task_context), program, options, classifier);
+    auto execution = ExecutionState<Kind, Unsolvability>(std::move(task_context), program, options, classifier);
     auto choices = std::vector<ChoiceFrame<Kind>> {};
-    auto outcome = execution.run();
+    const auto resume = [&](const ChoiceFrame<Kind>& frame) -> ExecutionOutcome<Kind>
+    {
+        if (const auto status = try_choice(execution, frame))
+            return *status;
+        return run_greedy(execution);
+    };
+    auto outcome = run_greedy(execution);
     while (true)
     {
-        if (auto* choice = std::get_if<ChoiceFrame<Kind>>(&outcome))
+        if (auto* choice = std::get_if<PendingChoice<Kind>>(&outcome))
         {
-            choices.push_back(std::move(*choice));
-            outcome = execution.run(choices.back());
+            choices.push_back(enter_choice(execution, std::move(*choice)));
+            outcome = resume(choices.back());
             continue;
         }
 
@@ -34,11 +41,11 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
         if (status != ProgramProofStatus::FAILURE)
             return execution.finish(status);
 
-        while (!choices.empty() && !execution.advance(choices.back()))
+        while (!choices.empty() && !advance_choice(execution, choices.back()))
             choices.pop_back();
         if (choices.empty())
             return execution.finish(ProgramProofStatus::FAILURE);
-        outcome = execution.run(choices.back());
+        outcome = resume(choices.back());
     }
 }
 
