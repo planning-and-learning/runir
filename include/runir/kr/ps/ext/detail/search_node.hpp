@@ -12,6 +12,19 @@
 namespace runir::kr::ps::ext::detail
 {
 
+// Reaching an ACTIVE ancestor returns PENDING to the caller without changing
+// the ancestor's status. A frame stores PENDING when it unwinds with an unresolved
+// cyclic dependency instead of an established success or definite failure.
+//
+// For example, A chooses B or Goal, and B continues to A:
+// 1. A and then B become ACTIVE.
+// 2. B reaches active A and receives PENDING; A remains ACTIVE.
+// 3. B unwinds as PENDING because its continuation is unresolved.
+// 4. A tries Goal and becomes SUCCESS.
+// A later visit to B can now succeed through A. It reconsiders recorded
+// continuations without generating B's successors again. Therefore PENDING
+// cannot be cached as FAILURE; encountering a duplicate alone does not change
+// that state's status.
 enum class SearchStatus
 {
     NEW,
@@ -53,8 +66,6 @@ struct Predecessor
     ProgramStateView<Kind> target;
     std::optional<tyr::formalism::planning::ActionBindingView> action;
     std::optional<RuleVariantView> rule;
-    // Bindings of the same Choose rule at the same state share one existential obligation.
-    std::optional<std::size_t> choice = std::nullopt;
 };
 
 }  // namespace runir::kr::ps::ext::detail

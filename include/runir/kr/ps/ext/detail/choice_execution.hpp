@@ -27,7 +27,7 @@ std::optional<ProgramProofStatus> try_next_choice(ExecutionState<Kind, Unsolvabi
             if (step.status == ProgramOutcome::OUT_OF_STATES)
                 return ProgramProofStatus::OUT_OF_STATES;
             if (step.status == ProgramOutcome::APPLIED)
-                return execution.record_transition(source, step, index);
+                return execution.record_transition(source, step, choice.has_alternatives());
             execution.mark_deadend(frame.state);
             return ProgramProofStatus::FAILURE;
         },
@@ -130,8 +130,18 @@ ProgramProofStatus run_execution(ExecutionState<Kind, Unsolvability>& execution)
         if (frame.successor != frame.successors_begin)
         {
             const auto& edge = execution.predecessors()[--frame.successor];
-            if (edge.source == frame.state && !edge.choice)
+            if (edge.source != frame.state)
+                continue;
+            if (!edge.rule)
                 next = edge.target;
+            else
+                ygg::visit(
+                    [&](auto rule)
+                    {
+                        if constexpr (!ChooseRuleView<decltype(rule)>)
+                            next = edge.target;
+                    },
+                    edge.rule->get_variant());
             continue;
         }
         if (frame.choice != frame.choices_begin)
@@ -151,8 +161,14 @@ ProgramProofStatus run_execution(ExecutionState<Kind, Unsolvability>& execution)
             if (frame.binding != 0)
             {
                 const auto& edge = execution.predecessors()[--frame.binding];
-                if (edge.choice == index)
-                    next = edge.target;
+                if (edge.source == frame.state)
+                    std::visit(
+                        [&](const auto& choice)
+                        {
+                            if (edge.rule == choice.rule)
+                                next = edge.target;
+                        },
+                        execution.choices()[index].choice);
                 continue;
             }
             const auto status = try_next_choice(execution, index);

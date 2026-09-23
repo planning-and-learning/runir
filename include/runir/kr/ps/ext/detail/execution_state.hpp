@@ -82,18 +82,16 @@ public:
         m_choices.push_back({ state, std::move(choice) });
     }
 
-    std::optional<ProgramProofStatus>
-    record_transition(ProgramStateView<Kind> source, const ProgramStep<Kind>& step, std::optional<std::size_t> choice = std::nullopt)
+    std::optional<ProgramProofStatus> record_transition(ProgramStateView<Kind> source, const ProgramStep<Kind>& step, bool non_singleton_choice = false)
     {
-        const auto weight = choice ? std::visit([](const auto& value) { return ygg::uint_t(value.has_alternatives()); }, m_choices[*choice].choice) : 0;
-        const auto depth = search_node(source).choice_depth + weight;
+        const auto depth = search_node(source).choice_depth + ygg::uint_t(non_singleton_choice);
         const auto created = discover(step.get_target());
         if (!created)
             return ProgramProofStatus::OUT_OF_STATES;
         const auto target = step.get_target();
         const auto& transition = step.get_state_transition();
         const auto action = transition ? std::optional(transition->action) : std::nullopt;
-        m_predecessors.push_back({ source, target, action, step.rule, choice });
+        m_predecessors.push_back({ source, target, action, step.rule });
         if (*created)
         {
             auto& node = search_node(target);
