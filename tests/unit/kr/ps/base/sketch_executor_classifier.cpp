@@ -48,7 +48,7 @@ void check_classifier_failures(datasets::TaskSearchContextPtr<Kind> search_conte
     EXPECT_FALSE(label.is_goal);
     EXPECT_FALSE(label.is_alive);
     EXPECT_TRUE(label.is_unsolvable);
-    EXPECT_GT(task_context->dl_denotation_repository->template size<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(), 0);
+    EXPECT_EQ(task_context->dl_denotation_repository->template size<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(), 0);
 
     options.max_time = std::chrono::steady_clock::duration::zero();
     const auto timed_out = kr::ps::base::find_solution(task_context, sketch, options);
@@ -68,7 +68,7 @@ void check_classifier_failures(datasets::TaskSearchContextPtr<Kind> search_conte
     options.classifier = goal_classifier;
     const auto goal_result = kr::ps::base::find_solution(task_context, sketch, options);
     auto found_goal = false;
-    auto caches = kr::dl::semantics::DenotationCaches<kr::UnsFamilyTag>();
+    auto caches = kr::dl::semantics::DenotationCaches<kr::UnsFamilyTag>(*task_context->dl_denotation_repository);
     for (const auto vertex : goal_result.graph->get_vertex_indices())
     {
         const auto& goal_label = goal_result.graph->get_vertex(vertex).get_property();

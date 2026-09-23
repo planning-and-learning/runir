@@ -495,7 +495,7 @@ void expect_control_only_steps_do_not_generate_planning_successors()
 
 }  // namespace
 
-TEST(RunirTests, ExtDistanceFeatureEvaluationReusesTaskContextCache)
+TEST(RunirTests, ExtDistanceFeatureEvaluationDoesNotRetainTaskDenotations)
 {
     namespace p = tyr::planning;
 
@@ -516,13 +516,12 @@ TEST(RunirTests, ExtDistanceFeatureEvaluationReusesTaskContextCache)
     const auto first = collect_steps(expander, initial_state);
     ASSERT_EQ(first.size(), 1);
     EXPECT_EQ(first.front().status, kr::ps::ext::detail::ProgramOutcome::APPLIED);
-    EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(), 0);
-    const auto cached_denotations = task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>();
+    EXPECT_EQ(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(), 0);
 
     const auto second = collect_steps(expander, initial_state);
     ASSERT_EQ(second.size(), 1);
     EXPECT_EQ(second.front().get_target().get_index(), first.front().get_target().get_index());
-    EXPECT_EQ(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(), cached_denotations);
+    EXPECT_EQ(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::NumericalTag>>(), 0);
     EXPECT_EQ(initial_state.get_module_state().get_memory_state().get_name(), "source");
 }
 

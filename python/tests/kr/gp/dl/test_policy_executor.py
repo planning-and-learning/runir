@@ -184,7 +184,7 @@ def test_france_et_al_aaai2021_policy_executor_for_gripper_task(
     assert dl_denotation_repository is task_context.dl_denotation_repository
     expander = SuccessorExpander(task_context, sketch)
     expander.matching_rule(source_state, target_state)
-    source_caches, target_caches = DenotationCaches(), DenotationCaches()
+    source_caches, target_caches = DenotationCaches(dl_denotation_repository), DenotationCaches(dl_denotation_repository)
     transition_context = GroundTransitionEvaluationContext(
         source_state, target_state, dl_builder, dl_denotation_repository, source_caches, target_caches
     )

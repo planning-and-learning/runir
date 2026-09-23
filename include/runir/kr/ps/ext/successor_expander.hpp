@@ -271,7 +271,7 @@ private:
                                      runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
                                      ygg::Data<runir::kr::dl::semantics::CallArguments>& target)
     {
-        const auto denotation = evaluate(argument, context);
+        const auto denotation = evaluate(argument.get_expression(), context, context.get_denotation_repository());
         if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
             target.concept_arguments.push_back(denotation.get_index());
         else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
@@ -385,11 +385,14 @@ private:
         if (!rule_is_applicable(rule, state, planning_state))
             return true;
         auto state_context = m_environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
+        if (rule.get_effects().empty())
+        {
+            const auto denotation = evaluate(rule.get_feature().get_expression(), state_context, *m_task_context->dl_denotation_repository);
+            return !stop() && emit(detail::Choice<Category>(rule_variant, denotation));
+        }
         const auto denotation = evaluate(rule.get_feature(), state_context);
         if (stop())
             return false;
-        if (rule.get_effects().empty())
-            return emit(detail::Choice<Category>(rule_variant, denotation));
 
         auto admitted = m_task_context->dl_builder.template get_builder<runir::kr::dl::semantics::Denotation<Category>>(denotation.get_data().num_objects);
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
@@ -407,7 +410,10 @@ private:
         }
         if (stop())
             return false;
-        return emit(detail::Choice<Category>(rule_variant, runir::kr::dl::semantics::detail::materialize_denotation(admitted, state_context).first));
+        return emit(detail::Choice<Category>(rule_variant,
+                                             runir::kr::dl::semantics::detail::materialize_denotation(admitted,
+                                                                                                    m_task_context->dl_builder,
+                                                                                                    *m_task_context->dl_denotation_repository).first));
     }
 
     LabeledNode successor(const tyr::planning::StateView<Kind>& planning_state, tyr::formalism::planning::ActionBindingView binding)

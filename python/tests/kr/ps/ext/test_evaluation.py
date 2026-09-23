@@ -343,7 +343,7 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     assert repository.get_or_create(registers) == register_view == loaded.module_state.registers
     assert len({argument_view, loaded.module_state.arguments}) == 1
     assert len({register_view, loaded.module_state.registers}) == 1
-    caches = semantics.DenotationCaches()
+    caches = semantics.DenotationCaches(repository)
     context = getattr(semantics, f"{kind.title()}StateEvaluationContext")(
         loaded.state, task_context.dl_builder, repository, caches, argument_view, register_view,
     )
@@ -433,12 +433,15 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 @pytest.mark.parametrize("universal", [False, True])
-@pytest.mark.parametrize("static_goal_satisfied", [False, True])
+@pytest.mark.parametrize("initial_goal_satisfied", [False, True])
 def test_initial_goal_classifier_and_zero_time_results(
-    tmp_path, kind: Literal["ground", "lifted"], universal: bool, static_goal_satisfied: bool,
+    tmp_path, kind: Literal["ground", "lifted"], universal: bool, initial_goal_satisfied: bool,
 ) -> None:
     directory = FIXTURE_ROOT / "kr/ps/ext/choose"
-    goal = "(at start)" if static_goal_satisfied else "(and (at start) (bad start))"
+    # Grounding rejects false static goals; exercise that case directly only in lifted mode.
+    goal = "(at goal)" if kind == "ground" else "(and (at start) (bad start))"
+    if initial_goal_satisfied:
+        goal = "(at start)"
     task_path = tmp_path / "task.pddl"
     task_path.write_text(read_fixture("kr/ps/ext/choose/task.pddl").replace("(:goal (at goal))", f"(:goal {goal})"))
     parser = Parser(directory / "domain.pddl", ParserOptions())
@@ -462,9 +465,9 @@ def test_initial_goal_classifier_and_zero_time_results(
     )
     find_solution = getattr(ext, f"find_{kind}_solution")
     result = find_solution(context, program, options)
-    assert result.status == (ext.ProgramProofStatus.SUCCESS if static_goal_satisfied else ext.ProgramProofStatus.FAILURE)
-    assert result.deadend_states == ([] if static_goal_satisfied else [0])
-    if static_goal_satisfied and not universal:
+    assert result.status == (ext.ProgramProofStatus.SUCCESS if initial_goal_satisfied else ext.ProgramProofStatus.FAILURE)
+    assert result.deadend_states == ([] if initial_goal_satisfied else [0])
+    if initial_goal_satisfied and not universal:
         assert result.plan is not None
         assert result.plan.empty()
         assert result.plan.get_start_node() == initial_node(context).pack()
@@ -485,8 +488,8 @@ def test_initial_goal_classifier_and_zero_time_results(
         assert proof.graph.get_num_edges() == 0
         label = proof.graph.get_vertex_property(0)
         assert label.is_initial
-        assert label.is_goal == static_goal_satisfied
-        assert label.is_unsolvable == (not static_goal_satisfied)
+        assert label.is_goal == initial_goal_satisfied
+        assert label.is_unsolvable == (not initial_goal_satisfied)
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])

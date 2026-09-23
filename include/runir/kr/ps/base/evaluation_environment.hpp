@@ -26,7 +26,9 @@ private:
 public:
     explicit EvaluationEnvironment(runir::kr::TaskContext<Kind>& task_context) :
         m_dl_builder(task_context.dl_builder),
-        m_dl_denotation_repository(*task_context.dl_denotation_repository)
+        m_dl_denotation_repository(*task_context.dl_denotation_repository),
+        m_dl_caches(m_dl_denotation_repository),
+        m_dl_target_caches(m_dl_denotation_repository)
     {
     }
 

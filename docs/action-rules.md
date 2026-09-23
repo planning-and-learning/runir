@@ -147,17 +147,24 @@ snapshot = tuple(tuple(row) for row in relation)
 read-only `RelationRow` views of Tyr object indices, with values ordered by
 `columns`. Repeated evaluation in an unchanged context reuses the cached relation.
 Before evaluating a different state, register binding, or argument binding, call
-`environment.get_dl_caches().clear(False)`. Clear the whole cache with `.clear()`
-before changing tasks or constructor repositories. Evaluation does not clear
-caches automatically. Constructor repositories remain caller-owned: keep them alive
+`environment.get_dl_caches().clear(False)`. This also clears dynamic denotation
+storage; static denotations survive until `.clear()` clears both partitions.
+Clear both partitions before changing constructor repositories; create new
+caches for a different task. Evaluation does not clear caches
+automatically. Constructor repositories remain caller-owned: keep them alive
 and unchanged while their entries are cached or their views are in use.
 Create a new state context from the next execution state
 after advancing execution. Each state context retains its execution state and environment.
 
 Low-level `pyrunir.kr.dl.ext.semantics` contexts take
 `(state, builder, denotation_repository, caches, arguments, registers)`.
+Construct the caches with `DenotationCaches(denotation_repository)`.
 Create `CallArgumentsData` for the four lists of denotation indices and
 `RegisterValuesData` for optional object indices or pairs of object indices.
+For `CallArgumentsData`, evaluate its expression with
+`expression.evaluate(context, denotation_repository)` and store the returned index.
+This writes the result directly into the persistent repository; intermediate
+denotations remain in the cache. Persistent results survive cache clearing.
 Intern each with `denotation_repository.get_or_create(data)` and pass the
 returned `CallArguments` and `RegisterValues` views to the context. These types
 are defined in `pyrunir.kr.dl.base.semantics`. Changing the source data does not
@@ -165,8 +172,8 @@ change an interned value; intern the updated data and create a new context.
 Clear dynamic cache entries before evaluating the new context. Register storage
 is sized from the module's declarations.
 
-Relations, rows, and iterators retain the evaluation environment, but clearing
-their cache invalidates them. Do not access an old view after clearing; evaluate
+Denotations, relations, rows, and iterators retain the evaluation environment,
+but clearing their cache partition invalidates them. Do not access an old view after clearing; evaluate
 again or use a Python snapshot made before the clear, as above.
 `len(relation)` is the row count and `relation.arity()` is the column count.
 A zero-column query has no rows when false and one empty row when true.

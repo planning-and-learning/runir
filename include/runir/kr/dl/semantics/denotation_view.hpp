@@ -265,7 +265,7 @@ public:
         return RoleIterator(*this, npos, npos);
     }
 
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    auto identifying_members() const noexcept { return std::make_tuple(m_handle, get_denotation_repository(*m_context).get_index()); }
 };
 
 }

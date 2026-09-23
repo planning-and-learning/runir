@@ -93,8 +93,8 @@ void bind_semantics_repositories(nb::module_& m)
     nb::class_<runir::kr::dl::semantics::Builder>(m, "Builder").def(nb::init<>());
 
     using DenotationCaches = runir::kr::dl::semantics::DenotationCaches<runir::kr::BaseFamilyTag>;
-    nb::class_<DenotationCaches>(m, "DenotationCaches", "Clear dynamic denotations between contexts; clear all denotations between tasks or repositories.")
-        .def(nb::init<>())
+    nb::class_<DenotationCaches>(m, "DenotationCaches", "Own evaluated denotations until their cache partition is cleared.")
+        .def(nb::init<semantics::DenotationRepository&>(), nb::arg("denotation_repository"))
         .def("clear", nb::overload_cast<>(&DenotationCaches::clear))
         .def("clear", nb::overload_cast<bool>(&DenotationCaches::clear), nb::arg("is_static"));
 

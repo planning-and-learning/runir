@@ -48,7 +48,7 @@ public:
         return get<Category>().at(static_cast<size_t>(ygg::uint_t(arg)));
     }
 
-    auto identifying_members() const noexcept { return std::make_tuple(get_handle(), m_context->get_index()); }
+    auto identifying_members() const noexcept { return std::make_tuple(get_handle(), get_denotation_repository(*m_context).get_index()); }
 };
 
 }  // namespace ygg

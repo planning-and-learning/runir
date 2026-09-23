@@ -160,9 +160,12 @@ public:
         m_builder(),
         m_denotation_repository(denotation_repository),
         m_workspace(),
-        m_denotation_caches(states.size()),
+        m_denotation_caches(),
         m_seen_denotations(states.size())
     {
+        m_denotation_caches.reserve(states.size());
+        for (size_t i = 0; i < states.size(); ++i)
+            m_denotation_caches.emplace_back(denotation_repository);
     }
 
     template<runir::kr::dl::CategoryTag Category>
@@ -179,7 +182,12 @@ public:
         {
             auto context = runir::kr::dl::semantics::StateEvaluationContext<Family, Kind>(
                 m_states[i].unpack(), m_builder, m_denotation_repository, m_workspace, m_denotation_caches[i]);
-            seen.scratch.push_back(runir::kr::dl::semantics::evaluate(constructor, context));
+            // Signatures compare values across static/dynamic caches and states in one canonical repository.
+            auto& cache = m_denotation_caches[i].template get<Category>(constructor.is_static());
+            auto it = cache.find(constructor);
+            if (it == cache.end() || it->second.get_context().get_index() != m_denotation_repository.get_index())
+                it = cache.insert_or_assign(constructor, runir::kr::dl::semantics::evaluate(constructor, context, m_denotation_repository)).first;
+            seen.scratch.push_back(it->second);
         }
 
         const auto vector = seen.vectors.insert(seen.scratch);

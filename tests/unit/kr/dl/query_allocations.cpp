@@ -189,7 +189,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     auto repository = dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(search->task->get_repository());
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto caches = sem::DenotationCaches<kr::ExtFamilyTag>();
+    auto caches = sem::DenotationCaches<kr::ExtFamilyTag>(denotations);
     auto arguments = ygg::Data<sem::CallArguments>();
     auto registers = ygg::Data<sem::RegisterValues>();
     registers.concept_values.resize(8);
@@ -207,7 +207,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
                                                                                  empty_arguments,
                                                                                  register_values);
     const auto nominal = kr::ps::ext::dl::parse_concept(R"((c_nominal "a"))", search->task->get_domain().get_domain(), *repository);
-    arguments.concept_arguments.push_back(sem::evaluate(nominal, context).get_index());
+    arguments.concept_arguments.push_back(sem::evaluate(nominal, context, denotations).get_index());
     const auto argument_values = sem::get_or_create(denotations, arguments).first;
     const auto expression = kr::ps::ext::dl::parse_numerical(
         R"((n_count (q_rename (source target)

@@ -19,12 +19,11 @@ namespace runir::kr::dl::semantics
 
 /// Denotations for one fixed task and constructor repository factory. Static entries
 /// survive changes to the evaluation context; clear(false) before changing state,
-/// registers, or arguments. Clear everything before changing tasks or factories,
-/// or clearing either repository.
-/// Borrowed query results remain valid until their partition is cleared. Constructor
-/// and denotation repositories must outlive the entries; renamed views borrow schemas.
-/// Relation workspaces must outlive the cache. Clearing static entries also clears
-/// dynamic entries, which may borrow their rows through a rename.
+/// registers, or arguments. Each partition owns its denotation storage and reuses
+/// its capacity after clearing. All returned denotations and query results borrow
+/// their partition and remain valid until it is cleared.
+/// Constructor repositories and relation workspaces must outlive their cached views.
+/// Clearing static entries also clears dynamic entries, which may borrow static rows.
 template<FamilyTag Family>
 struct DenotationCaches
 {
@@ -36,26 +35,36 @@ struct DenotationCaches
 private:
     struct Partition
     {
+        DenotationRepositoryPtr denotations;
         std::tuple<Cache<ConceptTag>, Cache<RoleTag>, Cache<BooleanTag>, Cache<NumericalTag>> values;
         QueryCache queries;
         std::vector<ygg::UniqueObjectPoolPtr<ygg::database::Relation<>>> relations;
+
+        explicit Partition(const DenotationRepository& persistent) :
+            denotations(persistent.get_factory().create_shared(persistent.get_formalism_repository_ptr()))
+        {
+        }
 
         void clear() noexcept
         {
             std::apply([](auto&... caches) { (caches.clear(), ...); }, values);
             queries.clear();
             relations.clear();
+            denotations->clear();
         }
     };
 
     std::array<Partition, 2> m_partitions;
 
 public:
-    DenotationCaches() = default;
+    explicit DenotationCaches(const DenotationRepository& persistent) : m_partitions { Partition(persistent), Partition(persistent) } {}
     DenotationCaches(const DenotationCaches&) = delete;
     DenotationCaches& operator=(const DenotationCaches&) = delete;
     DenotationCaches(DenotationCaches&&) = default;
     DenotationCaches& operator=(DenotationCaches&&) = default;
+
+    auto& get_repository(bool is_static) noexcept { return *m_partitions[is_static].denotations; }
+    const auto& get_repository(bool is_static) const noexcept { return *m_partitions[is_static].denotations; }
 
     template<CategoryTag Category>
     auto& get(bool is_static) noexcept

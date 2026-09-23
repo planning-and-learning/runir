@@ -73,7 +73,7 @@ void check_queries()
     auto repository = dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto caches = sem::DenotationCaches<Ext>();
+    auto caches = sem::DenotationCaches<Ext>(denotations);
     auto empty_arguments = ygg::Data<sem::CallArguments>();
     auto registers = ygg::Data<sem::RegisterValues>();
     registers.concept_values.resize(1);
@@ -196,8 +196,8 @@ void check_queries()
     EXPECT_FALSE(context.registers().template get<dl::ConceptTag>()[0]);
     EXPECT_FALSE(context.registers().template get<dl::RoleTag>()[0]);
 
-    const auto a_set = sem::evaluate(parser::parse_concept(R"((c_nominal "a"))", domain, *repository), context);
-    const auto c_set = sem::evaluate(parser::parse_concept(R"((c_nominal "c"))", domain, *repository), context);
+    const auto a_set = sem::evaluate(parser::parse_concept(R"((c_nominal "a"))", domain, *repository), context, denotations);
+    const auto c_set = sem::evaluate(parser::parse_concept(R"((c_nominal "c"))", domain, *repository), context, denotations);
     auto argument_values = ygg::Data<sem::CallArguments>();
     argument_values.concept_arguments.push_back(a_set.get_index());
     auto argument_context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
@@ -256,7 +256,7 @@ void check_cached_queries()
     auto& repo = *repository;
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto caches = sem::DenotationCaches<Family>();
+    auto caches = sem::DenotationCaches<Family>(denotations);
     auto context = sem::StateEvaluationContext<Family, tyr::GroundTag>(state, builder, denotations, builder.get_workspace(), caches);
 
     auto column_data = ygg::Data<dl::QueryColumn>();
@@ -549,7 +549,7 @@ void check_query_cache_across_states()
     auto repository = dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto caches = sem::DenotationCaches<Ext>();
+    auto caches = sem::DenotationCaches<Ext>(denotations);
     auto empty_arguments = ygg::Data<sem::CallArguments>();
     auto registers = ygg::Data<sem::RegisterValues>();
     registers.concept_values.resize(1);
@@ -598,11 +598,51 @@ void check_query_cache_across_states()
     EXPECT_TRUE(sem::evaluate(ready, next).empty());
     EXPECT_EQ(sem::evaluate(count, next).get(), 3);
 
+    const auto dynamic_role = parser::parse_role(R"((r_project x z (q_atomic_state "triple" (x y z))))", domain, *repository);
+    const auto static_role = parser::parse_role(R"((r_atomic_state "edge"))", domain, *repository);
+    const auto static_value = sem::evaluate(static_role, context);
+    for (size_t i = 0; i < 16; ++i)
+    {
+        caches.clear(false);
+        EXPECT_EQ(caches.get_repository(false).template size<sem::Denotation<dl::RoleTag>>(), 0);
+        EXPECT_EQ(static_value.count(), 2);
+        const auto value = sem::evaluate(dynamic_role, i % 2 == 0 ? context : next);
+        EXPECT_EQ(value.count(), i % 2 == 0 ? 4 : 3);
+        EXPECT_EQ(caches.get_repository(false).template size<sem::Denotation<dl::RoleTag>>(), 1);
+        EXPECT_EQ(denotations.template size<sem::Denotation<dl::RoleTag>>(), 0);
+    }
+
+    // Materialize persistent results directly; source and target scratch storage remain independent.
+    caches.clear(false);
+    const auto retained = sem::evaluate(dynamic_role, context, denotations);
+    EXPECT_EQ(caches.get_repository(false).template size<sem::Denotation<dl::RoleTag>>(), 0);
+    EXPECT_FALSE(caches.template get<dl::RoleTag>(false).contains(dynamic_role));
+    const auto source_value = sem::evaluate(dynamic_role, context);
+    auto target_caches = sem::DenotationCaches<Ext>(denotations);
+    EXPECT_NE(&target_caches.get_repository(false), &caches.get_repository(false));
+    EXPECT_NE(&caches.get_repository(false), &caches.get_repository(true));
+    auto target_context = sem::StateEvaluationContext<Ext, Kind>(successors.front().get_state(),
+                                                               builder,
+                                                               denotations,
+                                                               builder.get_workspace(),
+                                                               target_caches,
+                                                               next.arguments(),
+                                                               next.registers());
+    EXPECT_EQ(sem::evaluate(dynamic_role, target_context).count(), 3);
+    EXPECT_NE(sem::evaluate(static_role, target_context), static_value);
+    target_caches.clear();
+    EXPECT_EQ(source_value.count(), 4);
+    EXPECT_EQ(static_value.count(), 2);
+    EXPECT_EQ(retained.count(), 4);
+
     caches.clear(true);
     EXPECT_TRUE(caches.get_queries(true).empty());
     EXPECT_TRUE(caches.template get<dl::NumericalTag>(true).empty());
     EXPECT_TRUE(caches.get_queries(false).empty());
     EXPECT_TRUE(caches.template get<dl::NumericalTag>(false).empty());
+    EXPECT_EQ(caches.get_repository(false).template size<sem::Denotation<dl::RoleTag>>(), 0);
+    EXPECT_EQ(caches.get_repository(true).template size<sem::Denotation<dl::RoleTag>>(), 0);
+    EXPECT_EQ(retained.count(), 4);
     caches.clear();
     EXPECT_TRUE(caches.get_queries(false).empty());
     EXPECT_TRUE(caches.template get<dl::NumericalTag>(false).empty());
@@ -617,7 +657,7 @@ void check_query_cache_across_bindings()
     auto repository = dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto caches = sem::DenotationCaches<Ext>();
+    auto caches = sem::DenotationCaches<Ext>(denotations);
     auto empty_arguments = ygg::Data<sem::CallArguments>();
     auto registers = ygg::Data<sem::RegisterValues>();
     registers.concept_values.resize(1);
@@ -632,8 +672,8 @@ void check_query_cache_across_bindings()
     const auto a = domain.get_constants()[0];
     const auto b = domain.get_constants()[1];
     const auto c = domain.get_constants()[2];
-    const auto a_set = sem::evaluate(parser::parse_concept(R"((c_nominal "a"))", domain, *repository), context);
-    const auto b_set = sem::evaluate(parser::parse_concept(R"((c_nominal "b"))", domain, *repository), context);
+    const auto a_set = sem::evaluate(parser::parse_concept(R"((c_nominal "a"))", domain, *repository), context, denotations);
+    const auto b_set = sem::evaluate(parser::parse_concept(R"((c_nominal "b"))", domain, *repository), context, denotations);
     auto argument_values = ygg::Data<sem::CallArguments>();
     argument_values.concept_arguments.push_back(a_set.get_index());
     const auto make_bound = [&]
@@ -762,7 +802,7 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     auto repository = dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto caches = sem::DenotationCaches<Ext>();
+    auto caches = sem::DenotationCaches<Ext>(denotations);
     auto empty_arguments = ygg::Data<sem::CallArguments>();
     auto registers = ygg::Data<sem::RegisterValues>();
     registers.concept_values.resize(1);

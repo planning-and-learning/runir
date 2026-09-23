@@ -46,6 +46,20 @@ void bind_constructor_view(nb::module_& m, const char* name)
             [](const View& view, LiftedContext& context) { return runir::kr::dl::semantics::evaluate(view, context); },
             nb::arg("context"),
             nb::keep_alive<0, 2>())
+        .def(
+            "evaluate",
+            [](const View& view, GroundContext& context, semantics::DenotationRepository& repository)
+            { return semantics::evaluate(view, context, repository); },
+            nb::arg("context"),
+            nb::arg("denotation_repository"),
+            nb::keep_alive<0, 3>())
+        .def(
+            "evaluate",
+            [](const View& view, LiftedContext& context, semantics::DenotationRepository& repository)
+            { return semantics::evaluate(view, context, repository); },
+            nb::arg("context"),
+            nb::arg("denotation_repository"),
+            nb::keep_alive<0, 3>())
         .def("syntactic_complexity", [](View view) { return runir::kr::dl::semantics::syntactic_complexity(view); });
     m.def("syntactic_complexity", [](View view) { return runir::kr::dl::semantics::syntactic_complexity(view); }, nb::arg("constructor"));
 }

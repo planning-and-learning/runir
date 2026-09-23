@@ -116,6 +116,19 @@ inline ygg::Data<Denotation<RoleTag>>& make_data(const ygg::Builder<Denotation<R
     return data;
 }
 
+class DenotationRepositoryFactory
+{
+private:
+    // Copies share one index sequence, including factories retained by repositories.
+    std::shared_ptr<size_t> m_next_index;
+
+public:
+    DenotationRepositoryFactory() : m_next_index(std::make_shared<size_t>(0)) {}
+
+    DenotationRepository create(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
+    DenotationRepositoryPtr create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
+};
+
 class DenotationRepository
 {
     friend class DenotationRepositoryFactory;
@@ -133,12 +146,16 @@ private:
     SymbolRepository m_symbol_repository;
     VectorRepository m_vector_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;
+    DenotationRepositoryFactory m_factory;
     size_t m_index;
 
-    DenotationRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
+    DenotationRepository(size_t index,
+                         DenotationRepositoryFactory factory,
+                         std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
         m_symbol_repository(nullptr),
         m_vector_repository(),
         m_formalism_repository(std::move(formalism_repository)),
+        m_factory(std::move(factory)),
         m_index(index)
     {
         assert(m_formalism_repository);
@@ -152,11 +169,13 @@ public:
     DenotationRepository& operator=(DenotationRepository&&) = delete;
 
     const auto& get_index() const noexcept { return m_index; }
+    auto get_factory() const noexcept { return m_factory; }
     const auto& get_formalism_repository() const noexcept
     {
         assert(m_formalism_repository);
         return *m_formalism_repository;
     }
+    const auto& get_formalism_repository_ptr() const noexcept { return m_formalism_repository; }
 
     void clear() noexcept
     {
@@ -202,24 +221,15 @@ public:
     auto& get_vector_repository() noexcept { return m_vector_repository; }
 };
 
-class DenotationRepositoryFactory
+inline DenotationRepository DenotationRepositoryFactory::create(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)
 {
-private:
-    size_t m_next_index;
+    return DenotationRepository((*m_next_index)++, *this, std::move(formalism_repository));
+}
 
-public:
-    DenotationRepositoryFactory() : m_next_index(0) {}
-
-    DenotationRepository create(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)
-    {
-        return DenotationRepository(m_next_index++, std::move(formalism_repository));
-    }
-
-    DenotationRepositoryPtr create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)
-    {
-        return DenotationRepositoryPtr(new DenotationRepository(m_next_index++, std::move(formalism_repository)));
-    }
-};
+inline DenotationRepositoryPtr DenotationRepositoryFactory::create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)
+{
+    return DenotationRepositoryPtr(new DenotationRepository((*m_next_index)++, *this, std::move(formalism_repository)));
+}
 
 inline const DenotationRepository& get_denotation_repository(const DenotationRepository& repository) noexcept { return repository; }
 

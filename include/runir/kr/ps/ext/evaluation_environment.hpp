@@ -39,8 +39,8 @@ public:
         m_dl_denotation_repository(*task_context.dl_denotation_repository),
         m_execution_repository(*task_context.execution_repository),
         m_dl_workspace(),
-        m_dl_caches(),
-        m_dl_target_caches(),
+        m_dl_caches(m_dl_denotation_repository),
+        m_dl_target_caches(m_dl_denotation_repository),
         m_do_argument_denotations(),
         m_program(program)
     {

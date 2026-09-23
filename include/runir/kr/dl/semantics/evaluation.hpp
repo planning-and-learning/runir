@@ -88,13 +88,12 @@ auto make_role_builder(StateEvaluationContext<Family, Kind>& context)
     return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects(context));
 }
 
-template<CategoryTag Category, FamilyTag Family, tyr::TaskKind Kind>
-auto materialize_denotation(ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>& result, StateEvaluationContext<Family, Kind>& context)
+template<CategoryTag Category>
+auto materialize_denotation(ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>& result, Builder& builder, DenotationRepository& repository)
 {
-    auto data = runir::kr::dl::semantics::checkout<Denotation<Category>>(context.get_builder());
+    auto data = runir::kr::dl::semantics::checkout<Denotation<Category>>(builder);
     make_data(*result, *data);
 
-    auto& repository = context.get_denotation_repository();
     if constexpr (std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>)
         data->vec_index = repository.get_vector_repository().insert(result->blocks);
 
@@ -832,14 +831,28 @@ auto evaluate_impl(FamilyConstructorView<Family, Category> constructor,
 }
 
 template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind>
+auto evaluate(FamilyConstructorView<Family, Category> constructor,
+              StateEvaluationContext<Family, Kind>& context,
+              DenotationRepository& repository) -> DenotationView<Category>
+{
+    if (repository.get_formalism_repository_ptr() != context.get_denotation_repository().get_formalism_repository_ptr())
+        throw std::invalid_argument("Denotations must be evaluated into a repository for the same planning task.");
+
+    // Only the final value receives the destination's lifetime; children use the ordinary caches.
+    auto result = evaluate_impl(constructor, context);
+    return detail::materialize_denotation<Category>(result, context.get_builder(), repository).first;
+}
+
+template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind>
 auto evaluate(FamilyConstructorView<Family, Category> constructor, StateEvaluationContext<Family, Kind>& context) -> DenotationView<Category>
 {
-    auto& cache = context.get_caches().template get<Category>(constructor.is_static());
+    const auto is_static = constructor.is_static();
+    auto& cache = context.get_caches().template get<Category>(is_static);
     if (const auto it = cache.find(constructor); it != cache.end())
         return it->second;
 
-    auto result = evaluate_impl(constructor, context);
-    return cache.emplace(constructor, detail::materialize_denotation<Category>(result, context).first).first->second;
+    auto& repository = context.get_caches().get_repository(is_static);
+    return cache.emplace(constructor, evaluate(constructor, context, repository)).first->second;
 }
 
 }

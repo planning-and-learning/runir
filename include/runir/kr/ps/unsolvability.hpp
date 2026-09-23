@@ -28,7 +28,8 @@ private:
 public:
     ClassifierUnsolvability(runir::kr::TaskContext<Kind>& task_context, runir::kr::uns::ClassifierView classifier) :
         m_task_context(task_context),
-        m_classifier(classifier)
+        m_classifier(classifier),
+        m_caches(*task_context.dl_denotation_repository)
     {
     }
 
