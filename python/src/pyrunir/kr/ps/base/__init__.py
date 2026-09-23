@@ -25,6 +25,7 @@ from ...._pyrunir.kr.ps.base import (
     SketchIndex,
     SketchProofEdgeLabel,
     SketchProofStatus,
+    SketchSearchStatistics,
     SuccessorExpander,
     find_ground_solution,
     find_lifted_solution,

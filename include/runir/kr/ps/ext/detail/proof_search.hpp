@@ -48,6 +48,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
     {
         graphs::VertexIndex vertex;
         std::optional<std::size_t> choice = std::nullopt;
+        ygg::uint_t depth = 0;
     };
     struct ChoiceFrame
     {
@@ -70,19 +71,41 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
     auto selected_edges = std::vector<std::tuple<graphs::VertexIndex, graphs::VertexIndex, ygg::uint_t>> {};
     auto plan_steps = tyr::planning::PackedLabeledNodeList<Kind> {};
     auto failed = false;
-    auto num_choice_points = ygg::uint_t(0);
-    auto num_binding_attempts = ygg::uint_t(0);
-    auto num_backtracks = ygg::uint_t(0);
+    auto statistics = ModuleProgramSearchStatistics {};
     auto random = std::mt19937_64(options.random_seed);
     const auto started_at = std::chrono::steady_clock::now();
     const auto out_of_time = [&]() { return options.max_time && std::chrono::steady_clock::now() - started_at >= *options.max_time; };
-    const auto finish = [&](Status status, std::optional<ygg::uint_t> choice_depth = std::nullopt)
+    const auto assess_choice_depth = [&]() -> std::optional<ygg::uint_t>
     {
+        if (expansions.empty())
+            return 0;
+
+        // Only the current attempt determines success; the proof graph also retains abandoned bindings.
+        auto graph = graphs::StaticGraphBuilder<std::tuple<>, ygg::uint_t> {};
+        for (std::size_t i = 0; i < expansions.size(); ++i)
+            graph.add_vertex();
+        for (const auto& [source, target, weight] : selected_edges)
+            graph.add_directed_edge(source, target, weight);
+        // Cyclic attempts retain the observed traversal peak without repeatedly following their cycles.
+        if (!graphs::find_cycle(graph).empty())
+            return std::nullopt;
+
+        // The topological order is sinks first. Shared continuations must retain the longest incoming path.
+        auto depths = std::vector<ygg::uint_t>(expansions.size(), 0);
+        for (const auto source : graphs::algorithms::topological_sort(graph))
+            for (const auto edge : graph.get_out_edge_indices(source))
+                depths[source] = std::max(depths[source], graph.get_edge(edge).get_property() + depths[graph.get_target(edge)]);
+        statistics.max_choice_depth = std::max(statistics.max_choice_depth, depths.front());
+        return depths.front();
+    };
+
+    const auto finish = [&](Status status, ygg::uint_t choice_depth = 0)
+    {
+        if (status != Status::SUCCESS)
+            assess_choice_depth();
         auto result = proof.finish(status);
-        result.choice_depth = choice_depth;
-        result.num_choice_points = num_choice_points;
-        result.num_binding_attempts = num_binding_attempts;
-        result.num_backtracks = num_backtracks;
+        result.statistics = statistics;
+        result.statistics.choice_depth = choice_depth;
         return result;
     };
     const auto vertex_for = [&](ExecutionStateView<Kind> state, bool initial = false, bool alive = true, bool unsolvable = false)
@@ -95,17 +118,18 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
             expansions.emplace_back(std::move(state));
         return result->first;
     };
-    const auto enqueue = [&](graphs::VertexIndex vertex)
+    const auto enqueue = [&](graphs::VertexIndex vertex, ygg::uint_t depth = 0)
     {
         if (!expansions[vertex].visited)
         {
             expansions[vertex].visited = true;
             visited.push_back(vertex);
-            open.push_back({ vertex });
+            open.push_back({ vertex, std::nullopt, depth });
         }
     };
-    const auto apply_step = [&](graphs::VertexIndex source, std::size_t step_index, const Obligation* choice = nullptr) -> std::optional<Status>
+    const auto apply_step = [&](const Work& work, std::size_t step_index, const Obligation* choice = nullptr) -> std::optional<Status>
     {
+        const auto source = work.vertex;
         auto& expansion = expansions[source];
         const auto& step = expansion.steps[step_index];
         if (step.status == Outcome::OUT_OF_TIME)
@@ -115,7 +139,10 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
 
         const auto applied = step.status == Outcome::APPLIED || step.status == Outcome::RESTORED_CALLER;
         if (choice && applied)
-            ++num_binding_attempts;
+            ++statistics.num_binding_attempts;
+        const auto depth = work.depth + ygg::uint_t(choice && choice->alternatives.size() > 1);
+        if (applied)
+            statistics.max_choice_depth = std::max(statistics.max_choice_depth, depth);
         const auto empty_choice = !applied && choice;
         if (applied || (step.get_target().get_phase() == ExecutionPhase::INTERNAL && !empty_choice))
         {
@@ -132,7 +159,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
             {
                 if (!options.universal)
                     plan_steps.insert(plan_steps.end(), step.plan_suffix.begin(), step.plan_suffix.end());
-                enqueue(*target);
+                enqueue(*target, depth);
             }
             else
             {
@@ -157,24 +184,6 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
         failed |= !applied;
         return std::nullopt;
     };
-    const auto choice_depth = [&](graphs::VertexIndex initial) -> std::optional<ygg::uint_t>
-    {
-        // Only the current attempt determines success; the proof graph also retains abandoned bindings.
-        auto graph = graphs::StaticGraphBuilder<std::tuple<>, ygg::uint_t> {};
-        for (std::size_t i = 0; i < expansions.size(); ++i)
-            graph.add_vertex();
-        for (const auto& [source, target, weight] : selected_edges)
-            graph.add_directed_edge(source, target, weight);
-        if (!graphs::find_cycle(graph).empty())
-            return std::nullopt;
-
-        // The topological order is sinks first. Shared continuations must retain the longest incoming path.
-        auto depths = std::vector<ygg::uint_t>(expansions.size(), 0);
-        for (const auto source : graphs::algorithms::topological_sort(graph))
-            for (const auto edge : graph.get_out_edge_indices(source))
-                depths[source] = std::max(depths[source], graph.get_edge(edge).get_property() + depths[graph.get_target(edge)]);
-        return depths[initial];
-    };
 
     const auto initial_vertex = vertex_for(proof.initial_state(), true);
     if (!initial_vertex)
@@ -188,9 +197,9 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
 
         if (open.empty())
         {
-            if (!failed)
-                if (const auto depth = choice_depth(*initial_vertex))
-                    return finish(Status::SUCCESS, depth);
+            const auto depth = assess_choice_depth();
+            if (!failed && depth)
+                return finish(Status::SUCCESS, *depth);
 
             auto resumed = false;
             while (!choices.empty())
@@ -200,7 +209,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                 const auto& obligation = expansion.obligations[*frame.work.choice];
                 const auto& alternatives = obligation.alternatives;
                 if (expansion.steps[alternatives[frame.alternative]].status == Outcome::APPLIED)
-                    ++num_backtracks;
+                    ++statistics.num_backtracks;
                 open = frame.open;
                 while (visited.size() > frame.visited_size)
                 {
@@ -213,7 +222,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
 
                 if (++frame.alternative < alternatives.size())
                 {
-                    if (const auto limit = apply_step(frame.work.vertex, alternatives[frame.alternative], &obligation))
+                    if (const auto limit = apply_step(frame.work, alternatives[frame.alternative], &obligation))
                         return finish(*limit);
                     resumed = true;
                     break;
@@ -231,10 +240,10 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
         if (work.choice)
         {
             const auto& obligation = expansion.obligations[*work.choice];
-            num_choice_points += obligation.alternatives.size() > 1;
+            statistics.num_choice_points += obligation.alternatives.size() > 1;
             // ponytail: copy the pending frontier only at choose; use a persistent worklist if these snapshots dominate memory.
             choices.push_back({ work, 0, open, visited.size(), selected_edges.size(), plan_steps.size(), failed });
-            if (const auto limit = apply_step(work.vertex, obligation.alternatives.front(), &obligation))
+            if (const auto limit = apply_step(work, obligation.alternatives.front(), &obligation))
                 return finish(*limit);
             continue;
         }
@@ -244,7 +253,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
             if (!options.universal)
             {
                 proof.set_plan(tyr::planning::PackedPlan<Kind>(initial_node, std::move(plan_steps)));
-                return finish(Status::SUCCESS, choice_depth(*initial_vertex));
+                return finish(Status::SUCCESS, assess_choice_depth().value());
             }
             continue;
         }
@@ -259,10 +268,13 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
 
         if (!expansion.expanded)
         {
+            ++statistics.num_expanded;
             if (options.universal || options.shuffle_choice_points)
                 proof.template steps<EagerExpansionPolicy>(expansion.state, out_of_time, expansion.steps);
             else
                 proof.template steps<LazyExpansionPolicy>(expansion.state, out_of_time, expansion.steps);
+            statistics.num_generated += std::ranges::count_if(expansion.steps, [](const auto& step)
+            { return step.status == Outcome::APPLIED || step.status == Outcome::RESTORED_CALLER; });
             if (out_of_time())
                 return finish(Status::OUT_OF_TIME);
             if (options.shuffle_choice_points)
@@ -310,8 +322,8 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                 return finish(Status::OUT_OF_TIME);
             const auto& obligation = expansion.obligations[i];
             if (obligation.choice)
-                open.push_back({ work.vertex, i });
-            else if (const auto limit = apply_step(work.vertex, obligation.alternatives.front()))
+                open.push_back({ work.vertex, i, work.depth });
+            else if (const auto limit = apply_step(work, obligation.alternatives.front()))
                 return finish(*limit);
         }
     }

@@ -2,6 +2,7 @@
 #include "planning_fixtures.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <runir/datasets/state_graph.hpp>
@@ -139,6 +140,9 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     ASSERT_TRUE(bounded.graph);
     EXPECT_EQ(bounded.graph->get_num_vertices(), 1);
     EXPECT_EQ(bounded_search->state_repository->num_states(), 2);
+    EXPECT_EQ(bounded.statistics.num_expanded, 1);
+    // The first move stays in the current room: it is generated but rejected by sketch matching.
+    EXPECT_EQ(bounded.statistics.num_generated, 2);
     const auto& packed_state = bounded.graph->get_vertex(0).get_property().state;
     EXPECT_EQ(packed_state.get_index(), state.get_index());
     EXPECT_EQ(packed_state.unpack().pack(), packed_state);
@@ -151,14 +155,26 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     const auto two_step_successors = two_step_expander.labeled_successors(state);
     EXPECT_TRUE(two_step_expander.accepted_successors(state, two_step_successors).empty());
 
-    auto rejected_options = kr::ps::base::SketchSearchOptions<tyr::GroundTag> {};
-    const auto rejected = kr::ps::base::find_solution(task_context, two_step_only, rejected_options);
-    EXPECT_EQ(rejected.status, kr::ps::base::SketchProofStatus::FAILURE);
-    ASSERT_TRUE(rejected.graph);
-    EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
-    EXPECT_EQ(rejected.graph->get_num_edges(), 0);
-    EXPECT_TRUE(rejected.deadend_states.empty());
-    EXPECT_FALSE(rejected.open_states.empty());
+    for (const auto shuffle : { false, true })
+    {
+        auto rejected_options = kr::ps::base::SketchSearchOptions<tyr::GroundTag> {};
+        rejected_options.shuffle_choice_points = shuffle;
+        const auto rejected = kr::ps::base::find_solution(task_context, two_step_only, rejected_options);
+        EXPECT_EQ(rejected.status, kr::ps::base::SketchProofStatus::FAILURE);
+        ASSERT_TRUE(rejected.graph);
+        EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
+        EXPECT_EQ(rejected.graph->get_num_edges(), 0);
+        EXPECT_TRUE(rejected.deadend_states.empty());
+        EXPECT_FALSE(rejected.open_states.empty());
+        EXPECT_EQ(rejected.statistics.num_expanded, 1);
+        EXPECT_EQ(rejected.statistics.num_generated, two_step_successors.size());
+
+        rejected_options.max_time = std::chrono::steady_clock::duration::zero();
+        const auto timed_out = kr::ps::base::find_solution(task_context, two_step_only, rejected_options);
+        EXPECT_EQ(timed_out.status, kr::ps::base::SketchProofStatus::OUT_OF_TIME);
+        EXPECT_EQ(timed_out.statistics.num_expanded, 0);
+        EXPECT_EQ(timed_out.statistics.num_generated, 0);
+    }
 }
 
 TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries)

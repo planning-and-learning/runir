@@ -51,6 +51,7 @@ void bind_sketch_proof_types(nb::module_& m, const char* prefix)
         .def_ro("deadend_states", &Results::deadend_states)
         .def_ro("open_states", &Results::open_states)
         .def_ro("cycle", &Results::cycle)
+        .def_ro("statistics", &Results::statistics)
         .def("is_successful", &Results::is_successful);
 }
 
@@ -73,6 +74,10 @@ void bind_sketch_search_options(nb::module_& m, const char* name)
 
 void bind_sketch_executor(nb::module_& m)
 {
+    nb::class_<SketchSearchStatistics>(m, "SketchSearchStatistics")
+        .def_ro("num_expanded", &SketchSearchStatistics::num_expanded)
+        .def_ro("num_generated", &SketchSearchStatistics::num_generated);
+
     auto edge_label = nb::class_<SketchProofEdgeLabel>(m, "SketchProofEdgeLabel")
                           .def_ro("transition", &SketchProofEdgeLabel::transition)
                           .def_ro("rule", &SketchProofEdgeLabel::rule);

@@ -81,6 +81,8 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     EXPECT_FALSE(label.is_alive);
     EXPECT_TRUE(label.is_unsolvable);
     EXPECT_EQ(label.execution_state.get_call_stack().get_memory_state().get_name(), "source");
+    EXPECT_EQ(result.statistics.num_expanded, 0);
+    EXPECT_EQ(result.statistics.num_generated, 0);
     EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(), 0);
 }
 
@@ -208,6 +210,8 @@ TEST(RunirTests, ExtFindSolutionReportsTheCompleteThreeStateCycle)
     ASSERT_TRUE(result.graph);
     EXPECT_EQ(result.graph->get_num_vertices(), 3);
     EXPECT_EQ(result.graph->get_num_edges(), 3);
+    EXPECT_EQ(result.statistics.num_expanded, 3);
+    EXPECT_EQ(result.statistics.num_generated, 3);  // Generating an already visited target still counts.
     ASSERT_EQ(result.cycle.size(), 4);
     EXPECT_EQ(result.cycle.front(), result.cycle.back());
     EXPECT_EQ(std::set(result.cycle.begin(), result.cycle.end()).size(), 3);
@@ -313,10 +317,13 @@ void check_choice_execution()
         options.universal = universal;
         const auto result = ext::find_solution(context, program, options);
         ASSERT_EQ(result.status, Status::SUCCESS);
-        EXPECT_EQ(result.choice_depth, 1);
-        EXPECT_EQ(result.num_choice_points, 1);
-        EXPECT_EQ(result.num_binding_attempts, 2);
-        EXPECT_EQ(result.num_backtracks, 1);
+        EXPECT_EQ(result.statistics.choice_depth, 1);
+        EXPECT_EQ(result.statistics.max_choice_depth, 1);
+        EXPECT_EQ(result.statistics.num_choice_points, 1);
+        EXPECT_EQ(result.statistics.num_binding_attempts, 2);
+        EXPECT_EQ(result.statistics.num_backtracks, 1);
+        EXPECT_EQ(result.statistics.num_expanded, 5);
+        EXPECT_EQ(result.statistics.num_generated, 5);
         EXPECT_FALSE(result.open_states.empty());  // The bad binding really was attempted.
         if (!universal)
         {
@@ -333,9 +340,10 @@ void check_choice_execution()
                 + choice_rule("finish", "m2", "m3", move_to_goal)));
         const auto cyclic_result = ext::find_solution(context, cyclic, options);
         EXPECT_EQ(cyclic_result.status, Status::SUCCESS);
-        EXPECT_EQ(cyclic_result.choice_depth, 1);
-        EXPECT_EQ(cyclic_result.num_binding_attempts, 2);
-        EXPECT_EQ(cyclic_result.num_backtracks, 1);
+        EXPECT_EQ(cyclic_result.statistics.choice_depth, 1);
+        EXPECT_EQ(cyclic_result.statistics.max_choice_depth, 1);
+        EXPECT_EQ(cyclic_result.statistics.num_binding_attempts, 2);
+        EXPECT_EQ(cyclic_result.statistics.num_backtracks, 1);
         EXPECT_FALSE(cyclic_result.cycle.empty());
 
         for (const auto& body : { choose_empty,
@@ -344,10 +352,13 @@ void check_choice_execution()
             const auto empty = make_program(choice_module("empty", choice_rule("select", "m0", "m1", body)));
             const auto empty_result = ext::find_solution(context, empty, options);
             EXPECT_EQ(empty_result.status, Status::FAILURE);
-            EXPECT_FALSE(empty_result.choice_depth);
-            EXPECT_EQ(empty_result.num_choice_points, 0);
-            EXPECT_EQ(empty_result.num_binding_attempts, 0);
-            EXPECT_EQ(empty_result.num_backtracks, 0);
+            EXPECT_EQ(empty_result.statistics.choice_depth, 0);
+            EXPECT_EQ(empty_result.statistics.max_choice_depth, 0);
+            EXPECT_EQ(empty_result.statistics.num_choice_points, 0);
+            EXPECT_EQ(empty_result.statistics.num_binding_attempts, 0);
+            EXPECT_EQ(empty_result.statistics.num_backtracks, 0);
+            EXPECT_EQ(empty_result.statistics.num_expanded, 1);
+            EXPECT_EQ(empty_result.statistics.num_generated, 0);
             EXPECT_FALSE(empty_result.deadend_states.empty());
         }
 
@@ -362,10 +373,11 @@ void check_choice_execution()
                     + move_rules));
             const auto filtered_result = ext::find_solution(context, filtered, options);
             EXPECT_EQ(filtered_result.status, good ? Status::SUCCESS : Status::FAILURE);
-            EXPECT_EQ(filtered_result.choice_depth, good ? std::optional<ygg::uint_t>(0) : std::nullopt);
-            EXPECT_EQ(filtered_result.num_choice_points, 0);
-            EXPECT_EQ(filtered_result.num_binding_attempts, 1);
-            EXPECT_EQ(filtered_result.num_backtracks, good ? 0 : 1);
+            EXPECT_EQ(filtered_result.statistics.choice_depth, 0);
+            EXPECT_EQ(filtered_result.statistics.max_choice_depth, 0);
+            EXPECT_EQ(filtered_result.statistics.num_choice_points, 0);
+            EXPECT_EQ(filtered_result.statistics.num_binding_attempts, 1);
+            EXPECT_EQ(filtered_result.statistics.num_backtracks, good ? 0 : 1);
         }
 
         const auto ordinary = make_program(choice_module(
@@ -374,18 +386,24 @@ void check_choice_execution()
                 + move_rules));
         const auto ordinary_result = ext::find_solution(context, ordinary, options);
         EXPECT_EQ(ordinary_result.status, Status::SUCCESS);
-        EXPECT_EQ(ordinary_result.choice_depth, 0);
-        EXPECT_EQ(ordinary_result.num_choice_points, 0);
-        EXPECT_EQ(ordinary_result.num_binding_attempts, 0);
-        EXPECT_EQ(ordinary_result.num_backtracks, 0);
+        EXPECT_EQ(ordinary_result.statistics.choice_depth, 0);
+        EXPECT_EQ(ordinary_result.statistics.max_choice_depth, 0);
+        EXPECT_EQ(ordinary_result.statistics.num_choice_points, 0);
+        EXPECT_EQ(ordinary_result.statistics.num_binding_attempts, 0);
+        EXPECT_EQ(ordinary_result.statistics.num_backtracks, 0);
+        EXPECT_EQ(ordinary_result.statistics.num_expanded, 3);
+        EXPECT_EQ(ordinary_result.statistics.num_generated, 3);
 
         const auto exhausted = make_program(choice_module("exhausted", choice_rule("select", "m0", "m1", choose_candidates)));
         const auto exhausted_result = ext::find_solution(context, exhausted, options);
         EXPECT_EQ(exhausted_result.status, Status::FAILURE);
-        EXPECT_FALSE(exhausted_result.choice_depth);
-        EXPECT_EQ(exhausted_result.num_choice_points, 1);
-        EXPECT_EQ(exhausted_result.num_binding_attempts, 2);
-        EXPECT_EQ(exhausted_result.num_backtracks, 2);
+        EXPECT_EQ(exhausted_result.statistics.choice_depth, 0);
+        EXPECT_EQ(exhausted_result.statistics.max_choice_depth, 1);
+        EXPECT_EQ(exhausted_result.statistics.num_choice_points, 1);
+        EXPECT_EQ(exhausted_result.statistics.num_binding_attempts, 2);
+        EXPECT_EQ(exhausted_result.statistics.num_backtracks, 2);
+        EXPECT_EQ(exhausted_result.statistics.num_expanded, 3);
+        EXPECT_EQ(exhausted_result.statistics.num_generated, 2);
 
         const auto nested = make_program(choice_module(
             "nested",
@@ -395,10 +413,11 @@ void check_choice_execution()
                 + choice_rule("finish", "m2", "m3", move_to_goal)));
         const auto nested_result = ext::find_solution(context, nested, options);
         EXPECT_EQ(nested_result.status, Status::SUCCESS);
-        EXPECT_EQ(nested_result.choice_depth, 2);
-        EXPECT_EQ(nested_result.num_choice_points, 3);
-        EXPECT_EQ(nested_result.num_binding_attempts, 6);
-        EXPECT_EQ(nested_result.num_backtracks, 4);
+        EXPECT_EQ(nested_result.statistics.choice_depth, 2);
+        EXPECT_EQ(nested_result.statistics.max_choice_depth, 2);
+        EXPECT_EQ(nested_result.statistics.num_choice_points, 3);
+        EXPECT_EQ(nested_result.statistics.num_binding_attempts, 6);
+        EXPECT_EQ(nested_result.statistics.num_backtracks, 4);
         if (!universal)
         {
             ASSERT_TRUE(nested_result.plan);
@@ -415,10 +434,14 @@ void check_choice_execution()
                 + choice_rule("finish", "m2", "m3", move_to_goal)));
         const auto deeper_failure_result = ext::find_solution(context, deeper_failure, options);
         EXPECT_EQ(deeper_failure_result.status, Status::SUCCESS);
-        EXPECT_EQ(deeper_failure_result.choice_depth, 1);
-        EXPECT_EQ(deeper_failure_result.num_choice_points, 4);
-        EXPECT_EQ(deeper_failure_result.num_binding_attempts, 8);
-        EXPECT_EQ(deeper_failure_result.num_backtracks, 7);
+        EXPECT_EQ(deeper_failure_result.statistics.choice_depth, 1);
+        EXPECT_EQ(deeper_failure_result.statistics.max_choice_depth, 3);
+        EXPECT_EQ(deeper_failure_result.statistics.num_choice_points, 4);
+        EXPECT_EQ(deeper_failure_result.statistics.num_binding_attempts, 8);
+        EXPECT_EQ(deeper_failure_result.statistics.num_backtracks, 7);
+        // The deepest failed states are revisited through both inner bindings, but only expanded once.
+        EXPECT_EQ(deeper_failure_result.statistics.num_expanded, 8);
+        EXPECT_EQ(deeper_failure_result.statistics.num_generated, 10);
 
         const auto callee =
             parse(choice_module("callee", choice_rule("select", "m0", "m1", choose_candidates) + choice_rule("move-selected", "m1", "m3", move_to_register)));
@@ -429,9 +452,12 @@ void check_choice_execution()
         const auto call_program = create_module_program(repository, caller, { caller, callee });
         const auto call_result = ext::find_solution(context, call_program, options);
         EXPECT_EQ(call_result.status, Status::SUCCESS);
-        EXPECT_EQ(call_result.choice_depth, 1);
-        EXPECT_EQ(call_result.num_binding_attempts, 2);
-        EXPECT_EQ(call_result.num_backtracks, 1);
+        EXPECT_EQ(call_result.statistics.choice_depth, 1);
+        EXPECT_EQ(call_result.statistics.max_choice_depth, 1);
+        EXPECT_EQ(call_result.statistics.num_binding_attempts, 2);
+        EXPECT_EQ(call_result.statistics.num_backtracks, 1);
+        EXPECT_EQ(call_result.statistics.num_expanded, 9);
+        EXPECT_EQ(call_result.statistics.num_generated, 9);  // Includes entering the callee and both caller returns.
         EXPECT_FALSE(call_result.open_states.empty());
         if (!universal)
         {
@@ -452,14 +478,20 @@ void check_choice_execution()
         limited.max_num_states = 1;
         const auto state_limited = ext::find_solution(context, program, limited);
         EXPECT_EQ(state_limited.status, Status::OUT_OF_STATES);
-        EXPECT_FALSE(state_limited.choice_depth);
+        EXPECT_EQ(state_limited.statistics.choice_depth, 0);
+        EXPECT_EQ(state_limited.statistics.max_choice_depth, 1);
+        EXPECT_EQ(state_limited.statistics.num_expanded, 1);
+        EXPECT_EQ(state_limited.statistics.num_generated, 2);  // Both bindings are generated before the graph hits its limit.
         limited.max_num_states = result.graph->get_num_vertices() - 1;
         EXPECT_EQ(ext::find_solution(context, program, limited).status, Status::OUT_OF_STATES);
         limited = options;
         limited.max_time = std::chrono::steady_clock::duration::zero();
         const auto time_limited = ext::find_solution(context, program, limited);
         EXPECT_EQ(time_limited.status, Status::OUT_OF_TIME);
-        EXPECT_FALSE(time_limited.choice_depth);
+        EXPECT_EQ(time_limited.statistics.choice_depth, 0);
+        EXPECT_EQ(time_limited.statistics.max_choice_depth, 0);
+        EXPECT_EQ(time_limited.statistics.num_expanded, 0);
+        EXPECT_EQ(time_limited.statistics.num_generated, 0);
 
         auto shuffled = options;
         shuffled.shuffle_choice_points = true;
@@ -483,24 +515,37 @@ void check_choice_execution()
             + choice_rule("move", "m3", "m4", move_to_register) + choice_rule("finish", "m4", "m5", move_to_goal)));
     const auto parallel_result = ext::find_solution(context, parallel, universal);
     EXPECT_EQ(parallel_result.status, Status::SUCCESS);
-    EXPECT_EQ(parallel_result.choice_depth, 1);  // Maximum path depth, not the sum of parallel obligations.
-    EXPECT_EQ(parallel_result.num_choice_points, 2);
-    EXPECT_EQ(parallel_result.num_binding_attempts, 2);
-    EXPECT_EQ(parallel_result.num_backtracks, 0);
+    EXPECT_EQ(parallel_result.statistics.choice_depth, 1);  // Maximum path depth, not the sum of parallel obligations.
+    EXPECT_EQ(parallel_result.statistics.max_choice_depth, 1);
+    EXPECT_EQ(parallel_result.statistics.num_choice_points, 2);
+    EXPECT_EQ(parallel_result.statistics.num_binding_attempts, 2);
+    EXPECT_EQ(parallel_result.statistics.num_backtracks, 0);
+    EXPECT_EQ(parallel_result.statistics.num_expanded, 5);
+    EXPECT_EQ(parallel_result.statistics.num_generated, 8);  // Includes the two untried bindings, not just proof edges.
 
-    const auto reconverged = make_program(choice_module(
-        "unequal-depths",
+    const auto reconverged_rules =
         // The LIFO frontier expands the short route and its suffix before the longer route reaches the join.
         choice_rule("long-route", "m0", "m1", load_goal) + choice_rule("short-route", "m0", "m3", load_goal)
             + choice_rule("long-choice", "m1", "m2", choose_candidates) + choice_rule("normalize-prefix", "m2", "m3", load_goal)
             + choice_rule("shared-choice", "m3", "m4", choose_candidates) + choice_rule("normalize-suffix", "m4", "m5", load_good)
-            + choice_rule("move", "m5", "m6", move_to_register) + choice_rule("finish", "m6", "m0", move_to_goal)));
+            + choice_rule("move", "m5", "m6", move_to_register) + choice_rule("finish", "m6", "m0", move_to_goal);
+    const auto reconverged = make_program(choice_module("unequal-depths", reconverged_rules));
     const auto reconverged_result = ext::find_solution(context, reconverged, universal);
     EXPECT_EQ(reconverged_result.status, Status::SUCCESS);
-    EXPECT_EQ(reconverged_result.choice_depth, 2);
-    EXPECT_EQ(reconverged_result.num_choice_points, 2);
-    EXPECT_EQ(reconverged_result.num_binding_attempts, 2);
-    EXPECT_EQ(reconverged_result.num_backtracks, 0);
+    EXPECT_EQ(reconverged_result.statistics.choice_depth, 2);
+    EXPECT_EQ(reconverged_result.statistics.max_choice_depth, 2);
+    EXPECT_EQ(reconverged_result.statistics.num_choice_points, 2);
+    EXPECT_EQ(reconverged_result.statistics.num_binding_attempts, 2);
+    EXPECT_EQ(reconverged_result.statistics.num_backtracks, 0);
+
+    // The next ordinary obligation hits the state limit just after the longer route reaches the shared suffix.
+    const auto partial = make_program(choice_module("partial-unequal-depths", reconverged_rules + choice_rule("exceed-limit", "m2", "m6", load_goal)));
+    auto limited = universal;
+    limited.max_num_states = reconverged_result.graph->get_num_vertices();
+    const auto partial_result = ext::find_solution(context, partial, limited);
+    EXPECT_EQ(partial_result.status, Status::OUT_OF_STATES);
+    EXPECT_EQ(partial_result.statistics.choice_depth, 0);
+    EXPECT_EQ(partial_result.statistics.max_choice_depth, 2);
 
     const auto revisited = make_program(
         choice_module("revisited",

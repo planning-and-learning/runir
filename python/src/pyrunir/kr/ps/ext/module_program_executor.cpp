@@ -125,10 +125,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_ro("deadend_states", &Results::deadend_states)
         .def_ro("open_states", &Results::open_states)
         .def_ro("cycle", &Results::cycle)
-        .def_ro("choice_depth", &Results::choice_depth)
-        .def_ro("num_choice_points", &Results::num_choice_points)
-        .def_ro("num_binding_attempts", &Results::num_binding_attempts)
-        .def_ro("num_backtracks", &Results::num_backtracks)
+        .def_ro("statistics", &Results::statistics)
         .def("is_successful", &Results::is_successful);
 
     nb::class_<Options>(m, (std::string(prefix) + "ModuleProgramSearchOptions").c_str())
@@ -174,6 +171,15 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 void bind_module_program_executor(nb::module_& m)
 {
     nb::exception<ActionRuleContractError>(m, "ActionRuleContractError", PyExc_RuntimeError);
+
+    nb::class_<ModuleProgramSearchStatistics>(m, "ModuleProgramSearchStatistics")
+        .def_ro("num_expanded", &ModuleProgramSearchStatistics::num_expanded)
+        .def_ro("num_generated", &ModuleProgramSearchStatistics::num_generated)
+        .def_ro("choice_depth", &ModuleProgramSearchStatistics::choice_depth)
+        .def_ro("max_choice_depth", &ModuleProgramSearchStatistics::max_choice_depth)
+        .def_ro("num_choice_points", &ModuleProgramSearchStatistics::num_choice_points)
+        .def_ro("num_binding_attempts", &ModuleProgramSearchStatistics::num_binding_attempts)
+        .def_ro("num_backtracks", &ModuleProgramSearchStatistics::num_backtracks);
 
     nb::enum_<ExecutionPhase>(m, "ExecutionPhase").value("INTERNAL", ExecutionPhase::INTERNAL).value("EXTERNAL", ExecutionPhase::EXTERNAL);
 

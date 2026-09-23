@@ -114,6 +114,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
             continue;
         }
 
+        ++result.statistics.num_expanded;
         const auto source_state = source_label.state.unpack();
         auto expansion_status = SketchProofStatus::SUCCESS;
         auto has_accepted_successor = false;
@@ -141,6 +142,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
         if (options.shuffle_choice_points)
         {
             auto successors = expander.labeled_successors(source_state);
+            result.statistics.num_generated += successors.size();
             if (out_of_time())
                 return finish(SketchProofStatus::OUT_OF_TIME);
             ygg::portable_shuffle(successors.begin(), successors.end(), random);
@@ -159,6 +161,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
             generator.for_each_labeled_successor_node(node, *search_context.state_repository, *search_context.axiom_evaluator,
                 [&](const auto& successor)
                 {
+                    ++result.statistics.num_generated;
                     const auto rule = expander.matching_rule_until(source_state, successor.node.get_state(), out_of_time);
                     if (out_of_time())
                     {

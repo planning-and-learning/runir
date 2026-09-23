@@ -153,8 +153,11 @@ std::string sketch(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> view)
 template<tyr::TaskKind Kind>
 std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<Kind>& result)
 {
-    return fmt::format("SketchProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={})",
+    return fmt::format("SketchProofResults(status={}, num_expanded={}, num_generated={}, graph_vertices={}, graph_edges={}, "
+                       "deadend_states={}, open_states={}, cycle={})",
                        runir::kr::ps::base::to_string(result.status),
+                       result.statistics.num_expanded,
+                       result.statistics.num_generated,
                        result.graph ? result.graph->get_num_vertices() : 0,
                        result.graph ? result.graph->get_num_edges() : 0,
                        result.deadend_states.size(),

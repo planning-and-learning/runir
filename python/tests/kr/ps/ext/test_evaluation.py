@@ -409,10 +409,14 @@ def test_choose_search_statistics_are_read_only(
     options.universal = universal
     result = find_solution(context, program, options)
     assert result.is_successful()
-    assert result.choice_depth == 1
-    assert result.num_choice_points == 1
-    assert result.num_binding_attempts == 2
-    assert result.num_backtracks == 1
-    for name in ("choice_depth", "num_choice_points", "num_binding_attempts", "num_backtracks"):
+    assert isinstance(result.statistics, ext.ModuleProgramSearchStatistics)
+    assert result.statistics.num_expanded == 5
+    assert result.statistics.num_generated == 5
+    assert result.statistics.choice_depth == 1
+    assert result.statistics.max_choice_depth == 1
+    assert result.statistics.num_choice_points == 1
+    assert result.statistics.num_binding_attempts == 2
+    assert result.statistics.num_backtracks == 1
+    for name in ("num_expanded", "num_generated", "choice_depth", "max_choice_depth", "num_choice_points", "num_binding_attempts", "num_backtracks"):
         with pytest.raises(AttributeError):
-            setattr(result, name, 99)
+            setattr(result.statistics, name, 99)

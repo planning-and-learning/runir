@@ -69,6 +69,7 @@ from ...._pyrunir.kr.ps.ext import (
     ModuleProgramProofEdgeLabel,
     ModuleProgramProofStateTransition,
     ModuleProgramProofStatus,
+    ModuleProgramSearchStatistics,
     Repository,
     RepositoryFactory,
     RuleVariant,

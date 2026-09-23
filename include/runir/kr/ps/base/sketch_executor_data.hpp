@@ -43,6 +43,15 @@ constexpr std::string_view to_string(SketchProofStatus status)
     throw std::invalid_argument("invalid SketchProofStatus");
 }
 
+struct SketchSearchStatistics
+{
+    /// Successor-generation invocations, including zero-successor and interrupted expansions; excludes goals and classifier-pruned states.
+    uint64_t num_expanded = 0;
+    /// Planning successors generated before sketch-rule filtering and visited-state deduplication; excludes the initial state.
+    /// Counts repeated target states separately and retains partial counts on failure or resource limits.
+    uint64_t num_generated = 0;
+};
+
 template<tyr::TaskKind Kind>
 struct SketchProofResults
 {
@@ -52,6 +61,7 @@ struct SketchProofResults
     runir::graphs::VertexIndexList deadend_states;
     runir::graphs::VertexIndexList open_states;
     runir::graphs::VertexIndexList cycle;
+    SketchSearchStatistics statistics;
 
     bool is_successful() const noexcept { return status == SketchProofStatus::SUCCESS; }
 };

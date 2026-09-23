@@ -35,6 +35,8 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     const auto result = kr::ps::base::find_solution(task_context, sketch, options);
 
     EXPECT_EQ(result.status, kr::ps::base::SketchProofStatus::FAILURE);
+    EXPECT_EQ(result.statistics.num_expanded, 0);
+    EXPECT_EQ(result.statistics.num_generated, 0);
     ASSERT_TRUE(result.graph);
     ASSERT_EQ(result.graph->get_num_vertices(), 1);
     EXPECT_EQ(result.graph->get_num_edges(), 0);

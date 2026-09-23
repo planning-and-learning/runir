@@ -55,6 +55,30 @@ struct ModuleProgramSearchOptions
     bool shuffle_choice_points = false;
 };
 
+struct ModuleProgramSearchStatistics
+{
+    /// Extended-state expansions started, including those yielding no successors; cached replay is excluded.
+    uint64_t num_expanded = 0;
+    /// Extended successors emitted before selection and duplicate detection, including untried Choose bindings.
+    /// Counts applied rules and caller returns, not rejected planning candidates or failure markers.
+    /// The initial state is excluded; both counters retain work from abandoned branches and resource-limited searches.
+    uint64_t num_generated = 0;
+
+    /// Successful execution's non-singleton Choose count; universal mode takes the maximum over successful proof paths.
+    /// Counts bindings after effect filtering, excludes abandoned attempts, and is zero unless the search succeeds.
+    ygg::uint_t choice_depth = 0;
+    /// Maximum non-singleton Choose depth reached, including abandoned attempts and resource-limited searches.
+    /// Acyclic attempts include shared continuations; cyclic attempts retain the depth actually traversed.
+    ygg::uint_t max_choice_depth = 0;
+    /// Non-singleton Choose frames entered across the whole search, including abandoned and re-entered frames.
+    ygg::uint_t num_choice_points = 0;
+    /// Admitted bindings attempted, including singleton Choose bodies; empty Choose bodies contribute zero.
+    ygg::uint_t num_binding_attempts = 0;
+    /// Attempted binding continuations undone after failure, including singleton and exhausted frames.
+    /// These search-effort counters retain partial counts on failure or resource limits.
+    ygg::uint_t num_backtracks = 0;
+};
+
 template<tyr::TaskKind Kind>
 struct ModuleProgramProofResults
 {
@@ -65,17 +89,7 @@ struct ModuleProgramProofResults
     runir::graphs::VertexIndexList deadend_states;
     runir::graphs::VertexIndexList open_states;
     runir::graphs::VertexIndexList cycle;
-
-    /// Successful execution's non-singleton Choose count; universal mode takes the maximum over successful proof paths.
-    /// Counts bindings after effect filtering, excludes abandoned attempts, and is absent unless the search succeeds.
-    std::optional<ygg::uint_t> choice_depth = std::nullopt;
-    /// Non-singleton Choose frames entered across the whole search, including abandoned and re-entered frames.
-    ygg::uint_t num_choice_points = 0;
-    /// Admitted bindings attempted, including singleton Choose bodies; empty Choose bodies contribute zero.
-    ygg::uint_t num_binding_attempts = 0;
-    /// Attempted binding continuations undone after failure, including singleton and exhausted frames.
-    /// These search-effort counters retain partial counts on failure or resource limits.
-    ygg::uint_t num_backtracks = 0;
+    ModuleProgramSearchStatistics statistics;
 
     bool is_successful() const noexcept { return status == ModuleProgramProofStatus::SUCCESS; }
 };
