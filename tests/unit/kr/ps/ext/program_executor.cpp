@@ -655,6 +655,25 @@ void check_choice_execution()
         expect_single_expansion(pending_singleton_result);
     }
 
+    // Returning from the successful ordinary continuation must still evaluate the failing Choose obligation.
+    const auto required_choice = make_program(choice_module(
+        "ordinary-success-failing-choice",
+        choice_rule("ordinary", "m0", "m1", load_good) + choice_rule("choose", "m0", "m6", choose_candidates) + move_rules));
+    const auto required_choice_result = ext::find_solution(context, required_choice, universal);
+    EXPECT_EQ(required_choice_result.status, Status::FAILURE);
+    ASSERT_TRUE(required_choice_result.graph);
+    auto goals = 0;
+    auto failed_bindings = 0;
+    for (const auto vertex : required_choice_result.graph->get_vertex_indices())
+    {
+        const auto& label = required_choice_result.graph->get_vertex(vertex).get_property();
+        goals += label.is_goal;
+        failed_bindings += label.program_state.get_module_state().get_memory_state().get_name() == "m6";
+    }
+    EXPECT_EQ(goals, 1);
+    EXPECT_EQ(failed_bindings, 2);
+    expect_single_expansion(required_choice_result);
+
     // Each rule retains its own obligation: a successful choose cannot hide a bad load or another empty choose.
     for (const auto& other : { std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)))"), choose_empty })
     {
