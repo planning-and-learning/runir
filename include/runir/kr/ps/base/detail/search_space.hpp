@@ -12,22 +12,22 @@ namespace runir::kr::ps::base::detail
 {
 
 template<tyr::TaskKind Kind>
-tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(ygg::Index<tyr::planning::State<Kind>> goal,
-                                                        const ygg::SegmentedVector<SearchNode<Kind>>& search_nodes,
-                                                        const tyr::planning::PackedNode<Kind>& initial_node)
+tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(tyr::planning::PackedNode<Kind> goal,
+                                                        const ygg::SegmentedVector<SearchNode<Kind>>& search_nodes)
 {
     auto steps = tyr::planning::PackedLabeledNodeList<Kind> {};
-    auto state = goal;
-    while (search_nodes[ygg::uint_t(state)].parent_state != ygg::Index<tyr::planning::State<Kind>>::max())
+    auto current = std::move(goal);
+    while (true)
     {
-        const auto& node = search_nodes[ygg::uint_t(state)];
+        const auto& node = search_nodes[ygg::uint_t(current.get_state().get_index())];
+        if (!node.parent_node)
+            break;
         assert(node.action);
-        const auto packed_state = tyr::planning::PackedStateView<Kind>(state, initial_node.get_state().get_state_repository());
-        steps.push_back({ *node.action, tyr::planning::PackedNode<Kind>(packed_state, node.metric) });
-        state = node.parent_state;
+        steps.push_back({ *node.action, current });
+        current = *node.parent_node;
     }
     std::ranges::reverse(steps);
-    return tyr::planning::PackedPlan<Kind>(initial_node, std::move(steps));
+    return tyr::planning::PackedPlan<Kind>(std::move(current), std::move(steps));
 }
 
 }  // namespace runir::kr::ps::base::detail

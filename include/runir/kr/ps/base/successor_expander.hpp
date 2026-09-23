@@ -3,6 +3,7 @@
 
 #include "runir/kr/ps/base/compatibility.hpp"
 #include "runir/kr/ps/base/evaluation_environment.hpp"
+#include "runir/kr/ps/base/sketch_executor_data.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/task_context.hpp"
 
@@ -10,8 +11,6 @@
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/node.hpp>
 #include <tyr/planning/state_view.hpp>
-#include <utility>
-#include <vector>
 
 namespace runir::kr::ps::base
 {
@@ -26,7 +25,6 @@ private:
 
 public:
     using LabeledNode = tyr::planning::LabeledNode<Kind>;
-    using AcceptedSuccessor = std::pair<LabeledNode, RuleView>;
 
     SuccessorExpander(runir::kr::TaskContext<Kind>& task_context, SketchView sketch) :
         m_task_context(task_context),
@@ -37,32 +35,38 @@ public:
 
     auto& get_environment() noexcept { return m_environment; }
 
-    std::vector<LabeledNode> labeled_successors(const tyr::planning::StateView<Kind>& state)
+    /// Call emit(successor, rule) for each successor permitted by its first matching rule.
+    /// emit returning false or stop returning true ends enumeration; stop is also checked for rejected candidates.
+    /// The ordering policy visits applicable bindings and checks stop before each visit.
+    /// Increment statistics.num_generated for every generated successor, including rejected and duplicate targets.
+    /// Return true if enumeration completed, false if stopped.
+    /// Callbacks must not reenter this expander or its generator.
+    template<typename BindingOrder, typename Emit, typename Stop>
+    bool for_each_successor(const tyr::planning::Node<Kind>& node, SketchSearchStatistics& statistics, BindingOrder& order, Emit&& emit, Stop&& stop)
     {
-        auto& search_context = *m_task_context.search_context;
-        auto& successor_generator = *search_context.successor_generator;
-        const auto node = successor_generator.get_node(*search_context.state_repository, state.get_index());
-        return successor_generator.get_labeled_successor_nodes(node, *search_context.state_repository, *search_context.axiom_evaluator);
-    }
+        if (stop())
+            return false;
 
-    std::vector<AcceptedSuccessor> accepted_successors(const tyr::planning::StateView<Kind>& state, const std::vector<LabeledNode>& successors)
-    {
-        return accepted_successors(state, successors, [] { return false; });
-    }
-
-    template<typename Stop>
-    std::vector<AcceptedSuccessor> accepted_successors(const tyr::planning::StateView<Kind>& state, const std::vector<LabeledNode>& successors, Stop&& stop)
-    {
+        // All candidates share the source state, so its dynamic features are cached for this expansion.
         m_environment.get_dl_caches().clear(false);
-        auto result = std::vector<AcceptedSuccessor> {};
-        for (const auto& successor : successors)
+        auto& search_context = *m_task_context.search_context;
+        auto& generator = *search_context.successor_generator;
+
+        const auto visit_binding = [&](tyr::formalism::planning::ActionBindingView binding)
         {
+            const auto successor =
+                LabeledNode { binding, generator.get_successor_node(node, binding, *search_context.state_repository, *search_context.axiom_evaluator) };
+            ++statistics.num_generated;
+
+            const auto rule = matching_rule_until(node.get_state(), successor.node.get_state(), stop);
             if (stop())
-                break;
-            if (const auto rule = matching_rule_until(state, successor.node.get_state(), stop))
-                result.emplace_back(successor, *rule);
-        }
-        return result;
+                return false;
+            if (!rule)
+                return true;
+            return emit(successor, *rule);
+        };
+
+        return order.for_each_binding(generator, node, visit_binding, stop);
     }
 
     std::optional<RuleView> matching_rule(const tyr::planning::StateView<Kind>& source_state, const tyr::planning::StateView<Kind>& target_state)
@@ -71,7 +75,8 @@ public:
         return matching_rule_until(source_state, target_state, [] { return false; });
     }
 
-    // The caller clears the source cache once before checking a batch of successors.
+private:
+    // Reuse the prepared source cache; refresh dynamic target features for each candidate.
     std::optional<RuleView>
     matching_rule_until(const tyr::planning::StateView<Kind>& source_state, const tyr::planning::StateView<Kind>& target_state, auto&& stop)
     {

@@ -1,6 +1,7 @@
 #include "fixtures.hpp"
 #include "planning_fixtures.hpp"
 
+#include <chrono>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
@@ -14,13 +15,14 @@
 namespace runir::tests
 {
 
-TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
+namespace
 {
-    namespace p = tyr::planning;
 
-    auto search_context = make_gripper_ground_context();
+template<tyr::TaskKind Kind>
+void check_classifier_failures(datasets::TaskSearchContextPtr<Kind> search_context, bool shuffle)
+{
     auto task = search_context->task;
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
+    auto task_context = kr::TaskContext<Kind>::create(kr::DomainContext::create(task->get_domain()), search_context);
 
     auto dl_repository = task_context->domain_context->base_repository->get_dl_repository_ptr();
     auto repository = task_context->domain_context->base_repository;
@@ -30,7 +32,8 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     auto classifier_repository = task_context->domain_context->uns_repository;
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/always.classifier"), task->get_domain().get_domain(), *classifier_repository);
 
-    auto options = kr::ps::base::SketchSearchOptions<tyr::GroundTag> {};
+    auto options = kr::ps::base::SketchSearchOptions<Kind> {};
+    options.shuffle_choice_points = shuffle;
     options.classifier = classifier;
     const auto result = kr::ps::base::find_solution(task_context, sketch, options);
 
@@ -46,7 +49,17 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     EXPECT_FALSE(label.is_goal);
     EXPECT_FALSE(label.is_alive);
     EXPECT_TRUE(label.is_unsolvable);
-    EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(), 0);
+    EXPECT_GT(task_context->dl_denotation_repository->template size<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(), 0);
+
+    options.max_time = std::chrono::steady_clock::duration::zero();
+    const auto timed_out = kr::ps::base::find_solution(task_context, sketch, options);
+    EXPECT_EQ(timed_out.status, kr::ps::base::SketchProofStatus::OUT_OF_TIME);
+    EXPECT_TRUE(timed_out.deadend_states.empty());
+    EXPECT_TRUE(timed_out.open_states.empty());
+    ASSERT_TRUE(timed_out.graph);
+    ASSERT_EQ(timed_out.graph->get_num_vertices(), 1);
+    EXPECT_TRUE(timed_out.graph->get_vertex(0).get_property().is_unsolvable);
+    options.max_time.reset();
 
     const auto goal_classifier = kr::uns::dl::parse_classifier(
         read_fixture("kr/ps/base/executor/base_find_solution_treats_classifier_matches_as_terminal_failures/goal_classifier.classifier"),
@@ -62,17 +75,38 @@ TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
         const auto& goal_label = goal_result.graph->get_vertex(vertex).get_property();
         if (!goal_label.is_goal)
             continue;
-        auto context = kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(goal_label.state.unpack(),
-                                                                                            task_context->dl_builder,
-                                                                                            *task_context->dl_denotation_repository,
-                                                                                            task_context->dl_builder.get_workspace(),
-                                                                                            caches);
+        auto context = kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, Kind>(goal_label.state.unpack(),
+                                                                                     task_context->dl_builder,
+                                                                                     *task_context->dl_denotation_repository,
+                                                                                     task_context->dl_builder.get_workspace(),
+                                                                                     caches);
         caches.clear(false);
         EXPECT_TRUE(kr::uns::classify(goal_classifier, context));
         EXPECT_FALSE(goal_label.is_unsolvable);
         found_goal = true;
     }
     EXPECT_TRUE(found_goal);
+}
+
+}  // namespace
+
+TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
+{
+    for (const auto shuffle : { false, true })
+    {
+        SCOPED_TRACE(shuffle);
+        check_classifier_failures(make_gripper_ground_context(), shuffle);
+    }
+}
+
+TEST(RunirTests, BaseLiftedFindSolutionTreatsClassifierMatchesAsTerminalFailures)
+{
+    for (const auto shuffle : { false, true })
+    {
+        SCOPED_TRACE(shuffle);
+        check_classifier_failures(
+            make_lifted_context(benchmark_path("classical/tests/gripper/domain.pddl"), benchmark_path("classical/tests/gripper/test-1.pddl")), shuffle);
+    }
 }
 
 }  // namespace runir::tests

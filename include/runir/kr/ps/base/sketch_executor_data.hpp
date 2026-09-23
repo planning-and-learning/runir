@@ -48,7 +48,7 @@ struct SketchSearchStatistics
 {
     /// Successor-generation invocations, including zero-successor and interrupted expansions; excludes goals and classifier-pruned states.
     uint64_t num_expanded = 0;
-    /// Planning successors generated before sketch-rule filtering and visited-state deduplication; excludes the initial state.
+    /// Planning successors generated before sketch-rule filtering and state deduplication; excludes the initial state.
     /// Counts repeated target states separately and retains partial counts on failure or resource limits.
     uint64_t num_generated = 0;
 };

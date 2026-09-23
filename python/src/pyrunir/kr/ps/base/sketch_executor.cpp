@@ -1,12 +1,15 @@
 #include "pyrunir/kr/ps/base/module.hpp"
 
+#include <functional>
 #include <nanobind/stl/chrono.h>
+#include <nanobind/stl/function.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 #include <pyrunir/graphs/graph.hpp>
 #include <runir/datasets/state_graph.hpp>
+#include <runir/kr/ps/base/binding_order.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
 #include <runir/kr/ps/base/successor_expander.hpp>
@@ -76,6 +79,7 @@ void bind_sketch_search_options(nb::module_& m, const char* name)
 void bind_sketch_executor(nb::module_& m)
 {
     nb::class_<SketchSearchStatistics>(m, "SketchSearchStatistics")
+        .def(nb::init<>())
         .def_ro("num_expanded", &SketchSearchStatistics::num_expanded)
         .def_ro("num_generated", &SketchSearchStatistics::num_generated);
 
@@ -102,7 +106,18 @@ void bind_sketch_executor(nb::module_& m)
 
     nb::class_<Expander>(m, "SuccessorExpander")
         .def(nb::init<runir::kr::TaskContext<Kind>&, SketchView>(), "task_context"_a, "sketch"_a, nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
-        .def("labeled_successors", &Expander::labeled_successors, "state"_a)
+        .def(
+            "for_each_successor",
+            [](Expander& self, const tyr::planning::Node<Kind>& node, SketchSearchStatistics& statistics,
+               const std::function<bool(Expander::LabeledNode, RuleView)>& emit, const std::function<bool()>& stop)
+            {
+                auto order = InOrder {};
+                return self.for_each_successor(node, statistics, order, emit, stop);
+            },
+            "node"_a,
+            "statistics"_a,
+            "emit"_a,
+            "stop"_a)
         .def("matching_rule", &Expander::matching_rule, "source_state"_a, "target_state"_a);
 
     m.def(

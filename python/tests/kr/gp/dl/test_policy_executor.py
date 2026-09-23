@@ -21,6 +21,7 @@ from pyrunir.kr.ps.base import (
     LiftedSketchSearchOptions,
     SketchProofEdgeLabel,
     SketchProofStatus,
+    SketchSearchStatistics,
     SuccessorExpander,
     find_ground_solution,
     syntactic_complexity,
@@ -80,31 +81,67 @@ def test_base_sketch_exposes_declared_features(gripper_planning_domain: Planning
 
 
 
-def test_base_labeled_successors_include_transitions_rejected_by_the_sketch(
+def test_base_successor_callbacks_filter_and_stop_generation(
     ground_gripper_search_context: GroundTaskSearchContext, gripper_planning_domain: PlanningDomain
 ) -> None:
     search = ground_gripper_search_context
     task_context = GroundTaskContext(DomainContext(gripper_planning_domain), search)
-    sketch = SketchFactory.create_empty(task_context.domain_context.base_repository)
+    sketch_repository = task_context.domain_context.base_repository
+    sketch = parse_sketch(
+        read_fixture("kr/ps/base/executor/any_transition.sketch"), gripper_planning_domain, sketch_repository
+    )
     expander = SuccessorExpander(task_context, sketch)
+    rejecting_expander = SuccessorExpander(task_context, SketchFactory.create_empty(sketch_repository))
     initial = search.successor_generator.get_initial_node(search.state_repository, search.axiom_evaluator)
     initial_successors = search.successor_generator.get_labeled_successor_nodes(
         initial, search.state_repository, search.axiom_evaluator
     )
-    assert initial_successors
+    assert len(initial_successors) > 1
 
-    for state in (initial.get_state(), initial_successors[0].node.get_state()):
-        node = search.successor_generator.get_node(search.state_repository, state.get_index())
+    for node in (initial, initial_successors[0].node):
+        state = node.get_state()
         expected = search.successor_generator.get_labeled_successor_nodes(
             node, search.state_repository, search.axiom_evaluator
         )
-        actual = expander.labeled_successors(state)
+        accepted = [step for step in expected if step.node.get_state().get_index() != state.get_index()]
+        assert accepted
+        actual = []
+        statistics = SketchSearchStatistics()
+        assert statistics.num_generated == 0
 
-        assert actual
-        assert Counter((step.label, step.node.get_state()) for step in actual) == Counter(
-            (step.label, step.node.get_state()) for step in expected
+        def emit(step, rule):
+            assert statistics.num_generated >= len(actual) + 1
+            actual.append((step, rule))
+            return True
+
+        assert expander.for_each_successor(node, statistics, emit, lambda: False) is True
+        generated = len(expected)
+        assert statistics.num_generated == generated
+        assert Counter((step.label, step.node.get_state()) for step, _ in actual) == Counter(
+            (step.label, step.node.get_state()) for step in accepted
         )
-        assert all(expander.matching_rule(state, step.node.get_state()) is None for step in actual)
+        assert all(expander.matching_rule(state, step.node.get_state()) == rule for step, rule in actual)
+        first_accepted = next(i for i, step in enumerate(expected) if step.node.get_state().get_index() != state.get_index())
+        assert expander.for_each_successor(node, statistics, lambda step, rule: False, lambda: False) is False
+        generated += first_accepted + 1
+        assert statistics.num_generated == generated
+
+        actual.clear()
+        assert expander.for_each_successor(node, statistics, emit, lambda: True) is False
+        assert statistics.num_generated == generated
+        assert actual == []
+        assert rejecting_expander.for_each_successor(node, statistics, emit, lambda: False) is True
+        generated += len(expected)
+        assert statistics.num_generated == generated
+        assert actual == []
+        assert all(rejecting_expander.matching_rule(state, step.node.get_state()) is None for step in expected)
+
+        assert rejecting_expander.for_each_successor(
+            node, statistics, emit, lambda: statistics.num_generated > generated
+        ) is False
+        assert statistics.num_generated == generated + 1
+        assert statistics.num_expanded == 0
+        assert actual == []
 
 
 def test_france_et_al_aaai2021_policy_executor_for_gripper_task(

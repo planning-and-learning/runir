@@ -3,9 +3,13 @@
 
 #include <algorithm>
 #include <chrono>
+#include <concepts>
+#include <cstdint>
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <random>
 #include <runir/datasets/state_graph.hpp>
+#include <runir/kr/ps/base/binding_order.hpp>
 #include <runir/kr/ps/base/dl/parser.hpp>
 #include <runir/kr/ps/base/dl/sketch_factory.hpp>
 #include <runir/kr/ps/base/repository.hpp>
@@ -92,12 +96,12 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_EQ(plan.get_start_node().get_metric(), replay.get_metric());
         for (const auto& step : plan.get_labeled_succ_nodes())
         {
-            const auto source = generator.get_node(*context->state_repository, replay.get_state().get_index());
-            replay = generator.get_successor_node(source, step.label, *context->state_repository, *context->axiom_evaluator);
+            replay = generator.get_successor_node(replay, step.label, *context->state_repository, *context->axiom_evaluator);
             EXPECT_EQ(step.node.get_state().get_index(), replay.get_state().get_index());
             EXPECT_EQ(step.node.get_metric(), replay.get_metric());
         }
         EXPECT_EQ(plan.get_cost(), replay.get_metric());
+        EXPECT_EQ(plan.get_cost(), plan.get_length());
         const auto& terminal = fragment.graph->get_vertex(fragment.graph->get_num_vertices() - 1).get_property();
         EXPECT_TRUE(terminal.is_goal);
         EXPECT_EQ(replay.get_state().get_index(), terminal.state.get_index());
@@ -127,10 +131,25 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/executor/any_transition.sketch"), task->get_domain().get_domain(), *repository);
 
     auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, sketch);
-    const auto state = search_context->successor_generator->get_initial_node(*search_context->state_repository, *search_context->axiom_evaluator).get_state();
-    const auto immediate = expander.labeled_successors(state);
-    const auto accepted = expander.accepted_successors(state, immediate);
-    ASSERT_GT(accepted.size(), 1);
+    auto& generator = *search_context->successor_generator;
+    const auto initial = generator.get_initial_node(*search_context->state_repository, *search_context->axiom_evaluator);
+    const auto state = initial.get_state();
+    const auto immediate = generator.get_labeled_successor_nodes(initial, *search_context->state_repository, *search_context->axiom_evaluator);
+    auto num_accepted = uint64_t(0);
+    auto statistics = kr::ps::base::SketchSearchStatistics {};
+    auto order = kr::ps::base::InOrder {};
+    EXPECT_TRUE(expander.for_each_successor(
+        initial,
+        statistics,
+        order,
+        [&](const auto&, auto)
+        {
+            ++num_accepted;
+            return true;
+        },
+        [] { return false; }));
+    EXPECT_EQ(statistics.num_generated, immediate.size());
+    ASSERT_GT(num_accepted, 1);
 
     auto greedy_options = kr::ps::base::SketchSearchOptions<tyr::GroundTag> {};
     const auto greedy = kr::ps::base::find_solution(task_context, sketch, greedy_options);
@@ -139,8 +158,11 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
     const auto universal = kr::ps::base::find_solution(task_context, sketch, universal_options);
     ASSERT_TRUE(greedy.graph);
     ASSERT_TRUE(universal.graph);
+    // Moving between rooms and back closes a cycle before either state satisfies the goal.
+    EXPECT_EQ(universal.status, kr::ps::base::SketchProofStatus::FAILURE);
+    EXPECT_FALSE(universal.cycle.empty());
     EXPECT_EQ(greedy.graph->get_out_degree(0), 1);
-    EXPECT_EQ(universal.graph->get_out_degree(0), accepted.size());
+    EXPECT_EQ(universal.graph->get_out_degree(0), num_accepted);
 
     for (const auto edge : universal.graph->get_out_edge_indices(0))
     {
@@ -172,8 +194,18 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
         task->get_domain().get_domain(),
         *repository);
     auto two_step_expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, two_step_only);
-    const auto two_step_successors = two_step_expander.labeled_successors(state);
-    EXPECT_TRUE(two_step_expander.accepted_successors(state, two_step_successors).empty());
+    auto rejected_statistics = kr::ps::base::SketchSearchStatistics {};
+    EXPECT_TRUE(two_step_expander.for_each_successor(
+        initial,
+        rejected_statistics,
+        order,
+        [](const auto&, auto)
+        {
+            ADD_FAILURE() << "Unexpected accepted successor";
+            return false;
+        },
+        [] { return false; }));
+    EXPECT_EQ(rejected_statistics.num_generated, immediate.size());
 
     for (const auto shuffle : { false, true })
     {
@@ -188,7 +220,7 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
         EXPECT_TRUE(rejected.deadend_states.empty());
         EXPECT_FALSE(rejected.open_states.empty());
         EXPECT_EQ(rejected.statistics.num_expanded, 1);
-        EXPECT_EQ(rejected.statistics.num_generated, two_step_successors.size());
+        EXPECT_EQ(rejected.statistics.num_generated, immediate.size());
 
         rejected_options.max_time = std::chrono::steady_clock::duration::zero();
         const auto timed_out = kr::ps::base::find_solution(task_context, two_step_only, rejected_options);
@@ -197,6 +229,114 @@ TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)
         EXPECT_EQ(timed_out.statistics.num_expanded, 0);
         EXPECT_EQ(timed_out.statistics.num_generated, 0);
     }
+}
+
+namespace
+{
+
+template<tyr::TaskKind Kind>
+void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> prototype)
+{
+    const auto task = prototype->task;
+    const auto domain_context = kr::DomainContext::create(task->get_domain());
+    const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/executor/any_transition.sketch"),
+                                                    task->get_domain().get_domain(),
+                                                    *domain_context->base_repository);
+    const auto rejecting_sketch = kr::ps::base::dl::parse_sketch(
+        read_fixture("kr/ps/base/executor/base_find_solution_uses_only_immediate_outcomes_and_universal_uses_all/two_step_only.sketch"),
+        task->get_domain().get_domain(),
+        *domain_context->base_repository);
+
+    const auto check_order = [&](auto order)
+    {
+        constexpr bool shuffle = std::same_as<decltype(order), kr::ps::base::Shuffled>;
+        SCOPED_TRACE(shuffle);
+        auto search = datasets::TaskSearchContext<Kind>::create(task, ygg::ExecutionContext::create(1));
+        auto context = kr::TaskContext<Kind>::create(domain_context, search);
+        auto expander = kr::ps::base::SuccessorExpander<Kind>(*context, sketch);
+        const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+        const auto state = initial.get_state();
+        const auto num_bindings = search->successor_generator->get_applicable_action_bindings(initial).size();
+        ASSERT_GT(num_bindings, 2);
+        auto num_emitted = uint64_t(0);
+        auto statistics = kr::ps::base::SketchSearchStatistics {};
+        const auto emit_one = [&](const auto& successor, auto rule)
+        {
+            ++num_emitted;
+            EXPECT_GT(statistics.num_generated, 0);
+            EXPECT_NE(successor.node.get_state().get_index(), state.get_index());
+            EXPECT_EQ(rule, sketch.get_rules().front());
+            return false;
+        };
+
+        EXPECT_FALSE(expander.for_each_successor(initial, statistics, order, emit_one, [] { return true; }));
+        EXPECT_EQ(statistics.num_generated, 0);
+        EXPECT_EQ(num_emitted, 0);
+        EXPECT_EQ(search->state_repository->num_states(), 1);
+        if constexpr (shuffle)
+        {
+            auto stop_polls = 0;
+            EXPECT_FALSE(expander.for_each_successor(initial, statistics, order, emit_one, [&] { return ++stop_polls >= 3; }));
+            EXPECT_EQ(statistics.num_generated, 0);
+            EXPECT_EQ(num_emitted, 0);
+            EXPECT_EQ(search->state_repository->num_states(), 1);
+        }
+        EXPECT_FALSE(expander.for_each_successor(initial, statistics, order, emit_one, [] { return false; }));
+        const auto generated = statistics.num_generated;
+        EXPECT_EQ(num_emitted, 1);
+        EXPECT_GE(generated, 1);
+        EXPECT_LT(generated, num_bindings);
+        EXPECT_EQ(search->state_repository->num_states(), 2);
+
+        num_emitted = 0;
+        EXPECT_TRUE(expander.for_each_successor(
+            initial,
+            statistics,
+            order,
+            [&](const auto&, auto)
+            {
+                ++num_emitted;
+                return true;
+            },
+            [] { return false; }));
+        EXPECT_EQ(statistics.num_generated, generated + num_bindings);
+        EXPECT_EQ(statistics.num_expanded, 0);
+        EXPECT_GT(num_emitted, 1);
+        EXPECT_LT(num_emitted, num_bindings);  // The self-transition counts as generated, but is rejected.
+
+        auto rejected_search = datasets::TaskSearchContext<Kind>::create(task, ygg::ExecutionContext::create(1));
+        auto rejected_context = kr::TaskContext<Kind>::create(domain_context, rejected_search);
+        auto rejecting_expander = kr::ps::base::SuccessorExpander<Kind>(*rejected_context, rejecting_sketch);
+        const auto rejected_initial =
+            rejected_search->successor_generator->get_initial_node(*rejected_search->state_repository, *rejected_search->axiom_evaluator);
+        auto rejected_statistics = kr::ps::base::SketchSearchStatistics {};
+        EXPECT_FALSE(rejecting_expander.for_each_successor(
+            rejected_initial,
+            rejected_statistics,
+            order,
+            [](const auto&, auto)
+            {
+                ADD_FAILURE() << "Unexpected accepted successor";
+                return false;
+            },
+            [&] { return rejected_search->state_repository->num_states() > 1; }));
+        EXPECT_GE(rejected_statistics.num_generated, 1);
+        EXPECT_LT(rejected_statistics.num_generated, num_bindings);
+        EXPECT_EQ(rejected_search->state_repository->num_states(), 2);
+    };
+    check_order(kr::ps::base::InOrder {});
+    auto random = std::mt19937_64(0);
+    check_order(kr::ps::base::Shuffled(random));
+}
+
+}  // namespace
+
+TEST(RunirTests, BaseGroundSuccessorsStopWithoutGeneratingAllStates) { check_base_successor_early_stop(make_gripper_ground_context()); }
+
+TEST(RunirTests, BaseLiftedSuccessorsStopWithoutGeneratingAllStates)
+{
+    check_base_successor_early_stop(make_lifted_context(benchmark_path("classical/tests/gripper/domain.pddl"),
+                                                       benchmark_path("classical/tests/gripper/test-1.pddl")));
 }
 
 TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries)
@@ -218,8 +358,10 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
         *task_context->domain_context->base_repository);
 
     auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, sketch);
-    const auto source = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator).get_state();
-    const auto successors = expander.labeled_successors(source);
+    auto& generator = *search->successor_generator;
+    const auto initial = generator.get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto source = initial.get_state();
+    const auto successors = generator.get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
     ASSERT_GT(successors.size(), 1);
     ASSERT_TRUE(expander.matching_rule(source, successors.front().node.get_state()));
 
@@ -231,7 +373,7 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
     EXPECT_TRUE(expander.matching_rule(source, successors.back().node.get_state()));
     const auto target = successors.front().node.get_state();
     EXPECT_FALSE(expander.matching_rule(target, source));
-    const auto next = expander.labeled_successors(target);
+    const auto next = generator.get_labeled_successor_nodes(successors.front().node, *search->state_repository, *search->axiom_evaluator);
     ASSERT_FALSE(next.empty());
     EXPECT_TRUE(expander.matching_rule(target, next.front().node.get_state()));
     EXPECT_TRUE(expander.matching_rule(source, target));
