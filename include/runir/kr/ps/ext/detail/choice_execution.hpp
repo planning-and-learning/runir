@@ -14,7 +14,7 @@ template<tyr::TaskKind Kind, typename Unsolvability>
 std::optional<ProgramProofStatus> try_next_choice(ExecutionState<Kind, Unsolvability>& execution, std::size_t index)
 {
     auto& frame = execution.choices()[index];
-    const auto source = execution.state_view(frame.state);
+    const auto source = frame.state;
     return std::visit(
         [&](auto& choice) -> std::optional<ProgramProofStatus>
         {
@@ -37,7 +37,7 @@ std::optional<ProgramProofStatus> try_next_choice(ExecutionState<Kind, Unsolvabi
 template<tyr::TaskKind Kind>
 struct SearchFrame
 {
-    ygg::Index<ProgramState<Kind>> state;
+    ProgramStateView<Kind> state;
     std::size_t successors_begin;
     std::size_t successor;
     std::size_t choices_begin;

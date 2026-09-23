@@ -7,33 +7,36 @@
 #include <algorithm>
 #include <tyr/planning/plan.hpp>
 #include <utility>
+#include <vector>
 
 namespace runir::kr::ps::ext::detail
 {
 
 template<tyr::TaskKind Kind>
-tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(ygg::Index<ProgramState<Kind>> goal,
+tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(ProgramStateView<Kind> goal,
                                                            const ygg::SegmentedVector<SearchNode<Kind>>& search_nodes,
                                                            const tyr::planning::PackedNode<Kind>& initial_node,
                                                            runir::kr::TaskContext<Kind>& context)
 {
-    auto steps = tyr::planning::PackedLabeledNodeList<Kind> {};
+    auto actions = std::vector<tyr::formalism::planning::ActionBindingView> {};
     auto state = goal;
-    while (search_nodes[ygg::uint_t(state)].parent_state != ygg::Index<ProgramState<Kind>>::max())
+    while (search_nodes[ygg::uint_t(state.get_index())].parent_state)
     {
-        const auto& node = search_nodes[ygg::uint_t(state)];
-        if (node.planning_successor)
-            steps.push_back(*node.planning_successor);
-        state = node.parent_state;
+        const auto& node = search_nodes[ygg::uint_t(state.get_index())];
+        if (node.action)
+            actions.push_back(*node.action);
+        state = *node.parent_state;
     }
-    std::ranges::reverse(steps);
-    // Search does not accumulate metrics. Reconstruct them along the actual plan.
+    std::ranges::reverse(actions);
+    // Reconstruct plan states and cumulative metrics from the recorded actions.
+    auto steps = tyr::planning::PackedLabeledNodeList<Kind> {};
+    steps.reserve(actions.size());
     auto node = initial_node.unpack();
     auto& search = *context.search_context;
-    for (auto& step : steps)
+    for (const auto action : actions)
     {
-        node = search.successor_generator->get_successor_node(node, step.label, *search.state_repository, *search.axiom_evaluator);
-        step.node = node.pack();
+        node = search.successor_generator->get_successor_node(node, action, *search.state_repository, *search.axiom_evaluator);
+        steps.push_back({ action, node.pack() });
     }
     return tyr::planning::PackedPlan<Kind>(initial_node, std::move(steps));
 }

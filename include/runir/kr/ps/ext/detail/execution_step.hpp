@@ -122,7 +122,7 @@ struct Choice
 template<tyr::TaskKind Kind>
 struct ChoiceFrame
 {
-    ygg::Index<ProgramState<Kind>> state;
+    ProgramStateView<Kind> state;
     std::variant<Choice<runir::kr::dl::ConceptTag>, Choice<runir::kr::dl::RoleTag>> choice;
 };
 

@@ -35,8 +35,8 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
     auto num_reached = std::size_t(0);
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*search_context.task);
     auto expander = SuccessorExpander<Kind>(task_context, sketch);
-    const auto initial_node = search_context.successor_generator->get_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
-    const auto initial_state = initial_node.get_state();
+    const auto initial_node = search_context.successor_generator->get_packed_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
+    const auto initial_state = initial_node.get_state().unpack();
     const auto static_goal_satisfied = goal_strategy.is_static_goal_satisfied(*search_context.task);
     const auto stopwatch = options.max_time ? std::optional<ygg::CountdownWatch>(*options.max_time) : std::nullopt;
 
@@ -45,36 +45,35 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
     const auto is_goal = [&](const tyr::planning::StateView<Kind>& state)
     { return static_goal_satisfied && goal_strategy.is_dynamic_goal_satisfied(initial_state, state); };
 
-    const auto get_or_create_state = [&](const tyr::planning::StateView<Kind>& state) -> std::optional<std::pair<ygg::Index<tyr::planning::State<Kind>>, bool>>
+    const auto get_or_create_state = [&](const tyr::planning::StateView<Kind>& state) -> std::optional<bool>
     {
-        const auto index = state.get_index();
-        const auto position = std::size_t(ygg::uint_t(index));
-        if ((num_reached > 0 && index == initial_state.get_index()) || (position < nodes.size() && nodes[position].parent_node))
-            return std::pair(index, false);
+        const auto position = std::size_t(ygg::uint_t(state.get_index()));
+        if ((num_reached > 0 && state == initial_state) || (position < nodes.size() && nodes[position].parent_state))
+            return false;
         if (num_reached >= options.max_num_states)
             return std::nullopt;
-        auto& node = detail::get_or_create_search_node(index, nodes);
+        auto& node = detail::get_or_create_search_node(state.pack(), nodes);
         ++num_reached;
         node.is_goal = is_goal(state);
         node.is_unsolvable = !node.is_goal && classifier.is_unsolvable(state);
-        return std::pair(index, true);
+        return true;
     };
 
-    auto finish = [&](SketchProofStatus status, std::optional<tyr::planning::PackedNode<Kind>> goal = std::nullopt)
+    auto finish = [&](SketchProofStatus status, std::optional<tyr::planning::PackedStateView<Kind>> goal = std::nullopt)
     {
         result.status = status;
-        detail::build_proof_graph<Kind>(result, nodes, predecessors, num_reached > 0 ? std::optional(initial_state.get_index()) : std::nullopt);
+        detail::build_proof_graph<Kind>(result, nodes, predecessors, num_reached > 0 ? std::optional(initial_node.get_state()) : std::nullopt);
         if (result.status == SketchProofStatus::SUCCESS && (!result.deadend_states.empty() || !result.open_states.empty() || !result.cycle.empty()))
             result.status = SketchProofStatus::FAILURE;
         if (goal && result.is_successful())
-            result.plan = detail::extract_total_ordered_plan(std::move(*goal), nodes);
+            result.plan = detail::extract_total_ordered_plan(std::move(*goal), nodes, initial_node, task_context);
         return std::move(result);
     };
 
     const auto initial = get_or_create_state(initial_state);
     if (!initial)
         return finish(SketchProofStatus::OUT_OF_STATES);
-    auto open = tyr::planning::PackedNodeList<Kind> { initial_node.pack() };
+    auto open = tyr::planning::PackedNodeList<Kind> { initial_node };
 
     while (!open.empty())
     {
@@ -83,12 +82,12 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
 
         const auto packed_node = std::move(open.back());
         open.pop_back();
-        const auto source = packed_node.get_state().get_index();
+        const auto& source = packed_node.get_state();
         auto& source_node = detail::get_or_create_search_node(source, nodes);
         if (source_node.is_goal)
         {
             if (!options.universal)
-                return finish(SketchProofStatus::SUCCESS, packed_node);
+                return finish(SketchProofStatus::SUCCESS, source);
             continue;
         }
         if (source_node.is_unsolvable)
@@ -114,12 +113,12 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
                 expansion_status = SketchProofStatus::OUT_OF_STATES;
                 return false;
             }
-            const auto [target, created] = *target_result;
+            const auto target = successor.node.get_state().pack();
             predecessors.push_back({ source, target, successor.label, rule });
-            if (created)
+            if (*target_result)
             {
                 auto& target_node = detail::get_or_create_search_node(target, nodes);
-                target_node.parent_node = packed_node;
+                target_node.parent_state = source;
                 target_node.action = successor.label;
                 open.push_back(successor.node.pack());
             }

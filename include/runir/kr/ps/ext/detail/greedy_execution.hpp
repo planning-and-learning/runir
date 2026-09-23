@@ -21,15 +21,14 @@ apply_greedy_step(ExecutionState<Kind, Unsolvability>& execution, ProgramStateVi
         return ProgramProofStatus::OUT_OF_STATES;
     if (step.status == ProgramOutcome::APPLIED || step.status == ProgramOutcome::RESTORED_CALLER)
         return execution.record_transition(source, step);
-    execution.mark_open(source.get_index());
+    execution.mark_open(source);
     return std::nullopt;
 }
 
 /// Enumerate one state before descending: successor generation is not reentrant.
 template<tyr::TaskKind Kind, typename Unsolvability>
-std::optional<ProgramProofStatus> expand_state(ExecutionState<Kind, Unsolvability>& execution, ygg::Index<ProgramState<Kind>> index)
+std::optional<ProgramProofStatus> expand_state(ExecutionState<Kind, Unsolvability>& execution, ProgramStateView<Kind> state)
 {
-    const auto state = execution.state_view(index);
     ++execution.statistics().num_expanded;
     auto limit = std::optional<ProgramProofStatus> {};
     execution.expander().for_each_successor(
@@ -49,7 +48,7 @@ std::optional<ProgramProofStatus> expand_state(ExecutionState<Kind, Unsolvabilit
                     if constexpr (std::same_as<std::decay_t<decltype(value)>, ProgramStep<Kind>>)
                         limit = apply_greedy_step(execution, state, value);
                     else
-                        execution.add_choice(index, value);
+                        execution.add_choice(state, value);
                 },
                 expansion);
             return !limit && execution.universal();

@@ -33,8 +33,8 @@ private:
     ygg::SegmentedVector<SearchNode<Kind>> m_nodes;
     std::vector<Predecessor<Kind>> m_predecessors;
     std::size_t m_num_reached = 0;
-    std::optional<ygg::Index<ProgramState<Kind>>> m_initial;
-    std::optional<ygg::Index<ProgramState<Kind>>> m_goal;
+    std::optional<ProgramStateView<Kind>> m_initial;
+    std::optional<ProgramStateView<Kind>> m_goal;
     std::vector<ChoiceFrame<Kind>> m_choices;
     ProgramSearchStatistics m_statistics;
 
@@ -58,7 +58,7 @@ public:
         const auto initial = m_expander.initial_state(m_initial_node.unpack());
         if (!discover(initial))
             return false;
-        m_initial = initial.get_index();
+        m_initial = initial;
         return true;
     }
 
@@ -69,14 +69,13 @@ public:
     auto& choices() { return m_choices; }
     const auto& predecessors() const { return m_predecessors; }
     auto initial() const { return *m_initial; }
-    ProgramStateView<Kind> state_view(ygg::Index<ProgramState<Kind>> state) const { return { state, *m_task_context->execution_repository }; }
-    SearchNode<Kind>& search_node(ygg::Index<ProgramState<Kind>> state) { return get_or_create_search_node(state, m_nodes); }
+    SearchNode<Kind>& search_node(ProgramStateView<Kind> state) { return get_or_create_search_node(state, m_nodes); }
 
-    void mark_deadend(ygg::Index<ProgramState<Kind>> state) { search_node(state).is_deadend = true; }
-    void mark_open(ygg::Index<ProgramState<Kind>> state) { search_node(state).is_open = true; }
+    void mark_deadend(ProgramStateView<Kind> state) { search_node(state).is_deadend = true; }
+    void mark_open(ProgramStateView<Kind> state) { search_node(state).is_open = true; }
 
     template<runir::kr::dl::CategoryTag Category>
-    void add_choice(ygg::Index<ProgramState<Kind>> state, Choice<Category> choice)
+    void add_choice(ProgramStateView<Kind> state, Choice<Category> choice)
     {
         if (choice.exhausted())
             mark_deadend(state);
@@ -87,24 +86,25 @@ public:
     record_transition(ProgramStateView<Kind> source, const ProgramStep<Kind>& step, std::optional<std::size_t> choice = std::nullopt)
     {
         const auto weight = choice ? std::visit([](const auto& value) { return ygg::uint_t(value.has_alternatives()); }, m_choices[*choice].choice) : 0;
-        const auto depth = search_node(source.get_index()).choice_depth + weight;
+        const auto depth = search_node(source).choice_depth + weight;
         const auto created = discover(step.get_target());
         if (!created)
             return ProgramProofStatus::OUT_OF_STATES;
-        const auto target = step.get_target().get_index();
+        const auto target = step.get_target();
         const auto& transition = step.get_state_transition();
-        m_predecessors.push_back({ source.get_index(), target, transition ? std::optional(transition->action) : std::nullopt, step.rule, choice });
+        const auto action = transition ? std::optional(transition->action) : std::nullopt;
+        m_predecessors.push_back({ source, target, action, step.rule, choice });
         if (*created)
         {
             auto& node = search_node(target);
-            node.parent_state = source.get_index();
-            node.planning_successor = step.planning_successor;
+            node.parent_state = source;
+            node.action = action;
             node.choice_depth = depth;
         }
         return std::nullopt;
     }
 
-    void select_goal(ygg::Index<ProgramState<Kind>> state)
+    void select_goal(ProgramStateView<Kind> state)
     {
         if (!m_goal)
             m_goal = state;
@@ -129,9 +129,8 @@ public:
 private:
     std::optional<bool> discover(ProgramStateView<Kind> state)
     {
-        const auto index = state.get_index();
-        auto& node = search_node(index);
-        if (m_initial == index || node.parent_state != ygg::Index<ProgramState<Kind>>::max())
+        auto& node = search_node(state);
+        if (m_initial == state || node.parent_state)
             return false;
         if (m_num_reached >= m_options.max_num_states)
             return std::nullopt;
