@@ -25,58 +25,38 @@ apply_greedy_step(ExecutionState<Kind, Unsolvability>& execution, ProgramStateVi
     return std::nullopt;
 }
 
-/// Drain ordinary states once, retaining encountered Choose cursors separately.
+/// Enumerate one state before descending: successor generation is not reentrant.
 template<tyr::TaskKind Kind, typename Unsolvability>
-std::optional<ProgramProofStatus> run_greedy(ExecutionState<Kind, Unsolvability>& execution)
+std::optional<ProgramProofStatus> expand_state(ExecutionState<Kind, Unsolvability>& execution, ygg::Index<ProgramState<Kind>> index)
 {
-    while (execution.has_pending())
-    {
-        if (execution.out_of_time())
-            return ProgramProofStatus::OUT_OF_TIME;
-
-        const auto state = execution.state_view(execution.pop());
-        const auto& node = execution.search_node(state.get_index());
-        if (node.is_goal)
+    const auto state = execution.state_view(index);
+    ++execution.statistics().num_expanded;
+    auto limit = std::optional<ProgramProofStatus> {};
+    execution.expander().for_each_successor(
+        state,
+        tyr::planning::Node<Kind>(state.get_state(), 0),
+        execution.statistics(),
+        [&](const typename SuccessorExpander<Kind>::Expansion& expansion)
         {
-            execution.select_goal(state.get_index());
-            if (!execution.universal())
-                return ProgramProofStatus::SUCCESS;
-            continue;
-        }
-        if (node.is_unsolvable)
-        {
-            execution.mark_deadend(state.get_index());
-            continue;
-        }
-
-        ++execution.statistics().num_expanded;
-        auto limit = std::optional<ProgramProofStatus> {};
-        execution.expander().for_each_successor(
-            state,
-            tyr::planning::Node<Kind>(state.get_state(), 0),
-            execution.statistics(),
-            [&](const typename SuccessorExpander<Kind>::Expansion& expansion)
+            if (execution.out_of_time())
             {
-                if (execution.out_of_time())
+                limit = ProgramProofStatus::OUT_OF_TIME;
+                return false;
+            }
+            std::visit(
+                [&](const auto& value)
                 {
-                    limit = ProgramProofStatus::OUT_OF_TIME;
-                    return false;
-                }
-                std::visit(
-                    [&](const auto& value)
-                    {
-                        if constexpr (std::same_as<std::decay_t<decltype(value)>, ProgramStep<Kind>>)
-                            limit = apply_greedy_step(execution, state, value);
-                        else
-                            execution.add_choice(state.get_index(), value);
-                    },
-                    expansion);
-                return !limit && execution.universal();
-            },
-            [&] { return execution.out_of_time(); });
-        if (limit)
-            return limit;
-    }
+                    if constexpr (std::same_as<std::decay_t<decltype(value)>, ProgramStep<Kind>>)
+                        limit = apply_greedy_step(execution, state, value);
+                    else
+                        execution.add_choice(index, value);
+                },
+                expansion);
+            return !limit && execution.universal();
+        },
+        [&] { return execution.out_of_time(); });
+    if (limit)
+        return limit;
     if (execution.out_of_time())
         return ProgramProofStatus::OUT_OF_TIME;
     return std::nullopt;

@@ -1,7 +1,6 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_EXECUTION_STATE_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_EXECUTION_STATE_HPP_
 
-#include "runir/kr/ps/ext/detail/proof_analysis.hpp"
 #include "runir/kr/ps/ext/detail/proof_graph.hpp"
 #include "runir/kr/ps/ext/detail/search_space.hpp"
 #include "runir/kr/ps/ext/successor_expander.hpp"
@@ -36,9 +35,7 @@ private:
     std::size_t m_num_reached = 0;
     std::optional<ygg::Index<ProgramState<Kind>>> m_initial;
     std::optional<ygg::Index<ProgramState<Kind>>> m_goal;
-    std::vector<ygg::Index<ProgramState<Kind>>> m_frontier;
     std::vector<ChoiceFrame<Kind>> m_choices;
-    ProofAnalysis<Kind> m_analysis;
     ProgramSearchStatistics m_statistics;
 
 public:
@@ -62,7 +59,6 @@ public:
         if (!discover(initial))
             return false;
         m_initial = initial.get_index();
-        m_frontier.push_back(*m_initial);
         return true;
     }
 
@@ -71,18 +67,10 @@ public:
     SuccessorExpander<Kind>& expander() { return m_expander; }
     ProgramSearchStatistics& statistics() { return m_statistics; }
     auto& choices() { return m_choices; }
-    bool choice_is_proved(std::size_t index) const { return m_analysis.choice_is_proved(index); }
+    const auto& predecessors() const { return m_predecessors; }
+    auto initial() const { return *m_initial; }
     ProgramStateView<Kind> state_view(ygg::Index<ProgramState<Kind>> state) const { return { state, *m_task_context->execution_repository }; }
     SearchNode<Kind>& search_node(ygg::Index<ProgramState<Kind>> state) { return get_or_create_search_node(state, m_nodes); }
-
-    bool has_pending() const { return !m_frontier.empty(); }
-
-    ygg::Index<ProgramState<Kind>> pop()
-    {
-        const auto state = m_frontier.back();
-        m_frontier.pop_back();
-        return state;
-    }
 
     void mark_deadend(ygg::Index<ProgramState<Kind>> state) { search_node(state).is_deadend = true; }
     void mark_open(ygg::Index<ProgramState<Kind>> state) { search_node(state).is_open = true; }
@@ -112,7 +100,6 @@ public:
             node.parent_state = source.get_index();
             node.planning_successor = step.planning_successor;
             node.choice_depth = depth;
-            m_frontier.push_back(target);
         }
         return std::nullopt;
     }
@@ -121,11 +108,6 @@ public:
     {
         if (!m_goal)
             m_goal = state;
-    }
-
-    bool assess()
-    {
-        return m_analysis.assess(m_nodes, m_predecessors, m_choices, *m_initial, [&] { return out_of_time(); });
     }
 
     ProgramProofResults<Kind> finish(ProgramProofStatus status)

@@ -635,6 +635,26 @@ void check_choice_execution()
     EXPECT_FALSE(revisited_result.cycle.empty());
     expect_single_expansion(revisited_result);
 
+    // B exhausts its singleton binding while A is active; a later visit must retry that recorded target after A succeeds.
+    for (const auto reverse : { false, true })
+    {
+        SCOPED_TRACE(reverse);
+        const auto root_a = choice_rule("root-A", "m1", "m2", load_goal);
+        const auto root_b = choice_rule("root-B", "m1", "m3", load_goal);
+        const auto pending_singleton = make_program(choice_module(
+            reverse ? "pending-singleton-B-first" : "pending-singleton-A-first",
+            choice_rule("init", "m0", "m1", load_goal) + (reverse ? root_b + root_a : root_a + root_b)
+                + choice_rule("A", "m2", "m4", choose_candidates)
+                + choice_rule("B", "m3", "m2", "(:choose (:conditions) (:concept Goal) (:register (:concept r0)))")
+                + choice_rule("bad-to-B", "m4", "m3", "(:load (:conditions (positive Bad)) (:concept Goal) (:register (:concept r0)))")
+                + choice_rule("good-move", "m4", "m5", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
+                + choice_rule("finish", "m5", "m0", move_to_goal)));
+        const auto pending_singleton_result = ext::find_solution(context, pending_singleton, universal);
+        EXPECT_EQ(pending_singleton_result.status, Status::SUCCESS);
+        EXPECT_FALSE(pending_singleton_result.cycle.empty());
+        expect_single_expansion(pending_singleton_result);
+    }
+
     // Each rule retains its own obligation: a successful choose cannot hide a bad load or another empty choose.
     for (const auto& other : { std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)))"), choose_empty })
     {

@@ -13,6 +13,15 @@
 namespace runir::kr::ps::ext::detail
 {
 
+enum class SearchStatus
+{
+    NEW,
+    ACTIVE,
+    PENDING,  // Depends on an active ancestor; not a cached failure.
+    SUCCESS,
+    FAILURE,
+};
+
 template<tyr::TaskKind Kind>
 struct SearchNode
 {
@@ -21,6 +30,7 @@ struct SearchNode
     std::optional<tyr::planning::PackedLabeledNode<Kind>> planning_successor = std::nullopt;
     // Number of non-singleton Choose bindings on the first-parent path.
     ygg::uint_t choice_depth = 0;
+    SearchStatus status = SearchStatus::NEW;
     bool is_goal = false;
     bool is_unsolvable = false;
     bool is_deadend = false;

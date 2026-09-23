@@ -2,7 +2,6 @@
 #define RUNIR_KR_PS_EXT_DETAIL_PROOF_SEARCH_HPP_
 
 #include "runir/kr/ps/ext/detail/choice_execution.hpp"
-#include "runir/kr/ps/ext/detail/greedy_execution.hpp"
 #include "runir/kr/ps/ext/program_executor.hpp"
 #include "runir/kr/ps/unsolvability.hpp"
 
@@ -20,18 +19,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
     auto execution = ExecutionState<Kind, Unsolvability>(std::move(task_context), program, options, classifier);
     if (!execution.initialize())
         return execution.finish(ProgramProofStatus::OUT_OF_STATES);
-    while (true)
-    {
-        if (const auto status = run_greedy(execution))
-            return execution.finish(*status);
-        const auto proved = execution.assess();
-        if (execution.out_of_time())
-            return execution.finish(ProgramProofStatus::OUT_OF_TIME);
-        if (proved)
-            return execution.finish(ProgramProofStatus::SUCCESS);
-        if (const auto status = try_next_choice(execution))
-            return execution.finish(*status);
-    }
+    return execution.finish(run_execution(execution));
 }
 
 }  // namespace detail
