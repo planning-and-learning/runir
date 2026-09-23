@@ -181,17 +181,17 @@ def test_paper_module_factory_descriptions_parse_and_format_round_trip() -> None
     formatted_program = str(program)
     assert MODULE_FACTORY_SKETCH_FRAGMENT in formatted_program
 
-    reparsed_program = dl.parse_module_program(formatted_program, planning_domain, repository)
+    reparsed_program = dl.parse_program(formatted_program, planning_domain, repository)
     assert reparsed_program.get_entry_module().get_name() == "root"
     assert len(reparsed_program.get_modules()) == 5
 
 
-def test_module_program_parser_reports_x3_syntax_position() -> None:
+def test_program_parser_reports_x3_syntax_position() -> None:
     planning_domain, repository = _repositories()
     source = '(:program (:entry root)'
 
     with pytest.raises(ParseError, match="Expected .* while parsing program") as raised:
-        dl.parse_module_program(source, planning_domain, repository)
+        dl.parse_program(source, planning_domain, repository)
 
     assert "In line 1:" in str(raised.value)
     assert source in str(raised.value)
@@ -254,36 +254,36 @@ def test_parser_exception_hierarchy_matches_cpp_categories() -> None:
     assert not issubclass(SemanticError, RuntimeError)
 
 
-def test_module_program_parser_rejects_invalid_wiring() -> None:
+def test_program_parser_rejects_invalid_wiring() -> None:
     planning_domain, repository = _repositories()
 
     with pytest.raises(DuplicateDefinitionError):
-        dl.parse_module_program(
-            read_fixture("kr/ps/ext/executor/ext_module_program_parser_rejects_invalid_program_wiring/case_3.program"),
+        dl.parse_program(
+            read_fixture("kr/ps/ext/executor/ext_program_parser_rejects_invalid_program_wiring/case_3.program"),
             planning_domain,
             repository,
         )
     with pytest.raises(UndefinedSymbolError):
-        dl.parse_module_program(read_fixture("kr/ps/ext/python/module_program_parser_rejects_invalid_wiring/root.program"), planning_domain, repository)
+        dl.parse_program(read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/root.program"), planning_domain, repository)
 
     with pytest.raises(InvalidExpressionError, match="argument signature"):
-        dl.parse_module_program(read_fixture("kr/ps/ext/python/module_program_parser_rejects_invalid_wiring/caller.program"), planning_domain, repository)
+        dl.parse_program(read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/caller.program"), planning_domain, repository)
 
     with pytest.raises(UndefinedSymbolError, match=r"Undefined module: missing"):
-        dl.parse_module_program(
-            read_fixture("kr/ps/ext/executor/ext_module_program_parser_rejects_invalid_program_wiring/case_2.program"),
+        dl.parse_program(
+            read_fixture("kr/ps/ext/executor/ext_program_parser_rejects_invalid_program_wiring/case_2.program"),
             planning_domain,
             repository,
         )
 
     with pytest.raises(UndefinedSymbolError, match=r"Undefined memory state: missing"):
-        dl.parse_module_program(read_fixture("kr/ps/ext/python/module_program_parser_rejects_invalid_wiring/bad_memory.program"), planning_domain, repository)
+        dl.parse_program(read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/bad_memory.program"), planning_domain, repository)
 
     with pytest.raises(UndefinedSymbolError, match=r"Undefined register: r1"):
-        dl.parse_module_program(read_fixture("kr/ps/ext/python/module_program_parser_rejects_invalid_wiring/bad_register.program"), planning_domain, repository)
+        dl.parse_program(read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/bad_register.program"), planning_domain, repository)
 
     with pytest.raises(UndefinedSymbolError, match=r"Undefined feature: missing"):
-        dl.parse_module_program(read_fixture("kr/ps/ext/python/module_program_parser_rejects_invalid_wiring/bad_feature.program"), planning_domain, repository)
+        dl.parse_program(read_fixture("kr/ps/ext/python/program_parser_rejects_invalid_wiring/bad_feature.program"), planning_domain, repository)
 
 
 def test_empty_module_factory_uses_ext_repositories() -> None:
@@ -305,7 +305,7 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
 
     program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
 
-    search_options = ext.GroundModuleProgramSearchOptions()
+    search_options = ext.GroundProgramSearchOptions()
     assert not hasattr(search_options, "brfs_options")
     assert not hasattr(search_options, "iw_options")
     assert not hasattr(search_options, "siw_options")
@@ -318,7 +318,7 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     assert search_options.classifier is None
 
     search_result = ext.find_ground_solution(task_context, program, search_options)
-    assert search_result.status == ext.ModuleProgramProofStatus.SUCCESS
+    assert search_result.status == ext.ProgramProofStatus.SUCCESS
     assert search_result.is_successful()
     assert isinstance(search_result.plan, GroundPackedPlan)
     assert search_result.plan.get_length() == 4
@@ -330,9 +330,9 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     classifier_dl_repository = task_context.domain_context.uns_repository.get_dl_repository()
     classifier_repository = task_context.domain_context.uns_repository
     classifier = parse_classifier(read_fixture("kr/uns/always.classifier"), planning_domain, classifier_repository)
-    classified_options = ext.GroundModuleProgramSearchOptions()
+    classified_options = ext.GroundProgramSearchOptions()
     classified_options.classifier = classifier
-    lifted_options = ext.LiftedModuleProgramSearchOptions()
+    lifted_options = ext.LiftedProgramSearchOptions()
     assert lifted_options.classifier is None
     lifted_options.classifier = classifier
     assert lifted_options.classifier.get_index() == classifier.get_index()
@@ -340,7 +340,7 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     del classifier, classifier_repository, classifier_dl_repository
     gc.collect()
     classified_result = ext.find_ground_solution(task_context, program, classified_options)
-    assert classified_result.status == ext.ModuleProgramProofStatus.FAILURE
+    assert classified_result.status == ext.ProgramProofStatus.FAILURE
     assert classified_result.graph.get_num_vertices() == 1
     assert classified_result.graph.get_num_edges() == 0
     assert len(classified_result.deadend_states) == 1
@@ -354,10 +354,10 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     assert classified_result.statistics.num_binding_attempts == 0
     assert classified_result.statistics.num_backtracks == 0
 
-    proof_options = ext.GroundModuleProgramSearchOptions()
+    proof_options = ext.GroundProgramSearchOptions()
     proof_options.universal = True
     proof = ext.find_ground_solution(task_context, program, proof_options)
-    assert proof.status == ext.ModuleProgramProofStatus.FAILURE
+    assert proof.status == ext.ProgramProofStatus.FAILURE
     assert not proof.is_successful()
     assert proof.graph.get_num_vertices() > search_result.graph.get_num_vertices()
     vertex = next(iter(proof.graph.get_vertex_indices()))
@@ -367,14 +367,14 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     assert proof.graph.get_target(edge) in proof.graph.get_vertex_indices()
     assert edge in proof.graph.get_out_edge_indices(proof.graph.get_source(edge))
     edge_label = proof.graph.get_edge_property(edge)
-    assert ext.ModuleProgramProofEdgeLabel is ext.GroundModuleProgramProofEdgeLabel
-    assert isinstance(edge_label, ext.ModuleProgramProofEdgeLabel)
+    assert ext.ProgramProofEdgeLabel is ext.GroundProgramProofEdgeLabel
+    assert isinstance(edge_label, ext.ProgramProofEdgeLabel)
     if edge_label.state_transition is not None:
-        assert isinstance(edge_label.state_transition, ext.ModuleProgramProofStateTransition)
+        assert isinstance(edge_label.state_transition, ext.ProgramProofStateTransition)
         assert isinstance(edge_label.state_transition.action, ActionBinding)
     vertex_label = proof.graph.get_vertex_property(vertex)
-    assert vertex_label.execution_state.call_stack.memory_state is not None
-    frame = vertex_label.execution_state.call_stack
+    assert vertex_label.program_state.module_state.memory_state is not None
+    frame = vertex_label.program_state.module_state
     assert len(frame.registers.concept_values) == len(frame.module.get_concept_registers())
     assert len(frame.registers.role_values) == len(frame.module.get_role_registers())
     assert len(proof.deadend_states) == 0
@@ -388,7 +388,7 @@ def test_packed_solution_plan_owns_states_after_result_release() -> None:
         program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(
             planning_domain, task_context.domain_context.ext_repository
         )
-        result = ext.find_ground_solution(task_context, program, ext.GroundModuleProgramSearchOptions())
+        result = ext.find_ground_solution(task_context, program, ext.GroundProgramSearchOptions())
         assert result.is_successful()
         plan = result.plan
         assert isinstance(plan, GroundPackedPlan)
@@ -405,19 +405,19 @@ def test_packed_solution_plan_owns_states_after_result_release() -> None:
 @pytest.mark.parametrize("case", EXECUTION_CASES, ids=[case["name"] for case in EXECUTION_CASES])
 def test_executor_fixture(case: ExecutionFixture) -> None:
     task_context, planning_domain, _ground_task = _ground_context_and_domain()
-    program = dl.parse_module_program(
+    program = dl.parse_program(
         read_fixture(case["program_file"]), planning_domain, task_context.domain_context.ext_repository
     )
-    options = ext.GroundModuleProgramSearchOptions()
+    options = ext.GroundProgramSearchOptions()
     options.universal = case["universal"]
 
     result = ext.find_ground_solution(task_context, program, options)
 
     expected_status = {
-        "success": ext.ModuleProgramProofStatus.SUCCESS,
-        "failure": ext.ModuleProgramProofStatus.FAILURE,
-        "out_of_time": ext.ModuleProgramProofStatus.OUT_OF_TIME,
-        "out_of_states": ext.ModuleProgramProofStatus.OUT_OF_STATES,
+        "success": ext.ProgramProofStatus.SUCCESS,
+        "failure": ext.ProgramProofStatus.FAILURE,
+        "out_of_time": ext.ProgramProofStatus.OUT_OF_TIME,
+        "out_of_states": ext.ProgramProofStatus.OUT_OF_STATES,
     }[case["status"]]
     assert result.status == expected_status
     assert result.graph.get_num_vertices() == case["num_vertices"]
@@ -429,10 +429,10 @@ def test_executor_fixture(case: ExecutionFixture) -> None:
         assert result.graph.get_vertex_property(vertex).is_unsolvable
 
 
-def test_module_program_parser_rejects_missing_action() -> None:
+def test_program_parser_rejects_missing_action() -> None:
     task_context, planning_domain, _ground_task = _ground_context_and_domain()
     with pytest.raises(UndefinedSymbolError, match=r"Undefined action: missing-action"):
-        dl.parse_module_program(
+        dl.parse_program(
             read_fixture("kr/ps/ext/execution/missing_action.program"),
             planning_domain,
             task_context.domain_context.ext_repository,
@@ -448,13 +448,13 @@ def test_lifted_executor_binding_reports_failure_status() -> None:
     _dl_repository = task_context.domain_context.ext_repository.get_dl_repository()
     repository = task_context.domain_context.ext_repository
 
-    program = dl.parse_module_program(read_fixture("kr/ps/ext/execution/empty.program"), planning_domain, repository)
-    options = ext.LiftedModuleProgramSearchOptions()
+    program = dl.parse_program(read_fixture("kr/ps/ext/execution/empty.program"), planning_domain, repository)
+    options = ext.LiftedProgramSearchOptions()
     options.universal = True
 
     result = ext.find_lifted_solution(task_context, program, options)
 
-    assert result.status == ext.ModuleProgramProofStatus.FAILURE
+    assert result.status == ext.ProgramProofStatus.FAILURE
     assert not result.is_successful()
     assert result.statistics.choice_depth == 0
     assert result.statistics.num_choice_points == 0
@@ -478,7 +478,7 @@ def test_labeled_successors_are_unfiltered_and_own_their_native_values(kind: str
         search = LiftedTaskSearchContext(task, execution_context)
         context = LiftedTaskContext(DomainContext(planning_domain), search)
         expander_type = ext.LiftedSuccessorExpander
-    program = dl.parse_module_program(
+    program = dl.parse_program(
         read_fixture("kr/ps/ext/execution/empty.program"), planning_domain, context.domain_context.ext_repository
     )
     expander = expander_type(context, program)
@@ -513,21 +513,21 @@ def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
     expander = ext.GroundSuccessorExpander(task_context, program)
     initial = expander.initial_state()
     duplicate_initial = expander.initial_state()
-    assert isinstance(initial, ext.GroundExecutionState)
-    assert initial.phase == ext.ExecutionPhase.EXTERNAL
-    assert isinstance(initial.call_stack, ext.GroundCallStack)
-    assert isinstance(initial.call_stack.registers, RegisterValues)
-    assert isinstance(initial.call_stack.arguments, CallArguments)
-    assert initial.call_stack.arguments.concept_arguments == []
+    assert isinstance(initial, ext.GroundProgramState)
+    assert initial.call_stack is None
+    assert isinstance(initial.module_state, ext.GroundModuleState)
+    assert isinstance(initial.module_state.registers, RegisterValues)
+    assert isinstance(initial.module_state.arguments, CallArguments)
+    assert initial.module_state.arguments.concept_arguments == []
     assert initial == duplicate_initial
-    assert initial.call_stack == duplicate_initial.call_stack
-    assert initial.call_stack.registers == duplicate_initial.call_stack.registers
-    assert initial.call_stack.arguments == duplicate_initial.call_stack.arguments
+    assert initial.module_state == duplicate_initial.module_state
+    assert initial.module_state.registers == duplicate_initial.module_state.registers
+    assert initial.module_state.arguments == duplicate_initial.module_state.arguments
     assert len({initial, duplicate_initial}) == 1
 
     steps = expander.control_steps(initial)
     assert steps
-    assert isinstance(steps[0], ext.GroundModuleProgramExecutionStep)
+    assert isinstance(steps[0], ext.GroundProgramExecutionStep)
     target = steps[0].target
 
     del steps, duplicate_initial, initial, expander, program, repository, dl_repository, task_context
@@ -535,7 +535,7 @@ def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
 
     assert target.state is not None
     assert target.program.get_entry_module() is not None
-    assert target.call_stack.module is not None
+    assert target.module_state.module is not None
     del target
     gc.collect()
 
@@ -548,23 +548,23 @@ def test_lifted_execution_views_and_proof_labels_survive_owner_destruction() -> 
     task_context = LiftedTaskContext(DomainContext(planning_domain), search_context)
     dl_repository = task_context.domain_context.ext_repository.get_dl_repository()
     repository = task_context.domain_context.ext_repository
-    program = dl.parse_module_program(read_fixture("kr/ps/ext/execution/empty.program"), planning_domain, repository)
+    program = dl.parse_program(read_fixture("kr/ps/ext/execution/empty.program"), planning_domain, repository)
 
     expander = ext.LiftedSuccessorExpander(task_context, program)
     initial = expander.initial_state()
-    assert isinstance(initial, ext.LiftedExecutionState)
-    assert initial.phase == ext.ExecutionPhase.EXTERNAL
-    assert isinstance(initial.call_stack, ext.LiftedCallStack)
+    assert isinstance(initial, ext.LiftedProgramState)
+    assert initial.call_stack is None
+    assert isinstance(initial.module_state, ext.LiftedModuleState)
 
-    options = ext.LiftedModuleProgramSearchOptions()
+    options = ext.LiftedProgramSearchOptions()
     options.universal = True
     result = ext.find_lifted_solution(task_context, program, options)
     vertex = next(iter(result.graph.get_vertex_indices()))
     label = result.graph.get_vertex_property(vertex)
-    assert isinstance(label, ext.LiftedModuleProgramProofVertexLabel)
+    assert isinstance(label, ext.LiftedProgramProofVertexLabel)
 
     del result, expander, initial, program, repository, dl_repository, task_context, search_context, lifted_task
     gc.collect()
 
-    assert label.execution_state.state is not None
-    assert label.execution_state.call_stack.memory_state is not None
+    assert label.program_state.state is not None
+    assert label.program_state.module_state.memory_state is not None

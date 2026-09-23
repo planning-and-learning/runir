@@ -50,7 +50,7 @@ def _context(kind):
 
 def _runtime(kind, source=None):
     task_context, domain = _context(kind)
-    program = dl.parse_module_program(source or _program(), domain, task_context.domain_context.ext_repository)
+    program = dl.parse_program(source or _program(), domain, task_context.domain_context.ext_repository)
     prefix = kind.title()
     expander = getattr(ext, f"{prefix}SuccessorExpander")(task_context, program)
     state = expander.initial_state()
@@ -61,7 +61,7 @@ def _runtime(kind, source=None):
 def test_action_and_query_feature_bindings_round_trip_and_serialize():
     task_context, domain = _context("lifted")
     repository = task_context.domain_context.ext_repository
-    program = dl.parse_module_program(_program(), domain, repository)
+    program = dl.parse_program(_program(), domain, repository)
     module = program.get_entry_module()
     feature = module.get_query_features()[0]
     variant = module.get_memory_transitions()[0][0]
@@ -73,7 +73,7 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize():
     assert rule.get_action_name() == "move"
     assert [column.get_name() for column in feature.get_expression().get_columns()] == ["from", "to"]
     assert feature.syntactic_complexity() > 0
-    assert str(dl.parse_module_program(str(program), domain, repository)) == str(program)
+    assert str(dl.parse_program(str(program), domain, repository)) == str(program)
 
     concrete = dl.ConcreteQueryFeatureData()
     concrete.symbol = feature.get_symbol()
@@ -164,7 +164,7 @@ def test_action_effect_contract_violation_is_an_exception(kind):
     task_context, program, expander, state, environment = _runtime(kind, _program(effects="(decreases count)"))
     with pytest.raises(ext.ActionRuleContractError):
         expander.control_steps(state)
-    options = getattr(ext, f"{kind.title()}ModuleProgramSearchOptions")()
+    options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
     with pytest.raises(ext.ActionRuleContractError):
         getattr(ext, f"find_{kind}_solution")(task_context, program, options)
 
@@ -173,19 +173,19 @@ def test_action_effect_contract_violation_is_an_exception(kind):
 def test_action_parser_rejects_incomplete_binding_schema(query):
     task_context, domain = _context("lifted")
     with pytest.raises(ArityMismatchError):
-        dl.parse_module_program(_program(query=query), domain, task_context.domain_context.ext_repository)
+        dl.parse_program(_program(query=query), domain, task_context.domain_context.ext_repository)
 
 
 def test_action_parser_rejects_undefined_query_feature():
     task_context, domain = _context("lifted")
     with pytest.raises(UndefinedSymbolError):
-        dl.parse_module_program(_program().replace("(:query selected)", "(:query missing)"), domain, task_context.domain_context.ext_repository)
+        dl.parse_program(_program().replace("(:query selected)", "(:query missing)"), domain, task_context.domain_context.ext_repository)
 
 
 @pytest.mark.parametrize("preprocessing", [False, True])
 def test_action_structural_counterexample_retains_query_rule(preprocessing):
     task_context, domain = _context("lifted")
-    program = dl.parse_module_program(_program(), domain, task_context.domain_context.ext_repository)
+    program = dl.parse_program(_program(), domain, task_context.domain_context.ext_repository)
     result = dl.structural_termination(program.get_entry_module(), use_incomplete_preprocessing=preprocessing)
     assert not result.is_terminating()
     graph = result.sieve_result.counterexample
@@ -252,8 +252,8 @@ def test_query_features_follow_module_arguments_and_registers_in_the_same_state(
     choices = [step.target for step in expander.load_steps(child)]
     assert len(choices) == 2
     assert choices[0].state == choices[1].state == initial.state
-    features = {feature.get_symbol(): feature for feature in child.call_stack.module.get_query_features()}
-    expected = [((int(state.call_stack.registers.concept_values[0].get_index()),),) for state in choices]
+    features = {feature.get_symbol(): feature for feature in child.module_state.module.get_query_features()}
+    expected = [((int(state.module_state.registers.concept_values[0].get_index()),),) for state in choices]
     all_candidates = {row for selected in expected for row in selected}
     assert expected[0] != expected[1]
 
@@ -294,7 +294,7 @@ def test_action_query_preserves_correlated_parameter_tuples(kind, tmp_path):
         task_context = GroundTaskContext(domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution))
     else:
         task_context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
-    program = dl.parse_module_program("""(:program (:entry root)
+    program = dl.parse_program("""(:program (:entry root)
       (:module (:symbol root) (:arguments) (:registers)
         (:entry m0) (:memory m0 m1)
         (:features (:query (:symbol pairs) (:expression (q_atomic_state "allowed" (source target)))))

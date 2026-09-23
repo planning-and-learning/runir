@@ -2,8 +2,8 @@
 #include "pyrunir/kr/binding_utils.hpp"
 
 #include <runir/kr/ps/ext/formatter.hpp>
-#include <runir/kr/ps/ext/module_program_data.hpp>
-#include <runir/kr/ps/ext/module_program_view.hpp>
+#include <runir/kr/ps/ext/program_data.hpp>
+#include <runir/kr/ps/ext/program_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/syntactic_complexity.hpp>
 #include <yggdrasil/python/bindings.hpp>
@@ -14,15 +14,15 @@ namespace runir::kr::ps::ext
 
 using namespace nanobind::literals;
 
-void bind_module_program(nb::module_& m, RepositoryBinding& repository)
+void bind_program(nb::module_& m, RepositoryBinding& repository)
 {
-    using T = ModuleProgram;
+    using T = Program;
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
-    ygg::bind_index<ygg::Index<T>>(m, "ModuleProgramIndex");
-    auto data = nb::class_<Data>(m, "ModuleProgramData").def(nb::init<>()).def_rw("index", &Data::index).def_rw("entry_module", &Data::entry_module);
+    ygg::bind_index<ygg::Index<T>>(m, "ProgramIndex");
+    auto data = nb::class_<Data>(m, "ProgramData").def(nb::init<>()).def_rw("index", &Data::index).def_rw("entry_module", &Data::entry_module);
     ygg::add_comparison(data);
-    auto view = nb::class_<View>(m, "ModuleProgram")
+    auto view = nb::class_<View>(m, "Program")
                     .def("get_index", &View::get_index)
                     .def("get_entry_module", &View::get_entry_module, nb::keep_alive<0, 1>())
                     .def("get_modules", &View::get_modules)

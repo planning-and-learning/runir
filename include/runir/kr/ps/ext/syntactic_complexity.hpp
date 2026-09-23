@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_EXT_SYNTACTIC_COMPLEXITY_HPP_
 
 #include "runir/kr/ps/ext/dl/syntactic_complexity.hpp"
-#include "runir/kr/ps/ext/module_program_view.hpp"
+#include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
 #include <cstddef>
@@ -35,11 +35,11 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<Module>, C> view)
 }
 
 template<typename C>
-std::size_t syntactic_complexity(ygg::View<ygg::Index<ModuleProgram>, C> view)
+std::size_t syntactic_complexity(ygg::View<ygg::Index<Program>, C> view)
 {
     auto result = std::size_t { 0 };
-    for (auto module : view.get_modules())
-        result += syntactic_complexity(module);
+    for (auto module_ : view.get_modules())
+        result += syntactic_complexity(module_);
     return result;
 }
 

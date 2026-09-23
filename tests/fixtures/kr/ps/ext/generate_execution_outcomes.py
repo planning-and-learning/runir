@@ -47,15 +47,15 @@ def main() -> None:
 
     for case in suite["cases"]:
         description = (ROOT / "tests/fixtures" / case["program_file"]).read_text(encoding="utf-8")
-        program = dl.parse_module_program(description, planning_domain, task_context.domain_context.ext_repository)
-        options = ext.GroundModuleProgramSearchOptions()
+        program = dl.parse_program(description, planning_domain, task_context.domain_context.ext_repository)
+        options = ext.GroundProgramSearchOptions()
         options.universal = case["universal"]
         result = ext.find_ground_solution(task_context, program, options)
         case["status"] = {
-            ext.ModuleProgramProofStatus.SUCCESS: "success",
-            ext.ModuleProgramProofStatus.FAILURE: "failure",
-            ext.ModuleProgramProofStatus.OUT_OF_TIME: "out_of_time",
-            ext.ModuleProgramProofStatus.OUT_OF_STATES: "out_of_states",
+            ext.ProgramProofStatus.SUCCESS: "success",
+            ext.ProgramProofStatus.FAILURE: "failure",
+            ext.ProgramProofStatus.OUT_OF_TIME: "out_of_time",
+            ext.ProgramProofStatus.OUT_OF_STATES: "out_of_states",
         }[result.status]
         case["num_vertices"] = result.graph.get_num_vertices()
         case["num_edges"] = result.graph.get_num_edges()

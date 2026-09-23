@@ -75,7 +75,7 @@ struct Module
 {
 };
 
-struct ModuleProgram
+struct Program
 {
 };
 
@@ -87,7 +87,7 @@ using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<ps::Rule<ExtFamilyTag>>, C
 using FeatureTypes = runir::kr::ps::PsFeatureTypes<runir::kr::ExtFamilyTag>;
 using ConditionTypes = runir::kr::ps::PsConditionTypes<runir::kr::ExtFamilyTag>;
 using EffectTypes = runir::kr::ps::PsEffectTypes<runir::kr::ExtFamilyTag>;
-using ProgramTypes = ygg::TypeList<MemoryState, ModuleSymbol, Module, ModuleProgram>;
+using ProgramTypes = ygg::TypeList<MemoryState, ModuleSymbol, Module, Program>;
 using RepositoryTypes = ygg::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ProgramTypes>;
 using Repository =
     runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::ExtFamilyTag>>;
@@ -100,7 +100,7 @@ using RoleRegisterView = ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr:
 using MemoryStateView = ygg::View<ygg::Index<MemoryState>, Repository>;
 using ModuleSymbolView = ygg::View<ygg::Index<ModuleSymbol>, Repository>;
 using ModuleView = ygg::View<ygg::Index<Module>, Repository>;
-using ModuleProgramView = ygg::View<ygg::Index<ModuleProgram>, Repository>;
+using ProgramView = ygg::View<ygg::Index<Program>, Repository>;
 using RuleVariantView = ygg::View<ygg::Index<ps::Rule<ExtFamilyTag>>, Repository>;
 
 template<RuleKind Kind>

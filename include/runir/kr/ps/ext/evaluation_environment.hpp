@@ -31,10 +31,10 @@ private:
     runir::kr::dl::semantics::DenotationCaches<runir::kr::ExtFamilyTag> m_dl_caches;
     runir::kr::dl::semantics::DenotationCaches<runir::kr::ExtFamilyTag> m_dl_target_caches;
     std::vector<runir::kr::dl::semantics::ConceptDenotationView> m_do_argument_denotations;
-    ModuleProgramView m_program;
+    ProgramView m_program;
 
 public:
-    EvaluationEnvironment(runir::kr::TaskContext<Kind>& task_context, ModuleProgramView program) :
+    EvaluationEnvironment(runir::kr::TaskContext<Kind>& task_context, ProgramView program) :
         m_dl_builder(task_context.dl_builder),
         m_dl_denotation_repository(*task_context.dl_denotation_repository),
         m_execution_repository(*task_context.execution_repository),
@@ -60,14 +60,14 @@ public:
     }
 
     /// Contexts borrow stored register and argument data. Cache invalidation remains explicit.
-    StateDlContext make_dl_context(ExecutionStateView<Kind> state)
+    StateDlContext make_dl_context(ProgramStateView<Kind> state)
     {
         const auto program = state.get_program();
         if (&state.get_context() != &m_execution_repository || &program.get_context() != &m_program.get_context()
             || program.get_index() != m_program.get_index())
             throw std::invalid_argument("EvaluationEnvironment requires an execution state from the selected task and program.");
-        const auto stack = state.get_call_stack();
-        return make_dl_context(state.get_state(), stack.get_arguments(), stack.get_registers());
+        const auto module_state = state.get_module_state();
+        return make_dl_context(module_state.get_state(), module_state.get_arguments(), module_state.get_registers());
     }
 
     StateDlContext make_dl_context(tyr::planning::StateView<Kind> state,

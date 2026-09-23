@@ -6,7 +6,7 @@
 #include "runir/kr/ps/ext/execution_index.hpp"
 #include "runir/kr/ps/ext/memory_state_index.hpp"
 #include "runir/kr/ps/ext/module_index.hpp"
-#include "runir/kr/ps/ext/module_program_index.hpp"
+#include "runir/kr/ps/ext/program_index.hpp"
 #include "runir/kr/ps/ext/module_symbol_index.hpp"
 #include "runir/kr/ps/ext/rule_index.hpp"
 #include "runir/kr/ps/ext/rule_variant_index.hpp"

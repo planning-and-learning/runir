@@ -11,7 +11,7 @@ from pyrunir.kr import DomainContext, GroundTaskContext, LiftedTaskContext
 from pyrunir.kr.dl.base.semantics import CallArguments, CallArgumentsData, RegisterValues, RegisterValuesData
 from pyrunir.kr.dl.ext import semantics
 from pyrunir.kr.ps import ext
-from pyrunir.kr.ps.ext.dl import parse_module_program
+from pyrunir.kr.ps.ext.dl import parse_program
 from pytyr.formalism.planning import Parser, PlanningDomain
 from pytyr.planning import lifted
 from pyyggdrasil.execution import ExecutionContext
@@ -90,7 +90,7 @@ def _task_context(
 
 def _loaded_frame(kind: Literal["ground", "lifted"], source: str = PROGRAM):
     task_context, domain = _task_context(kind)
-    program = parse_module_program(
+    program = parse_program(
         source,
         domain,
         task_context.domain_context.ext_repository,
@@ -121,6 +121,32 @@ def test_call_rule_arguments_preserve_feature_views_and_order() -> None:
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
+def test_module_state_and_suspended_caller_preserve_fields_and_dependencies(kind: Literal["ground", "lifted"]) -> None:
+    task_context, program, expander, loaded = _loaded_frame(kind)
+    references = sys.getrefcount(loaded)
+    module_state = loaded.module_state
+    assert isinstance(module_state, getattr(ext, f"{kind.title()}ModuleState"))
+    assert sys.getrefcount(loaded) > references
+    assert len({module_state, loaded.module_state}) == 1
+    assert module_state.state == loaded.state
+    assert module_state.memory_state.get_name() == "m2"
+    caller = loaded.call_stack
+    assert isinstance(caller, getattr(ext, f"{kind.title()}CallStack"))
+    assert caller.module == program.get_entry_module()
+    assert caller.return_memory_state.get_name() == "m1"
+    assert caller.caller is None
+    assert not caller.has_caller
+    assert caller.registers.concept_values == []
+    assert caller.arguments.concept_arguments == []
+    del task_context, program, expander, loaded
+    gc.collect()
+    assert len(module_state.arguments.concept_arguments) == 1
+    assert module_state.registers.concept_values[0] is not None
+    assert module_state.registers.role_values[0] is not None
+    assert caller.return_memory_state.get_name() == "m1"
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
 def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     kind: Literal["ground", "lifted"],
 ) -> None:
@@ -129,7 +155,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         environment_type = ext.GroundEvaluationEnvironment
     else:
         environment_type = ext.LiftedEvaluationEnvironment
-    frame = loaded.call_stack
+    frame = loaded.module_state
     assert len(frame.arguments.concept_arguments) == 1
     assert len(frame.arguments.role_arguments) == 1
     assert len(frame.arguments.boolean_arguments) == 1
@@ -230,7 +256,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
-def test_state_evaluation_context_retains_execution_state_and_environment(
+def test_state_evaluation_context_retains_program_state_and_environment(
     kind: Literal["ground", "lifted"],
 ) -> None:
     task_context, program, expander, loaded = _loaded_frame(kind)
@@ -244,8 +270,8 @@ def test_state_evaluation_context_retains_execution_state_and_environment(
     context = environment.make_dl_context(loaded)
     assert sys.getrefcount(loaded) > state_references
     assert sys.getrefcount(environment) > environment_references
-    boolean = loaded.call_stack.module.get_boolean_features()[0]
-    numerical = loaded.call_stack.module.get_numerical_features()[0]
+    boolean = loaded.module_state.module.get_boolean_features()[0]
+    numerical = loaded.module_state.module.get_numerical_features()[0]
     del task_context, program, expander, loaded, environment
     gc.collect()
     assert ext.evaluate(boolean, context).get() is True
@@ -264,8 +290,8 @@ def test_state_evaluation_contexts_borrow_distinct_call_arguments(
         environment.make_dl_context(initial),
     ]
     features = [
-        loaded.call_stack.module.get_numerical_features()[0],
-        initial.call_stack.module.get_numerical_features()[0],
+        loaded.module_state.module.get_numerical_features()[0],
+        initial.module_state.module.get_numerical_features()[0],
     ]
     del loaded, initial
     gc.collect()
@@ -282,12 +308,12 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
         f"(:registers {declarations} (:concept selected) (:role location))",
     )
     task_context, program, expander, loaded = _loaded_frame(kind, source)
-    concept_values = loaded.call_stack.registers.concept_values
-    role_values = loaded.call_stack.registers.role_values
+    concept_values = loaded.module_state.registers.concept_values
+    role_values = loaded.module_state.registers.role_values
     assert len(concept_values) == len(role_values) == 6
     assert concept_values[:5] == role_values[:5] == [None] * 5
     assert concept_values[5] is not None and role_values[5] is not None
-    features = {feature.get_symbol(): feature for feature in loaded.call_stack.module.get_numerical_features()}
+    features = {feature.get_symbol(): feature for feature in loaded.module_state.module.get_numerical_features()}
     environment = getattr(ext, f"{kind.title()}EvaluationEnvironment")(task_context, program)
     context = environment.make_dl_context(loaded)
     assert ext.evaluate(features["concept_register_size"], context).get() == 1
@@ -296,7 +322,7 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     arguments = CallArgumentsData()
     for category in ("concept", "role", "boolean", "numerical"):
         field = f"{category}_arguments"
-        setattr(arguments, field, [value.get_index() for value in getattr(loaded.call_stack.arguments, field)])
+        setattr(arguments, field, [value.get_index() for value in getattr(loaded.module_state.arguments, field)])
     registers = RegisterValuesData()
     registers.concept_values = [None] * 5 + [concept_values[5].get_index()]
     expected_roles = [None] * 5 + [tuple(value.get_index() for value in role_values[5])]
@@ -307,10 +333,10 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     register_view = repository.get_or_create(registers)
     assert isinstance(argument_view, CallArguments)
     assert isinstance(register_view, RegisterValues)
-    assert repository.get_or_create(arguments) == argument_view == loaded.call_stack.arguments
-    assert repository.get_or_create(registers) == register_view == loaded.call_stack.registers
-    assert len({argument_view, loaded.call_stack.arguments}) == 1
-    assert len({register_view, loaded.call_stack.registers}) == 1
+    assert repository.get_or_create(arguments) == argument_view == loaded.module_state.arguments
+    assert repository.get_or_create(registers) == register_view == loaded.module_state.registers
+    assert len({argument_view, loaded.module_state.arguments}) == 1
+    assert len({register_view, loaded.module_state.registers}) == 1
     caches = semantics.DenotationCaches()
     context = getattr(semantics, f"{kind.title()}StateEvaluationContext")(
         loaded.state, task_context.dl_builder, repository, caches, argument_view, register_view,
@@ -347,23 +373,23 @@ def test_choose_steps_filter_effects_against_original_registers(kind: Literal["g
         "(:register (:role location))",
         "(:register (:role location)) (:effects (increases role_register_size))",
     )
-    program = parse_module_program(source, domain, task_context.domain_context.ext_repository)
+    program = parse_program(source, domain, task_context.domain_context.ext_repository)
     expander_type = ext.GroundSuccessorExpander if kind == "ground" else ext.LiftedSuccessorExpander
     expander = expander_type(task_context, program)
     child = expander.control_steps(expander.initial_state())[0].target
     concept_steps = expander.choose_steps(child)
     assert len(concept_steps) == 2
-    assert child.call_stack.registers.concept_values[0] is None
+    assert child.module_state.registers.concept_values[0] is None
     assert {
-        step.target.call_stack.registers.concept_values[0].get_name() for step in concept_steps
+        step.target.module_state.registers.concept_values[0].get_name() for step in concept_steps
     } == {"ball1", "ball2"}
     for step in concept_steps:
         role_steps = expander.choose_steps(step.target)
         assert len(role_steps) == 2
-        assert step.target.call_stack.registers.role_values[0] is None
+        assert step.target.module_state.registers.role_values[0] is None
         for role_step in role_steps:
             assert role_step.target.state == child.state
-            assert role_step.target.call_stack.registers.role_values[0] is not None
+            assert role_step.target.module_state.registers.role_values[0] is not None
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -381,13 +407,13 @@ def test_choose_search_statistics_are_read_only(
             domain,
             GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution),
         )
-        options = ext.GroundModuleProgramSearchOptions()
+        options = ext.GroundProgramSearchOptions()
         find_solution = ext.find_ground_solution
     else:
         context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
-        options = ext.LiftedModuleProgramSearchOptions()
+        options = ext.LiftedProgramSearchOptions()
         find_solution = ext.find_lifted_solution
-    program = parse_module_program(
+    program = parse_program(
         """(:program (:entry search)
           (:module (:symbol search) (:arguments) (:registers (:concept selected))
             (:entry m0) (:memory m0 m1 m2 m3)
@@ -409,7 +435,7 @@ def test_choose_search_statistics_are_read_only(
     options.universal = universal
     result = find_solution(context, program, options)
     assert result.is_successful()
-    assert isinstance(result.statistics, ext.ModuleProgramSearchStatistics)
+    assert isinstance(result.statistics, ext.ProgramSearchStatistics)
     assert result.statistics.num_expanded == 5
     assert result.statistics.num_generated == 5
     assert result.statistics.choice_depth == 1

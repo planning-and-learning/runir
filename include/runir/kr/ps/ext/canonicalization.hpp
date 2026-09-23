@@ -8,7 +8,7 @@
 #include "runir/kr/ps/feature_data.hpp"
 #include "runir/kr/ps/ext/memory_state_data.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
-#include "runir/kr/ps/ext/module_program_data.hpp"
+#include "runir/kr/ps/ext/program_data.hpp"
 #include "runir/kr/ps/ext/module_symbol_data.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_data.hpp"
@@ -83,7 +83,7 @@ inline bool is_canonical(const ygg::Data<Module>& data) noexcept
            && ygg::is_canonical(data.numerical_features) && ygg::is_canonical(data.query_features) && ygg::is_canonical(data.memory_states);
 }
 
-inline bool is_canonical(const ygg::Data<ModuleProgram>&) noexcept { return true; }
+inline bool is_canonical(const ygg::Data<Program>&) noexcept { return true; }
 
 inline void canonicalize(ygg::Data<MemoryState>&) noexcept {}
 
@@ -151,7 +151,7 @@ inline void canonicalize(ygg::Data<Module>& data)
     ygg::canonicalize(data.memory_states);
 }
 
-inline void canonicalize(ygg::Data<ModuleProgram>&) noexcept {}
+inline void canonicalize(ygg::Data<Program>&) noexcept {}
 
 }  // namespace runir::kr::ps::ext
 

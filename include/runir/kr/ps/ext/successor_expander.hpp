@@ -12,7 +12,7 @@
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
 #include "runir/kr/ps/ext/execution_repository.hpp"
 #include "runir/kr/ps/ext/expansion_policy.hpp"
-#include "runir/kr/ps/ext/module_program_view.hpp"
+#include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 #include "runir/kr/task_context.hpp"
 
@@ -56,9 +56,9 @@ private:
 
 public:
     using LabeledNode = tyr::planning::LabeledNode<Kind>;
-    using Step = detail::ModuleProgramStep<Kind>;
+    using Step = detail::ProgramStep<Kind>;
 
-    SuccessorExpander(runir::kr::TaskContextPtr<Kind> task_context, ModuleProgramView program) :
+    SuccessorExpander(runir::kr::TaskContextPtr<Kind> task_context, ProgramView program) :
         m_task_context(task_context ? std::move(task_context) : throw std::invalid_argument("SuccessorExpander requires a task context.")),
         m_program(program),
         m_goal_strategy(*m_task_context->search_context->task),
@@ -75,17 +75,17 @@ public:
 
     const auto& get_task_context() const noexcept { return m_task_context; }
 
-    ExecutionStateView<Kind> initial_state()
+    ProgramStateView<Kind> initial_state()
     {
         auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_task_context->dl_builder);
-        const auto module = m_program.get_entry_module();
+        const auto module_ = m_program.get_entry_module();
         const auto frame = Frame { m_initial_state,
-                                   module,
-                                   module.get_entry_memory_state(),
-                                   empty_registers(module),
+                                   module_,
+                                   module_.get_entry_memory_state(),
+                                   empty_registers(module_),
                                    get_or_create(*m_task_context->dl_denotation_repository, *arguments).first,
                                    std::nullopt };
-        return intern(frame, ExecutionPhase::EXTERNAL);
+        return intern(frame);
     }
 
     bool is_goal(const tyr::planning::StateView<Kind>& state)
@@ -93,66 +93,66 @@ public:
         return m_static_goal_satisfied && m_goal_strategy.is_dynamic_goal_satisfied(m_initial_state, state);
     }
 
-    bool is_goal(ExecutionStateView<Kind> state) { return is_goal(state.get_state()); }
+    bool is_goal(ProgramStateView<Kind> state) { return is_goal(state.get_state()); }
 
-    std::vector<Step> load_steps(ExecutionStateView<Kind> state)
+    std::vector<Step> load_steps(ProgramStateView<Kind> state)
     {
         auto result = std::vector<Step> {};
         load_steps(std::move(state), result);
         return result;
     }
 
-    void load_steps(ExecutionStateView<Kind> state, std::vector<Step>& out_steps)
+    void load_steps(ProgramStateView<Kind> state, std::vector<Step>& out_steps)
     {
         load_steps_until(std::move(state), [] { return false; }, out_steps);
     }
 
-    std::vector<Step> load_steps_until(ExecutionStateView<Kind> state, auto&& stop)
+    std::vector<Step> load_steps_until(ProgramStateView<Kind> state, auto&& stop)
     {
         auto result = std::vector<Step> {};
         load_steps_until(std::move(state), stop, result);
         return result;
     }
 
-    void load_steps_until(ExecutionStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
+    void load_steps_until(ProgramStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
     {
         auto context = materialize(state);
         collect_steps<EagerExpansionPolicy, LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>>(context, generated_successors(), stop, out_steps);
     }
 
-    std::vector<Step> choose_steps(ExecutionStateView<Kind> state)
+    std::vector<Step> choose_steps(ProgramStateView<Kind> state)
     {
         auto result = std::vector<Step> {};
         choose_steps(std::move(state), result);
         return result;
     }
 
-    void choose_steps(ExecutionStateView<Kind> state, std::vector<Step>& out_steps)
+    void choose_steps(ProgramStateView<Kind> state, std::vector<Step>& out_steps)
     {
         choose_steps_until(std::move(state), [] { return false; }, out_steps);
     }
 
-    std::vector<Step> choose_steps_until(ExecutionStateView<Kind> state, auto&& stop)
+    std::vector<Step> choose_steps_until(ProgramStateView<Kind> state, auto&& stop)
     {
         auto result = std::vector<Step> {};
         choose_steps_until(std::move(state), stop, result);
         return result;
     }
 
-    void choose_steps_until(ExecutionStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
+    void choose_steps_until(ProgramStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
     {
         auto context = materialize(state);
         collect_steps<EagerExpansionPolicy, ChooseTag<runir::kr::dl::ConceptTag>, ChooseTag<runir::kr::dl::RoleTag>>(context, generated_successors(), stop, out_steps);
     }
 
-    std::vector<LabeledNode> labeled_successors(ExecutionStateView<Kind> state)
+    std::vector<LabeledNode> labeled_successors(ProgramStateView<Kind> state)
     {
         auto result = std::vector<LabeledNode> {};
         labeled_successors(std::move(state), result);
         return result;
     }
 
-    void labeled_successors(ExecutionStateView<Kind> state, std::vector<LabeledNode>& out_successors)
+    void labeled_successors(ProgramStateView<Kind> state, std::vector<LabeledNode>& out_successors)
     {
         auto& search_context = *m_task_context->search_context;
         auto& successor_generator = *search_context.successor_generator;
@@ -160,26 +160,26 @@ public:
         successor_generator.get_labeled_successor_nodes(node, *search_context.state_repository, *search_context.axiom_evaluator, out_successors);
     }
 
-    std::vector<Step> control_steps(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors)
+    std::vector<Step> control_steps(ProgramStateView<Kind> state, const std::vector<LabeledNode>& successors)
     {
         auto result = std::vector<Step> {};
         control_steps(std::move(state), successors, result);
         return result;
     }
 
-    void control_steps(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, std::vector<Step>& out_steps)
+    void control_steps(ProgramStateView<Kind> state, const std::vector<LabeledNode>& successors, std::vector<Step>& out_steps)
     {
         control_steps_until(std::move(state), successors, [] { return false; }, out_steps);
     }
 
-    std::vector<Step> control_steps_until(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop)
+    std::vector<Step> control_steps_until(ProgramStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop)
     {
         auto result = std::vector<Step> {};
         control_steps_until(std::move(state), successors, stop, result);
         return result;
     }
 
-    void control_steps_until(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop, std::vector<Step>& out_steps)
+    void control_steps_until(ProgramStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop, std::vector<Step>& out_steps)
     {
         auto context = materialize(state);
         collect_steps<EagerExpansionPolicy, DoTag, ActionTag, CallTag, SketchTag>(context, supplied_successors(successors), stop, out_steps);
@@ -187,14 +187,14 @@ public:
             out_steps.push_back(fallback(std::move(context)));
     }
 
-    std::vector<Step> control_steps(ExecutionStateView<Kind> state)
+    std::vector<Step> control_steps(ProgramStateView<Kind> state)
     {
         auto result = std::vector<Step> {};
         control_steps(std::move(state), result);
         return result;
     }
 
-    void control_steps(ExecutionStateView<Kind> state, std::vector<Step>& out_steps)
+    void control_steps(ProgramStateView<Kind> state, std::vector<Step>& out_steps)
     {
         auto context = materialize(state);
         collect_steps<EagerExpansionPolicy, DoTag, ActionTag, CallTag, SketchTag>(context, generated_successors(), [] { return false; }, out_steps);
@@ -202,19 +202,19 @@ public:
             out_steps.push_back(fallback(std::move(context)));
     }
 
-    std::vector<Step> steps(ExecutionStateView<Kind> state)
+    std::vector<Step> steps(ProgramStateView<Kind> state)
     {
         auto result = std::vector<Step> {};
         steps(std::move(state), result);
         return result;
     }
 
-    void steps(ExecutionStateView<Kind> state, std::vector<Step>& out_steps)
+    void steps(ProgramStateView<Kind> state, std::vector<Step>& out_steps)
     {
         steps_until(std::move(state), [] { return false; }, out_steps);
     }
 
-    std::vector<Step> steps_until(ExecutionStateView<Kind> state, auto&& stop)
+    std::vector<Step> steps_until(ProgramStateView<Kind> state, auto&& stop)
     {
         auto result = std::vector<Step> {};
         steps_until(std::move(state), stop, result);
@@ -222,7 +222,7 @@ public:
     }
 
     template<ExpansionPolicy Policy = EagerExpansionPolicy>
-    void steps_until(ExecutionStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
+    void steps_until(ProgramStateView<Kind> state, auto&& stop, std::vector<Step>& out_steps)
     {
         auto context = materialize(state);
         collect_steps<Policy, LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>, ChooseTag<runir::kr::dl::ConceptTag>,
@@ -231,19 +231,19 @@ public:
             out_steps.push_back(fallback(std::move(context)));
     }
 
-    std::vector<Step> steps(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors)
+    std::vector<Step> steps(ProgramStateView<Kind> state, const std::vector<LabeledNode>& successors)
     {
         auto result = std::vector<Step> {};
         steps(std::move(state), successors, result);
         return result;
     }
 
-    void steps(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, std::vector<Step>& out_steps)
+    void steps(ProgramStateView<Kind> state, const std::vector<LabeledNode>& successors, std::vector<Step>& out_steps)
     {
         steps_until(std::move(state), successors, [] { return false; }, out_steps);
     }
 
-    std::vector<Step> steps_until(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop)
+    std::vector<Step> steps_until(ProgramStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop)
     {
         auto result = std::vector<Step> {};
         steps_until(std::move(state), successors, stop, result);
@@ -251,7 +251,7 @@ public:
     }
 
     template<ExpansionPolicy Policy = EagerExpansionPolicy>
-    void steps_until(ExecutionStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop, std::vector<Step>& out_steps)
+    void steps_until(ProgramStateView<Kind> state, const std::vector<LabeledNode>& successors, auto&& stop, std::vector<Step>& out_steps)
     {
         auto context = materialize(state);
         collect_steps<Policy, LoadTag<runir::kr::dl::ConceptTag>, LoadTag<runir::kr::dl::RoleTag>, ChooseTag<runir::kr::dl::ConceptTag>,
@@ -261,13 +261,13 @@ public:
     }
 
     std::optional<RuleVariantView>
-    matching_rule(ExecutionStateView<Kind> state, tyr::formalism::planning::ActionBindingView action, tyr::planning::StateView<Kind> target_state)
+    matching_rule(ProgramStateView<Kind> state, tyr::formalism::planning::ActionBindingView action, tyr::planning::StateView<Kind> target_state)
     {
         auto context = materialize(state);
         return matching_rule_for_candidate(context, LabeledNode { action, tyr::planning::Node<Kind>(std::move(target_state), ygg::float_t(0)) });
     }
 
-    std::optional<Step> apply(ExecutionStateView<Kind> state,
+    std::optional<Step> apply(ProgramStateView<Kind> state,
                               RuleVariantView rule,
                               std::optional<tyr::formalism::planning::ActionBindingView> action = std::nullopt,
                               std::optional<tyr::planning::StateView<Kind>> target_state = std::nullopt)
@@ -280,52 +280,58 @@ public:
     }
 
 private:
-    Frame materialize(ExecutionStateView<Kind> state) const
+    Frame materialize(ProgramStateView<Kind> state) const
     {
         assert(&state.get_context() == m_task_context->execution_repository.get());
         const auto program = state.get_program();
         if (&program.get_context() != &m_program.get_context() || program.get_index() != m_program.get_index())
             throw std::invalid_argument("SuccessorExpander requires an execution state from the selected program.");
-        const auto call_stack = state.get_call_stack();
-        return Frame { state.get_state(),          call_stack.get_module(),    call_stack.get_memory_state(),
-                       call_stack.get_registers(), call_stack.get_arguments(), call_stack.get_caller() };
+        const auto module_state = state.get_module_state();
+        return Frame { module_state.get_state(),     module_state.get_module(),    module_state.get_memory_state(),
+                       module_state.get_registers(), module_state.get_arguments(), state.get_call_stack() };
     }
 
-    runir::kr::dl::semantics::RegisterValuesView empty_registers(ModuleView module)
+    runir::kr::dl::semantics::RegisterValuesView empty_registers(ModuleView module_)
     {
         auto data = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
-        data->concept_values.resize(module.template get_registers<runir::kr::dl::ConceptTag>().size());
-        data->role_values.resize(module.template get_registers<runir::kr::dl::RoleTag>().size());
+        data->concept_values.resize(module_.template get_registers<runir::kr::dl::ConceptTag>().size());
+        data->role_values.resize(module_.template get_registers<runir::kr::dl::RoleTag>().size());
         return get_or_create(*m_task_context->dl_denotation_repository, *data).first;
     }
 
-    CallStackView<Kind> intern_call_stack(const Frame& frame, MemoryStateView memory_state)
+    CallStackView<Kind> intern_call_stack(const Frame& frame, MemoryStateView return_memory_state)
     {
         auto data = checkout<CallStack>(m_task_context->execution_builder);
         ygg::set(frame.module, data->module);
-        ygg::set(memory_state, data->memory_state);
+        ygg::set(return_memory_state, data->return_memory_state);
         ygg::set(frame.registers, data->registers);
         ygg::set(frame.arguments, data->arguments);
         ygg::set(frame.caller, data->caller);
         return get_or_create(*m_task_context->execution_repository, *data).first;
     }
 
-    ExecutionStateView<Kind> intern(const Frame& frame, ExecutionPhase phase)
+    ProgramStateView<Kind> intern(const Frame& frame)
     {
-        auto data = checkout<ExecutionState<Kind>>(m_task_context->execution_builder);
+        auto module_state = checkout<ModuleState<Kind>>(m_task_context->execution_builder);
+        ygg::set(frame.state, module_state->state);
+        ygg::set(frame.module, module_state->module);
+        ygg::set(frame.memory_state, module_state->memory_state);
+        ygg::set(frame.registers, module_state->registers);
+        ygg::set(frame.arguments, module_state->arguments);
+
+        auto data = checkout<ProgramState<Kind>>(m_task_context->execution_builder);
         ygg::set(m_program, data->program);
-        ygg::set(frame.state, data->state);
-        ygg::set(intern_call_stack(frame, frame.memory_state), data->call_stack);
-        data->phase = phase;
+        ygg::set(get_or_create(*m_task_context->execution_repository, *module_state).first, data->module_state);
+        ygg::set(frame.caller, data->call_stack);
         return get_or_create(*m_task_context->execution_repository, *data).first;
     }
 
-    void enter_module(Frame& frame, ModuleView module, MemoryStateView return_memory_state, runir::kr::dl::semantics::CallArgumentsView arguments)
+    void enter_module(Frame& frame, ModuleView module_, MemoryStateView return_memory_state, runir::kr::dl::semantics::CallArgumentsView arguments)
     {
         frame.caller = intern_call_stack(frame, return_memory_state);
-        frame.module = module;
-        frame.memory_state = module.get_entry_memory_state();
-        frame.registers = empty_registers(module);
+        frame.module = module_;
+        frame.memory_state = module_.get_entry_memory_state();
+        frame.registers = empty_registers(module_);
         frame.arguments = arguments;
     }
 
@@ -335,7 +341,7 @@ private:
             return false;
         const auto caller = *frame.caller;
         frame.module = caller.get_module();
-        frame.memory_state = caller.get_memory_state();
+        frame.memory_state = caller.get_return_memory_state();
         frame.registers = caller.get_registers();
         frame.arguments = caller.get_arguments();
         frame.caller = caller.get_caller();
@@ -751,12 +757,12 @@ private:
                 auto target = context;
                 target.registers = target_registers;
                 target.memory_state = rule.get_target();
-                result.push_back(applied(std::move(target), rule_variant, ExecutionPhase::INTERNAL));
+                result.push_back(applied(std::move(target), rule_variant));
             }
             if constexpr (ChooseRuleView<R>)
                 if (!stop() && result.size() == initial_size)
                 {
-                    auto failure = make_step(detail::ModuleProgramOutcome::FAILURE, context, ExecutionPhase::INTERNAL);
+                    auto failure = make_step(detail::ProgramOutcome::FAILURE, context);
                     failure.rule = rule_variant;
                     result.push_back(std::move(failure));
                 }
@@ -807,9 +813,9 @@ private:
             if (status == RuleExecutionStatus::NOT_APPLICABLE)
                 return;
             if (status == RuleExecutionStatus::MALFORMED_CALL)
-                result.push_back(make_step(detail::ModuleProgramOutcome::MALFORMED_CALL, std::move(target), ExecutionPhase::EXTERNAL));
+                result.push_back(make_step(detail::ProgramOutcome::MALFORMED_CALL, std::move(target)));
             else
-                result.push_back(applied(std::move(target), rule_variant, ExecutionPhase::EXTERNAL));
+                result.push_back(applied(std::move(target), rule_variant));
         }
         else if constexpr (std::same_as<R, RuleView<SketchTag>>)
         {
@@ -819,7 +825,7 @@ private:
             {
                 auto target = context;
                 if (execute_sketch(rule, target, {}) == RuleExecutionStatus::APPLIED)
-                    result.push_back(applied(std::move(target), rule_variant, ExecutionPhase::EXTERNAL));
+                    result.push_back(applied(std::move(target), rule_variant));
                 return;
             }
 
@@ -838,28 +844,28 @@ private:
         }
     }
 
-    Step make_step(detail::ModuleProgramOutcome status, Frame context, ExecutionPhase phase)
+    Step make_step(detail::ProgramOutcome status, Frame context)
     {
-        return Step(status, intern(context, phase), m_task_context);
+        return Step(status, intern(context), m_task_context);
     }
 
     Step fallback(Frame context)
     {
         if (restore_caller(context))
-            return make_step(detail::ModuleProgramOutcome::RESTORED_CALLER, std::move(context), ExecutionPhase::EXTERNAL);
-        return make_step(detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION, std::move(context), ExecutionPhase::EXTERNAL);
+            return make_step(detail::ProgramOutcome::RESTORED_CALLER, std::move(context));
+        return make_step(detail::ProgramOutcome::NO_APPLICABLE_ACTION, std::move(context));
     }
 
-    Step applied(Frame context, RuleVariantView rule, ExecutionPhase phase)
+    Step applied(Frame context, RuleVariantView rule)
     {
-        auto step = make_step(detail::ModuleProgramOutcome::APPLIED, std::move(context), phase);
+        auto step = make_step(detail::ProgramOutcome::APPLIED, std::move(context));
         step.rule = rule;
         return step;
     }
 
     Step planning_step(Frame context, const LabeledNode& successor, RuleVariantView rule)
     {
-        auto step = applied(std::move(context), rule, ExecutionPhase::EXTERNAL);
+        auto step = applied(std::move(context), rule);
         step.plan_suffix.push_back(successor.pack());
         step.state_transition = runir::datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) };
         return step;
@@ -893,7 +899,7 @@ private:
     }
 
     runir::kr::TaskContextPtr<Kind> m_task_context;
-    ModuleProgramView m_program;
+    ProgramView m_program;
     tyr::planning::ConjunctiveGoalStrategy<Kind> m_goal_strategy;
     tyr::planning::StateView<Kind> m_initial_state;
     bool m_static_goal_satisfied;

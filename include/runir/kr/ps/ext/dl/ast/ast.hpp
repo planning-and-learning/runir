@@ -148,7 +148,7 @@ struct Module : x3::position_tagged
     std::vector<RuleEntry> rule_entries;
 };
 
-struct ModuleProgram : x3::position_tagged
+struct Program : x3::position_tagged
 {
     Identifier entry;
     std::vector<Module> modules;

@@ -1,7 +1,7 @@
-#ifndef RUNIR_KR_PS_EXT_MODULE_PROGRAM_VIEW_HPP_
-#define RUNIR_KR_PS_EXT_MODULE_PROGRAM_VIEW_HPP_
+#ifndef RUNIR_KR_PS_EXT_PROGRAM_VIEW_HPP_
+#define RUNIR_KR_PS_EXT_PROGRAM_VIEW_HPP_
 
-#include "runir/kr/ps/ext/module_program_data.hpp"
+#include "runir/kr/ps/ext/program_data.hpp"
 #include "runir/kr/ps/ext/module_symbol_view.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 
@@ -14,14 +14,14 @@ namespace ygg
 {
 
 template<typename C>
-class View<Index<runir::kr::ps::ext::ModuleProgram>, C>
+class View<Index<runir::kr::ps::ext::Program>, C>
 {
 private:
     const C* m_context;
-    Index<runir::kr::ps::ext::ModuleProgram> m_handle;
+    Index<runir::kr::ps::ext::Program> m_handle;
 
 public:
-    View(Index<runir::kr::ps::ext::ModuleProgram> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::ext::Program> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
 
     const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
     const auto& get_context() const noexcept { return *m_context; }
@@ -32,9 +32,9 @@ public:
     auto get_modules() const noexcept { return make_view(get_data().modules, *m_context); }
     std::optional<View<Index<runir::kr::ps::ext::Module>, C>> find_module(Index<runir::kr::ps::ext::ModuleSymbol> symbol) const
     {
-        for (auto module : get_modules())
-            if (module.get_symbol().get_index() == symbol)
-                return module;
+        for (auto module_ : get_modules())
+            if (module_.get_symbol().get_index() == symbol)
+                return module_;
         return std::nullopt;
     }
 

@@ -331,10 +331,10 @@ void increment(SignatureCounts& counts)
         ++counts.numericals;
 }
 
-SignatureCounts signature_counts(const ast::Module& module)
+SignatureCounts signature_counts(const ast::Module& module_)
 {
     auto result = SignatureCounts {};
-    for (const auto& argument : module.arguments)
+    for (const auto& argument : module_.arguments)
         boost::apply_visitor([&](const auto& concrete) { increment<typename AstCategory<std::remove_cvref_t<decltype(concrete)>>::Type>(result); },
                              argument.get());
     return result;
@@ -367,7 +367,7 @@ std::vector<ast::Register<Category>> collect_registers(const std::vector<ast::Re
     return result;
 }
 
-void validate_module_declarations(const ast::Module& module, const runir::kr::parser::DiagnosticContext& diagnostics)
+void validate_module_declarations(const ast::Module& module_, const runir::kr::parser::DiagnosticContext& diagnostics)
 {
     auto concept_arguments = std::unordered_set<std::string> {};
     auto role_arguments = std::unordered_set<std::string> {};
@@ -380,7 +380,7 @@ void validate_module_declarations(const ast::Module& module, const runir::kr::pa
             diagnostics.throw_at(symbol, runir::kr::DuplicateDefinitionError(std::string(kind) + " argument", symbol.text));
     };
 
-    for (const auto& argument : module.arguments)
+    for (const auto& argument : module_.arguments)
     {
         boost::apply_visitor(
             [&](const auto& concrete)
@@ -398,11 +398,11 @@ void validate_module_declarations(const ast::Module& module, const runir::kr::pa
             argument.get());
     }
 
-    validate_unique_names(collect_registers<runir::kr::dl::ConceptTag>(module.registers), "concept", diagnostics);
-    validate_unique_names(collect_registers<runir::kr::dl::RoleTag>(module.registers), "role", diagnostics);
+    validate_unique_names(collect_registers<runir::kr::dl::ConceptTag>(module_.registers), "concept", diagnostics);
+    validate_unique_names(collect_registers<runir::kr::dl::RoleTag>(module_.registers), "role", diagnostics);
 
     auto feature_symbols = std::unordered_set<std::string> {};
-    for (const auto& feature : module.features)
+    for (const auto& feature : module_.features)
         boost::apply_visitor(
             [&](const auto& concrete)
             {
@@ -412,7 +412,7 @@ void validate_module_declarations(const ast::Module& module, const runir::kr::pa
             feature.get());
 
     auto rule_symbols = std::unordered_set<std::string> {};
-    for (const auto& entry : module.rule_entries)
+    for (const auto& entry : module_.rule_entries)
         if (!rule_symbols.emplace(entry.symbol.text).second)
             diagnostics.throw_at(entry.symbol, runir::kr::DuplicateDefinitionError("rule", entry.symbol.text));
 }
@@ -746,10 +746,10 @@ struct FeatureSymbolSets
     std::unordered_set<std::string> numericals;
 };
 
-FeatureSymbolSets feature_symbols(const ast::Module& module)
+FeatureSymbolSets feature_symbols(const ast::Module& module_)
 {
     auto result = FeatureSymbolSets {};
-    for (const auto& feature : module.features)
+    for (const auto& feature : module_.features)
     {
         boost::apply_visitor(
             [&](const auto& concrete)
@@ -1265,29 +1265,29 @@ void validate_module_set(const std::vector<ast::Module>& modules,
     auto feature_symbols_by_module = std::unordered_map<std::string, FeatureSymbolSets> {};
     for (std::size_t i = 0; i < modules.size(); ++i)
     {
-        const auto& module = modules[i];
+        const auto& module_ = modules[i];
         const auto* error_handler = error_handlers ? (*error_handlers)[i].get() : nullptr;
         with_diagnostic_scope(diagnostics,
                               error_handler,
                               [&]
                               {
-                                  if (!signatures_by_name.emplace(module.name.text, signature_counts(module)).second)
-                                      diagnostics.throw_at(module.name, runir::kr::DuplicateDefinitionError("module", module.name.text));
-                                  feature_symbols_by_module.emplace(module.name.text, feature_symbols(module));
+                                  if (!signatures_by_name.emplace(module_.name.text, signature_counts(module_)).second)
+                                      diagnostics.throw_at(module_.name, runir::kr::DuplicateDefinitionError("module", module_.name.text));
+                                  feature_symbols_by_module.emplace(module_.name.text, feature_symbols(module_));
                               });
     }
 
     for (std::size_t i = 0; i < modules.size(); ++i)
     {
-        const auto& module = modules[i];
+        const auto& module_ = modules[i];
         const auto* error_handler = error_handlers ? (*error_handlers)[i].get() : nullptr;
         with_diagnostic_scope(
             diagnostics,
             error_handler,
             [&]
             {
-                const auto& caller_features = feature_symbols_by_module.at(module.name.text);
-                for (const auto& transition : module.rule_entries)
+                const auto& caller_features = feature_symbols_by_module.at(module_.name.text);
+                for (const auto& transition : module_.rule_entries)
                 {
                     for (const auto& rule : transition.rules)
                     {
@@ -1304,7 +1304,7 @@ void validate_module_set(const std::vector<ast::Module>& modules,
                                     const auto actual = call_argument_signature_counts(concrete, caller_features, diagnostics);
                                     if (actual != callee->second)
                                         diagnostics.throw_at(concrete,
-                                                             runir::kr::InvalidExpressionError("Call from module " + module.name.text + " to module "
+                                                             runir::kr::InvalidExpressionError("Call from module " + module_.name.text + " to module "
                                                                                                + concrete.callee.text + " has argument signature "
                                                                                                + signature_text(actual) + "; expected "
                                                                                                + signature_text(callee->second)));
@@ -1317,17 +1317,17 @@ void validate_module_set(const std::vector<ast::Module>& modules,
     }
 }
 
-void validate_module_program(const ast::ModuleProgram& program, runir::kr::parser::DiagnosticContext& diagnostics)
+void validate_program(const ast::Program& program, runir::kr::parser::DiagnosticContext& diagnostics)
 {
     validate_module_set(program.modules, diagnostics);
 
     auto module_names = std::unordered_set<std::string> {};
     auto entry_has_arguments = false;
-    for (const auto& module : program.modules)
+    for (const auto& module_ : program.modules)
     {
-        module_names.emplace(module.name.text);
-        if (module.name.text == program.entry.text)
-            entry_has_arguments = !module.arguments.empty();
+        module_names.emplace(module_.name.text);
+        if (module_.name.text == program.entry.text)
+            entry_has_arguments = !module_.arguments.empty();
     }
 
     if (!module_names.contains(program.entry.text))
@@ -1353,35 +1353,35 @@ ModuleView parse_module(const std::string& description, tyr::formalism::planning
     return lower_module(ast, domain, repository, builders, diagnostics, module_symbols);
 }
 
-ModuleProgramView parse_module_program(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
+ProgramView parse_program(const std::string& description, tyr::formalism::planning::DomainView domain, Repository& repository)
 {
     auto diagnostic_output = std::ostringstream {};
     auto error_handler = runir::kr::parser::ErrorHandlerType(description.cbegin(), description.cend(), diagnostic_output);
     auto diagnostics = runir::kr::parser::DiagnosticContext {};
     auto scope = runir::kr::parser::DiagnosticContext::Scope(diagnostics, error_handler);
-    auto ast = runir::kr::ps::ext::dl::ast::ModuleProgram {};
-    parser::parse_module_program_ast(description, ast, error_handler);
-    validate_module_program(ast, diagnostics);
+    auto ast = runir::kr::ps::ext::dl::ast::Program {};
+    parser::parse_program_ast(description, ast, error_handler);
+    validate_program(ast, diagnostics);
 
     auto dl_builder = runir::kr::dl::Builder<runir::kr::ExtFamilyTag> {};
     auto ps_builder = runir::kr::ps::ext::Builder {};
     auto builders = Builders { dl_builder, ps_builder };
     auto module_symbols = std::unordered_map<std::string, ygg::Index<ModuleSymbol>> {};
-    for (const auto& module : ast.modules)
+    for (const auto& module_ : ast.modules)
     {
         auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol>(ps_builder);
-        symbol_data->name = module.name.text;
-        module_symbols.emplace(module.name.text, intern(repository, *symbol_data).get_index());
+        symbol_data->name = module_.name.text;
+        module_symbols.emplace(module_.name.text, intern(repository, *symbol_data).get_index());
     }
     auto module_indices_by_name = std::unordered_map<std::string, ygg::Index<Module>> {};
-    auto data = runir::kr::ps::ext::checkout<ModuleProgram>(ps_builder);
+    auto data = runir::kr::ps::ext::checkout<Program>(ps_builder);
     data->modules.reserve(ast.modules.size());
 
-    for (const auto& module : ast.modules)
+    for (const auto& module_ : ast.modules)
     {
-        auto view = lower_module(module, domain, repository, builders, diagnostics, module_symbols);
+        auto view = lower_module(module_, domain, repository, builders, diagnostics, module_symbols);
         data->modules.push_back(view.get_index());
-        module_indices_by_name.emplace(module.name.text, view.get_index());
+        module_indices_by_name.emplace(module_.name.text, view.get_index());
     }
 
     data->entry_module = module_indices_by_name.at(ast.entry.text);

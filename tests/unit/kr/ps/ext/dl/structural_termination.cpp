@@ -30,10 +30,10 @@ TEST(RunirTests, ExtStructuralTerminationEmptyModuleIsTerminating)
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
-    const auto module = kr::ps::ext::dl::ModuleFactory::create_empty(*repository);
+    const auto module_ = kr::ps::ext::dl::ModuleFactory::create_empty(*repository);
 
-    const auto result = kr::ps::ext::dl::structural_termination(module);
-    const auto without_incomplete = kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, false);
+    const auto result = kr::ps::ext::dl::structural_termination(module_);
+    const auto without_incomplete = kr::ps::ext::dl::structural_termination(module_, kr::ps::dl::default_max_features, false);
 
     EXPECT_TRUE(result.is_terminating());
     EXPECT_FALSE(result.sieve_result.has_value());
@@ -53,12 +53,12 @@ TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminatin
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     // m0 -> m1 decreases fn; m1 -> m0 keeps fn unchanged: every memory cycle
     // strictly decreases fn, so the module terminates.
-    const auto module = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/terminating.module"), planning_task.get_domain().get_domain(), *repository);
+    const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/terminating.module"), planning_task.get_domain().get_domain(), *repository);
 
-    const auto incomplete_result = kr::ps::ext::dl::incomplete_structural_termination(module);
-    const auto result = kr::ps::ext::dl::structural_termination(module);
-    const auto without_incomplete = kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, false);
-    const auto numericals = module.get_features<kr::ps::dl::NumericalFeature>();
+    const auto incomplete_result = kr::ps::ext::dl::incomplete_structural_termination(module_);
+    const auto result = kr::ps::ext::dl::structural_termination(module_);
+    const auto without_incomplete = kr::ps::ext::dl::structural_termination(module_, kr::ps::dl::default_max_features, false);
+    const auto numericals = module_.get_features<kr::ps::dl::NumericalFeature>();
 
     EXPECT_TRUE(result.is_terminating());
     ASSERT_TRUE(result.incomplete_result.has_value());
@@ -85,10 +85,10 @@ TEST(RunirTests, ExtStructuralTerminationUsesDoRuleEffects)
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     // The do edge declares fn unchanged, and the return edge decreases fn.
     // This is structurally terminating even though a do edge is in the memory cycle.
-    const auto module =
+    const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/do_rule_effects.module"), planning_task.get_domain().get_domain(), *repository);
 
-    const auto result = kr::ps::ext::dl::structural_termination(module);
+    const auto result = kr::ps::ext::dl::structural_termination(module_);
 
     EXPECT_TRUE(result.is_terminating());
 }
@@ -156,7 +156,7 @@ TEST(RunirTests, ExtStructuralTerminationActionRulesUseEffectOverapproximation)
   )
   {0}
 ))", module_source(true));
-        const auto program = kr::ps::ext::dl::parse_module_program(program_source, domain.get_domain(), *repository);
+        const auto program = kr::ps::ext::dl::parse_program(program_source, domain.get_domain(), *repository);
         EXPECT_EQ(kr::ps::ext::dl::structural_termination(program).is_terminating(), terminating);
         EXPECT_EQ(kr::ps::ext::dl::incomplete_structural_termination(program).is_terminating(), terminating);
     }
@@ -173,10 +173,10 @@ TEST(RunirTests, ExtStructuralTerminationLoadPreservesRegisterIndependentFeature
     // Loading r0 does not change the planning state and fn does not mention r0.
     // The load edge should therefore preserve fn, allowing the following
     // decreasing sketch edge to prove the memory cycle terminating.
-    const auto module =
+    const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/load_independent.module"), planning_task.get_domain().get_domain(), *repository);
 
-    const auto result = kr::ps::ext::dl::structural_termination(module);
+    const auto result = kr::ps::ext::dl::structural_termination(module_);
 
     EXPECT_TRUE(result.is_terminating());
 }
@@ -192,9 +192,9 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRegisterDependentFeatur
     // Here fn is the cardinality of the concept stored in r0. The load edge
     // writes r0, so fn is unconstrained and can restore the ranking after the
     // decreasing edge; SIEVE must leave a counterexample cycle.
-    const auto module = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/load_dependent.module"), planning_task.get_domain().get_domain(), *repository);
+    const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/load_dependent.module"), planning_task.get_domain().get_domain(), *repository);
 
-    const auto result = kr::ps::ext::dl::structural_termination(module);
+    const auto result = kr::ps::ext::dl::structural_termination(module_);
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
@@ -215,9 +215,9 @@ TEST(RunirTests, ExtStructuralTerminationFindsRegistersInsideQueries)
         source.replace(position,
                        std::string("(c_register r0)").size(),
                        std::string("(c_project x (q_project (x) (q_join (q_concept x (c_top)) (q_concept x (") + expression + ")))))");
-        const auto module = kr::ps::ext::dl::parse_module(source, domain.get_domain(), *repository);
+        const auto module_ = kr::ps::ext::dl::parse_module(source, domain.get_domain(), *repository);
         for (const auto preprocessing : { false, true })
-            EXPECT_EQ(kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, preprocessing).is_terminating(),
+            EXPECT_EQ(kr::ps::ext::dl::structural_termination(module_, kr::ps::dl::default_max_features, preprocessing).is_terminating(),
                       std::string(expression) == "c_top");
     }
 }
@@ -233,10 +233,10 @@ TEST(RunirTests, ExtStructuralTerminationLoadUnconstrainsRoleRegisterDependentFe
     // Here fn counts objects reached through the role stored in r0. The load edge
     // writes r0, so fn is unconstrained and can restore the ranking after the
     // decreasing edge; SIEVE must leave a counterexample cycle.
-    const auto module =
+    const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/role_load_dependent.module"), planning_task.get_domain().get_domain(), *repository);
 
-    const auto result = kr::ps::ext::dl::structural_termination(module);
+    const auto result = kr::ps::ext::dl::structural_termination(module_);
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
@@ -253,9 +253,9 @@ TEST(RunirTests, ExtStructuralTerminationChoosePreservesBindingSemantics)
     {
         auto source = read_fixture(std::string("kr/ps/ext/dl/") + fixture + ".module");
         source.replace(source.find("(:load"), 6, "(:choose");
-        const auto module = kr::ps::ext::dl::parse_module(source, planning_domain.get_domain(), *repository);
+        const auto module_ = kr::ps::ext::dl::parse_module(source, planning_domain.get_domain(), *repository);
         for (const auto preprocessing : { false, true })
-            EXPECT_EQ(kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, preprocessing).is_terminating(),
+            EXPECT_EQ(kr::ps::ext::dl::structural_termination(module_, kr::ps::dl::default_max_features, preprocessing).is_terminating(),
                       std::string(fixture) == "load_independent");
     }
 }
@@ -277,11 +277,11 @@ TEST(RunirTests, ExtStructuralTerminationBindingEffectsOverrideImplicitPreservat
                                     + expression + "))))) " + "(:rules (:rule (:symbol bind) (:expression (:source-memory m0) (:target-memory m0) (:" + kind
                                     + " (:conditions (greater_zero n)) (:concept all) (:register (:concept selected)) " + "(:effects (positive b) (" + effect
                                     + " n)))))))";
-                const auto module = kr::ps::ext::dl::parse_module(source, planning_domain.get_domain(), *repository);
+                const auto module_ = kr::ps::ext::dl::parse_module(source, planning_domain.get_domain(), *repository);
                 // Counts are bounded on each finite instance, so either unopposed
                 // strict direction terminates; unchanged admits a self-loop.
                 for (const auto preprocessing : { false, true })
-                    EXPECT_EQ(kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, preprocessing).is_terminating(),
+                    EXPECT_EQ(kr::ps::ext::dl::structural_termination(module_, kr::ps::dl::default_max_features, preprocessing).is_terminating(),
                               std::string(effect) != "unchanged");
             }
 }
@@ -296,10 +296,10 @@ TEST(RunirTests, ExtStructuralTerminationUnconstrainedReturnIsNotTerminating)
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     // As above, but the return rule m1 -> m0 leaves fn unconstrained: the
     // memory cycle can restore fn, so termination cannot be proven.
-    const auto module =
+    const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/non_terminating.module"), planning_task.get_domain().get_domain(), *repository);
 
-    const auto result = kr::ps::ext::dl::structural_termination(module);
+    const auto result = kr::ps::ext::dl::structural_termination(module_);
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
@@ -330,9 +330,9 @@ TEST(RunirTests, ExtStructuralTerminationPreservesSparseMemoryStateIdentities)
         auto data = ygg::Data<kr::ps::ext::MemoryState>(std::string(name));
         repository->get_or_create(data);
     }
-    const auto module =
+    const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/non_terminating.module"), planning_task.get_domain().get_domain(), *repository);
-    const auto memory_states = module.get_memory_states();
+    const auto memory_states = module_.get_memory_states();
     ASSERT_EQ(memory_states.size(), 2);
     EXPECT_EQ(memory_states[0].get_index(), ygg::Index<kr::ps::ext::MemoryState>(1));
     EXPECT_EQ(memory_states[1].get_index(), ygg::Index<kr::ps::ext::MemoryState>(3));
@@ -342,7 +342,7 @@ TEST(RunirTests, ExtStructuralTerminationPreservesSparseMemoryStateIdentities)
     for (const auto preprocessing : { false, true })
     {
         SCOPED_TRACE(preprocessing);
-        const auto result = kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, preprocessing);
+        const auto result = kr::ps::ext::dl::structural_termination(module_, kr::ps::dl::default_max_features, preprocessing);
         ASSERT_FALSE(result.is_terminating());
         ASSERT_TRUE(result.sieve_result.has_value());
         ASSERT_NE(result.sieve_result->counterexample, nullptr);
@@ -369,9 +369,9 @@ TEST(RunirTests, ExtStructuralTerminationIgnoresOneWayBridgeBetweenMemoryCycles)
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     // m0 <-> m1 terminates on fa, m2 <-> m3 does not terminate on fb, and
     // the one-way bridge m1 -> m2 cannot participate in a cycle.
-    const auto module = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/one_way_bridge.module"), planning_task.get_domain().get_domain(), *repository);
+    const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/one_way_bridge.module"), planning_task.get_domain().get_domain(), *repository);
 
-    const auto result = kr::ps::ext::dl::structural_termination(module);
+    const auto result = kr::ps::ext::dl::structural_termination(module_);
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
@@ -405,11 +405,11 @@ TEST(RunirTests, ExtSurvivingRulesRetainOnlyResidualLabelsAcrossRuleVariants)
     for (const auto& [fixture, expected] : cases)
     {
         SCOPED_TRACE(fixture);
-        const auto module = kr::ps::ext::dl::parse_module(read_fixture(fixture), planning_task.get_domain().get_domain(), *repository);
+        const auto module_ = kr::ps::ext::dl::parse_module(read_fixture(fixture), planning_task.get_domain().get_domain(), *repository);
         for (const auto preprocessing : { false, true })
         {
             SCOPED_TRACE(preprocessing);
-            const auto result = kr::ps::ext::dl::structural_termination(module, kr::ps::dl::default_max_features, preprocessing);
+            const auto result = kr::ps::ext::dl::structural_termination(module_, kr::ps::dl::default_max_features, preprocessing);
             ASSERT_TRUE(result.sieve_result.has_value());
             const auto& rules = result.sieve_result->surviving_rules;
             auto symbols = std::set<std::string> {};
@@ -434,12 +434,12 @@ TEST(RunirTests, ExtStructuralTerminationLiftsProjectedComponentsToGlobalAxes)
     const auto planning_task = fp::Parser(domain).parse_task(task_file);
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
-    const auto module =
+    const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/projected_components.module"), planning_task.get_domain().get_domain(), *repository);
 
-    const auto result = kr::ps::ext::dl::structural_termination(module);
-    const auto booleans = module.get_features<kr::ps::dl::BooleanFeature>();
-    const auto numericals = module.get_features<kr::ps::dl::NumericalFeature>();
+    const auto result = kr::ps::ext::dl::structural_termination(module_);
+    const auto booleans = module_.get_features<kr::ps::dl::BooleanFeature>();
+    const auto numericals = module_.get_features<kr::ps::dl::NumericalFeature>();
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_TRUE(result.sieve_result.has_value());
@@ -513,10 +513,10 @@ TEST(RunirTests, ExtStructuralTerminationAppliesFeatureLimitPerResidualComponent
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
 
-    const auto module = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/split_features.module"), planning_task.get_domain().get_domain(), *repository);
+    const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/split_features.module"), planning_task.get_domain().get_domain(), *repository);
 
-    const auto result = kr::ps::ext::dl::structural_termination(module);
-    const auto numericals = module.get_features<kr::ps::dl::NumericalFeature>();
+    const auto result = kr::ps::ext::dl::structural_termination(module_);
+    const auto numericals = module_.get_features<kr::ps::dl::NumericalFeature>();
 
     EXPECT_FALSE(result.is_terminating());
     EXPECT_EQ(numericals.size(), 15);
@@ -526,7 +526,7 @@ TEST(RunirTests, ExtStructuralTerminationAppliesFeatureLimitPerResidualComponent
         EXPECT_LT(vertex.get_property().numerical_values, std::uint64_t { 1 } << 15);
 }
 
-TEST(RunirTests, ExtStructuralTerminationAcyclicModuleProgramCallsAreTerminating)
+TEST(RunirTests, ExtStructuralTerminationAcyclicProgramCallsAreTerminating)
 {
     namespace fp = tyr::formalism::planning;
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
@@ -535,7 +535,7 @@ TEST(RunirTests, ExtStructuralTerminationAcyclicModuleProgramCallsAreTerminating
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_task.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto program =
-        kr::ps::ext::dl::parse_module_program(read_fixture("kr/ps/ext/dl/acyclic_calls.program"), planning_task.get_domain().get_domain(), *repository);
+        kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/dl/acyclic_calls.program"), planning_task.get_domain().get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::structural_termination(program);
 
@@ -544,7 +544,7 @@ TEST(RunirTests, ExtStructuralTerminationAcyclicModuleProgramCallsAreTerminating
     EXPECT_TRUE(result.recursive_call_rules.empty());
 }
 
-TEST(RunirTests, ExtStructuralTerminationRecursiveModuleProgramCallsAreNotTerminating)
+TEST(RunirTests, ExtStructuralTerminationRecursiveProgramCallsAreNotTerminating)
 {
     namespace fp = tyr::formalism::planning;
     const auto domain = benchmark_path("classical/tests/gripper/domain.pddl");
@@ -556,7 +556,7 @@ TEST(RunirTests, ExtStructuralTerminationRecursiveModuleProgramCallsAreNotTermin
     // insufficient. The program-level call graph root -> leaf -> root is a
     // recursive module cycle and is conservatively rejected.
     const auto program =
-        kr::ps::ext::dl::parse_module_program(read_fixture("kr/ps/ext/dl/recursive_calls.program"), planning_task.get_domain().get_domain(), *repository);
+        kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/dl/recursive_calls.program"), planning_task.get_domain().get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::structural_termination(program);
 
@@ -573,7 +573,7 @@ TEST(RunirTests, ExtStructuralTerminationPreservesCallLabelsAndOrder)
     const auto planning_domain = fp::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
-    const auto original = kr::ps::ext::dl::parse_module_program(read_fixture("kr/ps/ext/dl/ordered_calls.program"), planning_domain.get_domain(), *repository);
+    const auto original = kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/dl/ordered_calls.program"), planning_domain.get_domain(), *repository);
 
     for (const auto omit_target : { false, true })
     {

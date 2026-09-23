@@ -30,7 +30,7 @@ public:
     static std::vector<ModuleView> create_bonet_et_al_icaps2024_modules(tyr::formalism::planning::DomainView domain, Repository& repository);
     static std::vector<std::string> create_bonet_et_al_icaps2024_descriptions();
     static std::string create_bonet_et_al_icaps2024_program_description();
-    static ModuleProgramView create_bonet_et_al_icaps2024_program(tyr::formalism::planning::DomainView domain, Repository& repository);
+    static ProgramView create_bonet_et_al_icaps2024_program(tyr::formalism::planning::DomainView domain, Repository& repository);
 
     static ModuleView create_on_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository);
     static ModuleView create_on_table_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository);

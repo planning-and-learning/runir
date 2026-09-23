@@ -91,9 +91,9 @@ rule_entry_type const rule_entry = "rule_entry";
 rules_section_type const rules_section = ":rules";
 memory_section_type const memory_section = ":memory";
 module_type const module = "module";
-module_program_type const module_program = "module_program";
+program_type const program = "program";
 module_root_type const module_root = "module_root";
-module_program_root_type const module_program_root = "module_program_root";
+program_root_type const program_root = "program_root";
 
 const auto identifier_def = x3::rule<IdentifierText, std::string> { "identifier_text" } =
     raw[lexeme[(alpha | char_('_')) >> *(alnum | char_('_') | char_('-'))]];
@@ -203,9 +203,9 @@ const auto memory_section_def = context(":memory")[(lit("(") >> keyword(":memory
 const auto module_def = context("module")[(lit("(") >> keyword(":module")) > symbol_section > arguments_section > registers_section > entry_section
                                           > memory_section > features_section > rules_section > lit(")")];
 const auto required_modules = x3::rule<class RequiredModules, std::vector<ast::Module>> { "one or more modules" } = +module;
-const auto module_program_def = context("program")[(lit("(") >> keyword(":program")) > entry_section > required_modules > lit(")")];
+const auto program_def = context("program")[(lit("(") >> keyword(":program")) > entry_section > required_modules > lit(")")];
 const auto module_root_def = context("module")[module > eoi];
-const auto module_program_root_def = context("program")[module_program > eoi];
+const auto program_root_def = context("program")[program > eoi];
 
 BOOST_SPIRIT_DEFINE(identifier,
                     quoted_string,
@@ -263,9 +263,9 @@ BOOST_SPIRIT_DEFINE(identifier,
                     rules_section,
                     memory_section,
                     module,
-                    module_program,
+                    program,
                     module_root,
-                    module_program_root)
+                    program_root)
 
 struct IdentifierClass : x3::annotate_on_success
 {
@@ -435,13 +435,13 @@ struct RuleEntryClass : x3::annotate_on_success
 struct ModuleClass : x3::annotate_on_success
 {
 };
-struct ModuleProgramClass : x3::annotate_on_success
+struct ProgramClass : x3::annotate_on_success
 {
 };
 struct ModuleRootClass : runir::kr::parser::ErrorHandlerBase
 {
 };
-struct ModuleProgramRootClass : runir::kr::parser::ErrorHandlerBase
+struct ProgramRootClass : runir::kr::parser::ErrorHandlerBase
 {
 };
 

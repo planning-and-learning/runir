@@ -5,8 +5,7 @@
 #include "runir/serialization/kr/dl/semantics/call_arguments_view.hpp"
 #include "runir/serialization/kr/dl/semantics/denotation_view.hpp"
 #include "runir/serialization/kr/dl/semantics/register_values_view.hpp"
-#include "runir/serialization/kr/ps/ext/execution_declarations.hpp"
-#include "runir/serialization/kr/ps/ext/module_program_view.hpp"
+#include "runir/serialization/kr/ps/ext/program_view.hpp"
 #include "tyr/planning/state_repository.hpp"
 #include "tyr/serialization/formalism/object_view.hpp"
 #include "tyr/serialization/planning/state_view.hpp"
@@ -16,21 +15,30 @@ namespace ygg::serialization
 {
 
 template<typename Archive, ::tyr::TaskKind Kind>
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleStateView<Kind>>)
+{
+    ar.field("state", [](const auto& value) -> decltype(auto) { return (value.get_state()); });
+    ar.field("module", [](const auto& value) -> decltype(auto) { return (value.get_module()); });
+    ar.field("memory_state", [](const auto& value) -> decltype(auto) { return (value.get_memory_state()); });
+    ar.field("registers", [](const auto& value) -> decltype(auto) { return (value.get_registers()); });
+    ar.field("arguments", [](const auto& value) -> decltype(auto) { return (value.get_arguments()); });
+}
+
+template<typename Archive, ::tyr::TaskKind Kind>
 void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::CallStackView<Kind>>)
 {
     ar.field("module", [](const auto& value) -> decltype(auto) { return (value.get_module()); });
-    ar.field("memory_state", [](const auto& value) -> decltype(auto) { return (value.get_memory_state()); });
+    ar.field("return_memory_state", [](const auto& value) -> decltype(auto) { return (value.get_return_memory_state()); });
     ar.field("registers", [](const auto& value) -> decltype(auto) { return (value.get_registers()); });
     ar.field("arguments", [](const auto& value) -> decltype(auto) { return (value.get_arguments()); });
     ar.field("caller", [](const auto& value) -> decltype(auto) { return (value.get_caller()); });
 }
 
 template<typename Archive, ::tyr::TaskKind Kind>
-void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ExecutionStateView<Kind>>)
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ProgramStateView<Kind>>)
 {
-    ar.field("state", [](const auto& value) -> decltype(auto) { return (value.get_state()); });
     ar.field("program", [](const auto& value) -> decltype(auto) { return (value.get_program()); });
-    ar.field("phase", [](const auto& value) -> decltype(auto) { return (value.get_phase()); });
+    ar.field("module_state", [](const auto& value) -> decltype(auto) { return (value.get_module_state()); });
     ar.field("call_stack", [](const auto& value) -> decltype(auto) { return (value.get_call_stack()); });
 }
 

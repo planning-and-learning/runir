@@ -16,8 +16,8 @@ ModuleIncompleteStructuralTerminationResult incomplete_structural_termination(Mo
 
 /// Applies the incomplete proof to every module and additionally rejects
 /// unresolved or recursive module calls.
-ModuleProgramIncompleteStructuralTerminationResult
-incomplete_structural_termination(ModuleProgramView program, bool use_memory_scc_scope = runir::kr::ps::dl::default_use_memory_scc_scope);
+ProgramIncompleteStructuralTerminationResult
+incomplete_structural_termination(ProgramView program, bool use_memory_scc_scope = runir::kr::ps::dl::default_use_memory_scc_scope);
 
 }  // namespace runir::kr::ps::ext::dl
 

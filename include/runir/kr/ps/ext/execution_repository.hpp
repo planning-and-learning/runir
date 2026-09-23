@@ -22,13 +22,13 @@ namespace runir::kr::ps::ext
 {
 
 template<tyr::TaskKind Kind>
-using ExecutionSymbolRepository = ygg::formalism::SymbolRepository<CallStack, ExecutionState<Kind>>;
+using ExecutionSymbolRepository = ygg::formalism::SymbolRepository<ModuleState<Kind>, CallStack, ProgramState<Kind>>;
 
 template<tyr::TaskKind Kind>
 class ExecutionBuilder
 {
 private:
-    ygg::formalism::BuilderStorage<CallStack, ExecutionState<Kind>> m_storage;
+    ygg::formalism::BuilderStorage<ModuleState<Kind>, CallStack, ProgramState<Kind>> m_storage;
 
 public:
     template<typename T>

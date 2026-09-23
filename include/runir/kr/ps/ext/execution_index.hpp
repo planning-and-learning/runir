@@ -11,6 +11,13 @@
 namespace ygg
 {
 
+template<tyr::TaskKind Kind>
+struct Index<runir::kr::ps::ext::ModuleState<Kind>> : IndexMixin<Index<runir::kr::ps::ext::ModuleState<Kind>>>
+{
+    using Base = IndexMixin<Index<runir::kr::ps::ext::ModuleState<Kind>>>;
+    using Base::Base;
+};
+
 template<>
 struct Index<runir::kr::ps::ext::CallStack> : IndexMixin<Index<runir::kr::ps::ext::CallStack>>
 {
@@ -19,9 +26,9 @@ struct Index<runir::kr::ps::ext::CallStack> : IndexMixin<Index<runir::kr::ps::ex
 };
 
 template<tyr::TaskKind Kind>
-struct Index<runir::kr::ps::ext::ExecutionState<Kind>> : IndexMixin<Index<runir::kr::ps::ext::ExecutionState<Kind>>>
+struct Index<runir::kr::ps::ext::ProgramState<Kind>> : IndexMixin<Index<runir::kr::ps::ext::ProgramState<Kind>>>
 {
-    using Base = IndexMixin<Index<runir::kr::ps::ext::ExecutionState<Kind>>>;
+    using Base = IndexMixin<Index<runir::kr::ps::ext::ProgramState<Kind>>>;
     using Base::Base;
 };
 

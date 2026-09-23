@@ -1,7 +1,7 @@
-#ifndef RUNIR_SERIALIZATION_KR_PS_EXT_MODULE_PROGRAM_PROOF_GRAPH_HPP_
-#define RUNIR_SERIALIZATION_KR_PS_EXT_MODULE_PROGRAM_PROOF_GRAPH_HPP_
+#ifndef RUNIR_SERIALIZATION_KR_PS_EXT_PROGRAM_PROOF_GRAPH_HPP_
+#define RUNIR_SERIALIZATION_KR_PS_EXT_PROGRAM_PROOF_GRAPH_HPP_
 
-#include "runir/kr/ps/ext/module_program_proof_graph.hpp"
+#include "runir/kr/ps/ext/program_proof_graph.hpp"
 #include "runir/serialization/graphs/static_graph.hpp"
 #include "runir/serialization/kr/ps/ext/execution_view.hpp"
 #include "runir/serialization/kr/ps/ext/rule_variant_view.hpp"
@@ -12,9 +12,9 @@ namespace ygg::serialization
 {
 
 template<typename Archive, ::tyr::TaskKind Kind>
-void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>)
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ProgramProofVertexLabel<Kind>>)
 {
-    ar.field("execution_state", [](const auto& value) -> decltype(auto) { return (value.execution_state); });
+    ar.field("program_state", [](const auto& value) -> decltype(auto) { return (value.program_state); });
     ar.field("is_initial", [](const auto& value) -> decltype(auto) { return (value.is_initial); });
     ar.field("is_goal", [](const auto& value) -> decltype(auto) { return (value.is_goal); });
     ar.field("is_alive", [](const auto& value) -> decltype(auto) { return (value.is_alive); });
@@ -22,14 +22,14 @@ void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::Modul
 }
 
 template<typename Archive>
-void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleProgramProofStateTransition>)
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ProgramProofStateTransition>)
 {
     ar.field("action", [](const auto& value) -> decltype(auto) { return (value.action); });
     ar.field("cost", [](const auto& value) -> decltype(auto) { return (value.cost); });
 }
 
 template<typename Archive>
-void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ModuleProgramProofEdgeLabel>)
+void describe_fields(Archive& ar, std::type_identity<::runir::kr::ps::ext::ProgramProofEdgeLabel>)
 {
     ar.field("state_transition", [](const auto& value) -> decltype(auto) { return (value.state_transition); });
     ar.field("rule", [](const auto& value) -> decltype(auto) { return (value.rule); });

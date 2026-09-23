@@ -7,7 +7,7 @@
 #include "runir/kr/ps/dl/effect_view.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/memory_state_view.hpp"
-#include "runir/kr/ps/ext/module_program_view.hpp"
+#include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/ps/ext/module_symbol_view.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"

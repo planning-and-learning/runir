@@ -9,7 +9,7 @@
 #include "runir/serialization/kr/dl/semantics/denotation_view.hpp"
 #include "runir/serialization/kr/ps/base/sketch_view.hpp"
 #include "runir/serialization/kr/ps/base/sketch_proof_graph.hpp"
-#include "runir/serialization/kr/ps/ext/module_program_proof_graph.hpp"
+#include "runir/serialization/kr/ps/ext/program_proof_graph.hpp"
 #include "runir/serialization/kr/uns/classifier_view.hpp"
 
 #include <tyr/serialization/serialization.hpp>

@@ -20,9 +20,9 @@ auto create_module(kr::ps::ext::Repository& repository,
                    kr::ps::ext::MemoryStateView entry,
                    std::initializer_list<kr::ps::ext::MemoryStateView> memory_states) -> kr::ps::ext::ModuleView;
 
-auto create_module_program(kr::ps::ext::Repository& repository,
+auto create_program(kr::ps::ext::Repository& repository,
                            kr::ps::ext::ModuleView entry,
-                           std::initializer_list<kr::ps::ext::ModuleView> modules) -> kr::ps::ext::ModuleProgramView;
+                           std::initializer_list<kr::ps::ext::ModuleView> modules) -> kr::ps::ext::ProgramView;
 
 auto create_top_concept(kr::dl::ExtConstructorRepository& repository) -> kr::dl::ExtConstructorView<kr::dl::ConceptTag>;
 

@@ -3,40 +3,24 @@
 
 #include "runir/kr/dl/semantics/declarations.hpp"
 
-#include <cstdint>
 #include <memory>
-#include <stdexcept>
-#include <string_view>
 #include <tyr/planning/declarations.hpp>
 #include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::ps::ext
 {
 
+template<tyr::TaskKind Kind>
+struct ModuleState
+{
+};
+
 struct CallStack
 {
 };
 
-enum class ExecutionPhase : std::uint8_t
-{
-    INTERNAL,
-    EXTERNAL,
-};
-
-constexpr std::string_view to_string(ExecutionPhase phase)
-{
-    switch (phase)
-    {
-        case ExecutionPhase::INTERNAL:
-            return "INTERNAL";
-        case ExecutionPhase::EXTERNAL:
-            return "EXTERNAL";
-    }
-    throw std::invalid_argument("invalid ExecutionPhase");
-}
-
 template<tyr::TaskKind Kind>
-struct ExecutionState
+struct ProgramState
 {
 };
 
@@ -53,10 +37,13 @@ template<tyr::TaskKind Kind>
 using ExecutionRepositoryFactoryPtr = std::shared_ptr<ExecutionRepositoryFactory<Kind>>;
 
 template<tyr::TaskKind Kind>
+using ModuleStateView = ygg::View<ygg::Index<ModuleState<Kind>>, ExecutionRepository<Kind>>;
+
+template<tyr::TaskKind Kind>
 using CallStackView = ygg::View<ygg::Index<CallStack>, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using ExecutionStateView = ygg::View<ygg::Index<ExecutionState<Kind>>, ExecutionRepository<Kind>>;
+using ProgramStateView = ygg::View<ygg::Index<ProgramState<Kind>>, ExecutionRepository<Kind>>;
 
 }  // namespace runir::kr::ps::ext
 

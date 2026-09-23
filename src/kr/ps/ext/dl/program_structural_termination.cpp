@@ -14,15 +14,15 @@ namespace runir::kr::ps::ext::dl
 namespace detail
 {
 
-inline void analyze_modules(ModuleProgramView program,
-                            ModuleProgramStructuralTerminationResult& result,
+inline void analyze_modules(ProgramView program,
+                            ProgramStructuralTerminationResult& result,
                             std::size_t max_features,
                             bool use_incomplete_preprocessing,
                             bool use_memory_scc_scope)
 {
-    for (auto module : program.get_modules())
+    for (auto module_ : program.get_modules())
     {
-        auto module_result = structural_termination(module, max_features, use_incomplete_preprocessing, use_memory_scc_scope);
+        auto module_result = structural_termination(module_, max_features, use_incomplete_preprocessing, use_memory_scc_scope);
         if (!module_result.is_terminating())
             result.status = StructuralTerminationStatus::NON_TERMINATING;
         result.module_results.push_back(std::move(module_result));
@@ -35,7 +35,7 @@ struct ModuleCallGraph
     std::vector<RuleVariantView> unresolved_rules;
 };
 
-inline std::optional<std::size_t> find_module(ModuleProgramView program, ygg::Index<ModuleSymbol> symbol)
+inline std::optional<std::size_t> find_module(ProgramView program, ygg::Index<ModuleSymbol> symbol)
 {
     const auto modules = program.get_modules();
     for (std::size_t position = 0; position < modules.size(); ++position)
@@ -44,7 +44,7 @@ inline std::optional<std::size_t> find_module(ModuleProgramView program, ygg::In
     return std::nullopt;
 }
 
-inline ModuleCallGraph build_module_call_graph(ModuleProgramView program)
+inline ModuleCallGraph build_module_call_graph(ProgramView program)
 {
     const auto modules = program.get_modules();
     auto builder = graphs::StaticGraphBuilder<std::tuple<>, RuleVariantView> {};
@@ -83,7 +83,7 @@ inline ModuleCallGraph build_module_call_graph(ModuleProgramView program)
     return { graphs::StaticGraph<std::tuple<>, RuleVariantView> { std::move(builder) }, std::move(unresolved_rules) };
 }
 
-std::vector<RuleVariantView> find_recursive_call_rules(ModuleProgramView program)
+std::vector<RuleVariantView> find_recursive_call_rules(ProgramView program)
 {
     const auto call_graph = build_module_call_graph(program);
     auto result = call_graph.unresolved_rules;
@@ -97,10 +97,10 @@ std::vector<RuleVariantView> find_recursive_call_rules(ModuleProgramView program
 
 }  // namespace detail
 
-ModuleProgramStructuralTerminationResult
-structural_termination(ModuleProgramView program, std::size_t max_features, bool use_incomplete_preprocessing, bool use_memory_scc_scope)
+ProgramStructuralTerminationResult
+structural_termination(ProgramView program, std::size_t max_features, bool use_incomplete_preprocessing, bool use_memory_scc_scope)
 {
-    auto result = ModuleProgramStructuralTerminationResult {};
+    auto result = ProgramStructuralTerminationResult {};
     detail::analyze_modules(program, result, max_features, use_incomplete_preprocessing, use_memory_scc_scope);
     result.recursive_call_rules = detail::find_recursive_call_rules(program);
     if (!result.recursive_call_rules.empty())

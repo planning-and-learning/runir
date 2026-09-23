@@ -11,9 +11,9 @@ namespace runir::kr::ps::ext::dl::parser
 {
 
 ast::Module parse_module_ast(const std::string& description);
-ast::ModuleProgram parse_module_program_ast(const std::string& description);
+ast::Program parse_program_ast(const std::string& description);
 void parse_module_ast(const std::string& description, ast::Module& result, runir::kr::parser::ErrorHandlerType& error_handler);
-void parse_module_program_ast(const std::string& description, ast::ModuleProgram& result, runir::kr::parser::ErrorHandlerType& error_handler);
+void parse_program_ast(const std::string& description, ast::Program& result, runir::kr::parser::ErrorHandlerType& error_handler);
 
 }  // namespace runir::kr::ps::ext::dl::parser
 

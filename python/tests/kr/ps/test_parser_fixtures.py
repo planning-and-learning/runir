@@ -38,4 +38,4 @@ def test_parser_negative_fixture(case: ParserFixture, gripper_planning_domain: P
             if case["parser"] == "ext_module":
                 dl.parse_module(description, gripper_planning_domain, repository)
             else:
-                dl.parse_module_program(description, gripper_planning_domain, repository)
+                dl.parse_program(description, gripper_planning_domain, repository)

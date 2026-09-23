@@ -23,7 +23,7 @@ add_library(kr SHARED
     ps/base/dl/structural_termination/result.cpp
     ps/base/sketch_executor.cpp
     ps/ext/dl/incomplete_structural_termination.cpp
-    ps/ext/dl/module_program_structural_termination.cpp
+    ps/ext/dl/program_structural_termination.cpp
     ps/ext/dl/module_factory.cpp
     ps/ext/dl/parser/parser.cpp
     ps/ext/dl/parser/parser_instantiations.cpp
@@ -32,7 +32,7 @@ add_library(kr SHARED
     ps/ext/dl/structural_termination/analysis.cpp
     ps/ext/dl/structural_termination/incomplete_result.cpp
     ps/ext/dl/structural_termination/result.cpp
-    ps/ext/module_program_executor.cpp
+    ps/ext/program_executor.cpp
     ps/structural_termination.cpp
     ps/structural_termination/incomplete.cpp
     ps/structural_termination/policy_graph.cpp

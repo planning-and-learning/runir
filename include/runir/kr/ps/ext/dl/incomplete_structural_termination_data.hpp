@@ -40,7 +40,7 @@ struct ModuleIncompleteStructuralTerminationResult
     bool is_terminating() const noexcept { return status == IncompleteStructuralTerminationStatus::TERMINATING; }
 };
 
-struct ModuleProgramIncompleteStructuralTerminationResult
+struct ProgramIncompleteStructuralTerminationResult
 {
     IncompleteStructuralTerminationStatus status = IncompleteStructuralTerminationStatus::TERMINATING;
     std::vector<ModuleIncompleteStructuralTerminationResult> module_results;

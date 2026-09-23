@@ -68,7 +68,7 @@ struct ModuleStructuralTerminationResult
     bool is_terminating() const noexcept { return status == StructuralTerminationStatus::TERMINATING; }
 };
 
-struct ModuleProgramStructuralTerminationResult
+struct ProgramStructuralTerminationResult
 {
     StructuralTerminationStatus status = StructuralTerminationStatus::TERMINATING;
     std::vector<ModuleStructuralTerminationResult> module_results;

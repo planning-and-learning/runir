@@ -67,7 +67,7 @@ TEST(RunirTests, PolicyExtParserNegativeFixtures)
                 if (parser == "ext_module")
                     static_cast<void>(kr::ps::ext::dl::parse_module(description, domain, *repository));
                 else if (parser == "ext_program")
-                    static_cast<void>(kr::ps::ext::dl::parse_module_program(description, domain, *repository));
+                    static_cast<void>(kr::ps::ext::dl::parse_program(description, domain, *repository));
                 else
                     throw std::runtime_error("Unknown parser fixture kind: " + parser);
             },
@@ -81,11 +81,11 @@ TEST(RunirTests, ExtendedModuleFormatterPreservesAlternativeRuleGrouping)
     const auto domain = planning_domain.get_domain();
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
-    const auto module = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/parser/alternative_rules.module"), domain, *repository);
+    const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/parser/alternative_rules.module"), domain, *repository);
 
-    ASSERT_EQ(module.get_memory_transitions().size(), 1);
-    ASSERT_EQ(module.get_memory_transitions().front().size(), 2);
-    const auto formatted = fmt::format("{}", module);
+    ASSERT_EQ(module_.get_memory_transitions().size(), 1);
+    ASSERT_EQ(module_.get_memory_transitions().front().size(), 2);
+    const auto formatted = fmt::format("{}", module_);
     const auto symbol = std::string("(:symbol choose)");
     ASSERT_NE(formatted.find(symbol), std::string::npos) << formatted;
     EXPECT_EQ(formatted.find(symbol), formatted.rfind(symbol)) << formatted;
@@ -177,19 +177,19 @@ TEST(RunirTests, ExtendedQueryFeatureActionRuleRoundTrip)
         (:rule (:symbol move) (:expression (:source-memory start) (:target-memory done)
           (:action (:conditions) (:action "move") (:query moves) (:effects)))))
     ))";
-    const auto module = kr::ps::ext::dl::parse_module(description, domain, *repository);
-    ASSERT_EQ(module.get_query_features().size(), 3);
-    const auto query_feature = module.get_query_features().front();
+    const auto module_ = kr::ps::ext::dl::parse_module(description, domain, *repository);
+    ASSERT_EQ(module_.get_query_features().size(), 3);
+    const auto query_feature = module_.get_query_features().front();
     EXPECT_EQ(query_feature.get_symbol(), "moves");
     const auto columns = query_feature.get_expression().get_columns();
     ASSERT_EQ(columns.size(), 2);
     EXPECT_EQ(columns[0].get_name(), "to");
     EXPECT_EQ(columns[1].get_name(), "from");
-    EXPECT_TRUE(module.get_query_features().back().get_expression().get_schema().empty());
-    EXPECT_EQ(kr::ps::ext::syntactic_complexity(module), 13);
+    EXPECT_TRUE(module_.get_query_features().back().get_expression().get_schema().empty());
+    EXPECT_EQ(kr::ps::ext::syntactic_complexity(module_), 13);
 
-    ASSERT_EQ(module.get_memory_transitions().size(), 1);
-    ASSERT_EQ(module.get_memory_transitions().front().size(), 1);
+    ASSERT_EQ(module_.get_memory_transitions().size(), 1);
+    ASSERT_EQ(module_.get_memory_transitions().front().size(), 1);
     ygg::visit(
         [&](auto rule)
         {
@@ -204,12 +204,12 @@ TEST(RunirTests, ExtendedQueryFeatureActionRuleRoundTrip)
             else
                 ADD_FAILURE() << "Expected an action rule.";
         },
-        module.get_memory_transitions().front().front().get_variant());
+        module_.get_memory_transitions().front().front().get_variant());
 
-    const auto formatted = fmt::format("{}", module);
+    const auto formatted = fmt::format("{}", module_);
     EXPECT_NE(formatted.find("(:query moves)"), std::string::npos);
     const auto reparsed = kr::ps::ext::dl::parse_module(formatted, domain, *repository);
-    EXPECT_EQ(reparsed, module);
+    EXPECT_EQ(reparsed, module_);
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
 }
 

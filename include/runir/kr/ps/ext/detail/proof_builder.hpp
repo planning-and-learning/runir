@@ -3,7 +3,7 @@
 
 #include "runir/graphs/cycle.hpp"
 #include "runir/kr/dl/semantics/uns/state_evaluation_context.hpp"
-#include "runir/kr/ps/ext/module_program_executor_data.hpp"
+#include "runir/kr/ps/ext/program_executor_data.hpp"
 #include "runir/kr/ps/ext/successor_expander.hpp"
 #include "runir/kr/task_context.hpp"
 #include "runir/kr/uns/classify.hpp"
@@ -19,19 +19,19 @@ namespace runir::kr::ps::ext::detail
 {
 
 template<tyr::TaskKind Kind>
-class ModuleProgramProofBuilder
+class ProgramProofBuilder
 {
 private:
-    ModuleProgramProofResults<Kind> m_result;
-    ModuleProgramProofGraphBuilder<Kind> m_builder;
-    ygg::UnorderedMap<ygg::Index<ExecutionState<Kind>>, graphs::VertexIndex> m_vertex_to_index;
+    ProgramProofResults<Kind> m_result;
+    ProgramProofGraphBuilder<Kind> m_builder;
+    ygg::UnorderedMap<ygg::Index<ProgramState<Kind>>, graphs::VertexIndex> m_vertex_to_index;
     SuccessorExpander<Kind> m_expander;
     std::optional<runir::kr::uns::ClassifierView> m_classifier;
     runir::kr::dl::semantics::DenotationCaches<runir::kr::UnsFamilyTag> m_classifier_caches;
 
 public:
-    ModuleProgramProofBuilder(runir::kr::TaskContextPtr<Kind> task_context,
-                              ModuleProgramView program,
+    ProgramProofBuilder(runir::kr::TaskContextPtr<Kind> task_context,
+                              ProgramView program,
                               std::optional<runir::kr::uns::ClassifierView> classifier) :
         m_result(),
         m_builder(),
@@ -49,12 +49,12 @@ public:
     bool is_unsolvable(graphs::VertexIndex vertex) const { return m_builder.get_vertex(vertex).get_property().is_unsolvable; }
 
     template<ExpansionPolicy Policy>
-    void steps(ExecutionStateView<Kind> state, auto&& stop, std::vector<ModuleProgramStep<Kind>>& out_steps)
+    void steps(ProgramStateView<Kind> state, auto&& stop, std::vector<ProgramStep<Kind>>& out_steps)
     {
         m_expander.template steps_until<Policy>(std::move(state), std::forward<decltype(stop)>(stop), out_steps);
     }
 
-    auto get_or_create_vertex(ExecutionStateView<Kind> state, bool is_initial, bool is_alive, bool is_unsolvable, ygg::uint_t max_num_vertices)
+    auto get_or_create_vertex(ProgramStateView<Kind> state, bool is_initial, bool is_alive, bool is_unsolvable, ygg::uint_t max_num_vertices)
         -> std::optional<std::pair<graphs::VertexIndex, bool>>
     {
         if (const auto it = m_vertex_to_index.find(state.get_index()); it != m_vertex_to_index.end())
@@ -75,7 +75,7 @@ public:
             is_unsolvable |= runir::kr::uns::classify(*m_classifier, context);
             is_alive &= !is_unsolvable;
         }
-        auto label = ModuleProgramProofVertexLabel<Kind> { state, is_initial, goal, is_alive, is_unsolvable };
+        auto label = ProgramProofVertexLabel<Kind> { state, is_initial, goal, is_alive, is_unsolvable };
         const auto vertex = m_builder.add_vertex(label);
         m_vertex_to_index.emplace(state.get_index(), vertex);
         return std::pair(vertex, true);
@@ -86,9 +86,9 @@ public:
                   std::optional<datasets::StateGraphEdgeLabel> state_transition,
                   std::optional<RuleVariantView> rule = std::nullopt)
     {
-        auto label = ModuleProgramProofEdgeLabel {};
+        auto label = ProgramProofEdgeLabel {};
         if (state_transition)
-            label.state_transition = ModuleProgramProofStateTransition { state_transition->action, state_transition->cost };
+            label.state_transition = ProgramProofStateTransition { state_transition->action, state_transition->cost };
         if (rule)
             label.rule = *rule;
         m_builder.add_directed_edge(source, target, std::move(label));
@@ -98,10 +98,10 @@ public:
     void add_open_state(graphs::VertexIndex vertex) { m_result.open_states.push_back(vertex); }
     void set_plan(tyr::planning::PackedPlan<Kind> plan) { m_result.plan = std::move(plan); }
 
-    auto finish(ModuleProgramProofStatus status) -> ModuleProgramProofResults<Kind>
+    auto finish(ProgramProofStatus status) -> ProgramProofResults<Kind>
     {
         m_result.status = status;
-        auto graph = std::make_shared<ModuleProgramProofGraph<Kind>>(std::move(m_builder));
+        auto graph = std::make_shared<ProgramProofGraph<Kind>>(std::move(m_builder));
         if (m_result.cycle.empty())
             m_result.cycle = graphs::find_cycle(*graph);
         m_result.graph = std::move(graph);

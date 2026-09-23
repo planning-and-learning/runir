@@ -4,7 +4,7 @@
 #include "runir/datasets/state_graph.hpp"
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
-#include "runir/kr/ps/ext/module_program_executor_data.hpp"
+#include "runir/kr/ps/ext/program_executor_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 
 #include <optional>
@@ -16,7 +16,7 @@
 namespace runir::kr::ps::ext::detail
 {
 
-enum class ModuleProgramOutcome
+enum class ProgramOutcome
 {
     SUCCESS,
     APPLIED,
@@ -30,49 +30,49 @@ enum class ModuleProgramOutcome
     CYCLE,
 };
 
-constexpr std::string_view to_string(ModuleProgramOutcome outcome)
+constexpr std::string_view to_string(ProgramOutcome outcome)
 {
     switch (outcome)
     {
-        case ModuleProgramOutcome::SUCCESS:
+        case ProgramOutcome::SUCCESS:
             return "success";
-        case ModuleProgramOutcome::APPLIED:
+        case ProgramOutcome::APPLIED:
             return "applied";
-        case ModuleProgramOutcome::RESTORED_CALLER:
+        case ProgramOutcome::RESTORED_CALLER:
             return "restored_caller";
-        case ModuleProgramOutcome::FAILURE:
+        case ProgramOutcome::FAILURE:
             return "failure";
-        case ModuleProgramOutcome::NO_APPLICABLE_ACTION:
+        case ProgramOutcome::NO_APPLICABLE_ACTION:
             return "no_applicable_action";
-        case ModuleProgramOutcome::MALFORMED_CALL:
+        case ProgramOutcome::MALFORMED_CALL:
             return "malformed_call";
-        case ModuleProgramOutcome::SEARCH_FAILURE:
+        case ProgramOutcome::SEARCH_FAILURE:
             return "search_failure";
-        case ModuleProgramOutcome::OUT_OF_TIME:
+        case ProgramOutcome::OUT_OF_TIME:
             return "out_of_time";
-        case ModuleProgramOutcome::OUT_OF_STATES:
+        case ProgramOutcome::OUT_OF_STATES:
             return "out_of_states";
-        case ModuleProgramOutcome::CYCLE:
+        case ProgramOutcome::CYCLE:
             return "cycle";
     }
-    throw std::invalid_argument("invalid ModuleProgramOutcome");
+    throw std::invalid_argument("invalid ProgramOutcome");
 }
 
 /// One canonical execution successor plus the rule and optional planning transition that produced it.
 template<tyr::TaskKind Kind>
-struct ModuleProgramStep
+struct ProgramStep
 {
 private:
     runir::kr::TaskContextPtr<Kind> m_task_context;
 
 public:
-    ModuleProgramOutcome status;
-    ExecutionStateView<Kind> target;
+    ProgramOutcome status;
+    ProgramStateView<Kind> target;
     std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
     std::optional<RuleVariantView> rule = std::nullopt;
     tyr::planning::PackedLabeledNodeList<Kind> plan_suffix;
 
-    ModuleProgramStep(ModuleProgramOutcome status_, ExecutionStateView<Kind> target_, runir::kr::TaskContextPtr<Kind> task_context) :
+    ProgramStep(ProgramOutcome status_, ProgramStateView<Kind> target_, runir::kr::TaskContextPtr<Kind> task_context) :
         m_task_context(std::move(task_context)),
         status(status_),
         target(std::move(target_))
@@ -80,33 +80,33 @@ public:
     }
 
     std::string_view get_status_name() const { return to_string(status); }
-    ExecutionStateView<Kind> get_target() const noexcept { return target; }
+    ProgramStateView<Kind> get_target() const noexcept { return target; }
     const auto& get_state_transition() const noexcept { return state_transition; }
     const auto& get_rule() const noexcept { return rule; }
 };
 
-inline ModuleProgramProofStatus translate_proof_status(ModuleProgramOutcome status)
+inline ProgramProofStatus translate_proof_status(ProgramOutcome status)
 {
     switch (status)
     {
-        case ModuleProgramOutcome::SUCCESS:
-            return ModuleProgramProofStatus::SUCCESS;
-        case ModuleProgramOutcome::APPLIED:
-        case ModuleProgramOutcome::RESTORED_CALLER:
-            return ModuleProgramProofStatus::FAILURE;
-        case ModuleProgramOutcome::OUT_OF_TIME:
-            return ModuleProgramProofStatus::OUT_OF_TIME;
-        case ModuleProgramOutcome::OUT_OF_STATES:
-            return ModuleProgramProofStatus::OUT_OF_STATES;
-        case ModuleProgramOutcome::CYCLE:
-        case ModuleProgramOutcome::FAILURE:
-        case ModuleProgramOutcome::NO_APPLICABLE_ACTION:
-        case ModuleProgramOutcome::MALFORMED_CALL:
-        case ModuleProgramOutcome::SEARCH_FAILURE:
-            return ModuleProgramProofStatus::FAILURE;
+        case ProgramOutcome::SUCCESS:
+            return ProgramProofStatus::SUCCESS;
+        case ProgramOutcome::APPLIED:
+        case ProgramOutcome::RESTORED_CALLER:
+            return ProgramProofStatus::FAILURE;
+        case ProgramOutcome::OUT_OF_TIME:
+            return ProgramProofStatus::OUT_OF_TIME;
+        case ProgramOutcome::OUT_OF_STATES:
+            return ProgramProofStatus::OUT_OF_STATES;
+        case ProgramOutcome::CYCLE:
+        case ProgramOutcome::FAILURE:
+        case ProgramOutcome::NO_APPLICABLE_ACTION:
+        case ProgramOutcome::MALFORMED_CALL:
+        case ProgramOutcome::SEARCH_FAILURE:
+            return ProgramProofStatus::FAILURE;
     }
 
-    return ModuleProgramProofStatus::FAILURE;
+    return ProgramProofStatus::FAILURE;
 }
 
 }  // namespace runir::kr::ps::ext::detail

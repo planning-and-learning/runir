@@ -41,14 +41,14 @@ auto create_module(kr::ps::ext::Repository& repository,
     return repository.get_or_create(data).first;
 }
 
-auto create_module_program(kr::ps::ext::Repository& repository,
+auto create_program(kr::ps::ext::Repository& repository,
                            kr::ps::ext::ModuleView entry,
-                           std::initializer_list<kr::ps::ext::ModuleView> modules) -> kr::ps::ext::ModuleProgramView
+                           std::initializer_list<kr::ps::ext::ModuleView> modules) -> kr::ps::ext::ProgramView
 {
-    auto data = ygg::Data<kr::ps::ext::ModuleProgram>();
+    auto data = ygg::Data<kr::ps::ext::Program>();
     data.entry_module = entry.get_index();
-    for (auto module : modules)
-        data.modules.push_back(module.get_index());
+    for (auto module_ : modules)
+        data.modules.push_back(module_.get_index());
     kr::ps::ext::canonicalize(data);
     return repository.get_or_create(data).first;
 }

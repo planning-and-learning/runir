@@ -86,14 +86,14 @@ choice ordering.
 
 ## Python access
 
-Module evaluation uses persistent `ext.GroundExecutionState` or
-`ext.LiftedExecutionState` values produced by the successor expander, with the
+Module evaluation uses persistent `ext.GroundProgramState` or
+`ext.LiftedProgramState` values produced by the successor expander, with the
 corresponding `GroundEvaluationEnvironment` or `LiftedEvaluationEnvironment`.
 
 `module.get_query_features()` returns named `ext.dl.QueryFeature` values.
 `ActionRule.get_query_feature()` returns the selector, and
 `feature.get_expression().get_columns()` exposes its output schema.
-Create a state evaluation context with `environment.make_dl_context(execution_state)`.
+Create a state evaluation context with `environment.make_dl_context(program_state)`.
 It borrows the registers and call arguments stored in that execution state.
 `ext.evaluate(feature, state_context)` returns the feature's native
 denotation for every category. Boolean and numerical denotations expose their
@@ -104,7 +104,7 @@ from pyrunir.kr.ps import ext
 
 feature = module.get_query_features()[0]
 columns = tuple(column.get_name() for column in feature.get_expression().get_columns())
-state_context = environment.make_dl_context(execution_state)
+state_context = environment.make_dl_context(program_state)
 relation = ext.evaluate(feature, state_context)
 snapshot = tuple(tuple(row) for row in relation)
 ```

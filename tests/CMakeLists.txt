@@ -82,7 +82,7 @@ set(RUNIR_KR_PS_TYPE_TEST_SOURCES
     unit/kr/ps/ext/feature.cpp
     unit/kr/ps/ext/memory_state.cpp
     unit/kr/ps/ext/module.cpp
-    unit/kr/ps/ext/module_program.cpp
+    unit/kr/ps/ext/program.cpp
     unit/kr/ps/ext/module_symbol.cpp
     unit/kr/ps/ext/rule.cpp
     unit/kr/ps/ext/rule_variant.cpp
@@ -121,8 +121,8 @@ add_runir_test(
     runir::kr
 )
 add_runir_test(
-    runir_kr_ps_ext_module_program_executor
-    "unit/kr/ps/ext/module_fixtures.cpp;unit/kr/ps/ext/module_program_executor.cpp;unit/kr/ps/ext/module_program_parser.cpp;unit/kr/ps/ext/execution_repository.cpp;unit/kr/ps/ext/successor_expander.cpp"
+    runir_kr_ps_ext_program_executor
+    "unit/kr/ps/ext/module_fixtures.cpp;unit/kr/ps/ext/program_executor.cpp;unit/kr/ps/ext/program_parser.cpp;unit/kr/ps/ext/execution_repository.cpp;unit/kr/ps/ext/successor_expander.cpp"
     runir::datasets
     runir::kr
     runir_test_planning_fixtures

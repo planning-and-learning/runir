@@ -3,7 +3,7 @@
 
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/proof_builder.hpp"
-#include "runir/kr/ps/ext/module_program_executor.hpp"
+#include "runir/kr/ps/ext/program_executor.hpp"
 #include "runir/kr/task_context.hpp"
 
 #include <algorithm>
@@ -20,12 +20,12 @@ namespace runir::kr::ps::ext
 
 template<tyr::TaskKind Kind>
 auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
-                   ModuleProgramView program,
-                   const ModuleProgramSearchOptions<Kind>& options) -> ModuleProgramProofResults<Kind>
+                   ProgramView program,
+                   const ProgramSearchOptions<Kind>& options) -> ProgramProofResults<Kind>
 {
-    using Step = detail::ModuleProgramStep<Kind>;
-    using Outcome = detail::ModuleProgramOutcome;
-    using Status = ModuleProgramProofStatus;
+    using Step = detail::ProgramStep<Kind>;
+    using Outcome = detail::ProgramOutcome;
+    using Status = ProgramProofStatus;
     struct Obligation
     {
         std::vector<std::size_t> alternatives;
@@ -33,7 +33,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
     };
     struct Expansion
     {
-        ExecutionStateView<Kind> state;
+        ProgramStateView<Kind> state;
         std::vector<Step> steps;
         std::vector<Obligation> obligations;
         std::vector<std::optional<graphs::VertexIndex>> targets;
@@ -42,7 +42,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
         bool reported_deadend = false;
         bool reported_open = false;
 
-        explicit Expansion(ExecutionStateView<Kind> state_) : state(std::move(state_)) {}
+        explicit Expansion(ProgramStateView<Kind> state_) : state(std::move(state_)) {}
     };
     struct Work
     {
@@ -63,7 +63,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
 
     const auto& search_context = *task_context->search_context;
     const auto initial_node = search_context.successor_generator->get_packed_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
-    auto proof = detail::ModuleProgramProofBuilder<Kind>(std::move(task_context), program, options.classifier);
+    auto proof = detail::ProgramProofBuilder<Kind>(std::move(task_context), program, options.classifier);
     auto expansions = std::deque<Expansion> {};
     auto open = std::vector<Work> {};
     auto choices = std::vector<ChoiceFrame> {};
@@ -71,7 +71,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
     auto selected_edges = std::vector<std::tuple<graphs::VertexIndex, graphs::VertexIndex, ygg::uint_t>> {};
     auto plan_steps = tyr::planning::PackedLabeledNodeList<Kind> {};
     auto failed = false;
-    auto statistics = ModuleProgramSearchStatistics {};
+    auto statistics = ProgramSearchStatistics {};
     auto random = std::mt19937_64(options.random_seed);
     const auto started_at = std::chrono::steady_clock::now();
     const auto out_of_time = [&]() { return options.max_time && std::chrono::steady_clock::now() - started_at >= *options.max_time; };
@@ -108,7 +108,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
         result.statistics.choice_depth = choice_depth;
         return result;
     };
-    const auto vertex_for = [&](ExecutionStateView<Kind> state, bool initial = false, bool alive = true, bool unsolvable = false)
+    const auto vertex_for = [&](ProgramStateView<Kind> state, bool initial = false, bool alive = true, bool unsolvable = false)
         -> std::optional<graphs::VertexIndex>
     {
         const auto result = proof.get_or_create_vertex(state, initial, alive, unsolvable, options.max_num_states);
@@ -144,29 +144,20 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
         if (applied)
             statistics.max_choice_depth = std::max(statistics.max_choice_depth, depth);
         const auto empty_choice = !applied && choice;
-        if (applied || (step.get_target().get_phase() == ExecutionPhase::INTERNAL && !empty_choice))
+        if (applied)
         {
             auto& target = expansion.targets[step_index];
             if (!target)
             {
-                target = vertex_for(step.get_target(), false, applied, !applied);
+                target = vertex_for(step.get_target());
                 if (!target)
                     return Status::OUT_OF_STATES;
                 proof.add_edge(source, *target, step.get_state_transition(), step.rule);
             }
             selected_edges.emplace_back(source, *target, choice && choice->alternatives.size() > 1);
-            if (applied)
-            {
-                if (!options.universal)
-                    plan_steps.insert(plan_steps.end(), step.plan_suffix.begin(), step.plan_suffix.end());
-                enqueue(*target, depth);
-            }
-            else
-            {
-                if (!expansions[*target].reported_deadend)
-                    proof.add_deadend_state(*target);
-                expansions[*target].reported_deadend = true;
-            }
+            if (!options.universal)
+                plan_steps.insert(plan_steps.end(), step.plan_suffix.begin(), step.plan_suffix.end());
+            enqueue(*target, depth);
         }
         else if (empty_choice)
         {

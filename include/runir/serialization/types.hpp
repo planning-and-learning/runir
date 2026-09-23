@@ -9,7 +9,7 @@
 #include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/sketch_proof_graph.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
-#include "runir/kr/ps/ext/module_program_proof_graph.hpp"
+#include "runir/kr/ps/ext/program_proof_graph.hpp"
 #include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/uns/repository.hpp"
 
@@ -32,20 +32,20 @@ using ExtViews = ygg::MapTypeListSecondT<IndexView, kr::ps::ext::Repository, Ext
 using UnsViews = ygg::MapTypeListSecondT<IndexView, kr::uns::Repository, kr::uns::RepositoryTypes>;
 
 template<tyr::TaskKind Kind>
-using ExecutionViews = ygg::TypeList<kr::ps::ext::CallStackView<Kind>, kr::ps::ext::ExecutionStateView<Kind>>;
+using ExecutionViews = ygg::TypeList<kr::ps::ext::ModuleStateView<Kind>, kr::ps::ext::CallStackView<Kind>, kr::ps::ext::ProgramStateView<Kind>>;
 
 template<tyr::TaskKind Kind>
 using StateProperties = ygg::TypeList<datasets::StateGraphVertexLabel<Kind>,
                                       datasets::AnnotatedStateGraphVertexLabel<Kind>,
                                       kr::ps::base::SketchProofVertexLabel<Kind>,
-                                      kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>;
+                                      kr::ps::ext::ProgramProofVertexLabel<Kind>>;
 
 using GraphProperties = ygg::ConcatTypeListsT<StateProperties<tyr::GroundTag>,
                                               StateProperties<tyr::LiftedTag>,
                                               ygg::TypeList<datasets::StateGraphEdgeLabel,
                                                             kr::ps::base::SketchProofEdgeLabel,
-                                                            kr::ps::ext::ModuleProgramProofStateTransition,
-                                                            kr::ps::ext::ModuleProgramProofEdgeLabel>>;
+                                                            kr::ps::ext::ProgramProofStateTransition,
+                                                            kr::ps::ext::ProgramProofEdgeLabel>>;
 
 template<tyr::TaskKind Kind>
 using StateGraphs = ygg::TypeList<datasets::StaticStateGraph<Kind>,
@@ -53,7 +53,7 @@ using StateGraphs = ygg::TypeList<datasets::StaticStateGraph<Kind>,
                                   datasets::StaticAnnotatedStateGraph<Kind>,
                                   datasets::AnnotatedStateGraph<Kind>,
                                   kr::ps::base::SketchProofGraph<Kind>,
-                                  kr::ps::ext::ModuleProgramProofGraph<Kind>>;
+                                  kr::ps::ext::ProgramProofGraph<Kind>>;
 
 using Graphs = ygg::ConcatTypeListsT<StateGraphs<tyr::GroundTag>, StateGraphs<tyr::LiftedTag>>;
 

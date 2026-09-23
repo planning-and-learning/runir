@@ -4,7 +4,7 @@
 #include "runir/kr/dl/semantics/formatter.hpp"
 #include "runir/kr/ps/ext/dl/formatter.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
-#include "runir/kr/ps/ext/module_program_executor_data.hpp"
+#include "runir/kr/ps/ext/program_executor_data.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
 #include "runir/kr/ps/ext/views.hpp"
@@ -293,15 +293,15 @@ std::string module(ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C> view)
 }
 
 template<typename C>
-void append_module_program(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgram>, C> view)
+void append_program(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Program>, C> view)
 {
     os << ygg::print_indent << "(:program\n";
     {
         ygg::IndentScope scope(os);
         os << ygg::print_indent << "(:entry " << view.get_entry_module().get_name() << ")\n";
-        for (auto module : view.get_modules())
+        for (auto module_ : view.get_modules())
         {
-            append_module(os, module);
+            append_module(os, module_);
             os << '\n';
         }
     }
@@ -309,10 +309,10 @@ void append_module_program(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps:
 }
 
 template<typename C>
-std::string module_program(ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgram>, C> view)
+std::string program(ygg::View<ygg::Index<runir::kr::ps::ext::Program>, C> view)
 {
     auto os = std::ostringstream {};
-    append_module_program(os, view);
+    append_program(os, view);
     return os.str();
 }
 
@@ -406,11 +406,23 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C>> : fm
 };
 
 template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleProgram>, C>> : fmt::formatter<std::string_view>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Program>, C>> : fmt::formatter<std::string_view>
 {
     auto format(auto view, format_context& context) const
     {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::module_program(view), context);
+        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::program(view), context);
+    }
+};
+
+template<tyr::TaskKind Kind, typename C>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleState<Kind>>, C>>
+{
+    constexpr auto parse(format_parse_context& context) { return context.begin(); }
+    auto format(const auto& value, format_context& context) const
+    {
+        return fmt::format_to(context.out(), "ModuleState(state={}, module={}, memory_state={}, registers={}, arguments={})",
+                              value.get_state().get_index(), value.get_module().get_name(), value.get_memory_state(),
+                              value.get_registers(), value.get_arguments());
     }
 };
 
@@ -420,35 +432,25 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::CallStack>, C>>
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& value, format_context& context) const -> format_context::iterator
     {
-        return fmt::format_to(context.out(), "CallStack(module={}, memory_state={}, registers={}, arguments={}, caller={})",
-                              value.get_module().get_name(), value.get_memory_state(), value.get_registers(),
+        return fmt::format_to(context.out(), "CallStack(module={}, return_memory_state={}, registers={}, arguments={}, caller={})",
+                              value.get_module().get_name(), value.get_return_memory_state(), value.get_registers(),
                               value.get_arguments(), value.get_caller());
     }
 };
 
-template<>
-struct fmt::formatter<runir::kr::ps::ext::ExecutionPhase> : fmt::formatter<std::string_view>
-{
-    auto format(runir::kr::ps::ext::ExecutionPhase phase, format_context& context) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::to_string(phase), context);
-    }
-};
-
 template<tyr::TaskKind Kind, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ExecutionState<Kind>>, C>>
+struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ProgramState<Kind>>, C>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& value, format_context& context) const
     {
-        return fmt::format_to(context.out(), "ExecutionState(state={}, program={}, phase={}, call_stack={})",
-                              value.get_state().get_index(), value.get_program().get_index(),
-                              value.get_phase(), value.get_call_stack());
+        return fmt::format_to(context.out(), "ProgramState(program={}, module_state={}, call_stack={})",
+                              value.get_program().get_index(), value.get_module_state(), value.get_call_stack());
     }
 };
 
 template<>
-struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofStateTransition>
+struct fmt::formatter<runir::kr::ps::ext::ProgramProofStateTransition>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& value, format_context& context) const
@@ -458,16 +460,16 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofStateTransition>
 };
 
 template<tyr::TaskKind Kind>
-struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>
+struct fmt::formatter<runir::kr::ps::ext::ProgramProofVertexLabel<Kind>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& label, format_context& context) const
     {
-        const auto state = label.execution_state;
+        const auto state = label.program_state;
         return fmt::format_to(context.out(),
                               "state={} module={} initial={} goal={} alive={} unsolvable={}",
                               state.get_state().get_index(),
-                              state.get_call_stack().get_module().get_name(),
+                              state.get_module_state().get_module().get_name(),
                               label.is_initial,
                               label.is_goal,
                               label.is_alive,
@@ -476,7 +478,7 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofVertexLabel<Kind>>
 };
 
 template<>
-struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofEdgeLabel>
+struct fmt::formatter<runir::kr::ps::ext::ProgramProofEdgeLabel>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& label, format_context& context) const
@@ -488,13 +490,13 @@ struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofEdgeLabel>
 };
 
 template<tyr::TaskKind Kind>
-struct fmt::formatter<runir::kr::ps::ext::ModuleProgramProofResults<Kind>>
+struct fmt::formatter<runir::kr::ps::ext::ProgramProofResults<Kind>>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& result, format_context& context) const
     {
         return fmt::format_to(context.out(),
-                              "ModuleProgramProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={}, "
+                              "ProgramProofResults(status={}, graph_vertices={}, graph_edges={}, deadend_states={}, open_states={}, cycle={}, "
                               "num_expanded={}, num_generated={}, choice_depth={}, max_choice_depth={}, num_choice_points={}, num_binding_attempts={}, num_backtracks={})",
                               runir::kr::ps::ext::to_string(result.status),
                               result.graph ? result.graph->get_num_vertices() : 0,

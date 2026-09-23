@@ -41,14 +41,14 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ModuleStructuralTerminationResult>
 };
 
 template<>
-struct fmt::formatter<runir::kr::ps::ext::dl::ModuleProgramStructuralTerminationResult>
+struct fmt::formatter<runir::kr::ps::ext::dl::ProgramStructuralTerminationResult>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
 
-    auto format(const runir::kr::ps::ext::dl::ModuleProgramStructuralTerminationResult& result, format_context& context) const
+    auto format(const runir::kr::ps::ext::dl::ProgramStructuralTerminationResult& result, format_context& context) const
     {
         return fmt::format_to(context.out(),
-                              "ModuleProgramStructuralTerminationResult({}, {} modules, {} recursive calls)",
+                              "ProgramStructuralTerminationResult({}, {} modules, {} recursive calls)",
                               result.is_terminating() ? "terminating" : "non-terminating",
                               result.module_results.size(),
                               result.recursive_call_rules.size());
@@ -69,14 +69,14 @@ struct fmt::formatter<runir::kr::ps::ext::dl::ModuleIncompleteStructuralTerminat
 };
 
 template<>
-struct fmt::formatter<runir::kr::ps::ext::dl::ModuleProgramIncompleteStructuralTerminationResult>
+struct fmt::formatter<runir::kr::ps::ext::dl::ProgramIncompleteStructuralTerminationResult>
 {
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
 
-    auto format(const runir::kr::ps::ext::dl::ModuleProgramIncompleteStructuralTerminationResult& result, format_context& context) const
+    auto format(const runir::kr::ps::ext::dl::ProgramIncompleteStructuralTerminationResult& result, format_context& context) const
     {
         return fmt::format_to(context.out(),
-                              "ModuleProgramIncompleteStructuralTerminationResult({}, {} modules, {} recursive calls)",
+                              "ProgramIncompleteStructuralTerminationResult({}, {} modules, {} recursive calls)",
                               result.is_terminating() ? "terminating" : "unknown",
                               result.module_results.size(),
                               result.recursive_call_rules.size());

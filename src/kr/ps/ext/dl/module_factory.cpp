@@ -831,9 +831,9 @@ std::string ModuleFactory::create_bonet_et_al_icaps2024_program_description()
 ))RUNIR";
 }
 
-ModuleProgramView ModuleFactory::create_bonet_et_al_icaps2024_program(tyr::formalism::planning::DomainView domain, Repository& repository)
+ProgramView ModuleFactory::create_bonet_et_al_icaps2024_program(tyr::formalism::planning::DomainView domain, Repository& repository)
 {
-    return parse_module_program(create_bonet_et_al_icaps2024_program_description(), domain, repository);
+    return parse_program(create_bonet_et_al_icaps2024_program_description(), domain, repository);
 }
 
 ModuleView ModuleFactory::create_on_bonet_et_al_icaps2024(tyr::formalism::planning::DomainView domain, Repository& repository)

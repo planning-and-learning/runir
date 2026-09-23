@@ -10,7 +10,7 @@
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
-#include <runir/kr/ps/ext/module_program_executor.hpp>
+#include <runir/kr/ps/ext/program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
@@ -23,27 +23,27 @@
 namespace runir::tests
 {
 
-TEST(RunirTests, ModuleProgramStatusesToString)
+TEST(RunirTests, ProgramStatusesToString)
 {
-    using kr::ps::ext::ModuleProgramProofStatus;
-    EXPECT_EQ(kr::ps::ext::to_string(ModuleProgramProofStatus::SUCCESS), "success");
-    EXPECT_EQ(kr::ps::ext::to_string(ModuleProgramProofStatus::FAILURE), "failure");
-    EXPECT_EQ(kr::ps::ext::to_string(ModuleProgramProofStatus::OUT_OF_TIME), "out_of_time");
-    EXPECT_EQ(kr::ps::ext::to_string(ModuleProgramProofStatus::OUT_OF_STATES), "out_of_states");
-    EXPECT_THROW((void) kr::ps::ext::to_string(static_cast<ModuleProgramProofStatus>(255)), std::invalid_argument);
+    using kr::ps::ext::ProgramProofStatus;
+    EXPECT_EQ(kr::ps::ext::to_string(ProgramProofStatus::SUCCESS), "success");
+    EXPECT_EQ(kr::ps::ext::to_string(ProgramProofStatus::FAILURE), "failure");
+    EXPECT_EQ(kr::ps::ext::to_string(ProgramProofStatus::OUT_OF_TIME), "out_of_time");
+    EXPECT_EQ(kr::ps::ext::to_string(ProgramProofStatus::OUT_OF_STATES), "out_of_states");
+    EXPECT_THROW((void) kr::ps::ext::to_string(static_cast<ProgramProofStatus>(255)), std::invalid_argument);
 
-    using kr::ps::ext::detail::ModuleProgramOutcome;
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ModuleProgramOutcome::SUCCESS), "success");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ModuleProgramOutcome::APPLIED), "applied");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ModuleProgramOutcome::RESTORED_CALLER), "restored_caller");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ModuleProgramOutcome::FAILURE), "failure");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ModuleProgramOutcome::NO_APPLICABLE_ACTION), "no_applicable_action");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ModuleProgramOutcome::MALFORMED_CALL), "malformed_call");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ModuleProgramOutcome::SEARCH_FAILURE), "search_failure");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ModuleProgramOutcome::OUT_OF_TIME), "out_of_time");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ModuleProgramOutcome::OUT_OF_STATES), "out_of_states");
-    EXPECT_EQ(kr::ps::ext::detail::to_string(ModuleProgramOutcome::CYCLE), "cycle");
-    EXPECT_THROW((void) kr::ps::ext::detail::to_string(static_cast<ModuleProgramOutcome>(255)), std::invalid_argument);
+    using kr::ps::ext::detail::ProgramOutcome;
+    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::SUCCESS), "success");
+    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::APPLIED), "applied");
+    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::RESTORED_CALLER), "restored_caller");
+    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::FAILURE), "failure");
+    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::NO_APPLICABLE_ACTION), "no_applicable_action");
+    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::MALFORMED_CALL), "malformed_call");
+    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::SEARCH_FAILURE), "search_failure");
+    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::OUT_OF_TIME), "out_of_time");
+    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::OUT_OF_STATES), "out_of_states");
+    EXPECT_EQ(kr::ps::ext::detail::to_string(ProgramOutcome::CYCLE), "cycle");
+    EXPECT_THROW((void) kr::ps::ext::detail::to_string(static_cast<ProgramOutcome>(255)), std::invalid_argument);
 }
 
 TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
@@ -56,21 +56,21 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
 
     auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
     auto repository = task_context->domain_context->ext_repository;
-    const auto module =
+    const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_treats_classifier_matches_as_terminal_failures/module.module"),
                                       task->get_domain().get_domain(),
                                       *repository);
-    const auto program = create_module_program(*repository, module, { module });
+    const auto program = create_program(*repository, module_, { module_ });
 
     auto classifier_dl_repository = task_context->domain_context->uns_repository->get_dl_repository_ptr();
     auto classifier_repository = task_context->domain_context->uns_repository;
     const auto classifier = kr::uns::dl::parse_classifier(read_fixture("kr/uns/always.classifier"), task->get_domain().get_domain(), *classifier_repository);
 
-    auto options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
+    auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     options.classifier = classifier;
     const auto result = kr::ps::ext::find_solution(task_context, program, options);
 
-    EXPECT_EQ(result.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
+    EXPECT_EQ(result.status, kr::ps::ext::ProgramProofStatus::FAILURE);
     ASSERT_TRUE(result.graph);
     ASSERT_EQ(result.graph->get_num_vertices(), 1);
     EXPECT_EQ(result.graph->get_num_edges(), 0);
@@ -80,7 +80,7 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     EXPECT_FALSE(label.is_goal);
     EXPECT_FALSE(label.is_alive);
     EXPECT_TRUE(label.is_unsolvable);
-    EXPECT_EQ(label.execution_state.get_call_stack().get_memory_state().get_name(), "source");
+    EXPECT_EQ(label.program_state.get_module_state().get_memory_state().get_name(), "source");
     EXPECT_EQ(result.statistics.num_expanded, 0);
     EXPECT_EQ(result.statistics.num_generated, 0);
     EXPECT_GT(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(), 0);
@@ -102,7 +102,7 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(task->get_domain().get_domain(), *repository);
     ASSERT_EQ(program.get_modules().size(), 5);
 
-    auto search_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag>();
+    auto search_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag>();
 
     const auto search_result = kr::ps::ext::find_solution(task_context, program, search_options);
     EXPECT_TRUE(search_result.is_successful());
@@ -112,21 +112,10 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     auto proof_options = search_options;
     proof_options.universal = true;
     const auto proof = kr::ps::ext::find_solution(task_context, program, proof_options);
-    EXPECT_EQ(proof.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE) << fmt::format("{}", proof);
+    EXPECT_EQ(proof.status, kr::ps::ext::ProgramProofStatus::FAILURE) << fmt::format("{}", proof);
     ASSERT_TRUE(proof.graph);
     ASSERT_TRUE(search_result.graph);
     EXPECT_GT(proof.graph->get_num_vertices(), search_result.graph->get_num_vertices());
-
-    auto has_internal_memory_state = false;
-    auto has_external_memory_state = false;
-    for (const auto vertex : proof.graph->get_vertex_indices())
-    {
-        const auto phase = proof.graph->get_vertex(vertex).get_property().execution_state.get_phase();
-        has_internal_memory_state |= phase == kr::ps::ext::ExecutionPhase::INTERNAL;
-        has_external_memory_state |= phase == kr::ps::ext::ExecutionPhase::EXTERNAL;
-    }
-    EXPECT_TRUE(has_internal_memory_state);
-    EXPECT_TRUE(has_external_memory_state);
 
     EXPECT_FALSE(proof.cycle.empty());
 }
@@ -141,11 +130,11 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
 
     auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
     auto repository = task_context->domain_context->ext_repository;
-    const auto module = kr::ps::ext::dl::parse_module(
+    const auto module_ = kr::ps::ext::dl::parse_module(
         read_fixture("kr/ps/ext/executor/ext_sketch_uses_only_immediate_outcomes_and_universal_preserves_parallel_edges/module.module"),
         task->get_domain().get_domain(),
         *repository);
-    const auto program = create_module_program(*repository, module, { module });
+    const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto initial_state = expander.initial_state();
     const auto immediate = expander.labeled_successors(initial_state);
@@ -155,9 +144,9 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
     for (const auto& step : steps)
         EXPECT_EQ(step.plan_suffix.size(), 1);
 
-    auto greedy_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
+    auto greedy_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
-    auto universal_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
+    auto universal_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     universal_options.universal = true;
     const auto universal = kr::ps::ext::find_solution(task_context, program, universal_options);
     ASSERT_TRUE(greedy.graph);
@@ -174,16 +163,16 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
         read_fixture("kr/ps/ext/executor/ext_sketch_uses_only_immediate_outcomes_and_universal_preserves_parallel_edges/two_step_module.module"),
         task->get_domain().get_domain(),
         *repository);
-    const auto two_step_program = create_module_program(*repository, two_step_module, { two_step_module });
+    const auto two_step_program = create_program(*repository, two_step_module, { two_step_module });
     auto two_step_expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, two_step_program);
     const auto two_step_state = two_step_expander.initial_state();
     const auto two_step_outcomes = two_step_expander.control_steps(two_step_state);
     ASSERT_EQ(two_step_outcomes.size(), 1);
-    EXPECT_EQ(two_step_outcomes.front().status, kr::ps::ext::detail::ModuleProgramOutcome::NO_APPLICABLE_ACTION);
+    EXPECT_EQ(two_step_outcomes.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
 
-    auto rejected_options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
+    auto rejected_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     const auto rejected = kr::ps::ext::find_solution(task_context, two_step_program, rejected_options);
-    EXPECT_EQ(rejected.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
+    EXPECT_EQ(rejected.status, kr::ps::ext::ProgramProofStatus::FAILURE);
     ASSERT_TRUE(rejected.graph);
     EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
     EXPECT_EQ(rejected.graph->get_num_edges(), 0);
@@ -199,14 +188,14 @@ TEST(RunirTests, ExtFindSolutionReportsTheCompleteThreeStateCycle)
 
     auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
     auto repository = task_context->domain_context->ext_repository;
-    const auto module = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_reports_the_complete_three_state_cycle/module.module"),
+    const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_reports_the_complete_three_state_cycle/module.module"),
                                                       task->get_domain().get_domain(),
                                                       *repository);
-    const auto program = create_module_program(*repository, module, { module });
+    const auto program = create_program(*repository, module_, { module_ });
 
-    auto options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag> {};
+    auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     const auto result = kr::ps::ext::find_solution(task_context, program, options);
-    EXPECT_EQ(result.status, kr::ps::ext::ModuleProgramProofStatus::FAILURE);
+    EXPECT_EQ(result.status, kr::ps::ext::ProgramProofStatus::FAILURE);
     ASSERT_TRUE(result.graph);
     EXPECT_EQ(result.graph->get_num_vertices(), 3);
     EXPECT_EQ(result.graph->get_num_edges(), 3);
@@ -232,10 +221,10 @@ TEST(RunirTests, ExtExecutorFixtureOutcomesMatch)
     for (const auto& value : cases)
     {
         const auto& test_case = ygg::common::as_object(value, "case");
-        const auto program = kr::ps::ext::dl::parse_module_program(read_fixture(ygg::common::as_string(test_case, "program_file", "case")),
+        const auto program = kr::ps::ext::dl::parse_program(read_fixture(ygg::common::as_string(test_case, "program_file", "case")),
                                                                    task->get_domain().get_domain(),
                                                                    *task_context->domain_context->ext_repository);
-        auto options = kr::ps::ext::ModuleProgramSearchOptions<tyr::GroundTag>();
+        auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag>();
         options.universal = ygg::common::as_bool(test_case, "universal", "case");
 
         const auto result = kr::ps::ext::find_solution(task_context, program, options);
@@ -286,7 +275,7 @@ template<tyr::TaskKind Kind>
 void check_choice_execution()
 {
     namespace ext = kr::ps::ext;
-    using Status = ext::ModuleProgramProofStatus;
+    using Status = ext::ProgramProofStatus;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
     auto search_context = [&]()
     {
@@ -301,19 +290,19 @@ void check_choice_execution()
     const auto parse = [&](const std::string& text) { return ext::dl::parse_module(text, task->get_domain().get_domain(), repository); };
     const auto make_program = [&](const std::string& text)
     {
-        const auto module = parse(text);
-        return create_module_program(repository, module, { module });
+        const auto module_ = parse(text);
+        return create_program(repository, module_, { module_ });
     };
     const auto program = make_program(choice_module("choose", choice_rule("select", "m0", "m1", choose_candidates) + move_rules));
     auto expander = ext::SuccessorExpander<Kind>(context, program);
     const auto bindings = expander.choose_steps(expander.initial_state());
     ASSERT_EQ(bindings.size(), 2);
-    EXPECT_EQ(bindings[0].target.get_call_stack().get_registers().get_concept_values()[0].value().get_name(), "bad");
+    EXPECT_EQ(bindings[0].target.get_module_state().get_registers().get_concept_values()[0].value().get_name(), "bad");
 
     for (const auto universal : { false, true })
     {
         SCOPED_TRACE(universal);
-        auto options = ext::ModuleProgramSearchOptions<Kind> {};
+        auto options = ext::ProgramSearchOptions<Kind> {};
         options.universal = universal;
         const auto result = ext::find_solution(context, program, options);
         ASSERT_EQ(result.status, Status::SUCCESS);
@@ -449,7 +438,7 @@ void check_choice_execution()
                                                 choice_rule("save-goal", "m0", "m1", "(:load (:conditions) (:concept Goal) (:register (:concept r0)))")
                                                     + choice_rule("call", "m1", "m2", "(:call (:conditions) (:callee callee) (:arguments))")
                                                     + choice_rule("finish", "m2", "m3", move_to_register)));
-        const auto call_program = create_module_program(repository, caller, { caller, callee });
+        const auto call_program = create_program(repository, caller, { caller, callee });
         const auto call_result = ext::find_solution(context, call_program, options);
         EXPECT_EQ(call_result.status, Status::SUCCESS);
         EXPECT_EQ(call_result.statistics.choice_depth, 1);
@@ -471,7 +460,7 @@ void check_choice_execution()
             "callee",
             choice_rule("load-good", "m0", "m1", "(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))")
                 + choice_rule("move-good", "m1", "m2", move_to_register) + choice_rule("empty", "m2", "m3", choose_empty)));
-        const auto blocked_call = create_module_program(repository, caller, { caller, empty_callee });
+        const auto blocked_call = create_program(repository, caller, { caller, empty_callee });
         EXPECT_EQ(ext::find_solution(context, blocked_call, options).status, Status::FAILURE);
 
         auto limited = options;
@@ -504,7 +493,7 @@ void check_choice_execution()
         EXPECT_EQ(first.graph->get_num_edges(), second.graph->get_num_edges());
     }
 
-    auto universal = ext::ModuleProgramSearchOptions<Kind> {};
+    auto universal = ext::ProgramSearchOptions<Kind> {};
     universal.universal = true;
     const auto load_goal = std::string("(:load (:conditions) (:concept Goal) (:register (:concept r0)))");
     const auto load_good = std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))");
@@ -610,12 +599,12 @@ void check_ordinary_execution_keeps_complete_graph()
                                : choice_rule("first", "m0", "m1", skip) + choice_rule("parallel", "m0", "m1", skip)
                                      + choice_rule("load", "m1", "m2", load) + choice_rule("move", "m2", "m3", move_to_register)
                                      + choice_rule("finish", "m3", "m4", move_to_goal);
-        const auto module = ext::dl::parse_module(choice_module("ordinary", rules), task->get_domain().get_domain(), repository);
-        const auto program = create_module_program(repository, module, { module });
+        const auto module_ = ext::dl::parse_module(choice_module("ordinary", rules), task->get_domain().get_domain(), repository);
+        const auto program = create_program(repository, module_, { module_ });
 
-        auto options = ext::ModuleProgramSearchOptions<Kind> {};
+        auto options = ext::ProgramSearchOptions<Kind> {};
         const auto greedy = ext::find_solution(context, program, options);
-        EXPECT_EQ(greedy.status, ext::ModuleProgramProofStatus::FAILURE);
+        EXPECT_EQ(greedy.status, ext::ProgramProofStatus::FAILURE);
         ASSERT_TRUE(greedy.graph);
         EXPECT_EQ(greedy.graph->get_num_vertices(), diamond ? 5 : 4);
         EXPECT_EQ(greedy.graph->get_num_edges(), diamond ? 4 : 3);
@@ -630,7 +619,7 @@ void check_ordinary_execution_keeps_complete_graph()
             options.classifier = classify ? std::optional(classifier) : std::nullopt;
             options.shuffle_choice_points = false;
             const auto complete = ext::find_solution(context, program, options);
-            EXPECT_EQ(complete.status, ext::ModuleProgramProofStatus::FAILURE);
+            EXPECT_EQ(complete.status, ext::ProgramProofStatus::FAILURE);
             ASSERT_TRUE(complete.graph);
             EXPECT_EQ(complete.graph->get_num_vertices(), diamond ? 9 : 7);
             EXPECT_EQ(complete.graph->get_num_edges(), diamond ? 9 : 7);
@@ -649,7 +638,7 @@ void check_ordinary_execution_keeps_complete_graph()
             EXPECT_FALSE(failure.is_goal);
             EXPECT_EQ(failure.is_alive, !classify);
             EXPECT_EQ(failure.is_unsolvable, classify);
-            EXPECT_EQ(failure.execution_state.get_call_stack().get_registers().get_concept_values()[0].value().get_name(), "bad");
+            EXPECT_EQ(failure.program_state.get_module_state().get_registers().get_concept_values()[0].value().get_name(), "bad");
 
             options.shuffle_choice_points = true;
             options.random_seed = 42;

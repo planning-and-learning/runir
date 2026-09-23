@@ -6,7 +6,7 @@ from pyrunir.kr.dl.base import semantics
 from pyrunir.kr.dl.ext import semantics as ext_semantics
 from pyrunir.kr.dl.uns import semantics as uns_semantics
 from pyrunir.kr.ps.base.dl import parse_sketch
-from pyrunir.kr.ps.ext.dl import parse_module_program
+from pyrunir.kr.ps.ext.dl import parse_program
 from pyrunir.kr.uns.dl import parse_classifier
 from pyrunir.serialization import register_table, serialize, table
 from pyyggdrasil.serialization import Dictionaries
@@ -39,7 +39,7 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
         expression = owner.get_boolean_features()[0].get_expression()
         module = semantics
     elif family == "ext":
-        owner = parse_module_program(
+        owner = parse_program(
             "(:program (:entry root) (:module (:symbol root) (:arguments) (:registers) "
             f"(:entry m0) (:memory m0) (:features {feature}) (:rules)))",
             gripper_planning_domain,
@@ -79,7 +79,7 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
         reparsed = parse_sketch(formatted, gripper_planning_domain, fresh_context.base_repository)
         assert len(reparsed.get_rules()) == 1
     elif family == "ext":
-        reparsed = parse_module_program(formatted, gripper_planning_domain, fresh_context.ext_repository)
+        reparsed = parse_program(formatted, gripper_planning_domain, fresh_context.ext_repository)
     else:
         reparsed = parse_classifier(formatted, gripper_planning_domain, fresh_context.uns_repository)
     assert str(reparsed) == formatted
@@ -145,10 +145,10 @@ _NAMED_QUERY_PROGRAM = """(:program (:entry root)
 
 def test_query_program_round_trip_preserves_named_references(gripper_planning_domain):
     context = DomainContext(gripper_planning_domain)
-    program = parse_module_program(_NAMED_QUERY_PROGRAM, gripper_planning_domain, context.ext_repository)
+    program = parse_program(_NAMED_QUERY_PROGRAM, gripper_planning_domain, context.ext_repository)
     formatted = str(program)
     fresh_context = DomainContext(gripper_planning_domain)
-    reparsed = parse_module_program(formatted, gripper_planning_domain, fresh_context.ext_repository)
+    reparsed = parse_program(formatted, gripper_planning_domain, fresh_context.ext_repository)
 
     assert str(reparsed) == formatted
     assert reparsed.get_entry_module().get_name() == "root"
@@ -180,7 +180,7 @@ def test_query_program_rejects_undefined_named_references(gripper_planning_domai
     source = _NAMED_QUERY_PROGRAM.replace(reference, missing)
     context = DomainContext(gripper_planning_domain)
     with pytest.raises(UndefinedSymbolError, match=f"Undefined {kind}: missing") as raised:
-        parse_module_program(source, gripper_planning_domain, context.ext_repository)
+        parse_program(source, gripper_planning_domain, context.ext_repository)
     assert raised.value.diagnostic.location is not None
     assert raised.value.diagnostic.location.begin == source.index("missing")
 

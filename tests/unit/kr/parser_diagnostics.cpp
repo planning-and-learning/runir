@@ -158,19 +158,19 @@ void check_dl_expression_diagnostics()
 TEST(RunirTests, ParserDiagnosticsCoverSketchModuleAndClassifier)
 {
     const auto sketch = std::string("(:sketch (:features) (:rules))");
-    const auto module = std::string("(:module (:symbol m) (:arguments) (:registers) (:entry s) (:memory s) (:features) (:rules))");
+    const auto module_ = std::string("(:module (:symbol m) (:arguments) (:registers) (:entry s) (:memory s) (:features) (:rules))");
     const auto classifier = std::string("(:classifier (:symbol c) (:features) (:expression (or)))");
     const auto parse_sketch = kr::ps::base::dl::parser::parse_sketch_ast;
     const auto parse_module = [](const std::string& source) { return kr::ps::ext::dl::parser::parse_module_ast(source); };
     const auto parse_classifier = kr::uns::dl::parser::parse_classifier_ast;
 
     EXPECT_NO_THROW(parse_sketch("; )\n" + sketch + " ; ("));
-    EXPECT_NO_THROW(parse_module("; )\n" + module + " ; ("));
+    EXPECT_NO_THROW(parse_module("; )\n" + module_ + " ; ("));
     EXPECT_NO_THROW(parse_classifier("; )\n" + classifier + " ; ("));
     expect_diagnostic(parse_sketch, sketch.substr(0, sketch.size() - 1), "sketch", sketch.size() - 1, 0);
     expect_diagnostic(parse_sketch, sketch + ")", "sketch", sketch.size(), 0);
-    expect_diagnostic(parse_module, module.substr(0, module.size() - 1), "module", module.size() - 1, 0);
-    expect_diagnostic(parse_module, module + ")", "module", module.size(), 0);
+    expect_diagnostic(parse_module, module_.substr(0, module_.size() - 1), "module", module_.size() - 1, 0);
+    expect_diagnostic(parse_module, module_ + ")", "module", module_.size(), 0);
     expect_diagnostic(parse_classifier, classifier.substr(0, classifier.size() - 1), "classifier", classifier.size() - 1, 0);
     expect_diagnostic(parse_classifier, classifier + ")", "classifier", classifier.size(), 0);
 }
@@ -226,7 +226,7 @@ TEST(RunirTests, ParserDiagnosticsPreserveTheInnermostContext)
     expect_diagnostic(kr::ps::base::dl::parser::parse_sketch_ast, source, ":expression", source.size(), source.find("(:expression"));
 
     const auto program = std::string("(:program (:entry root)");
-    expect_diagnostic([](const std::string& source) { return kr::ps::ext::dl::parser::parse_module_program_ast(source); },
+    expect_diagnostic([](const std::string& source) { return kr::ps::ext::dl::parser::parse_program_ast(source); },
                       program,
                       "program",
                       program.size(),
@@ -238,11 +238,11 @@ TEST(RunirTests, ParserDiagnosticsKeepUnrecognizedSectionsAtTheirParent)
 {
     const auto sketch = std::string("(:sketch (:unknown))");
     expect_diagnostic(kr::ps::base::dl::parser::parse_sketch_ast, sketch, "sketch", sketch.find("(:unknown"), 0, ":features");
-    const auto module = std::string("(:module (:unknown))");
+    const auto module_ = std::string("(:module (:unknown))");
     expect_diagnostic([](const std::string& source) { return kr::ps::ext::dl::parser::parse_module_ast(source); },
-                      module,
+                      module_,
                       "module",
-                      module.find("(:unknown"),
+                      module_.find("(:unknown"),
                       0,
                       ":symbol");
     const auto classifier = std::string("(:classifier (:unknown))");

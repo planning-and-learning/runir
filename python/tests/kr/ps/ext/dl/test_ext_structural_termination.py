@@ -318,9 +318,9 @@ def test_ext_incomplete_structural_termination_uses_memory_components(gripper_pl
     assert sieve_result.surviving_rules == []
 
 
-def test_ext_incomplete_structural_termination_accepts_module_program(gripper_planning_domain: PlanningDomain) -> None:
+def test_ext_incomplete_structural_termination_accepts_program(gripper_planning_domain: PlanningDomain) -> None:
     repository = _repository(gripper_planning_domain)
-    program = dl.parse_module_program(
+    program = dl.parse_program(
         read_fixture("kr/ps/ext/dl/non_terminating.program"), gripper_planning_domain, repository
     )
 

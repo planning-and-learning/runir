@@ -22,9 +22,9 @@ void bind_parser(nb::module_& m)
         "repository"_a);
 
     m.def(
-        "parse_module_program",
+        "parse_program",
         [](const std::string& description, tyr::formalism::planning::PlanningDomain domain, runir::kr::ps::ext::Repository& repository)
-        { return runir::kr::ps::ext::dl::parse_module_program(description, domain.get_domain(), repository); },
+        { return runir::kr::ps::ext::dl::parse_program(description, domain.get_domain(), repository); },
         "description"_a,
         "domain"_a,
         "repository"_a);

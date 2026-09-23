@@ -13,7 +13,7 @@
 #include <runir/kr/ps/ext/action_rule_contract_error.hpp>
 #include <runir/kr/ps/ext/evaluation_environment.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
-#include <runir/kr/ps/ext/module_program_executor.hpp>
+#include <runir/kr/ps/ext/program_executor.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
 #include <string>
@@ -49,13 +49,14 @@ void bind_feature_evaluation(nb::module_& m)
 template<tyr::TaskKind Kind>
 void bind_execution_types(nb::module_& m, const char* prefix)
 {
+    using LocalStateView = ModuleStateView<Kind>;
     using StackView = CallStackView<Kind>;
-    using StateView = ExecutionStateView<Kind>;
-    using VertexLabel = ModuleProgramProofVertexLabel<Kind>;
-    using Graph = ModuleProgramProofGraph<Kind>;
-    using Results = ModuleProgramProofResults<Kind>;
-    using Options = ModuleProgramSearchOptions<Kind>;
-    using Step = detail::ModuleProgramStep<Kind>;
+    using StateView = ProgramStateView<Kind>;
+    using VertexLabel = ProgramProofVertexLabel<Kind>;
+    using Graph = ProgramProofGraph<Kind>;
+    using Results = ProgramProofResults<Kind>;
+    using Options = ProgramSearchOptions<Kind>;
+    using Step = detail::ProgramStep<Kind>;
     using Expander = SuccessorExpander<Kind>;
     using Environment = EvaluationEnvironment<Kind>;
 
@@ -63,11 +64,11 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
 
     nb::class_<Environment>(m, (std::string(prefix) + "EvaluationEnvironment").c_str())
-        .def(nb::init<runir::kr::TaskContext<Kind>&, ModuleProgramView>(), "task_context"_a, "program"_a, nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
+        .def(nb::init<runir::kr::TaskContext<Kind>&, ProgramView>(), "task_context"_a, "program"_a, nb::keep_alive<1, 2>(), nb::keep_alive<1, 3>())
         .def(
             "make_dl_context",
             [](Environment& self, StateView state) { return self.make_dl_context(state); },
-            "execution_state"_a,
+            "program_state"_a,
             nb::keep_alive<0, 1>(),
             nb::keep_alive<0, 2>())
         .def("get_dl_caches", &Environment::get_dl_caches, nb::rv_policy::reference_internal)
@@ -79,9 +80,19 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     bind_feature_evaluation<Kind, runir::kr::ps::dl::NumericalFeature>(m);
     bind_feature_evaluation<Kind, runir::kr::ps::dl::QueryFeature>(m);
 
+    auto module_state = nb::class_<LocalStateView>(m, (std::string(prefix) + "ModuleState").c_str())
+                            .def_prop_ro("state", &LocalStateView::get_state, nb::keep_alive<0, 1>())
+                            .def_prop_ro("module", &LocalStateView::get_module, nb::keep_alive<0, 1>())
+                            .def_prop_ro("memory_state", &LocalStateView::get_memory_state, nb::keep_alive<0, 1>())
+                            .def_prop_ro("registers", &LocalStateView::get_registers, nb::keep_alive<0, 1>())
+                            .def_prop_ro("arguments", &LocalStateView::get_arguments, nb::keep_alive<0, 1>());
+    ygg::add_print(module_state);
+    ygg::add_comparison(module_state);
+    ygg::add_hash(module_state);
+
     auto call_stack = nb::class_<StackView>(m, (std::string(prefix) + "CallStack").c_str())
                           .def_prop_ro("module", &StackView::get_module, nb::keep_alive<0, 1>())
-                          .def_prop_ro("memory_state", &StackView::get_memory_state, nb::keep_alive<0, 1>())
+                          .def_prop_ro("return_memory_state", &StackView::get_return_memory_state, nb::keep_alive<0, 1>())
                           .def_prop_ro("registers", &StackView::get_registers, nb::keep_alive<0, 1>())
                           .def_prop_ro("arguments", &StackView::get_arguments, nb::keep_alive<0, 1>())
                           .def_prop_ro("caller", &StackView::get_caller, nb::keep_alive<0, 1>())
@@ -90,20 +101,20 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     ygg::add_comparison(call_stack);
     ygg::add_hash(call_stack);
 
-    auto execution_state = nb::class_<StateView>(m, (std::string(prefix) + "ExecutionState").c_str())
-                               .def_prop_ro("state", &StateView::get_state, nb::keep_alive<0, 1>())
-                               .def_prop_ro("program", &StateView::get_program, nb::keep_alive<0, 1>())
-                               .def_prop_ro("phase", &StateView::get_phase)
-                               .def_prop_ro("call_stack", &StateView::get_call_stack, nb::keep_alive<0, 1>());
-    ygg::add_print(execution_state);
-    ygg::add_comparison(execution_state);
-    ygg::add_hash(execution_state);
+    auto program_state = nb::class_<StateView>(m, (std::string(prefix) + "ProgramState").c_str())
+                             .def_prop_ro("state", &StateView::get_state, nb::keep_alive<0, 1>())
+                             .def_prop_ro("program", &StateView::get_program, nb::keep_alive<0, 1>())
+                             .def_prop_ro("module_state", &StateView::get_module_state, nb::keep_alive<0, 1>())
+                             .def_prop_ro("call_stack", &StateView::get_call_stack, nb::keep_alive<0, 1>());
+    ygg::add_print(program_state);
+    ygg::add_comparison(program_state);
+    ygg::add_hash(program_state);
 
-    auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ModuleProgramProofVertexLabel").c_str())
-                            .def_ro("execution_state", &VertexLabel::execution_state)
+    auto vertex_label = nb::class_<VertexLabel>(m, (std::string(prefix) + "ProgramProofVertexLabel").c_str())
+                            .def_ro("program_state", &VertexLabel::program_state)
                             .def_prop_ro(
                                 "state",
-                                [](const VertexLabel& self) { return self.execution_state.get_state(); },
+                                [](const VertexLabel& self) { return self.program_state.get_state(); },
                                 nb::keep_alive<0, 1>())
                             .def_ro("is_initial", &VertexLabel::is_initial)
                             .def_ro("is_goal", &VertexLabel::is_goal)
@@ -113,12 +124,12 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     ygg::add_comparison(vertex_label);
     ygg::add_hash(vertex_label);
 
-    auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ModuleProgramProofGraph").c_str());
+    auto graph = nb::class_<Graph>(m, (std::string(prefix) + "ProgramProofGraph").c_str());
     graph.def(nb::init<>());
     bind_readable_graph_methods<true>(graph);
     bind_forward_graph(graph);
 
-    nb::class_<Results>(m, (std::string(prefix) + "ModuleProgramProofResults").c_str())
+    nb::class_<Results>(m, (std::string(prefix) + "ProgramProofResults").c_str())
         .def_ro("status", &Results::status)
         .def_ro("graph", &Results::graph, nb::keep_alive<0, 1>())
         .def_ro("plan", &Results::plan, nb::rv_policy::copy)
@@ -128,7 +139,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_ro("statistics", &Results::statistics)
         .def("is_successful", &Results::is_successful);
 
-    nb::class_<Options>(m, (std::string(prefix) + "ModuleProgramSearchOptions").c_str())
+    nb::class_<Options>(m, (std::string(prefix) + "ProgramSearchOptions").c_str())
         .def(nb::init<>())
         .def_rw("universal", &Options::universal)
         .def_rw("classifier", &Options::classifier, nb::for_setter(nb::keep_alive<1, 2>()))
@@ -137,14 +148,14 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_rw("random_seed", &Options::random_seed)
         .def_rw("shuffle_choice_points", &Options::shuffle_choice_points);
 
-    nb::class_<Step>(m, (std::string(prefix) + "ModuleProgramExecutionStep").c_str())
+    nb::class_<Step>(m, (std::string(prefix) + "ProgramExecutionStep").c_str())
         .def_prop_ro("status", &Step::get_status_name)
         .def_prop_ro("target", &Step::get_target, nb::keep_alive<0, 1>())
         .def_prop_ro("state_transition", &Step::get_state_transition, nb::keep_alive<0, 1>())
         .def_prop_ro("rule", &Step::get_rule, nb::keep_alive<0, 1>());
 
     nb::class_<Expander>(m, (std::string(prefix) + "SuccessorExpander").c_str())
-        .def(nb::init<runir::kr::TaskContextPtr<Kind>, ModuleProgramView>(), "task_context"_a, "program"_a)
+        .def(nb::init<runir::kr::TaskContextPtr<Kind>, ProgramView>(), "task_context"_a, "program"_a)
         .def("initial_state", &Expander::initial_state, nb::keep_alive<0, 1>())
         .def(
             "labeled_successors",
@@ -168,49 +179,47 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
 }  // namespace
 
-void bind_module_program_executor(nb::module_& m)
+void bind_program_executor(nb::module_& m)
 {
     nb::exception<ActionRuleContractError>(m, "ActionRuleContractError", PyExc_RuntimeError);
 
-    nb::class_<ModuleProgramSearchStatistics>(m, "ModuleProgramSearchStatistics")
-        .def_ro("num_expanded", &ModuleProgramSearchStatistics::num_expanded)
-        .def_ro("num_generated", &ModuleProgramSearchStatistics::num_generated)
-        .def_ro("choice_depth", &ModuleProgramSearchStatistics::choice_depth)
-        .def_ro("max_choice_depth", &ModuleProgramSearchStatistics::max_choice_depth)
-        .def_ro("num_choice_points", &ModuleProgramSearchStatistics::num_choice_points)
-        .def_ro("num_binding_attempts", &ModuleProgramSearchStatistics::num_binding_attempts)
-        .def_ro("num_backtracks", &ModuleProgramSearchStatistics::num_backtracks);
+    nb::class_<ProgramSearchStatistics>(m, "ProgramSearchStatistics")
+        .def_ro("num_expanded", &ProgramSearchStatistics::num_expanded)
+        .def_ro("num_generated", &ProgramSearchStatistics::num_generated)
+        .def_ro("choice_depth", &ProgramSearchStatistics::choice_depth)
+        .def_ro("max_choice_depth", &ProgramSearchStatistics::max_choice_depth)
+        .def_ro("num_choice_points", &ProgramSearchStatistics::num_choice_points)
+        .def_ro("num_binding_attempts", &ProgramSearchStatistics::num_binding_attempts)
+        .def_ro("num_backtracks", &ProgramSearchStatistics::num_backtracks);
 
-    nb::enum_<ExecutionPhase>(m, "ExecutionPhase").value("INTERNAL", ExecutionPhase::INTERNAL).value("EXTERNAL", ExecutionPhase::EXTERNAL);
+    nb::enum_<ProgramProofStatus>(m, "ProgramProofStatus")
+        .value("SUCCESS", ProgramProofStatus::SUCCESS)
+        .value("FAILURE", ProgramProofStatus::FAILURE)
+        .value("OUT_OF_TIME", ProgramProofStatus::OUT_OF_TIME)
+        .value("OUT_OF_STATES", ProgramProofStatus::OUT_OF_STATES);
 
-    nb::enum_<ModuleProgramProofStatus>(m, "ModuleProgramProofStatus")
-        .value("SUCCESS", ModuleProgramProofStatus::SUCCESS)
-        .value("FAILURE", ModuleProgramProofStatus::FAILURE)
-        .value("OUT_OF_TIME", ModuleProgramProofStatus::OUT_OF_TIME)
-        .value("OUT_OF_STATES", ModuleProgramProofStatus::OUT_OF_STATES);
-
-    auto state_transition = nb::class_<ModuleProgramProofStateTransition>(m, "ModuleProgramProofStateTransition")
-                                .def_ro("action", &ModuleProgramProofStateTransition::action)
-                                .def_ro("cost", &ModuleProgramProofStateTransition::cost);
+    auto state_transition = nb::class_<ProgramProofStateTransition>(m, "ProgramProofStateTransition")
+                                .def_ro("action", &ProgramProofStateTransition::action)
+                                .def_ro("cost", &ProgramProofStateTransition::cost);
     ygg::add_print(state_transition);
     ygg::add_comparison(state_transition);
     ygg::add_hash(state_transition);
 
-    auto edge_label = nb::class_<ModuleProgramProofEdgeLabel>(m, "ModuleProgramProofEdgeLabel")
-                          .def_ro("state_transition", &ModuleProgramProofEdgeLabel::state_transition)
-                          .def_ro("rule", &ModuleProgramProofEdgeLabel::rule);
+    auto edge_label = nb::class_<ProgramProofEdgeLabel>(m, "ProgramProofEdgeLabel")
+                          .def_ro("state_transition", &ProgramProofEdgeLabel::state_transition)
+                          .def_ro("rule", &ProgramProofEdgeLabel::rule);
     ygg::add_print(edge_label);
     ygg::add_comparison(edge_label);
     ygg::add_hash(edge_label);
-    m.attr("GroundModuleProgramProofEdgeLabel") = edge_label;
-    m.attr("LiftedModuleProgramProofEdgeLabel") = edge_label;
+    m.attr("GroundProgramProofEdgeLabel") = edge_label;
+    m.attr("LiftedProgramProofEdgeLabel") = edge_label;
 
     bind_execution_types<tyr::GroundTag>(m, "Ground");
     bind_execution_types<tyr::LiftedTag>(m, "Lifted");
 
     m.def(
         "find_ground_solution",
-        [](runir::kr::TaskContextPtr<tyr::GroundTag> task_context, ModuleProgramView program, const ModuleProgramSearchOptions<tyr::GroundTag>& options)
+        [](runir::kr::TaskContextPtr<tyr::GroundTag> task_context, ProgramView program, const ProgramSearchOptions<tyr::GroundTag>& options)
         { return find_solution(std::move(task_context), program, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         "task_context"_a,
@@ -218,7 +227,7 @@ void bind_module_program_executor(nb::module_& m)
         "options"_a);
     m.def(
         "find_lifted_solution",
-        [](runir::kr::TaskContextPtr<tyr::LiftedTag> task_context, ModuleProgramView program, const ModuleProgramSearchOptions<tyr::LiftedTag>& options)
+        [](runir::kr::TaskContextPtr<tyr::LiftedTag> task_context, ProgramView program, const ProgramSearchOptions<tyr::LiftedTag>& options)
         { return find_solution(std::move(task_context), program, options); },
         nb::call_guard<nb::gil_scoped_release>(),
         "task_context"_a,

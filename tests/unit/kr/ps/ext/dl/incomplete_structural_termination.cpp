@@ -27,11 +27,11 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationMapsNumericalOpponent)
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
-    const auto module =
+    const auto module_ =
         kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/incomplete_numerical_opponent.module"), planning_domain.get_domain(), *repository);
 
-    const auto result = kr::ps::ext::dl::incomplete_structural_termination(module);
-    const auto numericals = module.get_features<kr::ps::dl::NumericalFeature>();
+    const auto result = kr::ps::ext::dl::incomplete_structural_termination(module_);
+    const auto numericals = module_.get_features<kr::ps::dl::NumericalFeature>();
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_EQ(numericals.size(), 1);
@@ -51,13 +51,13 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationUsesMemorySeparation)
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
-    const auto module = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/separated_boolean.module"), planning_domain.get_domain(), *repository);
+    const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/separated_boolean.module"), planning_domain.get_domain(), *repository);
 
-    const auto result = kr::ps::ext::dl::incomplete_structural_termination(module);
+    const auto result = kr::ps::ext::dl::incomplete_structural_termination(module_);
 
     EXPECT_TRUE(result.is_terminating());
     EXPECT_TRUE(result.surviving_rules.empty());
-    EXPECT_TRUE(kr::ps::ext::dl::structural_termination(module).is_terminating());
+    EXPECT_TRUE(kr::ps::ext::dl::structural_termination(module_).is_terminating());
 }
 
 TEST(RunirTests, ExtIncompleteStructuralTerminationSeparatedRegisterLoadDoesNotBlockDecrease)
@@ -66,9 +66,9 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationSeparatedRegisterLoadDoesNotB
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
-    const auto module = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/incomplete_register_load.module"), planning_domain.get_domain(), *repository);
+    const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/incomplete_register_load.module"), planning_domain.get_domain(), *repository);
 
-    const auto result = kr::ps::ext::dl::incomplete_structural_termination(module);
+    const auto result = kr::ps::ext::dl::incomplete_structural_termination(module_);
 
     ASSERT_FALSE(result.is_terminating());
     ASSERT_EQ(result.surviving_rules.size(), 1);
@@ -82,12 +82,12 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationHasNoFeatureLimit)
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
-    const auto module = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/incomplete_many_features.module"), planning_domain.get_domain(), *repository);
+    const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/dl/incomplete_many_features.module"), planning_domain.get_domain(), *repository);
 
-    const auto result = kr::ps::ext::dl::incomplete_structural_termination(module);
+    const auto result = kr::ps::ext::dl::incomplete_structural_termination(module_);
 
     EXPECT_TRUE(result.is_terminating());
-    EXPECT_EQ(module.get_features<kr::ps::dl::NumericalFeature>().size(), 15);
+    EXPECT_EQ(module_.get_features<kr::ps::dl::NumericalFeature>().size(), 15);
 }
 
 TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicCallIsLocallyTerminating)
@@ -97,7 +97,7 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicCallIsLocallyTerminati
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto program =
-        kr::ps::ext::dl::parse_module_program(read_fixture("kr/ps/ext/dl/incomplete_acyclic_calls.program"), planning_domain.get_domain(), *repository);
+        kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/dl/incomplete_acyclic_calls.program"), planning_domain.get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(program);
 
@@ -115,7 +115,7 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationReportsRecursiveCalls)
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
     const auto program =
-        kr::ps::ext::dl::parse_module_program(read_fixture("kr/ps/ext/dl/incomplete_recursive_calls.program"), planning_domain.get_domain(), *repository);
+        kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/dl/incomplete_recursive_calls.program"), planning_domain.get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(program);
 
@@ -131,7 +131,7 @@ TEST(RunirTests, ExtIncompleteStructuralTerminationAcyclicEmptyProgramIsTerminat
     const auto planning_domain = fp::Parser(gripper_domain()).get_domain();
     auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
     auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
-    const auto program = kr::ps::ext::dl::parse_module_program(read_fixture("kr/ps/ext/dl/acyclic_empty.program"), planning_domain.get_domain(), *repository);
+    const auto program = kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/dl/acyclic_empty.program"), planning_domain.get_domain(), *repository);
 
     const auto result = kr::ps::ext::dl::incomplete_structural_termination(program);
 

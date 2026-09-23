@@ -1,9 +1,9 @@
-#ifndef RUNIR_KR_PS_EXT_MODULE_PROGRAM_EXECUTOR_DATA_HPP_
-#define RUNIR_KR_PS_EXT_MODULE_PROGRAM_EXECUTOR_DATA_HPP_
+#ifndef RUNIR_KR_PS_EXT_PROGRAM_EXECUTOR_DATA_HPP_
+#define RUNIR_KR_PS_EXT_PROGRAM_EXECUTOR_DATA_HPP_
 
 #include "runir/graphs/declarations.hpp"
 #include "runir/kr/declarations.hpp"
-#include "runir/kr/ps/ext/module_program_proof_graph.hpp"
+#include "runir/kr/ps/ext/program_proof_graph.hpp"
 #include "runir/kr/uns/classifier_view.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
@@ -20,7 +20,7 @@
 namespace runir::kr::ps::ext
 {
 
-enum class ModuleProgramProofStatus
+enum class ProgramProofStatus
 {
     SUCCESS,
     FAILURE,
@@ -28,24 +28,24 @@ enum class ModuleProgramProofStatus
     OUT_OF_STATES,
 };
 
-constexpr std::string_view to_string(ModuleProgramProofStatus status)
+constexpr std::string_view to_string(ProgramProofStatus status)
 {
     switch (status)
     {
-        case ModuleProgramProofStatus::SUCCESS:
+        case ProgramProofStatus::SUCCESS:
             return "success";
-        case ModuleProgramProofStatus::FAILURE:
+        case ProgramProofStatus::FAILURE:
             return "failure";
-        case ModuleProgramProofStatus::OUT_OF_TIME:
+        case ProgramProofStatus::OUT_OF_TIME:
             return "out_of_time";
-        case ModuleProgramProofStatus::OUT_OF_STATES:
+        case ProgramProofStatus::OUT_OF_STATES:
             return "out_of_states";
     }
-    throw std::invalid_argument("invalid ModuleProgramProofStatus");
+    throw std::invalid_argument("invalid ProgramProofStatus");
 }
 
 template<tyr::TaskKind Kind>
-struct ModuleProgramSearchOptions
+struct ProgramSearchOptions
 {
     bool universal = false;
     std::optional<runir::kr::uns::ClassifierView> classifier = std::nullopt;
@@ -55,7 +55,7 @@ struct ModuleProgramSearchOptions
     bool shuffle_choice_points = false;
 };
 
-struct ModuleProgramSearchStatistics
+struct ProgramSearchStatistics
 {
     /// Extended-state expansions started, including those yielding no successors; cached replay is excluded.
     uint64_t num_expanded = 0;
@@ -80,18 +80,18 @@ struct ModuleProgramSearchStatistics
 };
 
 template<tyr::TaskKind Kind>
-struct ModuleProgramProofResults
+struct ProgramProofResults
 {
-    ModuleProgramProofStatus status = ModuleProgramProofStatus::SUCCESS;
+    ProgramProofStatus status = ProgramProofStatus::SUCCESS;
     runir::kr::TaskContextPtr<Kind> task_context_owner;
-    std::shared_ptr<ModuleProgramProofGraph<Kind>> graph;
+    std::shared_ptr<ProgramProofGraph<Kind>> graph;
     std::optional<tyr::planning::PackedPlan<Kind>> plan = std::nullopt;
     runir::graphs::VertexIndexList deadend_states;
     runir::graphs::VertexIndexList open_states;
     runir::graphs::VertexIndexList cycle;
-    ModuleProgramSearchStatistics statistics;
+    ProgramSearchStatistics statistics;
 
-    bool is_successful() const noexcept { return status == ModuleProgramProofStatus::SUCCESS; }
+    bool is_successful() const noexcept { return status == ProgramProofStatus::SUCCESS; }
 };
 
 }  // namespace runir::kr::ps::ext

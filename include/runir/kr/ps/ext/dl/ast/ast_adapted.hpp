@@ -23,6 +23,6 @@ BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::CallRule, conditions, cal
 
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::RuleEntry, symbol, source, target, rules)
 BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::Module, name, arguments, registers, entry, memory_states, features, rule_entries)
-BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::ModuleProgram, entry, modules)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::ext::dl::ast::Program, entry, modules)
 
 #endif

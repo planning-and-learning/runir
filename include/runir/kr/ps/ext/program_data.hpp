@@ -1,8 +1,8 @@
-#ifndef RUNIR_KR_PS_EXT_MODULE_PROGRAM_DATA_HPP_
-#define RUNIR_KR_PS_EXT_MODULE_PROGRAM_DATA_HPP_
+#ifndef RUNIR_KR_PS_EXT_PROGRAM_DATA_HPP_
+#define RUNIR_KR_PS_EXT_PROGRAM_DATA_HPP_
 
 #include "runir/kr/ps/ext/module_index.hpp"
-#include "runir/kr/ps/ext/module_program_index.hpp"
+#include "runir/kr/ps/ext/program_index.hpp"
 
 #include <tuple>
 #include <yggdrasil/core/types.hpp>
@@ -12,9 +12,9 @@ namespace ygg
 {
 
 template<>
-struct Data<runir::kr::ps::ext::ModuleProgram>
+struct Data<runir::kr::ps::ext::Program>
 {
-    Index<runir::kr::ps::ext::ModuleProgram> index;
+    Index<runir::kr::ps::ext::Program> index;
     Index<runir::kr::ps::ext::Module> entry_module;
     IndexList<runir::kr::ps::ext::Module> modules;
 

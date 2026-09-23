@@ -42,7 +42,7 @@ the `runir` repository root.
 | Concrete syntax | `include/runir/kr/ps/ext/dl/ast/ast.hpp`, `src/kr/ps/ext/dl/parser.cpp`, `include/runir/kr/ps/ext/formatter.hpp` | `(:rule (:symbol s) (:expression (:source-memory m) (:target-memory m') <variant>...))`, variants `(:load (:conditions ...) (:concept F) (:register (:concept r)))`, `(:sketch (:conditions ...) (:effects ...))`, `(:do ...)`, `(:call ...)`; several variants under one rule symbol are alternatives |
 | Registers | `include/runir/kr/dl/declarations.hpp` | `num_registers = 4` concept registers and 4 role registers per module; features refer to them with `(c_register r0)` and `(r_register r0)` |
 | Execution state | `include/runir/kr/ps/ext/execution_data.hpp` | interned tuple `(program, planning state, call stack, phase)`; the call stack frame holds `(module, memory state, registers, arguments, caller)` |
-| Steps | `include/runir/kr/ps/ext/successor_expander.hpp` | one `ModuleProgramStep` per applicable rule and binding: a load rule yields one step per object in the denotation; a sketch rule with effects yields one step per compatible successor state |
+| Steps | `include/runir/kr/ps/ext/successor_expander.hpp` | one `ProgramStep` per applicable rule and binding: a load rule yields one step per object in the denotation; a sketch rule with effects yields one step per compatible successor state |
 | Search | `include/runir/kr/ps/ext/detail/proof_search.hpp` | `find_solution` with `options.universal = true` explores every step and reports `FAILURE` if any leaf is open or a dead end (verification); with `universal = false` it keeps only the first step at each state (greedy execution) |
 | No rule applies | `SuccessorExpander::fallback` | pops the call stack (`RESTORED_CALLER`) or reports `NO_APPLICABLE_ACTION` |
 | Termination | `include/runir/kr/ps/ext/dl/structural_termination.hpp` | Sieve over `(feature valuation, memory state)` vertices; load rules use the Phi(r) semantics |
@@ -189,13 +189,13 @@ backtracks to the most recent `choose` frame, on any of:
 | `NO_APPLICABLE_ACTION` | `fallback`: no rule applies and the call stack is empty |
 | `MALFORMED_CALL` | `execute_call` |
 | revisit of an execution state | section 4.5; subsumes cycles on the current branch and nogoods from abandoned branches |
-| `is_unsolvable` from the optional classifier | `ModuleProgramProofBuilder::get_or_create_vertex` |
+| `is_unsolvable` from the optional classifier | `ProgramProofBuilder::get_or_create_vertex` |
 
 `OUT_OF_TIME` and `OUT_OF_STATES` abort the whole search as today.
 
-The enum values `SEARCH_FAILURE` and `CYCLE` exist in `ModuleProgramOutcome`
+The enum values `SEARCH_FAILURE` and `CYCLE` exist in `ProgramOutcome`
 but nothing produces them today. Cycles are currently detected after the
-search by `ModuleProgramProofBuilder::finish`, which runs `find_cycle` over
+search by `ProgramProofBuilder::finish`, which runs `find_cycle` over
 the whole proof graph and downgrades `SUCCESS` to `FAILURE`. That post-hoc
 check cannot be kept for the backtracking executor: a cycle inside an
 abandoned branch must not fail the overall result. Cycle detection moves
@@ -224,7 +224,7 @@ counterexample. Section 4.4 says which states are reported.
 
 ### 4.4 Two modes, as today
 
-`ModuleProgramSearchOptions::universal` keeps its meaning and both modes
+`ProgramSearchOptions::universal` keeps its meaning and both modes
 must implement section 4.2.
 
 **Verification (`universal = true`).** Build the proof graph over all steps
@@ -255,7 +255,7 @@ Result of verification, in addition to `SUCCESS`/`FAILURE`:
 frames, greedy everywhere else:
 
 ```
-frame = (execution_state_index, choose_rule, next_binding_index, plan_length)
+frame = (program_state_index, choose_rule, next_binding_index, plan_length)
 
 run(initial):
   state <- initial; stack <- []; plan <- []
@@ -290,14 +290,14 @@ is an index copy and the denotation can be recomputed rather than stored.
 Store `plan_length` so the plan prefix can be truncated on backtrack; today
 `plan_steps` is only ever appended.
 
-Add to `ModuleProgramSearchOptions`:
+Add to `ProgramSearchOptions`:
 
 - `max_backtracks` (default unlimited) for the executor;
 - `use_nogoods` (default true), section 4.5;
 - `shuffle_choice_points` already exists and applies to binding order if
   set; the default order stays object index order.
 
-Add to `ModuleProgramProofResults`:
+Add to `ProgramProofResults`:
 
 - `num_backtracks`, `num_choice_frames` (peak depth) for evaluation;
 - `exhausted_choices` as above.
@@ -309,7 +309,7 @@ point, because it contains the planning state, the call stack, all
 registers and the memory state. Therefore an execution state that was
 reached, fully explored over all bindings of its `choose` rule, and not
 solved, can never be solved later on a different branch. Record it in a
-nogood set keyed by `ExecutionStateView` index. Entering a nogood state on
+nogood set keyed by `ProgramStateView` index. Entering a nogood state on
 any branch triggers backtracking. This is sound and it is what turns
 factorial enumeration into the dynamic-programming recurrence on TSP,
 because the planning state records the visited set.
@@ -472,7 +472,7 @@ Decided 2026-09-17.
   today's greedy executor. Structural termination treats `choose` like
   `load`, so choose-free programs get the same verdicts.
 - What differs is the guarantee, and that is made visible in the API rather
-  than in a namespace: `ModuleProgramView::is_deterministic()` is true iff
+  than in a namespace: `ProgramView::is_deterministic()` is true iff
   no module has a `choose` rule, and Theorem 10 is claimed only for
   deterministic programs. The AND/OR verification and the backtracking
   executor live in new entry points next to `find_solution`; `find_solution`
@@ -506,7 +506,7 @@ Ordered so that each step compiles and tests on its own.
    *solved* per section 4.2 and set `status` from the initial vertex.
    Restrict `open_states` and `deadend_states` to relevant vertices and
    populate `exhausted_choices` (section 4.4).
-6. **Execution.** Add `ModuleProgramView::is_deterministic()`. Add the
+6. **Execution.** Add `ProgramView::is_deterministic()`. Add the
    DFS of section 4.4 as a new entry point next to `find_solution`; make
    `find_solution` reject programs with `choose` rules. Implement the
    revisit rule of section 4.5 on the interned execution states instead of

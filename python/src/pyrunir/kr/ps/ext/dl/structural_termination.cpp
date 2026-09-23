@@ -43,11 +43,11 @@ void bind_structural_termination(nb::module_& m)
         .def_ro("surviving_rules", &ModuleIncompleteStructuralTerminationResult::surviving_rules)
         .def("is_terminating", &ModuleIncompleteStructuralTerminationResult::is_terminating);
 
-    nb::class_<ModuleProgramIncompleteStructuralTerminationResult>(m, "ModuleProgramIncompleteStructuralTerminationResult")
-        .def_ro("status", &ModuleProgramIncompleteStructuralTerminationResult::status)
-        .def_ro("module_results", &ModuleProgramIncompleteStructuralTerminationResult::module_results)
-        .def_ro("recursive_call_rules", &ModuleProgramIncompleteStructuralTerminationResult::recursive_call_rules)
-        .def("is_terminating", &ModuleProgramIncompleteStructuralTerminationResult::is_terminating);
+    nb::class_<ProgramIncompleteStructuralTerminationResult>(m, "ProgramIncompleteStructuralTerminationResult")
+        .def_ro("status", &ProgramIncompleteStructuralTerminationResult::status)
+        .def_ro("module_results", &ProgramIncompleteStructuralTerminationResult::module_results)
+        .def_ro("recursive_call_rules", &ProgramIncompleteStructuralTerminationResult::recursive_call_rules)
+        .def("is_terminating", &ProgramIncompleteStructuralTerminationResult::is_terminating);
 
     auto vertex_label = nb::class_<ModulePolicyGraphVertexLabel>(m, "ModulePolicyGraphVertexLabel")
                             .def_ro("boolean_values", &ModulePolicyGraphVertexLabel::boolean_values)
@@ -75,11 +75,11 @@ void bind_structural_termination(nb::module_& m)
         .def_ro("sieve_result", &ModuleStructuralTerminationResult::sieve_result, nb::keep_alive<0, 1>())
         .def("is_terminating", &ModuleStructuralTerminationResult::is_terminating);
 
-    nb::class_<ModuleProgramStructuralTerminationResult>(m, "ModuleProgramStructuralTerminationResult")
-        .def_ro("status", &ModuleProgramStructuralTerminationResult::status)
-        .def_ro("module_results", &ModuleProgramStructuralTerminationResult::module_results)
-        .def_ro("recursive_call_rules", &ModuleProgramStructuralTerminationResult::recursive_call_rules)
-        .def("is_terminating", &ModuleProgramStructuralTerminationResult::is_terminating);
+    nb::class_<ProgramStructuralTerminationResult>(m, "ProgramStructuralTerminationResult")
+        .def_ro("status", &ProgramStructuralTerminationResult::status)
+        .def_ro("module_results", &ProgramStructuralTerminationResult::module_results)
+        .def_ro("recursive_call_rules", &ProgramStructuralTerminationResult::recursive_call_rules)
+        .def("is_terminating", &ProgramStructuralTerminationResult::is_terminating);
 
     m.def("structural_termination",
           nb::overload_cast<ModuleView, std::size_t, bool, bool>(&structural_termination),
@@ -91,7 +91,7 @@ void bind_structural_termination(nb::module_& m)
           "Decide structural termination with configurable feature limit and optional memory-SCC-scoped incomplete preprocessing. For Action rules, concrete forward termination assumes every selected applicable tuple satisfies the declared effects; runtime checks only visited transitions.");
 
     m.def("structural_termination",
-          nb::overload_cast<ModuleProgramView, std::size_t, bool, bool>(&structural_termination),
+          nb::overload_cast<ProgramView, std::size_t, bool, bool>(&structural_termination),
           "program"_a,
           "max_features"_a = runir::kr::ps::dl::default_max_features,
           "use_incomplete_preprocessing"_a = runir::kr::ps::dl::default_use_incomplete_preprocessing,
@@ -107,7 +107,7 @@ void bind_structural_termination(nb::module_& m)
           "Apply the incomplete termination proof within residual memory SCCs by default, assuming Action-rule effects cover every selected applicable tuple.");
 
     m.def("incomplete_structural_termination",
-          nb::overload_cast<ModuleProgramView, bool>(&incomplete_structural_termination),
+          nb::overload_cast<ProgramView, bool>(&incomplete_structural_termination),
           "program"_a,
           "use_memory_scc_scope"_a = runir::kr::ps::dl::default_use_memory_scc_scope,
           nb::keep_alive<0, 1>(),

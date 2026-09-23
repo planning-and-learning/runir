@@ -68,9 +68,9 @@ struct ActionRuleClass;
 struct RuleClass;
 struct RuleEntryClass;
 struct ModuleClass;
-struct ModuleProgramClass;
+struct ProgramClass;
 struct ModuleRootClass;
-struct ModuleProgramRootClass;
+struct ProgramRootClass;
 
 using identifier_type = x3::rule<IdentifierClass, ast::Identifier>;
 using quoted_string_type = x3::rule<QuotedStringClass, ast::Identifier>;
@@ -128,16 +128,16 @@ using rule_entry_type = x3::rule<RuleEntryClass, ast::RuleEntry>;
 using rules_section_type = x3::rule<RulesSectionClass, std::vector<ast::RuleEntry>>;
 using memory_section_type = x3::rule<MemorySectionClass, std::vector<ast::NamedValue>>;
 using module_type = x3::rule<ModuleClass, ast::Module>;
-using module_program_type = x3::rule<ModuleProgramClass, ast::ModuleProgram>;
+using program_type = x3::rule<ProgramClass, ast::Program>;
 using module_root_type = x3::rule<ModuleRootClass, ast::Module>;
-using module_program_root_type = x3::rule<ModuleProgramRootClass, ast::ModuleProgram>;
+using program_root_type = x3::rule<ProgramRootClass, ast::Program>;
 
-BOOST_SPIRIT_DECLARE(module_type, module_program_type, module_root_type, module_program_root_type)
+BOOST_SPIRIT_DECLARE(module_type, program_type, module_root_type, program_root_type)
 
 module_type const& module_parser();
-module_program_type const& module_program_parser();
+program_type const& program_parser();
 module_root_type const& module_root_parser();
-module_program_root_type const& module_program_root_parser();
+program_root_type const& program_root_parser();
 
 }  // namespace runir::kr::ps::ext::dl::parser
 

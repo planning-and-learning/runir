@@ -32,7 +32,7 @@
 #include "runir/kr/ps/ext/memory_state_view.hpp"
 #include "runir/kr/ps/ext/module_data.hpp"
 #include "runir/kr/ps/ext/module_index.hpp"
-#include "runir/kr/ps/ext/module_program_executor.hpp"
+#include "runir/kr/ps/ext/program_executor.hpp"
 #include "runir/kr/ps/ext/module_symbol_data.hpp"
 #include "runir/kr/ps/ext/module_symbol_index.hpp"
 #include "runir/kr/ps/ext/module_symbol_view.hpp"
