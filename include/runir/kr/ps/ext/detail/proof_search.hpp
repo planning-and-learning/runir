@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <optional>
+#include <stack>
 #include <variant>
 #include <vector>
 #include <yggdrasil/core/chrono.hpp>
@@ -21,21 +22,11 @@ namespace detail
 template<tyr::TaskKind Kind>
 struct SearchFrame
 {
-    enum class Phase
-    {
-        ORDINARY,
-        CHOOSE,
-    };
-
     ProgramStateView<Kind> state;
-    std::size_t successors_begin;
-    std::size_t successor;
-    bool replay;
-    std::size_t replay_edge = 0;
-    std::optional<RuleVariantView> replay_rule = std::nullopt;
-    Phase phase = Phase::ORDINARY;
+    std::size_t edge;
+    // A state frame requires every rule; a rule frame combines its own continuations.
+    std::optional<RuleVariantView> rule = std::nullopt;
     SearchStatus result = SearchStatus::SUCCESS;
-    SearchStatus choice_result = SearchStatus::FAILURE;
 
     // Ordinary continuations are conjunctive; one pending child cannot override a definite failure.
     void require(SearchStatus child)
@@ -46,10 +37,21 @@ struct SearchFrame
 
     void accept(SearchStatus child)
     {
-        if (phase == Phase::ORDINARY)
+        if (!rule)
             require(child);
-        else if (child == SearchStatus::SUCCESS || (child == SearchStatus::PENDING && choice_result == SearchStatus::FAILURE))
-            choice_result = child;
+        else
+            ygg::visit(
+                [&](auto concrete)
+                {
+                    if constexpr (ChooseRuleView<decltype(concrete)>)
+                    {
+                        if (child == SearchStatus::SUCCESS || (child == SearchStatus::PENDING && result == SearchStatus::FAILURE))
+                            result = child;
+                    }
+                    else
+                        require(child);
+                },
+                rule->get_variant());
     }
 };
 
@@ -86,8 +88,8 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
     if (!admitted)
         return finish(ProgramProofStatus::OUT_OF_STATES);
 
-    using Phase = typename SearchFrame<Kind>::Phase;
-    auto stack = std::vector<SearchFrame<Kind>> {};
+    constexpr auto no_edge = ExecutionState<Kind, Unsolvability>::no_edge;
+    auto stack = std::stack<SearchFrame<Kind>, std::vector<SearchFrame<Kind>>> {};
     auto next = std::optional(initial);
     auto returned = std::optional<SearchStatus> {};
     while (true)
@@ -104,8 +106,6 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
                 returned = SearchStatus::PENDING;
                 continue;
             }
-            const auto replay = node.status == SearchStatus::PENDING;
-            const auto successors_begin = replay ? 0 : execution.predecessors().size();
             if (node.status == SearchStatus::DISCOVERED)
             {
                 if (node.is_goal)
@@ -128,101 +128,100 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView pro
                 continue;
             }
             node.status = SearchStatus::ACTIVE;
-            stack.push_back({ state, successors_begin, execution.predecessors().size(), replay, replay ? execution.predecessors().size() : 0 });
+            // Snapshot only the already recorded edges. Later bindings are handled by the active choice stack.
+            const auto first_edge = execution.first_outgoing(state);
+            stack.push({ state, first_edge });
             if (node.is_open)
-                stack.back().result = SearchStatus::FAILURE;
+                stack.top().result = SearchStatus::FAILURE;
         }
         if (returned)
         {
             if (stack.empty())
                 return finish(*returned == SearchStatus::SUCCESS ? ProgramProofStatus::SUCCESS : ProgramProofStatus::FAILURE);
-            stack.back().accept(*returned);
+            stack.top().accept(*returned);
             returned.reset();
         }
 
-        auto& frame = stack.back();
-        auto& node = execution.search_node(frame.state);
-        if (frame.phase == Phase::ORDINARY)
+        auto& frame = stack.top();
+        if (frame.rule)
         {
-            if (frame.successor != frame.successors_begin)
-            {
-                const auto& edge = execution.predecessors()[--frame.successor];
-                if (edge.source != frame.state)
-                    continue;
-                if (!edge.rule)
-                    next = edge.target;
-                else
-                    ygg::visit(
-                        [&](auto rule)
-                        {
-                            if constexpr (!ChooseRuleView<decltype(rule)>)
-                                next = edge.target;
-                        },
-                        edge.rule->get_variant());
-                continue;
-            }
-            frame.phase = Phase::CHOOSE;
-        }
-        if (frame.replay)
-        {
-            // A pending state exhausted every unresolved Choose before unwinding. Its recorded bindings suffice for replay.
-            // After filtering by source, each rule's bindings form one consecutive group: replay never generates new edges.
-            // ponytail: scan existing records; add an outgoing index only if profiling warrants it.
-            if (frame.replay_edge != 0)
-            {
-                const auto& edge = execution.predecessors()[--frame.replay_edge];
-                if (edge.source == frame.state && edge.rule)
-                    ygg::visit(
-                        [&](auto rule)
-                        {
-                            if constexpr (ChooseRuleView<decltype(rule)>)
-                            {
-                                if (frame.replay_rule != edge.rule)
-                                {
-                                    if (frame.replay_rule)
-                                        frame.require(frame.choice_result);
-                                    frame.replay_rule = edge.rule;
-                                    frame.choice_result = SearchStatus::FAILURE;
-                                }
-                                if (frame.choice_result != SearchStatus::SUCCESS)
-                                    next = edge.target;
-                            }
-                        },
-                        edge.rule->get_variant());
-                continue;
-            }
-            if (frame.replay_rule)
-                frame.require(frame.choice_result);
-        }
-        else if (!execution.choices().empty() && execution.choices().top().state == frame.state)
-        {
-            if (frame.choice_result != SearchStatus::SUCCESS)
-            {
-                if (const auto step = execution.next_binding())
+            const auto limit = ygg::visit(
+                [&](auto rule) -> std::optional<ProgramProofStatus>
                 {
-                    if (step->status == ProgramOutcome::OUT_OF_TIME)
-                        return finish(ProgramProofStatus::OUT_OF_TIME);
-                    if (step->status == ProgramOutcome::OUT_OF_STATES)
-                        return finish(ProgramProofStatus::OUT_OF_STATES);
-                    if (step->status == ProgramOutcome::APPLIED)
+                    if constexpr (ChooseRuleView<decltype(rule)>)
                     {
-                        const auto non_singleton = std::visit([](const auto& choice) { return choice.has_alternatives(); }, execution.choices().top().choice);
-                        if (const auto limit = execution.record_transition(frame.state, *step, non_singleton))
-                            return finish(*limit);
-                        next = step->get_target();
-                        continue;
+                        if (!execution.choices().empty() && execution.choices().top().state == frame.state)
+                        {
+                            if (frame.result != SearchStatus::SUCCESS)
+                                if (const auto step = execution.next_binding())
+                                {
+                                    if (step->status == ProgramOutcome::OUT_OF_TIME)
+                                        return ProgramProofStatus::OUT_OF_TIME;
+                                    if (step->status == ProgramOutcome::OUT_OF_STATES)
+                                        return ProgramProofStatus::OUT_OF_STATES;
+                                    if (step->status == ProgramOutcome::APPLIED)
+                                    {
+                                        const auto non_singleton =
+                                            std::visit([](const auto& choice) { return choice.has_alternatives(); }, execution.choices().top().choice);
+                                        if (const auto limit = execution.record_transition(frame.state, *step, non_singleton))
+                                            return limit;
+                                        next = step->get_target();
+                                        return std::nullopt;
+                                    }
+                                    execution.search_node(frame.state).is_deadend = true;
+                                }
+                            execution.choices().pop();
+                            return std::nullopt;
+                        }
+                        if (frame.result == SearchStatus::SUCCESS)
+                            return std::nullopt;
                     }
-                    node.is_deadend = true;
-                }
-            }
-            frame.require(frame.choice_result);
-            execution.choices().pop();
-            frame.choice_result = SearchStatus::FAILURE;
+                    if (frame.edge != no_edge && execution.predecessors()[frame.edge].rule == frame.rule)
+                    {
+                        next = execution.predecessors()[frame.edge].target;
+                        frame.edge = execution.next_outgoing(frame.edge);
+                    }
+                    return std::nullopt;
+                },
+                frame.rule->get_variant());
+            if (limit)
+                return finish(*limit);
+            if (next)
+                continue;
+
+            // Skip untried recorded bindings after a successful Choose, then resume the parent state's next rule.
+            while (frame.edge != no_edge && execution.predecessors()[frame.edge].rule == frame.rule)
+                frame.edge = execution.next_outgoing(frame.edge);
+            const auto edge = frame.edge;
+            returned = frame.result;
+            stack.pop();
+            stack.top().edge = edge;
             continue;
         }
-        node.status = frame.result;
+        if (frame.edge != no_edge)
+        {
+            // A rule frame consumes one consecutive group and returns the next group's cursor to this state frame.
+            const auto& edge = execution.predecessors()[frame.edge];
+            if (!edge.rule)
+            {
+                frame.edge = execution.next_outgoing(frame.edge);
+                next = edge.target;
+            }
+            else
+                ygg::visit(
+                    [&](auto rule)
+                    { stack.push({ frame.state, frame.edge, edge.rule, ChooseRuleView<decltype(rule)> ? SearchStatus::FAILURE : SearchStatus::SUCCESS }); },
+                    edge.rule->get_variant());
+            continue;
+        }
+        if (!execution.choices().empty() && execution.choices().top().state == frame.state)
+        {
+            std::visit([&](const auto& choice) { stack.push({ frame.state, no_edge, choice.rule, SearchStatus::FAILURE }); }, execution.choices().top().choice);
+            continue;
+        }
+        execution.search_node(frame.state).status = frame.result;
         returned = frame.result;
-        stack.pop_back();
+        stack.pop();
     }
 }
 

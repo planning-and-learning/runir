@@ -6,6 +6,7 @@
 
 #include <concepts>
 #include <cstddef>
+#include <limits>
 #include <optional>
 #include <stack>
 #include <type_traits>
@@ -34,11 +35,16 @@ private:
 
     ygg::SegmentedVector<SearchNode<Kind>> m_nodes;
     std::vector<Predecessor<Kind>> m_predecessors;
+    // Outgoing edge chains use stable indices while transition storage grows.
+    std::vector<std::size_t> m_first_outgoing;
+    std::vector<std::size_t> m_next_outgoing;
     std::size_t m_num_reached = 0;
     std::stack<ChoiceFrame<Kind>, std::vector<ChoiceFrame<Kind>>> m_choices;
     ProgramSearchStatistics m_statistics;
 
 public:
+    static constexpr std::size_t no_edge = std::numeric_limits<std::size_t>::max();
+
     ExecutionState(SuccessorExpander<Kind>& expander,
                    ProgramStateView<Kind> initial,
                    const ProgramSearchOptions<Kind>& options,
@@ -59,6 +65,12 @@ public:
     const auto& nodes() const { return m_nodes; }
     auto& choices() { return m_choices; }
     const auto& predecessors() const { return m_predecessors; }
+    std::size_t first_outgoing(ProgramStateView<Kind> state) const
+    {
+        const auto index = std::size_t(ygg::uint_t(state.get_index()));
+        return index < m_first_outgoing.size() ? m_first_outgoing[index] : no_edge;
+    }
+    std::size_t next_outgoing(std::size_t edge) const { return m_next_outgoing[edge]; }
     SearchNode<Kind>& search_node(ProgramStateView<Kind> state) { return get_or_create_search_node(state, m_nodes); }
 
     /// Admit a NEW state; return false only when the state limit prevents admission.
@@ -85,7 +97,13 @@ public:
             return ProgramProofStatus::OUT_OF_STATES;
         const auto& transition = step.get_state_transition();
         const auto action = transition ? std::optional(transition->action) : std::nullopt;
+        const auto source_index = std::size_t(ygg::uint_t(source.get_index()));
+        if (source_index >= m_first_outgoing.size())
+            m_first_outgoing.resize(source_index + 1, no_edge);
+        const auto edge = m_predecessors.size();
         m_predecessors.push_back({ source, target, action, step.rule });
+        m_next_outgoing.push_back(m_first_outgoing[source_index]);
+        m_first_outgoing[source_index] = edge;
         if (created)
         {
             node.parent_state = source;
