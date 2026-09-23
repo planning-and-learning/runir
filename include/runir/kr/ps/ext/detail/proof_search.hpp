@@ -1,19 +1,25 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_PROOF_SEARCH_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_PROOF_SEARCH_HPP_
 
+#include "runir/graphs/cycle.hpp"
+#include "runir/kr/dl/semantics/uns/state_evaluation_context.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
-#include "runir/kr/ps/ext/detail/proof_builder.hpp"
 #include "runir/kr/ps/ext/program_executor.hpp"
+#include "runir/kr/ps/ext/successor_expander.hpp"
 #include "runir/kr/task_context.hpp"
+#include "runir/kr/uns/classify.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <deque>
+#include <memory>
+#include <optional>
 #include <random>
 #include <tuple>
 #include <utility>
 #include <vector>
 #include <yggdrasil/core/portable_shuffle.hpp>
+#include <yggdrasil/semantics/hash.hpp>
 
 namespace runir::kr::ps::ext
 {
@@ -63,7 +69,12 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
 
     const auto& search_context = *task_context->search_context;
     const auto initial_node = search_context.successor_generator->get_packed_initial_node(*search_context.state_repository, *search_context.axiom_evaluator);
-    auto proof = detail::ProgramProofBuilder<Kind>(std::move(task_context), program, options.classifier);
+    auto result = ProgramProofResults<Kind> {};
+    result.task_context_owner = task_context;
+    auto builder = ProgramProofGraphBuilder<Kind> {};
+    auto state_to_vertex = ygg::UnorderedMap<ygg::Index<ProgramState<Kind>>, graphs::VertexIndex> {};
+    auto expander = SuccessorExpander<Kind>(task_context, program);
+    auto classifier_caches = runir::kr::dl::semantics::DenotationCaches<runir::kr::UnsFamilyTag> {};
     auto expansions = std::deque<Expansion> {};
     auto open = std::vector<Work> {};
     auto choices = std::vector<ChoiceFrame> {};
@@ -103,20 +114,37 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
     {
         if (status != Status::SUCCESS)
             assess_choice_depth();
-        auto result = proof.finish(status);
+        result.status = status;
+        auto graph = std::make_shared<ProgramProofGraph<Kind>>(std::move(builder));
+        result.cycle = graphs::find_cycle(*graph);
+        result.graph = std::move(graph);
         result.statistics = statistics;
         result.statistics.choice_depth = choice_depth;
-        return result;
+        return std::move(result);
     };
-    const auto vertex_for = [&](ProgramStateView<Kind> state, bool initial = false, bool alive = true, bool unsolvable = false)
-        -> std::optional<graphs::VertexIndex>
+    const auto vertex_for = [&](ProgramStateView<Kind> state, bool initial = false) -> std::optional<graphs::VertexIndex>
     {
-        const auto result = proof.get_or_create_vertex(state, initial, alive, unsolvable, options.max_num_states);
-        if (!result)
+        if (const auto it = state_to_vertex.find(state.get_index()); it != state_to_vertex.end())
+            return it->second;
+        if (state_to_vertex.size() >= options.max_num_states)
             return std::nullopt;
-        if (result->second)
-            expansions.emplace_back(std::move(state));
-        return result->first;
+
+        const auto goal = expander.is_goal(state.get_state());
+        auto unsolvable = false;
+        if (!goal && options.classifier)
+        {
+            classifier_caches.clear(false);
+            auto context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, Kind>(state.get_state(),
+                                                                                                      task_context->dl_builder,
+                                                                                                      *task_context->dl_denotation_repository,
+                                                                                                      task_context->dl_builder.get_workspace(),
+                                                                                                      classifier_caches);
+            unsolvable = runir::kr::uns::classify(*options.classifier, context);
+        }
+        const auto vertex = builder.add_vertex(ProgramProofVertexLabel<Kind> { state, initial, goal, !unsolvable, unsolvable });
+        state_to_vertex.emplace(state.get_index(), vertex);
+        expansions.emplace_back(std::move(state));
+        return vertex;
     };
     const auto enqueue = [&](graphs::VertexIndex vertex, ygg::uint_t depth = 0)
     {
@@ -152,7 +180,12 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
                 target = vertex_for(step.get_target());
                 if (!target)
                     return Status::OUT_OF_STATES;
-                proof.add_edge(source, *target, step.get_state_transition(), step.rule);
+                auto label = ProgramProofEdgeLabel {};
+                if (const auto transition = step.get_state_transition())
+                    label.state_transition = ProgramProofStateTransition { transition->action, transition->cost };
+                if (step.rule)
+                    label.rule = *step.rule;
+                builder.add_directed_edge(source, *target, std::move(label));
             }
             selected_edges.emplace_back(source, *target, choice && choice->alternatives.size() > 1);
             if (!options.universal)
@@ -163,20 +196,20 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
         {
             // Failure belongs to this choose obligation, not to the shared source state.
             if (!expansion.reported_deadend)
-                proof.add_deadend_state(source);
+                result.deadend_states.push_back(source);
             expansion.reported_deadend = true;
         }
         else
         {
             if (!expansion.reported_open)
-                proof.add_open_state(source);
+                result.open_states.push_back(source);
             expansion.reported_open = true;
         }
         failed |= !applied;
         return std::nullopt;
     };
 
-    const auto initial_vertex = vertex_for(proof.initial_state(), true);
+    const auto initial_vertex = vertex_for(expander.initial_state(), true);
     if (!initial_vertex)
         return finish(Status::OUT_OF_STATES);
     enqueue(*initial_vertex);
@@ -239,19 +272,19 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
             continue;
         }
 
-        if (proof.is_goal(expansion.state.get_state()))
+        if (expander.is_goal(expansion.state.get_state()))
         {
             if (!options.universal)
             {
-                proof.set_plan(tyr::planning::PackedPlan<Kind>(initial_node, std::move(plan_steps)));
+                result.plan = tyr::planning::PackedPlan<Kind>(initial_node, std::move(plan_steps));
                 return finish(Status::SUCCESS, assess_choice_depth().value());
             }
             continue;
         }
-        if (proof.is_unsolvable(work.vertex))
+        if (builder.get_vertex(work.vertex).get_property().is_unsolvable)
         {
             if (!expansion.reported_deadend)
-                proof.add_deadend_state(work.vertex);
+                result.deadend_states.push_back(work.vertex);
             expansion.reported_deadend = true;
             failed = true;
             continue;
@@ -261,9 +294,9 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
         {
             ++statistics.num_expanded;
             if (options.universal || options.shuffle_choice_points)
-                proof.template steps<EagerExpansionPolicy>(expansion.state, out_of_time, expansion.steps);
+                expander.template steps_until<EagerExpansionPolicy>(expansion.state, out_of_time, expansion.steps);
             else
-                proof.template steps<LazyExpansionPolicy>(expansion.state, out_of_time, expansion.steps);
+                expander.template steps_until<LazyExpansionPolicy>(expansion.state, out_of_time, expansion.steps);
             statistics.num_generated += std::ranges::count_if(expansion.steps, [](const auto& step)
             { return step.status == Outcome::APPLIED || step.status == Outcome::RESTORED_CALLER; });
             if (out_of_time())
