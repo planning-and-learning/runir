@@ -6,6 +6,7 @@
 #include "runir/kr/ps/ext/memory_state_view.hpp"
 #include "runir/kr/ps/ext/module_symbol_view.hpp"
 #include "runir/kr/ps/ext/rule_data.hpp"
+#include "runir/kr/ps/ext/order_term_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
 #include <concepts>
@@ -37,8 +38,8 @@ public:
     auto get_conditions() const noexcept { return make_view(get_data().conditions, *m_context); }
 
     auto get_effects() const noexcept
-        requires(runir::kr::ps::ext::BindingRuleKind<Kind> || std::same_as<Kind, runir::kr::ps::ext::SketchTag>
-                 || std::same_as<Kind, runir::kr::ps::ext::DoTag> || std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
+        requires(runir::kr::ps::ext::BindingRuleKind<Kind> || std::same_as<Kind, runir::kr::ps::ext::SketchTag> || std::same_as<Kind, runir::kr::ps::ext::DoTag>
+                 || std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
     {
         return make_view(get_data().effects, *m_context);
     }
@@ -53,6 +54,13 @@ public:
         requires runir::kr::ps::ext::BindingRuleKind<Kind>
     {
         return make_view(get_data().reg, get_repository(*m_context).get_dl_repository());
+    }
+
+    auto get_order() const noexcept
+        requires(std::same_as<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::dl::ConceptTag>>
+                 || std::same_as<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::dl::RoleTag>>)
+    {
+        return make_view(get_data().order, *m_context);
     }
 
     const auto& get_action_name() const noexcept

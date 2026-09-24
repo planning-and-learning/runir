@@ -23,6 +23,16 @@ struct ModuleSymbol
 {
 };
 
+struct OrderTerm
+{
+};
+
+enum class OrderDirection
+{
+    MIN,
+    MAX,
+};
+
 // Rules
 
 struct SketchTag
@@ -87,7 +97,7 @@ using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<ps::Rule<ExtFamilyTag>>, C
 using FeatureTypes = runir::kr::ps::PsFeatureTypes<runir::kr::ExtFamilyTag>;
 using ConditionTypes = runir::kr::ps::PsConditionTypes<runir::kr::ExtFamilyTag>;
 using EffectTypes = runir::kr::ps::PsEffectTypes<runir::kr::ExtFamilyTag>;
-using ProgramTypes = ygg::TypeList<MemoryState, ModuleSymbol, Module, Program>;
+using ProgramTypes = ygg::TypeList<MemoryState, ModuleSymbol, Module, Program, OrderTerm>;
 using RepositoryTypes = ygg::ConcatTypeListsT<runir::kr::ps::base::RepositoryTypes, FeatureTypes, ConditionTypes, EffectTypes, RuleTypes, ProgramTypes>;
 using Repository =
     runir::kr::ps::BasicRepository<runir::kr::ExtFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::ExtFamilyTag>>;
@@ -97,6 +107,7 @@ using RepositoryFactory =
 
 using ConceptRegisterView = ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>, runir::kr::dl::ExtConstructorRepository>;
 using RoleRegisterView = ygg::View<ygg::Index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>, runir::kr::dl::ExtConstructorRepository>;
+using OrderTermView = ygg::View<ygg::Index<OrderTerm>, Repository>;
 using MemoryStateView = ygg::View<ygg::Index<MemoryState>, Repository>;
 using ModuleSymbolView = ygg::View<ygg::Index<ModuleSymbol>, Repository>;
 using ModuleView = ygg::View<ygg::Index<Module>, Repository>;

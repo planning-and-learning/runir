@@ -4,8 +4,8 @@
 #include "runir/kr/dl/semantics/formatter.hpp"
 #include "runir/kr/ps/ext/dl/formatter.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
-#include "runir/kr/ps/ext/program_executor_data.hpp"
 #include "runir/kr/ps/ext/module_view.hpp"
+#include "runir/kr/ps/ext/program_executor_data.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
 #include "runir/kr/ps/ext/views.hpp"
 
@@ -140,6 +140,17 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext:
         os << ygg::print_indent << ")\n";
         if (!view.get_effects().empty())
             append_effects(os, view.get_effects());
+        if constexpr (std::same_as<Kind, ChooseTag<typename Kind::Category>>)
+            if (!view.get_order().empty())
+                append_inline_section(os,
+                                      "order",
+                                      view.get_order(),
+                                      [](std::ostream& output, auto term)
+                                      {
+                                          output << '(' << (term.get_direction() == OrderDirection::MIN ? "min" : "max") << ' ';
+                                          ygg::visit([&](auto feature) { output << feature.get_symbol(); }, term.get_feature());
+                                          output << ')';
+                                      });
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::SketchTag>)
     {
@@ -148,10 +159,7 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext:
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::DoTag>)
     {
         os << ygg::print_indent << "(:action " << fmt::format("{:?}", view.get_action_name().view()) << ")\n";
-        append_inline_section(os,
-                              "arguments",
-                              view.get_action_arguments(),
-                              [](std::ostream& output, auto argument) { output << argument.get_symbol(); });
+        append_inline_section(os, "arguments", view.get_action_arguments(), [](std::ostream& output, auto argument) { output << argument.get_symbol(); });
         append_effects(os, view.get_effects());
     }
     else if constexpr (std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
@@ -408,10 +416,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Module>, C>> : fm
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::Program>, C>> : fmt::formatter<std::string_view>
 {
-    auto format(auto view, format_context& context) const
-    {
-        return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::program(view), context);
-    }
+    auto format(auto view, format_context& context) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::ext::program(view), context); }
 };
 
 template<tyr::TaskKind Kind, typename C>
@@ -420,9 +425,13 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ModuleState<Kind>
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& value, format_context& context) const
     {
-        return fmt::format_to(context.out(), "ModuleState(state={}, module={}, memory_state={}, registers={}, arguments={})",
-                              value.get_state().get_index(), value.get_module().get_name(), value.get_memory_state(),
-                              value.get_registers(), value.get_arguments());
+        return fmt::format_to(context.out(),
+                              "ModuleState(state={}, module={}, memory_state={}, registers={}, arguments={})",
+                              value.get_state().get_index(),
+                              value.get_module().get_name(),
+                              value.get_memory_state(),
+                              value.get_registers(),
+                              value.get_arguments());
     }
 };
 
@@ -432,9 +441,13 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::CallStack>, C>>
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& value, format_context& context) const -> format_context::iterator
     {
-        return fmt::format_to(context.out(), "CallStack(module={}, return_memory_state={}, registers={}, arguments={}, caller={})",
-                              value.get_module().get_name(), value.get_return_memory_state(), value.get_registers(),
-                              value.get_arguments(), value.get_caller());
+        return fmt::format_to(context.out(),
+                              "CallStack(module={}, return_memory_state={}, registers={}, arguments={}, caller={})",
+                              value.get_module().get_name(),
+                              value.get_return_memory_state(),
+                              value.get_registers(),
+                              value.get_arguments(),
+                              value.get_caller());
     }
 };
 
@@ -444,8 +457,11 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ext::ProgramState<Kind
     constexpr auto parse(format_parse_context& context) { return context.begin(); }
     auto format(const auto& value, format_context& context) const
     {
-        return fmt::format_to(context.out(), "ProgramState(program={}, module_state={}, call_stack={})",
-                              value.get_program().get_index(), value.get_module_state(), value.get_call_stack());
+        return fmt::format_to(context.out(),
+                              "ProgramState(program={}, module_state={}, call_stack={})",
+                              value.get_program().get_index(),
+                              value.get_module_state(),
+                              value.get_call_stack());
     }
 };
 

@@ -24,6 +24,10 @@ void bind_numerical_data(nb::module_& m, const char* name)
         cls.def_rw("arg", &Data::arg);
     else if constexpr (std::same_as<Tag, DistanceTag>)
         cls.def_rw("lhs", &Data::lhs).def_rw("mid", &Data::mid).def_rw("rhs", &Data::rhs);
+    else if constexpr (std::same_as<Tag, NumericalConstantTag>)
+        cls.def_rw("identifier", &Data::identifier);
+    else if constexpr (NumericalBinaryTag<Tag>)
+        cls.def_rw("lhs", &Data::lhs).def_rw("rhs", &Data::rhs);
     else
         cls.def_rw("reference", &Data::reference);
 }
@@ -45,6 +49,10 @@ void bind_numerical_view(nb::module_& m, const char* name)
         cls.def("get_lhs", &View::get_lhs, nb::keep_alive<0, 1>())
             .def("get_mid", &View::get_mid, nb::keep_alive<0, 1>())
             .def("get_rhs", &View::get_rhs, nb::keep_alive<0, 1>());
+    else if constexpr (std::same_as<Tag, NumericalConstantTag>)
+        cls.def("get_value", &View::get_value);
+    else if constexpr (NumericalBinaryTag<Tag>)
+        cls.def("get_lhs", &View::get_lhs, nb::keep_alive<0, 1>()).def("get_rhs", &View::get_rhs, nb::keep_alive<0, 1>());
     else
         cls.def("get_argument", &View::get_argument, nb::keep_alive<0, 1>());
 }
@@ -53,6 +61,34 @@ void bind_numerical_view(nb::module_& m, const char* name)
 
 void bind_semantics_numerical(nb::module_& m)
 {
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, NumericalConstantTag>>>(m, "NumericalConstantIndex");
+    bind_numerical_data<NumericalConstantTag>(m, "NumericalConstantData");
+    bind_numerical_view<NumericalConstantTag>(m, "NumericalConstant");
+
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, AddTag>>>(m, "NumericalAddIndex");
+    bind_numerical_data<AddTag>(m, "NumericalAddData");
+    bind_numerical_view<AddTag>(m, "NumericalAdd");
+
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, SubTag>>>(m, "NumericalSubIndex");
+    bind_numerical_data<SubTag>(m, "NumericalSubData");
+    bind_numerical_view<SubTag>(m, "NumericalSub");
+
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, MulTag>>>(m, "NumericalMulIndex");
+    bind_numerical_data<MulTag>(m, "NumericalMulData");
+    bind_numerical_view<MulTag>(m, "NumericalMul");
+
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, DivTag>>>(m, "NumericalDivIndex");
+    bind_numerical_data<DivTag>(m, "NumericalDivData");
+    bind_numerical_view<DivTag>(m, "NumericalDiv");
+
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, MinTag>>>(m, "NumericalMinIndex");
+    bind_numerical_data<MinTag>(m, "NumericalMinData");
+    bind_numerical_view<MinTag>(m, "NumericalMin");
+
+    ygg::bind_index<ygg::Index<Numerical<runir::kr::ExtFamilyTag, MaxTag>>>(m, "NumericalMaxIndex");
+    bind_numerical_data<MaxTag>(m, "NumericalMaxData");
+    bind_numerical_view<MaxTag>(m, "NumericalMax");
+
     using Count = Numerical<runir::kr::ExtFamilyTag, CountTag>;
     using Distance = Numerical<runir::kr::ExtFamilyTag, DistanceTag>;
     using ArgumentReference = Numerical<runir::kr::ExtFamilyTag, ArgumentTag<NumericalTag>>;

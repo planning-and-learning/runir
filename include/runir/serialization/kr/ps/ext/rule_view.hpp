@@ -14,6 +14,13 @@
 namespace ygg::serialization
 {
 
+template<typename Archive, typename C>
+void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ext::OrderTerm>, C>>)
+{
+    ar.field("direction", [](const auto& value) { return std::string(value.get_direction() == runir::kr::ps::ext::OrderDirection::MIN ? "min" : "max"); });
+    ar.variant([](const auto& value) { return value.get_feature(); });
+}
+
 template<typename Archive, runir::kr::ps::ext::RuleKind Kind, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::ext::Rule<Kind>>, C>>)
 {
@@ -29,6 +36,8 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::e
         ar.field("feature", [](const auto& value) -> decltype(auto) { return (value.get_feature()); });
         ar.field("register", [](const auto& value) -> decltype(auto) { return (value.get_register()); });
     }
+    if constexpr (requires(const Value& value) { value.get_order(); })
+        ar.field("order", [](const auto& value) { return value.get_order(); });
     if constexpr (requires(const Value& value) { value.get_action_name(); })
         ar.field("action_name", [](const auto& value) -> decltype(auto) { return (value.get_action_name()); });
     if constexpr (requires(const Value& value) { value.get_action_arguments(); })

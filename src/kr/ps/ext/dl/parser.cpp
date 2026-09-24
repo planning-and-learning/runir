@@ -2,8 +2,8 @@
 
 #include "kr/parser/constructors.hpp"
 #include "kr/parser/resolution.hpp"
-#include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/canonicalization.hpp"
+#include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/grammar/parser/parser.hpp"
 #include "runir/kr/dl/repository.hpp"
 #include "runir/kr/errors.hpp"
@@ -464,10 +464,7 @@ void append_argument(Repository& repository,
 }
 
 template<typename FeatureTag, typename Expression>
-auto intern_dl_feature(Repository& repository,
-                       runir::kr::ps::ext::Builder& builder,
-                       ygg::Index<Expression> constructor,
-                       const std::string& symbol)
+auto intern_dl_feature(Repository& repository, runir::kr::ps::ext::Builder& builder, ygg::Index<Expression> constructor, const std::string& symbol)
 {
     auto concrete_data = runir::kr::ps::ext::checkout<runir::kr::ps::ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, FeatureTag>>(builder);
     concrete_data->feature = constructor;
@@ -884,6 +881,19 @@ auto parse_binding_rule(
     data->target = target;
     append_conditions(repository, builder, rule.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
     append_effects(repository, builder, rule.effects, boolean_features, numerical_features, diagnostics, data->effects);
+    if constexpr (std::same_as<Kind, ChooseTag<Category>>)
+        for (const auto& term : rule.order)
+        {
+            auto value = checkout<OrderTerm>(builder);
+            value->direction = term.direction;
+            if (const auto it = boolean_features.find(term.feature.text); it != boolean_features.end())
+                value->feature = it->second;
+            else if (const auto it = numerical_features.find(term.feature.text); it != numerical_features.end())
+                value->feature = it->second;
+            else
+                diagnostics.throw_at(term.feature, runir::kr::UndefinedSymbolError("Boolean or numerical ordering feature", term.feature.text));
+            data->order.push_back(get_or_create(repository, *value).first.get_index());
+        }
     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
         data->feature = require_feature(concept_features, rule.feature, diagnostics);
@@ -922,17 +932,17 @@ auto parse_rule(
             {
                 using Kind = typename AstCategory<RuleAst>::Kind;
                 return parse_binding_rule<Kind>(repository,
-                                                 builder,
-                                                 concrete,
-                                                 source,
-                                                 target,
-                                                 concept_features,
-                                                 role_features,
-                                                 boolean_features,
-                                                 numerical_features,
-                                                 references,
-                                                 symbol,
-                                                 diagnostics);
+                                                builder,
+                                                concrete,
+                                                source,
+                                                target,
+                                                concept_features,
+                                                role_features,
+                                                boolean_features,
+                                                numerical_features,
+                                                references,
+                                                symbol,
+                                                diagnostics);
             }
             else if constexpr (std::same_as<RuleAst, ast::SketchRule>)
             {
@@ -1181,8 +1191,7 @@ ModuleView lower_module(const ast::Module& ast,
     auto boolean_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>> {};
     auto numerical_features =
         std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>> {};
-    auto query_features =
-        std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>> {};
+    auto query_features = std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>>> {};
     for (const auto& feature : ast.features)
     {
         boost::apply_visitor(

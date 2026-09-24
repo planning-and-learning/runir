@@ -61,7 +61,9 @@ using BaseNumericalConstructorTags = ygg::TypeList<CountTag, DistanceTag>;
 using ExtConceptConstructorTags = ygg::ConcatTypeListsT<BaseConceptConstructorTags, ygg::TypeList<RegisterTag, ArgumentTag<ConceptTag>>>;
 using ExtRoleConstructorTags = ygg::ConcatTypeListsT<BaseRoleConstructorTags, ygg::TypeList<RegisterTag, ArgumentTag<RoleTag>>>;
 using ExtBooleanConstructorTags = ygg::ConcatTypeListsT<BaseBooleanConstructorTags, ygg::TypeList<ArgumentTag<BooleanTag>>>;
-using ExtNumericalConstructorTags = ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ygg::TypeList<ArgumentTag<NumericalTag>>>;
+using NumericalBinaryConstructorTags = ygg::TypeList<AddTag, SubTag, MulTag, DivTag, MinTag, MaxTag>;
+using ArithmeticConstructorTags = ygg::ConcatTypeListsT<ygg::TypeList<NumericalConstantTag>, NumericalBinaryConstructorTags>;
+using ExtNumericalConstructorTags = ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ArithmeticConstructorTags, ygg::TypeList<ArgumentTag<NumericalTag>>>;
 
 using UnsComparisonConstructorTags = ygg::TypeList<EqTag<BooleanTag>,
                                                    NeqTag<BooleanTag>,
@@ -77,7 +79,6 @@ using UnsComparisonConstructorTags = ygg::TypeList<EqTag<BooleanTag>,
                                                    GeTag<NumericalTag>>;
 
 using UnsLogicalConstructorTags = ygg::TypeList<AndTag, OrTag, NotTag>;
-using UnsNumericalBinaryConstructorTags = ygg::TypeList<AddTag, SubTag, MulTag, DivTag, MinTag, MaxTag>;
 
 using UnsConceptConstructorTags = BaseConceptConstructorTags;
 using UnsRoleConstructorTags = BaseRoleConstructorTags;
@@ -85,7 +86,7 @@ using UnsBooleanConstructorTags = ygg::ConcatTypeListsT<
     BaseBooleanConstructorTags,
     ygg::ConcatTypeListsT<UnsComparisonConstructorTags, ygg::ConcatTypeListsT<ygg::TypeList<BooleanConstantTag>, UnsLogicalConstructorTags>>>;
 using UnsNumericalConstructorTags =
-    ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ygg::ConcatTypeListsT<ygg::TypeList<NumericalConstantTag>, UnsNumericalBinaryConstructorTags>>;
+    ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ygg::ConcatTypeListsT<ygg::TypeList<NumericalConstantTag>, NumericalBinaryConstructorTags>>;
 
 template<>
 struct DlFamilyTraits<runir::kr::BaseFamilyTag>

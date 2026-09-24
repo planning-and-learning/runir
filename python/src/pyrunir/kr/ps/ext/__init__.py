@@ -1,6 +1,10 @@
 # Import all classes and functions for better IDE support
 
 from ...._pyrunir.kr.ps.ext import (
+    OrderDirection,
+    OrderTerm,
+    OrderTermData,
+    OrderTermIndex,
     ActionRule,
     ActionRuleData,
     ActionRuleIndex,

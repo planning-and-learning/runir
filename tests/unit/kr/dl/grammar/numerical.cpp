@@ -63,7 +63,7 @@ consteval bool numerical_data_view()
         };
     else if constexpr (std::same_as<Tag, kr::dl::NumericalConstantTag>)
         return requires(Data& data) { data.identifier; };
-    else if constexpr (kr::dl::TypeListContains<Tag, kr::dl::UnsNumericalBinaryConstructorTags>::value)
+    else if constexpr (kr::dl::TypeListContains<Tag, kr::dl::NumericalBinaryConstructorTags>::value)
         return requires(Data& data) {
             data.lhs;
             data.rhs;

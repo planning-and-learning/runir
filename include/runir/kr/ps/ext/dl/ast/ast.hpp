@@ -5,6 +5,7 @@
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/parser/ast.hpp"
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
+#include "runir/kr/ps/ext/declarations.hpp"
 
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
@@ -67,7 +68,8 @@ struct QueryFeature : x3::position_tagged
 using FeatureVariant = PositionedVariant<Feature<runir::kr::dl::ConceptTag>,
                                          Feature<runir::kr::dl::RoleTag>,
                                          Feature<runir::kr::dl::BooleanTag>,
-                                         Feature<runir::kr::dl::NumericalTag>, QueryFeature>;
+                                         Feature<runir::kr::dl::NumericalTag>,
+                                         QueryFeature>;
 
 struct NamedValue : x3::position_tagged
 {
@@ -83,6 +85,12 @@ struct LoadRule : x3::position_tagged
     std::vector<Effect> effects;
 };
 
+struct OrderTerm : x3::position_tagged
+{
+    OrderDirection direction;
+    Identifier feature;
+};
+
 template<runir::kr::dl::CategoryTag Category>
 struct ChooseRule : x3::position_tagged
 {
@@ -90,6 +98,7 @@ struct ChooseRule : x3::position_tagged
     Identifier feature;
     Identifier reg;
     std::vector<Effect> effects;
+    std::vector<OrderTerm> order;
 };
 
 struct SketchRule : x3::position_tagged
@@ -127,7 +136,8 @@ using Rule = PositionedVariant<LoadRule<runir::kr::dl::ConceptTag>,
                                DoRule,
                                CallRule,
                                ChooseRule<runir::kr::dl::ConceptTag>,
-                               ChooseRule<runir::kr::dl::RoleTag>, ActionRule>;
+                               ChooseRule<runir::kr::dl::RoleTag>,
+                               ActionRule>;
 
 struct RuleEntry : x3::position_tagged
 {

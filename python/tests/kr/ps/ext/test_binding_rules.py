@@ -40,7 +40,7 @@ def test_binding_rules_parse_construct_and_serialize(gripper_planning_domain, ki
     data.effects = []
     assert (repository.get_or_create(data) == rule) == (not rule.get_effects())
 
-    assert list(rule_type.Fields.__members__) == ["source", "target", "conditions", "effects", "feature", "register"]
+    assert list(rule_type.Fields.__members__) == ["source", "target", "conditions", "effects", "feature", "register"] + (["order"] if kind == "choose" else [])
     dictionaries = Dictionaries()
     register_table(dictionaries, ext.RuleVariant, "variants", "v")
     register_table(dictionaries, rule_type, "bindings", "r", fields=("source", "target", "effects"))
@@ -52,3 +52,47 @@ def test_binding_rules_parse_construct_and_serialize(gripper_planning_domain, ki
         "source": "m0", "target": "m1", "effects": [f"e{i}" for i in range(len(rule.get_effects()))],
     }]
     assert table(dictionaries, ext.EffectVariant) == [{"text": str(effect)} for effect in rule.get_effects()]
+
+
+@pytest.mark.parametrize("category,expression", [("concept", "c_top"), ("role", "r_universal")])
+def test_choose_order_data_and_serialization(gripper_planning_domain, category, expression):
+    repository = DomainContext(gripper_planning_domain).ext_repository
+    source = f"""(:module (:symbol ranked) (:arguments) (:registers (:{category} selected))
+      (:entry a) (:memory a b)
+      (:features (:{category} (:symbol candidates) (:expression ({expression})))
+        (:boolean (:symbol flag) (:expression (b_nonempty (c_top))))
+        (:numerical (:symbol n) (:expression (n_const 2))))
+      (:rules (:rule (:symbol pick) (:expression (:source-memory a) (:target-memory b)
+        (:choose (:conditions) (:{category} candidates) (:register (:{category} selected))
+          (:order (max flag) (min n) (max flag)))))))"""
+    module = parse_module(source, gripper_planning_domain, repository)
+    rule = module.get_memory_transitions()[0][0].get_variant()
+    terms = rule.get_order()
+    assert terms[0].get_index() == terms[2].get_index()
+    assert [t.get_direction() for t in terms] == [ext.OrderDirection.MAX, ext.OrderDirection.MIN, ext.OrderDirection.MAX]
+    assert [t.get_feature().get_symbol() for t in terms] == ["flag", "n", "flag"]
+    assert str(parse_module(str(module), gripper_planning_domain, repository)) == str(module)
+    data = getattr(ext, f"{category.title()}ChooseRuleData")()
+    data.source, data.target = rule.get_source().get_index(), rule.get_target().get_index()
+    data.feature, data.reg = rule.get_feature().get_index(), rule.get_register().get_index()
+    values = []
+    for term in terms:
+        value = ext.OrderTermData()
+        value.direction, value.feature = term.get_direction(), term.get_feature().get_index()
+        interned = repository.get_or_create(value)
+        assert interned == term
+        values.append(interned.get_index())
+    data.order = values
+    assert repository.get_or_create(data) == rule
+    data.order = list(reversed(values[:2]))
+    assert repository.get_or_create(data) != rule
+    dictionaries = Dictionaries()
+    register_table(dictionaries, ext.dl.BooleanFeature, "booleans", "b", project=lambda f: {"symbol": f.get_symbol()})
+    register_table(dictionaries, ext.dl.NumericalFeature, "numericals", "n", project=lambda f: {"symbol": f.get_symbol()})
+    register_table(dictionaries, ext.OrderTerm, "ordering", "o")
+    register_table(dictionaries, type(rule), "rules", "r", fields=("order",))
+    assert serialize(dictionaries, rule) == "r0"
+    assert table(dictionaries, type(rule)) == [{"order": ["o0", "o1", "o0"]}]
+    assert table(dictionaries, ext.OrderTerm) == [
+        {"direction": "max", "variant": "b0"}, {"direction": "min", "variant": "n0"},
+    ]

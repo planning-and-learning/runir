@@ -13,9 +13,11 @@
 #include <optional>
 #include <stdexcept>
 #include <string_view>
+#include <type_traits>
 #include <tyr/planning/node.hpp>
 #include <utility>
 #include <variant>
+#include <vector>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -82,15 +84,25 @@ struct Choice
     using Denotation = runir::kr::dl::semantics::DenotationView<Category>;
     using Cursor = decltype(std::declval<Denotation>().begin());
 
+    using Binding = std::remove_cvref_t<decltype(*std::declval<Cursor>())>;
+
     RuleVariantView rule;
     Denotation denotation;
     Cursor cursor;
+    std::vector<Binding> ordered_bindings;
+    size_t position = 0;
 
     Choice(RuleVariantView rule_, Denotation denotation_) noexcept : rule(rule_), denotation(denotation_), cursor(denotation.begin()) {}
 
-    bool exhausted() const noexcept { return cursor == denotation.end(); }
-    auto current() const noexcept { return *cursor; }
-    void advance() noexcept { ++cursor; }
+    bool exhausted() const noexcept { return ordered_bindings.empty() ? cursor == denotation.end() : position == ordered_bindings.size(); }
+    auto current() const noexcept { return ordered_bindings.empty() ? *cursor : ordered_bindings[position]; }
+    void advance() noexcept
+    {
+        if (ordered_bindings.empty())
+            ++cursor;
+        else
+            ++position;
+    }
 
     bool has_alternatives() const noexcept
     {

@@ -542,3 +542,98 @@ def test_choose_search_statistics_are_read_only(
     for name in ("num_expanded", "num_generated", "choice_depth"):
         with pytest.raises(AttributeError):
             setattr(result.statistics, name, 99)
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+@pytest.mark.parametrize("universal", [False, True])
+@pytest.mark.parametrize("order,expected,depth", [
+    ("(:order (min score))", 3, 1),
+    ("(:order (max score))", 5, 1),
+    ("(:order (min infinite_score))", 3, 1),
+    ("(:order (max infinite_score))", 5, 1),
+    ("(:order (min bad_flag) (max score))", 3, 1),
+    ("(:order)", 5, 1),
+    ("(:order (min zero))", 5, 1),
+    ("(:effects (negative bad_flag)) (:order (max score))", 3, 0),
+])
+@pytest.mark.parametrize("category", ["concept", "role"])
+def test_choose_order_scores_bound_candidates(kind, universal, order, expected, depth, category):
+    directory = FIXTURE_ROOT / "kr/ps/ext/choose"
+    parser = Parser(directory / "domain.pddl", ParserOptions())
+    task = lifted.Task(parser.parse_task(directory / "task.pddl", ParserOptions()))
+    execution = ExecutionContext(1)
+    domain = DomainContext(parser.get_domain())
+    if kind == "ground":
+        context = GroundTaskContext(
+            domain,
+            GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution),
+        )
+        options = ext.GroundProgramSearchOptions()
+        find_solution = ext.find_ground_solution
+    else:
+        context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
+        options = ext.LiftedProgramSearchOptions()
+        find_solution = ext.find_lifted_solution
+    candidates = '(c_atomic_state "candidate")'
+    target = "(c_register selected)"
+    if category == "role":
+        candidates = f"(r_identity {candidates})"
+        target = "(c_some (r_register selected) (c_top))"
+    bad_count = f'(n_count (c_and {target} (c_atomic_state "bad")))'
+    program = parse_program(
+        f"""(:program (:entry search)
+          (:module (:symbol search) (:arguments) (:registers (:{category} selected))
+            (:entry m0) (:memory m0 m1 m2 m3)
+            (:features
+              (:{category} (:symbol candidates) (:expression {candidates}))
+              (:concept (:symbol here) (:expression (c_atomic_state "at")))
+              (:concept (:symbol goal) (:expression (c_atomic_goal "at" true)))
+              (:concept (:symbol target) (:expression {target}))
+              (:numerical (:symbol zero) (:expression (n_const 0)))
+              (:boolean (:symbol bad_flag) (:expression (b_nonempty (c_and {target} (c_atomic_state "bad")))))
+              (:numerical (:symbol infinite_score) (:expression (n_div (n_const 1) (n_sub (n_const 1) {bad_count}))))
+              (:numerical (:symbol score) (:expression (n_add (n_count (c_and {target} (c_atomic_state "bad"))) (n_const 0)))))
+            (:rules
+              (:rule (:symbol select) (:expression (:source-memory m0) (:target-memory m1)
+                (:choose (:conditions) (:{category} candidates) (:register (:{category} selected)) {order})))
+              (:rule (:symbol move-selected) (:expression (:source-memory m1) (:target-memory m2)
+                (:do (:conditions) (:action "move") (:arguments here target) (:effects))))
+              (:rule (:symbol finish) (:expression (:source-memory m2) (:target-memory m3)
+                (:do (:conditions) (:action "move") (:arguments here goal) (:effects)))))))""",
+        parser.get_domain(),
+        context.domain_context.ext_repository,
+    )
+    options.universal = universal
+    result = find_solution(context, program, options)
+    assert result.is_successful()
+    assert isinstance(result.statistics, ext.ProgramSearchStatistics)
+    assert result.statistics.num_expanded == expected
+    assert result.statistics.num_generated == expected
+    assert result.statistics.choice_depth == depth
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+def test_ext_arithmetic_values_and_round_trip(kind):
+    cases = [
+        ("(n_const 7)", 7),
+        ("(n_add (n_const 4) (n_const 5))", 9),
+        ("(n_sub (n_const 2) (n_const 5))", 0),
+        ("(n_mul (n_const 4) (n_const 5))", 20),
+        ("(n_div (n_const 9) (n_const 2))", 4),
+        ("(n_min (n_const 4) (n_const 5))", 4),
+        ("(n_max (n_const 4) (n_const 5))", 5),
+        ("(n_mul (n_const 0) (n_div (n_const 1) (n_const 0)))", 0),
+        ("(n_div (n_const 9) (n_div (n_const 1) (n_const 0)))", 0),
+    ]
+    task_context, domain = _task_context(kind)
+    features = "\n".join(f"(:numerical (:symbol f{i}) (:expression {expression}))" for i, (expression, _) in enumerate(cases))
+    source = f"(:program (:entry root) (:module (:symbol root) (:arguments) (:registers) (:entry m) (:memory m) (:features {features}) (:rules)))"
+    repository = task_context.domain_context.ext_repository
+    program = parse_program(source, domain, repository)
+    assert str(parse_program(str(program), domain, repository)) == str(program)
+    expander = getattr(ext, f"{kind.title()}SuccessorExpander")(task_context, program)
+    state = expander.initial_state(initial_node(task_context).get_state())
+    environment = getattr(ext, f"{kind.title()}EvaluationEnvironment")(task_context, program)
+    context = environment.make_dl_context(state)
+    values = {f.get_symbol(): ext.evaluate(f, context).get() for f in program.get_entry_module().get_numerical_features()}
+    assert values == {f"f{i}": expected for i, (_, expected) in enumerate(cases)}

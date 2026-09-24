@@ -4,12 +4,13 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/register_index.hpp"
 #include "runir/kr/ps/condition_index.hpp"
+#include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/effect_index.hpp"
 #include "runir/kr/ps/ext/memory_state_index.hpp"
 #include "runir/kr/ps/ext/module_symbol_index.hpp"
 #include "runir/kr/ps/ext/rule_index.hpp"
+#include "runir/kr/ps/ext/order_term_data.hpp"
 #include "runir/kr/ps/feature_index.hpp"
-#include "runir/kr/ps/dl/declarations.hpp"
 
 #include <cista/containers/string.h>
 #include <cista/containers/variant.h>
@@ -18,27 +19,25 @@
 #include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
+#include <yggdrasil/semantics/comparison.hpp>
 
 namespace runir::kr::ps::ext
 {
 
-using CallArgument = ::cista::offset::variant<
-    ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>,
-    ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>,
-    ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>,
-    ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>;
+using CallArgument = ::cista::offset::variant<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>,
+                                              ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>,
+                                              ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>>,
+                                              ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>>>;
 
 }  // namespace runir::kr::ps::ext
 
 namespace ygg
 {
 
-template<runir::kr::ps::ext::BindingRuleKind Kind>
-struct Data<runir::kr::ps::ext::Rule<Kind>>
+template<runir::kr::dl::CategoryTag Category>
+struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>>
 {
-    using Category = typename Kind::Category;
-
-    Index<runir::kr::ps::ext::Rule<Kind>> index;
+    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::LoadTag<Category>>> index;
     Index<runir::kr::ps::ext::MemoryState> source;
     Index<runir::kr::ps::ext::MemoryState> target;
     IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
@@ -59,6 +58,35 @@ struct Data<runir::kr::ps::ext::Rule<Kind>>
 
     auto cista_members() const noexcept { return std::tie(index, source, target, conditions, feature, reg, effects); }
     auto identifying_members() const noexcept { return std::tie(source, target, conditions, feature, reg, effects); }
+};
+
+template<runir::kr::dl::CategoryTag Category>
+struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>>
+{
+    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<Category>>> index;
+    Index<runir::kr::ps::ext::MemoryState> source;
+    Index<runir::kr::ps::ext::MemoryState> target;
+    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
+    Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, Category>> feature;
+    Index<runir::kr::dl::Register<Category>> reg;
+    IndexList<runir::kr::ps::EffectVariant<runir::kr::ExtFamilyTag>> effects;
+
+    IndexList<runir::kr::ps::ext::OrderTerm> order;
+
+    void clear() noexcept
+    {
+        ygg::clear(index);
+        ygg::clear(source);
+        ygg::clear(target);
+        ygg::clear(conditions);
+        ygg::clear(feature);
+        ygg::clear(reg);
+        ygg::clear(effects);
+        ygg::clear(order);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, source, target, conditions, feature, reg, effects, order); }
+    auto identifying_members() const noexcept { return std::tie(source, target, conditions, feature, reg, effects, order); }
 };
 
 template<>

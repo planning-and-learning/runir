@@ -659,4 +659,60 @@ This document summarizes Appendix~1, Section~A1.2 of
 \emph{The Description Logic Handbook}, edited by Franz Baader,
 Deborah L. McGuinness, Daniele Nardi, and Peter F. Patel-Schneider.
 
+
+\section{Numerical Arithmetic}
+
+The Ext and Uns families support the following numerical constructors.
+Operands take values in $\{0,\ldots,M-1\}\cup\{\infty\}$, where
+$M=\operatorname{max}(\texttt{ygg::uint\_t})$ represents infinity. Finite addition and multiplication results
+at least $M$ are mapped to infinity. Subtraction saturates at zero.
+
+\begin{center}
+\begin{tabular}{ll}
+\textbf{Syntax} & \textbf{Value for operands $a,b$} \\
+\texttt{(n\_const k)} & $k$ \\
+\texttt{(n\_add A B)} & $a+b$; infinity if either operand is infinite \\
+\texttt{(n\_sub A B)} & $\max(a-b,0)$; infinity if $a=\infty$ \\
+\texttt{(n\_mul A B)} & $ab$; zero if either operand is zero, even with infinity \\
+\texttt{(n\_div A B)} & $\lfloor a/b\rfloor$ for finite $a$ and positive finite $b$ \\
+\texttt{(n\_min A B)} & $\min(a,b)$ \\
+\texttt{(n\_max A B)} & $\max(a,b)$ \\
+\end{tabular}
+\end{center}
+For subtraction, finite $a$ minus infinity is zero. For multiplication,
+a nonzero infinite operand gives infinity. Division by zero gives infinity;
+otherwise an infinite numerator gives infinity, and a finite numerator divided
+by infinity gives zero. Thus $\infty-\infty=\infty$ and
+$\infty/\infty=\infty$. Boolean comparisons and Boolean arithmetic are not
+introduced into Ext by these constructors.
+
+\section{Choose Binding Order}
+
+A Choose body may end with
+\texttt{(:order (min f1) (max f2) ...)}, after its optional effects.
+Each term references a declared Boolean or numerical feature in the enclosing
+module. Load and other rule kinds do not accept this section.
+Let $D_E$ be the admitted bindings after effect filtering, $r$ the target
+register, and $(d_i,f_i)_{i=1}^k$ the ordering terms. Define
+\[
+ v_i(o)=f_i(s,\rho[r\leftarrow o]),\qquad o\in D_E.
+\]
+The planning state, module arguments, and other registers remain unchanged.
+For $o,p\in D_E$, let $j=\min\{i:v_i(o)\ne v_i(p)\}$ when this set is
+nonempty. Binding $o$ precedes $p$ exactly when
+\[
+ (d_j=\mathrm{min}\land v_j(o)<v_j(p))\ \lor\
+ (d_j=\mathrm{max}\land v_j(o)>v_j(p)).
+\]
+Booleans are ordered $\mathrm{false}<\mathrm{true}$; numerical infinity is
+greater than every finite value. Equal keys retain the original denotation
+iteration order. An omitted or empty order preserves that order for all
+bindings. Features are evaluated once per admitted candidate and term before
+sorting; empty and singleton choices need no scoring.
+
+Ordering changes only which binding is tried first. It removes no candidate,
+imposes no condition on successful continuations, and leaves universal
+obligations and backtracking unchanged. Scoring does not count as successor
+generation. Time limits cover scoring and sorting as well as search.
+
 \end{document}

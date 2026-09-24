@@ -76,6 +76,8 @@ increases_effect_type const increases_effect = "increases_effect";
 decreases_effect_type const decreases_effect = "decreases_effect";
 effect_observation_type const effect_observation = "effect_observation";
 effect_type const effect = "effect";
+order_term_type const order_term = "order term";
+order_section_type const order_section = ":order";
 effects_section_type const effects_section = ":effects";
 arguments_expression_section_type const arguments_expression_section = ":arguments";
 concept_load_rule_type const concept_load_rule = "concept_load_rule";
@@ -136,8 +138,7 @@ const auto numerical_feature_def = context(
                          > lit(")")];
 const auto query_feature_def = context(
     "query feature")[keyword("(:query") > symbol_section
-                     > context(":expression")[(lit("(") >> keyword(":expression")) > dl_parser::query_parser<runir::kr::ExtFamilyTag>() > lit(")")]
-                     > lit(")")];
+                     > context(":expression")[(lit("(") >> keyword(":expression")) > dl_parser::query_parser<runir::kr::ExtFamilyTag>() > lit(")")] > lit(")")];
 const auto feature_def = concept_feature | role_feature | boolean_feature | numerical_feature | query_feature;
 const auto features_section_def = context(":features")[(lit("(") >> keyword(":features")) > *feature > lit(")")];
 
@@ -169,18 +170,20 @@ const auto effect_def = context("effect")[(lit("(") >> effect_observation) > ide
 const auto effects_section_def = context(":effects")[(lit("(") >> keyword(":effects")) > *effect > lit(")")];
 const auto optional_effects_section = effects_section | attr(std::vector<ast::Effect> {});
 
-const auto concept_load_rule_def =
-    context("concept load rule")[(keyword("(:load") >> conditions_section >> concept_feature_section_def) > concept_register_section_def
-                                > optional_effects_section > lit(")")];
-const auto role_load_rule_def =
-    context("role load rule")[(keyword("(:load") >> conditions_section >> role_feature_section_def) > role_register_section_def
-                             > optional_effects_section > lit(")")];
+const auto order_term_def =
+    context("order term")[lit("(") > ((keyword("min") >> attr(OrderDirection::MIN)) | (keyword("max") >> attr(OrderDirection::MAX))) > identifier > lit(")")];
+const auto order_section_def = context(":order")[(lit("(") >> keyword(":order")) > *order_term > lit(")")];
+const auto optional_order_section = order_section | attr(std::vector<ast::OrderTerm> {});
+
+const auto concept_load_rule_def = context("concept load rule")[(keyword("(:load") >> conditions_section >> concept_feature_section_def)
+                                                                > concept_register_section_def > optional_effects_section > lit(")")];
+const auto role_load_rule_def = context(
+    "role load rule")[(keyword("(:load") >> conditions_section >> role_feature_section_def) > role_register_section_def > optional_effects_section > lit(")")];
 const auto concept_choose_rule_def =
     context("concept choose rule")[(keyword("(:choose") >> conditions_section >> concept_feature_section_def) > concept_register_section_def
-                                  > optional_effects_section > lit(")")];
-const auto role_choose_rule_def =
-    context("role choose rule")[(keyword("(:choose") >> conditions_section >> role_feature_section_def) > role_register_section_def
-                               > optional_effects_section > lit(")")];
+                                   > optional_effects_section > optional_order_section > lit(")")];
+const auto role_choose_rule_def = context("role choose rule")[(keyword("(:choose") >> conditions_section >> role_feature_section_def)
+                                                              > role_register_section_def > optional_effects_section > optional_order_section > lit(")")];
 const auto sketch_rule_def = context("sketch rule")[keyword("(:sketch") > conditions_section > effects_section > lit(")")];
 const auto do_rule_def =
     context("action rule")[keyword("(:do") > conditions_section > action_section > arguments_expression_section > effects_section > lit(")")];
@@ -249,6 +252,8 @@ BOOST_SPIRIT_DEFINE(identifier,
                     effect_observation,
                     effect,
                     effects_section,
+                    order_term,
+                    order_section,
                     arguments_expression_section,
                     concept_load_rule,
                     role_load_rule,
@@ -406,6 +411,12 @@ struct ConceptLoadRuleClass : x3::annotate_on_success
 {
 };
 struct RoleLoadRuleClass : x3::annotate_on_success
+{
+};
+struct OrderTermClass : x3::annotate_on_success
+{
+};
+struct OrderSectionClass : x3::annotate_on_success
 {
 };
 struct ConceptChooseRuleClass : x3::annotate_on_success

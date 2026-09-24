@@ -29,6 +29,8 @@ auto bind_rule_data(nb::module_& m, const char* name)
                    .def_rw("conditions", &Data::conditions);
     if constexpr (requires { &Data::effects; })
         cls.def_rw("effects", &Data::effects);
+    if constexpr (requires { &Data::order; })
+        cls.def_rw("order", &Data::order);
     ygg::add_comparison(cls);
     return cls;
 }
@@ -44,6 +46,8 @@ auto bind_rule_view(nb::module_& m, const char* name)
                    .def("get_conditions", &View::get_conditions);
     if constexpr (requires { &View::get_effects; })
         cls.def("get_effects", &View::get_effects);
+    if constexpr (requires(View view) { view.get_order(); })
+        cls.def("get_order", &View::get_order);
     ygg::add_print(cls);
     ygg::add_comparison(cls);
     ygg::add_hash(cls);
@@ -54,6 +58,24 @@ auto bind_rule_view(nb::module_& m, const char* name)
 
 void bind_rule(nb::module_& m, RepositoryBinding& repository)
 {
+    nb::enum_<OrderDirection>(m, "OrderDirection").value("MIN", OrderDirection::MIN).value("MAX", OrderDirection::MAX);
+    using TermData = ygg::Data<OrderTerm>;
+    ygg::bind_index<ygg::Index<OrderTerm>>(m, "OrderTermIndex");
+    auto term = nb::class_<TermData>(m, "OrderTermData")
+                    .def(nb::init<>())
+                    .def_rw("index", &TermData::index)
+                    .def_rw("direction", &TermData::direction)
+                    .def_rw("feature", &TermData::feature);
+    ygg::add_comparison(term);
+    using TermView = OrderTermView;
+    auto term_view = nb::class_<TermView>(m, "OrderTerm")
+                         .def("get_index", &TermView::get_index)
+                         .def("get_direction", &TermView::get_direction)
+                         .def("get_feature", &TermView::get_feature, nb::keep_alive<0, 1>());
+    ygg::add_comparison(term_view);
+    ygg::add_hash(term_view);
+    repository.def("get_or_create", &runir::kr::python::get_or_create_data<OrderTerm, Repository>, "data"_a, nb::keep_alive<0, 1>());
+
     using ConceptLoad = Rule<LoadTag<runir::kr::dl::ConceptTag>>;
     using RoleLoad = Rule<LoadTag<runir::kr::dl::RoleTag>>;
     using ConceptChoose = Rule<ChooseTag<runir::kr::dl::ConceptTag>>;
@@ -74,15 +96,15 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
 
     bind_rule_data<ConceptLoad>(m, "ConceptLoadRuleData").def_rw("feature", &ygg::Data<ConceptLoad>::feature).def_rw("reg", &ygg::Data<ConceptLoad>::reg);
     bind_rule_data<RoleLoad>(m, "RoleLoadRuleData").def_rw("feature", &ygg::Data<RoleLoad>::feature).def_rw("reg", &ygg::Data<RoleLoad>::reg);
-    bind_rule_data<ConceptChoose>(m, "ConceptChooseRuleData").def_rw("feature", &ygg::Data<ConceptChoose>::feature).def_rw("reg", &ygg::Data<ConceptChoose>::reg);
+    bind_rule_data<ConceptChoose>(m, "ConceptChooseRuleData")
+        .def_rw("feature", &ygg::Data<ConceptChoose>::feature)
+        .def_rw("reg", &ygg::Data<ConceptChoose>::reg);
     bind_rule_data<RoleChoose>(m, "RoleChooseRuleData").def_rw("feature", &ygg::Data<RoleChoose>::feature).def_rw("reg", &ygg::Data<RoleChoose>::reg);
     bind_rule_data<Sketch>(m, "SketchRuleData");
     bind_rule_data<Action>(m, "ActionRuleData")
         .def_rw("action_name", &ygg::Data<Action>::action_name)
         .def_rw("query_feature", &ygg::Data<Action>::query_feature);
-    bind_rule_data<Do>(m, "DoRuleData")
-        .def_rw("action_name", &ygg::Data<Do>::action_name)
-        .def_rw("arguments", &ygg::Data<Do>::arguments);
+    bind_rule_data<Do>(m, "DoRuleData").def_rw("action_name", &ygg::Data<Do>::action_name).def_rw("arguments", &ygg::Data<Do>::arguments);
     bind_rule_data<Call>(m, "CallRuleData").def_rw("callee", &ygg::Data<Call>::callee).def_rw("arguments", &ygg::Data<Call>::arguments);
 
     bind_rule_view<ConceptLoad>(m, "ConceptLoadRule")

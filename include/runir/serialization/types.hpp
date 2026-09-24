@@ -40,11 +40,10 @@ using StateProperties = ygg::TypeList<datasets::StateGraphVertexLabel<Kind>,
                                       kr::ps::base::SketchProofVertexLabel<Kind>,
                                       kr::ps::ext::ProgramProofVertexLabel<Kind>>;
 
-using GraphProperties = ygg::ConcatTypeListsT<StateProperties<tyr::GroundTag>,
-                                              StateProperties<tyr::LiftedTag>,
-                                              ygg::TypeList<datasets::StateGraphEdgeLabel,
-                                                            kr::ps::base::SketchProofEdgeLabel,
-                                                            kr::ps::ext::ProgramProofEdgeLabel>>;
+using GraphProperties =
+    ygg::ConcatTypeListsT<StateProperties<tyr::GroundTag>,
+                          StateProperties<tyr::LiftedTag>,
+                          ygg::TypeList<datasets::StateGraphEdgeLabel, kr::ps::base::SketchProofEdgeLabel, kr::ps::ext::ProgramProofEdgeLabel>>;
 
 template<tyr::TaskKind Kind>
 using StateGraphs = ygg::TypeList<datasets::StaticStateGraph<Kind>,

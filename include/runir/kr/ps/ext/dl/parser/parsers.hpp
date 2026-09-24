@@ -59,6 +59,11 @@ struct EffectObservationClass;
 struct EffectClass;
 struct ConceptLoadRuleClass;
 struct RoleLoadRuleClass;
+struct OrderTermClass;
+struct OrderSectionClass;
+using order_term_type = x3::rule<OrderTermClass, ast::OrderTerm>;
+using order_section_type = x3::rule<OrderSectionClass, std::vector<ast::OrderTerm>>;
+
 struct ConceptChooseRuleClass;
 struct RoleChooseRuleClass;
 struct SketchRuleClass;

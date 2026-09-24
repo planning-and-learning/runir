@@ -28,6 +28,8 @@ inline void canonicalize(ygg::Data<Rule<runir::kr::ExtFamilyTag>>&) noexcept {}
 namespace runir::kr::ps::ext
 {
 
+inline bool is_canonical(const ygg::Data<OrderTerm>&) noexcept { return true; }
+
 inline bool is_canonical(const ygg::Data<MemoryState>&) noexcept { return true; }
 
 inline bool is_canonical(const ygg::Data<ModuleSymbol>&) noexcept { return true; }
@@ -84,6 +86,8 @@ inline bool is_canonical(const ygg::Data<Module>& data) noexcept
 }
 
 inline bool is_canonical(const ygg::Data<Program>&) noexcept { return true; }
+
+inline void canonicalize(ygg::Data<OrderTerm>&) noexcept {}
 
 inline void canonicalize(ygg::Data<MemoryState>&) noexcept {}
 

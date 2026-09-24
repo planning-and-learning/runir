@@ -137,6 +137,9 @@ public:
     }
 
 private:
+    std::vector<ygg::uint_t> m_order_scores;
+    std::vector<size_t> m_order_indices;
+
     // Validate borrowed views before evaluating features or modifying the execution repository.
     void validate_planning_state(const tyr::planning::StateView<Kind>& state) const
     {
@@ -374,6 +377,83 @@ private:
         return true;
     }
 
+    /// Ordering is evaluated after binding, and only rearranges the admitted values.
+    template<runir::kr::dl::CategoryTag Category, typename Emit, typename Stop>
+    bool emit_choice(RuleView<ChooseTag<Category>> rule,
+                     RuleVariantView rule_variant,
+                     ProgramStateView<Kind> state,
+                     const tyr::planning::StateView<Kind>& planning_state,
+                     runir::kr::dl::semantics::DenotationView<Category> denotation,
+                     Emit&& emit,
+                     Stop&& stop)
+    {
+        auto choice = detail::Choice<Category>(rule_variant, denotation);
+        if (stop())
+            return false;
+        if (rule.get_order().empty() || !choice.has_alternatives())
+            return emit(std::move(choice));
+
+        // Flat scratch buffers are reused across choices; only ordered values survive in the DFS frame.
+        m_order_scores.clear();
+        m_order_indices.clear();
+        const auto width = rule.get_order().size();
+        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
+        for (const auto value : denotation)
+        {
+            if (stop())
+                return false;
+            const auto target_registers = bound_registers(rule, state, value, *registers);
+            m_environment.get_dl_target_caches().clear(false);
+            auto transition = m_environment.make_dl_transition_context(planning_state,
+                                                                       planning_state,
+                                                                       state.get_module_state().get_arguments(),
+                                                                       state.get_module_state().get_registers(),
+                                                                       target_registers);
+            for (auto term : rule.get_order())
+            {
+                if (stop())
+                    return false;
+                m_order_scores.push_back(
+                    ygg::visit([&](auto feature) { return ygg::uint_t(evaluate(feature, transition.get_target_context()).get()); }, term.get_feature()));
+            }
+            m_order_indices.push_back(choice.ordered_bindings.size());
+            choice.ordered_bindings.push_back(value);
+        }
+        if (stop())
+            return false;
+        // The original ordinal is the final key, giving stable ties without sort scratch allocations.
+        std::sort(m_order_indices.begin(),
+                  m_order_indices.end(),
+                  [&](size_t lhs, size_t rhs)
+                  {
+                      size_t column = 0;
+                      for (auto term : rule.get_order())
+                      {
+                          const auto left = m_order_scores[lhs * width + column];
+                          const auto right = m_order_scores[rhs * width + column++];
+                          if (left != right)
+                              return term.get_direction() == OrderDirection::MIN ? left < right : left > right;
+                      }
+                      return lhs < rhs;
+                  });
+        if (stop())
+            return false;
+        // Convert the sorted source indices into an in-place permutation.
+        for (size_t i = 0; i < m_order_indices.size(); ++i)
+        {
+            auto current = i;
+            while (m_order_indices[current] != i)
+            {
+                const auto next = m_order_indices[current];
+                std::swap(choice.ordered_bindings[current], choice.ordered_bindings[next]);
+                m_order_indices[current] = current;
+                current = next;
+            }
+            m_order_indices[current] = current;
+        }
+        return !stop() && emit(std::move(choice));
+    }
+
     template<runir::kr::dl::CategoryTag Category, typename Emit, typename Stop>
     bool emit_rule(RuleView<ChooseTag<Category>> rule,
                    RuleVariantView rule_variant,
@@ -388,7 +468,7 @@ private:
         if (rule.get_effects().empty())
         {
             const auto denotation = evaluate(rule.get_feature().get_expression(), state_context, *m_task_context->dl_denotation_repository);
-            return !stop() && emit(detail::Choice<Category>(rule_variant, denotation));
+            return emit_choice(rule, rule_variant, state, planning_state, denotation, emit, stop);
         }
         const auto denotation = evaluate(rule.get_feature(), state_context);
         if (stop())
@@ -410,10 +490,14 @@ private:
         }
         if (stop())
             return false;
-        return emit(detail::Choice<Category>(rule_variant,
-                                             runir::kr::dl::semantics::detail::materialize_denotation(admitted,
-                                                                                                    m_task_context->dl_builder,
-                                                                                                    *m_task_context->dl_denotation_repository).first));
+        return emit_choice(
+            rule,
+            rule_variant,
+            state,
+            planning_state,
+            runir::kr::dl::semantics::detail::materialize_denotation(admitted, m_task_context->dl_builder, *m_task_context->dl_denotation_repository).first,
+            emit,
+            stop);
     }
 
     LabeledNode successor(const tyr::planning::StateView<Kind>& planning_state, tyr::formalism::planning::ActionBindingView binding)

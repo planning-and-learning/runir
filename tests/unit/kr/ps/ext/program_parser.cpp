@@ -2,6 +2,7 @@
 #include "module_fixtures.hpp"
 
 #include <boost/variant/get.hpp>
+#include <cista/serialization.h>
 #include <concepts>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
@@ -822,6 +823,65 @@ TEST(RunirTests, ExtModuleFactoryCreatesEmptyModule)
     EXPECT_EQ(reparsed.get_entry_memory_state().get_name(), empty.get_entry_memory_state().get_name());
     EXPECT_EQ(reparsed.get_memory_states().size(), empty.get_memory_states().size());
     EXPECT_EQ(kr::ps::ext::syntactic_complexity(reparsed), 0);
+}
+
+TEST(RunirTests, ExtChooseOrderRoundTrip)
+{
+    namespace ext = kr::ps::ext;
+    const auto domain = tyr::formalism::planning::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(domain.get_repository());
+    auto repository = ext::RepositoryFactory().create(dl_repository);
+    for (const auto* category : { "concept", "role" })
+    {
+        const auto source = [&](const char* order)
+        {
+            return fmt::format(R"((:module (:symbol ranked) (:arguments) (:registers (:{} selected))
+              (:entry a) (:memory a b)
+              (:features (:{} (:symbol candidates) (:expression {}))
+                (:boolean (:symbol flag) (:expression (b_nonempty (c_top))))
+                (:numerical (:symbol score) (:expression (n_add (n_const 1) (n_const 2)))))
+              (:rules (:rule (:symbol select) (:expression (:source-memory a) (:target-memory b)
+                (:choose (:conditions) (:{} candidates) (:register (:{} selected)) {}))))))",
+                               category,
+                               category,
+                               std::string(category) == "concept" ? "(c_top)" : "(r_universal)",
+                               category,
+                               category,
+                               order);
+        };
+        const auto parse = [&](const std::string& text) { return ext::dl::parse_module(text, domain.get_domain(), *repository); };
+        const auto module_ = parse(source("(:order (max flag) (min score) (max flag))"));
+        EXPECT_EQ(parse(fmt::format("{}", module_)), module_);
+        ygg::visit(
+            [&](auto rule)
+            {
+                if constexpr (ext::ChooseRuleView<decltype(rule)>)
+                {
+                    ASSERT_EQ(rule.get_order().size(), 3U);
+                    EXPECT_EQ(rule.get_order()[0].get_direction(), ext::OrderDirection::MAX);
+                    auto bytes = cista::serialize(rule.get_data());
+                    using Data = std::remove_cvref_t<decltype(rule.get_data())>;
+                    const auto* decoded = cista::deserialize<Data>(bytes);
+                    EXPECT_EQ(decoded->order.size(), 3U);
+                    EXPECT_EQ(decoded->order[1], rule.get_order()[1].get_index());
+                    EXPECT_EQ(decoded->order[0], decoded->order[2]);
+                    const auto term = rule.get_order()[1];
+                    const auto& term_data = term.get_data();
+                    auto term_bytes = cista::serialize(term_data);
+                    const auto* decoded_term = cista::deserialize<ygg::Data<ext::OrderTerm>>(term_bytes);
+                    EXPECT_TRUE(ygg::EqualTo<ygg::Data<ext::OrderTerm>> {}(*decoded_term, term_data));
+                    EXPECT_EQ(decoded_term->direction, ext::OrderDirection::MIN);
+                    EXPECT_TRUE(ygg::EqualTo<Data> {}(*decoded, rule.get_data()));
+                }
+            },
+            module_.get_memory_transitions()[0][0].get_variant());
+        EXPECT_ANY_THROW(parse(source("(:order (min candidates))")));
+        EXPECT_ANY_THROW(parse(source("(:order (min missing))")));
+        EXPECT_ANY_THROW(parse(source("(:order (ascending score))")));
+        auto load = source("(:order (min score))");
+        load.replace(load.find(":choose"), 7, ":load");
+        EXPECT_ANY_THROW(parse(load));
+    }
 }
 
 }  // namespace runir::tests

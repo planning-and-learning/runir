@@ -42,3 +42,9 @@ For `V` indexed state slots, `E` recorded transitions and `C` Choose obligations
 The counter-and-worklist mechanism is an incremental application of Horn-clause propagation: W. F. Dowling and J. H. Gallier, [*Linear-time algorithms for testing the satisfiability of propositional Horn formulae*](https://doi.org/10.1016/0743-1066%2884%2990014-1), Journal of Logic Programming 1(3), 267–284, 1984. [Author-hosted PDF](https://www.seas.upenn.edu/~cis5110/Dowling-Gallier-Horn-sat.pdf).
 
 For the equivalent AND/OR reachability-game formulation, see Algorithm 1 in Dietmar Berwanger's [*Graph games with perfect information*](https://lsv.ens-paris-saclay.fr/~dwb/gtc.pdf).
+
+## Choose ordering
+
+An optional trailing `(:order (min feature) (max feature) ...)` ranks admitted bindings lexicographically. Features are Boolean or numerical and are evaluated with the chosen register tentatively bound, after effect filtering. Ties retain denotation iteration order. The executor scores each candidate once per term, then sorts; it never evaluates features from the comparator. Unordered choices retain their lazy cursor.
+
+Ranking does not prune bindings or change AND/OR obligations. Scoring does not increment generated-state statistics. Search time limits include ranking. Numerical constants and `n_add`, `n_sub`, `n_mul`, `n_div`, `n_min`, and `n_max` are available in Ext with the existing Uns arithmetic semantics.
