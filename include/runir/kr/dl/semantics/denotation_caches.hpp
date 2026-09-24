@@ -10,6 +10,7 @@
 #include <vector>
 #include <yggdrasil/containers/associative_containers.hpp>
 #include <yggdrasil/containers/unique_object_pool.hpp>
+#include <yggdrasil/database/join_index.hpp>
 #include <yggdrasil/database/relation.hpp>
 #include <yggdrasil/semantics/equal_to.hpp>
 #include <yggdrasil/semantics/hash.hpp>
@@ -23,6 +24,8 @@ namespace runir::kr::dl::semantics
 /// its capacity after clearing. All returned denotations and query results borrow
 /// their partition and remain valid until it is cleared.
 /// Constructor repositories and relation workspaces must outlive their cached views.
+/// Use one relation workspace per cache lifetime, or clear(true) before switching:
+/// join indexes identify row storage within that workspace's relation factory.
 /// Clearing static entries also clears dynamic entries, which may borrow static rows.
 template<FamilyTag Family>
 struct DenotationCaches
@@ -55,6 +58,8 @@ private:
     };
 
     std::array<Partition, 2> m_partitions;
+    // Borrows rows retained in the static partition; clear before releasing them.
+    ygg::database::JoinIndexCache<> m_static_join_indexes;
 
 public:
     explicit DenotationCaches(const DenotationRepository& persistent) : m_partitions { Partition(persistent), Partition(persistent) } {}
@@ -81,6 +86,9 @@ public:
     auto& get_queries(bool is_static) noexcept { return m_partitions[is_static].queries; }
     const auto& get_queries(bool is_static) const noexcept { return m_partitions[is_static].queries; }
 
+    auto& get_static_join_indexes() noexcept { return m_static_join_indexes; }
+    const auto& get_static_join_indexes() const noexcept { return m_static_join_indexes; }
+
     auto retain(bool is_static, ygg::UniqueObjectPoolPtr<ygg::database::Relation<>> relation)
     {
         const auto view = relation->view();
@@ -93,7 +101,10 @@ public:
     void clear(bool is_static) noexcept
     {
         if (is_static)
+        {
+            m_static_join_indexes.clear();
             m_partitions[false].clear();
+        }
         m_partitions[is_static].clear();
     }
 

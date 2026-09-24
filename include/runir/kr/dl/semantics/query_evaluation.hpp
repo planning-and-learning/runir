@@ -75,7 +75,18 @@ auto evaluate(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
         const auto lhs = evaluate(constructor.get_lhs(), context);
         const auto rhs = evaluate(constructor.get_rhs(), context);
         if constexpr (std::same_as<Tag, QueryJoinTag>)
-            ygg::database::join(lhs, rhs, data.plan, *result, context.get_workspace().get_database_workspace());
+        {
+            const auto lhs_static = constructor.get_lhs().is_static();
+            const auto rhs_static = constructor.get_rhs().is_static();
+            // Fully static joins already retain their complete result.
+            ygg::database::join(lhs,
+                                rhs,
+                                data.plan,
+                                context.get_caches().get_static_join_indexes(),
+                                { .lhs = lhs_static && !rhs_static, .rhs = rhs_static && !lhs_static },
+                                *result,
+                                context.get_workspace().get_database_workspace());
+        }
         else if constexpr (std::same_as<Tag, QueryUnionTag>)
             ygg::database::union_(lhs, rhs, *result);
         else

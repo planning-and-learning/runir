@@ -565,8 +565,26 @@ void check_query_cache_across_states()
     const auto goal = parse_query(R"((q_atomic_goal "triple" false (x y z)))", domain, *repository);
     const auto derived = parse_query(R"((q_atomic_state "copied" (x y z)))", domain, *repository);
     const auto ready = parse_query(R"((q_atomic_state "ready" ()))", domain, *repository);
+    const auto triple = parse_query(R"((q_atomic_state "triple" (x y z)))", domain, *repository);
+    const auto fixed_join = parse_query(R"((q_join (q_atomic_state "fixed" (x y z)) (q_atomic_state "triple" (x y z))))", domain, *repository);
+    const auto reversed_join = parse_query(R"((q_join (q_atomic_state "triple" (x y z)) (q_atomic_state "fixed" (x y z))))", domain, *repository);
+    const auto static_join = parse_query(R"((q_join (q_atomic_state "fixed" (x y z)) (q_atomic_state "fixed" (x y z))))", domain, *repository);
     const auto count = parser::parse_numerical(R"((n_count (q_atomic_state "triple" (x y z))))", domain, *repository);
     const auto fixed_count = parser::parse_numerical(R"((n_count (q_atomic_state "fixed" (x y z))))", domain, *repository);
+    const auto matching_row = std::array { ygg::uint_t(domain.get_constants()[0].get_index()),
+                                          ygg::uint_t(domain.get_constants()[1].get_index()),
+                                          ygg::uint_t(domain.get_constants()[2].get_index()) };
+    const auto check_mixed_joins = [&](auto& target)
+    {
+        const auto matches = sem::evaluate(triple, target).contains(matching_row);
+        for (const auto query : { fixed_join, reversed_join })
+        {
+            const auto rows = sem::evaluate(query, target);
+            EXPECT_EQ(rows.size(), matches ? 1 : 0);
+            EXPECT_EQ(rows.contains(matching_row), matches);
+        }
+        return matches;
+    };
 
     const auto fixed_rows = sem::evaluate(fixed, context);
     const auto goal_rows = sem::evaluate(goal, context);
@@ -577,9 +595,31 @@ void check_query_cache_across_states()
     EXPECT_EQ(sem::evaluate(ready, context).size(), 1);
     EXPECT_EQ(sem::evaluate(count, context).get(), 4);
     EXPECT_EQ(sem::evaluate(fixed_count, context).get(), 2);
+    // A fully static join caches its result without retaining an additional index.
+    EXPECT_EQ(sem::evaluate(static_join, context).size(), fixed_rows.size());
+    EXPECT_EQ(caches.get_static_join_indexes().size(), 0);
+    EXPECT_TRUE(check_mixed_joins(context));
+    // Opposite join orientations share one index over the same static rows and keys.
+    EXPECT_EQ(caches.get_static_join_indexes().size(), 1);
 
     const auto successors = search->successor_generator->get_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
     ASSERT_FALSE(successors.empty());
+    // Only removing (triple a b c) empties the join; the static index survives state changes.
+    auto empty_joins = size_t { 0 };
+    for (const auto& successor : successors)
+    {
+        auto successor_context = sem::StateEvaluationContext<Ext, Kind>(successor.get_state(),
+                                                                       builder,
+                                                                       denotations,
+                                                                       builder.get_workspace(),
+                                                                       caches,
+                                                                       context.arguments(),
+                                                                       context.registers());
+        caches.clear(false);
+        empty_joins += !check_mixed_joins(successor_context);
+        EXPECT_EQ(caches.get_static_join_indexes().size(), 1);
+    }
+    EXPECT_EQ(empty_joins, 1);
     auto next = sem::StateEvaluationContext<Ext, Kind>(successors.front().get_state(),
                                                        builder,
                                                        denotations,
@@ -636,6 +676,7 @@ void check_query_cache_across_states()
     EXPECT_EQ(retained.count(), 4);
 
     caches.clear(true);
+    EXPECT_EQ(caches.get_static_join_indexes().size(), 0);
     EXPECT_TRUE(caches.get_queries(true).empty());
     EXPECT_TRUE(caches.template get<dl::NumericalTag>(true).empty());
     EXPECT_TRUE(caches.get_queries(false).empty());
@@ -643,6 +684,9 @@ void check_query_cache_across_states()
     EXPECT_EQ(caches.get_repository(false).template size<sem::Denotation<dl::RoleTag>>(), 0);
     EXPECT_EQ(caches.get_repository(true).template size<sem::Denotation<dl::RoleTag>>(), 0);
     EXPECT_EQ(retained.count(), 4);
+    // A full clear releases indexed rows as well; reevaluation must rebuild the shared index.
+    EXPECT_TRUE(check_mixed_joins(context));
+    EXPECT_EQ(caches.get_static_join_indexes().size(), 1);
     caches.clear();
     EXPECT_TRUE(caches.get_queries(false).empty());
     EXPECT_TRUE(caches.template get<dl::NumericalTag>(false).empty());
@@ -694,11 +738,18 @@ void check_query_cache_across_bindings()
         parser::parse_numerical(R"((n_count (q_join (q_atomic_state "fixed" (x y z)) (q_concept x (c_register 0)))))", domain, *repository);
     const auto argument = parse_query(R"((q_join (q_atomic_state "fixed" (x y z)) (q_concept x (c_argument 0))))", domain, *repository);
     const auto role_register = parse_query(R"((q_join (q_atomic_state "fixed" (x y z)) (q_role (x y) (r_register 0))))", domain, *repository);
+    const auto register_rhs = parse_query(R"((q_join (q_concept z (c_register 0)) (q_atomic_state "fixed" (x y z))))", domain, *repository);
+    const auto role_register_rhs = parse_query(R"((q_join (q_role (x y) (r_register 0)) (q_atomic_state "fixed" (y x z))))", domain, *repository);
 
     const auto fixed_rows = sem::evaluate(fixed, bound);
     EXPECT_EQ(sem::evaluate(register_count, bound).get(), 1);
     EXPECT_EQ(sem::evaluate(argument, bound).size(), 1);
     EXPECT_EQ(sem::evaluate(role_register, bound).size(), 1);
+    const auto rhs_rows = sem::evaluate(register_rhs, bound);
+    EXPECT_EQ(rhs_rows.size(), 1);
+    EXPECT_TRUE(rhs_rows.contains({ ygg::uint_t(a.get_index()), ygg::uint_t(c.get_index()), ygg::uint_t(b.get_index()) }));
+    EXPECT_TRUE(std::ranges::equal(rhs_rows.columns(), register_rhs.get_schema()));
+    EXPECT_TRUE(sem::evaluate(role_register_rhs, bound).empty());
     registers.concept_values[0] = b.get_index();
     registers.role_values[0] = ::cista::pair(b.get_index(), c.get_index());
     argument_values.concept_arguments[0] = b_set.get_index();
@@ -708,6 +759,12 @@ void check_query_cache_across_bindings()
     EXPECT_EQ(sem::evaluate(register_count, rebound).get(), 0);
     EXPECT_TRUE(sem::evaluate(argument, rebound).empty());
     EXPECT_TRUE(sem::evaluate(role_register, rebound).empty());
+    EXPECT_TRUE(sem::evaluate(register_rhs, rebound).empty());
+    // Reordered shared columns are matched by label, not by their position in either operand.
+    const auto rhs_role_rows = sem::evaluate(role_register_rhs, rebound);
+    EXPECT_EQ(rhs_role_rows.size(), 1);
+    EXPECT_TRUE(rhs_role_rows.contains({ ygg::uint_t(b.get_index()), ygg::uint_t(c.get_index()), ygg::uint_t(a.get_index()) }));
+    EXPECT_TRUE(std::ranges::equal(rhs_role_rows.columns(), role_register_rhs.get_schema()));
     EXPECT_TRUE(caches.template get<dl::NumericalTag>(false).contains(register_count));
     EXPECT_FALSE(caches.template get<dl::NumericalTag>(true).contains(register_count));
 
@@ -719,6 +776,8 @@ void check_query_cache_across_bindings()
     EXPECT_EQ(sem::evaluate(register_count, cleared).get(), 0);
     EXPECT_EQ(sem::evaluate(argument, cleared).size(), 1);
     EXPECT_TRUE(sem::evaluate(role_register, cleared).empty());
+    EXPECT_TRUE(sem::evaluate(register_rhs, cleared).empty());
+    EXPECT_TRUE(sem::evaluate(role_register_rhs, cleared).empty());
     EXPECT_EQ(bound.registers().template get<dl::ConceptTag>()[0].value().get_index(), a.get_index());
     EXPECT_EQ(bound.arguments().template get<dl::ConceptTag>()[0].get_index(), a_set.get_index());
     EXPECT_EQ(rebound.registers().template get<dl::ConceptTag>()[0].value().get_index(), b.get_index());
