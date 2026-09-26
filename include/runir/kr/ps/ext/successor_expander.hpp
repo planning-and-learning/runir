@@ -65,7 +65,8 @@ public:
         return intern(data, std::nullopt);
     }
 
-    /// Emit a program step or a compact Choose obligation in natural rule and binding order.
+    /// Emit a program step or a compact Choose obligation in natural rule and binding order,
+    /// except that sketch rules with effects are emitted together, binding-major, after all other rules.
     /// Return true on exhaustion; emit returning false or stop returning true ends enumeration.
     /// Count applied successors and caller returns, not Choice descriptors or failure markers.
     /// Callbacks must not reenter this expander or its successor generator. Apply choices after enumeration.
@@ -85,6 +86,7 @@ public:
                 statistics.num_generated += step->status == detail::ProgramOutcome::APPLIED || step->status == detail::ProgramOutcome::RESTORED_CALLER;
             return emit(std::move(expansion));
         };
+        m_sketch_rules.clear();
         for (const auto transition : state.get_module_state().get_module().get_memory_transitions())
             for (const auto rule : transition)
             {
@@ -93,6 +95,8 @@ public:
                 if (!ygg::visit([&](auto concrete) { return emit_rule(concrete, rule, state, planning_state, emit_expansion, stop); }, rule.get_variant()))
                     return false;
             }
+        if (!emit_sketch_successors(state, planning_state, emit_expansion, stop))
+            return false;
         if (stop())
             return false;
         return emitted || emit_expansion(fallback(state));
@@ -600,14 +604,26 @@ private:
     {
         if (!rule_is_applicable(rule, state, planning_state))
             return true;
-        if (rule.get_effects().empty())
+        // Rules with effects share one successor enumeration in emit_sketch_successors.
+        if (!rule.get_effects().empty())
         {
-            if (stop())
-                return false;
-            auto target = state.get_module_state().get_data();
-            ygg::set(rule.get_target(), target.memory_state);
-            return emit(applied(intern(target, state.get_call_stack()), rule_variant));
+            m_sketch_rules.emplace_back(rule, rule_variant);
+            return true;
         }
+        if (stop())
+            return false;
+        auto target = state.get_module_state().get_data();
+        ygg::set(rule.get_target(), target.memory_state);
+        return emit(applied(intern(target, state.get_call_stack()), rule_variant));
+    }
+
+    /// Generate each planning successor once and test every collected sketch rule against it,
+    /// emitting one step per matching (successor, rule) pair in binding-major, rule-minor order.
+    template<typename Emit, typename Stop>
+    bool emit_sketch_successors(ProgramStateView<Kind> state, const tyr::planning::StateView<Kind>& planning_state, Emit&& emit, Stop&& stop)
+    {
+        if (m_sketch_rules.empty())
+            return true;
         auto& generator = *m_task_context->search_context->successor_generator;
         const auto visit = [&](tyr::formalism::planning::ActionBindingView binding)
         {
@@ -615,9 +631,14 @@ private:
                 return false;
             const auto candidate = successor(planning_state, binding);
             m_environment.get_dl_target_caches().clear(false);
-            if (!sketch_rule_matches_state(rule, state, planning_state, candidate.node.get_state()))
-                return true;
-            return emit(planning_step(state, candidate, rule_variant, rule.get_target()));
+            for (const auto& [sketch_rule, rule_variant] : m_sketch_rules)
+            {
+                if (!sketch_rule_matches_state(sketch_rule, state, planning_state, candidate.node.get_state()))
+                    continue;
+                if (!emit(planning_step(state, candidate, rule_variant, sketch_rule.get_target())))
+                    return false;
+            }
+            return true;
         };
         return generator.for_each_applicable_action_binding(tyr::planning::Node<Kind>(planning_state, 0), std::ref(visit));
     }
@@ -775,6 +796,7 @@ private:
     EvaluationEnvironment<Kind> m_environment;
     detail::ActionRuleEvaluator<Kind> m_action_rule_evaluator;
     std::vector<ygg::uint_t> m_action_tuple;
+    std::vector<std::pair<RuleView<SketchTag>, RuleVariantView>> m_sketch_rules;
 };
 
 #ifndef RUNIR_HEADER_INSTANTIATION

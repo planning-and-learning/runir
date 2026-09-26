@@ -1370,11 +1370,12 @@ void expect_callback_sketch_order_and_cancellation()
     (:concept (:symbol Gripper) (:expression (c_atomic_state "gripper")))
     (:numerical (:symbol Free) (:expression (n_count (c_atomic_state "free")))))
   (:rules
-    (:rule (:symbol rejected) (:expression (:source-memory source) (:target-memory impossible)
-      (:sketch (:conditions) (:effects (increases Free)))))
     (:rule (:symbol next) (:expression (:source-memory source) (:target-memory picked)
-      (:do (:conditions) (:action "pick") (:arguments Ball Room Gripper) (:effects (decreases Free)))))))
+      (:sketch (:conditions) (:effects (decreases Free)))))
+    (:rule (:symbol rejected) (:expression (:source-memory source) (:target-memory impossible)
+      (:do (:conditions) (:action "pick") (:arguments Ball Room Gripper) (:effects (increases Free)))))))
 )");
+    // Sketch rules with effects are expanded after all other rules, so the rejecting Do rule runs first despite its position.
     for (const auto cancelled : { true, false })
     {
         const auto task_context =
