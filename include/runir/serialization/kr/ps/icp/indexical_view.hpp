@@ -29,7 +29,7 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<T>, C>>)
              [](const auto& value) -> std::optional<ygg::uint_t>
              {
                  if (::cista::holds_alternative<runir::kr::ps::icp::ArgumentPosition>(value.get_object_reference()))
-                     return value.get_object_reference().template as<runir::kr::ps::icp::ArgumentPosition>().value;
+                     return ygg::uint_t(value.get_object_reference().template as<runir::kr::ps::icp::ArgumentPosition>());
                  return std::nullopt;
              });
     ar.field("register",

@@ -4,6 +4,7 @@
 #include "runir/kr/ps/icp/object_reference.hpp"
 #include "runir/kr/ps/icp/xeffect_index.hpp"
 
+#include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
 #include <yggdrasil/core/types_utils.hpp>
@@ -16,11 +17,13 @@ struct Data<runir::kr::ps::icp::XEffect>
 {
     Index<runir::kr::ps::icp::XEffect> index;
     runir::kr::ps::icp::EffectOperation operation {};
-    runir::kr::ps::icp::ObjectReference object;
-    runir::kr::ps::icp::ConceptFeatureIndex feature;
+    ::cista::offset::variant<runir::kr::ps::icp::ArgumentPosition, Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object;
+    Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature;
 
     Data() = default;
-    Data(runir::kr::ps::icp::EffectOperation operation_, runir::kr::ps::icp::ObjectReference object_, runir::kr::ps::icp::ConceptFeatureIndex feature_) :
+    Data(runir::kr::ps::icp::EffectOperation operation_,
+         ::cista::offset::variant<runir::kr::ps::icp::ArgumentPosition, Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object_,
+         Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature_) :
         index(),
         operation(operation_),
         object(std::move(object_)),

@@ -30,7 +30,8 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::i
     ar.field("reset_pairs",
              [](const auto& value)
              {
-                 using FeatureView = decltype(make_view(runir::kr::ps::icp::ConceptFeatureIndex {}, value.get_context()));
+                 using FeatureView =
+                     decltype(make_view(Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> {}, value.get_context()));
                  std::vector<std::pair<FeatureView, FeatureView>> pairs;
                  for (const auto& pair : value.get_reset_pairs())
                      pairs.emplace_back(make_view(pair.before, value.get_context()), make_view(pair.after, value.get_context()));

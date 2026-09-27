@@ -62,10 +62,11 @@ void append_indexical(std::ostream& os, Predicate predicate, const ArgumentNames
             if constexpr (std::same_as<std::remove_cvref_t<decltype(reference)>, ArgumentPosition>)
             {
                 os << " (:argument ";
-                if (reference.value < arguments.size())
-                    os << arguments.at(reference.value);
+                const auto position = ygg::uint_t(reference);
+                if (position < arguments.size())
+                    os << arguments.at(position);
                 else
-                    os << "arg" << reference.value;
+                    os << "arg" << position;
                 os << ')';
             }
             else

@@ -7,6 +7,7 @@
 #include "runir/kr/ps/icp/evaluation_environment.hpp"
 
 #include <algorithm>
+#include <cista/containers/variant.h>
 #include <functional>
 #include <tyr/formalism/planning/action_view.hpp>
 #include <unordered_map>
@@ -81,13 +82,16 @@ class SuccessorExpander
         }
         return true;
     }
-    std::optional<ygg::uint_t> resolve(const ObjectReference& reference, RegistersView registers, tyr::formalism::planning::ActionBindingView binding) const
+    std::optional<ygg::uint_t>
+    resolve(const ::cista::offset::variant<ArgumentPosition, ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>& reference,
+            RegistersView registers,
+            tyr::formalism::planning::ActionBindingView binding) const
     {
         return reference.apply(
             [&](auto ref) -> std::optional<ygg::uint_t>
             {
                 if constexpr (std::same_as<decltype(ref), ArgumentPosition>)
-                    return ygg::uint_t(binding.get_objects().at(ref.value).get_index());
+                    return ygg::uint_t(binding.get_objects().at(ygg::uint_t(ref)).get_index());
                 else
                 {
                     const auto reg = ygg::make_view(ref, m_program.get_context().get_dl_repository());

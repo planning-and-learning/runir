@@ -46,8 +46,7 @@ void bind_indexical(nb::module_& m, RepositoryBinding& repository)
 {
     nb::enum_<ConditionOperation>(m, "ConditionOperation").value("BELONGS", ConditionOperation::BELONGS).value("NOT_BELONGS", ConditionOperation::NOT_BELONGS);
     nb::enum_<EffectOperation>(m, "EffectOperation").value("ENTER", EffectOperation::ENTER).value("EXIT", EffectOperation::EXIT);
-    auto argument = nb::class_<ArgumentPosition>(m, "ArgumentPosition").def(nb::init<>()).def_rw("value", &ArgumentPosition::value);
-    ygg::add_comparison(argument);
+    ygg::bind_fixed_uint<ArgumentPosition>(m, "ArgumentPosition");
     auto reset_pair = nb::class_<ResetPair>(m, "ResetPair").def(nb::init<>()).def_rw("before", &ResetPair::before).def_rw("after", &ResetPair::after);
     reset_pair.def(nb::self == nb::self).def(nb::self != nb::self);
     bind_indexical_type<XCondition>(m, repository, "XCondition");

@@ -7,6 +7,7 @@
 #include "runir/kr/ps/icp/repository.hpp"
 
 #include <algorithm>
+#include <cista/containers/variant.h>
 #include <sstream>
 #include <tyr/formalism/planning/repository.hpp>
 #include <unordered_set>
@@ -221,10 +222,11 @@ ModuleView lower_module(const ast::Module& module,
                                 diagnostics.throw_at(argument, DuplicateDefinitionError("action argument", argument.text));
                             rule->argument_names.emplace_back(argument.text);
                         }
-                        const auto object = [&](const ast::Object& source) -> ObjectReference
+                        const auto object = [&](const ast::Object& source)
                         {
                             return boost::apply_visitor(
-                                [&](const auto& value) -> ObjectReference
+                                [&](const auto& value)
+                                    -> ::cista::offset::variant<ArgumentPosition, ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>
                                 {
                                     if constexpr (std::same_as<std::remove_cvref_t<decltype(value)>, ast::ArgumentObject>)
                                         return ArgumentPosition { require(arguments, value.name, "action argument", diagnostics) };

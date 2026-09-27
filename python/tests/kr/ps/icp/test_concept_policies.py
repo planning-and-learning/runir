@@ -53,6 +53,16 @@ PROGRAM = """(:program (:entry main)
 """
 
 
+def test_argument_position_binding_and_indexical_data():
+    assert icp.ArgumentPosition().is_max()
+    position = icp.ArgumentPosition(0)
+    assert int(position) == position.value() == 0
+    for data_type in (icp.XConditionData, icp.XEffectData):
+        data = data_type()
+        data.object = position
+        assert data.object == position
+
+
 def context_and_program(kind, source=PROGRAM):
     directory = data_root() / "classical" / "tests" / "gripper"
     parser = Parser(directory / "domain.pddl", ParserOptions())
