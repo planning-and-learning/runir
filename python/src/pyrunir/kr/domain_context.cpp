@@ -4,6 +4,7 @@
 #include <runir/kr/domain_context.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
+#include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 
@@ -23,6 +24,10 @@ void bind_domain_context(nb::module_& m)
         .def_prop_ro(
             "ext_repository",
             [](DomainContext& self) -> auto& { return *self.ext_repository; },
+            nb::rv_policy::reference_internal)
+        .def_prop_ro(
+            "icp_repository",
+            [](DomainContext& self) -> auto& { return *self.icp_repository; },
             nb::rv_policy::reference_internal)
         .def_prop_ro("uns_repository", [](DomainContext& self) -> auto& { return *self.uns_repository; }, nb::rv_policy::reference_internal);
 }

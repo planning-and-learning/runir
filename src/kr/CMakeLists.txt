@@ -33,6 +33,9 @@ add_library(kr SHARED
     ps/ext/dl/structural_termination/incomplete_result.cpp
     ps/ext/dl/structural_termination/result.cpp
     ps/ext/program_executor.cpp
+    ps/icp/dl/parser.cpp
+    ps/icp/dl/parser/parser.cpp
+    ps/icp/program_executor.cpp
     ps/structural_termination.cpp
     ps/structural_termination/incomplete.cpp
     ps/structural_termination/policy_graph.cpp

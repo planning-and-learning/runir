@@ -10,7 +10,7 @@ namespace runir::kr::ps
 
 template<runir::kr::dl::FamilyTag Family, typename FeatureTag, typename C, tyr::TaskKind Kind>
 auto evaluate(ygg::View<ygg::Index<ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>, C> feature,
-              runir::kr::dl::semantics::StateEvaluationContext<Family, Kind>& context)
+              runir::kr::dl::semantics::StateEvaluationContext<typename PsFamilyTraits<Family>::DlFamily, Kind>& context)
 {
     return runir::kr::dl::semantics::evaluate(feature.get_feature(), context);
 }

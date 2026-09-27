@@ -35,7 +35,11 @@ TaskContext<Kind>::TaskContext(DomainContextPtr domain_context_, runir::datasets
     execution_builder(),
     execution_repository(runir::kr::ps::ext::ExecutionRepositoryFactory<Kind>().create_shared(search_context->state_repository,
                                                                                               dl_denotation_repository,
-                                                                                              domain_context->ext_repository))
+                                                                                              domain_context->ext_repository)),
+    icp_execution_builder(),
+    icp_execution_repository(runir::kr::ps::icp::ExecutionRepositoryFactory<Kind>().create_shared(search_context->state_repository,
+                                                                                                  dl_denotation_repository,
+                                                                                                  domain_context->icp_repository))
 {
 }
 

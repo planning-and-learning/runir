@@ -138,4 +138,8 @@ Extended policies support [query features and Action rules](docs/action-rules.md
 for selecting complete action tuples and checking declared effect contracts.
 Their [proof search](docs/proof-search.md) combines lazy Choose exploration with incremental AND/OR success propagation.
 
+[Indexical concept policies](docs/concept-policies.md) are available as the separate
+`icp` family, with Ext features, Load and Crule effects, concept histories, and
+greedy or universal execution.
+
 This keeps low-level planning mechanics in Tyr while giving learning code a high-level, typed interface for representations, abstractions, and policy evaluation.

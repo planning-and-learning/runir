@@ -4,6 +4,7 @@
 #include "runir/kr/dl/constructor_index.hpp"
 #include "runir/kr/dl/query_index.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
+#include "runir/kr/ps/family_traits.hpp"
 #include "runir/kr/ps/feature_data.hpp"
 
 #include <cista/containers/string.h>
@@ -26,13 +27,13 @@ using FeatureCategory = std::conditional_t<std::same_as<FeatureTag, BooleanFeatu
 template<runir::kr::FamilyTag Family, typename FeatureTag>
 struct FeatureExpression
 {
-    using Type = runir::kr::dl::Constructor<Family, FeatureCategory<FeatureTag>>;
+    using Type = runir::kr::dl::Constructor<typename runir::kr::ps::PsFamilyTraits<Family>::DlFamily, FeatureCategory<FeatureTag>>;
 };
 
-template<>
-struct FeatureExpression<runir::kr::ExtFamilyTag, QueryFeature>
+template<runir::kr::FamilyTag Family>
+struct FeatureExpression<Family, QueryFeature>
 {
-    using Type = runir::kr::dl::Query<runir::kr::ExtFamilyTag>;
+    using Type = runir::kr::dl::Query<typename runir::kr::ps::PsFamilyTraits<Family>::DlFamily>;
 };
 
 }  // namespace runir::kr::ps::dl

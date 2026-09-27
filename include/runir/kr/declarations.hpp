@@ -31,13 +31,18 @@ struct ExtFamilyTag
     static constexpr auto name = "Ext";
 };
 
+struct IcpFamilyTag
+{
+    static constexpr auto name = "Icp";
+};
+
 struct UnsFamilyTag
 {
     static constexpr auto name = "Uns";
 };
 
 template<typename T>
-concept FamilyTag = std::same_as<T, BaseFamilyTag> || std::same_as<T, ExtFamilyTag> || std::same_as<T, UnsFamilyTag>;
+concept FamilyTag = std::same_as<T, BaseFamilyTag> || std::same_as<T, ExtFamilyTag> || std::same_as<T, UnsFamilyTag> || std::same_as<T, IcpFamilyTag>;
 
 }  // namespace runir::kr
 

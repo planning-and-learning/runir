@@ -4,6 +4,7 @@
 #include "runir/kr/declarations.hpp"
 #include "runir/kr/ps/base/declarations.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"
+#include "runir/kr/ps/icp/declarations.hpp"
 #include "runir/kr/uns/declarations.hpp"
 
 #include <tyr/formalism/planning/declarations.hpp>
@@ -15,6 +16,7 @@ struct DomainContext
 {
     const runir::kr::ps::base::RepositoryPtr base_repository;
     const runir::kr::ps::ext::RepositoryPtr ext_repository;
+    const runir::kr::ps::icp::RepositoryPtr icp_repository;
     const runir::kr::uns::RepositoryPtr uns_repository;
 
     static DomainContextPtr create(const tyr::formalism::planning::PlanningDomain& domain);

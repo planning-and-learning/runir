@@ -7,6 +7,7 @@
 #include "runir/kr/domain_context.hpp"
 #include "runir/kr/ps/ext/execution_declarations.hpp"
 #include "runir/kr/ps/ext/execution_repository.hpp"
+#include "runir/kr/ps/icp/execution_repository.hpp"
 
 #include <memory>
 
@@ -22,6 +23,9 @@ struct TaskContext
     runir::kr::dl::semantics::DenotationRepositoryPtr dl_denotation_repository;
     runir::kr::ps::ext::ExecutionBuilder<Kind> execution_builder;
     runir::kr::ps::ext::ExecutionRepositoryPtr<Kind> execution_repository;
+
+    runir::kr::ps::icp::ExecutionBuilder<Kind> icp_execution_builder;
+    runir::kr::ps::icp::ExecutionRepositoryPtr<Kind> icp_execution_repository;
 
     TaskContext(const TaskContext&) = delete;
     TaskContext& operator=(const TaskContext&) = delete;
