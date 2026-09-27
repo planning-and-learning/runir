@@ -1,6 +1,7 @@
 #include "runir/kr/ps/base/dl/parser.hpp"
 
 #include "kr/parser/constructors.hpp"
+#include "kr/parser/observations.hpp"
 #include "kr/parser/resolution.hpp"
 #include "runir/kr/dl/grammar/ast/ast.hpp"
 #include "runir/kr/dl/repository.hpp"
@@ -120,219 +121,8 @@ auto parse_feature(
     sketch_data.numerical_features.push_back(feature.get_index());
 }
 
-template<typename FeatureTag>
-auto require_feature(const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>>& features,
-                     const runir::kr::parser::ast::Identifier& name,
-                     const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    const auto it = features.find(name.text);
-    if (it == features.end())
-        diagnostics.throw_at(name, runir::kr::UndefinedSymbolError("feature", name.text));
-    return it->second;
-}
-
-template<typename FeatureTag, typename ObservationTag>
-auto make_condition(ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>> feature,
-                    Repository& repository,
-                    runir::kr::ps::base::Builder& builder)
-{
-    auto concrete_data =
-        runir::kr::ps::base::checkout<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>(builder);
-    concrete_data->feature = feature;
-    const auto concrete = intern(repository, *concrete_data);
-    auto variant_data = runir::kr::ps::base::checkout<runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>(builder);
-    variant_data->variant = concrete.get_index();
-    const auto variant = intern(repository, *variant_data);
-    auto data = runir::kr::ps::base::checkout<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>(builder);
-    data->variant = variant.get_index();
-    return intern(repository, *data);
-}
-
-template<typename FeatureTag, typename ObservationTag>
-auto make_effect(ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>> feature,
-                 Repository& repository,
-                 runir::kr::ps::base::Builder& builder)
-{
-    auto concrete_data =
-        runir::kr::ps::base::checkout<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>(builder);
-    concrete_data->feature = feature;
-    const auto concrete = intern(repository, *concrete_data);
-    auto variant_data = runir::kr::ps::base::checkout<runir::kr::ps::ConcreteEffectVariant<runir::kr::BaseFamilyTag, runir::kr::DlTag>>(builder);
-    variant_data->variant = concrete.get_index();
-    const auto variant = intern(repository, *variant_data);
-    auto data = runir::kr::ps::base::checkout<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>(builder);
-    data->variant = variant.get_index();
-    return intern(repository, *data);
-}
-
-auto parse_condition_observation(
-    const runir::kr::ps::base::dl::ast::Positive&,
-    const runir::kr::parser::ast::Identifier& feature,
-    Repository& repository,
-    runir::kr::ps::base::Builder& builder,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>>&,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(require_feature(boolean_features, feature, diagnostics),
-                                                                                          repository,
-                                                                                          builder);
-}
-
-auto parse_condition_observation(
-    const runir::kr::ps::base::dl::ast::Negative&,
-    const runir::kr::parser::ast::Identifier& feature,
-    Repository& repository,
-    runir::kr::ps::base::Builder& builder,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>>&,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    return make_condition<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(require_feature(boolean_features, feature, diagnostics),
-                                                                                          repository,
-                                                                                          builder);
-}
-
-auto parse_condition_observation(
-    const runir::kr::ps::base::dl::ast::EqualZero&,
-    const runir::kr::parser::ast::Identifier& feature,
-    Repository& repository,
-    runir::kr::ps::base::Builder& builder,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>>&,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>>&
-        numerical_features,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>(require_feature(numerical_features, feature, diagnostics),
-                                                                                             repository,
-                                                                                             builder);
-}
-
-auto parse_condition_observation(
-    const runir::kr::ps::base::dl::ast::GreaterZero&,
-    const runir::kr::parser::ast::Identifier& feature,
-    Repository& repository,
-    runir::kr::ps::base::Builder& builder,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>>&,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>>&
-        numerical_features,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    return make_condition<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>(require_feature(numerical_features, feature, diagnostics),
-                                                                                               repository,
-                                                                                               builder);
-}
-
-auto parse_condition(
-    const runir::kr::ps::base::dl::ast::Condition<runir::kr::BaseFamilyTag>& node,
-    Repository& repository,
-    runir::kr::ps::base::Builder& builder,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>>&
-        numerical_features,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    return boost::apply_visitor(
-        [&](const auto& observation)
-        { return parse_condition_observation(observation, node.feature, repository, builder, boolean_features, numerical_features, diagnostics); },
-        node.observation.get());
-}
-
-auto parse_effect_observation(
-    const runir::kr::ps::base::dl::ast::Positive&,
-    const runir::kr::parser::ast::Identifier& feature,
-    Repository& repository,
-    runir::kr::ps::base::Builder& builder,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>>&,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>(require_feature(boolean_features, feature, diagnostics),
-                                                                                       repository,
-                                                                                       builder);
-}
-
-auto parse_effect_observation(
-    const runir::kr::ps::base::dl::ast::Negative&,
-    const runir::kr::parser::ast::Identifier& feature,
-    Repository& repository,
-    runir::kr::ps::base::Builder& builder,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>>&,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>(require_feature(boolean_features, feature, diagnostics),
-                                                                                       repository,
-                                                                                       builder);
-}
-
-auto parse_effect_observation(
-    const runir::kr::ps::base::dl::ast::Unchanged&,
-    const runir::kr::parser::ast::Identifier& feature,
-    Repository& repository,
-    runir::kr::ps::base::Builder& builder,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>>&
-        numerical_features,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    const auto boolean_it = boolean_features.find(feature.text);
-    const auto numerical_it = numerical_features.find(feature.text);
-
-    if (boolean_it != boolean_features.end() && numerical_it != numerical_features.end())
-        diagnostics.throw_at(feature, runir::kr::InvalidExpressionError("Ambiguous feature \"" + feature.text + "\"."));
-    if (boolean_it != boolean_features.end())
-        return make_effect<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>(boolean_it->second, repository, builder);
-    if (numerical_it != numerical_features.end())
-        return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>(numerical_it->second, repository, builder);
-
-    diagnostics.throw_at(feature, runir::kr::UndefinedSymbolError("feature", feature.text));
-}
-
-auto parse_effect_observation(
-    const runir::kr::ps::base::dl::ast::Increases&,
-    const runir::kr::parser::ast::Identifier& feature,
-    Repository& repository,
-    runir::kr::ps::base::Builder& builder,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>>&,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>>&
-        numerical_features,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>(require_feature(numerical_features, feature, diagnostics),
-                                                                                          repository,
-                                                                                          builder);
-}
-
-auto parse_effect_observation(
-    const runir::kr::ps::base::dl::ast::Decreases&,
-    const runir::kr::parser::ast::Identifier& feature,
-    Repository& repository,
-    runir::kr::ps::base::Builder& builder,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>>&,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>>&
-        numerical_features,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    return make_effect<runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>(require_feature(numerical_features, feature, diagnostics),
-                                                                                          repository,
-                                                                                          builder);
-}
-
-auto parse_effect(
-    const runir::kr::ps::base::dl::ast::Effect<runir::kr::BaseFamilyTag>& node,
-    Repository& repository,
-    runir::kr::ps::base::Builder& builder,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>>& boolean_features,
-    const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>>&
-        numerical_features,
-    const runir::kr::parser::DiagnosticContext& diagnostics)
-{
-    return boost::apply_visitor(
-        [&](const auto& observation)
-        { return parse_effect_observation(observation, node.feature, repository, builder, boolean_features, numerical_features, diagnostics); },
-        node.observation.get());
-}
+using runir::kr::parser::observations::parse_condition;
+using runir::kr::parser::observations::parse_effect;
 
 auto parse_rule(
     const runir::kr::ps::base::dl::ast::Rule<runir::kr::BaseFamilyTag>& node,
@@ -347,11 +137,11 @@ auto parse_rule(
     data->symbol = node.symbol.text;
     data->conditions.reserve(node.conditions.size());
     for (const auto& condition : node.conditions)
-        data->conditions.push_back(parse_condition(condition, repository, builder, boolean_features, numerical_features, diagnostics).get_index());
+        data->conditions.push_back(parse_condition(repository, builder, condition, boolean_features, numerical_features, diagnostics).get_index());
 
     data->effects.reserve(node.effects.size());
     for (const auto& effect : node.effects)
-        data->effects.push_back(parse_effect(effect, repository, builder, boolean_features, numerical_features, diagnostics).get_index());
+        data->effects.push_back(parse_effect(repository, builder, effect, boolean_features, numerical_features, diagnostics).get_index());
     return intern(repository, *data);
 }
 

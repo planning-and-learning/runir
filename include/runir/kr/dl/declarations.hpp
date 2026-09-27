@@ -17,7 +17,7 @@ namespace runir::kr::dl
 {
 
 template<typename T>
-concept FamilyTag = runir::kr::FamilyTag<T>;
+concept FamilyTag = std::same_as<T, runir::kr::BaseFamilyTag> || std::same_as<T, runir::kr::ExtFamilyTag> || std::same_as<T, runir::kr::UnsFamilyTag>;
 
 /**
  * Categories

@@ -129,6 +129,13 @@ TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
         [&] { kr::dl::grammar::parse_grammar("((b_0 (b_nonempty (q_concept X (c_top)))))", domain, *grammar_repository); },
         "Relational expressions are not supported in generation grammars");
 
+    for (const auto* grammar : {
+             R"(((c_0 (c_project X (q_atomic_state "at" (X Y))))))",
+             R"(((r_0 (r_project X Y (q_atomic_state "at" (X Y))))))" })
+        expect_error_containing(
+            [&] { kr::dl::grammar::parse_grammar(grammar, domain, *grammar_repository); },
+            "Relational expressions are not supported in generation grammars");
+
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_atomic_state \"at\" (X X)))", domain, *repository), kr::InvalidExpressionError);
     EXPECT_THROW(kr::ps::ext::dl::parse_numerical("(n_count (q_project (missing) (q_concept X (c_top))))", domain, *repository), kr::InvalidExpressionError);
     for (const auto& expression : {

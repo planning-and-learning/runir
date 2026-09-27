@@ -10,8 +10,8 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::Concept)(
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::BooleanFeature)(Family), symbol, feature)
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::NumericalFeature)(Family), symbol, feature)
 
-BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::Condition)(Family), observation, feature)
-BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::Effect)(Family), observation, feature)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::base::dl::ast::Condition, observation, feature)
+BOOST_FUSION_ADAPT_STRUCT(runir::kr::ps::base::dl::ast::Effect, observation, feature)
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::Rule)(Family), symbol, conditions, effects)
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family), (runir::kr::ps::base::dl::ast::Sketch)(Family), features, rules)
 

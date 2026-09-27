@@ -3,13 +3,13 @@
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/base/state_evaluation_context.hpp>
-#include <runir/kr/ps/base/dl/syntactic_complexity.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/syntactic_complexity.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
 #include <runir/kr/ps/dl/feature_data.hpp>
 #include <runir/kr/ps/dl/feature_view.hpp>
+#include <runir/kr/ps/dl/syntactic_complexity.hpp>
 #include <runir/kr/ps/feature_view.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
@@ -60,7 +60,7 @@ void bind_numerical_feature(nb::module_& m, RepositoryBinding& repository)
                            [](const FeatureView& value, LiftedContext& context) { return runir::kr::ps::evaluate(value, context); },
                            "context"_a,
                            nb::keep_alive<0, 2>())
-                       .def("syntactic_complexity", [](FeatureView value) { return runir::kr::ps::base::syntactic_complexity(value); });
+                       .def("syntactic_complexity", [](FeatureView value) { return runir::kr::ps::syntactic_complexity(value); });
     ygg::add_print(feature);
     ygg::add_comparison(feature);
     ygg::add_hash(feature);
@@ -80,7 +80,7 @@ void bind_numerical_feature(nb::module_& m, RepositoryBinding& repository)
                                     [](const ConcreteFeatureView& value, LiftedContext& context) { return runir::kr::ps::evaluate(value, context); },
                                     "context"_a,
                                     nb::keep_alive<0, 2>())
-                                .def("syntactic_complexity", [](ConcreteFeatureView value) { return runir::kr::ps::base::dl::syntactic_complexity(value); });
+                                .def("syntactic_complexity", [](ConcreteFeatureView value) { return runir::kr::ps::dl::syntactic_complexity(value); });
     ygg::add_print(concrete_feature);
     ygg::add_comparison(concrete_feature);
     ygg::add_hash(concrete_feature);

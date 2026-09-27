@@ -23,49 +23,14 @@
 namespace runir::kr::ps::base
 {
 
-template<typename FeatureTag, typename C>
-std::string feature(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C> view)
-{
-    return ygg::visit([](auto concrete_feature) { return runir::kr::ps::base::dl::feature(concrete_feature); }, view.get_variant());
-}
-
 template<typename Features>
 void append_features(std::ostream& os, Features features)
 {
     for (auto feature : features)
     {
-        os << ygg::print_indent;
-        ygg::visit([&](auto concrete_feature) { runir::kr::ps::base::dl::append_feature(os, concrete_feature); }, feature.get_variant());
+        runir::kr::ps::append_feature(os, feature);
         os << "\n";
     }
-}
-
-template<typename FeatureTag, typename ObservationTag, typename C>
-std::string condition(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
-{
-    return runir::kr::ps::base::dl::condition(view);
-}
-
-template<typename FeatureTag, typename ObservationTag, typename C>
-std::string effect(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
-{
-    return runir::kr::ps::base::dl::effect(view);
-}
-
-template<typename C>
-std::string condition(ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C> view)
-{
-    return ygg::visit([](auto concrete_variant)
-                      { return ygg::visit([](auto concrete_condition) { return condition(concrete_condition); }, concrete_variant.get_variant()); },
-                      view.get_variant());
-}
-
-template<typename C>
-std::string effect(ygg::View<ygg::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C> view)
-{
-    return ygg::visit([](auto concrete_variant)
-                      { return ygg::visit([](auto concrete_effect) { return effect(concrete_effect); }, concrete_variant.get_variant()); },
-                      view.get_variant());
 }
 
 template<typename Values, typename FormatValue>
@@ -102,8 +67,8 @@ void append_rule(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::Rule<runi
         os << ygg::print_indent << "(:expression\n";
         {
             ygg::IndentScope expression_scope(os);
-            append_list_section(os, "conditions", view.get_conditions(), [](auto item) { return condition(item); });
-            append_list_section(os, "effects", view.get_effects(), [](auto item) { return effect(item); });
+            append_list_section(os, "conditions", view.get_conditions(), [](auto item) { return fmt::format("{}", item); });
+            append_list_section(os, "effects", view.get_effects(), [](auto item) { return fmt::format("{}", item); });
         }
         os << ygg::print_indent << ")\n";
     }
@@ -168,50 +133,6 @@ std::string sketch_proof_results(const runir::kr::ps::base::SketchProofResults<K
 
 }  // namespace runir::kr::ps::base
 
-template<typename FeatureTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C>> : fmt::formatter<std::string_view>
-{
-    using View = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::feature(view), ctx); }
-};
-
-template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C>> : fmt::formatter<std::string_view>
-{
-    using View = ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::condition(view), ctx); }
-};
-
-template<typename LanguageTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, LanguageTag>>, C>> :
-    fmt::formatter<std::string_view>
-{
-    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteConditionVariant<runir::kr::BaseFamilyTag, LanguageTag>>, C>;
-    auto format(View view, format_context& ctx) const
-    {
-        const auto text = ygg::visit([](auto concrete_condition) { return runir::kr::ps::base::condition(concrete_condition); }, view.get_variant());
-        return fmt::formatter<std::string_view>::format(text, ctx);
-    }
-};
-
-template<typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C>> : fmt::formatter<std::string_view>
-{
-    using View = ygg::View<ygg::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::effect(view), ctx); }
-};
-
-template<typename LanguageTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteEffectVariant<runir::kr::BaseFamilyTag, LanguageTag>>, C>> : fmt::formatter<std::string_view>
-{
-    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteEffectVariant<runir::kr::BaseFamilyTag, LanguageTag>>, C>;
-    auto format(View view, format_context& ctx) const
-    {
-        const auto text = ygg::visit([](auto concrete_effect) { return runir::kr::ps::base::effect(concrete_effect); }, view.get_variant());
-        return fmt::formatter<std::string_view>::format(text, ctx);
-    }
-};
-
 template<typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>> : fmt::formatter<std::string_view>
 {
@@ -249,8 +170,13 @@ struct fmt::formatter<runir::kr::ps::base::SketchProofVertexLabel<Kind>> : fmt::
 {
     auto format(const runir::kr::ps::base::SketchProofVertexLabel<Kind>& label, format_context& ctx) const
     {
-        return fmt::format_to(ctx.out(), "state={} initial={} goal={} alive={} unsolvable={}",
-                              label.state.get_index(), label.is_initial, label.is_goal, label.is_alive, label.is_unsolvable);
+        return fmt::format_to(ctx.out(),
+                              "state={} initial={} goal={} alive={} unsolvable={}",
+                              label.state.get_index(),
+                              label.is_initial,
+                              label.is_goal,
+                              label.is_alive,
+                              label.is_unsolvable);
     }
 };
 

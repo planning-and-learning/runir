@@ -3,6 +3,8 @@
 
 #include "runir/kr/declarations.hpp"
 
+#include <type_traits>
+
 namespace runir::kr::ps
 {
 
@@ -23,11 +25,17 @@ struct ConcreteFeature;
 
 // Transition evaluation
 
+namespace dl
+{
+template<FamilyTag Family, tyr::TaskKind Kind>
+class TransitionEvaluationContext;
+}
+
 template<typename Family, typename LanguageTag, typename Context>
-concept IsTransitionEvaluationContext = FamilyTag<Family> && requires(const Context& context) {
-    context.get_source_state();
-    context.get_target_state();
-};
+concept IsTransitionEvaluationContext =
+    FamilyTag<Family> && std::same_as<LanguageTag, runir::kr::DlTag>
+    && (std::same_as<std::remove_cvref_t<Context>, dl::TransitionEvaluationContext<Family, tyr::GroundTag>>
+        || std::same_as<std::remove_cvref_t<Context>, dl::TransitionEvaluationContext<Family, tyr::LiftedTag>>);
 
 // Condition
 
@@ -57,10 +65,10 @@ struct ConcreteEffect;
 
 // Repository
 
-template<FamilyTag Family, typename RepositoryTypes, typename DlRepositoryPtr>
+template<FamilyTag Family, typename RepositoryTypes>
 class BasicRepository;
 
-template<FamilyTag Family, typename RepositoryTypes, typename DlRepositoryPtr>
+template<FamilyTag Family, typename RepositoryTypes>
 class BasicRepositoryFactory;
 
 }  // namespace runir::kr::ps

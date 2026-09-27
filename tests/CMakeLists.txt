@@ -35,6 +35,7 @@ set(RUNIR_KR_DL_TYPE_TEST_SOURCES
     unit/kr/dl/boolean.cpp
     unit/kr/dl/concept.cpp
     unit/kr/dl/constructor.cpp
+    unit/kr/dl/family_traits.cpp
     unit/kr/dl/numerical.cpp
     unit/kr/dl/register.cpp
     unit/kr/dl/role.cpp
@@ -69,6 +70,8 @@ set(RUNIR_KR_DL_CNF_GRAMMAR_TYPE_TEST_SOURCES
 add_runir_test(runir_kr_dl_cnf_grammar_types "${RUNIR_KR_DL_CNF_GRAMMAR_TYPE_TEST_SOURCES}" runir::kr)
 
 set(RUNIR_KR_PS_TYPE_TEST_SOURCES
+    unit/kr/ps/family_traits.cpp
+    unit/kr/ps/evaluation_context.cpp
     unit/kr/ps/base/condition.cpp
     unit/kr/ps/base/effect.cpp
     unit/kr/ps/base/rule.cpp

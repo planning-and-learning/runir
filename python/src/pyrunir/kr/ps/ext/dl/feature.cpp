@@ -3,11 +3,11 @@
 
 #include <runir/kr/ps/dl/feature_data.hpp>
 #include <runir/kr/ps/dl/feature_view.hpp>
-#include <runir/kr/ps/ext/dl/syntactic_complexity.hpp>
-#include <runir/kr/ps/feature_data.hpp>
+#include <runir/kr/ps/dl/syntactic_complexity.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/syntactic_complexity.hpp>
+#include <runir/kr/ps/feature_data.hpp>
 #include <runir/kr/ps/feature_view.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
@@ -32,11 +32,7 @@ template<typename T>
 void bind_concrete_feature_data(nb::module_& m, const char* name)
 {
     using Data = ygg::Data<T>;
-    auto cls = nb::class_<Data>(m, name)
-                   .def(nb::init<>())
-                   .def_rw("index", &Data::index)
-                   .def_rw("feature", &Data::feature)
-                   .def_rw("symbol", &Data::symbol);
+    auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index).def_rw("feature", &Data::feature).def_rw("symbol", &Data::symbol);
     ygg::add_comparison(cls);
 }
 
@@ -49,7 +45,7 @@ void bind_feature_view(nb::module_& m, const char* name)
                    .def("get_variant", &View::get_variant)
                    .def("get_expression", &View::get_expression, nb::keep_alive<0, 1>())
                    .def("get_symbol", &View::get_symbol)
-                   .def("syntactic_complexity", [](View value) { return runir::kr::ps::ext::syntactic_complexity(value); });
+                   .def("syntactic_complexity", [](View value) { return runir::kr::ps::syntactic_complexity(value); });
     ygg::add_print(cls);
     ygg::add_comparison(cls);
     ygg::add_hash(cls);
@@ -63,7 +59,7 @@ void bind_concrete_feature_view(nb::module_& m, const char* name)
                    .def("get_index", &View::get_index)
                    .def("get_expression", &View::get_expression, nb::keep_alive<0, 1>())
                    .def("get_symbol", &View::get_symbol)
-                   .def("syntactic_complexity", [](View value) { return runir::kr::ps::ext::dl::syntactic_complexity(value); });
+                   .def("syntactic_complexity", [](View value) { return runir::kr::ps::dl::syntactic_complexity(value); });
     ygg::add_print(cls);
     ygg::add_comparison(cls);
     ygg::add_hash(cls);

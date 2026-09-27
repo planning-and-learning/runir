@@ -83,11 +83,33 @@ TEST(RunirTests, PolicySketchParserParsesConditionsAndEffects)
     EXPECT_EQ(fmt::format("{}", first_rule.get_conditions().front()), "(positive r)");
     EXPECT_EQ(fmt::format("{}", first_rule.get_effects().front()), "(negative r)");
 
+    const auto check_format_specs = [](auto view)
+    {
+        const auto text = fmt::format("{}", view);
+        EXPECT_EQ(fmt::format("{:>24}", view), fmt::format("{:>24}", text));
+        EXPECT_EQ(fmt::format("{:.4}", view), fmt::format("{:.4}", text));
+    };
+    const auto check_variants = [&](auto view)
+    {
+        check_format_specs(view);
+        ygg::visit(
+            [&](auto language)
+            {
+                check_format_specs(language);
+                ygg::visit(check_format_specs, language.get_variant());
+            },
+            view.get_variant());
+    };
+    for (auto condition : first_rule.get_conditions())
+        check_variants(condition);
+    for (auto effect : first_rule.get_effects())
+        check_variants(effect);
+
     const auto formatted = fmt::format("{}", sketch);
     EXPECT_EQ(fmt::format("{}", kr::ps::base::dl::parse_sketch(formatted, planning_domain.get_domain(), *repository)), formatted);
     const auto feature = sketch.template get_features<kr::ps::dl::BooleanFeature>().front();
-    const auto concrete_complexity = ygg::visit([](auto concrete) { return kr::ps::base::dl::syntactic_complexity(concrete); }, feature.get_variant());
-    EXPECT_EQ(kr::ps::base::syntactic_complexity(feature), concrete_complexity);
+    const auto concrete_complexity = ygg::visit([](auto concrete) { return kr::ps::dl::syntactic_complexity(concrete); }, feature.get_variant());
+    EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete_complexity);
     EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
     EXPECT_EQ(kr::ps::base::syntactic_complexity(sketch), 6);
 }

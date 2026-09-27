@@ -5,6 +5,7 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/ps/declarations.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
+#include "runir/kr/ps/family_traits.hpp"
 
 #include <memory>
 #include <yggdrasil/core/type_list.hpp>
@@ -29,16 +30,11 @@ struct Classifier
     static constexpr auto keyword = "classifier";
 };
 
-using RepositoryTypes = ygg::TypeList<runir::kr::ps::ConcreteFeature<runir::kr::UnsFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
-                                      runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>,
-                                      runir::kr::uns::ClassifierLiteral,
-                                      runir::kr::uns::ClassifierClause,
-                                      runir::kr::uns::Classifier>;
-using Repository =
-    runir::kr::ps::BasicRepository<runir::kr::UnsFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::UnsFamilyTag>>;
+using RepositoryTypes =
+    ygg::ConcatTypeListsT<runir::kr::ps::PsFeatureTypes<runir::kr::UnsFamilyTag>, ygg::TypeList<ClassifierLiteral, ClassifierClause, Classifier>>;
+using Repository = runir::kr::ps::BasicRepository<runir::kr::UnsFamilyTag, RepositoryTypes>;
 using RepositoryPtr = std::shared_ptr<Repository>;
-using RepositoryFactory =
-    runir::kr::ps::BasicRepositoryFactory<runir::kr::UnsFamilyTag, RepositoryTypes, runir::kr::dl::ConstructorRepositoryPtrFor<runir::kr::UnsFamilyTag>>;
+using RepositoryFactory = runir::kr::ps::BasicRepositoryFactory<runir::kr::UnsFamilyTag, RepositoryTypes>;
 
 using ClassifierLiteralView = ygg::View<ygg::Index<runir::kr::uns::ClassifierLiteral>, Repository>;
 using ClassifierClauseView = ygg::View<ygg::Index<runir::kr::uns::ClassifierClause>, Repository>;

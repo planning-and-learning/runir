@@ -42,16 +42,16 @@ using positive_condition_type = x3::rule<PositiveConditionClass, ast::Positive>;
 using negative_condition_type = x3::rule<NegativeConditionClass, ast::Negative>;
 using equal_zero_condition_type = x3::rule<EqualZeroConditionClass, ast::EqualZero>;
 using greater_zero_condition_type = x3::rule<GreaterZeroConditionClass, ast::GreaterZero>;
-using base_condition_observation_type = x3::rule<ConditionObservationClass, ast::ConditionObservation<runir::kr::BaseFamilyTag>>;
-using base_condition_type = x3::rule<ConditionClass, ast::Condition<runir::kr::BaseFamilyTag>>;
+using base_condition_observation_type = x3::rule<ConditionObservationClass, ast::ConditionObservation>;
+using base_condition_type = x3::rule<ConditionClass, ast::Condition>;
 
 using positive_effect_type = x3::rule<PositiveEffectClass, ast::Positive>;
 using negative_effect_type = x3::rule<NegativeEffectClass, ast::Negative>;
 using unchanged_effect_type = x3::rule<UnchangedEffectClass, ast::Unchanged>;
 using increases_effect_type = x3::rule<IncreasesEffectClass, ast::Increases>;
 using decreases_effect_type = x3::rule<DecreasesEffectClass, ast::Decreases>;
-using base_effect_observation_type = x3::rule<EffectObservationClass, ast::EffectObservation<runir::kr::BaseFamilyTag>>;
-using base_effect_type = x3::rule<EffectClass, ast::Effect<runir::kr::BaseFamilyTag>>;
+using base_effect_observation_type = x3::rule<EffectObservationClass, ast::EffectObservation>;
+using base_effect_type = x3::rule<EffectClass, ast::Effect>;
 
 using base_rule_type = x3::rule<RuleClass, ast::Rule<runir::kr::BaseFamilyTag>>;
 using base_sketch_type = x3::rule<SketchClass, ast::Sketch<runir::kr::BaseFamilyTag>>;

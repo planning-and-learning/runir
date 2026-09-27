@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_BASE_COMPATIBILITY_HPP_
 
 #include "runir/kr/ps/base/declarations.hpp"
-#include "runir/kr/ps/base/dl/compatibility.hpp"
+#include "runir/kr/ps/dl/compatibility.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/ps/compatibility.hpp"

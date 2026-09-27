@@ -11,6 +11,13 @@ applications combine the representations and choose how to render and save
 them. Output documentation lives under each repository's `docs/serialization/`
 directory.
 
+## Feature-generation grammars
+
+Generation grammars cover a subset of the feature language. Relational queries,
+`c_project`, `r_project`, and query operands of `n_count` or `b_nonempty` are
+supported in concrete features, but are rejected in generation grammars.
+The grammar parser reports this restriction explicitly.
+
 ## Table rendering
 
 `pyyggdrasil.serialization.table.render_table` adapts serialized rows to `tabulate`,

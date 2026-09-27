@@ -21,60 +21,28 @@ namespace runir::kr::dl::cnf_grammar
 {
 
 template<runir::kr::dl::FamilyTag Family>
-struct RepositoryConstructorFamily
-{
-    template<typename Tag>
-        requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
-    using Concept = runir::kr::dl::cnf_grammar::Concept<Family, Tag>;
-
-    template<typename Tag>
-        requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-    using Role = runir::kr::dl::cnf_grammar::Role<Family, Tag>;
-
-    template<typename Tag>
-        requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
-    using Boolean = runir::kr::dl::cnf_grammar::Boolean<Family, Tag>;
-
-    template<typename Tag>
-        requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-    using Numerical = runir::kr::dl::cnf_grammar::Numerical<Family, Tag>;
-
-    template<runir::kr::dl::CategoryTag Category>
-    using Constructor = runir::kr::dl::cnf_grammar::Constructor<Family, Category>;
-
-    template<runir::kr::dl::CategoryTag Category>
-    using NonTerminal = runir::kr::dl::cnf_grammar::NonTerminal<Family, Category>;
-
-    template<runir::kr::dl::CategoryTag Category>
-    using DerivationRule = runir::kr::dl::cnf_grammar::DerivationRule<Family, Category>;
-
-    template<runir::kr::dl::CategoryTag Category>
-    using SubstitutionRule = runir::kr::dl::cnf_grammar::SubstitutionRule<Family, Category>;
-};
+using FamilyConceptTypes = ygg::MapTypeListSecondT<Concept, Family, runir::kr::dl::FamilyConceptConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyConceptTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Concept, runir::kr::dl::FamilyConceptConstructorTags<Family>>;
+using FamilyRoleTypes = ygg::MapTypeListSecondT<Role, Family, runir::kr::dl::FamilyRoleConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyRoleTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Role, runir::kr::dl::FamilyRoleConstructorTags<Family>>;
+using FamilyBooleanTypes = ygg::MapTypeListSecondT<Boolean, Family, runir::kr::dl::FamilyBooleanConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyBooleanTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Boolean, runir::kr::dl::FamilyBooleanConstructorTags<Family>>;
+using FamilyNumericalTypes = ygg::MapTypeListSecondT<Numerical, Family, runir::kr::dl::FamilyNumericalConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyNumericalTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Numerical, runir::kr::dl::FamilyNumericalConstructorTags<Family>>;
+using FamilyConstructorTypes = ygg::MapTypeListSecondT<Constructor, Family, runir::kr::dl::CategoryTags>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyConstructorTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Constructor, runir::kr::dl::CategoryTags>;
+using FamilyNonTerminalTypes = ygg::MapTypeListSecondT<NonTerminal, Family, runir::kr::dl::CategoryTags>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyNonTerminalTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template NonTerminal, runir::kr::dl::CategoryTags>;
+using FamilyDerivationRuleTypes = ygg::MapTypeListSecondT<DerivationRule, Family, runir::kr::dl::CategoryTags>;
 
 template<runir::kr::dl::FamilyTag Family>
-using FamilyDerivationRuleTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template DerivationRule, runir::kr::dl::CategoryTags>;
-
-template<runir::kr::dl::FamilyTag Family>
-using FamilySubstitutionRuleTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template SubstitutionRule, runir::kr::dl::CategoryTags>;
+using FamilySubstitutionRuleTypes = ygg::MapTypeListSecondT<SubstitutionRule, Family, runir::kr::dl::CategoryTags>;
 
 template<runir::kr::dl::FamilyTag Family>
 using FamilyGrammarTypes = ygg::TypeList<Grammar<Family>>;
@@ -100,24 +68,9 @@ using BaseBuilder = Builder<runir::kr::BaseFamilyTag>;
 using ExtBuilder = Builder<runir::kr::ExtFamilyTag>;
 using UnsBuilder = Builder<runir::kr::UnsFamilyTag>;
 
-template<typename T>
-[[nodiscard]] auto checkout(BaseBuilder& builder)
-{
-    auto data = builder.template get_builder<T>();
-    data->clear();
-    return data;
-}
-
-template<typename T>
-[[nodiscard]] auto checkout(ExtBuilder& builder)
-{
-    auto data = builder.template get_builder<T>();
-    data->clear();
-    return data;
-}
-
-template<typename T>
-[[nodiscard]] auto checkout(UnsBuilder& builder)
+template<typename T, typename B>
+    requires(std::same_as<B, BaseBuilder> || std::same_as<B, ExtBuilder> || std::same_as<B, UnsBuilder>)
+[[nodiscard]] auto checkout(B& builder)
 {
     auto data = builder.template get_builder<T>();
     data->clear();

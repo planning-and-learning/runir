@@ -8,7 +8,7 @@
 namespace runir::kr::ps
 {
 
-template<runir::kr::dl::FamilyTag Family, typename FeatureTag, typename C, tyr::TaskKind Kind>
+template<runir::kr::FamilyTag Family, typename FeatureTag, typename C, tyr::TaskKind Kind>
 auto evaluate(ygg::View<ygg::Index<ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>, C> feature,
               runir::kr::dl::semantics::StateEvaluationContext<typename PsFamilyTraits<Family>::DlFamily, Kind>& context)
 {

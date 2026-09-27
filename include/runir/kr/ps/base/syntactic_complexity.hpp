@@ -1,9 +1,9 @@
 #ifndef RUNIR_KR_PS_BASE_SYNTACTIC_COMPLEXITY_HPP_
 #define RUNIR_KR_PS_BASE_SYNTACTIC_COMPLEXITY_HPP_
 
-#include "runir/kr/ps/base/dl/syntactic_complexity.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
+#include "runir/kr/ps/syntactic_complexity.hpp"
 
 #include <cstddef>
 #include <yggdrasil/core/types.hpp>
@@ -11,20 +11,14 @@
 namespace runir::kr::ps::base
 {
 
-template<typename FeatureTag, typename C>
-std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, FeatureTag>>, C> view)
-{
-    return ygg::visit([](auto feature) { return runir::kr::ps::base::dl::syntactic_complexity(feature); }, view.get_variant());
-}
-
 template<typename C>
 std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> view)
 {
     auto result = std::size_t { 0 };
     for (auto feature : view.template get_features<runir::kr::ps::dl::BooleanFeature>())
-        result += syntactic_complexity(feature);
+        result += runir::kr::ps::syntactic_complexity(feature);
     for (auto feature : view.template get_features<runir::kr::ps::dl::NumericalFeature>())
-        result += syntactic_complexity(feature);
+        result += runir::kr::ps::syntactic_complexity(feature);
     return result;
 }
 

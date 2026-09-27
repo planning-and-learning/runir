@@ -67,24 +67,9 @@ using BaseBuilder = Builder<runir::kr::BaseFamilyTag>;
 using ExtBuilder = Builder<runir::kr::ExtFamilyTag>;
 using UnsBuilder = Builder<runir::kr::UnsFamilyTag>;
 
-template<typename T>
-[[nodiscard]] auto checkout(BaseBuilder& builder)
-{
-    auto data = builder.template get_builder<T>();
-    data->clear();
-    return data;
-}
-
-template<typename T>
-[[nodiscard]] auto checkout(ExtBuilder& builder)
-{
-    auto data = builder.template get_builder<T>();
-    data->clear();
-    return data;
-}
-
-template<typename T>
-[[nodiscard]] auto checkout(UnsBuilder& builder)
+template<typename T, typename B>
+    requires(std::same_as<B, BaseBuilder> || std::same_as<B, ExtBuilder> || std::same_as<B, UnsBuilder>)
+[[nodiscard]] auto checkout(B& builder)
 {
     auto data = builder.template get_builder<T>();
     data->clear();

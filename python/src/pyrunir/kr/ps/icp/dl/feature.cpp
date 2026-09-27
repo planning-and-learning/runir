@@ -7,6 +7,7 @@
 #include <runir/kr/ps/feature_view.hpp>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
+#include <runir/kr/ps/syntactic_complexity.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -42,7 +43,8 @@ void bind_feature_view(nb::module_& m, const char* name)
                    .def("get_index", &View::get_index)
                    .def("get_variant", &View::get_variant)
                    .def("get_expression", &View::get_expression, nb::keep_alive<0, 1>())
-                   .def("get_symbol", &View::get_symbol);
+                   .def("get_symbol", &View::get_symbol)
+                   .def("syntactic_complexity", [](View value) { return runir::kr::ps::syntactic_complexity(value); });
     ygg::add_print(cls);
     ygg::add_comparison(cls);
     ygg::add_hash(cls);
@@ -55,7 +57,8 @@ void bind_concrete_feature_view(nb::module_& m, const char* name)
     auto cls = nb::class_<View>(m, name)
                    .def("get_index", &View::get_index)
                    .def("get_expression", &View::get_expression, nb::keep_alive<0, 1>())
-                   .def("get_symbol", &View::get_symbol);
+                   .def("get_symbol", &View::get_symbol)
+                   .def("syntactic_complexity", [](View value) { return runir::kr::ps::dl::syntactic_complexity(value); });
     ygg::add_print(cls);
     ygg::add_comparison(cls);
     ygg::add_hash(cls);

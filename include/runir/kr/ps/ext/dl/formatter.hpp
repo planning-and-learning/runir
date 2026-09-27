@@ -7,6 +7,7 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <yggdrasil/formatting/cista_formatters.hpp>
 #include <yggdrasil/formatting/dynamic_bitset_formatters.hpp>
 
 template<>

@@ -85,8 +85,7 @@ using UnsRoleConstructorTags = BaseRoleConstructorTags;
 using UnsBooleanConstructorTags = ygg::ConcatTypeListsT<
     BaseBooleanConstructorTags,
     ygg::ConcatTypeListsT<UnsComparisonConstructorTags, ygg::ConcatTypeListsT<ygg::TypeList<BooleanConstantTag>, UnsLogicalConstructorTags>>>;
-using UnsNumericalConstructorTags =
-    ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ygg::ConcatTypeListsT<ygg::TypeList<NumericalConstantTag>, NumericalBinaryConstructorTags>>;
+using UnsNumericalConstructorTags = ygg::ConcatTypeListsT<BaseNumericalConstructorTags, ArithmeticConstructorTags>;
 
 template<>
 struct DlFamilyTraits<runir::kr::BaseFamilyTag>

@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_ICP_EVALUATION_ENVIRONMENT_HPP_
 
 #include "runir/kr/dl/semantics/ext/state_evaluation_context.hpp"
-#include "runir/kr/ps/icp/dl/transition_evaluation_context.hpp"
+#include "runir/kr/ps/dl/transition_evaluation_context.hpp"
 #include "runir/kr/ps/icp/execution_view.hpp"
 #include "runir/kr/task_context.hpp"
 
@@ -12,12 +12,13 @@ namespace runir::kr::ps::icp
 template<tyr::TaskKind Kind>
 class EvaluationEnvironment
 {
-    using StateContext = runir::kr::dl::semantics::StateEvaluationContext<ExtFamilyTag, Kind>;
     using TransitionContext = runir::kr::ps::dl::TransitionEvaluationContext<IcpFamilyTag, Kind>;
+    using StateContext = typename TransitionContext::DlContext;
+    using DlFamily = typename TransitionContext::DlFamily;
     TaskContext<Kind>& m_task;
     ProgramView m_program;
     runir::kr::dl::semantics::EvaluationWorkspace m_workspace;
-    runir::kr::dl::semantics::DenotationCaches<ExtFamilyTag> m_source_caches, m_target_caches;
+    runir::kr::dl::semantics::DenotationCaches<DlFamily> m_source_caches, m_target_caches;
     runir::kr::dl::semantics::CallArgumentsView m_arguments;
 
     static auto empty_arguments(TaskContext<Kind>& task)

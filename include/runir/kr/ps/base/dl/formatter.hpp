@@ -1,13 +1,13 @@
 #ifndef RUNIR_KR_PS_BASE_DL_FORMATTER_HPP_
 #define RUNIR_KR_PS_BASE_DL_FORMATTER_HPP_
 
-#include "runir/kr/dl/semantics/formatter.hpp"
-#include "runir/kr/ps/dl/condition_view.hpp"
-#include "runir/kr/ps/dl/effect_view.hpp"
-#include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/base/dl/incomplete_structural_termination_data.hpp"
 #include "runir/kr/ps/base/dl/structural_termination_data.hpp"
 #include "runir/kr/ps/base/repository.hpp"
+#include "runir/kr/ps/dl/condition_view.hpp"
+#include "runir/kr/ps/dl/effect_view.hpp"
+#include "runir/kr/ps/dl/feature_view.hpp"
+#include "runir/kr/ps/formatter.hpp"
 
 #include <fmt/format.h>
 #include <iterator>
@@ -23,65 +23,7 @@ namespace runir::kr::ps::base::dl
 
 inline std::string symbol_section(std::string_view value) { return fmt::format("(:symbol {})", value); }
 
-template<typename FeatureTag, typename C>
-void append_feature(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view)
-{
-    os << "(:" << FeatureTag::keyword << "\n";
-    {
-        ygg::IndentScope scope(os);
-        os << ygg::print_indent << symbol_section(view.get_symbol()) << "\n";
-        os << ygg::print_indent << "(:expression ";
-        fmt::format_to(std::ostream_iterator<char>(os), "{}", view.get_expression());
-        os << ")\n";
-    }
-    os << ygg::print_indent << ")";
-}
-
-template<typename FeatureTag, typename C>
-std::string feature(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C> view)
-{
-    auto os = std::ostringstream {};
-    append_feature(os, view);
-    return os.str();
-}
-
-template<typename FeatureTag, typename ObservationTag, typename C>
-std::string condition(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
-{
-    return fmt::format("({} {})", ObservationTag::keyword, view.get_feature().get_symbol());
-}
-
-template<typename FeatureTag, typename ObservationTag, typename C>
-std::string effect(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> view)
-{
-    return fmt::format("({} {})", ObservationTag::keyword, view.get_feature().get_symbol());
-}
-
 }  // namespace runir::kr::ps::base::dl
-
-template<typename FeatureTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C>> :
-    fmt::formatter<std::string_view>
-{
-    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag>>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::dl::feature(view), ctx); }
-};
-
-template<typename FeatureTag, typename ObservationTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>> :
-    fmt::formatter<std::string_view>
-{
-    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::dl::condition(view), ctx); }
-};
-
-template<typename FeatureTag, typename ObservationTag, typename C>
-struct fmt::formatter<ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>> :
-    fmt::formatter<std::string_view>
-{
-    using View = ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<runir::kr::BaseFamilyTag, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>;
-    auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::ps::base::dl::effect(view), ctx); }
-};
 
 template<>
 struct fmt::formatter<runir::kr::ps::base::dl::PolicyGraphVertexLabel, char> : fmt::formatter<std::string_view>

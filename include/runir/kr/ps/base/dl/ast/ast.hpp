@@ -78,7 +78,6 @@ struct Feature : PositionedVariant<BooleanFeature<Family>, NumericalFeature<Fami
     using Base::operator=;
 };
 
-template<runir::kr::FamilyTag Family>
 struct ConditionObservation : PositionedVariant<Positive, Negative, EqualZero, GreaterZero>
 {
     using Base = PositionedVariant<Positive, Negative, EqualZero, GreaterZero>;
@@ -86,14 +85,12 @@ struct ConditionObservation : PositionedVariant<Positive, Negative, EqualZero, G
     using Base::operator=;
 };
 
-template<runir::kr::FamilyTag Family>
 struct Condition : x3::position_tagged
 {
-    ConditionObservation<Family> observation;
+    ConditionObservation observation;
     runir::kr::parser::ast::Identifier feature;
 };
 
-template<runir::kr::FamilyTag Family>
 struct EffectObservation : PositionedVariant<Positive, Negative, Unchanged, Increases, Decreases>
 {
     using Base = PositionedVariant<Positive, Negative, Unchanged, Increases, Decreases>;
@@ -101,10 +98,9 @@ struct EffectObservation : PositionedVariant<Positive, Negative, Unchanged, Incr
     using Base::operator=;
 };
 
-template<runir::kr::FamilyTag Family>
 struct Effect : x3::position_tagged
 {
-    EffectObservation<Family> observation;
+    EffectObservation observation;
     runir::kr::parser::ast::Identifier feature;
 };
 
@@ -112,8 +108,8 @@ template<runir::kr::FamilyTag Family>
 struct Rule : x3::position_tagged
 {
     runir::kr::parser::ast::Identifier symbol;
-    std::vector<Condition<Family>> conditions;
-    std::vector<Effect<Family>> effects;
+    std::vector<Condition> conditions;
+    std::vector<Effect> effects;
 };
 
 template<runir::kr::FamilyTag Family>

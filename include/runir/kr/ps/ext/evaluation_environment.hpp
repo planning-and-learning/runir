@@ -5,7 +5,7 @@
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 #include "runir/kr/dl/semantics/ext/state_evaluation_context.hpp"
-#include "runir/kr/ps/ext/dl/transition_evaluation_context.hpp"
+#include "runir/kr/ps/dl/transition_evaluation_context.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/task_context.hpp"
 

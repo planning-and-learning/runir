@@ -3,7 +3,7 @@
 
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
-#include "runir/kr/ps/base/dl/transition_evaluation_context.hpp"
+#include "runir/kr/ps/dl/transition_evaluation_context.hpp"
 #include "runir/kr/task_context.hpp"
 
 #include <utility>

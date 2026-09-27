@@ -14,6 +14,12 @@ namespace runir::kr::ps
 namespace detail
 {
 
+template<runir::kr::FamilyTag Family, typename FeatureTag>
+using DlFeature = ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>;
+
+template<runir::kr::FamilyTag Family, typename Categories>
+using PsFeatureTypes = ygg::ConcatTypeListsT<ygg::MapTypeListSecondT<Feature, Family, Categories>, ygg::MapTypeListSecondT<DlFeature, Family, Categories>>;
+
 template<runir::kr::FamilyTag Family>
 using PsConditionTypes = ygg::TypeList<ConditionVariant<Family>,
                                        ConcreteConditionVariant<Family, runir::kr::DlTag>,
@@ -35,23 +41,15 @@ using PsEffectTypes = ygg::TypeList<EffectVariant<Family>,
 }  // namespace detail
 
 template<runir::kr::FamilyTag Family>
-struct PsFamilyTraits
-{
-    using DlFamily = Family;
-};
+struct PsFamilyTraits;
 
 template<>
 struct PsFamilyTraits<runir::kr::BaseFamilyTag>
 {
     using DlFamily = runir::kr::BaseFamilyTag;
     using FeatureCategories = ygg::TypeList<runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::NumericalFeature>;
-    using ConditionLanguages = ygg::TypeList<runir::kr::DlTag>;
-    using EffectLanguages = ygg::TypeList<runir::kr::DlTag>;
 
-    using FeatureTypes = ygg::TypeList<Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>,
-                                       Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>,
-                                       ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
-                                       ConcreteFeature<runir::kr::BaseFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>>;
+    using FeatureTypes = detail::PsFeatureTypes<runir::kr::BaseFamilyTag, FeatureCategories>;
 
     using ConditionTypes = detail::PsConditionTypes<runir::kr::BaseFamilyTag>;
 
@@ -67,19 +65,8 @@ struct PsFamilyTraits<runir::kr::ExtFamilyTag>
                                             runir::kr::ps::dl::BooleanFeature,
                                             runir::kr::ps::dl::NumericalFeature,
                                             runir::kr::ps::dl::QueryFeature>;
-    using ConditionLanguages = ygg::TypeList<runir::kr::DlTag>;
-    using EffectLanguages = ygg::TypeList<runir::kr::DlTag>;
 
-    using FeatureTypes = ygg::TypeList<Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>,
-                                       Feature<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>,
-                                       Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::BooleanFeature>,
-                                       Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::NumericalFeature>,
-                                       Feature<runir::kr::ExtFamilyTag, runir::kr::ps::dl::QueryFeature>,
-                                       ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag>,
-                                       ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::dl::RoleTag>,
-                                       ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
-                                       ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>,
-                                       ConcreteFeature<runir::kr::ExtFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::QueryFeature>>;
+    using FeatureTypes = detail::PsFeatureTypes<runir::kr::ExtFamilyTag, FeatureCategories>;
 
     using ConditionTypes = detail::PsConditionTypes<runir::kr::ExtFamilyTag>;
 
@@ -91,23 +78,22 @@ struct PsFamilyTraits<runir::kr::IcpFamilyTag>
 {
     using DlFamily = runir::kr::ExtFamilyTag;
     using FeatureCategories = PsFamilyTraits<runir::kr::ExtFamilyTag>::FeatureCategories;
-    using ConditionLanguages = PsFamilyTraits<runir::kr::ExtFamilyTag>::ConditionLanguages;
-    using EffectLanguages = PsFamilyTraits<runir::kr::ExtFamilyTag>::EffectLanguages;
 
-    using FeatureTypes = ygg::TypeList<Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>,
-                                       Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>,
-                                       Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::BooleanFeature>,
-                                       Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::NumericalFeature>,
-                                       Feature<runir::kr::IcpFamilyTag, runir::kr::ps::dl::QueryFeature>,
-                                       ConcreteFeature<runir::kr::IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::ConceptTag>,
-                                       ConcreteFeature<runir::kr::IcpFamilyTag, runir::kr::DlTag, runir::kr::dl::RoleTag>,
-                                       ConcreteFeature<runir::kr::IcpFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature>,
-                                       ConcreteFeature<runir::kr::IcpFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature>,
-                                       ConcreteFeature<runir::kr::IcpFamilyTag, runir::kr::DlTag, runir::kr::ps::dl::QueryFeature>>;
+    using FeatureTypes = detail::PsFeatureTypes<runir::kr::IcpFamilyTag, FeatureCategories>;
 
     using ConditionTypes = detail::PsConditionTypes<runir::kr::IcpFamilyTag>;
 
     using EffectTypes = detail::PsEffectTypes<runir::kr::IcpFamilyTag>;
+};
+
+template<>
+struct PsFamilyTraits<runir::kr::UnsFamilyTag>
+{
+    using DlFamily = runir::kr::UnsFamilyTag;
+    using FeatureCategories = ygg::TypeList<runir::kr::ps::dl::BooleanFeature>;
+    using FeatureTypes = detail::PsFeatureTypes<runir::kr::UnsFamilyTag, FeatureCategories>;
+    using ConditionTypes = ygg::TypeList<>;
+    using EffectTypes = ygg::TypeList<>;
 };
 
 template<runir::kr::FamilyTag Family>

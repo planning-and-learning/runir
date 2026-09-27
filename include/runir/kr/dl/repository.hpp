@@ -25,48 +25,22 @@ namespace runir::kr::dl
 {
 
 template<FamilyTag Family>
-struct RepositoryConstructorFamily
-{
-    template<typename Tag>
-        requires FamilyConceptConstructorTag<Family, Tag>
-    using Concept = FamilyConcept<Family, Tag>;
-
-    template<typename Tag>
-        requires FamilyRoleConstructorTag<Family, Tag>
-    using Role = FamilyRole<Family, Tag>;
-
-    template<typename Tag>
-        requires FamilyBooleanConstructorTag<Family, Tag>
-    using Boolean = FamilyBoolean<Family, Tag>;
-
-    template<typename Tag>
-        requires FamilyNumericalConstructorTag<Family, Tag>
-    using Numerical = FamilyNumerical<Family, Tag>;
-
-    template<CategoryTag Category>
-    using Constructor = FamilyConstructor<Family, Category>;
-
-    template<typename Tag>
-    using Query = runir::kr::dl::Query<Family, Tag>;
-};
+using FamilyConceptTypes = ygg::MapTypeListSecondT<Concept, Family, FamilyConceptConstructorTags<Family>>;
 
 template<FamilyTag Family>
-using FamilyConceptTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Concept, FamilyConceptConstructorTags<Family>>;
+using FamilyRoleTypes = ygg::MapTypeListSecondT<Role, Family, FamilyRoleConstructorTags<Family>>;
 
 template<FamilyTag Family>
-using FamilyRoleTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Role, FamilyRoleConstructorTags<Family>>;
+using FamilyBooleanTypes = ygg::MapTypeListSecondT<Boolean, Family, FamilyBooleanConstructorTags<Family>>;
 
 template<FamilyTag Family>
-using FamilyBooleanTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Boolean, FamilyBooleanConstructorTags<Family>>;
+using FamilyNumericalTypes = ygg::MapTypeListSecondT<Numerical, Family, FamilyNumericalConstructorTags<Family>>;
 
 template<FamilyTag Family>
-using FamilyNumericalTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Numerical, FamilyNumericalConstructorTags<Family>>;
+using FamilyConstructorTypes = ygg::MapTypeListSecondT<Constructor, Family, CategoryTags>;
 
 template<FamilyTag Family>
-using FamilyConstructorTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Constructor, CategoryTags>;
-
-template<FamilyTag Family>
-using FamilyQueryTypes = ygg::MapTypeListT<RepositoryConstructorFamily<Family>::template Query, QueryConstructorTags>;
+using FamilyQueryTypes = ygg::MapTypeListSecondT<Query, Family, QueryConstructorTags>;
 
 template<FamilyTag Family>
 using FamilyReferenceTypes = std::conditional_t<
@@ -95,24 +69,9 @@ using BaseBuilder = Builder<runir::kr::BaseFamilyTag>;
 using ExtBuilder = Builder<runir::kr::ExtFamilyTag>;
 using UnsBuilder = Builder<runir::kr::UnsFamilyTag>;
 
-template<typename T>
-[[nodiscard]] auto checkout(BaseBuilder& builder)
-{
-    auto data = builder.template get_builder<T>();
-    data->clear();
-    return data;
-}
-
-template<typename T>
-[[nodiscard]] auto checkout(ExtBuilder& builder)
-{
-    auto data = builder.template get_builder<T>();
-    data->clear();
-    return data;
-}
-
-template<typename T>
-[[nodiscard]] auto checkout(UnsBuilder& builder)
+template<typename T, typename B>
+    requires(std::same_as<B, BaseBuilder> || std::same_as<B, ExtBuilder> || std::same_as<B, UnsBuilder>)
+[[nodiscard]] auto checkout(B& builder)
 {
     auto data = builder.template get_builder<T>();
     data->clear();

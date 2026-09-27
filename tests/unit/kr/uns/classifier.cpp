@@ -107,8 +107,8 @@ TEST(RunirTests, UnsClassifierParsesAndFormats)
     EXPECT_EQ(fmt::format("{}", classifier.get_clauses().front().get_literals()[1]), "(not no_object)");
 
     const auto feature = classifier.get_features().front();
-    const auto concrete_complexity = ygg::visit([](auto concrete) { return kr::uns::dl::syntactic_complexity(concrete); }, feature.get_variant());
-    EXPECT_EQ(kr::uns::syntactic_complexity(feature), concrete_complexity);
+    const auto concrete_complexity = ygg::visit([](auto concrete) { return kr::ps::dl::syntactic_complexity(concrete); }, feature.get_variant());
+    EXPECT_EQ(kr::ps::syntactic_complexity(feature), concrete_complexity);
     EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
     EXPECT_EQ(kr::uns::syntactic_complexity(classifier), 7);
     auto empty_data = ygg::Data<kr::uns::Classifier>(std::string("empty"));

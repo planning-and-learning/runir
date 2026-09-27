@@ -95,6 +95,30 @@ def test_search_and_round_trip(kind, universal):
     assert (result.plan is None) == universal
 
 
+def test_feature_complexity_uses_the_shared_dl_language():
+    source = PROGRAM.replace(
+        '(:query (:symbol locations)',
+        '(:role (:symbol carrying) (:expression (r_atomic_state "carry")))\n'
+        '      (:boolean (:symbol populated) (:expression (b_nonempty (c_top))))\n'
+        '      (:query (:symbol locations)',
+    )
+    context, program = context_and_program("Lifted", source)
+    module = program.get_module()
+    cases = (
+        (module.get_concept_features(), "candidates", 3),
+        (module.get_role_features(), "carrying", 1),
+        (module.get_boolean_features(), "populated", 2),
+        (module.get_numerical_features(), "selected_count", 2),
+        (module.get_query_features(), "locations", 1),
+    )
+    for features, symbol, complexity in cases:
+        feature = next(value for value in features if value.get_symbol() == symbol)
+        assert feature.syntactic_complexity() == complexity
+        assert feature.get_variant().syntactic_complexity() == complexity
+    domain = context.search_context.task.get_formalism_task().get_domain()
+    assert icp.dl.parse_program(str(program), domain, context.domain_context.icp_repository) == program
+
+
 @pytest.mark.parametrize("kind", ["Ground", "Lifted"])
 def test_histories_evaluation_and_owned_views(kind):
     context, program = context_and_program(kind)

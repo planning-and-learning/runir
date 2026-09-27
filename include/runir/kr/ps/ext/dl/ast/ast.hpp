@@ -25,8 +25,8 @@ struct PositionedVariant : x3::position_tagged, x3::variant<Alternatives...>
     using Base::operator=;
 };
 
-using Condition = runir::kr::ps::base::dl::ast::Condition<runir::kr::ExtFamilyTag>;
-using Effect = runir::kr::ps::base::dl::ast::Effect<runir::kr::ExtFamilyTag>;
+using Condition = runir::kr::ps::base::dl::ast::Condition;
+using Effect = runir::kr::ps::base::dl::ast::Effect;
 
 template<runir::kr::dl::CategoryTag Category>
 struct Argument : x3::position_tagged

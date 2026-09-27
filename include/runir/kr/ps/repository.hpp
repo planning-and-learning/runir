@@ -3,6 +3,7 @@
 
 #include "runir/kr/ps/canonicalization.hpp"
 #include "runir/kr/ps/declarations.hpp"
+#include "runir/kr/ps/family_traits.hpp"
 
 #include <cassert>
 #include <memory>
@@ -15,13 +16,16 @@
 namespace runir::kr::ps
 {
 
-template<FamilyTag Family, typename RepositoryTypes, typename DlRepositoryPtr>
+template<FamilyTag Family, typename RepositoryTypes>
 class BasicRepository
 {
-    template<FamilyTag, typename, typename>
-    friend class BasicRepositoryFactory;
+public:
+    using DlRepositoryPtr = runir::kr::dl::ConstructorRepositoryPtrFor<typename PsFamilyTraits<Family>::DlFamily>;
 
 private:
+    template<FamilyTag, typename>
+    friend class BasicRepositoryFactory;
+
     ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, RepositoryTypes> m_symbol_repository;
     DlRepositoryPtr m_dl_repository;
     size_t m_index;
@@ -79,29 +83,29 @@ public:
     }
 };
 
-template<FamilyTag Family, typename RepositoryTypes, typename DlRepositoryPtr>
+template<FamilyTag Family, typename RepositoryTypes>
 class BasicRepositoryFactory
 {
 private:
     size_t m_next_index = 0;
 
 public:
-    using Repository = BasicRepository<Family, RepositoryTypes, DlRepositoryPtr>;
+    using Repository = BasicRepository<Family, RepositoryTypes>;
+    using DlRepositoryPtr = typename Repository::DlRepositoryPtr;
     std::shared_ptr<Repository> create(DlRepositoryPtr dl_repository)
     {
         return std::shared_ptr<Repository>(new Repository(m_next_index++, std::move(dl_repository)));
     }
 };
 
-template<FamilyTag Family, typename RepositoryTypes, typename DlRepositoryPtr>
-inline const BasicRepository<Family, RepositoryTypes, DlRepositoryPtr>&
-get_repository(const BasicRepository<Family, RepositoryTypes, DlRepositoryPtr>& repository) noexcept
+template<FamilyTag Family, typename RepositoryTypes>
+inline const BasicRepository<Family, RepositoryTypes>& get_repository(const BasicRepository<Family, RepositoryTypes>& repository) noexcept
 {
     return repository;
 }
 
-template<FamilyTag Family, typename RepositoryTypes, typename DlRepositoryPtr>
-inline BasicRepository<Family, RepositoryTypes, DlRepositoryPtr>& get_repository(BasicRepository<Family, RepositoryTypes, DlRepositoryPtr>& repository) noexcept
+template<FamilyTag Family, typename RepositoryTypes>
+inline BasicRepository<Family, RepositoryTypes>& get_repository(BasicRepository<Family, RepositoryTypes>& repository) noexcept
 {
     return repository;
 }

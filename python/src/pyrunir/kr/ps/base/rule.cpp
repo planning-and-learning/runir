@@ -3,7 +3,7 @@
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
-#include <runir/kr/ps/base/dl/transition_evaluation_context.hpp>
+#include <runir/kr/ps/dl/transition_evaluation_context.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/rule_data.hpp>
