@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_FEATURE_VIEW_HPP_
 #define RUNIR_KR_PS_FEATURE_VIEW_HPP_
 
+#include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/feature_index.hpp"
 
 #include <tuple>
@@ -10,7 +11,7 @@
 namespace ygg
 {
 
-template<runir::kr::FamilyTag Family, typename FeatureTag, typename C>
+template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
 class View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C>
 {
 private:

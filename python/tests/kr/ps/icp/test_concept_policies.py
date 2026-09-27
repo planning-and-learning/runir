@@ -115,6 +115,11 @@ def test_feature_complexity_uses_the_shared_dl_language():
         feature = next(value for value in features if value.get_symbol() == symbol)
         assert feature.syntactic_complexity() == complexity
         assert feature.get_variant().syntactic_complexity() == complexity
+        assert feature.get_feature() == feature.get_expression()
+        assert feature.get_variant().get_feature() == feature.get_expression()
+    total = sum(feature.syntactic_complexity() for features, _, _ in cases for feature in features)
+    assert module.syntactic_complexity() == total
+    assert program.syntactic_complexity() == total
     domain = context.search_context.task.get_formalism_task().get_domain()
     assert icp.dl.parse_program(str(program), domain, context.domain_context.icp_repository) == program
 

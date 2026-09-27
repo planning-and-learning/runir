@@ -1,5 +1,6 @@
 #include <concepts>
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
+#include <runir/kr/dl/cnf_grammar/generate.hpp>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/repository.hpp>
 
@@ -12,6 +13,41 @@ static_assert(kr::dl::FamilyTag<kr::BaseFamilyTag>);
 static_assert(kr::dl::FamilyTag<kr::ExtFamilyTag>);
 static_assert(kr::dl::FamilyTag<kr::UnsFamilyTag>);
 static_assert(!kr::dl::FamilyTag<kr::IcpFamilyTag>);
+
+template<typename Category>
+concept RegisterCategory = requires {
+    typename kr::dl::Register<Category>;
+    typename kr::dl::RegisterIdentifier<Category>;
+    typename kr::dl::RegisterView<Category>;
+};
+
+template<typename Category>
+concept QueryProjectionCategory = requires {
+    typename kr::dl::QueryProjection<kr::BaseFamilyTag, Category>;
+    typename kr::dl::QueryProjection<kr::ExtFamilyTag, Category>;
+    typename kr::dl::QueryProjection<kr::UnsFamilyTag, Category>;
+};
+
+static_assert(RegisterCategory<kr::dl::ConceptTag> && RegisterCategory<kr::dl::RoleTag>);
+static_assert(!RegisterCategory<kr::dl::BooleanTag> && !RegisterCategory<kr::dl::NumericalTag>);
+static_assert(QueryProjectionCategory<kr::dl::ConceptTag> && QueryProjectionCategory<kr::dl::RoleTag>);
+static_assert(!QueryProjectionCategory<kr::dl::BooleanTag> && !QueryProjectionCategory<kr::dl::NumericalTag>);
+
+template<typename Family, typename Kind>
+concept GeneratesConstructors = requires(kr::dl::cnf_grammar::FamilyGrammarView<Family> grammar,
+                                        const std::vector<tyr::planning::PackedStateView<Kind>>& states,
+                                        kr::dl::ConstructorRepositoryFor<Family>& constructors,
+                                        kr::dl::semantics::DenotationRepository& denotations,
+                                        const kr::dl::cnf_grammar::GenerateOptions& options) {
+    kr::dl::cnf_grammar::generate<Family, Kind>(grammar, states, constructors, denotations, options);
+};
+
+static_assert(GeneratesConstructors<kr::BaseFamilyTag, tyr::GroundTag>);
+static_assert(GeneratesConstructors<kr::BaseFamilyTag, tyr::LiftedTag>);
+static_assert(!GeneratesConstructors<kr::ExtFamilyTag, tyr::GroundTag>);
+static_assert(!GeneratesConstructors<kr::ExtFamilyTag, tyr::LiftedTag>);
+static_assert(!GeneratesConstructors<kr::UnsFamilyTag, tyr::GroundTag>);
+static_assert(!GeneratesConstructors<kr::UnsFamilyTag, tyr::LiftedTag>);
 
 static_assert(kr::dl::FamilyNumericalConstructorTag<kr::ExtFamilyTag, kr::dl::AddTag>);
 static_assert(kr::dl::FamilyNumericalConstructorTag<kr::UnsFamilyTag, kr::dl::AddTag>);

@@ -21,22 +21,27 @@ template<runir::kr::FamilyTag Family, typename Categories>
 using PsFeatureTypes = ygg::ConcatTypeListsT<ygg::MapTypeListSecondT<Feature, Family, Categories>, ygg::MapTypeListSecondT<DlFeature, Family, Categories>>;
 
 template<runir::kr::FamilyTag Family>
-using PsConditionTypes = ygg::TypeList<ConditionVariant<Family>,
-                                       ConcreteConditionVariant<Family, runir::kr::DlTag>,
-                                       ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
-                                       ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
-                                       ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>,
-                                       ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>;
+using PsConcreteConditionTypes =
+    ygg::TypeList<ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
+                  ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
+                  ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>,
+                  ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>;
 
 template<runir::kr::FamilyTag Family>
-using PsEffectTypes = ygg::TypeList<EffectVariant<Family>,
-                                    ConcreteEffectVariant<Family, runir::kr::DlTag>,
-                                    ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
-                                    ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
-                                    ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>,
-                                    ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>,
-                                    ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
-                                    ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
+using PsConcreteEffectTypes = ygg::TypeList<ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>,
+                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>,
+                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>,
+                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>,
+                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>,
+                                            ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>;
+
+template<runir::kr::FamilyTag Family>
+using PsConditionTypes =
+    ygg::ConcatTypeListsT<ygg::TypeList<ConditionVariant<Family>, ConcreteConditionVariant<Family, runir::kr::DlTag>>, PsConcreteConditionTypes<Family>>;
+
+template<runir::kr::FamilyTag Family>
+using PsEffectTypes =
+    ygg::ConcatTypeListsT<ygg::TypeList<EffectVariant<Family>, ConcreteEffectVariant<Family, runir::kr::DlTag>>, PsConcreteEffectTypes<Family>>;
 
 }  // namespace detail
 

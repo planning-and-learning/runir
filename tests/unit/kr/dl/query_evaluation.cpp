@@ -8,10 +8,9 @@
 #include <runir/kr/dl/query_data.hpp>
 #include <runir/kr/dl/query_view.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/base/state_evaluation_context.hpp>
+#include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
-#include <runir/kr/dl/semantics/uns/state_evaluation_context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <stdexcept>
 #include <string>

@@ -3,6 +3,7 @@
 
 #include "runir/kr/ps/condition_index.hpp"
 #include "runir/kr/ps/dl/declarations.hpp"
+#include "runir/kr/ps/family_traits.hpp"
 #include "runir/kr/ps/feature_index.hpp"
 
 #include <cista/containers/variant.h>
@@ -17,11 +18,7 @@ namespace ygg
 template<runir::kr::FamilyTag Family>
 struct Data<runir::kr::ps::ConcreteConditionVariant<Family, runir::kr::DlTag>>
 {
-    using Variant = ::cista::offset::variant<
-        Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>,
-        Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>,
-        Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::EqualZero>>,
-        Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::GreaterZero>>>;
+    using Variant = ygg::ApplyTypeListT<::cista::offset::variant, ygg::MapTypeListT<Index, runir::kr::ps::detail::PsConcreteConditionTypes<Family>>>;
 
     Index<runir::kr::ps::ConcreteConditionVariant<Family, runir::kr::DlTag>> index;
     Variant variant;
@@ -39,7 +36,7 @@ struct Data<runir::kr::ps::ConcreteConditionVariant<Family, runir::kr::DlTag>>
     auto identifying_members() const noexcept { return std::tie(variant); }
 };
 
-template<runir::kr::FamilyTag Family, typename FeatureTag, typename ObservationTag>
+template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag>
 struct Data<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>
 {
     Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>> index;

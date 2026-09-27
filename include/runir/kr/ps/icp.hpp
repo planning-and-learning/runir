@@ -7,6 +7,7 @@
 #include "runir/kr/ps/icp/program_executor.hpp"
 #include "runir/kr/ps/icp/repository.hpp"
 #include "runir/kr/ps/icp/successor_expander.hpp"
+#include "runir/kr/ps/icp/syntactic_complexity.hpp"
 #include "runir/kr/ps/icp/views.hpp"
 
 #endif

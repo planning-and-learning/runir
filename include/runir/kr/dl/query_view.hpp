@@ -136,11 +136,9 @@ public:
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category, typename C>
 class View<Index<runir::kr::dl::QueryProjection<Family, Category>>, C>
 {
-    static_assert(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>);
-
 private:
     Index<runir::kr::dl::QueryProjection<Family, Category>> m_handle;
     const C* m_context;

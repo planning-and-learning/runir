@@ -30,7 +30,7 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::FamilyNumer
 template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
 std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C> view);
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category, typename C>
 std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C> view);
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
@@ -130,7 +130,7 @@ std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::Query<Famil
         return 1;
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category, typename C>
 std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C> view)
 {
     return 1 + syntactic_complexity(view.get_arg());

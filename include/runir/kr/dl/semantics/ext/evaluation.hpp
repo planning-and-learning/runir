@@ -103,18 +103,4 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<runir::kr::ExtFamilyTag,
 
 }  // namespace runir::kr::dl::semantics
 
-namespace runir::kr::dl::semantics::ext
-{
-
-template<tyr::TaskKind Kind>
-const auto& get_repository(const runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context) noexcept
-{
-    return runir::kr::dl::semantics::get_repository(context);
-}
-
-using runir::kr::dl::semantics::evaluate;
-using runir::kr::dl::semantics::evaluate_impl;
-
-}  // namespace runir::kr::dl::semantics::ext
-
 #endif

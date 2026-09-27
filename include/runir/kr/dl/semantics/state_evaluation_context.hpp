@@ -7,6 +7,7 @@
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 
+#include <concepts>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>
 #include <utility>
@@ -24,7 +25,7 @@ private:
     EvaluationWorkspace& m_workspace;
     DenotationCaches<Family>& m_caches;
 
-protected:
+public:
     BaseStateEvaluationContext(tyr::planning::StateView<Kind> state,
                                Builder& builder,
                                DenotationRepository& denotation_repository,
@@ -38,7 +39,6 @@ protected:
     {
     }
 
-public:
     const auto& get_state() const noexcept { return m_state; }
     auto& get_builder() noexcept { return m_builder; }
     auto& get_denotation_repository() noexcept { return m_denotation_repository; }
@@ -49,6 +49,14 @@ public:
 
 template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 class StateEvaluationContext;
+
+template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
+    requires(!std::same_as<Family, runir::kr::ExtFamilyTag>)
+class StateEvaluationContext<Family, Kind> : public BaseStateEvaluationContext<Family, Kind>
+{
+public:
+    using BaseStateEvaluationContext<Family, Kind>::BaseStateEvaluationContext;
+};
 
 template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
 const auto& get_repository(const StateEvaluationContext<Family, Kind>& context) noexcept

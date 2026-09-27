@@ -25,9 +25,8 @@ concept IsConcreteConditionVariantView =
 
 template<typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename Context, typename StorageContext>
 concept IsConcreteConditionView =
-    IsTransitionEvaluationContext<Family, LanguageTag, Context>
-    && requires(ygg::View<ygg::Index<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>, StorageContext> condition,
-                Context& context) {
+    IsTransitionEvaluationContext<Family, LanguageTag, Context> && dl::ConditionObservationTag<ObservationTag, FeatureTag>
+    && requires(ygg::View<ygg::Index<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>, StorageContext> condition, Context& context) {
            { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
        };
 

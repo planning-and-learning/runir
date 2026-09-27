@@ -1,5 +1,8 @@
 #include <concepts>
+#include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/repository.hpp>
+#include <runir/kr/ps/condition_compatibility.hpp>
+#include <runir/kr/ps/effect_compatibility.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/uns/repository.hpp>
@@ -31,6 +34,122 @@ static_assert(std::same_as<typename ygg::Data<IcpQuery>::Expression, kr::dl::Que
 // Classifiers expose Boolean features, without acquiring policy conditions or effects.
 static_assert(std::same_as<kr::ps::PsConditionTypes<kr::UnsFamilyTag>, ygg::TypeList<>>);
 static_assert(std::same_as<kr::ps::PsEffectTypes<kr::UnsFamilyTag>, ygg::TypeList<>>);
+
+template<typename T>
+concept StoredType = requires {
+    sizeof(ygg::Index<T>);
+    sizeof(ygg::Data<T>);
+};
+
+template<typename T, typename Repository>
+concept ViewableType = StoredType<T> && requires { sizeof(ygg::View<ygg::Index<T>, Repository>); };
+
+template<typename Repository, typename... Types>
+consteval bool usable_inventory(ygg::TypeList<Types...>)
+{
+    return (ViewableType<Types, Repository> && ...);
+}
+
+static_assert(usable_inventory<kr::ps::base::Repository>(kr::ps::PsCoreTypes<kr::BaseFamilyTag> {}));
+static_assert(usable_inventory<kr::ps::ext::Repository>(kr::ps::PsCoreTypes<kr::ExtFamilyTag> {}));
+static_assert(usable_inventory<kr::ps::icp::Repository>(kr::ps::PsCoreTypes<kr::IcpFamilyTag> {}));
+static_assert(usable_inventory<kr::uns::Repository>(kr::ps::PsCoreTypes<kr::UnsFamilyTag> {}));
+
+// Default repository inventories do not restrict the reusable semantic types.
+using BaseRole = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::dl::RoleTag>;
+using BaseQuery = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::ps::dl::QueryFeature>;
+using UnsNumerical = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::ps::dl::NumericalFeature>;
+using UnsPositive = kr::ps::ConcreteCondition<kr::UnsFamilyTag, kr::DlTag, kr::ps::dl::BooleanFeature, kr::ps::dl::Positive>;
+using BaseCustomTypes = ygg::ConcatTypeListsT<
+    kr::ps::PsCoreTypes<kr::BaseFamilyTag>,
+    ygg::TypeList<BaseRole, BaseQuery, kr::ps::Feature<kr::BaseFamilyTag, kr::dl::RoleTag>, kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::QueryFeature>>>;
+using UnsCustomTypes = ygg::ConcatTypeListsT<kr::ps::PsCoreTypes<kr::UnsFamilyTag>,
+                                             ygg::TypeList<UnsNumerical, kr::ps::Feature<kr::UnsFamilyTag, kr::ps::dl::NumericalFeature>>,
+                                             kr::ps::detail::PsConditionTypes<kr::UnsFamilyTag>,
+                                             kr::ps::detail::PsEffectTypes<kr::UnsFamilyTag>>;
+using BaseCustomRepository = kr::ps::BasicRepository<kr::BaseFamilyTag, BaseCustomTypes>;
+using UnsCustomRepository = kr::ps::BasicRepository<kr::UnsFamilyTag, UnsCustomTypes>;
+static_assert(usable_inventory<BaseCustomRepository>(BaseCustomTypes {}));
+static_assert(usable_inventory<UnsCustomRepository>(UnsCustomTypes {}));
+static_assert(usable_inventory<kr::ps::ext::Repository>(kr::ps::PsCoreTypes<kr::BaseFamilyTag> {}));
+
+using BaseFeatureInExt = ygg::View<ygg::Index<kr::ps::Feature<kr::BaseFamilyTag, kr::ps::dl::BooleanFeature>>, kr::ps::ext::Repository>;
+using BaseConditionInExt = ygg::View<ygg::Index<kr::ps::ConditionVariant<kr::BaseFamilyTag>>, kr::ps::ext::Repository>;
+static_assert(requires(BaseFeatureInExt feature, BaseConditionInExt condition) {
+    feature.get_symbol();
+    feature.get_variant();
+    condition.get_variant();
+});
+
+// Storage contexts remain structural; no exact repository type is required.
+struct BaseFeatureStorage
+{
+    const BaseCustomRepository& repository;
+    const auto& get_dl_repository() const { return repository.get_dl_repository(); }
+    const auto& get_index() const { return repository.get_index(); }
+    friend const BaseCustomRepository& get_repository(const BaseFeatureStorage& storage) { return storage.repository; }
+};
+
+template<typename Type, typename Repository, typename Context>
+concept CanEvaluate = StoredType<Type> && requires(ygg::View<ygg::Index<Type>, Repository>& view, Context& context) { kr::ps::evaluate(view, context); };
+
+using BaseStateContext = kr::dl::semantics::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>;
+using UnsStateContext = kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>;
+using ExtStateContext = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
+using BaseBoolean = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, kr::ps::dl::BooleanFeature>;
+using UnsBoolean = kr::ps::ConcreteFeature<kr::UnsFamilyTag, kr::DlTag, kr::ps::dl::BooleanFeature>;
+static_assert(CanEvaluate<BaseBoolean, kr::ps::base::Repository, BaseStateContext>);
+static_assert(CanEvaluate<UnsBoolean, kr::uns::Repository, UnsStateContext>);
+static_assert(CanEvaluate<BaseRole, BaseCustomRepository, BaseStateContext>);
+static_assert(CanEvaluate<BaseQuery, BaseCustomRepository, BaseStateContext>);
+static_assert(CanEvaluate<BaseRole, BaseFeatureStorage, BaseStateContext>);
+static_assert(CanEvaluate<kr::ps::Feature<kr::BaseFamilyTag, kr::dl::RoleTag>, BaseFeatureStorage, BaseStateContext>);
+static_assert(CanEvaluate<UnsNumerical, UnsCustomRepository, UnsStateContext>);
+static_assert(CanEvaluate<IcpQuery, kr::ps::icp::Repository, ExtStateContext>);
+static_assert(!CanEvaluate<BaseBoolean, kr::ps::base::Repository, UnsStateContext>);
+static_assert(!CanEvaluate<UnsBoolean, kr::uns::Repository, BaseStateContext>);
+
+// Invalid semantic categories and observation pairs still fail substitution.
+using InvalidFeature = kr::ps::ConcreteFeature<kr::BaseFamilyTag, kr::DlTag, int>;
+using NumericalPositive = kr::ps::ConcreteCondition<kr::BaseFamilyTag, kr::DlTag, kr::ps::dl::NumericalFeature, kr::ps::dl::Positive>;
+using BooleanDecreases = kr::ps::ConcreteEffect<kr::ExtFamilyTag, kr::DlTag, kr::ps::dl::BooleanFeature, kr::ps::dl::Decreases>;
+static_assert(!StoredType<InvalidFeature>);
+static_assert(!StoredType<kr::ps::Feature<kr::BaseFamilyTag, int>>);
+static_assert(!StoredType<kr::ps::ConcreteFeature<kr::ExtFamilyTag, void, kr::ps::dl::BooleanFeature>>);
+static_assert(!StoredType<NumericalPositive>);
+static_assert(!StoredType<BooleanDecreases>);
+static_assert(!CanEvaluate<InvalidFeature, BaseCustomRepository, BaseStateContext>);
+
+template<typename Family, typename Repository>
+consteval bool observation_contracts()
+{
+    using Context = kr::ps::dl::TransitionEvaluationContext<Family, tyr::GroundTag>;
+    using Boolean = kr::ps::dl::BooleanFeature;
+    using Numerical = kr::ps::dl::NumericalFeature;
+    static_assert(kr::ps::IsConcreteConditionView<Family, kr::DlTag, Boolean, kr::ps::dl::Positive, Context, Repository>);
+    static_assert(kr::ps::IsConcreteEffectView<Family, kr::DlTag, Numerical, kr::ps::dl::Decreases, Context, Repository>);
+    static_assert(!kr::ps::IsConcreteConditionView<Family, kr::DlTag, Numerical, kr::ps::dl::Positive, Context, Repository>);
+    static_assert(!kr::ps::IsConcreteEffectView<Family, kr::DlTag, Boolean, kr::ps::dl::Decreases, Context, Repository>);
+    static_assert(!kr::ps::IsConcreteConditionView<Family, void, Boolean, kr::ps::dl::Positive, Context, Repository>);
+
+    // The variant alternatives and repository inventory share one ordered list.
+    using Conditions = ygg::ApplyTypeListT<::cista::offset::variant, ygg::MapTypeListT<ygg::Index, kr::ps::detail::PsConcreteConditionTypes<Family>>>;
+    using Effects = ygg::ApplyTypeListT<::cista::offset::variant, ygg::MapTypeListT<ygg::Index, kr::ps::detail::PsConcreteEffectTypes<Family>>>;
+    static_assert(std::same_as<typename ygg::Data<kr::ps::ConcreteConditionVariant<Family, kr::DlTag>>::Variant, Conditions>);
+    static_assert(std::same_as<typename ygg::Data<kr::ps::ConcreteEffectVariant<Family, kr::DlTag>>::Variant, Effects>);
+    return true;
+}
+
+static_assert(observation_contracts<kr::BaseFamilyTag, kr::ps::base::Repository>());
+static_assert(observation_contracts<kr::ExtFamilyTag, kr::ps::ext::Repository>());
+static_assert(observation_contracts<kr::IcpFamilyTag, kr::ps::icp::Repository>());
+static_assert(observation_contracts<kr::UnsFamilyTag, UnsCustomRepository>());
+
+// Compile the implementation body as well as checking its callable signature.
+[[maybe_unused]] bool check_custom_uns_condition(ygg::View<ygg::Index<UnsPositive>, UnsCustomRepository> condition, UnsStateContext& context)
+{
+    return kr::ps::is_compatible_with(condition, context);
+}
 
 }  // namespace
 }  // namespace runir::tests

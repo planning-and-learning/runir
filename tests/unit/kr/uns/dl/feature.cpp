@@ -1,5 +1,5 @@
 #include <concepts>
-#include <runir/kr/dl/semantics/uns/state_evaluation_context.hpp>
+#include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
 #include <runir/kr/ps/dl/feature_data.hpp>
 #include <runir/kr/ps/dl/feature_view.hpp>

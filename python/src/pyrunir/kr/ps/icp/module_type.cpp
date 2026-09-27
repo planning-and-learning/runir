@@ -5,6 +5,7 @@
 #include <runir/kr/ps/icp/module_data.hpp>
 #include <runir/kr/ps/icp/module_view.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
+#include <runir/kr/ps/icp/syntactic_complexity.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -49,7 +50,8 @@ void bind_module(nb::module_& m, RepositoryBinding& repository)
                     .def("get_entry_memory_state", &View::get_entry_memory_state, nb::keep_alive<0, 1>())
                     .def("get_memory_states", &View::get_memory_states)
                     .def("get_memory_transitions", &View::get_memory_transitions)
-                    .def("get_reset_pairs", &View::get_reset_pairs);
+                    .def("get_reset_pairs", &View::get_reset_pairs)
+                    .def("syntactic_complexity", [](View value) { return runir::kr::ps::icp::syntactic_complexity(value); });
     ygg::add_print(view);
     ygg::add_comparison(view);
     ygg::add_hash(view);

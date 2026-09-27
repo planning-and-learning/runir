@@ -13,7 +13,7 @@
 namespace ygg
 {
 
-template<runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::ConceptOrRoleTag Category>
 struct Data<runir::kr::dl::Register<Category>>
 {
     Index<runir::kr::dl::Register<Category>> index;

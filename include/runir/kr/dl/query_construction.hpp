@@ -96,10 +96,9 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
     }
 }
 
-template<FamilyTag Family, CategoryTag Category>
+template<FamilyTag Family, ConceptOrRoleTag Category>
 void prepare(ygg::Data<QueryProjection<Family, Category>>& data, const ConstructorRepositoryFor<Family>& repository)
 {
-    static_assert(std::same_as<Category, ConceptTag> || std::same_as<Category, RoleTag>);
     const auto columns = query_columns(data.columns);
     require_query_arity(columns.size(), std::same_as<Category, ConceptTag> ? 1 : 2);
     const auto arg = ygg::make_view(data.arg, repository).get_schema();

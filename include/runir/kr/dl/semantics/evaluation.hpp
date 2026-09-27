@@ -35,7 +35,7 @@ namespace runir::kr::dl::semantics
 template<FamilyTag Family, tyr::TaskKind Kind, typename C>
 auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, StateEvaluationContext<Family, Kind>& context) -> ygg::database::RelationView<>;
 
-template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind, typename C>
+template<FamilyTag Family, ConceptOrRoleTag Category, tyr::TaskKind Kind, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor,
                    StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>;
 

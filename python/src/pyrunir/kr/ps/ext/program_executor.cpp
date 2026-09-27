@@ -13,6 +13,7 @@
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
+#include <runir/kr/ps/dl/declarations.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
 #include <runir/kr/ps/ext/action_rule_contract_error.hpp>
 #include <runir/kr/ps/ext/evaluation_environment.hpp>
@@ -36,7 +37,7 @@ using runir::graphs::bind_readable_graph_methods;
 namespace
 {
 
-template<tyr::TaskKind Kind, typename FeatureTag>
+template<tyr::TaskKind Kind, runir::kr::ps::dl::FeatureTag FeatureTag>
 void bind_feature_evaluation(nb::module_& m)
 {
     using FeatureView = ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, Repository>;

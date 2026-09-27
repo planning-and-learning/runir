@@ -4,7 +4,7 @@
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/dl/semantics/base/state_evaluation_context.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
@@ -913,6 +913,7 @@ public:
 
 }  // namespace
 template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
+    requires std::same_as<Family, runir::kr::BaseFamilyTag>
 GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
                                     const std::vector<tyr::planning::PackedStateView<Kind>>& states,
                                     runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,

@@ -3,8 +3,8 @@
 
 #include "runir/kr/ps/declarations.hpp"
 
-#include <yggdrasil/ids/index_mixins.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/ids/index_mixins.hpp>
 
 namespace ygg
 {

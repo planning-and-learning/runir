@@ -75,6 +75,7 @@ struct GenerateResultsFor
 };
 
 template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
+    requires std::same_as<Family, runir::kr::BaseFamilyTag>
 GenerateResultsFor<Family> generate(FamilyGrammarView<Family> grammar,
                                     const std::vector<tyr::planning::PackedStateView<Kind>>& states,
                                     runir::kr::dl::ConstructorRepositoryFor<Family>& output_repository,

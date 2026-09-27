@@ -1,6 +1,10 @@
 #ifndef RUNIR_KR_PS_DL_DECLARATIONS_HPP_
 #define RUNIR_KR_PS_DL_DECLARATIONS_HPP_
 
+#include "runir/kr/dl/declarations.hpp"
+
+#include <concepts>
+
 namespace runir::kr::ps::dl
 {
 
@@ -58,6 +62,22 @@ struct Unconstrained
 {
     static constexpr auto keyword = "unconstrained";
 };
+
+// These are semantic categories, independent of a default policy repository's inventory.
+template<typename T>
+concept FeatureTag = std::same_as<T, runir::kr::dl::ConceptTag> || std::same_as<T, runir::kr::dl::RoleTag> || std::same_as<T, BooleanFeature>
+                     || std::same_as<T, NumericalFeature> || std::same_as<T, QueryFeature>;
+
+template<typename Observation, typename Feature>
+concept ConditionObservationTag =
+    (std::same_as<Feature, BooleanFeature> && (std::same_as<Observation, Positive> || std::same_as<Observation, Negative>) )
+    || (std::same_as<Feature, NumericalFeature> && (std::same_as<Observation, EqualZero> || std::same_as<Observation, GreaterZero>) );
+
+template<typename Observation, typename Feature>
+concept EffectObservationTag = (std::same_as<Feature, BooleanFeature>
+                                && (std::same_as<Observation, Positive> || std::same_as<Observation, Negative> || std::same_as<Observation, Unchanged>) )
+                               || (std::same_as<Feature, NumericalFeature>
+                                   && (std::same_as<Observation, Increases> || std::same_as<Observation, Decreases> || std::same_as<Observation, Unchanged>) );
 
 }  // namespace runir::kr::ps::dl
 

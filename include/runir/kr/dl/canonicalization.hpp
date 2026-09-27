@@ -14,11 +14,11 @@
 namespace runir::kr::dl
 {
 
-template<FamilyTag Family, CategoryTag Category>
+template<FamilyTag Family, ConceptOrRoleTag Category>
 void canonicalize(ygg::Data<QueryProjection<Family, Category>>&) noexcept
 {
 }
-template<FamilyTag Family, CategoryTag Category>
+template<FamilyTag Family, ConceptOrRoleTag Category>
 bool is_canonical(const ygg::Data<QueryProjection<Family, Category>>&) noexcept
 {
     return true;
@@ -87,7 +87,7 @@ bool is_canonical(const ygg::Data<Argument<Category>>&) noexcept
     return true;
 }
 
-template<CategoryTag Category>
+template<ConceptOrRoleTag Category>
 bool is_canonical(const ygg::Data<Register<Category>>&) noexcept
 {
     return true;
@@ -133,7 +133,7 @@ void canonicalize(ygg::Data<Argument<Category>>&) noexcept
     // Trivially canonical
 }
 
-template<CategoryTag Category>
+template<ConceptOrRoleTag Category>
 void canonicalize(ygg::Data<Register<Category>>&) noexcept
 {
     // Trivially canonical

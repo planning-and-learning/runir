@@ -3,6 +3,7 @@
 
 #include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/effect_index.hpp"
+#include "runir/kr/ps/family_traits.hpp"
 #include "runir/kr/ps/feature_index.hpp"
 
 #include <cista/containers/variant.h>
@@ -17,13 +18,7 @@ namespace ygg
 template<runir::kr::FamilyTag Family>
 struct Data<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>>
 {
-    using Variant = ::cista::offset::variant<
-        Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Positive>>,
-        Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Negative>>,
-        Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::BooleanFeature, runir::kr::ps::dl::Unchanged>>,
-        Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Increases>>,
-        Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Decreases>>,
-        Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, runir::kr::ps::dl::NumericalFeature, runir::kr::ps::dl::Unchanged>>>;
+    using Variant = ygg::ApplyTypeListT<::cista::offset::variant, ygg::MapTypeListT<Index, runir::kr::ps::detail::PsConcreteEffectTypes<Family>>>;
 
     Index<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>> index;
     Variant variant;
@@ -41,7 +36,7 @@ struct Data<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>>
     auto identifying_members() const noexcept { return std::tie(variant); }
 };
 
-template<runir::kr::FamilyTag Family, typename FeatureTag, typename ObservationTag>
+template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag>
 struct Data<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>
 {
     Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>> index;

@@ -19,12 +19,12 @@
 namespace runir::kr::ps::dl
 {
 
-template<typename FeatureTag>
+template<runir::kr::ps::dl::FeatureTag FeatureTag>
 using FeatureCategory = std::conditional_t<std::same_as<FeatureTag, BooleanFeature>,
                                            runir::kr::dl::BooleanTag,
                                            std::conditional_t<std::same_as<FeatureTag, NumericalFeature>, runir::kr::dl::NumericalTag, FeatureTag>>;
 
-template<runir::kr::FamilyTag Family, typename FeatureTag>
+template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag>
 struct FeatureExpression
 {
     using Type = runir::kr::dl::Constructor<typename runir::kr::ps::PsFamilyTraits<Family>::DlFamily, FeatureCategory<FeatureTag>>;
@@ -41,7 +41,7 @@ struct FeatureExpression<Family, QueryFeature>
 namespace ygg
 {
 
-template<runir::kr::FamilyTag Family, typename FeatureTag>
+template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag>
 struct Data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>
 {
     using Expression = typename runir::kr::ps::dl::FeatureExpression<Family, FeatureTag>::Type;

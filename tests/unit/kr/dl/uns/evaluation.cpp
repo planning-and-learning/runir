@@ -8,7 +8,7 @@
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
-#include <runir/kr/dl/semantics/uns/state_evaluation_context.hpp>
+#include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <string>
 
 namespace runir::tests

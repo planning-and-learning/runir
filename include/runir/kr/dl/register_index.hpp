@@ -9,7 +9,7 @@
 namespace ygg
 {
 
-template<runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::ConceptOrRoleTag Category>
 struct Index<runir::kr::dl::Register<Category>> : IndexMixin<Index<runir::kr::dl::Register<Category>>>
 {
     using Base = IndexMixin<Index<runir::kr::dl::Register<Category>>>;

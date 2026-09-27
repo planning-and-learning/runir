@@ -46,6 +46,9 @@ struct NumericalTag
 template<typename T>
 concept CategoryTag = std::same_as<T, ConceptTag> || std::same_as<T, RoleTag> || std::same_as<T, BooleanTag> || std::same_as<T, NumericalTag>;
 
+template<typename T>
+concept ConceptOrRoleTag = std::same_as<T, ConceptTag> || std::same_as<T, RoleTag>;
+
 using CategoryTags = ygg::TypeList<ConceptTag, RoleTag, BooleanTag, NumericalTag>;
 
 /**
@@ -318,7 +321,7 @@ struct Argument
 {
 };
 
-template<CategoryTag Category>
+template<ConceptOrRoleTag Category>
 struct Register
 {
 };
@@ -343,7 +346,7 @@ struct ArgumentTag
     }();
 };
 
-template<CategoryTag Category>
+template<ConceptOrRoleTag Category>
 struct RegisterIdentifier : ygg::IndexMixin<RegisterIdentifier<Category>>
 {
     using Base = ygg::IndexMixin<RegisterIdentifier<Category>>;
@@ -626,7 +629,7 @@ struct QueryColumn;
 template<FamilyTag Family, typename Tag = void>
 struct Query;
 
-template<FamilyTag Family, CategoryTag Category>
+template<FamilyTag Family, ConceptOrRoleTag Category>
 struct QueryProjection;
 
 struct ProjectTag
@@ -851,7 +854,7 @@ using ExtConstructorRepositoryFactory = ConstructorRepositoryFactoryFor<runir::k
 template<CategoryTag Category>
 using ArgumentView = ygg::View<ygg::Index<Argument<Category>>, ExtConstructorRepository>;
 
-template<CategoryTag Category>
+template<ConceptOrRoleTag Category>
 using RegisterView = ygg::View<ygg::Index<Register<Category>>, ExtConstructorRepository>;
 
 using UnsConstructorRepository = ConstructorRepositoryFor<runir::kr::UnsFamilyTag>;

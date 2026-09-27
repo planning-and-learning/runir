@@ -9,7 +9,7 @@
 namespace ygg::serialization
 {
 
-template<typename Archive, runir::kr::dl::CategoryTag Category, typename C>
+template<typename Archive, runir::kr::dl::ConceptOrRoleTag Category, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Register<Category>>, C>>)
 {
     ar.field("name", [](const auto& value) -> decltype(auto) { return (value.get_name()); });

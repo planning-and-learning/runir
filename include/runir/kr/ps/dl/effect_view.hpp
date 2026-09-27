@@ -12,7 +12,7 @@
 namespace ygg
 {
 
-template<runir::kr::FamilyTag Family, typename FeatureTag, typename ObservationTag, typename C>
+template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag, typename C>
 class View<Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C>
 {
 private:

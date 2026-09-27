@@ -290,11 +290,9 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectValueTag>>
     auto identifying_members() const noexcept { return std::tie(arg, column, object); }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category>
 struct Data<runir::kr::dl::QueryProjection<Family, Category>>
 {
-    static_assert(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>);
-
     Index<runir::kr::dl::QueryProjection<Family, Category>> index;
     Index<runir::kr::dl::Query<Family>> arg {};
     IndexList<runir::kr::dl::QueryColumn> columns {};

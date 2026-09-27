@@ -103,7 +103,7 @@ std::string query(ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C> vi
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL query constructor tag");
 }
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category, typename C>
 std::string query_projection(ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C> view)
 {
     auto columns = view.get_columns();
@@ -334,7 +334,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::Query<Family, Tag>>, C
     auto format(View view, format_context& ctx) const { return fmt::formatter<std::string_view>::format(runir::kr::dl::semantics::query(view), ctx); }
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C>> : fmt::formatter<std::string_view>
 {
     using View = ygg::View<ygg::Index<runir::kr::dl::QueryProjection<Family, Category>>, C>;
@@ -353,7 +353,7 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::Argument<Category>>, C
     }
 };
 
-template<runir::kr::dl::CategoryTag Category, typename C>
+template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
 struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::Register<Category>>, C>> : fmt::formatter<std::string_view>
 {
     auto format(const ygg::View<ygg::Index<runir::kr::dl::Register<Category>>, C>& value, format_context& ctx) const

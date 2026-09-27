@@ -9,7 +9,7 @@
 namespace ygg
 {
 
-template<runir::kr::dl::CategoryTag Category, typename C>
+template<runir::kr::dl::ConceptOrRoleTag Category, typename C>
 class View<Index<runir::kr::dl::Register<Category>>, C>
 {
 private:

@@ -1,4 +1,5 @@
 #include <concepts>
+#include <gtest/gtest.h>
 #include <runir/kr/dl/grammar/constructor_repository.hpp>
 #include <runir/kr/dl/grammar/numerical_data.hpp>
 #include <runir/kr/dl/grammar/numerical_index.hpp>
@@ -62,11 +63,16 @@ consteval bool numerical_data_view()
             view.get_identifier();
         };
     else if constexpr (std::same_as<Tag, kr::dl::NumericalConstantTag>)
-        return requires(Data& data) { data.identifier; };
+        return requires(Data& data, const View& view) {
+            data.identifier;
+            view.get_value();
+        };
     else if constexpr (kr::dl::TypeListContains<Tag, kr::dl::NumericalBinaryConstructorTags>::value)
-        return requires(Data& data) {
+        return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;
+            view.get_lhs();
+            view.get_rhs();
         };
     else
         return false;
@@ -83,5 +89,30 @@ static_assert(numerical_data_views<kr::ExtFamilyTag>(kr::dl::FamilyNumericalCons
 static_assert(numerical_data_views<kr::UnsFamilyTag>(kr::dl::FamilyNumericalConstructorTags<kr::UnsFamilyTag> {}));
 
 }  // namespace
+
+TEST(RunirKrDlGrammarNumerical, ExposesArithmeticOperandsAndConstants)
+{
+    namespace dl = kr::dl;
+    namespace grammar = dl::grammar;
+    using Family = kr::ExtFamilyTag;
+    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto repository = grammar::ConstructorRepositoryFactoryFor<Family>().create(planning_repository);
+
+    auto lhs_data = ygg::Data<grammar::NonTerminal<Family, dl::NumericalTag>>(std::string("left"));
+    auto rhs_data = ygg::Data<grammar::NonTerminal<Family, dl::NumericalTag>>(std::string("right"));
+    const auto lhs = repository->get_or_create(lhs_data).first;
+    const auto rhs = repository->get_or_create(rhs_data).first;
+    auto lhs_choice_data = ygg::Data<grammar::ConstructorOrNonTerminal<Family, dl::NumericalTag>>(lhs.get_index());
+    auto rhs_choice_data = ygg::Data<grammar::ConstructorOrNonTerminal<Family, dl::NumericalTag>>(rhs.get_index());
+    const auto lhs_choice = repository->get_or_create(lhs_choice_data).first;
+    const auto rhs_choice = repository->get_or_create(rhs_choice_data).first;
+    auto difference_data = ygg::Data<grammar::Numerical<Family, dl::SubTag>>(lhs_choice.get_index(), rhs_choice.get_index());
+    const auto difference = repository->get_or_create(difference_data).first;
+
+    EXPECT_EQ(difference.get_lhs(), lhs_choice);
+    EXPECT_EQ(difference.get_rhs(), rhs_choice);
+    auto constant_data = ygg::Data<grammar::Numerical<Family, dl::NumericalConstantTag>>(42);
+    EXPECT_EQ(repository->get_or_create(constant_data).first.get_value(), 42);
+}
 
 }

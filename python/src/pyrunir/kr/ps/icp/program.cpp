@@ -5,6 +5,7 @@
 #include <runir/kr/ps/icp/program_data.hpp>
 #include <runir/kr/ps/icp/program_view.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
+#include <runir/kr/ps/icp/syntactic_complexity.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -24,7 +25,8 @@ void bind_program(nb::module_& m, RepositoryBinding& repository)
     auto view = nb::class_<View>(m, "Program")
                     .def("get_index", &View::get_index)
                     .def("get_entry_module", &View::get_entry_module, nb::keep_alive<0, 1>())
-                    .def("get_module", &View::get_module, nb::keep_alive<0, 1>());
+                    .def("get_module", &View::get_module, nb::keep_alive<0, 1>())
+                    .def("syntactic_complexity", [](View value) { return runir::kr::ps::icp::syntactic_complexity(value); });
     ygg::add_print(view);
     ygg::add_comparison(view);
     ygg::add_hash(view);

@@ -62,20 +62,23 @@ consteval bool boolean_data_view()
             data.identifier;
             view.get_identifier();
         };
-    else if constexpr (std::same_as<Tag, kr::dl::NonemptyTag>)
+    else if constexpr (std::same_as<Tag, kr::dl::NonemptyTag> || std::same_as<Tag, kr::dl::NotTag>)
         return requires(Data& data, const View& view) {
             data.arg;
             view.get_arg();
         };
     else if constexpr (kr::dl::TypeListContains<Tag, kr::dl::UnsComparisonConstructorTags>::value || kr::dl::TypeListContains<Tag, LogicalBinaryTags>::value)
-        return requires(Data& data) {
+        return requires(Data& data, const View& view) {
             data.lhs;
             data.rhs;
+            view.get_lhs();
+            view.get_rhs();
         };
     else if constexpr (std::same_as<Tag, kr::dl::BooleanConstantTag>)
-        return requires(Data& data) { data.identifier; };
-    else if constexpr (std::same_as<Tag, kr::dl::NotTag>)
-        return requires(Data& data) { data.arg; };
+        return requires(Data& data, const View& view) {
+            data.identifier;
+            view.get_value();
+        };
     else
         return false;
 }

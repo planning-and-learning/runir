@@ -48,7 +48,7 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::Q
     }
 }
 
-template<typename Archive, runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
+template<typename Archive, runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::QueryProjection<Family, Category>>, C>>)
 {
     ar.field("columns", [](const auto& value) -> decltype(auto) { return (value.get_columns()); });

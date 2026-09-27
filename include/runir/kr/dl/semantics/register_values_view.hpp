@@ -9,7 +9,6 @@
 #include <yggdrasil/containers/optional.hpp>
 #include <yggdrasil/containers/pair.hpp>
 #include <yggdrasil/containers/vector.hpp>
-#include <yggdrasil/core/dependent_false.hpp>
 
 namespace ygg
 {
@@ -32,18 +31,16 @@ public:
     auto get_concept_values() const noexcept { return make_view(get_data().concept_values, get_context().get_formalism_repository()); }
     auto get_role_values() const noexcept { return make_view(get_data().role_values, get_context().get_formalism_repository()); }
 
-    template<runir::kr::dl::CategoryTag Category>
+    template<runir::kr::dl::ConceptOrRoleTag Category>
     auto get() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
             return get_concept_values();
-        else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return get_role_values();
         else
-            static_assert(dependent_false<Category>::value, "unhandled register category");
+            return get_role_values();
     }
 
-    template<runir::kr::dl::CategoryTag Category>
+    template<runir::kr::dl::ConceptOrRoleTag Category>
     auto at(runir::kr::dl::RegisterIdentifier<Category> reg) const
     {
         return get<Category>().at(static_cast<size_t>(ygg::uint_t(reg)));

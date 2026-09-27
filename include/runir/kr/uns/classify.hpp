@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_UNS_CLASSIFY_HPP_
 #define RUNIR_KR_UNS_CLASSIFY_HPP_
 
-#include "runir/kr/dl/semantics/uns/state_evaluation_context.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/uns/classifier_view.hpp"
 

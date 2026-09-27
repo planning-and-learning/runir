@@ -1,9 +1,8 @@
 #ifndef RUNIR_KR_PS_DL_TRANSITION_EVALUATION_CONTEXT_HPP_
 #define RUNIR_KR_PS_DL_TRANSITION_EVALUATION_CONTEXT_HPP_
 
-#include "runir/kr/dl/semantics/base/state_evaluation_context.hpp"
 #include "runir/kr/dl/semantics/ext/state_evaluation_context.hpp"
-#include "runir/kr/dl/semantics/uns/state_evaluation_context.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/family_traits.hpp"
 
 #include <utility>

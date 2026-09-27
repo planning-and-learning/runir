@@ -48,9 +48,27 @@ public:
     }
 
     auto get_arg() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::NonemptyTag>
+        requires(std::same_as<Tag, runir::kr::dl::NonemptyTag> || std::same_as<Tag, runir::kr::dl::NotTag>)
     {
         return make_view(get_data().arg, *m_context);
+    }
+
+    auto get_lhs() const noexcept
+        requires(runir::kr::dl::ComparisonTag<Tag> || runir::kr::dl::LogicalBinaryTag<Tag>)
+    {
+        return make_view(get_data().lhs, *m_context);
+    }
+
+    auto get_rhs() const noexcept
+        requires(runir::kr::dl::ComparisonTag<Tag> || runir::kr::dl::LogicalBinaryTag<Tag>)
+    {
+        return make_view(get_data().rhs, *m_context);
+    }
+
+    auto get_value() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::BooleanConstantTag>
+    {
+        return get_data().identifier;
     }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }

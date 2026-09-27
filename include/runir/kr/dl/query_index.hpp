@@ -22,7 +22,7 @@ struct Index<runir::kr::dl::Query<Family, Tag>> : IndexMixin<Index<runir::kr::dl
     using Base::Base;
 };
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
+template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ConceptOrRoleTag Category>
 struct Index<runir::kr::dl::QueryProjection<Family, Category>> : IndexMixin<Index<runir::kr::dl::QueryProjection<Family, Category>>>
 {
     using Base = IndexMixin<Index<runir::kr::dl::QueryProjection<Family, Category>>>;

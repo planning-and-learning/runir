@@ -1,7 +1,7 @@
 #include "bindings.hpp"
 
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/uns/state_evaluation_context.hpp>
+#include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/uns/classifier_index.hpp>
 #include <runir/kr/uns/classifier_view.hpp>
 #include <runir/kr/uns/classify.hpp>

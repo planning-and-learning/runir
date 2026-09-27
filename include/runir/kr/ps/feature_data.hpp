@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_FEATURE_DATA_HPP_
 #define RUNIR_KR_PS_FEATURE_DATA_HPP_
 
+#include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/feature_index.hpp"
 
 #include <cista/containers/variant.h>
@@ -12,7 +13,7 @@
 namespace ygg
 {
 
-template<runir::kr::FamilyTag Family, typename FeatureTag>
+template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag>
 struct Data<runir::kr::ps::Feature<Family, FeatureTag>>
 {
     using Variant = ::cista::offset::variant<Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>>;

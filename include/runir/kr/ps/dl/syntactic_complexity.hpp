@@ -10,7 +10,7 @@
 namespace runir::kr::ps::dl
 {
 
-template<runir::kr::FamilyTag Family, typename FeatureTag, typename C>
+template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
 std::size_t syntactic_complexity(ygg::View<ygg::Index<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>>, C> view)
 {
     return runir::kr::dl::semantics::syntactic_complexity(view.get_feature());

@@ -41,7 +41,7 @@ public:
     }
 
     auto get_lhs() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::DistanceTag>
+        requires(std::same_as<Tag, runir::kr::dl::DistanceTag> || runir::kr::dl::NumericalBinaryTag<Tag>)
     {
         return make_view(get_data().lhs, *m_context);
     }
@@ -53,9 +53,15 @@ public:
     }
 
     auto get_rhs() const noexcept
-        requires std::same_as<Tag, runir::kr::dl::DistanceTag>
+        requires(std::same_as<Tag, runir::kr::dl::DistanceTag> || runir::kr::dl::NumericalBinaryTag<Tag>)
     {
         return make_view(get_data().rhs, *m_context);
+    }
+
+    auto get_value() const noexcept
+        requires std::same_as<Tag, runir::kr::dl::NumericalConstantTag>
+    {
+        return get_data().identifier;
     }
 
     auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
