@@ -410,10 +410,13 @@ def test_terminating_program_executes_and_proves_from_python() -> None:
     assert len(proof.cycle) == 0
 
 
-def test_packed_solution_plan_owns_states_after_result_release() -> None:
+@pytest.mark.parametrize("mode", [ext.StateMemorization.NONE, ext.StateMemorization.CHOICE, ext.StateMemorization.ALL])
+def test_packed_solution_plan_owns_states_after_result_release(mode) -> None:
     def solve():
         task_context, _planning_domain, program = _terminating_context_and_program()
-        result = ext.find_ground_solution(task_context, program, ext.GroundProgramSearchOptions())
+        options = ext.GroundProgramSearchOptions()
+        options.state_memorization = mode
+        result = ext.find_ground_solution(task_context, program, options)
         assert result.is_successful()
         plan = result.plan
         assert isinstance(plan, GroundPackedPlan)
@@ -594,7 +597,8 @@ def test_ground_execution_views_own_their_task_and_program_contexts() -> None:
     gc.collect()
 
 
-def test_lifted_execution_views_and_proof_labels_survive_owner_destruction() -> None:
+@pytest.mark.parametrize("mode", [ext.StateMemorization.NONE, ext.StateMemorization.CHOICE, ext.StateMemorization.ALL])
+def test_lifted_execution_views_and_proof_labels_survive_owner_destruction(mode) -> None:
     planning_task, planning_domain = _planning_task_and_domain()
     execution_context = ExecutionContext(1)
     lifted_task = Task(planning_task)
@@ -612,6 +616,7 @@ def test_lifted_execution_views_and_proof_labels_survive_owner_destruction() -> 
 
     options = ext.LiftedProgramSearchOptions()
     options.universal = True
+    options.state_memorization = mode
     result = ext.find_lifted_solution(task_context, program, options)
     vertex = next(iter(result.graph.get_vertex_indices()))
     label = result.graph.get_vertex_property(vertex)

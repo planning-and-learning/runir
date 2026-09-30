@@ -52,32 +52,30 @@ concept CallArgumentsContract =
        };
 
 template<typename Kind>
-concept ModuleStateContract =
-    tyr::TaskKind<Kind> && IndexedDataView<kr::ps::ext::ModuleState<Kind>, Kind>
-    && std::same_as<View<kr::ps::ext::ModuleState<Kind>, Kind>, kr::ps::ext::ModuleStateView<Kind>>
-    && requires(ygg::Data<kr::ps::ext::ModuleState<Kind>>& data, const kr::ps::ext::ModuleStateView<Kind>& view) {
-           data.index;
-           data.state;
-           data.module;
-           data.memory_state;
-           data.registers;
-           data.arguments;
-           data.clear();
-           view.get_index();
-           view.get_state();
-           view.get_module();
-           view.get_memory_state();
-           view.get_registers();
-           view.get_arguments();
-       };
+concept ModuleStateContract = tyr::TaskKind<Kind> && IndexedDataView<kr::ps::ext::ModuleState<Kind>, Kind>
+                              && std::same_as<View<kr::ps::ext::ModuleState<Kind>, Kind>, kr::ps::ext::ModuleStateView<Kind>>
+                              && requires(ygg::Data<kr::ps::ext::ModuleState<Kind>>& data, const kr::ps::ext::ModuleStateView<Kind>& view) {
+                                     data.index;
+                                     data.state;
+                                     data.module_;
+                                     data.memory_state;
+                                     data.registers;
+                                     data.arguments;
+                                     data.clear();
+                                     view.get_index();
+                                     view.get_state();
+                                     view.get_module();
+                                     view.get_memory_state();
+                                     view.get_registers();
+                                     view.get_arguments();
+                                 };
 
 template<typename Kind>
 concept CallStackContract =
-    tyr::TaskKind<Kind> && IndexedDataView<kr::ps::ext::CallStack, Kind>
-    && std::same_as<View<kr::ps::ext::CallStack, Kind>, kr::ps::ext::CallStackView<Kind>>
+    tyr::TaskKind<Kind> && IndexedDataView<kr::ps::ext::CallStack, Kind> && std::same_as<View<kr::ps::ext::CallStack, Kind>, kr::ps::ext::CallStackView<Kind>>
     && requires(ygg::Data<kr::ps::ext::CallStack>& data, const kr::ps::ext::CallStackView<Kind>& view) {
            data.index;
-           data.module;
+           data.module_;
            data.return_memory_state;
            data.registers;
            data.arguments;

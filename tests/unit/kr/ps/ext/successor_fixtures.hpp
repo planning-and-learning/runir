@@ -26,9 +26,10 @@ auto collect_steps(
     bool first_only = false,
     const std::function<bool()>& stop = [] { return false; })
 {
-    using Expander = kr::ps::ext::SuccessorExpander<Kind>;
+    using Step = kr::ps::ext::detail::ProgramStep<Kind>;
+    using Expansion = std::variant<Step, kr::ps::ext::detail::Choice<kr::dl::ConceptTag>, kr::ps::ext::detail::Choice<kr::dl::RoleTag>>;
     auto statistics = kr::ps::ext::ProgramSearchStatistics {};
-    auto expansions = std::vector<typename Expander::Expansion> {};
+    auto expansions = std::vector<Expansion> {};
     expander.for_each_successor(
         state,
         statistics,
@@ -38,12 +39,12 @@ auto collect_steps(
             return !first_only;
         },
         stop);
-    auto result = std::vector<typename Expander::Step> {};
+    auto result = std::vector<Step> {};
     for (auto& expansion : expansions)
         std::visit(
             [&](auto candidate)
             {
-                if constexpr (std::same_as<decltype(candidate), typename Expander::Step>)
+                if constexpr (std::same_as<decltype(candidate), Step>)
                     result.push_back(std::move(candidate));
                 else if (candidate.exhausted())
                     result.push_back(expander.apply_choice(state, candidate, statistics));

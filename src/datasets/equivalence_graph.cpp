@@ -135,7 +135,7 @@ public:
         m_coordinator->initialize_start(start, *m_events.get_start());
     }
 
-    void on_start_search(const tyr::planning::Node<Kind>& node, ygg::float_t f_value) override { m_events.on_start_search(node, f_value); }
+    void on_start_search(const tyr::planning::Node<tyr::planning::StateView<Kind>>& node, ygg::float_t f_value) override { m_events.on_start_search(node, f_value); }
 
     void on_end_search(tyr::planning::SearchStatus, const tyr::planning::Statistics&) override {}
     void on_solved(const tyr::planning::Plan<Kind>&) override {}

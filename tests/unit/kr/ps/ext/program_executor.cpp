@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <runir/kr/ps/ext/detail/search_path.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/dl/structural_termination.hpp>
@@ -180,9 +181,10 @@ TEST(RunirTests, ExtFindSolutionRejectsCyclesBeforeInterningStates)
 
     auto dl_repository = task_context->domain_context->ext_repository->get_dl_repository_ptr();
     auto repository = task_context->domain_context->ext_repository;
-    const auto module_ = kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_reports_the_complete_three_state_cycle/module.module"),
-                                                      task->get_domain().get_domain(),
-                                                      *repository);
+    const auto module_ =
+        kr::ps::ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_reports_the_complete_three_state_cycle/module.module"),
+                                      task->get_domain().get_domain(),
+                                      *repository);
     const auto program = create_program(*repository, module_, { module_ });
 
     ASSERT_FALSE(kr::ps::ext::dl::structural_termination(program).is_terminating());
@@ -219,8 +221,8 @@ TEST(RunirTests, ExtExecutorFixtureOutcomesMatch)
     {
         const auto& test_case = ygg::common::as_object(value, "case");
         const auto program = kr::ps::ext::dl::parse_program(read_fixture(ygg::common::as_string(test_case, "program_file", "case")),
-                                                                   task->get_domain().get_domain(),
-                                                                   *task_context->domain_context->ext_repository);
+                                                            task->get_domain().get_domain(),
+                                                            *task_context->domain_context->ext_repository);
         auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag>();
         options.universal = ygg::common::as_bool(test_case, "universal", "case");
         if (ygg::common::as_string(test_case, "name", "case") == "load_deadend")
@@ -314,14 +316,14 @@ void check_choice_execution()
     EXPECT_EQ(bindings[0].target.get_module_state().get_registers().get_concept_values()[0].value().get_name(), "bad");
 
     // Backtracking past a failed binding must preserve the successful planning prefix.
-    const auto plan_program = make_program(choice_module(
-        "plan-after-failure",
-        choice_rule("select-good", "m0", "m1", "(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))")
-            + choice_rule("move-good", "m1", "m2", move_to_register)
-            + choice_rule("normalize", "m2", "m3", "(:load (:conditions) (:concept Goal) (:register (:concept r0)))")
-            + choice_rule("choose", "m3", "m4", choose_candidates)
-            + choice_rule("fail", "m4", "m6", "(:load (:conditions (positive Bad)) (:concept Goal) (:register (:concept r0)))")
-            + choice_rule("finish", "m4", "m5", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here Goal) (:effects)))")));
+    const auto plan_program = make_program(
+        choice_module("plan-after-failure",
+                      choice_rule("select-good", "m0", "m1", "(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))")
+                          + choice_rule("move-good", "m1", "m2", move_to_register)
+                          + choice_rule("normalize", "m2", "m3", "(:load (:conditions) (:concept Goal) (:register (:concept r0)))")
+                          + choice_rule("choose", "m3", "m4", choose_candidates)
+                          + choice_rule("fail", "m4", "m6", "(:load (:conditions (positive Bad)) (:concept Goal) (:register (:concept r0)))")
+                          + choice_rule("finish", "m4", "m5", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here Goal) (:effects)))")));
     const auto plan_result = ext::find_solution(context, plan_program, ext::ProgramSearchOptions<Kind> {});
     ASSERT_EQ(plan_result.status, Status::SUCCESS);
     EXPECT_TRUE(plan_result.cycle.empty());
@@ -375,8 +377,8 @@ void check_choice_execution()
                 + choice_rule("finish", "m2", "m3", move_to_goal)));
         EXPECT_THROW((void) ext::find_solution(context, cyclic, options), std::invalid_argument);
 
-        for (const auto& body : { choose_empty,
-                                  std::string("(:choose (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (positive Same)))") })
+        for (const auto& body :
+             { choose_empty, std::string("(:choose (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (positive Same)))") })
         {
             const auto empty = make_program(choice_module("empty", choice_rule("select", "m0", "m1", body)));
             const auto empty_result = ext::find_solution(context, empty, options);
@@ -390,12 +392,14 @@ void check_choice_execution()
         for (const auto good : { false, true })
         {
             SCOPED_TRACE(good);
-            const auto filtered = make_program(choice_module(
-                "singleton",
-                choice_rule("select", "m0", "m1",
-                            std::string("(:choose (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (")
-                                + (good ? "negative" : "positive") + " Bad)))")
-                    + move_rules));
+            const auto filtered =
+                make_program(choice_module("singleton",
+                                           choice_rule("select",
+                                                       "m0",
+                                                       "m1",
+                                                       std::string("(:choose (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (")
+                                                           + (good ? "negative" : "positive") + " Bad)))")
+                                               + move_rules));
             const auto filtered_result = ext::find_solution(context, filtered, options);
             EXPECT_EQ(filtered_result.status, good ? Status::SUCCESS : Status::FAILURE);
             EXPECT_EQ(filtered_result.statistics.choice_depth, 0);
@@ -420,8 +424,7 @@ void check_choice_execution()
 
         const auto ordinary = make_program(choice_module(
             "ordinary-success",
-            choice_rule("select", "m0", "m1", "(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))")
-                + move_rules));
+            choice_rule("select", "m0", "m1", "(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))") + move_rules));
         const auto ordinary_result = ext::find_solution(context, ordinary, options);
         EXPECT_EQ(ordinary_result.status, Status::SUCCESS);
         EXPECT_EQ(ordinary_result.statistics.choice_depth, 0);
@@ -451,13 +454,13 @@ void check_choice_execution()
         }
 
         // The rejected branch crosses three choices; only the outer choice remains on the winning path.
-        const auto deeper_failure = make_program(choice_module(
-            "deeper-failure",
-            choice_rule("outer", "m0", "m1", choose_candidates)
-                + choice_rule("bad-inner", "m1", "m4", "(:choose (:conditions (positive Bad)) (:concept Candidates) (:register (:concept r1)))")
-                + choice_rule("bad-deepest", "m4", "m5", "(:choose (:conditions) (:concept Candidates) (:register (:concept r1)))")
-                + choice_rule("move-good", "m1", "m2", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
-                + choice_rule("finish", "m2", "m3", move_to_goal)));
+        const auto deeper_failure = make_program(
+            choice_module("deeper-failure",
+                          choice_rule("outer", "m0", "m1", choose_candidates)
+                              + choice_rule("bad-inner", "m1", "m4", "(:choose (:conditions (positive Bad)) (:concept Candidates) (:register (:concept r1)))")
+                              + choice_rule("bad-deepest", "m4", "m5", "(:choose (:conditions) (:concept Candidates) (:register (:concept r1)))")
+                              + choice_rule("move-good", "m1", "m2", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
+                              + choice_rule("finish", "m2", "m3", move_to_goal)));
         const auto deeper_failure_result = ext::find_solution(context, deeper_failure, options);
         EXPECT_EQ(deeper_failure_result.status, Status::SUCCESS);
         EXPECT_EQ(deeper_failure_result.statistics.choice_depth, 1);
@@ -532,12 +535,12 @@ void check_choice_execution()
         EXPECT_EQ(first.graph->get_num_edges(), second.graph->get_num_edges());
 
         // All alternatives fail, but converging bindings reuse the permanently explored suffix.
-        const auto replayed = make_program(choice_module(
-            "replayed-failure",
-            choice_rule("outer", "m0", "m1", choose_candidates)
-                + choice_rule("inner", "m1", "m4", "(:choose (:conditions) (:concept Candidates) (:register (:concept r1)))")
-                + choice_rule("deepest", "m4", "m5", "(:choose (:conditions) (:concept Candidates) (:register (:concept r1)))")
-                + choice_rule("shared-suffix", "m5", "m6", "(:load (:conditions) (:concept Goal) (:register (:concept r1)))")));
+        const auto replayed =
+            make_program(choice_module("replayed-failure",
+                                       choice_rule("outer", "m0", "m1", choose_candidates)
+                                           + choice_rule("inner", "m1", "m4", "(:choose (:conditions) (:concept Candidates) (:register (:concept r1)))")
+                                           + choice_rule("deepest", "m4", "m5", "(:choose (:conditions) (:concept Candidates) (:register (:concept r1)))")
+                                           + choice_rule("shared-suffix", "m5", "m6", "(:load (:conditions) (:concept Goal) (:register (:concept r1)))")));
         const auto replay_first = ext::find_solution(context, replayed, options);
         const auto interned_states = context->execution_repository->template size<ext::ProgramState<Kind>>();
         const auto replay_second = ext::find_solution(context, replayed, options);
@@ -573,11 +576,11 @@ void check_choice_execution()
     universal.universal = true;
     const auto load_goal = std::string("(:load (:conditions) (:concept Goal) (:register (:concept r0)))");
     const auto load_good = std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))");
-    const auto parallel = make_program(choice_module(
-        "parallel-choices",
-        choice_rule("left", "m0", "m1", choose_candidates) + choice_rule("right", "m0", "m2", choose_candidates)
-            + choice_rule("join-left", "m1", "m3", load_good) + choice_rule("join-right", "m2", "m3", load_good)
-            + choice_rule("move", "m3", "m4", move_to_register) + choice_rule("finish", "m4", "m5", move_to_goal)));
+    const auto parallel =
+        make_program(choice_module("parallel-choices",
+                                   choice_rule("left", "m0", "m1", choose_candidates) + choice_rule("right", "m0", "m2", choose_candidates)
+                                       + choice_rule("join-left", "m1", "m3", load_good) + choice_rule("join-right", "m2", "m3", load_good)
+                                       + choice_rule("move", "m3", "m4", move_to_register) + choice_rule("finish", "m4", "m5", move_to_goal)));
     const auto states_before_parallel = context->execution_repository->template size<ext::ProgramState<Kind>>();
     const auto parallel_result = ext::find_solution(context, parallel, universal);
     EXPECT_EQ(parallel_result.status, Status::SUCCESS);
@@ -618,11 +621,11 @@ void check_choice_execution()
     EXPECT_EQ(context->execution_repository->template size<ext::ProgramState<Kind>>() - states_before_shared_choice, 5);
 
     // Both choices retain their own cursor; retrying one does not repeat the other sibling's attempts.
-    const auto replayed_sibling = make_program(choice_module(
-        "replayed-sibling",
-        choice_rule("left", "m0", "m1", choose_candidates) + choice_rule("right", "m0", "m2", choose_candidates)
-            + choice_rule("move-left", "m1", "m3", move_to_register) + choice_rule("move-right", "m2", "m4", move_to_register)
-            + choice_rule("finish-left", "m3", "m5", move_to_goal) + choice_rule("finish-right", "m4", "m6", move_to_goal)));
+    const auto replayed_sibling =
+        make_program(choice_module("replayed-sibling",
+                                   choice_rule("left", "m0", "m1", choose_candidates) + choice_rule("right", "m0", "m2", choose_candidates)
+                                       + choice_rule("move-left", "m1", "m3", move_to_register) + choice_rule("move-right", "m2", "m4", move_to_register)
+                                       + choice_rule("finish-left", "m3", "m5", move_to_goal) + choice_rule("finish-right", "m4", "m6", move_to_goal)));
     const auto replayed_sibling_result = ext::find_solution(context, replayed_sibling, universal);
     EXPECT_EQ(replayed_sibling_result.status, Status::SUCCESS);
     EXPECT_EQ(replayed_sibling_result.statistics.choice_depth, 1);
@@ -631,9 +634,9 @@ void check_choice_execution()
     const auto reconverged_rules =
         // The short route discovers the shared choice before the longer route reaches the join.
         choice_rule("long-route", "m0", "m1", load_goal) + choice_rule("short-route", "m0", "m3", load_goal)
-            + choice_rule("long-choice", "m1", "m2", choose_candidates) + choice_rule("normalize-prefix", "m2", "m3", load_goal)
-            + choice_rule("shared-choice", "m3", "m4", choose_candidates) + choice_rule("normalize-suffix", "m4", "m5", load_good)
-            + choice_rule("move", "m5", "m6", move_to_register) + choice_rule("finish", "m6", "m7", move_to_goal);
+        + choice_rule("long-choice", "m1", "m2", choose_candidates) + choice_rule("normalize-prefix", "m2", "m3", load_goal)
+        + choice_rule("shared-choice", "m3", "m4", choose_candidates) + choice_rule("normalize-suffix", "m4", "m5", load_good)
+        + choice_rule("move", "m5", "m6", move_to_register) + choice_rule("finish", "m6", "m7", move_to_goal);
     const auto reconverged = make_program(choice_module("unequal-depths", reconverged_rules));
     const auto reconverged_result = ext::find_solution(context, reconverged, universal);
     EXPECT_EQ(reconverged_result.status, Status::SUCCESS);
@@ -649,9 +652,9 @@ void check_choice_execution()
     EXPECT_EQ(partial_result.statistics.choice_depth, 0);
 
     // Returning from the successful ordinary continuation must still evaluate the failing Choose obligation.
-    const auto required_choice = make_program(choice_module(
-        "ordinary-success-failing-choice",
-        choice_rule("ordinary", "m0", "m1", load_good) + choice_rule("choose", "m0", "m6", choose_candidates) + move_rules));
+    const auto required_choice =
+        make_program(choice_module("ordinary-success-failing-choice",
+                                   choice_rule("ordinary", "m0", "m1", load_good) + choice_rule("choose", "m0", "m6", choose_candidates) + move_rules));
     const auto required_choice_result = ext::find_solution(context, required_choice, universal);
     EXPECT_EQ(required_choice_result.status, Status::FAILURE);
     ASSERT_TRUE(required_choice_result.graph);
@@ -711,14 +714,11 @@ void check_ordinary_execution_keeps_complete_graph()
     for (const auto diamond : { false, true })
     {
         SCOPED_TRACE(diamond);
-        const auto rules = diamond
-                               ? choice_rule("left", "m0", "m1", skip) + choice_rule("right", "m0", "m2", skip)
-                                     + choice_rule("join-left", "m1", "m3", skip) + choice_rule("join-right", "m2", "m3", skip)
-                                     + choice_rule("load", "m3", "m4", load) + choice_rule("move", "m4", "m5", move_to_register)
-                                     + choice_rule("finish", "m5", "m6", move_to_goal)
-                               : choice_rule("first", "m0", "m1", skip) + choice_rule("parallel", "m0", "m1", skip)
-                                     + choice_rule("load", "m1", "m2", load) + choice_rule("move", "m2", "m3", move_to_register)
-                                     + choice_rule("finish", "m3", "m4", move_to_goal);
+        const auto rules = diamond ? choice_rule("left", "m0", "m1", skip) + choice_rule("right", "m0", "m2", skip) + choice_rule("join-left", "m1", "m3", skip)
+                                         + choice_rule("join-right", "m2", "m3", skip) + choice_rule("load", "m3", "m4", load)
+                                         + choice_rule("move", "m4", "m5", move_to_register) + choice_rule("finish", "m5", "m6", move_to_goal) :
+                                     choice_rule("first", "m0", "m1", skip) + choice_rule("parallel", "m0", "m1", skip) + choice_rule("load", "m1", "m2", load)
+                                         + choice_rule("move", "m2", "m3", move_to_register) + choice_rule("finish", "m3", "m4", move_to_goal);
         const auto module_ = ext::dl::parse_module(choice_module("ordinary", rules), task->get_domain().get_domain(), repository);
         const auto program = create_program(repository, module_, { module_ });
 
@@ -785,5 +785,307 @@ void check_ordinary_execution_keeps_complete_graph()
 
 TEST(RunirTests, ExtOrdinaryGroundExecutionKeepsCompleteGraph) { check_ordinary_execution_keeps_complete_graph<tyr::GroundTag>(); }
 TEST(RunirTests, ExtOrdinaryLiftedExecutionKeepsCompleteGraph) { check_ordinary_execution_keeps_complete_graph<tyr::LiftedTag>(); }
+
+namespace
+{
+
+template<tyr::TaskKind Kind>
+void check_state_memorization()
+{
+    namespace ext = kr::ps::ext;
+    using Mode = ext::StateMemorization;
+    using Status = ext::ProgramProofStatus;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    // Fresh repositories make retained-state assertions independent of previous searches.
+    const auto run = [&](const std::string& modules, const ext::ProgramSearchOptions<Kind>& options)
+    {
+        auto search = [&]()
+        {
+            if constexpr (std::same_as<Kind, tyr::GroundTag>)
+                return make_ground_context(directory / "domain.pddl", directory / "task.pddl");
+            else
+                return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
+        }();
+        auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
+        const auto program = ext::dl::parse_program("(:program (:entry main) " + modules + ")",
+                                                    search->task->get_domain().get_domain(),
+                                                    *context->domain_context->ext_repository);
+        return ext::find_solution(context, program, options);
+    };
+    const auto select = choice_rule("select", "m0", "m1", choose_candidates);
+    const auto backtrack = choice_module("main", select + move_rules);
+    const auto singleton = std::string("(:choose (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))");
+    const auto load_goal = std::string("(:load (:conditions) (:concept Goal) (:register (:concept r0)))");
+    const auto call = std::string(R"((:module (:symbol main) (:arguments) (:registers (:concept r0))
+                           (:entry m0) (:memory m0 m1 m2 m3)
+                           (:features
+                             (:concept (:symbol Candidates) (:expression (c_atomic_state "candidate")))
+                             (:concept (:symbol Here) (:expression (c_atomic_state "at")))
+                             (:concept (:symbol Goal) (:expression (c_atomic_goal "at" true)))
+                             (:concept (:symbol R) (:expression (c_register r0)))
+                             (:role (:symbol Links) (:expression (r_atomic_state "edge")))
+                             (:boolean (:symbol HasCandidates) (:expression (b_nonempty (c_atomic_state "candidate"))))
+                             (:numerical (:symbol Count) (:expression (n_count (c_atomic_state "candidate")))))
+                           (:rules )")
+                      + choice_rule("save-goal", "m0", "m1", load_goal)
+                      + choice_rule("call", "m1", "m2", "(:call (:conditions) (:callee child) (:arguments Candidates Links HasCandidates Count))")
+                      + choice_rule("finish", "m2", "m3", move_to_register) + "))" + R"((:module (:symbol child)
+                           (:arguments (:concept choices) (:role links) (:boolean has_choices) (:numerical count))
+                           (:registers (:concept r0))
+                           (:entry m0) (:memory m0 m1 m2)
+                           (:features
+                             (:concept (:symbol Candidates) (:expression
+                               (c_and (c_argument choices) (c_some (r_inverse (r_argument links)) (c_top)))))
+                             (:concept (:symbol Here) (:expression (c_atomic_state "at")))
+                             (:concept (:symbol R) (:expression (c_register r0)))
+                             (:boolean (:symbol HasCandidates) (:expression (b_argument has_choices)))
+                             (:numerical (:symbol Count) (:expression (n_argument count))))
+                           (:rules )"
+                      + choice_rule("select",
+                                    "m0",
+                                    "m1",
+                                    "(:choose (:conditions (positive HasCandidates) (greater_zero Count)) (:concept Candidates) (:register (:concept r0)))")
+                      + choice_rule("move", "m1", "m2", move_to_register) + "))";
+
+    for (const auto mode : { Mode::NONE, Mode::CHOICE, Mode::ALL })
+        for (const auto universal : { false, true })
+        {
+            SCOPED_TRACE(static_cast<int>(mode));
+            SCOPED_TRACE(universal);
+            auto options = ext::ProgramSearchOptions<Kind> {};
+            options.state_memorization = mode;
+            options.universal = universal;
+            const auto result = run(backtrack, options);
+            ASSERT_EQ(result.status, Status::SUCCESS);
+            ASSERT_TRUE(result.graph);
+            EXPECT_EQ(result.statistics.choice_depth, 1);
+            EXPECT_EQ(result.statistics.num_expanded, 5);
+            EXPECT_EQ(result.graph->get_num_vertices(), mode == Mode::ALL ? 6 : 4);
+            EXPECT_EQ(result.graph->get_num_edges(), mode == Mode::ALL ? 5 : 3);
+            EXPECT_EQ(result.open_states.empty(), mode != Mode::ALL);
+            EXPECT_EQ(result.task_context_owner->execution_repository->template size<ext::ProgramState<Kind>>(), result.graph->get_num_vertices());
+            EXPECT_EQ(result.task_context_owner->search_context->state_repository->num_states(), mode == Mode::ALL ? 4 : 3);
+            EXPECT_EQ(result.plan.has_value(), !universal);
+            if (result.plan)
+            {
+                EXPECT_EQ(result.plan->get_length(), 2);
+                EXPECT_EQ(result.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
+            }
+
+            const auto filtered = run(choice_module("main", choice_rule("select", "m0", "m1", singleton) + move_rules), options);
+            EXPECT_EQ(filtered.status, Status::SUCCESS);
+            EXPECT_EQ(filtered.statistics.choice_depth, 0);
+            const auto empty = run(choice_module("main", choice_rule("select", "m0", "m1", choose_empty)), options);
+            EXPECT_EQ(empty.status, Status::FAILURE);
+            EXPECT_EQ(empty.deadend_states.size(), 1);
+            const auto exhausted = run(choice_module("main", select), options);
+            EXPECT_EQ(exhausted.status, Status::FAILURE);
+            EXPECT_FALSE(exhausted.open_states.empty());
+
+            // An additional Choose or ordinary load is a separate universal obligation.
+            for (const auto& other : { choose_empty, std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)))") })
+            {
+                const auto mixed = run(choice_module("main", select + choice_rule("other", "m0", "m1", other) + move_rules), options);
+                EXPECT_EQ(mixed.status, universal ? Status::FAILURE : Status::SUCCESS);
+            }
+            // Inner choices must leave the outer cursor and pending sibling obligation intact.
+            const auto nested =
+                run(choice_module("main",
+                                  select + choice_rule("sibling", "m0", "m1", choose_candidates) + choice_rule("inner", "m1", "m2", choose_candidates)
+                                      + choice_rule("move", "m2", "m3", move_to_register) + choice_rule("finish", "m3", "m4", move_to_goal)),
+                    options);
+            EXPECT_EQ(nested.status, Status::SUCCESS);
+            EXPECT_EQ(nested.statistics.choice_depth, 2);
+            const auto called = run(call, options);
+            ASSERT_EQ(called.status, Status::SUCCESS);
+            EXPECT_EQ(called.statistics.choice_depth, 1);
+            if (called.plan)
+            {
+                EXPECT_EQ(called.plan->get_length(), 2);
+            }
+            auto child_states = 0;
+            for (const auto vertex : called.graph->get_vertex_indices())
+            {
+                const auto frame = called.graph->get_vertex(vertex).get_property().program_state.get_module_state();
+                if (frame.get_module().get_name() == "child")
+                {
+                    ++child_states;
+                    const auto arguments = frame.get_arguments();
+                    ASSERT_EQ(arguments.template get<kr::dl::ConceptTag>().size(), 1);
+                    ASSERT_EQ(arguments.template get<kr::dl::RoleTag>().size(), 1);
+                    ASSERT_EQ(arguments.template get<kr::dl::BooleanTag>().size(), 1);
+                    ASSERT_EQ(arguments.template get<kr::dl::NumericalTag>().size(), 1);
+                    EXPECT_EQ(arguments.template get<kr::dl::ConceptTag>().at(0).get().count(), 2);
+                    EXPECT_EQ(arguments.template get<kr::dl::RoleTag>().at(0).count(), 3);
+                    EXPECT_TRUE(arguments.template get<kr::dl::BooleanTag>().at(0).get());
+                    EXPECT_EQ(arguments.template get<kr::dl::NumericalTag>().at(0).get(), 2);
+                }
+            }
+            EXPECT_GT(child_states, 0);
+
+            for (const auto maximum : { 0u, 1u })
+            {
+                auto limited = options;
+                limited.max_num_states = maximum;
+                const auto bounded = run(backtrack, limited);
+                EXPECT_EQ(bounded.status, Status::OUT_OF_STATES);
+                EXPECT_EQ(bounded.statistics.num_expanded, maximum);
+                EXPECT_EQ(bounded.statistics.num_generated, maximum);
+                EXPECT_EQ(bounded.graph->get_num_vertices(), maximum);
+                EXPECT_FALSE(bounded.plan);
+            }
+            options.max_time = std::chrono::steady_clock::duration::zero();
+            const auto timed = run(backtrack, options);
+            EXPECT_EQ(timed.status, Status::OUT_OF_TIME);
+            EXPECT_EQ(timed.statistics.num_expanded, 0);
+            EXPECT_EQ(timed.statistics.num_generated, 0);
+            EXPECT_FALSE(timed.plan);
+        }
+
+    // Both ordinary arms converge before a Choose. CHOICE must cache the entire
+    // source obligation, including singleton success and an empty-choice failure.
+    for (const auto& body : { choose_candidates, singleton, choose_empty })
+    {
+        auto expansions = std::vector<uint64_t> {};
+        const auto diamond = choice_module("main",
+                                           choice_rule("left", "m0", "m1", load_goal) + choice_rule("right", "m0", "m2", load_goal)
+                                               + choice_rule("join-left", "m1", "m3", load_goal) + choice_rule("join-right", "m2", "m3", load_goal)
+                                               + choice_rule("select", "m3", "m4", body) + choice_rule("move", "m4", "m5", move_to_register)
+                                               + choice_rule("finish", "m5", "m6", move_to_goal));
+        for (const auto mode : { Mode::NONE, Mode::CHOICE, Mode::ALL })
+        {
+            auto options = ext::ProgramSearchOptions<Kind> {};
+            options.state_memorization = mode;
+            options.universal = true;
+            const auto result = run(diamond, options);
+            EXPECT_EQ(result.status, body == choose_empty ? Status::FAILURE : Status::SUCCESS);
+            expansions.push_back(result.statistics.num_expanded);
+        }
+        EXPECT_GT(expansions[0], expansions[1]);
+        EXPECT_EQ(expansions[1], expansions[2]);
+    }
+}
+
+}  // namespace
+
+TEST(RunirTests, ExtGroundStateMemorizationPreservesSemanticsAndRetainsOnlyWitnesses) { check_state_memorization<tyr::GroundTag>(); }
+TEST(RunirTests, ExtLiftedStateMemorizationPreservesSemanticsAndRetainsOnlyWitnesses) { check_state_memorization<tyr::LiftedTag>(); }
+
+TEST(RunirTests, ExtPooledOwnersReleaseChildrenAndPreserveBuffers)
+{
+    using kr::ps::ext::detail::PooledSharedOwner;
+    struct Record
+    {
+        std::vector<int> buffer;
+        PooledSharedOwner<Record> child;
+        int* releases = nullptr;
+        void release_owners() noexcept
+        {
+            child.reset();
+            if (releases)
+                ++*releases;
+        }
+    };
+    using Owner = PooledSharedOwner<Record>;
+    auto pool = std::make_shared<ygg::SharedObjectPool<Record>>();
+    auto releases = 0;
+    auto owner = Owner(pool);
+    owner->releases = &releases;
+    owner->buffer.assign(64, 7);
+    owner->child = Owner(pool);
+    owner->child->releases = &releases;
+    const auto address = owner.get();
+    const auto capacity = owner->buffer.capacity();
+    auto copy = owner;
+    owner.reset();
+    EXPECT_EQ(releases, 0);
+    EXPECT_EQ(copy.ref_count(), 1);
+    copy.reset();
+    EXPECT_EQ(releases, 2);
+    EXPECT_EQ(pool->free_size(), 2);
+
+    auto reused = Owner(pool);
+    EXPECT_EQ(reused.get(), address);
+    EXPECT_EQ(reused->buffer.capacity(), capacity);
+    EXPECT_FALSE(reused->child);
+    auto assigned = Owner(pool);
+    assigned = reused;
+    EXPECT_EQ(releases, 3);
+    EXPECT_EQ(reused.ref_count(), 2);
+    auto moved = Owner(pool);
+    moved = std::move(assigned);
+    EXPECT_FALSE(assigned);
+    EXPECT_EQ(releases, 4);
+    reused.reset();
+    EXPECT_EQ(releases, 4);
+    moved.reset();
+    EXPECT_EQ(releases, 5);
+    EXPECT_EQ(pool->free_size(), pool->size());
+
+    auto survivor = Owner(pool);
+    const auto weak_pool = std::weak_ptr(pool);
+    pool.reset();
+    EXPECT_FALSE(weak_pool.expired());
+    survivor.reset();
+    EXPECT_TRUE(weak_pool.expired());
+}
+
+TEST(RunirTests, ExtPooledArgumentsReuseDenotationBuffersAndIgnoreInactiveValues)
+{
+    namespace detail = kr::ps::ext::detail;
+    using Category = kr::dl::ConceptTag;
+    auto pools = detail::TransientPools<tyr::GroundTag> {};
+    auto arguments = pools.arguments();
+    auto denotation = ygg::Builder<kr::dl::semantics::Denotation<Category>>(128);
+    denotation.get().set(3);
+    detail::append_call_argument<Category>(*arguments, denotation);
+    detail::append_call_argument<Category>(*arguments, denotation);
+    const auto slot = arguments.get();
+    const auto blocks = arguments->get<Category>()[0].blocks.data();
+    const auto capacity = arguments->get<Category>()[0].blocks.capacity();
+    arguments.reset();
+    arguments = pools.arguments();
+    EXPECT_EQ(arguments.get(), slot);
+    EXPECT_TRUE(arguments->get<Category>().empty());
+    detail::append_call_argument<Category>(*arguments, denotation);
+    EXPECT_EQ(arguments->get<Category>().size(), 1);
+    EXPECT_EQ(arguments->get<Category>()[0].blocks.data(), blocks);
+    EXPECT_EQ(arguments->get<Category>()[0].blocks.capacity(), capacity);
+    auto equivalent = pools.arguments();
+    detail::append_call_argument<Category>(*equivalent, denotation);
+    EXPECT_TRUE(ygg::EqualTo<detail::OwnedCallArguments> {}(*arguments, *equivalent));
+    EXPECT_EQ(ygg::Hash<detail::OwnedCallArguments> {}(*arguments), ygg::Hash<detail::OwnedCallArguments> {}(*equivalent));
+}
+
+TEST(RunirTests, ExtPooledSearchPathReleasesLongChainsIteratively)
+{
+    namespace ext = kr::ps::ext;
+    using Kind = tyr::GroundTag;
+    using Path = ext::detail::SearchPath<Kind, ext::ProgramStateView<Kind>>;
+    using PathPtr = ext::detail::PooledSharedOwner<Path>;
+    auto search = make_gripper_ground_context();
+    auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
+    auto& repository = *context->domain_context->ext_repository;
+    const auto module_ =
+        ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_treats_classifier_matches_as_terminal_failures/module.module"),
+                              search->task->get_domain().get_domain(),
+                              repository);
+    const auto program = create_program(repository, module_, { module_ });
+    auto expander = ext::SuccessorExpander<Kind>(context, program);
+    const auto state = expander.initial_state(initial_planning_node(expander).get_state());
+    auto pool = std::make_shared<ygg::SharedObjectPool<Path>>();
+    auto tip = PathPtr {};
+    constexpr int length = 100'000;
+    for (int index = 0; index < length; ++index)
+    {
+        auto path = PathPtr(pool);
+        path->initialize(state, std::move(tip), {}, {}, 0);
+        tip = std::move(path);
+    }
+    EXPECT_EQ(pool->size(), length);
+    EXPECT_EQ(pool->free_size(), 0);
+    tip.reset();
+    EXPECT_EQ(pool->free_size(), pool->size());
+}
 
 }  // namespace runir::tests

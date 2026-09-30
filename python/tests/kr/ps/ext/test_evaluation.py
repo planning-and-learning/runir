@@ -432,6 +432,64 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
+def test_state_memorization_options(kind):
+    options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
+    assert options.state_memorization == ext.StateMemorization.ALL
+    for mode in (ext.StateMemorization.NONE, ext.StateMemorization.CHOICE, ext.StateMemorization.ALL):
+        options.state_memorization = mode
+        assert options.state_memorization == mode
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+@pytest.mark.parametrize("mode", [ext.StateMemorization.NONE, ext.StateMemorization.CHOICE, ext.StateMemorization.ALL])
+def test_state_memorization_preserves_axiom_closure(tmp_path, kind, mode):
+    domain_source = read_fixture("kr/ps/ext/choose/domain.pddl")
+    domain_source = domain_source.replace(":requirements :strips", ":requirements :strips :derived-predicates")
+    domain_source = domain_source.replace("(bad ?x)", "(bad ?x) (reached ?x)")
+    domain_source = domain_source.rstrip()[:-1] + "\n(:derived (reached ?x) (at ?x)))\n"
+    domain_path = tmp_path / "domain.pddl"
+    domain_path.write_text(domain_source)
+    task_path = tmp_path / "task.pddl"
+    task_path.write_text(read_fixture("kr/ps/ext/choose/task.pddl").replace("(:goal (at goal))", "(:goal (reached goal))"))
+    parser = Parser(domain_path, ParserOptions())
+    task = lifted.Task(parser.parse_task(task_path, ParserOptions()))
+    execution = ExecutionContext(1)
+    domain = DomainContext(parser.get_domain())
+    if kind == "ground":
+        context = GroundTaskContext(domain, GroundTaskSearchContext(task.instantiate_ground_task(execution).task, execution))
+    else:
+        context = LiftedTaskContext(domain, LiftedTaskSearchContext(task, execution))
+    program = parse_program("""(:program (:entry main)
+      (:module (:symbol main) (:arguments) (:registers (:concept selected))
+        (:entry m0) (:memory m0 m1 m2 m3)
+        (:features
+          (:concept (:symbol candidates) (:expression (c_atomic_state "candidate")))
+          (:concept (:symbol here) (:expression (c_atomic_state "reached")))
+          (:concept (:symbol goal) (:expression (c_atomic_goal "reached" true)))
+          (:concept (:symbol target) (:expression (c_register selected))))
+        (:rules
+          (:rule (:symbol select) (:expression (:source-memory m0) (:target-memory m1)
+            (:choose (:conditions) (:concept candidates) (:register (:concept selected)))))
+          (:rule (:symbol move) (:expression (:source-memory m1) (:target-memory m2)
+            (:do (:conditions) (:action "move") (:arguments here target) (:effects))))
+          (:rule (:symbol finish) (:expression (:source-memory m2) (:target-memory m3)
+            (:do (:conditions) (:action "move") (:arguments here goal) (:effects)))))))""",
+        parser.get_domain(), domain.ext_repository,
+    )
+    options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
+    options.state_memorization = mode
+    options.classifier = parse_classifier("""(:classifier (:symbol bad-location)
+      (:features (:boolean (:symbol bad) (:expression
+        (b_nonempty (c_and (c_atomic_state "reached") (c_atomic_state "bad"))))))
+      (:expression (or (and bad))))""", parser.get_domain(), domain.uns_repository)
+    result = getattr(ext, f"find_{kind}_solution")(context, program, options)
+    assert result.is_successful()
+    assert result.plan.get_length() == 2
+    assert result.statistics.choice_depth == 1
+    assert bool(result.deadend_states) == (mode == ext.StateMemorization.ALL)
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
 @pytest.mark.parametrize("universal", [False, True])
 @pytest.mark.parametrize("program_file", ["non_terminating.program", "recursive_calls.program"])
 def test_execution_requires_whole_program_structural_termination(kind, universal, program_file):

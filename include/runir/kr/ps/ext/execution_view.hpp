@@ -7,7 +7,9 @@
 
 #include <optional>
 #include <tuple>
+#include <type_traits>
 #include <tyr/formalism/object_view.hpp>
+#include <tyr/planning/state_view.hpp>
 #include <yggdrasil/containers/optional.hpp>
 #include <yggdrasil/containers/pair.hpp>
 #include <yggdrasil/containers/vector.hpp>
@@ -32,7 +34,7 @@ public:
     auto get_index() const noexcept { return m_handle; }
 
     auto get_state() const { return get_repository(*m_context).get_state_repository().get_registered_state(get_data().state); }
-    auto get_module() const noexcept { return make_view(get_data().module, get_repository(*m_context).get_program_repository()); }
+    auto get_module() const noexcept { return make_view(get_data().module_, get_repository(*m_context).get_program_repository()); }
     auto get_memory_state() const noexcept { return make_view(get_data().memory_state, get_repository(*m_context).get_program_repository()); }
     auto get_registers() const noexcept { return make_view(get_data().registers, get_repository(*m_context).get_denotation_repository()); }
     auto get_arguments() const noexcept { return make_view(get_data().arguments, get_repository(*m_context).get_denotation_repository()); }
@@ -55,7 +57,7 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
     auto get_index() const noexcept { return m_handle; }
 
-    auto get_module() const noexcept { return make_view(get_data().module, get_repository(*m_context).get_program_repository()); }
+    auto get_module() const noexcept { return make_view(get_data().module_, get_repository(*m_context).get_program_repository()); }
     auto get_return_memory_state() const noexcept { return make_view(get_data().return_memory_state, get_repository(*m_context).get_program_repository()); }
     auto get_registers() const noexcept { return make_view(get_data().registers, get_repository(*m_context).get_denotation_repository()); }
     auto get_arguments() const noexcept { return make_view(get_data().arguments, get_repository(*m_context).get_denotation_repository()); }
@@ -100,5 +102,23 @@ public:
 };
 
 }  // namespace ygg
+
+namespace runir::kr::ps::ext
+{
+
+/// Common read interface for registered and pooled program states.
+template<typename S, typename Kind>
+concept ProgramStateViewConcept = tyr::TaskKind<Kind> && requires(const S& state) {
+    requires tyr::planning::StateViewConcept<std::remove_cvref_t<decltype(state.get_state())>, Kind>;
+    state.get_program();
+    state.get_module_state().get_module();
+    state.get_module_state().get_memory_state();
+    state.get_module_state().get_registers();
+    state.get_module_state().get_arguments();
+    state.get_call_stack();
+    state.get_context();
+};
+
+}  // namespace runir::kr::ps::ext
 
 #endif

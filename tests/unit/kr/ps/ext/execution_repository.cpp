@@ -33,7 +33,7 @@ void expect_execution_records_round_trip()
     {
         auto data = builder.template get_builder<kr::ps::ext::ModuleState<Kind>>();
         data->state = ygg::Index<tyr::planning::State<Kind>>(5);
-        data->module = ygg::Index<kr::ps::ext::Module>(1);
+        data->module_ = ygg::Index<kr::ps::ext::Module>(1);
         data->memory_state = ygg::Index<kr::ps::ext::MemoryState>(2);
         data->registers = ygg::Index<kr::dl::semantics::RegisterValues>(3);
         data->arguments = ygg::Index<kr::dl::semantics::CallArguments>(4);
@@ -41,7 +41,7 @@ void expect_execution_records_round_trip()
     }
     {
         auto data = builder.template get_builder<kr::ps::ext::CallStack>();
-        data->module = ygg::Index<kr::ps::ext::Module>(1);
+        data->module_ = ygg::Index<kr::ps::ext::Module>(1);
         data->return_memory_state = ygg::Index<kr::ps::ext::MemoryState>(2);
         data->registers = ygg::Index<kr::dl::semantics::RegisterValues>(3);
         data->arguments = ygg::Index<kr::dl::semantics::CallArguments>(4);
@@ -169,7 +169,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     {
         auto data = execution_builder.get_builder<kr::ps::ext::ModuleState<tyr::GroundTag>>();
         ygg::set(state, data->state);
-        ygg::set(caller, data->module);
+        ygg::set(caller, data->module_);
         ygg::set(caller_return, data->memory_state);
         ygg::set(registers, data->registers);
         ygg::set(arguments, data->arguments);
@@ -181,7 +181,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     {
         auto data = execution_builder.get_builder<kr::ps::ext::ModuleState<tyr::GroundTag>>();
         ygg::set(state, data->state);
-        ygg::set(callee, data->module);
+        ygg::set(callee, data->module_);
         ygg::set(callee_entry, data->memory_state);
         ygg::set(registers, data->registers);
         ygg::set(arguments, data->arguments);
@@ -214,7 +214,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto caller_frame = [&]()
     {
         auto data = execution_builder.get_builder<kr::ps::ext::CallStack>();
-        ygg::set(caller, data->module);
+        ygg::set(caller, data->module_);
         ygg::set(caller_return, data->return_memory_state);
         ygg::set(registers, data->registers);
         ygg::set(arguments, data->arguments);
@@ -224,7 +224,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto callee_frame = [&]()
     {
         auto data = execution_builder.get_builder<kr::ps::ext::CallStack>();
-        ygg::set(callee, data->module);
+        ygg::set(callee, data->module_);
         ygg::set(callee_entry, data->return_memory_state);
         ygg::set(registers, data->registers);
         ygg::set(arguments, data->arguments);

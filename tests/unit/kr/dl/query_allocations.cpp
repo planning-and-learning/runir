@@ -15,6 +15,7 @@
 #include <runir/kr/task_context.hpp>
 #include <string>
 #include <tyr/planning/ground/successor_generator.hpp>
+#include <variant>
 
 #if defined(_MSC_VER)
 #include <malloc.h>
@@ -299,9 +300,11 @@ TEST(RunirSearch, ProgramSearchAllocationsGrowWithContainerCapacity)
                 ASSERT_TRUE(ext::find_solution(context, program, options).is_successful());
                 // Structural certification is policy analysis, not per-step search bookkeeping.
                 auto expander = ext::SuccessorExpander<tyr::GroundTag>(context, program);
+                auto storage = ext::detail::InternedSearchStorage<tyr::GroundTag>(options);
                 auto classifier = kr::ps::NoUnsolvability {};
+                using Choices = std::variant<ext::detail::Choice<kr::dl::ConceptTag>, ext::detail::Choice<kr::dl::RoleTag>>;
                 allocation_tracking::Scope measured;
-                const auto result = ext::detail::find_solution(expander, options, classifier);
+                const auto result = ext::detail::find_solution<tyr::GroundTag, Choices>(expander, storage, options, classifier);
                 allocations[scale] = measured.finish().allocated;
                 ASSERT_TRUE(result.is_successful());
                 EXPECT_EQ(result.statistics.num_expanded, length + 2);

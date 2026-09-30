@@ -114,8 +114,8 @@ void expect_module_return_preserves_callee_planning_state()
     (:rules (:rule (:symbol move) (:expression (:source-memory move) (:target-memory done)
       (:do (:conditions) (:action "move") (:arguments Here Candidates) (:effects)))))))
 )",
-                                                       context->search_context->task->get_domain().get_domain(),
-                                                       *context->domain_context->ext_repository);
+                                                context->search_context->task->get_domain().get_domain(),
+                                                *context->domain_context->ext_repository);
     auto expander = ext::SuccessorExpander<Kind>(context, program);
     const auto planning_node = initial_planning_node(expander);
     const auto initial = expander.initial_state(planning_node.get_state());
@@ -466,8 +466,8 @@ void expect_control_only_steps_do_not_generate_planning_successors()
   (:module (:symbol leaf) (:arguments) (:registers)
     (:entry source) (:memory source) (:features) (:rules)))
 )",
-                                                       task_context->search_context->task->get_domain().get_domain(),
-                                                       repository);
+                                                task_context->search_context->task->get_domain().get_domain(),
+                                                repository);
     auto expander = ext::SuccessorExpander<Kind>(task_context, program);
     const auto planning_node = initial_planning_node(expander);
     const auto initial = expander.initial_state(planning_node.get_state());
@@ -556,7 +556,9 @@ TEST(RunirTests, ExtChooseUsesNaturalDenotationCursors)
     (:rule (:symbol at) (:expression (:source-memory source) (:target-memory target) (:choose (:conditions) (:role At) (:register (:role r)))))
     (:rule (:symbol no-pairs) (:expression (:source-memory source) (:target-memory target) (:choose (:conditions) (:role NoPairs) (:register (:role r)))))
     (:rule (:symbol one-pair) (:expression (:source-memory source) (:target-memory target) (:choose (:conditions) (:role OnePair) (:register (:role r)))))))
-)", search->task->get_domain().get_domain(), repository);
+)",
+                                               search->task->get_domain().get_domain(),
+                                               repository);
     const auto program = create_program(repository, module_, { module_ });
     auto expander = Expander(context, program);
     const auto node = initial_planning_node(expander);
@@ -566,31 +568,26 @@ TEST(RunirTests, ExtChooseUsesNaturalDenotationCursors)
     ASSERT_TRUE(expander.for_each_successor(
         state,
         statistics,
-        [&](auto expansion)
+        [&](auto choice)
         {
-            std::visit(
-                [&](auto choice)
+            if constexpr (std::same_as<decltype(choice), ext::detail::ProgramStep<tyr::GroundTag>>)
+                ADD_FAILURE() << "Expected a compact Choice descriptor";
+            else
+            {
+                counts.push_back(choice.count());
+                EXPECT_EQ(choice.has_alternatives(), choice.count() > 1);
+                auto expected = choice.denotation.begin();
+                std::size_t visited = 0;
+                while (!choice.exhausted())
                 {
-                    if constexpr (std::same_as<decltype(choice), Expander::Step>)
-                        ADD_FAILURE() << "Expected a compact Choice descriptor";
-                    else
-                    {
-                        counts.push_back(choice.count());
-                        EXPECT_EQ(choice.has_alternatives(), choice.count() > 1);
-                        auto expected = choice.denotation.begin();
-                        std::size_t visited = 0;
-                        while (!choice.exhausted())
-                        {
-                            EXPECT_EQ(choice.cursor, expected);
-                            ++expected;
-                            ++visited;
-                            choice.advance();
-                        }
-                        EXPECT_EQ(expected, choice.denotation.end());
-                        EXPECT_EQ(visited, choice.count());
-                    }
-                },
-                std::move(expansion));
+                    EXPECT_EQ(choice.cursor, expected);
+                    ++expected;
+                    ++visited;
+                    choice.advance();
+                }
+                EXPECT_EQ(expected, choice.denotation.end());
+                EXPECT_EQ(visited, choice.count());
+            }
             return true;
         },
         [] { return false; }));
@@ -1265,7 +1262,7 @@ void expect_query_action_contracts()
         const auto planning_node = initial_planning_node(expander);
         const auto initial = expander.initial_state(planning_node.get_state());
         const auto rule = module_.get_memory_transitions()[0][0];
-        auto lazy = std::vector<typename ext::SuccessorExpander<Kind>::Step> {};
+        auto lazy = std::vector<ext::detail::ProgramStep<Kind>> {};
         if (scenario == 2 || scenario == 4)
         {
             EXPECT_THROW(collect_steps(expander, initial), ext::ActionRuleContractError);
@@ -1388,13 +1385,16 @@ void expect_callback_sketch_order_and_cancellation()
         auto expander = ext::SuccessorExpander<Kind>(task_context, program);
         const auto planning_node = initial_planning_node(expander);
         const auto initial = expander.initial_state(planning_node.get_state());
-        using Step = typename ext::SuccessorExpander<Kind>::Step;
+        using Step = ext::detail::ProgramStep<Kind>;
         auto selected = std::vector<Step> {};
         auto statistics = ext::ProgramSearchStatistics {};
         const auto emit = [&](const auto& expansion)
         {
             EXPECT_GT(statistics.num_generated, 0);
-            selected.push_back(std::get<Step>(expansion));
+            if constexpr (std::same_as<std::remove_cvref_t<decltype(expansion)>, Step>)
+                selected.push_back(expansion);
+            else
+                ADD_FAILURE() << "Expected a program step";
             return false;
         };
         EXPECT_FALSE(expander.for_each_successor(initial, statistics, emit, [] { return true; }));
@@ -1415,7 +1415,10 @@ void expect_callback_sketch_order_and_cancellation()
             statistics,
             [&](const auto& expansion)
             {
-                complete.push_back(std::get<Step>(expansion));
+                if constexpr (std::same_as<std::remove_cvref_t<decltype(expansion)>, Step>)
+                    complete.push_back(expansion);
+                else
+                    ADD_FAILURE() << "Expected a program step";
                 return true;
             },
             [] { return false; }));
@@ -1446,8 +1449,8 @@ void expect_query_action_existential_binding()
     (:source-memory source) (:target-memory target)
     (:action (:conditions) (:action "finish") (:query Bindings) (:effects))))))
 )",
-                                              domain,
-                                              repository);
+                                               domain,
+                                               repository);
     const auto program = create_program(repository, module_, { module_ });
     auto expander = ext::SuccessorExpander<Kind>(task_context, program);
     const auto planning_node = initial_planning_node(expander);

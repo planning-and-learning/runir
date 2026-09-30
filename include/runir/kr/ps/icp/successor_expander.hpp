@@ -218,8 +218,8 @@ class SuccessorExpander
             if (m_matching.empty())
                 return true;
             const auto candidate =
-                tyr::planning::LabeledNode<Kind> { binding,
-                                                   search.successor_generator->get_successor_node(tyr::planning::Node<Kind>(source.get_state(), 0),
+                tyr::planning::LabeledNode<tyr::planning::StateView<Kind>> { binding,
+                                                   search.successor_generator->get_successor_node(tyr::planning::Node<tyr::planning::StateView<Kind>>(source.get_state(), 0),
                                                                                                   binding,
                                                                                                   *search.state_repository,
                                                                                                   *search.axiom_evaluator) };
@@ -252,7 +252,7 @@ class SuccessorExpander
             }
             return true;
         };
-        return search.successor_generator->for_each_applicable_action_binding(tyr::planning::Node<Kind>(source.get_state(), 0), action, std::ref(visit));
+        return search.successor_generator->for_each_applicable_action_binding(tyr::planning::Node<tyr::planning::StateView<Kind>>(source.get_state(), 0), action, std::ref(visit));
     }
 
 public:

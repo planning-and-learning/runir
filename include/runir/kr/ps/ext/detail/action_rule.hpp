@@ -24,15 +24,14 @@
 namespace runir::kr::ps::ext::detail
 {
 
-template<tyr::TaskKind Kind>
-[[noreturn]] void action_rule_contract_error(RuleView<ActionTag> rule,
-                                             const tyr::planning::StateView<Kind>& state,
-                                             std::span<const ygg::uint_t> tuple,
-                                             std::string_view reason)
+template<tyr::planning::StateViewConcept State>
+[[noreturn]] void action_rule_contract_error(RuleView<ActionTag> rule, const State& state, std::span<const ygg::uint_t> tuple, std::string_view reason)
 {
     auto message = std::ostringstream {};
-    message << "Action rule " << ygg::uint_t(rule.get_index()) << " for '" << rule.get_action_name().str()
-            << "' in state " << ygg::uint_t(state.get_index()) << " with tuple (";
+    message << "Action rule " << ygg::uint_t(rule.get_index()) << " for '" << rule.get_action_name().str() << "' in state";
+    if constexpr (requires { state.get_index(); })
+        message << ' ' << ygg::uint_t(state.get_index());
+    message << " with tuple (";
     for (size_t i = 0; i < tuple.size(); ++i)
         message << (i ? ", " : "") << tuple[i];
     message << "): " << reason;
@@ -63,7 +62,8 @@ class ActionRuleEvaluator
 public:
     explicit ActionRuleEvaluator(tyr::planning::TaskPtr<Kind> task) : m_task(std::move(task)) {}
 
-    const ActionInfo& action_info(RuleView<ActionTag> rule, const tyr::planning::StateView<Kind>& state, size_t arity)
+    template<tyr::planning::StateViewConcept<Kind> State>
+    const ActionInfo& action_info(RuleView<ActionTag> rule, const State& state, size_t arity)
     {
         auto it = m_actions.find(rule.get_index());
         if (it == m_actions.end())
@@ -90,12 +90,14 @@ public:
         return it->second;
     }
 
-    Action action(RuleView<ActionTag> rule, const tyr::planning::StateView<Kind>& state, size_t arity)
+    template<tyr::planning::StateViewConcept<Kind> State>
+    Action action(RuleView<ActionTag> rule, const State& state, size_t arity)
     {
         return action_info(rule, state, arity).schema;
     }
 
-    Binding applicable_binding(RuleView<ActionTag> rule, const tyr::planning::StateView<Kind>& planning_state, std::span<const ygg::uint_t> tuple)
+    template<tyr::planning::StateViewConcept<Kind> State>
+    Binding applicable_binding(RuleView<ActionTag> rule, const State& planning_state, std::span<const ygg::uint_t> tuple)
     {
         const auto& info = action_info(rule, planning_state, tuple.size());
         const auto schema = info.schema;

@@ -51,7 +51,7 @@ constexpr std::string_view to_string(ProgramOutcome outcome)
 
 /// One rule application or caller return, including local failures whose target remains the source state.
 /// Search completion and resource limits are reported separately from these steps.
-template<tyr::TaskKind Kind>
+template<tyr::TaskKind Kind, ProgramStateViewConcept<Kind> S = ProgramStateView<Kind>>
 struct ProgramStep
 {
 private:
@@ -59,12 +59,12 @@ private:
 
 public:
     ProgramOutcome status;
-    ProgramStateView<Kind> target;
+    S target;
     std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
     std::optional<RuleVariantView> rule = std::nullopt;
     std::optional<tyr::planning::PackedLabeledNode<Kind>> planning_successor = std::nullopt;
 
-    ProgramStep(ProgramOutcome status_, ProgramStateView<Kind> target_, runir::kr::TaskContextPtr<Kind> task_context) :
+    ProgramStep(ProgramOutcome status_, S target_, runir::kr::TaskContextPtr<Kind> task_context) :
         m_task_context(std::move(task_context)),
         status(status_),
         target(std::move(target_))
@@ -72,7 +72,7 @@ public:
     }
 
     std::string_view get_status_name() const { return to_string(status); }
-    ProgramStateView<Kind> get_target() const noexcept { return target; }
+    S get_target() const noexcept { return target; }
     const auto& get_state_transition() const noexcept { return state_transition; }
     const auto& get_rule() const noexcept { return rule; }
 };
@@ -80,6 +80,7 @@ public:
 template<runir::kr::dl::CategoryTag Category>
 struct Choice
 {
+    using CategoryType = Category;
     using Denotation = runir::kr::dl::semantics::DenotationView<Category>;
     using Cursor = decltype(std::declval<Denotation>().begin());
 
@@ -93,6 +94,7 @@ struct Choice
 
     Choice(RuleVariantView rule_, Denotation denotation_) noexcept : rule(rule_), denotation(denotation_), cursor(denotation.begin()) {}
 
+    auto& bindings() noexcept { return ordered_bindings; }
     bool exhausted() const noexcept { return ordered_bindings.empty() ? cursor == denotation.end() : position == ordered_bindings.size(); }
     auto current() const noexcept { return ordered_bindings.empty() ? *cursor : ordered_bindings[position]; }
     void advance() noexcept
@@ -116,13 +118,6 @@ struct Choice
         else
             return denotation.count();
     }
-};
-
-template<tyr::TaskKind Kind>
-struct ChoiceFrame
-{
-    ProgramStateView<Kind> state;
-    std::variant<Choice<runir::kr::dl::ConceptTag>, Choice<runir::kr::dl::RoleTag>> choice;
 };
 
 }  // namespace runir::kr::ps::ext::detail

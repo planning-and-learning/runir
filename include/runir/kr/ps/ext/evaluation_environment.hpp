@@ -6,6 +6,7 @@
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 #include "runir/kr/dl/semantics/ext/state_evaluation_context.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
+#include "runir/kr/ps/ext/detail/transient_values.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/task_context.hpp"
 
@@ -16,6 +17,47 @@
 
 namespace runir::kr::ps::ext
 {
+
+namespace detail
+{
+
+template<tyr::TaskKind Kind>
+class TransientEvaluationContext : public runir::kr::dl::semantics::BaseStateEvaluationContext<ExtFamilyTag, Kind, tyr::planning::BuilderStateView<Kind>>
+{
+    using Base = runir::kr::dl::semantics::BaseStateEvaluationContext<ExtFamilyTag, Kind, tyr::planning::BuilderStateView<Kind>>;
+    CallArgumentsRef m_arguments;
+    RegisterValuesRef m_registers;
+
+public:
+    TransientEvaluationContext(tyr::planning::BuilderStateView<Kind> state,
+                               runir::kr::dl::semantics::Builder& builder,
+                               runir::kr::dl::semantics::DenotationRepository& repository,
+                               runir::kr::dl::semantics::EvaluationWorkspace& workspace,
+                               runir::kr::dl::semantics::DenotationCaches<ExtFamilyTag>& caches,
+                               CallArgumentsRef arguments,
+                               RegisterValuesRef registers) :
+        Base(state, builder, repository, workspace, caches),
+        m_arguments(arguments),
+        m_registers(registers)
+    {
+    }
+    auto arguments() const noexcept { return m_arguments; }
+    auto registers() const noexcept { return m_registers; }
+};
+
+template<tyr::TaskKind Kind>
+struct TransientTransitionContext
+{
+    using FamilyType = ExtFamilyTag;
+    TransientEvaluationContext<Kind> source;
+    TransientEvaluationContext<Kind> target;
+    auto& get_source_context() noexcept { return source; }
+    auto& get_target_context() noexcept { return target; }
+    const auto& get_source_state() const noexcept { return source.get_state(); }
+    const auto& get_target_state() const noexcept { return target.get_state(); }
+};
+
+}  // namespace detail
 
 template<tyr::TaskKind Kind>
 class EvaluationEnvironment
@@ -74,6 +116,27 @@ public:
                                    runir::kr::dl::semantics::RegisterValuesView registers)
     {
         return StateDlContext(std::move(state), m_dl_builder, m_dl_denotation_repository, m_dl_workspace, m_dl_caches, arguments, registers);
+    }
+
+    auto make_dl_context(tyr::planning::BuilderStateView<Kind> state, detail::CallArgumentsRef arguments, detail::RegisterValuesRef registers)
+    {
+        return detail::TransientEvaluationContext<Kind>(state, m_dl_builder, m_dl_denotation_repository, m_dl_workspace, m_dl_caches, arguments, registers);
+    }
+
+    auto make_dl_transition_context(tyr::planning::BuilderStateView<Kind> source_state,
+                                    tyr::planning::BuilderStateView<Kind> target_state,
+                                    detail::CallArgumentsRef arguments,
+                                    detail::RegisterValuesRef source_registers,
+                                    detail::RegisterValuesRef target_registers)
+    {
+        return detail::TransientTransitionContext<Kind> { make_dl_context(source_state, arguments, source_registers),
+                                                          detail::TransientEvaluationContext<Kind>(target_state,
+                                                                                                   m_dl_builder,
+                                                                                                   m_dl_denotation_repository,
+                                                                                                   m_dl_workspace,
+                                                                                                   m_dl_target_caches,
+                                                                                                   arguments,
+                                                                                                   target_registers) };
     }
 
     TransitionDlContext make_dl_transition_context(tyr::planning::StateView<Kind> source_state,

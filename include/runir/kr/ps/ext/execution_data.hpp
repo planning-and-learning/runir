@@ -25,19 +25,19 @@ struct Data<runir::kr::ps::ext::ModuleState<Kind>>
 {
     Index<runir::kr::ps::ext::ModuleState<Kind>> index;
     Index<tyr::planning::State<Kind>> state;
-    Index<runir::kr::ps::ext::Module> module;
+    Index<runir::kr::ps::ext::Module> module_;
     Index<runir::kr::ps::ext::MemoryState> memory_state;
     Index<runir::kr::dl::semantics::RegisterValues> registers;
     Index<runir::kr::dl::semantics::CallArguments> arguments;
 
     Data() = default;
     Data(Index<tyr::planning::State<Kind>> state_,
-         Index<runir::kr::ps::ext::Module> module_,
+         Index<runir::kr::ps::ext::Module> module_index,
          Index<runir::kr::ps::ext::MemoryState> memory_state_,
          Index<runir::kr::dl::semantics::RegisterValues> registers_,
          Index<runir::kr::dl::semantics::CallArguments> arguments_) noexcept :
         state(state_),
-        module(module_),
+        module_(module_index),
         memory_state(memory_state_),
         registers(registers_),
         arguments(arguments_)
@@ -48,33 +48,33 @@ struct Data<runir::kr::ps::ext::ModuleState<Kind>>
     {
         ygg::clear(index);
         ygg::clear(state);
-        ygg::clear(module);
+        ygg::clear(module_);
         ygg::clear(memory_state);
         ygg::clear(registers);
         ygg::clear(arguments);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, state, module, memory_state, registers, arguments); }
-    auto identifying_members() const noexcept { return std::tie(state, module, memory_state, registers, arguments); }
+    auto cista_members() const noexcept { return std::tie(index, state, module_, memory_state, registers, arguments); }
+    auto identifying_members() const noexcept { return std::tie(state, module_, memory_state, registers, arguments); }
 };
 
 template<>
 struct Data<runir::kr::ps::ext::CallStack>
 {
     Index<runir::kr::ps::ext::CallStack> index;
-    Index<runir::kr::ps::ext::Module> module;
+    Index<runir::kr::ps::ext::Module> module_;
     Index<runir::kr::ps::ext::MemoryState> return_memory_state;
     Index<runir::kr::dl::semantics::RegisterValues> registers;
     Index<runir::kr::dl::semantics::CallArguments> arguments;
     ::cista::optional<Index<runir::kr::ps::ext::CallStack>> caller;
 
     Data() = default;
-    Data(Index<runir::kr::ps::ext::Module> module_,
+    Data(Index<runir::kr::ps::ext::Module> module_index,
          Index<runir::kr::ps::ext::MemoryState> return_memory_state_,
          Index<runir::kr::dl::semantics::RegisterValues> registers_,
          Index<runir::kr::dl::semantics::CallArguments> arguments_,
          ::cista::optional<Index<runir::kr::ps::ext::CallStack>> caller_ = {}) noexcept :
-        module(module_),
+        module_(module_index),
         return_memory_state(return_memory_state_),
         registers(registers_),
         arguments(arguments_),
@@ -85,15 +85,15 @@ struct Data<runir::kr::ps::ext::CallStack>
     void clear() noexcept
     {
         ygg::clear(index);
-        ygg::clear(module);
+        ygg::clear(module_);
         ygg::clear(return_memory_state);
         ygg::clear(registers);
         ygg::clear(arguments);
         ygg::clear(caller);
     }
 
-    auto cista_members() const noexcept { return std::tie(index, module, return_memory_state, registers, arguments, caller); }
-    auto identifying_members() const noexcept { return std::tie(module, return_memory_state, registers, arguments, caller); }
+    auto cista_members() const noexcept { return std::tie(index, module_, return_memory_state, registers, arguments, caller); }
+    auto identifying_members() const noexcept { return std::tie(module_, return_memory_state, registers, arguments, caller); }
 };
 
 template<tyr::TaskKind Kind>

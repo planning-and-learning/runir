@@ -94,10 +94,12 @@ Query evaluation still materializes the selected relation.
 `statistics.num_generated` counts emitted extended successors, including caller
 returns and attempted Choose bindings. Rejected planning candidates, failure
 markers, and unattempted Choose bindings do not contribute. The search owns
-`num_expanded`; each program state is expanded at most once per search, and direct
-expander calls do not increment it. Arrivals at an already discovered state retain
-their diagnostic edges without repeating expansion. Choose cursors iterate independently;
-no state discovery or first predecessor is undone when another binding is tried.
+`num_expanded`; direct expander calls do not increment it. The default
+`StateMemorization.ALL` expands each program state at most once and retains every
+diagnostic edge. `NONE` and `CHOICE` can repeat non-memoized states and return only
+the selected solution or diagnostic path, materialized after search. See
+[state memorization and returned paths](proof-search.md#state-memorization-and-returned-paths)
+for the storage and state-limit contract. Choose cursors iterate independently.
 
 `statistics.choice_depth` counts non-singleton Choose bindings on the first
 discovered goal's predecessor path, and is zero unless the search succeeds.

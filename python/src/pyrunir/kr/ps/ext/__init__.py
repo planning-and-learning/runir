@@ -84,6 +84,7 @@ from ...._pyrunir.kr.ps.ext import (
     SketchRule,
     SketchRuleData,
     SketchRuleIndex,
+    StateMemorization,
     evaluate,
     find_ground_solution,
     find_lifted_solution,

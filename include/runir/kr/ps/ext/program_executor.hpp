@@ -10,24 +10,22 @@ namespace runir::kr::ps::ext
 /// Execute greedily, or require all ordinary continuations when options.universal is true.
 /// Requires whole-program structural termination; throws std::invalid_argument otherwise.
 /// Every selected Choose rule needs one successful binding; distinct Choose rules remain separate obligations.
-/// Each program state is expanded at most once, and limits count work across all attempted bindings.
-/// The returned graph includes rejected branches; only successful non-universal searches return a plan.
+/// ALL memoizes every state and returns the full explored graph, including rejected branches.
+/// NONE and CHOICE return only a selected solution or diagnostic path; they never retain the full graph.
+/// Materializing that returned path is separate from search memorization. Unmemorized states may be expanded again.
+/// Limits count work across attempted bindings; only successful non-universal searches return a plan.
 template<tyr::TaskKind Kind>
-auto find_solution(runir::kr::TaskContextPtr<Kind> task_context,
-                   ProgramView program,
-                   const ProgramSearchOptions<Kind>& options) -> ProgramProofResults<Kind>;
+auto find_solution(runir::kr::TaskContextPtr<Kind> task_context, ProgramView program, const ProgramSearchOptions<Kind>& options) -> ProgramProofResults<Kind>;
 
 #ifndef RUNIR_HEADER_INSTANTIATION
 
 extern template auto find_solution<tyr::GroundTag>(runir::kr::TaskContextPtr<tyr::GroundTag> task_context,
-                                                             ProgramView program,
-                                                             const ProgramSearchOptions<tyr::GroundTag>& options)
-    -> ProgramProofResults<tyr::GroundTag>;
+                                                   ProgramView program,
+                                                   const ProgramSearchOptions<tyr::GroundTag>& options) -> ProgramProofResults<tyr::GroundTag>;
 
 extern template auto find_solution<tyr::LiftedTag>(runir::kr::TaskContextPtr<tyr::LiftedTag> task_context,
-                                                             ProgramView program,
-                                                             const ProgramSearchOptions<tyr::LiftedTag>& options)
-    -> ProgramProofResults<tyr::LiftedTag>;
+                                                   ProgramView program,
+                                                   const ProgramSearchOptions<tyr::LiftedTag>& options) -> ProgramProofResults<tyr::LiftedTag>;
 
 #endif
 

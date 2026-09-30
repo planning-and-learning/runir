@@ -5,6 +5,7 @@
 #include "runir/kr/ps/ext/detail/predecessors.hpp"
 #include "runir/kr/ps/ext/program_executor_data.hpp"
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -65,6 +66,41 @@ void build_proof_graph(ProgramProofResults<Kind>& result,
     }
     result.graph = std::make_shared<ProgramProofGraph<Kind>>(std::span<const VertexLabel>(vertices), std::span<const Edge>(edges));
     result.cycle = graphs::find_cycle(*result.graph);
+}
+
+/// Materialize only a selected reached path; it is diagnostic, not a complete AND/OR proof.
+template<tyr::TaskKind Kind, typename Expander, typename PathPtr>
+void build_witness_graph(ProgramProofResults<Kind>& result, Expander& expander, PathPtr witness)
+{
+    auto path = std::vector<PathPtr> {};
+    for (auto current = witness; current; current = current->parent)
+        path.push_back(current);
+    std::ranges::reverse(path);
+    using Vertex = ProgramProofVertexLabel<Kind>;
+    using Edge = std::tuple<graphs::VertexIndex, graphs::VertexIndex, ProgramProofEdgeLabel>;
+    auto vertices = std::vector<Vertex> {};
+    auto edges = std::vector<Edge> {};
+    vertices.reserve(path.size());
+    for (std::size_t i = 0; i < path.size(); ++i)
+    {
+        const auto& entry = *path[i];
+        const auto index = static_cast<graphs::VertexIndex>(i);
+        vertices.emplace_back(expander.materialize(*entry.state), i == 0, entry.is_goal, !entry.is_unsolvable, entry.is_unsolvable);
+        if (entry.is_deadend)
+            result.deadend_states.push_back(index);
+        if (entry.is_open)
+            result.open_states.push_back(index);
+        if (i)
+        {
+            auto label = ProgramProofEdgeLabel {};
+            if (entry.transition)
+                label.action = entry.transition->action;
+            if (entry.rule)
+                label.rule = *entry.rule;
+            edges.emplace_back(index - 1, index, std::move(label));
+        }
+    }
+    result.graph = std::make_shared<ProgramProofGraph<Kind>>(std::span<const Vertex>(vertices), std::span<const Edge>(edges));
 }
 
 }  // namespace runir::kr::ps::ext::detail

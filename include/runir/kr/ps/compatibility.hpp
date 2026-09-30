@@ -11,44 +11,44 @@
 namespace runir::kr::ps
 {
 
-template<runir::kr::FamilyTag Family, typename LanguageTag, typename C, tyr::TaskKind Kind>
+template<runir::kr::FamilyTag Family,
+         typename LanguageTag,
+         typename C,
+         runir::kr::dl::semantics::StateEvaluationContextConcept<typename PsFamilyTraits<Family>::DlFamily> Context>
     requires std::same_as<LanguageTag, runir::kr::DlTag>
-bool is_compatible_with(ygg::View<ygg::Index<ConcreteConditionVariant<Family, LanguageTag>>, C> condition,
-                        runir::kr::dl::semantics::StateEvaluationContext<typename PsFamilyTraits<Family>::DlFamily, Kind>& context)
+bool is_compatible_with(ygg::View<ygg::Index<ConcreteConditionVariant<Family, LanguageTag>>, C> condition, Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::is_compatible_with(child, context); }, condition.get_variant());
 }
 
-template<runir::kr::FamilyTag Family, typename C, tyr::TaskKind Kind>
-bool is_compatible_with(ygg::View<ygg::Index<ConditionVariant<Family>>, C> condition,
-                        runir::kr::dl::semantics::StateEvaluationContext<typename PsFamilyTraits<Family>::DlFamily, Kind>& context)
+template<runir::kr::FamilyTag Family, typename C, runir::kr::dl::semantics::StateEvaluationContextConcept<typename PsFamilyTraits<Family>::DlFamily> Context>
+bool is_compatible_with(ygg::View<ygg::Index<ConditionVariant<Family>>, C> condition, Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::is_compatible_with(child, context); }, condition.get_variant());
 }
 
-template<runir::kr::FamilyTag Family, typename LanguageTag, typename C, tyr::TaskKind Kind>
+template<runir::kr::FamilyTag Family, typename LanguageTag, typename C, runir::kr::ps::dl::TransitionEvaluationContextConcept<Family> Context>
     requires std::same_as<LanguageTag, runir::kr::DlTag>
-bool is_compatible_with(ygg::View<ygg::Index<ConcreteConditionVariant<Family, LanguageTag>>, C> condition,
-                        dl::TransitionEvaluationContext<Family, Kind>& context)
+bool is_compatible_with(ygg::View<ygg::Index<ConcreteConditionVariant<Family, LanguageTag>>, C> condition, Context& context)
 {
     return is_compatible_with(condition, context.get_source_context());
 }
 
-template<runir::kr::FamilyTag Family, typename C, tyr::TaskKind Kind>
-bool is_compatible_with(ygg::View<ygg::Index<ConditionVariant<Family>>, C> condition, dl::TransitionEvaluationContext<Family, Kind>& context)
+template<runir::kr::FamilyTag Family, typename C, runir::kr::ps::dl::TransitionEvaluationContextConcept<Family> Context>
+bool is_compatible_with(ygg::View<ygg::Index<ConditionVariant<Family>>, C> condition, Context& context)
 {
     return is_compatible_with(condition, context.get_source_context());
 }
 
-template<runir::kr::FamilyTag Family, typename LanguageTag, typename C, tyr::TaskKind Kind>
+template<runir::kr::FamilyTag Family, typename LanguageTag, typename C, runir::kr::ps::dl::TransitionEvaluationContextConcept<Family> Context>
     requires std::same_as<LanguageTag, runir::kr::DlTag>
-bool is_compatible_with(ygg::View<ygg::Index<ConcreteEffectVariant<Family, LanguageTag>>, C> effect, dl::TransitionEvaluationContext<Family, Kind>& context)
+bool is_compatible_with(ygg::View<ygg::Index<ConcreteEffectVariant<Family, LanguageTag>>, C> effect, Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::is_compatible_with(child, context); }, effect.get_variant());
 }
 
-template<runir::kr::FamilyTag Family, typename C, tyr::TaskKind Kind>
-bool is_compatible_with(ygg::View<ygg::Index<EffectVariant<Family>>, C> effect, dl::TransitionEvaluationContext<Family, Kind>& context)
+template<runir::kr::FamilyTag Family, typename C, runir::kr::ps::dl::TransitionEvaluationContextConcept<Family> Context>
+bool is_compatible_with(ygg::View<ygg::Index<EffectVariant<Family>>, C> effect, Context& context)
 {
     return ygg::visit([&](auto child) { return runir::kr::ps::is_compatible_with(child, context); }, effect.get_variant());
 }

@@ -11,9 +11,11 @@
 namespace runir::kr::ps
 {
 
-template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C, tyr::TaskKind Kind>
-auto evaluate(ygg::View<ygg::Index<Feature<Family, FeatureTag>>, C> feature,
-              runir::kr::dl::semantics::StateEvaluationContext<typename PsFamilyTraits<Family>::DlFamily, Kind>& context)
+template<runir::kr::FamilyTag Family,
+         runir::kr::ps::dl::FeatureTag FeatureTag,
+         typename C,
+         runir::kr::dl::semantics::StateEvaluationContextConcept<typename PsFamilyTraits<Family>::DlFamily> Context>
+auto evaluate(ygg::View<ygg::Index<Feature<Family, FeatureTag>>, C> feature, Context& context)
 {
     return ygg::visit([&](auto child) { return evaluate(child, context); }, feature.get_variant());
 }

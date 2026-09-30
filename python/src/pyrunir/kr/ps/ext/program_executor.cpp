@@ -89,7 +89,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using Step = detail::ProgramStep<Kind>;
     using Expander = SuccessorExpander<Kind>;
     using Environment = EvaluationEnvironment<Kind>;
-    using Expansion = typename Expander::Expansion;
+    using Expansion = std::variant<Step, detail::Choice<runir::kr::dl::ConceptTag>, detail::Choice<runir::kr::dl::RoleTag>>;
 
     nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
     nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
@@ -175,7 +175,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def_rw("universal", &Options::universal)
         .def_rw("classifier", &Options::classifier, nb::for_setter(nb::keep_alive<1, 2>()))
         .def_rw("max_num_states", &Options::max_num_states)
-        .def_rw("max_time", &Options::max_time);
+        .def_rw("max_time", &Options::max_time)
+        .def_rw("state_memorization", &Options::state_memorization);
 
     nb::class_<Step>(m, (std::string(prefix) + "ProgramExecutionStep").c_str())
         .def_prop_ro("status", &Step::get_status_name)
@@ -193,14 +194,25 @@ void bind_execution_types(nb::module_& m, const char* prefix)
                StateView state,
                ProgramSearchStatistics& statistics,
                const std::function<bool(Expansion)>& emit,
-               const std::function<bool()>& stop)
-            { return self.for_each_successor(state, statistics, emit, stop); },
+               const std::function<bool()>& stop) { return self.for_each_successor(state, statistics, emit, stop); },
             "state"_a,
             "statistics"_a,
             "emit"_a,
             "stop"_a)
-        .def("apply_choice", &Expander::template apply_choice<runir::kr::dl::ConceptTag>, "state"_a, "choice"_a, "statistics"_a)
-        .def("apply_choice", &Expander::template apply_choice<runir::kr::dl::RoleTag>, "state"_a, "choice"_a, "statistics"_a)
+        .def(
+            "apply_choice",
+            [](Expander& self, StateView state, const detail::Choice<runir::kr::dl::ConceptTag>& choice, ProgramSearchStatistics& statistics)
+            { return self.apply_choice(state, choice, statistics); },
+            "state"_a,
+            "choice"_a,
+            "statistics"_a)
+        .def(
+            "apply_choice",
+            [](Expander& self, StateView state, const detail::Choice<runir::kr::dl::RoleTag>& choice, ProgramSearchStatistics& statistics)
+            { return self.apply_choice(state, choice, statistics); },
+            "state"_a,
+            "choice"_a,
+            "statistics"_a)
         .def("matching_rule", &Expander::matching_rule, "state"_a, "successor"_a, nb::keep_alive<0, 1>())
         .def("apply", &Expander::apply, "state"_a, "rule"_a, "successor"_a = std::nullopt);
 }
@@ -210,6 +222,11 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 void bind_program_executor(nb::module_& m)
 {
     nb::exception<ActionRuleContractError>(m, "ActionRuleContractError", PyExc_RuntimeError);
+
+    nb::enum_<StateMemorization>(m, "StateMemorization")
+        .value("NONE", StateMemorization::NONE)
+        .value("CHOICE", StateMemorization::CHOICE)
+        .value("ALL", StateMemorization::ALL);
 
     bind_choice<runir::kr::dl::ConceptTag>(m, "ConceptChoice");
     bind_choice<runir::kr::dl::RoleTag>(m, "RoleChoice");

@@ -5,15 +5,29 @@
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/family_traits.hpp"
 
+#include <type_traits>
 #include <utility>
 
 namespace runir::kr::ps::dl
 {
 
+template<typename Context, typename Family = typename Context::FamilyType>
+concept TransitionEvaluationContextConcept = runir::kr::FamilyTag<Family> && requires(Context& context) {
+    requires std::same_as<typename Context::FamilyType, Family>;
+    requires runir::kr::dl::semantics::StateEvaluationContextConcept<std::remove_cvref_t<decltype(context.get_source_context())>,
+                                                                     typename PsFamilyTraits<Family>::DlFamily>;
+    requires runir::kr::dl::semantics::StateEvaluationContextConcept<std::remove_cvref_t<decltype(context.get_target_context())>,
+                                                                     typename PsFamilyTraits<Family>::DlFamily>;
+    requires std::same_as<typename std::remove_cvref_t<decltype(context.get_source_context())>::KindType,
+                          typename std::remove_cvref_t<decltype(context.get_target_context())>::KindType>;
+};
+
 template<runir::kr::FamilyTag Family, tyr::TaskKind Kind>
 class TransitionEvaluationContext
 {
 public:
+    using FamilyType = Family;
+    using KindType = Kind;
     using DlFamily = typename PsFamilyTraits<Family>::DlFamily;
     using DlContext = runir::kr::dl::semantics::StateEvaluationContext<DlFamily, Kind>;
 

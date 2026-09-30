@@ -18,9 +18,9 @@ template<runir::kr::FamilyTag Family,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag,
          typename C,
-         tyr::TaskKind Kind>
+         runir::kr::dl::semantics::StateEvaluationContextConcept<typename PsFamilyTraits<Family>::DlFamily> Context>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
-                        runir::kr::dl::semantics::StateEvaluationContext<typename PsFamilyTraits<Family>::DlFamily, Kind>& context)
+                        Context& context)
 {
     const auto value = runir::kr::ps::evaluate(condition.get_feature(), context).get();
     if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature> && std::same_as<ObservationTag, runir::kr::ps::dl::Positive>)
@@ -37,9 +37,9 @@ template<runir::kr::FamilyTag Family,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag,
          typename C,
-         tyr::TaskKind Kind>
+         runir::kr::ps::dl::TransitionEvaluationContextConcept<Family> Context>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
-                        runir::kr::ps::dl::TransitionEvaluationContext<Family, Kind>& context)
+                        Context& context)
 {
     return is_compatible_with(condition, context.get_source_context());
 }
@@ -48,9 +48,8 @@ template<runir::kr::FamilyTag Family,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          runir::kr::ps::dl::EffectObservationTag<FeatureTag> ObservationTag,
          typename C,
-         tyr::TaskKind Kind>
-bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> effect,
-                        runir::kr::ps::dl::TransitionEvaluationContext<Family, Kind>& context)
+         runir::kr::ps::dl::TransitionEvaluationContextConcept<Family> Context>
+bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> effect, Context& context)
 {
     const auto target = runir::kr::ps::evaluate(effect.get_feature(), context.get_target_context()).get();
 

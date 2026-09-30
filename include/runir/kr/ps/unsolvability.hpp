@@ -10,8 +10,8 @@ namespace runir::kr::ps
 
 struct NoUnsolvability
 {
-    template<tyr::TaskKind Kind>
-    bool is_unsolvable(const tyr::planning::StateView<Kind>&) const noexcept
+    template<tyr::planning::StateViewConcept State>
+    bool is_unsolvable(const State&) const noexcept
     {
         return false;
     }
@@ -33,14 +33,15 @@ public:
     {
     }
 
-    bool is_unsolvable(const tyr::planning::StateView<Kind>& state)
+    template<tyr::planning::StateViewConcept<Kind> State>
+    bool is_unsolvable(const State& state)
     {
         m_caches.clear(false);
-        auto context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, Kind>(state,
-                                                                                                       m_task_context.dl_builder,
-                                                                                                       *m_task_context.dl_denotation_repository,
-                                                                                                       m_task_context.dl_builder.get_workspace(),
-                                                                                                       m_caches);
+        auto context = runir::kr::dl::semantics::BaseStateEvaluationContext<runir::kr::UnsFamilyTag, Kind, State>(state,
+                                                                                                                  m_task_context.dl_builder,
+                                                                                                                  *m_task_context.dl_denotation_repository,
+                                                                                                                  m_task_context.dl_builder.get_workspace(),
+                                                                                                                  m_caches);
         return runir::kr::uns::classify(m_classifier, context);
     }
 };

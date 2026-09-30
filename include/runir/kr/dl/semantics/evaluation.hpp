@@ -32,58 +32,57 @@
 namespace runir::kr::dl::semantics
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind, typename C>
-auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, StateEvaluationContext<Family, Kind>& context) -> ygg::database::RelationView<>;
+template<FamilyTag Family, StateEvaluationContextConcept<Family> Context, typename C>
+auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, Context& context) -> ygg::database::RelationView<>;
 
-template<FamilyTag Family, ConceptOrRoleTag Category, tyr::TaskKind Kind, typename C>
+template<FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor,
-                   StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>;
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>;
 
-template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind>
-auto evaluate_impl(FamilyConstructorView<Family, Category> constructor,
-                   StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>;
+template<FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family> Context>
+auto evaluate_impl(FamilyConstructorView<Family, Category> constructor, Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>;
 
-template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyConceptConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> constructor,
-                   StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<ConceptTag>>>;
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<ConceptTag>>>;
 
-template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyRoleConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor,
-                   StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<RoleTag>>>;
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<RoleTag>>>;
 
-template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyBooleanConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> constructor,
-                   StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<BooleanTag>>>;
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<BooleanTag>>>;
 
-template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyNumericalConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constructor,
-                   StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<NumericalTag>>>;
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<NumericalTag>>>;
 
-template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind>
-auto evaluate(FamilyConstructorView<Family, Category> constructor, StateEvaluationContext<Family, Kind>& context) -> DenotationView<Category>;
+template<FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family> Context>
+auto evaluate(FamilyConstructorView<Family, Category> constructor, Context& context) -> DenotationView<Category>;
 
 namespace detail
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind>
-auto num_objects(const StateEvaluationContext<Family, Kind>& context) noexcept -> ygg::uint_t
+template<StateEvaluationContextConcept Context>
+auto num_objects(const Context& context) noexcept -> ygg::uint_t
 {
-    const auto task = context.get_state().get_state_repository()->get_task()->get_task();
+    const auto task = context.get_state().get_task().get_task();
     return static_cast<ygg::uint_t>(task.get_domain().get_constants().size() + task.get_objects().size());
 }
 
-template<FamilyTag Family, tyr::TaskKind Kind>
-auto make_concept_builder(StateEvaluationContext<Family, Kind>& context)
+template<StateEvaluationContextConcept Context>
+auto make_concept_builder(Context& context)
 {
     return context.get_builder().template get_builder<Denotation<ConceptTag>>(num_objects(context));
 }
 
-template<FamilyTag Family, tyr::TaskKind Kind>
-auto make_role_builder(StateEvaluationContext<Family, Kind>& context)
+template<StateEvaluationContextConcept Context>
+auto make_role_builder(Context& context)
 {
     return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects(context));
 }
@@ -102,40 +101,38 @@ auto materialize_denotation(ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Cat
     return interned;
 }
 
-template<FamilyTag Family, tyr::TaskKind Kind, typename F>
-void for_each_current_atom(StateEvaluationContext<Family, Kind>& context, std::type_identity<tyr::formalism::StaticTag>, F&& f)
+template<StateEvaluationContextConcept Context, typename F>
+void for_each_current_atom(Context& context, std::type_identity<tyr::formalism::StaticTag>, F&& f)
 {
     for (auto atom : context.get_state().get_static_atoms_view())
         std::forward<F>(f)(atom);
 }
 
-template<FamilyTag Family, tyr::TaskKind Kind, typename F>
-void for_each_current_atom(StateEvaluationContext<Family, Kind>& context, std::type_identity<tyr::formalism::FluentTag>, F&& f)
+template<StateEvaluationContextConcept Context, typename F>
+void for_each_current_atom(Context& context, std::type_identity<tyr::formalism::FluentTag>, F&& f)
 {
     for (auto fact : context.get_state().get_fluent_facts_view())
         if (auto atom = fact.get_atom())
             std::forward<F>(f)(*atom);
 }
 
-template<FamilyTag Family, tyr::TaskKind Kind, typename F>
-void for_each_current_atom(StateEvaluationContext<Family, Kind>& context, std::type_identity<tyr::formalism::DerivedTag>, F&& f)
+template<StateEvaluationContextConcept Context, typename F>
+void for_each_current_atom(Context& context, std::type_identity<tyr::formalism::DerivedTag>, F&& f)
 {
     for (auto atom : context.get_state().get_derived_atoms_view())
         std::forward<F>(f)(atom);
 }
 
-template<tyr::formalism::FactKind T, FamilyTag Family, tyr::TaskKind Kind, typename F>
-void for_each_current_atom(StateEvaluationContext<Family, Kind>& context, F&& f)
+template<tyr::formalism::FactKind T, StateEvaluationContextConcept Context, typename F>
+void for_each_current_atom(Context& context, F&& f)
 {
     for_each_current_atom(context, std::type_identity<T> {}, std::forward<F>(f));
 }
 
-template<tyr::formalism::FactKind T, FamilyTag Family, tyr::TaskKind Kind>
-void for_each_goal_atom(StateEvaluationContext<Family, Kind>& context,
-                        bool polarity,
-                        std::invocable<tyr::formalism::planning::AtomView<::tyr::GroundTag, T>> auto&& f)
+template<tyr::formalism::FactKind T, StateEvaluationContextConcept Context>
+void for_each_goal_atom(Context& context, bool polarity, std::invocable<tyr::formalism::planning::AtomView<::tyr::GroundTag, T>> auto&& f)
 {
-    const auto goal = context.get_state().get_state_repository()->get_task()->get_task().get_goal();
+    const auto goal = context.get_state().get_task().get_task().get_goal();
     if constexpr (std::same_as<T, tyr::formalism::FluentTag>)
     {
         const auto facts = polarity ? goal.template get_facts<tyr::formalism::PositiveTag>() : goal.template get_facts<tyr::formalism::NegativeTag>();
@@ -157,8 +154,8 @@ auto object_index(tyr::formalism::planning::AtomView<::tyr::GroundTag, T> atom, 
     return atom.get_row().get_objects()[position].get_index();
 }
 
-template<FamilyTag Family, tyr::formalism::FactKind T, tyr::TaskKind Kind, typename C>
-auto evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<Family, AtomicStateTag<T>>>, C> constructor, StateEvaluationContext<Family, Kind>& context)
+template<FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family> Context, typename C>
+auto evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<Family, AtomicStateTag<T>>>, C> constructor, Context& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
@@ -181,8 +178,8 @@ auto evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<Family, At
     return result;
 }
 
-template<FamilyTag Family, tyr::formalism::FactKind T, tyr::TaskKind Kind, typename C>
-auto evaluate_atomic_goal_concept(ygg::View<ygg::Index<FamilyConcept<Family, AtomicGoalTag<T>>>, C> constructor, StateEvaluationContext<Family, Kind>& context)
+template<FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family> Context, typename C>
+auto evaluate_atomic_goal_concept(ygg::View<ygg::Index<FamilyConcept<Family, AtomicGoalTag<T>>>, C> constructor, Context& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
@@ -203,8 +200,8 @@ auto evaluate_atomic_goal_concept(ygg::View<ygg::Index<FamilyConcept<Family, Ato
     return result;
 }
 
-template<FamilyTag Family, tyr::formalism::FactKind T, tyr::TaskKind Kind, typename C>
-auto evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicStateTag<T>>>, C> constructor, StateEvaluationContext<Family, Kind>& context)
+template<FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family> Context, typename C>
+auto evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicStateTag<T>>>, C> constructor, Context& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
@@ -229,8 +226,8 @@ auto evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicSt
     return result;
 }
 
-template<FamilyTag Family, tyr::formalism::FactKind T, tyr::TaskKind Kind, typename C>
-auto evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicGoalTag<T>>>, C> constructor, StateEvaluationContext<Family, Kind>& context)
+template<FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family> Context, typename C>
+auto evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicGoalTag<T>>>, C> constructor, Context& context)
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
@@ -252,8 +249,8 @@ auto evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicGoa
     return result;
 }
 
-template<FamilyTag Family, tyr::formalism::FactKind T, tyr::TaskKind Kind, typename C>
-auto evaluate_atomic_state_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, AtomicStateTag<T>>>, C> constructor, StateEvaluationContext<Family, Kind>& context)
+template<FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family> Context, typename C>
+auto evaluate_atomic_state_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, AtomicStateTag<T>>>, C> constructor, Context& context)
 {
     bool value = false;
 
@@ -270,8 +267,8 @@ auto evaluate_atomic_state_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, At
     return context.get_builder().template get_builder<Denotation<BooleanTag>>(value);
 }
 
-template<FamilyTag Family, tyr::formalism::FactKind T, tyr::TaskKind Kind, typename C>
-auto evaluate_atomic_goal_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, AtomicGoalTag<T>>>, C> constructor, StateEvaluationContext<Family, Kind>& context)
+template<FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family> Context, typename C>
+auto evaluate_atomic_goal_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, AtomicGoalTag<T>>>, C> constructor, Context& context)
 {
     bool value = false;
 
@@ -368,10 +365,10 @@ constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) n
 
 }  // namespace detail
 
-template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyConceptConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> constructor,
-                   StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<ConceptTag>>>
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<ConceptTag>>>
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
@@ -556,10 +553,10 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
     return result;
 }
 
-template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyRoleConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor,
-                   StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<RoleTag>>>
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<RoleTag>>>
 {
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
@@ -687,10 +684,10 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     return result;
 }
 
-template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyBooleanConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> constructor,
-                   StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<BooleanTag>>>
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<BooleanTag>>>
 {
     if constexpr (is_atomic_state_tag_v<Tag>)
     {
@@ -736,10 +733,10 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
     }
 }
 
-template<FamilyTag Family, typename Tag, tyr::TaskKind Kind, typename C>
+template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyNumericalConstructorTag<Family, Tag>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constructor,
-                   StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<NumericalTag>>>
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<NumericalTag>>>
 {
     ygg::uint_t result_value = 0;
 
@@ -823,17 +820,14 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
     return result;
 }
 
-template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind>
-auto evaluate_impl(FamilyConstructorView<Family, Category> constructor,
-                   StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>
+template<FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family> Context>
+auto evaluate_impl(FamilyConstructorView<Family, Category> constructor, Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>
 {
     return ygg::visit([&](auto child) { return evaluate_impl(child, context); }, constructor.get_variant());
 }
 
-template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind>
-auto evaluate(FamilyConstructorView<Family, Category> constructor,
-              StateEvaluationContext<Family, Kind>& context,
-              DenotationRepository& repository) -> DenotationView<Category>
+template<FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family> Context>
+auto evaluate(FamilyConstructorView<Family, Category> constructor, Context& context, DenotationRepository& repository) -> DenotationView<Category>
 {
     if (repository.get_formalism_repository_ptr() != context.get_denotation_repository().get_formalism_repository_ptr())
         throw std::invalid_argument("Denotations must be evaluated into a repository for the same planning task.");
@@ -843,8 +837,8 @@ auto evaluate(FamilyConstructorView<Family, Category> constructor,
     return detail::materialize_denotation<Category>(result, context.get_builder(), repository).first;
 }
 
-template<FamilyTag Family, CategoryTag Category, tyr::TaskKind Kind>
-auto evaluate(FamilyConstructorView<Family, Category> constructor, StateEvaluationContext<Family, Kind>& context) -> DenotationView<Category>
+template<FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family> Context>
+auto evaluate(FamilyConstructorView<Family, Category> constructor, Context& context) -> DenotationView<Category>
 {
     const auto is_static = constructor.is_static();
     auto& cache = context.get_caches().template get<Category>(is_static);

@@ -9,15 +9,59 @@ grounded and lifted execution, in both universal and nonuniversal modes.
 With this precondition, concrete execution has no cycles and results can be
 computed directly in depth-first postorder:
 
-- [`depth_first_search`](../include/runir/kr/ps/ext/detail/proof_search.hpp) evaluates each admitted program state once and advances lazy Choose cursors.
-- [`ExecutionState`](../include/runir/kr/ps/ext/detail/execution_state.hpp) records transitions, first parents, limits and statistics.
+- One [`depth_first_search`](../include/runir/kr/ps/ext/detail/proof_search.hpp) evaluates the same AND/OR obligations in every mode.
+- [`InternedSearchStorage` and `TransientSearchStorage`](../include/runir/kr/ps/ext/detail/search_storage.hpp) control admission, memoization and retained transitions.
+- Pooled [`SearchPath`](../include/runir/kr/ps/ext/detail/search_path.hpp) records retain active prefixes and selected witnesses; released paths return their storage to the pool.
 
-The diagnostic graph and optional plan are constructed afterward. The graph
-retains failed alternatives, which do not invalidate a successful Choose.
-Planning states, program states and completed search results remain interned;
-shared continuations reuse their completed success or failure.
+The diagnostic graph and optional plan are constructed afterward. Their retained
+states depend on the selected memorization mode below. Failed alternatives do
+not invalidate a successful Choose.
 
-[`Predecessors`](../include/runir/kr/ps/ext/detail/predecessors.hpp) owns the append-only transition records. Its typed `EdgeId` identifies an edge independently of vector reallocations. An expansion records its ordinary transitions consecutively before descending. Each DFS frame walks that interval in reverse using `EdgeId` boundaries, preserving the existing traversal order without a separate outgoing-edge index.
+In `ALL` mode, [`Predecessors`](../include/runir/kr/ps/ext/detail/predecessors.hpp)
+is an append-only vector of admitted transitions, including parallel edges.
+The shared DFS enumerates an expansion before descending, then processes ordinary
+successors and Choose obligations in reverse order. Storage policies preserve
+`ALL`'s first-parent plan reconstruction without a separate traversal algorithm.
+
+## State memorization and returned paths
+
+`ProgramSearchOptions.state_memorization` controls reuse of completed search
+results. It defaults to `StateMemorization.ALL`, preserving the existing behavior.
+
+| Mode | States memoized during search | Returned graph |
+| --- | --- | --- |
+| `NONE` | None; a shared continuation can be evaluated again. | Only the selected solution or diagnostic path. |
+| `CHOICE` | Source states with admitted Choose obligations, including singleton and empty choices. | Only the selected solution or diagnostic path. |
+| `ALL` | Every admitted program state; shared continuations reuse their completed result. | The full explored graph, including failed alternatives and repeated transitions. |
+
+In `CHOICE`, the memoized result belongs to the source state's **combined**
+obligations. It includes every required ordinary successor and every selected
+Choose rule; satisfying one Choose does not satisfy its siblings. The modes do
+not change the AND/OR semantics or eliminate the active state and control data
+needed for execution and backtracking.
+
+`NONE` and `CHOICE` materialize the selected returned path after search. Its states
+are retained so graph labels and a returned plan remain valid after search-local
+builders are released. This final witness storage is separate from memoizing
+states during search: selecting `NONE` does not mean that the result contains no
+states. Tyr also registers the initial planning seed for goal checks and plan
+reconstruction, even with a zero state budget; this is not a search memo entry,
+and reduced-mode successors stay pooled until the selected path is materialized.
+Only successful nonuniversal execution returns a plan; universal success
+and failures can still return a diagnostic graph.
+
+On failure, the reduced graph contains one failing path that execution actually
+reached. This can be a rejected Choose binding, even when another binding later
+satisfied that particular Choose. The graph is a diagnostic example: it does not
+show that every alternative failed, or record all obligations of a universal
+search. The result status reports the outcome of the whole search. Failure
+suffixes are not retained in the memo table or reconstructed from cached results.
+
+```python
+options = ext.LiftedProgramSearchOptions()
+options.state_memorization = ext.StateMemorization.CHOICE
+result = ext.find_lifted_solution(task_context, program, options)
+```
 
 ## AND/OR semantics
 
@@ -34,26 +78,39 @@ With `universal=false`, enumeration retains the first ordinary outcome or select
 
 ## Depth-first evaluation
 
-Each DFS frame remembers its pending child and whether all ordinary successors
-have succeeded. A failed Choose binding advances the same cursor; a successful
-binding completes that Choose without trying the remaining alternatives. Every
-selected Choose must succeed. Empty choices, local failures and failed ordinary
-successors make their state fail.
+DFS frames are small values in one stack vector: a pooled path handle, offsets
+into shared pending-successor and choice buffers, and two result flags. Frames
+own no vectors and are not individually allocated. Children append to the shared
+buffers and consume their entries before returning, preserving pending siblings.
+The next path is processed before returning to its parent frame.
+
+A failed Choose binding advances the same cursor; a successful binding completes
+that Choose without trying the remaining alternatives. Every selected Choose
+must succeed. Empty choices, local failures and failed ordinary successors make
+their state fail.
 
 Once its children and choices finish, the state receives its final success or
-failure. An already completed state is reused immediately. Structural termination
+failure. A memoized completed state is reused immediately. Structural termination
 excludes dependencies on an active ancestor, so there is no success queue,
 reverse-dependency storage or fixed-point propagation.
 
 Time or state exhaustion returns a resource-limit status, not failure.
-First-parent plan reconstruction and choice-depth accounting remain unchanged.
-For `V` indexed state slots, `E` recorded transitions and `C` attempted Choose
+`max_num_states` counts distinct admitted states in `ALL`, and admitted state
+occurrences in `NONE` and `CHOICE`. It is a search-work budget, not a bound on
+simultaneously retained memory. Repeated expansions in reduced modes contribute
+to `num_expanded` and repeated emitted successors contribute to `num_generated`;
+the counters include abandoned branches. Consequently a reduced mode can exhaust
+the same budget earlier than `ALL` on a graph with shared continuations.
+
+For `ALL`, with `V` indexed state slots, `E` recorded transitions and `C` attempted Choose
 obligations, evaluation uses `O(V + E + C)` time and storage, excluding structural
 analysis, successor generation and final graph/plan construction. A terminating
-program can still have exponentially many branching continuations.
+program can still have exponentially many branching continuations. Reduced modes
+trade less retained search data for possible recomputation; final witness storage
+also grows with the returned path.
 
 ## Choose ordering
 
-An optional trailing `(:order (min feature) (max feature) ...)` ranks admitted bindings lexicographically. Features are Boolean or numerical and are evaluated with the chosen register tentatively bound, after effect filtering. Ties retain denotation iteration order. The executor scores each candidate once per term, then sorts; it never evaluates features from the comparator. Unordered choices retain their lazy cursor.
+An optional trailing `(:order (min feature) (max feature) ...)` ranks admitted bindings lexicographically. Features are Boolean or numerical and are evaluated with the chosen register tentatively bound, after effect filtering. Ties retain denotation iteration order. The executor scores each candidate once per term, then sorts; it never evaluates features from the comparator. In `ALL`, unordered choices retain their lazy denotation cursor. `NONE` and `CHOICE` own a vector of admitted bindings so later evaluation cannot invalidate them; successor states are still constructed only for attempted bindings.
 
 Ranking does not prune bindings or change AND/OR obligations. Scoring does not increment generated-state statistics. Search time limits include ranking. Numerical constants and `n_add`, `n_sub`, `n_mul`, `n_div`, `n_min`, and `n_max` are available in Ext with the existing Uns arithmetic semantics.

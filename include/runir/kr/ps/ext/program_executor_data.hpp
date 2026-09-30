@@ -44,19 +44,29 @@ constexpr std::string_view to_string(ProgramProofStatus status)
     throw std::invalid_argument("invalid ProgramProofStatus");
 }
 
+/// Search-state memorization, independent of materializing the returned witness path.
+enum class StateMemorization
+{
+    NONE,    ///< Do not memoize completed program states.
+    CHOICE,  ///< Memoize source states with admitted Choose obligations, including singleton and empty choices.
+    ALL,     ///< Memoize every program state and retain the full explored graph.
+};
+
 template<tyr::TaskKind Kind>
 struct ProgramSearchOptions
 {
     bool universal = false;
     std::optional<runir::kr::uns::ClassifierView> classifier = std::nullopt;
+    /// Counts distinct admitted states in ALL, admitted state occurrences in NONE and CHOICE.
     ygg::uint_t max_num_states = std::numeric_limits<ygg::uint_t>::max();
     std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
+    StateMemorization state_memorization = StateMemorization::ALL;
 };
 
 struct ProgramSearchStatistics
 {
-    /// Distinct extended-state expansions started, including those yielding no successors.
-    /// Each program state is expanded at most once per search.
+    /// Extended-state expansions started, including those yielding no successors.
+    /// ALL expands each state at most once; NONE and CHOICE may repeat non-memoized states.
     uint64_t num_expanded = 0;
     /// Extended successors emitted before selection and duplicate detection; Choose emits only attempted bindings.
     /// Counts applied rules and caller returns, not rejected planning candidates or failure markers.
@@ -73,6 +83,8 @@ struct ProgramProofResults
 {
     ProgramProofStatus status = ProgramProofStatus::SUCCESS;
     runir::kr::TaskContextPtr<Kind> task_context_owner;
+    /// ALL retains every explored transition. NONE and CHOICE materialize only the selected
+    /// solution or diagnostic path after search, with owned states independent of search memorization.
     std::shared_ptr<ProgramProofGraph<Kind>> graph;
     std::optional<tyr::planning::PackedPlan<Kind>> plan = std::nullopt;
     runir::graphs::VertexIndexList deadend_states;

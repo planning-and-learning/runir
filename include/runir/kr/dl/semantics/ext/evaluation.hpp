@@ -14,9 +14,8 @@ namespace runir::kr::dl::semantics
 namespace detail
 {
 
-template<CategoryTag Category, tyr::TaskKind Kind>
-auto copy_argument_denotation(StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
-                              DenotationView<Category> view) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>
+template<CategoryTag Category, StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context>
+auto copy_argument_denotation(Context& context, const auto& view) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>
 {
     if constexpr (std::same_as<Category, BooleanTag> || std::same_as<Category, NumericalTag>)
     {
@@ -43,9 +42,9 @@ auto copy_argument_denotation(StateEvaluationContext<runir::kr::ExtFamilyTag, Ki
 
 }  // namespace detail
 
-template<tyr::TaskKind Kind, typename C>
+template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor,
-                   StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<ConceptTag>>>
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<ConceptTag>>>
 {
     auto result = detail::make_concept_builder(context);
     auto result_bitset = result->get();
@@ -57,9 +56,9 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, R
     return result;
 }
 
-template<tyr::TaskKind Kind, typename C>
+template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor,
-                   StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<RoleTag>>>
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<RoleTag>>>
 {
     auto result = detail::make_role_builder(context);
 
@@ -73,30 +72,30 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, Regi
     return result;
 }
 
-template<tyr::TaskKind Kind, typename C>
+template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, ArgumentTag<ConceptTag>>>, C> constructor,
-                   StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<ConceptTag>>>
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<ConceptTag>>>
 {
     return detail::copy_argument_denotation<ConceptTag>(context, context.arguments().at(constructor.get_argument().get_identifier()));
 }
 
-template<tyr::TaskKind Kind, typename C>
+template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, ArgumentTag<RoleTag>>>, C> constructor,
-                   StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<RoleTag>>>
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<RoleTag>>>
 {
     return detail::copy_argument_denotation<RoleTag>(context, context.arguments().at(constructor.get_argument().get_identifier()));
 }
 
-template<tyr::TaskKind Kind, typename C>
+template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<runir::kr::ExtFamilyTag, ArgumentTag<BooleanTag>>>, C> constructor,
-                   StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<BooleanTag>>>
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<BooleanTag>>>
 {
     return detail::copy_argument_denotation<BooleanTag>(context, context.arguments().at(constructor.get_argument().get_identifier()));
 }
 
-template<tyr::TaskKind Kind, typename C>
+template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<runir::kr::ExtFamilyTag, ArgumentTag<NumericalTag>>>, C> constructor,
-                   StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<NumericalTag>>>
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<NumericalTag>>>
 {
     return detail::copy_argument_denotation<NumericalTag>(context, context.arguments().at(constructor.get_argument().get_identifier()));
 }

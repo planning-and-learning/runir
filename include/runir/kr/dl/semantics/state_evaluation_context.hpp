@@ -8,6 +8,7 @@
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 
 #include <concepts>
+#include <type_traits>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/state_view.hpp>
 #include <utility>
@@ -15,18 +16,35 @@
 namespace runir::kr::dl::semantics
 {
 
-template<FamilyTag Family, tyr::TaskKind Kind>
+/// Evaluation reads state contents; it does not require registered state identity.
+template<typename Context, typename Family = typename Context::FamilyType>
+concept StateEvaluationContextConcept = FamilyTag<Family> && requires(Context& context, const Context& const_context) {
+    typename Context::KindType;
+    requires tyr::TaskKind<typename Context::KindType>;
+    requires std::same_as<typename Context::FamilyType, Family>;
+    requires tyr::planning::StateViewConcept<std::remove_cvref_t<decltype(const_context.get_state())>, typename Context::KindType>;
+    { context.get_builder() } -> std::same_as<Builder&>;
+    { context.get_denotation_repository() } -> std::same_as<DenotationRepository&>;
+    { context.get_workspace() } -> std::same_as<EvaluationWorkspace&>;
+    { context.get_caches() } -> std::same_as<DenotationCaches<Family>&>;
+};
+
+template<FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S = tyr::planning::StateView<Kind>>
 class BaseStateEvaluationContext
 {
 private:
-    tyr::planning::StateView<Kind> m_state;
+    S m_state;
     Builder& m_builder;
     DenotationRepository& m_denotation_repository;
     EvaluationWorkspace& m_workspace;
     DenotationCaches<Family>& m_caches;
 
 public:
-    BaseStateEvaluationContext(tyr::planning::StateView<Kind> state,
+    using FamilyType = Family;
+    using KindType = Kind;
+    using StateType = S;
+
+    BaseStateEvaluationContext(S state,
                                Builder& builder,
                                DenotationRepository& denotation_repository,
                                EvaluationWorkspace& workspace,
@@ -58,10 +76,10 @@ public:
     using BaseStateEvaluationContext<Family, Kind>::BaseStateEvaluationContext;
 };
 
-template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
-const auto& get_repository(const StateEvaluationContext<Family, Kind>& context) noexcept
+template<StateEvaluationContextConcept Context>
+const auto& get_repository(const Context& context) noexcept
 {
-    return context.get_state().get_state_repository()->get_task()->get_repository();
+    return context.get_state().get_repository();
 }
 
 }

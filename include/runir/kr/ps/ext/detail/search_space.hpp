@@ -5,12 +5,30 @@
 #include "runir/kr/task_context.hpp"
 
 #include <algorithm>
+#include <span>
 #include <tyr/planning/plan.hpp>
 #include <utility>
 #include <vector>
 
 namespace runir::kr::ps::ext::detail
 {
+
+template<tyr::TaskKind Kind>
+tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(std::span<const tyr::formalism::planning::ActionBindingView> actions,
+                                                           const tyr::planning::PackedNode<Kind>& initial_node,
+                                                           runir::kr::TaskContext<Kind>& context)
+{
+    auto steps = tyr::planning::PackedLabeledNodeList<Kind> {};
+    steps.reserve(actions.size());
+    auto node = initial_node.unpack();
+    auto& search = *context.search_context;
+    for (const auto action : actions)
+    {
+        node = search.successor_generator->get_successor_node(node, action, *search.state_repository, *search.axiom_evaluator);
+        steps.push_back({ action, node.pack() });
+    }
+    return tyr::planning::PackedPlan<Kind>(initial_node, std::move(steps));
+}
 
 template<tyr::TaskKind Kind>
 tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(ProgramStateView<Kind> goal,
@@ -29,16 +47,7 @@ tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(ProgramStateView<Kind
     }
     std::ranges::reverse(actions);
     // Reconstruct plan states and cumulative metrics from the recorded actions.
-    auto steps = tyr::planning::PackedLabeledNodeList<Kind> {};
-    steps.reserve(actions.size());
-    auto node = initial_node.unpack();
-    auto& search = *context.search_context;
-    for (const auto action : actions)
-    {
-        node = search.successor_generator->get_successor_node(node, action, *search.state_repository, *search.axiom_evaluator);
-        steps.push_back({ action, node.pack() });
-    }
-    return tyr::planning::PackedPlan<Kind>(initial_node, std::move(steps));
+    return extract_total_ordered_plan<Kind>(actions, initial_node, context);
 }
 
 }  // namespace runir::kr::ps::ext::detail

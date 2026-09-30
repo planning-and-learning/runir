@@ -6,8 +6,9 @@
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/action_rule.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
+#include "runir/kr/ps/ext/detail/transient_state.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
-#include "runir/kr/ps/ext/execution_repository.hpp"
+#include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 #include "runir/kr/task_context.hpp"
@@ -19,6 +20,7 @@
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <type_traits>
 #include <tyr/formalism/planning/action_view.hpp>
 #include <tyr/planning/declarations.hpp>
 #include <tyr/planning/node.hpp>
@@ -31,17 +33,14 @@
 namespace runir::kr::ps::ext
 {
 
-template<tyr::TaskKind Kind>
+template<tyr::TaskKind Kind, typename ExecutionStorage = InternedExecutionStorage<Kind>>
 class SuccessorExpander
 {
 public:
-    using LabeledNode = tyr::planning::LabeledNode<Kind>;
-    using Step = detail::ProgramStep<Kind>;
-    using Expansion = std::variant<Step, detail::Choice<runir::kr::dl::ConceptTag>, detail::Choice<runir::kr::dl::RoleTag>>;
-
     SuccessorExpander(runir::kr::TaskContextPtr<Kind> task_context, ProgramView program) :
         m_task_context(task_context ? std::move(task_context) : throw std::invalid_argument("SuccessorExpander requires a task context.")),
         m_program(program),
+        m_storage(m_task_context, m_program),
         m_environment(*m_task_context, m_program),
         m_action_rule_evaluator(m_task_context->search_context->task)
     {
@@ -51,18 +50,19 @@ public:
 
     const auto& get_task_context() const noexcept { return m_task_context; }
 
-    /// Intern the entry module with empty registers and arguments, and no caller.
-    ProgramStateView<Kind> initial_state(const tyr::planning::StateView<Kind>& state)
+    /// Create the entry module with empty registers and arguments, and no caller.
+    auto initial_state(const tyr::planning::StateView<Kind>& state)
     {
         validate_planning_state(state);
-        auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_task_context->dl_builder);
-        const auto module_ = m_program.get_entry_module();
-        auto data = ygg::Data<ModuleState<Kind>>(state.get_index(),
-                                                 module_.get_index(),
-                                                 module_.get_entry_memory_state().get_index(),
-                                                 empty_registers(module_).get_index(),
-                                                 get_or_create(*m_task_context->dl_denotation_repository, *arguments).first.get_index());
-        return intern(data, std::nullopt);
+        return m_storage.initial_state(state);
+    }
+
+    /// Only selected output states receive repository-backed identities in transient mode.
+    template<ProgramStateViewConcept<Kind> S>
+    ProgramStateView<Kind> materialize(const S& state)
+    {
+        validate_source(state);
+        return m_storage.materialize(state);
     }
 
     /// Emit a program step or a compact Choose obligation in natural rule and binding order,
@@ -70,8 +70,8 @@ public:
     /// Return true on exhaustion; emit returning false or stop returning true ends enumeration.
     /// Count applied successors and caller returns, not Choice descriptors or failure markers.
     /// Callbacks must not reenter this expander or its successor generator. Apply choices after enumeration.
-    template<typename Emit, typename Stop>
-    bool for_each_successor(ProgramStateView<Kind> state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop)
+    template<ProgramStateViewConcept<Kind> S, typename Emit, typename Stop>
+    bool for_each_successor(S state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop)
     {
         if (stop())
             return false;
@@ -79,11 +79,11 @@ public:
         const auto planning_state = state.get_state();
         m_environment.get_dl_caches().clear(false);
         bool emitted = false;
-        const auto emit_expansion = [&](Expansion expansion)
+        const auto emit_expansion = [&](auto expansion)
         {
             emitted = true;
-            if (const auto* step = std::get_if<Step>(&expansion))
-                statistics.num_generated += step->status == detail::ProgramOutcome::APPLIED || step->status == detail::ProgramOutcome::RESTORED_CALLER;
+            if constexpr (std::same_as<decltype(expansion), detail::ProgramStep<Kind, S>>)
+                statistics.num_generated += expansion.status == detail::ProgramOutcome::APPLIED || expansion.status == detail::ProgramOutcome::RESTORED_CALLER;
             return emit(std::move(expansion));
         };
         m_sketch_rules.clear();
@@ -103,17 +103,26 @@ public:
     }
 
     /// Apply the current admitted binding without advancing its cursor; an exhausted choice reports FAILURE.
-    template<runir::kr::dl::CategoryTag Category>
-    Step apply_choice(ProgramStateView<Kind> state, const detail::Choice<Category>& choice, ProgramSearchStatistics& statistics)
+    template<runir::kr::dl::CategoryTag Category, ProgramStateViewConcept<Kind> S>
+    detail::ProgramStep<Kind, S> apply_choice(S state, const detail::Choice<Category>& choice, ProgramSearchStatistics& statistics)
     {
         validate_source(state);
-        auto step = choice_step(state, choice);
+        auto step = choice_step<Category>(state, choice);
+        statistics.num_generated += step.status == detail::ProgramOutcome::APPLIED;
+        return step;
+    }
+
+    template<runir::kr::dl::CategoryTag Category, ProgramStateViewConcept<Kind> S>
+    detail::ProgramStep<Kind, S> apply_choice(S state, const detail::TransientChoice<Category>& choice, ProgramSearchStatistics& statistics)
+    {
+        validate_source(state);
+        auto step = choice_step<Category>(state, choice);
         statistics.num_generated += step.status == detail::ProgramOutcome::APPLIED;
         return step;
     }
 
     /// Find the first rule that admits this planning successor; control-only rules do not match planning actions.
-    std::optional<RuleVariantView> matching_rule(ProgramStateView<Kind> state, const LabeledNode& candidate)
+    std::optional<RuleVariantView> matching_rule(ProgramStateView<Kind> state, const tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>& candidate)
     {
         validate_source(state);
         validate_planning_state(candidate.node.get_state());
@@ -129,7 +138,9 @@ public:
 
     /// Apply one rule, using a supplied planning successor for Do, Action, or a Sketch with effects.
     /// Load, Choose, Call, and empty-effect Sketch rules derive their own control transition.
-    std::optional<Step> apply(ProgramStateView<Kind> state, RuleVariantView rule, std::optional<LabeledNode> candidate = std::nullopt)
+    std::optional<detail::ProgramStep<Kind>> apply(ProgramStateView<Kind> state,
+                                                   RuleVariantView rule,
+                                                   std::optional<tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>> candidate = std::nullopt)
     {
         validate_source(state);
         if (candidate)
@@ -145,13 +156,20 @@ private:
     std::vector<size_t> m_order_indices;
 
     // Validate borrowed views before evaluating features or modifying the execution repository.
-    void validate_planning_state(const tyr::planning::StateView<Kind>& state) const
+    template<tyr::planning::StateViewConcept<Kind> S>
+    void validate_planning_state(const S& state) const
     {
-        if (state.get_state_repository().get() != m_task_context->search_context->state_repository.get())
-            throw std::invalid_argument("SuccessorExpander requires a planning state from the selected task's state repository.");
+        if constexpr (requires { state.get_state_repository(); })
+        {
+            if (state.get_state_repository().get() != m_task_context->search_context->state_repository.get())
+                throw std::invalid_argument("SuccessorExpander requires a planning state from the selected task's state repository.");
+        }
+        else if (&state.get_task() != m_task_context->search_context->task.get())
+            throw std::invalid_argument("SuccessorExpander requires a planning state from the selected task.");
     }
 
-    void validate_source(ProgramStateView<Kind> state) const
+    template<ProgramStateViewConcept<Kind> S>
+    void validate_source(S state) const
     {
         if (&state.get_context() != m_task_context->execution_repository.get())
             throw std::invalid_argument("SuccessorExpander requires an execution state from the selected task.");
@@ -160,30 +178,32 @@ private:
             throw std::invalid_argument("SuccessorExpander requires an execution state from the selected program.");
     }
 
-    runir::kr::dl::semantics::RegisterValuesView empty_registers(ModuleView module_)
+    template<ProgramStateViewConcept<Kind> S>
+    auto copy_module(const S& state)
     {
-        auto data = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
-        data->concept_values.resize(module_.template get_registers<runir::kr::dl::ConceptTag>().size());
-        data->role_values.resize(module_.template get_registers<runir::kr::dl::RoleTag>().size());
-        return get_or_create(*m_task_context->dl_denotation_repository, *data).first;
+        auto result = m_storage.module_();
+        *result = state.get_module_state().get_data();
+        return result;
     }
 
-    ProgramStateView<Kind> intern(ygg::Data<ModuleState<Kind>>& module_state, std::optional<CallStackView<Kind>> caller)
+    template<typename ModuleData>
+    void set_empty_registers(ModuleData& target, ModuleView module_)
     {
-        auto data = ygg::Data<ProgramState<Kind>>(m_program.get_index(), get_or_create(*m_task_context->execution_repository, module_state).first.get_index());
-        ygg::set(caller, data.call_stack);
-        return get_or_create(*m_task_context->execution_repository, data).first;
+        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
+        registers->concept_values.resize(module_.template get_registers<runir::kr::dl::ConceptTag>().size());
+        registers->role_values.resize(module_.template get_registers<runir::kr::dl::RoleTag>().size());
+        m_storage.set_registers(target, m_storage.registers(*registers));
     }
 
     // Rule admission and argument/effect evaluation share the environment's reusable denotation caches.
-    template<RuleKind RuleKindT, typename C>
-    static bool has_current_source(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, ProgramStateView<Kind> state)
+    template<RuleKind RuleKindT, typename C, ProgramStateViewConcept<Kind> S>
+    static bool has_current_source(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, S state)
     {
         return rule.get_source().get_index() == state.get_module_state().get_memory_state().get_index();
     }
 
-    template<RuleKind RuleKindT, typename C>
-    bool rule_is_applicable(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, ProgramStateView<Kind> state, const tyr::planning::StateView<Kind>& planning_state)
+    template<RuleKind RuleKindT, typename C, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    bool rule_is_applicable(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, S state, const PS& planning_state)
     {
         if (!has_current_source(rule, state))
             return false;
@@ -203,8 +223,8 @@ private:
             registers.role_values.at(index) = ::cista::pair(value.first.get_index(), value.second.get_index());
     }
 
-    template<typename C>
-    auto& evaluate_do_arguments(ygg::View<ygg::Index<Rule<DoTag>>, C> rule, ProgramStateView<Kind> state, const tyr::planning::StateView<Kind>& planning_state)
+    template<typename C, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    auto& evaluate_do_arguments(ygg::View<ygg::Index<Rule<DoTag>>, C> rule, S state, const PS& planning_state)
     {
         const auto arguments = rule.get_action_arguments();
         auto& denotations = m_environment.prepare_do_argument_denotations();
@@ -230,11 +250,8 @@ private:
         return true;
     }
 
-    template<typename C>
-    bool do_effects_match(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
-                          ProgramStateView<Kind> state,
-                          const tyr::planning::StateView<Kind>& planning_state,
-                          const tyr::planning::StateView<Kind>& target_state)
+    template<typename C, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    bool do_effects_match(ygg::View<ygg::Index<Rule<DoTag>>, C> rule, S state, const PS& planning_state, const PS& target_state)
     {
         auto transition = m_environment.make_dl_transition_context(planning_state,
                                                                    target_state,
@@ -244,12 +261,12 @@ private:
         return is_compatible_with(rule, transition);
     }
 
-    template<typename C>
+    template<typename C, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
     bool do_rule_matches(ygg::View<ygg::Index<Rule<DoTag>>, C> rule,
-                         ProgramStateView<Kind> state,
-                         const tyr::planning::StateView<Kind>& planning_state,
+                         S state,
+                         const PS& planning_state,
                          tyr::formalism::planning::ActionBindingView action,
-                         const tyr::planning::StateView<Kind>& target_state)
+                         const PS& target_state)
     {
         if (!rule_is_applicable(rule, state, planning_state))
             return false;
@@ -257,11 +274,8 @@ private:
         return action_matches_do_arguments(rule, action, denotations) && do_effects_match(rule, state, planning_state, target_state);
     }
 
-    template<typename C>
-    bool sketch_rule_matches_state(ygg::View<ygg::Index<Rule<SketchTag>>, C> rule,
-                                   ProgramStateView<Kind> state,
-                                   const tyr::planning::StateView<Kind>& planning_state,
-                                   const tyr::planning::StateView<Kind>& target_state)
+    template<typename C, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    bool sketch_rule_matches_state(ygg::View<ygg::Index<Rule<SketchTag>>, C> rule, S state, const PS& planning_state, const PS& target_state)
     {
         if (!has_current_source(rule, state))
             return false;
@@ -273,55 +287,26 @@ private:
         return is_compatible_with(rule, transition);
     }
 
-    template<typename FeatureTag, typename C>
-    static void append_call_argument(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, C> argument,
-                                     runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>& context,
-                                     ygg::Data<runir::kr::dl::semantics::CallArguments>& target)
+    template<typename C, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    auto evaluate_call_arguments(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, S state, const PS& planning_state)
     {
-        const auto denotation = evaluate(argument.get_expression(), context, context.get_denotation_repository());
-        if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
-            target.concept_arguments.push_back(denotation.get_index());
-        else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
-            target.role_arguments.push_back(denotation.get_index());
-        else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
-            target.boolean_arguments.push_back(denotation.get_index());
-        else
-            target.numerical_arguments.push_back(denotation.get_index());
-    }
-
-    template<typename C>
-    auto
-    evaluate_call_arguments(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, ProgramStateView<Kind> state, const tyr::planning::StateView<Kind>& planning_state)
-    {
-        auto result = checkout<runir::kr::dl::semantics::CallArguments>(m_task_context->dl_builder);
+        auto result = m_storage.arguments();
         auto state_context = m_environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
-        rule.for_each_call_argument([&](auto argument) { append_call_argument(argument, state_context, *result); });
+        rule.for_each_call_argument([&](auto argument) { m_storage.append_call_argument(argument, state_context, *result); });
         return result;
     }
 
-    static bool call_arguments_match_signature(ModuleView callee, const ygg::Data<runir::kr::dl::semantics::CallArguments>& arguments)
-    {
-        return arguments.concept_arguments.size() == callee.template get_arguments<runir::kr::dl::ConceptTag>().size()
-               && arguments.role_arguments.size() == callee.template get_arguments<runir::kr::dl::RoleTag>().size()
-               && arguments.boolean_arguments.size() == callee.template get_arguments<runir::kr::dl::BooleanTag>().size()
-               && arguments.numerical_arguments.size() == callee.template get_arguments<runir::kr::dl::NumericalTag>().size();
-    }
-
-    template<BindingRuleKind RuleKindT, typename Value>
-    auto
-    bound_registers(RuleView<RuleKindT> rule, ProgramStateView<Kind> state, const Value& value, ygg::Data<runir::kr::dl::semantics::RegisterValues>& registers)
+    template<BindingRuleKind RuleKindT, typename Value, ProgramStateViewConcept<Kind> S>
+    auto bound_registers(RuleView<RuleKindT> rule, S state, const Value& value, ygg::Data<runir::kr::dl::semantics::RegisterValues>& registers)
     {
         registers.concept_values = state.get_module_state().get_registers().get_data().concept_values;
         registers.role_values = state.get_module_state().get_registers().get_data().role_values;
         apply_binding(rule, value, registers);
-        return get_or_create(*m_task_context->dl_denotation_repository, registers).first;
+        return m_storage.registers(registers);
     }
 
-    template<BindingRuleKind RuleKindT>
-    bool binding_effects_match(RuleView<RuleKindT> rule,
-                               ProgramStateView<Kind> state,
-                               const tyr::planning::StateView<Kind>& planning_state,
-                               runir::kr::dl::semantics::RegisterValuesView registers)
+    template<BindingRuleKind RuleKindT, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename R>
+    bool binding_effects_match(RuleView<RuleKindT> rule, S state, const PS& planning_state, R registers)
     {
         if (rule.get_effects().empty())
             return true;
@@ -335,8 +320,8 @@ private:
     }
 
     /// Bind a register and move memory while preserving the planning state and caller stack.
-    template<runir::kr::dl::CategoryTag Category>
-    Step choice_step(ProgramStateView<Kind> state, const detail::Choice<Category>& choice)
+    template<runir::kr::dl::CategoryTag Category, typename ChoiceType, ProgramStateViewConcept<Kind> S>
+    detail::ProgramStep<Kind, S> choice_step(S state, const ChoiceType& choice)
     {
         if (choice.exhausted())
         {
@@ -346,19 +331,14 @@ private:
         }
         const auto rule = choice.rule.get_variant().template get<ygg::Index<Rule<ChooseTag<Category>>>>();
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
-        auto target = state.get_module_state().get_data();
-        ygg::set(bound_registers(rule, state, choice.current(), *registers), target.registers);
-        ygg::set(rule.get_target(), target.memory_state);
-        return applied(intern(target, state.get_call_stack()), choice.rule);
+        auto target = copy_module(state);
+        m_storage.set_registers(*target, bound_registers(rule, state, choice.current(), *registers));
+        ygg::set(rule.get_target(), target->memory_state);
+        return applied(m_storage.store(std::move(target), state.get_call_stack()), choice.rule);
     }
 
-    template<runir::kr::dl::CategoryTag Category, typename Emit, typename Stop>
-    bool emit_rule(RuleView<LoadTag<Category>> rule,
-                   RuleVariantView rule_variant,
-                   ProgramStateView<Kind> state,
-                   const tyr::planning::StateView<Kind>& planning_state,
-                   Emit&& emit,
-                   Stop&& stop)
+    template<runir::kr::dl::CategoryTag Category, typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    bool emit_rule(RuleView<LoadTag<Category>> rule, RuleVariantView rule_variant, S state, const PS& planning_state, Emit&& emit, Stop&& stop)
     {
         if (!rule_is_applicable(rule, state, planning_state))
             return true;
@@ -372,26 +352,26 @@ private:
             const auto target_registers = bound_registers(rule, state, value, *registers);
             if (!binding_effects_match(rule, state, planning_state, target_registers))
                 continue;
-            auto target = state.get_module_state().get_data();
-            ygg::set(target_registers, target.registers);
-            ygg::set(rule.get_target(), target.memory_state);
-            if (!emit(applied(intern(target, state.get_call_stack()), rule_variant)))
+            auto target = copy_module(state);
+            m_storage.set_registers(*target, target_registers);
+            ygg::set(rule.get_target(), target->memory_state);
+            if (!emit(applied(m_storage.store(std::move(target), state.get_call_stack()), rule_variant)))
                 return false;
         }
         return true;
     }
 
     /// Ordering is evaluated after binding, and only rearranges the admitted values.
-    template<runir::kr::dl::CategoryTag Category, typename Emit, typename Stop>
+    template<runir::kr::dl::CategoryTag Category, typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
     bool emit_choice(RuleView<ChooseTag<Category>> rule,
                      RuleVariantView rule_variant,
-                     ProgramStateView<Kind> state,
-                     const tyr::planning::StateView<Kind>& planning_state,
+                     S state,
+                     const PS& planning_state,
                      runir::kr::dl::semantics::DenotationView<Category> denotation,
                      Emit&& emit,
                      Stop&& stop)
     {
-        auto choice = detail::Choice<Category>(rule_variant, denotation);
+        auto choice = m_storage.choice(rule_variant, denotation);
         if (stop())
             return false;
         if (rule.get_order().empty() || !choice.has_alternatives())
@@ -400,6 +380,7 @@ private:
         // Flat scratch buffers are reused across choices; only ordered values survive in the DFS frame.
         m_order_scores.clear();
         m_order_indices.clear();
+        choice.bindings().clear();
         const auto width = rule.get_order().size();
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
         for (const auto value : denotation)
@@ -420,8 +401,8 @@ private:
                 m_order_scores.push_back(
                     ygg::visit([&](auto feature) { return ygg::uint_t(evaluate(feature, transition.get_target_context()).get()); }, term.get_feature()));
             }
-            m_order_indices.push_back(choice.ordered_bindings.size());
-            choice.ordered_bindings.push_back(value);
+            m_order_indices.push_back(choice.bindings().size());
+            choice.bindings().push_back(value);
         }
         if (stop())
             return false;
@@ -449,7 +430,7 @@ private:
             while (m_order_indices[current] != i)
             {
                 const auto next = m_order_indices[current];
-                std::swap(choice.ordered_bindings[current], choice.ordered_bindings[next]);
+                std::swap(choice.bindings()[current], choice.bindings()[next]);
                 m_order_indices[current] = current;
                 current = next;
             }
@@ -458,20 +439,17 @@ private:
         return !stop() && emit(std::move(choice));
     }
 
-    template<runir::kr::dl::CategoryTag Category, typename Emit, typename Stop>
-    bool emit_rule(RuleView<ChooseTag<Category>> rule,
-                   RuleVariantView rule_variant,
-                   ProgramStateView<Kind> state,
-                   const tyr::planning::StateView<Kind>& planning_state,
-                   Emit&& emit,
-                   Stop&& stop)
+    template<runir::kr::dl::CategoryTag Category, typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    bool emit_rule(RuleView<ChooseTag<Category>> rule, RuleVariantView rule_variant, S state, const PS& planning_state, Emit&& emit, Stop&& stop)
     {
         if (!rule_is_applicable(rule, state, planning_state))
             return true;
         auto state_context = m_environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
         if (rule.get_effects().empty())
         {
-            const auto denotation = evaluate(rule.get_feature().get_expression(), state_context, *m_task_context->dl_denotation_repository);
+            const auto denotation = evaluate(rule.get_feature().get_expression(),
+                                             state_context,
+                                             m_storage.choice_denotation_repository(m_environment.get_dl_caches().get_repository(false)));
             return emit_choice(rule, rule_variant, state, planning_state, denotation, emit, stop);
         }
         const auto denotation = evaluate(rule.get_feature(), state_context);
@@ -494,34 +472,21 @@ private:
         }
         if (stop())
             return false;
-        return emit_choice(
-            rule,
-            rule_variant,
-            state,
-            planning_state,
-            runir::kr::dl::semantics::detail::materialize_denotation(admitted, m_task_context->dl_builder, *m_task_context->dl_denotation_repository).first,
-            emit,
-            stop);
+        return emit_choice(rule,
+                           rule_variant,
+                           state,
+                           planning_state,
+                           runir::kr::dl::semantics::detail::materialize_denotation(
+                               admitted,
+                               m_task_context->dl_builder,
+                               m_storage.choice_denotation_repository(m_environment.get_dl_caches().get_repository(false)))
+                               .first,
+                           emit,
+                           stop);
     }
 
-    LabeledNode successor(const tyr::planning::StateView<Kind>& planning_state, tyr::formalism::planning::ActionBindingView binding)
-    {
-        auto& search = *m_task_context->search_context;
-        // Tyr requires a Node, but policy expansion does not carry a path metric.
-        return { binding,
-                 search.successor_generator->get_successor_node(tyr::planning::Node<Kind>(planning_state, 0),
-                                                                binding,
-                                                                *search.state_repository,
-                                                                *search.axiom_evaluator) };
-    }
-
-    template<typename Emit, typename Stop>
-    bool emit_rule(RuleView<DoTag> rule,
-                   RuleVariantView rule_variant,
-                   ProgramStateView<Kind> state,
-                   const tyr::planning::StateView<Kind>& planning_state,
-                   Emit&& emit,
-                   Stop&& stop)
+    template<typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    bool emit_rule(RuleView<DoTag> rule, RuleVariantView rule_variant, S state, const PS& planning_state, Emit&& emit, Stop&& stop)
     {
         if (!rule_is_applicable(rule, state, planning_state))
             return true;
@@ -539,22 +504,19 @@ private:
                     return false;
                 if (!action_matches_do_arguments(rule, binding, denotations))
                     return true;
-                const auto candidate = successor(planning_state, binding);
+                const auto candidate = m_storage.successor(planning_state, binding);
                 m_environment.get_dl_target_caches().clear(false);
                 if (!do_effects_match(rule, state, planning_state, candidate.node.get_state()))
                     return true;
                 return emit(planning_step(state, candidate, rule_variant, rule.get_target()));
             };
-            return search.successor_generator->for_each_applicable_action_binding(tyr::planning::Node<Kind>(planning_state, 0), action, std::ref(visit));
+            return search.successor_generator->for_each_applicable_action_binding(tyr::planning::Node<PS>(planning_state, 0), action, std::ref(visit));
         }
         return true;
     }
 
-    void check_action_effects(RuleView<ActionTag> rule,
-                              ProgramStateView<Kind> state,
-                              const tyr::planning::StateView<Kind>& planning_state,
-                              const LabeledNode& candidate,
-                              std::span<const ygg::uint_t> tuple)
+    template<ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename N>
+    void check_action_effects(RuleView<ActionTag> rule, S state, const PS& planning_state, const N& candidate, std::span<const ygg::uint_t> tuple)
     {
         m_environment.get_dl_target_caches().clear(false);
         auto transition = m_environment.make_dl_transition_context(planning_state,
@@ -567,13 +529,8 @@ private:
                 detail::action_rule_contract_error(rule, planning_state, tuple, "offered transition violates declared effects");
     }
 
-    template<typename Emit, typename Stop>
-    bool emit_rule(RuleView<ActionTag> rule,
-                   RuleVariantView rule_variant,
-                   ProgramStateView<Kind> state,
-                   const tyr::planning::StateView<Kind>& planning_state,
-                   Emit&& emit,
-                   Stop&& stop)
+    template<typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    bool emit_rule(RuleView<ActionTag> rule, RuleVariantView rule_variant, S state, const PS& planning_state, Emit&& emit, Stop&& stop)
     {
         if (!rule_is_applicable(rule, state, planning_state))
             return true;
@@ -586,7 +543,7 @@ private:
                 return false;
             const auto tuple = query[i];
             const auto binding = m_action_rule_evaluator.applicable_binding(rule, planning_state, tuple);
-            const auto candidate = successor(planning_state, binding);
+            const auto candidate = m_storage.successor(planning_state, binding);
             check_action_effects(rule, state, planning_state, candidate, tuple);
             if (!emit(planning_step(state, candidate, rule_variant, rule.get_target())))
                 return false;
@@ -594,13 +551,8 @@ private:
         return true;
     }
 
-    template<typename Emit, typename Stop>
-    bool emit_rule(RuleView<SketchTag> rule,
-                   RuleVariantView rule_variant,
-                   ProgramStateView<Kind> state,
-                   const tyr::planning::StateView<Kind>& planning_state,
-                   Emit&& emit,
-                   Stop&& stop)
+    template<typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    bool emit_rule(RuleView<SketchTag> rule, RuleVariantView rule_variant, S state, const PS& planning_state, Emit&& emit, Stop&& stop)
     {
         if (!rule_is_applicable(rule, state, planning_state))
             return true;
@@ -612,15 +564,15 @@ private:
         }
         if (stop())
             return false;
-        auto target = state.get_module_state().get_data();
-        ygg::set(rule.get_target(), target.memory_state);
-        return emit(applied(intern(target, state.get_call_stack()), rule_variant));
+        auto target = copy_module(state);
+        ygg::set(rule.get_target(), target->memory_state);
+        return emit(applied(m_storage.store(std::move(target), state.get_call_stack()), rule_variant));
     }
 
     /// Generate each planning successor once and test every collected sketch rule against it,
     /// emitting one step per matching (successor, rule) pair in binding-major, rule-minor order.
-    template<typename Emit, typename Stop>
-    bool emit_sketch_successors(ProgramStateView<Kind> state, const tyr::planning::StateView<Kind>& planning_state, Emit&& emit, Stop&& stop)
+    template<typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    bool emit_sketch_successors(S state, const PS& planning_state, Emit&& emit, Stop&& stop)
     {
         if (m_sketch_rules.empty())
             return true;
@@ -629,7 +581,7 @@ private:
         {
             if (stop())
                 return false;
-            const auto candidate = successor(planning_state, binding);
+            const auto candidate = m_storage.successor(planning_state, binding);
             m_environment.get_dl_target_caches().clear(false);
             for (const auto& [sketch_rule, rule_variant] : m_sketch_rules)
             {
@@ -640,16 +592,11 @@ private:
             }
             return true;
         };
-        return generator.for_each_applicable_action_binding(tyr::planning::Node<Kind>(planning_state, 0), std::ref(visit));
+        return generator.for_each_applicable_action_binding(tyr::planning::Node<PS>(planning_state, 0), std::ref(visit));
     }
 
-    template<typename Emit, typename Stop>
-    bool emit_rule(RuleView<CallTag> rule,
-                   RuleVariantView rule_variant,
-                   ProgramStateView<Kind> state,
-                   const tyr::planning::StateView<Kind>& planning_state,
-                   Emit&& emit,
-                   Stop&& stop)
+    template<typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    bool emit_rule(RuleView<CallTag> rule, RuleVariantView rule_variant, S state, const PS& planning_state, Emit&& emit, Stop&& stop)
     {
         if (!rule_is_applicable(rule, state, planning_state))
             return true;
@@ -657,37 +604,44 @@ private:
         const auto callee = m_program.find_module(rule.get_callee().get_index());
         if (stop())
             return false;
-        if (!callee || !call_arguments_match_signature(*callee, *arguments))
+        if (!callee || !m_storage.arguments_match(*callee, *arguments))
             return emit(make_step(detail::ProgramOutcome::MALFORMED_CALL, state));
 
-        auto target = state.get_module_state().get_data();
-        auto caller = ygg::Data<CallStack>(target.module, rule.get_target().get_index(), target.registers, target.arguments, state.get_data().call_stack);
-        ygg::set(*callee, target.module);
-        ygg::set(callee->get_entry_memory_state(), target.memory_state);
-        ygg::set(empty_registers(*callee), target.registers);
-        ygg::set(get_or_create(*m_task_context->dl_denotation_repository, *arguments).first, target.arguments);
-        return emit(applied(intern(target, get_or_create(*m_task_context->execution_repository, caller).first), rule_variant));
+        auto target = copy_module(state);
+        auto caller = m_storage.save_caller(state, rule.get_target());
+        ygg::set(*callee, target->module_);
+        ygg::set(callee->get_entry_memory_state(), target->memory_state);
+        set_empty_registers(*target, *callee);
+        m_storage.set_arguments(*target, std::move(arguments));
+        return emit(applied(m_storage.store(std::move(target), std::move(caller)), rule_variant));
     }
 
-    template<BindingRuleKind RuleKindT>
-    bool matches(RuleView<RuleKindT>, ProgramStateView<Kind>, const tyr::planning::StateView<Kind>&, const LabeledNode&)
+    template<BindingRuleKind RuleKindT, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename N>
+    bool matches(RuleView<RuleKindT>, S, const PS&, const N&)
     {
         return false;
     }
 
-    bool matches(RuleView<CallTag>, ProgramStateView<Kind>, const tyr::planning::StateView<Kind>&, const LabeledNode&) { return false; }
+    template<ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename N>
+    bool matches(RuleView<CallTag>, S, const PS&, const N&)
+    {
+        return false;
+    }
 
-    bool matches(RuleView<DoTag> rule, ProgramStateView<Kind> state, const tyr::planning::StateView<Kind>& planning_state, const LabeledNode& candidate)
+    template<ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename N>
+    bool matches(RuleView<DoTag> rule, S state, const PS& planning_state, const N& candidate)
     {
         return do_rule_matches(rule, state, planning_state, candidate.label, candidate.node.get_state());
     }
 
-    bool matches(RuleView<SketchTag> rule, ProgramStateView<Kind> state, const tyr::planning::StateView<Kind>& planning_state, const LabeledNode& candidate)
+    template<ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename N>
+    bool matches(RuleView<SketchTag> rule, S state, const PS& planning_state, const N& candidate)
     {
         return !rule.get_effects().empty() && sketch_rule_matches_state(rule, state, planning_state, candidate.node.get_state());
     }
 
-    bool matches(RuleView<ActionTag> rule, ProgramStateView<Kind> state, const tyr::planning::StateView<Kind>& planning_state, const LabeledNode& candidate)
+    template<ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename N>
+    bool matches(RuleView<ActionTag> rule, S state, const PS& planning_state, const N& candidate)
     {
         if (!rule_is_applicable(rule, state, planning_state) || candidate.label.get_relation().get_name() != rule.get_action_name())
             return false;
@@ -704,105 +658,171 @@ private:
         return true;
     }
 
-    template<RuleKind RuleKindT>
+    template<RuleKind RuleKindT, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename N>
         requires(BindingRuleKind<RuleKindT> || std::same_as<RuleKindT, CallTag>)
-    std::optional<Step> apply_rule(RuleView<RuleKindT> rule,
-                                   RuleVariantView rule_variant,
-                                   ProgramStateView<Kind> state,
-                                   const tyr::planning::StateView<Kind>& planning_state,
-                                   const std::optional<LabeledNode>&)
+    std::optional<detail::ProgramStep<Kind, S>>
+    apply_rule(RuleView<RuleKindT> rule, RuleVariantView rule_variant, S state, const PS& planning_state, const std::optional<N>&)
     {
-        auto result = std::optional<Expansion> {};
+        auto result = std::optional<detail::ProgramStep<Kind, S>> {};
         emit_rule(
             rule,
             rule_variant,
             state,
             planning_state,
-            [&](Expansion expansion)
+            [&](auto expansion)
             {
-                result = std::move(expansion);
+                if constexpr (ChooseRuleView<decltype(rule)>)
+                    result = choice_step<typename RuleKindT::Category>(state, expansion);
+                else
+                    result = std::move(expansion);
                 return false;
             },
             [] { return false; });
-        if (!result)
-            return std::nullopt;
-        if constexpr (ChooseRuleView<decltype(rule)>)
-            return choice_step(state, std::get<detail::Choice<typename RuleKindT::Category>>(*result));
-        else
-            return std::get<Step>(std::move(*result));
+        return result;
     }
 
-    template<typename Tag>
+    template<typename Tag, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename N>
         requires(std::same_as<Tag, DoTag> || std::same_as<Tag, ActionTag> || std::same_as<Tag, SketchTag>)
-    std::optional<Step> apply_rule(RuleView<Tag> rule,
-                                   RuleVariantView rule_variant,
-                                   ProgramStateView<Kind> state,
-                                   const tyr::planning::StateView<Kind>& planning_state,
-                                   const std::optional<LabeledNode>& candidate)
+    std::optional<detail::ProgramStep<Kind, S>>
+    apply_rule(RuleView<Tag> rule, RuleVariantView rule_variant, S state, const PS& planning_state, const std::optional<N>& candidate)
     {
         if constexpr (std::same_as<Tag, SketchTag>)
             if (rule.get_effects().empty())
             {
                 if (!rule_is_applicable(rule, state, planning_state))
                     return std::nullopt;
-                auto target = state.get_module_state().get_data();
-                ygg::set(rule.get_target(), target.memory_state);
-                return applied(intern(target, state.get_call_stack()), rule_variant);
+                auto target = copy_module(state);
+                ygg::set(rule.get_target(), target->memory_state);
+                return applied(m_storage.store(std::move(target), state.get_call_stack()), rule_variant);
             }
         if (!candidate || !matches(rule, state, planning_state, *candidate))
             return std::nullopt;
         return planning_step(state, *candidate, rule_variant, rule.get_target());
     }
 
-    Step make_step(detail::ProgramOutcome status, ProgramStateView<Kind> state) { return Step(status, state, m_task_context); }
+    template<ProgramStateViewConcept<Kind> S>
+    detail::ProgramStep<Kind, S> make_step(detail::ProgramOutcome status, S state)
+    {
+        return detail::ProgramStep<Kind, S>(status, std::move(state), m_task_context);
+    }
 
     /// With no emitted rule outcome, return to the caller or report an open top-level state.
     /// Restore caller control and bindings while retaining the planning state reached by the callee.
-    Step fallback(ProgramStateView<Kind> state)
+    template<ProgramStateViewConcept<Kind> S>
+    detail::ProgramStep<Kind, S> fallback(S state)
     {
         if (const auto caller = state.get_call_stack())
         {
-            auto target = state.get_module_state().get_data();
+            auto target = copy_module(state);
             const auto& saved = caller->get_data();
-            target.module = saved.module;
-            target.memory_state = saved.return_memory_state;
-            target.registers = saved.registers;
-            target.arguments = saved.arguments;
-            return make_step(detail::ProgramOutcome::RESTORED_CALLER, intern(target, caller->get_caller()));
+            target->module_ = saved.module_;
+            target->memory_state = saved.return_memory_state;
+            target->registers = saved.registers;
+            target->arguments = saved.arguments;
+            return make_step(detail::ProgramOutcome::RESTORED_CALLER, m_storage.store(std::move(target), caller->get_caller()));
         }
         return make_step(detail::ProgramOutcome::NO_APPLICABLE_ACTION, state);
     }
 
-    Step applied(ProgramStateView<Kind> state, RuleVariantView rule)
+    template<ProgramStateViewConcept<Kind> S>
+    detail::ProgramStep<Kind, S> applied(S state, RuleVariantView rule)
     {
         auto step = make_step(detail::ProgramOutcome::APPLIED, state);
         step.rule = rule;
         return step;
     }
 
-    Step planning_step(ProgramStateView<Kind> state, const LabeledNode& successor, RuleVariantView rule, MemoryStateView memory_state)
+    template<ProgramStateViewConcept<Kind> S, typename N>
+    detail::ProgramStep<Kind, S> planning_step(S state, const N& successor, RuleVariantView rule, MemoryStateView memory_state)
     {
-        auto target = state.get_module_state().get_data();
-        ygg::set(successor.node.get_state(), target.state);
-        ygg::set(memory_state, target.memory_state);
-        auto step = applied(intern(target, state.get_call_stack()), rule);
-        step.planning_successor = successor.pack();
+        auto target = copy_module(state);
+        m_storage.set_planning_state(*target, successor);
+        ygg::set(memory_state, target->memory_state);
+        auto step = applied(m_storage.store(std::move(target), state.get_call_stack()), rule);
+        if constexpr (requires { successor.pack(); })
+            step.planning_successor = successor.pack();
         step.state_transition = datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) };
         return step;
     }
 
     runir::kr::TaskContextPtr<Kind> m_task_context;
     ProgramView m_program;
+    ExecutionStorage m_storage;
     EvaluationEnvironment<Kind> m_environment;
     detail::ActionRuleEvaluator<Kind> m_action_rule_evaluator;
     std::vector<ygg::uint_t> m_action_tuple;
     std::vector<std::pair<RuleView<SketchTag>, RuleVariantView>> m_sketch_rules;
 };
 
+template<tyr::TaskKind Kind>
+using TransientSuccessorExpander = SuccessorExpander<Kind, TransientExecutionStorage<Kind>>;
+
 #ifndef RUNIR_HEADER_INSTANTIATION
 
 extern template class SuccessorExpander<tyr::GroundTag>;
 extern template class SuccessorExpander<tyr::LiftedTag>;
+
+extern template ProgramStateView<tyr::GroundTag>
+SuccessorExpander<tyr::GroundTag>::materialize<ProgramStateView<tyr::GroundTag>>(const ProgramStateView<tyr::GroundTag>&);
+
+extern template detail::ProgramStep<tyr::GroundTag>
+SuccessorExpander<tyr::GroundTag>::apply_choice<runir::kr::dl::ConceptTag, ProgramStateView<tyr::GroundTag>>(ProgramStateView<tyr::GroundTag>,
+                                                                                                             const detail::Choice<runir::kr::dl::ConceptTag>&,
+                                                                                                             ProgramSearchStatistics&);
+
+extern template detail::ProgramStep<tyr::GroundTag>
+SuccessorExpander<tyr::GroundTag>::apply_choice<runir::kr::dl::RoleTag, ProgramStateView<tyr::GroundTag>>(ProgramStateView<tyr::GroundTag>,
+                                                                                                          const detail::Choice<runir::kr::dl::RoleTag>&,
+                                                                                                          ProgramSearchStatistics&);
+
+extern template ProgramStateView<tyr::GroundTag>
+SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::materialize<detail::TransientProgramState<tyr::GroundTag>>(
+    const detail::TransientProgramState<tyr::GroundTag>&);
+
+extern template detail::ProgramStep<tyr::GroundTag, detail::TransientProgramState<tyr::GroundTag>>
+SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::apply_choice<runir::kr::dl::ConceptTag,
+                                                                                           detail::TransientProgramState<tyr::GroundTag>>(
+    detail::TransientProgramState<tyr::GroundTag>,
+    const detail::TransientChoice<runir::kr::dl::ConceptTag>&,
+    ProgramSearchStatistics&);
+
+extern template detail::ProgramStep<tyr::GroundTag, detail::TransientProgramState<tyr::GroundTag>>
+SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::apply_choice<runir::kr::dl::RoleTag,
+                                                                                           detail::TransientProgramState<tyr::GroundTag>>(
+    detail::TransientProgramState<tyr::GroundTag>,
+    const detail::TransientChoice<runir::kr::dl::RoleTag>&,
+    ProgramSearchStatistics&);
+
+extern template ProgramStateView<tyr::LiftedTag>
+SuccessorExpander<tyr::LiftedTag>::materialize<ProgramStateView<tyr::LiftedTag>>(const ProgramStateView<tyr::LiftedTag>&);
+
+extern template detail::ProgramStep<tyr::LiftedTag>
+SuccessorExpander<tyr::LiftedTag>::apply_choice<runir::kr::dl::ConceptTag, ProgramStateView<tyr::LiftedTag>>(ProgramStateView<tyr::LiftedTag>,
+                                                                                                             const detail::Choice<runir::kr::dl::ConceptTag>&,
+                                                                                                             ProgramSearchStatistics&);
+
+extern template detail::ProgramStep<tyr::LiftedTag>
+SuccessorExpander<tyr::LiftedTag>::apply_choice<runir::kr::dl::RoleTag, ProgramStateView<tyr::LiftedTag>>(ProgramStateView<tyr::LiftedTag>,
+                                                                                                          const detail::Choice<runir::kr::dl::RoleTag>&,
+                                                                                                          ProgramSearchStatistics&);
+
+extern template ProgramStateView<tyr::LiftedTag>
+SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::materialize<detail::TransientProgramState<tyr::LiftedTag>>(
+    const detail::TransientProgramState<tyr::LiftedTag>&);
+
+extern template detail::ProgramStep<tyr::LiftedTag, detail::TransientProgramState<tyr::LiftedTag>>
+SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::apply_choice<runir::kr::dl::ConceptTag,
+                                                                                           detail::TransientProgramState<tyr::LiftedTag>>(
+    detail::TransientProgramState<tyr::LiftedTag>,
+    const detail::TransientChoice<runir::kr::dl::ConceptTag>&,
+    ProgramSearchStatistics&);
+
+extern template detail::ProgramStep<tyr::LiftedTag, detail::TransientProgramState<tyr::LiftedTag>>
+SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::apply_choice<runir::kr::dl::RoleTag,
+                                                                                           detail::TransientProgramState<tyr::LiftedTag>>(
+    detail::TransientProgramState<tyr::LiftedTag>,
+    const detail::TransientChoice<runir::kr::dl::RoleTag>&,
+    ProgramSearchStatistics&);
 
 #endif
 

@@ -25,7 +25,7 @@ private:
     EvaluationEnvironment<Kind> m_environment;
 
 public:
-    using LabeledNode = tyr::planning::LabeledNode<Kind>;
+    using LabeledNode = tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>;
 
     SuccessorExpander(runir::kr::TaskContext<Kind>& task_context, SketchView sketch) :
         m_task_context(task_context),
@@ -52,7 +52,7 @@ public:
         auto& search_context = *m_task_context.search_context;
         auto& generator = *search_context.successor_generator;
         // Tyr requires a Node, but policy expansion does not carry a path metric.
-        const auto node = tyr::planning::Node<Kind>(state, 0);
+        const auto node = tyr::planning::Node<tyr::planning::StateView<Kind>>(state, 0);
 
         const auto visit_binding = [&](tyr::formalism::planning::ActionBindingView binding)
         {

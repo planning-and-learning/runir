@@ -10,16 +10,15 @@
 namespace runir::kr::dl::semantics
 {
 
-template<FamilyTag Family, typename C, tyr::TaskKind Kind>
-auto evaluate(ygg::View<ygg::Index<Query<Family, QueryRenameTag>>, C> constructor, StateEvaluationContext<Family, Kind>& context)
+template<FamilyTag Family, typename C, StateEvaluationContextConcept<Family> Context>
+auto evaluate(ygg::View<ygg::Index<Query<Family, QueryRenameTag>>, C> constructor, Context& context)
 {
     return ygg::database::rename(evaluate(constructor.get_arg(), context), constructor.get_schema());
 }
 
-template<FamilyTag Family, typename Tag, typename C, tyr::TaskKind Kind>
+template<FamilyTag Family, typename Tag, typename C, StateEvaluationContextConcept<Family> Context>
     requires(!std::same_as<Tag, void> && !std::same_as<Tag, QueryRenameTag>)
-auto evaluate(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
-              StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::database::Relation<>>
+auto evaluate(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context& context) -> ygg::UniqueObjectPoolPtr<ygg::database::Relation<>>
 {
     const auto& data = constructor.get_data();
     const auto schema = constructor.get_schema();
@@ -115,8 +114,8 @@ auto evaluate(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
     return result;
 }
 
-template<FamilyTag Family, tyr::TaskKind Kind, typename C>
-auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, StateEvaluationContext<Family, Kind>& context) -> ygg::database::RelationView<>
+template<FamilyTag Family, StateEvaluationContextConcept<Family> Context, typename C>
+auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, Context& context) -> ygg::database::RelationView<>
 {
     auto& cache = context.get_caches().get_queries(constructor.is_static());
     if (const auto it = cache.find(constructor); it != cache.end())
@@ -127,9 +126,9 @@ auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, StateEvaluati
     return cache.emplace(constructor, result).first->second;
 }
 
-template<FamilyTag Family, ConceptOrRoleTag Category, tyr::TaskKind Kind, typename C>
+template<FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor,
-                   StateEvaluationContext<Family, Kind>& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>
+                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>
 {
     const auto positions = constructor.get_data().plan.positions();
     const auto relation = evaluate(constructor.get_arg(), context);
