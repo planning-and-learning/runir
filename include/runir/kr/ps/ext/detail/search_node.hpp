@@ -12,19 +12,13 @@
 namespace runir::kr::ps::ext::detail
 {
 
-// ACTIVE states have a DFS frame; PENDING states have finished forward exploration
-// but still depend on an unresolved proof. Neither status causes re-expansion.
-// ProofPropagation can establish SUCCESS before or after the frame is popped.
-// For example, A chooses B or Goal and B continues to A: B becomes PENDING,
-// then A's Goal binding proves A and immediately notifies B through its incoming
-// dependency. No replay is needed. If exploration and propagation both drain,
-// an unresolved initial state has no finite proof and the search returns FAILURE.
+// Structural termination excludes back edges to ACTIVE states. Completed results
+// are retained so shared continuations are evaluated only once.
 enum class SearchStatus
 {
     NEW,         // Not yet admitted to this search.
     DISCOVERED,  // Admitted, awaiting expansion.
     ACTIVE,
-    PENDING,  // Forward exploration complete; proof dependencies remain unresolved.
     SUCCESS,
     FAILURE,
 };

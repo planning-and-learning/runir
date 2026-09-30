@@ -8,6 +8,7 @@
 namespace runir::kr::ps::ext
 {
 /// Execute greedily, or require all ordinary continuations when options.universal is true.
+/// Requires whole-program structural termination; throws std::invalid_argument otherwise.
 /// Every selected Choose rule needs one successful binding; distinct Choose rules remain separate obligations.
 /// Each program state is expanded at most once, and limits count work across all attempted bindings.
 /// The returned graph includes rejected branches; only successful non-universal searches return a plan.

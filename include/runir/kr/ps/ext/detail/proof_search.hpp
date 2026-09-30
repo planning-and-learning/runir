@@ -4,9 +4,11 @@
 #include "runir/kr/ps/ext/detail/execution_state.hpp"
 #include "runir/kr/ps/ext/detail/proof_graph.hpp"
 #include "runir/kr/ps/ext/detail/search_space.hpp"
+#include "runir/kr/ps/ext/dl/structural_termination.hpp"
 #include "runir/kr/ps/ext/program_executor.hpp"
 #include "runir/kr/ps/unsolvability.hpp"
 
+#include <cassert>
 #include <cstddef>
 #include <optional>
 #include <stack>
@@ -27,14 +29,14 @@ struct SearchFrame
     ProgramStateView<Kind> state;
     EdgeId begin;
     EdgeId next;
+    std::optional<ProgramStateView<Kind>> child = std::nullopt;
+    bool choice_child = false;
+    bool succeeded = true;
 };
 
-/// DFS schedules generation; ProofPropagation resolves the AND/OR dependencies independently.
-/// Expand a state once, visit ordinary edges, then try each Choose until proved or exhausted.
-/// Reaching a previously expanded state adds a dependency but never replays its outgoing edges.
-/// An unresolved binding must not block the next alternative: a later exit can prove the cycle.
-/// Only after all scheduled work and success notifications drain is an unresolved root a failure.
-/// Resource limits instead return their limit status, retaining the explored graph and counters.
+/// Evaluate the terminating execution graph in postorder, reusing completed results.
+/// Ordinary successors are AND requirements; bindings of each Choose are alternatives.
+/// Resource limits retain the explored graph and counters without deciding unfinished states.
 template<tyr::TaskKind Kind, typename Unsolvability>
 ProgramProofStatus
 depth_first_search(ExecutionState<Kind, Unsolvability>& execution, ProgramStateView<Kind> initial, std::optional<ProgramStateView<Kind>>& goal)
@@ -43,7 +45,7 @@ depth_first_search(ExecutionState<Kind, Unsolvability>& execution, ProgramStateV
     auto next = std::optional(initial);
     while (true)
     {
-        if (execution.out_of_time() || !execution.proof().propagate([&] { return execution.out_of_time(); }))
+        if (execution.out_of_time())
             return ProgramProofStatus::OUT_OF_TIME;
 
         if (next)
@@ -51,13 +53,14 @@ depth_first_search(ExecutionState<Kind, Unsolvability>& execution, ProgramStateV
             const auto state = *next;
             next.reset();
             auto& node = execution.search_node(state);
+            assert(node.status != SearchStatus::ACTIVE && "Structurally terminating execution cannot have a back edge.");
             if (node.status != SearchStatus::DISCOVERED)
                 continue;
             if (node.is_goal)
             {
                 if (!goal)
                     goal = state;
-                execution.proof().succeed(state);
+                node.status = SearchStatus::SUCCESS;
                 continue;
             }
             if (node.is_unsolvable)
@@ -71,43 +74,56 @@ depth_first_search(ExecutionState<Kind, Unsolvability>& execution, ProgramStateV
             if (const auto limit = execution.expand(state))
                 return *limit;
             // Snapshot ordinary edges before any lazy bindings are recorded for this state.
-            stack.push({ state, begin, execution.predecessors().end_id() });
+            stack.push({ state, begin, execution.predecessors().end_id(), std::nullopt, false, !node.is_open && !node.is_deadend });
             continue;
         }
 
-        // Propagation above also runs after the final frame/goal, so no success event is lost.
         if (stack.empty())
             return execution.search_node(initial).status == SearchStatus::SUCCESS ? ProgramProofStatus::SUCCESS : ProgramProofStatus::FAILURE;
 
         auto& frame = stack.top();
+        auto& choices = execution.choices();
+        if (frame.child)
+        {
+            const auto status = execution.search_node(*frame.child).status;
+            assert(status == SearchStatus::SUCCESS || status == SearchStatus::FAILURE);
+            if (frame.choice_child)
+            {
+                if (status == SearchStatus::SUCCESS)
+                    choices.pop();
+            }
+            else
+                frame.succeeded &= status == SearchStatus::SUCCESS;
+            frame.child.reset();
+        }
         if (frame.next != frame.begin)
         {
             frame.next = Predecessors<Kind>::previous(frame.next);
-            next = execution.predecessors()[frame.next].target;
+            frame.child = execution.predecessors()[frame.next].target;
+            frame.choice_child = false;
+            next = frame.child;
             continue;
         }
 
-        auto& choices = execution.choices();
         if (!choices.empty() && choices.top().state == frame.state)
         {
             const auto& choice = choices.top();
-            if (!execution.proof().choice_succeeded(choice.choice_id))
+            if (const auto step = execution.next_binding())
             {
-                if (const auto step = execution.next_binding())
-                {
-                    const auto non_singleton = std::visit([](const auto& binding) { return binding.has_alternatives(); }, choice.choice);
-                    if (const auto limit = execution.record_transition(frame.state, *step, non_singleton, choice.choice_id))
-                        return *limit;
-                    next = step->get_target();
-                    continue;
-                }
+                const auto non_singleton = std::visit([](const auto& binding) { return binding.has_alternatives(); }, choice.choice);
+                if (const auto limit = execution.record_transition(frame.state, *step, non_singleton))
+                    return *limit;
+                frame.child = step->get_target();
+                frame.choice_child = true;
+                next = frame.child;
+                continue;
             }
+            frame.succeeded = false;
             choices.pop();
             continue;
         }
         auto& node = execution.search_node(frame.state);
-        if (node.status == SearchStatus::ACTIVE)
-            node.status = SearchStatus::PENDING;
+        node.status = frame.succeeded ? SearchStatus::SUCCESS : SearchStatus::FAILURE;
         stack.pop();
     }
 }
@@ -149,6 +165,9 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
                    ProgramView program,
                    const ProgramSearchOptions<Kind>& options) -> ProgramProofResults<Kind>
 {
+    if (!dl::structural_termination(program).is_terminating())
+        throw std::invalid_argument("Ext find_solution requires a structurally terminating program.");
+
     // Validate the task and program before constructing a classifier that borrows the task context.
     auto expander = SuccessorExpander<Kind>(task_context_owner, program);
     if (options.classifier)

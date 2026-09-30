@@ -17,6 +17,7 @@
 #include <runir/kr/ps/ext/successor_expander.hpp>
 #include <runir/kr/task_context.hpp>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -1500,7 +1501,7 @@ void expect_query_action_nullary_binding()
             EXPECT_TRUE(steps.front().planning_successor->label.get_objects().empty());
             EXPECT_TRUE(is_planning_goal(expander, steps.front().get_target().get_state()));
             EXPECT_THROW(collect_steps(expander, steps.front().get_target()), ext::ActionRuleContractError);
-            EXPECT_TRUE(ext::find_solution(task_context, program, ext::ProgramSearchOptions<Kind> {}).is_successful());
+            EXPECT_THROW(ext::find_solution(task_context, program, ext::ProgramSearchOptions<Kind> {}), std::invalid_argument);
         }
     }
 }

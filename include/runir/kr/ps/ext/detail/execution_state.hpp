@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_EXECUTION_STATE_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_EXECUTION_STATE_HPP_
 
-#include "runir/kr/ps/ext/detail/proof_propagation.hpp"
+#include "runir/kr/ps/ext/detail/predecessors.hpp"
 #include "runir/kr/ps/ext/successor_expander.hpp"
 
 #include <cstddef>
@@ -32,7 +32,6 @@ private:
 
     ygg::SegmentedVector<SearchNode<Kind>> m_nodes;
     Predecessors<Kind> m_predecessors;
-    ProofPropagation<Kind> m_proof { m_nodes, m_predecessors };
     std::size_t m_num_reached = 0;
     std::stack<ChoiceFrame<Kind>, std::vector<ChoiceFrame<Kind>>> m_choices;
     ProgramSearchStatistics m_statistics;
@@ -57,7 +56,6 @@ public:
     ProgramSearchStatistics& statistics() { return m_statistics; }
     const auto& nodes() const { return m_nodes; }
     auto& choices() { return m_choices; }
-    auto& proof() { return m_proof; }
     const auto& predecessors() const { return m_predecessors; }
     SearchNode<Kind>& search_node(ProgramStateView<Kind> state) { return get_or_create_search_node(state, m_nodes); }
 
@@ -79,8 +77,7 @@ public:
     /// An admission limit leaves the transition unrecorded, but its generation is already counted.
     std::optional<ProgramProofStatus> record_transition(ProgramStateView<Kind> source,
                                                         const ProgramStep<Kind>& step,
-                                                        bool non_singleton_choice = false,
-                                                        std::optional<ChoiceId> choice_id = std::nullopt)
+                                                        bool non_singleton_choice = false)
     {
         const auto depth = search_node(source).choice_depth + ygg::uint_t(non_singleton_choice);
         const auto target = step.get_target();
@@ -90,14 +87,13 @@ public:
             return ProgramProofStatus::OUT_OF_STATES;
         const auto& transition = step.get_state_transition();
         const auto action = transition ? std::optional(transition->action) : std::nullopt;
-        const auto edge = m_predecessors.append({ source, target, action, step.rule });
+        m_predecessors.append({ source, target, action, step.rule });
         if (created)
         {
             node.parent_state = source;
             node.action = action;
             node.choice_depth = depth;
         }
-        m_proof.add_transition(edge, choice_id);
         return std::nullopt;
     }
 
@@ -125,7 +121,6 @@ public:
             return limit;
         if (out_of_time())
             return ProgramProofStatus::OUT_OF_TIME;
-        m_proof.finish_enumeration(state);
         return std::nullopt;
     }
 
@@ -151,8 +146,7 @@ private:
     {
         if (choice.exhausted())
             search_node(state).is_deadend = true;
-        const auto choice_id = m_proof.add_choice(state);
-        m_choices.push({ state, std::move(choice), choice_id });
+        m_choices.push({ state, std::move(choice) });
         return std::nullopt;
     }
 

@@ -1,14 +1,23 @@
 # Program proof search
 
-The Ext executor separates depth-first exploration from proof resolution:
+Ext `find_solution` requires a structurally terminating whole program. It checks
+this before execution and raises `std::invalid_argument` (`ValueError` in Python)
+when termination is not established. Structural-analysis resource limits also
+remain errors, not termination certificates. The requirement applies to both
+grounded and lifted execution, in both universal and nonuniversal modes.
 
-- [`depth_first_search`](../include/runir/kr/ps/ext/detail/proof_search.hpp) schedules each admitted program state once and advances lazy Choose cursors.
+With this precondition, concrete execution has no cycles and results can be
+computed directly in depth-first postorder:
+
+- [`depth_first_search`](../include/runir/kr/ps/ext/detail/proof_search.hpp) evaluates each admitted program state once and advances lazy Choose cursors.
 - [`ExecutionState`](../include/runir/kr/ps/ext/detail/execution_state.hpp) records transitions, first parents, limits and statistics.
-- [`ProofPropagation`](../include/runir/kr/ps/ext/detail/proof_propagation.hpp) propagates newly established successes through incoming dependencies.
 
-The diagnostic graph and optional plan are constructed afterward. The graph retains rejected alternatives, so a cycle in that graph does not by itself invalidate a successful proof.
+The diagnostic graph and optional plan are constructed afterward. The graph
+retains failed alternatives, which do not invalidate a successful Choose.
+Planning states, program states and completed search results remain interned;
+shared continuations reuse their completed success or failure.
 
-[`Predecessors`](../include/runir/kr/ps/ext/detail/predecessors.hpp) owns the append-only transition records. Its typed `EdgeId` identifies an edge independently of vector reallocations. An expansion records its ordinary transitions consecutively before descending. Each DFS frame walks that interval in reverse using `EdgeId` boundaries, preserving the existing traversal order without a separate outgoing-edge index. Incoming dependencies use optional `EdgeId` links for propagation.
+[`Predecessors`](../include/runir/kr/ps/ext/detail/predecessors.hpp) owns the append-only transition records. Its typed `EdgeId` identifies an edge independently of vector reallocations. An expansion records its ordinary transitions consecutively before descending. Each DFS frame walks that interval in reverse using `EdgeId` boundaries, preserving the existing traversal order without a separate outgoing-edge index.
 
 ## AND/OR semantics
 
@@ -23,25 +32,25 @@ The second implication is enabled only after successor enumeration finishes and 
 
 With `universal=false`, enumeration retains the first ordinary outcome or selected Choose obligation. With `universal=true`, every ordinary outcome and every enabled Choose rule is required. Different bindings of one Choose share an OR obligation; different Choose rules never share one.
 
-## Incremental resolution
+## Depth-first evaluation
 
-Each program state's `StateProof` records `remaining_requirements` (one per unsatisfied ordinary edge or Choose rule), `first_incoming_edge` (the dependencies to notify when this state succeeds), and `enumeration_complete` (all requirements have been declared). Choose bindings can still be generated afterward because they satisfy an existing requirement. [`ChoiceProofs`](../include/runir/kr/ps/ext/detail/choice_proofs.hpp) owns each Choose's permanent satisfied flag, independent of its temporary cursor. Frames and dependencies identify that flag with a `ChoiceId`, a distinct integer type. `satisfy(id)` returns true only on its first success.
+Each DFS frame remembers its pending child and whether all ordinary successors
+have succeeded. A failed Choose binding advances the same cursor; a successful
+binding completes that Choose without trying the remaining alternatives. Every
+selected Choose must succeed. Empty choices, local failures and failed ordinary
+successors make their state fail.
 
-A new state success is queued once and visits only incoming dependencies. An ordinary dependency decrements its source counter; a Choose dependency does so only on that obligation's first success. An unblocked state succeeds when enumeration is complete and its counter reaches zero.
+Once its children and choices finish, the state receives its final success or
+failure. An already completed state is reused immediately. Structural termination
+excludes dependencies on an active ancestor, so there is no success queue,
+reverse-dependency storage or fixed-point propagation.
 
-A dependency registered after its target succeeds is credited immediately and is **not** linked for a second notification. Waiting for complete enumeration prevents a successful early child from proving its parent before the parent's other requirements are known.
-
-DFS tries another binding when the previous one remains unresolved; it does not wait for cyclic dependencies to become failures. For example, if `A` chooses `B` or Goal and `B` continues to `A`, proving `A` through Goal subsequently proves `B` through notification. There is no replay or repeated expansion. A cycle without a finite exit produces no success.
-
-When exploration and notifications both finish, the initial state succeeds exactly when it has been proved. Untried bindings of satisfied Choices are unnecessary. Time or state exhaustion returns a resource-limit status, not failure. First-parent plan reconstruction and choice-depth accounting remain unchanged.
-
-For `V` indexed state slots, `E` recorded transitions and `C` Choose obligations, resolution uses `O(V + E + C)` time and storage. This excludes successor generation and final graph/plan construction. The generated planning graph can still be exponential. Notifications may avoid alternatives that the previous replay implementation would have tried; expansion/generation counters continue to report actual work.
-
-## References
-
-The counter-and-worklist mechanism is an incremental application of Horn-clause propagation: W. F. Dowling and J. H. Gallier, [*Linear-time algorithms for testing the satisfiability of propositional Horn formulae*](https://doi.org/10.1016/0743-1066%2884%2990014-1), Journal of Logic Programming 1(3), 267–284, 1984. [Author-hosted PDF](https://www.seas.upenn.edu/~cis5110/Dowling-Gallier-Horn-sat.pdf).
-
-For the equivalent AND/OR reachability-game formulation, see Algorithm 1 in Dietmar Berwanger's [*Graph games with perfect information*](https://lsv.ens-paris-saclay.fr/~dwb/gtc.pdf).
+Time or state exhaustion returns a resource-limit status, not failure.
+First-parent plan reconstruction and choice-depth accounting remain unchanged.
+For `V` indexed state slots, `E` recorded transitions and `C` attempted Choose
+obligations, evaluation uses `O(V + E + C)` time and storage, excluding structural
+analysis, successor generation and final graph/plan construction. A terminating
+program can still have exponentially many branching continuations.
 
 ## Choose ordering
 

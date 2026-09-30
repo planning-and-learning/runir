@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import TypedDict, cast
 
 from ext_execution_utils import collect_steps, initial_node
-from fixture_utils import load_fixture, read_fixture
+from fixture_utils import FIXTURE_ROOT, load_fixture, read_fixture
 from pypddl_datasets import data_root
 import pytest
 
@@ -88,6 +88,32 @@ def _ground_context_and_domain() -> tuple[GroundTaskContext, PlanningDomain, Gro
     ground_task = lifted_task.instantiate_ground_task(execution_context, GroundTaskInstantiationOptions()).task
     search_context = GroundTaskSearchContext(ground_task, execution_context)
     return GroundTaskContext(DomainContext(planning_domain), search_context), planning_domain, ground_task
+
+
+def _terminating_context_and_program():
+    directory = FIXTURE_ROOT / "kr/ps/ext/choose"
+    parser = Parser(directory / "domain.pddl", ParserOptions())
+    task = Task(parser.parse_task(directory / "task.pddl", ParserOptions()))
+    execution = ExecutionContext(1)
+    ground_task = task.instantiate_ground_task(execution, GroundTaskInstantiationOptions()).task
+    context = GroundTaskContext(
+        DomainContext(parser.get_domain()), GroundTaskSearchContext(ground_task, execution),
+    )
+    program = dl.parse_program("""(:program (:entry main)
+      (:module (:symbol main) (:arguments) (:registers)
+        (:entry m0) (:memory m0 m1 m2)
+        (:features
+          (:concept (:symbol here) (:expression (c_atomic_state "at")))
+          (:concept (:symbol good) (:expression (c_and (c_atomic_state "candidate") (c_not (c_atomic_state "bad")))))
+          (:concept (:symbol goal) (:expression (c_atomic_goal "at" true))))
+        (:rules
+          (:rule (:symbol first) (:expression (:source-memory m0) (:target-memory m1)
+            (:do (:conditions) (:action "move") (:arguments here good) (:effects))))
+          (:rule (:symbol second) (:expression (:source-memory m1) (:target-memory m2)
+            (:do (:conditions) (:action "move") (:arguments here goal) (:effects)))))))""",
+        parser.get_domain(), context.domain_context.ext_repository,
+    )
+    return context, parser.get_domain(), program
 
 
 def _repositories() -> tuple[PlanningDomain, ext.Repository]:
@@ -299,12 +325,22 @@ def test_empty_module_factory_uses_ext_repositories() -> None:
     assert reparsed.syntactic_complexity() == 0
 
 
-def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> None:
+@pytest.mark.parametrize("universal", [False, True])
+def test_paper_program_requires_structural_termination(universal: bool) -> None:
     task_context, planning_domain, _ground_task = _ground_context_and_domain()
-    _dl_repository = task_context.domain_context.ext_repository.get_dl_repository()
-    repository = task_context.domain_context.ext_repository
+    program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(
+        planning_domain, task_context.domain_context.ext_repository,
+    )
+    assert not dl.structural_termination(program).is_terminating()
+    options = ext.GroundProgramSearchOptions()
+    options.universal = universal
+    with pytest.raises(ValueError, match=r"^Ext find_solution requires a structurally terminating program\.$"):
+        ext.find_ground_solution(task_context, program, options)
 
-    program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(planning_domain, repository)
+
+def test_terminating_program_executes_and_proves_from_python() -> None:
+    task_context, planning_domain, program = _terminating_context_and_program()
+    assert dl.structural_termination(program).is_terminating()
 
     search_options = ext.GroundProgramSearchOptions()
     assert not hasattr(search_options, "brfs_options")
@@ -320,7 +356,7 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     assert search_result.status == ext.ProgramProofStatus.SUCCESS
     assert search_result.is_successful()
     assert isinstance(search_result.plan, GroundPackedPlan)
-    assert search_result.plan.get_length() == 4
+    assert search_result.plan.get_length() == 2
     assert search_result.statistics.choice_depth == 0
 
     classifier_dl_repository = task_context.domain_context.uns_repository.get_dl_repository()
@@ -350,9 +386,9 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     proof_options = ext.GroundProgramSearchOptions()
     proof_options.universal = True
     proof = ext.find_ground_solution(task_context, program, proof_options)
-    assert proof.status == ext.ProgramProofStatus.FAILURE
-    assert not proof.is_successful()
-    assert proof.graph.get_num_vertices() > search_result.graph.get_num_vertices()
+    assert proof.status == ext.ProgramProofStatus.SUCCESS
+    assert proof.is_successful()
+    assert proof.graph.get_num_vertices() == search_result.graph.get_num_vertices()
     vertex = next(iter(proof.graph.get_vertex_indices()))
     assert isinstance(proof.graph.get_successor_indices(vertex), list)
     edge = next(iter(proof.graph.get_edge_indices()))
@@ -371,15 +407,12 @@ def test_paper_modules_execute_on_small_blocksworld_instance_from_python() -> No
     assert len(frame.registers.role_values) == len(frame.module.get_role_registers())
     assert len(proof.deadend_states) == 0
     assert len(proof.open_states) == 0
-    assert len(proof.cycle) > 0
+    assert len(proof.cycle) == 0
 
 
 def test_packed_solution_plan_owns_states_after_result_release() -> None:
     def solve():
-        task_context, planning_domain, _ground_task = _ground_context_and_domain()
-        program = dl.ModuleFactory.create_bonet_et_al_icaps2024_program(
-            planning_domain, task_context.domain_context.ext_repository
-        )
+        task_context, _planning_domain, program = _terminating_context_and_program()
         result = ext.find_ground_solution(task_context, program, ext.GroundProgramSearchOptions())
         assert result.is_successful()
         plan = result.plan
@@ -388,10 +421,10 @@ def test_packed_solution_plan_owns_states_after_result_release() -> None:
 
     plan, text, final_state_text = solve()
     gc.collect()
-    assert plan.get_length() == 4
+    assert plan.get_length() == 2
     assert str(plan) == text
     assert str(plan.get_labeled_succ_nodes()[-1].node.get_state().unpack()) == final_state_text
-    assert plan.unpack().get_length() == 4
+    assert plan.unpack().get_length() == 2
 
 
 @pytest.mark.parametrize("case", EXECUTION_CASES, ids=[case["name"] for case in EXECUTION_CASES])
@@ -402,6 +435,11 @@ def test_executor_fixture(case: ExecutionFixture) -> None:
     )
     options = ext.GroundProgramSearchOptions()
     options.universal = case["universal"]
+
+    if case["name"] == "load_deadend":
+        with pytest.raises(ValueError, match=r"^Ext find_solution requires a structurally terminating program\.$"):
+            ext.find_ground_solution(task_context, program, options)
+        return
 
     result = ext.find_ground_solution(task_context, program, options)
 

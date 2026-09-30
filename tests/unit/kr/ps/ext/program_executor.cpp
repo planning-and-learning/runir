@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
+#include <runir/kr/ps/ext/dl/structural_termination.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
@@ -84,7 +85,7 @@ TEST(RunirTests, ExtFindSolutionTreatsClassifierMatchesAsTerminalFailures)
     EXPECT_EQ(task_context->dl_denotation_repository->size<kr::dl::semantics::Denotation<kr::dl::BooleanTag>>(), 0);
 }
 
-TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
+TEST(RunirTests, ExtFindSolutionRejectsNonterminatingPaperModules)
 {
     namespace p = tyr::planning;
 
@@ -100,22 +101,13 @@ TEST(RunirTests, ExtPaperModulesExecuteOnSmallBlocksworldInstance)
     const auto program = kr::ps::ext::dl::ModuleFactory::create_bonet_et_al_icaps2024_program(task->get_domain().get_domain(), *repository);
     ASSERT_EQ(program.get_modules().size(), 5);
 
-    auto search_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag>();
-
-    const auto search_result = kr::ps::ext::find_solution(task_context, program, search_options);
-    EXPECT_TRUE(search_result.is_successful());
-    ASSERT_TRUE(search_result.plan.has_value());
-    EXPECT_EQ(search_result.plan->get_length(), 4);
-
-    auto proof_options = search_options;
-    proof_options.universal = true;
-    const auto proof = kr::ps::ext::find_solution(task_context, program, proof_options);
-    EXPECT_EQ(proof.status, kr::ps::ext::ProgramProofStatus::FAILURE) << fmt::format("{}", proof);
-    ASSERT_TRUE(proof.graph);
-    ASSERT_TRUE(search_result.graph);
-    EXPECT_GT(proof.graph->get_num_vertices(), search_result.graph->get_num_vertices());
-
-    EXPECT_FALSE(proof.cycle.empty());
+    ASSERT_FALSE(kr::ps::ext::dl::structural_termination(program).is_terminating());
+    for (const auto universal : { false, true })
+    {
+        auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
+        options.universal = universal;
+        EXPECT_THROW((void) kr::ps::ext::find_solution(task_context, program, options), std::invalid_argument);
+    }
 }
 
 TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallelEdges)
@@ -178,7 +170,7 @@ TEST(RunirTests, ExtSketchUsesOnlyImmediateOutcomesAndUniversalPreservesParallel
     EXPECT_EQ(rejected.graph->get_num_edges(), 0);
 }
 
-TEST(RunirTests, ExtFindSolutionReportsTheCompleteThreeStateCycle)
+TEST(RunirTests, ExtFindSolutionRejectsCyclesBeforeInterningStates)
 {
     namespace p = tyr::planning;
 
@@ -193,17 +185,22 @@ TEST(RunirTests, ExtFindSolutionReportsTheCompleteThreeStateCycle)
                                                       *repository);
     const auto program = create_program(*repository, module_, { module_ });
 
-    auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
-    const auto result = kr::ps::ext::find_solution(task_context, program, options);
-    EXPECT_EQ(result.status, kr::ps::ext::ProgramProofStatus::FAILURE);
-    ASSERT_TRUE(result.graph);
-    EXPECT_EQ(result.graph->get_num_vertices(), 3);
-    EXPECT_EQ(result.graph->get_num_edges(), 3);
-    EXPECT_EQ(result.statistics.num_expanded, 3);
-    EXPECT_EQ(result.statistics.num_generated, 3);  // Generating an already visited target still counts.
-    ASSERT_EQ(result.cycle.size(), 4);
-    EXPECT_EQ(result.cycle.front(), result.cycle.back());
-    EXPECT_EQ(std::set(result.cycle.begin(), result.cycle.end()).size(), 3);
+    ASSERT_FALSE(kr::ps::ext::dl::structural_termination(program).is_terminating());
+    for (const auto universal : { false, true })
+    {
+        auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
+        options.universal = universal;
+        try
+        {
+            (void) kr::ps::ext::find_solution(task_context, program, options);
+            FAIL() << "a cyclic program must be rejected";
+        }
+        catch (const std::invalid_argument& error)
+        {
+            EXPECT_STREQ(error.what(), "Ext find_solution requires a structurally terminating program.");
+        }
+        EXPECT_EQ(task_context->execution_repository->size<kr::ps::ext::ProgramState<tyr::GroundTag>>(), 0);
+    }
 }
 
 TEST(RunirTests, ExtExecutorFixtureOutcomesMatch)
@@ -226,6 +223,11 @@ TEST(RunirTests, ExtExecutorFixtureOutcomesMatch)
                                                                    *task_context->domain_context->ext_repository);
         auto options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag>();
         options.universal = ygg::common::as_bool(test_case, "universal", "case");
+        if (ygg::common::as_string(test_case, "name", "case") == "load_deadend")
+        {
+            EXPECT_THROW((void) kr::ps::ext::find_solution(task_context, program, options), std::invalid_argument);
+            continue;
+        }
 
         const auto result = kr::ps::ext::find_solution(task_context, program, options);
 
@@ -247,7 +249,7 @@ std::string choice_module(const std::string& name, const std::string& rules)
 {
     return "(:module (:symbol " + name + R"()
         (:arguments) (:registers (:concept r0) (:concept r1))
-        (:entry m0) (:memory m0 m1 m2 m3 m4 m5 m6)
+        (:entry m0) (:memory m0 m1 m2 m3 m4 m5 m6 m7)
         (:features
             (:concept (:symbol Candidates) (:expression (c_atomic_state "candidate")))
             (:concept (:symbol Empty) (:expression (c_bot)))
@@ -311,18 +313,19 @@ void check_choice_execution()
     ASSERT_EQ(bindings.size(), 2);
     EXPECT_EQ(bindings[0].target.get_module_state().get_registers().get_concept_values()[0].value().get_name(), "bad");
 
-    // The rejected binding returns to an already visited state. It must not replace that state's plan parent.
+    // Backtracking past a failed binding must preserve the successful planning prefix.
     const auto plan_program = make_program(choice_module(
-        "plan-after-cycle",
+        "plan-after-failure",
         choice_rule("select-good", "m0", "m1", "(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))")
             + choice_rule("move-good", "m1", "m2", move_to_register)
             + choice_rule("normalize", "m2", "m3", "(:load (:conditions) (:concept Goal) (:register (:concept r0)))")
             + choice_rule("choose", "m3", "m4", choose_candidates)
-            + choice_rule("cycle", "m4", "m3", "(:load (:conditions (positive Bad)) (:concept Goal) (:register (:concept r0)))")
+            + choice_rule("fail", "m4", "m6", "(:load (:conditions (positive Bad)) (:concept Goal) (:register (:concept r0)))")
             + choice_rule("finish", "m4", "m5", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here Goal) (:effects)))")));
     const auto plan_result = ext::find_solution(context, plan_program, ext::ProgramSearchOptions<Kind> {});
     ASSERT_EQ(plan_result.status, Status::SUCCESS);
-    EXPECT_FALSE(plan_result.cycle.empty());
+    EXPECT_TRUE(plan_result.cycle.empty());
+    EXPECT_FALSE(plan_result.open_states.empty());
     ASSERT_TRUE(plan_result.plan);
     const auto& plan = *plan_result.plan;
     ASSERT_EQ(plan.get_length(), 2);
@@ -370,10 +373,7 @@ void check_choice_execution()
             choice_rule("select", "m0", "m1", choose_candidates) + choice_rule("loop", "m1", "m1", "(:sketch (:conditions (positive Bad)) (:effects))")
                 + choice_rule("move-selected", "m1", "m2", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
                 + choice_rule("finish", "m2", "m3", move_to_goal)));
-        const auto cyclic_result = ext::find_solution(context, cyclic, options);
-        EXPECT_EQ(cyclic_result.status, Status::SUCCESS);
-        EXPECT_EQ(cyclic_result.statistics.choice_depth, 1);
-        EXPECT_FALSE(cyclic_result.cycle.empty());
+        EXPECT_THROW((void) ext::find_solution(context, cyclic, options), std::invalid_argument);
 
         for (const auto& body : { choose_empty,
                                   std::string("(:choose (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (positive Same)))") })
@@ -633,7 +633,7 @@ void check_choice_execution()
         choice_rule("long-route", "m0", "m1", load_goal) + choice_rule("short-route", "m0", "m3", load_goal)
             + choice_rule("long-choice", "m1", "m2", choose_candidates) + choice_rule("normalize-prefix", "m2", "m3", load_goal)
             + choice_rule("shared-choice", "m3", "m4", choose_candidates) + choice_rule("normalize-suffix", "m4", "m5", load_good)
-            + choice_rule("move", "m5", "m6", move_to_register) + choice_rule("finish", "m6", "m0", move_to_goal);
+            + choice_rule("move", "m5", "m6", move_to_register) + choice_rule("finish", "m6", "m7", move_to_goal);
     const auto reconverged = make_program(choice_module("unequal-depths", reconverged_rules));
     const auto reconverged_result = ext::find_solution(context, reconverged, universal);
     EXPECT_EQ(reconverged_result.status, Status::SUCCESS);
@@ -647,61 +647,6 @@ void check_choice_execution()
     const auto partial_result = ext::find_solution(context, partial, limited);
     EXPECT_EQ(partial_result.status, Status::OUT_OF_STATES);
     EXPECT_EQ(partial_result.statistics.choice_depth, 0);
-
-    const auto revisited = make_program(
-        choice_module("revisited",
-                      choice_rule("init", "m0", "m1", load_goal) + choice_rule("first-A", "m1", "m2", load_goal) + choice_rule("then-B", "m1", "m3", load_goal)
-                          + choice_rule("A", "m2", "m4", choose_candidates) + choice_rule("B", "m3", "m2", load_goal)
-                          + choice_rule("bad-to-B", "m4", "m3", "(:load (:conditions (positive Bad)) (:concept Goal) (:register (:concept r0)))")
-                          + choice_rule("good-move", "m4", "m5", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
-                          + choice_rule("finish", "m5", "m0", move_to_goal)));
-    const auto revisited_result = ext::find_solution(context, revisited, universal);
-    EXPECT_EQ(revisited_result.status, Status::SUCCESS);
-    EXPECT_FALSE(revisited_result.cycle.empty());
-    expect_single_expansion(revisited_result);
-
-    // B exhausts its singleton binding while A is active; A's success must notify B after B's cursor is gone.
-    for (const auto reverse : { false, true })
-    {
-        SCOPED_TRACE(reverse);
-        const auto root_a = choice_rule("root-A", "m1", "m2", load_goal);
-        const auto root_b = choice_rule("root-B", "m1", "m3", load_goal);
-        const auto pending_rules =
-            choice_rule("init", "m0", "m1", load_goal) + (reverse ? root_b + root_a : root_a + root_b) + choice_rule("A", "m2", "m4", choose_candidates)
-            + choice_rule("B", "m3", "m2", "(:choose (:conditions) (:concept Goal) (:register (:concept r0)))")
-            + choice_rule("bad-to-B", "m4", "m3", "(:load (:conditions (positive Bad)) (:concept Goal) (:register (:concept r0)))")
-            + choice_rule("good-move", "m4", "m5", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
-            + choice_rule("finish", "m5", "m0", move_to_goal);
-        const auto pending_singleton = make_program(choice_module(reverse ? "pending-singleton-B-first" : "pending-singleton-A-first", pending_rules));
-        const auto pending_singleton_result = ext::find_solution(context, pending_singleton, universal);
-        EXPECT_EQ(pending_singleton_result.status, Status::SUCCESS);
-        EXPECT_FALSE(pending_singleton_result.cycle.empty());
-        expect_single_expansion(pending_singleton_result);
-
-        // B also has a proved Choose; both obligations remain tracked after their cursors are gone.
-        const auto pending_choices =
-            make_program(choice_module(reverse ? "pending-choices-B-first" : "pending-choices-A-first",
-                                       pending_rules
-                                           + choice_rule("B-independent",
-                                                         "m3",
-                                                         "m4",
-                                                         "(:choose (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))")));
-        const auto pending_choices_result = ext::find_solution(context, pending_choices, universal);
-        EXPECT_EQ(pending_choices_result.status, Status::SUCCESS);
-        EXPECT_FALSE(pending_choices_result.cycle.empty());
-        expect_single_expansion(pending_choices_result);
-        ASSERT_TRUE(pending_choices_result.graph);
-        auto dependent_bindings = 0;
-        auto independent_bindings = 0;
-        for (const auto edge : pending_choices_result.graph->get_edge_indices())
-        {
-            const auto& rule = pending_choices_result.graph->get_edge(edge).get_property().rule;
-            dependent_bindings += rule && rule->get_symbol() == "B";
-            independent_bindings += rule && rule->get_symbol() == "B-independent";
-        }
-        EXPECT_EQ(dependent_bindings, 1);
-        EXPECT_EQ(independent_bindings, 1);
-    }
 
     // Returning from the successful ordinary continuation must still evaluate the failing Choose obligation.
     const auto required_choice = make_program(choice_module(
@@ -770,7 +715,7 @@ void check_ordinary_execution_keeps_complete_graph()
                                ? choice_rule("left", "m0", "m1", skip) + choice_rule("right", "m0", "m2", skip)
                                      + choice_rule("join-left", "m1", "m3", skip) + choice_rule("join-right", "m2", "m3", skip)
                                      + choice_rule("load", "m3", "m4", load) + choice_rule("move", "m4", "m5", move_to_register)
-                                     + choice_rule("finish", "m5", "m0", move_to_goal)
+                                     + choice_rule("finish", "m5", "m6", move_to_goal)
                                : choice_rule("first", "m0", "m1", skip) + choice_rule("parallel", "m0", "m1", skip)
                                      + choice_rule("load", "m1", "m2", load) + choice_rule("move", "m2", "m3", move_to_register)
                                      + choice_rule("finish", "m3", "m4", move_to_goal);

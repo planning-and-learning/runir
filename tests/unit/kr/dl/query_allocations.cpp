@@ -8,6 +8,7 @@
 #include <new>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
+#include <runir/kr/ps/ext/detail/proof_search.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
@@ -296,8 +297,11 @@ TEST(RunirSearch, ProgramSearchAllocationsGrowWithContainerCapacity)
                 options.universal = universal;
                 // Retain interned execution states and warm the shared builders before measuring search bookkeeping.
                 ASSERT_TRUE(ext::find_solution(context, program, options).is_successful());
+                // Structural certification is policy analysis, not per-step search bookkeeping.
+                auto expander = ext::SuccessorExpander<tyr::GroundTag>(context, program);
+                auto classifier = kr::ps::NoUnsolvability {};
                 allocation_tracking::Scope measured;
-                const auto result = ext::find_solution(context, program, options);
+                const auto result = ext::detail::find_solution(expander, options, classifier);
                 allocations[scale] = measured.finish().allocated;
                 ASSERT_TRUE(result.is_successful());
                 EXPECT_EQ(result.statistics.num_expanded, length + 2);

@@ -433,6 +433,21 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 @pytest.mark.parametrize("universal", [False, True])
+@pytest.mark.parametrize("program_file", ["non_terminating.program", "recursive_calls.program"])
+def test_execution_requires_whole_program_structural_termination(kind, universal, program_file):
+    context, domain = _task_context(kind)
+    program = parse_program(
+        read_fixture(f"kr/ps/ext/dl/{program_file}"), domain, context.domain_context.ext_repository,
+    )
+    options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
+    options.universal = universal
+    options.max_time = timedelta(0)
+    with pytest.raises(ValueError, match=r"^Ext find_solution requires a structurally terminating program\.$"):
+        getattr(ext, f"find_{kind}_solution")(context, program, options)
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+@pytest.mark.parametrize("universal", [False, True])
 @pytest.mark.parametrize("initial_goal_satisfied", [False, True])
 def test_initial_goal_classifier_and_zero_time_results(
     tmp_path, kind: Literal["ground", "lifted"], universal: bool, initial_goal_satisfied: bool,

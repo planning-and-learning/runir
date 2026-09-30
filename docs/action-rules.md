@@ -65,6 +65,10 @@ and forward termination does not establish completeness of backtracking search.
 
 ## Enumeration and search
 
+Ext `find_solution` requires a structurally terminating whole program and
+rejects programs without that certificate before execution. This precondition
+does not apply to direct successor-expander calls.
+
 `SuccessorExpander::for_each_successor(state, statistics, emit, stop)`
 visits immediate outcomes without collecting successor states. The interned
 `ProgramState` contains the planning state and the module's control, registers,
@@ -92,7 +96,7 @@ returns and attempted Choose bindings. Rejected planning candidates, failure
 markers, and unattempted Choose bindings do not contribute. The search owns
 `num_expanded`; each program state is expanded at most once per search, and direct
 expander calls do not increment it. Arrivals at an already discovered state retain
-their proof edges without repeating expansion. Choose cursors iterate independently;
+their diagnostic edges without repeating expansion. Choose cursors iterate independently;
 no state discovery or first predecessor is undone when another binding is tried.
 
 `statistics.choice_depth` counts non-singleton Choose bindings on the first
