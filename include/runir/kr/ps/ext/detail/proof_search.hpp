@@ -71,20 +71,21 @@ ProgramProofStatus depth_first_search(Expander& expander,
         const bool goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial_planning_state, planning_state.get_state_builder());
         return std::pair(goal, !goal && classifier.is_unsolvable(planning_state));
     };
-    const auto record_transition = [&](ProgramStateViewConcept<Kind> auto source, const Step& step, bool non_singleton)
+    const auto record_transition = [&](ProgramStateViewConcept<Kind> auto source, const Step& step, std::size_t choice_width)
     {
         const auto& transition = step.get_state_transition();
         const auto action = transition ? std::optional(transition->action) : std::nullopt;
-        return storage.record_transition(source, expander.view(step.target), action, step.rule, non_singleton, classify);
+        return storage.record_transition(source, expander.view(step.target), action, step.rule, choice_width, classify);
     };
     const auto make_path =
-        [&](S state, PathPtr parent, std::optional<datasets::StateGraphEdgeLabel> transition, std::optional<RuleVariantView> rule, bool non_singleton)
+        [&](S state, PathPtr parent, std::optional<datasets::StateGraphEdgeLabel> transition, std::optional<RuleVariantView> rule, std::size_t choice_width)
     {
-        const auto depth = parent ? parent->choice_depth + ygg::uint_t(non_singleton) : 0;
-        return path_pool.get_or_allocate(std::move(state), std::move(parent), transition, rule, depth);
+        const auto depth = parent ? parent->choice_depth + ygg::uint_t(choice_width > 1) : 0;
+        const auto width = parent ? std::max(parent->choice_width, choice_width) : 0;
+        return path_pool.get_or_allocate(std::move(state), std::move(parent), transition, rule, depth, width);
     };
     if (storage.admit(expander.view(initial), classify))
-        next = make_path(initial, {}, {}, {}, false);
+        next = make_path(initial, {}, {}, {}, 0);
     else
         status = ProgramProofStatus::OUT_OF_STATES;
 
@@ -141,7 +142,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
                     {
                         if (expansion.status == ProgramOutcome::APPLIED || expansion.status == ProgramOutcome::RESTORED_CALLER)
                         {
-                            if (!record_transition(state, expansion, false))
+                            if (!record_transition(state, expansion, 0))
                                 limit = ProgramProofStatus::OUT_OF_STATES;
                             else
                                 successors.push_back(std::move(expansion));
@@ -221,19 +222,19 @@ ProgramProofStatus depth_first_search(Expander& expander,
             auto step = std::move(successors.back());
             successors.pop_back();
             frame.choice_child = false;
-            next = make_path(step.get_target(), frame.path, step.get_state_transition(), step.rule, false);
+            next = make_path(step.get_target(), frame.path, step.get_state_transition(), step.rule, 0);
             continue;
         }
         if (choices.size() != frame.choices_begin)
         {
             auto step = std::optional<Step> {};
-            bool non_singleton = false;
+            std::size_t choice_width = 0;
             std::visit(
                 [&](auto& choice)
                 {
                     if (!choice.exhausted())
                     {
-                        non_singleton = choice.has_alternatives();
+                        choice_width = choice.count();
                         step = expander.apply_choice(state, choice, statistics);
                         choice.advance();
                     }
@@ -245,13 +246,13 @@ ProgramProofStatus depth_first_search(Expander& expander,
                 choices.pop_back();
                 continue;
             }
-            if (!record_transition(state, *step, non_singleton))
+            if (!record_transition(state, *step, choice_width))
             {
                 status = ProgramProofStatus::OUT_OF_STATES;
                 break;
             }
             frame.choice_child = true;
-            next = make_path(step->get_target(), frame.path, step->get_state_transition(), step->rule, non_singleton);
+            next = make_path(step->get_target(), frame.path, step->get_state_transition(), step->rule, choice_width);
             continue;
         }
         if (frame.memo_state)
@@ -297,6 +298,7 @@ find_solution(Expander& expander, SearchStorage<Kind, Memorization>& storage, co
         if (status == ProgramProofStatus::SUCCESS && first_goal)
         {
             result.statistics.choice_depth = first_goal->choice_depth;
+            result.statistics.choice_width = first_goal->choice_width;
             if (!options.universal)
             {
                 auto actions = std::vector<tyr::formalism::planning::ActionBindingView> {};
@@ -315,6 +317,7 @@ find_solution(Expander& expander, SearchStorage<Kind, Memorization>& storage, co
         {
             const auto goal = *first_goal->state;
             result.statistics.choice_depth = storage.node(goal).choice_depth;
+            result.statistics.choice_width = storage.node(goal).choice_width;
             if (!options.universal)
                 result.plan = extract_total_ordered_plan(goal, storage.nodes, initial_node, *task_context);
         }

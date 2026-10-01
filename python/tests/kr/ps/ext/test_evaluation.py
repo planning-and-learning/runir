@@ -523,6 +523,7 @@ def test_state_memorization_preserves_axiom_closure(tmp_path, kind, mode):
     assert result.is_successful()
     assert result.plan.get_length() == 2
     assert result.statistics.choice_depth == 1
+    assert result.statistics.choice_width == 2
     assert bool(result.deadend_states) == (mode == ext.StateMemorization.ALL)
 
 
@@ -593,6 +594,7 @@ def test_initial_goal_classifier_and_zero_time_results(
         assert proof.statistics.num_expanded == 0
         assert proof.statistics.num_generated == 0
         assert proof.statistics.choice_depth == 0
+        assert proof.statistics.choice_width == 0
         assert proof.open_states == []
         assert proof.graph.get_num_vertices() == 1
         assert proof.graph.get_num_edges() == 0
@@ -604,9 +606,11 @@ def test_initial_goal_classifier_and_zero_time_results(
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 @pytest.mark.parametrize("universal", [False, True])
+@pytest.mark.parametrize("mode", [ext.StateMemorization.NONE, ext.StateMemorization.CHOICE, ext.StateMemorization.ALL])
 def test_choose_search_statistics_are_read_only(
-    kind: Literal["ground", "lifted"], universal: bool,
+    kind: Literal["ground", "lifted"], universal: bool, mode,
 ) -> None:
+    assert ext.ProgramSearchStatistics().choice_width == 0
     directory = FIXTURE_ROOT / "kr/ps/ext/choose"
     parser = Parser(directory / "domain.pddl", ParserOptions())
     task = lifted.Task(parser.parse_task(directory / "task.pddl", ParserOptions()))
@@ -643,31 +647,33 @@ def test_choose_search_statistics_are_read_only(
         context.domain_context.ext_repository,
     )
     options.universal = universal
+    options.state_memorization = mode
     result = find_solution(context, program, options)
     assert result.is_successful()
     assert isinstance(result.statistics, ext.ProgramSearchStatistics)
     assert result.statistics.num_expanded == 5
     assert result.statistics.num_generated == 5
     assert result.statistics.choice_depth == 1
-    for name in ("num_expanded", "num_generated", "choice_depth"):
+    assert result.statistics.choice_width == 2
+    for name in ("num_expanded", "num_generated", "choice_depth", "choice_width"):
         with pytest.raises(AttributeError):
             setattr(result.statistics, name, 99)
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 @pytest.mark.parametrize("universal", [False, True])
-@pytest.mark.parametrize("order,expected,depth", [
-    ("(:order (min score))", 3, 1),
-    ("(:order (max score))", 5, 1),
-    ("(:order (min infinite_score))", 3, 1),
-    ("(:order (max infinite_score))", 5, 1),
-    ("(:order (min bad_flag) (max score))", 3, 1),
-    ("(:order)", 5, 1),
-    ("(:order (min zero))", 5, 1),
-    ("(:effects (negative bad_flag)) (:order (max score))", 3, 0),
+@pytest.mark.parametrize("order,expected,depth,width", [
+    ("(:order (min score))", 3, 1, 2),
+    ("(:order (max score))", 5, 1, 2),
+    ("(:order (min infinite_score))", 3, 1, 2),
+    ("(:order (max infinite_score))", 5, 1, 2),
+    ("(:order (min bad_flag) (max score))", 3, 1, 2),
+    ("(:order)", 5, 1, 2),
+    ("(:order (min zero))", 5, 1, 2),
+    ("(:effects (negative bad_flag)) (:order (max score))", 3, 0, 1),
 ])
 @pytest.mark.parametrize("category", ["concept", "role"])
-def test_choose_order_scores_bound_candidates(kind, universal, order, expected, depth, category):
+def test_choose_order_scores_bound_candidates(kind, universal, order, expected, depth, width, category):
     directory = FIXTURE_ROOT / "kr/ps/ext/choose"
     parser = Parser(directory / "domain.pddl", ParserOptions())
     task = lifted.Task(parser.parse_task(directory / "task.pddl", ParserOptions()))
@@ -720,6 +726,7 @@ def test_choose_order_scores_bound_candidates(kind, universal, order, expected, 
     assert result.statistics.num_expanded == expected
     assert result.statistics.num_generated == expected
     assert result.statistics.choice_depth == depth
+    assert result.statistics.choice_width == width
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])

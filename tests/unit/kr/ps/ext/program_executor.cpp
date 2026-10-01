@@ -258,6 +258,7 @@ std::string choice_module(const std::string& name, const std::string& rules)
         (:entry m0) (:memory m0 m1 m2 m3 m4 m5 m6 m7)
         (:features
             (:concept (:symbol Candidates) (:expression (c_atomic_state "candidate")))
+            (:concept (:symbol All) (:expression (c_top)))
             (:concept (:symbol Empty) (:expression (c_bot)))
             (:concept (:symbol Here) (:expression (c_atomic_state "at")))
             (:concept (:symbol Goal) (:expression (c_atomic_goal "at" true)))
@@ -388,6 +389,7 @@ void check_choice_execution()
             const auto empty_result = ext::find_solution(context, empty, options);
             EXPECT_EQ(empty_result.status, Status::FAILURE);
             EXPECT_EQ(empty_result.statistics.choice_depth, 0);
+            EXPECT_EQ(empty_result.statistics.choice_width, 0);
             EXPECT_EQ(empty_result.statistics.num_expanded, 1);
             EXPECT_EQ(empty_result.statistics.num_generated, 0);
             EXPECT_FALSE(empty_result.deadend_states.empty());
@@ -407,6 +409,7 @@ void check_choice_execution()
             const auto filtered_result = ext::find_solution(context, filtered, options);
             EXPECT_EQ(filtered_result.status, good ? Status::SUCCESS : Status::FAILURE);
             EXPECT_EQ(filtered_result.statistics.choice_depth, 0);
+            EXPECT_EQ(filtered_result.statistics.choice_width, good ? 1 : 0);
             EXPECT_EQ(filtered_result.statistics.num_generated, good ? 3 : 2);  // Rejected bindings never emit a successor.
         }
 
@@ -420,6 +423,7 @@ void check_choice_execution()
         const auto singleton_chain_result = ext::find_solution(context, singleton_chain, options);
         EXPECT_EQ(singleton_chain_result.status, Status::SUCCESS);
         EXPECT_EQ(singleton_chain_result.statistics.choice_depth, 0);
+        EXPECT_EQ(singleton_chain_result.statistics.choice_width, 1);
         EXPECT_EQ(singleton_chain_result.statistics.num_expanded, 5);
         EXPECT_EQ(singleton_chain_result.statistics.num_generated, 5);
         EXPECT_TRUE(singleton_chain_result.deadend_states.empty());
@@ -432,6 +436,7 @@ void check_choice_execution()
         const auto ordinary_result = ext::find_solution(context, ordinary, options);
         EXPECT_EQ(ordinary_result.status, Status::SUCCESS);
         EXPECT_EQ(ordinary_result.statistics.choice_depth, 0);
+        EXPECT_EQ(ordinary_result.statistics.choice_width, 0);
         EXPECT_EQ(ordinary_result.statistics.num_expanded, 3);
         EXPECT_EQ(ordinary_result.statistics.num_generated, 3);
 
@@ -654,6 +659,7 @@ void check_choice_execution()
     const auto partial_result = ext::find_solution(context, partial, limited);
     EXPECT_EQ(partial_result.status, Status::OUT_OF_STATES);
     EXPECT_EQ(partial_result.statistics.choice_depth, 0);
+    EXPECT_EQ(partial_result.statistics.choice_width, 0);
 
     // Returning from the successful ordinary continuation must still evaluate the failing Choose obligation.
     const auto required_choice =
@@ -661,6 +667,7 @@ void check_choice_execution()
                                    choice_rule("ordinary", "m0", "m1", load_good) + choice_rule("choose", "m0", "m6", choose_candidates) + move_rules));
     const auto required_choice_result = ext::find_solution(context, required_choice, universal);
     EXPECT_EQ(required_choice_result.status, Status::FAILURE);
+    EXPECT_EQ(required_choice_result.statistics.choice_width, 0);
     ASSERT_TRUE(required_choice_result.graph);
     auto goals = 0;
     auto failed_bindings = 0;
@@ -858,6 +865,22 @@ void check_state_memorization()
                         select + choice_rule("call", "m1", "m2", "(:call (:conditions) (:callee grandchild) (:arguments))")
                             + choice_rule("move", "m2", "m3", move_to_register))
         + choice_module("grandchild", choice_rule("load", "m0", "m1", load_goal));
+    const auto choose_all = std::string("(:choose (:conditions) (:concept All) (:register (:concept r0)))");
+    const auto load_good = std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))");
+    const auto wider_failure = choice_module(
+        "main",
+        select + choice_rule("bad-choice", "m1", "m4", "(:choose (:conditions (positive Bad)) (:concept All) (:register (:concept r1)))")
+            + choice_rule("move-good", "m1", "m2", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
+            + choice_rule("finish", "m2", "m3", move_to_goal));
+    // Universal DFS visits the narrow arm first; the later wider arm rejoins its
+    // successful suffix. Non-universal execution admits only the first (wide) arm.
+    const auto unequal_widths = choice_module(
+        "main",
+        choice_rule("wide-arm", "m0", "m1", load_goal) + choice_rule("narrow-arm", "m0", "m4", load_goal)
+            + choice_rule("wide-choice", "m1", "m2", choose_all)
+            + choice_rule("narrow-choice", "m4", "m2", "(:choose (:conditions) (:concept Goal) (:register (:concept r0)))")
+            + choice_rule("normalize", "m2", "m3", load_good) + choice_rule("move", "m3", "m5", move_to_register)
+            + choice_rule("finish", "m5", "m6", move_to_goal));
 
     for (const auto mode : { Mode::NONE, Mode::CHOICE, Mode::ALL })
         for (const auto universal : { false, true })
@@ -871,6 +894,8 @@ void check_state_memorization()
             ASSERT_EQ(result.status, Status::SUCCESS);
             ASSERT_TRUE(result.graph);
             EXPECT_EQ(result.statistics.choice_depth, 1);
+            EXPECT_EQ(result.statistics.choice_width, 2);  // The successful binding is last, but the original width is retained.
+            EXPECT_NE(fmt::format("{}", result).find("choice_depth=1, choice_width=2"), std::string::npos);
             EXPECT_EQ(result.statistics.num_expanded, 5);
             EXPECT_EQ(result.graph->get_num_vertices(), mode == Mode::ALL ? 6 : 4);
             EXPECT_EQ(result.graph->get_num_edges(), mode == Mode::ALL ? 5 : 3);
@@ -887,11 +912,14 @@ void check_state_memorization()
             const auto filtered = run(choice_module("main", choice_rule("select", "m0", "m1", singleton) + move_rules), options);
             EXPECT_EQ(filtered.status, Status::SUCCESS);
             EXPECT_EQ(filtered.statistics.choice_depth, 0);
+            EXPECT_EQ(filtered.statistics.choice_width, 1);  // Count admitted bindings after effect filtering.
             const auto empty = run(choice_module("main", choice_rule("select", "m0", "m1", choose_empty)), options);
             EXPECT_EQ(empty.status, Status::FAILURE);
+            EXPECT_EQ(empty.statistics.choice_width, 0);
             EXPECT_EQ(empty.deadend_states.size(), 1);
             const auto exhausted = run(choice_module("main", select), options);
             EXPECT_EQ(exhausted.status, Status::FAILURE);
+            EXPECT_EQ(exhausted.statistics.choice_width, 0);
             EXPECT_FALSE(exhausted.open_states.empty());
 
             // An additional Choose or ordinary load is a separate universal obligation.
@@ -899,6 +927,7 @@ void check_state_memorization()
             {
                 const auto mixed = run(choice_module("main", select + choice_rule("other", "m0", "m1", other) + move_rules), options);
                 EXPECT_EQ(mixed.status, universal ? Status::FAILURE : Status::SUCCESS);
+                EXPECT_EQ(mixed.statistics.choice_width, universal ? 0 : 2);
             }
             // Inner choices must leave the outer cursor and pending sibling obligation intact.
             const auto nested =
@@ -908,9 +937,17 @@ void check_state_memorization()
                     options);
             EXPECT_EQ(nested.status, Status::SUCCESS);
             EXPECT_EQ(nested.statistics.choice_depth, 2);
+            EXPECT_EQ(nested.statistics.choice_width, 2);  // Maximum, not sum, across nested choices.
+            const auto rejected_wider = run(wider_failure, options);
+            ASSERT_EQ(rejected_wider.status, Status::SUCCESS);
+            EXPECT_EQ(rejected_wider.statistics.choice_width, 2);  // Four-way choices occur only on the failed branch.
+            const auto first_goal = run(unequal_widths, options);
+            ASSERT_EQ(first_goal.status, Status::SUCCESS);
+            EXPECT_EQ(first_goal.statistics.choice_width, universal ? 1 : 4);
             const auto called = run(call, options);
             ASSERT_EQ(called.status, Status::SUCCESS);
             EXPECT_EQ(called.statistics.choice_depth, 1);
+            EXPECT_EQ(called.statistics.choice_width, 2);
             if (called.plan)
             {
                 EXPECT_EQ(called.plan->get_length(), 2);
@@ -938,6 +975,7 @@ void check_state_memorization()
             // Both returns must restore the correct registers, including after witness materialization.
             const auto nested_called = run(nested_call, options);
             ASSERT_EQ(nested_called.status, Status::SUCCESS);
+            EXPECT_EQ(nested_called.statistics.choice_width, 2);
             if (nested_called.plan)
                 EXPECT_EQ(nested_called.plan->get_length(), 2);
             auto grandchild_states = 0;
@@ -966,6 +1004,7 @@ void check_state_memorization()
                 limited.max_num_states = maximum;
                 const auto bounded = run(backtrack, limited);
                 EXPECT_EQ(bounded.status, Status::OUT_OF_STATES);
+                EXPECT_EQ(bounded.statistics.choice_width, 0);
                 EXPECT_EQ(bounded.statistics.num_expanded, maximum);
                 EXPECT_EQ(bounded.statistics.num_generated, maximum);
                 EXPECT_EQ(bounded.graph->get_num_vertices(), maximum);
@@ -974,6 +1013,7 @@ void check_state_memorization()
             options.max_time = std::chrono::steady_clock::duration::zero();
             const auto timed = run(backtrack, options);
             EXPECT_EQ(timed.status, Status::OUT_OF_TIME);
+            EXPECT_EQ(timed.statistics.choice_width, 0);
             EXPECT_EQ(timed.statistics.num_expanded, 0);
             EXPECT_EQ(timed.statistics.num_generated, 0);
             EXPECT_FALSE(timed.plan);
@@ -981,7 +1021,6 @@ void check_state_memorization()
 
     // Both ordinary arms converge before a Choose. CHOICE must cache the entire
     // source obligation, including singleton success and an empty-choice failure.
-    const auto load_good = std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))");
     for (const auto& body : { choose_candidates, singleton, choose_empty })
         for (const auto ordinary_before_choice : { false, true })
         {
@@ -1230,7 +1269,7 @@ TEST(RunirTests, ExtPooledSearchPathReleasesLongChainsIteratively)
     for (int index = 0; index < length; ++index)
     {
         auto path = pool.get_or_allocate();
-        path->initialize(state, std::move(tip), {}, {}, 0);
+        path->initialize(state, std::move(tip), {}, {}, 0, 0);
         tip = std::move(path);
     }
     EXPECT_EQ(pool.size(), length);

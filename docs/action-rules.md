@@ -104,8 +104,11 @@ the selected solution or diagnostic path, materialized after search. See
 for the storage and state-limit contract. Choose cursors iterate independently.
 
 `statistics.choice_depth` counts non-singleton Choose bindings on the first
-discovered goal's predecessor path, and is zero unless the search succeeds.
-It describes one solution path, including in universal mode.
+discovered goal's predecessor path. `statistics.choice_width` is the maximum
+number of bindings at any Choose on that same path, after effect filtering.
+A singleton Choose has width 1; a path without Choose has width 0. Both
+statistics are zero unless the search succeeds, and describe one solution path,
+including in universal mode. Choices on abandoned branches do not contribute.
 
 ## Python access
 

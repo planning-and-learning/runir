@@ -262,7 +262,8 @@ void bind_program_executor(nb::module_& m)
         .def(nb::init<>())
         .def_ro("num_expanded", &ProgramSearchStatistics::num_expanded)
         .def_ro("num_generated", &ProgramSearchStatistics::num_generated)
-        .def_ro("choice_depth", &ProgramSearchStatistics::choice_depth);
+        .def_ro("choice_depth", &ProgramSearchStatistics::choice_depth)
+        .def_ro("choice_width", &ProgramSearchStatistics::choice_width);
 
     nb::enum_<ProgramProofStatus>(m, "ProgramProofStatus")
         .value("SUCCESS", ProgramProofStatus::SUCCESS)

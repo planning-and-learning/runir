@@ -4,7 +4,9 @@
 #include "runir/kr/ps/ext/detail/search_node.hpp"
 #include "runir/kr/ps/ext/program_executor_data.hpp"
 
+#include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -52,7 +54,7 @@ struct SearchStorage<Kind, StateMemorization::ALL>
                            ProgramStateView<Kind> target,
                            std::optional<tyr::formalism::planning::ActionBindingView> action,
                            std::optional<RuleVariantView> rule,
-                           bool non_singleton,
+                           std::size_t choice_width,
                            auto&& classify)
     {
         auto& entry = node(target);
@@ -64,7 +66,8 @@ struct SearchStorage<Kind, StateMemorization::ALL>
         {
             entry.parent_state = source;
             entry.action = action;
-            entry.choice_depth = node(source).choice_depth + ygg::uint_t(non_singleton);
+            entry.choice_depth = node(source).choice_depth + ygg::uint_t(choice_width > 1);
+            entry.choice_width = std::max(node(source).choice_width, choice_width);
         }
         return true;
     }
@@ -121,7 +124,7 @@ struct SearchStorage<Kind, StateMemorization::NONE>
                            BuilderProgramStateView<Kind> target,
                            std::optional<tyr::formalism::planning::ActionBindingView>,
                            std::optional<RuleVariantView>,
-                           bool,
+                           std::size_t,
                            auto&& classify)
     {
         return admit(target, classify);

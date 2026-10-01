@@ -5,6 +5,7 @@
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 
+#include <cstddef>
 #include <optional>
 #include <utility>
 #include <yggdrasil/containers/shared_object_pool.hpp>
@@ -23,6 +24,7 @@ struct SearchPath
     std::optional<datasets::StateGraphEdgeLabel> transition;
     std::optional<RuleVariantView> rule;
     ygg::uint_t choice_depth = 0;
+    std::size_t choice_width = 0;
     bool is_goal = false;
     bool is_unsolvable = false;
     bool is_deadend = false;
@@ -32,13 +34,15 @@ struct SearchPath
                     ygg::SharedObjectPoolPtr<SearchPath<Kind, S>> parent_,
                     std::optional<datasets::StateGraphEdgeLabel> transition_,
                     std::optional<RuleVariantView> rule_,
-                    ygg::uint_t choice_depth_)
+                    ygg::uint_t choice_depth_,
+                    std::size_t choice_width_)
     {
         state = std::move(state_);
         parent = std::move(parent_);
         transition = transition_;
         rule = rule_;
         choice_depth = choice_depth_;
+        choice_width = choice_width_;
         is_goal = is_unsolvable = is_deadend = is_open = false;
     }
 

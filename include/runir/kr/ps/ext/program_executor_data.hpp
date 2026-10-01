@@ -8,6 +8,7 @@
 #include "runir/kr/uns/declarations.hpp"
 
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -77,6 +78,9 @@ struct ProgramSearchStatistics
     /// Non-singleton Choose count on the first discovered goal's predecessor path.
     /// Counts bindings after effect filtering and is zero unless the search succeeds.
     ygg::uint_t choice_depth = 0;
+    /// Maximum Choose binding count after effect filtering on that same predecessor path.
+    /// Singleton choices have width one; zero if there are no choices or the search does not succeed.
+    std::size_t choice_width = 0;
 };
 
 template<tyr::TaskKind Kind>

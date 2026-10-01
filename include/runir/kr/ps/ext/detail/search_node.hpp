@@ -31,6 +31,8 @@ struct SearchNode
     std::optional<tyr::formalism::planning::ActionBindingView> action = std::nullopt;
     // Number of non-singleton Choose bindings on the first-parent path.
     ygg::uint_t choice_depth = 0;
+    // Maximum post-filter Choose binding count on the first-parent path.
+    std::size_t choice_width = 0;
     SearchStatus status = SearchStatus::NEW;
     bool is_goal = false;
     bool is_unsolvable = false;
