@@ -1,8 +1,8 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_SEARCH_STORAGE_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_SEARCH_STORAGE_HPP_
 
-#include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/predecessors.hpp"
+#include "runir/kr/ps/ext/program_executor_data.hpp"
 
 #include <cassert>
 #include <optional>
@@ -28,6 +28,9 @@ struct SearchStorage<Kind, StateMemorization::ALL>
 
     auto& node(ProgramStateView<Kind> state) { return get_or_create_search_node(state, nodes); }
 
+    auto initial_memo_state(ProgramStateView<Kind> state) { return std::optional(state); }
+    std::optional<ProgramStateView<Kind>> choice_memo_state(auto&&) { return std::nullopt; }
+
     bool admit(ProgramStateView<Kind> state, auto&& classify)
     {
         auto& entry = node(state);
@@ -43,16 +46,18 @@ struct SearchStorage<Kind, StateMemorization::ALL>
         return true;
     }
 
-    bool record_transition(ProgramStateView<Kind> source, const ProgramStep<Kind>& step, bool non_singleton, auto&& classify)
+    bool record_transition(ProgramStateView<Kind> source,
+                           ProgramStateView<Kind> target,
+                           std::optional<tyr::formalism::planning::ActionBindingView> action,
+                           std::optional<RuleVariantView> rule,
+                           bool non_singleton,
+                           auto&& classify)
     {
-        const auto target = step.get_target();
         auto& entry = node(target);
         const bool created = entry.status == SearchStatus::NEW;
         if (!admit(target, classify))
             return false;
-        const auto& transition = step.get_state_transition();
-        const auto action = transition ? std::optional(transition->action) : std::nullopt;
-        predecessors.push_back({ source, target, action, step.rule });
+        predecessors.push_back({ source, target, action, rule });
         if (created)
         {
             entry.parent_state = source;
@@ -86,7 +91,7 @@ struct SearchStorage<Kind, StateMemorization::ALL>
         entry.is_open = path.is_open;
     }
 
-    void memorize(ProgramStateView<Kind> state, bool) { node(state).status = SearchStatus::ACTIVE; }
+    void memorize(ProgramStateView<Kind> state) { node(state).status = SearchStatus::ACTIVE; }
 
     void complete(ProgramStateView<Kind> state, bool succeeded) { node(state).status = succeeded ? SearchStatus::SUCCESS : SearchStatus::FAILURE; }
 };
@@ -101,7 +106,10 @@ struct SearchStorage<Kind, StateMemorization::NONE>
 
     explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : options(options_) {}
 
-    bool admit(const ygg::Builder<ProgramState<Kind>>&, auto&&)
+    std::optional<ProgramStateView<Kind>> initial_memo_state(BuilderProgramStateView<Kind>) { return std::nullopt; }
+    std::optional<ProgramStateView<Kind>> choice_memo_state(auto&&) { return std::nullopt; }
+
+    bool admit(BuilderProgramStateView<Kind>, auto&&)
     {
         if (num_reached == options.max_num_states)
             return false;
@@ -109,28 +117,36 @@ struct SearchStorage<Kind, StateMemorization::NONE>
         return true;
     }
 
-    bool record_transition(const ygg::Builder<ProgramState<Kind>>&, const ProgramStep<Kind, ygg::Builder<ProgramState<Kind>>>& step, bool, auto&& classify)
+    bool record_transition(BuilderProgramStateView<Kind>,
+                           BuilderProgramStateView<Kind> target,
+                           std::optional<tyr::formalism::planning::ActionBindingView>,
+                           std::optional<RuleVariantView>,
+                           bool,
+                           auto&& classify)
     {
-        return admit(step.get_target(), classify);
+        return admit(target, classify);
     }
 
-    std::optional<bool> completed(const ygg::Builder<ProgramState<Kind>>&) { return std::nullopt; }
+    std::optional<bool> completed(ProgramStateView<Kind>) { return std::nullopt; }
 
-    auto classify(const ygg::Builder<ProgramState<Kind>>& state, auto&& classify) { return classify(state); }
-    void record_flags(const ygg::Builder<ProgramState<Kind>>&, const auto&) {}
-    void memorize(const ygg::Builder<ProgramState<Kind>>&, bool) {}
-    void complete(const ygg::Builder<ProgramState<Kind>>&, bool) {}
+    auto classify(BuilderProgramStateView<Kind> state, auto&& classify) { return classify(state); }
+    void record_flags(BuilderProgramStateView<Kind>, const auto&) {}
+    void memorize(ProgramStateView<Kind>) {}
+    void complete(ProgramStateView<Kind>, bool) {}
 };
 
-/// CHOICE shares NONE's work accounting and retains the combined result at each Choose source.
+/// CHOICE interns each Choose source and keys its combined result by repository identity.
+/// Other state occurrences share NONE's pooled storage and work accounting.
 template<tyr::TaskKind Kind>
 struct SearchStorage<Kind, StateMemorization::CHOICE> : SearchStorage<Kind, StateMemorization::NONE>
 {
-    ygg::UnorderedMap<ygg::Builder<ProgramState<Kind>>, SearchStatus> memo;
+    ygg::UnorderedMap<ProgramStateView<Kind>, SearchStatus> memo;
 
     explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : SearchStorage<Kind, StateMemorization::NONE>(options_) {}
 
-    std::optional<bool> completed(const ygg::Builder<ProgramState<Kind>>& state)
+    ProgramStateView<Kind> choice_memo_state(auto&& materialize) { return materialize(); }
+
+    std::optional<bool> completed(ProgramStateView<Kind> state)
     {
         if (const auto found = memo.find(state); found != memo.end())
         {
@@ -140,17 +156,9 @@ struct SearchStorage<Kind, StateMemorization::CHOICE> : SearchStorage<Kind, Stat
         return std::nullopt;
     }
 
-    void memorize(const ygg::Builder<ProgramState<Kind>>& state, bool has_choice)
-    {
-        if (has_choice)
-            memo.try_emplace(state, SearchStatus::ACTIVE);
-    }
+    void memorize(ProgramStateView<Kind> state) { memo.try_emplace(state, SearchStatus::ACTIVE); }
 
-    void complete(const ygg::Builder<ProgramState<Kind>>& state, bool succeeded)
-    {
-        if (const auto found = memo.find(state); found != memo.end())
-            found->second = succeeded ? SearchStatus::SUCCESS : SearchStatus::FAILURE;
-    }
+    void complete(ProgramStateView<Kind> state, bool succeeded) { memo.at(state) = succeeded ? SearchStatus::SUCCESS : SearchStatus::FAILURE; }
 };
 
 }  // namespace runir::kr::ps::ext::detail

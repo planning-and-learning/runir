@@ -33,7 +33,7 @@ materialize_register_values(R registers, runir::kr::dl::semantics::Builder& buil
 template<tyr::TaskKind Kind>
 struct TransientLabeledNode
 {
-    ygg::SharedObjectPoolPtr<ygg::Builder<tyr::planning::State<Kind>>> owner;
+    ygg::UniqueObjectPoolPtr<ygg::Builder<tyr::planning::State<Kind>>> owner;
     tyr::formalism::planning::ActionBindingView label;
     tyr::planning::Node<tyr::planning::BuilderStateView<Kind>> node;
 };
@@ -42,19 +42,22 @@ struct TransientLabeledNode
 template<tyr::TaskKind Kind>
 class TransientPools
 {
-    ygg::SharedObjectPool<ygg::Builder<tyr::planning::State<Kind>>> m_planning;
-    ygg::SharedObjectPool<ygg::Builder<ModuleState<Kind>>> m_module_states;
-    ygg::SharedObjectPool<ygg::Builder<CallStack>> m_call_stacks;
+    ygg::UniqueObjectPool<ygg::Builder<tyr::planning::State<Kind>>> m_planning;
+    ygg::UniqueObjectPool<ygg::Builder<ModuleState<Kind>>> m_module_states;
+    ygg::UniqueObjectPool<ygg::Builder<CallStack>> m_call_stacks;
+    ygg::SharedObjectPool<ygg::Builder<ProgramState<Kind>>> m_program_states;
 
 public:
     auto planning() { return m_planning.get_or_allocate(); }
     auto module_() { return m_module_states.get_or_allocate(); }
     auto caller() { return m_call_stacks.get_or_allocate(); }
+    auto program() { return m_program_states.get_or_allocate(); }
 };
 
 }  // namespace detail
 
-/// Pooled per-state construction used by NONE and CHOICE; only selected output paths are materialized.
+/// Pooled per-state construction used by NONE and CHOICE. Selected output paths and
+/// CHOICE sources with Choose obligations are materialized in the task repositories.
 /// Call arguments and their final denotations are always interned in the task repository.
 /// Returned transient states and handles must be released before this storage is destroyed.
 template<tyr::TaskKind Kind>
@@ -69,10 +72,18 @@ public:
 
     auto module_() { return m_pools.module_(); }
 
-    auto view(const ygg::Builder<ProgramState<Kind>>& state) const noexcept { return ygg::make_view(state, *m_context->execution_repository); }
-    auto retain(BuilderProgramStateView<Kind> state) const { return state.get_data(); }
-    auto call_stack(BuilderProgramStateView<Kind> state) const { return state.get_data().call_stack; }
-    auto caller(BuilderCallStackView<Kind> state) const { return state.get_data().caller; }
+    auto view(const ygg::SharedObjectPoolPtr<ygg::Builder<ProgramState<Kind>>>& state) const noexcept
+    {
+        return ygg::make_view(*state, *m_context->execution_repository);
+    }
+    auto retain(BuilderProgramStateView<Kind> state)
+    {
+        auto result = m_pools.program();
+        *result = state.get_data();
+        return result;
+    }
+    auto call_stack(BuilderProgramStateView<Kind> state) const { return state.get_call_stack(); }
+    auto caller(BuilderCallStackView<Kind> state) const { return state.get_caller(); }
     auto registers(const ygg::Data<runir::kr::dl::semantics::RegisterValues>& data)
     {
         return ygg::make_view(data, *m_context->search_context->task->get_repository());
@@ -81,31 +92,52 @@ public:
     {
         target.registers = values.get_data();
     }
-    void set_arguments(ygg::Builder<ModuleState<Kind>>& target, runir::kr::dl::semantics::CallArgumentsView arguments) { target.arguments = arguments; }
-    void set_module(ygg::Builder<ModuleState<Kind>>& target, ModuleView module_) { target.module_ = module_; }
-    void set_memory_state(ygg::Builder<ModuleState<Kind>>& target, MemoryStateView memory_state) { target.memory_state = memory_state; }
-
-    ygg::Builder<ProgramState<Kind>> store(ygg::SharedObjectPoolPtr<ygg::Builder<ModuleState<Kind>>> module_state,
-                                           ygg::SharedObjectPoolPtr<ygg::Builder<CallStack>> call_stack)
+    void set_arguments(ygg::Builder<ModuleState<Kind>>& target, runir::kr::dl::semantics::CallArgumentsView arguments)
     {
-        return ygg::Builder<ProgramState<Kind>>(m_program, std::move(module_state), std::move(call_stack));
+        target.arguments = arguments.get_index();
+    }
+    void set_module(ygg::Builder<ModuleState<Kind>>& target, ModuleView module_) { target.module_ = module_.get_index(); }
+    void set_memory_state(ygg::Builder<ModuleState<Kind>>& target, MemoryStateView memory_state) { target.memory_state = memory_state.get_index(); }
+
+    auto store(ygg::UniqueObjectPoolPtr<ygg::Builder<ModuleState<Kind>>> module_state, std::optional<BuilderCallStackView<Kind>> call_stack)
+    {
+        auto result = m_pools.program();
+        result->program = m_program.get_index();
+        // Exchange buffers so both reusable pool slots retain their allocations.
+        std::swap(result->module_state, *module_state);
+        if (call_stack)
+        {
+            const auto frames = call_stack->get_frames();
+            result->call_stack.frames.assign(frames.begin(), frames.end());
+        }
+        else
+            result->call_stack.frames.clear();
+        return result;
     }
 
-    ygg::Builder<ProgramState<Kind>> initial_state(const tyr::planning::StateView<Kind>& state)
+    auto store(ygg::UniqueObjectPoolPtr<ygg::Builder<ModuleState<Kind>>> module_state, ygg::UniqueObjectPoolPtr<ygg::Builder<CallStack>> call_stack)
+    {
+        auto result = m_pools.program();
+        result->program = m_program.get_index();
+        std::swap(result->module_state, *module_state);
+        result->call_stack.frames.swap(call_stack->frames);
+        return result;
+    }
+
+    auto initial_state(const tyr::planning::StateView<Kind>& state)
     {
         const auto entry = m_program.get_entry_module();
         auto data = module_();
-        data->state = m_pools.planning();
-        *data->state = state.get_state_builder();
-        data->module_ = entry;
-        data->memory_state = entry.get_entry_memory_state();
+        data->state = state.get_state_builder();
+        data->module_ = entry.get_index();
+        data->memory_state = entry.get_entry_memory_state().get_index();
         auto empty = checkout<runir::kr::dl::semantics::RegisterValues>(m_context->dl_builder);
         empty->concept_values.resize(entry.template get_registers<runir::kr::dl::ConceptTag>().size());
         empty->role_values.resize(entry.template get_registers<runir::kr::dl::RoleTag>().size());
         set_registers(*data, registers(*empty));
         auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_context->dl_builder);
-        data->arguments = get_or_create(*m_context->dl_denotation_repository, *arguments).first;
-        return store(std::move(data), {});
+        data->arguments = get_or_create(*m_context->dl_denotation_repository, *arguments).first.get_index();
+        return store(std::move(data), std::nullopt);
     }
 
     ProgramStateView<Kind> materialize(BuilderProgramStateView<Kind> state)
@@ -117,16 +149,12 @@ public:
         auto& denotations = *m_context->dl_denotation_repository;
         auto& dl_builder = m_context->dl_builder;
         auto caller = std::optional<CallStackView<Kind>> {};
-        auto callers = std::vector<BuilderCallStackView<Kind>> {};
-        for (auto current = state.get_call_stack(); current; current = current->get_caller())
-            callers.push_back(*current);
-        for (auto it = callers.rbegin(); it != callers.rend(); ++it)
+        for (const auto& saved : state.get_data().call_stack.frames)
         {
-            const auto saved = *it;
-            auto data = ygg::Data<CallStack>(saved.get_module().get_index(),
-                                             saved.get_return_memory_state().get_index(),
-                                             detail::materialize_register_values(saved.get_registers(), dl_builder, denotations).get_index(),
-                                             saved.get_arguments().get_index());
+            auto data = ygg::Data<CallStack>(saved.module_,
+                                             saved.return_memory_state,
+                                             detail::materialize_register_values(registers(saved.registers), dl_builder, denotations).get_index(),
+                                             saved.arguments);
             ygg::set(caller, data.caller);
             caller = get_or_create(*m_context->execution_repository, data).first;
         }
@@ -145,11 +173,9 @@ public:
     {
         const auto module_ = state.get_module_state();
         auto saved = m_pools.caller();
-        saved->module_ = module_.get_module();
-        saved->return_memory_state = return_state;
-        saved->registers = module_.get_data().registers;
-        saved->arguments = module_.get_data().arguments;
-        saved->caller = call_stack(state);
+        saved->frames = state.get_data().call_stack.frames;
+        saved->frames.push_back(
+            { module_.get_module().get_index(), return_state.get_index(), module_.get_data().registers, module_.get_arguments().get_index() });
         return saved;
     }
 
@@ -166,7 +192,7 @@ public:
         const auto view = tyr::planning::BuilderStateView<Kind>(*target, *search.task);
         return { std::move(target), binding, tyr::planning::Node<tyr::planning::BuilderStateView<Kind>>(view, 0) };
     }
-    void set_planning_state(ygg::Builder<ModuleState<Kind>>& target, const detail::TransientLabeledNode<Kind>& successor) { target.state = successor.owner; }
+    void set_planning_state(ygg::Builder<ModuleState<Kind>>& target, const detail::TransientLabeledNode<Kind>& successor) { target.state = *successor.owner; }
 };
 
 #ifndef RUNIR_HEADER_INSTANTIATION

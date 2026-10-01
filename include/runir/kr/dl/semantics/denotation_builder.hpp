@@ -6,6 +6,7 @@
 #include <bit>
 #include <cassert>
 #include <cstddef>
+#include <tuple>
 #include <tyr/formalism/object_index.hpp>
 #include <utility>
 #include <vector>
@@ -34,6 +35,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::BooleanTag>>
 
     auto get() noexcept -> bool& { return value; }
     auto get() const noexcept -> const bool& { return value; }
+    auto identifying_members() const noexcept { return std::tie(value); }
 };
 
 template<>
@@ -53,6 +55,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::NumericalTag>
 
     auto get() noexcept -> ygg::uint_t& { return value; }
     auto get() const noexcept -> const ygg::uint_t& { return value; }
+    auto identifying_members() const noexcept { return std::tie(value); }
 };
 
 template<>
@@ -92,6 +95,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
 
     auto get() noexcept -> Bitset { return Bitset(blocks.data(), num_bits(num_objects)); }
     auto get() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), num_bits(num_objects)); }
+    auto identifying_members() const noexcept { return std::tie(num_objects, blocks); }
 };
 
 template<>
@@ -153,6 +157,7 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
     auto get(ygg::uint_t object) noexcept -> Bitset { return get(ygg::Index<tyr::formalism::Object>(object)); }
     auto get(ygg::uint_t object) const noexcept -> ConstBitset { return get(ygg::Index<tyr::formalism::Object>(object)); }
     auto get_num_objects() const noexcept { return num_objects; }
+    auto identifying_members() const noexcept { return std::tie(num_objects, blocks); }
 
     bool any() const noexcept
     {

@@ -6,6 +6,8 @@
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
 #include <yggdrasil/core/concepts.hpp>
+#include <yggdrasil/semantics/equal_to.hpp>
+#include <yggdrasil/semantics/hash.hpp>
 
 namespace runir::tests
 {
@@ -94,6 +96,37 @@ static_assert(
     std::same_as<kr::dl::semantics::ConceptDenotationView, ygg::View<ygg::Index<Denotation<kr::dl::ConceptTag>>, kr::dl::semantics::DenotationRepository>>);
 
 }  // namespace
+
+TEST(RunirKrDlSemanticsDenotation, BuilderIdentityUsesValuesRatherThanRegistration)
+{
+    const auto check = []<kr::dl::CategoryTag Category>()
+    {
+        using Denotation = kr::dl::semantics::Denotation<Category>;
+        auto original = ygg::Builder<Denotation> {};
+        if constexpr (kr::dl::ConceptOrRoleTag<Category>)
+            original.initialize(3);
+        original.index = ygg::Index<Denotation>(1);
+        auto copy = original;
+        copy.index = ygg::Index<Denotation>(2);
+
+        EXPECT_TRUE(ygg::EqualTo<> {}(original, copy));
+        EXPECT_EQ(ygg::Hash<> {}(original), ygg::Hash<> {}(copy));
+
+        if constexpr (kr::dl::ConceptOrRoleTag<Category>)
+        {
+            copy.blocks.front() = 1;
+            const auto larger_universe = ygg::Builder<Denotation>(4);
+            EXPECT_FALSE(ygg::EqualTo<> {}(original, larger_universe));
+        }
+        else
+            copy.get() = 1;
+        EXPECT_FALSE(ygg::EqualTo<> {}(original, copy));
+    };
+    check.template operator()<kr::dl::BooleanTag>();
+    check.template operator()<kr::dl::NumericalTag>();
+    check.template operator()<kr::dl::ConceptTag>();
+    check.template operator()<kr::dl::RoleTag>();
+}
 
 TEST(RunirKrDlSemanticsDenotation, ExposesScalarValues)
 {

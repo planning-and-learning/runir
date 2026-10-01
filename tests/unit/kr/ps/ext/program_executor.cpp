@@ -850,6 +850,14 @@ void check_state_memorization()
                                     "m1",
                                     "(:choose (:conditions (positive HasCandidates) (greater_zero Count)) (:concept Candidates) (:register (:concept r0)))")
                       + choice_rule("move", "m1", "m2", move_to_register) + "))";
+    const auto nested_call =
+        choice_module("main",
+                      choice_rule("save-goal", "m0", "m1", load_goal) + choice_rule("call", "m1", "m2", "(:call (:conditions) (:callee child) (:arguments))")
+                          + choice_rule("finish", "m2", "m3", move_to_register))
+        + choice_module("child",
+                        select + choice_rule("call", "m1", "m2", "(:call (:conditions) (:callee grandchild) (:arguments))")
+                            + choice_rule("move", "m2", "m3", move_to_register))
+        + choice_module("grandchild", choice_rule("load", "m0", "m1", load_goal));
 
     for (const auto mode : { Mode::NONE, Mode::CHOICE, Mode::ALL })
         for (const auto universal : { false, true })
@@ -927,6 +935,31 @@ void check_state_memorization()
             }
             EXPECT_GT(child_states, 0);
 
+            // Both returns must restore the correct registers, including after witness materialization.
+            const auto nested_called = run(nested_call, options);
+            ASSERT_EQ(nested_called.status, Status::SUCCESS);
+            if (nested_called.plan)
+                EXPECT_EQ(nested_called.plan->get_length(), 2);
+            auto grandchild_states = 0;
+            for (const auto vertex : nested_called.graph->get_vertex_indices())
+            {
+                const auto state = nested_called.graph->get_vertex(vertex).get_property().program_state;
+                if (state.get_module_state().get_module().get_name() != "grandchild")
+                    continue;
+                ++grandchild_states;
+                const auto saved_child = state.get_call_stack();
+                ASSERT_TRUE(saved_child);
+                EXPECT_EQ(saved_child->get_module().get_name(), "child");
+                EXPECT_EQ(saved_child->get_return_memory_state().get_name(), "m2");
+                const auto saved_main = saved_child->get_caller();
+                ASSERT_TRUE(saved_main);
+                EXPECT_EQ(saved_main->get_module().get_name(), "main");
+                EXPECT_EQ(saved_main->get_return_memory_state().get_name(), "m2");
+                EXPECT_EQ(saved_main->get_registers().template get<kr::dl::ConceptTag>().at(0).value().get_name(), "goal");
+                EXPECT_FALSE(saved_main->get_caller());
+            }
+            EXPECT_GT(grandchild_states, 0);
+
             for (const auto maximum : { 0u, 1u })
             {
                 auto limited = options;
@@ -948,25 +981,69 @@ void check_state_memorization()
 
     // Both ordinary arms converge before a Choose. CHOICE must cache the entire
     // source obligation, including singleton success and an empty-choice failure.
+    const auto load_good = std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))");
     for (const auto& body : { choose_candidates, singleton, choose_empty })
-    {
-        auto expansions = std::vector<uint64_t> {};
-        const auto diamond = choice_module("main",
-                                           choice_rule("left", "m0", "m1", load_goal) + choice_rule("right", "m0", "m2", load_goal)
-                                               + choice_rule("join-left", "m1", "m3", load_goal) + choice_rule("join-right", "m2", "m3", load_goal)
-                                               + choice_rule("select", "m3", "m4", body) + choice_rule("move", "m4", "m5", move_to_register)
-                                               + choice_rule("finish", "m5", "m6", move_to_goal));
-        for (const auto mode : { Mode::NONE, Mode::CHOICE, Mode::ALL })
+        for (const auto ordinary_before_choice : { false, true })
         {
-            auto options = ext::ProgramSearchOptions<Kind> {};
-            options.state_memorization = mode;
-            options.universal = true;
-            const auto result = run(diamond, options);
-            EXPECT_EQ(result.status, body == choose_empty ? Status::FAILURE : Status::SUCCESS);
-            expansions.push_back(result.statistics.num_expanded);
+            SCOPED_TRACE(body);
+            SCOPED_TRACE(ordinary_before_choice);
+            auto expansions = std::vector<uint64_t> {};
+            auto generated = std::vector<uint64_t> {};
+            const auto ordinary = ordinary_before_choice ?
+                                      choice_rule("ordinary", "m3", "m7", load_good) + choice_rule("ordinary-move", "m7", "m5", move_to_register) :
+                                      std::string {};
+            const auto diamond = choice_module("main",
+                                               choice_rule("left", "m0", "m1", load_goal) + choice_rule("right", "m0", "m2", load_goal)
+                                                   + choice_rule("join-left", "m1", "m3", load_goal) + choice_rule("join-right", "m2", "m3", load_goal)
+                                                   + ordinary + choice_rule("select", "m3", "m4", body) + choice_rule("move", "m4", "m5", move_to_register)
+                                                   + choice_rule("finish", "m5", "m6", move_to_goal));
+            for (const auto mode : { Mode::NONE, Mode::CHOICE, Mode::ALL })
+            {
+                auto options = ext::ProgramSearchOptions<Kind> {};
+                options.state_memorization = mode;
+                options.universal = true;
+                const auto result = run(diamond, options);
+                EXPECT_EQ(result.status, body == choose_empty ? Status::FAILURE : Status::SUCCESS);
+                expansions.push_back(result.statistics.num_expanded);
+                generated.push_back(result.statistics.num_generated);
+            }
+            // A cached source still starts expansion. An ordinary outcome emitted before its
+            // first Choose counts as work, but must be discarded rather than explored again.
+            // The first visit also repeats the shared goal edge in reduced modes.
+            const auto repeated_goal = ordinary_before_choice && body != choose_empty ? 1u : 0u;
+            EXPECT_EQ(expansions[1], expansions[2] + 1 + repeated_goal);
+            EXPECT_EQ(generated[1], generated[2] + unsigned(ordinary_before_choice) + repeated_goal);
+            if (ordinary_before_choice || body != choose_empty)
+            {
+                EXPECT_GT(expansions[0], expansions[1]);
+                EXPECT_GT(generated[0], generated[1]);
+            }
+            else
+            {
+                EXPECT_EQ(expansions[0], expansions[1]);
+                EXPECT_EQ(generated[0], generated[1]);
+            }
         }
-        EXPECT_GT(expansions[0], expansions[1]);
-        EXPECT_EQ(expansions[1], expansions[2]);
+
+    // The second choice source is outside the selected witness. CHOICE retains it,
+    // while ordinary states on rejected bad bindings remain uninterned.
+    const auto separate_choices =
+        choice_module("main",
+                      choice_rule("left", "m0", "m1", load_goal) + choice_rule("right", "m0", "m2", load_goal)
+                          + choice_rule("left-choice", "m1", "m3", choose_candidates) + choice_rule("right-choice", "m2", "m3", choose_candidates)
+                          + choice_rule("move", "m3", "m4", move_to_register) + choice_rule("finish", "m4", "m5", move_to_goal));
+    for (const auto mode : { Mode::NONE, Mode::CHOICE, Mode::ALL })
+    {
+        auto options = ext::ProgramSearchOptions<Kind> {};
+        options.state_memorization = mode;
+        options.universal = true;
+        const auto result = run(separate_choices, options);
+        ASSERT_EQ(result.status, Status::SUCCESS);
+        ASSERT_TRUE(result.graph);
+        EXPECT_EQ(result.graph->get_num_vertices(), mode == Mode::ALL ? 8 : 5);
+        EXPECT_EQ(result.task_context_owner->execution_repository->template size<ext::ProgramState<Kind>>(),
+                  result.graph->get_num_vertices() + (mode == Mode::CHOICE ? 1 : 0));
+        EXPECT_EQ(result.task_context_owner->search_context->state_repository->num_states(), mode == Mode::ALL ? 4 : 3);
     }
 }
 
@@ -979,7 +1056,7 @@ namespace
 {
 
 template<tyr::TaskKind Kind>
-void check_transient_planning_state_sharing_and_reuse()
+void check_transient_builder_values_and_reuse()
 {
     namespace ext = kr::ps::ext;
     namespace detail = ext::detail;
@@ -989,7 +1066,8 @@ void check_transient_planning_state_sharing_and_reuse()
     static_assert(ext::ProgramStateViewConcept<ext::ProgramStateView<Kind>, Kind>);
     static_assert(ext::ProgramStateViewConcept<ext::BorrowedProgramStateView<Kind>, Kind>);
     static_assert(ext::ProgramStateViewConcept<ext::BuilderProgramStateView<Kind>, Kind>);
-    static_assert(ext::StoredProgramStateConcept<ygg::Builder<ext::ProgramState<Kind>>, Kind>);
+    static_assert(ext::StoredProgramStateConcept<ygg::SharedObjectPoolPtr<ygg::Builder<ext::ProgramState<Kind>>>, Kind>);
+    static_assert(!ext::StoredProgramStateConcept<ygg::Builder<ext::ProgramState<Kind>>, Kind>);
     static_assert(!ext::StoredProgramStateConcept<ext::BorrowedProgramStateView<Kind>, Kind>);
     static_assert(!ext::StoredProgramStateConcept<ext::BuilderProgramStateView<Kind>, Kind>);
     constexpr auto has_index = []<typename V>() { return requires(const V& view) { view.get_index(); }; };
@@ -1012,30 +1090,32 @@ void check_transient_planning_state_sharing_and_reuse()
                               repository);
     const auto program = create_program(repository, module_, { module_ });
     auto pools = detail::TransientPools<Kind> {};
-    auto first = pools.module_();
-    first->state = pools.planning();
-    first->module_ = module_;
-    first->memory_state = module_.get_entry_memory_state();
+    auto first = pools.program();
+    first->program = program.get_index();
+    auto& first_module = first->module_state;
+    first_module.module_ = module_.get_index();
+    first_module.memory_state = module_.get_entry_memory_state().get_index();
     auto arguments = sem::checkout<sem::CallArguments>(context->dl_builder);
     const auto argument_view = sem::get_or_create(*context->dl_denotation_repository, *arguments).first;
-    first->arguments = argument_view;
-    const auto program_data = ygg::Builder<ext::ProgramState<Kind>>(program, first, {});
-    const auto program_state = ygg::make_view(program_data, *context->execution_repository);
+    first_module.arguments = argument_view.get_index();
+    const auto program_state = ygg::make_view(*first, *context->execution_repository);
     const auto module_state = program_state.get_module_state();
-    EXPECT_EQ(&module_state.get_data(), first.get());
+    EXPECT_EQ(&module_state.get_data(), &first_module);
+    EXPECT_TRUE(ygg::EqualTo<ext::ProgramView> {}(program_state.get_program(), program));
     EXPECT_TRUE(ygg::EqualTo<ext::ModuleView> {}(module_state.get_module(), module_));
     EXPECT_TRUE(ygg::EqualTo<ext::MemoryStateView> {}(module_state.get_memory_state(), module_.get_entry_memory_state()));
     EXPECT_EQ(&module_state.get_module().get_context(), &repository);
     EXPECT_EQ(&module_state.get_state().get_task(), search->task.get());
-    EXPECT_EQ(&module_state.get_registers().get_data(), &first->registers);
-    ASSERT_TRUE(first->arguments);
-    EXPECT_TRUE(ygg::EqualTo<sem::CallArgumentsView> {}(module_state.get_arguments(), *first->arguments));
+    EXPECT_EQ(&module_state.get_state().get_state_builder(), &first_module.state);
+    EXPECT_EQ(&module_state.get_registers().get_data(), &first_module.registers);
+    EXPECT_TRUE(ygg::EqualTo<sem::CallArgumentsView> {}(module_state.get_arguments(), argument_view));
     EXPECT_EQ(&module_state.get_arguments().get_context(), context->dl_denotation_repository.get());
-    first->registers.concept_values.emplace_back(ygg::Index<tyr::formalism::Object>(0));
-    first->registers.role_values.emplace_back(
+    EXPECT_FALSE(program_state.get_call_stack());
+    first_module.registers.concept_values.emplace_back(ygg::Index<tyr::formalism::Object>(0));
+    first_module.registers.role_values.emplace_back(
         ::cista::pair<ygg::Index<tyr::formalism::Object>, ygg::Index<tyr::formalism::Object>>(ygg::Index<tyr::formalism::Object>(0),
                                                                                               ygg::Index<tyr::formalism::Object>(1)));
-    const auto registered_registers = sem::get_or_create(*context->dl_denotation_repository, first->registers).first;
+    const auto registered_registers = sem::get_or_create(*context->dl_denotation_repository, first_module.registers).first;
     const auto borrowed_registers = module_state.get_registers();
     const auto concept_id = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0);
     const auto role_id = kr::dl::RegisterIdentifier<kr::dl::RoleTag>(0);
@@ -1043,7 +1123,7 @@ void check_transient_planning_state_sharing_and_reuse()
     EXPECT_EQ(&borrowed_registers.at(concept_id).value().get_context(), &registered_registers.at(concept_id).value().get_context());
     EXPECT_EQ(borrowed_registers.at(role_id).value().get_first().get_index(), registered_registers.at(role_id).value().get_first().get_index());
     EXPECT_EQ(borrowed_registers.at(role_id).value().get_second().get_index(), registered_registers.at(role_id).value().get_second().get_index());
-    auto& facts = first->state->template get_atoms<tyr::formalism::FluentTag>();
+    auto& facts = first_module.state.template get_atoms<tyr::formalism::FluentTag>();
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
         facts.values = { 1, 0 };
     else
@@ -1051,60 +1131,77 @@ void check_transient_planning_state_sharing_and_reuse()
         facts.indices.resize(2);
         facts.indices.set(0);
     }
-    first->state->get_numeric_variables().values = { 3.0 };
-    auto shared = pools.module_();
-    *shared = *first;
-    EXPECT_EQ(shared->state.get(), first->state.get());
-    EXPECT_EQ(first->state.ref_count(), 2);
+    first_module.state.get_numeric_variables().values = { 3.0 };
 
-    auto separate = pools.module_();
+    // Caller views expose prefixes of one owned vector, with the newest frame last.
+    auto& frames = first->call_stack.frames;
+    frames.push_back({ first_module.module_, first_module.memory_state, first_module.registers, first_module.arguments });
+    frames.push_back(frames.front());
+    frames.back().registers.concept_values.front() = ygg::Index<tyr::formalism::Object>(1);
+    const auto stack = program_state.get_call_stack();
+    ASSERT_TRUE(stack);
+    EXPECT_EQ(&stack->get_data(), &first->call_stack);
+    EXPECT_EQ(stack->get_frames().size(), 2);
+    EXPECT_TRUE(ygg::EqualTo<ext::ModuleView> {}(stack->get_module(), module_));
+    EXPECT_TRUE(ygg::EqualTo<ext::MemoryStateView> {}(stack->get_return_memory_state(), module_.get_entry_memory_state()));
+    EXPECT_TRUE(ygg::EqualTo<sem::CallArgumentsView> {}(stack->get_arguments(), argument_view));
+    EXPECT_EQ(stack->get_registers().at(concept_id).value().get_index(), ygg::Index<tyr::formalism::Object>(1));
+    const auto caller = stack->get_caller();
+    ASSERT_TRUE(caller);
+    EXPECT_EQ(&caller->get_data(), &first->call_stack);
+    EXPECT_EQ(caller->get_frames().size(), 1);
+    EXPECT_EQ(caller->get_registers().at(concept_id).value().get_index(), ygg::Index<tyr::formalism::Object>(0));
+    EXPECT_FALSE(caller->get_caller());
+
+    // Builder copies own independent mutable planning, register, and caller buffers.
+    auto separate = pools.program();
     *separate = *first;
-    separate->state = pools.planning();
-    *separate->state = *first->state;
-    EXPECT_NE(separate->state.get(), first->state.get());
-    EXPECT_TRUE(ygg::EqualTo<ygg::Builder<ext::ModuleState<Kind>>> {}(*first, *separate));
-    EXPECT_EQ(ygg::Hash<ygg::Builder<ext::ModuleState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<ext::ModuleState<Kind>>> {}(*separate));
-    separate->state->template get_atoms<tyr::formalism::DerivedTag>().indices.resize(1, true);
-    EXPECT_TRUE(ygg::EqualTo<ygg::Builder<ext::ModuleState<Kind>>> {}(*first, *separate));
-    EXPECT_EQ(ygg::Hash<ygg::Builder<ext::ModuleState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<ext::ModuleState<Kind>>> {}(*separate));
+    auto& separate_module = separate->module_state;
+    EXPECT_NE(separate_module.state.get_numeric_variables().values.data(), first_module.state.get_numeric_variables().values.data());
+    EXPECT_NE(separate_module.registers.concept_values.data(), first_module.registers.concept_values.data());
+    EXPECT_NE(separate->call_stack.frames.data(), first->call_stack.frames.data());
+    EXPECT_TRUE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
+    EXPECT_EQ(ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*separate));
+    separate_module.state.template get_atoms<tyr::formalism::DerivedTag>().indices.resize(1, true);
+    EXPECT_TRUE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
+    EXPECT_EQ(ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*separate));
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
-        separate->state->template get_atoms<tyr::formalism::FluentTag>().values.front() = 0;
+        separate_module.state.template get_atoms<tyr::formalism::FluentTag>().values.front() = 0;
     else
-        separate->state->template get_atoms<tyr::formalism::FluentTag>().indices.flip(0);
-    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ModuleState<Kind>>> {}(*first, *separate));
-    *separate->state = *first->state;
-    separate->state->get_numeric_variables().values.front() = 4.0;
-    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ModuleState<Kind>>> {}(*first, *separate));
+        separate_module.state.template get_atoms<tyr::formalism::FluentTag>().indices.flip(0);
+    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
+    separate_module.state = first_module.state;
+    separate_module.state.get_numeric_variables().values.front() = 4.0;
+    EXPECT_EQ(first_module.state.get_numeric_variables().values.front(), 3.0);
+    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
+    separate_module.state = first_module.state;
+    separate_module.registers.concept_values.front() = ygg::Index<tyr::formalism::Object>(1);
+    EXPECT_EQ(first_module.registers.concept_values.front().value(), ygg::Index<tyr::formalism::Object>(0));
+    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
+    separate_module.registers = first_module.registers;
+    separate->call_stack.frames.front().registers.concept_values.front() = ygg::Index<tyr::formalism::Object>(1);
+    EXPECT_EQ(first->call_stack.frames.front().registers.concept_values.front().value(), ygg::Index<tyr::formalism::Object>(0));
+    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
 
-    const auto module_slot = separate.get();
-    const auto slot = separate->state.get();
-    const auto buffer = separate->state->get_numeric_variables().values.data();
-    const auto capacity = separate->state->get_numeric_variables().values.capacity();
+    // The outer pool retains the inline buffers when the whole program value is released.
+    const auto slot = separate.get();
+    const auto buffer = separate_module.state.get_numeric_variables().values.data();
+    const auto capacity = separate_module.state.get_numeric_variables().values.capacity();
+    const auto frame_buffer = separate->call_stack.frames.data();
+    const auto frame_capacity = separate->call_stack.frames.capacity();
     separate = {};
-    auto reused = pools.planning();
+    auto reused = pools.program();
     EXPECT_EQ(reused.get(), slot);
-    EXPECT_EQ(reused->get_numeric_variables().values.data(), buffer);
-    EXPECT_EQ(reused->get_numeric_variables().values.capacity(), capacity);
-    ASSERT_EQ(reused->get_numeric_variables().values.size(), 1);
-    EXPECT_EQ(reused->get_numeric_variables().values.front(), 4.0);
-
-    auto reused_module = pools.module_();
-    EXPECT_EQ(reused_module.get(), module_slot);
-    EXPECT_FALSE(reused_module->module_);
-    EXPECT_FALSE(reused_module->memory_state);
-    EXPECT_FALSE(reused_module->arguments);
-    reused_module->state = reused;
-    reused_module->module_ = module_;
-    reused_module->memory_state = module_.get_entry_memory_state();
-    const auto reused_view = ygg::make_view(*reused_module, *context->execution_repository);
-    EXPECT_EQ(&reused_view.get_state().get_task(), search->task.get());
-    EXPECT_TRUE(ygg::EqualTo<ext::ModuleView> {}(reused_view.get_module(), module_));
+    EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.data(), buffer);
+    EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.capacity(), capacity);
+    EXPECT_EQ(reused->call_stack.frames.data(), frame_buffer);
+    EXPECT_EQ(reused->call_stack.frames.capacity(), frame_capacity);
 }
 
 }  // namespace
 
-TEST(RunirTests, ExtGroundPlanningBuildersAreSharedAndReused) { check_transient_planning_state_sharing_and_reuse<tyr::GroundTag>(); }
-TEST(RunirTests, ExtLiftedPlanningBuildersAreSharedAndReused) { check_transient_planning_state_sharing_and_reuse<tyr::LiftedTag>(); }
+TEST(RunirTests, ExtGroundPlanningBuildersOwnValuesAndReuseBuffers) { check_transient_builder_values_and_reuse<tyr::GroundTag>(); }
+TEST(RunirTests, ExtLiftedPlanningBuildersOwnValuesAndReuseBuffers) { check_transient_builder_values_and_reuse<tyr::LiftedTag>(); }
 
 TEST(RunirTests, ExtPooledSearchPathReleasesLongChainsIteratively)
 {

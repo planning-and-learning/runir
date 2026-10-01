@@ -46,6 +46,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
         PathPtr path;
         std::size_t successors_begin;
         std::size_t choices_begin;
+        std::optional<ProgramStateView<Kind>> memo_state;
         bool choice_child = false;
         bool succeeded = true;
     };
@@ -64,11 +65,17 @@ ProgramProofStatus depth_first_search(Expander& expander,
     auto next = PathPtr {};
     auto completed = std::optional<bool> {};
     const auto out_of_time = [&] { return stopwatch && stopwatch->has_finished(); };
-    const auto classify = [&](const S& state)
+    const auto classify = [&](ProgramStateViewConcept<Kind> auto state)
     {
-        const auto planning_state = expander.view(state).get_state();
+        const auto planning_state = state.get_state();
         const bool goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial_planning_state, planning_state.get_state_builder());
         return std::pair(goal, !goal && classifier.is_unsolvable(planning_state));
+    };
+    const auto record_transition = [&](ProgramStateViewConcept<Kind> auto source, const Step& step, bool non_singleton)
+    {
+        const auto& transition = step.get_state_transition();
+        const auto action = transition ? std::optional(transition->action) : std::nullopt;
+        return storage.record_transition(source, expander.view(step.target), action, step.rule, non_singleton, classify);
     };
     const auto make_path =
         [&](S state, PathPtr parent, std::optional<datasets::StateGraphEdgeLabel> transition, std::optional<RuleVariantView> rule, bool non_singleton)
@@ -76,7 +83,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
         const auto depth = parent ? parent->choice_depth + ygg::uint_t(non_singleton) : 0;
         return path_pool.get_or_allocate(std::move(state), std::move(parent), transition, rule, depth);
     };
-    if (storage.admit(initial, classify))
+    if (storage.admit(expander.view(initial), classify))
         next = make_path(initial, {}, {}, {}, false);
     else
         status = ProgramProofStatus::OUT_OF_STATES;
@@ -92,13 +99,18 @@ ProgramProofStatus depth_first_search(Expander& expander,
         if (next)
         {
             auto path = std::move(next);
-            if (const auto cached = storage.completed(*path->state))
+            const auto state = expander.view(*path->state);
+            const auto memo_state = storage.initial_memo_state(state);
+            if (memo_state)
             {
-                completed = *cached;
-                continue;
+                if (const auto cached = storage.completed(*memo_state))
+                {
+                    completed = *cached;
+                    continue;
+                }
+                storage.memorize(*memo_state);
             }
-            storage.memorize(*path->state, false);
-            std::tie(path->is_goal, path->is_unsolvable) = storage.classify(*path->state, classify);
+            std::tie(path->is_goal, path->is_unsolvable) = storage.classify(state, classify);
             if (path->is_goal || path->is_unsolvable)
             {
                 if (path->is_goal && !first_goal)
@@ -106,16 +118,17 @@ ProgramProofStatus depth_first_search(Expander& expander,
                 path->is_deadend = path->is_unsolvable;
                 if (path->is_unsolvable && !first_failure)
                     first_failure = path;
-                storage.record_flags(*path->state, *path);
-                storage.complete(*path->state, path->is_goal);
+                storage.record_flags(state, *path);
+                if (memo_state)
+                    storage.complete(*memo_state, path->is_goal);
                 completed = path->is_goal;
                 continue;
             }
             ++statistics.num_expanded;
-            auto frame = Frame { std::move(path), successors.size(), choices.size() };
+            auto frame = Frame { std::move(path), successors.size(), choices.size(), memo_state };
             auto limit = std::optional<ProgramProofStatus> {};
             expander.for_each_successor(
-                expander.view(*frame.path->state),
+                state,
                 statistics,
                 [&](auto expansion)
                 {
@@ -128,7 +141,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
                     {
                         if (expansion.status == ProgramOutcome::APPLIED || expansion.status == ProgramOutcome::RESTORED_CALLER)
                         {
-                            if (!storage.record_transition(*frame.path->state, expansion, false, classify))
+                            if (!record_transition(state, expansion, false))
                                 limit = ProgramProofStatus::OUT_OF_STATES;
                             else
                                 successors.push_back(std::move(expansion));
@@ -143,6 +156,19 @@ ProgramProofStatus depth_first_search(Expander& expander,
                     }
                     else
                     {
+                        if (!frame.memo_state)
+                        {
+                            frame.memo_state = storage.choice_memo_state([&] { return expander.materialize(state); });
+                            if (frame.memo_state)
+                            {
+                                if (const auto cached = storage.completed(*frame.memo_state))
+                                {
+                                    completed = *cached;
+                                    return false;
+                                }
+                                storage.memorize(*frame.memo_state);
+                            }
+                        }
                         if (expansion.exhausted())
                         {
                             frame.path->is_deadend = true;
@@ -154,7 +180,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
                     return !limit && options.universal;
                 },
                 out_of_time);
-            storage.record_flags(*frame.path->state, *frame.path);
+            storage.record_flags(state, *frame.path);
             if (out_of_time() && !limit)
                 limit = ProgramProofStatus::OUT_OF_TIME;
             if (limit)
@@ -162,12 +188,20 @@ ProgramProofStatus depth_first_search(Expander& expander,
                 status = *limit;
                 break;
             }
-            storage.memorize(*frame.path->state, choices.size() != frame.choices_begin);
+            if (completed)
+            {
+                // A choice-source memo covers every obligation, including ordinary
+                // successors emitted before the first Choose revealed its identity.
+                successors.erase(successors.begin() + frame.successors_begin, successors.end());
+                choices.erase(choices.begin() + frame.choices_begin, choices.end());
+                continue;
+            }
             stack.push_back(std::move(frame));
             continue;
         }
 
         auto& frame = stack.back();
+        const auto state = expander.view(*frame.path->state);
         if (completed)
         {
             if (frame.choice_child)
@@ -200,7 +234,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
                     if (!choice.exhausted())
                     {
                         non_singleton = choice.has_alternatives();
-                        step = expander.apply_choice(expander.view(*frame.path->state), choice, statistics);
+                        step = expander.apply_choice(state, choice, statistics);
                         choice.advance();
                     }
                 },
@@ -211,7 +245,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
                 choices.pop_back();
                 continue;
             }
-            if (!storage.record_transition(*frame.path->state, *step, non_singleton, classify))
+            if (!record_transition(state, *step, non_singleton))
             {
                 status = ProgramProofStatus::OUT_OF_STATES;
                 break;
@@ -220,7 +254,8 @@ ProgramProofStatus depth_first_search(Expander& expander,
             next = make_path(step->get_target(), frame.path, step->get_state_transition(), step->rule, non_singleton);
             continue;
         }
-        storage.complete(*frame.path->state, frame.succeeded);
+        if (frame.memo_state)
+            storage.complete(*frame.memo_state, frame.succeeded);
         completed = frame.succeeded;
         stack.pop_back();
     }

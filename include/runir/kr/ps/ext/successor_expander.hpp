@@ -65,7 +65,7 @@ public:
         return m_storage.initial_state(state);
     }
 
-    /// Only selected output states receive repository-backed identities in transient mode.
+    /// Intern selected output states and, in CHOICE mode, sources with Choose obligations.
     template<ProgramStateViewConcept<Kind> S>
     ProgramStateView<Kind> materialize(const S& state)
     {
@@ -77,7 +77,7 @@ public:
     /// except that sketch rules with effects are emitted together, binding-major, after all other rules.
     /// Return true on exhaustion; emit returning false or stop returning true ends enumeration.
     /// Count applied successors and caller returns, not Choice descriptors or failure markers.
-    /// Callbacks must not reenter this expander or its successor generator. Apply choices after enumeration.
+    /// Callbacks may materialize the source, but must not generate successors or apply choices. Apply choices after enumeration.
     template<ProgramStateViewConcept<Kind> S, typename Emit, typename Stop>
     bool for_each_successor(S state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop)
     {
@@ -739,11 +739,10 @@ private:
         if (const auto caller = state.get_call_stack())
         {
             auto target = copy_module(state);
-            const auto& saved = caller->get_data();
-            target->module_ = saved.module_;
-            target->memory_state = saved.return_memory_state;
-            target->registers = saved.registers;
-            target->arguments = saved.arguments;
+            m_storage.set_module(*target, caller->get_module());
+            m_storage.set_memory_state(*target, caller->get_return_memory_state());
+            m_storage.set_registers(*target, caller->get_registers());
+            m_storage.set_arguments(*target, caller->get_arguments());
             return make_step(detail::ProgramOutcome::RESTORED_CALLER, m_storage.store(std::move(target), m_storage.caller(*caller)));
         }
         return make_step(detail::ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state));

@@ -48,7 +48,7 @@ constexpr std::string_view to_string(ProgramProofStatus status)
 enum class StateMemorization
 {
     NONE,    ///< Do not memoize completed program states.
-    CHOICE,  ///< Memoize source states with admitted Choose obligations, including singleton and empty choices.
+    CHOICE,  ///< Intern and memoize sources of admitted Choose obligations, including singleton and empty choices.
     ALL,     ///< Memoize every program state and retain the full explored graph.
 };
 
@@ -67,6 +67,7 @@ struct ProgramSearchStatistics
 {
     /// Extended-state expansions started, including those yielding no successors.
     /// ALL expands each state at most once; NONE and CHOICE may repeat non-memoized states.
+    /// CHOICE also counts repeated expansion until the first Choose identifies a memoized source.
     uint64_t num_expanded = 0;
     /// Extended successors emitted before selection and duplicate detection; Choose emits only attempted bindings.
     /// Counts applied rules and caller returns, not rejected planning candidates or failure markers.
@@ -85,6 +86,7 @@ struct ProgramProofResults
     runir::kr::TaskContextPtr<Kind> task_context_owner;
     /// ALL retains every explored transition. NONE and CHOICE materialize only the selected
     /// solution or diagnostic path after search, with owned states independent of search memorization.
+    /// CHOICE may also retain interned choice sources in the task repository outside this graph.
     std::shared_ptr<ProgramProofGraph<Kind>> graph;
     std::optional<tyr::planning::PackedPlan<Kind>> plan = std::nullopt;
     runir::graphs::VertexIndexList deadend_states;

@@ -6,6 +6,7 @@
 #include <memory>
 #include <type_traits>
 #include <tyr/planning/declarations.hpp>
+#include <yggdrasil/containers/shared_object_pool.hpp>
 #include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::ps::ext
@@ -66,9 +67,9 @@ using BuilderProgramStateView = ygg::View<ygg::Builder<ProgramState<Kind>>, Exec
 
 /// Values retained by search: repository identities or owners of pooled execution data.
 template<typename S, typename Kind>
-concept StoredProgramStateConcept =
-    tyr::TaskKind<Kind>
-    && (std::same_as<std::remove_cvref_t<S>, ProgramStateView<Kind>> || std::same_as<std::remove_cvref_t<S>, ygg::Builder<ProgramState<Kind>>>);
+concept StoredProgramStateConcept = tyr::TaskKind<Kind>
+                                    && (std::same_as<std::remove_cvref_t<S>, ProgramStateView<Kind>>
+                                        || std::same_as<std::remove_cvref_t<S>, ygg::SharedObjectPoolPtr<ygg::Builder<ProgramState<Kind>>>>);
 
 }  // namespace runir::kr::ps::ext
 

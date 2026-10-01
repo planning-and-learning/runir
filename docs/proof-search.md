@@ -31,14 +31,18 @@ results. It defaults to `StateMemorization.ALL`, preserving the existing behavio
 | Mode | States memoized during search | Returned graph |
 | --- | --- | --- |
 | `NONE` | None; a shared continuation can be evaluated again. | Only the selected solution or diagnostic path. |
-| `CHOICE` | Source states with admitted Choose obligations, including singleton and empty choices. | Only the selected solution or diagnostic path. |
+| `CHOICE` | Interned source states with admitted Choose obligations, including singleton and empty choices. | Only the selected solution or diagnostic path. |
 | `ALL` | Every admitted program state; shared continuations reuse their completed result. | The full explored graph, including failed alternatives and repeated transitions. |
 
 In `CHOICE`, the memoized result belongs to the source state's **combined**
 obligations. It includes every required ordinary successor and every selected
-Choose rule; satisfying one Choose does not satisfy its siblings. The modes do
-not change the AND/OR semantics or eliminate the active state and control data
-needed for execution and backtracking.
+Choose rule; satisfying one Choose does not satisfy its siblings. The first
+admitted Choose interns the complete source program state, including registers
+and caller frames. Its `ProgramStateView` is the memo key; the table does not
+copy builders. Choice sources remain in the task repository even when they are
+absent from the returned witness graph. The modes do not change the AND/OR
+semantics or eliminate the active state and control data needed for execution
+and backtracking.
 
 `NONE` and `CHOICE` materialize the selected returned path after search. Its states
 are retained so graph labels and a returned plan remain valid after search-local
@@ -46,7 +50,19 @@ builders are released. This final witness storage is separate from memoizing
 states during search: selecting `NONE` does not mean that the result contains no
 states. Tyr also registers the initial planning seed for goal checks and plan
 reconstruction, even with a zero state budget; this is not a search memo entry,
-and reduced-mode successors stay pooled until the selected path is materialized.
+and other reduced-mode successors stay pooled until the selected path is
+materialized.
+Transient execution builders own child values in their lowest-level construction
+representation: `Builder<T>` where available, otherwise `Data<T>`. This means an
+inline planning-state builder, register data, and a flat vector of saved caller
+frames. Definitions and
+interned call arguments are referenced by indices; borrowed views interpret them
+using the execution repository. Builders contain no pool handles. Search/storage
+pools complete program states and construction scratch space, retaining reusable
+buffers after release. Copying a builder produces independent mutable contents;
+control-only successors consequently copy planning buffers, and stack snapshots
+copy saved register values.
+
 Only successful nonuniversal execution returns a plan; universal success
 and failures can still return a diagnostic graph.
 
@@ -79,7 +95,8 @@ With `universal=false`, enumeration retains the first ordinary outcome or select
 ## Depth-first evaluation
 
 DFS frames are small values in one stack vector: a pooled path handle, offsets
-into shared pending-successor and choice buffers, and two result flags. Frames
+into shared pending-successor and choice buffers, an optional interned memo key,
+and two result flags. Frames
 own no vectors and are not individually allocated. Children append to the shared
 buffers and consume their entries before returning, preserving pending siblings.
 The next path is processed before returning to its parent frame.
@@ -90,7 +107,11 @@ must succeed. Empty choices, local failures and failed ordinary successors make
 their state fail.
 
 Once its children and choices finish, the state receives its final success or
-failure. A memoized completed state is reused immediately. Structural termination
+failure. `ALL` reuses a completed state before expansion. `CHOICE` detects a
+cached source when enumeration reaches its first admitted Choose and discards
+any buffered successors from that repeated expansion. Classification and
+ordinary successor generation before that Choose can therefore repeat; this
+work still counts toward the statistics and state budget. Structural termination
 excludes dependencies on an active ancestor, so there is no success queue,
 reverse-dependency storage or fixed-point propagation.
 
