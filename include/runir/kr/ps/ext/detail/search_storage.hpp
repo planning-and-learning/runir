@@ -1,12 +1,13 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_SEARCH_STORAGE_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_SEARCH_STORAGE_HPP_
 
-#include "runir/kr/ps/ext/detail/predecessors.hpp"
+#include "runir/kr/ps/ext/detail/search_node.hpp"
 #include "runir/kr/ps/ext/program_executor_data.hpp"
 
 #include <cassert>
 #include <optional>
 #include <utility>
+#include <vector>
 #include <yggdrasil/containers/associative_containers.hpp>
 
 namespace runir::kr::ps::ext::detail
@@ -21,7 +22,8 @@ struct SearchStorage<Kind, StateMemorization::ALL>
 {
     const ProgramSearchOptions<Kind>& options;
     ygg::SegmentedVector<SearchNode<Kind>> nodes;
-    Predecessors<Kind> predecessors;
+    // Retains each admitted transition in discovery order, including parallel edges.
+    std::vector<Predecessor<Kind>> predecessors;
     ygg::uint_t num_reached = 0;
 
     explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : options(options_) {}
@@ -85,8 +87,6 @@ struct SearchStorage<Kind, StateMemorization::ALL>
     void record_flags(ProgramStateView<Kind> state, const auto& path)
     {
         auto& entry = node(state);
-        entry.is_goal = path.is_goal;
-        entry.is_unsolvable = path.is_unsolvable;
         entry.is_deadend = path.is_deadend;
         entry.is_open = path.is_open;
     }

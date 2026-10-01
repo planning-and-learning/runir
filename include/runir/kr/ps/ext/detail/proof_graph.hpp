@@ -2,7 +2,7 @@
 #define RUNIR_KR_PS_EXT_DETAIL_PROOF_GRAPH_HPP_
 
 #include "runir/graphs/cycle.hpp"
-#include "runir/kr/ps/ext/detail/predecessors.hpp"
+#include "runir/kr/ps/ext/detail/search_node.hpp"
 #include "runir/kr/ps/ext/program_executor_data.hpp"
 
 #include <algorithm>
@@ -23,7 +23,7 @@ namespace runir::kr::ps::ext::detail
 template<tyr::TaskKind Kind>
 void build_proof_graph(ProgramProofResults<Kind>& result,
                        const ygg::SegmentedVector<SearchNode<Kind>>& nodes,
-                       const Predecessors<Kind>& predecessors,
+                       const std::vector<Predecessor<Kind>>& predecessors,
                        std::optional<ProgramStateView<Kind>> initial)
 {
     using VertexLabel = ProgramProofVertexLabel<Kind>;

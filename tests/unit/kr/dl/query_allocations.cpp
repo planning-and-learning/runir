@@ -252,9 +252,10 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     EXPECT_EQ(counts.deallocated, 0);
 }
 
-TEST(RunirSearch, ProgramSearchAllocationsGrowWithContainerCapacity)
+TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
 {
     namespace ext = kr::ps::ext;
+    using Path = ext::detail::SearchPath<tyr::GroundTag, ext::ProgramStateView<tyr::GroundTag>>;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/ps/ext/choose";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     auto context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(search->task->get_domain()), search);
@@ -295,22 +296,35 @@ TEST(RunirSearch, ProgramSearchAllocationsGrowWithContainerCapacity)
                 const auto program = ext::dl::parse_program(text, search->task->get_domain().get_domain(), *context->domain_context->ext_repository);
                 auto options = ext::ProgramSearchOptions<tyr::GroundTag> {};
                 options.universal = universal;
-                // Retain interned execution states and warm the shared builders before measuring search bookkeeping.
-                ASSERT_TRUE(ext::find_solution(context, program, options).is_successful());
-                // Structural certification is policy analysis, not per-step search bookkeeping.
                 auto expander = ext::SuccessorExpander<tyr::GroundTag>(context, program);
-                auto storage = ext::detail::SearchStorage<tyr::GroundTag, ext::StateMemorization::ALL>(options);
+                const auto initial_node = search->successor_generator->get_packed_initial_node(*search->state_repository, *search->axiom_evaluator);
+                const auto initial = expander.initial_state(initial_node.get_state().unpack());
                 auto classifier = kr::ps::NoUnsolvability {};
-                allocation_tracking::Scope measured;
-                const auto result = ext::detail::find_solution<tyr::GroundTag>(expander, storage, options, classifier);
-                allocations[scale] = measured.finish().allocated;
-                ASSERT_TRUE(result.is_successful());
-                EXPECT_EQ(result.statistics.num_expanded, length + 2);
-                EXPECT_EQ(result.statistics.num_generated, length + 2);
-                EXPECT_EQ(result.statistics.choice_depth, choose ? length : 0);
+                auto path_pool = ygg::SharedObjectPool<Path> {};
+                // Warm path and binding pools to the live DFS depth. Fresh search storage
+                // on each pass ensures memoization cannot skip any of the measured work.
+                for (const auto warmup : { true, false })
+                {
+                    SCOPED_TRACE(warmup);
+                    auto storage = ext::detail::SearchStorage<tyr::GroundTag, ext::StateMemorization::ALL>(options);
+                    auto statistics = ext::ProgramSearchStatistics {};
+                    auto first_goal = ygg::SharedObjectPoolPtr<Path> {};
+                    auto witness = ygg::SharedObjectPoolPtr<Path> {};
+                    allocation_tracking::Scope measured;
+                    const auto status = ext::detail::depth_first_search<
+                        tyr::GroundTag>(expander, initial_node.get_state(), initial, options, classifier, storage, statistics, path_pool, first_goal, witness);
+                    const auto counts = measured.finish();
+                    if (!warmup)
+                        allocations[scale] = counts.allocated;
+                    ASSERT_EQ(status, ext::ProgramProofStatus::SUCCESS);
+                    EXPECT_EQ(statistics.num_expanded, length + 2);
+                    EXPECT_EQ(statistics.num_generated, length + 2);
+                    ASSERT_TRUE(first_goal);
+                    EXPECT_EQ(first_goal->choice_depth, choose ? length : 0);
+                }
             }
-            // Eight times as many steps must not cause per-step or per-Choose allocations.
-            // The allowance covers geometric growth of independent search/graph containers across allocators.
+            // After warmup, eight times as many steps must not cause per-step or per-Choose allocations.
+            // The allowance covers geometric growth of traversal and memoization containers across allocators.
             EXPECT_LE(allocations[1], allocations[0] + 128) << "small=" << allocations[0] << ", large=" << allocations[1];
         }
 }

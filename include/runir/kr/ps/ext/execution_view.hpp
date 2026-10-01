@@ -241,25 +241,13 @@ concept ModuleStateViewConcept = tyr::TaskKind<Kind> && requires(const S& state)
     state.get_context();
 };
 
-template<typename S>
-concept CallStackViewConcept = requires(const S& state) {
-    { state.get_module() } -> std::same_as<ModuleView>;
-    { state.get_return_memory_state() } -> std::same_as<MemoryStateView>;
-    requires runir::kr::dl::semantics::RegisterValuesViewConcept<std::remove_cvref_t<decltype(state.get_registers())>>;
-    { state.get_arguments() } -> std::same_as<runir::kr::dl::semantics::CallArgumentsView>;
-    state.get_caller();
-    state.get_data();
-    state.get_context();
-};
-
 /// Shared semantic access for indexed, borrowed-data and builder views; no registered identity is required.
 template<typename S, typename Kind>
 concept ProgramStateViewConcept = tyr::TaskKind<Kind> && requires(const S& state) {
     requires tyr::planning::StateViewConcept<std::remove_cvref_t<decltype(state.get_state())>, Kind>;
     { state.get_program() } -> std::same_as<ProgramView>;
     requires ModuleStateViewConcept<std::remove_cvref_t<decltype(state.get_module_state())>, Kind>;
-    requires CallStackViewConcept<std::remove_cvref_t<decltype(*state.get_call_stack())>>;
-    { state.get_call_stack().has_value() } -> std::same_as<bool>;
+    { state.get_call_stack() } -> std::same_as<std::optional<CallStackView<Kind>>>;
     state.get_data();
     state.get_context();
 };

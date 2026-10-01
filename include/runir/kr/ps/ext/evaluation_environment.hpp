@@ -43,9 +43,6 @@ public:
     {
     }
 
-    auto get_program() const noexcept { return m_program; }
-    auto& get_dl_repository() noexcept { return m_program.get_context().get_dl_repository(); }
-    auto& get_dl_workspace() noexcept { return m_dl_workspace; }
     auto& get_dl_caches() noexcept { return m_dl_caches; }
     auto& get_dl_target_caches() noexcept { return m_dl_target_caches; }
 

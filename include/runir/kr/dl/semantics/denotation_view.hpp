@@ -20,41 +20,38 @@
 namespace runir::kr::dl::semantics
 {
 
-template<runir::kr::dl::CategoryTag Category, typename C>
+template<runir::kr::dl::CategoryTag Category>
 struct DenotationElementType;
 
-template<typename C>
-struct DenotationElementType<runir::kr::dl::BooleanTag, C>
+template<>
+struct DenotationElementType<runir::kr::dl::BooleanTag>
 {
     using Type = bool;
 };
 
-template<typename C>
-struct DenotationElementType<runir::kr::dl::NumericalTag, C>
+template<>
+struct DenotationElementType<runir::kr::dl::NumericalTag>
 {
     using Type = ygg::uint_t;
 };
 
-template<typename C>
-struct DenotationElementType<runir::kr::dl::ConceptTag, C>
+template<>
+struct DenotationElementType<runir::kr::dl::ConceptTag>
 {
     using Type = tyr::formalism::planning::ObjectView;
 };
 
-template<typename C>
-struct DenotationElementType<runir::kr::dl::RoleTag, C>
+template<>
+struct DenotationElementType<runir::kr::dl::RoleTag>
 {
     using Type = std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>;
 };
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-using DenotationElement = typename DenotationElementType<Category, C>::Type;
+template<runir::kr::dl::CategoryTag Category>
+using DenotationElementView = typename DenotationElementType<Category>::Type;
 
-template<runir::kr::dl::CategoryTag Category, typename C = DenotationRepository>
-using DenotationElementView = DenotationElement<Category, C>;
-
-template<runir::kr::dl::CategoryTag Category, typename C = DenotationRepository>
-using DenotationElementViewList = std::vector<DenotationElementView<Category, C>>;
+template<runir::kr::dl::CategoryTag Category>
+using DenotationElementViewList = std::vector<DenotationElementView<Category>>;
 
 }  // namespace runir::kr::dl::semantics
 
@@ -88,7 +85,7 @@ public:
         ConceptIterator() = default;
         ConceptIterator(const View& view, size_t object) noexcept : m_handle(view.get_handle()), m_context(&view.get_context()), m_object(object) {}
 
-        auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElementView<runir::kr::dl::ConceptTag, C>
+        auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElementView<runir::kr::dl::ConceptTag>
         {
             return make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_object)), m_context->get_formalism_repository());
         }
@@ -144,7 +141,7 @@ public:
                 advance_to_next_nonempty_row();
         }
 
-        auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElementView<runir::kr::dl::RoleTag, C>
+        auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElementView<runir::kr::dl::RoleTag>
         {
             return std::pair(make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)), m_context->get_formalism_repository()),
                              make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_target)), m_context->get_formalism_repository()));

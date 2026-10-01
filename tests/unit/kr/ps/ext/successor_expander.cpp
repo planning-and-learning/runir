@@ -550,7 +550,7 @@ TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallers)
         auto storage = ext::TransientExecutionStorage<Kind>(context, program);
         const auto initial_node = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
         const auto initial = storage.initial_state(initial_node.get_state());
-        EXPECT_FALSE(storage.call_stack(storage.view(initial)));
+        EXPECT_FALSE(storage.view(initial).get_call_stack());
         EXPECT_EQ(executions.template size<ext::CallStack>(), 0);
         const auto source = storage.view(initial).get_state();
         const auto bindings = search.successor_generator->get_applicable_action_bindings(initial_node);
@@ -589,16 +589,14 @@ TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallers)
         const auto copy = storage.retain(storage.view(retained));
         ASSERT_TRUE(copy->call_stack);
         EXPECT_EQ(*copy->call_stack, inner_caller.get_index());
-        const auto stored_caller = storage.call_stack(storage.view(copy));
-        ASSERT_TRUE(stored_caller);
-        EXPECT_EQ(stored_caller->get_index(), inner_caller.get_index());
         const auto caller = storage.view(copy).get_call_stack();
         ASSERT_TRUE(caller);
+        EXPECT_EQ(caller->get_index(), inner_caller.get_index());
         auto returned_module = storage.module_();
         *returned_module = copy->module_state;
-        storage.set_memory_state(*returned_module, caller->get_return_memory_state());
+        returned_module->memory_state = caller->get_return_memory_state().get_index();
         storage.set_registers(*returned_module, caller->get_registers());
-        const auto returned = storage.store(std::move(returned_module), storage.caller(*caller));
+        const auto returned = storage.store(std::move(returned_module), caller->get_caller());
         ASSERT_TRUE(returned->call_stack);
         EXPECT_EQ(*returned->call_stack, outer_caller.get_index());
         EXPECT_TRUE(ygg::EqualTo<ext::MemoryStateView> {}(storage.view(returned).get_module_state().get_memory_state(), inner_return));

@@ -22,7 +22,7 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::s
         ar.field("values",
                  [](const auto& value)
                  {
-                     auto elements = runir::kr::dl::semantics::DenotationElementViewList<Category, C> {};
+                     auto elements = runir::kr::dl::semantics::DenotationElementViewList<Category> {};
                      for (auto element : value)
                          elements.push_back(element);
                      return elements;

@@ -43,7 +43,6 @@ private:
 public:
     using FamilyType = Family;
     using KindType = Kind;
-    using StateType = S;
 
     BaseStateEvaluationContext(S state,
                                Builder& builder,

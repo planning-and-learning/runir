@@ -17,8 +17,8 @@ The diagnostic graph and optional plan are constructed afterward. Their retained
 states depend on the selected memorization mode below. Failed alternatives do
 not invalidate a successful Choose.
 
-In `ALL` mode, [`Predecessors`](../include/runir/kr/ps/ext/detail/predecessors.hpp)
-is an append-only vector of admitted transitions, including parallel edges.
+In `ALL` mode, [`SearchStorage`](../include/runir/kr/ps/ext/detail/search_storage.hpp)
+keeps an append-only vector of admitted transitions, including parallel edges.
 The shared DFS enumerates an expansion before descending, then processes ordinary
 successors and Choose obligations in reverse order. Storage policies preserve
 `ALL`'s first-parent plan reconstruction without a separate traversal algorithm.

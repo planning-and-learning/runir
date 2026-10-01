@@ -9,28 +9,9 @@ template class SuccessorExpander<tyr::GroundTag>;
 template class SuccessorExpander<tyr::LiftedTag>;
 
 template class InternedExecutionStorage<tyr::GroundTag>;
-
-template tyr::planning::LabeledNode<tyr::planning::StateView<tyr::GroundTag>>
-InternedExecutionStorage<tyr::GroundTag>::successor<tyr::planning::StateView<tyr::GroundTag>>(const tyr::planning::StateView<tyr::GroundTag>&,
-                                                                                              tyr::formalism::planning::ActionBindingView);
-
 template class TransientExecutionStorage<tyr::GroundTag>;
-
-template tyr::planning::LabeledNode<tyr::planning::BuilderStateView<tyr::GroundTag>>
-TransientExecutionStorage<tyr::GroundTag>::successor<tyr::planning::BuilderStateView<tyr::GroundTag>>(const tyr::planning::BuilderStateView<tyr::GroundTag>&,
-                                                                                                      tyr::formalism::planning::ActionBindingView);
-
 template class InternedExecutionStorage<tyr::LiftedTag>;
-
-template tyr::planning::LabeledNode<tyr::planning::StateView<tyr::LiftedTag>>
-InternedExecutionStorage<tyr::LiftedTag>::successor<tyr::planning::StateView<tyr::LiftedTag>>(const tyr::planning::StateView<tyr::LiftedTag>&,
-                                                                                              tyr::formalism::planning::ActionBindingView);
-
 template class TransientExecutionStorage<tyr::LiftedTag>;
-
-template tyr::planning::LabeledNode<tyr::planning::BuilderStateView<tyr::LiftedTag>>
-TransientExecutionStorage<tyr::LiftedTag>::successor<tyr::planning::BuilderStateView<tyr::LiftedTag>>(const tyr::planning::BuilderStateView<tyr::LiftedTag>&,
-                                                                                                      tyr::formalism::planning::ActionBindingView);
 
 template ProgramStateView<tyr::GroundTag>
 SuccessorExpander<tyr::GroundTag>::materialize<ProgramStateView<tyr::GroundTag>>(const ProgramStateView<tyr::GroundTag>&);

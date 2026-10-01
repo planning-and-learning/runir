@@ -32,16 +32,8 @@ public:
 
     auto view(ProgramStateView<Kind> state) const noexcept { return state; }
     auto retain(ProgramStateView<Kind> state) const noexcept { return state; }
-    auto call_stack(ProgramStateView<Kind> state) const { return state.get_call_stack(); }
-    auto caller(CallStackView<Kind> state) const { return state.get_caller(); }
 
     void set_registers(ygg::Data<ModuleState<Kind>>& target, runir::kr::dl::semantics::RegisterValuesView values) { target.registers = values.get_index(); }
-    void set_arguments(ygg::Data<ModuleState<Kind>>& target, runir::kr::dl::semantics::CallArgumentsView arguments)
-    {
-        target.arguments = arguments.get_index();
-    }
-    void set_module(ygg::Data<ModuleState<Kind>>& target, ModuleView module_) { target.module_ = module_.get_index(); }
-    void set_memory_state(ygg::Data<ModuleState<Kind>>& target, MemoryStateView memory_state) { target.memory_state = memory_state.get_index(); }
 
     ProgramStateView<Kind> store(ygg::UniqueObjectPoolPtr<ygg::Data<ModuleState<Kind>>> module_state, std::optional<CallStackView<Kind>> caller)
     {
@@ -75,12 +67,15 @@ public:
         return get_or_create(*m_context->execution_repository, saved).first;
     }
 
-    template<tyr::planning::StateViewConcept<Kind> S>
-    tyr::planning::LabeledNode<tyr::planning::StateView<Kind>> successor(const S& state, tyr::formalism::planning::ActionBindingView binding)
+    tyr::planning::LabeledNode<tyr::planning::StateView<Kind>> successor(const tyr::planning::StateView<Kind>& state,
+                                                                         tyr::formalism::planning::ActionBindingView binding)
     {
         auto& search = *m_context->search_context;
         return { binding,
-                 search.successor_generator->get_successor_node(tyr::planning::Node<S>(state, 0), binding, *search.state_repository, *search.axiom_evaluator) };
+                 search.successor_generator->get_successor_node(tyr::planning::Node<tyr::planning::StateView<Kind>>(state, 0),
+                                                                binding,
+                                                                *search.state_repository,
+                                                                *search.axiom_evaluator) };
     }
     void set_planning_state(ygg::Data<ModuleState<Kind>>& target, tyr::planning::StateView<Kind> state)
     {
@@ -132,8 +127,6 @@ public:
         *result = state.get_data();
         return result;
     }
-    auto call_stack(BuilderProgramStateView<Kind> state) const { return state.get_call_stack(); }
-    auto caller(CallStackView<Kind> state) const { return state.get_caller(); }
     auto registers(const ygg::Data<runir::kr::dl::semantics::RegisterValues>& data)
     {
         return ygg::make_view(data, *m_context->search_context->task->get_repository());
@@ -143,12 +136,6 @@ public:
     {
         target.registers = values.get_data();
     }
-    void set_arguments(ygg::Builder<ModuleState<Kind>>& target, runir::kr::dl::semantics::CallArgumentsView arguments)
-    {
-        target.arguments = arguments.get_index();
-    }
-    void set_module(ygg::Builder<ModuleState<Kind>>& target, ModuleView module_) { target.module_ = module_.get_index(); }
-    void set_memory_state(ygg::Builder<ModuleState<Kind>>& target, MemoryStateView memory_state) { target.memory_state = memory_state.get_index(); }
 
     auto store(ygg::UniqueObjectPoolPtr<ygg::Builder<ModuleState<Kind>>> module_state, std::optional<CallStackView<Kind>> call_stack)
     {
@@ -211,13 +198,12 @@ public:
 
     /// The returned state borrows scratch storage until the next successor() call.
     /// Consume or copy it before then; the source must not borrow this same scratch storage.
-    template<tyr::planning::StateViewConcept<Kind> S>
-    tyr::planning::LabeledNode<tyr::planning::BuilderStateView<Kind>> successor(const S& state, tyr::formalism::planning::ActionBindingView binding)
+    tyr::planning::LabeledNode<tyr::planning::BuilderStateView<Kind>> successor(const tyr::planning::BuilderStateView<Kind>& state,
+                                                                                tyr::formalism::planning::ActionBindingView binding)
     {
         auto& search = *m_context->search_context;
-        const auto source = tyr::planning::BuilderStateView<Kind>(state.get_state_builder(), state.get_task());
         return { binding,
-                 search.successor_generator->get_successor_node(tyr::planning::Node<tyr::planning::BuilderStateView<Kind>>(source, 0),
+                 search.successor_generator->get_successor_node(tyr::planning::Node<tyr::planning::BuilderStateView<Kind>>(state, 0),
                                                                 binding,
                                                                 m_planning,
                                                                 *search.axiom_evaluator) };
@@ -231,28 +217,9 @@ public:
 #ifndef RUNIR_HEADER_INSTANTIATION
 
 extern template class InternedExecutionStorage<tyr::GroundTag>;
-
-extern template tyr::planning::LabeledNode<tyr::planning::StateView<tyr::GroundTag>>
-InternedExecutionStorage<tyr::GroundTag>::successor<tyr::planning::StateView<tyr::GroundTag>>(const tyr::planning::StateView<tyr::GroundTag>&,
-                                                                                              tyr::formalism::planning::ActionBindingView);
-
 extern template class InternedExecutionStorage<tyr::LiftedTag>;
-
-extern template tyr::planning::LabeledNode<tyr::planning::StateView<tyr::LiftedTag>>
-InternedExecutionStorage<tyr::LiftedTag>::successor<tyr::planning::StateView<tyr::LiftedTag>>(const tyr::planning::StateView<tyr::LiftedTag>&,
-                                                                                              tyr::formalism::planning::ActionBindingView);
-
 extern template class TransientExecutionStorage<tyr::GroundTag>;
-
-extern template tyr::planning::LabeledNode<tyr::planning::BuilderStateView<tyr::GroundTag>>
-TransientExecutionStorage<tyr::GroundTag>::successor<tyr::planning::BuilderStateView<tyr::GroundTag>>(const tyr::planning::BuilderStateView<tyr::GroundTag>&,
-                                                                                                      tyr::formalism::planning::ActionBindingView);
-
 extern template class TransientExecutionStorage<tyr::LiftedTag>;
-
-extern template tyr::planning::LabeledNode<tyr::planning::BuilderStateView<tyr::LiftedTag>>
-TransientExecutionStorage<tyr::LiftedTag>::successor<tyr::planning::BuilderStateView<tyr::LiftedTag>>(const tyr::planning::BuilderStateView<tyr::LiftedTag>&,
-                                                                                                      tyr::formalism::planning::ActionBindingView);
 
 #endif
 
