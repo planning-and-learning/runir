@@ -52,7 +52,7 @@ auto collect_steps(
                     for (; !candidate.exhausted(); candidate.advance())
                         result.push_back(expander.apply_choice(state, candidate, statistics));
             },
-            expansion);
+            std::move(expansion));
     return result;
 }
 

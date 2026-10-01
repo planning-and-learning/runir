@@ -4,6 +4,7 @@
 #include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <memory>
+#include <type_traits>
 #include <tyr/planning/declarations.hpp>
 #include <yggdrasil/core/types.hpp>
 
@@ -44,6 +45,30 @@ using CallStackView = ygg::View<ygg::Index<CallStack>, ExecutionRepository<Kind>
 
 template<tyr::TaskKind Kind>
 using ProgramStateView = ygg::View<ygg::Index<ProgramState<Kind>>, ExecutionRepository<Kind>>;
+
+template<tyr::TaskKind Kind>
+using BorrowedModuleStateView = ygg::View<ygg::Data<ModuleState<Kind>>, ExecutionRepository<Kind>>;
+
+template<tyr::TaskKind Kind>
+using BorrowedCallStackView = ygg::View<ygg::Data<CallStack>, ExecutionRepository<Kind>>;
+
+template<tyr::TaskKind Kind>
+using BorrowedProgramStateView = ygg::View<ygg::Data<ProgramState<Kind>>, ExecutionRepository<Kind>>;
+
+template<tyr::TaskKind Kind>
+using BuilderModuleStateView = ygg::View<ygg::Builder<ModuleState<Kind>>, ExecutionRepository<Kind>>;
+
+template<tyr::TaskKind Kind>
+using BuilderCallStackView = ygg::View<ygg::Builder<CallStack>, ExecutionRepository<Kind>>;
+
+template<tyr::TaskKind Kind>
+using BuilderProgramStateView = ygg::View<ygg::Builder<ProgramState<Kind>>, ExecutionRepository<Kind>>;
+
+/// Values retained by search: repository identities or owners of pooled execution data.
+template<typename S, typename Kind>
+concept StoredProgramStateConcept =
+    tyr::TaskKind<Kind>
+    && (std::same_as<std::remove_cvref_t<S>, ProgramStateView<Kind>> || std::same_as<std::remove_cvref_t<S>, ygg::Builder<ProgramState<Kind>>>);
 
 }  // namespace runir::kr::ps::ext
 

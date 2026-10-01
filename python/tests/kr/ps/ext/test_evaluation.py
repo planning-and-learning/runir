@@ -210,6 +210,10 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     numerical = ext.evaluate(
         numericals["argument_count"], dl_context
     )
+    assert concept == frame.arguments.concept_arguments[0]
+    assert role == frame.arguments.role_arguments[0]
+    assert boolean == frame.arguments.boolean_arguments[0]
+    assert numerical == frame.arguments.numerical_arguments[0]
     node = initial_node(task_context)
     child = collect_steps(expander, expander.initial_state(node.get_state()))[0].target
     other_concept = collect_steps(expander, child)[1].target
@@ -400,7 +404,7 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
         assert isinstance(choice, choice_type)
         assert choice.rule is not None
         assert choice.count() == 2
-        expected = list(choice.denotation)
+        expected = choice.bindings
         result = []
         for value in expected:
             assert not choice.exhausted()
@@ -408,7 +412,7 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
             result.append(expander.apply_choice(state, choice, statistics))
             choice.advance()
         assert choice.exhausted()
-        assert list(choice.denotation) == expected
+        assert choice.bindings == expected
         assert statistics.num_generated == generated + len(result)
         with pytest.raises(IndexError):
             choice.current()
@@ -429,6 +433,39 @@ def test_choice_callbacks_filter_effects_and_keep_independent_cursors(kind: Lite
         for role_step in role_steps:
             assert role_step.target.state == child.state
             assert role_step.target.module_state.registers.role_values[0] is not None
+
+
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+def test_choice_bindings_keep_pool_and_repositories_alive(kind):
+    task_context, domain = _task_context(kind)
+    program = parse_program(PROGRAM.replace("(:load", "(:choose"), domain, task_context.domain_context.ext_repository)
+    expander = getattr(ext, f"{kind.title()}SuccessorExpander")(task_context, program)
+    child = collect_steps(expander, expander.initial_state(initial_node(task_context).get_state()))[0].target
+    statistics = ext.ProgramSearchStatistics()
+    choices = []
+    references = sys.getrefcount(expander)
+    expander.for_each_successor(child, statistics, lambda choice: choices.append(choice) or True, lambda: False)
+    concept_choice, = choices
+    assert sys.getrefcount(expander) > references
+    with_concept = expander.apply_choice(child, concept_choice, statistics).target
+    choices.clear()
+    expander.for_each_successor(with_concept, statistics, lambda choice: choices.append(choice) or True, lambda: False)
+    role_choice, = choices
+    concept = concept_choice.current()
+    role = role_choice.current()
+    concepts = concept_choice.bindings
+    roles = role_choice.bindings
+    names = concept.get_name(), tuple(value.get_name() for value in role)
+
+    del choices, expander, with_concept, child, program, task_context, domain
+    gc.collect()
+    assert concept_choice.current() == concept
+    assert role_choice.current() == role
+    del concept_choice, role_choice
+    gc.collect()
+    assert (concept.get_name(), tuple(value.get_name() for value in role)) == names
+    assert concept in concepts
+    assert role in roles
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])

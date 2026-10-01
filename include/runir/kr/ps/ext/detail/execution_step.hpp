@@ -8,15 +8,15 @@
 #include "runir/kr/ps/ext/program_executor_data.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 
+#include <concepts>
 #include <cstddef>
 #include <optional>
 #include <stdexcept>
 #include <string_view>
-#include <type_traits>
 #include <tyr/planning/node.hpp>
 #include <utility>
 #include <variant>
-#include <vector>
+#include <yggdrasil/containers/unique_object_pool.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -51,7 +51,7 @@ constexpr std::string_view to_string(ProgramOutcome outcome)
 
 /// One rule application or caller return, including local failures whose target remains the source state.
 /// Search completion and resource limits are reported separately from these steps.
-template<tyr::TaskKind Kind, ProgramStateViewConcept<Kind> S = ProgramStateView<Kind>>
+template<tyr::TaskKind Kind, StoredProgramStateConcept<Kind> S = ProgramStateView<Kind>>
 struct ProgramStep
 {
 private:
@@ -77,47 +77,35 @@ public:
     const auto& get_rule() const noexcept { return rule; }
 };
 
+/// Retains candidate bindings while child evaluations clear their denotation caches.
+/// The expander owns the binding pool and must outlive the choice in every memorization mode.
 template<runir::kr::dl::CategoryTag Category>
 struct Choice
 {
-    using CategoryType = Category;
-    using Denotation = runir::kr::dl::semantics::DenotationView<Category>;
-    using Cursor = decltype(std::declval<Denotation>().begin());
+private:
+    ygg::UniqueObjectPoolPtr<runir::kr::dl::semantics::DenotationElementViewList<Category>> m_bindings;
 
-    using Binding = std::remove_cvref_t<decltype(*std::declval<Cursor>())>;
-
+public:
     RuleVariantView rule;
-    Denotation denotation;
-    Cursor cursor;
-    std::vector<Binding> ordered_bindings;
     size_t position = 0;
 
-    Choice(RuleVariantView rule_, Denotation denotation_) noexcept : rule(rule_), denotation(denotation_), cursor(denotation.begin()) {}
-
-    auto& bindings() noexcept { return ordered_bindings; }
-    bool exhausted() const noexcept { return ordered_bindings.empty() ? cursor == denotation.end() : position == ordered_bindings.size(); }
-    auto current() const noexcept { return ordered_bindings.empty() ? *cursor : ordered_bindings[position]; }
-    void advance() noexcept
+    Choice(RuleVariantView rule_,
+           runir::kr::dl::semantics::DenotationView<Category> denotation,
+           ygg::UniqueObjectPool<runir::kr::dl::semantics::DenotationElementViewList<Category>>& pool) :
+        m_bindings(pool.get_or_allocate()),
+        rule(rule_)
     {
-        if (ordered_bindings.empty())
-            ++cursor;
-        else
-            ++position;
+        m_bindings->clear();
+        for (const auto binding : denotation)
+            m_bindings->push_back(binding);
     }
-
-    bool has_alternatives() const noexcept
-    {
-        auto first = denotation.begin();
-        return first != denotation.end() && ++first != denotation.end();
-    }
-
-    size_t count() const noexcept
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return denotation.get().count();
-        else
-            return denotation.count();
-    }
+    auto& bindings() noexcept { return *m_bindings; }
+    const auto& bindings() const noexcept { return *m_bindings; }
+    bool exhausted() const noexcept { return position == bindings().size(); }
+    const auto& current() const { return bindings().at(position); }
+    void advance() noexcept { ++position; }
+    bool has_alternatives() const noexcept { return bindings().size() > 1; }
+    size_t count() const noexcept { return bindings().size(); }
 };
 
 }  // namespace runir::kr::ps::ext::detail

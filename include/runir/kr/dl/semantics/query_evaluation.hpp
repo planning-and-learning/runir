@@ -128,7 +128,8 @@ auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, Context& cont
 
 template<FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor,
-                   Context& context) -> ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>
+                   Context& context,
+                   DenotationRepository& repository) -> DenotationView<Category>
 {
     const auto positions = constructor.get_data().plan.positions();
     const auto relation = evaluate(constructor.get_arg(), context);
@@ -148,7 +149,7 @@ auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> c
             result->get(row[positions[0]]).set(row[positions[1]]);
         }
     }
-    return result;
+    return detail::materialize_denotation(result, context.get_builder(), repository).first;
 }
 
 }  // namespace runir::kr::dl::semantics

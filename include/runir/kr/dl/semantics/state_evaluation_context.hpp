@@ -6,6 +6,7 @@
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
+#include "runir/kr/dl/semantics/register_values_view.hpp"
 
 #include <concepts>
 #include <type_traits>
@@ -65,15 +66,18 @@ public:
     auto& get_caches() noexcept { return m_caches; }
 };
 
-template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
+template<runir::kr::dl::FamilyTag Family,
+         tyr::TaskKind Kind,
+         tyr::planning::StateViewConcept<Kind> S = tyr::planning::StateView<Kind>,
+         RegisterValuesViewConcept R = RegisterValuesView>
 class StateEvaluationContext;
 
-template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind>
+template<runir::kr::dl::FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S, RegisterValuesViewConcept R>
     requires(!std::same_as<Family, runir::kr::ExtFamilyTag>)
-class StateEvaluationContext<Family, Kind> : public BaseStateEvaluationContext<Family, Kind>
+class StateEvaluationContext<Family, Kind, S, R> : public BaseStateEvaluationContext<Family, Kind, S>
 {
 public:
-    using BaseStateEvaluationContext<Family, Kind>::BaseStateEvaluationContext;
+    using BaseStateEvaluationContext<Family, Kind, S>::BaseStateEvaluationContext;
 };
 
 template<StateEvaluationContextConcept Context>

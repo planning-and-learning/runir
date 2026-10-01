@@ -13,6 +13,7 @@
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
+#include <vector>
 #include <yggdrasil/containers/dynamic_bitset.hpp>
 #include <yggdrasil/core/types.hpp>
 
@@ -49,6 +50,12 @@ struct DenotationElementType<runir::kr::dl::RoleTag, C>
 template<runir::kr::dl::CategoryTag Category, typename C>
 using DenotationElement = typename DenotationElementType<Category, C>::Type;
 
+template<runir::kr::dl::CategoryTag Category, typename C = DenotationRepository>
+using DenotationElementView = DenotationElement<Category, C>;
+
+template<runir::kr::dl::CategoryTag Category, typename C = DenotationRepository>
+using DenotationElementViewList = std::vector<DenotationElementView<Category, C>>;
+
 }  // namespace runir::kr::dl::semantics
 
 namespace ygg
@@ -79,14 +86,9 @@ public:
 
     public:
         ConceptIterator() = default;
-        ConceptIterator(const View& view, size_t object) noexcept :
-            m_handle(view.get_handle()),
-            m_context(&view.get_context()),
-            m_object(object)
-        {
-        }
+        ConceptIterator(const View& view, size_t object) noexcept : m_handle(view.get_handle()), m_context(&view.get_context()), m_object(object) {}
 
-        auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElement<runir::kr::dl::ConceptTag, C>
+        auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElementView<runir::kr::dl::ConceptTag, C>
         {
             return make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_object)), m_context->get_formalism_repository());
         }
@@ -142,7 +144,7 @@ public:
                 advance_to_next_nonempty_row();
         }
 
-        auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElement<runir::kr::dl::RoleTag, C>
+        auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElementView<runir::kr::dl::RoleTag, C>
         {
             return std::pair(make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)), m_context->get_formalism_repository()),
                              make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_target)), m_context->get_formalism_repository()));

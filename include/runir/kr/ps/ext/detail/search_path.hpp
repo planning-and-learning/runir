@@ -2,23 +2,24 @@
 #define RUNIR_KR_PS_EXT_DETAIL_SEARCH_PATH_HPP_
 
 #include "runir/datasets/state_graph.hpp"
-#include "runir/kr/ps/ext/detail/pooled_shared_owner.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 
 #include <optional>
 #include <utility>
+#include <yggdrasil/containers/shared_object_pool.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
 
 /// A retained path owns pooled states, not an explored-graph predecessor table.
 /// Pending siblings and selected witnesses can outlive a DFS frame; discarded branches release their states.
-template<tyr::TaskKind Kind, ProgramStateViewConcept<Kind> S>
+/// The search owns the pool until graph and plan construction have released every path.
+template<tyr::TaskKind Kind, StoredProgramStateConcept<Kind> S>
 struct SearchPath
 {
     std::optional<S> state;
-    PooledSharedOwner<SearchPath<Kind, S>> parent;
+    ygg::SharedObjectPoolPtr<SearchPath<Kind, S>> parent;
     std::optional<datasets::StateGraphEdgeLabel> transition;
     std::optional<RuleVariantView> rule;
     ygg::uint_t choice_depth = 0;
@@ -28,7 +29,7 @@ struct SearchPath
     bool is_open = false;
 
     void initialize(S state_,
-                    PooledSharedOwner<SearchPath<Kind, S>> parent_,
+                    ygg::SharedObjectPoolPtr<SearchPath<Kind, S>> parent_,
                     std::optional<datasets::StateGraphEdgeLabel> transition_,
                     std::optional<RuleVariantView> rule_,
                     ygg::uint_t choice_depth_)
@@ -41,7 +42,7 @@ struct SearchPath
         is_goal = is_unsolvable = is_deadend = is_open = false;
     }
 
-    void release_owners() noexcept
+    void on_pool_release() noexcept
     {
         state.reset();
         // Releasing a long witness must not recursively destroy the entire parent chain.
@@ -50,7 +51,7 @@ struct SearchPath
             auto previous = std::move(parent);
             parent = std::move(previous->parent);
         }
-        parent.reset();
+        parent = {};
     }
 };
 

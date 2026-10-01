@@ -289,8 +289,8 @@ void expect_binding_effects_and_empty_choices()
                         const auto values = target.get_module_state().get_registers();
                         if (role)
                         {
-                            ASSERT_TRUE(values.get_role_values()[0]);
-                            const auto pair = values.get_role_values()[0].value();
+                            ASSERT_TRUE(values.template get<kr::dl::RoleTag>()[0]);
+                            const auto pair = values.template get<kr::dl::RoleTag>()[0].value();
                             EXPECT_EQ(pair.get_second().get_name(), "rooma");
                             if (scenario == 1)
                             {
@@ -299,10 +299,10 @@ void expect_binding_effects_and_empty_choices()
                         }
                         else
                         {
-                            ASSERT_TRUE(values.get_concept_values()[0]);
+                            ASSERT_TRUE(values.template get<kr::dl::ConceptTag>()[0]);
                             if (scenario == 1)
                             {
-                                EXPECT_EQ(values.get_concept_values()[0].value().get_name(), "ball2");
+                                EXPECT_EQ(values.template get<kr::dl::ConceptTag>()[0].value().get_name(), "ball2");
                             }
                         }
                     }
@@ -322,9 +322,9 @@ void expect_binding_effects_and_empty_choices()
                     ASSERT_EQ(steps.size(), 1);
                     EXPECT_EQ(steps.front().status, kr::ps::ext::detail::ProgramOutcome::NO_APPLICABLE_ACTION);
                 }
-                for (const auto value : initial.get_module_state().get_registers().get_concept_values())
+                for (const auto value : initial.get_module_state().get_registers().template get<kr::dl::ConceptTag>())
                     EXPECT_FALSE(value);
-                for (const auto value : initial.get_module_state().get_registers().get_role_values())
+                for (const auto value : initial.get_module_state().get_registers().template get<kr::dl::RoleTag>())
                     EXPECT_FALSE(value);
                 EXPECT_EQ(initial.get_module_state().get_memory_state().get_name(), "source");
                 EXPECT_TRUE(collect_steps(expander, initial, false, [] { return true; }).empty());
@@ -532,7 +532,7 @@ TEST(RunirTests, ExtGroundAndLiftedInitialStatesUseExpanderRepository)
     expect_initial_program_state_uses_expander_repository<tyr::LiftedTag>();
 }
 
-TEST(RunirTests, ExtChooseUsesNaturalDenotationCursors)
+TEST(RunirTests, ExtChooseUsesNaturalBindingOrder)
 {
     namespace ext = kr::ps::ext;
     using Expander = ext::SuccessorExpander<tyr::GroundTag>;
@@ -540,7 +540,7 @@ TEST(RunirTests, ExtChooseUsesNaturalDenotationCursors)
     auto context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(search->task->get_domain()), search);
     auto& repository = *context->domain_context->ext_repository;
     const auto module_ = ext::dl::parse_module(R"(
-(:module (:symbol cursors) (:arguments) (:registers (:concept c) (:role r))
+(:module (:symbol bindings) (:arguments) (:registers (:concept c) (:role r))
   (:entry source) (:memory source target)
   (:features
     (:concept (:symbol Balls) (:expression (c_atomic_state "ball")))
@@ -576,16 +576,16 @@ TEST(RunirTests, ExtChooseUsesNaturalDenotationCursors)
             {
                 counts.push_back(choice.count());
                 EXPECT_EQ(choice.has_alternatives(), choice.count() > 1);
-                auto expected = choice.denotation.begin();
+                auto expected = choice.bindings().begin();
                 std::size_t visited = 0;
                 while (!choice.exhausted())
                 {
-                    EXPECT_EQ(choice.cursor, expected);
+                    EXPECT_EQ(choice.current(), *expected);
                     ++expected;
                     ++visited;
                     choice.advance();
                 }
-                EXPECT_EQ(expected, choice.denotation.end());
+                EXPECT_EQ(expected, choice.bindings().end());
                 EXPECT_EQ(visited, choice.count());
             }
             return true;
@@ -594,6 +594,86 @@ TEST(RunirTests, ExtChooseUsesNaturalDenotationCursors)
     EXPECT_EQ(statistics.num_generated, 0);
     std::ranges::sort(counts);
     EXPECT_EQ(counts, (std::vector<std::size_t> { 0, 0, 1, 1, 2, 2 }));
+}
+
+TEST(RunirTests, ExtChoicesRetainBindingsAcrossChildEvaluationAndPoolReuse)
+{
+    namespace ext = kr::ps::ext;
+    using Choice = ext::detail::Choice<kr::dl::ConceptTag>;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto context = create_task_context<tyr::GroundTag>(directory / "domain.pddl", directory / "task.pddl");
+    auto& search = *context->search_context;
+    auto& repository = *context->domain_context->ext_repository;
+    const auto module_ = ext::dl::parse_module(R"(
+(:module (:symbol retained-bindings) (:arguments) (:registers (:concept selected))
+  (:entry source) (:memory source child done)
+  (:features
+    (:concept (:symbol Candidates) (:expression (c_or (c_atomic_state "candidate") (c_atomic_state "at"))))
+    (:concept (:symbol Here) (:expression (c_atomic_state "at"))))
+  (:rules
+    (:rule (:symbol parent) (:expression (:source-memory source) (:target-memory child) (:choose (:conditions) (:concept Candidates) (:register (:concept selected)))))
+    (:rule (:symbol child) (:expression (:source-memory child) (:target-memory done) (:choose (:conditions) (:concept Here) (:register (:concept selected)))))))
+)",
+                                               search.task->get_domain().get_domain(),
+                                               repository);
+    const auto program = create_program(repository, module_, { module_ });
+    const auto check = [&]<typename Storage>()
+    {
+        auto expander = ext::SuccessorExpander<tyr::GroundTag, Storage>(context, program);
+        const auto node = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
+        const auto initial = expander.initial_state(node.get_state());
+        auto statistics = ext::ProgramSearchStatistics {};
+        const auto choices = [&](const auto& state)
+        {
+            auto result = std::vector<Choice> {};
+            EXPECT_TRUE(expander.for_each_successor(
+                expander.view(state),
+                statistics,
+                [&](auto expansion)
+                {
+                    if constexpr (std::same_as<decltype(expansion), Choice>)
+                        result.push_back(std::move(expansion));
+                    else
+                        ADD_FAILURE() << "Expected a concept choice";
+                    return true;
+                },
+                [] { return false; }));
+            return result;
+        };
+        auto parent = choices(initial);
+        ASSERT_EQ(parent.size(), 1);
+        const auto expected = parent.front().bindings();
+        ASSERT_EQ(expected.size(), 3);
+        const auto* parent_buffer = parent.front().bindings().data();
+        const auto child = expander.apply_choice(expander.view(initial), parent.front(), statistics).get_target();
+
+        // Child expansion clears the evaluator cache. Its released binding buffer can be reused while the parent remains live.
+        const typename decltype(expected)::value_type* child_buffer = nullptr;
+        for (size_t attempt = 0; attempt < 2; ++attempt)
+        {
+            const auto next = choices(child);
+            ASSERT_EQ(next.size(), 1);
+            ASSERT_EQ(next.front().count(), 1);
+            EXPECT_EQ(next.front().current().get_name(), "start");
+            EXPECT_NE(next.front().bindings().data(), parent_buffer);
+            if (child_buffer)
+                EXPECT_EQ(next.front().bindings().data(), child_buffer);
+            child_buffer = next.front().bindings().data();
+        }
+        EXPECT_EQ(parent.front().bindings().data(), parent_buffer);
+        EXPECT_TRUE(std::ranges::equal(parent.front().bindings(), expected));
+        for (const auto binding : expected)
+        {
+            const auto target = expander.apply_choice(expander.view(initial), parent.front(), statistics).get_target();
+            const auto selected = expander.view(target).get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0];
+            ASSERT_TRUE(selected);
+            EXPECT_EQ(*selected, binding);
+            parent.front().advance();
+        }
+        EXPECT_TRUE(parent.front().exhausted());
+    };
+    check.template operator()<ext::InternedExecutionStorage<tyr::GroundTag>>();
+    check.template operator()<ext::TransientExecutionStorage<tyr::GroundTag>>();
 }
 
 TEST(RunirTests, ExtGroundAndLiftedModuleReturnsPreserveCalleePlanningState)
@@ -688,7 +768,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
         const auto target_state = step.get_target();
         EXPECT_EQ(target_state.get_state().get_index(), initial_state.get_state().get_index());
         EXPECT_EQ(target_state.get_module_state().get_memory_state().get_index(), target.get_index());
-        const auto loaded = target_state.get_module_state().get_registers().get_concept_values()[0];
+        const auto loaded = target_state.get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0];
         ASSERT_TRUE(loaded);
         loaded_objects.insert(ygg::uint_t(loaded.value().get_index()));
     }
@@ -706,8 +786,8 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
 
     const auto edge = greedy.graph->get_out_edge_indices(0).front();
     const auto selected = greedy.graph->get_vertex(greedy.graph->get_target(edge)).get_property().program_state;
-    const auto actual_loaded = selected.get_module_state().get_registers().get_concept_values()[0];
-    const auto expected_loaded = steps.front().get_target().get_module_state().get_registers().get_concept_values()[0];
+    const auto actual_loaded = selected.get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0];
+    const auto expected_loaded = steps.front().get_target().get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0];
     ASSERT_TRUE(actual_loaded);
     ASSERT_TRUE(expected_loaded);
     EXPECT_EQ(actual_loaded.value().get_index(), expected_loaded.value().get_index());
@@ -760,7 +840,7 @@ TEST(RunirTests, ExtRoleLoadRuleEnumeratesAllPairsAndAdvancesMemory)
         const auto target_state = step.get_target();
         EXPECT_EQ(target_state.get_state().get_index(), initial_state.get_state().get_index());
         EXPECT_EQ(target_state.get_module_state().get_memory_state().get_name(), "target");
-        const auto loaded = target_state.get_module_state().get_registers().get_role_values()[0];
+        const auto loaded = target_state.get_module_state().get_registers().template get<kr::dl::RoleTag>()[0];
         ASSERT_TRUE(loaded);
         const auto pair = loaded.value();
         loaded_pairs.emplace(ygg::uint_t(pair.get_first().get_index()), ygg::uint_t(pair.get_second().get_index()));
@@ -1561,7 +1641,8 @@ void expect_callback_expansion_counts()
             EXPECT_EQ(steps.front().status, ext::detail::ProgramOutcome::APPLIED);
             auto first = std::vector<std::string> {};
             if (binding)
-                first.push_back(std::string(steps.front().get_target().get_module_state().get_registers().get_concept_values()[0].value().get_name().str()));
+                first.push_back(
+                    std::string(steps.front().get_target().get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0].value().get_name().str()));
             else
                 for (const auto object : steps.front().planning_successor->label.get_objects())
                     first.push_back(std::string(object.get_name().str()));

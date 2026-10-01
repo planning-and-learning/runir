@@ -29,8 +29,8 @@ concept RegisterValuesContract =
            data.role_values;
            data.clear();
            view.get_index();
-           view.get_concept_values();
-           view.get_role_values();
+           view.template get<kr::dl::ConceptTag>();
+           view.template get<kr::dl::RoleTag>();
        };
 
 template<typename SharedView>

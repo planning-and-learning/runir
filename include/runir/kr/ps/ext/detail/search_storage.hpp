@@ -3,7 +3,6 @@
 
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/predecessors.hpp"
-#include "runir/kr/ps/ext/detail/transient_state.hpp"
 
 #include <cassert>
 #include <optional>
@@ -13,16 +12,19 @@
 namespace runir::kr::ps::ext::detail
 {
 
+template<tyr::TaskKind Kind, StateMemorization Memorization>
+struct SearchStorage;
+
 /// ALL keeps state identity, first predecessors and every admitted transition.
 template<tyr::TaskKind Kind>
-struct InternedSearchStorage
+struct SearchStorage<Kind, StateMemorization::ALL>
 {
     const ProgramSearchOptions<Kind>& options;
     ygg::SegmentedVector<SearchNode<Kind>> nodes;
     Predecessors<Kind> predecessors;
     ygg::uint_t num_reached = 0;
 
-    explicit InternedSearchStorage(const ProgramSearchOptions<Kind>& options_) : options(options_) {}
+    explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : options(options_) {}
 
     auto& node(ProgramStateView<Kind> state) { return get_or_create_search_node(state, nodes); }
 
@@ -89,18 +91,17 @@ struct InternedSearchStorage
     void complete(ProgramStateView<Kind> state, bool succeeded) { node(state).status = succeeded ? SearchStatus::SUCCESS : SearchStatus::FAILURE; }
 };
 
-/// NONE retains no memo entries; CHOICE retains only the combined result at a Choose source.
+/// NONE retains no memo entries or memo table.
 /// Every generated occurrence still consumes the search-work budget.
 template<tyr::TaskKind Kind>
-struct TransientSearchStorage
+struct SearchStorage<Kind, StateMemorization::NONE>
 {
     const ProgramSearchOptions<Kind>& options;
-    ygg::UnorderedMap<TransientProgramState<Kind>, SearchStatus> memo;
     ygg::uint_t num_reached = 0;
 
-    explicit TransientSearchStorage(const ProgramSearchOptions<Kind>& options_) : options(options_) {}
+    explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : options(options_) {}
 
-    bool admit(const TransientProgramState<Kind>&, auto&&)
+    bool admit(const ygg::Builder<ProgramState<Kind>>&, auto&&)
     {
         if (num_reached == options.max_num_states)
             return false;
@@ -108,32 +109,44 @@ struct TransientSearchStorage
         return true;
     }
 
-    bool record_transition(const TransientProgramState<Kind>&, const ProgramStep<Kind, TransientProgramState<Kind>>& step, bool, auto&& classify)
+    bool record_transition(const ygg::Builder<ProgramState<Kind>>&, const ProgramStep<Kind, ygg::Builder<ProgramState<Kind>>>& step, bool, auto&& classify)
     {
         return admit(step.get_target(), classify);
     }
 
-    std::optional<bool> completed(const TransientProgramState<Kind>& state)
+    std::optional<bool> completed(const ygg::Builder<ProgramState<Kind>>&) { return std::nullopt; }
+
+    auto classify(const ygg::Builder<ProgramState<Kind>>& state, auto&& classify) { return classify(state); }
+    void record_flags(const ygg::Builder<ProgramState<Kind>>&, const auto&) {}
+    void memorize(const ygg::Builder<ProgramState<Kind>>&, bool) {}
+    void complete(const ygg::Builder<ProgramState<Kind>>&, bool) {}
+};
+
+/// CHOICE shares NONE's work accounting and retains the combined result at each Choose source.
+template<tyr::TaskKind Kind>
+struct SearchStorage<Kind, StateMemorization::CHOICE> : SearchStorage<Kind, StateMemorization::NONE>
+{
+    ygg::UnorderedMap<ygg::Builder<ProgramState<Kind>>, SearchStatus> memo;
+
+    explicit SearchStorage(const ProgramSearchOptions<Kind>& options_) : SearchStorage<Kind, StateMemorization::NONE>(options_) {}
+
+    std::optional<bool> completed(const ygg::Builder<ProgramState<Kind>>& state)
     {
-        if (options.state_memorization == StateMemorization::CHOICE)
-            if (const auto found = memo.find(state); found != memo.end())
-            {
-                assert(found->second != SearchStatus::ACTIVE && "Structurally terminating execution cannot have a back edge.");
-                return found->second == SearchStatus::SUCCESS;
-            }
+        if (const auto found = memo.find(state); found != memo.end())
+        {
+            assert(found->second != SearchStatus::ACTIVE && "Structurally terminating execution cannot have a back edge.");
+            return found->second == SearchStatus::SUCCESS;
+        }
         return std::nullopt;
     }
 
-    auto classify(const TransientProgramState<Kind>& state, auto&& classify) { return classify(state); }
-    void record_flags(const TransientProgramState<Kind>&, const auto&) {}
-
-    void memorize(const TransientProgramState<Kind>& state, bool has_choice)
+    void memorize(const ygg::Builder<ProgramState<Kind>>& state, bool has_choice)
     {
-        if (options.state_memorization == StateMemorization::CHOICE && has_choice)
+        if (has_choice)
             memo.try_emplace(state, SearchStatus::ACTIVE);
     }
 
-    void complete(const TransientProgramState<Kind>& state, bool succeeded)
+    void complete(const ygg::Builder<ProgramState<Kind>>& state, bool succeeded)
     {
         if (const auto found = memo.find(state); found != memo.end())
             found->second = succeeded ? SearchStatus::SUCCESS : SearchStatus::FAILURE;

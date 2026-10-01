@@ -6,11 +6,11 @@
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/action_rule.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
-#include "runir/kr/ps/ext/detail/transient_state.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
 #include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
+#include "runir/kr/ps/ext/transient_execution_storage.hpp"
 #include "runir/kr/task_context.hpp"
 
 #include <algorithm>
@@ -33,6 +33,8 @@
 namespace runir::kr::ps::ext
 {
 
+/// Returned choices must not outlive this expander.
+/// With TransientExecutionStorage, returned states and steps must not outlive it either.
 template<tyr::TaskKind Kind, typename ExecutionStorage = InternedExecutionStorage<Kind>>
 class SuccessorExpander
 {
@@ -49,6 +51,12 @@ public:
     }
 
     const auto& get_task_context() const noexcept { return m_task_context; }
+
+    template<StoredProgramStateConcept<Kind> S>
+    auto view(const S& state) const
+    {
+        return m_storage.view(state);
+    }
 
     /// Create the entry module with empty registers and arguments, and no caller.
     auto initial_state(const tyr::planning::StateView<Kind>& state)
@@ -73,6 +81,7 @@ public:
     template<ProgramStateViewConcept<Kind> S, typename Emit, typename Stop>
     bool for_each_successor(S state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop)
     {
+        using Step = detail::ProgramStep<Kind, decltype(m_storage.retain(state))>;
         if (stop())
             return false;
         validate_source(state);
@@ -82,7 +91,7 @@ public:
         const auto emit_expansion = [&](auto expansion)
         {
             emitted = true;
-            if constexpr (std::same_as<decltype(expansion), detail::ProgramStep<Kind, S>>)
+            if constexpr (std::same_as<decltype(expansion), Step>)
                 statistics.num_generated += expansion.status == detail::ProgramOutcome::APPLIED || expansion.status == detail::ProgramOutcome::RESTORED_CALLER;
             return emit(std::move(expansion));
         };
@@ -104,16 +113,7 @@ public:
 
     /// Apply the current admitted binding without advancing its cursor; an exhausted choice reports FAILURE.
     template<runir::kr::dl::CategoryTag Category, ProgramStateViewConcept<Kind> S>
-    detail::ProgramStep<Kind, S> apply_choice(S state, const detail::Choice<Category>& choice, ProgramSearchStatistics& statistics)
-    {
-        validate_source(state);
-        auto step = choice_step<Category>(state, choice);
-        statistics.num_generated += step.status == detail::ProgramOutcome::APPLIED;
-        return step;
-    }
-
-    template<runir::kr::dl::CategoryTag Category, ProgramStateViewConcept<Kind> S>
-    detail::ProgramStep<Kind, S> apply_choice(S state, const detail::TransientChoice<Category>& choice, ProgramSearchStatistics& statistics)
+    auto apply_choice(S state, const detail::Choice<Category>& choice, ProgramSearchStatistics& statistics)
     {
         validate_source(state);
         auto step = choice_step<Category>(state, choice);
@@ -184,6 +184,14 @@ private:
         auto result = m_storage.module_();
         *result = state.get_module_state().get_data();
         return result;
+    }
+
+    static bool arguments_match(ModuleView callee, runir::kr::dl::semantics::CallArgumentsView arguments)
+    {
+        return arguments.template get<runir::kr::dl::ConceptTag>().size() == callee.template get_arguments<runir::kr::dl::ConceptTag>().size()
+               && arguments.template get<runir::kr::dl::RoleTag>().size() == callee.template get_arguments<runir::kr::dl::RoleTag>().size()
+               && arguments.template get<runir::kr::dl::BooleanTag>().size() == callee.template get_arguments<runir::kr::dl::BooleanTag>().size()
+               && arguments.template get<runir::kr::dl::NumericalTag>().size() == callee.template get_arguments<runir::kr::dl::NumericalTag>().size();
     }
 
     template<typename ModuleData>
@@ -290,10 +298,22 @@ private:
     template<typename C, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
     auto evaluate_call_arguments(ygg::View<ygg::Index<Rule<CallTag>>, C> rule, S state, const PS& planning_state)
     {
-        auto result = m_storage.arguments();
+        auto result = checkout<runir::kr::dl::semantics::CallArguments>(m_task_context->dl_builder);
         auto state_context = m_environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
-        rule.for_each_call_argument([&](auto argument) { m_storage.append_call_argument(argument, state_context, *result); });
-        return result;
+        rule.for_each_call_argument(
+            [&]<typename FeatureTag, typename FC>(ygg::View<ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, FeatureTag>>, FC> argument)
+            {
+                const auto denotation = evaluate(argument.get_expression(), state_context, *m_task_context->dl_denotation_repository);
+                if constexpr (std::same_as<FeatureTag, runir::kr::dl::ConceptTag>)
+                    result->concept_arguments.push_back(denotation.get_index());
+                else if constexpr (std::same_as<FeatureTag, runir::kr::dl::RoleTag>)
+                    result->role_arguments.push_back(denotation.get_index());
+                else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
+                    result->boolean_arguments.push_back(denotation.get_index());
+                else
+                    result->numerical_arguments.push_back(denotation.get_index());
+            });
+        return get_or_create(*m_task_context->dl_denotation_repository, *result).first;
     }
 
     template<BindingRuleKind RuleKindT, typename Value, ProgramStateViewConcept<Kind> S>
@@ -305,7 +325,10 @@ private:
         return m_storage.registers(registers);
     }
 
-    template<BindingRuleKind RuleKindT, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename R>
+    template<BindingRuleKind RuleKindT,
+             ProgramStateViewConcept<Kind> S,
+             tyr::planning::StateViewConcept<Kind> PS,
+             runir::kr::dl::semantics::RegisterValuesViewConcept R>
     bool binding_effects_match(RuleView<RuleKindT> rule, S state, const PS& planning_state, R registers)
     {
         if (rule.get_effects().empty())
@@ -321,11 +344,11 @@ private:
 
     /// Bind a register and move memory while preserving the planning state and caller stack.
     template<runir::kr::dl::CategoryTag Category, typename ChoiceType, ProgramStateViewConcept<Kind> S>
-    detail::ProgramStep<Kind, S> choice_step(S state, const ChoiceType& choice)
+    auto choice_step(S state, const ChoiceType& choice)
     {
         if (choice.exhausted())
         {
-            auto failure = make_step(detail::ProgramOutcome::FAILURE, state);
+            auto failure = make_step(detail::ProgramOutcome::FAILURE, m_storage.retain(state));
             failure.rule = choice.rule;
             return failure;
         }
@@ -333,8 +356,8 @@ private:
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
         auto target = copy_module(state);
         m_storage.set_registers(*target, bound_registers(rule, state, choice.current(), *registers));
-        ygg::set(rule.get_target(), target->memory_state);
-        return applied(m_storage.store(std::move(target), state.get_call_stack()), choice.rule);
+        m_storage.set_memory_state(*target, rule.get_target());
+        return applied(m_storage.store(std::move(target), m_storage.call_stack(state)), choice.rule);
     }
 
     template<runir::kr::dl::CategoryTag Category, typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
@@ -354,11 +377,20 @@ private:
                 continue;
             auto target = copy_module(state);
             m_storage.set_registers(*target, target_registers);
-            ygg::set(rule.get_target(), target->memory_state);
-            if (!emit(applied(m_storage.store(std::move(target), state.get_call_stack()), rule_variant)))
+            m_storage.set_memory_state(*target, rule.get_target());
+            if (!emit(applied(m_storage.store(std::move(target), m_storage.call_stack(state)), rule_variant)))
                 return false;
         }
         return true;
+    }
+
+    template<runir::kr::dl::ConceptOrRoleTag Category>
+    auto make_choice(RuleVariantView rule, runir::kr::dl::semantics::DenotationView<Category> denotation)
+    {
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+            return detail::Choice<Category>(rule, denotation, m_concept_bindings);
+        else
+            return detail::Choice<Category>(rule, denotation, m_role_bindings);
     }
 
     /// Ordering is evaluated after binding, and only rearranges the admitted values.
@@ -371,7 +403,7 @@ private:
                      Emit&& emit,
                      Stop&& stop)
     {
-        auto choice = m_storage.choice(rule_variant, denotation);
+        auto choice = make_choice(rule_variant, denotation);
         if (stop())
             return false;
         if (rule.get_order().empty() || !choice.has_alternatives())
@@ -380,10 +412,9 @@ private:
         // Flat scratch buffers are reused across choices; only ordered values survive in the DFS frame.
         m_order_scores.clear();
         m_order_indices.clear();
-        choice.bindings().clear();
         const auto width = rule.get_order().size();
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
-        for (const auto value : denotation)
+        for (const auto value : choice.bindings())
         {
             if (stop())
                 return false;
@@ -401,8 +432,7 @@ private:
                 m_order_scores.push_back(
                     ygg::visit([&](auto feature) { return ygg::uint_t(evaluate(feature, transition.get_target_context()).get()); }, term.get_feature()));
             }
-            m_order_indices.push_back(choice.bindings().size());
-            choice.bindings().push_back(value);
+            m_order_indices.push_back(m_order_indices.size());
         }
         if (stop())
             return false;
@@ -447,9 +477,7 @@ private:
         auto state_context = m_environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
         if (rule.get_effects().empty())
         {
-            const auto denotation = evaluate(rule.get_feature().get_expression(),
-                                             state_context,
-                                             m_storage.choice_denotation_repository(m_environment.get_dl_caches().get_repository(false)));
+            const auto denotation = evaluate(rule.get_feature(), state_context);
             return emit_choice(rule, rule_variant, state, planning_state, denotation, emit, stop);
         }
         const auto denotation = evaluate(rule.get_feature(), state_context);
@@ -472,17 +500,15 @@ private:
         }
         if (stop())
             return false;
-        return emit_choice(rule,
-                           rule_variant,
-                           state,
-                           planning_state,
-                           runir::kr::dl::semantics::detail::materialize_denotation(
-                               admitted,
-                               m_task_context->dl_builder,
-                               m_storage.choice_denotation_repository(m_environment.get_dl_caches().get_repository(false)))
-                               .first,
-                           emit,
-                           stop);
+        return emit_choice(
+            rule,
+            rule_variant,
+            state,
+            planning_state,
+            runir::kr::dl::semantics::detail::materialize_denotation(admitted, m_task_context->dl_builder, m_environment.get_dl_caches().get_repository(false))
+                .first,
+            emit,
+            stop);
     }
 
     template<typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
@@ -565,8 +591,8 @@ private:
         if (stop())
             return false;
         auto target = copy_module(state);
-        ygg::set(rule.get_target(), target->memory_state);
-        return emit(applied(m_storage.store(std::move(target), state.get_call_stack()), rule_variant));
+        m_storage.set_memory_state(*target, rule.get_target());
+        return emit(applied(m_storage.store(std::move(target), m_storage.call_stack(state)), rule_variant));
     }
 
     /// Generate each planning successor once and test every collected sketch rule against it,
@@ -604,15 +630,15 @@ private:
         const auto callee = m_program.find_module(rule.get_callee().get_index());
         if (stop())
             return false;
-        if (!callee || !m_storage.arguments_match(*callee, *arguments))
-            return emit(make_step(detail::ProgramOutcome::MALFORMED_CALL, state));
+        if (!callee || !arguments_match(*callee, arguments))
+            return emit(make_step(detail::ProgramOutcome::MALFORMED_CALL, m_storage.retain(state)));
 
         auto target = copy_module(state);
         auto caller = m_storage.save_caller(state, rule.get_target());
-        ygg::set(*callee, target->module_);
-        ygg::set(callee->get_entry_memory_state(), target->memory_state);
+        m_storage.set_module(*target, *callee);
+        m_storage.set_memory_state(*target, callee->get_entry_memory_state());
         set_empty_registers(*target, *callee);
-        m_storage.set_arguments(*target, std::move(arguments));
+        m_storage.set_arguments(*target, arguments);
         return emit(applied(m_storage.store(std::move(target), std::move(caller)), rule_variant));
     }
 
@@ -660,10 +686,9 @@ private:
 
     template<RuleKind RuleKindT, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename N>
         requires(BindingRuleKind<RuleKindT> || std::same_as<RuleKindT, CallTag>)
-    std::optional<detail::ProgramStep<Kind, S>>
-    apply_rule(RuleView<RuleKindT> rule, RuleVariantView rule_variant, S state, const PS& planning_state, const std::optional<N>&)
+    auto apply_rule(RuleView<RuleKindT> rule, RuleVariantView rule_variant, S state, const PS& planning_state, const std::optional<N>&)
     {
-        auto result = std::optional<detail::ProgramStep<Kind, S>> {};
+        auto result = std::optional<detail::ProgramStep<Kind, decltype(m_storage.retain(state))>> {};
         emit_rule(
             rule,
             rule_variant,
@@ -683,24 +708,24 @@ private:
 
     template<typename Tag, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename N>
         requires(std::same_as<Tag, DoTag> || std::same_as<Tag, ActionTag> || std::same_as<Tag, SketchTag>)
-    std::optional<detail::ProgramStep<Kind, S>>
-    apply_rule(RuleView<Tag> rule, RuleVariantView rule_variant, S state, const PS& planning_state, const std::optional<N>& candidate)
+    auto apply_rule(RuleView<Tag> rule, RuleVariantView rule_variant, S state, const PS& planning_state, const std::optional<N>& candidate)
     {
+        using Result = std::optional<detail::ProgramStep<Kind, decltype(m_storage.retain(state))>>;
         if constexpr (std::same_as<Tag, SketchTag>)
             if (rule.get_effects().empty())
             {
                 if (!rule_is_applicable(rule, state, planning_state))
-                    return std::nullopt;
+                    return Result {};
                 auto target = copy_module(state);
-                ygg::set(rule.get_target(), target->memory_state);
-                return applied(m_storage.store(std::move(target), state.get_call_stack()), rule_variant);
+                m_storage.set_memory_state(*target, rule.get_target());
+                return Result(applied(m_storage.store(std::move(target), m_storage.call_stack(state)), rule_variant));
             }
         if (!candidate || !matches(rule, state, planning_state, *candidate))
-            return std::nullopt;
-        return planning_step(state, *candidate, rule_variant, rule.get_target());
+            return Result {};
+        return Result(planning_step(state, *candidate, rule_variant, rule.get_target()));
     }
 
-    template<ProgramStateViewConcept<Kind> S>
+    template<StoredProgramStateConcept<Kind> S>
     detail::ProgramStep<Kind, S> make_step(detail::ProgramOutcome status, S state)
     {
         return detail::ProgramStep<Kind, S>(status, std::move(state), m_task_context);
@@ -709,7 +734,7 @@ private:
     /// With no emitted rule outcome, return to the caller or report an open top-level state.
     /// Restore caller control and bindings while retaining the planning state reached by the callee.
     template<ProgramStateViewConcept<Kind> S>
-    detail::ProgramStep<Kind, S> fallback(S state)
+    auto fallback(S state)
     {
         if (const auto caller = state.get_call_stack())
         {
@@ -719,26 +744,26 @@ private:
             target->memory_state = saved.return_memory_state;
             target->registers = saved.registers;
             target->arguments = saved.arguments;
-            return make_step(detail::ProgramOutcome::RESTORED_CALLER, m_storage.store(std::move(target), caller->get_caller()));
+            return make_step(detail::ProgramOutcome::RESTORED_CALLER, m_storage.store(std::move(target), m_storage.caller(*caller)));
         }
-        return make_step(detail::ProgramOutcome::NO_APPLICABLE_ACTION, state);
+        return make_step(detail::ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state));
     }
 
-    template<ProgramStateViewConcept<Kind> S>
+    template<StoredProgramStateConcept<Kind> S>
     detail::ProgramStep<Kind, S> applied(S state, RuleVariantView rule)
     {
-        auto step = make_step(detail::ProgramOutcome::APPLIED, state);
+        auto step = make_step(detail::ProgramOutcome::APPLIED, std::move(state));
         step.rule = rule;
         return step;
     }
 
     template<ProgramStateViewConcept<Kind> S, typename N>
-    detail::ProgramStep<Kind, S> planning_step(S state, const N& successor, RuleVariantView rule, MemoryStateView memory_state)
+    auto planning_step(S state, const N& successor, RuleVariantView rule, MemoryStateView memory_state)
     {
         auto target = copy_module(state);
         m_storage.set_planning_state(*target, successor);
-        ygg::set(memory_state, target->memory_state);
-        auto step = applied(m_storage.store(std::move(target), state.get_call_stack()), rule);
+        m_storage.set_memory_state(*target, memory_state);
+        auto step = applied(m_storage.store(std::move(target), m_storage.call_stack(state)), rule);
         if constexpr (requires { successor.pack(); })
             step.planning_successor = successor.pack();
         step.state_transition = datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) };
@@ -749,6 +774,8 @@ private:
     ProgramView m_program;
     ExecutionStorage m_storage;
     EvaluationEnvironment<Kind> m_environment;
+    ygg::UniqueObjectPool<runir::kr::dl::semantics::DenotationElementViewList<runir::kr::dl::ConceptTag>> m_concept_bindings;
+    ygg::UniqueObjectPool<runir::kr::dl::semantics::DenotationElementViewList<runir::kr::dl::RoleTag>> m_role_bindings;
     detail::ActionRuleEvaluator<Kind> m_action_rule_evaluator;
     std::vector<ygg::uint_t> m_action_tuple;
     std::vector<std::pair<RuleView<SketchTag>, RuleVariantView>> m_sketch_rules;
@@ -765,63 +792,59 @@ extern template class SuccessorExpander<tyr::LiftedTag>;
 extern template ProgramStateView<tyr::GroundTag>
 SuccessorExpander<tyr::GroundTag>::materialize<ProgramStateView<tyr::GroundTag>>(const ProgramStateView<tyr::GroundTag>&);
 
-extern template detail::ProgramStep<tyr::GroundTag>
+extern template auto
 SuccessorExpander<tyr::GroundTag>::apply_choice<runir::kr::dl::ConceptTag, ProgramStateView<tyr::GroundTag>>(ProgramStateView<tyr::GroundTag>,
                                                                                                              const detail::Choice<runir::kr::dl::ConceptTag>&,
                                                                                                              ProgramSearchStatistics&);
 
-extern template detail::ProgramStep<tyr::GroundTag>
+extern template auto
 SuccessorExpander<tyr::GroundTag>::apply_choice<runir::kr::dl::RoleTag, ProgramStateView<tyr::GroundTag>>(ProgramStateView<tyr::GroundTag>,
                                                                                                           const detail::Choice<runir::kr::dl::RoleTag>&,
                                                                                                           ProgramSearchStatistics&);
 
 extern template ProgramStateView<tyr::GroundTag>
-SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::materialize<detail::TransientProgramState<tyr::GroundTag>>(
-    const detail::TransientProgramState<tyr::GroundTag>&);
+SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::materialize<BuilderProgramStateView<tyr::GroundTag>>(
+    const BuilderProgramStateView<tyr::GroundTag>&);
 
-extern template detail::ProgramStep<tyr::GroundTag, detail::TransientProgramState<tyr::GroundTag>>
-SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::apply_choice<runir::kr::dl::ConceptTag,
-                                                                                           detail::TransientProgramState<tyr::GroundTag>>(
-    detail::TransientProgramState<tyr::GroundTag>,
-    const detail::TransientChoice<runir::kr::dl::ConceptTag>&,
+extern template auto
+SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::apply_choice<runir::kr::dl::ConceptTag, BuilderProgramStateView<tyr::GroundTag>>(
+    BuilderProgramStateView<tyr::GroundTag>,
+    const detail::Choice<runir::kr::dl::ConceptTag>&,
     ProgramSearchStatistics&);
 
-extern template detail::ProgramStep<tyr::GroundTag, detail::TransientProgramState<tyr::GroundTag>>
-SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::apply_choice<runir::kr::dl::RoleTag,
-                                                                                           detail::TransientProgramState<tyr::GroundTag>>(
-    detail::TransientProgramState<tyr::GroundTag>,
-    const detail::TransientChoice<runir::kr::dl::RoleTag>&,
+extern template auto
+SuccessorExpander<tyr::GroundTag, TransientExecutionStorage<tyr::GroundTag>>::apply_choice<runir::kr::dl::RoleTag, BuilderProgramStateView<tyr::GroundTag>>(
+    BuilderProgramStateView<tyr::GroundTag>,
+    const detail::Choice<runir::kr::dl::RoleTag>&,
     ProgramSearchStatistics&);
 
 extern template ProgramStateView<tyr::LiftedTag>
 SuccessorExpander<tyr::LiftedTag>::materialize<ProgramStateView<tyr::LiftedTag>>(const ProgramStateView<tyr::LiftedTag>&);
 
-extern template detail::ProgramStep<tyr::LiftedTag>
+extern template auto
 SuccessorExpander<tyr::LiftedTag>::apply_choice<runir::kr::dl::ConceptTag, ProgramStateView<tyr::LiftedTag>>(ProgramStateView<tyr::LiftedTag>,
                                                                                                              const detail::Choice<runir::kr::dl::ConceptTag>&,
                                                                                                              ProgramSearchStatistics&);
 
-extern template detail::ProgramStep<tyr::LiftedTag>
+extern template auto
 SuccessorExpander<tyr::LiftedTag>::apply_choice<runir::kr::dl::RoleTag, ProgramStateView<tyr::LiftedTag>>(ProgramStateView<tyr::LiftedTag>,
                                                                                                           const detail::Choice<runir::kr::dl::RoleTag>&,
                                                                                                           ProgramSearchStatistics&);
 
 extern template ProgramStateView<tyr::LiftedTag>
-SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::materialize<detail::TransientProgramState<tyr::LiftedTag>>(
-    const detail::TransientProgramState<tyr::LiftedTag>&);
+SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::materialize<BuilderProgramStateView<tyr::LiftedTag>>(
+    const BuilderProgramStateView<tyr::LiftedTag>&);
 
-extern template detail::ProgramStep<tyr::LiftedTag, detail::TransientProgramState<tyr::LiftedTag>>
-SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::apply_choice<runir::kr::dl::ConceptTag,
-                                                                                           detail::TransientProgramState<tyr::LiftedTag>>(
-    detail::TransientProgramState<tyr::LiftedTag>,
-    const detail::TransientChoice<runir::kr::dl::ConceptTag>&,
+extern template auto
+SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::apply_choice<runir::kr::dl::ConceptTag, BuilderProgramStateView<tyr::LiftedTag>>(
+    BuilderProgramStateView<tyr::LiftedTag>,
+    const detail::Choice<runir::kr::dl::ConceptTag>&,
     ProgramSearchStatistics&);
 
-extern template detail::ProgramStep<tyr::LiftedTag, detail::TransientProgramState<tyr::LiftedTag>>
-SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::apply_choice<runir::kr::dl::RoleTag,
-                                                                                           detail::TransientProgramState<tyr::LiftedTag>>(
-    detail::TransientProgramState<tyr::LiftedTag>,
-    const detail::TransientChoice<runir::kr::dl::RoleTag>&,
+extern template auto
+SuccessorExpander<tyr::LiftedTag, TransientExecutionStorage<tyr::LiftedTag>>::apply_choice<runir::kr::dl::RoleTag, BuilderProgramStateView<tyr::LiftedTag>>(
+    BuilderProgramStateView<tyr::LiftedTag>,
+    const detail::Choice<runir::kr::dl::RoleTag>&,
     ProgramSearchStatistics&);
 
 #endif

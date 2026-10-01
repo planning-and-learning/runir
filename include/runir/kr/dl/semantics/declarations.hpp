@@ -5,6 +5,7 @@
 
 #include <concepts>
 #include <memory>
+#include <tyr/formalism/planning/declarations.hpp>
 #include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::dl::semantics
@@ -29,6 +30,7 @@ class DenotationRepositoryFactory;
 
 using RegisterValuesView = ygg::View<ygg::Index<RegisterValues>, DenotationRepository>;
 using CallArgumentsView = ygg::View<ygg::Index<CallArguments>, DenotationRepository>;
+using BorrowedRegisterValuesView = ygg::View<ygg::Data<RegisterValues>, tyr::formalism::planning::Repository>;
 
 template<CategoryTag Category>
 using DenotationView = ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>;

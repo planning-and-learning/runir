@@ -22,22 +22,22 @@ concept TransitionEvaluationContextConcept = runir::kr::FamilyTag<Family> && req
                           typename std::remove_cvref_t<decltype(context.get_target_context())>::KindType>;
 };
 
-template<runir::kr::FamilyTag Family, tyr::TaskKind Kind>
+template<runir::kr::FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
 class TransitionEvaluationContext
 {
 public:
     using FamilyType = Family;
     using KindType = Kind;
     using DlFamily = typename PsFamilyTraits<Family>::DlFamily;
-    using DlContext = runir::kr::dl::semantics::StateEvaluationContext<DlFamily, Kind>;
+    using DlContext = runir::kr::dl::semantics::StateEvaluationContext<DlFamily, Kind, S, R>;
 
 private:
     DlContext m_source_context;
     DlContext m_target_context;
 
 public:
-    TransitionEvaluationContext(tyr::planning::StateView<Kind> source_state,
-                                tyr::planning::StateView<Kind> target_state,
+    TransitionEvaluationContext(S source_state,
+                                S target_state,
                                 runir::kr::dl::semantics::Builder& dl_builder,
                                 runir::kr::dl::semantics::DenotationRepository& dl_denotation_repository,
                                 runir::kr::dl::semantics::EvaluationWorkspace& workspace,
@@ -50,16 +50,16 @@ public:
     {
     }
 
-    TransitionEvaluationContext(tyr::planning::StateView<Kind> source_state,
-                                tyr::planning::StateView<Kind> target_state,
+    TransitionEvaluationContext(S source_state,
+                                S target_state,
                                 runir::kr::dl::semantics::Builder& dl_builder,
                                 runir::kr::dl::semantics::DenotationRepository& dl_denotation_repository,
                                 runir::kr::dl::semantics::EvaluationWorkspace& workspace,
                                 runir::kr::dl::semantics::DenotationCaches<DlFamily>& source_caches,
                                 runir::kr::dl::semantics::DenotationCaches<DlFamily>& target_caches,
                                 runir::kr::dl::semantics::CallArgumentsView arguments,
-                                runir::kr::dl::semantics::RegisterValuesView source_registers,
-                                runir::kr::dl::semantics::RegisterValuesView target_registers) noexcept
+                                R source_registers,
+                                R target_registers) noexcept
         requires std::same_as<DlFamily, runir::kr::ExtFamilyTag>
         :
         m_source_context(std::move(source_state), dl_builder, dl_denotation_repository, workspace, source_caches, arguments, source_registers),

@@ -11,8 +11,8 @@ namespace ygg::serialization
 template<typename Archive, typename C>
 void describe_fields(Archive& ar, std::type_identity<ygg::View<ygg::Index<::runir::kr::dl::semantics::RegisterValues>, C>>)
 {
-    ar.field("concept_values", [](const auto& value) -> decltype(auto) { return (value.get_concept_values()); });
-    ar.field("role_values", [](const auto& value) -> decltype(auto) { return (value.get_role_values()); });
+    ar.field("concept_values", [](const auto& value) -> decltype(auto) { return (value.template get<runir::kr::dl::ConceptTag>()); });
+    ar.field("role_values", [](const auto& value) -> decltype(auto) { return (value.template get<runir::kr::dl::RoleTag>()); });
 }
 
 }  // namespace ygg::serialization

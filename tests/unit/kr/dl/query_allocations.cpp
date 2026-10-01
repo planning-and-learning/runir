@@ -282,14 +282,13 @@ TEST(RunirSearch, ProgramSearchAllocationsGrowWithContainerCapacity)
                         (:rules )";
                 for (size_t i = 0; i < length + 2; ++i)
                 {
-                    text += "(:rule (:symbol r" + std::to_string(i) + ") (:expression (:source-memory m" + std::to_string(i)
-                            + ") (:target-memory m" + std::to_string(i + 1) + ") ";
+                    text += "(:rule (:symbol r" + std::to_string(i) + ") (:expression (:source-memory m" + std::to_string(i) + ") (:target-memory m"
+                            + std::to_string(i + 1) + ") ";
                     if (i < length)
-                        text += choose ? "(:choose (:conditions) (:concept Candidates) (:register (:concept selected)))"
-                                       : "(:load (:conditions) (:concept Goal) (:register (:concept selected)))";
+                        text += choose ? "(:choose (:conditions) (:concept Candidates) (:register (:concept selected)))" :
+                                         "(:load (:conditions) (:concept Goal) (:register (:concept selected)))";
                     else
-                        text += std::string(R"((:do (:conditions) (:action "move") (:arguments Here )")
-                                + (i == length ? "Good" : "Goal") + ") (:effects))";
+                        text += std::string(R"((:do (:conditions) (:action "move") (:arguments Here )") + (i == length ? "Good" : "Goal") + ") (:effects))";
                     text += "))";
                 }
                 text += ")))";
@@ -300,11 +299,10 @@ TEST(RunirSearch, ProgramSearchAllocationsGrowWithContainerCapacity)
                 ASSERT_TRUE(ext::find_solution(context, program, options).is_successful());
                 // Structural certification is policy analysis, not per-step search bookkeeping.
                 auto expander = ext::SuccessorExpander<tyr::GroundTag>(context, program);
-                auto storage = ext::detail::InternedSearchStorage<tyr::GroundTag>(options);
+                auto storage = ext::detail::SearchStorage<tyr::GroundTag, ext::StateMemorization::ALL>(options);
                 auto classifier = kr::ps::NoUnsolvability {};
-                using Choices = std::variant<ext::detail::Choice<kr::dl::ConceptTag>, ext::detail::Choice<kr::dl::RoleTag>>;
                 allocation_tracking::Scope measured;
-                const auto result = ext::detail::find_solution<tyr::GroundTag, Choices>(expander, storage, options, classifier);
+                const auto result = ext::detail::find_solution<tyr::GroundTag>(expander, storage, options, classifier);
                 allocations[scale] = measured.finish().allocated;
                 ASSERT_TRUE(result.is_successful());
                 EXPECT_EQ(result.statistics.num_expanded, length + 2);

@@ -10,23 +10,23 @@
 namespace runir::kr::dl::semantics
 {
 
-template<tyr::TaskKind Kind>
-class StateEvaluationContext<runir::kr::ExtFamilyTag, Kind> : public BaseStateEvaluationContext<runir::kr::ExtFamilyTag, Kind>
+template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S, RegisterValuesViewConcept R>
+class StateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S, R> : public BaseStateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S>
 {
 private:
-    using Base = BaseStateEvaluationContext<runir::kr::ExtFamilyTag, Kind>;
+    using Base = BaseStateEvaluationContext<runir::kr::ExtFamilyTag, Kind, S>;
 
-    RegisterValuesView m_registers;
+    R m_registers;
     CallArgumentsView m_arguments;
 
 public:
-    StateEvaluationContext(tyr::planning::StateView<Kind> state,
+    StateEvaluationContext(S state,
                            Builder& builder,
                            DenotationRepository& denotation_repository,
                            EvaluationWorkspace& workspace,
                            DenotationCaches<runir::kr::ExtFamilyTag>& caches,
                            CallArgumentsView arguments,
-                           RegisterValuesView registers) noexcept :
+                           R registers) noexcept :
         Base(std::move(state), builder, denotation_repository, workspace, caches),
         m_registers(registers),
         m_arguments(arguments)

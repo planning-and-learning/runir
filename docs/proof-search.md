@@ -10,7 +10,7 @@ With this precondition, concrete execution has no cycles and results can be
 computed directly in depth-first postorder:
 
 - One [`depth_first_search`](../include/runir/kr/ps/ext/detail/proof_search.hpp) evaluates the same AND/OR obligations in every mode.
-- [`InternedSearchStorage` and `TransientSearchStorage`](../include/runir/kr/ps/ext/detail/search_storage.hpp) control admission, memoization and retained transitions.
+- [`SearchStorage<Kind, StateMemorization>`](../include/runir/kr/ps/ext/detail/search_storage.hpp) specializes admission, memoization and retained transitions for each mode. The entry-point switch selects the policy once; the DFS performs no runtime memorization-mode checks. `NONE` has no memo table.
 - Pooled [`SearchPath`](../include/runir/kr/ps/ext/detail/search_path.hpp) records retain active prefixes and selected witnesses; released paths return their storage to the pool.
 
 The diagnostic graph and optional plan are constructed afterward. Their retained
@@ -109,8 +109,12 @@ program can still have exponentially many branching continuations. Reduced modes
 trade less retained search data for possible recomputation; final witness storage
 also grows with the returned path.
 
+Call arguments and their final denotations are interned in the task repository
+in every mode, including `NONE` and `CHOICE`. They can accumulate across calls;
+reduced state memorization does not bound this storage.
+
 ## Choose ordering
 
-An optional trailing `(:order (min feature) (max feature) ...)` ranks admitted bindings lexicographically. Features are Boolean or numerical and are evaluated with the chosen register tentatively bound, after effect filtering. Ties retain denotation iteration order. The executor scores each candidate once per term, then sorts; it never evaluates features from the comparator. In `ALL`, unordered choices retain their lazy denotation cursor. `NONE` and `CHOICE` own a vector of admitted bindings so later evaluation cannot invalidate them; successor states are still constructed only for attempted bindings.
+An optional trailing `(:order (min feature) (max feature) ...)` ranks admitted bindings lexicographically. Features are Boolean or numerical and are evaluated with the chosen register tentatively bound, after effect filtering. Ties retain denotation iteration order. The executor scores each candidate once per term, then sorts; it never evaluates features from the comparator. All modes retain admitted bindings in pooled vectors, so later evaluation can clear its denotation caches without invalidating pending choices. These vectors are filled eagerly, including for unordered choices; successor states are still constructed only for attempted bindings.
 
 Ranking does not prune bindings or change AND/OR obligations. Scoring does not increment generated-state statistics. Search time limits include ranking. Numerical constants and `n_add`, `n_sub`, `n_mul`, `n_div`, `n_min`, and `n_max` are available in Ext with the existing Uns arithmetic semantics.

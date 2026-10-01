@@ -5,7 +5,6 @@
 #include "runir/kr/dl/semantics/denotation_view.hpp"
 
 #include <tyr/serialization/formalism/object_view.hpp>
-#include <vector>
 #include <yggdrasil/serialization/dictionaries.hpp>
 
 namespace ygg::serialization
@@ -20,13 +19,14 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::s
     }
     else
     {
-        ar.field("values", [](const auto& value)
-        {
-            auto elements = std::vector<runir::kr::dl::semantics::DenotationElement<Category, C>> {};
-            for (auto element : value)
-                elements.push_back(element);
-            return elements;
-        });
+        ar.field("values",
+                 [](const auto& value)
+                 {
+                     auto elements = runir::kr::dl::semantics::DenotationElementViewList<Category, C> {};
+                     for (auto element : value)
+                         elements.push_back(element);
+                     return elements;
+                 });
     }
 }
 

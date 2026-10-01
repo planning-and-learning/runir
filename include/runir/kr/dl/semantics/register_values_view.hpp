@@ -13,6 +13,36 @@
 namespace ygg
 {
 
+/// Borrows the register data and formalism repository; both must outlive the view and its ranges.
+template<typename C>
+class View<Data<runir::kr::dl::semantics::RegisterValues>, C>
+{
+    const Data<runir::kr::dl::semantics::RegisterValues>* m_handle;
+    const C* m_context;
+
+public:
+    View(const Data<runir::kr::dl::semantics::RegisterValues>& handle, const C& context) noexcept : m_handle(&handle), m_context(&context) {}
+
+    const auto& get_data() const noexcept { return *m_handle; }
+    const auto& get_context() const noexcept { return *m_context; }
+    const auto& get_handle() const noexcept { return *m_handle; }
+
+    template<runir::kr::dl::ConceptOrRoleTag Category>
+    auto get() const noexcept
+    {
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+            return make_view(get_data().concept_values, get_context());
+        else
+            return make_view(get_data().role_values, get_context());
+    }
+
+    template<runir::kr::dl::ConceptOrRoleTag Category>
+    auto at(runir::kr::dl::RegisterIdentifier<Category> identifier) const
+    {
+        return get<Category>().at(static_cast<size_t>(ygg::uint_t(identifier)));
+    }
+};
+
 template<typename C>
 class View<Index<runir::kr::dl::semantics::RegisterValues>, C>
 {
@@ -28,16 +58,13 @@ public:
     const auto& get_handle() const noexcept { return m_handle; }
     auto get_index() const noexcept { return m_handle; }
 
-    auto get_concept_values() const noexcept { return make_view(get_data().concept_values, get_context().get_formalism_repository()); }
-    auto get_role_values() const noexcept { return make_view(get_data().role_values, get_context().get_formalism_repository()); }
-
     template<runir::kr::dl::ConceptOrRoleTag Category>
     auto get() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return get_concept_values();
+            return make_view(get_data().concept_values, get_context().get_formalism_repository());
         else
-            return get_role_values();
+            return make_view(get_data().role_values, get_context().get_formalism_repository());
     }
 
     template<runir::kr::dl::ConceptOrRoleTag Category>
@@ -50,5 +77,22 @@ public:
 };
 
 }  // namespace ygg
+
+namespace runir::kr::dl::semantics
+{
+
+template<typename V>
+concept RegisterValuesViewConcept = requires(const V& values, RegisterIdentifier<ConceptTag> concept_id, RegisterIdentifier<RoleTag> role_id) {
+    { values.get_data() } -> std::same_as<const ygg::Data<RegisterValues>&>;
+    values.template get<ConceptTag>();
+    values.template get<RoleTag>();
+    { values.at(concept_id).has_value() } -> std::same_as<bool>;
+    { values.at(concept_id).value() } -> std::same_as<tyr::formalism::planning::ObjectView>;
+    { values.at(role_id).has_value() } -> std::same_as<bool>;
+    { values.at(role_id).value().get_first() } -> std::same_as<tyr::formalism::planning::ObjectView>;
+    { values.at(role_id).value().get_second() } -> std::same_as<tyr::formalism::planning::ObjectView>;
+};
+
+}  // namespace runir::kr::dl::semantics
 
 #endif

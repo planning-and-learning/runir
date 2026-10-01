@@ -20,9 +20,10 @@ namespace runir::kr::dl::semantics
 
 /// Denotations for one fixed task and constructor repository factory. Static entries
 /// survive changes to the evaluation context; clear(false) before changing state,
-/// registers, or arguments. Each partition owns its denotation storage and reuses
-/// its capacity after clearing. All returned denotations and query results borrow
-/// their partition and remain valid until it is cleared.
+/// registers, or arguments. Each partition owns computed denotation storage and
+/// reuses its capacity after clearing. Arguments reuse their existing views, so
+/// their owning repository must also outlive the cached values. Other returned
+/// denotations and query results borrow their partition until it is cleared.
 /// Constructor repositories and relation workspaces must outlive their cached views.
 /// Use one relation workspace per cache lifetime, or clear(true) before switching:
 /// join indexes identify row storage within that workspace's relation factory.

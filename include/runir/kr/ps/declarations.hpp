@@ -2,8 +2,10 @@
 #define RUNIR_KR_PS_DECLARATIONS_HPP_
 
 #include "runir/kr/declarations.hpp"
+#include "runir/kr/dl/semantics/register_values_view.hpp"
 
 #include <type_traits>
+#include <tyr/planning/state_view.hpp>
 
 namespace runir::kr::ps
 {
@@ -27,15 +29,25 @@ struct ConcreteFeature;
 
 namespace dl
 {
-template<FamilyTag Family, tyr::TaskKind Kind>
+template<FamilyTag Family,
+         tyr::TaskKind Kind,
+         tyr::planning::StateViewConcept<Kind> S = tyr::planning::StateView<Kind>,
+         runir::kr::dl::semantics::RegisterValuesViewConcept R = runir::kr::dl::semantics::RegisterValuesView>
 class TransitionEvaluationContext;
+}
+
+namespace detail
+{
+template<typename Family, typename Context>
+inline constexpr bool is_transition_evaluation_context = false;
+
+template<FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
+inline constexpr bool is_transition_evaluation_context<Family, dl::TransitionEvaluationContext<Family, Kind, S, R>> = true;
 }
 
 template<typename Family, typename LanguageTag, typename Context>
 concept IsTransitionEvaluationContext =
-    FamilyTag<Family> && std::same_as<LanguageTag, runir::kr::DlTag>
-    && (std::same_as<std::remove_cvref_t<Context>, dl::TransitionEvaluationContext<Family, tyr::GroundTag>>
-        || std::same_as<std::remove_cvref_t<Context>, dl::TransitionEvaluationContext<Family, tyr::LiftedTag>>);
+    FamilyTag<Family> && std::same_as<LanguageTag, runir::kr::DlTag> && detail::is_transition_evaluation_context<Family, std::remove_cvref_t<Context>>;
 
 // Condition
 

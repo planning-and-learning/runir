@@ -8,9 +8,9 @@
 #include <runir/kr/dl/query_data.hpp>
 #include <runir/kr/dl/query_view.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
+#include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <stdexcept>
 #include <string>
@@ -211,6 +211,8 @@ void check_queries()
     EXPECT_THROW(sem::evaluate(argument_count, context), std::out_of_range);
     caches.clear(false);
     EXPECT_EQ(sem::evaluate(argument_count, argument_context).get(), 2);
+    const auto argument = parser::parse_concept("(c_argument 0)", domain, *repository);
+    EXPECT_EQ(sem::evaluate(argument, argument_context), a_set);
     argument_values.concept_arguments[0] = c_set.get_index();
     auto other_argument_context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
                                                                          builder,
@@ -242,6 +244,46 @@ void check_queries()
     caches.clear(false);
     EXPECT_EQ(sem::evaluate(triple_count, context).get(), 4);
     EXPECT_TRUE(sem::evaluate(ready_test, context).get());
+
+    // Borrowed state/register views use interned arguments, which survive feature-cache invalidation.
+    {
+        auto argument_data = ygg::Data<sem::CallArguments> {};
+        argument_data.concept_arguments.push_back(a_set.get_index());
+        const auto arguments = sem::get_or_create(denotations, argument_data).first;
+        const auto planning_state = initial.get_state();
+        auto borrowed_context = sem::StateEvaluationContext<Ext, Kind, tyr::planning::BuilderStateView<Kind>, sem::BorrowedRegisterValuesView>(
+            tyr::planning::BuilderStateView<Kind>(planning_state.get_state_builder(), *search->task),
+            builder,
+            denotations,
+            builder.get_workspace(),
+            caches,
+            arguments,
+            ygg::make_view(registers, *search->task->get_repository()));
+        static_assert(std::is_same_v<decltype(borrowed_context.arguments()), sem::CallArgumentsView>);
+        EXPECT_EQ(&borrowed_context.arguments().get_data(), &arguments.get_data());
+        auto copied_context = borrowed_context;
+        EXPECT_EQ(&copied_context.arguments().get_data(), &arguments.get_data());
+        caches.clear(false);
+        EXPECT_EQ(sem::evaluate(argument, borrowed_context), a_set);
+        EXPECT_EQ(caches.get_repository(false).template size<sem::Denotation<dl::ConceptTag>>(), 0);
+        caches.clear(false);
+        EXPECT_TRUE(a_set.get()[ygg::uint_t(a.get_index())]);
+        EXPECT_EQ(sem::evaluate(argument, borrowed_context), a_set);
+        caches.clear(false);
+    }
+
+    // An explicit destination owns its result independently of the argument's repository.
+    auto destination = sem::DenotationRepositoryFactory().create(search->task->get_repository());
+    const auto retained_argument = sem::evaluate(argument, argument_context, destination);
+    EXPECT_EQ(&retained_argument.get_context(), &destination);
+    const auto distance = parser::parse_numerical(R"((n_distance (c_nominal "a") (r_atomic_state "edge") (c_nominal "c")))", domain, *repository);
+    const auto retained_distance = sem::evaluate(distance, context, destination);
+    EXPECT_EQ(&retained_distance.get_context(), &destination);
+    caches.clear();
+    denotations.clear();
+    EXPECT_EQ(retained_argument.get().count(), 1);
+    EXPECT_TRUE(retained_argument.get()[ygg::uint_t(a.get_index())]);
+    EXPECT_EQ(retained_distance.get(), 2);
 }
 
 template<dl::FamilyTag Family>
@@ -571,8 +613,8 @@ void check_query_cache_across_states()
     const auto count = parser::parse_numerical(R"((n_count (q_atomic_state "triple" (x y z))))", domain, *repository);
     const auto fixed_count = parser::parse_numerical(R"((n_count (q_atomic_state "fixed" (x y z))))", domain, *repository);
     const auto matching_row = std::array { ygg::uint_t(domain.get_constants()[0].get_index()),
-                                          ygg::uint_t(domain.get_constants()[1].get_index()),
-                                          ygg::uint_t(domain.get_constants()[2].get_index()) };
+                                           ygg::uint_t(domain.get_constants()[1].get_index()),
+                                           ygg::uint_t(domain.get_constants()[2].get_index()) };
     const auto check_mixed_joins = [&](auto& target)
     {
         const auto matches = sem::evaluate(triple, target).contains(matching_row);
@@ -608,12 +650,12 @@ void check_query_cache_across_states()
     for (const auto& successor : successors)
     {
         auto successor_context = sem::StateEvaluationContext<Ext, Kind>(successor.get_state(),
-                                                                       builder,
-                                                                       denotations,
-                                                                       builder.get_workspace(),
-                                                                       caches,
-                                                                       context.arguments(),
-                                                                       context.registers());
+                                                                        builder,
+                                                                        denotations,
+                                                                        builder.get_workspace(),
+                                                                        caches,
+                                                                        context.arguments(),
+                                                                        context.registers());
         caches.clear(false);
         empty_joins += !check_mixed_joins(successor_context);
         EXPECT_EQ(caches.get_static_join_indexes().size(), 1);
@@ -661,12 +703,12 @@ void check_query_cache_across_states()
     EXPECT_NE(&target_caches.get_repository(false), &caches.get_repository(false));
     EXPECT_NE(&caches.get_repository(false), &caches.get_repository(true));
     auto target_context = sem::StateEvaluationContext<Ext, Kind>(successors.front().get_state(),
-                                                               builder,
-                                                               denotations,
-                                                               builder.get_workspace(),
-                                                               target_caches,
-                                                               next.arguments(),
-                                                               next.registers());
+                                                                 builder,
+                                                                 denotations,
+                                                                 builder.get_workspace(),
+                                                                 target_caches,
+                                                                 next.arguments(),
+                                                                 next.registers());
     EXPECT_EQ(sem::evaluate(dynamic_role, target_context).count(), 3);
     EXPECT_NE(sem::evaluate(static_role, target_context), static_value);
     target_caches.clear();

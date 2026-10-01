@@ -132,8 +132,8 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         const auto changed = denotations.get_or_create(*data).first;
         EXPECT_NE(changed.get_index(), registers.get_index());
         data->clear();
-        EXPECT_EQ(changed.get_concept_values()[0].value().get_index(), ygg::Index<tyr::formalism::Object>(1));
-        EXPECT_EQ(registers.get_concept_values()[0].value().get_index(), ygg::Index<tyr::formalism::Object>(0));
+        EXPECT_EQ(changed.template get<kr::dl::ConceptTag>()[0].value().get_index(), ygg::Index<tyr::formalism::Object>(1));
+        EXPECT_EQ(registers.template get<kr::dl::ConceptTag>()[0].value().get_index(), ygg::Index<tyr::formalism::Object>(0));
         EXPECT_EQ(denotations.size<kr::dl::semantics::RegisterValues>(), 2);
     }
 
@@ -254,8 +254,8 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
 
     ASSERT_TRUE(callee_frame.get_caller());
     EXPECT_EQ(callee_frame.get_caller()->get_index(), caller_frame.get_index());
-    EXPECT_EQ(callee_frame.get_caller()->get_registers().get_concept_values()[0].value().get_index(), ygg::Index<tyr::formalism::Object>(0));
-    const auto role_value = callee_frame.get_caller()->get_registers().get_role_values()[0];
+    EXPECT_EQ(callee_frame.get_caller()->get_registers().template get<kr::dl::ConceptTag>()[0].value().get_index(), ygg::Index<tyr::formalism::Object>(0));
+    const auto role_value = callee_frame.get_caller()->get_registers().template get<kr::dl::RoleTag>()[0];
     ASSERT_TRUE(role_value);
     const auto pair = role_value.value();
     EXPECT_EQ(pair.get_first().get_index(), ygg::Index<tyr::formalism::Object>(0));

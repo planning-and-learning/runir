@@ -85,7 +85,7 @@ void build_witness_graph(ProgramProofResults<Kind>& result, Expander& expander, 
     {
         const auto& entry = *path[i];
         const auto index = static_cast<graphs::VertexIndex>(i);
-        vertices.emplace_back(expander.materialize(*entry.state), i == 0, entry.is_goal, !entry.is_unsolvable, entry.is_unsolvable);
+        vertices.emplace_back(expander.materialize(expander.view(*entry.state)), i == 0, entry.is_goal, !entry.is_unsolvable, entry.is_unsolvable);
         if (entry.is_deadend)
             result.deadend_states.push_back(index);
         if (entry.is_open)

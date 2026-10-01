@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <runir/kr/dl/semantics/denotation_repository.hpp>
+#include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/ps/ext/detail/search_path.hpp>
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
@@ -16,11 +18,13 @@
 #include <runir/kr/ps/ext/program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
+#include <runir/kr/ps/ext/transient_execution_storage.hpp>
 #include <runir/kr/task_context.hpp>
 #include <runir/kr/uns/dl/parser.hpp>
 #include <runir/kr/uns/repository.hpp>
 #include <set>
 #include <stdexcept>
+#include <yggdrasil/containers/shared_object_pool.hpp>
 #include <yggdrasil/serialization/json.hpp>
 
 namespace runir::tests
@@ -313,7 +317,7 @@ void check_choice_execution()
     const auto planning_node = initial_planning_node(expander);
     const auto bindings = collect_steps(expander, expander.initial_state(planning_node.get_state()));
     ASSERT_EQ(bindings.size(), 2);
-    EXPECT_EQ(bindings[0].target.get_module_state().get_registers().get_concept_values()[0].value().get_name(), "bad");
+    EXPECT_EQ(bindings[0].target.get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0].value().get_name(), "bad");
 
     // Backtracking past a failed binding must preserve the successful planning prefix.
     const auto plan_program = make_program(
@@ -757,7 +761,7 @@ void check_ordinary_execution_keeps_complete_graph()
             EXPECT_FALSE(failure.is_goal);
             EXPECT_EQ(failure.is_alive, !classify);
             EXPECT_EQ(failure.is_unsolvable, classify);
-            EXPECT_EQ(failure.program_state.get_module_state().get_registers().get_concept_values()[0].value().get_name(), "bad");
+            EXPECT_EQ(failure.program_state.get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0].value().get_name(), "bad");
 
             const auto& first = complete;
             const auto second = ext::find_solution(context, program, options);
@@ -971,98 +975,143 @@ void check_state_memorization()
 TEST(RunirTests, ExtGroundStateMemorizationPreservesSemanticsAndRetainsOnlyWitnesses) { check_state_memorization<tyr::GroundTag>(); }
 TEST(RunirTests, ExtLiftedStateMemorizationPreservesSemanticsAndRetainsOnlyWitnesses) { check_state_memorization<tyr::LiftedTag>(); }
 
-TEST(RunirTests, ExtPooledOwnersReleaseChildrenAndPreserveBuffers)
+namespace
 {
-    using kr::ps::ext::detail::PooledSharedOwner;
-    struct Record
+
+template<tyr::TaskKind Kind>
+void check_transient_planning_state_sharing_and_reuse()
+{
+    namespace ext = kr::ps::ext;
+    namespace detail = ext::detail;
+    namespace sem = kr::dl::semantics;
+    static_assert(sem::RegisterValuesViewConcept<sem::RegisterValuesView>);
+    static_assert(sem::RegisterValuesViewConcept<sem::BorrowedRegisterValuesView>);
+    static_assert(ext::ProgramStateViewConcept<ext::ProgramStateView<Kind>, Kind>);
+    static_assert(ext::ProgramStateViewConcept<ext::BorrowedProgramStateView<Kind>, Kind>);
+    static_assert(ext::ProgramStateViewConcept<ext::BuilderProgramStateView<Kind>, Kind>);
+    static_assert(ext::StoredProgramStateConcept<ygg::Builder<ext::ProgramState<Kind>>, Kind>);
+    static_assert(!ext::StoredProgramStateConcept<ext::BorrowedProgramStateView<Kind>, Kind>);
+    static_assert(!ext::StoredProgramStateConcept<ext::BuilderProgramStateView<Kind>, Kind>);
+    constexpr auto has_index = []<typename V>() { return requires(const V& view) { view.get_index(); }; };
+    static_assert(!has_index.template operator()<sem::BorrowedRegisterValuesView>());
+    static_assert(!has_index.template operator()<ext::BorrowedProgramStateView<Kind>>());
+    static_assert(!has_index.template operator()<ext::BuilderProgramStateView<Kind>>());
+    const auto directory = benchmark_path("classical/tests/gripper");
+    const auto search = [&]()
     {
-        std::vector<int> buffer;
-        PooledSharedOwner<Record> child;
-        int* releases = nullptr;
-        void release_owners() noexcept
-        {
-            child.reset();
-            if (releases)
-                ++*releases;
-        }
-    };
-    using Owner = PooledSharedOwner<Record>;
-    auto pool = std::make_shared<ygg::SharedObjectPool<Record>>();
-    auto releases = 0;
-    auto owner = Owner(pool);
-    owner->releases = &releases;
-    owner->buffer.assign(64, 7);
-    owner->child = Owner(pool);
-    owner->child->releases = &releases;
-    const auto address = owner.get();
-    const auto capacity = owner->buffer.capacity();
-    auto copy = owner;
-    owner.reset();
-    EXPECT_EQ(releases, 0);
-    EXPECT_EQ(copy.ref_count(), 1);
-    copy.reset();
-    EXPECT_EQ(releases, 2);
-    EXPECT_EQ(pool->free_size(), 2);
+        if constexpr (std::same_as<Kind, tyr::GroundTag>)
+            return make_ground_context(directory / "domain.pddl", directory / "test-1.pddl");
+        else
+            return make_lifted_context(directory / "domain.pddl", directory / "test-1.pddl");
+    }();
+    auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
+    auto& repository = *context->domain_context->ext_repository;
+    const auto module_ =
+        ext::dl::parse_module(read_fixture("kr/ps/ext/executor/ext_find_solution_treats_classifier_matches_as_terminal_failures/module.module"),
+                              search->task->get_domain().get_domain(),
+                              repository);
+    const auto program = create_program(repository, module_, { module_ });
+    auto pools = detail::TransientPools<Kind> {};
+    auto first = pools.module_();
+    first->state = pools.planning();
+    first->module_ = module_;
+    first->memory_state = module_.get_entry_memory_state();
+    auto arguments = sem::checkout<sem::CallArguments>(context->dl_builder);
+    const auto argument_view = sem::get_or_create(*context->dl_denotation_repository, *arguments).first;
+    first->arguments = argument_view;
+    const auto program_data = ygg::Builder<ext::ProgramState<Kind>>(program, first, {});
+    const auto program_state = ygg::make_view(program_data, *context->execution_repository);
+    const auto module_state = program_state.get_module_state();
+    EXPECT_EQ(&module_state.get_data(), first.get());
+    EXPECT_TRUE(ygg::EqualTo<ext::ModuleView> {}(module_state.get_module(), module_));
+    EXPECT_TRUE(ygg::EqualTo<ext::MemoryStateView> {}(module_state.get_memory_state(), module_.get_entry_memory_state()));
+    EXPECT_EQ(&module_state.get_module().get_context(), &repository);
+    EXPECT_EQ(&module_state.get_state().get_task(), search->task.get());
+    EXPECT_EQ(&module_state.get_registers().get_data(), &first->registers);
+    ASSERT_TRUE(first->arguments);
+    EXPECT_TRUE(ygg::EqualTo<sem::CallArgumentsView> {}(module_state.get_arguments(), *first->arguments));
+    EXPECT_EQ(&module_state.get_arguments().get_context(), context->dl_denotation_repository.get());
+    first->registers.concept_values.emplace_back(ygg::Index<tyr::formalism::Object>(0));
+    first->registers.role_values.emplace_back(
+        ::cista::pair<ygg::Index<tyr::formalism::Object>, ygg::Index<tyr::formalism::Object>>(ygg::Index<tyr::formalism::Object>(0),
+                                                                                              ygg::Index<tyr::formalism::Object>(1)));
+    const auto registered_registers = sem::get_or_create(*context->dl_denotation_repository, first->registers).first;
+    const auto borrowed_registers = module_state.get_registers();
+    const auto concept_id = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0);
+    const auto role_id = kr::dl::RegisterIdentifier<kr::dl::RoleTag>(0);
+    EXPECT_EQ(borrowed_registers.at(concept_id).value().get_index(), registered_registers.at(concept_id).value().get_index());
+    EXPECT_EQ(&borrowed_registers.at(concept_id).value().get_context(), &registered_registers.at(concept_id).value().get_context());
+    EXPECT_EQ(borrowed_registers.at(role_id).value().get_first().get_index(), registered_registers.at(role_id).value().get_first().get_index());
+    EXPECT_EQ(borrowed_registers.at(role_id).value().get_second().get_index(), registered_registers.at(role_id).value().get_second().get_index());
+    auto& facts = first->state->template get_atoms<tyr::formalism::FluentTag>();
+    if constexpr (std::same_as<Kind, tyr::GroundTag>)
+        facts.values = { 1, 0 };
+    else
+    {
+        facts.indices.resize(2);
+        facts.indices.set(0);
+    }
+    first->state->get_numeric_variables().values = { 3.0 };
+    auto shared = pools.module_();
+    *shared = *first;
+    EXPECT_EQ(shared->state.get(), first->state.get());
+    EXPECT_EQ(first->state.ref_count(), 2);
 
-    auto reused = Owner(pool);
-    EXPECT_EQ(reused.get(), address);
-    EXPECT_EQ(reused->buffer.capacity(), capacity);
-    EXPECT_FALSE(reused->child);
-    auto assigned = Owner(pool);
-    assigned = reused;
-    EXPECT_EQ(releases, 3);
-    EXPECT_EQ(reused.ref_count(), 2);
-    auto moved = Owner(pool);
-    moved = std::move(assigned);
-    EXPECT_FALSE(assigned);
-    EXPECT_EQ(releases, 4);
-    reused.reset();
-    EXPECT_EQ(releases, 4);
-    moved.reset();
-    EXPECT_EQ(releases, 5);
-    EXPECT_EQ(pool->free_size(), pool->size());
+    auto separate = pools.module_();
+    *separate = *first;
+    separate->state = pools.planning();
+    *separate->state = *first->state;
+    EXPECT_NE(separate->state.get(), first->state.get());
+    EXPECT_TRUE(ygg::EqualTo<ygg::Builder<ext::ModuleState<Kind>>> {}(*first, *separate));
+    EXPECT_EQ(ygg::Hash<ygg::Builder<ext::ModuleState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<ext::ModuleState<Kind>>> {}(*separate));
+    separate->state->template get_atoms<tyr::formalism::DerivedTag>().indices.resize(1, true);
+    EXPECT_TRUE(ygg::EqualTo<ygg::Builder<ext::ModuleState<Kind>>> {}(*first, *separate));
+    EXPECT_EQ(ygg::Hash<ygg::Builder<ext::ModuleState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<ext::ModuleState<Kind>>> {}(*separate));
+    if constexpr (std::same_as<Kind, tyr::GroundTag>)
+        separate->state->template get_atoms<tyr::formalism::FluentTag>().values.front() = 0;
+    else
+        separate->state->template get_atoms<tyr::formalism::FluentTag>().indices.flip(0);
+    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ModuleState<Kind>>> {}(*first, *separate));
+    *separate->state = *first->state;
+    separate->state->get_numeric_variables().values.front() = 4.0;
+    EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ModuleState<Kind>>> {}(*first, *separate));
 
-    auto survivor = Owner(pool);
-    const auto weak_pool = std::weak_ptr(pool);
-    pool.reset();
-    EXPECT_FALSE(weak_pool.expired());
-    survivor.reset();
-    EXPECT_TRUE(weak_pool.expired());
+    const auto module_slot = separate.get();
+    const auto slot = separate->state.get();
+    const auto buffer = separate->state->get_numeric_variables().values.data();
+    const auto capacity = separate->state->get_numeric_variables().values.capacity();
+    separate = {};
+    auto reused = pools.planning();
+    EXPECT_EQ(reused.get(), slot);
+    EXPECT_EQ(reused->get_numeric_variables().values.data(), buffer);
+    EXPECT_EQ(reused->get_numeric_variables().values.capacity(), capacity);
+    ASSERT_EQ(reused->get_numeric_variables().values.size(), 1);
+    EXPECT_EQ(reused->get_numeric_variables().values.front(), 4.0);
+
+    auto reused_module = pools.module_();
+    EXPECT_EQ(reused_module.get(), module_slot);
+    EXPECT_FALSE(reused_module->module_);
+    EXPECT_FALSE(reused_module->memory_state);
+    EXPECT_FALSE(reused_module->arguments);
+    reused_module->state = reused;
+    reused_module->module_ = module_;
+    reused_module->memory_state = module_.get_entry_memory_state();
+    const auto reused_view = ygg::make_view(*reused_module, *context->execution_repository);
+    EXPECT_EQ(&reused_view.get_state().get_task(), search->task.get());
+    EXPECT_TRUE(ygg::EqualTo<ext::ModuleView> {}(reused_view.get_module(), module_));
 }
 
-TEST(RunirTests, ExtPooledArgumentsReuseDenotationBuffersAndIgnoreInactiveValues)
-{
-    namespace detail = kr::ps::ext::detail;
-    using Category = kr::dl::ConceptTag;
-    auto pools = detail::TransientPools<tyr::GroundTag> {};
-    auto arguments = pools.arguments();
-    auto denotation = ygg::Builder<kr::dl::semantics::Denotation<Category>>(128);
-    denotation.get().set(3);
-    detail::append_call_argument<Category>(*arguments, denotation);
-    detail::append_call_argument<Category>(*arguments, denotation);
-    const auto slot = arguments.get();
-    const auto blocks = arguments->get<Category>()[0].blocks.data();
-    const auto capacity = arguments->get<Category>()[0].blocks.capacity();
-    arguments.reset();
-    arguments = pools.arguments();
-    EXPECT_EQ(arguments.get(), slot);
-    EXPECT_TRUE(arguments->get<Category>().empty());
-    detail::append_call_argument<Category>(*arguments, denotation);
-    EXPECT_EQ(arguments->get<Category>().size(), 1);
-    EXPECT_EQ(arguments->get<Category>()[0].blocks.data(), blocks);
-    EXPECT_EQ(arguments->get<Category>()[0].blocks.capacity(), capacity);
-    auto equivalent = pools.arguments();
-    detail::append_call_argument<Category>(*equivalent, denotation);
-    EXPECT_TRUE(ygg::EqualTo<detail::OwnedCallArguments> {}(*arguments, *equivalent));
-    EXPECT_EQ(ygg::Hash<detail::OwnedCallArguments> {}(*arguments), ygg::Hash<detail::OwnedCallArguments> {}(*equivalent));
-}
+}  // namespace
+
+TEST(RunirTests, ExtGroundPlanningBuildersAreSharedAndReused) { check_transient_planning_state_sharing_and_reuse<tyr::GroundTag>(); }
+TEST(RunirTests, ExtLiftedPlanningBuildersAreSharedAndReused) { check_transient_planning_state_sharing_and_reuse<tyr::LiftedTag>(); }
 
 TEST(RunirTests, ExtPooledSearchPathReleasesLongChainsIteratively)
 {
     namespace ext = kr::ps::ext;
     using Kind = tyr::GroundTag;
     using Path = ext::detail::SearchPath<Kind, ext::ProgramStateView<Kind>>;
-    using PathPtr = ext::detail::PooledSharedOwner<Path>;
+    using PathPtr = ygg::SharedObjectPoolPtr<Path>;
     auto search = make_gripper_ground_context();
     auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
     auto& repository = *context->domain_context->ext_repository;
@@ -1073,19 +1122,19 @@ TEST(RunirTests, ExtPooledSearchPathReleasesLongChainsIteratively)
     const auto program = create_program(repository, module_, { module_ });
     auto expander = ext::SuccessorExpander<Kind>(context, program);
     const auto state = expander.initial_state(initial_planning_node(expander).get_state());
-    auto pool = std::make_shared<ygg::SharedObjectPool<Path>>();
+    auto pool = ygg::SharedObjectPool<Path> {};
     auto tip = PathPtr {};
     constexpr int length = 100'000;
     for (int index = 0; index < length; ++index)
     {
-        auto path = PathPtr(pool);
+        auto path = pool.get_or_allocate();
         path->initialize(state, std::move(tip), {}, {}, 0);
         tip = std::move(path);
     }
-    EXPECT_EQ(pool->size(), length);
-    EXPECT_EQ(pool->free_size(), 0);
-    tip.reset();
-    EXPECT_EQ(pool->free_size(), pool->size());
+    EXPECT_EQ(pool.size(), length);
+    EXPECT_EQ(pool.free_size(), 0);
+    tip = {};
+    EXPECT_EQ(pool.free_size(), pool.size());
 }
 
 }  // namespace runir::tests

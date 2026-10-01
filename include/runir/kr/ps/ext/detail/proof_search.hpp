@@ -12,7 +12,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <memory>
 #include <optional>
 #include <tuple>
 #include <type_traits>
@@ -28,7 +27,7 @@ namespace detail
 
 /// Evaluate terminating executions in postorder. The storage policy controls state
 /// admission, memoization and graph retention; AND/OR traversal is identical in every mode.
-template<tyr::TaskKind Kind, typename Choices, ProgramStateViewConcept<Kind> S, typename Expander, typename Storage, typename Unsolvability>
+template<tyr::TaskKind Kind, StoredProgramStateConcept<Kind> S, typename Expander, typename Storage, typename Unsolvability>
 ProgramProofStatus depth_first_search(Expander& expander,
                                       const tyr::planning::PackedStateView<Kind>& initial_state,
                                       const S& initial,
@@ -36,12 +35,12 @@ ProgramProofStatus depth_first_search(Expander& expander,
                                       Unsolvability& classifier,
                                       Storage& storage,
                                       ProgramSearchStatistics& statistics,
-                                      PooledSharedOwner<SearchPath<Kind, S>>& first_goal,
-                                      PooledSharedOwner<SearchPath<Kind, S>>& witness)
+                                      ygg::SharedObjectPool<SearchPath<Kind, S>>& path_pool,
+                                      ygg::SharedObjectPoolPtr<SearchPath<Kind, S>>& first_goal,
+                                      ygg::SharedObjectPoolPtr<SearchPath<Kind, S>>& witness)
 {
     using Step = ProgramStep<Kind, S>;
-    using Path = SearchPath<Kind, S>;
-    using PathPtr = PooledSharedOwner<SearchPath<Kind, S>>;
+    using PathPtr = ygg::SharedObjectPoolPtr<SearchPath<Kind, S>>;
     struct Frame
     {
         PathPtr path;
@@ -57,10 +56,9 @@ ProgramProofStatus depth_first_search(Expander& expander,
     const auto initial_planning_state = initial_state.unpack();
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*search.task);
     const bool static_goal = goal_strategy.is_static_goal_satisfied(*search.task);
-    auto path_pool = std::make_shared<ygg::SharedObjectPool<Path>>();
     auto stack = std::vector<Frame> {};
     auto successors = std::vector<Step> {};
-    auto choices = std::vector<Choices> {};
+    auto choices = std::vector<std::variant<Choice<runir::kr::dl::ConceptTag>, Choice<runir::kr::dl::RoleTag>>> {};
     auto status = ProgramProofStatus::SUCCESS;
     auto first_failure = PathPtr {};
     auto next = PathPtr {};
@@ -68,7 +66,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
     const auto out_of_time = [&] { return stopwatch && stopwatch->has_finished(); };
     const auto classify = [&](const S& state)
     {
-        const auto planning_state = state.get_state();
+        const auto planning_state = expander.view(state).get_state();
         const bool goal = static_goal && goal_strategy.is_dynamic_goal_satisfied(initial_planning_state, planning_state.get_state_builder());
         return std::pair(goal, !goal && classifier.is_unsolvable(planning_state));
     };
@@ -76,9 +74,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
         [&](S state, PathPtr parent, std::optional<datasets::StateGraphEdgeLabel> transition, std::optional<RuleVariantView> rule, bool non_singleton)
     {
         const auto depth = parent ? parent->choice_depth + ygg::uint_t(non_singleton) : 0;
-        auto path = PathPtr(path_pool);
-        path->initialize(std::move(state), std::move(parent), transition, rule, depth);
-        return path;
+        return path_pool.get_or_allocate(std::move(state), std::move(parent), transition, rule, depth);
     };
     if (storage.admit(initial, classify))
         next = make_path(initial, {}, {}, {}, false);
@@ -119,7 +115,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
             auto frame = Frame { std::move(path), successors.size(), choices.size() };
             auto limit = std::optional<ProgramProofStatus> {};
             expander.for_each_successor(
-                *frame.path->state,
+                expander.view(*frame.path->state),
                 statistics,
                 [&](auto expansion)
                 {
@@ -204,7 +200,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
                     if (!choice.exhausted())
                     {
                         non_singleton = choice.has_alternatives();
-                        step = expander.apply_choice(*frame.path->state, choice, statistics);
+                        step = expander.apply_choice(expander.view(*frame.path->state), choice, statistics);
                         choice.advance();
                     }
                 },
@@ -237,28 +233,31 @@ ProgramProofStatus depth_first_search(Expander& expander,
 }
 
 /// Own the search lifetime, then construct its graph and optional execution plan.
-template<tyr::TaskKind Kind, typename Choices, typename Expander, typename Storage, typename Unsolvability>
-ProgramProofResults<Kind> find_solution(Expander& expander, Storage& storage, const ProgramSearchOptions<Kind>& options, Unsolvability& classifier)
+template<tyr::TaskKind Kind, StateMemorization Memorization, typename Expander, typename Unsolvability>
+ProgramProofResults<Kind>
+find_solution(Expander& expander, SearchStorage<Kind, Memorization>& storage, const ProgramSearchOptions<Kind>& options, Unsolvability& classifier)
 {
     const auto& task_context = expander.get_task_context();
     auto& search = *task_context->search_context;
     const auto initial_node = search.successor_generator->get_packed_initial_node(*search.state_repository, *search.axiom_evaluator);
     const auto initial = expander.initial_state(initial_node.get_state().unpack());
     using S = std::remove_cvref_t<decltype(initial)>;
-    using PathPtr = PooledSharedOwner<SearchPath<Kind, S>>;
+    using PathPtr = ygg::SharedObjectPoolPtr<SearchPath<Kind, S>>;
     auto statistics = ProgramSearchStatistics {};
+    auto path_pool = ygg::SharedObjectPool<SearchPath<Kind, S>> {};
     auto first_goal = PathPtr {};
     auto witness = PathPtr {};
     const auto status =
-        depth_first_search<Kind, Choices>(expander, initial_node.get_state(), initial, options, classifier, storage, statistics, first_goal, witness);
+        depth_first_search<Kind>(expander, initial_node.get_state(), initial, options, classifier, storage, statistics, path_pool, first_goal, witness);
 
     auto result = ProgramProofResults<Kind> {};
     result.task_context_owner = task_context;
     result.status = status;
     result.statistics = statistics;
-    if constexpr (std::same_as<Storage, TransientSearchStorage<Kind>>)
+    if constexpr (Memorization != StateMemorization::ALL)
     {
-        storage.memo.clear();
+        if constexpr (Memorization == StateMemorization::CHOICE)
+            storage.memo.clear();
         build_witness_graph(result, expander, witness);
         if (status == ProgramProofStatus::SUCCESS && first_goal)
         {
@@ -298,15 +297,15 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
     if (!dl::structural_termination(program).is_terminating())
         throw std::invalid_argument("Ext find_solution requires a structurally terminating program.");
 
-    const auto execute = [&]<typename Choices>(auto& expander, auto& storage)
+    const auto execute = [&](auto& expander, auto& storage)
     {
         if (options.classifier)
         {
             auto classifier = ClassifierUnsolvability<Kind>(*task_context_owner, *options.classifier);
-            return detail::find_solution<Kind, Choices>(expander, storage, options, classifier);
+            return detail::find_solution<Kind>(expander, storage, options, classifier);
         }
         auto classifier = NoUnsolvability {};
-        return detail::find_solution<Kind, Choices>(expander, storage, options, classifier);
+        return detail::find_solution<Kind>(expander, storage, options, classifier);
     };
     // Validate the task and program before constructing a classifier that borrows the task context.
     switch (options.state_memorization)
@@ -314,17 +313,20 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
         case StateMemorization::ALL:
         {
             auto expander = SuccessorExpander<Kind>(task_context_owner, program);
-            auto storage = detail::InternedSearchStorage<Kind>(options);
-            using Choices = std::variant<detail::Choice<runir::kr::dl::ConceptTag>, detail::Choice<runir::kr::dl::RoleTag>>;
-            return execute.template operator()<Choices>(expander, storage);
+            auto storage = detail::SearchStorage<Kind, StateMemorization::ALL>(options);
+            return execute(expander, storage);
         }
         case StateMemorization::NONE:
+        {
+            auto expander = SuccessorExpander<Kind, TransientExecutionStorage<Kind>>(task_context_owner, program);
+            auto storage = detail::SearchStorage<Kind, StateMemorization::NONE>(options);
+            return execute(expander, storage);
+        }
         case StateMemorization::CHOICE:
         {
             auto expander = SuccessorExpander<Kind, TransientExecutionStorage<Kind>>(task_context_owner, program);
-            auto storage = detail::TransientSearchStorage<Kind>(options);
-            using Choices = std::variant<detail::TransientChoice<runir::kr::dl::ConceptTag>, detail::TransientChoice<runir::kr::dl::RoleTag>>;
-            return execute.template operator()<Choices>(expander, storage);
+            auto storage = detail::SearchStorage<Kind, StateMemorization::CHOICE>(options);
+            return execute(expander, storage);
         }
     }
     throw std::invalid_argument("Invalid Ext state memorization mode.");

@@ -422,8 +422,8 @@ struct fmt::formatter<ygg::View<ygg::Index<runir::kr::dl::semantics::RegisterVal
     {
         return fmt::format_to(context.out(),
                               "RegisterValues(concepts=[{}], roles=[{}])",
-                              fmt::join(value.get_concept_values(), ", "),
-                              fmt::join(value.get_role_values(), ", "));
+                              fmt::join(value.template get<runir::kr::dl::ConceptTag>(), ", "),
+                              fmt::join(value.template get<runir::kr::dl::RoleTag>(), ", "));
     }
 };
 

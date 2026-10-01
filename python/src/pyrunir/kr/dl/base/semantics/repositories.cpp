@@ -71,8 +71,8 @@ void bind_semantics_repositories(nb::module_& m)
 
     auto register_values = nb::class_<RegisterValuesView>(m, "RegisterValues")
                                .def("get_index", &RegisterValuesView::get_index)
-                               .def_prop_ro("concept_values", &RegisterValuesView::get_concept_values)
-                               .def_prop_ro("role_values", &RegisterValuesView::get_role_values);
+                               .def_prop_ro("concept_values", &RegisterValuesView::get<ConceptTag>)
+                               .def_prop_ro("role_values", &RegisterValuesView::get<RoleTag>);
     ygg::add_print(register_values);
     ygg::add_comparison(register_values);
     ygg::add_hash(register_values);

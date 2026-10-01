@@ -55,17 +55,33 @@ template<runir::kr::dl::CategoryTag Category>
 void bind_choice(nb::module_& m, const char* name)
 {
     using Choice = detail::Choice<Category>;
+    const auto binding = [](const runir::kr::dl::semantics::DenotationElementView<Category>& value, nb::handle owner)
+    {
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+            return nb::cast(value, nb::rv_policy::reference_internal, owner);
+        else
+            return nb::make_tuple(nb::cast(value.first, nb::rv_policy::reference_internal, owner),
+                                  nb::cast(value.second, nb::rv_policy::reference_internal, owner));
+    };
     nb::class_<Choice>(m, name)
-        .def_ro("rule", &Choice::rule)
-        .def_ro("denotation", &Choice::denotation)
+        .def_ro("rule", &Choice::rule, nb::keep_alive<0, 1>())
+        .def_prop_ro("bindings",
+                     [binding](nb::handle owner)
+                     {
+                         nb::list result;
+                         for (const auto& value : nb::cast<const Choice&>(owner).bindings())
+                             result.append(binding(value, owner));
+                         return result;
+                     })
         .def("exhausted", &Choice::exhausted)
         .def("count", &Choice::count)
         .def("current",
-             [](const Choice& self)
+             [binding](nb::handle owner)
              {
+                 const auto& self = nb::cast<const Choice&>(owner);
                  if (self.exhausted())
                      throw nb::index_error("Choice is exhausted.");
-                 return self.current();
+                 return binding(self.current(), owner);
              })
         .def("advance",
              [](Choice& self)
@@ -89,7 +105,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using Step = detail::ProgramStep<Kind>;
     using Expander = SuccessorExpander<Kind>;
     using Environment = EvaluationEnvironment<Kind>;
-    using Expansion = std::variant<Step, detail::Choice<runir::kr::dl::ConceptTag>, detail::Choice<runir::kr::dl::RoleTag>>;
+    // Callback results may outlive the expander that owns their binding pool.
+    const auto retain_expander = nb::cpp_function([](nb::object value, nb::handle) { return value; }, nb::keep_alive<0, 2>());
 
     nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
     nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
@@ -190,11 +207,21 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def("initial_state", &Expander::initial_state, "state"_a, nb::keep_alive<0, 1>())
         .def(
             "for_each_successor",
-            [](Expander& self,
-               StateView state,
-               ProgramSearchStatistics& statistics,
-               const std::function<bool(Expansion)>& emit,
-               const std::function<bool()>& stop) { return self.for_each_successor(state, statistics, emit, stop); },
+            [retain_expander](Expander& self, StateView state, ProgramSearchStatistics& statistics, nb::callable emit, const std::function<bool()>& stop)
+            {
+                const auto owner = nb::cast(&self, nb::rv_policy::reference);
+                return self.for_each_successor(
+                    state,
+                    statistics,
+                    [&](auto expansion)
+                    {
+                        auto value = nb::cast(std::move(expansion));
+                        if constexpr (!std::same_as<decltype(expansion), Step>)
+                            value = retain_expander(value, owner);
+                        return nb::cast<bool>(emit(value));
+                    },
+                    stop);
+            },
             "state"_a,
             "statistics"_a,
             "emit"_a,

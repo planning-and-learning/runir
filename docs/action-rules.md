@@ -77,8 +77,10 @@ arguments, and call stack. The callback returns `true` to continue and
 or callback termination returns `false`.
 
 An ordinary outcome is a `ProgramExecutionStep`. A Choose rule emits a
-`ConceptChoice` or `RoleChoice`, retaining its effect-filtered denotation and a
-cursor. Applying a choice constructs only its current binding's successor.
+`ConceptChoice` or `RoleChoice`, retaining its effect-filtered bindings in a
+pooled vector and a current position. All memorization modes use this same
+representation; clearing evaluation caches does not invalidate pending choices.
+Applying a choice constructs only its current binding's successor.
 An enabled empty Choose remains a failed obligation. Each Choose rule keeps
 its own obligation in universal search. Do rules enumerate bindings only for
 their action schema and filter arguments before constructing successor states.
@@ -116,13 +118,14 @@ Call `expander.initial_state(planning_state)` with a Tyr planning state, such as
 order, with a constructible `ext.ProgramSearchStatistics` object.
 
 Each callback receives a step or a `ConceptChoice`/`RoleChoice` by value.
-Choices expose `rule`, `denotation`, `current()`, `advance()`, `exhausted()`,
+Choices expose `rule`, `bindings`, `current()`, `advance()`, `exhausted()`,
 and `count()`. After enumeration returns, use
 `expander.apply_choice(state, choice, statistics)` to apply the current
 binding, then advance the cursor to try another. Do not reenter the same
-expander from its callback. A choice borrows its repositories; keep the task
-context and program alive while using it. Accessing or advancing an exhausted
-Python choice raises `IndexError`.
+expander from its callback. In C++, a choice must be destroyed before its
+expander, which owns the binding pool. Python choices retain their expander, and
+binding views retain their choice. Accessing or advancing an exhausted Python
+choice raises `IndexError`.
 
 Continue execution with `step.target` for both planning and control-only steps.
 A planning step also exposes its owned `planning_successor`.
@@ -138,6 +141,21 @@ It borrows the registers and call arguments stored in that execution state.
 `ext.evaluate(feature, state_context)` returns the feature's native
 denotation for every category. Boolean and numerical denotations expose their
 scalar value through `.get()`; concept and role denotations are iterable.
+
+Argument features return views of the stored call arguments without copying
+their values into the feature cache. In every memorization mode, final argument
+values are evaluated in the caller's state and interned with their argument
+bundle in the task's denotation repository. Pooled execution states and saved
+callers borrow an indexed `CallArgumentsView` into that repository. Clearing feature caches does not invalidate argument views;
+argument bundles and their final denotations remain until the task repository
+is cleared or destroyed.
+
+The C++ execution and evaluation interfaces accept indexed, borrowed-data and
+builder views through semantic view concepts. In `NONE` and `CHOICE`, paths and
+memo entries retain program builders that own pooled execution values; views
+borrow those values during evaluation. Builders may move as search buffers grow,
+so borrowed views must not outlive their owners or survive a move of the viewed
+builder. Only returned witness states are copied into the result repositories.
 
 ```python
 from pyrunir.kr.ps import ext
