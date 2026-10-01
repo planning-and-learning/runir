@@ -16,7 +16,7 @@ InternedExecutionStorage<tyr::GroundTag>::successor<tyr::planning::StateView<tyr
 
 template class TransientExecutionStorage<tyr::GroundTag>;
 
-template detail::TransientLabeledNode<tyr::GroundTag>
+template tyr::planning::LabeledNode<tyr::planning::BuilderStateView<tyr::GroundTag>>
 TransientExecutionStorage<tyr::GroundTag>::successor<tyr::planning::BuilderStateView<tyr::GroundTag>>(const tyr::planning::BuilderStateView<tyr::GroundTag>&,
                                                                                                       tyr::formalism::planning::ActionBindingView);
 
@@ -28,7 +28,7 @@ InternedExecutionStorage<tyr::LiftedTag>::successor<tyr::planning::StateView<tyr
 
 template class TransientExecutionStorage<tyr::LiftedTag>;
 
-template detail::TransientLabeledNode<tyr::LiftedTag>
+template tyr::planning::LabeledNode<tyr::planning::BuilderStateView<tyr::LiftedTag>>
 TransientExecutionStorage<tyr::LiftedTag>::successor<tyr::planning::BuilderStateView<tyr::LiftedTag>>(const tyr::planning::BuilderStateView<tyr::LiftedTag>&,
                                                                                                       tyr::formalism::planning::ActionBindingView);
 

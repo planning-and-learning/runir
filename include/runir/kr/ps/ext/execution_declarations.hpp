@@ -60,9 +60,6 @@ template<tyr::TaskKind Kind>
 using BuilderModuleStateView = ygg::View<ygg::Builder<ModuleState<Kind>>, ExecutionRepository<Kind>>;
 
 template<tyr::TaskKind Kind>
-using BuilderCallStackView = ygg::View<ygg::Builder<CallStack>, ExecutionRepository<Kind>>;
-
-template<tyr::TaskKind Kind>
 using BuilderProgramStateView = ygg::View<ygg::Builder<ProgramState<Kind>>, ExecutionRepository<Kind>>;
 
 /// Values retained by search: repository identities or owners of pooled execution data.

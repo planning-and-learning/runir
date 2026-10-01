@@ -10,7 +10,6 @@
 #include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
-#include "runir/kr/ps/ext/transient_execution_storage.hpp"
 #include "runir/kr/task_context.hpp"
 
 #include <algorithm>
@@ -186,21 +185,25 @@ private:
         return result;
     }
 
+    template<tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
+    auto
+    make_module(const S& planning_state, ModuleView module_, MemoryStateView memory_state, R registers, runir::kr::dl::semantics::CallArgumentsView arguments)
+    {
+        auto result = m_storage.module_();
+        m_storage.set_planning_state(*result, planning_state);
+        m_storage.set_module(*result, module_);
+        m_storage.set_memory_state(*result, memory_state);
+        m_storage.set_registers(*result, registers);
+        m_storage.set_arguments(*result, arguments);
+        return result;
+    }
+
     static bool arguments_match(ModuleView callee, runir::kr::dl::semantics::CallArgumentsView arguments)
     {
         return arguments.template get<runir::kr::dl::ConceptTag>().size() == callee.template get_arguments<runir::kr::dl::ConceptTag>().size()
                && arguments.template get<runir::kr::dl::RoleTag>().size() == callee.template get_arguments<runir::kr::dl::RoleTag>().size()
                && arguments.template get<runir::kr::dl::BooleanTag>().size() == callee.template get_arguments<runir::kr::dl::BooleanTag>().size()
                && arguments.template get<runir::kr::dl::NumericalTag>().size() == callee.template get_arguments<runir::kr::dl::NumericalTag>().size();
-    }
-
-    template<typename ModuleData>
-    void set_empty_registers(ModuleData& target, ModuleView module_)
-    {
-        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
-        registers->concept_values.resize(module_.template get_registers<runir::kr::dl::ConceptTag>().size());
-        registers->role_values.resize(module_.template get_registers<runir::kr::dl::RoleTag>().size());
-        m_storage.set_registers(target, m_storage.registers(*registers));
     }
 
     // Rule admission and argument/effect evaluation share the environment's reusable denotation caches.
@@ -354,9 +357,12 @@ private:
         }
         const auto rule = choice.rule.get_variant().template get<ygg::Index<Rule<ChooseTag<Category>>>>();
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
-        auto target = copy_module(state);
-        m_storage.set_registers(*target, bound_registers(rule, state, choice.current(), *registers));
-        m_storage.set_memory_state(*target, rule.get_target());
+        const auto module_ = state.get_module_state();
+        auto target = make_module(state.get_state(),
+                                  module_.get_module(),
+                                  rule.get_target(),
+                                  bound_registers(rule, state, choice.current(), *registers),
+                                  module_.get_arguments());
         return applied(m_storage.store(std::move(target), m_storage.call_stack(state)), choice.rule);
     }
 
@@ -375,9 +381,8 @@ private:
             const auto target_registers = bound_registers(rule, state, value, *registers);
             if (!binding_effects_match(rule, state, planning_state, target_registers))
                 continue;
-            auto target = copy_module(state);
-            m_storage.set_registers(*target, target_registers);
-            m_storage.set_memory_state(*target, rule.get_target());
+            const auto module_ = state.get_module_state();
+            auto target = make_module(planning_state, module_.get_module(), rule.get_target(), target_registers, module_.get_arguments());
             if (!emit(applied(m_storage.store(std::move(target), m_storage.call_stack(state)), rule_variant)))
                 return false;
         }
@@ -633,12 +638,11 @@ private:
         if (!callee || !arguments_match(*callee, arguments))
             return emit(make_step(detail::ProgramOutcome::MALFORMED_CALL, m_storage.retain(state)));
 
-        auto target = copy_module(state);
         auto caller = m_storage.save_caller(state, rule.get_target());
-        m_storage.set_module(*target, *callee);
-        m_storage.set_memory_state(*target, callee->get_entry_memory_state());
-        set_empty_registers(*target, *callee);
-        m_storage.set_arguments(*target, arguments);
+        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task_context->dl_builder);
+        registers->concept_values.resize(callee->template get_registers<runir::kr::dl::ConceptTag>().size());
+        registers->role_values.resize(callee->template get_registers<runir::kr::dl::RoleTag>().size());
+        auto target = make_module(planning_state, *callee, callee->get_entry_memory_state(), m_storage.registers(*registers), arguments);
         return emit(applied(m_storage.store(std::move(target), std::move(caller)), rule_variant));
     }
 
@@ -738,11 +742,8 @@ private:
     {
         if (const auto caller = state.get_call_stack())
         {
-            auto target = copy_module(state);
-            m_storage.set_module(*target, caller->get_module());
-            m_storage.set_memory_state(*target, caller->get_return_memory_state());
-            m_storage.set_registers(*target, caller->get_registers());
-            m_storage.set_arguments(*target, caller->get_arguments());
+            auto target =
+                make_module(state.get_state(), caller->get_module(), caller->get_return_memory_state(), caller->get_registers(), caller->get_arguments());
             return make_step(detail::ProgramOutcome::RESTORED_CALLER, m_storage.store(std::move(target), m_storage.caller(*caller)));
         }
         return make_step(detail::ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state));
@@ -759,9 +760,8 @@ private:
     template<ProgramStateViewConcept<Kind> S, typename N>
     auto planning_step(S state, const N& successor, RuleVariantView rule, MemoryStateView memory_state)
     {
-        auto target = copy_module(state);
-        m_storage.set_planning_state(*target, successor);
-        m_storage.set_memory_state(*target, memory_state);
+        const auto module_ = state.get_module_state();
+        auto target = make_module(successor.node.get_state(), module_.get_module(), memory_state, module_.get_registers(), module_.get_arguments());
         auto step = applied(m_storage.store(std::move(target), m_storage.call_stack(state)), rule);
         if constexpr (requires { successor.pack(); })
             step.planning_successor = successor.pack();

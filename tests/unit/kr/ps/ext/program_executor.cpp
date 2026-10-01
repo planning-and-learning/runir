@@ -14,11 +14,11 @@
 #include <runir/kr/ps/ext/dl/module_factory.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/dl/structural_termination.hpp>
+#include <runir/kr/ps/ext/execution_storage.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/successor_expander.hpp>
-#include <runir/kr/ps/ext/transient_execution_storage.hpp>
 #include <runir/kr/task_context.hpp>
 #include <runir/kr/uns/dl/parser.hpp>
 #include <runir/kr/uns/repository.hpp>
@@ -1059,7 +1059,6 @@ template<tyr::TaskKind Kind>
 void check_transient_builder_values_and_reuse()
 {
     namespace ext = kr::ps::ext;
-    namespace detail = ext::detail;
     namespace sem = kr::dl::semantics;
     static_assert(sem::RegisterValuesViewConcept<sem::RegisterValuesView>);
     static_assert(sem::RegisterValuesViewConcept<sem::BorrowedRegisterValuesView>);
@@ -1089,8 +1088,8 @@ void check_transient_builder_values_and_reuse()
                               search->task->get_domain().get_domain(),
                               repository);
     const auto program = create_program(repository, module_, { module_ });
-    auto pools = detail::TransientPools<Kind> {};
-    auto first = pools.program();
+    auto pool = ygg::SharedObjectPool<ygg::Builder<ext::ProgramState<Kind>>> {};
+    auto first = pool.get_or_allocate();
     first->program = program.get_index();
     auto& first_module = first->module_state;
     first_module.module_ = module_.get_index();
@@ -1133,33 +1132,38 @@ void check_transient_builder_values_and_reuse()
     }
     first_module.state.get_numeric_variables().values = { 3.0 };
 
-    // Caller views expose prefixes of one owned vector, with the newest frame last.
-    auto& frames = first->call_stack.frames;
-    frames.push_back({ first_module.module_, first_module.memory_state, first_module.registers, first_module.arguments });
-    frames.push_back(frames.front());
-    frames.back().registers.concept_values.front() = ygg::Index<tyr::formalism::Object>(1);
+    // Transient module values use the same interned callers as registered execution states.
+    auto tail_data = ygg::Data<ext::CallStack>(first_module.module_, first_module.memory_state, registered_registers.get_index(), first_module.arguments);
+    const auto tail = ext::get_or_create(*context->execution_repository, tail_data).first;
+    auto head_registers = first_module.registers;
+    head_registers.concept_values.front() = ygg::Index<tyr::formalism::Object>(1);
+    const auto head_register_values = sem::get_or_create(*context->dl_denotation_repository, head_registers).first;
+    auto head_data = ygg::Data<ext::CallStack>(first_module.module_, first_module.memory_state, head_register_values.get_index(), first_module.arguments);
+    head_data.caller = tail.get_index();
+    const auto head = ext::get_or_create(*context->execution_repository, head_data).first;
+    first->call_stack = head.get_index();
+    EXPECT_EQ(ext::get_or_create(*context->execution_repository, head_data).first.get_index(), head.get_index());
+    static_assert(std::same_as<decltype(program_state.get_call_stack()), std::optional<ext::CallStackView<Kind>>>);
     const auto stack = program_state.get_call_stack();
     ASSERT_TRUE(stack);
-    EXPECT_EQ(&stack->get_data(), &first->call_stack);
-    EXPECT_EQ(stack->get_frames().size(), 2);
+    EXPECT_EQ(stack->get_index(), head.get_index());
     EXPECT_TRUE(ygg::EqualTo<ext::ModuleView> {}(stack->get_module(), module_));
     EXPECT_TRUE(ygg::EqualTo<ext::MemoryStateView> {}(stack->get_return_memory_state(), module_.get_entry_memory_state()));
     EXPECT_TRUE(ygg::EqualTo<sem::CallArgumentsView> {}(stack->get_arguments(), argument_view));
     EXPECT_EQ(stack->get_registers().at(concept_id).value().get_index(), ygg::Index<tyr::formalism::Object>(1));
     const auto caller = stack->get_caller();
     ASSERT_TRUE(caller);
-    EXPECT_EQ(&caller->get_data(), &first->call_stack);
-    EXPECT_EQ(caller->get_frames().size(), 1);
+    EXPECT_EQ(caller->get_index(), tail.get_index());
     EXPECT_EQ(caller->get_registers().at(concept_id).value().get_index(), ygg::Index<tyr::formalism::Object>(0));
     EXPECT_FALSE(caller->get_caller());
 
-    // Builder copies own independent mutable planning, register, and caller buffers.
-    auto separate = pools.program();
+    // Program copies own their mutable module values and share immutable callers.
+    auto separate = pool.get_or_allocate();
     *separate = *first;
     auto& separate_module = separate->module_state;
     EXPECT_NE(separate_module.state.get_numeric_variables().values.data(), first_module.state.get_numeric_variables().values.data());
     EXPECT_NE(separate_module.registers.concept_values.data(), first_module.registers.concept_values.data());
-    EXPECT_NE(separate->call_stack.frames.data(), first->call_stack.frames.data());
+    EXPECT_EQ(*separate->call_stack, *first->call_stack);
     EXPECT_TRUE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
     EXPECT_EQ(ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*separate));
     separate_module.state.template get_atoms<tyr::formalism::DerivedTag>().indices.resize(1, true);
@@ -1179,23 +1183,24 @@ void check_transient_builder_values_and_reuse()
     EXPECT_EQ(first_module.registers.concept_values.front().value(), ygg::Index<tyr::formalism::Object>(0));
     EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
     separate_module.registers = first_module.registers;
-    separate->call_stack.frames.front().registers.concept_values.front() = ygg::Index<tyr::formalism::Object>(1);
-    EXPECT_EQ(first->call_stack.frames.front().registers.concept_values.front().value(), ygg::Index<tyr::formalism::Object>(0));
+    separate->call_stack = tail.get_index();
+    EXPECT_EQ(program_state.get_call_stack()->get_index(), head.get_index());
     EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
 
-    // The outer pool retains the inline buffers when the whole program value is released.
+    // Releasing a program retains its mutable module buffers for reuse.
     const auto slot = separate.get();
     const auto buffer = separate_module.state.get_numeric_variables().values.data();
     const auto capacity = separate_module.state.get_numeric_variables().values.capacity();
-    const auto frame_buffer = separate->call_stack.frames.data();
-    const auto frame_capacity = separate->call_stack.frames.capacity();
+    const auto concept_buffer = separate_module.registers.concept_values.data();
+    const auto role_buffer = separate_module.registers.role_values.data();
     separate = {};
-    auto reused = pools.program();
+    auto reused = pool.get_or_allocate();
     EXPECT_EQ(reused.get(), slot);
     EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.data(), buffer);
     EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.capacity(), capacity);
-    EXPECT_EQ(reused->call_stack.frames.data(), frame_buffer);
-    EXPECT_EQ(reused->call_stack.frames.capacity(), frame_capacity);
+    EXPECT_EQ(reused->module_state.registers.concept_values.data(), concept_buffer);
+    EXPECT_EQ(reused->module_state.registers.role_values.data(), role_buffer);
+    EXPECT_EQ(caller->get_registers().at(concept_id).value().get_index(), ygg::Index<tyr::formalism::Object>(0));
 }
 
 }  // namespace

@@ -54,14 +54,22 @@ and other reduced-mode successors stay pooled until the selected path is
 materialized.
 Transient execution builders own child values in their lowest-level construction
 representation: `Builder<T>` where available, otherwise `Data<T>`. This means an
-inline planning-state builder, register data, and a flat vector of saved caller
-frames. Definitions and
-interned call arguments are referenced by indices; borrowed views interpret them
-using the execution repository. Builders contain no pool handles. Search/storage
-pools complete program states and construction scratch space, retaining reusable
-buffers after release. Copying a builder produces independent mutable contents;
-control-only successors consequently copy planning buffers, and stack snapshots
-copy saved register values.
+inline planning-state builder and register data. Definitions and interned call
+arguments are referenced by indices; borrowed views interpret them using the
+execution repository. Saved callers form an immutable chain: each call-stack
+frame is always interned, with an optional index identifying its parent. The
+program builder stores the optional head index, just like interned program data.
+Calls intern the current module's saved registers and caller frame; ordinary
+transitions and returns reuse existing indices. Programs without calls create no
+caller frames. Caller frames remain in the task repository even in `NONE` and
+`CHOICE` modes. Copying a program builder copies its mutable module values and
+the caller index. Execution storage owns the remaining pools and must outlive
+their handles.
+Transitions initialize final values directly instead of copying planning states
+or registers that they immediately replace.
+Planning successor generation reuses one scratch builder owned by execution
+storage. Its returned node borrows that builder until the next successor call;
+accepted candidates are copied into program states before the scratch is reused.
 
 Only successful nonuniversal execution returns a plan; universal success
 and failures can still return a diagnostic graph.

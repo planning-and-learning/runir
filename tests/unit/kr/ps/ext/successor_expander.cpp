@@ -532,6 +532,93 @@ TEST(RunirTests, ExtGroundAndLiftedInitialStatesUseExpanderRepository)
     expect_initial_program_state_uses_expander_repository<tyr::LiftedTag>();
 }
 
+TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallers)
+{
+    namespace ext = kr::ps::ext;
+    const auto check = []<tyr::TaskKind Kind>()
+    {
+        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+        const auto context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
+        auto& repository = *context->domain_context->ext_repository;
+        auto& search = *context->search_context;
+        auto& executions = *context->execution_repository;
+        const auto entry = create_memory_state(repository, "entry");
+        const auto outer_return = create_memory_state(repository, "outer-return");
+        const auto inner_return = create_memory_state(repository, "inner-return");
+        const auto module_ = create_module(repository, "module", entry, { entry, outer_return, inner_return });
+        const auto program = create_program(repository, module_, { module_ });
+        auto storage = ext::TransientExecutionStorage<Kind>(context, program);
+        const auto initial_node = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
+        const auto initial = storage.initial_state(initial_node.get_state());
+        EXPECT_FALSE(storage.call_stack(storage.view(initial)));
+        EXPECT_EQ(executions.template size<ext::CallStack>(), 0);
+        const auto source = storage.view(initial).get_state();
+        const auto bindings = search.successor_generator->get_applicable_action_bindings(initial_node);
+        ASSERT_EQ(bindings.size(), 2);
+
+        const auto outer_caller = storage.save_caller(storage.view(initial), outer_return);
+        EXPECT_EQ(storage.save_caller(storage.view(initial), outer_return).get_index(), outer_caller.get_index());
+        EXPECT_EQ(executions.template size<ext::CallStack>(), 1);
+        auto callee_module = storage.module_();
+        *callee_module = initial->module_state;
+        const auto callee = storage.store(std::move(callee_module), outer_caller);
+        const auto inner_caller = storage.save_caller(storage.view(callee), inner_return);
+        EXPECT_EQ(storage.save_caller(storage.view(callee), inner_return).get_index(), inner_caller.get_index());
+        EXPECT_EQ(executions.template size<ext::CallStack>(), 2);
+        ASSERT_TRUE(inner_caller.get_caller());
+        EXPECT_EQ(inner_caller.get_caller()->get_index(), outer_caller.get_index());
+        EXPECT_FALSE(outer_caller.get_caller());
+
+        const auto first = storage.successor(source, bindings.front());
+        const auto scratch = &first.node.get_state().get_state_builder();
+        const auto expected = *scratch;
+        auto target = storage.module_();
+        *target = initial->module_state;
+        storage.set_planning_state(*target, first.node.get_state());
+        const auto retained = storage.store(std::move(target), inner_caller);
+        ASSERT_TRUE(retained->call_stack);
+        EXPECT_EQ(*retained->call_stack, inner_caller.get_index());
+
+        // Generating another candidate overwrites scratch, but not the accepted program state.
+        const auto second = storage.successor(source, bindings.back());
+        EXPECT_EQ(&second.node.get_state().get_state_builder(), scratch);
+        EXPECT_TRUE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, expected));
+        EXPECT_FALSE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, second.node.get_state().get_state_builder()));
+        EXPECT_TRUE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(initial->module_state.state, initial_node.get_state().get_state_builder()));
+
+        const auto copy = storage.retain(storage.view(retained));
+        ASSERT_TRUE(copy->call_stack);
+        EXPECT_EQ(*copy->call_stack, inner_caller.get_index());
+        const auto stored_caller = storage.call_stack(storage.view(copy));
+        ASSERT_TRUE(stored_caller);
+        EXPECT_EQ(stored_caller->get_index(), inner_caller.get_index());
+        const auto caller = storage.view(copy).get_call_stack();
+        ASSERT_TRUE(caller);
+        auto returned_module = storage.module_();
+        *returned_module = copy->module_state;
+        storage.set_memory_state(*returned_module, caller->get_return_memory_state());
+        storage.set_registers(*returned_module, caller->get_registers());
+        const auto returned = storage.store(std::move(returned_module), storage.caller(*caller));
+        ASSERT_TRUE(returned->call_stack);
+        EXPECT_EQ(*returned->call_stack, outer_caller.get_index());
+        EXPECT_TRUE(ygg::EqualTo<ext::MemoryStateView> {}(storage.view(returned).get_module_state().get_memory_state(), inner_return));
+
+        const auto materialized = storage.materialize(storage.view(retained));
+        const auto materialized_inner = materialized.get_call_stack();
+        ASSERT_TRUE(materialized_inner);
+        EXPECT_EQ(materialized_inner->get_index(), inner_caller.get_index());
+        EXPECT_TRUE(ygg::EqualTo<ext::MemoryStateView> {}(materialized_inner->get_return_memory_state(), inner_return));
+        const auto materialized_outer = materialized_inner->get_caller();
+        ASSERT_TRUE(materialized_outer);
+        EXPECT_EQ(materialized_outer->get_index(), outer_caller.get_index());
+        EXPECT_TRUE(ygg::EqualTo<ext::MemoryStateView> {}(materialized_outer->get_return_memory_state(), outer_return));
+        EXPECT_FALSE(materialized_outer->get_caller());
+        EXPECT_EQ(executions.template size<ext::CallStack>(), 2);
+    };
+    check.template operator()<tyr::GroundTag>();
+    check.template operator()<tyr::LiftedTag>();
+}
+
 TEST(RunirTests, ExtChooseUsesNaturalBindingOrder)
 {
     namespace ext = kr::ps::ext;

@@ -7,10 +7,7 @@
 #include "runir/kr/ps/ext/execution_repository.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
 
-#include <cassert>
-#include <cstddef>
 #include <optional>
-#include <span>
 #include <tuple>
 #include <type_traits>
 #include <tyr/formalism/object_view.hpp>
@@ -203,45 +200,6 @@ public:
     auto get_arguments() const noexcept { return make_view(get_data().arguments, get_repository(*m_context).get_denotation_repository()); }
 };
 
-/// Borrows a nonempty prefix of saved frames; caller views shorten that prefix without copying it.
-template<typename C>
-class View<Builder<runir::kr::ps::ext::CallStack>, C>
-{
-    const Builder<runir::kr::ps::ext::CallStack>* m_handle;
-    const C* m_context;
-    std::size_t m_size;
-
-    View(const Builder<runir::kr::ps::ext::CallStack>& handle, const C& context, std::size_t size) noexcept :
-        m_handle(&handle),
-        m_context(&context),
-        m_size(size)
-    {
-        assert(m_size > 0 && m_size <= handle.frames.size());
-    }
-
-public:
-    View(const Builder<runir::kr::ps::ext::CallStack>& handle, const C& context) noexcept : View(handle, context, handle.frames.size()) {}
-
-    const auto& get_data() const noexcept { return *m_handle; }
-    const auto& get_handle() const noexcept { return *m_handle; }
-    const auto& get_context() const noexcept { return *m_context; }
-    auto get_frames() const noexcept { return std::span<const Builder<runir::kr::ps::ext::CallStack>::Frame>(get_data().frames.data(), m_size); }
-    auto get_module() const noexcept { return make_view(get_frames().back().module_, get_repository(*m_context).get_program_repository()); }
-    auto get_return_memory_state() const noexcept
-    {
-        return make_view(get_frames().back().return_memory_state, get_repository(*m_context).get_program_repository());
-    }
-    auto get_registers() const noexcept { return make_view(get_frames().back().registers, get_repository(*m_context).get_formalism_repository()); }
-    auto get_arguments() const noexcept { return make_view(get_frames().back().arguments, get_repository(*m_context).get_denotation_repository()); }
-
-    auto get_caller() const -> std::optional<View>
-    {
-        if (m_size == 1)
-            return std::nullopt;
-        return View(get_data(), *m_context, m_size - 1);
-    }
-};
-
 /// The builder may move when search buffers grow. Create this view only while its owner remains in place.
 template<tyr::TaskKind Kind, typename C>
 class View<Builder<runir::kr::ps::ext::ProgramState<Kind>>, C>
@@ -259,11 +217,11 @@ public:
     auto get_program() const noexcept { return make_view(get_data().program, get_repository(*m_context).get_program_repository()); }
     auto get_module_state() const noexcept { return make_view(get_data().module_state, *m_context); }
 
-    auto get_call_stack() const -> std::optional<View<Builder<runir::kr::ps::ext::CallStack>, C>>
+    auto get_call_stack() const -> std::optional<View<Index<runir::kr::ps::ext::CallStack>, C>>
     {
-        if (get_data().call_stack.frames.empty())
+        if (!get_data().call_stack)
             return std::nullopt;
-        return make_view(get_data().call_stack, *m_context);
+        return make_view(*get_data().call_stack, *m_context);
     }
 };
 
