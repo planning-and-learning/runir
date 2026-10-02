@@ -21,7 +21,7 @@ template<CategoryTag Category>
 void bind_constructor_data(nb::module_& m, const char* name)
 {
     using Data = ygg::Data<Constructor<runir::kr::UnsFamilyTag, Category>>;
-    auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
+    auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index).def_rw("variant", &Data::variant);
     ygg::add_comparison(cls);
 }
 

@@ -1,6 +1,8 @@
 # Import all classes for better IDE support
 
 from ....._pyrunir.kr.dl.uns.semantics import (
+    ConstructorRepository,
+    ConstructorRepositoryFactory,
     QueryColumn,
     QueryColumnData,
     QueryColumnIndex,

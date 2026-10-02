@@ -1,5 +1,4 @@
 #include "bindings.hpp"
-#include "pyrunir/kr/binding_utils.hpp"
 
 #include <runir/kr/dl/argument_data.hpp>
 #include <runir/kr/dl/argument_view.hpp>
@@ -10,8 +9,6 @@
 
 namespace runir::kr::dl::ext
 {
-
-using namespace nanobind::literals;
 
 namespace
 {
@@ -46,7 +43,7 @@ void bind_argument_view(nb::module_& m, const char* name)
 
 }  // namespace
 
-void bind_argument(nb::module_& m, RepositoryBinding& repository)
+void bind_argument(nb::module_& m)
 {
     using Concept = Argument<ConceptTag>;
     using Role = Argument<RoleTag>;
@@ -70,11 +67,6 @@ void bind_argument(nb::module_& m, RepositoryBinding& repository)
     bind_argument_view<RoleTag>(m, "RoleArgument");
     bind_argument_view<BooleanTag>(m, "BooleanArgument");
     bind_argument_view<NumericalTag>(m, "NumericalArgument");
-
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<Concept, ExtConstructorRepository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<Role, ExtConstructorRepository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<Boolean, ExtConstructorRepository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<Numerical, ExtConstructorRepository>, "data"_a, nb::keep_alive<0, 1>());
 }
 
 }  // namespace runir::kr::dl::ext

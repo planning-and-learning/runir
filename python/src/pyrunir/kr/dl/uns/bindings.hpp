@@ -8,7 +8,6 @@ namespace runir::kr::dl::uns
 
 void bind_constructor(nb::module_& m);
 void bind_parser(nb::module_& m);
-void bind_repository(nb::module_& m);
 
 }  // namespace runir::kr::dl::uns
 

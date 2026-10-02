@@ -282,3 +282,45 @@ def test_query_column_views_use_caller_owned_repository(gripper_planning_domain)
     columns = columns_after_owner_scope()
     gc.collect()
     assert [column.get_name() for column in columns] == ["ball", "room", "ball", "ball"]
+
+
+def test_native_ext_query_construction_derives_schema_and_evaluates(
+    gripper_planning_domain, ground_gripper_search_context
+):
+    domain = DomainContext(gripper_planning_domain)
+    repository = domain.ext_repository.get_dl_repository()
+    program = parse_program(
+        '(:program (:entry root) (:module (:symbol root) (:arguments) (:registers) '
+        '(:entry m0) (:memory m0) (:features (:numerical (:symbol count) '
+        '(:expression (n_count (q_join (q_atomic_state "at" (ball room)) '
+        '(q_concept room (c_atomic_state "at-robby"))))))) (:rules)))',
+        gripper_planning_domain,
+        domain.ext_repository,
+    )
+    expression = program.get_entry_module().get_numerical_features()[0].get_expression()
+    original = expression.get_variant().get_arg().get_variant()
+    join_data = ext_semantics.QueryJoinData()
+    join_data.lhs = original.get_rhs().get_index()
+    join_data.rhs = original.get_lhs().get_index()
+    joined = repository.get_or_create(join_data)
+    assert [column.get_name() for column in joined.get_columns()] == ["room", "ball"]
+    query_data = ext_semantics.QueryData()
+    query_data.variant = joined.get_index()
+    query = repository.get_or_create(query_data)
+    count_data = ext_semantics.NumericalCountData()
+    count_data.arg = query.get_index()
+    count = repository.get_or_create(count_data)
+    numerical_data = ext_semantics.NumericalData()
+    numerical_data.variant = count.get_index()
+    rewritten = repository.get_or_create(numerical_data)
+
+    search = ground_gripper_search_context
+    task = GroundTaskContext(domain, search)
+    state = search.state_repository.get_initial_state(search.axiom_evaluator)
+    caches = ext_semantics.DenotationCaches(task.dl_denotation_repository)
+    arguments = task.dl_denotation_repository.get_or_create(semantics.CallArgumentsData())
+    registers = task.dl_denotation_repository.get_or_create(semantics.RegisterValuesData())
+    context = ext_semantics.GroundStateEvaluationContext(
+        state, task.dl_builder, task.dl_denotation_repository, caches, arguments, registers
+    )
+    assert rewritten.evaluate(context).get() == expression.evaluate(context).get() == 2

@@ -12,7 +12,9 @@
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
 #include <tyr/planning/ground/state_view.hpp>
+#include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/state_view.hpp>
+#include <tyr/planning/lifted/task.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -21,6 +23,17 @@ namespace runir::kr::dl::base
 
 namespace
 {
+
+template<typename... Types>
+void bind_constructors(nb::class_<BaseConstructorRepository>& repository, ygg::TypeList<Types...>)
+{
+    (repository.def(
+         "get_or_create",
+         [](BaseConstructorRepository& self, ygg::Data<Types>& data) { return runir::kr::dl::get_or_create(self, data).first; },
+         nb::arg("data"),
+         nb::keep_alive<0, 1>()),
+     ...);
+}
 
 template<tyr::TaskKind Kind>
 void bind_state_evaluation_context(nb::module_& m, const char* name)
@@ -49,6 +62,28 @@ void bind_state_evaluation_context(nb::module_& m, const char* name)
 
 void bind_semantics_repositories(nb::module_& m)
 {
+    auto repository = nb::class_<runir::kr::dl::BaseConstructorRepository>(m, "ConstructorRepository");
+    repository.def("clear", &runir::kr::dl::BaseConstructorRepository::clear).def("get_index", &runir::kr::dl::BaseConstructorRepository::get_index);
+    bind_constructors(repository, FamilyConstructorRepositoryTypes<runir::kr::BaseFamilyTag> {});
+
+    auto factory = nb::class_<runir::kr::dl::BaseConstructorRepositoryFactory>(m, "ConstructorRepositoryFactory");
+    factory.def(nb::init<>())
+        .def(
+            "create",
+            [](runir::kr::dl::BaseConstructorRepositoryFactory& self, tyr::formalism::planning::PlanningDomain planning_domain)
+            { return self.create(planning_domain.get_repository()); },
+            nb::arg("planning_domain"))
+        .def(
+            "create",
+            [](runir::kr::dl::BaseConstructorRepositoryFactory& self, const tyr::planning::Task<tyr::GroundTag>& task)
+            { return self.create(task.get_repository()); },
+            nb::arg("ground_task"))
+        .def(
+            "create",
+            [](runir::kr::dl::BaseConstructorRepositoryFactory& self, const tyr::planning::Task<tyr::LiftedTag>& task)
+            { return self.create(task.get_repository()); },
+            nb::arg("lifted_task"));
+
     using CallArgumentsData = ygg::Data<semantics::CallArguments>;
     using RegisterValuesData = ygg::Data<semantics::RegisterValues>;
     using CallArgumentsView = semantics::CallArgumentsView;
@@ -110,18 +145,6 @@ void bind_semantics_repositories(nb::module_& m)
 
     bind_state_evaluation_context<tyr::GroundTag>(m, "GroundStateEvaluationContext");
     bind_state_evaluation_context<tyr::LiftedTag>(m, "LiftedStateEvaluationContext");
-
-    auto cls = nb::class_<runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>(m, "ConstructorRepository");
-    cls.def("clear", &runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>::clear)
-        .def("get_index", &runir::kr::dl::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>::get_index);
-
-    auto factory = nb::class_<runir::kr::dl::ConstructorRepositoryFactoryFor<runir::kr::BaseFamilyTag>>(m, "ConstructorRepositoryFactory");
-    factory.def(nb::init<>())
-        .def(
-            "create",
-            [](runir::kr::dl::ConstructorRepositoryFactoryFor<runir::kr::BaseFamilyTag>& self, tyr::formalism::planning::PlanningDomain planning_domain)
-            { return self.create(planning_domain.get_repository()); },
-            nb::arg("planning_domain"));
 }
 
 }  // namespace runir::kr::dl::base

@@ -1,5 +1,4 @@
 #include "bindings.hpp"
-#include "pyrunir/kr/binding_utils.hpp"
 
 #include <runir/kr/dl/register_data.hpp>
 #include <runir/kr/dl/register_view.hpp>
@@ -10,8 +9,6 @@
 
 namespace runir::kr::dl::ext
 {
-
-using namespace nanobind::literals;
 
 namespace
 {
@@ -46,7 +43,7 @@ void bind_register_view(nb::module_& m, const char* name)
 
 }  // namespace
 
-void bind_register(nb::module_& m, RepositoryBinding& repository)
+void bind_register(nb::module_& m)
 {
     using Concept = Register<ConceptTag>;
     using Role = Register<RoleTag>;
@@ -60,9 +57,6 @@ void bind_register(nb::module_& m, RepositoryBinding& repository)
     bind_register_data<RoleTag>(m, "RoleRegisterData");
     bind_register_view<ConceptTag>(m, "ConceptRegister");
     bind_register_view<RoleTag>(m, "RoleRegister");
-
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<Concept, ExtConstructorRepository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<Role, ExtConstructorRepository>, "data"_a, nb::keep_alive<0, 1>());
 }
 
 }  // namespace runir::kr::dl::ext

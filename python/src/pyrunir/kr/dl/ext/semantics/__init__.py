@@ -1,6 +1,8 @@
 # Import all classes for better IDE support
 
 from ....._pyrunir.kr.dl.ext.semantics import (
+    ConstructorRepository,
+    ConstructorRepositoryFactory,
     NumericalConstant,
     NumericalConstantData,
     NumericalConstantIndex,
