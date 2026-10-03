@@ -47,8 +47,8 @@ def test_repository_constructs_queries_and_semantic_wrappers(
     search = ground_gripper_search_context
     task = GroundTaskContext(DomainContext(gripper_planning_domain), search)
     state = search.state_repository.get_initial_state(search.axiom_evaluator)
-    caches = semantics.DenotationCaches(task.dl_denotation_repository)
-    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository, caches)
+    storage = semantics.EvaluationStorage(task.dl_denotation_repository)
+    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, storage)
     assert numerical.evaluate(context).get() == sum(1 for _ in constructor.evaluate(context))
     assert boolean.evaluate(context).get() is True
 

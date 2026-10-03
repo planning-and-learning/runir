@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_EXT_COMPATIBILITY_HPP_
 
 #include "runir/kr/ps/compatibility.hpp"
+#include "runir/kr/ps/ext/evaluation_environment.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 #include "runir/kr/ps/ext/rule_view.hpp"
 
@@ -22,6 +23,22 @@ bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, Contex
             return false;
 
     return true;
+}
+
+template<RuleKind RuleKindT, typename C, typename S>
+bool has_current_source(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, S state)
+{
+    return rule.get_source().get_index() == state.get_module_state().get_memory_state().get_index();
+}
+
+// Reject the source memory before evaluating conditions in the reusable environment.
+template<tyr::TaskKind Kind, RuleKind RuleKindT, typename C, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+bool rule_is_applicable(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, S state, const PS& planning_state, EvaluationEnvironment<Kind>& environment)
+{
+    if (!has_current_source(rule, state))
+        return false;
+    auto state_context = environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
+    return conditions_are_compatible(rule, state_context);
 }
 
 template<RuleKind Kind, typename C, typename Context>

@@ -5,7 +5,6 @@
 #include <vector>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/database/operations.hpp>
-#include <yggdrasil/database/relation_pool.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -15,7 +14,6 @@ class EvaluationWorkspace
 private:
     std::vector<ygg::uint_t> m_distance_queue;
     std::vector<ygg::uint_t> m_distance_values;
-    ygg::database::RelationPool<> m_relations;
     ygg::database::Workspace<> m_database_workspace;
 
 public:
@@ -30,7 +28,6 @@ public:
 
     auto& get_distance_queue() noexcept { return m_distance_queue; }
     auto& get_distance_values() noexcept { return m_distance_values; }
-    auto& get_relations() noexcept { return m_relations; }
     auto& get_database_workspace() noexcept { return m_database_workspace; }
 };
 

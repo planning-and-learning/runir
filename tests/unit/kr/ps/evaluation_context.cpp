@@ -16,9 +16,15 @@ constexpr bool mapped_context()
     using Context = kr::ps::dl::TransitionEvaluationContext<Family, Kind>;
     using DlFamily = typename kr::ps::PsFamilyTraits<Family>::DlFamily;
     using StateContext = kr::dl::semantics::StateEvaluationContext<DlFamily, Kind>;
+    using ResultContext = decltype(std::declval<const StateContext&>().for_result(false));
+    using ChildContext = decltype(std::declval<const StateContext&>().child_context());
     return kr::ps::IsTransitionEvaluationContext<Family, kr::DlTag, Context>
            && std::same_as<decltype(std::declval<Context&>().get_source_context()), StateContext&>
-           && std::same_as<decltype(std::declval<Context&>().get_target_context()), StateContext&>;
+           && std::same_as<decltype(std::declval<Context&>().get_target_context()), StateContext&>
+           && kr::dl::semantics::StateEvaluationContextConcept<ResultContext, DlFamily>
+           && kr::dl::semantics::StateEvaluationContextConcept<ChildContext, DlFamily> && std::same_as<typename ResultContext::KindType, Kind>
+           && std::same_as<typename ChildContext::KindType, Kind>
+           && (!std::same_as<DlFamily, kr::ExtFamilyTag> || (std::same_as<ResultContext, StateContext> && std::same_as<ChildContext, StateContext>) );
 }
 
 static_assert(mapped_context<kr::BaseFamilyTag, tyr::GroundTag>());

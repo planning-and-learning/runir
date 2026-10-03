@@ -137,6 +137,7 @@ Runir is designed for experiments where a learning system needs structured acces
 Extended policies support [query features and Action rules](docs/action-rules.md)
 for selecting complete action tuples and checking declared effect contracts.
 Their [proof search](docs/proof-search.md) combines lazy Choose exploration with incremental AND/OR success propagation.
+See [KR evaluation storage](docs/kr-evaluation.md) for result bindings, view lifetimes, and internal rule evaluators.
 
 [Indexical concept policies](docs/concept-policies.md) are available as the separate
 `icp` family, with Ext features, Load and Crule effects, concept histories, and

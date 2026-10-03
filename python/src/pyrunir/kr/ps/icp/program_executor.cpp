@@ -75,6 +75,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
             "program_state"_a,
             nb::keep_alive<0, 1>(),
             nb::keep_alive<0, 2>())
+        .def("reset_source", &Environment::reset_source)
+        .def("reset_target", &Environment::reset_target)
         .def("get_dl_caches", &Environment::get_dl_caches, nb::rv_policy::reference_internal)
         .def("get_dl_target_caches", &Environment::get_dl_target_caches, nb::rv_policy::reference_internal);
 

@@ -17,6 +17,23 @@
 namespace runir::kr::ps::ext
 {
 
+template<typename Storage, tyr::planning::StateViewConcept S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
+auto make_module(Storage& storage,
+                 const S& planning_state,
+                 ModuleView module_,
+                 MemoryStateView memory_state,
+                 R registers,
+                 runir::kr::dl::semantics::CallArgumentsView arguments)
+{
+    auto result = storage.module_();
+    storage.set_planning_state(*result, planning_state);
+    result->module_ = module_.get_index();
+    result->memory_state = memory_state.get_index();
+    storage.set_registers(*result, registers);
+    result->arguments = arguments.get_index();
+    return result;
+}
+
 /// Repository-backed construction used when the full explored graph is retained.
 template<tyr::TaskKind Kind>
 class InternedExecutionStorage
@@ -77,10 +94,7 @@ public:
                                                                 *search.state_repository,
                                                                 *search.axiom_evaluator) };
     }
-    void set_planning_state(ygg::Data<ModuleState<Kind>>& target, tyr::planning::StateView<Kind> state)
-    {
-        target.state = state.get_index();
-    }
+    void set_planning_state(ygg::Data<ModuleState<Kind>>& target, tyr::planning::StateView<Kind> state) { target.state = state.get_index(); }
 };
 
 namespace detail
@@ -94,6 +108,23 @@ materialize_register_values(R registers, runir::kr::dl::semantics::Builder& buil
     data->concept_values = registers.get_data().concept_values;
     data->role_values = registers.get_data().role_values;
     return runir::kr::dl::semantics::get_or_create(repository, *data).first;
+}
+
+template<tyr::TaskKind Kind, typename Storage, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+auto planning_step(Storage& storage,
+                   S state,
+                   const tyr::planning::LabeledNode<PS>& successor,
+                   RuleVariantView rule,
+                   MemoryStateView memory_state,
+                   const runir::kr::TaskContextPtr<Kind>& task_context)
+{
+    const auto module_ = state.get_module_state();
+    auto target = make_module(storage, successor.node.get_state(), module_.get_module(), memory_state, module_.get_registers(), module_.get_arguments());
+    auto step = applied(storage.store(std::move(target), state.get_call_stack()), rule, task_context);
+    if constexpr (requires { successor.pack(); })
+        step.planning_successor = successor.pack();
+    step.state_transition = datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) };
+    return step;
 }
 
 }  // namespace detail
@@ -178,21 +209,20 @@ public:
                                                  detail::materialize_register_values(module_.get_registers(), dl_builder, denotations).get_index(),
                                                  module_.get_arguments().get_index());
         auto program = ygg::Data<ProgramState<Kind>>(m_program.get_index(),
-                                                    get_or_create(*m_context->execution_repository, data).first.get_index(),
-                                                    state.get_data().call_stack);
+                                                     get_or_create(*m_context->execution_repository, data).first.get_index(),
+                                                     state.get_data().call_stack);
         return get_or_create(*m_context->execution_repository, program).first;
     }
 
     auto save_caller(BuilderProgramStateView<Kind> state, MemoryStateView return_state)
     {
         const auto module_ = state.get_module_state();
-        const auto registers =
-            detail::materialize_register_values(module_.get_registers(), m_context->dl_builder, *m_context->dl_denotation_repository);
+        const auto registers = detail::materialize_register_values(module_.get_registers(), m_context->dl_builder, *m_context->dl_denotation_repository);
         auto saved = ygg::Data<CallStack>(module_.get_module().get_index(),
-                                         return_state.get_index(),
-                                         registers.get_index(),
-                                         module_.get_arguments().get_index(),
-                                         state.get_data().call_stack);
+                                          return_state.get_index(),
+                                          registers.get_index(),
+                                          module_.get_arguments().get_index(),
+                                          state.get_data().call_stack);
         return get_or_create(*m_context->execution_repository, saved).first;
     }
 
@@ -208,10 +238,7 @@ public:
                                                                 m_planning,
                                                                 *search.axiom_evaluator) };
     }
-    void set_planning_state(ygg::Builder<ModuleState<Kind>>& target, tyr::planning::BuilderStateView<Kind> state)
-    {
-        target.state = state.get_state_builder();
-    }
+    void set_planning_state(ygg::Builder<ModuleState<Kind>>& target, tyr::planning::BuilderStateView<Kind> state) { target.state = state.get_state_builder(); }
 };
 
 #ifndef RUNIR_HEADER_INSTANTIATION

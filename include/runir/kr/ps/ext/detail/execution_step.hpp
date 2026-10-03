@@ -77,6 +77,20 @@ public:
     const auto& get_rule() const noexcept { return rule; }
 };
 
+template<tyr::TaskKind Kind, StoredProgramStateConcept<Kind> S>
+ProgramStep<Kind, S> make_step(ProgramOutcome status, S state, const runir::kr::TaskContextPtr<Kind>& task_context)
+{
+    return ProgramStep<Kind, S>(status, std::move(state), task_context);
+}
+
+template<tyr::TaskKind Kind, StoredProgramStateConcept<Kind> S>
+ProgramStep<Kind, S> applied(S state, RuleVariantView rule, const runir::kr::TaskContextPtr<Kind>& task_context)
+{
+    auto step = make_step(ProgramOutcome::APPLIED, std::move(state), task_context);
+    step.rule = rule;
+    return step;
+}
+
 /// Retains candidate bindings while child evaluations clear their denotation caches.
 /// The expander owns the binding pool and must outlive the choice in every memorization mode.
 template<runir::kr::dl::CategoryTag Category>

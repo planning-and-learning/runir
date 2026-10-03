@@ -197,9 +197,9 @@ void expect_borrowed_query_evaluation()
     {
         const auto rows = kr::ps::evaluate(feature, state_context);
         ASSERT_EQ(rows.size(), 1);
-        EXPECT_EQ(&kr::ps::evaluate(feature, state_context).storage(), &rows.storage());
+        EXPECT_EQ(kr::ps::evaluate(feature, state_context).get_storage_address(), rows.get_storage_address());
         const auto& cached = environment.get_dl_caches().get_queries(false).at(query);
-        EXPECT_EQ(&rows.storage(), &cached.storage());
+        EXPECT_EQ(rows.get_storage_address(), cached.get_storage_address());
         EXPECT_EQ(rows.columns().data(), cached.columns().data());
         EXPECT_TRUE(std::ranges::equal(rows.columns(), query.get_schema()));
 
@@ -215,15 +215,15 @@ void expect_borrowed_query_evaluation()
             const auto target_rows = kr::ps::evaluate(feature, transition.get_target_context());
             ASSERT_EQ(target_rows.size(), 1);
             EXPECT_NE(target_rows[0][0], rows[0][0]);
-            EXPECT_NE(&target_rows.storage(), &rows.storage());
+            EXPECT_NE(target_rows.get_storage_address(), rows.get_storage_address());
         }
         EXPECT_TRUE(environment.get_dl_target_caches().get_queries(false).contains(query));
-        environment.get_dl_target_caches().clear(false);
+        environment.reset_target();
         EXPECT_TRUE(environment.get_dl_caches().get_queries(false).contains(query));
         EXPECT_EQ(rows.size(), 1);
-        EXPECT_EQ(&kr::ps::evaluate(feature, state_context).storage(), &rows.storage());
+        EXPECT_EQ(kr::ps::evaluate(feature, state_context).get_storage_address(), rows.get_storage_address());
     }
-    environment.get_dl_caches().clear(false);
+    environment.reset_source();
     EXPECT_TRUE(environment.get_dl_caches().get_queries(false).empty());
     const auto rebuilt = kr::ps::evaluate(feature, state_context);
     EXPECT_EQ(rebuilt.size(), 1);
@@ -1380,6 +1380,15 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     EXPECT_TRUE(reached_move_target);
     EXPECT_TRUE(reached_pick_target);
 
+    // Explicit application also accepts a rule created after the program was prepared.
+    auto external_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(std::string("external"), pick_rule.get_index());
+    const auto external_rule = repository->get_or_create(external_data).first;
+    const auto external = expander.apply(expander.initial_state(planning_node.get_state()), external_rule, steps.front().planning_successor->unpack());
+    ASSERT_TRUE(external);
+    ASSERT_TRUE(external->rule);
+    EXPECT_EQ(external->rule->get_index(), external_rule.get_index());
+    EXPECT_EQ(external->get_target().get_module_state().get_memory_state().get_index(), pick_target.get_index());
+
     auto greedy_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
     const auto greedy = kr::ps::ext::find_solution(task_context, program, greedy_options);
     auto universal_options = kr::ps::ext::ProgramSearchOptions<tyr::GroundTag> {};
@@ -1389,6 +1398,46 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     ASSERT_TRUE(universal.graph);
     ASSERT_EQ(greedy.graph->get_out_degree(0), 1);
     EXPECT_EQ(universal.graph->get_out_degree(0), steps.size());
+}
+
+TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossRepositories)
+{
+    namespace ext = kr::ps::ext;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto context = create_task_context<tyr::GroundTag>(directory / "domain.pddl", directory / "task.pddl");
+    const auto foreign_context = kr::DomainContext::create(context->search_context->task->get_domain());
+    const auto make_module = [&](ext::Repository& repository, const char* target)
+    {
+        return ext::dl::parse_module(fmt::format(R"((:module (:symbol policy) (:arguments) (:registers)
+                (:entry source) (:memory source prepared external)
+                (:features)
+                (:rules (:rule (:symbol advance) (:expression
+                    (:source-memory source) (:target-memory {})
+                    (:sketch (:conditions) (:effects)))))))",
+                                                 target),
+                                     context->search_context->task->get_domain().get_domain(),
+                                     repository);
+    };
+    auto& repository = *context->domain_context->ext_repository;
+    const auto prepared_module = make_module(repository, "prepared");
+    const auto foreign_module = make_module(*foreign_context->ext_repository, "external");
+    const auto prepared_rule = prepared_module.get_memory_transitions()[0][0];
+    const auto foreign_rule = foreign_module.get_memory_transitions()[0][0];
+    ASSERT_EQ(prepared_rule.get_index(), foreign_rule.get_index());
+    ASSERT_NE(&prepared_rule.get_context(), &foreign_rule.get_context());
+
+    const auto program = create_program(repository, prepared_module, { prepared_module });
+    auto expander = ext::SuccessorExpander<tyr::GroundTag>(context, program);
+    const auto planning_node = initial_planning_node(expander);
+    const auto initial = expander.initial_state(planning_node.get_state());
+    const auto prepared = expander.apply(initial, prepared_rule);
+    const auto foreign = expander.apply(initial, foreign_rule);
+    ASSERT_TRUE(prepared);
+    ASSERT_TRUE(foreign);
+    ASSERT_TRUE(foreign->rule);
+    EXPECT_EQ(prepared->get_target().get_module_state().get_memory_state().get_name(), "prepared");
+    EXPECT_EQ(foreign->get_target().get_module_state().get_memory_state().get_name(), "external");
+    EXPECT_EQ(&foreign->rule->get_context(), &foreign_rule.get_context());
 }
 
 namespace

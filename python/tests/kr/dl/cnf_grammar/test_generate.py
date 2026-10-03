@@ -38,10 +38,10 @@ def _generate(grammar_description, states, planning_domain, task_context, max_sy
 
 def _concept_vector(concept, states, task_context):
     result = []
-    cache = semantics.DenotationCaches(task_context.dl_denotation_repository)
+    storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
     for state in states:
-        cache.clear(False)
-        context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository, cache)
+        storage.reset_dynamic()
+        context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
         result.append(tuple(sorted(object_.get_name() for object_ in concept.evaluate(context))))
     return tuple(result)
 
@@ -62,8 +62,8 @@ def test_generate_ground_and_cached_evaluation(gripper_data_dir) -> None:
     assert result.statistics.num_pruned == 0
     assert result.statistics.num_kept == 4
 
-    cache = semantics.DenotationCaches(task_context.dl_denotation_repository)
-    context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository, cache)
+    storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
+    context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
     assert len(list(result.concepts[0].evaluate(context))) == 6
     assert len(list(result.roles[0].evaluate(context))) == 36
     assert result.booleans[0].evaluate(context).get() is True
@@ -90,8 +90,8 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
 
     denotation_repository = task_context.dl_denotation_repository
     result = cnf_grammar.generate_lifted(cnf, [state], output_repository, denotation_repository, options)
-    cache = semantics.DenotationCaches(task_context.dl_denotation_repository)
-    context = semantics.LiftedStateEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository, cache)
+    storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
+    context = semantics.LiftedStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
     assert len(list(result.concepts[0].evaluate(context))) == 6
     assert result.numericals[0].evaluate(context).get() == 6
 
@@ -111,7 +111,8 @@ def test_generate_lifted_uses_domain_constructors_and_task_denotations(gripper_d
     foreign_state = foreign_search.state_repository.get_initial_state(foreign_search.axiom_evaluator).pack()
     foreign_context = LiftedTaskContext(DomainContext(foreign_parser.get_domain()), foreign_search)
     with pytest.raises(ValueError, match="repository for the same planning task"):
-        result.concepts[0].evaluate(context, foreign_context.dl_denotation_repository)
+        foreign_storage = semantics.EvaluationStorage(foreign_context.dl_denotation_repository)
+        semantics.LiftedStateEvaluationContext(state.unpack(), task_context.dl_builder, foreign_storage)
     with pytest.raises(ValueError, match="states and output repository for the same planning domain"):
         cnf_grammar.generate_lifted(cnf, [foreign_state], output_repository, denotation_repository, options)
 
@@ -133,10 +134,10 @@ def test_distance_evaluation_handles_shortest_zero_and_infinity(gripper_data_dir
         4,
     )
 
-    cache = semantics.DenotationCaches(task_context.dl_denotation_repository)
-    context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, task_context.dl_denotation_repository, cache)
+    storage = semantics.EvaluationStorage(task_context.dl_denotation_repository)
+    context = semantics.GroundStateEvaluationContext(state.unpack(), task_context.dl_builder, storage)
     values = [feature.evaluate(context).get() for feature in result.numericals]
-    cache.clear()
+    storage.reset_all()
     refreshed_values = [feature.evaluate(context).get() for feature in result.numericals]
 
     assert values == [1, 0, 2**32 - 1]

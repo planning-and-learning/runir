@@ -169,11 +169,11 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
 
     environment = environment_type(task_context, program)
     references = sys.getrefcount(environment)
-    caches = environment.get_dl_caches()
-    target_caches = environment.get_dl_target_caches()
-    assert caches is not target_caches
+    storage = environment.get_dl_caches()
+    target_storage = environment.get_dl_target_caches()
+    assert storage is not target_storage
     assert sys.getrefcount(environment) > references
-    del caches, target_caches
+    del storage, target_storage
     dl_context = environment.make_dl_context(loaded)
     booleans = {feature.get_symbol(): feature for feature in frame.module.get_boolean_features()}
     numericals = {feature.get_symbol(): feature for feature in frame.module.get_numerical_features()}
@@ -219,10 +219,10 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
     other_concept = collect_steps(expander, child)[1].target
     other_frame = collect_steps(expander, other_concept)[0].target
     assert other_frame.state == loaded.state
-    environment.get_dl_caches().clear(False)
+    environment.reset_source()
     other_dl_context = environment.make_dl_context(other_frame)
     assert ext.evaluate(booleans["selected_goal_ball"], other_dl_context).get() is True
-    environment.get_dl_caches().clear(False)
+    environment.reset_source()
     assert ext.evaluate(booleans["selected_goal_ball"], dl_context).get() is False
     del child, other_concept, other_frame, other_dl_context
 
@@ -232,7 +232,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         if step.state_transition.action.get_relation().get_name() == "move"
         and step.state_transition.action.get_objects()[-1].get_name() == "roomb"
     )
-    environment.get_dl_caches().clear(False)
+    environment.reset_source()
     dl_context = environment.make_dl_context(moved)
     assert ext.evaluate(numericals["nearby_balls"], dl_context).get() == 0
     assert ext.evaluate(numericals["argument_count"], dl_context).get() == 2
@@ -240,7 +240,7 @@ def test_evaluation_restores_arguments_registers_and_owns_dependencies(
         name: ext.evaluate(feature, dl_context).get()
         for name, feature in booleans.items()
     } == expected_booleans
-    environment.get_dl_caches().clear(False)
+    environment.reset_source()
     dl_context = environment.make_dl_context(loaded)
     assert ext.evaluate(numericals["nearby_balls"], dl_context).get() == 2
 
@@ -306,7 +306,7 @@ def test_state_evaluation_contexts_borrow_distinct_call_arguments(
     del loaded, initial
     gc.collect()
     for position in (0, 1, 0):
-        environment.get_dl_caches().clear(False)
+        environment.reset_source()
         assert ext.evaluate(features[position], contexts[position]).get() == 2
 
 
@@ -347,9 +347,9 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     assert repository.get_or_create(registers) == register_view == loaded.module_state.registers
     assert len({argument_view, loaded.module_state.arguments}) == 1
     assert len({register_view, loaded.module_state.registers}) == 1
-    caches = semantics.DenotationCaches(repository)
+    storage = semantics.EvaluationStorage(repository)
     context = getattr(semantics, f"{kind.title()}StateEvaluationContext")(
-        loaded.state, task_context.dl_builder, repository, caches, argument_view, register_view,
+        loaded.state, task_context.dl_builder, storage, argument_view, register_view,
     )
     assert ext.evaluate(features["argument_count"], context).get() == 2
     assert ext.evaluate(features["concept_register_size"], context).get() == 1
@@ -358,18 +358,18 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     registers.role_values = [None] * 6
     empty_register_view = repository.get_or_create(registers)
     assert empty_register_view != register_view
-    caches.clear(False)
+    storage.reset_dynamic()
     assert ext.evaluate(features["concept_register_size"], context).get() == 1
     assert ext.evaluate(features["role_register_size"], context).get() == 1
     context = getattr(semantics, f"{kind.title()}StateEvaluationContext")(
-        loaded.state, task_context.dl_builder, repository, caches, argument_view, empty_register_view,
+        loaded.state, task_context.dl_builder, storage, argument_view, empty_register_view,
     )
-    caches.clear(False)
+    storage.reset_dynamic()
     assert ext.evaluate(features["concept_register_size"], context).get() == 0
     assert ext.evaluate(features["role_register_size"], context).get() == 0
     del arguments, registers, argument_view, register_view, empty_register_view
     gc.collect()
-    caches.clear(False)
+    storage.reset_dynamic()
     assert ext.evaluate(features["argument_count"], context).get() == 2
 
 

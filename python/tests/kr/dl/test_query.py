@@ -9,6 +9,7 @@ from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_program
 from pyrunir.kr.uns.dl import parse_classifier
 from pyrunir.serialization import register_table, serialize, table
+from pyyggdrasil.database import RelationRepository, RelationView
 from pyyggdrasil.serialization import Dictionaries
 
 
@@ -58,21 +59,41 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
 
     task = GroundTaskContext(context, ground_gripper_search_context)
     state = ground_gripper_search_context.state_repository.get_initial_state(ground_gripper_search_context.axiom_evaluator)
-    caches = module.DenotationCaches(task.dl_denotation_repository)
+    storage = module.EvaluationStorage(task.dl_denotation_repository)
     with pytest.raises(TypeError):
         module.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository)
     bindings = (
         task.dl_denotation_repository.get_or_create(semantics.CallArgumentsData()),
         task.dl_denotation_repository.get_or_create(semantics.RegisterValuesData()),
     ) if family == "ext" else ()
-    evaluation_context = module.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository, caches, *bindings)
+    evaluation_context = module.GroundStateEvaluationContext(state, task.dl_builder, storage, *bindings)
     assert expression.evaluate(evaluation_context).get() is True
-    retained = expression.evaluate(evaluation_context, task.dl_denotation_repository)
-    caches.clear(False)
+    persistent_caches = module.DenotationCaches()
+    repository = task.dl_denotation_repository
+    retained_context = module.GroundStateEvaluationContext(
+        state, task.dl_builder, persistent_caches, repository, storage, *bindings
+    )
+    retained = expression.evaluate(retained_context)
+    retained_query = expression.get_variant().get_arg().evaluate(retained_context)
+    relations = task.dl_denotation_repository.get_relation_repository()
+    assert isinstance(relations, RelationRepository)
+    assert isinstance(retained_query, RelationView)
+    assert relations.rename(retained_query, list(retained_query.columns())) == retained_query
+    retained_rows = {tuple(row) for row in retained_query}
+    with pytest.raises(TypeError):
+        expression.evaluate(evaluation_context, task.dl_denotation_repository)
+    storage.reset_dynamic()
     assert expression.evaluate(evaluation_context).get() is True
-    caches.clear(True)
+    storage.reset_all()
     assert retained.get() is True
+    assert {tuple(row) for row in retained_query} == retained_rows
     assert expression.evaluate(evaluation_context).get() is True
+    ordinary_query = expression.get_variant().get_arg().evaluate(evaluation_context)
+    del evaluation_context, retained_context, persistent_caches, storage, repository, relations, task, state, bindings
+    gc.collect()
+    assert retained.get() is True
+    assert {tuple(row) for row in retained_query} == retained_rows
+    assert {tuple(row) for row in ordinary_query} == retained_rows
 
     formatted = str(owner)
     assert source in formatted
@@ -202,8 +223,8 @@ def test_query_count_evaluation(gripper_planning_domain, ground_gripper_search_c
     search = ground_gripper_search_context
     task = GroundTaskContext(domain, search)
     state = search.state_repository.get_initial_state(search.axiom_evaluator)
-    caches = semantics.DenotationCaches(task.dl_denotation_repository)
-    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository, caches)
+    storage = semantics.EvaluationStorage(task.dl_denotation_repository)
+    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, storage)
     owner = _sketch(f"(n_count {query})", "numerical", gripper_planning_domain, domain)
     expression = owner.get_numerical_features()[0].get_expression()
     assert expression.evaluate(context).get() == expected
@@ -215,8 +236,8 @@ def test_concept_and_role_projection_bindings(gripper_planning_domain, ground_gr
     search = ground_gripper_search_context
     task = GroundTaskContext(domain, search)
     state = search.state_repository.get_initial_state(search.axiom_evaluator)
-    caches = semantics.DenotationCaches(task.dl_denotation_repository)
-    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository, caches)
+    storage = semantics.EvaluationStorage(task.dl_denotation_repository)
+    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, storage)
     atom = '(q_atomic_state "at" (ball room))'
     owner = parse_sketch(
         "(:sketch (:features "
@@ -244,15 +265,19 @@ def test_concept_and_role_projection_bindings(gripper_planning_domain, ground_gr
     assert str(role) == f"(r_project room ball {atom})"
 
     repository = task.dl_denotation_repository
-    saved_concept = concept.evaluate(context, repository)
-    saved_role = role.evaluate(context, repository)
-    saved_count = features["balls"].evaluate(context, repository)
-    saved_boolean = owner.get_boolean_features()[0].get_expression().evaluate(context, repository)
-    caches.clear()
-    assert concept.evaluate(context, repository) == saved_concept
-    assert role.evaluate(context, repository) == saved_role
-    assert features["balls"].evaluate(context, repository) == saved_count
-    assert owner.get_boolean_features()[0].get_expression().evaluate(context, repository) == saved_boolean
+    persistent_caches = semantics.DenotationCaches()
+    retained_context = semantics.GroundStateEvaluationContext(
+        state, task.dl_builder, persistent_caches, repository, storage
+    )
+    saved_concept = concept.evaluate(retained_context)
+    saved_role = role.evaluate(retained_context)
+    saved_count = features["balls"].evaluate(retained_context)
+    saved_boolean = owner.get_boolean_features()[0].get_expression().evaluate(retained_context)
+    storage.reset_all()
+    assert concept.evaluate(retained_context) == saved_concept
+    assert role.evaluate(retained_context) == saved_role
+    assert features["balls"].evaluate(retained_context) == saved_count
+    assert owner.get_boolean_features()[0].get_expression().evaluate(retained_context) == saved_boolean
     assert {value.get_name() for value in saved_concept} == {"ball1", "ball2"}
     assert {(lhs.get_name(), rhs.get_name()) for lhs, rhs in saved_role} == {
         ("rooma", "ball1"), ("rooma", "ball2"),
@@ -317,10 +342,10 @@ def test_native_ext_query_construction_derives_schema_and_evaluates(
     search = ground_gripper_search_context
     task = GroundTaskContext(domain, search)
     state = search.state_repository.get_initial_state(search.axiom_evaluator)
-    caches = ext_semantics.DenotationCaches(task.dl_denotation_repository)
+    storage = ext_semantics.EvaluationStorage(task.dl_denotation_repository)
     arguments = task.dl_denotation_repository.get_or_create(semantics.CallArgumentsData())
     registers = task.dl_denotation_repository.get_or_create(semantics.RegisterValuesData())
     context = ext_semantics.GroundStateEvaluationContext(
-        state, task.dl_builder, task.dl_denotation_repository, caches, arguments, registers
+        state, task.dl_builder, storage, arguments, registers
     )
     assert rewritten.evaluate(context).get() == expression.evaluate(context).get() == 2

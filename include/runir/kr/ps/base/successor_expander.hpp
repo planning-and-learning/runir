@@ -1,8 +1,7 @@
 #ifndef RUNIR_KR_PS_BASE_SUCCESSOR_EXPANDER_HPP_
 #define RUNIR_KR_PS_BASE_SUCCESSOR_EXPANDER_HPP_
 
-#include "runir/kr/ps/base/compatibility.hpp"
-#include "runir/kr/ps/base/evaluation_environment.hpp"
+#include "runir/kr/ps/base/detail/rule_evaluators.hpp"
 #include "runir/kr/ps/base/sketch_executor_data.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/task_context.hpp"
@@ -21,20 +20,14 @@ class SuccessorExpander
 {
 private:
     runir::kr::TaskContext<Kind>& m_task_context;
-    SketchView m_sketch;
-    EvaluationEnvironment<Kind> m_environment;
+    detail::RuleEvaluators<Kind> m_rules;
 
 public:
     using LabeledNode = tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>;
 
-    SuccessorExpander(runir::kr::TaskContext<Kind>& task_context, SketchView sketch) :
-        m_task_context(task_context),
-        m_sketch(sketch),
-        m_environment(task_context)
-    {
-    }
+    SuccessorExpander(runir::kr::TaskContext<Kind>& task_context, SketchView sketch) : m_task_context(task_context), m_rules(task_context, sketch) {}
 
-    auto& get_environment() noexcept { return m_environment; }
+    auto& get_environment() noexcept { return m_rules.get_environment(); }
 
     /// Call emit(successor, rule) for each successor permitted by its first matching rule.
     /// emit returning false or stop returning true ends enumeration; stop is also checked for rejected candidates.
@@ -48,7 +41,7 @@ public:
             return false;
 
         // All candidates share the source state, so its dynamic features are cached for this expansion.
-        m_environment.get_dl_caches().clear(false);
+        m_rules.begin_source();
         auto& search_context = *m_task_context.search_context;
         auto& generator = *search_context.successor_generator;
         // Tyr requires a Node, but policy expansion does not carry a path metric.
@@ -62,7 +55,7 @@ public:
                 LabeledNode { binding, generator.get_successor_node(node, binding, *search_context.state_repository, *search_context.axiom_evaluator) };
             ++statistics.num_generated;
 
-            const auto rule = matching_rule_until(state, successor.node.get_state(), stop);
+            const auto rule = m_rules.matching_rule(state, successor.node.get_state(), stop);
             if (stop())
                 return false;
             if (!rule)
@@ -75,28 +68,8 @@ public:
 
     std::optional<RuleView> matching_rule(const tyr::planning::StateView<Kind>& source_state, const tyr::planning::StateView<Kind>& target_state)
     {
-        m_environment.get_dl_caches().clear(false);
-        return matching_rule_until(source_state, target_state, [] { return false; });
-    }
-
-private:
-    // Reuse the prepared source cache; refresh dynamic target features for each candidate.
-    std::optional<RuleView>
-    matching_rule_until(const tyr::planning::StateView<Kind>& source_state, const tyr::planning::StateView<Kind>& target_state, auto&& stop)
-    {
-        if (source_state.get_index() == target_state.get_index())
-            return std::nullopt;
-
-        m_environment.get_dl_target_caches().clear(false);
-        auto transition_context = m_environment.make_dl_transition_context(source_state, target_state);
-        for (auto rule : m_sketch.get_rules())
-        {
-            if (stop())
-                return std::nullopt;
-            if (runir::kr::ps::base::is_compatible_with(rule, transition_context))
-                return rule;
-        }
-        return std::nullopt;
+        m_rules.begin_source();
+        return m_rules.matching_rule(source_state, target_state, [] { return false; });
     }
 };
 

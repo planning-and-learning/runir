@@ -318,6 +318,72 @@ void check_normalized_arguments()
     }
 }
 
+template<tyr::TaskKind Kind>
+void check_rule_evaluator_scheduling()
+{
+    auto context = make_context<Kind>("choose");
+    const auto policy = program(context, module(rule("first", "m0", "m1", move("Candidates")) + rule("second", "m0", "m2", move("Candidates"))));
+    auto expander = icp::SuccessorExpander<Kind>(context, policy);
+    const auto source = initial(expander);
+    const auto natural = successors(expander, source);
+    ASSERT_EQ(natural.size(), 4);
+    EXPECT_EQ(natural[0].rule, natural[1].rule);
+    EXPECT_EQ(natural[2].rule, natural[3].rule);
+    EXPECT_NE(natural[0].rule, natural[2].rule);
+
+    auto history_buffer = [&]
+    {
+        auto histories = icp::checkout<icp::Histories>(context->icp_execution_builder);
+        return histories->concepts.data();
+    };
+    const auto* reused_history_buffer = history_buffer();
+    ASSERT_NE(reused_history_buffer, nullptr);
+
+    // Repeated grouped expansions retain action-group and history scratch, while the
+    // public order remains binding-major and each rule still emits its own edge.
+    for (int repetition = 0; repetition < 3; ++repetition)
+    {
+        auto grouped = std::vector<typename icp::SuccessorExpander<Kind>::Step> {};
+        auto statistics = icp::ProgramSearchStatistics {};
+        EXPECT_TRUE(expander.for_each_successor(
+            source,
+            statistics,
+            [&](auto step)
+            {
+                grouped.push_back(std::move(step));
+                return true;
+            },
+            [] { return false; },
+            true));
+        ASSERT_EQ(grouped.size(), 4);
+        EXPECT_EQ(statistics.num_generated, 4);
+        EXPECT_EQ(grouped[0].rule, natural[0].rule);
+        EXPECT_EQ(grouped[1].rule, natural[2].rule);
+        EXPECT_EQ(grouped[2].rule, natural[0].rule);
+        EXPECT_EQ(grouped[3].rule, natural[2].rule);
+        EXPECT_EQ(grouped[0].target.get_state(), grouped[1].target.get_state());
+        EXPECT_EQ(grouped[0].target.get_histories(), grouped[1].target.get_histories());
+        EXPECT_EQ(grouped[2].target.get_state(), grouped[3].target.get_state());
+        EXPECT_EQ(grouped[2].target.get_histories(), grouped[3].target.get_histories());
+        EXPECT_EQ(history_buffer(), reused_history_buffer);
+
+        auto accepted = 0;
+        statistics = {};
+        EXPECT_FALSE(expander.for_each_successor(
+            source,
+            statistics,
+            [&](auto)
+            {
+                ++accepted;
+                return false;
+            },
+            [] { return false; },
+            false));
+        EXPECT_EQ(accepted, 1);
+        EXPECT_EQ(statistics.num_generated, 1);
+    }
+}
+
 }  // namespace
 
 TEST(RunirTests, IcpGroundExecution)
@@ -325,6 +391,7 @@ TEST(RunirTests, IcpGroundExecution)
     check_executor<tyr::GroundTag>();
     check_histories<tyr::GroundTag>();
     check_normalized_arguments<tyr::GroundTag>();
+    check_rule_evaluator_scheduling<tyr::GroundTag>();
 }
 
 TEST(RunirTests, IcpLiftedExecution)
@@ -332,6 +399,7 @@ TEST(RunirTests, IcpLiftedExecution)
     check_executor<tyr::LiftedTag>();
     check_histories<tyr::LiftedTag>();
     check_normalized_arguments<tyr::LiftedTag>();
+    check_rule_evaluator_scheduling<tyr::LiftedTag>();
 }
 
 }  // namespace runir::tests

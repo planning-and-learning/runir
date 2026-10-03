@@ -189,6 +189,7 @@ from ....._pyrunir.kr.dl.uns.semantics import (
     ConceptValueRestrictionData,
     ConceptValueRestrictionIndex,
     DenotationCaches,
+    EvaluationStorage,
     GroundStateEvaluationContext,
     LiftedStateEvaluationContext,
     Numerical,

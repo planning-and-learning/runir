@@ -111,7 +111,10 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_EQ(dl_builder, &task_context->dl_builder);
         EXPECT_EQ(dl_builder, &dl_context.get_builder());
         EXPECT_EQ(dl_denotation_repository, task_context->dl_denotation_repository.get());
-        EXPECT_EQ(dl_denotation_repository, &dl_context.get_denotation_repository());
+        // Evaluation owns reusable result storage; the task repository remains durable.
+        EXPECT_NE(dl_denotation_repository, &dl_context.get_denotation_repository());
+        EXPECT_EQ(dl_denotation_repository->get_formalism_repository_ptr(), dl_context.get_denotation_repository().get_formalism_repository_ptr());
+        EXPECT_EQ(&dl_context.get_caches(), &expander.get_environment().get_dl_caches());
     }
 }
 
@@ -230,8 +233,8 @@ void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> protot
     const auto task = prototype->task;
     const auto domain_context = kr::DomainContext::create(task->get_domain());
     const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/executor/any_transition.sketch"),
-                                                    task->get_domain().get_domain(),
-                                                    *domain_context->base_repository);
+                                                       task->get_domain().get_domain(),
+                                                       *domain_context->base_repository);
     const auto rejecting_sketch = kr::ps::base::dl::parse_sketch(
         read_fixture("kr/ps/base/executor/base_find_solution_uses_only_immediate_outcomes_and_universal_uses_all/two_step_only.sketch"),
         task->get_domain().get_domain(),
@@ -291,8 +294,7 @@ void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> protot
     auto rejected_search = datasets::TaskSearchContext<Kind>::create(task, ygg::ExecutionContext::create(1));
     auto rejected_context = kr::TaskContext<Kind>::create(domain_context, rejected_search);
     auto rejecting_expander = kr::ps::base::SuccessorExpander<Kind>(*rejected_context, rejecting_sketch);
-    const auto rejected_initial =
-        rejected_search->successor_generator->get_initial_node(*rejected_search->state_repository, *rejected_search->axiom_evaluator);
+    const auto rejected_initial = rejected_search->successor_generator->get_initial_node(*rejected_search->state_repository, *rejected_search->axiom_evaluator);
     auto rejected_statistics = kr::ps::base::SketchSearchStatistics {};
     EXPECT_FALSE(rejecting_expander.for_each_successor(
         rejected_initial.get_state(),
@@ -314,8 +316,8 @@ TEST(RunirTests, BaseGroundSuccessorsStopWithoutGeneratingAllStates) { check_bas
 
 TEST(RunirTests, BaseLiftedSuccessorsStopWithoutGeneratingAllStates)
 {
-    check_base_successor_early_stop(make_lifted_context(benchmark_path("classical/tests/gripper/domain.pddl"),
-                                                       benchmark_path("classical/tests/gripper/test-1.pddl")));
+    check_base_successor_early_stop(
+        make_lifted_context(benchmark_path("classical/tests/gripper/domain.pddl"), benchmark_path("classical/tests/gripper/test-1.pddl")));
 }
 
 TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries)
@@ -346,7 +348,7 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
 
     auto& static_queries = expander.get_environment().get_dl_caches().get_queries(true);
     ASSERT_EQ(static_queries.size(), 1);
-    const auto* static_storage = &static_queries.begin()->second.storage();
+    const auto* static_storage = static_queries.begin()->second.get_storage_address();
     EXPECT_EQ(static_queries.begin()->second.size(), 2);
 
     EXPECT_TRUE(expander.matching_rule(source, successors.back().node.get_state()));
@@ -358,7 +360,7 @@ TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries
     EXPECT_TRUE(expander.matching_rule(source, target));
 
     ASSERT_EQ(static_queries.size(), 1);
-    EXPECT_EQ(&static_queries.begin()->second.storage(), static_storage);
+    EXPECT_EQ(static_queries.begin()->second.get_storage_address(), static_storage);
 }
 
 }  // namespace runir::tests

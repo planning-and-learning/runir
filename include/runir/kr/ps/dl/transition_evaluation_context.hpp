@@ -39,31 +39,25 @@ public:
     TransitionEvaluationContext(S source_state,
                                 S target_state,
                                 runir::kr::dl::semantics::Builder& dl_builder,
-                                runir::kr::dl::semantics::DenotationRepository& dl_denotation_repository,
-                                runir::kr::dl::semantics::EvaluationWorkspace& workspace,
-                                runir::kr::dl::semantics::DenotationCaches<DlFamily>& source_caches,
-                                runir::kr::dl::semantics::DenotationCaches<DlFamily>& target_caches) noexcept
+                                runir::kr::dl::semantics::EvaluationStorage<DlFamily>& source,
+                                runir::kr::dl::semantics::EvaluationStorage<DlFamily>& target)
         requires(!std::same_as<DlFamily, runir::kr::ExtFamilyTag>)
-        :
-        m_source_context(std::move(source_state), dl_builder, dl_denotation_repository, workspace, source_caches),
-        m_target_context(std::move(target_state), dl_builder, dl_denotation_repository, workspace, target_caches)
+        : m_source_context(std::move(source_state), dl_builder, source), m_target_context(std::move(target_state), dl_builder, target)
     {
     }
 
     TransitionEvaluationContext(S source_state,
                                 S target_state,
                                 runir::kr::dl::semantics::Builder& dl_builder,
-                                runir::kr::dl::semantics::DenotationRepository& dl_denotation_repository,
-                                runir::kr::dl::semantics::EvaluationWorkspace& workspace,
-                                runir::kr::dl::semantics::DenotationCaches<DlFamily>& source_caches,
-                                runir::kr::dl::semantics::DenotationCaches<DlFamily>& target_caches,
+                                runir::kr::dl::semantics::EvaluationStorage<DlFamily>& source,
+                                runir::kr::dl::semantics::EvaluationStorage<DlFamily>& target,
                                 runir::kr::dl::semantics::CallArgumentsView arguments,
                                 R source_registers,
-                                R target_registers) noexcept
+                                R target_registers)
         requires std::same_as<DlFamily, runir::kr::ExtFamilyTag>
         :
-        m_source_context(std::move(source_state), dl_builder, dl_denotation_repository, workspace, source_caches, arguments, source_registers),
-        m_target_context(std::move(target_state), dl_builder, dl_denotation_repository, workspace, target_caches, arguments, target_registers)
+        m_source_context(std::move(source_state), dl_builder, source, arguments, source_registers),
+        m_target_context(std::move(target_state), dl_builder, target, arguments, target_registers)
     {
     }
 

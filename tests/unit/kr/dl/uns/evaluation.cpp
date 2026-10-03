@@ -7,8 +7,8 @@
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
-#include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <runir/kr/dl/semantics/state_evaluation_context.hpp>
+#include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <string>
 
 namespace runir::tests
@@ -102,8 +102,8 @@ TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
     // Evaluation context over the initial state.
     auto builder = sem::Builder();
     auto denotation_repository = sem::DenotationRepositoryFactory().create(task->get_repository());
-    auto caches = sem::DenotationCaches<Uns>(denotation_repository);
-    auto context = sem::StateEvaluationContext<Uns, tyr::GroundTag>(state, builder, denotation_repository, builder.get_workspace(), caches);
+    auto storage = sem::EvaluationStorage<Uns>(denotation_repository);
+    auto context = sem::StateEvaluationContext<Uns, tyr::GroundTag>(state, builder, storage);
 
     // |c_top| is the number of objects; build n_const with exactly that value.
     const auto num_objects = sem::evaluate(count_ctor, context).get();
@@ -156,8 +156,8 @@ TEST(RunirTests, UnsFamilyArithmeticLogicalOperatorsEvaluateAndFormat)
 
     auto builder = sem::Builder();
     auto denotation_repository = sem::DenotationRepositoryFactory().create(task->get_repository());
-    auto caches = sem::DenotationCaches<Uns>(denotation_repository);
-    auto context = sem::StateEvaluationContext<Uns, tyr::GroundTag>(state, builder, denotation_repository, builder.get_workspace(), caches);
+    auto storage = sem::EvaluationStorage<Uns>(denotation_repository);
+    auto context = sem::StateEvaluationContext<Uns, tyr::GroundTag>(state, builder, storage);
 
     constexpr auto inf = std::numeric_limits<ygg::uint_t>::max();
     auto two = numerical_constant(repo, 2);

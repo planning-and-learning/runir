@@ -191,7 +191,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     auto repository = dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(search->task->get_repository());
     auto builder = sem::Builder();
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto caches = sem::DenotationCaches<kr::ExtFamilyTag>(denotations);
+    auto storage = sem::EvaluationStorage<kr::ExtFamilyTag>(denotations);
     auto arguments = ygg::Data<sem::CallArguments>();
     auto registers = ygg::Data<sem::RegisterValues>();
     registers.concept_values.resize(8);
@@ -201,15 +201,17 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     registers.role_values[7] = ::cista::pair(object.get_index(), object.get_index());
     const auto empty_arguments = sem::get_or_create(denotations, arguments).first;
     const auto register_values = sem::get_or_create(denotations, registers).first;
-    auto context = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(),
-                                                                                 builder,
-                                                                                 denotations,
-                                                                                 builder.get_workspace(),
-                                                                                 caches,
-                                                                                 empty_arguments,
-                                                                                 register_values);
+    auto context = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(), builder, storage, empty_arguments, register_values);
     const auto nominal = kr::ps::ext::dl::parse_concept(R"((c_nominal "a"))", search->task->get_domain().get_domain(), *repository);
-    arguments.concept_arguments.push_back(sem::evaluate(nominal, context, denotations).get_index());
+    auto persistent_memo = sem::DenotationCaches<kr::ExtFamilyTag> {};
+    auto persistent = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(),
+                                                                                    builder,
+                                                                                    persistent_memo,
+                                                                                    denotations,
+                                                                                    storage,
+                                                                                    empty_arguments,
+                                                                                    register_values);
+    arguments.concept_arguments.push_back(sem::evaluate(nominal, persistent).get_index());
     const auto argument_values = sem::get_or_create(denotations, arguments).first;
     const auto expression = kr::ps::ext::dl::parse_numerical(
         R"((n_count (q_rename (source target)
@@ -221,7 +223,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     // Clearing dynamic results measures query recomputation and pooled returns.
     for (size_t i = 0; i < 8; ++i)
     {
-        caches.clear(false);
+        storage.reset_dynamic();
         ASSERT_EQ(sem::evaluate(expression, context).get(), 3);
     }
 
@@ -229,24 +231,116 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     allocation_tracking::Scope measured;
     for (size_t i = 0; i < 1000; ++i)
     {
-        auto borrowed = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(),
-                                                                                      builder,
-                                                                                      denotations,
-                                                                                      builder.get_workspace(),
-                                                                                      caches,
-                                                                                      argument_values,
-                                                                                      register_values);
+        auto borrowed = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(), builder, storage, argument_values, register_values);
         auto copied = borrowed;
+        valid &= &copied.get_workspace() == &builder.get_workspace();
         valid &= &copied.registers().get_data() == &register_values.get_data();
         valid &= &copied.arguments().get_data() == &argument_values.get_data();
         valid &= copied.registers().at(dl::RegisterIdentifier<dl::ConceptTag>(5)).value().get_index() == object.get_index();
         valid &= copied.registers().at(dl::RegisterIdentifier<dl::RoleTag>(7)).value().get_second().get_index() == object.get_index();
         valid &= copied.arguments().at(dl::ArgumentIdentifier<dl::ConceptTag>(0)).get().count() == 1;
-        caches.clear(false);
+        storage.reset_dynamic();
         valid &= sem::evaluate(expression, copied).get() == 3;
     }
     const auto counts = measured.finish();
 
+    EXPECT_TRUE(valid);
+    EXPECT_EQ(counts.allocated, 0);
+    EXPECT_EQ(counts.deallocated, 0);
+}
+
+TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
+{
+    namespace sem = kr::dl::semantics;
+    using ColumnIndex = ygg::Index<ygg::database::Column>;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
+    const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
+    auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto& repository = denotations.get_relation_repository();
+    auto builder = sem::Builder {};
+    const auto columns = std::array<ColumnIndex, 2> { ColumnIndex(0), ColumnIndex(1) };
+    const auto renamed = std::array<ColumnIndex, 2> { ColumnIndex(2), ColumnIndex(3) };
+    auto result = builder.get_builder<ygg::database::Relation<>>(columns);
+    for (ygg::uint_t i = 0; i < 32; ++i)
+        result->insert({ i, i + 1 });
+    const auto* slot = result.get();
+    const auto* schema_buffer = result->columns().data();
+    const auto schema_capacity = result->memory_usage() - result->storage().memory_usage();
+    const auto* row_buffer = (*result)[0].data();
+    const auto row_capacity = result->storage().memory_usage();
+    const auto stored = ygg::database::intern_relation(*result, repository).first;
+    const auto* stored_schema_buffer = stored.columns().data();
+    const auto* stored_row_buffer = stored[0].data();
+    const auto* stored_row_indices = stored.row_indices().data();
+    result = {};
+
+    bool reused = true;
+    allocation_tracking::Scope measured;
+    for (size_t repeat = 0; repeat < 1000; ++repeat)
+    {
+        denotations.clear();
+        reused &= repository.empty();
+        auto next = builder.get_builder<ygg::database::Relation<>>(repeat % 2 ? renamed : columns);
+        // Cista schema storage uses malloc, which the global new/delete counter does not cover.
+        reused &= next.get() == slot;
+        reused &= next->columns().data() == schema_buffer;
+        reused &= next->memory_usage() - next->storage().memory_usage() == schema_capacity;
+        reused &= next->storage().memory_usage() == row_capacity;
+        for (ygg::uint_t i = 0; i < 32; ++i)
+            next->insert({ i, i + 1 });
+        reused &= (*next)[0].data() == row_buffer;
+        const auto value = ygg::database::intern_relation(*next, repository).first;
+        reused &= value.columns().data() == stored_schema_buffer;
+        reused &= value[0].data() == stored_row_buffer;
+        reused &= value.row_indices().data() == stored_row_indices;
+    }
+    const auto counts = measured.finish();
+    EXPECT_TRUE(reused);
+    EXPECT_EQ(counts.allocated, 0);
+    EXPECT_EQ(counts.deallocated, 0);
+}
+
+TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
+{
+    namespace sem = kr::dl::semantics;
+    using ColumnIndex = ygg::Index<ygg::database::Column>;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
+    const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
+    auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto& repository = denotations.get_relation_repository();
+    auto builder = sem::Builder {};
+    const auto columns = std::array<ColumnIndex, 2> { ColumnIndex(0), ColumnIndex(1) };
+    const auto aliases = std::array<ColumnIndex, 2> { ColumnIndex(100), ColumnIndex(101) };
+    bool valid = true;
+    const auto cycle = [&](size_t generation)
+    {
+        denotations.clear();
+        valid &= repository.empty();
+        for (ygg::uint_t i = 0; i < 512; ++i)
+        {
+            const auto object = ygg::uint_t(i + generation * 512);
+            auto owner = builder.get_builder<ygg::database::Relation<>>(columns);
+            owner->insert({ object, 1 });
+            owner->insert({ object, 2 });
+            const auto value = ygg::database::intern_relation(*owner, repository, generation).first;
+            const auto alias = repository.rename(value, aliases);
+            valid &= value.size() == 2 && alias.size() == 2 && value[0][0] == object;
+            valid &= value.get_storage_address() == alias.get_storage_address();
+            auto duplicate = builder.get_builder<ygg::database::Relation<>>(columns);
+            duplicate->insert({ object, 2 });
+            duplicate->insert({ object, 1 });
+            valid &= ygg::database::intern_relation(*duplicate, repository, generation).first == value;
+            valid &= repository.rename(value, aliases) == alias;
+        }
+        valid &= repository.size() == 1024;
+    };
+    for (size_t repeat = 0; repeat < 8; ++repeat)
+        cycle(repeat);
+
+    allocation_tracking::Scope measured;
+    for (size_t repeat = 0; repeat < 100; ++repeat)
+        cycle(repeat);
+    const auto counts = measured.finish();
     EXPECT_TRUE(valid);
     EXPECT_EQ(counts.allocated, 0);
     EXPECT_EQ(counts.deallocated, 0);

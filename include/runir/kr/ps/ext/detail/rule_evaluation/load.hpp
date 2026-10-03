@@ -1,0 +1,52 @@
+#ifndef RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_LOAD_HPP_
+#define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_LOAD_HPP_
+
+#include "runir/kr/ps/dl/evaluation.hpp"
+#include "runir/kr/ps/ext/detail/rule_evaluation/binding.hpp"
+#include "runir/kr/ps/ext/execution_storage.hpp"
+
+namespace runir::kr::ps::ext::detail
+{
+
+template<tyr::TaskKind Kind, runir::kr::dl::ConceptOrRoleTag Category>
+class LoadRuleEvaluator
+{
+    RuleView<LoadTag<Category>> m_rule;
+    RuleVariantView m_variant;
+
+public:
+    using RuleTag = LoadTag<Category>;
+    LoadRuleEvaluator(RuleView<LoadTag<Category>> rule, RuleVariantView variant) : m_rule(rule), m_variant(variant) {}
+    auto rule() const noexcept { return m_rule; }
+    auto variant() const noexcept { return m_variant; }
+
+    template<typename Context, typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    bool emit(Context& context, S state, const PS& planning_state, Emit&& emit, Stop&& stop)
+    {
+        const auto rule = m_rule;
+        const auto rule_variant = m_variant;
+        if (!ext::rule_is_applicable(rule, state, planning_state, context.environment))
+            return true;
+        auto state_context =
+            context.environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
+        const auto denotation = evaluate(rule.get_feature(), state_context);
+        auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(context.task_context->dl_builder);
+        for (const auto value : denotation)
+        {
+            if (stop())
+                return false;
+            const auto target_registers = bound_registers(rule, state.get_module_state().get_registers(), value, *registers, context.storage);
+            if (!binding_effects_match(rule, state, planning_state, target_registers, context.environment))
+                continue;
+            const auto module_ = state.get_module_state();
+            auto target = ext::make_module(context.storage, planning_state, module_.get_module(), rule.get_target(), target_registers, module_.get_arguments());
+            if (!emit(detail::applied(context.storage.store(std::move(target), state.get_call_stack()), rule_variant, context.task_context)))
+                return false;
+        }
+        return true;
+    }
+};
+
+}  // namespace runir::kr::ps::ext::detail
+
+#endif

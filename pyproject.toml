@@ -53,6 +53,7 @@ include = [
     "cmake/**",
     "docs/serialization/**",
     "docs/action-rules.md",
+    "docs/kr-evaluation.md",
     "include/**",
     "python/**",
     "src/**",

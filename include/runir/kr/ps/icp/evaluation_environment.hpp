@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_ICP_EVALUATION_ENVIRONMENT_HPP_
 #define RUNIR_KR_PS_ICP_EVALUATION_ENVIRONMENT_HPP_
 
+#include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/dl/semantics/ext/state_evaluation_context.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
 #include "runir/kr/ps/icp/execution_view.hpp"
@@ -17,8 +18,7 @@ class EvaluationEnvironment
     using DlFamily = typename TransitionContext::DlFamily;
     TaskContext<Kind>& m_task;
     ProgramView m_program;
-    runir::kr::dl::semantics::EvaluationWorkspace m_workspace;
-    runir::kr::dl::semantics::DenotationCaches<DlFamily> m_source_caches, m_target_caches;
+    runir::kr::dl::semantics::EvaluationStorage<DlFamily> m_source_storage, m_target_storage;
     runir::kr::dl::semantics::CallArgumentsView m_arguments;
 
     static auto empty_arguments(TaskContext<Kind>& task)
@@ -31,17 +31,18 @@ public:
     EvaluationEnvironment(TaskContext<Kind>& task, ProgramView program) :
         m_task(task),
         m_program(program),
-        m_source_caches(*task.dl_denotation_repository),
-        m_target_caches(*task.dl_denotation_repository),
+        m_source_storage(*task.dl_denotation_repository),
+        m_target_storage(*task.dl_denotation_repository),
         m_arguments(empty_arguments(task))
     {
     }
 
     auto get_program() const noexcept { return m_program; }
     auto& get_dl_repository() noexcept { return m_program.get_context().get_dl_repository(); }
-    auto& get_dl_workspace() noexcept { return m_workspace; }
-    auto& get_dl_caches() noexcept { return m_source_caches; }
-    auto& get_dl_target_caches() noexcept { return m_target_caches; }
+    auto& get_dl_caches() noexcept { return m_source_storage.get_caches(); }
+    auto& get_dl_target_caches() noexcept { return m_target_storage.get_caches(); }
+    void reset_source() noexcept { m_source_storage.reset_dynamic(); }
+    void reset_target() noexcept { m_target_storage.reset_dynamic(); }
 
     /// Contexts borrow stored data; callers clear dynamic caches before evaluating a new configuration.
     StateContext make_dl_context(ProgramStateView<Kind> state)
@@ -52,23 +53,14 @@ public:
     }
     StateContext make_dl_context(tyr::planning::StateView<Kind> state, runir::kr::dl::semantics::RegisterValuesView registers)
     {
-        return StateContext(state, m_task.dl_builder, *m_task.dl_denotation_repository, m_workspace, m_source_caches, m_arguments, registers);
+        return StateContext(state, m_task.dl_builder, m_source_storage, m_arguments, registers);
     }
     TransitionContext make_dl_transition_context(tyr::planning::StateView<Kind> source,
                                                  tyr::planning::StateView<Kind> target,
                                                  runir::kr::dl::semantics::RegisterValuesView source_registers,
                                                  runir::kr::dl::semantics::RegisterValuesView target_registers)
     {
-        return TransitionContext(source,
-                                 target,
-                                 m_task.dl_builder,
-                                 *m_task.dl_denotation_repository,
-                                 m_workspace,
-                                 m_source_caches,
-                                 m_target_caches,
-                                 m_arguments,
-                                 source_registers,
-                                 target_registers);
+        return TransitionContext(source, target, m_task.dl_builder, m_source_storage, m_target_storage, m_arguments, source_registers, target_registers);
     }
 };
 

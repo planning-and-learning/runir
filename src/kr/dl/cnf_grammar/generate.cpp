@@ -4,15 +4,16 @@
 #include "runir/kr/dl/cnf_grammar/constructor_repository.hpp"
 #include "runir/kr/dl/datas.hpp"
 #include "runir/kr/dl/repository.hpp"
-#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
+#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <chrono>
 #include <concepts>
 #include <cstdint>
+#include <deque>
 #include <map>
 #include <optional>
 #include <stdexcept>
@@ -150,7 +151,7 @@ private:
     const std::vector<tyr::planning::PackedStateView<Kind>>& m_states;
     runir::kr::dl::semantics::Builder m_builder;
     runir::kr::dl::semantics::DenotationRepository& m_denotation_repository;
-    runir::kr::dl::semantics::EvaluationWorkspace m_workspace;
+    std::deque<runir::kr::dl::semantics::EvaluationStorage<Family>> m_intermediate_storage;
     std::vector<runir::kr::dl::semantics::DenotationCaches<Family>> m_denotation_caches;
     SeenDenotations<Family> m_seen_denotations;
 
@@ -159,13 +160,12 @@ public:
         m_states(states),
         m_builder(),
         m_denotation_repository(denotation_repository),
-        m_workspace(),
-        m_denotation_caches(),
+        m_intermediate_storage(),
+        m_denotation_caches(states.size()),
         m_seen_denotations(states.size())
     {
-        m_denotation_caches.reserve(states.size());
         for (size_t i = 0; i < states.size(); ++i)
-            m_denotation_caches.emplace_back(denotation_repository);
+            m_intermediate_storage.emplace_back(denotation_repository);
     }
 
     template<runir::kr::dl::CategoryTag Category>
@@ -180,14 +180,14 @@ public:
 
         for (size_t i = 0; i < m_states.size(); ++i)
         {
-            auto context = runir::kr::dl::semantics::StateEvaluationContext<Family, Kind>(
-                m_states[i].unpack(), m_builder, m_denotation_repository, m_workspace, m_denotation_caches[i]);
-            // Signatures compare values across static/dynamic caches and states in one canonical repository.
-            auto& cache = m_denotation_caches[i].template get<Category>(constructor.is_static());
-            auto it = cache.find(constructor);
-            if (it == cache.end() || it->second.get_context().get_index() != m_denotation_repository.get_index())
-                it = cache.insert_or_assign(constructor, runir::kr::dl::semantics::evaluate(constructor, context, m_denotation_repository)).first;
-            seen.scratch.push_back(it->second);
+            auto context = runir::kr::dl::semantics::StateEvaluationContext<Family, Kind>(m_states[i].unpack(),
+                                                                                          m_builder,
+                                                                                          m_denotation_caches[i],
+                                                                                          m_denotation_repository,
+                                                                                          m_intermediate_storage[i]);
+            // Roots share one canonical repository across example states; their
+            // intermediate results remain in the per-state reusable storage.
+            seen.scratch.push_back(runir::kr::dl::semantics::evaluate(constructor, context));
         }
 
         const auto vector = seen.vectors.insert(seen.scratch);

@@ -68,18 +68,14 @@ void check_classifier_failures(datasets::TaskSearchContextPtr<Kind> search_conte
     options.classifier = goal_classifier;
     const auto goal_result = kr::ps::base::find_solution(task_context, sketch, options);
     auto found_goal = false;
-    auto caches = kr::dl::semantics::DenotationCaches<kr::UnsFamilyTag>(*task_context->dl_denotation_repository);
+    auto storage = kr::dl::semantics::EvaluationStorage<kr::UnsFamilyTag>(*task_context->dl_denotation_repository);
     for (const auto vertex : goal_result.graph->get_vertex_indices())
     {
         const auto& goal_label = goal_result.graph->get_vertex(vertex).get_property();
         if (!goal_label.is_goal)
             continue;
-        auto context = kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, Kind>(goal_label.state.unpack(),
-                                                                                     task_context->dl_builder,
-                                                                                     *task_context->dl_denotation_repository,
-                                                                                     task_context->dl_builder.get_workspace(),
-                                                                                     caches);
-        caches.clear(false);
+        auto context = kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, Kind>(goal_label.state.unpack(), task_context->dl_builder, storage);
+        storage.reset_dynamic();
         EXPECT_TRUE(kr::uns::classify(goal_classifier, context));
         EXPECT_FALSE(goal_label.is_unsolvable);
         found_goal = true;
@@ -89,10 +85,7 @@ void check_classifier_failures(datasets::TaskSearchContextPtr<Kind> search_conte
 
 }  // namespace
 
-TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures)
-{
-    check_classifier_failures(make_gripper_ground_context());
-}
+TEST(RunirTests, BaseFindSolutionTreatsClassifierMatchesAsTerminalFailures) { check_classifier_failures(make_gripper_ground_context()); }
 
 TEST(RunirTests, BaseLiftedFindSolutionTreatsClassifierMatchesAsTerminalFailures)
 {

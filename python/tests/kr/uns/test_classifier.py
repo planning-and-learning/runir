@@ -57,13 +57,13 @@ def test_classifier_and_features_use_the_context_cache(gripper_planning_domain, 
     domain = DomainContext(gripper_planning_domain)
     task = GroundTaskContext(domain, ground_gripper_search_context)
     state = ground_gripper_search_context.state_repository.get_initial_state(ground_gripper_search_context.axiom_evaluator)
-    caches = semantics.DenotationCaches(task.dl_denotation_repository)
-    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository, caches)
+    storage = semantics.EvaluationStorage(task.dl_denotation_repository)
+    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, storage)
     classifier = parse_classifier(read_fixture("kr/uns/always.classifier"), gripper_planning_domain, domain.uns_repository)
     feature = classifier.get_features()[0]
 
     assert classify(classifier, context) is True
     assert feature.evaluate(context).get() is True
     assert feature.get_variant().evaluate(context).get() is True
-    caches.clear()
+    storage.reset_all()
     assert classify(classifier, context) is True

@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_UNSOLVABILITY_HPP_
 #define RUNIR_KR_PS_UNSOLVABILITY_HPP_
 
-#include "runir/kr/dl/semantics/denotation_caches.hpp"
+#include "runir/kr/dl/semantics/evaluation_storage.hpp"
 #include "runir/kr/task_context.hpp"
 #include "runir/kr/uns/classify.hpp"
 
@@ -23,25 +23,21 @@ class ClassifierUnsolvability
 private:
     runir::kr::TaskContext<Kind>& m_task_context;
     runir::kr::uns::ClassifierView m_classifier;
-    runir::kr::dl::semantics::DenotationCaches<runir::kr::UnsFamilyTag> m_caches;
+    runir::kr::dl::semantics::EvaluationStorage<runir::kr::UnsFamilyTag> m_storage;
 
 public:
     ClassifierUnsolvability(runir::kr::TaskContext<Kind>& task_context, runir::kr::uns::ClassifierView classifier) :
         m_task_context(task_context),
         m_classifier(classifier),
-        m_caches(*task_context.dl_denotation_repository)
+        m_storage(*task_context.dl_denotation_repository)
     {
     }
 
     template<tyr::planning::StateViewConcept<Kind> State>
     bool is_unsolvable(const State& state)
     {
-        m_caches.clear(false);
-        auto context = runir::kr::dl::semantics::BaseStateEvaluationContext<runir::kr::UnsFamilyTag, Kind, State>(state,
-                                                                                                                  m_task_context.dl_builder,
-                                                                                                                  *m_task_context.dl_denotation_repository,
-                                                                                                                  m_task_context.dl_builder.get_workspace(),
-                                                                                                                  m_caches);
+        m_storage.reset_dynamic();
+        auto context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, Kind, State>(state, m_task_context.dl_builder, m_storage);
         return runir::kr::uns::classify(m_classifier, context);
     }
 };

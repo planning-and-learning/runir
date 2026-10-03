@@ -14,13 +14,13 @@
 namespace runir::kr::dl::detail
 {
 
-inline ygg::database::Columns query_columns(const ygg::IndexList<QueryColumn>& columns)
+inline ygg::Builder<ygg::database::Columns> query_columns(const ygg::IndexList<QueryColumn>& columns)
 {
-    std::vector<ygg::database::Column> labels;
+    std::vector<ygg::Index<ygg::database::Column>> labels;
     labels.reserve(columns.size());
     for (const auto column : columns)
-        labels.push_back(column.get_value());
-    return ygg::database::Columns(labels);
+        labels.emplace_back(column.get_value());
+    return ygg::Builder<ygg::database::Columns>(labels);
 }
 
 inline void require_query_arity(size_t actual, size_t expected)
@@ -48,17 +48,17 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
     {
         const auto lhs = ygg::make_view(data.lhs, repository).get_schema();
         const auto rhs = ygg::make_view(data.rhs, repository).get_schema();
-        data.plan = ygg::database::JoinPlan(lhs, rhs);
+        data.plan = ygg::database::JoinPlan(lhs.span(), rhs.span());
         data.columns.clear();
         data.columns.reserve(data.plan.output_columns().size());
         for (const auto column : data.plan.output_columns())
-            data.columns.push_back(ygg::Index<QueryColumn>(column));
+            data.columns.push_back(ygg::Index<QueryColumn>(column.get_value()));
     }
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
         const auto arg = ygg::make_view(data.arg, repository).get_schema();
         const auto columns = query_columns(data.columns);
-        data.plan = ygg::database::ProjectionPlan(arg, columns.view());
+        data.plan = ygg::database::ProjectionPlan(arg.span(), columns.span());
     }
     else
     {
@@ -69,17 +69,17 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
             if (!std::ranges::equal(lhs, rhs))
                 throw std::invalid_argument("Query: union and difference require identical ordered columns.");
             data.columns = get_query_columns(data.lhs, repository);
-            data.schema.assign(lhs);
+            data.schema.assign(lhs.span());
         }
         else if constexpr (std::same_as<Tag, QuerySelectEqualTag> || std::same_as<Tag, QuerySelectValueTag>)
         {
             data.columns = get_query_columns(data.arg, repository);
-            data.schema.assign(ygg::make_view(data.arg, repository).get_schema());
+            data.schema.assign(ygg::make_view(data.arg, repository).get_schema().span());
         }
         else
             data.schema = query_columns(data.columns);
 
-        const auto columns = data.schema.view();
+        const auto& columns = data.schema;
         if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
             require_query_arity(columns.size(), ygg::make_view(data.predicate, repository.get_planning_repository()).get_arity());
         else if constexpr (std::same_as<Tag, QueryConceptTag> || std::same_as<Tag, QueryRoleTag>)
@@ -88,11 +88,11 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
             require_query_arity(columns.size(), ygg::make_view(data.arg, repository).get_schema().size());
         else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
         {
-            data.lhs_position = columns.column_index(data.lhs_column.get_value());
-            data.rhs_position = columns.column_index(data.rhs_column.get_value());
+            data.lhs_position = columns.column_index(ygg::Index<ygg::database::Column>(data.lhs_column.get_value()));
+            data.rhs_position = columns.column_index(ygg::Index<ygg::database::Column>(data.rhs_column.get_value()));
         }
         else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
-            data.position = columns.column_index(data.column.get_value());
+            data.position = columns.column_index(ygg::Index<ygg::database::Column>(data.column.get_value()));
     }
 }
 
@@ -102,7 +102,7 @@ void prepare(ygg::Data<QueryProjection<Family, Category>>& data, const Construct
     const auto columns = query_columns(data.columns);
     require_query_arity(columns.size(), std::same_as<Category, ConceptTag> ? 1 : 2);
     const auto arg = ygg::make_view(data.arg, repository).get_schema();
-    data.plan = ygg::database::ProjectionPlan(arg, columns.view());
+    data.plan = ygg::database::ProjectionPlan(arg.span(), columns.span());
 }
 
 }  // namespace runir::kr::dl::detail

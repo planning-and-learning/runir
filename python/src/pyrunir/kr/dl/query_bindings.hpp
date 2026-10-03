@@ -5,6 +5,7 @@
 
 #include <runir/kr/dl/query_view.hpp>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <string>
@@ -48,7 +49,19 @@ void bind_query(nb::module_& m, const char* name)
     view.def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); });
     if constexpr (std::same_as<Tag, void>)
     {
-        view.def("get_variant", &View::get_variant, nb::keep_alive<0, 1>());
+        using GroundContext = semantics::StateEvaluationContext<Family, tyr::GroundTag>;
+        using LiftedContext = semantics::StateEvaluationContext<Family, tyr::LiftedTag>;
+        view.def("get_variant", &View::get_variant, nb::keep_alive<0, 1>())
+            .def(
+                "evaluate",
+                [](const View& value, GroundContext& context) { return semantics::evaluate(value, context); },
+                nb::arg("context"),
+                nb::keep_alive<0, 2>())
+            .def(
+                "evaluate",
+                [](const View& value, LiftedContext& context) { return semantics::evaluate(value, context); },
+                nb::arg("context"),
+                nb::keep_alive<0, 2>());
         m.def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); }, nb::arg("query"));
     }
     if constexpr (requires(View value) { value.get_predicate(); })

@@ -20,17 +20,38 @@ private:
     CallArgumentsView m_arguments;
 
 public:
-    StateEvaluationContext(S state,
-                           Builder& builder,
-                           DenotationRepository& denotation_repository,
-                           EvaluationWorkspace& workspace,
-                           DenotationCaches<runir::kr::ExtFamilyTag>& caches,
-                           CallArgumentsView arguments,
-                           R registers) noexcept :
-        Base(std::move(state), builder, denotation_repository, workspace, caches),
+    StateEvaluationContext(S state, Builder& builder, EvaluationStorage<runir::kr::ExtFamilyTag>& storage, CallArgumentsView arguments, R registers) :
+        Base(std::move(state), builder, storage),
         m_registers(registers),
         m_arguments(arguments)
     {
+    }
+
+    StateEvaluationContext(S state,
+                           Builder& builder,
+                           DenotationCaches<runir::kr::ExtFamilyTag>& caches,
+                           DenotationRepository& repository,
+                           EvaluationStorage<runir::kr::ExtFamilyTag>& intermediates,
+                           CallArgumentsView arguments,
+                           R registers) :
+        Base(std::move(state), builder, caches, repository, intermediates),
+        m_registers(registers),
+        m_arguments(arguments)
+    {
+    }
+
+    auto for_result(bool is_static) const noexcept
+    {
+        auto result = *this;
+        result.select_result(is_static);
+        return result;
+    }
+
+    auto child_context() const noexcept
+    {
+        auto result = *this;
+        result.select_children();
+        return result;
     }
 
     auto registers() const noexcept { return m_registers; }

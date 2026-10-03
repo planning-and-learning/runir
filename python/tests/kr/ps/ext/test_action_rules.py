@@ -151,8 +151,12 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     dl_context = environment.make_dl_context(state)
     relation = ext.evaluate(features["selected"], dl_context)
     assert isinstance(relation, RelationView)
+    assert relation == features["selected"].get_expression().evaluate(dl_context)
     assert len(relation) == 2
     assert relation.arity() == 2
+    assert len(relation.columns()) == 2
+    assert relation == ext.evaluate(features["selected"], dl_context)
+    assert len({relation, ext.evaluate(features["selected"], dl_context)}) == 1
     assert all(isinstance(row, RelationRow) and len(row) == 2 for row in relation)
     rows = {tuple(row) for row in relation}
     assert all(type(value) is int for row in rows for value in row)
@@ -181,19 +185,20 @@ def test_query_relation_preserves_rows_column_order_nullary_truth_and_lifetimes(
     good_step = next(step for step in steps if step.state_transition.action.get_objects()[1].get_name() == "good")
     del relation, truth, empty
     state = good_step.target
-    environment.get_dl_caches().clear(False)
+    environment.reset_source()
     dl_context = environment.make_dl_context(state)
     relation = ext.evaluate(features["selected"], dl_context)
     assert len(relation) == 1
     new_rows = {tuple(row) for row in relation}
     row = relation.at(0)
+    iterated_row = next(iter(relation))
     expected_row = tuple(row)
     del steps, good_step, successor, step, features, environment, dl_context, state, expander, program, task_context
     gc.collect()
     assert {tuple(value) for value in relation} == new_rows
     del relation
     gc.collect()
-    assert tuple(row) == expected_row
+    assert tuple(row) == tuple(iterated_row) == expected_row
 
 
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
@@ -263,7 +268,7 @@ def test_static_query_role_closure_query_composition(kind):
     rule = expander.matching_rule(state, successor)
     assert rule is not None
     state = expander.apply(state, rule, successor).target
-    environment.get_dl_caches().clear(False)
+    environment.reset_source()
     dl_context = environment.make_dl_context(state)
     assert {tuple(row) for row in ext.evaluate(features["selected"], dl_context)} == rows
 
@@ -301,7 +306,7 @@ def test_query_features_follow_module_arguments_and_registers_in_the_same_state(
     snapshots = []
     for position in (0, 1, 0):
         state = choices[position]
-        environment.get_dl_caches().clear(False)
+        environment.reset_source()
         dl_context = environment.make_dl_context(state)
         assert {tuple(row) for row in ext.evaluate(features["argument"], dl_context)} == all_candidates
         selected = ext.evaluate(features["register"], dl_context)

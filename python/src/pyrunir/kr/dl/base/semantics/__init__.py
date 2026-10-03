@@ -172,6 +172,7 @@ from ....._pyrunir.kr.dl.base.semantics import (
     ConstructorRepository,
     ConstructorRepositoryFactory,
     DenotationCaches,
+    EvaluationStorage,
     DenotationRepository,
     DenotationRepositoryFactory,
     GroundStateEvaluationContext,

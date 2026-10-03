@@ -5,6 +5,7 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
+#include "runir/kr/dl/semantics/denotation_storage.hpp"
 #include "runir/kr/dl/semantics/denotations.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
@@ -36,36 +37,26 @@ template<FamilyTag Family, StateEvaluationContextConcept<Family> Context, typena
 auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, Context& context) -> ygg::database::RelationView<>;
 
 template<FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor,
-                   Context& context,
-                   DenotationRepository& repository) -> DenotationView<Category>;
+auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor, Context& context) -> DenotationView<Category>;
 
 template<FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family> Context>
-auto evaluate_impl(FamilyConstructorView<Family, Category> constructor, Context& context, DenotationRepository& repository) -> DenotationView<Category>;
+auto evaluate_impl(FamilyConstructorView<Family, Category> constructor, Context& context) -> DenotationView<Category>;
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyConceptConstructorTag<Family, Tag>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> constructor,
-                   Context& context,
-                   DenotationRepository& repository) -> DenotationView<ConceptTag>;
+auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> constructor, Context& context) -> DenotationView<ConceptTag>;
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyRoleConstructorTag<Family, Tag>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor,
-                   Context& context,
-                   DenotationRepository& repository) -> DenotationView<RoleTag>;
+auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor, Context& context) -> DenotationView<RoleTag>;
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyBooleanConstructorTag<Family, Tag>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> constructor,
-                   Context& context,
-                   DenotationRepository& repository) -> DenotationView<BooleanTag>;
+auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> constructor, Context& context) -> DenotationView<BooleanTag>;
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyNumericalConstructorTag<Family, Tag>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constructor,
-                   Context& context,
-                   DenotationRepository& repository) -> DenotationView<NumericalTag>;
+auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constructor, Context& context) -> DenotationView<NumericalTag>;
 
 template<FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family> Context>
 auto evaluate(FamilyConstructorView<Family, Category> constructor, Context& context) -> DenotationView<Category>;
@@ -90,30 +81,6 @@ template<StateEvaluationContextConcept Context>
 auto make_role_builder(Context& context)
 {
     return context.get_builder().template get_builder<Denotation<RoleTag>>(num_objects(context));
-}
-
-template<CategoryTag Category>
-auto materialize_denotation(ygg::UniqueObjectPoolPtr<ygg::Builder<Denotation<Category>>>& result, Builder& builder, DenotationRepository& repository)
-{
-    auto data = runir::kr::dl::semantics::checkout<Denotation<Category>>(builder);
-    make_data(*result, *data);
-    if constexpr (ConceptOrRoleTag<Category>)
-        data->vec_index = repository.get_vector_repository().insert(result->blocks);
-    auto interned = get_or_create(repository, *data);
-    result->index = interned.first.get_index();
-    return interned;
-}
-
-template<CategoryTag Category>
-auto materialize_denotation(DenotationView<Category> result, Builder& builder, DenotationRepository& repository)
-{
-    if (&result.get_context() == &repository)
-        return std::pair(result, false);
-    auto data = runir::kr::dl::semantics::checkout<Denotation<Category>>(builder);
-    *data = result.get_data();
-    if constexpr (ConceptOrRoleTag<Category>)
-        data->vec_index = repository.get_vector_repository().insert(result.get_context().get_vector_repository()[data->vec_index]);
-    return get_or_create(repository, *data);
 }
 
 template<StateEvaluationContextConcept Context, typename F>
@@ -378,10 +345,10 @@ constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) n
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyConceptConstructorTag<Family, Tag>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> constructor,
-                   Context& context,
-                   DenotationRepository& repository) -> DenotationView<ConceptTag>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> constructor, Context& context) -> DenotationView<ConceptTag>
 {
+    [[maybe_unused]] auto children = context.child_context();
+    auto& repository = context.get_denotation_repository();
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_concept_builder(context);
     auto result_bitset = result->get();
@@ -401,28 +368,28 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
     }
     else if constexpr (std::same_as<Tag, IntersectionTag>)
     {
-        const auto lhs = evaluate(constructor.get_lhs(), context);
-        const auto rhs = evaluate(constructor.get_rhs(), context);
+        const auto lhs = evaluate(constructor.get_lhs(), children);
+        const auto rhs = evaluate(constructor.get_rhs(), children);
         result_bitset.copy_from(lhs.get());
         result_bitset &= rhs.get();
     }
     else if constexpr (std::same_as<Tag, UnionTag>)
     {
-        const auto lhs = evaluate(constructor.get_lhs(), context);
-        const auto rhs = evaluate(constructor.get_rhs(), context);
+        const auto lhs = evaluate(constructor.get_lhs(), children);
+        const auto rhs = evaluate(constructor.get_rhs(), children);
         result_bitset.copy_from(lhs.get());
         result_bitset |= rhs.get();
     }
     else if constexpr (std::same_as<Tag, NegationTag>)
     {
-        const auto arg = evaluate(constructor.get_arg(), context);
+        const auto arg = evaluate(constructor.get_arg(), children);
         result_bitset.copy_from(arg.get());
         result_bitset.flip();
     }
     else if constexpr (std::same_as<Tag, ValueRestrictionTag>)
     {
-        const auto role = evaluate(constructor.get_lhs(), context);
-        const auto concept_denotation = evaluate(constructor.get_rhs(), context);
+        const auto role = evaluate(constructor.get_lhs(), children);
+        const auto concept_denotation = evaluate(constructor.get_rhs(), children);
         const auto concept_bitset = concept_denotation.get();
 
         result_bitset.set();
@@ -434,8 +401,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
     }
     else if constexpr (std::same_as<Tag, ExistentialQuantificationTag>)
     {
-        const auto role = evaluate(constructor.get_lhs(), context);
-        const auto concept_denotation = evaluate(constructor.get_rhs(), context);
+        const auto role = evaluate(constructor.get_lhs(), children);
+        const auto concept_denotation = evaluate(constructor.get_rhs(), children);
         const auto concept_bitset = concept_denotation.get();
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
@@ -447,7 +414,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
     else if constexpr (std::same_as<Tag, AtLeastNumberRestrictionTag> || std::same_as<Tag, AtMostNumberRestrictionTag>
                        || std::same_as<Tag, ExactNumberRestrictionTag>)
     {
-        const auto role = evaluate(constructor.get_role(), context);
+        const auto role = evaluate(constructor.get_role(), children);
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             const auto count = static_cast<ygg::uint_t>(role.get(object).count());
@@ -471,8 +438,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
     else if constexpr (std::same_as<Tag, QualifiedAtLeastNumberRestrictionTag> || std::same_as<Tag, QualifiedAtMostNumberRestrictionTag>
                        || std::same_as<Tag, QualifiedExactNumberRestrictionTag>)
     {
-        const auto role = evaluate(constructor.get_role(), context);
-        const auto concept_denotation = evaluate(constructor.get_concept(), context);
+        const auto role = evaluate(constructor.get_role(), children);
+        const auto concept_denotation = evaluate(constructor.get_concept(), children);
         const auto concept_bitset = concept_denotation.get();
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
@@ -505,8 +472,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
     }
     else if constexpr (std::same_as<Tag, RoleValueMapTag>)
     {
-        const auto lhs = evaluate(constructor.get_lhs(), context);
-        const auto rhs = evaluate(constructor.get_rhs(), context);
+        const auto lhs = evaluate(constructor.get_lhs(), children);
+        const auto rhs = evaluate(constructor.get_rhs(), children);
 
         result_bitset.set();
         for (ygg::uint_t object = 0; object < num_objects; ++object)
@@ -517,8 +484,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
     }
     else if constexpr (std::same_as<Tag, AgreementTag>)
     {
-        const auto lhs = evaluate(constructor.get_lhs(), context);
-        const auto rhs = evaluate(constructor.get_rhs(), context);
+        const auto lhs = evaluate(constructor.get_lhs(), children);
+        const auto rhs = evaluate(constructor.get_rhs(), children);
 
         result_bitset.set();
         for (ygg::uint_t object = 0; object < num_objects; ++object)
@@ -535,7 +502,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
     }
     else if constexpr (std::same_as<Tag, RoleFillersTag>)
     {
-        const auto role = evaluate(constructor.get_role(), context);
+        const auto role = evaluate(constructor.get_role(), children);
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
             auto row = role.get(object);
@@ -562,13 +529,15 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL concept constructor tag in evaluate_impl");
     }
 
-    return detail::materialize_denotation(result, context.get_builder(), repository).first;
+    return intern_denotation(result, context.get_builder(), repository).first;
 }
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyRoleConstructorTag<Family, Tag>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor, Context& context, DenotationRepository& repository) -> DenotationView<RoleTag>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor, Context& context) -> DenotationView<RoleTag>
 {
+    [[maybe_unused]] auto children = context.child_context();
+    auto& repository = context.get_denotation_repository();
     [[maybe_unused]] const auto num_objects = detail::num_objects(context);
     auto result = detail::make_role_builder(context);
 
@@ -587,8 +556,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     }
     else if constexpr (std::same_as<Tag, IntersectionTag>)
     {
-        const auto lhs = evaluate(constructor.get_lhs(), context);
-        const auto rhs = evaluate(constructor.get_rhs(), context);
+        const auto lhs = evaluate(constructor.get_lhs(), children);
+        const auto rhs = evaluate(constructor.get_rhs(), children);
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
@@ -599,8 +568,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     }
     else if constexpr (std::same_as<Tag, UnionTag>)
     {
-        const auto lhs = evaluate(constructor.get_lhs(), context);
-        const auto rhs = evaluate(constructor.get_rhs(), context);
+        const auto lhs = evaluate(constructor.get_lhs(), children);
+        const auto rhs = evaluate(constructor.get_rhs(), children);
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
@@ -611,7 +580,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     }
     else if constexpr (std::same_as<Tag, ComplementTag>)
     {
-        const auto arg = evaluate(constructor.get_arg(), context);
+        const auto arg = evaluate(constructor.get_arg(), children);
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
@@ -622,7 +591,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     }
     else if constexpr (std::same_as<Tag, InverseTag>)
     {
-        const auto arg = evaluate(constructor.get_arg(), context);
+        const auto arg = evaluate(constructor.get_arg(), children);
 
         for (ygg::uint_t lhs = 0; lhs < num_objects; ++lhs)
         {
@@ -633,8 +602,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     }
     else if constexpr (std::same_as<Tag, CompositionTag>)
     {
-        const auto lhs = evaluate(constructor.get_lhs(), context);
-        const auto rhs = evaluate(constructor.get_rhs(), context);
+        const auto lhs = evaluate(constructor.get_lhs(), children);
+        const auto rhs = evaluate(constructor.get_rhs(), children);
 
         for (ygg::uint_t source = 0; source < num_objects; ++source)
         {
@@ -647,7 +616,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     }
     else if constexpr (std::same_as<Tag, TransitiveClosureTag> || std::same_as<Tag, ReflexiveTransitiveClosureTag>)
     {
-        const auto arg = evaluate(constructor.get_arg(), context);
+        const auto arg = evaluate(constructor.get_arg(), children);
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
             result->get(object).copy_from(arg.get(object));
@@ -668,8 +637,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     }
     else if constexpr (std::same_as<Tag, RestrictionTag>)
     {
-        const auto role = evaluate(constructor.get_lhs(), context);
-        const auto concept_denotation = evaluate(constructor.get_rhs(), context);
+        const auto role = evaluate(constructor.get_lhs(), children);
+        const auto concept_denotation = evaluate(constructor.get_rhs(), children);
         const auto concept_bitset = concept_denotation.get();
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
@@ -681,7 +650,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     }
     else if constexpr (std::same_as<Tag, IdentityTag>)
     {
-        const auto concept_denotation = evaluate(constructor.get_arg(), context);
+        const auto concept_denotation = evaluate(constructor.get_arg(), children);
         const auto bitset = concept_denotation.get();
 
         for (auto object = bitset.find_first(); object != decltype(bitset)::npos; object = bitset.find_next(object))
@@ -692,15 +661,15 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL role constructor tag in evaluate_impl");
     }
 
-    return detail::materialize_denotation(result, context.get_builder(), repository).first;
+    return intern_denotation(result, context.get_builder(), repository).first;
 }
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyBooleanConstructorTag<Family, Tag>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> constructor,
-                   Context& context,
-                   DenotationRepository& repository) -> DenotationView<BooleanTag>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> constructor, Context& context) -> DenotationView<BooleanTag>
 {
+    [[maybe_unused]] auto children = context.child_context();
+    auto& repository = context.get_denotation_repository();
     bool result_value = false;
     if constexpr (is_atomic_state_tag_v<Tag>)
     {
@@ -712,12 +681,12 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
     }
     else if constexpr (std::same_as<Tag, NonemptyTag>)
     {
-        result_value = ygg::visit([&](auto arg) { return detail::nonempty(evaluate(arg, context)); }, constructor.get_arg());
+        result_value = ygg::visit([&](auto arg) { return detail::nonempty(evaluate(arg, children)); }, constructor.get_arg());
     }
     else if constexpr (ComparisonTag<Tag>)
     {
-        const auto lhs = evaluate(constructor.get_lhs(), context);
-        const auto rhs = evaluate(constructor.get_rhs(), context);
+        const auto lhs = evaluate(constructor.get_lhs(), children);
+        const auto rhs = evaluate(constructor.get_rhs(), children);
         const auto lhs_value = static_cast<ygg::uint_t>(lhs.get());
         const auto rhs_value = static_cast<ygg::uint_t>(rhs.get());
         result_value = detail::apply_comparison<Tag>(lhs_value, rhs_value);
@@ -728,13 +697,13 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
     }
     else if constexpr (LogicalBinaryTag<Tag>)
     {
-        const auto lhs = evaluate(constructor.get_lhs(), context);
-        const auto rhs = evaluate(constructor.get_rhs(), context);
+        const auto lhs = evaluate(constructor.get_lhs(), children);
+        const auto rhs = evaluate(constructor.get_rhs(), children);
         result_value = detail::apply_logical_binary<Tag>(lhs.get(), rhs.get());
     }
     else if constexpr (std::same_as<Tag, NotTag>)
     {
-        const auto arg = evaluate(constructor.get_arg(), context);
+        const auto arg = evaluate(constructor.get_arg(), children);
         result_value = !arg.get();
     }
     else
@@ -743,32 +712,32 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
     }
 
     auto result = context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
-    return detail::materialize_denotation(result, context.get_builder(), repository).first;
+    return intern_denotation(result, context.get_builder(), repository).first;
 }
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
     requires FamilyNumericalConstructorTag<Family, Tag>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constructor,
-                   Context& context,
-                   DenotationRepository& repository) -> DenotationView<NumericalTag>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constructor, Context& context) -> DenotationView<NumericalTag>
 {
+    [[maybe_unused]] auto children = context.child_context();
+    auto& repository = context.get_denotation_repository();
     ygg::uint_t result_value = 0;
 
     if constexpr (std::same_as<Tag, CountTag>)
     {
-        result_value = ygg::visit([&](auto arg) { return detail::count(evaluate(arg, context)); }, constructor.get_arg());
+        result_value = ygg::visit([&](auto arg) { return detail::count(evaluate(arg, children)); }, constructor.get_arg());
     }
     else if constexpr (std::same_as<Tag, DistanceTag>)
     {
         constexpr auto infinity = std::numeric_limits<ygg::uint_t>::max();
 
-        const auto lhs = evaluate(constructor.get_lhs(), context);
+        const auto lhs = evaluate(constructor.get_lhs(), children);
         const auto lhs_bitset = lhs.get();
         result_value = infinity;
 
         if (lhs_bitset.any())
         {
-            const auto rhs = evaluate(constructor.get_rhs(), context);
+            const auto rhs = evaluate(constructor.get_rhs(), children);
             const auto rhs_bitset = rhs.get();
 
             if (rhs_bitset.any())
@@ -779,7 +748,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
                 }
                 else
                 {
-                    const auto role = evaluate(constructor.get_mid(), context);
+                    const auto role = evaluate(constructor.get_mid(), children);
                     context.get_workspace().prepare_distance(static_cast<ygg::uint_t>(lhs_bitset.size()));
                     auto& queue = context.get_workspace().get_distance_queue();
                     auto& distances = context.get_workspace().get_distance_values();
@@ -808,7 +777,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
                             if (rhs_bitset[target])
                             {
                                 auto result = context.get_builder().template get_builder<Denotation<NumericalTag>>(target_distance);
-                                return detail::materialize_denotation(result, context.get_builder(), repository).first;
+                                return intern_denotation(result, context.get_builder(), repository).first;
                             }
 
                             queue.push_back(static_cast<ygg::uint_t>(target));
@@ -824,8 +793,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
     }
     else if constexpr (NumericalBinaryTag<Tag>)
     {
-        const auto lhs = evaluate(constructor.get_lhs(), context);
-        const auto rhs = evaluate(constructor.get_rhs(), context);
+        const auto lhs = evaluate(constructor.get_lhs(), children);
+        const auto rhs = evaluate(constructor.get_rhs(), children);
         result_value = detail::apply_numerical_binary<Tag>(lhs.get(), rhs.get());
     }
     else
@@ -834,24 +803,13 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
     }
 
     auto result = context.get_builder().template get_builder<Denotation<NumericalTag>>(result_value);
-    return detail::materialize_denotation(result, context.get_builder(), repository).first;
+    return intern_denotation(result, context.get_builder(), repository).first;
 }
 
 template<FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family> Context>
-auto evaluate_impl(FamilyConstructorView<Family, Category> constructor, Context& context, DenotationRepository& repository) -> DenotationView<Category>
+auto evaluate_impl(FamilyConstructorView<Family, Category> constructor, Context& context) -> DenotationView<Category>
 {
-    if (repository.get_formalism_repository_ptr() != context.get_denotation_repository().get_formalism_repository_ptr())
-        throw std::invalid_argument("Denotations must be evaluated into a repository for the same planning task.");
-
-    return ygg::visit([&](auto child) { return evaluate_impl(child, context, repository); }, constructor.get_variant());
-}
-
-template<FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family> Context>
-auto evaluate(FamilyConstructorView<Family, Category> constructor, Context& context, DenotationRepository& repository) -> DenotationView<Category>
-{
-    // Only the final value receives the destination's lifetime; children use the ordinary caches.
-    const auto result = evaluate_impl(constructor, context, repository);
-    return detail::materialize_denotation(result, context.get_builder(), repository).first;
+    return ygg::visit([&](auto child) { return evaluate_impl(child, context); }, constructor.get_variant());
 }
 
 template<FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family> Context>
@@ -862,8 +820,8 @@ auto evaluate(FamilyConstructorView<Family, Category> constructor, Context& cont
     if (const auto it = cache.find(constructor); it != cache.end())
         return it->second;
 
-    auto& repository = context.get_caches().get_repository(is_static);
-    return cache.emplace(constructor, evaluate_impl(constructor, context, repository)).first->second;
+    auto result_context = context.for_result(is_static);
+    return cache.emplace(constructor, evaluate_impl(constructor, result_context)).first->second;
 }
 
 }

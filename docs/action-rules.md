@@ -87,9 +87,10 @@ their action schema and filter arguments before constructing successor states.
 
 Nonuniversal execution stops ordinary expansion at its first compatible
 outcome. Universal execution requires every ordinary outcome and one successful
-binding for each Choose rule. Rules and bindings are visited in their natural
-order, and enumeration supports early termination. Choose bindings follow
-their denotation order. Action applicability and effect contracts are checked
+binding for each Choose rule. Rule occurrences retain their existing order.
+Action tuples follow their relation's canonical row order; Choose bindings
+follow their denotation order. Enumeration supports early termination.
+Action applicability and effect contracts are checked
 only for visited tuples, so unvisited invalid tuples remain unchecked.
 Query evaluation still materializes the selected relation.
 
@@ -170,38 +171,51 @@ relation = ext.evaluate(feature, state_context)
 snapshot = tuple(tuple(row) for row in relation)
 ```
 
-`relation` is a borrowed `pyyggdrasil.database.RelationView`. Iterating it yields
-read-only `RelationRow` views of Tyr object indices, with values ordered by
-`columns`. Repeated evaluation in an unchanged context reuses the cached relation.
-Before evaluating a different state, register binding, or argument binding, call
-`environment.get_dl_caches().clear(False)`. This also clears dynamic denotation
-storage; static denotations survive until `.clear()` clears both partitions.
-Clear both partitions before changing constructor repositories; create new
-caches for a different task. Evaluation does not clear caches
-automatically. Constructor repositories remain caller-owned: keep them alive
-and unchanged while their entries are cached or their views are in use.
-Create a new state context from the next execution state
-after advancing execution. Each state context retains its execution state and environment.
+`relation` is an interned `pyyggdrasil.database.RelationView`.
+It exposes `get_index()`, iteration, row access, and shape operations directly.
+Rows contain read-only Tyr object indices, with values ordered by `columns`.
+Interning preserves column order; rows form a canonical set whose iteration
+order follows interned row identities rather than insertion order.
+Repeated evaluation in an unchanged context reuses the cached query identity.
+Rule occurrence order is unchanged, but canonical tuple order can change which
+binding a nonuniversal search visits first.
+
+Before evaluating a different source state, register binding, or argument
+binding, call `environment.reset_source()` and create a context for the new
+configuration. `environment.reset_target()` resets target evaluations between
+candidate transitions. These operations reset dynamic memo entries and their
+owned result repositories while preserving static results. Context creation
+alone does not reset anything. Each Python context retains its execution state
+and environment; constructor repositories must also stay alive and unchanged.
 
 Low-level `pyrunir.kr.dl.ext.semantics` contexts take
-`(state, builder, denotation_repository, caches, arguments, registers)`.
-Construct the caches with `DenotationCaches(denotation_repository)`.
-Create `CallArgumentsData` for the four lists of denotation indices and
-`RegisterValuesData` for optional object indices or pairs of object indices.
-For `CallArgumentsData`, evaluate its expression with
-`expression.evaluate(context, denotation_repository)` and store the returned index.
-This writes the result directly into the persistent repository; intermediate
-denotations remain in the cache. Persistent results survive cache clearing.
-Intern each with `denotation_repository.get_or_create(data)` and pass the
-returned `CallArguments` and `RegisterValues` views to the context. These types
-are defined in `pyrunir.kr.dl.base.semantics`. Changing the source data does not
-change an interned value; intern the updated data and create a new context.
-Clear dynamic cache entries before evaluating the new context. Register storage
-is sized from the module's declarations.
+`(state, builder, storage, arguments, registers)`, or
+`(state, builder, caches, denotation_repository, intermediates, arguments, registers)`
+when the final result needs different ownership from its children. Construct a
+reusable `EvaluationStorage(denotation_repository)` and pass it directly for
+ordinary evaluation. The builder owns the shared DL evaluation workspace.
+Every expression uses `expression.evaluate(context)`;
+the context selects where computed results are interned. See
+[KR evaluation storage](kr-evaluation.md) for durable results and reset
+rules.
 
-Denotations, relations, rows, and iterators retain the evaluation environment,
-but clearing their cache partition invalidates them. Do not access an old view after clearing; evaluate
-again or use a Python snapshot made before the clear, as above.
+`CallArgumentsData` holds the four lists of denotation indices;
+`RegisterValuesData` holds optional object indices or pairs of indices. Both are
+defined in `pyrunir.kr.dl.base.semantics`. Evaluate call-argument roots with
+separate caches and the task's durable denotation repository, then intern each
+bundle with `denotation_repository.get_or_create(data)`. Pass the resulting
+`CallArguments` and `RegisterValues` views to the context. Argument expressions
+pass through existing argument views, so supplied argument indices must already
+refer to the task repository. Changing source data does not change an interned
+value; intern the updated data and reset evaluation for the new context.
+Register storage is sized from the module's declarations.
+
+Denotations, query results, rows, and iterators retain their Python owners, but
+resetting an owning result repository invalidates its old views. Memo-only
+`DenotationCaches.reset_dynamic()` and `.reset_all()` leave result storage
+intact. Use storage or environment resets to release reusable evaluation
+results, and do not access those views afterward; evaluate again or take a
+Python snapshot first, as above.
 `len(relation)` is the row count and `relation.arity()` is the column count.
 A zero-column query has no rows when false and one empty row when true.
 

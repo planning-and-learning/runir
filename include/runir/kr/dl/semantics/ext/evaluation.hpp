@@ -10,9 +10,7 @@ namespace runir::kr::dl::semantics
 {
 
 template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor,
-                   Context& context,
-                   DenotationRepository& repository) -> DenotationView<ConceptTag>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor, Context& context) -> DenotationView<ConceptTag>
 {
     auto result = detail::make_concept_builder(context);
     auto result_bitset = result->get();
@@ -21,13 +19,11 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, R
     if (object)
         result_bitset.set(ygg::uint_t(object.value().get_index()));
 
-    return detail::materialize_denotation(result, context.get_builder(), repository).first;
+    return intern_denotation(result, context.get_builder(), context.get_denotation_repository()).first;
 }
 
 template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor,
-                   Context& context,
-                   DenotationRepository& repository) -> DenotationView<RoleTag>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, RegisterTag>>, C> constructor, Context& context) -> DenotationView<RoleTag>
 {
     auto result = detail::make_role_builder(context);
 
@@ -38,37 +34,32 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, Regi
         result->get(pair.get_first().get_index()).set(ygg::uint_t(pair.get_second().get_index()));
     }
 
-    return detail::materialize_denotation(result, context.get_builder(), repository).first;
+    return intern_denotation(result, context.get_builder(), context.get_denotation_repository()).first;
 }
 
 template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, ArgumentTag<ConceptTag>>>, C> constructor,
-                   Context& context,
-                   DenotationRepository&) -> DenotationView<ConceptTag>
+                   Context& context) -> DenotationView<ConceptTag>
 {
     return context.arguments().at(constructor.get_argument().get_identifier());
 }
 
 template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, ArgumentTag<RoleTag>>>, C> constructor,
-                   Context& context,
-                   DenotationRepository&) -> DenotationView<RoleTag>
+auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, ArgumentTag<RoleTag>>>, C> constructor, Context& context) -> DenotationView<RoleTag>
 {
     return context.arguments().at(constructor.get_argument().get_identifier());
 }
 
 template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<runir::kr::ExtFamilyTag, ArgumentTag<BooleanTag>>>, C> constructor,
-                   Context& context,
-                   DenotationRepository&) -> DenotationView<BooleanTag>
+                   Context& context) -> DenotationView<BooleanTag>
 {
     return context.arguments().at(constructor.get_argument().get_identifier());
 }
 
 template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<runir::kr::ExtFamilyTag, ArgumentTag<NumericalTag>>>, C> constructor,
-                   Context& context,
-                   DenotationRepository&) -> DenotationView<NumericalTag>
+                   Context& context) -> DenotationView<NumericalTag>
 {
     return context.arguments().at(constructor.get_argument().get_identifier());
 }

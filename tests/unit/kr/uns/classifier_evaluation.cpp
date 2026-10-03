@@ -23,8 +23,8 @@ TEST(RunirTests, UnsClassifierClassifies)
     const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
     auto builder = sem::Builder();
     auto denotation_repository = sem::DenotationRepositoryFactory().create(search->task->get_repository());
-    auto caches = sem::DenotationCaches<kr::UnsFamilyTag>(denotation_repository);
-    auto context = sem::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(state, builder, denotation_repository, builder.get_workspace(), caches);
+    auto storage = sem::EvaluationStorage<kr::UnsFamilyTag>(denotation_repository);
+    auto context = sem::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(state, builder, storage);
 
     // some_ball is true and no_object is false, so the first clause (some_ball AND NOT no_object) holds.
     EXPECT_TRUE(kr::uns::classify(classifier, context));

@@ -1,8 +1,8 @@
 #ifndef RUNIR_SEMANTICS_DENOTATION_REPOSITORY_HPP_
 #define RUNIR_SEMANTICS_DENOTATION_REPOSITORY_HPP_
 
-#include "runir/kr/dl/semantics/canonicalization.hpp"
 #include "runir/kr/dl/semantics/call_arguments_view.hpp"
+#include "runir/kr/dl/semantics/canonicalization.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_builder.hpp"
 #include "runir/kr/dl/semantics/denotation_data.hpp"
@@ -12,6 +12,7 @@
 #include "runir/kr/dl/semantics/register_values_view.hpp"
 
 #include <cassert>
+#include <concepts>
 #include <memory>
 #include <optional>
 #include <tuple>
@@ -21,6 +22,8 @@
 #include <yggdrasil/containers/unique_object_pool.hpp>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/database/relation_pool.hpp>
+#include <yggdrasil/database/relation_repository.hpp>
 #include <yggdrasil/formalism/builder.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
@@ -50,31 +53,34 @@ private:
                                                 BasicBuilder<Denotation<NumericalTag>>,
                                                 BasicBuilder<Denotation<ConceptTag>>,
                                                 BasicBuilder<Denotation<RoleTag>>>;
-    using DenotationDataStorage = ygg::formalism::BuilderStorage<Denotation<BooleanTag>,
-                                                                Denotation<NumericalTag>,
-                                                                Denotation<ConceptTag>,
-                                                                Denotation<RoleTag>,
-                                                                RegisterValues,
-                                                                CallArguments>;
+    using DenotationDataStorage = ygg::formalism::
+        BuilderStorage<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>, RegisterValues, CallArguments>;
 
     DenotationBuilderStorage m_builders;
     DenotationDataStorage m_data;
+    ygg::database::RelationPool<> m_relation_builders;
     EvaluationWorkspace m_workspace;
 
 public:
-    /// Default evaluation workspace, retaining mutable buffers across states.
+    /// Shared evaluation scratch, retaining mutable buffers across states.
     auto& get_workspace() noexcept { return m_workspace; }
 
     template<typename T>
     [[nodiscard]] auto get_builder()
     {
-        return std::get<BasicBuilder<T>>(m_builders).get_builder();
+        if constexpr (std::same_as<T, ygg::database::Relation<>>)
+            return m_relation_builders.get_or_allocate({});
+        else
+            return std::get<BasicBuilder<T>>(m_builders).get_builder();
     }
 
     template<typename T, typename... Args>
     [[nodiscard]] auto get_builder(Args&&... args)
     {
-        return std::get<BasicBuilder<T>>(m_builders).get_builder(std::forward<Args>(args)...);
+        if constexpr (std::same_as<T, ygg::database::Relation<>>)
+            return m_relation_builders.get_or_allocate(std::forward<Args>(args)...);
+        else
+            return std::get<BasicBuilder<T>>(m_builders).get_builder(std::forward<Args>(args)...);
     }
 
     template<typename T>
@@ -118,9 +124,12 @@ inline ygg::Data<Denotation<RoleTag>>& make_data(const ygg::Builder<Denotation<R
 
 class DenotationRepositoryFactory
 {
+    friend class DenotationRepository;
+
 private:
-    // Copies share one index sequence, including factories retained by repositories.
+    // Copies share identity sequences, including factories retained by repositories.
     std::shared_ptr<size_t> m_next_index;
+    ygg::database::RelationRepositoryFactory<> m_relation_factory;
 
 public:
     DenotationRepositoryFactory() : m_next_index(std::make_shared<size_t>(0)) {}
@@ -134,26 +143,22 @@ class DenotationRepository
     friend class DenotationRepositoryFactory;
 
 public:
-    using SymbolRepository = ygg::formalism::SymbolRepository<Denotation<BooleanTag>,
-                                                              Denotation<NumericalTag>,
-                                                              Denotation<ConceptTag>,
-                                                              Denotation<RoleTag>,
-                                                              RegisterValues,
-                                                              CallArguments>;
+    using SymbolRepository = ygg::formalism::
+        SymbolRepository<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>, RegisterValues, CallArguments>;
     using VectorRepository = ygg::RawVectorSet<ygg::uint_t, ygg::uint_t>;
 
 private:
     SymbolRepository m_symbol_repository;
     VectorRepository m_vector_repository;
+    ygg::database::RelationRepository<> m_relation_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;
     DenotationRepositoryFactory m_factory;
     size_t m_index;
 
-    DenotationRepository(size_t index,
-                         DenotationRepositoryFactory factory,
-                         std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
+    DenotationRepository(size_t index, DenotationRepositoryFactory factory, std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
         m_symbol_repository(nullptr),
         m_vector_repository(),
+        m_relation_repository(factory.m_relation_factory.create()),
         m_formalism_repository(std::move(formalism_repository)),
         m_factory(std::move(factory)),
         m_index(index)
@@ -181,6 +186,7 @@ public:
     {
         m_symbol_repository.clear();
         m_vector_repository.clear();
+        m_relation_repository.clear();
     }
 
     template<typename T>
@@ -219,6 +225,8 @@ public:
 
     const auto& get_vector_repository() const noexcept { return m_vector_repository; }
     auto& get_vector_repository() noexcept { return m_vector_repository; }
+    const auto& get_relation_repository() const noexcept { return m_relation_repository; }
+    auto& get_relation_repository() noexcept { return m_relation_repository; }
 };
 
 inline DenotationRepository DenotationRepositoryFactory::create(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository)

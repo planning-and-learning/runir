@@ -16,31 +16,24 @@ template<tyr::TaskKind Kind>
 void bind_transition_evaluation_context(nb::module_& m, const char* name)
 {
     using Context = runir::kr::ps::dl::TransitionEvaluationContext<runir::kr::BaseFamilyTag, Kind>;
-    using DenotationCaches = runir::kr::dl::semantics::DenotationCaches<runir::kr::BaseFamilyTag>;
+    using Storage = runir::kr::dl::semantics::EvaluationStorage<runir::kr::BaseFamilyTag>;
 
     nb::class_<Context>(m, name)
-        .def(
-            nb::new_([](tyr::planning::StateView<Kind> source_state,
-                        tyr::planning::StateView<Kind> target_state,
-                        runir::kr::dl::semantics::Builder& builder,
-                        runir::kr::dl::semantics::DenotationRepository& denotation_repository,
-                        DenotationCaches& source_caches,
-                        DenotationCaches& target_caches)
-                     { return Context(source_state, target_state, builder, denotation_repository, builder.get_workspace(), source_caches, target_caches); }),
-            nb::arg("source_state"),
-            nb::arg("target_state"),
-            nb::arg("builder"),
-            nb::arg("denotation_repository"),
-            nb::arg("source_denotation_caches"),
-            nb::arg("target_denotation_caches"),
-            nb::keep_alive<0, 4>(),
-            nb::keep_alive<0, 5>(),
-            nb::keep_alive<0, 6>(),
-            nb::keep_alive<0, 7>(),
-            nb::keep_alive<6, 4>(),
-            nb::keep_alive<6, 5>(),
-            nb::keep_alive<7, 4>(),
-            nb::keep_alive<7, 5>())
+        .def(nb::new_([](tyr::planning::StateView<Kind> source_state,
+                         tyr::planning::StateView<Kind> target_state,
+                         runir::kr::dl::semantics::Builder& builder,
+                         Storage& source,
+                         Storage& target) { return Context(source_state, target_state, builder, source, target); }),
+             nb::arg("source_state"),
+             nb::arg("target_state"),
+             nb::arg("builder"),
+             nb::arg("source_storage"),
+             nb::arg("target_storage"),
+             nb::keep_alive<0, 2>(),
+             nb::keep_alive<0, 3>(),
+             nb::keep_alive<0, 4>(),
+             nb::keep_alive<0, 5>(),
+             nb::keep_alive<0, 6>())
         .def("get_source_state", &Context::get_source_state, nb::rv_policy::copy, nb::keep_alive<0, 1>())
         .def("get_target_state", &Context::get_target_state, nb::rv_policy::copy, nb::keep_alive<0, 1>());
 }

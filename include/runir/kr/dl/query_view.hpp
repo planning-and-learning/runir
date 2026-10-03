@@ -92,9 +92,9 @@ public:
         if constexpr (std::same_as<Tag, void>)
             return ygg::visit([](auto concrete) { return concrete.get_schema(); }, get_variant());
         else if constexpr (std::same_as<Tag, runir::kr::dl::QueryJoinTag> || std::same_as<Tag, runir::kr::dl::QueryProjectTag>)
-            return get_data().plan.output_columns();
+            return make_view(get_data().plan.output_columns().get_data(), *m_context);
         else
-            return get_data().schema.view();
+            return make_view(get_data().schema.get_data(), *m_context);
     }
 
     auto get_lhs_column() const noexcept

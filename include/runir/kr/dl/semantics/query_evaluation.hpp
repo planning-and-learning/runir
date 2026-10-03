@@ -4,25 +4,46 @@
 #include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 
+#include <cstdint>
 #include <span>
 #include <yggdrasil/database/operations.hpp>
 
 namespace runir::kr::dl::semantics
 {
 
-template<FamilyTag Family, typename C, StateEvaluationContextConcept<Family> Context>
-auto evaluate(ygg::View<ygg::Index<Query<Family, QueryRenameTag>>, C> constructor, Context& context)
+namespace detail
 {
-    return ygg::database::rename(evaluate(constructor.get_arg(), context), constructor.get_schema());
+/// Column labels are local to a constructor repository. Its address must not
+/// be reused until the corresponding results and caches have been reset.
+template<typename C>
+size_t query_schema_namespace(const C& repository) noexcept
+{
+    static_assert(sizeof(std::uintptr_t) <= sizeof(size_t));
+    return static_cast<size_t>(reinterpret_cast<std::uintptr_t>(&repository));
+}
+}  // namespace detail
+
+template<FamilyTag Family, typename C, StateEvaluationContextConcept<Family> Context>
+auto evaluate_impl(ygg::View<ygg::Index<Query<Family, QueryRenameTag>>, C> constructor, Context& context) -> ygg::database::RelationView<>
+{
+    // Keep rows in their owning output partition, even when a low-level query
+    // wrapper conservatively marks a static child as dynamic.
+    const auto child = evaluate(constructor.get_arg(), context);
+    auto static_output = context.for_result(true);
+    auto dynamic_output = context.for_result(false);
+    auto& static_results = static_output.get_denotation_repository().get_relation_repository();
+    auto& results = &child.get_context() == &static_results ? static_results : dynamic_output.get_denotation_repository().get_relation_repository();
+    return results.rename(child, constructor.get_schema(), detail::query_schema_namespace(constructor.get_context()));
 }
 
 template<FamilyTag Family, typename Tag, typename C, StateEvaluationContextConcept<Family> Context>
     requires(!std::same_as<Tag, void> && !std::same_as<Tag, QueryRenameTag>)
-auto evaluate(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context& context) -> ygg::UniqueObjectPoolPtr<ygg::database::Relation<>>
+auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context& context) -> ygg::database::RelationView<>
 {
     const auto& data = constructor.get_data();
     const auto schema = constructor.get_schema();
-    auto result = context.get_workspace().get_relations().get_or_allocate(schema);
+    auto result = context.get_builder().template get_builder<ygg::database::Relation<>>(schema);
+    auto children = context.child_context();
     if constexpr (is_atomic_state_tag_v<Tag>)
     {
         auto& tuple = context.get_workspace().get_database_workspace().row;
@@ -54,14 +75,14 @@ auto evaluate(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context&
     }
     else if constexpr (std::same_as<Tag, QueryConceptTag>)
     {
-        const auto child = evaluate(constructor.get_arg(), context);
+        const auto child = evaluate(constructor.get_arg(), children);
         const auto bits = child.get();
         for (auto object = bits.find_first(); object != decltype(bits)::npos; object = bits.find_next(object))
             result->insert({ static_cast<ygg::uint_t>(object) });
     }
     else if constexpr (std::same_as<Tag, QueryRoleTag>)
     {
-        const auto child = evaluate(constructor.get_arg(), context);
+        const auto child = evaluate(constructor.get_arg(), children);
         for (ygg::uint_t source = 0; source < detail::num_objects(context); ++source)
         {
             const auto row = child.get(source);
@@ -71,8 +92,8 @@ auto evaluate(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context&
     }
     else if constexpr (std::same_as<Tag, QueryJoinTag> || std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
     {
-        const auto lhs = evaluate(constructor.get_lhs(), context);
-        const auto rhs = evaluate(constructor.get_rhs(), context);
+        const auto lhs = evaluate(constructor.get_lhs(), children);
+        const auto rhs = evaluate(constructor.get_rhs(), children);
         if constexpr (std::same_as<Tag, QueryJoinTag>)
         {
             const auto lhs_static = constructor.get_lhs().is_static();
@@ -81,7 +102,7 @@ auto evaluate(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context&
             ygg::database::join(lhs,
                                 rhs,
                                 data.plan,
-                                context.get_caches().get_static_join_indexes(),
+                                children.get_caches().get_static_join_indexes(),
                                 { .lhs = lhs_static && !rhs_static, .rhs = rhs_static && !lhs_static },
                                 *result,
                                 context.get_workspace().get_database_workspace());
@@ -93,17 +114,17 @@ auto evaluate(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context&
     }
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
-        const auto child = evaluate(constructor.get_arg(), context);
+        const auto child = evaluate(constructor.get_arg(), children);
         ygg::database::project(child, data.plan, *result, context.get_workspace().get_database_workspace());
     }
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
-        const auto child = evaluate(constructor.get_arg(), context);
+        const auto child = evaluate(constructor.get_arg(), children);
         ygg::database::select(child, [&](std::span<const ygg::uint_t> row) { return row[data.lhs_position] == row[data.rhs_position]; }, *result);
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
-        const auto child = evaluate(constructor.get_arg(), context);
+        const auto child = evaluate(constructor.get_arg(), children);
         const auto object = ygg::uint_t(constructor.get_object().get_index());
         ygg::database::select(child, [&](std::span<const ygg::uint_t> row) { return row[data.position] == object; }, *result);
     }
@@ -111,7 +132,10 @@ auto evaluate(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context&
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled relational query constructor");
     }
-    return result;
+    return ygg::database::intern_relation(*result,
+                                          context.get_denotation_repository().get_relation_repository(),
+                                          detail::query_schema_namespace(constructor.get_context()))
+        .first;
 }
 
 template<FamilyTag Family, StateEvaluationContextConcept<Family> Context, typename C>
@@ -121,18 +145,17 @@ auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, Context& cont
     if (const auto it = cache.find(constructor); it != cache.end())
         return it->second;
 
-    const auto result =
-        ygg::visit([&](auto child) { return context.get_caches().retain(constructor.is_static(), evaluate(child, context)); }, constructor.get_variant());
+    auto output = context.for_result(constructor.is_static());
+    const auto result = ygg::visit([&](auto child) { return evaluate_impl(child, output); }, constructor.get_variant());
     return cache.emplace(constructor, result).first->second;
 }
 
 template<FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family> Context, typename C>
-auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor,
-                   Context& context,
-                   DenotationRepository& repository) -> DenotationView<Category>
+auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor, Context& context) -> DenotationView<Category>
 {
     const auto positions = constructor.get_data().plan.positions();
-    const auto relation = evaluate(constructor.get_arg(), context);
+    auto children = context.child_context();
+    const auto relation = evaluate(constructor.get_arg(), children);
     auto result = context.get_builder().template get_builder<Denotation<Category>>(detail::num_objects(context));
     if constexpr (std::same_as<Category, ConceptTag>)
     {
@@ -149,7 +172,7 @@ auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> c
             result->get(row[positions[0]]).set(row[positions[1]]);
         }
     }
-    return detail::materialize_denotation(result, context.get_builder(), repository).first;
+    return intern_denotation(result, context.get_builder(), context.get_denotation_repository()).first;
 }
 
 }  // namespace runir::kr::dl::semantics
