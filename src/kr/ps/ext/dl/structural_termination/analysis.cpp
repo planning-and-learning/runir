@@ -101,10 +101,10 @@ Analysis analyze_module(ModuleView module_)
     const auto numericals = module_.get_features<runir::kr::ps::dl::NumericalFeature>();
     auto policy = runir::kr::ps::detail::QualitativePolicy(memory_states.size(), booleans.size(), numericals.size());
     auto analysis = Analysis { std::move(rules), std::move(policy) };
-    const auto memory_position = [&](ygg::Index<MemoryState> memory_state)
+    const auto memory_position = [&](MemoryStateView memory_state)
     {
         for (std::size_t position = 0; position < memory_states.size(); ++position)
-            if (memory_states[position].get_index() == memory_state)
+            if (memory_states[position] == memory_state)
                 return position;
         throw std::logic_error("structural_termination: rule references a memory state not listed in the module.");
     };
@@ -115,8 +115,8 @@ Analysis analyze_module(ModuleView module_)
         ygg::visit(
             [&](auto concrete_rule)
             {
-                profile.source_memory_position = memory_position(concrete_rule.get_source().get_index());
-                profile.target_memory_position = memory_position(concrete_rule.get_target().get_index());
+                profile.source_memory_position = memory_position(concrete_rule.get_source());
+                profile.target_memory_position = memory_position(concrete_rule.get_target());
                 for (auto condition : concrete_rule.get_conditions())
                     ygg::visit(
                         [&](auto concrete_variant)

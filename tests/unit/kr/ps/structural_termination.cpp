@@ -210,7 +210,7 @@ TEST(RunirTests, CommonFeaturePositionRejectsUndeclaredFeatureBeforeMaskShift)
     struct Feature
     {
         std::size_t index;
-        std::size_t get_index() const { return index; }
+        bool operator==(const Feature&) const = default;
     };
     auto features = std::array<Feature, 64> {};
     for (std::size_t position = 0; position < features.size(); ++position)

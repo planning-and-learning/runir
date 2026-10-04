@@ -55,8 +55,7 @@ public:
     auto make_dl_context(S state)
     {
         const auto program = state.get_program();
-        if (&state.get_context() != &m_execution_repository || &program.get_context() != &m_program.get_context()
-            || program.get_index() != m_program.get_index())
+        if (&state.get_context() != &m_execution_repository || &program.get_context() != &m_program.get_context() || program != m_program)
             throw std::invalid_argument("EvaluationEnvironment requires an execution state from the selected task and program.");
         const auto module_state = state.get_module_state();
         return make_dl_context(module_state.get_state(), module_state.get_arguments(), module_state.get_registers());

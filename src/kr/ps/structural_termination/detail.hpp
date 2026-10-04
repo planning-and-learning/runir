@@ -38,7 +38,7 @@ struct PolicyAnalysis
 template<typename Features, typename Feature>
 std::size_t feature_position(const Features& features, Feature feature)
 {
-    const auto found = std::find_if(features.begin(), features.end(), [&](auto candidate) { return candidate.get_index() == feature.get_index(); });
+    const auto found = std::find(features.begin(), features.end(), feature);
     if (found == features.end())
         throw std::invalid_argument("structural_termination: rule references a feature not listed in the policy");
     return static_cast<std::size_t>(std::distance(features.begin(), found));

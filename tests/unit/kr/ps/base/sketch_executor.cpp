@@ -12,6 +12,8 @@
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/sketch_executor.hpp>
 #include <runir/kr/ps/base/successor_expander.hpp>
+#include <tyr/planning/factory.hpp>
+#include <tyr/planning/state_repository.hpp>
 #include <vector>
 
 namespace runir::tests
@@ -116,6 +118,30 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_EQ(dl_denotation_repository->get_formalism_repository_ptr(), dl_context.get_denotation_repository().get_formalism_repository_ptr());
         EXPECT_EQ(&dl_context.get_caches(), &expander.get_environment().get_dl_caches());
     }
+}
+
+TEST(RunirTests, BaseMatchingDistinguishesCollidingStateIdsAcrossStorage)
+{
+    namespace p = tyr::planning;
+    const auto search_context = make_gripper_ground_context();
+    const auto task = search_context->task;
+    const auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(task->get_domain()), search_context);
+    const auto sketch = kr::ps::base::dl::parse_sketch(read_fixture("kr/ps/base/executor/any_transition.sketch"),
+                                                       task->get_domain().get_domain(),
+                                                       *task_context->domain_context->base_repository);
+    auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, sketch);
+    auto& generator = *search_context->successor_generator;
+    const auto initial = generator.get_initial_node(*search_context->state_repository, *search_context->axiom_evaluator);
+    const auto successors = generator.get_labeled_successor_nodes(initial, *search_context->state_repository, *search_context->axiom_evaluator);
+    const auto successor = std::ranges::find_if(successors, [&](const auto& candidate) { return candidate.node.get_state() != initial.get_state(); });
+    ASSERT_NE(successor, successors.end());
+
+    const auto target_repository = p::StateRepositoryFactory<tyr::GroundTag> {}.create(task);
+    const auto target = p::materialize_state(successor->node.get_state(), *target_repository, *search_context->axiom_evaluator);
+    ASSERT_EQ(initial.get_state().get_index(), target.get_index());
+    ASSERT_NE(initial.get_state(), target);
+    EXPECT_TRUE(expander.matching_rule(initial.get_state(), target));
+    EXPECT_FALSE(expander.matching_rule(initial.get_state(), initial.get_state()));
 }
 
 TEST(RunirTests, BaseFindSolutionUsesOnlyImmediateOutcomesAndUniversalUsesAll)

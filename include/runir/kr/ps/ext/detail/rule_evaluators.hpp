@@ -19,6 +19,7 @@
 #include <functional>
 #include <optional>
 #include <span>
+#include <sstream>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
@@ -61,14 +62,22 @@ class RuleEvaluators
     std::vector<std::pair<ygg::Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>, size_t>> m_lookup;
     ChooseRuleWorkspace m_choose;
     DoRuleWorkspace m_do;
-    ActionRuleWorkspace<Kind> m_action;
+    ActionRuleWorkspace m_action;
     std::vector<size_t> m_sketch_rules;
 
     template<RuleKind Tag>
     auto prepare(RuleView<Tag> rule, RuleVariantView variant)
     {
         if constexpr (std::same_as<Tag, ActionTag>)
-            return ActionRuleEvaluator<Kind>(rule, variant, *m_task_context->search_context->task);
+        {
+            for (const auto action : m_task_context->search_context->task->get_task().get_domain().get_actions())
+                if (action.get_name().str() == rule.get_action_name())
+                    return ActionRuleEvaluator<Kind>(rule, variant, action);
+            auto message = std::ostringstream {};
+            message << "Action rule " << ygg::uint_t(rule.get_index()) << " ('" << variant.get_symbol().str() << "') for '" << rule.get_action_name().str()
+                    << "': action schema does not exist in the task";
+            throw ActionRuleContractError(message.str());
+        }
         else if constexpr (std::same_as<Tag, CallTag>)
             return CallRuleEvaluator<Kind>(rule, variant, m_program);
         else if constexpr (std::same_as<Tag, DoTag>)
@@ -154,8 +163,7 @@ public:
     RuleEvaluators(runir::kr::TaskContextPtr<Kind> task_context, ProgramView program) :
         m_task_context(task_context ? std::move(task_context) : throw std::invalid_argument("RuleEvaluators requires a task context.")),
         m_program(program),
-        m_environment(*m_task_context, m_program),
-        m_action(m_task_context->search_context->task)
+        m_environment(*m_task_context, m_program)
     {
         if (&program.get_context() != m_task_context->domain_context->ext_repository.get())
             throw std::invalid_argument("RuleEvaluators requires a program from the domain context repository.");

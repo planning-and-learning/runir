@@ -15,6 +15,7 @@
 #include <runir/kr/task_context.hpp>
 #include <string>
 #include <tyr/planning/ground/successor_generator.hpp>
+#include <tyr/planning/lifted/successor_generator.hpp>
 #include <variant>
 
 #if defined(_MSC_VER)
@@ -422,5 +423,85 @@ TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
             EXPECT_LE(allocations[1], allocations[0] + 128) << "small=" << allocations[0] << ", large=" << allocations[1];
         }
 }
+
+namespace
+{
+template<tyr::TaskKind Kind, kr::ps::ext::ExecutionStorageConcept<Kind> Storage>
+void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr::ps::ext::ProgramView program)
+{
+    namespace ext = kr::ps::ext;
+    auto expander = ext::SuccessorExpander<Kind, Storage>(context, program);
+    auto& search = *context->search_context;
+    const auto node = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator);
+    const auto initial = expander.initial_state(node.get_state());
+    auto statistics = ext::ProgramSearchStatistics {};
+    bool valid = true;
+    const auto expand = [&]
+    {
+        size_t emitted = 0;
+        valid &= expander.for_each_successor(
+            expander.view(initial),
+            statistics,
+            [&](auto step)
+            {
+                if constexpr (std::same_as<decltype(step), ext::detail::ProgramStep<Kind, Storage>>)
+                {
+                    valid &= step.status == ext::detail::ProgramOutcome::APPLIED && step.state_transition.has_value();
+                    ++emitted;
+                }
+                else
+                    valid = false;
+                return true;
+            },
+            [] { return false; });
+        valid &= emitted == 2;
+    };
+    for (size_t i = 0; i < 8; ++i)
+        expand();
+    ASSERT_TRUE(valid);
+
+    allocation_tracking::Scope measured;
+    for (size_t i = 0; i < 512; ++i)
+        expand();
+    const auto counts = measured.finish();
+    EXPECT_TRUE(valid);
+    EXPECT_EQ(counts.allocated, 0);
+    EXPECT_EQ(counts.deallocated, 0);
+}
+
+template<tyr::TaskKind Kind>
+void expect_warmed_action_storage()
+{
+    namespace ext = kr::ps::ext;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/ps/ext/choose";
+    const auto search = [&]
+    {
+        if constexpr (std::same_as<Kind, tyr::GroundTag>)
+            return make_ground_context(directory / "domain.pddl", directory / "task.pddl");
+        else
+            return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
+    }();
+    const auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
+    const auto program = ext::dl::parse_program(R"(
+(:program (:entry actions)
+  (:module (:symbol actions) (:arguments) (:registers)
+    (:entry source) (:memory source target)
+    (:features
+      (:query (:symbol Moves) (:expression
+        (q_join (q_atomic_state "edge" (from to)) (q_atomic_state "at" (from)))))
+      (:numerical (:symbol N) (:expression (n_count (c_atomic_state "at")))))
+    (:rules (:rule (:symbol move) (:expression
+      (:source-memory source) (:target-memory target)
+      (:action (:conditions) (:action "move") (:query Moves) (:effects (unchanged N))))))))
+)",
+                                                search->task->get_domain().get_domain(),
+                                                *context->domain_context->ext_repository);
+    expect_warmed_action_expansions<Kind, ext::InternedExecutionStorage<Kind>>(context, program);
+    expect_warmed_action_expansions<Kind, ext::TransientExecutionStorage<Kind>>(context, program);
+}
+}  // namespace
+
+TEST(RunirSearch, WarmedActionExpansionsReuseGroundStorage) { expect_warmed_action_storage<tyr::GroundTag>(); }
+TEST(RunirSearch, WarmedActionExpansionsReuseLiftedStorage) { expect_warmed_action_storage<tyr::LiftedTag>(); }
 
 }  // namespace runir::tests

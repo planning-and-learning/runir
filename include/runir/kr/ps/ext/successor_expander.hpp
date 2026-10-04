@@ -159,7 +159,7 @@ private:
         if (&state.get_context() != m_task_context->execution_repository.get())
             throw std::invalid_argument("SuccessorExpander requires an execution state from the selected task.");
         const auto program = state.get_program();
-        if (&program.get_context() != &m_program.get_context() || program.get_index() != m_program.get_index())
+        if (&program.get_context() != &m_program.get_context() || program != m_program)
             throw std::invalid_argument("SuccessorExpander requires an execution state from the selected program.");
     }
 

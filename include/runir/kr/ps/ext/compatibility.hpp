@@ -24,7 +24,7 @@ bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, Contex
 template<RuleKind RuleKindT, typename C, typename S>
 bool has_current_source(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, S state)
 {
-    return rule.get_source().get_index() == state.get_module_state().get_memory_state().get_index();
+    return rule.get_source() == state.get_module_state().get_memory_state();
 }
 
 // Reject the source memory before evaluating conditions in the reusable environment.

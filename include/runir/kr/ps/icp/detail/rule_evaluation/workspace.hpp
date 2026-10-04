@@ -35,8 +35,7 @@ public:
         if (&program.get_context() != m_task->domain_context->icp_repository.get())
             throw std::invalid_argument("ICP requires a program from the domain context repository.");
         const auto planning_task = m_task->search_context->task->get_task();
-        auto empty = m_task->dl_builder.template get_builder<Denotation>(
-            static_cast<ygg::uint_t>(planning_task.get_domain().get_constants().size() + planning_task.get_objects().size()));
+        auto empty = m_task->dl_builder.template get_builder<Denotation>(static_cast<ygg::uint_t>(planning_task.get_num_objects()));
         m_empty = runir::kr::dl::semantics::insert(*m_task->dl_denotation_repository, *empty, m_task->dl_builder).first.get_index();
         const auto module = program.get_module();
         const auto features = module.template get_features<Concept>();

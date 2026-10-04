@@ -332,7 +332,7 @@ private:
 
         bool operands_are_interchangeable = false;
         if constexpr (std::same_as<LhsCategory, RhsCategory>)
-            operands_are_interchangeable = child_lhs.get_index() == child_rhs.get_index();
+            operands_are_interchangeable = child_lhs == child_rhs;
 
         for (size_t i = 1; i < m_complexity - 1; ++i)
         {
@@ -401,7 +401,7 @@ private:
     template<runir::kr::dl::CategoryTag Category>
     bool propagate(FamilySubstitutionRuleView<Family, Category> rule, bool& changed)
     {
-        if (rule.get_lhs().get_index() == rule.get_rhs().get_index())
+        if (rule.get_lhs() == rule.get_rhs())
             return !out_of_time();
 
         const auto& source = m_sentences.get(rule.get_rhs(), m_complexity);

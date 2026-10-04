@@ -37,7 +37,7 @@ public:
     /// Reuse source evaluations across candidates and target evaluations across rules.
     std::optional<RuleView> matching_rule(const tyr::planning::StateView<Kind>& source, const tyr::planning::StateView<Kind>& target, auto&& stop)
     {
-        if (source.get_index() == target.get_index())
+        if (source == target)
             return std::nullopt;
         m_environment.reset_target();
         auto transition = m_environment.make_dl_transition_context(source, target);

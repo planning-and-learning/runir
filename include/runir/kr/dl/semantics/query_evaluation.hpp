@@ -4,6 +4,7 @@
 #include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 
+#include <functional>
 #include <span>
 #include <yggdrasil/database/operations.hpp>
 
@@ -35,37 +36,35 @@ auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Con
     {
         auto& tuple = context.get_workspace().get_database_workspace().row;
         tuple.resize(schema.size());
-        detail::for_each_current_atom<typename Tag::FactKind>(context,
-                                                              [&](auto atom)
-                                                              {
-                                                                  if (atom.get_predicate().get_index() != data.predicate)
-                                                                      return;
-                                                                  for (size_t i = 0; i < tuple.size(); ++i)
-                                                                      tuple[i] = ygg::uint_t(detail::object_index(atom, i));
-                                                                  result->insert(std::span<const ygg::uint_t>(tuple));
-                                                              });
+        const auto predicate = constructor.get_predicate();
+        for (const auto atom : tyr::planning::get_atoms_view<typename Tag::FactKind>(context.get_state()))
+        {
+            if (atom.get_predicate() != predicate)
+                continue;
+            for (size_t i = 0; i < tuple.size(); ++i)
+                tuple[i] = ygg::uint_t(detail::object_index(atom, i));
+            result->insert(std::span<const ygg::uint_t>(tuple));
+        }
     }
     else if constexpr (is_atomic_goal_tag_v<Tag>)
     {
         auto& tuple = context.get_workspace().get_database_workspace().row;
         tuple.resize(schema.size());
-        detail::for_each_goal_atom<typename Tag::FactKind>(context,
-                                                           constructor.get_polarity(),
-                                                           [&](auto atom)
-                                                           {
-                                                               if (atom.get_predicate().get_index() != data.predicate)
-                                                                   return;
-                                                               for (size_t i = 0; i < tuple.size(); ++i)
-                                                                   tuple[i] = ygg::uint_t(detail::object_index(atom, i));
-                                                               result->insert(std::span<const ygg::uint_t>(tuple));
-                                                           });
+        const auto predicate = constructor.get_predicate();
+        for (const auto atom : context.get_state().get_task().get_task().get_goal().template get_atoms_view<typename Tag::FactKind>(constructor.get_polarity()))
+        {
+            if (atom.get_predicate() != predicate)
+                continue;
+            for (size_t i = 0; i < tuple.size(); ++i)
+                tuple[i] = ygg::uint_t(detail::object_index(atom, i));
+            result->insert(std::span<const ygg::uint_t>(tuple));
+        }
     }
     else if constexpr (std::same_as<Tag, QueryConceptTag>)
     {
         const auto child = evaluate(constructor.get_arg(), children);
         const auto bits = child.get();
-        for (auto object = bits.find_first(); object != decltype(bits)::npos; object = bits.find_next(object))
-            result->insert({ static_cast<ygg::uint_t>(object) });
+        ygg::for_each_bit([&](size_t object) { result->insert({ static_cast<ygg::uint_t>(object) }); }, std::identity {}, bits);
     }
     else if constexpr (std::same_as<Tag, QueryRoleTag>)
     {
@@ -73,8 +72,7 @@ auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Con
         for (ygg::uint_t source = 0; source < detail::num_objects(context); ++source)
         {
             const auto row = child.get(source);
-            for (auto target = row.find_first(); target != decltype(row)::npos; target = row.find_next(target))
-                result->insert({ source, static_cast<ygg::uint_t>(target) });
+            ygg::for_each_bit([&](size_t target) { result->insert({ source, static_cast<ygg::uint_t>(target) }); }, std::identity {}, row);
         }
     }
     else if constexpr (std::same_as<Tag, QueryJoinTag> || std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)

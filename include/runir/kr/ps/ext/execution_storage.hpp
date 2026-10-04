@@ -176,9 +176,7 @@ public:
     ProgramStateView<Kind> materialize(BuilderProgramStateView<Kind> state)
     {
         auto& search = *m_context->search_context;
-        auto builder = search.state_repository->get_state_builder();
-        *builder = state.get_state().get_state_builder();
-        const auto planning = search.state_repository->register_extended_state(std::move(builder));
+        const auto planning = search.state_repository->register_extended_state(state.get_state());
         auto& denotations = *m_context->dl_denotation_repository;
         auto& dl_builder = m_context->dl_builder;
         const auto module_ = state.get_module_state();

@@ -1479,7 +1479,9 @@ TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossReposi
     namespace ext = kr::ps::ext;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
     const auto context = create_task_context<tyr::GroundTag>(directory / "domain.pddl", directory / "task.pddl");
-    const auto foreign_context = kr::DomainContext::create(context->search_context->task->get_domain());
+    auto foreign_factory = ext::RepositoryFactory {};
+    const auto foreign_repository = foreign_factory.create(context->domain_context->ext_repository->get_dl_repository_ptr());
+    const auto distinct_repository = foreign_factory.create(context->domain_context->ext_repository->get_dl_repository_ptr());
     const auto make_module = [&](ext::Repository& repository, const char* target)
     {
         return ext::dl::parse_module(fmt::format(R"((:module (:symbol policy) (:arguments) (:registers)
@@ -1494,7 +1496,8 @@ TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossReposi
     };
     auto& repository = *context->domain_context->ext_repository;
     const auto prepared_module = make_module(repository, "prepared");
-    const auto foreign_module = make_module(*foreign_context->ext_repository, "external");
+    const auto foreign_module = make_module(*foreign_repository, "external");
+    const auto distinct_module = make_module(*distinct_repository, "external");
     const auto prepared_rule = prepared_module.get_memory_transitions()[0][0];
     const auto foreign_rule = foreign_module.get_memory_transitions()[0][0];
     ASSERT_EQ(prepared_rule.get_index(), foreign_rule.get_index());
@@ -1512,10 +1515,63 @@ TEST(RunirTests, ExtExplicitApplicationDistinguishesCollidingRuleIdsAcrossReposi
     EXPECT_EQ(prepared->get_target().get_module_state().get_memory_state().get_name(), "prepared");
     EXPECT_EQ(foreign->get_target().get_module_state().get_memory_state().get_name(), "external");
     EXPECT_EQ(&foreign->rule->get_context(), &foreign_rule.get_context());
+
+    // A colliding memory index from a different repository identity cannot
+    // make a rule applicable to the current program state.
+    ASSERT_EQ(distinct_module.get_entry_memory_state().get_index(), initial.get_module_state().get_memory_state().get_index());
+    ASSERT_NE(distinct_module.get_entry_memory_state(), initial.get_module_state().get_memory_state());
+    EXPECT_FALSE(expander.apply(initial, distinct_module.get_memory_transitions()[0][0]));
 }
 
 namespace
 {
+
+template<tyr::TaskKind Kind>
+void expect_unknown_action_rejected_during_preparation()
+{
+    namespace ext = kr::ps::ext;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto task_context = create_task_context<Kind>(directory / "domain.pddl", directory / "task.pddl");
+    auto& repository = *task_context->domain_context->ext_repository;
+    const auto parsed = ext::dl::parse_module(R"(
+(:module (:symbol actions) (:arguments) (:registers)
+  (:entry source) (:memory source unreachable)
+  (:features (:query (:symbol Moves) (:expression (q_atomic_state "edge" (from to)))))
+  (:rules))
+)",
+                                              task_context->search_context->task->get_domain().get_domain(),
+                                              repository);
+    // Programmatic rules can bypass the parser's schema lookup. Even an
+    // unreachable rule must have its action resolved when preparing the program.
+    auto action_data = ygg::Data<ext::Rule<ext::ActionTag>> {};
+    action_data.source = create_memory_state(repository, "unreachable").get_index();
+    action_data.target = parsed.get_entry_memory_state().get_index();
+    action_data.action_name = "missing-action";
+    action_data.query_feature = parsed.get_query_features()[0].get_index();
+    const auto action_rule = repository.insert(action_data).first;
+    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(std::string("missing-schema"), action_rule.get_index());
+    const auto variant = repository.insert(variant_data).first;
+    auto module_data = parsed.get_data();
+    auto transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>> {};
+    transition.push_back(variant.get_index());
+    module_data.memory_transitions.push_back(std::move(transition));
+    ext::canonicalize(module_data);
+    const auto module_ = repository.insert(module_data).first;
+    const auto program = create_program(repository, module_, { module_ });
+    const auto num_states = task_context->search_context->state_repository->num_states();
+    try
+    {
+        auto expander = ext::SuccessorExpander<Kind>(task_context, program);
+        FAIL() << "Preparing an unknown action schema must fail before state evaluation";
+    }
+    catch (const ext::ActionRuleContractError& error)
+    {
+        EXPECT_EQ(std::string(error.what()),
+                  fmt::format("Action rule {} ('missing-schema') for 'missing-action': action schema does not exist in the task",
+                              ygg::uint_t(action_rule.get_index())));
+    }
+    EXPECT_EQ(task_context->search_context->state_repository->num_states(), num_states);
+}
 
 template<tyr::TaskKind Kind>
 void expect_query_action_contracts()
@@ -1889,6 +1945,8 @@ void expect_callback_expansion_counts()
 
 TEST(RunirTests, ExtQueryActionContractsGround) { expect_query_action_contracts<tyr::GroundTag>(); }
 TEST(RunirTests, ExtQueryActionContractsLifted) { expect_query_action_contracts<tyr::LiftedTag>(); }
+TEST(RunirTests, ExtUnknownActionRejectedDuringPreparationGround) { expect_unknown_action_rejected_during_preparation<tyr::GroundTag>(); }
+TEST(RunirTests, ExtUnknownActionRejectedDuringPreparationLifted) { expect_unknown_action_rejected_during_preparation<tyr::LiftedTag>(); }
 TEST(RunirTests, ExtCallbackSelectionStopsAfterSelectedRuleGround) { expect_callback_selection_stops_after_selected_rule<tyr::GroundTag>(); }
 TEST(RunirTests, ExtCallbackSelectionStopsAfterSelectedRuleLifted) { expect_callback_selection_stops_after_selected_rule<tyr::LiftedTag>(); }
 TEST(RunirTests, ExtCallbackSketchOrderAndCancellationGround) { expect_callback_sketch_order_and_cancellation<tyr::GroundTag>(); }

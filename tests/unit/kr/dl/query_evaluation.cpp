@@ -5,6 +5,8 @@
 #include <cista/serialization.h>
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <limits>
+#include <optional>
 #include <runir/kr/dl/query_data.hpp>
 #include <runir/kr/dl/query_view.hpp>
 #include <runir/kr/dl/repository.hpp>
@@ -16,11 +18,13 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <tyr/formalism/planning/parser.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
 #include <utility>
 #include <vector>
 #include <yggdrasil/database/operations.hpp>
+#include <yggdrasil/execution/onetbb.hpp>
 #include <yggdrasil/semantics/hash.hpp>
 
 namespace runir::tests
@@ -830,8 +834,196 @@ void check_query_cache_across_bindings()
     EXPECT_EQ(rebound.arguments().template get<dl::ConceptTag>()[0].get_index(), b_set.get_index());
 }
 
+template<tyr::TaskKind Kind>
+void check_predicate_repository_identity()
+{
+    using Family = kr::BaseFamilyTag;
+    using Fact = tyr::formalism::FluentTag;
+    using Predicate = tyr::formalism::Predicate<Fact>;
+    namespace fp = tyr::formalism::planning;
+    const auto domain_source = std::string(R"(
+(define (domain predicate-identity)
+  (:requirements :strips)
+  (:constants a b)
+  (:predicates (flag) (marked ?x) (edge ?x ?y))
+  (:action clear :parameters (?x ?y)
+    :precondition (and (flag) (marked ?x) (edge ?x ?y))
+    :effect (and (not (flag)) (not (marked ?x)) (not (edge ?x ?y)))))
+)");
+    const auto task_source = std::string(R"(
+(define (problem predicate-identity-task)
+  (:domain predicate-identity)
+  (:init (flag) (marked a) (edge a b))
+  (:goal (and (flag) (marked a) (edge a b))))
+)");
+    auto execution = ygg::ExecutionContext::create(1);
+    auto lifted = tyr::planning::Task<tyr::LiftedTag>::create(fp::Parser(domain_source, std::nullopt).parse_task(task_source, std::nullopt));
+    auto task = [&]
+    {
+        if constexpr (std::same_as<Kind, tyr::GroundTag>)
+            return lifted->instantiate_ground_task(*execution).task;
+        else
+            return lifted;
+    }();
+    auto search = datasets::TaskSearchContext<Kind>::create(task, execution);
+    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto& domain = task->get_domain();
+    // Use one factory so repository identities differ even though predicate indices collide.
+    const auto foreign = domain.get_repository_factory()->create_shared();
+    auto predicates = std::array<ygg::Index<Predicate>, 3> {};
+    ASSERT_EQ(domain.get_domain().template get_predicates<Fact>().size(), predicates.size());
+    for (const auto predicate : domain.get_domain().template get_predicates<Fact>())
+    {
+        ASSERT_LT(predicate.get_arity(), predicates.size());
+        predicates[predicate.get_arity()] = predicate.get_index();
+        auto data = ygg::Data<Predicate>("foreign_" + predicate.get_name().str(), predicate.get_arity());
+        const auto other = fp::insert(*foreign, data).first;
+        ASSERT_EQ(other.get_index(), predicate.get_index());
+        ASSERT_NE(other, predicate);
+        EXPECT_EQ(ygg::make_view(predicate.get_index(), *task->get_repository()), predicate);
+    }
+    auto constructor_factory = dl::ConstructorRepositoryFactoryFor<Family>();
+    for (const auto& planning_repository : { domain.get_repository(), task->get_repository(), foreign })
+    {
+        const auto expected = planning_repository != foreign;
+        SCOPED_TRACE(expected ? "same predicate owner" : "different predicate owner");
+        auto repository = constructor_factory.create(planning_repository);
+        auto builder = sem::Builder();
+        auto denotations = sem::DenotationRepositoryFactory().create(task->get_repository());
+        auto storage = sem::EvaluationStorage<Family>(denotations);
+        auto context = sem::StateEvaluationContext<Family, Kind>(initial.get_state(), builder, storage);
+        const auto check = [&]<typename Tag>()
+        {
+            auto concept_data = ygg::Data<dl::Concept<Family, Tag>>(predicates[1]);
+            auto concept_wrapper = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(dl::insert(*repository, concept_data).first.get_index());
+            EXPECT_EQ(sem::evaluate(dl::insert(*repository, concept_wrapper).first, context).get().count(), size_t(expected));
+
+            auto role_data = ygg::Data<dl::Role<Family, Tag>>(predicates[2]);
+            auto role_wrapper = ygg::Data<dl::Constructor<Family, dl::RoleTag>>(dl::insert(*repository, role_data).first.get_index());
+            EXPECT_EQ(sem::evaluate(dl::insert(*repository, role_wrapper).first, context).count(), size_t(expected));
+
+            auto boolean_data = ygg::Data<dl::Boolean<Family, Tag>>(predicates[0]);
+            auto boolean_wrapper = ygg::Data<dl::Constructor<Family, dl::BooleanTag>>(dl::insert(*repository, boolean_data).first.get_index());
+            EXPECT_EQ(sem::evaluate(dl::insert(*repository, boolean_wrapper).first, context).get(), expected);
+
+            auto column = ygg::Data<dl::QueryColumn>();
+            column.name = "x";
+            auto query_data = ygg::Data<dl::Query<Family, Tag>>();
+            query_data.predicate = predicates[1];
+            query_data.columns.push_back(dl::insert(*repository, column).first.get_index());
+            if constexpr (dl::is_atomic_goal_tag_v<Tag>)
+                query_data.polarity = true;
+            auto query_wrapper = ygg::Data<dl::Query<Family>>();
+            query_wrapper.variant = dl::insert(*repository, query_data).first.get_index();
+            EXPECT_EQ(sem::evaluate(dl::insert(*repository, query_wrapper).first, context).size(), size_t(expected));
+        };
+        check.template operator()<dl::AtomicStateTag<Fact>>();
+        check.template operator()<dl::AtomicGoalTag<Fact>>();
+    }
+}
+
+template<tyr::TaskKind Kind>
+void check_multiword_bit_evaluation()
+{
+    constexpr auto word_bits = ygg::uint_t(std::numeric_limits<ygg::uint_t>::digits);
+    constexpr auto num_objects = 2 * word_bits + 3;
+    constexpr auto last = num_objects - 1;
+    const auto name = [](ygg::uint_t i) { return "v" + std::to_string(1000 + i); };
+    auto domain_source = std::string("(define (domain bit-boundaries) (:requirements :strips) (:constants");
+    for (ygg::uint_t i = 0; i < num_objects; ++i)
+        domain_source += " " + name(i);
+    domain_source += ") (:predicates (marked ?x) (edge ?x ?y)))";
+    auto task_source = std::string("(define (problem bit-boundaries-task) (:domain bit-boundaries) (:init");
+    for (const auto i : { ygg::uint_t(0), word_bits - 1, word_bits, last })
+        task_source += " (marked " + name(i) + ")";
+    for (const auto& [from, to] : std::array { std::pair { ygg::uint_t(0), word_bits - 1 },
+                                              std::pair { ygg::uint_t(0), word_bits },
+                                              std::pair { word_bits - 1, last },
+                                              std::pair { word_bits, last } })
+        task_source += " (edge " + name(from) + " " + name(to) + ")";
+    task_source += ") (:goal (and)))";
+    auto execution = ygg::ExecutionContext::create(1);
+    auto lifted =
+        tyr::planning::Task<tyr::LiftedTag>::create(tyr::formalism::planning::Parser(domain_source, std::nullopt).parse_task(task_source, std::nullopt));
+    auto task = [&]
+    {
+        if constexpr (std::same_as<Kind, tyr::GroundTag>)
+            return lifted->instantiate_ground_task(*execution).task;
+        else
+            return lifted;
+    }();
+    auto search = datasets::TaskSearchContext<Kind>::create(task, execution);
+    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto domain = task->get_domain().get_domain();
+    ASSERT_EQ(domain.get_constants().size(), num_objects);
+    for (const auto i : { ygg::uint_t(0), word_bits - 1, word_bits, last })
+    {
+        ASSERT_EQ(domain.get_constants()[i].get_name(), name(i));
+        ASSERT_EQ(ygg::uint_t(domain.get_constants()[i].get_index()), i);
+    }
+    auto repository = dl::ConstructorRepositoryFactoryFor<Ext>().create(task->get_repository());
+    sem::Builder builder;
+    auto denotations = sem::DenotationRepositoryFactory().create(task->get_repository());
+    sem::EvaluationStorage<Ext> storage(denotations);
+    ygg::Data<sem::CallArguments> arguments;
+    ygg::Data<sem::RegisterValues> registers;
+    auto context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
+                                                          builder,
+                                                          storage,
+                                                          sem::insert(denotations, arguments).first,
+                                                          sem::insert(denotations, registers).first);
+    const auto query = [&](const std::string& expression) { return sem::evaluate(parse_query(expression, domain, *repository), context); };
+    const auto concept_value = [&](const std::string& expression) { return sem::evaluate(parser::parse_concept(expression, domain, *repository), context); };
+    const auto number = [&](const std::string& expression) { return sem::evaluate(parser::parse_numerical(expression, domain, *repository), context).get(); };
+    const auto marked = std::string(R"((c_atomic_state "marked"))");
+    const auto edge = std::string(R"((r_atomic_state "edge"))");
+
+    const auto selected = query("(q_concept x " + marked + ")");
+    ASSERT_EQ(selected.size(), 4);
+    for (const auto i : { ygg::uint_t(0), word_bits - 1, word_bits, last })
+        EXPECT_TRUE(selected.contains({ i }));
+    EXPECT_EQ(query("(q_concept x (c_top))").size(), num_objects);
+    EXPECT_TRUE(query("(q_concept x (c_bot))").empty());
+    const auto identity = query("(q_role (x y) (r_identity (c_top)))");
+    EXPECT_EQ(identity.size(), num_objects);
+    EXPECT_TRUE(identity.contains({ last, last }));
+    EXPECT_TRUE(query("(q_role (x y) (r_identity (c_bot)))").empty());
+
+    const auto inverse = query("(q_role (x y) (r_inverse " + edge + "))");
+    ASSERT_EQ(inverse.size(), 4);
+    EXPECT_TRUE(inverse.contains({ word_bits - 1, 0 }));
+    EXPECT_TRUE(inverse.contains({ word_bits, 0 }));
+    EXPECT_TRUE(inverse.contains({ last, word_bits - 1 }));
+    EXPECT_TRUE(inverse.contains({ last, word_bits }));
+    const auto composition = query("(q_role (x y) (r_composition " + edge + " " + edge + "))");
+    ASSERT_EQ(composition.size(), 1);
+    EXPECT_TRUE(composition.contains({ 0, last }));
+    EXPECT_TRUE(query("(q_role (x y) (r_composition " + edge + " (r_identity (c_bot))))").empty());
+
+    const auto at_least = concept_value("(c_at_least 2 " + edge + " " + marked + ")").get();
+    EXPECT_EQ(at_least.count(), 1);
+    EXPECT_TRUE(at_least.test(0));
+    const auto exactly = concept_value("(c_exactly 1 " + edge + " " + marked + ")").get();
+    EXPECT_EQ(exactly.count(), 2);
+    EXPECT_TRUE(exactly.test(word_bits - 1));
+    EXPECT_TRUE(exactly.test(word_bits));
+    const auto at_most = concept_value("(c_at_most 1 " + edge + " " + marked + ")").get();
+    EXPECT_EQ(at_most.count(), num_objects - 1);
+    EXPECT_FALSE(at_most.test(0));
+    EXPECT_EQ(concept_value("(c_exactly 0 " + edge + " (c_bot))").get().count(), num_objects);
+
+    // The second source crosses a block boundary and shortens the path from two steps to one.
+    const auto starts = "(c_or (c_nominal \"" + name(0) + "\") (c_nominal \"" + name(word_bits) + "\"))";
+    EXPECT_EQ(number("(n_distance " + starts + " " + edge + " (c_nominal \"" + name(last) + "\"))"), 1);
+    EXPECT_EQ(number("(n_distance (c_nominal \"" + name(last) + "\") " + edge + " (c_nominal \"" + name(0) + "\"))"), std::numeric_limits<ygg::uint_t>::max());
+}
+
 }  // namespace
 
+TEST(RunirQueries, GroundMultiwordBitEvaluation) { check_multiword_bit_evaluation<tyr::GroundTag>(); }
+TEST(RunirQueries, LiftedMultiwordBitEvaluation) { check_multiword_bit_evaluation<tyr::LiftedTag>(); }
+TEST(RunirQueries, GroundAtomicEvaluationChecksPredicateRepository) { check_predicate_repository_identity<tyr::GroundTag>(); }
+TEST(RunirQueries, LiftedAtomicEvaluationChecksPredicateRepository) { check_predicate_repository_identity<tyr::LiftedTag>(); }
 TEST(RunirQueries, GroundRelationsAndMutableBindings) { check_queries<tyr::GroundTag>(); }
 TEST(RunirQueries, LiftedRelationsAndMutableBindings) { check_queries<tyr::LiftedTag>(); }
 TEST(RunirQueries, BaseCachingAndBorrowedRenameLifetime) { check_cached_queries<kr::BaseFamilyTag>(); }
