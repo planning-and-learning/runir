@@ -36,10 +36,11 @@ struct UnrelatedExecutionStorage
 {
 };
 
-struct MissingPlanningStateStorage : ext::InternedExecutionStorage<tyr::GroundTag>
+struct MissingStoreStorage : ext::InternedExecutionStorage<tyr::GroundTag>
 {
     using InternedExecutionStorage::InternedExecutionStorage;
-    void set_planning_state(ygg::Data<ext::ModuleState<tyr::GroundTag>>&, tyr::planning::StateView<tyr::GroundTag>) = delete;
+    template<typename... Args>
+    void store(Args&&...) = delete;
 };
 
 struct WrongRetainStorage : ext::InternedExecutionStorage<tyr::GroundTag>
@@ -63,7 +64,7 @@ static_assert(execution_storage_constraints_match<ext::TransientExecutionStorage
 static_assert(execution_storage_constraints_match<ext::TransientExecutionStorage<tyr::LiftedTag>, tyr::GroundTag, false>);
 static_assert(execution_storage_constraints_match<int, tyr::GroundTag, false>);
 static_assert(execution_storage_constraints_match<UnrelatedExecutionStorage, tyr::GroundTag, false>);
-static_assert(execution_storage_constraints_match<MissingPlanningStateStorage, tyr::GroundTag, false>);
+static_assert(execution_storage_constraints_match<MissingStoreStorage, tyr::GroundTag, false>);
 static_assert(execution_storage_constraints_match<WrongRetainStorage, tyr::GroundTag, false>);
 
 auto create_register(kr::ps::ext::Repository& repository, const std::string& name, ygg::uint_t identifier)
@@ -597,9 +598,8 @@ TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallers)
         const auto outer_caller = storage.save_caller(storage.view(initial), outer_return);
         EXPECT_EQ(storage.save_caller(storage.view(initial), outer_return).get_index(), outer_caller.get_index());
         EXPECT_EQ(executions.template size<ext::CallStack>(), 1);
-        auto callee_module = storage.module_();
-        *callee_module = initial->module_state;
-        const auto callee = storage.store(std::move(callee_module), outer_caller);
+        const auto initial_module = storage.view(initial).get_module_state();
+        const auto callee = storage.store(source, module_, entry, initial_module.get_registers(), initial_module.get_arguments(), outer_caller);
         const auto inner_caller = storage.save_caller(storage.view(callee), inner_return);
         EXPECT_EQ(storage.save_caller(storage.view(callee), inner_return).get_index(), inner_caller.get_index());
         EXPECT_EQ(executions.template size<ext::CallStack>(), 2);
@@ -610,10 +610,8 @@ TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallers)
         const auto first = storage.successor(source, bindings.front());
         const auto scratch = &first.node.get_state().get_state_builder();
         const auto expected = *scratch;
-        auto target = storage.module_();
-        *target = initial->module_state;
-        storage.set_planning_state(*target, first.node.get_state());
-        const auto retained = storage.store(std::move(target), inner_caller);
+        const auto retained =
+            storage.store(first.node.get_state(), module_, entry, initial_module.get_registers(), initial_module.get_arguments(), inner_caller);
         ASSERT_TRUE(retained->call_stack);
         EXPECT_EQ(*retained->call_stack, inner_caller.get_index());
 
@@ -630,11 +628,12 @@ TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallers)
         const auto caller = storage.view(copy).get_call_stack();
         ASSERT_TRUE(caller);
         EXPECT_EQ(caller->get_index(), inner_caller.get_index());
-        auto returned_module = storage.module_();
-        *returned_module = copy->module_state;
-        returned_module->memory_state = caller->get_return_memory_state().get_index();
-        storage.set_registers(*returned_module, caller->get_registers());
-        const auto returned = storage.store(std::move(returned_module), caller->get_caller());
+        const auto returned = storage.store(storage.view(copy).get_state(),
+                                            caller->get_module(),
+                                            caller->get_return_memory_state(),
+                                            caller->get_registers(),
+                                            caller->get_arguments(),
+                                            caller->get_caller());
         ASSERT_TRUE(returned->call_stack);
         EXPECT_EQ(*returned->call_stack, outer_caller.get_index());
         EXPECT_TRUE(ygg::EqualTo<ext::MemoryStateView> {}(storage.view(returned).get_module_state().get_memory_state(), inner_return));
@@ -650,6 +649,43 @@ TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallers)
         EXPECT_TRUE(ygg::EqualTo<ext::MemoryStateView> {}(materialized_outer->get_return_memory_state(), outer_return));
         EXPECT_FALSE(materialized_outer->get_caller());
         EXPECT_EQ(executions.template size<ext::CallStack>(), 2);
+
+        // Reusing a released slot must replace its values without replacing its buffers.
+        auto planning_values = expected;
+        planning_values.get_numeric_variables().values = { 3.0 };
+        const auto planning = ygg::make_view(planning_values, *search.task);
+        auto register_values = ygg::Data<kr::dl::semantics::RegisterValues>();
+        register_values.concept_values.emplace_back(ygg::Index<tyr::formalism::Object>(0));
+        register_values.role_values.emplace_back(::cista::pair { ygg::Index<tyr::formalism::Object>(0), ygg::Index<tyr::formalism::Object>(1) });
+        const auto registers = storage.registers(register_values);
+        auto recycled = storage.store(planning, module_, inner_return, registers, initial_module.get_arguments(), inner_caller);
+        const auto* slot = recycled.get();
+        const auto numeric_buffer = recycled->module_state.state.get_numeric_variables().values.data();
+        const auto numeric_capacity = recycled->module_state.state.get_numeric_variables().values.capacity();
+        const auto concept_buffer = recycled->module_state.registers.concept_values.data();
+        const auto concept_capacity = recycled->module_state.registers.concept_values.allocated_size_;
+        const auto role_buffer = recycled->module_state.registers.role_values.data();
+        const auto role_capacity = recycled->module_state.registers.role_values.allocated_size_;
+        recycled = {};
+        planning_values = initial_node.get_state().get_state_builder();
+        planning_values.get_numeric_variables().values = { 4.0 };
+        register_values.concept_values.front() = ygg::Index<tyr::formalism::Object>(1);
+        register_values.role_values.front().value().first = ygg::Index<tyr::formalism::Object>(1);
+        register_values.role_values.front().value().second = ygg::Index<tyr::formalism::Object>(0);
+        const auto reused = storage.store(planning, module_, entry, registers, initial_module.get_arguments(), {});
+        EXPECT_EQ(reused.get(), slot);
+        EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.data(), numeric_buffer);
+        EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.capacity(), numeric_capacity);
+        EXPECT_EQ(reused->module_state.registers.concept_values.data(), concept_buffer);
+        EXPECT_EQ(reused->module_state.registers.concept_values.allocated_size_, concept_capacity);
+        EXPECT_EQ(reused->module_state.registers.role_values.data(), role_buffer);
+        EXPECT_EQ(reused->module_state.registers.role_values.allocated_size_, role_capacity);
+        EXPECT_EQ(reused->module_state.state.get_numeric_variables().values.front(), 4.0);
+        EXPECT_TRUE(ygg::EqualTo<ygg::Data<kr::dl::semantics::RegisterValues>> {}(reused->module_state.registers, register_values));
+        EXPECT_FALSE(storage.view(reused).get_call_stack());
+        EXPECT_EQ(storage.view(reused).get_module_state().get_memory_state().get_index(), entry.get_index());
+        EXPECT_TRUE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(reused->module_state.state, planning_values));
+        EXPECT_TRUE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, expected));
     };
     check.template operator()<tyr::GroundTag>();
     check.template operator()<tyr::LiftedTag>();

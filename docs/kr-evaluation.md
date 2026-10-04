@@ -126,11 +126,16 @@ evaluator lives in `detail/rule_evaluation/rule.hpp`.
 Ext's `detail/rule_evaluation/context.hpp` contains only borrowed task, storage,
 and environment references. Its storage and the successor expander's storage
 are constrained by `ExecutionStorageConcept<Storage, Kind>`, which checks the
-shared interface while allowing interned views or pooled state handles.
+shared interface. `StoredState` names the returned state handle: an interned program
+state view or a pooled builder handle. `StateView` names the borrowed view used
+for evaluation. Rules create a complete successor with
+`storage.store(planning_state, module, memory, registers, arguments, call_stack)`.
+Interned storage records repository indices; transient storage fills a pooled
+program state's embedded module, retaining its planning and register buffers.
 Applicability checks live in `compatibility.hpp`;
 Load and Choose share register-binding helpers in `rule_evaluation/binding.hpp`.
-Module construction and execution-step helpers live in `execution_storage.hpp`
-and `detail/execution_step.hpp`. Sketch keeps its module-copy operation locally.
+Execution-step helpers live in `execution_storage.hpp` and
+`detail/execution_step.hpp`.
 
 Aggregates retain unique evaluator records and separate occurrence schedules.
 Program schedules are flat and selected by module and memory state where

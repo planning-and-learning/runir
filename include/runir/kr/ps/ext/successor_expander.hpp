@@ -81,7 +81,7 @@ public:
     template<ProgramStateViewConcept<Kind> S, typename Emit, typename Stop>
     bool for_each_successor(S state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop)
     {
-        using Step = detail::ProgramStep<Kind, decltype(m_storage.retain(state))>;
+        using Step = detail::ProgramStep<Kind, typename ExecutionStorage::StoredState>;
         if (stop())
             return false;
         validate_source(state);
@@ -172,13 +172,13 @@ private:
     {
         if (const auto caller = state.get_call_stack())
         {
-            auto target = ext::make_module(m_storage,
-                                           state.get_state(),
-                                           caller->get_module(),
-                                           caller->get_return_memory_state(),
-                                           caller->get_registers(),
-                                           caller->get_arguments());
-            return detail::make_step(detail::ProgramOutcome::RESTORED_CALLER, m_storage.store(std::move(target), caller->get_caller()), m_task_context);
+            auto target = m_storage.store(state.get_state(),
+                                          caller->get_module(),
+                                          caller->get_return_memory_state(),
+                                          caller->get_registers(),
+                                          caller->get_arguments(),
+                                          caller->get_caller());
+            return detail::make_step(detail::ProgramOutcome::RESTORED_CALLER, std::move(target), m_task_context);
         }
         return detail::make_step(detail::ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state), m_task_context);
     }

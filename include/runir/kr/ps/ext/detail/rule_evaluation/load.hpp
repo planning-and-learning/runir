@@ -39,8 +39,13 @@ public:
             if (!binding_effects_match(rule, state, planning_state, target_registers, context.environment))
                 continue;
             const auto module_ = state.get_module_state();
-            auto target = ext::make_module(context.storage, planning_state, module_.get_module(), rule.get_target(), target_registers, module_.get_arguments());
-            if (!emit(detail::applied(context.storage.store(std::move(target), state.get_call_stack()), rule_variant, context.task_context)))
+            auto target = context.storage.store(planning_state,
+                                                module_.get_module(),
+                                                rule.get_target(),
+                                                target_registers,
+                                                module_.get_arguments(),
+                                                state.get_call_stack());
+            if (!emit(detail::applied(std::move(target), rule_variant, context.task_context)))
                 return false;
         }
         return true;

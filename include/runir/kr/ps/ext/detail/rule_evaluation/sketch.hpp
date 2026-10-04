@@ -46,10 +46,14 @@ public:
     template<typename Context, ProgramStateViewConcept<Kind> S>
     auto control_step(Context& context, S state)
     {
-        auto target = context.storage.module_();
-        *target = state.get_module_state().get_data();
-        target->memory_state = m_rule.get_target().get_index();
-        return detail::applied(context.storage.store(std::move(target), state.get_call_stack()), m_variant, context.task_context);
+        const auto module_ = state.get_module_state();
+        auto target = context.storage.store(state.get_state(),
+                                            module_.get_module(),
+                                            m_rule.get_target(),
+                                            module_.get_registers(),
+                                            module_.get_arguments(),
+                                            state.get_call_stack());
+        return detail::applied(std::move(target), m_variant, context.task_context);
     }
 };
 

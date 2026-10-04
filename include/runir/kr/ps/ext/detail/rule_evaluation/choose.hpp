@@ -45,13 +45,13 @@ public:
         const auto rule = m_rule;
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(context.task_context->dl_builder);
         const auto module_ = state.get_module_state();
-        auto target = ext::make_module(context.storage,
-                                       state.get_state(),
-                                       module_.get_module(),
-                                       rule.get_target(),
-                                       bound_registers(rule, module_.get_registers(), choice.current(), *registers, context.storage),
-                                       module_.get_arguments());
-        return detail::applied(context.storage.store(std::move(target), state.get_call_stack()), choice.rule, context.task_context);
+        auto target = context.storage.store(state.get_state(),
+                                            module_.get_module(),
+                                            rule.get_target(),
+                                            bound_registers(rule, module_.get_registers(), choice.current(), *registers, context.storage),
+                                            module_.get_arguments(),
+                                            state.get_call_stack());
+        return detail::applied(std::move(target), choice.rule, context.task_context);
     }
 
 private:

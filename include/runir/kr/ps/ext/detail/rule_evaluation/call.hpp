@@ -81,8 +81,8 @@ public:
         registers->concept_values.resize(callee->template get_registers<runir::kr::dl::ConceptTag>().size());
         registers->role_values.resize(callee->template get_registers<runir::kr::dl::RoleTag>().size());
         auto target =
-            ext::make_module(context.storage, planning_state, *callee, callee->get_entry_memory_state(), context.storage.registers(*registers), arguments);
-        return emit(detail::applied(context.storage.store(std::move(target), std::move(caller)), rule_variant, context.task_context));
+            context.storage.store(planning_state, *callee, callee->get_entry_memory_state(), context.storage.registers(*registers), arguments, caller);
+        return emit(detail::applied(std::move(target), rule_variant, context.task_context));
     }
 };
 
