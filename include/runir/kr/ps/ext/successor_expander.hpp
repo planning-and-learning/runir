@@ -35,7 +35,7 @@ namespace runir::kr::ps::ext
 
 /// Returned choices must not outlive this expander.
 /// With TransientExecutionStorage, returned states and steps must not outlive it either.
-template<tyr::TaskKind Kind, typename ExecutionStorage = InternedExecutionStorage<Kind>>
+template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage = InternedExecutionStorage<Kind>>
 class SuccessorExpander
 {
 public:

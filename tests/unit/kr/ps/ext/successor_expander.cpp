@@ -9,8 +9,10 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/ps/ext/detail/rule_evaluation/context.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <runir/kr/ps/ext/execution_repository.hpp>
+#include <runir/kr/ps/ext/execution_storage.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
@@ -27,6 +29,42 @@ namespace runir::tests
 
 namespace
 {
+
+namespace ext = kr::ps::ext;
+
+struct UnrelatedExecutionStorage
+{
+};
+
+struct MissingPlanningStateStorage : ext::InternedExecutionStorage<tyr::GroundTag>
+{
+    using InternedExecutionStorage::InternedExecutionStorage;
+    void set_planning_state(ygg::Data<ext::ModuleState<tyr::GroundTag>>&, tyr::planning::StateView<tyr::GroundTag>) = delete;
+};
+
+struct WrongRetainStorage : ext::InternedExecutionStorage<tyr::GroundTag>
+{
+    using InternedExecutionStorage::InternedExecutionStorage;
+    int retain(ext::ProgramStateView<tyr::GroundTag>) const noexcept;
+};
+
+template<typename Storage, tyr::TaskKind Kind, bool Expected>
+constexpr bool execution_storage_constraints_match =
+    (ext::ExecutionStorageConcept<Storage, Kind> == Expected) && ((requires { typename ext::detail::RuleEvaluationContext<Kind, Storage>; }) == Expected)
+    && ((requires { typename ext::SuccessorExpander<Kind, Storage>; }) == Expected);
+
+static_assert(execution_storage_constraints_match<ext::InternedExecutionStorage<tyr::GroundTag>, tyr::GroundTag, true>);
+static_assert(execution_storage_constraints_match<ext::InternedExecutionStorage<tyr::LiftedTag>, tyr::LiftedTag, true>);
+static_assert(execution_storage_constraints_match<ext::TransientExecutionStorage<tyr::GroundTag>, tyr::GroundTag, true>);
+static_assert(execution_storage_constraints_match<ext::TransientExecutionStorage<tyr::LiftedTag>, tyr::LiftedTag, true>);
+static_assert(execution_storage_constraints_match<ext::InternedExecutionStorage<tyr::GroundTag>, tyr::LiftedTag, false>);
+static_assert(execution_storage_constraints_match<ext::InternedExecutionStorage<tyr::LiftedTag>, tyr::GroundTag, false>);
+static_assert(execution_storage_constraints_match<ext::TransientExecutionStorage<tyr::GroundTag>, tyr::LiftedTag, false>);
+static_assert(execution_storage_constraints_match<ext::TransientExecutionStorage<tyr::LiftedTag>, tyr::GroundTag, false>);
+static_assert(execution_storage_constraints_match<int, tyr::GroundTag, false>);
+static_assert(execution_storage_constraints_match<UnrelatedExecutionStorage, tyr::GroundTag, false>);
+static_assert(execution_storage_constraints_match<MissingPlanningStateStorage, tyr::GroundTag, false>);
+static_assert(execution_storage_constraints_match<WrongRetainStorage, tyr::GroundTag, false>);
 
 auto create_register(kr::ps::ext::Repository& repository, const std::string& name, ygg::uint_t identifier)
 {

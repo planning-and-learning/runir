@@ -132,7 +132,7 @@ class ActionRuleEvaluator
 {
     RuleView<ActionTag> m_rule;
     RuleVariantView m_variant;
-    std::optional<typename ActionRuleWorkspace<Kind>::Action> m_action;
+    std::optional<tyr::formalism::planning::ActionView<tyr::LiftedTag>> m_action;
     std::optional<size_t> m_action_slot;
 
     template<tyr::planning::StateViewConcept<Kind> State>

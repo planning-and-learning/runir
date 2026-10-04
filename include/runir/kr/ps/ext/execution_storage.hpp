@@ -10,6 +10,7 @@
 
 #include <concepts>
 #include <optional>
+#include <type_traits>
 #include <utility>
 #include <yggdrasil/containers/shared_object_pool.hpp>
 #include <yggdrasil/containers/unique_object_pool.hpp>
@@ -17,7 +18,39 @@
 namespace runir::kr::ps::ext
 {
 
-template<typename Storage, tyr::planning::StateViewConcept S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
+/// Shared execution operations; each storage chooses its own owned handles and borrowed views.
+template<typename Storage, typename Kind>
+concept ExecutionStorageConcept = tyr::TaskKind<Kind>
+                                  && requires(Storage& storage,
+                                              const Storage& const_storage,
+                                              tyr::planning::StateView<Kind> initial,
+                                              ygg::Data<runir::kr::dl::semantics::RegisterValues>& registers,
+                                              runir::kr::dl::semantics::RegisterValuesView saved_registers,
+                                              MemoryStateView memory,
+                                              tyr::formalism::planning::ActionBindingView binding,
+                                              decltype(storage.module_()) module,
+                                              const decltype(storage.initial_state(initial))& stored,
+                                              decltype(const_storage.view(stored)) state) {
+                                         { storage.initial_state(initial) } -> StoredProgramStateConcept<Kind>;
+                                         { const_storage.view(stored) } -> ProgramStateViewConcept<Kind>;
+                                         { storage.retain(state) } -> std::same_as<std::remove_cvref_t<decltype(stored)>>;
+                                         { storage.store(std::move(module), state.get_call_stack()) } -> std::same_as<std::remove_cvref_t<decltype(stored)>>;
+                                         { storage.registers(registers) } -> runir::kr::dl::semantics::RegisterValuesViewConcept;
+                                         { storage.set_registers(*module, storage.registers(registers)) } -> std::same_as<void>;
+                                         { storage.set_registers(*module, saved_registers) } -> std::same_as<void>;
+                                         { storage.set_planning_state(*module, state.get_state()) } -> std::same_as<void>;
+                                         *module = state.get_module_state().get_data();
+                                         module->module_ = state.get_module_state().get_module().get_index();
+                                         module->memory_state = memory.get_index();
+                                         module->arguments = state.get_module_state().get_arguments().get_index();
+                                         { storage.save_caller(state, memory) } -> std::same_as<CallStackView<Kind>>;
+                                         { storage.materialize(state) } -> std::same_as<ProgramStateView<Kind>>;
+                                         {
+                                             storage.successor(state.get_state(), binding)
+                                         } -> std::same_as<tyr::planning::LabeledNode<decltype(state.get_state())>>;
+                                     };
+
+template<tyr::planning::StateViewConcept S, ExecutionStorageConcept<typename S::KindType> Storage, runir::kr::dl::semantics::RegisterValuesViewConcept R>
 auto make_module(Storage& storage,
                  const S& planning_state,
                  ModuleView module_,
@@ -110,7 +143,7 @@ materialize_register_values(R registers, runir::kr::dl::semantics::Builder& buil
     return runir::kr::dl::semantics::get_or_create(repository, *data).first;
 }
 
-template<tyr::TaskKind Kind, typename Storage, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
 auto planning_step(Storage& storage,
                    S state,
                    const tyr::planning::LabeledNode<PS>& successor,

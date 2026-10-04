@@ -62,7 +62,6 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using Step = detail::ProgramStep<Kind>;
     using Expander = SuccessorExpander<Kind>;
     using Environment = EvaluationEnvironment<Kind>;
-    using Expansion = typename Expander::Step;
 
     nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
     nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());
@@ -148,11 +147,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
         .def("initial_state", &Expander::initial_state, "state"_a, nb::keep_alive<0, 1>())
         .def(
             "for_each_successor",
-            [](Expander& self,
-               StateView state,
-               ProgramSearchStatistics& statistics,
-               const std::function<bool(Expansion)>& emit,
-               const std::function<bool()>& stop) { return self.for_each_successor(state, statistics, emit, stop); },
+            [](Expander& self, StateView state, ProgramSearchStatistics& statistics, const std::function<bool(Step)>& emit, const std::function<bool()>& stop)
+            { return self.for_each_successor(state, statistics, emit, stop); },
             "state"_a,
             "statistics"_a,
             "emit"_a,

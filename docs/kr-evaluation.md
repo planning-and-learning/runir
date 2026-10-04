@@ -124,7 +124,10 @@ with aggregate dispatch in `detail/rule_evaluators.hpp`. Base's single rule
 evaluator lives in `detail/rule_evaluation/rule.hpp`.
 
 Ext's `detail/rule_evaluation/context.hpp` contains only borrowed task, storage,
-and environment references. Applicability checks live in `compatibility.hpp`;
+and environment references. Its storage and the successor expander's storage
+are constrained by `ExecutionStorageConcept<Storage, Kind>`, which checks the
+shared interface while allowing interned views or pooled state handles.
+Applicability checks live in `compatibility.hpp`;
 Load and Choose share register-binding helpers in `rule_evaluation/binding.hpp`.
 Module construction and execution-step helpers live in `execution_storage.hpp`
 and `detail/execution_step.hpp`. Sketch keeps its module-copy operation locally.

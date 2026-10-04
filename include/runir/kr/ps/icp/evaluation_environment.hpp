@@ -14,11 +14,9 @@ template<tyr::TaskKind Kind>
 class EvaluationEnvironment
 {
     using TransitionContext = runir::kr::ps::dl::TransitionEvaluationContext<IcpFamilyTag, Kind>;
-    using StateContext = typename TransitionContext::DlContext;
-    using DlFamily = typename TransitionContext::DlFamily;
     TaskContext<Kind>& m_task;
     ProgramView m_program;
-    runir::kr::dl::semantics::EvaluationStorage<DlFamily> m_source_storage, m_target_storage;
+    runir::kr::dl::semantics::EvaluationStorage<ExtFamilyTag> m_source_storage, m_target_storage;
     runir::kr::dl::semantics::CallArgumentsView m_arguments;
 
     static auto empty_arguments(TaskContext<Kind>& task)
@@ -45,15 +43,16 @@ public:
     void reset_target() noexcept { m_target_storage.reset_dynamic(); }
 
     /// Contexts borrow stored data; callers clear dynamic caches before evaluating a new configuration.
-    StateContext make_dl_context(ProgramStateView<Kind> state)
+    runir::kr::dl::semantics::StateEvaluationContext<ExtFamilyTag, Kind> make_dl_context(ProgramStateView<Kind> state)
     {
         if (&state.get_context() != m_task.icp_execution_repository.get() || state.get_program() != m_program)
             throw std::invalid_argument("ICP evaluation requires a state from the selected task and program.");
         return make_dl_context(state.get_state(), state.get_registers());
     }
-    StateContext make_dl_context(tyr::planning::StateView<Kind> state, runir::kr::dl::semantics::RegisterValuesView registers)
+    runir::kr::dl::semantics::StateEvaluationContext<ExtFamilyTag, Kind> make_dl_context(tyr::planning::StateView<Kind> state,
+                                                                                         runir::kr::dl::semantics::RegisterValuesView registers)
     {
-        return StateContext(state, m_task.dl_builder, m_source_storage, m_arguments, registers);
+        return { state, m_task.dl_builder, m_source_storage, m_arguments, registers };
     }
     TransitionContext make_dl_transition_context(tyr::planning::StateView<Kind> source,
                                                  tyr::planning::StateView<Kind> target,
