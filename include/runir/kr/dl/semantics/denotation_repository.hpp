@@ -98,30 +98,6 @@ template<typename T>
     return data;
 }
 
-inline ygg::Data<Denotation<BooleanTag>>& make_data(const ygg::Builder<Denotation<BooleanTag>>& builder, ygg::Data<Denotation<BooleanTag>>& data) noexcept
-{
-    data.value = builder.value;
-    return data;
-}
-
-inline ygg::Data<Denotation<NumericalTag>>& make_data(const ygg::Builder<Denotation<NumericalTag>>& builder, ygg::Data<Denotation<NumericalTag>>& data) noexcept
-{
-    data.value = builder.value;
-    return data;
-}
-
-inline ygg::Data<Denotation<ConceptTag>>& make_data(const ygg::Builder<Denotation<ConceptTag>>& builder, ygg::Data<Denotation<ConceptTag>>& data) noexcept
-{
-    data.num_objects = builder.num_objects;
-    return data;
-}
-
-inline ygg::Data<Denotation<RoleTag>>& make_data(const ygg::Builder<Denotation<RoleTag>>& builder, ygg::Data<Denotation<RoleTag>>& data) noexcept
-{
-    data.num_objects = builder.num_objects;
-    return data;
-}
-
 class DenotationRepositoryFactory
 {
     friend class DenotationRepository;

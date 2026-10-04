@@ -172,7 +172,7 @@ auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> c
             result->get(row[positions[0]]).set(row[positions[1]]);
         }
     }
-    return intern_denotation(result, context.get_builder(), context.get_denotation_repository()).first;
+    return get_or_create(context.get_denotation_repository(), *result, context.get_builder()).first;
 }
 
 }  // namespace runir::kr::dl::semantics

@@ -2,14 +2,16 @@
 #define RUNIR_KR_PS_EXT_EXECUTION_STORAGE_HPP_
 
 #include "runir/kr/dl/semantics/evaluation.hpp"
+#include "runir/kr/dl/semantics/interning.hpp"
 #include "runir/kr/ps/dl/evaluation.hpp"
-#include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/execution_repository.hpp"
+#include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
 #include "runir/kr/task_context.hpp"
 
 #include <concepts>
 #include <optional>
+#include <tyr/planning/node.hpp>
 #include <utility>
 #include <yggdrasil/containers/shared_object_pool.hpp>
 
@@ -115,39 +117,6 @@ public:
     }
 };
 
-namespace detail
-{
-
-template<runir::kr::dl::semantics::RegisterValuesViewConcept R>
-runir::kr::dl::semantics::RegisterValuesView
-materialize_register_values(R registers, runir::kr::dl::semantics::Builder& builder, runir::kr::dl::semantics::DenotationRepository& repository)
-{
-    auto data = runir::kr::dl::semantics::checkout<runir::kr::dl::semantics::RegisterValues>(builder);
-    data->concept_values = registers.get_data().concept_values;
-    data->role_values = registers.get_data().role_values;
-    return runir::kr::dl::semantics::get_or_create(repository, *data).first;
-}
-
-template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-auto planning_step(Storage& storage,
-                   S state,
-                   const tyr::planning::LabeledNode<PS>& successor,
-                   RuleVariantView rule,
-                   MemoryStateView memory_state,
-                   const runir::kr::TaskContextPtr<Kind>& task_context)
-{
-    const auto module_ = state.get_module_state();
-    auto target =
-        storage.store(successor.node.get_state(), module_.get_module(), memory_state, module_.get_registers(), module_.get_arguments(), state.get_call_stack());
-    auto step = applied(std::move(target), rule, task_context);
-    if constexpr (requires { successor.pack(); })
-        step.planning_successor = successor.pack();
-    step.state_transition = datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) };
-    return step;
-}
-
-}  // namespace detail
-
 /// Pooled per-state construction used by NONE and CHOICE. Selected output paths and
 /// CHOICE sources with Choose obligations are materialized in the task repositories.
 /// Call arguments and their final denotations are always interned in the task repository.
@@ -193,7 +162,7 @@ public:
         target.state = planning_state.get_state_builder();
         target.module_ = module_.get_index();
         target.memory_state = memory_state.get_index();
-        target.registers = registers.get_data();
+        runir::kr::dl::semantics::make_data(registers, target.registers);
         target.arguments = arguments.get_index();
         ygg::set(caller, result->call_stack);
         return result;
@@ -226,7 +195,7 @@ public:
         auto data = ygg::Data<ModuleState<Kind>>(planning.get_index(),
                                                  module_.get_module().get_index(),
                                                  module_.get_memory_state().get_index(),
-                                                 detail::materialize_register_values(module_.get_registers(), dl_builder, denotations).get_index(),
+                                                 get_or_create(denotations, module_.get_registers(), dl_builder).first.get_index(),
                                                  module_.get_arguments().get_index());
         auto program = ygg::Data<ProgramState<Kind>>(m_program.get_index(),
                                                      get_or_create(*m_context->execution_repository, data).first.get_index(),
@@ -237,7 +206,7 @@ public:
     auto save_caller(BuilderProgramStateView<Kind> state, MemoryStateView return_state)
     {
         const auto module_ = state.get_module_state();
-        const auto registers = detail::materialize_register_values(module_.get_registers(), m_context->dl_builder, *m_context->dl_denotation_repository);
+        const auto registers = get_or_create(*m_context->dl_denotation_repository, module_.get_registers(), m_context->dl_builder).first;
         auto saved = ygg::Data<CallStack>(module_.get_module().get_index(),
                                           return_state.get_index(),
                                           registers.get_index(),

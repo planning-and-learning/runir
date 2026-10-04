@@ -7,6 +7,7 @@
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
+#include <runir/kr/dl/semantics/interning.hpp>
 #include <runir/kr/ps/ext/dl/parser.hpp>
 #include <span>
 #include <stdexcept>
@@ -25,6 +26,153 @@ auto query_search()
 {
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
     return make_ground_context(directory / "domain.pddl", directory / "task.pddl");
+}
+
+TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices)
+{
+    const auto search = query_search();
+    auto repository = sem::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto builder = sem::Builder();
+    const auto check = [&]<dl::CategoryTag Category>()
+    {
+        using Denotation = sem::Denotation<Category>;
+        auto source = ygg::Builder<Denotation>();
+        if constexpr (dl::ConceptOrRoleTag<Category>)
+        {
+            source.initialize(3);
+            if constexpr (std::same_as<Category, dl::ConceptTag>)
+                source.get().set(1);
+            else
+                source.get(0).set(2);
+        }
+        else if constexpr (std::same_as<Category, dl::BooleanTag>)
+            source.get() = true;
+        else
+            source.get() = 7;
+        const auto expected = source;
+        const auto [view, inserted] = sem::get_or_create(repository, source, builder);
+        EXPECT_TRUE(inserted);
+        EXPECT_EQ(&view.get_context(), &repository);
+        EXPECT_EQ(source.index, view.get_index());
+        EXPECT_TRUE(ygg::EqualTo<ygg::Builder<Denotation>> {}(source, expected));
+
+        ygg::clear(source.index);
+        const auto [duplicate, duplicate_inserted] = sem::get_or_create(repository, source, builder);
+        EXPECT_FALSE(duplicate_inserted);
+        EXPECT_EQ(duplicate, view);
+        EXPECT_EQ(source.index, view.get_index());
+        EXPECT_EQ(repository.size<Denotation>(), 1);
+
+        source.initialize(0);
+        if constexpr (std::same_as<Category, dl::ConceptTag>)
+        {
+            EXPECT_EQ(view.get().count(), 1);
+            EXPECT_TRUE(view.get().test(1));
+        }
+        else if constexpr (std::same_as<Category, dl::RoleTag>)
+        {
+            EXPECT_EQ(view.get_num_objects(), 3);
+            EXPECT_EQ(view.count(), 1);
+            EXPECT_TRUE(view.get(0).test(2));
+        }
+        else
+            EXPECT_EQ(view.get(), expected.get());
+    };
+    check.template operator()<dl::BooleanTag>();
+    check.template operator()<dl::NumericalTag>();
+    check.template operator()<dl::ConceptTag>();
+    check.template operator()<dl::RoleTag>();
+}
+
+TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreservesBorrowedValues)
+{
+    const auto search = query_search();
+    const auto formalism = search->task->get_repository();
+    const auto objects = search->task->get_domain().get_domain().get_constants();
+    auto repository = sem::DenotationRepositoryFactory().create(formalism);
+    auto other_repository = sem::DenotationRepositoryFactory().create(formalism);
+    auto builder = sem::Builder();
+    auto values = ygg::Data<sem::RegisterValues>();
+    values.index = ygg::Index<sem::RegisterValues>(42);
+    values.concept_values.resize(2);
+    values.concept_values[0] = objects[0].get_index();
+    values.role_values.emplace_back(::cista::pair { objects[1].get_index(), objects[2].get_index() });
+    const auto expected = values;
+    const auto borrowed = ygg::make_view(values, *formalism);
+    const auto [view, inserted] = sem::get_or_create(repository, borrowed, builder);
+    EXPECT_TRUE(inserted);
+    EXPECT_EQ(&view.get_context(), &repository);
+    EXPECT_TRUE(ygg::EqualTo<ygg::Data<sem::RegisterValues>> {}(view.get_data(), expected));
+    const auto [duplicate, duplicate_inserted] = sem::get_or_create(repository, borrowed, builder);
+    EXPECT_FALSE(duplicate_inserted);
+    EXPECT_EQ(duplicate, view);
+    const auto [same_repository, same_inserted] = sem::get_or_create(repository, view, builder);
+    EXPECT_FALSE(same_inserted);
+    EXPECT_EQ(&same_repository.get_data(), &view.get_data());
+    EXPECT_EQ(repository.size<sem::RegisterValues>(), 1);
+    EXPECT_EQ(values.index, expected.index);
+    EXPECT_TRUE(ygg::EqualTo<ygg::Data<sem::RegisterValues>> {}(values, expected));
+
+    auto other_values = expected;
+    other_values.concept_values[0] = objects[1].get_index();
+    const auto occupied = sem::get_or_create(other_repository, other_values).first;
+    ASSERT_EQ(other_repository.get_index(), repository.get_index());
+    ASSERT_EQ(occupied.get_index(), view.get_index());
+    const auto [transferred, transferred_inserted] = sem::get_or_create(other_repository, view, builder);
+    EXPECT_TRUE(transferred_inserted);
+    EXPECT_EQ(&transferred.get_context(), &other_repository);
+    EXPECT_NE(transferred.get_index(), occupied.get_index());
+    EXPECT_TRUE(ygg::EqualTo<ygg::Data<sem::RegisterValues>> {}(transferred.get_data(), expected));
+    const auto [same_target, same_target_inserted] = sem::get_or_create(other_repository, view, builder);
+    EXPECT_EQ(same_target, transferred);
+    EXPECT_FALSE(same_target_inserted);
+    EXPECT_EQ(other_repository.size<sem::RegisterValues>(), 2);
+
+    const auto foreign_search = query_search();
+    auto foreign_repository = sem::DenotationRepositoryFactory().create(foreign_search->task->get_repository());
+    EXPECT_THROW((void) sem::get_or_create(foreign_repository, borrowed, builder), std::invalid_argument);
+    EXPECT_EQ(foreign_repository.size<sem::RegisterValues>(), 0);
+    auto foreign_values = expected;
+    const auto foreign_view = sem::get_or_create(foreign_repository, foreign_values).first;
+    EXPECT_THROW((void) sem::get_or_create(repository, foreign_view, builder), std::invalid_argument);
+    EXPECT_EQ(repository.size<sem::RegisterValues>(), 1);
+}
+
+TEST(RunirEvaluationStorage, RegisterExtractionClearsIdentityAndRetainsBuffers)
+{
+    const auto search = query_search();
+    const auto formalism = search->task->get_repository();
+    const auto objects = search->task->get_domain().get_domain().get_constants();
+    auto repository = sem::DenotationRepositoryFactory().create(formalism);
+    auto values = ygg::Data<sem::RegisterValues>();
+    values.concept_values.resize(2);
+    values.concept_values[0] = objects[0].get_index();
+    values.role_values.emplace_back(::cista::pair { objects[1].get_index(), objects[2].get_index() });
+    const auto view = sem::get_or_create(repository, values).first;
+    auto extracted = ygg::Data<sem::RegisterValues>();
+    extracted.index = view.get_index();
+    sem::make_data(view, extracted);
+    EXPECT_EQ(extracted.index, ygg::Index<sem::RegisterValues>());
+    EXPECT_TRUE(ygg::EqualTo<ygg::Data<sem::RegisterValues>> {}(extracted, values));
+    const auto concept_buffer = extracted.concept_values.data();
+    const auto concept_capacity = extracted.concept_values.allocated_size_;
+    const auto role_buffer = extracted.role_values.data();
+    const auto role_capacity = extracted.role_values.allocated_size_;
+
+    values.concept_values.resize(1);
+    values.concept_values[0] = objects[2].get_index();
+    values.role_values[0].reset();
+    extracted.index = view.get_index();
+    sem::make_data(ygg::make_view(values, *formalism), extracted);
+    EXPECT_EQ(extracted.index, ygg::Index<sem::RegisterValues>());
+    EXPECT_TRUE(ygg::EqualTo<ygg::Data<sem::RegisterValues>> {}(extracted, values));
+    EXPECT_EQ(extracted.concept_values.data(), concept_buffer);
+    EXPECT_EQ(extracted.concept_values.allocated_size_, concept_capacity);
+    EXPECT_EQ(extracted.role_values.data(), role_buffer);
+    EXPECT_EQ(extracted.role_values.allocated_size_, role_capacity);
+    EXPECT_EQ(view.get_data().concept_values.size(), 2);
+    EXPECT_EQ(view.get_data().concept_values[0].value(), objects[0].get_index());
+    EXPECT_TRUE(view.get_data().role_values[0].has_value());
 }
 
 TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)

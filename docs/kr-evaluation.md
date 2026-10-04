@@ -8,6 +8,16 @@ Concept, role, Boolean, and numerical results are interned denotation views.
 Queries return Yggdrasil's interned `RelationView` with ordered columns and a
 canonical set of rows. All result kinds belong to `DenotationRepository`.
 
+`semantics/interning.hpp` provides `get_or_create(repository, source, builder)`
+for computed denotation builders and borrowed or interned register views. The
+builder supplies reusable scratch. A register view already owned by the target
+repository is returned directly; transfers between repositories require the same
+formalism repository. `make_data(registers, data)` extracts mutable register
+values into caller-owned storage, retaining its buffers and clearing its old
+repository index. Rule binding and transient execution use this inverse
+conversion. Denotation set operations keep their existing `copy_from` calls;
+query interning uses Yggdrasil's relation repository directly.
+
 ## Storage and lifetime
 
 `DenotationCaches<Family>` stores memoized views and owns no result payloads.
@@ -134,7 +144,7 @@ Interned storage records repository indices; transient storage fills a pooled
 program state's embedded module, retaining its planning and register buffers.
 Applicability checks live in `compatibility.hpp`;
 Load and Choose share register-binding helpers in `rule_evaluation/binding.hpp`.
-Execution-step helpers live in `execution_storage.hpp` and
+Execution-step helpers, including `planning_step`, live in
 `detail/execution_step.hpp`.
 
 Aggregates retain unique evaluator records and separate occurrence schedules.

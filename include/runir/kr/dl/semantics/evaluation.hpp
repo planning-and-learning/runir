@@ -5,9 +5,9 @@
 #include "runir/kr/dl/declarations.hpp"
 #include "runir/kr/dl/semantics/constructor_view.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
-#include "runir/kr/dl/semantics/denotation_storage.hpp"
 #include "runir/kr/dl/semantics/denotations.hpp"
 #include "runir/kr/dl/semantics/evaluation_workspace.hpp"
+#include "runir/kr/dl/semantics/interning.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
 #include <algorithm>
@@ -529,7 +529,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL concept constructor tag in evaluate_impl");
     }
 
-    return intern_denotation(result, context.get_builder(), repository).first;
+    return get_or_create(repository, *result, context.get_builder()).first;
 }
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
@@ -661,7 +661,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL role constructor tag in evaluate_impl");
     }
 
-    return intern_denotation(result, context.get_builder(), repository).first;
+    return get_or_create(repository, *result, context.get_builder()).first;
 }
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
@@ -712,7 +712,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
     }
 
     auto result = context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
-    return intern_denotation(result, context.get_builder(), repository).first;
+    return get_or_create(repository, *result, context.get_builder()).first;
 }
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
@@ -777,7 +777,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
                             if (rhs_bitset[target])
                             {
                                 auto result = context.get_builder().template get_builder<Denotation<NumericalTag>>(target_distance);
-                                return intern_denotation(result, context.get_builder(), repository).first;
+                                return get_or_create(repository, *result, context.get_builder()).first;
                             }
 
                             queue.push_back(static_cast<ygg::uint_t>(target));
@@ -803,7 +803,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
     }
 
     auto result = context.get_builder().template get_builder<Denotation<NumericalTag>>(result_value);
-    return intern_denotation(result, context.get_builder(), repository).first;
+    return get_or_create(repository, *result, context.get_builder()).first;
 }
 
 template<FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family> Context>

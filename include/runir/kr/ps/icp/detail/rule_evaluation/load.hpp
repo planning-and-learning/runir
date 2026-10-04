@@ -37,8 +37,7 @@ public:
         {
             if (stop())
                 return false;
-            registers->concept_values = source.get_registers().get_data().concept_values;
-            registers->role_values = source.get_registers().get_data().role_values;
+            runir::kr::dl::semantics::make_data(source.get_registers(), *registers);
             const auto position = ygg::uint_t(m_rule.get_register().get_identifier());
             if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
                 registers->concept_values.at(position) = value.get_index();

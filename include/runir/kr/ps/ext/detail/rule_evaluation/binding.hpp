@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_BINDING_HPP_
 #define RUNIR_KR_PS_EXT_DETAIL_RULE_EVALUATION_BINDING_HPP_
 
+#include "runir/kr/dl/semantics/interning.hpp"
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
 
@@ -14,8 +15,7 @@ namespace runir::kr::ps::ext::detail
 template<BindingRuleKind Tag, runir::kr::dl::semantics::RegisterValuesViewConcept R, typename Value, typename Storage>
 auto bound_registers(RuleView<Tag> rule, R source, const Value& value, ygg::Data<runir::kr::dl::semantics::RegisterValues>& registers, Storage& storage)
 {
-    registers.concept_values = source.get_data().concept_values;
-    registers.role_values = source.get_data().role_values;
+    runir::kr::dl::semantics::make_data(source, registers);
     const auto index = size_t(ygg::uint_t(rule.get_register().get_identifier()));
     if constexpr (std::same_as<typename Tag::Category, runir::kr::dl::ConceptTag>)
         registers.concept_values.at(index) = value.get_index();

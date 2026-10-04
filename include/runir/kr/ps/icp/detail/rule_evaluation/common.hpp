@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_COMMON_HPP_
 #define RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_COMMON_HPP_
 
-#include "runir/kr/dl/semantics/denotation_storage.hpp"
+#include "runir/kr/dl/semantics/interning.hpp"
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/icp/compatibility.hpp"
 #include "runir/kr/ps/icp/detail/execution_step.hpp"
@@ -49,7 +49,7 @@ public:
         const auto planning_task = m_task->search_context->task->get_task();
         auto empty = m_task->dl_builder.template get_builder<Denotation>(
             static_cast<ygg::uint_t>(planning_task.get_domain().get_constants().size() + planning_task.get_objects().size()));
-        m_empty = runir::kr::dl::semantics::intern_denotation(empty, m_task->dl_builder, *m_task->dl_denotation_repository).first.get_index();
+        m_empty = runir::kr::dl::semantics::get_or_create(*m_task->dl_denotation_repository, *empty, m_task->dl_builder).first.get_index();
         const auto module = program.get_module();
         const auto features = module.template get_features<Concept>();
         m_reset_predecessors.resize(features.size());
@@ -117,7 +117,7 @@ public:
                         }
                 entered->get() |= previous[i].get();
                 histories->concepts[i] =
-                    runir::kr::dl::semantics::intern_denotation(entered, m_task->dl_builder, *m_task->dl_denotation_repository).first.get_index();
+                    runir::kr::dl::semantics::get_or_create(*m_task->dl_denotation_repository, *entered, m_task->dl_builder).first.get_index();
             }
         }
         if (!progress)
