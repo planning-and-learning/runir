@@ -1,5 +1,6 @@
 #include "planning_fixtures.hpp"
 
+#include <algorithm>
 #include <array>
 #include <concepts>
 #include <filesystem>
@@ -313,7 +314,7 @@ TEST(RunirEvaluationStorage, PreparedContextsRejectForeignTaskRepositories)
     EXPECT_THROW(Context(initial.get_state(), builder, caches, prototype, foreign_storage), std::invalid_argument);
 }
 
-TEST(RunirEvaluationStorage, QuerySchemasKeepTheirConstructorRepositoryNamespace)
+TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
 {
     const auto search = query_search();
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
@@ -323,10 +324,13 @@ TEST(RunirEvaluationStorage, QuerySchemasKeepTheirConstructorRepositoryNamespace
     auto builder = sem::Builder();
     auto persistent = sem::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = sem::EvaluationStorage<Ext>(persistent);
+    auto caches = sem::DenotationCaches<Ext>();
     auto arguments_data = ygg::Data<sem::CallArguments>();
     auto registers_data = ygg::Data<sem::RegisterValues>();
     auto context = sem::StateEvaluationContext<Ext, tyr::GroundTag>(initial.get_state(),
                                                                     builder,
+                                                                    caches,
+                                                                    persistent,
                                                                     storage,
                                                                     sem::get_or_create(persistent, arguments_data).first,
                                                                     sem::get_or_create(persistent, registers_data).first);
@@ -335,24 +339,58 @@ TEST(RunirEvaluationStorage, QuerySchemasKeepTheirConstructorRepositoryNamespace
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", search->task->get_domain().get_domain(), repository);
         return count.get_variant().template get<ygg::Index<dl::Numerical<Ext, dl::CountTag>>>().get_arg().template get<ygg::Index<dl::Query<Ext>>>();
     };
-    const auto left = query("(q_concept left (c_top))", *first_repository);
-    const auto right = query("(q_concept right (c_top))", *second_repository);
+    const auto left = query("(q_role (left_source left_target) (r_universal))", *first_repository);
+    const auto right = query("(q_role (right_source right_target) (r_universal))", *second_repository);
     ASSERT_EQ(left.get_columns()[0].get_index(), right.get_columns()[0].get_index());
     ASSERT_NE(left.get_columns()[0].get_name(), right.get_columns()[0].get_name());
+    using ColumnIndex = ygg::Index<ygg::database::Column>;
+    const auto columns = std::array { ColumnIndex(0), ColumnIndex(1) };
+    const auto reversed_columns = std::array { ColumnIndex(1), ColumnIndex(0) };
+    auto& results = persistent.get_relation_repository();
     const auto left_result = sem::evaluate(left, context);
     const auto right_result = sem::evaluate(right, context);
-    EXPECT_EQ(left_result.size(), right_result.size());
-    EXPECT_EQ(left_result.columns()[0], right_result.columns()[0]);
-    EXPECT_NE(left_result, right_result);
+    ASSERT_EQ(left_result.size(), 9);
+    EXPECT_TRUE(std::ranges::equal(left_result.columns(), columns));
+    EXPECT_EQ(&left_result.get_context(), &results);
+    EXPECT_EQ(left_result, right_result);
+    EXPECT_EQ(left_result.get_storage_address(), right_result.get_storage_address());
+    EXPECT_EQ(results.size(), 1);
 
-    const auto left_alias = query("(q_rename (renamed_left) (q_concept left (c_top)))", *first_repository);
-    const auto right_alias = query("(q_rename (renamed_right) (q_concept right (c_top)))", *second_repository);
+    const auto left_alias = query("(q_rename (left_target left_source) (q_role (left_source left_target) (r_universal)))", *first_repository);
+    const auto right_alias = query("(q_rename (right_target right_source) (q_role (right_source right_target) (r_universal)))", *second_repository);
     ASSERT_EQ(left_alias.get_columns()[0].get_index(), right_alias.get_columns()[0].get_index());
     const auto renamed_left = sem::evaluate(left_alias, context);
     const auto renamed_right = sem::evaluate(right_alias, context);
-    EXPECT_NE(renamed_left, renamed_right);
+    EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns));
+    EXPECT_EQ(renamed_left, renamed_right);
+    EXPECT_NE(renamed_left, left_result);
     EXPECT_EQ(renamed_left.get_storage_address(), left_result.get_storage_address());
     EXPECT_EQ(renamed_right.get_storage_address(), right_result.get_storage_address());
+    EXPECT_EQ(results.size(), 2);
+
+    {
+        auto direct = builder.get_builder<ygg::database::Relation<>>(columns);
+        for (size_t i = 0; i < left_result.size(); ++i)
+            direct->insert(left_result[i]);
+        const auto [interned, inserted] = ygg::database::intern_relation(*direct, results);
+        EXPECT_FALSE(inserted);
+        EXPECT_EQ(interned, left_result);
+    }
+
+    caches.reset_all();
+    storage.reset_all();
+    first_repository->clear();
+    first_repository.reset();
+    second_repository.reset();
+    EXPECT_EQ(left_result.size(), 9);
+    EXPECT_TRUE(left_result.contains({ 0, 2 }));
+    EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns));
+    auto fresh_repository = factory.create(search->task->get_repository());
+    const auto fresh = query("(q_role (fresh_source fresh_target) (r_universal))", *fresh_repository);
+    EXPECT_EQ(sem::evaluate(fresh, context), left_result);
+    const auto fresh_alias = query("(q_rename (fresh_target fresh_source) (q_role (fresh_source fresh_target) (r_universal)))", *fresh_repository);
+    EXPECT_EQ(sem::evaluate(fresh_alias, context), renamed_left);
+    EXPECT_EQ(results.size(), 2);
 }
 
 }  // namespace

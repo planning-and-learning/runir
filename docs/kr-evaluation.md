@@ -68,7 +68,7 @@ dynamic reset to their respective sides. Successor expansion performs these
 resets once per source and once per candidate target, so rules inspecting the
 same configuration share computed features. Low-level callers perform their
 own resets when state, registers, or arguments change. Create new storage for
-a different task or constructor-repository lifetime.
+a different planning task.
 
 Result views remain valid until their owning repository is reset or destroyed.
 Python keeps owners alive but does not prevent explicit resets. Memo-only
@@ -115,13 +115,15 @@ output configuration, and the renamed result uses the child's owning partition.
 Other child results can remain in scratch storage.
 
 `DenotationRepository::get_relation_repository()` exposes its Yggdrasil relation
-storage. Query identity includes the constructor-repository namespace, ordered
-schema, and row set. Inserting the same rows in another order produces the same
-identity. Canonical iteration follows interned row indices, so it need not match
-the order in which a query builder inserted its rows. Reset the matching storage
-before clearing or reusing a constructor repository. Views in a durable
-denotation repository survive intermediate-storage resets; views from a reset
-scratch repository do not.
+storage. Query result identity consists of the ordered numeric column schema and
+row set. Equal schemas and rows share a result even when different constructor
+repositories produced them; variable names remain on the query expressions.
+Inserting the same rows in another order produces the same identity. Canonical
+iteration follows interned row indices, so it need not match insertion order.
+Clear the expression caches before clearing or reusing a constructor repository;
+interned query results own their schemas and rows and remain valid. Views in a
+durable denotation repository survive intermediate-storage resets; views from a
+reset scratch repository do not.
 
 ## Rule evaluator organization
 

@@ -4,24 +4,11 @@
 #include "runir/kr/dl/query_view.hpp"
 #include "runir/kr/dl/semantics/evaluation.hpp"
 
-#include <cstdint>
 #include <span>
 #include <yggdrasil/database/operations.hpp>
 
 namespace runir::kr::dl::semantics
 {
-
-namespace detail
-{
-/// Column labels are local to a constructor repository. Its address must not
-/// be reused until the corresponding results and caches have been reset.
-template<typename C>
-size_t query_schema_namespace(const C& repository) noexcept
-{
-    static_assert(sizeof(std::uintptr_t) <= sizeof(size_t));
-    return static_cast<size_t>(reinterpret_cast<std::uintptr_t>(&repository));
-}
-}  // namespace detail
 
 template<FamilyTag Family, typename C, StateEvaluationContextConcept<Family> Context>
 auto evaluate_impl(ygg::View<ygg::Index<Query<Family, QueryRenameTag>>, C> constructor, Context& context) -> ygg::database::RelationView<>
@@ -33,7 +20,7 @@ auto evaluate_impl(ygg::View<ygg::Index<Query<Family, QueryRenameTag>>, C> const
     auto dynamic_output = context.for_result(false);
     auto& static_results = static_output.get_denotation_repository().get_relation_repository();
     auto& results = &child.get_context() == &static_results ? static_results : dynamic_output.get_denotation_repository().get_relation_repository();
-    return results.rename(child, constructor.get_schema(), detail::query_schema_namespace(constructor.get_context()));
+    return results.rename(child, constructor.get_schema());
 }
 
 template<FamilyTag Family, typename Tag, typename C, StateEvaluationContextConcept<Family> Context>
@@ -132,10 +119,7 @@ auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Con
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled relational query constructor");
     }
-    return ygg::database::intern_relation(*result,
-                                          context.get_denotation_repository().get_relation_repository(),
-                                          detail::query_schema_namespace(constructor.get_context()))
-        .first;
+    return ygg::database::intern_relation(*result, context.get_denotation_repository().get_relation_repository()).first;
 }
 
 template<FamilyTag Family, StateEvaluationContextConcept<Family> Context, typename C>
