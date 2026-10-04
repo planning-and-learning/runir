@@ -5,43 +5,38 @@
 
 #include <concepts>
 #include <tuple>
+#include <tyr/formalism/planning/domain_view.hpp>
 #include <yggdrasil/containers/optional.hpp>
+#include <yggdrasil/containers/vector.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/containers/vector.hpp>
-#include <tyr/formalism/planning/domain_view.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, typename C>
-class View<Index<runir::kr::dl::grammar::GrammarTag<Family>>, C>
+template<runir::kr::dl::FamilyTag Family, formalism::SymbolContextFor<runir::kr::dl::grammar::GrammarTag<Family>> C>
+class View<Index<runir::kr::dl::grammar::GrammarTag<Family>>, C> : public formalism::detail::View<Index<runir::kr::dl::grammar::GrammarTag<Family>>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::dl::grammar::GrammarTag<Family>> m_handle;
-
 public:
-    View(Index<runir::kr::dl::grammar::GrammarTag<Family>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::dl::grammar::GrammarTag<Family>> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::dl::grammar::GrammarTag<Family>>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    auto get_domain() const noexcept { return make_view(get_data().domain, m_context->get_planning_repository()); }
+    auto get_domain() const noexcept { return make_view(this->get_data().domain, this->m_context->get_planning_repository()); }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_start() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(get_data().concept_start, *m_context);
+            return make_view(this->get_data().concept_start, *this->m_context);
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return make_view(get_data().role_start, *m_context);
+            return make_view(this->get_data().role_start, *this->m_context);
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return make_view(get_data().boolean_start, *m_context);
+            return make_view(this->get_data().boolean_start, *this->m_context);
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return make_view(get_data().numerical_start, *m_context);
+            return make_view(this->get_data().numerical_start, *this->m_context);
         else
         {
             static_assert(ygg::dependent_false<Category>::value, "unhandled DL category in get_start");
@@ -52,20 +47,18 @@ public:
     auto get_derivation_rules() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(get_data().concept_derivation_rules, *m_context);
+            return make_view(this->get_data().concept_derivation_rules, *this->m_context);
         else if constexpr (std::same_as<Category, runir::kr::dl::RoleTag>)
-            return make_view(get_data().role_derivation_rules, *m_context);
+            return make_view(this->get_data().role_derivation_rules, *this->m_context);
         else if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag>)
-            return make_view(get_data().boolean_derivation_rules, *m_context);
+            return make_view(this->get_data().boolean_derivation_rules, *this->m_context);
         else if constexpr (std::same_as<Category, runir::kr::dl::NumericalTag>)
-            return make_view(get_data().numerical_derivation_rules, *m_context);
+            return make_view(this->get_data().numerical_derivation_rules, *this->m_context);
         else
         {
             static_assert(ygg::dependent_false<Category>::value, "unhandled DL category in get_derivation_rules");
         }
     }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
 }  // namespace ygg

@@ -80,9 +80,9 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
-    std::pair<ygg::View<ygg::Index<T>, ExecutionRepository>, bool> get_or_create(ygg::Data<T>& data)
+    std::pair<ygg::View<ygg::Index<T>, ExecutionRepository>, bool> insert(ygg::Data<T>& data)
     {
-        const auto [index, success] = m_symbol_repository.template get_or_create_local<T>(data);
+        const auto [index, success] = m_symbol_repository.template insert_local<T>(data);
         return { ygg::View<ygg::Index<T>, ExecutionRepository>(index, *this), success };
     }
 
@@ -126,11 +126,11 @@ public:
 
 template<tyr::TaskKind Kind, typename T>
     requires ygg::formalism::SupportsSymbol<ExecutionRepository<Kind>, T>
-void prepare_for_interning(ExecutionRepository<Kind>&, ygg::Data<T>&)
+void prepare_for_insert(ExecutionRepository<Kind>&, ygg::Data<T>&)
 {
 }
 
-using ygg::formalism::get_or_create;
+using ygg::formalism::insert;
 
 }  // namespace runir::kr::ps::icp
 

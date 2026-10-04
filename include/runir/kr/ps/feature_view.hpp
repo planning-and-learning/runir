@@ -7,26 +7,21 @@
 #include <tuple>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, typename C>
-class View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C>
+template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, formalism::SymbolContextFor<runir::kr::ps::Feature<Family, FeatureTag>> C>
+class View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C> : public formalism::detail::View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::ps::Feature<Family, FeatureTag>> m_handle;
-
 public:
-    View(Index<runir::kr::ps::Feature<Family, FeatureTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::Feature<Family, FeatureTag>> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    auto get_variant() const noexcept { return make_view(get_data().variant, *m_context); }
+    auto get_variant() const noexcept { return make_view(this->get_data().variant, *this->m_context); }
     auto get_symbol() const noexcept
     {
         return ygg::visit([](auto feature) { return feature.get_symbol(); }, get_variant());
@@ -36,8 +31,6 @@ public:
         return ygg::visit([](auto feature) { return feature.get_expression(); }, get_variant());
     }
     auto get_feature() const noexcept { return get_expression(); }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
 }  // namespace ygg

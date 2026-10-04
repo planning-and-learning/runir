@@ -23,59 +23,59 @@ using Uns = runir::kr::UnsFamilyTag;
 auto wrap_boolean(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repository, auto boolean)
 {
     auto data = ygg::Data<dl::Constructor<Uns, dl::BooleanTag>>(boolean.get_index());
-    return repository.get_or_create(data).first;
+    return repository.insert(data).first;
 }
 
 auto wrap_numerical(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repository, auto numerical)
 {
     auto data = ygg::Data<dl::Constructor<Uns, dl::NumericalTag>>(numerical.get_index());
-    return repository.get_or_create(data).first;
+    return repository.insert(data).first;
 }
 
 auto boolean_constant(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repository, bool value)
 {
     auto data = ygg::Data<dl::Boolean<Uns, dl::BooleanConstantTag>>(value);
-    return wrap_boolean(repository, repository.get_or_create(data).first);
+    return wrap_boolean(repository, repository.insert(data).first);
 }
 
 auto numerical_constant(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repository, ygg::uint_t value)
 {
     auto data = ygg::Data<dl::Numerical<Uns, dl::NumericalConstantTag>>(value);
-    return wrap_numerical(repository, repository.get_or_create(data).first);
+    return wrap_numerical(repository, repository.insert(data).first);
 }
 
 template<dl::ComparisonTag Tag>
 auto numerical_comparison(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repository, auto lhs, auto rhs)
 {
     auto data = ygg::Data<dl::Boolean<Uns, Tag>>(lhs.get_index(), rhs.get_index());
-    return wrap_boolean(repository, repository.get_or_create(data).first);
+    return wrap_boolean(repository, repository.insert(data).first);
 }
 
 template<dl::ComparisonTag Tag>
 auto boolean_comparison(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repository, auto lhs, auto rhs)
 {
     auto data = ygg::Data<dl::Boolean<Uns, Tag>>(lhs.get_index(), rhs.get_index());
-    return wrap_boolean(repository, repository.get_or_create(data).first);
+    return wrap_boolean(repository, repository.insert(data).first);
 }
 
 template<dl::NumericalBinaryTag Tag>
 auto numerical_binary(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repository, auto lhs, auto rhs)
 {
     auto data = ygg::Data<dl::Numerical<Uns, Tag>>(lhs.get_index(), rhs.get_index());
-    return wrap_numerical(repository, repository.get_or_create(data).first);
+    return wrap_numerical(repository, repository.insert(data).first);
 }
 
 template<dl::LogicalBinaryTag Tag>
 auto logical_binary(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repository, auto lhs, auto rhs)
 {
     auto data = ygg::Data<dl::Boolean<Uns, Tag>>(lhs.get_index(), rhs.get_index());
-    return wrap_boolean(repository, repository.get_or_create(data).first);
+    return wrap_boolean(repository, repository.insert(data).first);
 }
 
 auto logical_not(dl::ConstructorRepositoryFor<kr::UnsFamilyTag>& repository, auto boolean)
 {
     auto data = ygg::Data<dl::Boolean<Uns, dl::NotTag>>(boolean.get_index());
-    return wrap_boolean(repository, repository.get_or_create(data).first);
+    return wrap_boolean(repository, repository.insert(data).first);
 }
 
 }  // namespace
@@ -91,12 +91,12 @@ TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
 
     // c_top -> n_count(c_top)
     auto top_data = ygg::Data<dl::Concept<Uns, dl::TopTag>>();
-    auto top = repo.get_or_create(top_data).first;
+    auto top = repo.insert(top_data).first;
     auto top_ctor_data = ygg::Data<dl::Constructor<Uns, dl::ConceptTag>>(top.get_index());
-    auto top_ctor = repo.get_or_create(top_ctor_data).first;
+    auto top_ctor = repo.insert(top_ctor_data).first;
 
     auto count_data = ygg::Data<dl::Numerical<Uns, dl::CountTag>>(top_ctor.get_index());
-    auto count = repo.get_or_create(count_data).first;
+    auto count = repo.insert(count_data).first;
     auto count_ctor = wrap_numerical(repo, count);
 
     // Evaluation context over the initial state.

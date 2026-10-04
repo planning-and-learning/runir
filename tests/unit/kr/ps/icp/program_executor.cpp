@@ -233,7 +233,7 @@ void check_histories()
     // Equal planning state, memory, and registers with different histories must have distinct identities.
     auto cleared = step2.front().target.get_data();
     cleared.histories = source.get_histories().get_index();
-    const auto unvisited = icp::get_or_create(*context->icp_execution_repository, cleared).first;
+    const auto unvisited = icp::insert(*context->icp_execution_repository, cleared).first;
     EXPECT_NE(unvisited, step2.front().target);
     const auto allowed = successors(expander, unvisited);
     ASSERT_EQ(allowed.size(), 1);
@@ -346,12 +346,12 @@ void check_rule_evaluator_scheduling()
         data.concepts.push_back(data.concepts.front());
         const auto* buffer = data.concepts.data();
         const auto expected_size = data.concepts.size();
-        const auto [stored, created] = ygg::formalism::get_or_create(*context->icp_execution_repository, data);
+        const auto [stored, created] = ygg::formalism::insert(*context->icp_execution_repository, data);
         EXPECT_TRUE(created);
         EXPECT_EQ(stored.get_data().concepts, data.concepts);
         EXPECT_EQ(data.concepts.size(), expected_size);
         EXPECT_EQ(data.concepts.data(), buffer);
-        EXPECT_FALSE(icp::get_or_create(*context->icp_execution_repository, data).second);
+        EXPECT_FALSE(icp::insert(*context->icp_execution_repository, data).second);
     }
 
     // Repeated grouped expansions retain action-group and history scratch, while the

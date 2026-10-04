@@ -25,7 +25,7 @@ public:
     CallRuleEvaluator(RuleView<CallTag> rule, RuleVariantView variant, ProgramView program) :
         m_rule(rule),
         m_variant(variant),
-        m_callee(program.find_module(rule.get_callee().get_index()))
+        m_callee(program.find_module(rule.get_callee()))
     {
     }
     auto rule() const noexcept { return m_rule; }
@@ -58,7 +58,7 @@ private:
                 else
                     result->numerical_arguments.push_back(denotation.get_index());
             });
-        return get_or_create(*context.task_context->dl_denotation_repository, *result).first;
+        return insert(*context.task_context->dl_denotation_repository, *result).first;
     }
 
 public:
@@ -74,7 +74,8 @@ public:
         if (stop())
             return false;
         if (!callee || !arguments_match(*callee, arguments))
-            return emit(detail::make_step(ProgramOutcome::MALFORMED_CALL, context.storage.retain(state), context.task_context));
+            return emit(
+                detail::make_step<Kind, typename Context::StorageType>(ProgramOutcome::MALFORMED_CALL, context.storage.retain(state), context.task_context));
 
         auto caller = context.storage.save_caller(state, rule.get_target());
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(context.task_context->dl_builder);
@@ -82,7 +83,7 @@ public:
         registers->role_values.resize(callee->template get_registers<runir::kr::dl::RoleTag>().size());
         auto target =
             context.storage.store(planning_state, *callee, callee->get_entry_memory_state(), context.storage.registers(*registers), arguments, caller);
-        return emit(detail::applied(std::move(target), rule_variant, context.task_context));
+        return emit(detail::applied<Kind, typename Context::StorageType>(std::move(target), rule_variant, context.task_context));
     }
 };
 

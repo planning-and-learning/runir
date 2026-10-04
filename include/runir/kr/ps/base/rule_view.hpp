@@ -9,30 +9,23 @@
 #include <tuple>
 #include <yggdrasil/containers/vector.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<typename C>
-class View<Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>
+template<formalism::SymbolContextFor<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> C>
+class View<Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> : public formalism::detail::View<Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> m_handle;
-
 public:
-    View(Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    const auto& get_symbol() const noexcept { return get_data().symbol; }
-    auto get_conditions() const noexcept { return make_view(get_data().conditions, *m_context); }
-    auto get_effects() const noexcept { return make_view(get_data().effects, *m_context); }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    const auto& get_symbol() const noexcept { return this->get_data().symbol; }
+    auto get_conditions() const noexcept { return make_view(this->get_data().conditions, *this->m_context); }
+    auto get_effects() const noexcept { return make_view(this->get_data().effects, *this->m_context); }
 };
 
 }  // namespace ygg

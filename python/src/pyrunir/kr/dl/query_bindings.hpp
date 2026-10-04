@@ -21,7 +21,7 @@ template<FamilyTag Family, typename View>
 void bind_query_columns(nb::class_<View>& cls)
 {
     using ColumnView = ygg::View<ygg::Index<QueryColumn>, ConstructorRepositoryFor<Family>>;
-    const auto retain_owner = runir::kr::python::make_owner_retainer();
+    const auto retain_owner = ygg::python::make_owner_retainer();
     cls.def("get_columns",
             [retain_owner](nb::typed<nb::handle, View> owner)
             {

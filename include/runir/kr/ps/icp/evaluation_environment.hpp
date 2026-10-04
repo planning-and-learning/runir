@@ -22,7 +22,7 @@ class EvaluationEnvironment
     static auto empty_arguments(TaskContext<Kind>& task)
     {
         auto data = checkout<runir::kr::dl::semantics::CallArguments>(task.dl_builder);
-        return get_or_create(*task.dl_denotation_repository, *data).first;
+        return insert(*task.dl_denotation_repository, *data).first;
     }
 
 public:

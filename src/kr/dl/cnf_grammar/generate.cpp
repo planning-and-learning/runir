@@ -231,11 +231,11 @@ private:
     {
         auto data = runir::kr::dl::checkout<T>(m_builder);
         std::forward<Initialize>(initialize)(*data);
-        const auto concrete = runir::kr::dl::get_or_create(m_output_repository, *data).first;
+        const auto concrete = runir::kr::dl::insert(m_output_repository, *data).first;
 
         auto wrapper = runir::kr::dl::checkout<runir::kr::dl::Constructor<Family, Category>>(m_builder);
         wrapper->variant = concrete.get_index();
-        return runir::kr::dl::get_or_create(m_output_repository, *wrapper).first;
+        return runir::kr::dl::insert(m_output_repository, *wrapper).first;
     }
 
     template<runir::kr::dl::CategoryTag Category, typename T>

@@ -81,7 +81,7 @@ auto checkout(const Context& context)
 template<typename Context, typename T>
 auto intern(const Context& context, ygg::Data<T>& data)
 {
-    return get_or_create(context.repository, data).first;
+    return insert(context.repository, data).first;
 }
 
 template<runir::kr::dl::CategoryTag Category, typename Context, typename T>

@@ -8,35 +8,39 @@ Concept, role, Boolean, and numerical results are interned denotation views.
 Queries return Yggdrasil's interned `RelationView` with ordered columns and a
 canonical set of rows. All result kinds belong to `DenotationRepository`.
 
-`semantics/interning.hpp` provides `get_or_create(repository, source, builder)`
-for computed denotation builders and borrowed or interned register views. The
-builder supplies reusable scratch. A register view already owned by the target
-repository is returned directly; transfers between repositories require the same
-formalism repository. The same interning header provides
-`make_data(registers, data)` to extract mutable register values into caller-owned
-storage, retaining its buffers and clearing its old repository index.
+`semantics/interning.hpp` provides three conversion operations:
+
+- `insert(repository, data)` publishes prepared records; computed denotation
+  builders additionally receive the reusable semantic builder as scratch.
+- `assign(destination, view)` replaces mutable values while retaining buffers
+  and clearing the destination's old canonical identity.
+- `copy(view, CopyContext { repository, builder })` transfers register values or
+  denotations into another repository. Register and bitset denotation copies
+  require the same planning formalism. Same-owner results are reused directly.
+
+Insertion and indexed copying return `(view, inserted)`, with the flag describing
+only the top-level record. Python repository `insert(data)` returns the same pair;
+unpack it as `view, inserted = repository.insert(data)`. The view retains its
+repository even after the tuple is discarded. There are no old-name aliases.
+
 `register_values_data.hpp` provides typed `assign_register(data, identifier, value)`
-overloads that update concept or role registers with bounds checking and
-invalidate the destination's old index.
-Rule binding and transient execution use these operations. Denotation set
-operations keep their existing `copy_from` calls;
-query interning uses Yggdrasil's relation repository directly.
+overloads with bounds checking and identity invalidation. Rule binding and
+transient execution use assignment before register updates. Fused denotation set
+operations keep their existing bitset loops. Database relation copying interns
+source rows directly into destination storage without an intermediate builder.
 
-Mutable `Data` uses Yggdrasil's shared `get_or_create(repository, data)` from
-`formalism/interning.hpp`. Each language supplies `prepare_for_interning`:
-canonicalization runs before the raw repository operation, and DL constructors
-also prepare schema and staticness metadata. Existing language namespaces
-re-export the shared entrypoint. Successful symbol interning updates the input
-data's index on both insertion and reuse; the returned view retains the actual
-owning repository, including an ancestor repository. Mutating indexed scratch
-still requires invalidating its old index before it can be observed again.
+Mutable `Data` uses Yggdrasil's shared `insert(repository, data)` from
+`formalism/interning.hpp`. Each language supplies `prepare_for_insert`:
+canonicalization runs once before the raw `repository.insert(data)`, and DL
+constructors also prepare schema and staticness metadata. Both new and existing
+symbol results update the input's index and retain the canonical owning context,
+including an ancestor repository.
 
-`make_view` inspects an existing representation. `make_data` populates reusable
-mutable storage, while `get_or_create` publishes or retrieves an interned view.
-These operations preserve their type-specific conversions: relation builders
-contain rows and denotation builders contain bit blocks, whereas their stored
-records contain repository indices. Copying such a record alone does not make
-its referenced storage independent of its repository.
+`make_view` reads an existing representation. `assign` extracts mutable values,
+`insert` publishes compatible contents, and `copy` resolves repository-local
+payloads in its destination. Stored relation records contain column/row-set
+indices and stored denotations contain vector indices; copying those records
+alone does not transfer the referenced storage.
 
 ## Storage and lifetime
 

@@ -33,7 +33,7 @@ concept ExecutionStorageConcept = requires(Storage& storage,
                                            std::optional<CallStackView<Kind>> caller,
                                            tyr::formalism::planning::ActionBindingView binding) {
     requires tyr::TaskKind<Kind>;
-    requires StoredProgramStateConcept<typename Storage::StoredState, Kind>;
+    requires std::copyable<typename Storage::StoredState>;
     requires ProgramStateViewConcept<typename Storage::StateView, Kind>;
     { storage.initial_state(initial) } -> std::same_as<typename Storage::StoredState>;
     { const_storage.view(stored) } -> std::same_as<typename Storage::StateView>;
@@ -59,7 +59,7 @@ public:
 
     InternedExecutionStorage(runir::kr::TaskContextPtr<Kind> context, ProgramView program) : m_context(std::move(context)), m_program(program) {}
 
-    auto registers(ygg::Data<runir::kr::dl::semantics::RegisterValues>& data) { return get_or_create(*m_context->dl_denotation_repository, data).first; }
+    auto registers(ygg::Data<runir::kr::dl::semantics::RegisterValues>& data) { return insert(*m_context->dl_denotation_repository, data).first; }
 
     StateView view(StoredState state) const noexcept { return state; }
     StoredState retain(StateView state) const noexcept { return state; }
@@ -76,9 +76,9 @@ public:
                                                         memory_state.get_index(),
                                                         registers.get_index(),
                                                         arguments.get_index());
-        auto data = ygg::Data<ProgramState<Kind>>(m_program.get_index(), get_or_create(*m_context->execution_repository, module_data).first.get_index());
+        auto data = ygg::Data<ProgramState<Kind>>(m_program.get_index(), insert(*m_context->execution_repository, module_data).first.get_index());
         ygg::set(caller, data.call_stack);
-        return get_or_create(*m_context->execution_repository, data).first;
+        return insert(*m_context->execution_repository, data).first;
     }
 
     StoredState initial_state(const tyr::planning::StateView<Kind>& state)
@@ -88,12 +88,7 @@ public:
         empty->concept_values.resize(entry.template get_registers<runir::kr::dl::ConceptTag>().size());
         empty->role_values.resize(entry.template get_registers<runir::kr::dl::RoleTag>().size());
         auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_context->dl_builder);
-        return store(state,
-                     entry,
-                     entry.get_entry_memory_state(),
-                     registers(*empty),
-                     get_or_create(*m_context->dl_denotation_repository, *arguments).first,
-                     {});
+        return store(state, entry, entry.get_entry_memory_state(), registers(*empty), insert(*m_context->dl_denotation_repository, *arguments).first, {});
     }
 
     ProgramStateView<Kind> materialize(ProgramStateView<Kind> state) { return state; }
@@ -102,7 +97,7 @@ public:
     {
         const auto& module_ = state.get_module_state().get_data();
         auto saved = ygg::Data<CallStack>(module_.module_, return_state.get_index(), module_.registers, module_.arguments, state.get_data().call_stack);
-        return get_or_create(*m_context->execution_repository, saved).first;
+        return insert(*m_context->execution_repository, saved).first;
     }
 
     tyr::planning::LabeledNode<tyr::planning::StateView<Kind>> successor(const tyr::planning::StateView<Kind>& state,
@@ -162,7 +157,7 @@ public:
         target.state = planning_state.get_state_builder();
         target.module_ = module_.get_index();
         target.memory_state = memory_state.get_index();
-        runir::kr::dl::semantics::make_data(registers, target.registers);
+        runir::kr::dl::semantics::assign(target.registers, registers);
         target.arguments = arguments.get_index();
         ygg::set(caller, result->call_stack);
         return result;
@@ -175,12 +170,7 @@ public:
         empty->concept_values.resize(entry.template get_registers<runir::kr::dl::ConceptTag>().size());
         empty->role_values.resize(entry.template get_registers<runir::kr::dl::RoleTag>().size());
         auto arguments = checkout<runir::kr::dl::semantics::CallArguments>(m_context->dl_builder);
-        return store(state,
-                     entry,
-                     entry.get_entry_memory_state(),
-                     registers(*empty),
-                     get_or_create(*m_context->dl_denotation_repository, *arguments).first,
-                     {});
+        return store(state, entry, entry.get_entry_memory_state(), registers(*empty), insert(*m_context->dl_denotation_repository, *arguments).first, {});
     }
 
     ProgramStateView<Kind> materialize(BuilderProgramStateView<Kind> state)
@@ -195,24 +185,23 @@ public:
         auto data = ygg::Data<ModuleState<Kind>>(planning.get_index(),
                                                  module_.get_module().get_index(),
                                                  module_.get_memory_state().get_index(),
-                                                 get_or_create(denotations, module_.get_registers(), dl_builder).first.get_index(),
+                                                 copy(module_.get_registers(), { denotations, dl_builder }).first.get_index(),
                                                  module_.get_arguments().get_index());
-        auto program = ygg::Data<ProgramState<Kind>>(m_program.get_index(),
-                                                     get_or_create(*m_context->execution_repository, data).first.get_index(),
-                                                     state.get_data().call_stack);
-        return get_or_create(*m_context->execution_repository, program).first;
+        auto program =
+            ygg::Data<ProgramState<Kind>>(m_program.get_index(), insert(*m_context->execution_repository, data).first.get_index(), state.get_data().call_stack);
+        return insert(*m_context->execution_repository, program).first;
     }
 
     auto save_caller(BuilderProgramStateView<Kind> state, MemoryStateView return_state)
     {
         const auto module_ = state.get_module_state();
-        const auto registers = get_or_create(*m_context->dl_denotation_repository, module_.get_registers(), m_context->dl_builder).first;
+        const auto registers = copy(module_.get_registers(), { *m_context->dl_denotation_repository, m_context->dl_builder }).first;
         auto saved = ygg::Data<CallStack>(module_.get_module().get_index(),
                                           return_state.get_index(),
                                           registers.get_index(),
                                           module_.get_arguments().get_index(),
                                           state.get_data().call_stack);
-        return get_or_create(*m_context->execution_repository, saved).first;
+        return insert(*m_context->execution_repository, saved).first;
     }
 
     /// The returned state borrows scratch storage until the next successor() call.

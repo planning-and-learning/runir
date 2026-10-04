@@ -104,7 +104,7 @@ public:
     auto add_vertex(P&& property) -> VertexIndex
     {
         const auto index = next_index(m_vertices.size());
-        auto [property_index, _] = m_vertex_properties.get_or_create(ygg::Data<VertexProperty<VP>>(std::forward<P>(property)));
+        auto [property_index, _] = m_vertex_properties.insert(ygg::Data<VertexProperty<VP>>(std::forward<P>(property)));
         m_vertices.emplace_back(index, property_index, *this);
         m_out_edges.emplace_back();
         m_in_edges.emplace_back();
@@ -128,7 +128,7 @@ public:
         assert_valid_vertex(target);
 
         const auto index = next_index(m_edges.size());
-        auto [property_index, _] = m_edge_properties.get_or_create(ygg::Data<EdgeProperty<EP>>(std::forward<P>(property)));
+        auto [property_index, _] = m_edge_properties.insert(ygg::Data<EdgeProperty<EP>>(std::forward<P>(property)));
         m_edges.emplace_back(index, source, target, property_index, *this);
         m_out_edges[source].push_back(index);
         m_in_edges[target].push_back(index);

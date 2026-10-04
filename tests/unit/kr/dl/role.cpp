@@ -117,11 +117,11 @@ TEST(RunirKrDlRole, RoutesUnaryAndMixedBinaryData)
     auto repository = dl::BaseConstructorRepositoryFactory().create(planning_repository);
 
     auto unary_data = ygg::Data<dl::Role<Family, dl::InverseTag>>(ygg::Index<Role>(3));
-    const auto unary = repository->get_or_create(unary_data).first;
+    const auto unary = repository->insert(unary_data).first;
     EXPECT_EQ(unary.get_arg().get_index(), ygg::Index<Role>(3));
 
     auto binary_data = ygg::Data<dl::Role<Family, dl::RestrictionTag>>(ygg::Index<Role>(1), ygg::Index<Concept>(2));
-    const auto binary = repository->get_or_create(binary_data).first;
+    const auto binary = repository->insert(binary_data).first;
     EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Role>(1));
     EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Concept>(2));
 }

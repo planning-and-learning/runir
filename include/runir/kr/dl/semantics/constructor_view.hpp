@@ -12,29 +12,25 @@
 #include <tuple>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-class View<Index<runir::kr::dl::FamilyConstructor<Family, Category>>, C>
+template<runir::kr::dl::FamilyTag Family,
+         runir::kr::dl::CategoryTag Category,
+         formalism::SymbolContextFor<runir::kr::dl::FamilyConstructor<Family, Category>> C>
+class View<Index<runir::kr::dl::FamilyConstructor<Family, Category>>, C> :
+    public formalism::detail::View<Index<runir::kr::dl::FamilyConstructor<Family, Category>>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::dl::FamilyConstructor<Family, Category>> m_handle;
-
 public:
-    View(Index<runir::kr::dl::FamilyConstructor<Family, Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::dl::FamilyConstructor<Family, Category>> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::dl::FamilyConstructor<Family, Category>>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    auto get_variant() const noexcept { return make_view(get_data().variant, *m_context); }
-    bool is_static() const noexcept { return get_data().is_static; }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    auto get_variant() const noexcept { return make_view(this->get_data().variant, *this->m_context); }
+    bool is_static() const noexcept { return this->get_data().is_static; }
 };
 
 }

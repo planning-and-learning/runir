@@ -63,8 +63,8 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     with pytest.raises(TypeError):
         module.GroundStateEvaluationContext(state, task.dl_builder, task.dl_denotation_repository)
     bindings = (
-        task.dl_denotation_repository.get_or_create(semantics.CallArgumentsData()),
-        task.dl_denotation_repository.get_or_create(semantics.RegisterValuesData()),
+        task.dl_denotation_repository.insert(semantics.CallArgumentsData())[0],
+        task.dl_denotation_repository.insert(semantics.RegisterValuesData())[0],
     ) if family == "ext" else ()
     evaluation_context = module.GroundStateEvaluationContext(state, task.dl_builder, storage, *bindings)
     assert expression.evaluate(evaluation_context).get() is True
@@ -296,24 +296,24 @@ def test_query_column_retains_owner_after_list_and_repository_scope(gripper_plan
         for name in ("left", "right"):
             data = module.QueryColumnData()
             data.name = name
-            column_indices.append(repository.get_or_create(data).get_index())
+            column_indices.append(repository.insert(data)[0].get_index())
 
         role_data = module.RoleData()
-        role_data.variant = repository.get_or_create(module.RoleUniversalData()).get_index()
-        role = repository.get_or_create(role_data)
+        role_data.variant = repository.insert(module.RoleUniversalData())[0].get_index()
+        role = repository.insert(role_data)[0]
         concrete_data = module.QueryRoleData()
         concrete_data.arg = role.get_index()
         concrete_data.columns = column_indices
-        concrete = repository.get_or_create(concrete_data)
+        concrete = repository.insert(concrete_data)[0]
         query_data = module.QueryData()
         query_data.variant = concrete.get_index()
-        query = repository.get_or_create(query_data)
+        query = repository.insert(query_data)[0]
 
         if owner_kind in ("concept", "role"):
             data = module.ConceptProjectData() if owner_kind == "concept" else module.RoleProjectData()
             data.arg = query.get_index()
             data.columns = column_indices[1:] if owner_kind == "concept" else column_indices[::-1]
-            owner = repository.get_or_create(data)
+            owner = repository.insert(data)[0]
             expected = ["right"] if owner_kind == "concept" else ["right", "left"]
         else:
             owner = query if owner_kind == "query" else concrete
@@ -349,24 +349,24 @@ def test_native_ext_query_construction_derives_schema_and_evaluates(
     join_data = ext_semantics.QueryJoinData()
     join_data.lhs = original.get_rhs().get_index()
     join_data.rhs = original.get_lhs().get_index()
-    joined = repository.get_or_create(join_data)
+    joined = repository.insert(join_data)[0]
     assert [column.get_name() for column in joined.get_columns()] == ["room", "ball"]
     query_data = ext_semantics.QueryData()
     query_data.variant = joined.get_index()
-    query = repository.get_or_create(query_data)
+    query = repository.insert(query_data)[0]
     count_data = ext_semantics.NumericalCountData()
     count_data.arg = query.get_index()
-    count = repository.get_or_create(count_data)
+    count = repository.insert(count_data)[0]
     numerical_data = ext_semantics.NumericalData()
     numerical_data.variant = count.get_index()
-    rewritten = repository.get_or_create(numerical_data)
+    rewritten = repository.insert(numerical_data)[0]
 
     search = ground_gripper_search_context
     task = GroundTaskContext(domain, search)
     state = search.state_repository.get_initial_state(search.axiom_evaluator)
     storage = ext_semantics.EvaluationStorage(task.dl_denotation_repository)
-    arguments = task.dl_denotation_repository.get_or_create(semantics.CallArgumentsData())
-    registers = task.dl_denotation_repository.get_or_create(semantics.RegisterValuesData())
+    arguments = task.dl_denotation_repository.insert(semantics.CallArgumentsData())[0]
+    registers = task.dl_denotation_repository.insert(semantics.RegisterValuesData())[0]
     context = ext_semantics.GroundStateEvaluationContext(
         state, task.dl_builder, storage, arguments, registers
     )

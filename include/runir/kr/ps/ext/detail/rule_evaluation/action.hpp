@@ -111,7 +111,7 @@ public:
                     m_ground_actions.emplace(ground_action.get_row(), ground_action);
                 m_ground_actions_ready = true;
             }
-            const auto binding = tyr::formalism::planning::get_or_create(*m_task->get_repository(), m_binding).first;
+            const auto binding = tyr::formalism::planning::insert(*m_task->get_repository(), m_binding).first;
             const auto it = m_ground_actions.find(binding);
             if (it == m_ground_actions.end() || !m_executor.is_applicable(it->second, state))
                 action_rule_contract_error(rule, planning_state, tuple, "offered action is not applicable");
@@ -122,7 +122,7 @@ public:
             auto grounder = tyr::formalism::planning::GrounderContext { m_builder, *m_task->get_repository(), m_binding.objects };
             if (!m_executor.is_applicable(schema, state, grounder, *m_task->get_fdr_context()))
                 action_rule_contract_error(rule, planning_state, tuple, "offered action is not applicable");
-            return tyr::formalism::planning::get_or_create(*m_task->get_repository(), m_binding).first;
+            return tyr::formalism::planning::insert(*m_task->get_repository(), m_binding).first;
         }
     }
 };

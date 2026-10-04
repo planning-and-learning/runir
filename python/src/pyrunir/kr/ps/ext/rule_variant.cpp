@@ -25,14 +25,12 @@ void bind_rule_variant(nb::module_& m, RepositoryBinding& repository)
                     .def_rw("symbol", &Data::symbol)
                     .def_rw("variant", &Data::variant);
     ygg::add_comparison(data);
-    auto view = nb::class_<View>(m, "RuleVariant")
-                    .def("get_index", &View::get_index)
-                    .def("get_symbol", &View::get_symbol)
-                    .def("get_variant", &View::get_variant);
+    auto view =
+        nb::class_<View>(m, "RuleVariant").def("get_index", &View::get_index).def("get_symbol", &View::get_symbol).def("get_variant", &View::get_variant);
     ygg::add_print(view);
     ygg::add_comparison(view);
     ygg::add_hash(view);
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<T, Repository>, "data"_a, nb::keep_alive<0, 1>());
+    runir::kr::python::bind_insert<T>(repository);
 }
 
 }  // namespace runir::kr::ps::ext

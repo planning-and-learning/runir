@@ -62,11 +62,9 @@ using BuilderModuleStateView = ygg::View<ygg::Builder<ModuleState<Kind>>, Execut
 template<tyr::TaskKind Kind>
 using BuilderProgramStateView = ygg::View<ygg::Builder<ProgramState<Kind>>, ExecutionRepository<Kind>>;
 
-/// Values retained by search: repository identities or owners of pooled execution data.
-template<typename S, typename Kind>
-concept StoredProgramStateConcept = tyr::TaskKind<Kind>
-                                    && (std::same_as<std::remove_cvref_t<S>, ProgramStateView<Kind>>
-                                        || std::same_as<std::remove_cvref_t<S>, ygg::SharedObjectPoolPtr<ygg::Builder<ProgramState<Kind>>>>);
+/// Storage selects the handles whose contents survive reuse of its scratch buffers.
+template<typename S, typename Storage>
+concept RetainedStateFor = std::same_as<std::remove_cvref_t<S>, typename Storage::StoredState>;
 
 }  // namespace runir::kr::ps::ext
 

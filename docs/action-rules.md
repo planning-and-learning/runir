@@ -203,7 +203,7 @@ rules.
 `RegisterValuesData` holds optional object indices or pairs of indices. Both are
 defined in `pyrunir.kr.dl.base.semantics`. Evaluate call-argument roots with
 separate caches and the task's durable denotation repository, then intern each
-bundle with `denotation_repository.get_or_create(data)`. Pass the resulting
+bundle with `arguments, inserted = denotation_repository.insert(data)`. Pass the resulting
 `CallArguments` and `RegisterValues` views to the context. Argument expressions
 pass through existing argument views, so supplied argument indices must already
 refer to the task repository. Changing source data does not change an interned

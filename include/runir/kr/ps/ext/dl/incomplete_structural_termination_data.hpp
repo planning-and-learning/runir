@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_EXT_DL_INCOMPLETE_STRUCTURAL_TERMINATION_DATA_HPP_
 
 #include "runir/kr/ps/ext/declarations.hpp"
+#include "runir/kr/ps/ext/repository.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 

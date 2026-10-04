@@ -38,13 +38,13 @@ auto make_condition(Repository& repository, Builder& builder, ygg::Index<runir::
 {
     auto concrete_data = builder.template checkout<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>();
     concrete_data->feature = feature;
-    const auto concrete = repository.get_or_create(*concrete_data).first;
+    const auto concrete = repository.insert(*concrete_data).first;
     auto concrete_variant_data = builder.template checkout<runir::kr::ps::ConcreteConditionVariant<Family, runir::kr::DlTag>>();
     concrete_variant_data->variant = concrete.get_index();
-    const auto concrete_variant = repository.get_or_create(*concrete_variant_data).first;
+    const auto concrete_variant = repository.insert(*concrete_variant_data).first;
     auto variant_data = builder.template checkout<runir::kr::ps::ConditionVariant<Family>>();
     variant_data->variant = concrete_variant.get_index();
-    return repository.get_or_create(*variant_data).first;
+    return repository.insert(*variant_data).first;
 }
 
 template<typename FeatureTag, typename ObservationTag, runir::kr::FamilyTag Family, typename Repository, typename Builder>
@@ -52,13 +52,13 @@ auto make_effect(Repository& repository, Builder& builder, ygg::Index<runir::kr:
 {
     auto concrete_data = builder.template checkout<runir::kr::ps::ConcreteEffect<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>();
     concrete_data->feature = feature;
-    const auto concrete = repository.get_or_create(*concrete_data).first;
+    const auto concrete = repository.insert(*concrete_data).first;
     auto concrete_variant_data = builder.template checkout<runir::kr::ps::ConcreteEffectVariant<Family, runir::kr::DlTag>>();
     concrete_variant_data->variant = concrete.get_index();
-    const auto concrete_variant = repository.get_or_create(*concrete_variant_data).first;
+    const auto concrete_variant = repository.insert(*concrete_variant_data).first;
     auto variant_data = builder.template checkout<runir::kr::ps::EffectVariant<Family>>();
     variant_data->variant = concrete_variant.get_index();
-    return repository.get_or_create(*variant_data).first;
+    return repository.insert(*variant_data).first;
 }
 
 template<runir::kr::FamilyTag Family, typename Repository, typename Builder>

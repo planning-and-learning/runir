@@ -39,6 +39,9 @@ template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage = In
 class SuccessorExpander
 {
 public:
+    using StorageType = ExecutionStorage;
+    using StoredState = typename ExecutionStorage::StoredState;
+
     SuccessorExpander(runir::kr::TaskContextPtr<Kind> task_context, ProgramView program) :
         m_task_context(task_context ? std::move(task_context) : throw std::invalid_argument("SuccessorExpander requires a task context.")),
         m_program(program),
@@ -52,11 +55,7 @@ public:
     const auto& get_task_context() const noexcept { return m_task_context; }
     auto& get_environment() noexcept { return m_rule_evaluators.get_environment(); }
 
-    template<StoredProgramStateConcept<Kind> S>
-    auto view(const S& state) const
-    {
-        return m_storage.view(state);
-    }
+    auto view(const StoredState& state) const { return m_storage.view(state); }
 
     /// Create the entry module with empty registers and arguments, and no caller.
     auto initial_state(const tyr::planning::StateView<Kind>& state)
@@ -81,7 +80,7 @@ public:
     template<ProgramStateViewConcept<Kind> S, typename Emit, typename Stop>
     bool for_each_successor(S state, ProgramSearchStatistics& statistics, Emit&& emit, Stop&& stop)
     {
-        using Step = detail::ProgramStep<Kind, typename ExecutionStorage::StoredState>;
+        using Step = detail::ProgramStep<Kind, ExecutionStorage>;
         if (stop())
             return false;
         validate_source(state);
@@ -126,9 +125,10 @@ public:
 
     /// Apply one rule, using a supplied planning successor for Do, Action, or a Sketch with effects.
     /// Load, Choose, Call, and empty-effect Sketch rules derive their own control transition.
-    std::optional<detail::ProgramStep<Kind>> apply(ProgramStateView<Kind> state,
-                                                   RuleVariantView rule,
-                                                   std::optional<tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>> candidate = std::nullopt)
+    std::optional<detail::ProgramStep<Kind, ExecutionStorage>>
+    apply(typename ExecutionStorage::StateView state,
+          RuleVariantView rule,
+          std::optional<tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>> candidate = std::nullopt)
     {
         validate_source(state);
         if (candidate)
@@ -178,9 +178,9 @@ private:
                                           caller->get_registers(),
                                           caller->get_arguments(),
                                           caller->get_caller());
-            return detail::make_step(detail::ProgramOutcome::RESTORED_CALLER, std::move(target), m_task_context);
+            return detail::make_step<Kind, ExecutionStorage>(detail::ProgramOutcome::RESTORED_CALLER, std::move(target), m_task_context);
         }
-        return detail::make_step(detail::ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state), m_task_context);
+        return detail::make_step<Kind, ExecutionStorage>(detail::ProgramOutcome::NO_APPLICABLE_ACTION, m_storage.retain(state), m_task_context);
     }
 
     runir::kr::TaskContextPtr<Kind> m_task_context;

@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <nanobind/stl/shared_ptr.h>
+#include <pyrunir/kr/binding_utils.hpp>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
@@ -19,12 +20,7 @@ namespace
 template<typename... Types>
 void bind_constructors(nb::class_<ExtConstructorRepository>& repository, ygg::TypeList<Types...>)
 {
-    (repository.def(
-         "get_or_create",
-         [](ExtConstructorRepository& self, ygg::Data<Types>& data) { return runir::kr::dl::get_or_create(self, data).first; },
-         nb::arg("data"),
-         nb::keep_alive<0, 1>()),
-     ...);
+    (runir::kr::python::bind_insert<Types>(repository), ...);
 }
 
 }  // namespace

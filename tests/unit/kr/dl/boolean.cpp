@@ -107,15 +107,15 @@ TEST(RunirKrDlBoolean, RoutesConstantUnaryAndBinaryData)
     auto repository = dl::UnsConstructorRepositoryFactory().create(planning_repository);
 
     auto constant_data = ygg::Data<dl::Boolean<Family, dl::BooleanConstantTag>>(true);
-    const auto constant = repository->get_or_create(constant_data).first;
+    const auto constant = repository->insert(constant_data).first;
     EXPECT_TRUE(constant.get_value());
 
     auto unary_data = ygg::Data<dl::Boolean<Family, dl::NotTag>>(ygg::Index<Constructor>(4));
-    const auto unary = repository->get_or_create(unary_data).first;
+    const auto unary = repository->insert(unary_data).first;
     EXPECT_EQ(unary.get_arg().get_index(), ygg::Index<Constructor>(4));
 
     auto binary_data = ygg::Data<dl::Boolean<Family, dl::AndTag>>(ygg::Index<Constructor>(1), ygg::Index<Constructor>(2));
-    const auto binary = repository->get_or_create(binary_data).first;
+    const auto binary = repository->insert(binary_data).first;
     EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Constructor>(1));
     EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Constructor>(2));
 }

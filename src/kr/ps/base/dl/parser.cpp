@@ -51,7 +51,7 @@ using runir::kr::parser::constructors::unwrap;
 template<typename T>
 auto intern(runir::kr::ps::base::Repository& repository, ygg::Data<T>& data)
 {
-    return runir::kr::ps::base::get_or_create(repository, data).first;
+    return runir::kr::ps::base::insert(repository, data).first;
 }
 
 template<runir::kr::dl::CategoryTag Category>

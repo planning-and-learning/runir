@@ -33,13 +33,12 @@ using ygg::formalism::checkout;
 
 template<typename T>
     requires ygg::formalism::SupportsSymbol<Repository, T>
-void prepare_for_interning(Repository&, ygg::Data<T>& data)
+void prepare_for_insert(Repository&, ygg::Data<T>& data)
 {
     canonicalize(data);
 }
 
-using ygg::formalism::get_or_create;
-
+using ygg::formalism::insert;
 }
 
 #endif

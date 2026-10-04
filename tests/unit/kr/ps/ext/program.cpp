@@ -23,7 +23,7 @@ static_assert(requires(Data& data) {
     data.modules;
     data.clear();
 });
-static_assert(requires(const View& view, ygg::Index<kr::ps::ext::ModuleSymbol> symbol) {
+static_assert(requires(const View& view, kr::ps::ext::ModuleSymbolView symbol) {
     view.get_index();
     view.get_entry_module();
     view.get_modules();

@@ -45,7 +45,7 @@ public:
                                                 target_registers,
                                                 module_.get_arguments(),
                                                 state.get_call_stack());
-            if (!emit(detail::applied(std::move(target), rule_variant, context.task_context)))
+            if (!emit(detail::applied<Kind, typename Context::StorageType>(std::move(target), rule_variant, context.task_context)))
                 return false;
         }
         return true;

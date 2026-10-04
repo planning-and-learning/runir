@@ -1,7 +1,32 @@
+import gc
+import sys
+
 import pytest
 
 from pyrunir.kr import DomainContext, GroundTaskContext
 from pyrunir.kr.dl import base, ext, uns
+
+
+@pytest.mark.parametrize("family", [base, ext, uns], ids=["base", "ext", "uns"])
+def test_insert_returns_creation_flag_and_retains_owner_on_view(gripper_planning_domain, family):
+    def create_view():
+        repository = family.semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
+        data = family.semantics.QueryColumnData()
+        data.name = "retained"
+        before = sys.getrefcount(repository)
+        result = repository.insert(data)
+        assert isinstance(result, tuple)
+        view, inserted = result
+        assert inserted is True
+        assert repository.insert(data) == (view, False)
+        assert not hasattr(repository, "get_or_create")
+        del result
+        assert sys.getrefcount(repository) > before
+        return view
+
+    view = create_view()
+    gc.collect()
+    assert view.get_name() == "retained"
 
 
 @pytest.mark.parametrize("family", [base, uns], ids=["base", "uns"])
@@ -21,8 +46,8 @@ def test_repository_constructs_queries_and_semantic_wrappers(
         data = getattr(semantics, f"{type_name}Data")()
         for field, value in fields.items():
             setattr(data, field, value)
-        result = repository.get_or_create(data)
-        assert repository.get_or_create(data) == result
+        result = repository.insert(data)[0]
+        assert repository.insert(data)[0] == result
         return result
 
     constructor = create(category, variant=create(leaf).get_index())
@@ -64,7 +89,7 @@ def test_ext_repository_constructs_references(gripper_planning_domain, type_name
     data = getattr(ext, f"{type_name}Data")()
     data.name = "reference"
     data.identifier = getattr(ext, f"{type_name}Identifier")(3)
-    reference = repository.get_or_create(data)
+    reference = repository.insert(data)[0]
     assert reference.get_name() == data.name
     assert reference.get_identifier() == data.identifier
-    assert repository.get_or_create(data) == reference
+    assert repository.insert(data)[0] == reference

@@ -3,11 +3,11 @@
 
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
-#include <runir/kr/ps/dl/transition_evaluation_context.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/base/rule_data.hpp>
 #include <runir/kr/ps/base/rule_view.hpp>
+#include <runir/kr/ps/dl/transition_evaluation_context.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -42,14 +42,13 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     ygg::add_print(view);
     ygg::add_comparison(view);
     ygg::add_hash(view);
-    view.def("is_compatible_with",
-             [](View value, GroundContext& context) { return runir::kr::ps::base::is_compatible_with(value, context); },
-             "context"_a)
-        .def("is_compatible_with",
-             [](View value, LiftedContext& context) { return runir::kr::ps::base::is_compatible_with(value, context); },
-             "context"_a);
+    view.def(
+            "is_compatible_with",
+            [](View value, GroundContext& context) { return runir::kr::ps::base::is_compatible_with(value, context); },
+            "context"_a)
+        .def("is_compatible_with", [](View value, LiftedContext& context) { return runir::kr::ps::base::is_compatible_with(value, context); }, "context"_a);
 
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<T, Repository>, "data"_a, nb::keep_alive<0, 1>());
+    runir::kr::python::bind_insert<T>(repository);
 }
 
 }  // namespace runir::kr::ps::base

@@ -11,6 +11,8 @@ namespace runir::kr::ps::ext::detail
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
 struct RuleEvaluationContext
 {
+    using StorageType = Storage;
+
     const runir::kr::TaskContextPtr<Kind>& task_context;
     Storage& storage;
     EvaluationEnvironment<Kind>& environment;

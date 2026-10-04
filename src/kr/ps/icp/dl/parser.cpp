@@ -26,7 +26,7 @@ using runir::kr::parser::ext_constructors::parse;
 template<typename T>
 auto intern(Repository& repository, ygg::Data<T>& data)
 {
-    return get_or_create(repository, data).first;
+    return insert(repository, data).first;
 }
 
 using runir::kr::parser::observations::append_conditions;
@@ -118,7 +118,7 @@ ModuleView lower_module(const ast::Module& module,
                 auto value = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(dl_builder);
                 value->name = concrete.symbol.text;
                 value->identifier = runir::kr::dl::RegisterIdentifier<Category>(declarations.by_identifier.size());
-                const auto index = runir::kr::dl::get_or_create(repository.get_dl_repository(), *value).first.get_index();
+                const auto index = runir::kr::dl::insert(repository.get_dl_repository(), *value).first.get_index();
                 declarations.by_name.emplace(concrete.symbol.text, index);
                 declarations.by_identifier.push_back(index);
                 if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)

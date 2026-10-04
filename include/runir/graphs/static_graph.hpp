@@ -58,7 +58,7 @@ private:
 
         for (const auto& vertex : builder.get_vertices())
         {
-            auto [property_index, _] = m_vertex_properties.get_or_create(ygg::Data<VertexProperty<VP>>(vertex.get_property()));
+            auto [property_index, _] = m_vertex_properties.insert(ygg::Data<VertexProperty<VP>>(vertex.get_property()));
             m_vertices.emplace_back(vertex.get_index(), property_index, *this);
         }
 
@@ -69,7 +69,7 @@ private:
             m_out_edge_offsets[source] = index;
             for (const auto& edge : builder.get_out_edges(source))
             {
-                auto [property_index, _] = m_edge_properties.get_or_create(ygg::Data<EdgeProperty<EP>>(edge.get_property()));
+                auto [property_index, _] = m_edge_properties.insert(ygg::Data<EdgeProperty<EP>>(edge.get_property()));
                 m_edges.emplace_back(index++, source, edge.get_target(), property_index, *this);
             }
         }
@@ -113,8 +113,7 @@ public:
 
     explicit StaticGraph(StaticGraphBuilder<VP, EP>&& builder) { initialize(builder); }
 
-    StaticGraph(std::span<const VP> vertices, std::span<const std::tuple<VertexIndex, VertexIndex, EP>> edges) :
-        m_out_edge_offsets(vertices.size() + 1, 0)
+    StaticGraph(std::span<const VP> vertices, std::span<const std::tuple<VertexIndex, VertexIndex, EP>> edges) : m_out_edge_offsets(vertices.size() + 1, 0)
     {
         assert(vertices.size() <= static_cast<std::size_t>(std::numeric_limits<VertexIndex>::max()));
         assert(edges.size() <= static_cast<std::size_t>(std::numeric_limits<EdgeIndex>::max()));
@@ -123,7 +122,7 @@ public:
         m_edges.reserve(edges.size());
         for (const auto& property : vertices)
         {
-            auto [property_index, _] = m_vertex_properties.get_or_create(ygg::Data<VertexProperty<VP>>(property));
+            auto [property_index, _] = m_vertex_properties.insert(ygg::Data<VertexProperty<VP>>(property));
             m_vertices.emplace_back(static_cast<VertexIndex>(m_vertices.size()), property_index, *this);
         }
 
@@ -144,7 +143,7 @@ public:
         for (auto input_index : ordered_edges)
         {
             const auto& [source, target, property] = edges[input_index];
-            auto [property_index, _] = m_edge_properties.get_or_create(ygg::Data<EdgeProperty<EP>>(property));
+            auto [property_index, _] = m_edge_properties.insert(ygg::Data<EdgeProperty<EP>>(property));
             m_edges.emplace_back(static_cast<EdgeIndex>(m_edges.size()), source, target, property_index, *this);
         }
     }

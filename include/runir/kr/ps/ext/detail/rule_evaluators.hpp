@@ -282,7 +282,7 @@ public:
     template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
     auto apply(Context& context, S state, RuleVariantView rule, const std::optional<tyr::planning::LabeledNode<PS>>& candidate)
     {
-        using Result = std::optional<ProgramStep<Kind, decltype(context.storage.retain(state))>>;
+        using Result = std::optional<ProgramStep<Kind, typename Context::StorageType>>;
         const auto planning_state = state.get_state();
         return with_rule(rule,
                          [&](auto& evaluator) -> Result
@@ -326,7 +326,7 @@ public:
     template<runir::kr::dl::ConceptOrRoleTag Category, typename Context, ProgramStateViewConcept<Kind> S>
     auto apply_choice(Context& context, S state, const Choice<Category>& choice)
     {
-        using Step = ProgramStep<Kind, decltype(context.storage.retain(state))>;
+        using Step = ProgramStep<Kind, typename Context::StorageType>;
         return with_rule(choice.rule,
                          [&](auto& evaluator) -> Step
                          {

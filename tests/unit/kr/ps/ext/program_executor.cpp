@@ -867,17 +867,16 @@ void check_state_memorization()
         + choice_module("grandchild", choice_rule("load", "m0", "m1", load_goal));
     const auto choose_all = std::string("(:choose (:conditions) (:concept All) (:register (:concept r0)))");
     const auto load_good = std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))");
-    const auto wider_failure = choice_module(
-        "main",
-        select + choice_rule("bad-choice", "m1", "m4", "(:choose (:conditions (positive Bad)) (:concept All) (:register (:concept r1)))")
-            + choice_rule("move-good", "m1", "m2", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
-            + choice_rule("finish", "m2", "m3", move_to_goal));
+    const auto wider_failure =
+        choice_module("main",
+                      select + choice_rule("bad-choice", "m1", "m4", "(:choose (:conditions (positive Bad)) (:concept All) (:register (:concept r1)))")
+                          + choice_rule("move-good", "m1", "m2", R"((:do (:conditions (negative Bad)) (:action "move") (:arguments Here R) (:effects)))")
+                          + choice_rule("finish", "m2", "m3", move_to_goal));
     // Universal DFS visits the narrow arm first; the later wider arm rejoins its
     // successful suffix. Non-universal execution admits only the first (wide) arm.
     const auto unequal_widths = choice_module(
         "main",
-        choice_rule("wide-arm", "m0", "m1", load_goal) + choice_rule("narrow-arm", "m0", "m4", load_goal)
-            + choice_rule("wide-choice", "m1", "m2", choose_all)
+        choice_rule("wide-arm", "m0", "m1", load_goal) + choice_rule("narrow-arm", "m0", "m4", load_goal) + choice_rule("wide-choice", "m1", "m2", choose_all)
             + choice_rule("narrow-choice", "m4", "m2", "(:choose (:conditions) (:concept Goal) (:register (:concept r0)))")
             + choice_rule("normalize", "m2", "m3", load_good) + choice_rule("move", "m3", "m5", move_to_register)
             + choice_rule("finish", "m5", "m6", move_to_goal));
@@ -1104,10 +1103,10 @@ void check_transient_builder_values_and_reuse()
     static_assert(ext::ProgramStateViewConcept<ext::ProgramStateView<Kind>, Kind>);
     static_assert(ext::ProgramStateViewConcept<ext::BorrowedProgramStateView<Kind>, Kind>);
     static_assert(ext::ProgramStateViewConcept<ext::BuilderProgramStateView<Kind>, Kind>);
-    static_assert(ext::StoredProgramStateConcept<ygg::SharedObjectPoolPtr<ygg::Builder<ext::ProgramState<Kind>>>, Kind>);
-    static_assert(!ext::StoredProgramStateConcept<ygg::Builder<ext::ProgramState<Kind>>, Kind>);
-    static_assert(!ext::StoredProgramStateConcept<ext::BorrowedProgramStateView<Kind>, Kind>);
-    static_assert(!ext::StoredProgramStateConcept<ext::BuilderProgramStateView<Kind>, Kind>);
+    static_assert(ext::RetainedStateFor<ygg::SharedObjectPoolPtr<ygg::Builder<ext::ProgramState<Kind>>>, ext::TransientExecutionStorage<Kind>>);
+    static_assert(!ext::RetainedStateFor<ygg::Builder<ext::ProgramState<Kind>>, ext::TransientExecutionStorage<Kind>>);
+    static_assert(!ext::RetainedStateFor<ext::BorrowedProgramStateView<Kind>, ext::TransientExecutionStorage<Kind>>);
+    static_assert(!ext::RetainedStateFor<ext::BuilderProgramStateView<Kind>, ext::TransientExecutionStorage<Kind>>);
     constexpr auto has_index = []<typename V>() { return requires(const V& view) { view.get_index(); }; };
     static_assert(!has_index.template operator()<sem::BorrowedRegisterValuesView>());
     static_assert(!has_index.template operator()<ext::BorrowedProgramStateView<Kind>>());
@@ -1134,7 +1133,7 @@ void check_transient_builder_values_and_reuse()
     first_module.module_ = module_.get_index();
     first_module.memory_state = module_.get_entry_memory_state().get_index();
     auto arguments = sem::checkout<sem::CallArguments>(context->dl_builder);
-    const auto argument_view = sem::get_or_create(*context->dl_denotation_repository, *arguments).first;
+    const auto argument_view = sem::insert(*context->dl_denotation_repository, *arguments).first;
     first_module.arguments = argument_view.get_index();
     const auto program_state = ygg::make_view(*first, *context->execution_repository);
     const auto module_state = program_state.get_module_state();
@@ -1153,7 +1152,7 @@ void check_transient_builder_values_and_reuse()
     first_module.registers.role_values.emplace_back(
         ::cista::pair<ygg::Index<tyr::formalism::Object>, ygg::Index<tyr::formalism::Object>>(ygg::Index<tyr::formalism::Object>(0),
                                                                                               ygg::Index<tyr::formalism::Object>(1)));
-    const auto registered_registers = sem::get_or_create(*context->dl_denotation_repository, first_module.registers).first;
+    const auto registered_registers = sem::insert(*context->dl_denotation_repository, first_module.registers).first;
     const auto borrowed_registers = module_state.get_registers();
     const auto concept_id = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(0);
     const auto role_id = kr::dl::RegisterIdentifier<kr::dl::RoleTag>(0);
@@ -1173,15 +1172,15 @@ void check_transient_builder_values_and_reuse()
 
     // Transient module values use the same interned callers as registered execution states.
     auto tail_data = ygg::Data<ext::CallStack>(first_module.module_, first_module.memory_state, registered_registers.get_index(), first_module.arguments);
-    const auto tail = ext::get_or_create(*context->execution_repository, tail_data).first;
+    const auto tail = ext::insert(*context->execution_repository, tail_data).first;
     auto head_registers = first_module.registers;
     head_registers.concept_values.front() = ygg::Index<tyr::formalism::Object>(1);
-    const auto head_register_values = sem::get_or_create(*context->dl_denotation_repository, head_registers).first;
+    const auto head_register_values = sem::insert(*context->dl_denotation_repository, head_registers).first;
     auto head_data = ygg::Data<ext::CallStack>(first_module.module_, first_module.memory_state, head_register_values.get_index(), first_module.arguments);
     head_data.caller = tail.get_index();
-    const auto head = ext::get_or_create(*context->execution_repository, head_data).first;
+    const auto head = ext::insert(*context->execution_repository, head_data).first;
     first->call_stack = head.get_index();
-    EXPECT_EQ(ext::get_or_create(*context->execution_repository, head_data).first.get_index(), head.get_index());
+    EXPECT_EQ(ext::insert(*context->execution_repository, head_data).first.get_index(), head.get_index());
     static_assert(std::same_as<decltype(program_state.get_call_stack()), std::optional<ext::CallStackView<Kind>>>);
     const auto stack = program_state.get_call_stack();
     ASSERT_TRUE(stack);
@@ -1251,7 +1250,7 @@ TEST(RunirTests, ExtPooledSearchPathReleasesLongChainsIteratively)
 {
     namespace ext = kr::ps::ext;
     using Kind = tyr::GroundTag;
-    using Path = ext::detail::SearchPath<Kind, ext::ProgramStateView<Kind>>;
+    using Path = ext::detail::SearchPath<Kind, ext::InternedExecutionStorage<Kind>>;
     using PathPtr = ygg::SharedObjectPoolPtr<Path>;
     auto search = make_gripper_ground_context();
     auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);

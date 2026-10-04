@@ -10,6 +10,7 @@
 #include <tuple>
 #include <tyr/formalism/object_index.hpp>
 #include <tyr/formalism/object_view.hpp>
+#include <tyr/formalism/planning/repository.hpp>
 #include <utility>
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/serialization/cista_equal_to.hpp>

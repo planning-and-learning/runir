@@ -23,7 +23,7 @@ namespace runir::kr::dl::semantics
 
 /// Evaluation reads state contents; it does not require registered state identity.
 template<typename Context, typename Family = typename Context::FamilyType>
-concept StateEvaluationContextConcept = FamilyTag<Family> && requires(Context& context, const Context& const_context) {
+concept StateEvaluationResourcesConcept = FamilyTag<Family> && requires(Context& context, const Context& const_context) {
     typename Context::KindType;
     requires tyr::TaskKind<typename Context::KindType>;
     requires std::same_as<typename Context::FamilyType, Family>;
@@ -32,8 +32,23 @@ concept StateEvaluationContextConcept = FamilyTag<Family> && requires(Context& c
     { context.get_denotation_repository() } -> std::same_as<DenotationRepository&>;
     { context.get_workspace() } -> std::same_as<EvaluationWorkspace&>;
     { context.get_caches() } -> std::same_as<DenotationCaches<Family>&>;
-    const_context.for_result(false);
-    const_context.child_context();
+} && (!std::same_as<Family, runir::kr::ExtFamilyTag> || requires(const Context& context) {
+                                              { context.arguments() } -> std::same_as<CallArgumentsView>;
+                                              { context.registers() } -> RegisterValuesViewConcept;
+                                          });
+
+/// Recursive contexts retain their family, task kind, resources, and navigation.
+template<typename Context, typename Family, typename Kind>
+concept StateEvaluationNavigationConcept =
+    StateEvaluationResourcesConcept<Context, Family> && std::same_as<typename Context::KindType, Kind> && requires(const Context& context) {
+        { context.for_result(false) } -> std::same_as<Context>;
+        { context.child_context() } -> std::same_as<Context>;
+    };
+
+template<typename Context, typename Family = typename Context::FamilyType>
+concept StateEvaluationContextConcept = StateEvaluationResourcesConcept<Context, Family> && requires(const Context& context) {
+    { context.for_result(false) } -> StateEvaluationNavigationConcept<Family, typename Context::KindType>;
+    { context.child_context() } -> StateEvaluationNavigationConcept<Family, typename Context::KindType>;
 };
 
 template<FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S = tyr::planning::StateView<Kind>>

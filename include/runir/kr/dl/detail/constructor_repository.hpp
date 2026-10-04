@@ -61,12 +61,12 @@ public:
         return std::nullopt;
     }
 
-    /// Raw symbol interning. Use the language-specific free get_or_create() to canonicalize and prepare data.
+    /// Raw symbol interning. Use the language-specific free insert() to canonicalize and prepare data.
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
-    std::pair<ygg::View<ygg::Index<T>, ConstructorRepository>, bool> get_or_create(ygg::Data<T>& data)
+    std::pair<ygg::View<ygg::Index<T>, ConstructorRepository>, bool> insert(ygg::Data<T>& data)
     {
-        const auto [index, created] = m_symbol_repository.template get_or_create_local<T>(data);
+        const auto [index, created] = m_symbol_repository.template insert_local<T>(data);
         return { ygg::View<ygg::Index<T>, ConstructorRepository>(index, *this), created };
     }
 

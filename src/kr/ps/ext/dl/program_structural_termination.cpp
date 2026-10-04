@@ -35,11 +35,11 @@ struct ModuleCallGraph
     std::vector<RuleVariantView> unresolved_rules;
 };
 
-inline std::optional<std::size_t> find_module(ProgramView program, ygg::Index<ModuleSymbol> symbol)
+inline std::optional<std::size_t> find_module(ProgramView program, ModuleSymbolView symbol)
 {
     const auto modules = program.get_modules();
     for (std::size_t position = 0; position < modules.size(); ++position)
-        if (modules[position].get_symbol().get_index() == symbol)
+        if (modules[position].get_symbol() == symbol)
             return position;
     return std::nullopt;
 }
@@ -64,7 +64,7 @@ inline ModuleCallGraph build_module_call_graph(ProgramView program)
                         using RuleViewT = std::decay_t<decltype(rule)>;
                         if constexpr (std::same_as<RuleViewT, ygg::View<ygg::Index<Rule<CallTag>>, Repository>>)
                         {
-                            const auto target_module = find_module(program, rule.get_callee().get_index());
+                            const auto target_module = find_module(program, rule.get_callee());
                             if (!target_module)
                             {
                                 unresolved_rules.push_back(rule_variant);

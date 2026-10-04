@@ -37,7 +37,7 @@ public:
         const auto planning_task = m_task->search_context->task->get_task();
         auto empty = m_task->dl_builder.template get_builder<Denotation>(
             static_cast<ygg::uint_t>(planning_task.get_domain().get_constants().size() + planning_task.get_objects().size()));
-        m_empty = runir::kr::dl::semantics::get_or_create(*m_task->dl_denotation_repository, *empty, m_task->dl_builder).first.get_index();
+        m_empty = runir::kr::dl::semantics::insert(*m_task->dl_denotation_repository, *empty, m_task->dl_builder).first.get_index();
         const auto module = program.get_module();
         const auto features = module.template get_features<Concept>();
         m_reset_predecessors.resize(features.size());
@@ -52,7 +52,7 @@ public:
     const auto& get_task_context() const noexcept { return m_task; }
     auto get_program() const noexcept { return m_program; }
     auto& get_environment() noexcept { return m_environment; }
-    auto intern(ygg::Data<ProgramState<Kind>>& data) { return get_or_create(*m_task->icp_execution_repository, data).first; }
+    auto intern(ygg::Data<ProgramState<Kind>>& data) { return insert(*m_task->icp_execution_repository, data).first; }
 
     ProgramStateView<Kind> initial_state(tyr::planning::StateView<Kind> state)
     {
@@ -60,7 +60,7 @@ public:
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(m_task->dl_builder);
         registers->concept_values.resize(module.template get_registers<Concept>().size());
         registers->role_values.resize(module.template get_registers<runir::kr::dl::RoleTag>().size());
-        const auto stored_registers = get_or_create(*m_task->dl_denotation_repository, *registers).first;
+        const auto stored_registers = insert(*m_task->dl_denotation_repository, *registers).first;
         auto histories = checkout<Histories>(m_task->icp_execution_builder);
         histories->concepts.resize(module.template get_features<Concept>().size(), m_empty);
         auto data = ygg::Data<ProgramState<Kind>> {};
@@ -68,7 +68,7 @@ public:
         data.state = state.get_index();
         data.memory_state = module.get_entry_memory_state().get_index();
         data.registers = stored_registers.get_index();
-        data.histories = get_or_create(*m_task->icp_execution_repository, *histories).first.get_index();
+        data.histories = insert(*m_task->icp_execution_repository, *histories).first.get_index();
         return intern(data);
     }
 
@@ -104,8 +104,7 @@ public:
                             break;
                         }
                 entered->get() |= previous[i].get();
-                histories->concepts[i] =
-                    runir::kr::dl::semantics::get_or_create(*m_task->dl_denotation_repository, *entered, m_task->dl_builder).first.get_index();
+                histories->concepts[i] = runir::kr::dl::semantics::insert(*m_task->dl_denotation_repository, *entered, m_task->dl_builder).first.get_index();
             }
         }
         if (!progress)
@@ -115,7 +114,7 @@ public:
             if (m_changed[i])
                 for (const auto predecessor : m_reset_predecessors[i])
                     histories->concepts[predecessor] = m_empty;
-        return get_or_create(*m_task->icp_execution_repository, *histories).first;
+        return insert(*m_task->icp_execution_repository, *histories).first;
     }
 };
 

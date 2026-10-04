@@ -20,12 +20,10 @@ namespace runir::kr::dl::semantics
 class Builder
 {
 private:
-    using DenotationBuilderStorage = std::tuple<ygg::UniqueObjectPool<ygg::Builder<Denotation<BooleanTag>>>,
-                                                ygg::UniqueObjectPool<ygg::Builder<Denotation<NumericalTag>>>,
-                                                ygg::UniqueObjectPool<ygg::Builder<Denotation<ConceptTag>>>,
-                                                ygg::UniqueObjectPool<ygg::Builder<Denotation<RoleTag>>>>;
-    using DenotationDataStorage = ygg::formalism::
-        BuilderStorage<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>, RegisterValues, CallArguments>;
+    template<typename T>
+    using DenotationPool = ygg::UniqueObjectPool<ygg::Builder<T>>;
+    using DenotationBuilderStorage = ygg::TypeListToTupleT<ygg::MapTypeListT<DenotationPool, DenotationTypes>>;
+    using DenotationDataStorage = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, DenotationRecordTypes>;
 
     DenotationBuilderStorage m_builders;
     DenotationDataStorage m_data;
@@ -37,6 +35,7 @@ public:
     auto& get_workspace() noexcept { return m_workspace; }
 
     template<typename T>
+        requires(DenotationTypes::contains<T> || std::same_as<T, ygg::database::Relation<>>)
     [[nodiscard]] auto get_builder()
     {
         if constexpr (std::same_as<T, ygg::database::Relation<>>)
@@ -46,6 +45,10 @@ public:
     }
 
     template<typename T, typename... Args>
+        requires(sizeof...(Args) > 0
+                 && ((DenotationTypes::contains<T> && requires(DenotationPool<T>& pool, Args&&... args) { pool.get_or_allocate(std::forward<Args>(args)...); })
+                     || (std::same_as<T, ygg::database::Relation<>>
+                         && requires(ygg::database::RelationPool<>& pool, Args&&... args) { pool.get_or_allocate(std::forward<Args>(args)...); })))
     [[nodiscard]] auto get_builder(Args&&... args)
     {
         if constexpr (std::same_as<T, ygg::database::Relation<>>)
@@ -55,12 +58,14 @@ public:
     }
 
     template<typename T>
+        requires DenotationRecordTypes::contains<T>
     [[nodiscard]] auto get_data()
     {
         return m_data.template get_builder<T>();
     }
 
     template<typename T>
+        requires DenotationRecordTypes::contains<T>
     [[nodiscard]] auto checkout()
     {
         return m_data.template checkout<T>();
@@ -68,6 +73,7 @@ public:
 };
 
 template<typename T>
+    requires DenotationRecordTypes::contains<T>
 [[nodiscard]] auto checkout(Builder& builder)
 {
     return builder.template checkout<T>();

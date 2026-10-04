@@ -18,16 +18,16 @@ ModuleView ModuleFactory::create_empty(Repository& repository)
     auto builder = runir::kr::ps::ext::Builder {};
     auto entry_data = runir::kr::ps::ext::checkout<MemoryState>(builder);
     entry_data->name = "m0";
-    const auto entry = runir::kr::ps::ext::get_or_create(repository, *entry_data).first;
+    const auto entry = runir::kr::ps::ext::insert(repository, *entry_data).first;
 
     auto symbol_data = runir::kr::ps::ext::checkout<ModuleSymbol>(builder);
     symbol_data->name = "empty";
-    const auto symbol = runir::kr::ps::ext::get_or_create(repository, *symbol_data).first;
+    const auto symbol = runir::kr::ps::ext::insert(repository, *symbol_data).first;
     auto data = runir::kr::ps::ext::checkout<Module>(builder);
     data->symbol = symbol.get_index();
     data->entry_memory_state = entry.get_index();
     data->memory_states.push_back(entry.get_index());
-    return runir::kr::ps::ext::get_or_create(repository, *data).first;
+    return runir::kr::ps::ext::insert(repository, *data).first;
 }
 
 ModuleView ModuleFactory::create(ModuleSpecification specification, tyr::formalism::planning::DomainView domain, Repository& repository)

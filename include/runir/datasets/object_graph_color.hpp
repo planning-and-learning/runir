@@ -256,11 +256,11 @@ public:
     }
 
     template<typename T>
-    std::pair<ygg::View<ygg::Index<T>, ColorRepository>, bool> get_or_create(ygg::Data<T>& data)
+    std::pair<ygg::View<ygg::Index<T>, ColorRepository>, bool> insert(ygg::Data<T>& data)
     {
         canonicalize(data);
         assert(is_canonical(data));
-        const auto [index, created] = m_symbol_repository.get_or_create_local<T>(data);
+        const auto [index, created] = m_symbol_repository.insert_local<T>(data);
         return { ygg::View<ygg::Index<T>, ColorRepository>(index, *this), created };
     }
 

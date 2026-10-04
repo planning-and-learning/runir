@@ -34,14 +34,14 @@ static_assert(distinct_repository_contexts<kr::UnsFamilyTag>());
 
 template<typename Repository, typename T>
 concept InternsData = requires(Repository& repository, ygg::Data<T>& data) {
-    { ygg::formalism::get_or_create(repository, data) } -> std::same_as<std::pair<ygg::View<ygg::Index<T>, Repository>, bool>>;
+    { ygg::formalism::insert(repository, data) } -> std::same_as<std::pair<ygg::View<ygg::Index<T>, Repository>, bool>>;
 };
 
 template<typename Repository, typename T>
 consteval bool rejects_symbol()
 {
     return !ygg::formalism::SupportsSymbol<Repository, T> && !InternsData<Repository, T>
-           && !requires(Repository& repository, ygg::Data<T>& data) { repository.get_or_create(data); }
+           && !requires(Repository& repository, ygg::Data<T>& data) { repository.insert(data); }
            && !requires(const Repository& repository, const ygg::Data<T>& data) { repository.find(data); }
            && !requires(const Repository& repository, ygg::Index<T> index) { repository[index]; }
            && !requires(const Repository& repository) { repository.template size<T>(); };

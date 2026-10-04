@@ -19,7 +19,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<runir::kr::ExtFamilyTag, R
     if (object)
         result_bitset.set(ygg::uint_t(object.value().get_index()));
 
-    return get_or_create(context.get_denotation_repository(), *result, context.get_builder()).first;
+    return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }
 
 template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>
@@ -34,7 +34,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<runir::kr::ExtFamilyTag, Regi
         result->get(pair.get_first().get_index()).set(ygg::uint_t(pair.get_second().get_index()));
     }
 
-    return get_or_create(context.get_denotation_repository(), *result, context.get_builder()).first;
+    return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }
 
 template<StateEvaluationContextConcept<runir::kr::ExtFamilyTag> Context, typename C>

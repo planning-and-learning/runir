@@ -1,6 +1,8 @@
 #include "bindings.hpp"
 
 #include <memory>
+#include <nanobind/stl/optional.h>
+#include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <pyrunir/kr/binding_utils.hpp>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
@@ -25,12 +27,7 @@ namespace
 template<typename... Types>
 void bind_constructors(nb::class_<BaseConstructorRepository>& repository, ygg::TypeList<Types...>)
 {
-    (repository.def(
-         "get_or_create",
-         [](BaseConstructorRepository& self, ygg::Data<Types>& data) { return runir::kr::dl::get_or_create(self, data).first; },
-         nb::arg("data"),
-         nb::keep_alive<0, 1>()),
-     ...);
+    (runir::kr::python::bind_insert<Types>(repository), ...);
 }
 
 }  // namespace
@@ -78,20 +75,41 @@ void bind_semantics_repositories(nb::module_& m)
         .def_rw("concept_values", &RegisterValuesData::concept_values)
         .def_rw("role_values", &RegisterValuesData::role_values);
 
-    auto register_values = nb::class_<RegisterValuesView>(m, "RegisterValues")
-                               .def("get_index", &RegisterValuesView::get_index)
-                               .def_prop_ro("concept_values", &RegisterValuesView::get<ConceptTag>)
-                               .def_prop_ro("role_values", &RegisterValuesView::get<RoleTag>);
+    const auto retainer = ygg::python::make_owner_retainer();
+    using ObjectView = tyr::formalism::planning::ObjectView;
+    auto register_values =
+        nb::class_<RegisterValuesView>(m, "RegisterValues")
+            .def("get_index", &RegisterValuesView::get_index)
+            .def_prop_ro("concept_values",
+                         [retainer](nb::typed<nb::handle, RegisterValuesView> owner)
+                         {
+                             return nb::borrow<nb::typed<nb::list, std::optional<ObjectView>>>(
+                                 ygg::python::cast_with_owner(nb::cast<const RegisterValuesView&>(owner).get<ConceptTag>(), owner, retainer));
+                         })
+            .def_prop_ro("role_values",
+                         [retainer](nb::typed<nb::handle, RegisterValuesView> owner)
+                         {
+                             return nb::borrow<nb::typed<nb::list, std::optional<std::pair<ObjectView, ObjectView>>>>(
+                                 ygg::python::cast_with_owner(nb::cast<const RegisterValuesView&>(owner).get<RoleTag>(), owner, retainer));
+                         });
     ygg::add_print(register_values);
     ygg::add_comparison(register_values);
     ygg::add_hash(register_values);
 
-    auto call_arguments = nb::class_<CallArgumentsView>(m, "CallArguments")
-                              .def("get_index", &CallArgumentsView::get_index)
-                              .def_prop_ro("concept_arguments", &CallArgumentsView::get<ConceptTag>)
-                              .def_prop_ro("role_arguments", &CallArgumentsView::get<RoleTag>)
-                              .def_prop_ro("boolean_arguments", &CallArgumentsView::get<BooleanTag>)
-                              .def_prop_ro("numerical_arguments", &CallArgumentsView::get<NumericalTag>);
+    auto call_arguments = nb::class_<CallArgumentsView>(m, "CallArguments").def("get_index", &CallArgumentsView::get_index);
+    const auto bind_arguments = [&]<CategoryTag Category>(const char* name)
+    {
+        call_arguments.def_prop_ro(name,
+                                   [retainer](nb::typed<nb::handle, CallArgumentsView> owner)
+                                   {
+                                       return nb::borrow<nb::typed<nb::list, semantics::DenotationView<Category>>>(
+                                           ygg::python::cast_with_owner(nb::cast<const CallArgumentsView&>(owner).get<Category>(), owner, retainer));
+                                   });
+    };
+    bind_arguments.template operator()<ConceptTag>("concept_arguments");
+    bind_arguments.template operator()<RoleTag>("role_arguments");
+    bind_arguments.template operator()<BooleanTag>("boolean_arguments");
+    bind_arguments.template operator()<NumericalTag>("numerical_arguments");
     ygg::add_print(call_arguments);
     ygg::add_comparison(call_arguments);
     ygg::add_hash(call_arguments);
@@ -100,14 +118,14 @@ void bind_semantics_repositories(nb::module_& m)
 
     runir::kr::python::bind_evaluation_storage<runir::kr::BaseFamilyTag>(m);
 
-    nb::class_<DenotationRepository>(m, "DenotationRepository")
-        .def("get_index", &DenotationRepository::get_index)
-        .def(
-            "get_relation_repository",
-            [](DenotationRepository& self) -> auto& { return self.get_relation_repository(); },
-            nb::rv_policy::reference_internal)
-        .def("get_or_create", &runir::kr::python::get_or_create_data<semantics::CallArguments, DenotationRepository>, nb::arg("data"), nb::keep_alive<0, 1>())
-        .def("get_or_create", &runir::kr::python::get_or_create_data<semantics::RegisterValues, DenotationRepository>, nb::arg("data"), nb::keep_alive<0, 1>());
+    auto denotations = nb::class_<DenotationRepository>(m, "DenotationRepository")
+                           .def("get_index", &DenotationRepository::get_index)
+                           .def(
+                               "get_relation_repository",
+                               [](DenotationRepository& self) -> auto& { return self.get_relation_repository(); },
+                               nb::rv_policy::reference_internal);
+    runir::kr::python::bind_insert<semantics::CallArguments>(denotations);
+    runir::kr::python::bind_insert<semantics::RegisterValues>(denotations);
 
     nb::class_<runir::kr::dl::semantics::DenotationRepositoryFactory>(m, "DenotationRepositoryFactory")
         .def(nb::init<>())

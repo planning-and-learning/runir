@@ -52,20 +52,21 @@ constexpr std::string_view to_string(ProgramOutcome outcome)
 
 /// One rule application or caller return, including local failures whose target remains the source state.
 /// Search completion and resource limits are reported separately from these steps.
-template<tyr::TaskKind Kind, StoredProgramStateConcept<Kind> S = ProgramStateView<Kind>>
+template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage = InternedExecutionStorage<Kind>>
 struct ProgramStep
 {
 private:
     runir::kr::TaskContextPtr<Kind> m_task_context;
 
 public:
+    using StoredState = typename Storage::StoredState;
     ProgramOutcome status;
-    S target;
+    StoredState target;
     std::optional<datasets::StateGraphEdgeLabel> state_transition = std::nullopt;
     std::optional<RuleVariantView> rule = std::nullopt;
     std::optional<tyr::planning::PackedLabeledNode<Kind>> planning_successor = std::nullopt;
 
-    ProgramStep(ProgramOutcome status_, S target_, runir::kr::TaskContextPtr<Kind> task_context) :
+    ProgramStep(ProgramOutcome status_, StoredState target_, runir::kr::TaskContextPtr<Kind> task_context) :
         m_task_context(std::move(task_context)),
         status(status_),
         target(std::move(target_))
@@ -73,21 +74,21 @@ public:
     }
 
     std::string_view get_status_name() const { return to_string(status); }
-    S get_target() const noexcept { return target; }
+    StoredState get_target() const noexcept { return target; }
     const auto& get_state_transition() const noexcept { return state_transition; }
     const auto& get_rule() const noexcept { return rule; }
 };
 
-template<tyr::TaskKind Kind, StoredProgramStateConcept<Kind> S>
-ProgramStep<Kind, S> make_step(ProgramOutcome status, S state, const runir::kr::TaskContextPtr<Kind>& task_context)
+template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
+ProgramStep<Kind, Storage> make_step(ProgramOutcome status, typename Storage::StoredState state, const runir::kr::TaskContextPtr<Kind>& task_context)
 {
-    return ProgramStep<Kind, S>(status, std::move(state), task_context);
+    return ProgramStep<Kind, Storage>(status, std::move(state), task_context);
 }
 
-template<tyr::TaskKind Kind, StoredProgramStateConcept<Kind> S>
-ProgramStep<Kind, S> applied(S state, RuleVariantView rule, const runir::kr::TaskContextPtr<Kind>& task_context)
+template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
+ProgramStep<Kind, Storage> applied(typename Storage::StoredState state, RuleVariantView rule, const runir::kr::TaskContextPtr<Kind>& task_context)
 {
-    auto step = make_step(ProgramOutcome::APPLIED, std::move(state), task_context);
+    auto step = make_step<Kind, Storage>(ProgramOutcome::APPLIED, std::move(state), task_context);
     step.rule = rule;
     return step;
 }
@@ -103,7 +104,7 @@ auto planning_step(Storage& storage,
     const auto module_ = state.get_module_state();
     auto target =
         storage.store(successor.node.get_state(), module_.get_module(), memory_state, module_.get_registers(), module_.get_arguments(), state.get_call_stack());
-    auto step = applied(std::move(target), rule, task_context);
+    auto step = applied<Kind, Storage>(std::move(target), rule, task_context);
     if constexpr (requires { successor.pack(); })
         step.planning_successor = successor.pack();
     step.state_transition = datasets::StateGraphEdgeLabel { successor.label, ygg::float_t(1) };

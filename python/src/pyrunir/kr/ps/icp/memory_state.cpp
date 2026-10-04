@@ -25,7 +25,7 @@ void bind_memory_state(nb::module_& m, RepositoryBinding& repository)
     ygg::add_print(view);
     ygg::add_comparison(view);
     ygg::add_hash(view);
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<T, Repository>, "data"_a, nb::keep_alive<0, 1>());
+    runir::kr::python::bind_insert<T>(repository);
 }
 
 }  // namespace runir::kr::ps::icp

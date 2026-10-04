@@ -5,29 +5,22 @@
 
 #include <tuple>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<runir::kr::dl::CategoryTag Category, typename C>
-class View<Index<runir::kr::dl::Argument<Category>>, C>
+template<runir::kr::dl::CategoryTag Category, formalism::SymbolContextFor<runir::kr::dl::Argument<Category>> C>
+class View<Index<runir::kr::dl::Argument<Category>>, C> : public formalism::detail::View<Index<runir::kr::dl::Argument<Category>>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::dl::Argument<Category>> m_handle;
-
 public:
-    View(Index<runir::kr::dl::Argument<Category>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::dl::Argument<Category>> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::dl::Argument<Category>>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    const auto& get_name() const noexcept { return get_data().name; }
-    auto get_identifier() const noexcept { return get_data().identifier; }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    const auto& get_name() const noexcept { return this->get_data().name; }
+    auto get_identifier() const noexcept { return this->get_data().identifier; }
 };
 
 }  // namespace ygg

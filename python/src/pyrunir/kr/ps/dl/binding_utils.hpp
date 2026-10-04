@@ -33,7 +33,7 @@ auto bind_variant(nb::module_& m, nb::class_<Repository>& repository, const std:
     ygg::add_print(view);
     ygg::add_comparison(view);
     ygg::add_hash(view);
-    repository.def("get_or_create", &get_or_create_data<T, Repository>, nb::arg("data"), nb::keep_alive<0, 1>());
+    runir::kr::python::bind_insert<T>(repository);
     return view;
 }
 
@@ -69,7 +69,7 @@ auto bind_feature(nb::module_& m, nb::class_<Repository>& repository, const std:
     ygg::add_print(concrete);
     ygg::add_comparison(concrete);
     ygg::add_hash(concrete);
-    repository.def("get_or_create", &get_or_create_data<ConcreteFeature, Repository>, nb::arg("data"), nb::keep_alive<0, 1>());
+    runir::kr::python::bind_insert<ConcreteFeature>(repository);
     return std::pair(feature, concrete);
 }
 
@@ -85,7 +85,7 @@ auto bind_observation(nb::module_& m, nb::class_<Repository>& repository, const 
     ygg::add_print(view);
     ygg::add_comparison(view);
     ygg::add_hash(view);
-    repository.def("get_or_create", &get_or_create_data<T, Repository>, nb::arg("data"), nb::keep_alive<0, 1>());
+    runir::kr::python::bind_insert<T>(repository);
     return view;
 }
 

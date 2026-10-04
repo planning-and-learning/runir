@@ -6,6 +6,7 @@
 #include <concepts>
 #include <memory>
 #include <tyr/formalism/planning/declarations.hpp>
+#include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
 
 namespace runir::kr::dl::semantics
@@ -21,6 +22,9 @@ struct CallArguments
 
 template<CategoryTag Category>
 struct Denotation;
+
+using DenotationTypes = ygg::TypeList<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>>;
+using DenotationRecordTypes = ygg::ConcatTypeListsT<DenotationTypes, ygg::TypeList<RegisterValues, CallArguments>>;
 
 template<typename Index, std::unsigned_integral Block>
 struct IndexCoder;

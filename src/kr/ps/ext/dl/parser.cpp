@@ -51,7 +51,7 @@ using runir::kr::parser::constructors::unwrap;
 template<typename T>
 auto intern(Repository& repository, ygg::Data<T>& data)
 {
-    return runir::kr::ps::ext::get_or_create(repository, data).first;
+    return runir::kr::ps::ext::insert(repository, data).first;
 }
 
 auto parse_concept(const std::string& description,
@@ -133,7 +133,7 @@ auto intern_argument(Repository& repository,
     auto data = runir::kr::dl::checkout<runir::kr::dl::Argument<Category>>(builder);
     data->name = argument.symbol.text;
     data->identifier = runir::kr::dl::ArgumentIdentifier<Category>(identifier);
-    return runir::kr::dl::get_or_create(repository.get_dl_repository(), *data).first;
+    return runir::kr::dl::insert(repository.get_dl_repository(), *data).first;
 }
 
 struct SignatureCounts
@@ -559,7 +559,7 @@ auto parse_binding_rule(
                 value->feature = it->second;
             else
                 diagnostics.throw_at(term.feature, runir::kr::UndefinedSymbolError("Boolean or numerical ordering feature", term.feature.text));
-            data->order.push_back(get_or_create(repository, *value).first.get_index());
+            data->order.push_back(insert(repository, *value).first.get_index());
         }
     if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
@@ -831,7 +831,7 @@ ModuleView lower_module(const ast::Module& ast,
                     auto reg_data = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(builders.dl);
                     reg_data->name = concrete.symbol.text;
                     reg_data->identifier = runir::kr::dl::RegisterIdentifier<Category>(concept_register++);
-                    const auto index = runir::kr::dl::get_or_create(repository.get_dl_repository(), *reg_data).first.get_index();
+                    const auto index = runir::kr::dl::insert(repository.get_dl_repository(), *reg_data).first.get_index();
                     data->concept_registers.push_back(index);
                     references.concept_registers.by_name.emplace(concrete.symbol.text, index);
                     references.concept_registers.by_identifier.push_back(index);
@@ -841,7 +841,7 @@ ModuleView lower_module(const ast::Module& ast,
                     auto reg_data = runir::kr::dl::checkout<runir::kr::dl::Register<Category>>(builders.dl);
                     reg_data->name = concrete.symbol.text;
                     reg_data->identifier = runir::kr::dl::RegisterIdentifier<Category>(role_register++);
-                    const auto index = runir::kr::dl::get_or_create(repository.get_dl_repository(), *reg_data).first.get_index();
+                    const auto index = runir::kr::dl::insert(repository.get_dl_repository(), *reg_data).first.get_index();
                     data->role_registers.push_back(index);
                     references.role_registers.by_name.emplace(concrete.symbol.text, index);
                     references.role_registers.by_identifier.push_back(index);

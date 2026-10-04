@@ -6,48 +6,34 @@
 #include <tuple>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<runir::kr::FamilyTag Family, typename C>
-class View<Index<runir::kr::ps::ConditionVariant<Family>>, C>
+template<runir::kr::FamilyTag Family, formalism::SymbolContextFor<runir::kr::ps::ConditionVariant<Family>> C>
+class View<Index<runir::kr::ps::ConditionVariant<Family>>, C> : public formalism::detail::View<Index<runir::kr::ps::ConditionVariant<Family>>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::ps::ConditionVariant<Family>> m_handle;
-
 public:
-    View(Index<runir::kr::ps::ConditionVariant<Family>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::ConditionVariant<Family>> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::ps::ConditionVariant<Family>>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    auto get_variant() const noexcept { return make_view(get_data().variant, *m_context); }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    auto get_variant() const noexcept { return make_view(this->get_data().variant, *this->m_context); }
 };
 
-template<runir::kr::FamilyTag Family, typename LanguageTag, typename C>
-class View<Index<runir::kr::ps::ConcreteConditionVariant<Family, LanguageTag>>, C>
+template<runir::kr::FamilyTag Family, typename LanguageTag, formalism::SymbolContextFor<runir::kr::ps::ConcreteConditionVariant<Family, LanguageTag>> C>
+class View<Index<runir::kr::ps::ConcreteConditionVariant<Family, LanguageTag>>, C> :
+    public formalism::detail::View<Index<runir::kr::ps::ConcreteConditionVariant<Family, LanguageTag>>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::ps::ConcreteConditionVariant<Family, LanguageTag>> m_handle;
-
 public:
-    View(Index<runir::kr::ps::ConcreteConditionVariant<Family, LanguageTag>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::ConcreteConditionVariant<Family, LanguageTag>> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::ps::ConcreteConditionVariant<Family, LanguageTag>>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    auto get_variant() const noexcept { return make_view(get_data().variant, *m_context); }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    auto get_variant() const noexcept { return make_view(this->get_data().variant, *this->m_context); }
 };
 
 }  // namespace ygg

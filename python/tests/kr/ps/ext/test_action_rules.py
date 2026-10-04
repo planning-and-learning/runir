@@ -116,10 +116,10 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize():
     concrete = dl.ConcreteQueryFeatureData()
     concrete.symbol = feature.get_symbol()
     concrete.feature = feature.get_expression().get_index()
-    assert repository.get_or_create(concrete) == feature.get_variant()
+    assert repository.insert(concrete)[0] == feature.get_variant()
     wrapped = dl.QueryFeatureData()
     wrapped.variant = feature.get_variant().get_index()
-    assert repository.get_or_create(wrapped) == feature
+    assert repository.insert(wrapped)[0] == feature
     data = ext.ActionRuleData()
     data.source = rule.get_source().get_index()
     data.target = rule.get_target().get_index()
@@ -127,7 +127,7 @@ def test_action_and_query_feature_bindings_round_trip_and_serialize():
     data.effects = [effect.get_index() for effect in rule.get_effects()]
     data.action_name = rule.get_action_name()
     data.query_feature = feature.get_index()
-    assert repository.get_or_create(data) == rule
+    assert repository.insert(data)[0] == rule
     module_data = ext.ModuleData()
     module_data.query_features = [feature.get_index()]
     assert module_data.query_features == [feature.get_index()]

@@ -94,7 +94,7 @@ TEST(RunirKrDlConstructor, PreservesConcreteVariant)
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = dl::BaseConstructorRepositoryFactory().create(planning_repository);
     auto data = ygg::Data<Constructor>(ygg::Index<Concrete>(6));
-    const auto constructor = repository->get_or_create(data).first;
+    const auto constructor = repository->insert(data).first;
 
     ASSERT_TRUE(constructor.get_variant().template is<ygg::Index<Concrete>>());
     EXPECT_EQ(constructor.get_variant().template get<ygg::Index<Concrete>>().get_index(), ygg::Index<Concrete>(6));
@@ -109,21 +109,21 @@ TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
         auto repository = dl::ConstructorRepositoryFactoryFor<Family>().create(planning_repository);
         auto top = ygg::Data<dl::Concept<Family, dl::TopTag>>();
         auto bot = ygg::Data<dl::Concept<Family, dl::BotTag>>();
-        auto first_data = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(ygg::formalism::get_or_create(*repository, top).first.get_index());
-        auto second_data = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(ygg::formalism::get_or_create(*repository, bot).first.get_index());
-        const auto first = ygg::formalism::get_or_create(*repository, first_data).first;
-        const auto second = ygg::formalism::get_or_create(*repository, second_data).first;
+        auto first_data = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(ygg::formalism::insert(*repository, top).first.get_index());
+        auto second_data = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(ygg::formalism::insert(*repository, bot).first.get_index());
+        const auto first = ygg::formalism::insert(*repository, first_data).first;
+        const auto second = ygg::formalism::insert(*repository, second_data).first;
         EXPECT_TRUE(first.is_static());
         EXPECT_TRUE(second.is_static());
 
         auto data = ygg::Data<dl::Concept<Family, dl::IntersectionTag>>(second.get_index(), first.get_index());
         ASSERT_FALSE(dl::is_canonical(data));
-        const auto [intersection, created] = ygg::formalism::get_or_create(*repository, data);
+        const auto [intersection, created] = ygg::formalism::insert(*repository, data);
         EXPECT_TRUE(created);
         EXPECT_TRUE(dl::is_canonical(data));
         EXPECT_EQ(data.lhs, first.get_index());
         std::swap(data.lhs, data.rhs);
-        const auto [same, duplicate_created] = dl::get_or_create(*repository, data);
+        const auto [same, duplicate_created] = dl::insert(*repository, data);
         EXPECT_FALSE(duplicate_created);
         EXPECT_EQ(same.get_index(), intersection.get_index());
     };

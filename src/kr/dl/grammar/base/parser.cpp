@@ -37,7 +37,7 @@ auto intern(const ConstructorContext& context, Initialize&& initialize)
 {
     auto data = runir::kr::dl::grammar::checkout<T>(context.builder);
     std::forward<Initialize>(initialize)(*data);
-    return runir::kr::dl::grammar::get_or_create(context.repository, *data).first;
+    return runir::kr::dl::grammar::insert(context.repository, *data).first;
 }
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
@@ -48,9 +48,7 @@ auto parse(const ast::NonTerminal<Family, Category>& node, tyr::formalism::plann
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category>
 FamilyConstructorOrNonTerminalView<Family, Category>
-parse(const ast::ConstructorOrNonTerminal<Family, Category>& node,
-      tyr::formalism::planning::DomainView domain,
-      const ConstructorContext& context)
+parse(const ast::ConstructorOrNonTerminal<Family, Category>& node, tyr::formalism::planning::DomainView domain, const ConstructorContext& context)
 {
     const auto index = boost::apply_visitor(
         [&](const auto& arg) -> ygg::Data<ConstructorOrNonTerminal<Family, Category>>::Variant
@@ -74,16 +72,14 @@ parse(const ast::ConceptProject<Family>& node, tyr::formalism::planning::DomainV
 }
 
 template<runir::kr::dl::FamilyTag Family>
-FamilyConstructorView<Family, RoleTag>
-parse(const ast::RoleProject<Family>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
+FamilyConstructorView<Family, RoleTag> parse(const ast::RoleProject<Family>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars."));
 }
 
 template<runir::kr::dl::FamilyTag Family>
-auto parse_collection_operand(const ast::Query<Family>& node,
-                              tyr::formalism::planning::DomainView,
-                              const ConstructorContext& context) -> typename ygg::Data<Boolean<Family, NonemptyTag>>::ConstructorVariant
+auto parse_collection_operand(const ast::Query<Family>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context) ->
+    typename ygg::Data<Boolean<Family, NonemptyTag>>::ConstructorVariant
 {
     context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars."));
 }
@@ -177,7 +173,7 @@ auto parse_grammar_impl(const std::string& description,
         append_derivation_rule(*data, rule, domain, context);
 
     data->domain = domain.get_index();
-    return runir::kr::dl::grammar::get_or_create(repository, *data).first;
+    return runir::kr::dl::grammar::insert(repository, *data).first;
 }
 
 }  // namespace

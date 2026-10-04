@@ -31,13 +31,12 @@ using ygg::formalism::checkout;
 
 template<runir::kr::dl::FamilyTag Family, typename T>
     requires ygg::formalism::SupportsSymbol<BasicConstructorRepository<Family>, T>
-void prepare_for_interning(BasicConstructorRepository<Family>&, ygg::Data<T>& data)
+void prepare_for_insert(BasicConstructorRepository<Family>&, ygg::Data<T>& data)
 {
     canonicalize(data);
 }
 
-using ygg::formalism::get_or_create;
-
+using ygg::formalism::insert;
 }
 
 #ifndef RUNIR_HEADER_INSTANTIATION

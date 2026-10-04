@@ -199,8 +199,8 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     const auto object = search->task->get_domain().get_domain().get_constants()[0];
     registers.concept_values[5] = object.get_index();
     registers.role_values[7] = ::cista::pair(object.get_index(), object.get_index());
-    const auto empty_arguments = sem::get_or_create(denotations, arguments).first;
-    const auto register_values = sem::get_or_create(denotations, registers).first;
+    const auto empty_arguments = sem::insert(denotations, arguments).first;
+    const auto register_values = sem::insert(denotations, registers).first;
     auto context = sem::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>(initial.get_state(), builder, storage, empty_arguments, register_values);
     const auto nominal = kr::ps::ext::dl::parse_concept(R"((c_nominal "a"))", search->task->get_domain().get_domain(), *repository);
     auto persistent_memo = sem::DenotationCaches<kr::ExtFamilyTag> {};
@@ -212,7 +212,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
                                                                                     empty_arguments,
                                                                                     register_values);
     arguments.concept_arguments.push_back(sem::evaluate(nominal, persistent).get_index());
-    const auto argument_values = sem::get_or_create(denotations, arguments).first;
+    const auto argument_values = sem::insert(denotations, arguments).first;
     const auto expression = kr::ps::ext::dl::parse_numerical(
         R"((n_count (q_rename (source target)
                 (q_project (x z)
@@ -268,7 +268,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
     const auto schema_capacity = result->memory_usage() - result->storage().memory_usage();
     const auto* row_buffer = (*result)[0].data();
     const auto row_capacity = result->storage().memory_usage();
-    const auto stored = ygg::database::intern_relation(*result, repository).first;
+    const auto stored = ygg::database::insert(repository, *result).first;
     const auto* stored_schema_buffer = stored.columns().data();
     const auto* stored_row_buffer = stored[0].data();
     const auto* stored_row_indices = stored.row_indices().data();
@@ -289,7 +289,7 @@ TEST(RunirQueries, QueryResultResetReusesCistaSchemaAndRowCapacity)
         for (ygg::uint_t i = 0; i < 32; ++i)
             next->insert({ i, i + 1 });
         reused &= (*next)[0].data() == row_buffer;
-        const auto value = ygg::database::intern_relation(*next, repository).first;
+        const auto value = ygg::database::insert(repository, *next).first;
         reused &= value.columns().data() == stored_schema_buffer;
         reused &= value[0].data() == stored_row_buffer;
         reused &= value.row_indices().data() == stored_row_indices;
@@ -322,14 +322,14 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
             auto owner = builder.get_builder<ygg::database::Relation<>>(columns);
             owner->insert({ object, 1 });
             owner->insert({ object, 2 });
-            const auto value = ygg::database::intern_relation(*owner, repository, generation).first;
+            const auto value = ygg::database::insert(repository, *owner, generation).first;
             const auto alias = repository.rename(value, aliases);
             valid &= value.size() == 2 && alias.size() == 2 && value[0][0] == object;
             valid &= value.get_storage_address() == alias.get_storage_address();
             auto duplicate = builder.get_builder<ygg::database::Relation<>>(columns);
             duplicate->insert({ object, 2 });
             duplicate->insert({ object, 1 });
-            valid &= ygg::database::intern_relation(*duplicate, repository, generation).first == value;
+            valid &= ygg::database::insert(repository, *duplicate, generation).first == value;
             valid &= repository.rename(value, aliases) == alias;
         }
         valid &= repository.size() == 1024;
@@ -349,7 +349,7 @@ TEST(RunirQueries, LargeWarmedQueryResultTablesResetWithoutAllocations)
 TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
 {
     namespace ext = kr::ps::ext;
-    using Path = ext::detail::SearchPath<tyr::GroundTag, ext::ProgramStateView<tyr::GroundTag>>;
+    using Path = ext::detail::SearchPath<tyr::GroundTag, ext::InternedExecutionStorage<tyr::GroundTag>>;
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/ps/ext/choose";
     const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
     auto context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(search->task->get_domain()), search);

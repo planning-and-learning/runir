@@ -99,8 +99,8 @@ void check_queries()
     auto context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
                                                           builder,
                                                           storage,
-                                                          sem::get_or_create(denotations, empty_arguments).first,
-                                                          sem::get_or_create(denotations, registers).first);
+                                                          sem::insert(denotations, empty_arguments).first,
+                                                          sem::insert(denotations, registers).first);
 
     const auto triple = std::string(R"((q_atomic_state "triple" (x y z)))");
     const auto fixed = std::string(R"((q_atomic_state "fixed" (x y z)))");
@@ -183,8 +183,8 @@ void check_queries()
         auto updated = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
                                                               builder,
                                                               storage,
-                                                              sem::get_or_create(denotations, empty_arguments).first,
-                                                              sem::get_or_create(denotations, registers).first);
+                                                              sem::insert(denotations, empty_arguments).first,
+                                                              sem::insert(denotations, registers).first);
         return sem::evaluate(expression, updated);
     };
     const auto register_count = parser::parse_numerical("(n_count (q_join " + triple + " (q_concept x (c_register 0))))", domain, *repository);
@@ -219,8 +219,8 @@ void check_queries()
     auto argument_context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
                                                                    builder,
                                                                    storage,
-                                                                   sem::get_or_create(denotations, argument_values).first,
-                                                                   sem::get_or_create(denotations, registers).first);
+                                                                   sem::insert(denotations, argument_values).first,
+                                                                   sem::insert(denotations, registers).first);
     const auto argument_count = parser::parse_numerical("(n_count (q_join " + triple + " (q_concept x (c_argument 0))))", domain, *repository);
     // An invalid Ext argument must propagate through DL/query variant dispatch, not terminate.
     EXPECT_THROW(sem::evaluate(argument_count, context), std::out_of_range);
@@ -232,8 +232,8 @@ void check_queries()
     auto other_argument_context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
                                                                          builder,
                                                                          storage,
-                                                                         sem::get_or_create(denotations, argument_values).first,
-                                                                         sem::get_or_create(denotations, registers).first);
+                                                                         sem::insert(denotations, argument_values).first,
+                                                                         sem::insert(denotations, registers).first);
     storage.reset_dynamic();
     EXPECT_EQ(sem::evaluate(argument_count, other_argument_context).get(), 0);
     EXPECT_EQ(argument_context.arguments().template get<dl::ConceptTag>()[0].get_index(), a_set.get_index());
@@ -243,8 +243,8 @@ void check_queries()
     auto next = sem::StateEvaluationContext<Ext, Kind>(successors.front().get_state(),
                                                        builder,
                                                        storage,
-                                                       sem::get_or_create(denotations, empty_arguments).first,
-                                                       sem::get_or_create(denotations, registers).first);
+                                                       sem::insert(denotations, empty_arguments).first,
+                                                       sem::insert(denotations, registers).first);
     const auto triple_count = parser::parse_numerical("(n_count " + triple + ")", domain, *repository);
     const auto derived_count = parser::parse_numerical(R"((n_count (q_atomic_state "copied" (x y z))))", domain, *repository);
     const auto ready_test = parser::parse_boolean("(b_nonempty " + ready + ")", domain, *repository);
@@ -260,7 +260,7 @@ void check_queries()
     {
         auto argument_data = ygg::Data<sem::CallArguments> {};
         argument_data.concept_arguments.push_back(a_set.get_index());
-        const auto arguments = sem::get_or_create(denotations, argument_data).first;
+        const auto arguments = sem::insert(denotations, argument_data).first;
         const auto planning_state = initial.get_state();
         auto borrowed_context = sem::StateEvaluationContext<Ext, Kind, tyr::planning::BuilderStateView<Kind>, sem::BorrowedRegisterValuesView>(
             tyr::planning::BuilderStateView<Kind>(planning_state.get_state_builder(), *search->task),
@@ -318,39 +318,39 @@ void check_cached_queries()
 
     auto column_data = ygg::Data<dl::QueryColumn>();
     column_data.name = "x";
-    const auto x = dl::get_or_create(repo, column_data).first.get_index();
+    const auto x = dl::insert(repo, column_data).first.get_index();
     column_data.name = "renamed";
-    const auto renamed_column = dl::get_or_create(repo, column_data).first.get_index();
+    const auto renamed_column = dl::insert(repo, column_data).first.get_index();
     auto top_data = ygg::Data<dl::Concept<Family, dl::TopTag>>();
-    auto top_wrapper = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(dl::get_or_create(repo, top_data).first.get_index());
-    const auto top = dl::get_or_create(repo, top_wrapper).first;
+    auto top_wrapper = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(dl::insert(repo, top_data).first.get_index());
+    const auto top = dl::insert(repo, top_wrapper).first;
     using Lift = dl::Query<Family, dl::QueryConceptTag>;
     auto lift_data = ygg::Data<Lift>();
     lift_data.arg = top.get_index();
-    EXPECT_THROW(static_cast<void>(dl::get_or_create(repo, lift_data)), std::invalid_argument);
+    EXPECT_THROW(static_cast<void>(dl::insert(repo, lift_data)), std::invalid_argument);
     EXPECT_EQ(repo.template size<Lift>(), 0);
     lift_data.columns.push_back(x);
-    const auto [lift, created] = dl::get_or_create(repo, lift_data);
+    const auto [lift, created] = dl::insert(repo, lift_data);
     EXPECT_TRUE(created);
-    const auto [duplicate_lift, duplicate_created] = dl::get_or_create(repo, lift_data);
+    const auto [duplicate_lift, duplicate_created] = dl::insert(repo, lift_data);
     EXPECT_FALSE(duplicate_created);
     EXPECT_EQ(duplicate_lift.get_index(), lift.get_index());
     EXPECT_EQ(repo.template size<Lift>(), 1);
     auto query_data = ygg::Data<dl::Query<Family>>();
     query_data.variant = lift.get_index();
-    const auto query = dl::get_or_create(repo, query_data).first;
+    const auto query = dl::insert(repo, query_data).first;
     auto rename_data = ygg::Data<dl::Query<Family, dl::QueryRenameTag>>();
     rename_data.arg = query.get_index();
     rename_data.columns.push_back(renamed_column);
-    query_data.variant = dl::get_or_create(repo, rename_data).first.get_index();
-    const auto renamed = dl::get_or_create(repo, query_data).first;
+    query_data.variant = dl::insert(repo, rename_data).first.get_index();
+    const auto renamed = dl::insert(repo, query_data).first;
 
     auto expected_columns = ygg::IndexList<dl::QueryColumn>();
     expected_columns.push_back(renamed_column);
     expected_columns.push_back(x);
     const auto check_inferred_schema = [&](auto& data)
     {
-        const auto concrete = dl::get_or_create(repo, data).first;
+        const auto concrete = dl::insert(repo, data).first;
         EXPECT_EQ(concrete.get_data().columns, expected_columns);
 
         check_relocated_data(concrete.get_data(),
@@ -393,7 +393,7 @@ void check_cached_queries()
         if constexpr (requires { stale.position; })
             stale.position = 99;
         EXPECT_EQ(stale, concrete.get_data());
-        const auto [same, created] = ygg::formalism::get_or_create(repo, stale);
+        const auto [same, created] = ygg::formalism::insert(repo, stale);
         EXPECT_FALSE(created);
         EXPECT_EQ(same.get_index(), concrete.get_index());
         EXPECT_EQ(stale.columns, expected_columns);
@@ -434,7 +434,7 @@ void check_cached_queries()
         }
 
         query_data.variant = concrete.get_index();
-        const auto wrapper = dl::get_or_create(repo, query_data).first;
+        const auto wrapper = dl::insert(repo, query_data).first;
         EXPECT_TRUE(std::ranges::equal(wrapper.get_columns(), expected_columns, {}, [](auto column) { return column.get_index(); }));
         return wrapper;
     };
@@ -459,7 +459,7 @@ void check_cached_queries()
                          });
     const auto check_projection_plan = [&](auto& data, auto positions)
     {
-        const auto concrete = dl::get_or_create(repo, data).first;
+        const auto concrete = dl::insert(repo, data).first;
         check_relocated_data(concrete.get_data(),
                              [&](const auto& decoded)
                              {
@@ -478,7 +478,7 @@ void check_cached_queries()
         auto stale = data;
         stale.plan = {};
         EXPECT_EQ(stale, concrete.get_data());
-        const auto [same, created] = dl::get_or_create(repo, stale);
+        const auto [same, created] = dl::insert(repo, stale);
         EXPECT_FALSE(created);
         EXPECT_EQ(same.get_index(), concrete.get_index());
         EXPECT_TRUE(std::ranges::equal(stale.plan.positions(), positions));
@@ -517,8 +517,8 @@ void check_cached_queries()
     check_inferred_schema(value_data);
 
     auto count_data = ygg::Data<dl::Numerical<Family, dl::CountTag>>(renamed.get_index());
-    auto count_wrapper = ygg::Data<dl::Constructor<Family, dl::NumericalTag>>(dl::get_or_create(repo, count_data).first.get_index());
-    const auto count = dl::get_or_create(repo, count_wrapper).first;
+    auto count_wrapper = ygg::Data<dl::Constructor<Family, dl::NumericalTag>>(dl::insert(repo, count_data).first.get_index());
+    const auto count = dl::insert(repo, count_wrapper).first;
     EXPECT_EQ(sem::evaluate(count, context).get(), 3);
     EXPECT_EQ(sem::evaluate(count, context).get(), 3);
     EXPECT_TRUE(caches.template get<dl::ConceptTag>(true).contains(top));
@@ -527,8 +527,8 @@ void check_cached_queries()
     projection_data.arg = renamed.get_index();
     projection_data.columns.push_back(renamed_column);
     check_projection_plan(projection_data, std::array<size_t, 1> { 0 });
-    auto projection_wrapper = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(dl::get_or_create(repo, projection_data).first.get_index());
-    const auto projection = dl::get_or_create(repo, projection_wrapper).first;
+    auto projection_wrapper = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(dl::insert(repo, projection_data).first.get_index());
+    const auto projection = dl::insert(repo, projection_wrapper).first;
     EXPECT_EQ(sem::evaluate(projection, context).get().count(), 3);
 
     const auto held = sem::evaluate(renamed, context);
@@ -541,8 +541,8 @@ void check_cached_queries()
     auto nested_rename_data = rename_data;
     nested_rename_data.arg = renamed.get_index();
     nested_rename_data.columns[0] = x;
-    query_data.variant = dl::get_or_create(repo, nested_rename_data).first.get_index();
-    const auto nested = sem::evaluate(dl::get_or_create(repo, query_data).first, context);
+    query_data.variant = dl::insert(repo, nested_rename_data).first.get_index();
+    const auto nested = sem::evaluate(dl::insert(repo, query_data).first, context);
     EXPECT_EQ(nested.columns()[0], ColumnIndex(ygg::uint_t(x)));
     EXPECT_EQ(nested.get_storage_address(), held_storage);
     EXPECT_EQ(nested.size(), held.size());
@@ -551,10 +551,10 @@ void check_cached_queries()
     for (int i = 0; i < 64; ++i)
     {
         column_data.name = "extra_" + std::to_string(i);
-        const auto extra_column = dl::get_or_create(repo, column_data).first.get_index();
+        const auto extra_column = dl::insert(repo, column_data).first.get_index();
         rename_data.columns[0] = extra_column;
-        query_data.variant = dl::get_or_create(repo, rename_data).first.get_index();
-        const auto extra_query = dl::get_or_create(repo, query_data).first;
+        query_data.variant = dl::insert(repo, rename_data).first.get_index();
+        const auto extra_query = dl::insert(repo, query_data).first;
         const auto other = sem::evaluate(extra_query, context);
         EXPECT_EQ(other.get_storage_address(), held_storage);
         EXPECT_EQ(held.size(), 3);
@@ -567,14 +567,14 @@ void check_cached_queries()
     auto& other_repo = *other_repository;
     EXPECT_NE(other_repo.get_index(), repo.get_index());
     column_data.name = "unused";
-    static_cast<void>(dl::get_or_create(other_repo, column_data));
+    static_cast<void>(dl::insert(other_repo, column_data));
     column_data.name = "other";
-    const auto other_column = dl::get_or_create(other_repo, column_data).first.get_index();
-    top_wrapper.variant = dl::get_or_create(other_repo, top_data).first.get_index();
-    lift_data.arg = dl::get_or_create(other_repo, top_wrapper).first.get_index();
+    const auto other_column = dl::insert(other_repo, column_data).first.get_index();
+    top_wrapper.variant = dl::insert(other_repo, top_data).first.get_index();
+    lift_data.arg = dl::insert(other_repo, top_wrapper).first.get_index();
     lift_data.columns[0] = other_column;
-    query_data.variant = dl::get_or_create(other_repo, lift_data).first.get_index();
-    const auto other_query = dl::get_or_create(other_repo, query_data).first;
+    query_data.variant = dl::insert(other_repo, lift_data).first.get_index();
+    const auto other_query = dl::insert(other_repo, query_data).first;
     ASSERT_EQ(other_query.get_index(), query.get_index());
     ASSERT_NE(other_column, x);
     const auto cached = sem::evaluate(query, context);
@@ -618,8 +618,8 @@ void check_query_cache_across_states()
     auto context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
                                                           builder,
                                                           storage,
-                                                          sem::get_or_create(denotations, empty_arguments).first,
-                                                          sem::get_or_create(denotations, registers).first);
+                                                          sem::insert(denotations, empty_arguments).first,
+                                                          sem::insert(denotations, registers).first);
     const auto fixed = parse_query(R"((q_atomic_state "fixed" (x y z)))", domain, *repository);
     const auto goal = parse_query(R"((q_atomic_goal "triple" false (x y z)))", domain, *repository);
     const auto derived = parse_query(R"((q_atomic_state "copied" (x y z)))", domain, *repository);
@@ -676,8 +676,8 @@ void check_query_cache_across_states()
     auto next = sem::StateEvaluationContext<Ext, Kind>(successors.front().get_state(),
                                                        builder,
                                                        storage,
-                                                       sem::get_or_create(denotations, empty_arguments).first,
-                                                       sem::get_or_create(denotations, registers).first);
+                                                       sem::insert(denotations, empty_arguments).first,
+                                                       sem::insert(denotations, registers).first);
     storage.reset_dynamic();
     EXPECT_TRUE(caches.get_queries(false).empty());
     EXPECT_TRUE(caches.template get<dl::NumericalTag>(false).empty());
@@ -757,8 +757,8 @@ void check_query_cache_across_bindings()
     auto context = sem::StateEvaluationContext<Ext, Kind>(state,
                                                           builder,
                                                           storage,
-                                                          sem::get_or_create(denotations, empty_arguments).first,
-                                                          sem::get_or_create(denotations, registers).first);
+                                                          sem::insert(denotations, empty_arguments).first,
+                                                          sem::insert(denotations, registers).first);
     const auto a = domain.get_constants()[0];
     const auto b = domain.get_constants()[1];
     const auto c = domain.get_constants()[2];
@@ -773,8 +773,8 @@ void check_query_cache_across_bindings()
         return sem::StateEvaluationContext<Ext, Kind>(state,
                                                       builder,
                                                       storage,
-                                                      sem::get_or_create(denotations, argument_values).first,
-                                                      sem::get_or_create(denotations, registers).first);
+                                                      sem::insert(denotations, argument_values).first,
+                                                      sem::insert(denotations, registers).first);
     };
     registers.concept_values[0] = a.get_index();
     registers.role_values[0] = ::cista::pair(a.get_index(), b.get_index());
@@ -878,7 +878,7 @@ TEST(RunirQueries, StaticnessIsInferredAndSerializedWithoutChangingIdentity)
         EXPECT_EQ(stale, expression.get_data());
         using Data = std::remove_cvref_t<decltype(stale)>;
         EXPECT_EQ(ygg::Hash<Data>()(stale), ygg::Hash<Data>()(expression.get_data()));
-        const auto [same, created] = ygg::formalism::get_or_create(*repository, stale);
+        const auto [same, created] = ygg::formalism::insert(*repository, stale);
         EXPECT_FALSE(created);
         EXPECT_EQ(same.get_index(), expression.get_index());
         EXPECT_EQ(stale.is_static, expected);
@@ -916,8 +916,8 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     auto context = sem::StateEvaluationContext<Ext, tyr::GroundTag>(state,
                                                                     builder,
                                                                     storage,
-                                                                    sem::get_or_create(denotations, empty_arguments).first,
-                                                                    sem::get_or_create(denotations, registers).first);
+                                                                    sem::insert(denotations, empty_arguments).first,
+                                                                    sem::insert(denotations, registers).first);
     const auto description = std::string(R"((q_atomic_state "fixed" (x y z)))");
     const auto query = parse_query(description, domain, *repository);
     const auto renamed = parse_query("(q_rename (u v w) " + description + ")", domain, *repository);
@@ -948,8 +948,8 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     for (const auto column : query.get_columns())
         raw_rename_data.columns.push_back(column.get_index());
     std::swap(raw_rename_data.columns.front(), raw_rename_data.columns.back());
-    auto raw_wrapper = ygg::Data<dl::Query<Ext>>(dl::get_or_create(*repository, raw_rename_data).first.get_index());
-    const auto raw = repository->get_or_create(raw_wrapper).first;
+    auto raw_wrapper = ygg::Data<dl::Query<Ext>>(dl::insert(*repository, raw_rename_data).first.get_index());
+    const auto raw = repository->insert(raw_wrapper).first;
     EXPECT_FALSE(raw.is_static());
     const auto raw_rows = sem::evaluate(raw, context);
     EXPECT_EQ(raw_rows.get_storage_address(), original_rows.get_storage_address());
@@ -959,8 +959,8 @@ TEST(RunirQueries, CachedRenameSharesRowsWithoutChangingSchemasAndHandlesNullary
     raw_nested_data.arg = raw.get_index();
     for (const auto column : nested.get_columns())
         raw_nested_data.columns.push_back(column.get_index());
-    auto raw_nested_wrapper = ygg::Data<dl::Query<Ext>>(dl::get_or_create(*repository, raw_nested_data).first.get_index());
-    const auto raw_nested = repository->get_or_create(raw_nested_wrapper).first;
+    auto raw_nested_wrapper = ygg::Data<dl::Query<Ext>>(dl::insert(*repository, raw_nested_data).first.get_index());
+    const auto raw_nested = repository->insert(raw_nested_wrapper).first;
     EXPECT_FALSE(raw_nested.is_static());
     const auto raw_nested_rows = sem::evaluate(raw_nested, context);
     EXPECT_EQ(raw_nested_rows.get_storage_address(), original_rows.get_storage_address());
@@ -997,7 +997,7 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
         auto result = builder.get_builder<ygg::database::Relation<>>(columns);
         for (const auto& row : rows)
             result->insert(std::span<const ygg::uint_t>(row));
-        return ygg::database::intern_relation(*result, repository).first;
+        return ygg::database::insert(repository, *result).first;
     };
     const auto columns = std::array<ColumnIndex, 2> { ColumnIndex(0), ColumnIndex(1) };
     const auto rows = std::array<Row, 2> { Row { 2, 3 }, Row { 4, 5 } };
@@ -1033,8 +1033,8 @@ TEST(RunirQueries, PersistentRenameSurvivesIntermediateResetAndConstructorReleas
                                                                     output_memo,
                                                                     denotations,
                                                                     intermediates,
-                                                                    sem::get_or_create(denotations, arguments).first,
-                                                                    sem::get_or_create(denotations, registers).first);
+                                                                    sem::insert(denotations, arguments).first,
+                                                                    sem::insert(denotations, registers).first);
     const auto expression = parse_query(R"((q_rename (a b c) (q_atomic_state "triple" (x y z))))", domain, *constructors);
     const auto result = sem::evaluate(expression, context);
     ASSERT_EQ(result.size(), 4);

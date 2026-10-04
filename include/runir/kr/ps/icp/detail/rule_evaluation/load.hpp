@@ -37,9 +37,9 @@ public:
         {
             if (stop())
                 return false;
-            runir::kr::dl::semantics::make_data(source.get_registers(), *registers);
+            runir::kr::dl::semantics::assign(*registers, source.get_registers());
             runir::kr::dl::semantics::assign_register(*registers, m_rule.get_register().get_identifier(), value);
-            const auto target_registers = get_or_create(*task->dl_denotation_repository, *registers).first;
+            const auto target_registers = insert(*task->dl_denotation_repository, *registers).first;
             environment.reset_target();
             auto transition = environment.make_dl_transition_context(source.get_state(), source.get_state(), source.get_registers(), target_registers);
             if (!runir::kr::ps::all_compatible(m_rule.get_effects(), transition))

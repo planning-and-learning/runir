@@ -9,25 +9,19 @@
 namespace ygg
 {
 
-template<typename C>
-class View<Index<runir::kr::ps::ext::OrderTerm>, C>
+template<formalism::SymbolContextFor<runir::kr::ps::ext::OrderTerm> C>
+class View<Index<runir::kr::ps::ext::OrderTerm>, C> : public formalism::detail::View<Index<runir::kr::ps::ext::OrderTerm>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::ps::ext::OrderTerm> m_handle;
-
 public:
-    View(Index<runir::kr::ps::ext::OrderTerm> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::ext::OrderTerm> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::ps::ext::OrderTerm>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
+    auto get_direction() const noexcept { return this->get_data().direction; }
+    auto get_feature() const noexcept { return make_view(this->get_data().feature, *this->m_context); }
 
-    auto get_index() const noexcept { return m_handle; }
-    auto get_direction() const noexcept { return get_data().direction; }
-    auto get_feature() const noexcept { return make_view(get_data().feature, *m_context); }
-
-    auto identifying_members() const noexcept { return std::make_tuple(m_handle, m_context->get_index()); }
+    auto identifying_members() const noexcept { return std::make_tuple(this->m_handle, this->m_context->get_index()); }
 };
 
 }  // namespace ygg

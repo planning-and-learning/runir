@@ -137,7 +137,7 @@ auto initial_tuple_colors(const G& graph, const VertexIndexList& vertices)
             }
         }
 
-        colors[hash] = interner.get_or_create(InitialSignature(std::move(vertex_colors), std::move(equalities), std::move(adjacencies)));
+        colors[hash] = interner.insert(InitialSignature(std::move(vertex_colors), std::move(equalities), std::move(adjacencies)));
     }
 
     return colors;
@@ -214,7 +214,7 @@ auto compute_certificate(const G& graph)
         // Refine tuple colors.
         for (auto& [hash, signature] : tuple_signatures)
         {
-            const auto next_color = interner.get_or_create(std::move(signature));
+            const auto next_color = interner.insert(std::move(signature));
             next_colors[hash] = next_color;
             changed = changed || next_color != colors.at(hash);
         }

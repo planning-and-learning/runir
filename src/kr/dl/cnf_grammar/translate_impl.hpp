@@ -69,7 +69,7 @@ private:
     {
         auto data = runir::kr::dl::cnf_grammar::checkout<T>(m_context.builder);
         std::forward<Initialize>(initialize)(*data);
-        return runir::kr::dl::cnf_grammar::get_or_create(repository(), *data).first;
+        return runir::kr::dl::cnf_grammar::insert(repository(), *data).first;
     }
 
     template<typename T>
@@ -155,7 +155,7 @@ private:
         data->name = name;
         non_terminal_names().insert(std::move(name));
 
-        return runir::kr::dl::cnf_grammar::get_or_create(repository(), *data).first;
+        return runir::kr::dl::cnf_grammar::insert(repository(), *data).first;
     }
 
     void add_derivation_rule(FamilyNonTerminalView<Family, Category> lhs, FamilyConstructorView<Family, Category> rhs)
@@ -189,7 +189,7 @@ public:
         data->name = source.get_name().str();
         non_terminal_names().insert(std::string(data->name.str()));
 
-        return runir::kr::dl::cnf_grammar::get_or_create(repository(), *data).first;
+        return runir::kr::dl::cnf_grammar::insert(repository(), *data).first;
     }
 
     auto translate_to_non_terminal(runir::kr::dl::grammar::FamilyConstructorOrNonTerminalView<runir::kr::BaseFamilyTag, Category> source)
@@ -582,7 +582,7 @@ auto translate_impl(const runir::kr::dl::grammar::FamilyGrammarView<runir::kr::B
     translate_category<Family, runir::kr::dl::BooleanTag>(context);
     translate_category<Family, runir::kr::dl::NumericalTag>(context);
 
-    return runir::kr::dl::cnf_grammar::get_or_create(repository, *context.data).first;
+    return runir::kr::dl::cnf_grammar::insert(repository, *context.data).first;
 }
 
 }  // namespace detail

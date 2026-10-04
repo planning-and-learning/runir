@@ -9,42 +9,33 @@
 #include <tuple>
 #include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<typename C>
-class View<Index<runir::kr::ps::base::Sketch>, C>
+template<formalism::SymbolContextFor<runir::kr::ps::base::Sketch> C>
+class View<Index<runir::kr::ps::base::Sketch>, C> : public formalism::detail::View<Index<runir::kr::ps::base::Sketch>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::ps::base::Sketch> m_handle;
-
 public:
-    View(Index<runir::kr::ps::base::Sketch> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
-
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
+    View(Index<runir::kr::ps::base::Sketch> handle, const C& context) noexcept : formalism::detail::View<Index<runir::kr::ps::base::Sketch>, C>(handle, context)
+    {
+    }
 
     template<typename FeatureTag>
     auto get_features() const noexcept
     {
         if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::BooleanFeature>)
-            return make_view(get_data().boolean_features, *m_context);
+            return make_view(this->get_data().boolean_features, *this->m_context);
         else if constexpr (std::same_as<FeatureTag, runir::kr::ps::dl::NumericalFeature>)
-            return make_view(get_data().numerical_features, *m_context);
+            return make_view(this->get_data().numerical_features, *this->m_context);
         else
         {
             static_assert(ygg::dependent_false<FeatureTag>::value, "unhandled feature tag in Sketch::get_features");
         }
     }
 
-    auto get_rules() const noexcept { return make_view(get_data().rules, *m_context); }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    auto get_rules() const noexcept { return make_view(this->get_data().rules, *this->m_context); }
 };
 
 }  // namespace ygg

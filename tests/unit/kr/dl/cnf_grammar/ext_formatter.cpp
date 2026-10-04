@@ -17,7 +17,7 @@ TEST(RunirTests, ExtCnfGrammarNumericReferencesFormatWithoutExternalNames)
     const auto format = [&]<typename T>(auto identifier)
     {
         auto data = ygg::Data<T>(identifier);
-        return fmt::format("{}", ygg::formalism::get_or_create(*repository, data).first);
+        return fmt::format("{}", ygg::formalism::insert(*repository, data).first);
     };
 
     using ConceptRegister = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>;
@@ -47,11 +47,11 @@ TEST(RunirTests, CnfGrammarSharedInterningCanonicalizesOperands)
     auto data = ygg::Data<grammar::Concept<kr::ExtFamilyTag, kr::dl::IntersectionTag>>();
     data.lhs = decltype(data.lhs)(2);
     data.rhs = decltype(data.rhs)(1);
-    const auto [first, created] = ygg::formalism::get_or_create(*repository, data);
+    const auto [first, created] = ygg::formalism::insert(*repository, data);
     EXPECT_TRUE(created);
     EXPECT_TRUE(grammar::is_canonical(data));
     std::swap(data.lhs, data.rhs);
-    const auto [same, duplicate_created] = grammar::get_or_create(*repository, data);
+    const auto [same, duplicate_created] = grammar::insert(*repository, data);
     EXPECT_FALSE(duplicate_created);
     EXPECT_EQ(first.get_index(), same.get_index());
 }

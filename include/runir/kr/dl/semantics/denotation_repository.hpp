@@ -45,8 +45,7 @@ class DenotationRepository
     friend class DenotationRepositoryFactory;
 
 public:
-    using SymbolRepository = ygg::formalism::
-        SymbolRepository<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>, RegisterValues, CallArguments>;
+    using SymbolRepository = ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, DenotationRecordTypes>;
     using SymbolTypes = SymbolRepository::SymbolTypes;
     using VectorRepository = ygg::RawVectorSet<ygg::uint_t, ygg::uint_t>;
 
@@ -103,9 +102,9 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-    std::pair<ygg::View<ygg::Index<T>, DenotationRepository>, bool> get_or_create(ygg::Data<T>& data)
+    std::pair<ygg::View<ygg::Index<T>, DenotationRepository>, bool> insert(ygg::Data<T>& data)
     {
-        const auto [index, created] = m_symbol_repository.template get_or_create_local<T>(data);
+        const auto [index, created] = m_symbol_repository.template insert_local<T>(data);
         return { ygg::View<ygg::Index<T>, DenotationRepository>(index, *this), created };
     }
 
@@ -161,13 +160,12 @@ inline DenotationRepository::VectorRepository& get_denotation_vector_repository(
 
 template<typename T>
     requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-void prepare_for_interning(DenotationRepository&, ygg::Data<T>& data)
+void prepare_for_insert(DenotationRepository&, ygg::Data<T>& data)
 {
     canonicalize(data);
 }
 
-using ygg::formalism::get_or_create;
-
+using ygg::formalism::insert;
 }
 
 #endif

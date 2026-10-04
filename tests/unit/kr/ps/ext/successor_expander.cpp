@@ -70,16 +70,16 @@ static_assert(execution_storage_constraints_match<WrongRetainStorage, tyr::Groun
 auto create_register(kr::ps::ext::Repository& repository, const std::string& name, ygg::uint_t identifier)
 {
     auto data = ygg::Data<kr::dl::Register<kr::dl::ConceptTag>>(name, kr::dl::RegisterIdentifier<kr::dl::ConceptTag>(identifier));
-    return repository.get_dl_repository().get_or_create(data).first;
+    return repository.get_dl_repository().insert(data).first;
 }
 
 template<typename FeatureTag, kr::dl::CategoryTag Category>
 auto create_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::FamilyConstructor<kr::ExtFamilyTag, Category>> expression, const std::string& name)
 {
     auto concrete_data = ygg::Data<kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, FeatureTag>>(expression, name);
-    const auto concrete = repository.get_or_create(concrete_data).first;
+    const auto concrete = repository.insert(concrete_data).first;
     auto feature_data = ygg::Data<kr::ps::Feature<kr::ExtFamilyTag, FeatureTag>>(concrete.get_index());
-    return repository.get_or_create(feature_data).first;
+    return repository.insert(feature_data).first;
 }
 
 auto create_concept_feature(kr::ps::ext::Repository& repository,
@@ -888,10 +888,10 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     load_data.feature = top_feature.get_index();
     load_data.reg = reg.get_index();
     kr::ps::ext::canonicalize(load_data);
-    const auto load = repository->get_or_create(load_data).first;
+    const auto load = repository->insert(load_data).first;
 
     auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(load.get_index());
-    const auto variant = repository->get_or_create(variant_data).first;
+    const auto variant = repository->insert(variant_data).first;
 
     auto module_data = make_module_data(*repository, "module");
     module_data.entry_memory_state = source.get_index();
@@ -904,7 +904,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     ygg::canonicalize(transition);
     module_data.memory_transitions.push_back(std::move(transition));
     kr::ps::ext::canonicalize(module_data);
-    const auto module_ = repository->get_or_create(module_data).first;
+    const auto module_ = repository->insert(module_data).first;
 
     const auto formatted = fmt::format("{}", module_);
     EXPECT_NE(formatted.find("(:symbol module)"), std::string::npos) << formatted;
@@ -1082,13 +1082,13 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     const auto caller_return = create_memory_state(*repository, "caller_return");
     const auto callee_entry = create_memory_state(*repository, "callee_entry");
     auto concept_arg_data = ygg::Data<kr::dl::Argument<kr::dl::ConceptTag>>(std::string("x"), kr::dl::ArgumentIdentifier<kr::dl::ConceptTag>(0));
-    const auto concept_arg = dl_repository->get_or_create(concept_arg_data).first;
+    const auto concept_arg = dl_repository->insert(concept_arg_data).first;
     auto role_arg_data = ygg::Data<kr::dl::Argument<kr::dl::RoleTag>>(std::string("r"), kr::dl::ArgumentIdentifier<kr::dl::RoleTag>(0));
-    const auto role_arg = dl_repository->get_or_create(role_arg_data).first;
+    const auto role_arg = dl_repository->insert(role_arg_data).first;
     auto boolean_arg_data = ygg::Data<kr::dl::Argument<kr::dl::BooleanTag>>(std::string("b"), kr::dl::ArgumentIdentifier<kr::dl::BooleanTag>(0));
-    const auto boolean_arg = dl_repository->get_or_create(boolean_arg_data).first;
+    const auto boolean_arg = dl_repository->insert(boolean_arg_data).first;
     auto numerical_arg_data = ygg::Data<kr::dl::Argument<kr::dl::NumericalTag>>(std::string("n"), kr::dl::ArgumentIdentifier<kr::dl::NumericalTag>(0));
-    const auto numerical_arg = dl_repository->get_or_create(numerical_arg_data).first;
+    const auto numerical_arg = dl_repository->insert(numerical_arg_data).first;
 
     auto callee_data = make_module_data(*repository, "callee");
     callee_data.entry_memory_state = callee_entry.get_index();
@@ -1098,7 +1098,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     callee_data.boolean_arguments.push_back(boolean_arg.get_index());
     callee_data.numerical_arguments.push_back(numerical_arg.get_index());
     kr::ps::ext::canonicalize(callee_data);
-    const auto callee = repository->get_or_create(callee_data).first;
+    const auto callee = repository->insert(callee_data).first;
 
     const auto top_concept = create_top_concept(*dl_repository);
     const auto universal_role = kr::ps::ext::dl::parse_role("(r_universal)", task->get_domain().get_domain(), *dl_repository);
@@ -1123,10 +1123,10 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     call_data.arguments.push_back(true_feature.get_index());
     call_data.arguments.push_back(count_feature.get_index());
     kr::ps::ext::canonicalize(call_data);
-    const auto call = repository->get_or_create(call_data).first;
+    const auto call = repository->insert(call_data).first;
 
     auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(call.get_index());
-    const auto variant = repository->get_or_create(variant_data).first;
+    const auto variant = repository->insert(variant_data).first;
     auto caller_data = make_module_data(*repository, "caller");
     caller_data.entry_memory_state = caller_entry.get_index();
     caller_data.memory_states.push_back(caller_entry.get_index());
@@ -1136,7 +1136,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     ygg::canonicalize(transition);
     caller_data.memory_transitions.push_back(std::move(transition));
     kr::ps::ext::canonicalize(caller_data);
-    const auto caller = repository->get_or_create(caller_data).first;
+    const auto caller = repository->insert(caller_data).first;
 
     const auto program = create_program(*repository, caller, { caller, callee });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
@@ -1228,10 +1228,10 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     call_data.target = caller_return.get_index();
     call_data.callee = callee.get_symbol().get_index();
     kr::ps::ext::canonicalize(call_data);
-    const auto call = repository->get_or_create(call_data).first;
+    const auto call = repository->insert(call_data).first;
 
     auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(call.get_index());
-    const auto variant = repository->get_or_create(variant_data).first;
+    const auto variant = repository->insert(variant_data).first;
     auto caller_data = make_module_data(*repository, "caller");
     caller_data.entry_memory_state = caller_entry.get_index();
     caller_data.memory_states.push_back(caller_entry.get_index());
@@ -1241,7 +1241,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     ygg::canonicalize(transition);
     caller_data.memory_transitions.push_back(std::move(transition));
     kr::ps::ext::canonicalize(caller_data);
-    const auto caller = repository->get_or_create(caller_data).first;
+    const auto caller = repository->insert(caller_data).first;
 
     const auto program = create_program(*repository, caller, { caller, callee });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
@@ -1286,9 +1286,9 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     do_data.arguments.push_back(room_feature.get_index());
     do_data.arguments.push_back(gripper_feature.get_index());
     kr::ps::ext::canonicalize(do_data);
-    const auto rule = repository->get_or_create(do_data).first;
+    const auto rule = repository->insert(do_data).first;
     auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(rule.get_index());
-    const auto variant = repository->get_or_create(variant_data).first;
+    const auto variant = repository->insert(variant_data).first;
 
     auto module_data = make_module_data(*repository, "module");
     module_data.entry_memory_state = source.get_index();
@@ -1299,7 +1299,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     ygg::canonicalize(transition);
     module_data.memory_transitions.push_back(std::move(transition));
     kr::ps::ext::canonicalize(module_data);
-    const auto module_ = repository->get_or_create(module_data).first;
+    const auto module_ = repository->insert(module_data).first;
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
     const auto planning_node = initial_planning_node(expander);
@@ -1401,9 +1401,9 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     move_data.arguments.push_back(room_feature.get_index());
     move_data.arguments.push_back(gripper_feature.get_index());
     kr::ps::ext::canonicalize(move_data);
-    const auto move_rule = repository->get_or_create(move_data).first;
+    const auto move_rule = repository->insert(move_data).first;
     auto move_variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(move_rule.get_index());
-    const auto move_variant = repository->get_or_create(move_variant_data).first;
+    const auto move_variant = repository->insert(move_variant_data).first;
 
     auto pick_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("pick"));
     pick_data.source = source.get_index();
@@ -1412,9 +1412,9 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     pick_data.arguments.push_back(room_feature.get_index());
     pick_data.arguments.push_back(gripper_feature.get_index());
     kr::ps::ext::canonicalize(pick_data);
-    const auto pick_rule = repository->get_or_create(pick_data).first;
+    const auto pick_rule = repository->insert(pick_data).first;
     auto pick_variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(pick_rule.get_index());
-    const auto pick_variant = repository->get_or_create(pick_variant_data).first;
+    const auto pick_variant = repository->insert(pick_variant_data).first;
 
     auto module_data = make_module_data(*repository, "module");
     module_data.entry_memory_state = source.get_index();
@@ -1433,7 +1433,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     module_data.memory_transitions.push_back(std::move(pick_transition));
 
     kr::ps::ext::canonicalize(module_data);
-    const auto module_ = repository->get_or_create(module_data).first;
+    const auto module_ = repository->insert(module_data).first;
 
     const auto program = create_program(*repository, module_, { module_ });
     auto expander = kr::ps::ext::SuccessorExpander<tyr::GroundTag>(task_context, program);
@@ -1456,7 +1456,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
 
     // Explicit application also accepts a rule created after the program was prepared.
     auto external_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(std::string("external"), pick_rule.get_index());
-    const auto external_rule = repository->get_or_create(external_data).first;
+    const auto external_rule = repository->insert(external_data).first;
     const auto external = expander.apply(expander.initial_state(planning_node.get_state()), external_rule, steps.front().planning_successor->unpack());
     ASSERT_TRUE(external);
     ASSERT_TRUE(external->rule);

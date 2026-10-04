@@ -5,8 +5,8 @@
 #include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/ext/memory_state_view.hpp"
 #include "runir/kr/ps/ext/module_symbol_view.hpp"
-#include "runir/kr/ps/ext/rule_data.hpp"
 #include "runir/kr/ps/ext/order_term_view.hpp"
+#include "runir/kr/ps/ext/rule_data.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 
 #include <concepts>
@@ -14,94 +14,87 @@
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/containers/vector.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<runir::kr::ps::ext::RuleKind Kind, typename C>
-class View<Index<runir::kr::ps::ext::Rule<Kind>>, C>
+template<runir::kr::ps::ext::RuleKind Kind, formalism::SymbolContextFor<runir::kr::ps::ext::Rule<Kind>> C>
+class View<Index<runir::kr::ps::ext::Rule<Kind>>, C> : public formalism::detail::View<Index<runir::kr::ps::ext::Rule<Kind>>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::ps::ext::Rule<Kind>> m_handle;
-
 public:
-    View(Index<runir::kr::ps::ext::Rule<Kind>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::ext::Rule<Kind>> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::ps::ext::Rule<Kind>>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    auto get_source() const noexcept { return View<Index<runir::kr::ps::ext::MemoryState>, C>(get_data().source, *m_context); }
-    auto get_target() const noexcept { return View<Index<runir::kr::ps::ext::MemoryState>, C>(get_data().target, *m_context); }
-    auto get_conditions() const noexcept { return make_view(get_data().conditions, *m_context); }
+    auto get_source() const noexcept { return View<Index<runir::kr::ps::ext::MemoryState>, C>(this->get_data().source, *this->m_context); }
+    auto get_target() const noexcept { return View<Index<runir::kr::ps::ext::MemoryState>, C>(this->get_data().target, *this->m_context); }
+    auto get_conditions() const noexcept { return make_view(this->get_data().conditions, *this->m_context); }
 
     auto get_effects() const noexcept
         requires(runir::kr::ps::ext::BindingRuleKind<Kind> || std::same_as<Kind, runir::kr::ps::ext::SketchTag> || std::same_as<Kind, runir::kr::ps::ext::DoTag>
                  || std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
     {
-        return make_view(get_data().effects, *m_context);
+        return make_view(this->get_data().effects, *this->m_context);
     }
 
     auto get_feature() const noexcept
         requires runir::kr::ps::ext::BindingRuleKind<Kind>
     {
-        return make_view(get_data().feature, *m_context);
+        return make_view(this->get_data().feature, *this->m_context);
     }
 
     auto get_register() const noexcept
         requires runir::kr::ps::ext::BindingRuleKind<Kind>
     {
-        return make_view(get_data().reg, get_repository(*m_context).get_dl_repository());
+        return make_view(this->get_data().reg, get_repository(*this->m_context).get_dl_repository());
     }
 
     auto get_order() const noexcept
         requires(std::same_as<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::dl::ConceptTag>>
                  || std::same_as<Kind, runir::kr::ps::ext::ChooseTag<runir::kr::dl::RoleTag>>)
     {
-        return make_view(get_data().order, *m_context);
+        return make_view(this->get_data().order, *this->m_context);
     }
 
     const auto& get_action_name() const noexcept
         requires(std::same_as<Kind, runir::kr::ps::ext::DoTag> || std::same_as<Kind, runir::kr::ps::ext::ActionTag>)
     {
-        return get_data().action_name;
+        return this->get_data().action_name;
     }
 
     auto get_action_arguments() const noexcept
         requires std::same_as<Kind, runir::kr::ps::ext::DoTag>
     {
-        return make_view(get_data().arguments, *m_context);
+        return make_view(this->get_data().arguments, *this->m_context);
     }
 
     auto get_query_feature() const noexcept
         requires std::same_as<Kind, runir::kr::ps::ext::ActionTag>
     {
-        return make_view(get_data().query_feature, *m_context);
+        return make_view(this->get_data().query_feature, *this->m_context);
     }
 
     auto get_callee() const noexcept
         requires std::same_as<Kind, runir::kr::ps::ext::CallTag>
     {
-        return View<Index<runir::kr::ps::ext::ModuleSymbol>, C>(get_data().callee, *m_context);
+        return View<Index<runir::kr::ps::ext::ModuleSymbol>, C>(this->get_data().callee, *this->m_context);
     }
 
     auto get_call_arguments() const noexcept
         requires std::same_as<Kind, runir::kr::ps::ext::CallTag>
     {
-        return make_view(get_data().arguments, *m_context);
+        return make_view(this->get_data().arguments, *this->m_context);
     }
 
     template<typename F>
     void for_each_call_argument(F&& function) const
         requires std::same_as<Kind, runir::kr::ps::ext::CallTag>
     {
-        for (const auto& argument : get_data().arguments)
-            argument.apply([&](auto feature) { function(make_view(feature, *m_context)); });
+        for (const auto& argument : this->get_data().arguments)
+            argument.apply([&](auto feature) { function(make_view(feature, *this->m_context)); });
     }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
 }  // namespace ygg

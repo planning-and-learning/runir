@@ -112,7 +112,7 @@ TEST(RunirTests, UnsClassifierParsesAndFormats)
     EXPECT_EQ(concrete_complexity, kr::dl::semantics::syntactic_complexity(feature.get_expression()));
     EXPECT_EQ(kr::uns::syntactic_complexity(classifier), 7);
     auto empty_data = ygg::Data<kr::uns::Classifier>(std::string("empty"));
-    EXPECT_EQ(kr::uns::syntactic_complexity(fixture.repository->get_or_create(empty_data).first), 0);
+    EXPECT_EQ(kr::uns::syntactic_complexity(fixture.repository->insert(empty_data).first), 0);
 
     const auto formatted = fmt::format("{}", classifier);
     EXPECT_EQ(formatted.find("(:boolean (:symbol"), std::string::npos) << formatted;

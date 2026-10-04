@@ -9,46 +9,39 @@
 #include <yggdrasil/containers/optional.hpp>
 #include <yggdrasil/containers/vector.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<runir::kr::dl::FamilyTag Family, typename C>
-class View<Index<runir::kr::dl::cnf_grammar::Grammar<Family>>, C>
+template<runir::kr::dl::FamilyTag Family, formalism::SymbolContextFor<runir::kr::dl::cnf_grammar::Grammar<Family>> C>
+class View<Index<runir::kr::dl::cnf_grammar::Grammar<Family>>, C> : public formalism::detail::View<Index<runir::kr::dl::cnf_grammar::Grammar<Family>>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::dl::cnf_grammar::Grammar<Family>> m_handle;
-
 public:
-    View(Index<runir::kr::dl::cnf_grammar::Grammar<Family>> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::dl::cnf_grammar::Grammar<Family>> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::dl::cnf_grammar::Grammar<Family>>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    auto get_domain() const noexcept { return make_view(get_data().domain, m_context->get_planning_repository()); }
+    auto get_domain() const noexcept { return make_view(this->get_data().domain, this->m_context->get_planning_repository()); }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_start() const noexcept
     {
-        return make_view(get_data().template get_start<Category>(), *m_context);
+        return make_view(this->get_data().template get_start<Category>(), *this->m_context);
     }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_derivation_rules() const noexcept
     {
-        return make_view(get_data().template get_derivation_rules<Category>(), *m_context);
+        return make_view(this->get_data().template get_derivation_rules<Category>(), *this->m_context);
     }
 
     template<runir::kr::dl::CategoryTag Category>
     auto get_substitution_rules() const noexcept
     {
-        return make_view(get_data().template get_substitution_rules<Category>(), *m_context);
+        return make_view(this->get_data().template get_substitution_rules<Category>(), *this->m_context);
     }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
 };
 
 }  // namespace ygg

@@ -117,7 +117,7 @@ public:
 
     void clear() noexcept { m_set.clear(); }
 
-    auto get_or_create(const Data& data) { return m_set.insert(data); }
+    auto insert(const Data& data) { return m_set.insert(data); }
 
     auto get(Index index) const noexcept -> const Data& { return m_set[index]; }
     auto operator[](Index index) const noexcept -> const Data& { return get(index); }

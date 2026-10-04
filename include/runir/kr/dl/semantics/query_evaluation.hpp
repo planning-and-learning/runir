@@ -119,7 +119,7 @@ auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Con
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled relational query constructor");
     }
-    return ygg::database::intern_relation(*result, context.get_denotation_repository().get_relation_repository()).first;
+    return ygg::database::insert(context.get_denotation_repository().get_relation_repository(), *result).first;
 }
 
 template<FamilyTag Family, StateEvaluationContextConcept<Family> Context, typename C>
@@ -156,7 +156,7 @@ auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> c
             result->get(row[positions[0]]).set(row[positions[1]]);
         }
     }
-    return get_or_create(context.get_denotation_repository(), *result, context.get_builder()).first;
+    return insert(context.get_denotation_repository(), *result, context.get_builder()).first;
 }
 
 }  // namespace runir::kr::dl::semantics

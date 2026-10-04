@@ -27,20 +27,20 @@ namespace detail
 
 /// Evaluate terminating executions in postorder. The storage policy controls state
 /// admission, memoization and graph retention; AND/OR traversal is identical in every mode.
-template<tyr::TaskKind Kind, StoredProgramStateConcept<Kind> S, typename Expander, typename Storage, typename Unsolvability>
+template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage, typename Expander, typename Storage, typename Unsolvability>
 ProgramProofStatus depth_first_search(Expander& expander,
                                       const tyr::planning::PackedStateView<Kind>& initial_state,
-                                      const S& initial,
+                                      const typename ExecutionStorage::StoredState& initial,
                                       const ProgramSearchOptions<Kind>& options,
                                       Unsolvability& classifier,
                                       Storage& storage,
                                       ProgramSearchStatistics& statistics,
-                                      ygg::SharedObjectPool<SearchPath<Kind, S>>& path_pool,
-                                      ygg::SharedObjectPoolPtr<SearchPath<Kind, S>>& first_goal,
-                                      ygg::SharedObjectPoolPtr<SearchPath<Kind, S>>& witness)
+                                      ygg::SharedObjectPool<SearchPath<Kind, ExecutionStorage>>& path_pool,
+                                      ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>& first_goal,
+                                      ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>& witness)
 {
-    using Step = ProgramStep<Kind, S>;
-    using PathPtr = ygg::SharedObjectPoolPtr<SearchPath<Kind, S>>;
+    using Step = ProgramStep<Kind, ExecutionStorage>;
+    using PathPtr = ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>;
     struct Frame
     {
         PathPtr path;
@@ -77,8 +77,11 @@ ProgramProofStatus depth_first_search(Expander& expander,
         const auto action = transition ? std::optional(transition->action) : std::nullopt;
         return storage.record_transition(source, expander.view(step.target), action, step.rule, choice_width, classify);
     };
-    const auto make_path =
-        [&](S state, PathPtr parent, std::optional<datasets::StateGraphEdgeLabel> transition, std::optional<RuleVariantView> rule, std::size_t choice_width)
+    const auto make_path = [&](typename ExecutionStorage::StoredState state,
+                               PathPtr parent,
+                               std::optional<datasets::StateGraphEdgeLabel> transition,
+                               std::optional<RuleVariantView> rule,
+                               std::size_t choice_width)
     {
         const auto depth = parent ? parent->choice_depth + ygg::uint_t(choice_width > 1) : 0;
         const auto width = parent ? std::max(parent->choice_width, choice_width) : 0;
@@ -277,10 +280,10 @@ find_solution(Expander& expander, SearchStorage<Kind, Memorization>& storage, co
     auto& search = *task_context->search_context;
     const auto initial_node = search.successor_generator->get_packed_initial_node(*search.state_repository, *search.axiom_evaluator);
     const auto initial = expander.initial_state(initial_node.get_state().unpack());
-    using S = std::remove_cvref_t<decltype(initial)>;
-    using PathPtr = ygg::SharedObjectPoolPtr<SearchPath<Kind, S>>;
+    using ExecutionStorage = typename Expander::StorageType;
+    using PathPtr = ygg::SharedObjectPoolPtr<SearchPath<Kind, ExecutionStorage>>;
     auto statistics = ProgramSearchStatistics {};
-    auto path_pool = ygg::SharedObjectPool<SearchPath<Kind, S>> {};
+    auto path_pool = ygg::SharedObjectPool<SearchPath<Kind, ExecutionStorage>> {};
     auto first_goal = PathPtr {};
     auto witness = PathPtr {};
     const auto status =

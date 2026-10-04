@@ -100,15 +100,15 @@ TEST(RunirKrDlCnfGrammarNumerical, ExposesArithmeticOperandsAndConstants)
 
     auto lhs_data = ygg::Data<grammar::NonTerminal<Family, dl::NumericalTag>>(std::string("left"));
     auto rhs_data = ygg::Data<grammar::NonTerminal<Family, dl::NumericalTag>>(std::string("right"));
-    const auto lhs = repository->get_or_create(lhs_data).first;
-    const auto rhs = repository->get_or_create(rhs_data).first;
+    const auto lhs = repository->insert(lhs_data).first;
+    const auto rhs = repository->insert(rhs_data).first;
     auto difference_data = ygg::Data<grammar::Numerical<Family, dl::SubTag>>(lhs.get_index(), rhs.get_index());
-    const auto difference = repository->get_or_create(difference_data).first;
+    const auto difference = repository->insert(difference_data).first;
 
     EXPECT_EQ(difference.get_lhs(), lhs);
     EXPECT_EQ(difference.get_rhs(), rhs);
     auto constant_data = ygg::Data<grammar::Numerical<Family, dl::NumericalConstantTag>>(42);
-    EXPECT_EQ(repository->get_or_create(constant_data).first.get_value(), 42);
+    EXPECT_EQ(repository->insert(constant_data).first.get_value(), 42);
 }
 
 }

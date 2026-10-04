@@ -53,7 +53,7 @@ public:
                                             module_.get_registers(),
                                             module_.get_arguments(),
                                             state.get_call_stack());
-        return detail::applied(std::move(target), m_variant, context.task_context);
+        return detail::applied<Kind, typename Context::StorageType>(std::move(target), m_variant, context.task_context);
     }
 };
 

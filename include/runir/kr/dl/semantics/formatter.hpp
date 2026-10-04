@@ -291,28 +291,6 @@ std::string numerical(ygg::View<ygg::Index<runir::kr::dl::FamilyNumerical<Family
 
 }  // namespace runir::kr::dl::semantics
 
-namespace ygg
-{
-
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyConceptConstructorTag<Family, Tag>
-class View<Index<runir::kr::dl::FamilyConcept<Family, Tag>>, C>;
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyRoleConstructorTag<Family, Tag>
-class View<Index<runir::kr::dl::FamilyRole<Family, Tag>>, C>;
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyBooleanConstructorTag<Family, Tag>
-class View<Index<runir::kr::dl::FamilyBoolean<Family, Tag>>, C>;
-template<runir::kr::dl::FamilyTag Family, typename Tag, typename C>
-    requires runir::kr::dl::FamilyNumericalConstructorTag<Family, Tag>
-class View<Index<runir::kr::dl::FamilyNumerical<Family, Tag>>, C>;
-template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename C>
-class View<Index<runir::kr::dl::FamilyConstructor<Family, Category>>, C>;
-template<runir::kr::dl::CategoryTag Category, typename C>
-class View<Index<runir::kr::dl::semantics::Denotation<Category>>, C>;
-
-}  // namespace ygg
-
 template<runir::kr::dl::CategoryTag Category, typename C, typename Char>
 struct fmt::range_format_kind<ygg::View<ygg::Index<runir::kr::dl::semantics::Denotation<Category>>, C>, Char, void> : std::false_type
 {

@@ -14,16 +14,16 @@ def test_base_and_ext_repositories_construct_programmatically(gripper_planning_d
     base_repository = base.RepositoryFactory().create(BaseDlRepositoryFactory().create(gripper_planning_domain))
     rule_data = base.RuleData()
     rule_data.symbol = "r"
-    rule = base_repository.get_or_create(rule_data)
+    rule = base_repository.insert(rule_data)[0]
     assert rule.get_symbol() == "r"
-    assert base_repository.get_or_create(rule_data) == rule
+    assert base_repository.insert(rule_data)[0] == rule
 
     ext_repository = ext.RepositoryFactory().create(ExtDlRepositoryFactory().create(gripper_planning_domain))
     memory_state_data = ext.MemoryStateData()
     memory_state_data.name = "m0"
-    memory_state = ext_repository.get_or_create(memory_state_data)
+    memory_state = ext_repository.insert(memory_state_data)[0]
     assert memory_state.get_name() == "m0"
-    assert ext_repository.get_or_create(memory_state_data) == memory_state
+    assert ext_repository.insert(memory_state_data)[0] == memory_state
 
 
 def test_uns_features_construct_programmatically(gripper_planning_domain: PlanningDomain):
@@ -33,11 +33,11 @@ def test_uns_features_construct_programmatically(gripper_planning_domain: Planni
     concrete_data = uns_dl.ConcreteBooleanFeatureData()
     concrete_data.feature = feature.get_expression().get_index()
     concrete_data.symbol = feature.get_symbol()
-    concrete = repository.get_or_create(concrete_data)
+    concrete = repository.insert(concrete_data)[0]
     assert concrete == feature.get_variant()
     data = uns_dl.BooleanFeatureData()
     data.variant = concrete.get_index()
-    assert repository.get_or_create(data) == feature
+    assert repository.insert(data)[0] == feature
 
 
 @pytest.mark.parametrize("family", [base, ext, icp], ids=["base", "ext", "icp"])
@@ -65,11 +65,11 @@ def test_features_and_observations_have_consistent_accessors(family, gripper_pla
         concrete_data = getattr(family.dl, f"Concrete{name}Data")()
         concrete_data.feature = feature.get_expression().get_index()
         concrete_data.symbol = feature.get_symbol()
-        concrete = repository.get_or_create(concrete_data)
+        concrete = repository.insert(concrete_data)[0]
         assert concrete == feature.get_variant()
         feature_data = getattr(family.dl, f"{name}Data")()
         feature_data.variant = concrete.get_index()
-        assert repository.get_or_create(feature_data) == feature
+        assert repository.insert(feature_data)[0] == feature
 
     for name, feature in (
         ("PositiveBooleanCondition", boolean),
@@ -85,9 +85,9 @@ def test_features_and_observations_have_consistent_accessors(family, gripper_pla
     ):
         data = getattr(family.dl, f"{name}Data")()
         data.feature = feature.get_index()
-        observation = repository.get_or_create(data)
+        observation = repository.insert(data)[0]
         assert observation.get_feature() == feature
-        assert repository.get_or_create(data) == observation
+        assert repository.insert(data)[0] == observation
 
 
 def test_ext_module_role_features_and_program_modules_construct_programmatically(gripper_planning_domain: PlanningDomain):
@@ -104,14 +104,14 @@ def test_ext_module_role_features_and_program_modules_construct_programmatically
     module_data.role_features = [role.get_index()]
     module_data.entry_memory_state = parsed_module.get_entry_memory_state().get_index()
     module_data.memory_states = [state.get_index() for state in parsed_module.get_memory_states()]
-    module = repository.get_or_create(module_data)
+    module = repository.insert(module_data)[0]
     assert module == parsed_module
     assert list(module.get_role_features()) == [role]
 
     program_data = ext.ProgramData()
     program_data.entry_module = module.get_index()
     program_data.modules = [module.get_index()]
-    program = repository.get_or_create(program_data)
+    program = repository.insert(program_data)[0]
     assert program.get_entry_module() == module
     assert list(program.get_modules()) == [module]
     assert ext.dl.parse_program(str(program), gripper_planning_domain, repository) == program

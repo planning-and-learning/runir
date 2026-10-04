@@ -63,7 +63,7 @@ TEST(RunirKrDlArgument, ExposesNameAndIdentifier)
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = dl::ExtConstructorRepositoryFactory().create(planning_repository);
     auto data = ygg::Data<dl::Argument<dl::ConceptTag>>(std::string("source"), dl::ArgumentIdentifier<dl::ConceptTag>(3));
-    const auto argument = repository->get_or_create(data).first;
+    const auto argument = repository->insert(data).first;
 
     EXPECT_EQ(argument.get_name(), "source");
     EXPECT_EQ(argument.get_identifier(), dl::ArgumentIdentifier<dl::ConceptTag>(3));

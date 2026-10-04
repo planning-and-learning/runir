@@ -157,16 +157,16 @@ TEST(RunirKrDlConcept, RoutesUnaryBinaryAndNumberRestrictionData)
     auto repository = dl::BaseConstructorRepositoryFactory().create(planning_repository);
 
     auto unary_data = ygg::Data<dl::Concept<Family, dl::NegationTag>>(ygg::Index<Concept>(3));
-    const auto unary = repository->get_or_create(unary_data).first;
+    const auto unary = repository->insert(unary_data).first;
     EXPECT_EQ(unary.get_arg().get_index(), ygg::Index<Concept>(3));
 
     auto binary_data = ygg::Data<dl::Concept<Family, dl::ValueRestrictionTag>>(ygg::Index<Role>(1), ygg::Index<Concept>(2));
-    const auto binary = repository->get_or_create(binary_data).first;
+    const auto binary = repository->insert(binary_data).first;
     EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Role>(1));
     EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Concept>(2));
 
     auto restriction_data = ygg::Data<dl::Concept<Family, dl::AtLeastNumberRestrictionTag>>(5, ygg::Index<Role>(4));
-    const auto restriction = repository->get_or_create(restriction_data).first;
+    const auto restriction = repository->insert(restriction_data).first;
     EXPECT_EQ(restriction.get_n(), 5);
     EXPECT_EQ(restriction.get_role().get_index(), ygg::Index<Role>(4));
 }

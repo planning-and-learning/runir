@@ -6,6 +6,7 @@
 #include <runir/kr/dl/semantics/denotation_view.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <yggdrasil/python/bindings.hpp>
+#include <yggdrasil/python/owner.hpp>
 
 namespace runir::kr::dl::base
 {
@@ -17,6 +18,7 @@ void bind_denotation_view(nb::module_& m, const char* name)
 {
     using Type = runir::kr::dl::semantics::Denotation<Category>;
     using View = ygg::View<ygg::Index<Type>, runir::kr::dl::semantics::DenotationRepository>;
+    const auto retainer = ygg::python::make_owner_retainer();
 
     auto cls = nb::class_<View>(m, name).def("get_index", &View::get_index);
     ygg::add_print(cls);
@@ -27,16 +29,26 @@ void bind_denotation_view(nb::module_& m, const char* name)
         cls.def("get", [](View view) { return view.get(); });
 
     if constexpr (std::same_as<Category, ConceptTag>)
-        cls.def(
-            "__iter__",
-            [](const View& view) { return nb::make_iterator(nb::type<View>(), "ConceptDenotationIterator", view.begin(), view.end()); },
-            nb::keep_alive<0, 1>());
+        cls.def("__iter__",
+                [retainer](nb::typed<nb::handle, View> owner)
+                {
+                    const auto& view = nb::cast<const View&>(owner);
+                    return nb::borrow<nb::typed<nb::iterator, semantics::DenotationElementView<Category>>>(
+                        ygg::python::make_iterator_with_owner(nb::make_iterator(nb::type<View>(), "ConceptDenotationIterator", view.begin(), view.end()),
+                                                              owner,
+                                                              retainer));
+                });
 
     if constexpr (std::same_as<Category, RoleTag>)
-        cls.def(
-            "__iter__",
-            [](const View& view) { return nb::make_iterator(nb::type<View>(), "RoleDenotationIterator", view.begin(), view.end()); },
-            nb::keep_alive<0, 1>());
+        cls.def("__iter__",
+                [retainer](nb::typed<nb::handle, View> owner)
+                {
+                    const auto& view = nb::cast<const View&>(owner);
+                    return nb::borrow<nb::typed<nb::iterator, semantics::DenotationElementView<Category>>>(
+                        ygg::python::make_iterator_with_owner(nb::make_iterator(nb::type<View>(), "RoleDenotationIterator", view.begin(), view.end()),
+                                                              owner,
+                                                              retainer));
+                });
 }
 
 }  // namespace

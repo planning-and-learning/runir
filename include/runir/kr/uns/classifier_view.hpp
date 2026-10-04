@@ -1,78 +1,54 @@
 #ifndef RUNIR_KR_UNS_CLASSIFIER_VIEW_HPP_
 #define RUNIR_KR_UNS_CLASSIFIER_VIEW_HPP_
 
+#include "runir/kr/ps/dl/feature_view.hpp"
 #include "runir/kr/ps/feature_view.hpp"
 #include "runir/kr/uns/classifier_data.hpp"
-#include "runir/kr/ps/dl/feature_view.hpp"
 
 #include <tuple>
 #include <yggdrasil/containers/variant.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<typename C>
-class View<Index<runir::kr::uns::ClassifierLiteral>, C>
+template<formalism::SymbolContextFor<runir::kr::uns::ClassifierLiteral> C>
+class View<Index<runir::kr::uns::ClassifierLiteral>, C> : public formalism::detail::View<Index<runir::kr::uns::ClassifierLiteral>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::uns::ClassifierLiteral> m_handle;
-
 public:
-    View(Index<runir::kr::uns::ClassifierLiteral> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::uns::ClassifierLiteral> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::uns::ClassifierLiteral>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    auto get_feature() const noexcept { return make_view(get_data().variant, *m_context); }
-    auto get_polarity() const noexcept { return get_data().polarity; }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    auto get_feature() const noexcept { return make_view(this->get_data().variant, *this->m_context); }
+    auto get_polarity() const noexcept { return this->get_data().polarity; }
 };
 
-template<typename C>
-class View<Index<runir::kr::uns::ClassifierClause>, C>
+template<formalism::SymbolContextFor<runir::kr::uns::ClassifierClause> C>
+class View<Index<runir::kr::uns::ClassifierClause>, C> : public formalism::detail::View<Index<runir::kr::uns::ClassifierClause>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::uns::ClassifierClause> m_handle;
-
 public:
-    View(Index<runir::kr::uns::ClassifierClause> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::uns::ClassifierClause> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::uns::ClassifierClause>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    auto get_literals() const noexcept { return make_view(get_data().literals, *m_context); }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    auto get_literals() const noexcept { return make_view(this->get_data().literals, *this->m_context); }
 };
 
-template<typename C>
-class View<Index<runir::kr::uns::Classifier>, C>
+template<formalism::SymbolContextFor<runir::kr::uns::Classifier> C>
+class View<Index<runir::kr::uns::Classifier>, C> : public formalism::detail::View<Index<runir::kr::uns::Classifier>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::uns::Classifier> m_handle;
-
 public:
-    View(Index<runir::kr::uns::Classifier> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::uns::Classifier> handle, const C& context) noexcept : formalism::detail::View<Index<runir::kr::uns::Classifier>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    const auto& get_symbol() const noexcept { return get_data().symbol; }
-    auto get_features() const noexcept { return make_view(get_data().features, *m_context); }
-    auto get_clauses() const noexcept { return make_view(get_data().clauses, *m_context); }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    const auto& get_symbol() const noexcept { return this->get_data().symbol; }
+    auto get_features() const noexcept { return make_view(this->get_data().features, *this->m_context); }
+    auto get_clauses() const noexcept { return make_view(this->get_data().clauses, *this->m_context); }
 };
 
 }  // namespace ygg

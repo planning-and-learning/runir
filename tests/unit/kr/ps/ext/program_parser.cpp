@@ -31,9 +31,9 @@ template<typename FeatureTag, kr::dl::CategoryTag Category>
 auto create_feature(kr::ps::ext::Repository& repository, ygg::Index<kr::dl::FamilyConstructor<kr::ExtFamilyTag, Category>> expression, const std::string& name)
 {
     auto concrete_data = ygg::Data<kr::ps::ConcreteFeature<kr::ExtFamilyTag, kr::DlTag, FeatureTag>>(expression, name);
-    const auto concrete = repository.get_or_create(concrete_data).first;
+    const auto concrete = repository.insert(concrete_data).first;
     auto feature_data = ygg::Data<kr::ps::Feature<kr::ExtFamilyTag, FeatureTag>>(concrete.get_index());
-    return repository.get_or_create(feature_data).first;
+    return repository.insert(feature_data).first;
 }
 
 }  // namespace
@@ -77,7 +77,7 @@ TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
     all_data.boolean_features.push_back(boolean_feature.get_index());
     all_data.numerical_features.push_back(numerical_feature.get_index());
     kr::ps::ext::canonicalize(all_data);
-    const auto all = repository->get_or_create(all_data).first;
+    const auto all = repository->insert(all_data).first;
 
     const auto shared_feature = create_feature<kr::ps::dl::BooleanFeature>(*repository, boolean.get_index(), "shared");
     const auto shared_entry = create_memory_state(*repository, "shared_entry");
@@ -86,7 +86,7 @@ TEST(RunirTests, ExtSyntacticComplexityAggregatesDeclaredFeatures)
     shared_data.memory_states.push_back(shared_entry.get_index());
     shared_data.boolean_features.push_back(shared_feature.get_index());
     kr::ps::ext::canonicalize(shared_data);
-    const auto shared = repository->get_or_create(shared_data).first;
+    const auto shared = repository->insert(shared_data).first;
 
     EXPECT_EQ(kr::ps::ext::syntactic_complexity(all), 6);
     EXPECT_EQ(kr::ps::ext::syntactic_complexity(shared), 2);
@@ -310,8 +310,8 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidSections)
     EXPECT_THROW(kr::ps::ext::dl::parse_module(mismatched_load_register, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
 
     EXPECT_THROW(kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/executor/ext_module_parser_rejects_invalid_sections/case_14.program"),
-                                                       planning_task.get_domain().get_domain(),
-                                                       *repository),
+                                                planning_task.get_domain().get_domain(),
+                                                *repository),
                  std::runtime_error);
 }
 
@@ -328,21 +328,18 @@ TEST(RunirTests, ExtProgramParserRejectsInvalidProgramWiring)
     auto dl_repository = dl_repository_factory.create(planning_task.get_repository());
     auto repository = repository_factory.create(dl_repository);
 
-    EXPECT_THROW(
-        kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/executor/ext_program_parser_rejects_invalid_program_wiring/case_2.program"),
-                                              planning_task.get_domain().get_domain(),
-                                              *repository),
-        std::runtime_error);
-    EXPECT_THROW(
-        kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/executor/ext_program_parser_rejects_invalid_program_wiring/case_3.program"),
-                                              planning_task.get_domain().get_domain(),
-                                              *repository),
-        std::runtime_error);
-    EXPECT_THROW(
-        kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/executor/ext_program_parser_rejects_invalid_program_wiring/auto11.program"),
-                                              planning_task.get_domain().get_domain(),
-                                              *repository),
-        std::runtime_error);
+    EXPECT_THROW(kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/executor/ext_program_parser_rejects_invalid_program_wiring/case_2.program"),
+                                                planning_task.get_domain().get_domain(),
+                                                *repository),
+                 std::runtime_error);
+    EXPECT_THROW(kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/executor/ext_program_parser_rejects_invalid_program_wiring/case_3.program"),
+                                                planning_task.get_domain().get_domain(),
+                                                *repository),
+                 std::runtime_error);
+    EXPECT_THROW(kr::ps::ext::dl::parse_program(read_fixture("kr/ps/ext/executor/ext_program_parser_rejects_invalid_program_wiring/auto11.program"),
+                                                planning_task.get_domain().get_domain(),
+                                                *repository),
+                 std::runtime_error);
 }
 
 TEST(RunirTests, ExtModuleParserReadsPaperFactoryDescriptions)
@@ -671,8 +668,7 @@ TEST(RunirTests, ExtBindingRulesParseEffectsAndRoundTrip)
                                    reg_category,
                                    effects);
             };
-            const auto parse = [&](const std::string& text)
-            { return kr::ps::ext::dl::parse_module(text, planning_domain.get_domain(), *repository); };
+            const auto parse = [&](const std::string& text) { return kr::ps::ext::dl::parse_module(text, planning_domain.get_domain(), *repository); };
 
             for (const auto* effects : { "", "(:effects)", "(:effects (unchanged n) (positive b) (unchanged n))" })
             {

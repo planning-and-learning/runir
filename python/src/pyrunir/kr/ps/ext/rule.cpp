@@ -74,7 +74,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
                          .def("get_feature", &TermView::get_feature, nb::keep_alive<0, 1>());
     ygg::add_comparison(term_view);
     ygg::add_hash(term_view);
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<OrderTerm, Repository>, "data"_a, nb::keep_alive<0, 1>());
+    runir::kr::python::bind_insert<OrderTerm>(repository);
 
     using ConceptLoad = Rule<LoadTag<runir::kr::dl::ConceptTag>>;
     using RoleLoad = Rule<LoadTag<runir::kr::dl::RoleTag>>;
@@ -131,14 +131,14 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
         .def("get_callee", &CallView::get_callee, nb::keep_alive<0, 1>())
         .def("get_call_arguments", &CallView::get_call_arguments);
 
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<ConceptLoad, Repository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<RoleLoad, Repository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<ConceptChoose, Repository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<RoleChoose, Repository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<Sketch, Repository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<Do, Repository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<Action, Repository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<Call, Repository>, "data"_a, nb::keep_alive<0, 1>());
+    runir::kr::python::bind_insert<ConceptLoad>(repository);
+    runir::kr::python::bind_insert<RoleLoad>(repository);
+    runir::kr::python::bind_insert<ConceptChoose>(repository);
+    runir::kr::python::bind_insert<RoleChoose>(repository);
+    runir::kr::python::bind_insert<Sketch>(repository);
+    runir::kr::python::bind_insert<Do>(repository);
+    runir::kr::python::bind_insert<Action>(repository);
+    runir::kr::python::bind_insert<Call>(repository);
 }
 
 }  // namespace runir::kr::ps::ext

@@ -36,7 +36,7 @@ static_assert(requires(Data& data) {
 static_assert(requires(kr::ps::ext::Repository& repository, ygg::Data<kr::ps::Rule<kr::BaseFamilyTag>>& data) {
     canonicalize(data);
     { is_canonical(data) } -> std::same_as<bool>;
-    kr::ps::ext::get_or_create(repository, data);
+    kr::ps::ext::insert(repository, data);
 });
 
 }

@@ -61,9 +61,9 @@ public:
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicRepository, T>
-    std::pair<ygg::View<ygg::Index<T>, BasicRepository>, bool> get_or_create(ygg::Data<T>& data)
+    std::pair<ygg::View<ygg::Index<T>, BasicRepository>, bool> insert(ygg::Data<T>& data)
     {
-        const auto [index, success] = m_symbol_repository.template get_or_create_local<T>(data);
+        const auto [index, success] = m_symbol_repository.template insert_local<T>(data);
         return { ygg::View<ygg::Index<T>, BasicRepository>(index, *this), success };
     }
 

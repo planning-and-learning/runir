@@ -4,6 +4,7 @@
 #include "runir/graphs/static_graph.hpp"
 #include "runir/graphs/static_graph_builder.hpp"
 #include "runir/kr/ps/base/declarations.hpp"
+#include "runir/kr/ps/base/repository.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
 
 #include <tuple>

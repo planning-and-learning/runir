@@ -18,13 +18,13 @@ auto formatter_fragment(std::string_view name) -> std::string
 auto create_memory_state(kr::ps::ext::Repository& repository, const std::string& name) -> kr::ps::ext::MemoryStateView
 {
     auto data = ygg::Data<kr::ps::ext::MemoryState>(name);
-    return repository.get_or_create(data).first;
+    return repository.insert(data).first;
 }
 
 auto make_module_data(kr::ps::ext::Repository& repository, const std::string& name) -> ygg::Data<kr::ps::ext::Module>
 {
     auto symbol_data = ygg::Data<kr::ps::ext::ModuleSymbol>(name);
-    const auto symbol = repository.get_or_create(symbol_data).first;
+    const auto symbol = repository.insert(symbol_data).first;
     return ygg::Data<kr::ps::ext::Module>(symbol.get_index());
 }
 
@@ -38,27 +38,27 @@ auto create_module(kr::ps::ext::Repository& repository,
     for (auto state : memory_states)
         data.memory_states.push_back(state.get_index());
     kr::ps::ext::canonicalize(data);
-    return repository.get_or_create(data).first;
+    return repository.insert(data).first;
 }
 
 auto create_program(kr::ps::ext::Repository& repository,
-                           kr::ps::ext::ModuleView entry,
-                           std::initializer_list<kr::ps::ext::ModuleView> modules) -> kr::ps::ext::ProgramView
+                    kr::ps::ext::ModuleView entry,
+                    std::initializer_list<kr::ps::ext::ModuleView> modules) -> kr::ps::ext::ProgramView
 {
     auto data = ygg::Data<kr::ps::ext::Program>();
     data.entry_module = entry.get_index();
     for (auto module_ : modules)
         data.modules.push_back(module_.get_index());
     kr::ps::ext::canonicalize(data);
-    return repository.get_or_create(data).first;
+    return repository.insert(data).first;
 }
 
 auto create_top_concept(kr::dl::ExtConstructorRepository& repository) -> kr::dl::ExtConstructorView<kr::dl::ConceptTag>
 {
     auto top_data = ygg::Data<kr::dl::Concept<kr::ExtFamilyTag, kr::dl::TopTag>>();
-    const auto top = repository.get_or_create(top_data).first;
+    const auto top = repository.insert(top_data).first;
     auto constructor_data = ygg::Data<kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::ConceptTag>>(top.get_index());
-    return repository.get_or_create(constructor_data).first;
+    return repository.insert(constructor_data).first;
 }
 
 }  // namespace runir::tests

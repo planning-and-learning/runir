@@ -529,7 +529,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL concept constructor tag in evaluate_impl");
     }
 
-    return get_or_create(repository, *result, context.get_builder()).first;
+    return insert(repository, *result, context.get_builder()).first;
 }
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
@@ -618,8 +618,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
     {
         const auto arg = evaluate(constructor.get_arg(), children);
 
-        for (ygg::uint_t object = 0; object < num_objects; ++object)
-            result->get(object).copy_from(arg.get(object));
+        assign(*result, arg);
 
         for (ygg::uint_t mid = 0; mid < num_objects; ++mid)
         {
@@ -661,7 +660,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
         static_assert(ygg::dependent_false<Tag>::value, "unhandled DL role constructor tag in evaluate_impl");
     }
 
-    return get_or_create(repository, *result, context.get_builder()).first;
+    return insert(repository, *result, context.get_builder()).first;
 }
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
@@ -712,7 +711,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyBoolean<Family, Tag>>, C> construc
     }
 
     auto result = context.get_builder().template get_builder<Denotation<BooleanTag>>(result_value);
-    return get_or_create(repository, *result, context.get_builder()).first;
+    return insert(repository, *result, context.get_builder()).first;
 }
 
 template<FamilyTag Family, typename Tag, StateEvaluationContextConcept<Family> Context, typename C>
@@ -777,7 +776,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
                             if (rhs_bitset[target])
                             {
                                 auto result = context.get_builder().template get_builder<Denotation<NumericalTag>>(target_distance);
-                                return get_or_create(repository, *result, context.get_builder()).first;
+                                return insert(repository, *result, context.get_builder()).first;
                             }
 
                             queue.push_back(static_cast<ygg::uint_t>(target));
@@ -803,7 +802,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
     }
 
     auto result = context.get_builder().template get_builder<Denotation<NumericalTag>>(result_value);
-    return get_or_create(repository, *result, context.get_builder()).first;
+    return insert(repository, *result, context.get_builder()).first;
 }
 
 template<FamilyTag Family, CategoryTag Category, StateEvaluationContextConcept<Family> Context>

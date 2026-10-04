@@ -79,9 +79,9 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
         .def("get_argument_names", &RuleView<CruleTag>::get_argument_names)
         .def("get_xconditions", &RuleView<CruleTag>::get_xconditions)
         .def("get_xeffects", &RuleView<CruleTag>::get_xeffects);
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<ConceptLoad, Repository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<RoleLoad, Repository>, "data"_a, nb::keep_alive<0, 1>());
-    repository.def("get_or_create", &runir::kr::python::get_or_create_data<Crule, Repository>, "data"_a, nb::keep_alive<0, 1>());
+    runir::kr::python::bind_insert<ConceptLoad>(repository);
+    runir::kr::python::bind_insert<RoleLoad>(repository);
+    runir::kr::python::bind_insert<Crule>(repository);
 }
 
 }  // namespace runir::kr::ps::icp

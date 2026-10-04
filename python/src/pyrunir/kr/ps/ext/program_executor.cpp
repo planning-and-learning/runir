@@ -107,7 +107,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using Expander = SuccessorExpander<Kind>;
     using Environment = EvaluationEnvironment<Kind>;
     // Callback results may outlive the expander that owns their binding pool.
-    const auto retain_expander = runir::kr::python::make_owner_retainer();
+    const auto retain_expander = ygg::python::make_owner_retainer();
 
     nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
     nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());

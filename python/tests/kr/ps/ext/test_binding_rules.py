@@ -36,9 +36,9 @@ def test_binding_rules_parse_construct_and_serialize(gripper_planning_domain, ki
     data.feature = rule.get_feature().get_index()
     data.reg = rule.get_register().get_index()
     data.effects = [effect.get_index() for effect in rule.get_effects()]
-    assert repository.get_or_create(data) == rule
+    assert repository.insert(data)[0] == rule
     data.effects = []
-    assert (repository.get_or_create(data) == rule) == (not rule.get_effects())
+    assert (repository.insert(data)[0] == rule) == (not rule.get_effects())
 
     assert list(rule_type.Fields.__members__) == ["source", "target", "conditions", "effects", "feature", "register"] + (["order"] if kind == "choose" else [])
     dictionaries = Dictionaries()
@@ -79,13 +79,13 @@ def test_choose_order_data_and_serialization(gripper_planning_domain, category, 
     for term in terms:
         value = ext.OrderTermData()
         value.direction, value.feature = term.get_direction(), term.get_feature().get_index()
-        interned = repository.get_or_create(value)
+        interned = repository.insert(value)[0]
         assert interned == term
         values.append(interned.get_index())
     data.order = values
-    assert repository.get_or_create(data) == rule
+    assert repository.insert(data)[0] == rule
     data.order = list(reversed(values[:2]))
-    assert repository.get_or_create(data) != rule
+    assert repository.insert(data)[0] != rule
     dictionaries = Dictionaries()
     register_table(dictionaries, ext.dl.BooleanFeature, "booleans", "b", project=lambda f: {"symbol": f.get_symbol()})
     register_table(dictionaries, ext.dl.NumericalFeature, "numericals", "n", project=lambda f: {"symbol": f.get_symbol()})

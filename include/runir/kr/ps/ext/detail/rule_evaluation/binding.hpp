@@ -12,7 +12,7 @@ namespace runir::kr::ps::ext::detail
 template<BindingRuleKind Tag, runir::kr::dl::semantics::RegisterValuesViewConcept R, typename Value, typename Storage>
 auto bound_registers(RuleView<Tag> rule, R source, const Value& value, ygg::Data<runir::kr::dl::semantics::RegisterValues>& registers, Storage& storage)
 {
-    runir::kr::dl::semantics::make_data(source, registers);
+    runir::kr::dl::semantics::assign(registers, source);
     runir::kr::dl::semantics::assign_register(registers, rule.get_register().get_identifier(), value);
     return storage.registers(registers);
 }

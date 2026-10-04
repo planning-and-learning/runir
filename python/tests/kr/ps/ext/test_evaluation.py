@@ -110,6 +110,43 @@ def _loaded_frame(kind: Literal["ground", "lifted"], source: str = PROGRAM):
     return task_context, program, expander, loaded
 
 
+@pytest.mark.parametrize("kind", ["ground", "lifted"])
+@pytest.mark.parametrize("value_kind", ["concept_register", "role_register", "argument", "concept_iterator", "role_iterator"])
+def test_nested_borrowed_values_retain_owner_after_container_scope(kind, value_kind):
+    def extract():
+        task, program, expander, loaded = _loaded_frame(kind)
+        if value_kind.endswith("register"):
+            owner = loaded.module_state.registers
+            before = sys.getrefcount(owner)
+            if value_kind == "concept_register":
+                value = next(value for value in owner.concept_values if value is not None)
+            else:
+                value = next(value for value in owner.role_values if value is not None)[0]
+            expected = value.get_name()
+        else:
+            arguments = loaded.module_state.arguments
+            if value_kind == "argument":
+                owner = arguments
+                before = sys.getrefcount(owner)
+                value = owner.boolean_arguments[0]
+                expected = value.get()
+            else:
+                owner = (arguments.concept_arguments if value_kind == "concept_iterator" else arguments.role_arguments)[0]
+                before = sys.getrefcount(owner)
+                iterator = iter(owner)
+                value = next(iterator)
+                if value_kind == "role_iterator":
+                    value = value[0]
+                del iterator
+                expected = value.get_name()
+        assert sys.getrefcount(owner) > before
+        return value, expected
+
+    value, expected = extract()
+    gc.collect()
+    assert (value.get() if value_kind == "argument" else value.get_name()) == expected
+
+
 def test_call_rule_arguments_preserve_feature_views_and_order() -> None:
     task_context, program, expander, loaded = _loaded_frame("lifted")
     module = program.get_entry_module()
@@ -339,12 +376,12 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     registers.role_values = expected_roles
     assert registers.role_values == expected_roles
     repository = task_context.dl_denotation_repository
-    argument_view = repository.get_or_create(arguments)
-    register_view = repository.get_or_create(registers)
+    argument_view = repository.insert(arguments)[0]
+    register_view = repository.insert(registers)[0]
     assert isinstance(argument_view, CallArguments)
     assert isinstance(register_view, RegisterValues)
-    assert repository.get_or_create(arguments) == argument_view == loaded.module_state.arguments
-    assert repository.get_or_create(registers) == register_view == loaded.module_state.registers
+    assert repository.insert(arguments)[0] == argument_view == loaded.module_state.arguments
+    assert repository.insert(registers)[0] == register_view == loaded.module_state.registers
     assert len({argument_view, loaded.module_state.arguments}) == 1
     assert len({register_view, loaded.module_state.registers}) == 1
     storage = semantics.EvaluationStorage(repository)
@@ -356,7 +393,7 @@ def test_more_than_four_registers_and_interned_binding_views(kind: Literal["grou
     assert ext.evaluate(features["role_register_size"], context).get() == 1
     registers.concept_values = [None] * 6
     registers.role_values = [None] * 6
-    empty_register_view = repository.get_or_create(registers)
+    empty_register_view = repository.insert(registers)[0]
     assert empty_register_view != register_view
     storage.reset_dynamic()
     assert ext.evaluate(features["concept_register_size"], context).get() == 1

@@ -38,7 +38,7 @@ public:
     {
         if (choice.exhausted())
         {
-            auto failure = detail::make_step(ProgramOutcome::FAILURE, context.storage.retain(state), context.task_context);
+            auto failure = detail::make_step<Kind, typename Context::StorageType>(ProgramOutcome::FAILURE, context.storage.retain(state), context.task_context);
             failure.rule = choice.rule;
             return failure;
         }
@@ -51,7 +51,7 @@ public:
                                             bound_registers(rule, module_.get_registers(), choice.current(), *registers, context.storage),
                                             module_.get_arguments(),
                                             state.get_call_stack());
-        return detail::applied(std::move(target), choice.rule, context.task_context);
+        return detail::applied<Kind, typename Context::StorageType>(std::move(target), choice.rule, context.task_context);
     }
 
 private:

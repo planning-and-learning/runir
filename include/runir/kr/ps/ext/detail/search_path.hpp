@@ -2,6 +2,7 @@
 #define RUNIR_KR_PS_EXT_DETAIL_SEARCH_PATH_HPP_
 
 #include "runir/datasets/state_graph.hpp"
+#include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/ext/execution_view.hpp"
 #include "runir/kr/ps/ext/rule_variant_view.hpp"
 
@@ -16,11 +17,12 @@ namespace runir::kr::ps::ext::detail
 /// A retained path owns pooled states, not an explored-graph predecessor table.
 /// Pending siblings and selected witnesses can outlive a DFS frame; discarded branches release their states.
 /// The search owns the pool until graph and plan construction have released every path.
-template<tyr::TaskKind Kind, StoredProgramStateConcept<Kind> S>
+template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage>
 struct SearchPath
 {
-    std::optional<S> state;
-    ygg::SharedObjectPoolPtr<SearchPath<Kind, S>> parent;
+    using StoredState = typename Storage::StoredState;
+    std::optional<StoredState> state;
+    ygg::SharedObjectPoolPtr<SearchPath<Kind, Storage>> parent;
     std::optional<datasets::StateGraphEdgeLabel> transition;
     std::optional<RuleVariantView> rule;
     ygg::uint_t choice_depth = 0;
@@ -30,8 +32,8 @@ struct SearchPath
     bool is_deadend = false;
     bool is_open = false;
 
-    void initialize(S state_,
-                    ygg::SharedObjectPoolPtr<SearchPath<Kind, S>> parent_,
+    void initialize(StoredState state_,
+                    ygg::SharedObjectPoolPtr<SearchPath<Kind, Storage>> parent_,
                     std::optional<datasets::StateGraphEdgeLabel> transition_,
                     std::optional<RuleVariantView> rule_,
                     ygg::uint_t choice_depth_,

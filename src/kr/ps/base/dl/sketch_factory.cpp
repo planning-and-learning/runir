@@ -15,7 +15,7 @@ SketchView SketchFactory::create_empty(Repository& repository)
 {
     auto builder = runir::kr::ps::base::Builder {};
     auto data = runir::kr::ps::base::checkout<runir::kr::ps::base::Sketch>(builder);
-    return runir::kr::ps::base::get_or_create(repository, *data).first;
+    return runir::kr::ps::base::insert(repository, *data).first;
 }
 
 SketchView SketchFactory::create(SketchSpecification specification, tyr::formalism::planning::DomainView domain, Repository& repository)

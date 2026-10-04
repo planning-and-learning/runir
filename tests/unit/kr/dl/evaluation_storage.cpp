@@ -25,6 +25,38 @@ namespace dl = kr::dl;
 namespace sem = dl::semantics;
 using Ext = kr::ExtFamilyTag;
 
+using GroundExtContext = sem::StateEvaluationContext<Ext, tyr::GroundTag>;
+struct InvalidResultContext : GroundExtContext
+{
+    int for_result(bool) const;
+};
+struct MissingExtInputs : GroundExtContext
+{
+    sem::BaseStateEvaluationContext<Ext, tyr::GroundTag> child_context() const;
+};
+struct WrongFamilyContext : GroundExtContext
+{
+    sem::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag> child_context() const;
+};
+struct WrongKindContext : GroundExtContext
+{
+    sem::StateEvaluationContext<Ext, tyr::LiftedTag> child_context() const;
+};
+static_assert(sem::StateEvaluationContextConcept<GroundExtContext>);
+static_assert(sem::StateEvaluationContextConcept<sem::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>>);
+static_assert(sem::StateEvaluationContextConcept<sem::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>>);
+static_assert(!sem::StateEvaluationContextConcept<InvalidResultContext>);
+static_assert(!sem::StateEvaluationContextConcept<MissingExtInputs>);
+static_assert(!sem::StateEvaluationContextConcept<WrongFamilyContext>);
+static_assert(!sem::StateEvaluationContextConcept<WrongKindContext>);
+
+constexpr auto acquires_builder = []<typename T, typename... Args>()
+{ return requires(sem::Builder& builder, Args&&... args) { builder.template get_builder<T>(std::forward<Args>(args)...); }; };
+static_assert(acquires_builder.template operator()<sem::Denotation<dl::ConceptTag>, ygg::uint_t>());
+static_assert(acquires_builder.template operator()<ygg::database::Relation<>, std::span<const ygg::Index<ygg::database::Column>>>());
+static_assert(!acquires_builder.template operator()<int>());
+static_assert(!acquires_builder.template operator()<sem::Denotation<dl::ConceptTag>, std::string>());
+
 auto query_search()
 {
     const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../fixtures/kr/dl/query";
@@ -53,14 +85,14 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
         else
             source.get() = 7;
         const auto expected = source;
-        const auto [view, inserted] = sem::get_or_create(repository, source, builder);
+        const auto [view, inserted] = sem::insert(repository, source, builder);
         EXPECT_TRUE(inserted);
         EXPECT_EQ(&view.get_context(), &repository);
         EXPECT_EQ(source.index, view.get_index());
         EXPECT_TRUE(ygg::EqualTo<ygg::Builder<Denotation>> {}(source, expected));
 
         ygg::clear(source.index);
-        const auto [duplicate, duplicate_inserted] = sem::get_or_create(repository, source, builder);
+        const auto [duplicate, duplicate_inserted] = sem::insert(repository, source, builder);
         EXPECT_FALSE(duplicate_inserted);
         EXPECT_EQ(duplicate, view);
         EXPECT_EQ(source.index, view.get_index());
@@ -102,14 +134,14 @@ TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreserve
     values.role_values.emplace_back(::cista::pair { objects[1].get_index(), objects[2].get_index() });
     const auto expected = values;
     const auto borrowed = ygg::make_view(values, *formalism);
-    const auto [view, inserted] = sem::get_or_create(repository, borrowed, builder);
+    const auto [view, inserted] = sem::copy(borrowed, { repository, builder });
     EXPECT_TRUE(inserted);
     EXPECT_EQ(&view.get_context(), &repository);
     EXPECT_TRUE(ygg::EqualTo<ygg::Data<sem::RegisterValues>> {}(view.get_data(), expected));
-    const auto [duplicate, duplicate_inserted] = sem::get_or_create(repository, borrowed, builder);
+    const auto [duplicate, duplicate_inserted] = sem::copy(borrowed, { repository, builder });
     EXPECT_FALSE(duplicate_inserted);
     EXPECT_EQ(duplicate, view);
-    const auto [same_repository, same_inserted] = sem::get_or_create(repository, view, builder);
+    const auto [same_repository, same_inserted] = sem::copy(view, { repository, builder });
     EXPECT_FALSE(same_inserted);
     EXPECT_EQ(&same_repository.get_data(), &view.get_data());
     EXPECT_EQ(repository.size<sem::RegisterValues>(), 1);
@@ -118,26 +150,26 @@ TEST(RunirEvaluationStorage, RegisterInterningUsesRepositoryOwnershipAndPreserve
 
     auto other_values = expected;
     other_values.concept_values[0] = objects[1].get_index();
-    const auto occupied = sem::get_or_create(other_repository, other_values).first;
+    const auto occupied = sem::insert(other_repository, other_values).first;
     ASSERT_EQ(other_repository.get_index(), repository.get_index());
     ASSERT_EQ(occupied.get_index(), view.get_index());
-    const auto [transferred, transferred_inserted] = sem::get_or_create(other_repository, view, builder);
+    const auto [transferred, transferred_inserted] = sem::copy(view, { other_repository, builder });
     EXPECT_TRUE(transferred_inserted);
     EXPECT_EQ(&transferred.get_context(), &other_repository);
     EXPECT_NE(transferred.get_index(), occupied.get_index());
     EXPECT_TRUE(ygg::EqualTo<ygg::Data<sem::RegisterValues>> {}(transferred.get_data(), expected));
-    const auto [same_target, same_target_inserted] = sem::get_or_create(other_repository, view, builder);
+    const auto [same_target, same_target_inserted] = sem::copy(view, { other_repository, builder });
     EXPECT_EQ(same_target, transferred);
     EXPECT_FALSE(same_target_inserted);
     EXPECT_EQ(other_repository.size<sem::RegisterValues>(), 2);
 
     const auto foreign_search = query_search();
     auto foreign_repository = sem::DenotationRepositoryFactory().create(foreign_search->task->get_repository());
-    EXPECT_THROW((void) sem::get_or_create(foreign_repository, borrowed, builder), std::invalid_argument);
+    EXPECT_THROW((void) sem::copy(borrowed, { foreign_repository, builder }), std::invalid_argument);
     EXPECT_EQ(foreign_repository.size<sem::RegisterValues>(), 0);
     auto foreign_values = expected;
-    const auto foreign_view = sem::get_or_create(foreign_repository, foreign_values).first;
-    EXPECT_THROW((void) sem::get_or_create(repository, foreign_view, builder), std::invalid_argument);
+    const auto foreign_view = sem::insert(foreign_repository, foreign_values).first;
+    EXPECT_THROW((void) sem::copy(foreign_view, { repository, builder }), std::invalid_argument);
     EXPECT_EQ(repository.size<sem::RegisterValues>(), 1);
 }
 
@@ -151,10 +183,10 @@ TEST(RunirEvaluationStorage, RegisterExtractionClearsIdentityAndRetainsBuffers)
     values.concept_values.resize(2);
     values.concept_values[0] = objects[0].get_index();
     values.role_values.emplace_back(::cista::pair { objects[1].get_index(), objects[2].get_index() });
-    const auto view = sem::get_or_create(repository, values).first;
+    const auto view = sem::insert(repository, values).first;
     auto extracted = ygg::Data<sem::RegisterValues>();
     extracted.index = view.get_index();
-    sem::make_data(view, extracted);
+    sem::assign(extracted, view);
     EXPECT_EQ(extracted.index, ygg::Index<sem::RegisterValues>());
     EXPECT_TRUE(ygg::EqualTo<ygg::Data<sem::RegisterValues>> {}(extracted, values));
     const auto concept_buffer = extracted.concept_values.data();
@@ -166,7 +198,7 @@ TEST(RunirEvaluationStorage, RegisterExtractionClearsIdentityAndRetainsBuffers)
     values.concept_values[0] = objects[2].get_index();
     values.role_values[0].reset();
     extracted.index = view.get_index();
-    sem::make_data(ygg::make_view(values, *formalism), extracted);
+    sem::assign(extracted, ygg::make_view(values, *formalism));
     EXPECT_EQ(extracted.index, ygg::Index<sem::RegisterValues>());
     EXPECT_TRUE(ygg::EqualTo<ygg::Data<sem::RegisterValues>> {}(extracted, values));
     EXPECT_EQ(extracted.concept_values.data(), concept_buffer);
@@ -176,6 +208,63 @@ TEST(RunirEvaluationStorage, RegisterExtractionClearsIdentityAndRetainsBuffers)
     EXPECT_EQ(view.get_data().concept_values.size(), 2);
     EXPECT_EQ(view.get_data().concept_values[0].value(), objects[0].get_index());
     EXPECT_TRUE(view.get_data().role_values[0].has_value());
+
+    extracted.index = view.get_index();
+    sem::assign(extracted, ygg::make_view(extracted, *formalism));
+    EXPECT_EQ(extracted.index, ygg::Index<sem::RegisterValues>());
+    EXPECT_EQ(extracted.concept_values.data(), concept_buffer);
+    EXPECT_TRUE(ygg::EqualTo<ygg::Data<sem::RegisterValues>> {}(extracted, values));
+}
+
+TEST(RunirEvaluationStorage, DenotationConversionsResolvePayloadsAndReuseDestinationBuffers)
+{
+    const auto search = query_search();
+    auto source_repository = sem::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto target_repository = sem::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto scratch = sem::Builder();
+    const auto check = [&]<dl::CategoryTag Category>()
+    {
+        using D = sem::Denotation<Category>;
+        auto payload = ygg::Builder<D>();
+        if constexpr (dl::ConceptOrRoleTag<Category>)
+        {
+            payload.initialize(3);
+            if constexpr (std::same_as<Category, dl::ConceptTag>)
+                payload.get().set(1);
+            else
+                payload.get(1).set(2);
+        }
+        else
+            payload.value = 1;
+        const auto source = sem::insert(source_repository, payload, scratch).first;
+        auto destination = ygg::Builder<D>();
+        sem::assign(destination, source);
+        EXPECT_TRUE(ygg::EqualTo<ygg::Builder<D>> {}(destination, payload));
+        EXPECT_EQ(destination.index, ygg::Index<D>());
+        if constexpr (dl::ConceptOrRoleTag<Category>)
+        {
+            const auto* buffer = destination.blocks.data();
+            sem::assign(destination, source);
+            EXPECT_EQ(destination.blocks.data(), buffer);
+        }
+
+        payload.initialize(0);
+        const auto unrelated = sem::insert(target_repository, payload, scratch).first;
+        const auto [copied, created] = sem::copy(source, { target_repository, scratch });
+        EXPECT_TRUE(created);
+        EXPECT_NE(copied.get_index(), unrelated.get_index());
+        EXPECT_EQ(&copied.get_context(), &target_repository);
+        EXPECT_FALSE(sem::copy(source, { target_repository, scratch }).second);
+        EXPECT_EQ(sem::copy(copied, { target_repository, scratch }).first, copied);
+
+        source_repository.clear();
+        sem::assign(payload, copied);
+        EXPECT_TRUE(ygg::EqualTo<ygg::Builder<D>> {}(destination, payload));
+    };
+    check.template operator()<dl::BooleanTag>();
+    check.template operator()<dl::NumericalTag>();
+    check.template operator()<dl::ConceptTag>();
+    check.template operator()<dl::RoleTag>();
 }
 
 TEST(RunirEvaluationStorage, TypedRegisterAssignmentPreservesBuffersAndClearsIdentity)
@@ -225,7 +314,7 @@ TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
     auto registers_data = ygg::Data<sem::RegisterValues>();
     registers_data.concept_values.resize(1);
     registers_data.concept_values[0] = search->task->get_domain().get_domain().get_constants()[0].get_index();
-    const auto arguments = sem::get_or_create(persistent, arguments_data).first;
+    const auto arguments = sem::insert(persistent, arguments_data).first;
     const auto registers = ygg::make_view(registers_data, *search->task->get_repository());
     using Context = sem::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>, sem::BorrowedRegisterValuesView>;
     auto transient = Context(initial.get_state(), builder, storage, arguments, registers);
@@ -296,8 +385,8 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     auto context = sem::StateEvaluationContext<Ext, tyr::GroundTag>(initial.get_state(),
                                                                     builder,
                                                                     storage,
-                                                                    sem::get_or_create(prototype, arguments).first,
-                                                                    sem::get_or_create(prototype, registers).first);
+                                                                    sem::insert(prototype, arguments).first,
+                                                                    sem::insert(prototype, registers).first);
     const auto query = [&](const std::string& expression)
     {
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", domain, *constructors);
@@ -363,8 +452,8 @@ TEST(RunirEvaluationStorage, ExtContextsValidateInputTasksForBorrowedAndIndexedR
     auto caches = sem::DenotationCaches<Ext>();
     auto arguments_data = ygg::Data<sem::CallArguments>();
     auto registers_data = ygg::Data<sem::RegisterValues>();
-    const auto arguments = sem::get_or_create(input_repository, arguments_data).first;
-    const auto foreign_arguments = sem::get_or_create(foreign_repository, arguments_data).first;
+    const auto arguments = sem::insert(input_repository, arguments_data).first;
+    const auto foreign_arguments = sem::insert(foreign_repository, arguments_data).first;
     const auto check = [&](auto registers, auto foreign_registers)
     {
         using Context = sem::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>, decltype(registers)>;
@@ -376,7 +465,7 @@ TEST(RunirEvaluationStorage, ExtContextsValidateInputTasksForBorrowedAndIndexedR
         EXPECT_THROW(Context(initial.get_state(), builder, caches, repository, storage, arguments, foreign_registers), std::invalid_argument);
     };
     check(ygg::make_view(registers_data, *search->task->get_repository()), ygg::make_view(registers_data, *foreign_search->task->get_repository()));
-    check(sem::get_or_create(input_repository, registers_data).first, sem::get_or_create(foreign_repository, registers_data).first);
+    check(sem::insert(input_repository, registers_data).first, sem::insert(foreign_repository, registers_data).first);
 }
 
 TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
@@ -397,8 +486,8 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
                                                                     caches,
                                                                     persistent,
                                                                     storage,
-                                                                    sem::get_or_create(persistent, arguments_data).first,
-                                                                    sem::get_or_create(persistent, registers_data).first);
+                                                                    sem::insert(persistent, arguments_data).first,
+                                                                    sem::insert(persistent, registers_data).first);
     const auto query = [&](const std::string& expression, auto& repository)
     {
         const auto count = kr::ps::ext::dl::parse_numerical("(n_count " + expression + ")", search->task->get_domain().get_domain(), repository);
@@ -437,7 +526,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
         auto direct = builder.get_builder<ygg::database::Relation<>>(columns);
         for (size_t i = 0; i < left_result.size(); ++i)
             direct->insert(left_result[i]);
-        const auto [interned, inserted] = ygg::database::intern_relation(*direct, results);
+        const auto [interned, inserted] = ygg::database::insert(results, *direct);
         EXPECT_FALSE(inserted);
         EXPECT_EQ(interned, left_result);
     }

@@ -56,7 +56,7 @@ public:
         m_index.clear();
     }
 
-    auto get_or_create(Signature signature) -> Color
+    auto insert(Signature signature) -> Color
     {
         const auto color = static_cast<Color>(m_data.size());
         const auto [it, inserted] = m_index.emplace(std::move(signature), color);
@@ -169,7 +169,7 @@ auto compute_certificate(const G& graph)
         // Refine vertex colors.
         for (auto& [vertex, signature] : vertex_signatures)
         {
-            const auto next_color = interner.get_or_create(std::move(signature));
+            const auto next_color = interner.insert(std::move(signature));
             set_color<G>(next_colors, vertex, next_color);
             changed = changed || next_color != get_color<G>(colors, vertex);
         }

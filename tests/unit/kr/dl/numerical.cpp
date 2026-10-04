@@ -103,15 +103,15 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
     auto repository = dl::UnsConstructorRepositoryFactory().create(planning_repository);
 
     auto constant_data = ygg::Data<dl::Numerical<Family, dl::NumericalConstantTag>>(7);
-    EXPECT_EQ(repository->get_or_create(constant_data).first.get_value(), 7);
+    EXPECT_EQ(repository->insert(constant_data).first.get_value(), 7);
 
     auto binary_data = ygg::Data<dl::Numerical<Family, dl::AddTag>>(ygg::Index<Numerical>(1), ygg::Index<Numerical>(2));
-    const auto binary = repository->get_or_create(binary_data).first;
+    const auto binary = repository->insert(binary_data).first;
     EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Numerical>(1));
     EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Numerical>(2));
 
     auto distance_data = ygg::Data<dl::Numerical<Family, dl::DistanceTag>>(ygg::Index<Concept>(3), ygg::Index<Role>(4), ygg::Index<Concept>(5));
-    const auto distance = repository->get_or_create(distance_data).first;
+    const auto distance = repository->insert(distance_data).first;
     EXPECT_EQ(distance.get_lhs().get_index(), ygg::Index<Concept>(3));
     EXPECT_EQ(distance.get_mid().get_index(), ygg::Index<Role>(4));
     EXPECT_EQ(distance.get_rhs().get_index(), ygg::Index<Concept>(5));

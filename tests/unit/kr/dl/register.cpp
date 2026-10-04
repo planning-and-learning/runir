@@ -57,7 +57,7 @@ TEST(RunirKrDlRegister, ExposesNameAndUnboundedIdentifier)
     auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     auto repository = dl::ExtConstructorRepositoryFactory().create(planning_repository);
     auto data = ygg::Data<dl::Register<dl::RoleTag>>(std::string("target"), dl::RegisterIdentifier<dl::RoleTag>(1024));
-    const auto reg = repository->get_or_create(data).first;
+    const auto reg = repository->insert(data).first;
 
     EXPECT_EQ(reg.get_name(), "target");
     EXPECT_EQ(reg.get_identifier(), dl::RegisterIdentifier<dl::RoleTag>(1024));

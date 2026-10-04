@@ -137,8 +137,8 @@ TEST(RunirKrDlSemanticsDenotation, ExposesScalarValues)
 
     auto boolean_data = ygg::Data<semantics::Denotation<dl::BooleanTag>>(true);
     auto numerical_data = ygg::Data<semantics::Denotation<dl::NumericalTag>>(9);
-    EXPECT_TRUE(repository.get_or_create(boolean_data).first.get());
-    EXPECT_EQ(repository.get_or_create(numerical_data).first.get(), 9);
+    EXPECT_TRUE(repository.insert(boolean_data).first.get());
+    EXPECT_EQ(repository.insert(numerical_data).first.get(), 9);
 }
 
 TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
@@ -159,7 +159,7 @@ TEST(RunirKrDlSemanticsDenotation, CountsRolePairs)
     auto repository = semantics::DenotationRepositoryFactory().create(planning_repository);
     const auto vec_index = repository.get_vector_repository().insert(builder.blocks);
     auto data = ygg::Data<semantics::Denotation<dl::RoleTag>>(builder.get_num_objects(), vec_index);
-    const auto view = repository.get_or_create(data).first;
+    const auto view = repository.insert(data).first;
 
     EXPECT_TRUE(view.any());
     EXPECT_EQ(view.count(), 2);
@@ -173,7 +173,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
     for (const auto* name : { "a", "b", "c" })
     {
         auto data = ygg::Data<tyr::formalism::Object>(std::string(name));
-        (void) planning_repository->get_or_create(data);
+        (void) planning_repository->insert(data);
     }
     auto repository = semantics::DenotationRepositoryFactory().create(planning_repository);
 
@@ -181,7 +181,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
     concept_builder.get().set(0);
     concept_builder.get().set(2);
     auto concept_data = ygg::Data<semantics::Denotation<dl::ConceptTag>>(3, repository.get_vector_repository().insert(concept_builder.blocks));
-    const auto concept_view = repository.get_or_create(concept_data).first;
+    const auto concept_view = repository.insert(concept_data).first;
     const auto concept_copy = concept_view;
     EXPECT_TRUE(concept_view.begin() == concept_copy.begin());
     auto concept_iterator = ConceptView(concept_view).begin();  // The temporary wrapper is gone before iteration.
@@ -196,7 +196,7 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
     role_builder.get(0).set(1);
     role_builder.get(2).set(0);
     auto role_data = ygg::Data<semantics::Denotation<dl::RoleTag>>(3, repository.get_vector_repository().insert(role_builder.blocks));
-    const auto role_view = repository.get_or_create(role_data).first;
+    const auto role_view = repository.insert(role_data).first;
     const auto role_copy = role_view;
     EXPECT_TRUE(role_view.begin() == role_copy.begin());
     auto role_iterator = RoleView(role_view).begin();

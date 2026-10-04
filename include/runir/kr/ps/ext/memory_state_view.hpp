@@ -5,28 +5,21 @@
 
 #include <tuple>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<typename C>
-class View<Index<runir::kr::ps::ext::MemoryState>, C>
+template<formalism::SymbolContextFor<runir::kr::ps::ext::MemoryState> C>
+class View<Index<runir::kr::ps::ext::MemoryState>, C> : public formalism::detail::View<Index<runir::kr::ps::ext::MemoryState>, C>
 {
-private:
-    const C* m_context;
-    Index<runir::kr::ps::ext::MemoryState> m_handle;
-
 public:
-    View(Index<runir::kr::ps::ext::MemoryState> handle, const C& context) noexcept : m_context(&context), m_handle(handle) {}
+    View(Index<runir::kr::ps::ext::MemoryState> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::ps::ext::MemoryState>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const noexcept { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    const auto& get_name() const noexcept { return get_data().name; }
-
-    auto identifying_members() const noexcept { return std::tie(m_handle, m_context->get_index()); }
+    const auto& get_name() const noexcept { return this->get_data().name; }
 };
 
 }  // namespace ygg

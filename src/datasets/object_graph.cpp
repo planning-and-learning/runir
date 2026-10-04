@@ -84,7 +84,7 @@ public:
             vertices.push_back(vertex);
 
             auto predicate_color_data = ygg::Data<PredicateColor<T>>(atom.get_predicate().get_index(), static_cast<ygg::uint_t>(i), Context);
-            const auto predicate_color = m_repository.get_or_create(predicate_color_data).first;
+            const auto predicate_color = m_repository.insert(predicate_color_data).first;
             m_vertex_colors[vertex].emplace_back(predicate_color.get_index());
         }
 
@@ -100,7 +100,7 @@ public:
         for (auto& colors : m_vertex_colors)
         {
             auto color_data = ygg::Data<Color>(std::move(colors));
-            builder.add_vertex(m_repository.get_or_create(color_data).first);
+            builder.add_vertex(m_repository.insert(color_data).first);
         }
 
         for (const auto& [source, target] : m_edges)
