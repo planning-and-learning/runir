@@ -23,7 +23,7 @@ class DenotationCaches
 public:
     template<CategoryTag Category>
     using Cache = ygg::UnorderedMap<FamilyConstructorView<Family, Category>, DenotationView<Category>>;
-    using QueryCache = ygg::UnorderedMap<FamilyQueryView<Family>, ygg::database::RelationView<>>;
+    using QueryCache = ygg::UnorderedMap<FamilyQueryView<Family>, QueryDenotationView>;
 
 private:
     struct Partition
@@ -39,7 +39,7 @@ private:
     };
 
     std::array<Partition, 2> m_partitions;
-    ygg::database::JoinIndexCache<> m_static_join_indexes;
+    ygg::database::JoinIndexCache<ygg::Index<tyr::formalism::Object>> m_static_join_indexes;
 
 public:
     DenotationCaches() = default;

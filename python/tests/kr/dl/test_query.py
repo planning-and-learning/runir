@@ -9,7 +9,7 @@ from pyrunir.kr.ps.base.dl import parse_sketch
 from pyrunir.kr.ps.ext.dl import parse_program
 from pyrunir.kr.uns.dl import parse_classifier
 from pyrunir.serialization import register_table, serialize, table
-from pyyggdrasil.database import RelationRepository, RelationView
+from pytyr.formalism.planning import Object
 from pyyggdrasil.serialization import Dictionaries
 
 
@@ -76,8 +76,11 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     retained = expression.evaluate(retained_context)
     retained_query = expression.get_variant().get_arg().evaluate(retained_context)
     relations = task.dl_denotation_repository.get_relation_repository()
-    assert isinstance(relations, RelationRepository)
-    assert isinstance(retained_query, RelationView)
+    assert isinstance(relations, semantics.QueryDenotationRepository)
+    assert isinstance(retained_query, semantics.QueryDenotation)
+    assert isinstance(retained_query.get_index(), semantics.QueryDenotationIndex)
+    assert all(isinstance(row, semantics.QueryDenotationRow) for row in retained_query)
+    assert all(isinstance(object_, Object) for row in retained_query for object_ in row)
     assert relations.rename(retained_query, list(retained_query.columns())) == retained_query
     retained_rows = {tuple(row) for row in retained_query}
     with pytest.raises(TypeError):
@@ -89,6 +92,8 @@ def test_nested_query_owner_round_trip_bindings_complexity_and_serialization(
     assert {tuple(row) for row in retained_query} == retained_rows
     assert expression.evaluate(evaluation_context).get() is True
     ordinary_query = expression.get_variant().get_arg().evaluate(evaluation_context)
+    with pytest.raises(ValueError, match="source in this repository"):
+        relations.rename(ordinary_query, list(ordinary_query.columns()))
     del evaluation_context, retained_context, persistent_caches, storage, repository, relations, task, state, bindings
     gc.collect()
     assert retained.get() is True
@@ -294,7 +299,7 @@ def test_query_column_retains_owner_after_list_and_repository_scope(gripper_plan
         repository = factory.create(gripper_planning_domain)
         column_indices = []
         for name in ("left", "right"):
-            data = module.QueryColumnData()
+            data = semantics.QueryColumnData()
             data.name = name
             column_indices.append(repository.insert(data)[0].get_index())
 

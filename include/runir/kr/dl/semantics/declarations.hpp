@@ -5,9 +5,11 @@
 
 #include <concepts>
 #include <memory>
+#include <tyr/formalism/object_index.hpp>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/database/declarations.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -26,9 +28,6 @@ struct Denotation;
 using DenotationTypes = ygg::TypeList<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>>;
 using DenotationRecordTypes = ygg::ConcatTypeListsT<DenotationTypes, ygg::TypeList<RegisterValues, CallArguments>>;
 
-template<typename Index, std::unsigned_integral Block>
-struct IndexCoder;
-
 class Builder;
 class DenotationRepository;
 class DenotationRepositoryFactory;
@@ -41,6 +40,7 @@ template<CategoryTag Category>
 using DenotationView = ygg::View<ygg::Index<Denotation<Category>>, DenotationRepository>;
 
 using ConceptDenotationView = DenotationView<ConceptTag>;
+using QueryDenotationView = ygg::View<ygg::Index<ygg::database::Relation<ygg::Index<tyr::formalism::Object>>>, DenotationRepository>;
 using DenotationRepositoryPtr = std::shared_ptr<DenotationRepository>;
 
 }

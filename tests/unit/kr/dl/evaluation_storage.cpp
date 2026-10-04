@@ -24,6 +24,7 @@ namespace
 namespace dl = kr::dl;
 namespace sem = dl::semantics;
 using Ext = kr::ExtFamilyTag;
+using ObjectIndex = ygg::Index<tyr::formalism::Object>;
 
 using GroundExtContext = sem::StateEvaluationContext<Ext, tyr::GroundTag>;
 struct InvalidResultContext : GroundExtContext
@@ -53,7 +54,7 @@ static_assert(!sem::StateEvaluationContextConcept<WrongKindContext>);
 constexpr auto acquires_builder = []<typename T, typename... Args>()
 { return requires(sem::Builder& builder, Args&&... args) { builder.template get_builder<T>(std::forward<Args>(args)...); }; };
 static_assert(acquires_builder.template operator()<sem::Denotation<dl::ConceptTag>, ygg::uint_t>());
-static_assert(acquires_builder.template operator()<ygg::database::Relation<>, std::span<const ygg::Index<ygg::database::Column>>>());
+static_assert(acquires_builder.template operator()<ygg::database::Relation<ObjectIndex>, std::span<const ygg::Index<ygg::database::Column>>>());
 static_assert(!acquires_builder.template operator()<int>());
 static_assert(!acquires_builder.template operator()<sem::Denotation<dl::ConceptTag>, std::string>());
 
@@ -505,7 +506,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     const auto right_result = sem::evaluate(right, context);
     ASSERT_EQ(left_result.size(), 9);
     EXPECT_TRUE(std::ranges::equal(left_result.columns(), columns));
-    EXPECT_EQ(&left_result.get_context(), &results);
+    EXPECT_EQ(&left_result.get_context(), &persistent);
     EXPECT_EQ(left_result, right_result);
     EXPECT_EQ(left_result.get_storage_address(), right_result.get_storage_address());
     EXPECT_EQ(results.size(), 1);
@@ -523,10 +524,10 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_EQ(results.size(), 2);
 
     {
-        auto direct = builder.get_builder<ygg::database::Relation<>>(columns);
+        auto direct = builder.get_builder<ygg::database::Relation<ObjectIndex>>(columns);
         for (size_t i = 0; i < left_result.size(); ++i)
-            direct->insert(left_result[i]);
-        const auto [interned, inserted] = ygg::database::insert(results, *direct);
+            direct->insert(left_result.row(i));
+        const auto [interned, inserted] = sem::insert(persistent, *direct);
         EXPECT_FALSE(inserted);
         EXPECT_EQ(interned, left_result);
     }
@@ -537,7 +538,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     first_repository.reset();
     second_repository.reset();
     EXPECT_EQ(left_result.size(), 9);
-    EXPECT_TRUE(left_result.contains({ 0, 2 }));
+    EXPECT_TRUE(left_result.contains({ ObjectIndex(0), ObjectIndex(2) }));
     EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns));
     auto fresh_repository = factory.create(search->task->get_repository());
     const auto fresh = query("(q_role (fresh_source fresh_target) (r_universal))", *fresh_repository);

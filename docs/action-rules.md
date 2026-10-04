@@ -168,12 +168,17 @@ feature = module.get_query_features()[0]
 columns = tuple(column.get_name() for column in feature.get_expression().get_columns())
 state_context = environment.make_dl_context(program_state)
 relation = ext.evaluate(feature, state_context)
-snapshot = tuple(tuple(row) for row in relation)
+snapshot = tuple(tuple(int(object_.get_index()) for object_ in row) for row in relation)
 ```
 
-`relation` is an interned `pyyggdrasil.database.RelationView`.
-It exposes `get_index()`, iteration, row access, and shape operations directly.
-Rows contain read-only Tyr object indices, with values ordered by `columns`.
+`relation` is an interned `pyrunir.kr.dl.base.semantics.QueryDenotation`,
+shared by all DL families. Import shared query result types and
+`QueryColumnData`/`QueryColumnIndex` from `pyrunir.kr.dl.base.semantics`.
+The relation exposes `get_index()`, iteration, row access, and
+shape operations directly. Each `QueryDenotationRow` lazily yields the existing
+`pytyr.formalism.planning.Object` views, with values ordered by `columns`.
+Use `object_.get_name()` to inspect a value or `int(object_.get_index())` for an
+independent numeric snapshot, as above.
 Interning preserves column order; rows form a canonical set whose iteration
 order follows interned row identities rather than insertion order.
 Repeated evaluation in an unchanged context reuses the cached query identity.

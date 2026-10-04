@@ -35,7 +35,7 @@ namespace runir::kr::dl::semantics
 {
 
 template<FamilyTag Family, StateEvaluationContextConcept<Family> Context, typename C>
-auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, Context& context) -> ygg::database::RelationView<>;
+auto evaluate(ygg::View<ygg::Index<Query<Family>>, C> constructor, Context& context) -> QueryDenotationView;
 
 template<FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family> Context, typename C>
 auto evaluate_impl(ygg::View<ygg::Index<QueryProjection<Family, Category>>, C> constructor, Context& context) -> DenotationView<Category>;
@@ -214,11 +214,11 @@ bool evaluate_atomic_goal_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, Ato
 
 inline bool nonempty(DenotationView<ConceptTag> value) { return value.get().any(); }
 inline bool nonempty(DenotationView<RoleTag> value) { return value.any(); }
-inline bool nonempty(ygg::database::RelationView<> value) { return !value.empty(); }
+inline bool nonempty(QueryDenotationView value) { return !value.empty(); }
 
 inline ygg::uint_t count(DenotationView<ConceptTag> value) { return ygg::to_uint_t(value.get().count()); }
 inline ygg::uint_t count(DenotationView<RoleTag> value) { return ygg::to_uint_t(value.count()); }
-inline ygg::uint_t count(ygg::database::RelationView<> value) { return ygg::to_uint_t(value.size()); }
+inline ygg::uint_t count(QueryDenotationView value) { return ygg::to_uint_t(value.size()); }
 
 template<ComparisonTag Tag>
 constexpr bool apply_comparison(ygg::uint_t lhs, ygg::uint_t rhs) noexcept

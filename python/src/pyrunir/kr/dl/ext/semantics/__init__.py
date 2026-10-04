@@ -25,8 +25,6 @@ from ....._pyrunir.kr.dl.ext.semantics import (
     NumericalMaxData,
     NumericalMaxIndex,
     QueryColumn,
-    QueryColumnData,
-    QueryColumnIndex,
     Query,
     QueryData,
     QueryIndex,

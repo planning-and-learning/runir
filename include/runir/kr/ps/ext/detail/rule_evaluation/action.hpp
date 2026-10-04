@@ -24,7 +24,8 @@ namespace runir::kr::ps::ext::detail
 {
 
 template<tyr::planning::StateViewConcept State>
-[[noreturn]] void action_rule_contract_error(RuleView<ActionTag> rule, const State& state, std::span<const ygg::uint_t> tuple, std::string_view reason)
+[[noreturn]] void
+action_rule_contract_error(RuleView<ActionTag> rule, const State& state, std::span<const ygg::Index<tyr::formalism::Object>> tuple, std::string_view reason)
 {
     auto message = std::ostringstream {};
     message << "Action rule " << ygg::uint_t(rule.get_index()) << " for '" << rule.get_action_name().str() << "' in state";
@@ -32,7 +33,7 @@ template<tyr::planning::StateViewConcept State>
         message << ' ' << ygg::uint_t(state.get_index());
     message << " with tuple (";
     for (size_t i = 0; i < tuple.size(); ++i)
-        message << (i ? ", " : "") << tuple[i];
+        message << (i ? ", " : "") << ygg::uint_t(tuple[i]);
     message << "): " << reason;
     throw ActionRuleContractError(message.str());
 }
@@ -40,8 +41,7 @@ template<tyr::planning::StateViewConcept State>
 struct ActionRuleWorkspace
 {
     ygg::Data<tyr::formalism::RelationBinding<tyr::formalism::planning::Action<tyr::LiftedTag>>> binding;
-    std::vector<tyr::formalism::planning::ObjectView> objects;
-    std::vector<ygg::uint_t> tuple;
+    std::vector<ygg::Index<tyr::formalism::Object>> tuple;
 };
 
 template<tyr::TaskKind Kind>
@@ -62,25 +62,20 @@ class ActionRuleEvaluator
     template<tyr::planning::StateViewConcept<Kind> State>
     tyr::formalism::planning::ActionBindingView applicable_binding(tyr::planning::SuccessorGenerator<Kind>& generator,
                                                                    const State& planning_state,
-                                                                   std::span<const ygg::uint_t> tuple,
+                                                                   tyr::formalism::planning::ObjectSpanView objects,
                                                                    ActionRuleWorkspace& workspace) const
     {
         auto& binding = workspace.binding;
         binding.relation = m_action.get_index();
         binding.objects.clear();
-        workspace.objects.clear();
-        for (const auto object : tuple)
-        {
-            const auto index = ygg::Index<tyr::formalism::Object>(object);
+        for (const auto index : objects.get_data())
             binding.objects.push_back(index);
-            workspace.objects.push_back(ygg::make_view(index, *generator.get_task()->get_repository()));
-        }
         // Policy applicability has no carried path metric.
-        const auto status = generator.check_action_binding(tyr::planning::Node<State>(planning_state, 0), m_action, workspace.objects);
+        const auto status = generator.check_action_binding(tyr::planning::Node<State>(planning_state, 0), m_action, objects);
         if (status == tyr::planning::ActionBindingStatus::OUTSIDE_PARAMETER_DOMAIN)
-            action_rule_contract_error(m_rule, planning_state, tuple, "object is outside the action parameter domain");
+            action_rule_contract_error(m_rule, planning_state, objects.get_data(), "object is outside the action parameter domain");
         if (status != tyr::planning::ActionBindingStatus::APPLICABLE)
-            action_rule_contract_error(m_rule, planning_state, tuple, "offered action is not applicable");
+            action_rule_contract_error(m_rule, planning_state, objects.get_data(), "offered action is not applicable");
         return tyr::formalism::planning::insert(*generator.get_task()->get_repository(), binding).first;
     }
 
@@ -102,7 +97,7 @@ private:
                               S state,
                               const PS& planning_state,
                               const tyr::planning::LabeledNode<PS>& candidate,
-                              std::span<const ygg::uint_t> tuple)
+                              std::span<const ygg::Index<tyr::formalism::Object>> tuple)
     {
         context.environment.reset_target();
         auto transition = context.environment.make_dl_transition_context(planning_state,
@@ -126,14 +121,13 @@ public:
             context.environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
         const auto query = evaluate(rule.get_query_feature(), state_context);
         validate_query(planning_state, query.arity());
-        for (std::size_t i = 0; i < query.size(); ++i)
+        for (const auto objects : query)
         {
             if (stop())
                 return false;
-            const auto tuple = query[i];
-            const auto binding = applicable_binding(*context.task_context->search_context->successor_generator, planning_state, tuple, workspace);
+            const auto binding = applicable_binding(*context.task_context->search_context->successor_generator, planning_state, objects, workspace);
             const auto candidate = context.storage.successor(planning_state, binding);
-            check_action_effects(context, rule, state, planning_state, candidate, tuple);
+            check_action_effects(context, rule, state, planning_state, candidate, objects.get_data());
             if (!emit(detail::planning_step(context.storage, state, candidate, rule_variant, rule.get_target(), context.task_context)))
                 return false;
         }
@@ -153,10 +147,11 @@ public:
         validate_query(planning_state, query.arity());
         workspace.tuple.clear();
         for (const auto object : candidate.label.get_objects())
-            workspace.tuple.push_back(ygg::uint_t(object.get_index()));
-        if (workspace.tuple.size() != query.arity() || !query.contains(std::span<const ygg::uint_t>(workspace.tuple)))
+            workspace.tuple.push_back(object.get_index());
+        if (workspace.tuple.size() != query.arity() || !query.contains(std::span<const ygg::Index<tyr::formalism::Object>>(workspace.tuple)))
             return false;
-        applicable_binding(*context.task_context->search_context->successor_generator, planning_state, workspace.tuple, workspace);
+        const auto objects = ygg::make_view(std::span<const ygg::Index<tyr::formalism::Object>>(workspace.tuple), candidate.label.get_context());
+        applicable_binding(*context.task_context->search_context->successor_generator, planning_state, objects, workspace);
         check_action_effects(context, rule, state, planning_state, candidate, workspace.tuple);
         return true;
     }

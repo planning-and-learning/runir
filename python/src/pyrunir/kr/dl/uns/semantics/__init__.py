@@ -4,8 +4,6 @@ from ....._pyrunir.kr.dl.uns.semantics import (
     ConstructorRepository,
     ConstructorRepositoryFactory,
     QueryColumn,
-    QueryColumnData,
-    QueryColumnIndex,
     Query,
     QueryData,
     QueryIndex,

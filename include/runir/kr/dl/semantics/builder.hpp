@@ -27,7 +27,7 @@ private:
 
     DenotationBuilderStorage m_builders;
     DenotationDataStorage m_data;
-    ygg::database::RelationPool<> m_relation_builders;
+    ygg::database::RelationPool<ygg::Index<tyr::formalism::Object>> m_relation_builders;
     EvaluationWorkspace m_workspace;
 
 public:
@@ -35,10 +35,10 @@ public:
     auto& get_workspace() noexcept { return m_workspace; }
 
     template<typename T>
-        requires(DenotationTypes::contains<T> || std::same_as<T, ygg::database::Relation<>>)
+        requires(DenotationTypes::contains<T> || std::same_as<T, ygg::database::Relation<ygg::Index<tyr::formalism::Object>>>)
     [[nodiscard]] auto get_builder()
     {
-        if constexpr (std::same_as<T, ygg::database::Relation<>>)
+        if constexpr (std::same_as<T, ygg::database::Relation<ygg::Index<tyr::formalism::Object>>>)
             return m_relation_builders.get_or_allocate({});
         else
             return std::get<ygg::UniqueObjectPool<ygg::Builder<T>>>(m_builders).get_or_allocate();
@@ -47,11 +47,12 @@ public:
     template<typename T, typename... Args>
         requires(sizeof...(Args) > 0
                  && ((DenotationTypes::contains<T> && requires(DenotationPool<T>& pool, Args&&... args) { pool.get_or_allocate(std::forward<Args>(args)...); })
-                     || (std::same_as<T, ygg::database::Relation<>>
-                         && requires(ygg::database::RelationPool<>& pool, Args&&... args) { pool.get_or_allocate(std::forward<Args>(args)...); })))
+                     || (std::same_as<T, ygg::database::Relation<ygg::Index<tyr::formalism::Object>>>
+                         && requires(ygg::database::RelationPool<ygg::Index<tyr::formalism::Object>>& pool,
+                                     Args&&... args) { pool.get_or_allocate(std::forward<Args>(args)...); })))
     [[nodiscard]] auto get_builder(Args&&... args)
     {
-        if constexpr (std::same_as<T, ygg::database::Relation<>>)
+        if constexpr (std::same_as<T, ygg::database::Relation<ygg::Index<tyr::formalism::Object>>>)
             return m_relation_builders.get_or_allocate(std::forward<Args>(args)...);
         else
             return std::get<ygg::UniqueObjectPool<ygg::Builder<T>>>(m_builders).get_or_allocate(std::forward<Args>(args)...);

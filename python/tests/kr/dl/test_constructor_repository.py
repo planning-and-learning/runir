@@ -11,7 +11,7 @@ from pyrunir.kr.dl import base, ext, uns
 def test_insert_returns_creation_flag_and_retains_owner_on_view(gripper_planning_domain, family):
     def create_view():
         repository = family.semantics.ConstructorRepositoryFactory().create(gripper_planning_domain)
-        data = family.semantics.QueryColumnData()
+        data = base.semantics.QueryColumnData()
         data.name = "retained"
         before = sys.getrefcount(repository)
         result = repository.insert(data)
@@ -51,7 +51,11 @@ def test_repository_constructs_queries_and_semantic_wrappers(
         return result
 
     constructor = create(category, variant=create(leaf).get_index())
-    columns = [create("QueryColumn", name=name).get_index() for name in names]
+    columns = []
+    for name in names:
+        data = base.semantics.QueryColumnData()
+        data.name = name
+        columns.append(repository.insert(data)[0].get_index())
     atom = create(f"Query{category}", columns=columns, arg=constructor.get_index())
     query = create("Query", variant=atom.get_index())
     joined = create("QueryJoin", lhs=query.get_index(), rhs=query.get_index())

@@ -158,7 +158,7 @@ def test_histories_evaluation_and_owned_views(kind):
     assert len(rows) == 2
     assert len({ball for ball, _ in rows}) == 2
     robot = next(feature for feature in loaded.module.get_concept_features() if feature.get_symbol() == "robot")
-    assert {room for _, room in rows} == {int(obj.get_index()) for obj in icp.evaluate(robot, dl_context)}
+    assert {room for _, room in rows} == set(icp.evaluate(robot, dl_context))
     assert len(collect_steps(expander, loaded)) == 2
     histories = loaded.histories
     counts = [len(list(history)) for history in histories.concepts]

@@ -5,8 +5,11 @@ All DL expressions use `evaluate(expression, context)` in C++, or
 `evaluate(feature, context)`. The context selects result repositories and
 memoization; an additional repository argument is no longer part of evaluation.
 Concept, role, Boolean, and numerical results are interned denotation views.
-Queries return Yggdrasil's interned `RelationView` with ordered columns and a
-canonical set of rows. All result kinds belong to `DenotationRepository`.
+Queries return `QueryDenotationView`, a Yggdrasil relation view over typed Tyr
+object indices with `DenotationRepository` as its context. Its rows are borrowed
+`ObjectSpanView` values that lazily expose Tyr object views. Ordered columns and
+a canonical set of rows retain the same storage model as other relations.
+All result kinds belong to `DenotationRepository`.
 
 `semantics/interning.hpp` provides three conversion operations:
 
@@ -151,8 +154,11 @@ output configuration, and the renamed result uses the child's owning partition.
 Other child results can remain in scratch storage.
 
 `DenotationRepository::get_relation_repository()` exposes its Yggdrasil relation
-storage. Query result identity consists of the ordered numeric column schema and
-row set. Equal schemas and rows share a result even when different constructor
+storage of typed object indices. Python exposes it as
+`pyrunir.kr.dl.base.semantics.QueryDenotationRepository`;
+`rename(query, columns)` returns a `QueryDenotation` with the same planning and
+storage context, retaining both Python owners. Query result identity consists of
+the ordered numeric column schema and row set. Equal schemas and rows share a result even when different constructor
 repositories produced them; variable names remain on the query expressions.
 Inserting the same rows in another order produces the same identity. Canonical
 iteration follows interned row indices, so it need not match insertion order.

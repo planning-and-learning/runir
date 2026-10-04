@@ -111,19 +111,7 @@ void bind_query_projection(nb::module_& m, const char* name)
 template<FamilyTag Family>
 void bind_queries(nb::module_& m)
 {
-    using ColumnData = ygg::Data<QueryColumn>;
     using ColumnView = ygg::View<ygg::Index<QueryColumn>, ConstructorRepositoryFor<Family>>;
-    if constexpr (std::same_as<Family, runir::kr::BaseFamilyTag>)
-    {
-        ygg::bind_index<ygg::Index<QueryColumn>>(m, "QueryColumnIndex");
-        auto data = nb::class_<ColumnData>(m, "QueryColumnData").def(nb::init<>()).def_rw("index", &ColumnData::index).def_rw("name", &ColumnData::name);
-        ygg::add_comparison(data);
-    }
-    else
-    {
-        m.attr("QueryColumnIndex") = nb::type<ygg::Index<QueryColumn>>();
-        m.attr("QueryColumnData") = nb::type<ColumnData>();
-    }
     auto column = nb::class_<ColumnView>(m, "QueryColumn").def("get_index", &ColumnView::get_index).def("get_name", &ColumnView::get_name);
     ygg::add_print(column);
     ygg::add_comparison(column);

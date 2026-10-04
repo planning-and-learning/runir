@@ -35,6 +35,7 @@ namespace dl = kr::dl;
 namespace sem = dl::semantics;
 namespace parser = kr::ps::ext::dl;
 using Ext = kr::ExtFamilyTag;
+using ObjectIndex = ygg::Index<tyr::formalism::Object>;
 using ColumnIndex = ygg::Index<ygg::database::Column>;
 static_assert(!std::same_as<ColumnIndex, ygg::Index<tyr::formalism::Object>>);
 static_assert(!std::is_convertible_v<ygg::Index<tyr::formalism::Object>, ColumnIndex>);
@@ -634,9 +635,8 @@ void check_query_cache_across_states()
     const auto static_join = parse_query(R"((q_join (q_atomic_state "fixed" (x y z)) (q_atomic_state "fixed" (x y z))))", domain, *repository);
     const auto count = parser::parse_numerical(R"((n_count (q_atomic_state "triple" (x y z))))", domain, *repository);
     const auto fixed_count = parser::parse_numerical(R"((n_count (q_atomic_state "fixed" (x y z))))", domain, *repository);
-    const auto matching_row = std::array { ygg::uint_t(domain.get_constants()[0].get_index()),
-                                           ygg::uint_t(domain.get_constants()[1].get_index()),
-                                           ygg::uint_t(domain.get_constants()[2].get_index()) };
+    const auto matching_row =
+        std::array { domain.get_constants()[0].get_index(), domain.get_constants()[1].get_index(), domain.get_constants()[2].get_index() };
     const auto check_mixed_joins = [&](auto& target)
     {
         const auto matches = sem::evaluate(triple, target).contains(matching_row);
@@ -797,7 +797,7 @@ void check_query_cache_across_bindings()
     EXPECT_EQ(sem::evaluate(role_register, bound).size(), 1);
     const auto rhs_rows = sem::evaluate(register_rhs, bound);
     EXPECT_EQ(rhs_rows.size(), 1);
-    EXPECT_TRUE(rhs_rows.contains({ ygg::uint_t(a.get_index()), ygg::uint_t(c.get_index()), ygg::uint_t(b.get_index()) }));
+    EXPECT_TRUE(rhs_rows.contains({ a.get_index(), c.get_index(), b.get_index() }));
     EXPECT_TRUE(std::ranges::equal(rhs_rows.columns(), register_rhs.get_schema()));
     EXPECT_TRUE(sem::evaluate(role_register_rhs, bound).empty());
     registers.concept_values[0] = b.get_index();
@@ -813,7 +813,7 @@ void check_query_cache_across_bindings()
     // Reordered shared columns are matched by label, not by their position in either operand.
     const auto rhs_role_rows = sem::evaluate(role_register_rhs, rebound);
     EXPECT_EQ(rhs_role_rows.size(), 1);
-    EXPECT_TRUE(rhs_role_rows.contains({ ygg::uint_t(b.get_index()), ygg::uint_t(c.get_index()), ygg::uint_t(a.get_index()) }));
+    EXPECT_TRUE(rhs_role_rows.contains({ b.get_index(), c.get_index(), a.get_index() }));
     EXPECT_TRUE(std::ranges::equal(rhs_role_rows.columns(), role_register_rhs.get_schema()));
     EXPECT_TRUE(caches.template get<dl::NumericalTag>(false).contains(register_count));
     EXPECT_FALSE(caches.template get<dl::NumericalTag>(true).contains(register_count));
@@ -923,6 +923,73 @@ void check_predicate_repository_identity()
 }
 
 template<tyr::TaskKind Kind>
+void check_query_object_views()
+{
+    namespace fp = tyr::formalism::planning;
+    const auto execution = ygg::ExecutionContext::create(1);
+    const auto lifted = tyr::planning::Task<tyr::LiftedTag>::create(fp::Parser(R"(
+(define (domain query-objects)
+  (:requirements :strips)
+  (:constants parent)
+  (:predicates (fixed ?x ?y)))
+)",
+                                                                               "query-objects-domain.pddl")
+                                                                        .parse_task(R"(
+(define (problem query-objects-task)
+  (:domain query-objects)
+  (:objects local)
+  (:init (fixed parent local))
+  (:goal (fixed parent local)))
+)",
+                                                                                    "query-objects-task.pddl"));
+    const auto task = [&]
+    {
+        if constexpr (std::same_as<Kind, tyr::GroundTag>)
+            return lifted->instantiate_ground_task(*execution).task;
+        else
+            return lifted;
+    }();
+    ASSERT_TRUE(task);
+    const auto search = datasets::TaskSearchContext<Kind>::create(task, execution);
+    const auto state = search->state_repository->get_initial_state(*search->axiom_evaluator);
+    auto constructors = dl::ConstructorRepositoryFactoryFor<Ext>().create(task->get_repository());
+    auto denotations = sem::DenotationRepositoryFactory().create(task->get_repository());
+    auto builder = sem::Builder {};
+    auto storage = sem::EvaluationStorage<Ext>(denotations);
+    auto arguments = ygg::Data<sem::CallArguments> {};
+    auto registers = ygg::Data<sem::RegisterValues> {};
+    auto context =
+        sem::StateEvaluationContext<Ext, Kind>(state, builder, storage, sem::insert(denotations, arguments).first, sem::insert(denotations, registers).first);
+    const auto query = parse_query(R"((q_atomic_state "fixed" (x y)))", task->get_domain().get_domain(), *constructors);
+    const auto constant = task->get_task().get_domain().get_constants()[0];
+    const auto local = task->get_task().get_objects()[0];
+    ASSERT_NE(&constant.get_context(), &local.get_context());
+    const auto expected = std::array { constant, local };
+    const auto raw = std::array { constant.get_index(), local.get_index() };
+    const auto result = sem::evaluate(query, context);
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(&result.get_context(), &storage.get_denotation_repository(true));
+    const auto row = result[0];
+    static_assert(std::same_as<std::remove_cvref_t<decltype(row)>, fp::ObjectSpanView>);
+    EXPECT_EQ(&row.get_context(), task->get_repository().get());
+    EXPECT_TRUE(std::ranges::equal(result.row(0), raw));
+    EXPECT_TRUE(result.contains(raw));
+    EXPECT_TRUE(std::ranges::equal(row, expected));
+    EXPECT_EQ(row[0].get_name(), "parent");
+    EXPECT_EQ(row[1].get_name(), "local");
+    EXPECT_EQ(&row[0].get_context(), &constant.get_context());
+    EXPECT_EQ(&row[1].get_context(), &local.get_context());
+
+    storage.reset_dynamic();
+    EXPECT_TRUE(std::ranges::equal(row, expected));
+    EXPECT_EQ(sem::evaluate(query, context), result);
+    storage.reset_all();
+    const auto rebuilt = sem::evaluate(query, context);
+    ASSERT_EQ(rebuilt.size(), 1);
+    EXPECT_TRUE(std::ranges::equal(rebuilt[0], expected));
+}
+
+template<tyr::TaskKind Kind>
 void check_multiword_bit_evaluation()
 {
     constexpr auto word_bits = ygg::uint_t(std::numeric_limits<ygg::uint_t>::digits);
@@ -937,9 +1004,9 @@ void check_multiword_bit_evaluation()
     for (const auto i : { ygg::uint_t(0), word_bits - 1, word_bits, last })
         task_source += " (marked " + name(i) + ")";
     for (const auto& [from, to] : std::array { std::pair { ygg::uint_t(0), word_bits - 1 },
-                                              std::pair { ygg::uint_t(0), word_bits },
-                                              std::pair { word_bits - 1, last },
-                                              std::pair { word_bits, last } })
+                                               std::pair { ygg::uint_t(0), word_bits },
+                                               std::pair { word_bits - 1, last },
+                                               std::pair { word_bits, last } })
         task_source += " (edge " + name(from) + " " + name(to) + ")";
     task_source += ") (:goal (and)))";
     auto execution = ygg::ExecutionContext::create(1);
@@ -981,23 +1048,23 @@ void check_multiword_bit_evaluation()
     const auto selected = query("(q_concept x " + marked + ")");
     ASSERT_EQ(selected.size(), 4);
     for (const auto i : { ygg::uint_t(0), word_bits - 1, word_bits, last })
-        EXPECT_TRUE(selected.contains({ i }));
+        EXPECT_TRUE(selected.contains({ ObjectIndex(i) }));
     EXPECT_EQ(query("(q_concept x (c_top))").size(), num_objects);
     EXPECT_TRUE(query("(q_concept x (c_bot))").empty());
     const auto identity = query("(q_role (x y) (r_identity (c_top)))");
     EXPECT_EQ(identity.size(), num_objects);
-    EXPECT_TRUE(identity.contains({ last, last }));
+    EXPECT_TRUE(identity.contains({ ObjectIndex(last), ObjectIndex(last) }));
     EXPECT_TRUE(query("(q_role (x y) (r_identity (c_bot)))").empty());
 
     const auto inverse = query("(q_role (x y) (r_inverse " + edge + "))");
     ASSERT_EQ(inverse.size(), 4);
-    EXPECT_TRUE(inverse.contains({ word_bits - 1, 0 }));
-    EXPECT_TRUE(inverse.contains({ word_bits, 0 }));
-    EXPECT_TRUE(inverse.contains({ last, word_bits - 1 }));
-    EXPECT_TRUE(inverse.contains({ last, word_bits }));
+    EXPECT_TRUE(inverse.contains({ ObjectIndex(word_bits - 1), ObjectIndex(0) }));
+    EXPECT_TRUE(inverse.contains({ ObjectIndex(word_bits), ObjectIndex(0) }));
+    EXPECT_TRUE(inverse.contains({ ObjectIndex(last), ObjectIndex(word_bits - 1) }));
+    EXPECT_TRUE(inverse.contains({ ObjectIndex(last), ObjectIndex(word_bits) }));
     const auto composition = query("(q_role (x y) (r_composition " + edge + " " + edge + "))");
     ASSERT_EQ(composition.size(), 1);
-    EXPECT_TRUE(composition.contains({ 0, last }));
+    EXPECT_TRUE(composition.contains({ ObjectIndex(0), ObjectIndex(last) }));
     EXPECT_TRUE(query("(q_role (x y) (r_composition " + edge + " (r_identity (c_bot))))").empty());
 
     const auto at_least = concept_value("(c_at_least 2 " + edge + " " + marked + ")").get();
@@ -1020,6 +1087,8 @@ void check_multiword_bit_evaluation()
 
 }  // namespace
 
+TEST(RunirQueries, GroundQueryRowsResolveCanonicalObjectViews) { check_query_object_views<tyr::GroundTag>(); }
+TEST(RunirQueries, LiftedQueryRowsResolveCanonicalObjectViews) { check_query_object_views<tyr::LiftedTag>(); }
 TEST(RunirQueries, GroundMultiwordBitEvaluation) { check_multiword_bit_evaluation<tyr::GroundTag>(); }
 TEST(RunirQueries, LiftedMultiwordBitEvaluation) { check_multiword_bit_evaluation<tyr::LiftedTag>(); }
 TEST(RunirQueries, GroundAtomicEvaluationChecksPredicateRepository) { check_predicate_repository_identity<tyr::GroundTag>(); }
@@ -1183,16 +1252,16 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
     auto builder = sem::Builder {};
     auto& repository = denotations.get_relation_repository();
-    using Row = std::array<ygg::uint_t, 2>;
+    using Row = std::array<ObjectIndex, 2>;
     const auto intern = [&](std::array<ColumnIndex, 2> columns, std::array<Row, 2> rows)
     {
-        auto result = builder.get_builder<ygg::database::Relation<>>(columns);
+        auto result = builder.get_builder<ygg::database::Relation<ObjectIndex>>(columns);
         for (const auto& row : rows)
-            result->insert(std::span<const ygg::uint_t>(row));
+            result->insert(std::span<const ObjectIndex>(row));
         return ygg::database::insert(repository, *result).first;
     };
     const auto columns = std::array<ColumnIndex, 2> { ColumnIndex(0), ColumnIndex(1) };
-    const auto rows = std::array<Row, 2> { Row { 2, 3 }, Row { 4, 5 } };
+    const auto rows = std::array<Row, 2> { Row { ObjectIndex(2), ObjectIndex(3) }, Row { ObjectIndex(4), ObjectIndex(5) } };
     const auto first = intern(columns, rows);
     EXPECT_EQ(intern(columns, rows), first);
     EXPECT_NE(intern({ ColumnIndex(1), ColumnIndex(0) }, rows), first);
@@ -1231,14 +1300,14 @@ TEST(RunirQueries, PersistentRenameSurvivesIntermediateResetAndConstructorReleas
     const auto result = sem::evaluate(expression, context);
     ASSERT_EQ(result.size(), 4);
     const auto schema = std::vector<ColumnIndex>(result.columns().begin(), result.columns().end());
-    const auto first = std::vector<ygg::uint_t>(result[0].begin(), result[0].end());
+    const auto first = std::vector<ObjectIndex>(result.row(0).begin(), result.row(0).end());
     intermediates.reset_all();
     EXPECT_EQ(sem::evaluate(expression, context), result);
     output_memo.reset_all();
     constructors->clear();
     EXPECT_EQ(result.size(), 4);
     EXPECT_TRUE(std::ranges::equal(result.columns(), schema));
-    EXPECT_TRUE(std::ranges::equal(result[0], first));
+    EXPECT_TRUE(std::ranges::equal(result.row(0), first));
 }
 
 }  // namespace runir::tests
