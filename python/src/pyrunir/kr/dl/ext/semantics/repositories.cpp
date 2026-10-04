@@ -4,13 +4,9 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/denotation_caches.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <runir/kr/dl/semantics/ext/state_evaluation_context.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
-#include <tyr/planning/ground/state_view.hpp>
 #include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/state_view.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -31,52 +27,6 @@ void bind_constructors(nb::class_<ExtConstructorRepository>& repository, ygg::Ty
      ...);
 }
 
-template<tyr::TaskKind Kind>
-void bind_state_evaluation_context(nb::module_& m, const char* name)
-{
-    using Context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::ExtFamilyTag, Kind>;
-    using Storage = semantics::EvaluationStorage<runir::kr::ExtFamilyTag>;
-    using Caches = semantics::DenotationCaches<runir::kr::ExtFamilyTag>;
-    nb::class_<Context>(m, name)
-        .def(nb::new_([](tyr::planning::StateView<Kind> state,
-                         semantics::Builder& builder,
-                         Storage& storage,
-                         semantics::CallArgumentsView arguments,
-                         semantics::RegisterValuesView registers) { return Context(state, builder, storage, arguments, registers); }),
-             nb::arg("state"),
-             nb::arg("builder"),
-             nb::arg("storage"),
-             nb::arg("arguments"),
-             nb::arg("registers"),
-             nb::keep_alive<0, 2>(),
-             nb::keep_alive<0, 3>(),
-             nb::keep_alive<0, 4>(),
-             nb::keep_alive<0, 5>(),
-             nb::keep_alive<0, 6>())
-        .def(nb::new_([](tyr::planning::StateView<Kind> state,
-                         semantics::Builder& builder,
-                         Caches& caches,
-                         semantics::DenotationRepository& repository,
-                         Storage& intermediates,
-                         semantics::CallArgumentsView arguments,
-                         semantics::RegisterValuesView registers) { return Context(state, builder, caches, repository, intermediates, arguments, registers); }),
-             nb::arg("state"),
-             nb::arg("builder"),
-             nb::arg("caches"),
-             nb::arg("repository"),
-             nb::arg("intermediates"),
-             nb::arg("arguments"),
-             nb::arg("registers"),
-             nb::keep_alive<0, 2>(),
-             nb::keep_alive<0, 3>(),
-             nb::keep_alive<0, 4>(),
-             nb::keep_alive<0, 5>(),
-             nb::keep_alive<0, 6>(),
-             nb::keep_alive<0, 7>(),
-             nb::keep_alive<0, 8>())
-        .def("get_state", &Context::get_state, nb::rv_policy::copy, nb::keep_alive<0, 1>());
-}
-
 }  // namespace
 
 void bind_semantics_repositories(nb::module_& m)
@@ -85,8 +35,8 @@ void bind_semantics_repositories(nb::module_& m)
 
     // Builder and the DenotationRepository[Factory] are family-independent and registered once by
     // the base semantics module.
-    bind_state_evaluation_context<tyr::GroundTag>(m, "GroundStateEvaluationContext");
-    bind_state_evaluation_context<tyr::LiftedTag>(m, "LiftedStateEvaluationContext");
+    runir::kr::python::bind_state_evaluation_context<runir::kr::ExtFamilyTag, tyr::GroundTag>(m, "GroundStateEvaluationContext");
+    runir::kr::python::bind_state_evaluation_context<runir::kr::ExtFamilyTag, tyr::LiftedTag>(m, "LiftedStateEvaluationContext");
 
     auto repository = nb::class_<runir::kr::dl::ExtConstructorRepository>(m, "ConstructorRepository");
     repository.def("clear", &runir::kr::dl::ExtConstructorRepository::clear).def("get_index", &runir::kr::dl::ExtConstructorRepository::get_index);

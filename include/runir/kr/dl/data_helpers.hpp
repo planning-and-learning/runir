@@ -1,5 +1,5 @@
-#ifndef RUNIR_SEMANTICS_DATA_HELPERS_HPP_
-#define RUNIR_SEMANTICS_DATA_HELPERS_HPP_
+#ifndef RUNIR_KR_DL_DATA_HELPERS_HPP_
+#define RUNIR_KR_DL_DATA_HELPERS_HPP_
 
 #include "runir/kr/dl/indices.hpp"
 
@@ -12,7 +12,7 @@
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
 
-namespace runir::kr::dl::semantics
+namespace runir::kr::dl
 {
 
 template<typename Self>

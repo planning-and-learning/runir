@@ -2,10 +2,10 @@
 #define RUNIR_KR_PS_BASE_COMPATIBILITY_HPP_
 
 #include "runir/kr/ps/base/declarations.hpp"
-#include "runir/kr/ps/dl/compatibility.hpp"
 #include "runir/kr/ps/base/rule_view.hpp"
 #include "runir/kr/ps/base/sketch_view.hpp"
 #include "runir/kr/ps/compatibility.hpp"
+#include "runir/kr/ps/dl/compatibility.hpp"
 
 #include <yggdrasil/core/types.hpp>
 
@@ -15,15 +15,7 @@ namespace runir::kr::ps::base
 template<typename C, typename Context>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> rule, Context& context)
 {
-    for (auto condition : rule.get_conditions())
-        if (!runir::kr::ps::is_compatible_with(condition, context))
-            return false;
-
-    for (auto effect : rule.get_effects())
-        if (!runir::kr::ps::is_compatible_with(effect, context))
-            return false;
-
-    return true;
+    return all_compatible(rule.get_conditions(), context) && all_compatible(rule.get_effects(), context);
 }
 
 template<typename C, typename Context>

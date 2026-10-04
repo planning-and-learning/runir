@@ -10,17 +10,17 @@ namespace ygg
 
 template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
 struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>> :
-    runir::kr::dl::cnf_grammar::PredicateData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>, T>
+    runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>, T>
 {
-    using Base = runir::kr::dl::cnf_grammar::PredicateData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>, T>;
+    using Base = runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::AtomicStateTag<T>>, T>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
 struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>> :
-    runir::kr::dl::cnf_grammar::PredicateData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>, T>
+    runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>, T>
 {
-    using Base = runir::kr::dl::cnf_grammar::PredicateData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>, T>;
+    using Base = runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::AtomicGoalTag<T>>, T>;
     using Base::Base;
 };
 
@@ -48,54 +48,54 @@ struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NonemptyT
 
 template<>
 struct Data<runir::kr::dl::cnf_grammar::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>> :
-    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::cnf_grammar::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
-                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>
+    runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
+                                runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>
 {
-    using Base = runir::kr::dl::semantics::ArgumentData<
-        runir::kr::dl::cnf_grammar::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
-        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>;
+    using Base =
+        runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Boolean<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::BooleanTag>>,
+                                    runir::kr::dl::ArgumentIdentifier<runir::kr::dl::BooleanTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::ComparisonTag Tag>
 struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>> :
-    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::comparison_operand_t<Tag>>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::comparison_operand_t<Tag>>>
+    runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::comparison_operand_t<Tag>>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::comparison_operand_t<Tag>>>
 {
-    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::comparison_operand_t<Tag>>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::comparison_operand_t<Tag>>>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::comparison_operand_t<Tag>>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::comparison_operand_t<Tag>>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::BooleanConstantTag>> :
-    runir::kr::dl::semantics::IdentifierData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::BooleanConstantTag>, bool>
+    runir::kr::dl::IdentifierData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::BooleanConstantTag>, bool>
 {
-    using Base = runir::kr::dl::semantics::IdentifierData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::BooleanConstantTag>, bool>;
+    using Base = runir::kr::dl::IdentifierData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::BooleanConstantTag>, bool>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::LogicalBinaryTag Tag>
 struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>> :
-    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>
+    runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Boolean<Family, Tag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NotTag>> :
-    runir::kr::dl::semantics::UnaryData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NotTag>,
-                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>
+    runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NotTag>,
+                             runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>
 {
-    using Base = runir::kr::dl::semantics::UnaryData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NotTag>,
-                                                     runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>;
+    using Base = runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Boolean<Family, runir::kr::dl::NotTag>,
+                                          runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::BooleanTag>>;
     using Base::Base;
 };
 

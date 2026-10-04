@@ -31,7 +31,7 @@ void expect_execution_records_round_trip()
 {
     auto builder = kr::ps::ext::ExecutionBuilder<Kind>();
     {
-        auto data = builder.template get_builder<kr::ps::ext::ModuleState<Kind>>();
+        auto data = builder.template checkout<kr::ps::ext::ModuleState<Kind>>();
         data->state = ygg::Index<tyr::planning::State<Kind>>(5);
         data->module_ = ygg::Index<kr::ps::ext::Module>(1);
         data->memory_state = ygg::Index<kr::ps::ext::MemoryState>(2);
@@ -40,7 +40,7 @@ void expect_execution_records_round_trip()
         expect_cista_round_trip(*data);
     }
     {
-        auto data = builder.template get_builder<kr::ps::ext::CallStack>();
+        auto data = builder.template checkout<kr::ps::ext::CallStack>();
         data->module_ = ygg::Index<kr::ps::ext::Module>(1);
         data->return_memory_state = ygg::Index<kr::ps::ext::MemoryState>(2);
         data->registers = ygg::Index<kr::dl::semantics::RegisterValues>(3);
@@ -50,12 +50,23 @@ void expect_execution_records_round_trip()
         expect_cista_round_trip(*data);
     }
     {
-        auto data = builder.template get_builder<kr::ps::ext::ProgramState<Kind>>();
+        auto data = builder.template checkout<kr::ps::ext::ProgramState<Kind>>();
         data->program = ygg::Index<kr::ps::ext::Program>(8);
         data->module_state = ygg::Index<kr::ps::ext::ModuleState<Kind>>(6);
         expect_cista_round_trip(*data);
         data->call_stack = ygg::Index<kr::ps::ext::CallStack>(9);
         expect_cista_round_trip(*data);
+    }
+    {
+        auto data = builder.template get_builder<kr::ps::ext::ProgramState<Kind>>();
+        EXPECT_EQ(data->program, ygg::Index<kr::ps::ext::Program>(8));
+        ASSERT_TRUE(data->call_stack);
+        EXPECT_EQ(*data->call_stack, ygg::Index<kr::ps::ext::CallStack>(9));
+    }
+    {
+        auto data = kr::ps::ext::checkout<kr::ps::ext::ProgramState<Kind>>(builder);
+        EXPECT_EQ(data->program, ygg::Index<kr::ps::ext::Program>());
+        EXPECT_FALSE(data->call_stack);
     }
 }
 
@@ -108,8 +119,10 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         auto& role = data->role_values[0].emplace();
         role.first = ygg::Index<tyr::formalism::Object>(0);
         role.second = ygg::Index<tyr::formalism::Object>(1);
-        canonicalize(*data);
-        return denotations.get_or_create(*data).first;
+        const auto* buffer = data->concept_values.data();
+        const auto result = ygg::formalism::get_or_create(denotations, *data).first;
+        EXPECT_EQ(data->concept_values.data(), buffer);
+        return result;
     }();
 
     {
@@ -124,7 +137,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         const auto found = denotations.find(*data);
         ASSERT_TRUE(found);
         EXPECT_EQ(found->get_index(), registers.get_index());
-        const auto [duplicate, created] = denotations.get_or_create(*data);
+        const auto [duplicate, created] = ygg::formalism::get_or_create(denotations, *data);
         EXPECT_FALSE(created);
         EXPECT_EQ(duplicate.get_index(), registers.get_index());
         EXPECT_EQ(&duplicate.get_context(), &denotations);
@@ -167,7 +180,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     const auto state = initial.get_state();
     const auto caller_configuration = [&]()
     {
-        auto data = execution_builder.get_builder<kr::ps::ext::ModuleState<tyr::GroundTag>>();
+        auto data = execution_builder.checkout<kr::ps::ext::ModuleState<tyr::GroundTag>>();
         ygg::set(state, data->state);
         ygg::set(caller, data->module_);
         ygg::set(caller_return, data->memory_state);
@@ -179,7 +192,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
 
     const auto callee_configuration = [&]()
     {
-        auto data = execution_builder.get_builder<kr::ps::ext::ModuleState<tyr::GroundTag>>();
+        auto data = execution_builder.checkout<kr::ps::ext::ModuleState<tyr::GroundTag>>();
         ygg::set(state, data->state);
         ygg::set(callee, data->module_);
         ygg::set(callee_entry, data->memory_state);
@@ -213,7 +226,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
 
     const auto caller_frame = [&]()
     {
-        auto data = execution_builder.get_builder<kr::ps::ext::CallStack>();
+        auto data = execution_builder.checkout<kr::ps::ext::CallStack>();
         ygg::set(caller, data->module_);
         ygg::set(caller_return, data->return_memory_state);
         ygg::set(registers, data->registers);
@@ -223,7 +236,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
     }();
     const auto callee_frame = [&]()
     {
-        auto data = execution_builder.get_builder<kr::ps::ext::CallStack>();
+        auto data = execution_builder.checkout<kr::ps::ext::CallStack>();
         ygg::set(callee, data->module_);
         ygg::set(callee_entry, data->return_memory_state);
         ygg::set(registers, data->registers);
@@ -236,7 +249,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         auto nested_caller_data = caller_frame.get_data();
         nested_caller_data.caller = caller_frame.get_index();
         const auto nested_caller = execution_repository->get_or_create(nested_caller_data).first;
-        auto data = execution_builder.get_builder<kr::ps::ext::ProgramState<tyr::GroundTag>>();
+        auto data = execution_builder.checkout<kr::ps::ext::ProgramState<tyr::GroundTag>>();
         ygg::set(program, data->program);
         ygg::set(callee_configuration, data->module_state);
         data->call_stack = caller_frame.get_index();
@@ -263,7 +276,7 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
 
     const auto returned_state = [&]()
     {
-        auto data = execution_builder.get_builder<kr::ps::ext::ProgramState<tyr::GroundTag>>();
+        auto data = execution_builder.checkout<kr::ps::ext::ProgramState<tyr::GroundTag>>();
         ygg::set(program, data->program);
         ygg::set(caller_configuration, data->module_state);
         canonicalize(*data);

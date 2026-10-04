@@ -25,6 +25,7 @@ struct Denotation;
 template<typename Index, std::unsigned_integral Block>
 struct IndexCoder;
 
+class Builder;
 class DenotationRepository;
 class DenotationRepositoryFactory;
 

@@ -16,6 +16,7 @@
 #include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/formalism/builder.hpp>
+#include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
 namespace runir::kr::ps::ext
@@ -25,20 +26,7 @@ template<tyr::TaskKind Kind>
 using ExecutionSymbolRepository = ygg::formalism::SymbolRepository<ModuleState<Kind>, CallStack, ProgramState<Kind>>;
 
 template<tyr::TaskKind Kind>
-class ExecutionBuilder
-{
-private:
-    ygg::formalism::BuilderStorage<ModuleState<Kind>, CallStack, ProgramState<Kind>> m_storage;
-
-public:
-    template<typename T>
-    [[nodiscard]] auto get_builder()
-    {
-        auto data = m_storage.template get_builder<T>();
-        data->clear();
-        return data;
-    }
-};
+using ExecutionBuilder = ygg::formalism::BuilderStorage<ModuleState<Kind>, CallStack, ProgramState<Kind>>;
 
 template<tyr::TaskKind Kind>
 class ExecutionRepository
@@ -68,6 +56,8 @@ private:
     }
 
 public:
+    using SymbolTypes = typename ExecutionSymbolRepository<Kind>::SymbolTypes;
+
     ExecutionRepository(const ExecutionRepository&) = delete;
     ExecutionRepository& operator=(const ExecutionRepository&) = delete;
     ExecutionRepository(ExecutionRepository&&) = delete;
@@ -81,6 +71,7 @@ public:
     void clear() noexcept { m_symbol_repository.clear(); }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
     std::optional<ygg::View<ygg::Index<T>, ExecutionRepository>> find(const ygg::Data<T>& data) const noexcept
     {
         assert(is_canonical(data));
@@ -90,6 +81,7 @@ public:
     }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
     std::pair<ygg::View<ygg::Index<T>, ExecutionRepository>, bool> get_or_create(ygg::Data<T>& data)
     {
         assert(is_canonical(data));
@@ -98,6 +90,7 @@ public:
     }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
     const ygg::Data<T>& operator[](ygg::Index<T> index) const
     {
         assert(m_symbol_repository.template is_local<T>(index));
@@ -105,6 +98,7 @@ public:
     }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
     size_t size() const noexcept
     {
         return m_symbol_repository.template local_size<T>();
@@ -134,19 +128,13 @@ public:
 };
 
 template<tyr::TaskKind Kind, typename T>
-[[nodiscard]] auto get_or_create(ExecutionRepository<Kind>& repository, ygg::Data<T>& data)
+    requires ygg::formalism::SupportsSymbol<ExecutionRepository<Kind>, T>
+void prepare_for_interning(ExecutionRepository<Kind>&, ygg::Data<T>& data)
 {
     canonicalize(data);
-    return repository.get_or_create(data);
 }
 
-template<typename T, tyr::TaskKind Kind>
-[[nodiscard]] auto checkout(ExecutionBuilder<Kind>& builder)
-{
-    auto data = builder.template get_builder<T>();
-    data->clear();
-    return data;
-}
+using ygg::formalism::get_or_create;
 
 }  // namespace runir::kr::ps::ext
 

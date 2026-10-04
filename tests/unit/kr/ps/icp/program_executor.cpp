@@ -339,6 +339,21 @@ void check_rule_evaluator_scheduling()
     const auto* reused_history_buffer = history_buffer();
     ASSERT_NE(reused_history_buffer, nullptr);
 
+    {
+        auto data = ygg::Data<icp::Histories>();
+        data.concepts = source.get_histories().get_data().concepts;
+        ASSERT_FALSE(data.concepts.empty());
+        data.concepts.push_back(data.concepts.front());
+        const auto* buffer = data.concepts.data();
+        const auto expected_size = data.concepts.size();
+        const auto [stored, created] = ygg::formalism::get_or_create(*context->icp_execution_repository, data);
+        EXPECT_TRUE(created);
+        EXPECT_EQ(stored.get_data().concepts, data.concepts);
+        EXPECT_EQ(data.concepts.size(), expected_size);
+        EXPECT_EQ(data.concepts.data(), buffer);
+        EXPECT_FALSE(icp::get_or_create(*context->icp_execution_repository, data).second);
+    }
+
     // Repeated grouped expansions retain action-group and history scratch, while the
     // public order remains binding-major and each rule still emits its own edge.
     for (int repetition = 0; repetition < 3; ++repetition)

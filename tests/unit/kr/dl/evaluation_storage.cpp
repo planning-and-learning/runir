@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
+#include <runir/kr/dl/semantics/builder.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/dl/semantics/interning.hpp>
@@ -14,6 +15,7 @@
 #include <stdexcept>
 #include <string>
 #include <tyr/planning/ground/successor_generator.hpp>
+#include <utility>
 
 namespace runir::tests
 {
@@ -176,6 +178,40 @@ TEST(RunirEvaluationStorage, RegisterExtractionClearsIdentityAndRetainsBuffers)
     EXPECT_TRUE(view.get_data().role_values[0].has_value());
 }
 
+TEST(RunirEvaluationStorage, TypedRegisterAssignmentPreservesBuffersAndClearsIdentity)
+{
+    const auto search = query_search();
+    const auto objects = search->task->get_domain().get_domain().get_constants();
+    auto values = ygg::Data<sem::RegisterValues>();
+    values.concept_values.resize(2);
+    values.role_values.resize(2);
+    values.concept_values[0] = objects[0].get_index();
+    const auto concept_buffer = values.concept_values.data();
+    const auto role_buffer = values.role_values.data();
+
+    values.index = ygg::Index<sem::RegisterValues>(42);
+    sem::assign_register(values, dl::RegisterIdentifier<dl::ConceptTag>(1), objects[1]);
+    EXPECT_EQ(values.index, ygg::Index<sem::RegisterValues>());
+    EXPECT_EQ(values.concept_values[0].value(), objects[0].get_index());
+    EXPECT_EQ(values.concept_values[1].value(), objects[1].get_index());
+
+    values.index = ygg::Index<sem::RegisterValues>(42);
+    sem::assign_register(values, dl::RegisterIdentifier<dl::RoleTag>(1), std::pair(objects[1], objects[2]));
+    EXPECT_EQ(values.index, ygg::Index<sem::RegisterValues>());
+    EXPECT_FALSE(values.role_values[0].has_value());
+    EXPECT_EQ(values.role_values[1].value().first, objects[1].get_index());
+    EXPECT_EQ(values.role_values[1].value().second, objects[2].get_index());
+    EXPECT_EQ(values.concept_values.data(), concept_buffer);
+    EXPECT_EQ(values.role_values.data(), role_buffer);
+
+    values.index = ygg::Index<sem::RegisterValues>(42);
+    const auto expected = values;
+    EXPECT_THROW(sem::assign_register(values, dl::RegisterIdentifier<dl::ConceptTag>(2), objects[2]), std::out_of_range);
+    EXPECT_THROW(sem::assign_register(values, dl::RegisterIdentifier<dl::RoleTag>(2), std::pair(objects[2], objects[0])), std::out_of_range);
+    EXPECT_EQ(values.index, expected.index);
+    EXPECT_TRUE(ygg::EqualTo<ygg::Data<sem::RegisterValues>> {}(values, expected));
+}
+
 TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
 {
     const auto search = query_search();
@@ -312,6 +348,35 @@ TEST(RunirEvaluationStorage, PreparedContextsRejectForeignTaskRepositories)
     EXPECT_THROW(Context(initial.get_state(), builder, foreign_storage), std::invalid_argument);
     EXPECT_THROW(Context(initial.get_state(), builder, caches, foreign_prototype, storage), std::invalid_argument);
     EXPECT_THROW(Context(initial.get_state(), builder, caches, prototype, foreign_storage), std::invalid_argument);
+}
+
+TEST(RunirEvaluationStorage, ExtContextsValidateInputTasksForBorrowedAndIndexedRegisters)
+{
+    const auto search = query_search();
+    const auto foreign_search = query_search();
+    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    auto builder = sem::Builder();
+    auto repository = sem::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto input_repository = sem::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto foreign_repository = sem::DenotationRepositoryFactory().create(foreign_search->task->get_repository());
+    auto storage = sem::EvaluationStorage<Ext>(repository);
+    auto caches = sem::DenotationCaches<Ext>();
+    auto arguments_data = ygg::Data<sem::CallArguments>();
+    auto registers_data = ygg::Data<sem::RegisterValues>();
+    const auto arguments = sem::get_or_create(input_repository, arguments_data).first;
+    const auto foreign_arguments = sem::get_or_create(foreign_repository, arguments_data).first;
+    const auto check = [&](auto registers, auto foreign_registers)
+    {
+        using Context = sem::StateEvaluationContext<Ext, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>, decltype(registers)>;
+        EXPECT_NO_THROW(Context(initial.get_state(), builder, storage, arguments, registers));
+        EXPECT_NO_THROW(Context(initial.get_state(), builder, caches, repository, storage, arguments, registers));
+        EXPECT_THROW(Context(initial.get_state(), builder, storage, foreign_arguments, registers), std::invalid_argument);
+        EXPECT_THROW(Context(initial.get_state(), builder, caches, repository, storage, foreign_arguments, registers), std::invalid_argument);
+        EXPECT_THROW(Context(initial.get_state(), builder, storage, arguments, foreign_registers), std::invalid_argument);
+        EXPECT_THROW(Context(initial.get_state(), builder, caches, repository, storage, arguments, foreign_registers), std::invalid_argument);
+    };
+    check(ygg::make_view(registers_data, *search->task->get_repository()), ygg::make_view(registers_data, *foreign_search->task->get_repository()));
+    check(sem::get_or_create(input_repository, registers_data).first, sem::get_or_create(foreign_repository, registers_data).first);
 }
 
 TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)

@@ -806,11 +806,57 @@ struct Numerical;
 template<FamilyTag Family, CategoryTag Category>
 struct Constructor;
 
-template<FamilyTag Family>
-class BasicConstructorRepository;
+namespace detail
+{
+
+template<FamilyTag Family, typename RepositoryTypes>
+class ConstructorRepository;
+
+template<FamilyTag Family, typename RepositoryTypes>
+class ConstructorRepositoryFactory;
+
+}  // namespace detail
 
 template<FamilyTag Family>
-class BasicConstructorRepositoryFactory;
+using FamilyConceptTypes = ygg::MapTypeListSecondT<Concept, Family, FamilyConceptConstructorTags<Family>>;
+
+template<FamilyTag Family>
+using FamilyRoleTypes = ygg::MapTypeListSecondT<Role, Family, FamilyRoleConstructorTags<Family>>;
+
+template<FamilyTag Family>
+using FamilyBooleanTypes = ygg::MapTypeListSecondT<Boolean, Family, FamilyBooleanConstructorTags<Family>>;
+
+template<FamilyTag Family>
+using FamilyNumericalTypes = ygg::MapTypeListSecondT<Numerical, Family, FamilyNumericalConstructorTags<Family>>;
+
+template<FamilyTag Family>
+using FamilyConstructorTypes = ygg::MapTypeListSecondT<Constructor, Family, CategoryTags>;
+
+template<FamilyTag Family>
+using FamilyQueryTypes = ygg::MapTypeListSecondT<Query, Family, QueryConstructorTags>;
+
+template<FamilyTag Family>
+using FamilyReferenceTypes = std::conditional_t<
+    std::same_as<Family, runir::kr::ExtFamilyTag>,
+    ygg::TypeList<Argument<ConceptTag>, Argument<RoleTag>, Argument<BooleanTag>, Argument<NumericalTag>, Register<ConceptTag>, Register<RoleTag>>,
+    ygg::TypeList<>>;
+
+template<FamilyTag Family>
+using FamilyConstructorRepositoryTypes =
+    ygg::ConcatTypeListsT<FamilyConceptTypes<Family>,
+                          FamilyRoleTypes<Family>,
+                          FamilyBooleanTypes<Family>,
+                          FamilyNumericalTypes<Family>,
+                          FamilyConstructorTypes<Family>,
+                          FamilyReferenceTypes<Family>,
+                          FamilyQueryTypes<Family>,
+                          ygg::TypeList<Query<Family>, QueryColumn, QueryProjection<Family, ConceptTag>, QueryProjection<Family, RoleTag>>>;
+
+template<FamilyTag Family>
+using BasicConstructorRepository = runir::kr::dl::detail::ConstructorRepository<Family, FamilyConstructorRepositoryTypes<Family>>;
+
+template<FamilyTag Family>
+using BasicConstructorRepositoryFactory = runir::kr::dl::detail::ConstructorRepositoryFactory<Family, FamilyConstructorRepositoryTypes<Family>>;
 
 template<FamilyTag Family>
 using ConstructorRepositoryFor = BasicConstructorRepository<Family>;

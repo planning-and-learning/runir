@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <runir/kr/dl/repository.hpp>
 #include <tyr/formalism/planning/repository.hpp>
+#include <utility>
 #include <yggdrasil/core/concepts.hpp>
 
 namespace runir::tests
@@ -97,6 +98,38 @@ TEST(RunirKrDlConstructor, PreservesConcreteVariant)
 
     ASSERT_TRUE(constructor.get_variant().template is<ygg::Index<Concrete>>());
     EXPECT_EQ(constructor.get_variant().template get<ygg::Index<Concrete>>().get_index(), ygg::Index<Concrete>(6));
+}
+
+TEST(RunirKrDlConstructor, SharedInterningCanonicalizesAndPrepares)
+{
+    namespace dl = kr::dl;
+    const auto check = []<dl::FamilyTag Family>()
+    {
+        auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+        auto repository = dl::ConstructorRepositoryFactoryFor<Family>().create(planning_repository);
+        auto top = ygg::Data<dl::Concept<Family, dl::TopTag>>();
+        auto bot = ygg::Data<dl::Concept<Family, dl::BotTag>>();
+        auto first_data = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(ygg::formalism::get_or_create(*repository, top).first.get_index());
+        auto second_data = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(ygg::formalism::get_or_create(*repository, bot).first.get_index());
+        const auto first = ygg::formalism::get_or_create(*repository, first_data).first;
+        const auto second = ygg::formalism::get_or_create(*repository, second_data).first;
+        EXPECT_TRUE(first.is_static());
+        EXPECT_TRUE(second.is_static());
+
+        auto data = ygg::Data<dl::Concept<Family, dl::IntersectionTag>>(second.get_index(), first.get_index());
+        ASSERT_FALSE(dl::is_canonical(data));
+        const auto [intersection, created] = ygg::formalism::get_or_create(*repository, data);
+        EXPECT_TRUE(created);
+        EXPECT_TRUE(dl::is_canonical(data));
+        EXPECT_EQ(data.lhs, first.get_index());
+        std::swap(data.lhs, data.rhs);
+        const auto [same, duplicate_created] = dl::get_or_create(*repository, data);
+        EXPECT_FALSE(duplicate_created);
+        EXPECT_EQ(same.get_index(), intersection.get_index());
+    };
+    check.template operator()<kr::BaseFamilyTag>();
+    check.template operator()<kr::ExtFamilyTag>();
+    check.template operator()<kr::UnsFamilyTag>();
 }
 
 }

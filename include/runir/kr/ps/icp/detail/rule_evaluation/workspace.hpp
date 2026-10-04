@@ -1,5 +1,5 @@
-#ifndef RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_COMMON_HPP_
-#define RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_COMMON_HPP_
+#ifndef RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_WORKSPACE_HPP_
+#define RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_WORKSPACE_HPP_
 
 #include "runir/kr/dl/semantics/interning.hpp"
 #include "runir/kr/ps/dl/evaluation.hpp"
@@ -12,18 +12,6 @@
 
 namespace runir::kr::ps::icp::detail
 {
-
-template<tyr::TaskKind Kind, RuleKind Tag>
-class RuleEvaluator;
-
-template<typename Rule, typename Transition>
-bool effects_match(Rule rule, Transition& transition)
-{
-    for (const auto effect : rule.get_effects())
-        if (!is_compatible_with(effect, transition))
-            return false;
-    return true;
-}
 
 /// Shared evaluation and history scratch; individual rule records own no buffers.
 template<tyr::TaskKind Kind>

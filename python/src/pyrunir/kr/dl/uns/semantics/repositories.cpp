@@ -4,13 +4,9 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/denotation_caches.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <runir/kr/dl/semantics/state_evaluation_context.hpp>
 #include <tyr/formalism/planning/planning_domain.hpp>
-#include <tyr/planning/ground/state_view.hpp>
 #include <tyr/planning/ground/task.hpp>
-#include <tyr/planning/lifted/state_view.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -29,38 +25,6 @@ void bind_constructors(nb::class_<UnsConstructorRepository>& repository, ygg::Ty
          nb::arg("data"),
          nb::keep_alive<0, 1>()),
      ...);
-}
-
-template<tyr::TaskKind Kind>
-void bind_state_evaluation_context(nb::module_& m, const char* name)
-{
-    using Context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, Kind>;
-    using Storage = semantics::EvaluationStorage<runir::kr::UnsFamilyTag>;
-    using Caches = semantics::DenotationCaches<runir::kr::UnsFamilyTag>;
-    nb::class_<Context>(m, name)
-        .def(nb::new_([](tyr::planning::StateView<Kind> state, semantics::Builder& builder, Storage& storage) { return Context(state, builder, storage); }),
-             nb::arg("state"),
-             nb::arg("builder"),
-             nb::arg("storage"),
-             nb::keep_alive<0, 2>(),
-             nb::keep_alive<0, 3>(),
-             nb::keep_alive<0, 4>())
-        .def(nb::new_([](tyr::planning::StateView<Kind> state,
-                         semantics::Builder& builder,
-                         Caches& caches,
-                         semantics::DenotationRepository& repository,
-                         Storage& intermediates) { return Context(state, builder, caches, repository, intermediates); }),
-             nb::arg("state"),
-             nb::arg("builder"),
-             nb::arg("caches"),
-             nb::arg("repository"),
-             nb::arg("intermediates"),
-             nb::keep_alive<0, 2>(),
-             nb::keep_alive<0, 3>(),
-             nb::keep_alive<0, 4>(),
-             nb::keep_alive<0, 5>(),
-             nb::keep_alive<0, 6>())
-        .def("get_state", &Context::get_state, nb::rv_policy::copy, nb::keep_alive<0, 1>());
 }
 
 }  // namespace
@@ -91,8 +55,8 @@ void bind_semantics_repositories(nb::module_& m)
 
     runir::kr::python::bind_evaluation_storage<runir::kr::UnsFamilyTag>(m);
 
-    bind_state_evaluation_context<tyr::GroundTag>(m, "GroundStateEvaluationContext");
-    bind_state_evaluation_context<tyr::LiftedTag>(m, "LiftedStateEvaluationContext");
+    runir::kr::python::bind_state_evaluation_context<runir::kr::UnsFamilyTag, tyr::GroundTag>(m, "GroundStateEvaluationContext");
+    runir::kr::python::bind_state_evaluation_context<runir::kr::UnsFamilyTag, tyr::LiftedTag>(m, "LiftedStateEvaluationContext");
 }
 
 }  // namespace runir::kr::dl::uns

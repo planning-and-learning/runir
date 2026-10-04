@@ -8,91 +8,91 @@ namespace ygg
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::BotTag>> :
-    runir::kr::dl::cnf_grammar::NullaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::BotTag>>
+    runir::kr::dl::NullaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::BotTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::NullaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::BotTag>>;
+    using Base = runir::kr::dl::NullaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::BotTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::TopTag>> :
-    runir::kr::dl::cnf_grammar::NullaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::TopTag>>
+    runir::kr::dl::NullaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::TopTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::NullaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::TopTag>>;
+    using Base = runir::kr::dl::NullaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::TopTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtomicStateTag<T>>> :
-    runir::kr::dl::cnf_grammar::PredicateData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtomicStateTag<T>>, T>
+    runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtomicStateTag<T>>, T>
 {
-    using Base = runir::kr::dl::cnf_grammar::PredicateData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtomicStateTag<T>>, T>;
+    using Base = runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtomicStateTag<T>>, T>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family, tyr::formalism::FactKind T>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtomicGoalTag<T>>> :
-    runir::kr::dl::cnf_grammar::PredicateData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtomicGoalTag<T>>, T>
+    runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtomicGoalTag<T>>, T>
 {
-    using Base = runir::kr::dl::cnf_grammar::PredicateData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtomicGoalTag<T>>, T>;
+    using Base = runir::kr::dl::PredicateData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AtomicGoalTag<T>>, T>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::IntersectionTag>> :
-    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::IntersectionTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>
+    runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::IntersectionTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::IntersectionTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::IntersectionTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::UnionTag>> :
-    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::UnionTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>
+    runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::UnionTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::UnionTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::UnionTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::NegationTag>> :
-    runir::kr::dl::cnf_grammar::UnaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::NegationTag>,
-                                          runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>
+    runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::NegationTag>,
+                             runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::UnaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::NegationTag>,
-                                                       runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>;
+    using Base = runir::kr::dl::UnaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::NegationTag>,
+                                          runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ValueRestrictionTag>> :
-    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ValueRestrictionTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>
+    runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ValueRestrictionTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ValueRestrictionTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ValueRestrictionTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ExistentialQuantificationTag>> :
-    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ExistentialQuantificationTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>
+    runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ExistentialQuantificationTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ExistentialQuantificationTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::ExistentialQuantificationTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::ConceptTag>>;
     using Base::Base;
 };
 
@@ -155,25 +155,25 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::Qualified
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::RoleValueMapTag>> :
-    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::RoleValueMapTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>
+    runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::RoleValueMapTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::RoleValueMapTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::RoleValueMapTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AgreementTag>> :
-    runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AgreementTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
-                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>
+    runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AgreementTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
+                              runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AgreementTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
-                                                        runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>;
+    using Base = runir::kr::dl::BinaryData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::AgreementTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>,
+                                           runir::kr::dl::cnf_grammar::NonTerminal<Family, runir::kr::dl::RoleTag>>;
     using Base::Base;
 };
 
@@ -187,38 +187,38 @@ struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::RoleFille
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::OneOfTag>> :
-    runir::kr::dl::cnf_grammar::ObjectListData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::OneOfTag>>
+    runir::kr::dl::ObjectListData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::OneOfTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::ObjectListData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::OneOfTag>>;
+    using Base = runir::kr::dl::ObjectListData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::OneOfTag>>;
     using Base::Base;
 };
 
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::NominalTag>> :
-    runir::kr::dl::cnf_grammar::ObjectData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::NominalTag>>
+    runir::kr::dl::ObjectData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::NominalTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::ObjectData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::NominalTag>>;
+    using Base = runir::kr::dl::ObjectData<runir::kr::dl::cnf_grammar::Concept<Family, runir::kr::dl::NominalTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>> :
-    runir::kr::dl::cnf_grammar::RegisterData<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>,
-                                             runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>
+    runir::kr::dl::RegisterData<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>,
+                                runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>
 {
-    using Base = runir::kr::dl::cnf_grammar::RegisterData<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>,
-                                                          runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>;
+    using Base = runir::kr::dl::RegisterData<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::RegisterTag>,
+                                             runir::kr::dl::RegisterIdentifier<runir::kr::dl::ConceptTag>>;
     using Base::Base;
 };
 
 template<>
 struct Data<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>> :
-    runir::kr::dl::semantics::ArgumentData<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
-                                           runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>
+    runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
+                                runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>
 {
-    using Base = runir::kr::dl::semantics::ArgumentData<
-        runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
-        runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>;
+    using Base =
+        runir::kr::dl::ArgumentData<runir::kr::dl::cnf_grammar::Concept<runir::kr::ExtFamilyTag, runir::kr::dl::ArgumentTag<runir::kr::dl::ConceptTag>>,
+                                    runir::kr::dl::ArgumentIdentifier<runir::kr::dl::ConceptTag>>;
     using Base::Base;
 };
 

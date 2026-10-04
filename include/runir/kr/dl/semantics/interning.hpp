@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_DL_SEMANTICS_INTERNING_HPP_
 #define RUNIR_KR_DL_SEMANTICS_INTERNING_HPP_
 
+#include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 
 #include <stdexcept>
@@ -39,7 +40,7 @@ template<CategoryTag Category>
 /// Borrowed registers contain object indices from the target's formalism repository.
 [[nodiscard]] inline auto get_or_create(DenotationRepository& repository, BorrowedRegisterValuesView source, Builder& builder)
 {
-    if (&source.get_context() != &repository.get_formalism_repository())
+    if (&source.get_formalism_repository() != &repository.get_formalism_repository())
         throw std::invalid_argument("Register interning requires the same formalism repository.");
     auto data = checkout<RegisterValues>(builder);
     make_data(source, *data);
@@ -51,7 +52,7 @@ template<CategoryTag Category>
 {
     if (&source.get_context() == &repository)
         return { source, false };
-    return get_or_create(repository, BorrowedRegisterValuesView(source.get_data(), source.get_context().get_formalism_repository()), builder);
+    return get_or_create(repository, BorrowedRegisterValuesView(source.get_data(), source.get_formalism_repository()), builder);
 }
 
 }  // namespace runir::kr::dl::semantics

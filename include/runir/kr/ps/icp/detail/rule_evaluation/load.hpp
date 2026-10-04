@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_LOAD_HPP_
 #define RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_LOAD_HPP_
 
-#include "runir/kr/ps/icp/detail/rule_evaluation/common.hpp"
+#include "runir/kr/ps/icp/detail/rule_evaluation/workspace.hpp"
 
 namespace runir::kr::ps::icp::detail
 {
@@ -38,15 +38,11 @@ public:
             if (stop())
                 return false;
             runir::kr::dl::semantics::make_data(source.get_registers(), *registers);
-            const auto position = ygg::uint_t(m_rule.get_register().get_identifier());
-            if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-                registers->concept_values.at(position) = value.get_index();
-            else
-                registers->role_values.at(position) = ::cista::pair(value.first.get_index(), value.second.get_index());
+            runir::kr::dl::semantics::assign_register(*registers, m_rule.get_register().get_identifier(), value);
             const auto target_registers = get_or_create(*task->dl_denotation_repository, *registers).first;
             environment.reset_target();
             auto transition = environment.make_dl_transition_context(source.get_state(), source.get_state(), source.get_registers(), target_registers);
-            if (!effects_match(m_rule, transition))
+            if (!runir::kr::ps::all_compatible(m_rule.get_effects(), transition))
                 continue;
             const auto histories = workspace.update_histories(source, transition, std::nullopt, stop);
             if (!histories)

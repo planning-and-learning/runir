@@ -8,6 +8,7 @@
 
 #include <concepts>
 #include <memory>
+#include <tyr/planning/declarations.hpp>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
 
@@ -95,6 +96,12 @@ using RuleVariantView = ygg::View<ygg::Index<ps::Rule<IcpFamilyTag>>, Repository
 
 template<RuleKind Kind>
 using RuleView = ygg::View<ygg::Index<Rule<Kind>>, Repository>;
+
+namespace detail
+{
+template<tyr::TaskKind Kind, RuleKind Tag>
+class RuleEvaluator;
+}
 
 }
 

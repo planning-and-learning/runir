@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_CRULE_HPP_
 #define RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_CRULE_HPP_
 
-#include "runir/kr/ps/icp/detail/rule_evaluation/common.hpp"
+#include "runir/kr/ps/icp/detail/rule_evaluation/workspace.hpp"
 
 #include <cista/containers/variant.h>
 #include <tyr/formalism/planning/action_view.hpp>
@@ -82,7 +82,7 @@ public:
             if (effect.get_operation() == EffectOperation::ENTER ? (before || !after) : (!before || after))
                 return false;
         }
-        return effects_match(m_rule, transition);
+        return all_compatible(m_rule.get_effects(), transition);
     }
 
     ProgramStep<Kind> apply(ProgramStateView<Kind> source,

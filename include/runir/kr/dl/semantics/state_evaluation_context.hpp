@@ -2,6 +2,7 @@
 #define RUNIR_KR_DL_SEMANTICS_STATE_EVALUATION_CONTEXT_HPP_
 
 #include "runir/kr/dl/declarations.hpp"
+#include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_caches.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"

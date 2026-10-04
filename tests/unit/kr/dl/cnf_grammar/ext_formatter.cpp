@@ -4,6 +4,7 @@
 #include <runir/kr/dl/cnf_grammar/constructor_repository.hpp>
 #include <runir/kr/dl/cnf_grammar/formatter.hpp>
 #include <tyr/formalism/planning/repository.hpp>
+#include <utility>
 
 namespace runir::tests
 {
@@ -16,8 +17,7 @@ TEST(RunirTests, ExtCnfGrammarNumericReferencesFormatWithoutExternalNames)
     const auto format = [&]<typename T>(auto identifier)
     {
         auto data = ygg::Data<T>(identifier);
-        kr::dl::cnf_grammar::canonicalize(data);
-        return fmt::format("{}", repository->get_or_create(data).first);
+        return fmt::format("{}", ygg::formalism::get_or_create(*repository, data).first);
     };
 
     using ConceptRegister = kr::dl::RegisterIdentifier<kr::dl::ConceptTag>;
@@ -37,6 +37,23 @@ TEST(RunirTests, ExtCnfGrammarNumericReferencesFormatWithoutExternalNames)
               "(b_argument 5)");
     EXPECT_EQ((format.template operator()<kr::dl::cnf_grammar::Numerical<kr::ExtFamilyTag, kr::dl::ArgumentTag<kr::dl::NumericalTag>>>(NumericalArgument(6))),
               "(n_argument 6)");
+}
+
+TEST(RunirTests, CnfGrammarSharedInterningCanonicalizesOperands)
+{
+    namespace grammar = kr::dl::cnf_grammar;
+    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    auto repository = grammar::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_repository);
+    auto data = ygg::Data<grammar::Concept<kr::ExtFamilyTag, kr::dl::IntersectionTag>>();
+    data.lhs = decltype(data.lhs)(2);
+    data.rhs = decltype(data.rhs)(1);
+    const auto [first, created] = ygg::formalism::get_or_create(*repository, data);
+    EXPECT_TRUE(created);
+    EXPECT_TRUE(grammar::is_canonical(data));
+    std::swap(data.lhs, data.rhs);
+    const auto [same, duplicate_created] = grammar::get_or_create(*repository, data);
+    EXPECT_FALSE(duplicate_created);
+    EXPECT_EQ(first.get_index(), same.get_index());
 }
 
 }  // namespace runir::tests

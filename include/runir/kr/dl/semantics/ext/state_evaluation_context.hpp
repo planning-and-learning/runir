@@ -5,6 +5,7 @@
 #include "runir/kr/dl/semantics/register_values_view.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 
+#include <stdexcept>
 #include <utility>
 
 namespace runir::kr::dl::semantics
@@ -19,12 +20,22 @@ private:
     R m_registers;
     CallArgumentsView m_arguments;
 
+    void validate_inputs() const
+    {
+        const auto* repository = this->get_state().get_repository().get();
+        if (&m_arguments.get_context().get_formalism_repository() != repository)
+            throw std::invalid_argument("Evaluation requires arguments for the same planning task.");
+        if (&m_registers.get_formalism_repository() != repository)
+            throw std::invalid_argument("Evaluation requires registers for the same planning task.");
+    }
+
 public:
     StateEvaluationContext(S state, Builder& builder, EvaluationStorage<runir::kr::ExtFamilyTag>& storage, CallArgumentsView arguments, R registers) :
         Base(std::move(state), builder, storage),
         m_registers(registers),
         m_arguments(arguments)
     {
+        validate_inputs();
     }
 
     StateEvaluationContext(S state,
@@ -38,6 +49,7 @@ public:
         m_registers(registers),
         m_arguments(arguments)
     {
+        validate_inputs();
     }
 
     auto for_result(bool is_static) const noexcept

@@ -12,11 +12,31 @@ canonical set of rows. All result kinds belong to `DenotationRepository`.
 for computed denotation builders and borrowed or interned register views. The
 builder supplies reusable scratch. A register view already owned by the target
 repository is returned directly; transfers between repositories require the same
-formalism repository. `make_data(registers, data)` extracts mutable register
-values into caller-owned storage, retaining its buffers and clearing its old
-repository index. Rule binding and transient execution use this inverse
-conversion. Denotation set operations keep their existing `copy_from` calls;
+formalism repository. The same interning header provides
+`make_data(registers, data)` to extract mutable register values into caller-owned
+storage, retaining its buffers and clearing its old repository index.
+`register_values_data.hpp` provides typed `assign_register(data, identifier, value)`
+overloads that update concept or role registers with bounds checking and
+invalidate the destination's old index.
+Rule binding and transient execution use these operations. Denotation set
+operations keep their existing `copy_from` calls;
 query interning uses Yggdrasil's relation repository directly.
+
+Mutable `Data` uses Yggdrasil's shared `get_or_create(repository, data)` from
+`formalism/interning.hpp`. Each language supplies `prepare_for_interning`:
+canonicalization runs before the raw repository operation, and DL constructors
+also prepare schema and staticness metadata. Existing language namespaces
+re-export the shared entrypoint. Successful symbol interning updates the input
+data's index on both insertion and reuse; the returned view retains the actual
+owning repository, including an ancestor repository. Mutating indexed scratch
+still requires invalidating its old index before it can be observed again.
+
+`make_view` inspects an existing representation. `make_data` populates reusable
+mutable storage, while `get_or_create` publishes or retrieves an interned view.
+These operations preserve their type-specific conversions: relation builders
+contain rows and denotation builders contain bit blocks, whereas their stored
+records contain repository indices. Copying such a record alone does not make
+its referenced storage independent of its repository.
 
 ## Storage and lifetime
 
@@ -28,8 +48,16 @@ do not reuse cached entries with different result repositories.
 and their matching caches. Construct it with a prototype denotation
 repository: `EvaluationStorage(prototype)` in Python. Pass the storage directly
 to the context; roots and children use its caches and repositories.
-The semantic `Builder` owns pooled builders and the evaluation workspace,
-retaining mutable buffers across evaluations.
+The semantic `Builder`, defined in `semantics/builder.hpp`, owns pooled builders
+and the evaluation workspace, retaining mutable buffers across evaluations.
+
+For pooled `Data`, use `checkout<T>(builder)` to obtain cleared data while
+retaining its buffers. Yggdrasil's `BuilderStorage` implements the reset once;
+DL, grammar, policy, and execution builders share that operation. Raw
+`get_builder<T>()` on a `BuilderStorage` preserves prior contents, including
+Ext and ICP execution builders. The semantic builder exposes raw `Data`
+acquisition as `get_data<T>()`; its `get_builder<T>(...)` initializes mutable
+denotation or relation builders instead.
 
 For example, Python Ext evaluation with scratch ownership is:
 
@@ -53,6 +81,10 @@ a context selecting the current result's static or dynamic repository.
 `child_context()` returns a context using the intermediate storage's caches and
 repositories. Both retain borrowed inputs without changing the original context
 or copying result payloads.
+Both Ext constructors require arguments and registers from the state's planning
+repository. They may belong to different denotation repositories for that same
+planning repository. The check runs when constructing the context, not when
+copying it for child or result evaluation.
 
 The reset operations have different ownership effects:
 

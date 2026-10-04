@@ -4,6 +4,7 @@
 #include "runir/kr/dl/semantics/register_values_data.hpp"
 
 #include <concepts>
+#include <cstddef>
 #include <tuple>
 #include <tyr/formalism/object_view.hpp>
 #include <yggdrasil/containers/optional.hpp>
@@ -26,14 +27,15 @@ public:
     const auto& get_data() const noexcept { return *m_handle; }
     const auto& get_context() const noexcept { return *m_context; }
     const auto& get_handle() const noexcept { return *m_handle; }
+    const auto& get_formalism_repository() const noexcept { return *m_context; }
 
     template<runir::kr::dl::ConceptOrRoleTag Category>
     auto get() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(get_data().concept_values, get_context());
+            return make_view(get_data().concept_values, get_formalism_repository());
         else
-            return make_view(get_data().role_values, get_context());
+            return make_view(get_data().role_values, get_formalism_repository());
     }
 
     template<runir::kr::dl::ConceptOrRoleTag Category>
@@ -57,14 +59,15 @@ public:
     const auto& get_context() const noexcept { return *m_context; }
     const auto& get_handle() const noexcept { return m_handle; }
     auto get_index() const noexcept { return m_handle; }
+    const auto& get_formalism_repository() const noexcept { return get_denotation_repository(*m_context).get_formalism_repository(); }
 
     template<runir::kr::dl::ConceptOrRoleTag Category>
     auto get() const noexcept
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return make_view(get_data().concept_values, get_context().get_formalism_repository());
+            return make_view(get_data().concept_values, get_formalism_repository());
         else
-            return make_view(get_data().role_values, get_context().get_formalism_repository());
+            return make_view(get_data().role_values, get_formalism_repository());
     }
 
     template<runir::kr::dl::ConceptOrRoleTag Category>
@@ -84,6 +87,7 @@ namespace runir::kr::dl::semantics
 template<typename V>
 concept RegisterValuesViewConcept = requires(const V& values, RegisterIdentifier<ConceptTag> concept_id, RegisterIdentifier<RoleTag> role_id) {
     { values.get_data() } -> std::same_as<const ygg::Data<RegisterValues>&>;
+    { values.get_formalism_repository() } -> std::same_as<const tyr::formalism::planning::Repository&>;
     values.template get<ConceptTag>();
     values.template get<RoleTag>();
     { values.at(concept_id).has_value() } -> std::same_as<bool>;

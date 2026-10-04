@@ -20,6 +20,7 @@ template<FamilyTag Family, typename RepositoryTypes>
 class BasicRepository
 {
 public:
+    using SymbolTypes = RepositoryTypes;
     using DlRepositoryPtr = runir::kr::dl::ConstructorRepositoryPtrFor<typename PsFamilyTraits<Family>::DlFamily>;
 
 private:
@@ -50,6 +51,7 @@ public:
     void clear() noexcept { m_symbol_repository.clear(); }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<BasicRepository, T>
     std::optional<ygg::View<ygg::Index<T>, BasicRepository>> find(const ygg::Data<T>& data) const noexcept
     {
         if (auto index = m_symbol_repository.template find_local<T>(data))
@@ -58,6 +60,7 @@ public:
     }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<BasicRepository, T>
     std::pair<ygg::View<ygg::Index<T>, BasicRepository>, bool> get_or_create(ygg::Data<T>& data)
     {
         const auto [index, success] = m_symbol_repository.template get_or_create_local<T>(data);
@@ -65,18 +68,21 @@ public:
     }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<BasicRepository, T>
     const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
     {
         return m_symbol_repository.template at_local<T>(index);
     }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<BasicRepository, T>
     size_t size() const noexcept
     {
         return m_symbol_repository.template local_size<T>();
     }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<BasicRepository, T>
     const BasicRepository& get_canonical_context(ygg::Index<T>) const noexcept
     {
         return *this;

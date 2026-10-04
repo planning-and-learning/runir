@@ -176,9 +176,8 @@ private:
                                                                          state.get_module_state().get_arguments(),
                                                                          state.get_module_state().get_registers(),
                                                                          state.get_module_state().get_registers());
-        for (const auto effect : rule.get_effects())
-            if (!is_compatible_with(effect, transition))
-                detail::action_rule_contract_error(rule, planning_state, tuple, "offered transition violates declared effects");
+        if (!all_compatible(rule.get_effects(), transition))
+            detail::action_rule_contract_error(rule, planning_state, tuple, "offered transition violates declared effects");
     }
 
 public:

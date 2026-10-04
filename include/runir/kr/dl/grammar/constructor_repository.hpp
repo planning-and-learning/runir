@@ -1,61 +1,19 @@
 #ifndef RUNIR_GRAMMAR_CONSTRUCTOR_REPOSITORY_HPP_
 #define RUNIR_GRAMMAR_CONSTRUCTOR_REPOSITORY_HPP_
 
+#include "runir/kr/dl/detail/constructor_repository.hpp"
 #include "runir/kr/dl/grammar/canonicalization.hpp"
 #include "runir/kr/dl/grammar/datas.hpp"
 #include "runir/kr/dl/grammar/declarations.hpp"
 #include "runir/kr/dl/grammar/views.hpp"
 
-#include <cassert>
-#include <memory>
-#include <optional>
-#include <tyr/formalism/planning/repository.hpp>
-#include <utility>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/formalism/builder.hpp>
-#include <yggdrasil/formalism/symbol_repository.hpp>
+#include <yggdrasil/formalism/interning.hpp>
 
 namespace runir::kr::dl::grammar
 {
-
-template<runir::kr::dl::FamilyTag Family>
-using FamilyConceptTypes = ygg::MapTypeListSecondT<Concept, Family, runir::kr::dl::FamilyConceptConstructorTags<Family>>;
-
-template<runir::kr::dl::FamilyTag Family>
-using FamilyRoleTypes = ygg::MapTypeListSecondT<Role, Family, runir::kr::dl::FamilyRoleConstructorTags<Family>>;
-
-template<runir::kr::dl::FamilyTag Family>
-using FamilyBooleanTypes = ygg::MapTypeListSecondT<Boolean, Family, runir::kr::dl::FamilyBooleanConstructorTags<Family>>;
-
-template<runir::kr::dl::FamilyTag Family>
-using FamilyNumericalTypes = ygg::MapTypeListSecondT<Numerical, Family, runir::kr::dl::FamilyNumericalConstructorTags<Family>>;
-
-template<runir::kr::dl::FamilyTag Family>
-using FamilyConstructorTypes = ygg::MapTypeListSecondT<Constructor, Family, runir::kr::dl::CategoryTags>;
-
-template<runir::kr::dl::FamilyTag Family>
-using FamilyConstructorOrNonTerminalTypes = ygg::MapTypeListSecondT<ConstructorOrNonTerminal, Family, runir::kr::dl::CategoryTags>;
-
-template<runir::kr::dl::FamilyTag Family>
-using FamilyNonTerminalTypes = ygg::MapTypeListSecondT<NonTerminal, Family, runir::kr::dl::CategoryTags>;
-
-template<runir::kr::dl::FamilyTag Family>
-using FamilyDerivationRuleTypes = ygg::MapTypeListSecondT<DerivationRule, Family, runir::kr::dl::CategoryTags>;
-
-template<runir::kr::dl::FamilyTag Family>
-using FamilyGrammarTypes = ygg::TypeList<GrammarTag<Family>>;
-
-template<runir::kr::dl::FamilyTag Family>
-using FamilyConstructorRepositoryTypes = ygg::ConcatTypeListsT<FamilyConceptTypes<Family>,
-                                                               FamilyRoleTypes<Family>,
-                                                               FamilyBooleanTypes<Family>,
-                                                               FamilyNumericalTypes<Family>,
-                                                               FamilyConstructorTypes<Family>,
-                                                               FamilyConstructorOrNonTerminalTypes<Family>,
-                                                               FamilyNonTerminalTypes<Family>,
-                                                               FamilyDerivationRuleTypes<Family>,
-                                                               FamilyGrammarTypes<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
 using FamilyConstructorSymbolRepository = ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, FamilyConstructorRepositoryTypes<Family>>;
@@ -67,126 +25,30 @@ using BaseBuilder = Builder<runir::kr::BaseFamilyTag>;
 using ExtBuilder = Builder<runir::kr::ExtFamilyTag>;
 using UnsBuilder = Builder<runir::kr::UnsFamilyTag>;
 
-template<typename T, typename B>
-    requires(std::same_as<B, BaseBuilder> || std::same_as<B, ExtBuilder> || std::same_as<B, UnsBuilder>)
-[[nodiscard]] auto checkout(B& builder)
-{
-    auto data = builder.template get_builder<T>();
-    data->clear();
-    return data;
-}
-
-template<runir::kr::dl::FamilyTag Family>
-class BasicConstructorRepository
-{
-    template<runir::kr::dl::FamilyTag>
-    friend class BasicConstructorRepositoryFactory;
-
-private:
-    FamilyConstructorSymbolRepository<Family> m_symbol_repository;
-    std::shared_ptr<const tyr::formalism::planning::Repository> m_planning_repository;
-    size_t m_index;
-
-    BasicConstructorRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
-        m_symbol_repository(nullptr),
-        m_planning_repository(std::move(planning_repository)),
-        m_index(index)
-    {
-        assert(m_planning_repository);
-        clear();
-    }
-
-public:
-    BasicConstructorRepository(const BasicConstructorRepository&) = delete;
-    BasicConstructorRepository& operator=(const BasicConstructorRepository&) = delete;
-    BasicConstructorRepository(BasicConstructorRepository&&) = delete;
-    BasicConstructorRepository& operator=(BasicConstructorRepository&&) = delete;
-
-    const auto& get_index() const noexcept { return m_index; }
-    const auto& get_planning_repository() const noexcept
-    {
-        assert(m_planning_repository);
-        return *m_planning_repository;
-    }
-    const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
-
-    void clear() noexcept { m_symbol_repository.clear(); }
-
-    template<typename T>
-    std::optional<ygg::View<ygg::Index<T>, BasicConstructorRepository>> find(const ygg::Data<T>& data) const noexcept
-    {
-        if (auto index = m_symbol_repository.template find_local<T>(data))
-            return ygg::View<ygg::Index<T>, BasicConstructorRepository>(*index, *this);
-        return std::nullopt;
-    }
-
-    template<typename T>
-    std::pair<ygg::View<ygg::Index<T>, BasicConstructorRepository>, bool> get_or_create(ygg::Data<T>& data)
-    {
-        const auto [index, created] = m_symbol_repository.template get_or_create_local<T>(data);
-        return { ygg::View<ygg::Index<T>, BasicConstructorRepository>(index, *this), created };
-    }
-
-    template<typename T>
-    const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
-    {
-        assert(m_symbol_repository.template is_local<T>(index));
-        return m_symbol_repository.template at_local<T>(index);
-    }
-
-    template<typename T>
-    size_t size() const noexcept
-    {
-        return m_symbol_repository.template local_size<T>();
-    }
-
-    template<typename T>
-    const BasicConstructorRepository& get_canonical_context(ygg::Index<T>) const noexcept
-    {
-        return *this;
-    }
-};
-
-template<runir::kr::dl::FamilyTag Family>
-class BasicConstructorRepositoryFactory
-{
-private:
-    size_t m_next_index;
-
-public:
-    BasicConstructorRepositoryFactory() : m_next_index(0) {}
-
-    ConstructorRepositoryPtrFor<Family> create(std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository)
-    {
-        return ConstructorRepositoryPtrFor<Family>(new ConstructorRepositoryFor<Family>(m_next_index++, std::move(planning_repository)));
-    }
-};
-
-#ifndef RUNIR_HEADER_INSTANTIATION
-extern template class BasicConstructorRepositoryFactory<runir::kr::BaseFamilyTag>;
-extern template class BasicConstructorRepositoryFactory<runir::kr::ExtFamilyTag>;
-extern template class BasicConstructorRepositoryFactory<runir::kr::UnsFamilyTag>;
-#endif
-
-template<runir::kr::dl::FamilyTag Family>
-inline const ConstructorRepositoryFor<Family>& get_repository(const ConstructorRepositoryFor<Family>& repository) noexcept
-{
-    return repository;
-}
-
-template<runir::kr::dl::FamilyTag Family>
-inline ConstructorRepositoryFor<Family>& get_repository(ConstructorRepositoryFor<Family>& repository) noexcept
-{
-    return repository;
-}
+using runir::kr::dl::detail::get_repository;
+using ygg::formalism::checkout;
 
 template<runir::kr::dl::FamilyTag Family, typename T>
-[[nodiscard]] auto get_or_create(BasicConstructorRepository<Family>& repository, ygg::Data<T>& data)
+    requires ygg::formalism::SupportsSymbol<BasicConstructorRepository<Family>, T>
+void prepare_for_interning(BasicConstructorRepository<Family>&, ygg::Data<T>& data)
 {
     canonicalize(data);
-    return repository.get_or_create(data);
 }
 
+using ygg::formalism::get_or_create;
+
 }  // namespace runir::kr::dl::grammar
+
+#ifndef RUNIR_HEADER_INSTANTIATION
+namespace runir::kr::dl::detail
+{
+
+extern template class ConstructorRepositoryFactory<runir::kr::BaseFamilyTag,
+                                                   runir::kr::dl::grammar::FamilyConstructorRepositoryTypes<runir::kr::BaseFamilyTag>>;
+extern template class ConstructorRepositoryFactory<runir::kr::ExtFamilyTag, runir::kr::dl::grammar::FamilyConstructorRepositoryTypes<runir::kr::ExtFamilyTag>>;
+extern template class ConstructorRepositoryFactory<runir::kr::UnsFamilyTag, runir::kr::dl::grammar::FamilyConstructorRepositoryTypes<runir::kr::UnsFamilyTag>>;
+
+}  // namespace runir::kr::dl::detail
+#endif
 
 #endif

@@ -17,11 +17,7 @@ using runir::kr::ps::is_compatible_with;
 template<RuleKind Kind, typename C, typename Context>
 bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, Context& context)
 {
-    for (auto condition : rule.get_conditions())
-        if (!runir::kr::ps::icp::is_compatible_with(condition, context))
-            return false;
-
-    return true;
+    return all_compatible(rule.get_conditions(), context);
 }
 
 template<RuleKind Kind, typename C, typename Context>
@@ -31,11 +27,7 @@ bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind>>, C> rule, Context& cont
         return false;
 
     if constexpr (requires { rule.get_effects(); })
-    {
-        for (auto effect : rule.get_effects())
-            if (!runir::kr::ps::icp::is_compatible_with(effect, context))
-                return false;
-    }
+        return all_compatible(rule.get_effects(), context);
 
     return true;
 }

@@ -6,25 +6,24 @@
 #include "runir/kr/ps/icp/views.hpp"
 #include "runir/kr/ps/repository.hpp"
 
+#include <yggdrasil/formalism/builder.hpp>
+#include <yggdrasil/formalism/interning.hpp>
+
 namespace runir::kr::ps::icp
 {
 
 using Builder = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, RepositoryTypes>;
 
-template<typename T>
-[[nodiscard]] auto checkout(Builder& builder)
-{
-    auto data = builder.template get_builder<T>();
-    data->clear();
-    return data;
-}
+using ygg::formalism::checkout;
 
 template<typename T>
-[[nodiscard]] auto get_or_create(Repository& repository, ygg::Data<T>& data)
+    requires ygg::formalism::SupportsSymbol<Repository, T>
+void prepare_for_interning(Repository&, ygg::Data<T>& data)
 {
     canonicalize(data);
-    return repository.get_or_create(data);
 }
+
+using ygg::formalism::get_or_create;
 
 }
 

@@ -5,9 +5,6 @@
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
 
-#include <concepts>
-#include <cstddef>
-
 namespace runir::kr::ps::ext::detail
 {
 
@@ -16,11 +13,7 @@ template<BindingRuleKind Tag, runir::kr::dl::semantics::RegisterValuesViewConcep
 auto bound_registers(RuleView<Tag> rule, R source, const Value& value, ygg::Data<runir::kr::dl::semantics::RegisterValues>& registers, Storage& storage)
 {
     runir::kr::dl::semantics::make_data(source, registers);
-    const auto index = size_t(ygg::uint_t(rule.get_register().get_identifier()));
-    if constexpr (std::same_as<typename Tag::Category, runir::kr::dl::ConceptTag>)
-        registers.concept_values.at(index) = value.get_index();
-    else
-        registers.role_values.at(index) = ::cista::pair(value.first.get_index(), value.second.get_index());
+    runir::kr::dl::semantics::assign_register(registers, rule.get_register().get_identifier(), value);
     return storage.registers(registers);
 }
 

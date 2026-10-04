@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
+#include <yggdrasil/formalism/builder.hpp>
 
 namespace runir::kr::parser::constructors
 {
@@ -74,9 +75,7 @@ const T& unwrap(const boost::spirit::x3::forward_ast<T>& value) noexcept
 template<typename T, typename Context>
 auto checkout(const Context& context)
 {
-    auto data = context.builder.template get_builder<T>();
-    data->clear();
-    return data;
+    return ygg::formalism::checkout<T>(context.builder);
 }
 
 template<typename Context, typename T>
@@ -643,9 +642,9 @@ template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::BooleanNonempty<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     using Data = ygg::Data<typename Context::Target::template Boolean<runir::kr::dl::NonemptyTag>>;
-    const auto arg = boost::apply_visitor(
-        [&](const auto& value) -> typename Data::ConstructorVariant { return parse_collection_operand(unwrap(value), domain, context); },
-        node.arg.get());
+    const auto arg =
+        boost::apply_visitor([&](const auto& value) -> typename Data::ConstructorVariant { return parse_collection_operand(unwrap(value), domain, context); },
+                             node.arg.get());
 
     auto data = checkout<typename Context::Target::template Boolean<runir::kr::dl::NonemptyTag>>(context);
     data->arg = arg;
@@ -656,9 +655,9 @@ template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::NumericalCount<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     using Data = ygg::Data<typename Context::Target::template Numerical<runir::kr::dl::CountTag>>;
-    const auto arg = boost::apply_visitor(
-        [&](const auto& value) -> typename Data::ConstructorVariant { return parse_collection_operand(unwrap(value), domain, context); },
-        node.arg.get());
+    const auto arg =
+        boost::apply_visitor([&](const auto& value) -> typename Data::ConstructorVariant { return parse_collection_operand(unwrap(value), domain, context); },
+                             node.arg.get());
 
     auto data = checkout<typename Context::Target::template Numerical<runir::kr::dl::CountTag>>(context);
     data->arg = arg;

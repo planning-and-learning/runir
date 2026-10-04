@@ -12,6 +12,7 @@
 #include <nanobind/stl/vector.h>
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
+#include <pyrunir/kr/binding_utils.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/ps/dl/declarations.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
@@ -106,7 +107,7 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using Expander = SuccessorExpander<Kind>;
     using Environment = EvaluationEnvironment<Kind>;
     // Callback results may outlive the expander that owns their binding pool.
-    const auto retain_expander = nb::cpp_function([](nb::object value, nb::handle) { return value; }, nb::keep_alive<0, 2>());
+    const auto retain_expander = runir::kr::python::make_owner_retainer();
 
     nb::class_<ExecutionRepository<Kind>>(m, (std::string(prefix) + "ExecutionRepository").c_str());
     nb::class_<ExecutionBuilder<Kind>>(m, (std::string(prefix) + "ExecutionBuilder").c_str());

@@ -2,6 +2,7 @@
 #define RUNIR_KR_TASK_CONTEXT_HPP_
 
 #include "runir/datasets/task_class.hpp"
+#include "runir/kr/dl/semantics/builder.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
 #include "runir/kr/dl/semantics/denotation_repository.hpp"
 #include "runir/kr/domain_context.hpp"

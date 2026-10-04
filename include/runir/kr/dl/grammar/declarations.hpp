@@ -41,10 +41,48 @@ template<runir::kr::dl::FamilyTag Family>
 struct GrammarTag;
 
 template<runir::kr::dl::FamilyTag Family>
-class BasicConstructorRepository;
+using FamilyConceptTypes = ygg::MapTypeListSecondT<Concept, Family, runir::kr::dl::FamilyConceptConstructorTags<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
-class BasicConstructorRepositoryFactory;
+using FamilyRoleTypes = ygg::MapTypeListSecondT<Role, Family, runir::kr::dl::FamilyRoleConstructorTags<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using FamilyBooleanTypes = ygg::MapTypeListSecondT<Boolean, Family, runir::kr::dl::FamilyBooleanConstructorTags<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using FamilyNumericalTypes = ygg::MapTypeListSecondT<Numerical, Family, runir::kr::dl::FamilyNumericalConstructorTags<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using FamilyConstructorTypes = ygg::MapTypeListSecondT<Constructor, Family, runir::kr::dl::CategoryTags>;
+
+template<runir::kr::dl::FamilyTag Family>
+using FamilyConstructorOrNonTerminalTypes = ygg::MapTypeListSecondT<ConstructorOrNonTerminal, Family, runir::kr::dl::CategoryTags>;
+
+template<runir::kr::dl::FamilyTag Family>
+using FamilyNonTerminalTypes = ygg::MapTypeListSecondT<NonTerminal, Family, runir::kr::dl::CategoryTags>;
+
+template<runir::kr::dl::FamilyTag Family>
+using FamilyDerivationRuleTypes = ygg::MapTypeListSecondT<DerivationRule, Family, runir::kr::dl::CategoryTags>;
+
+template<runir::kr::dl::FamilyTag Family>
+using FamilyGrammarTypes = ygg::TypeList<GrammarTag<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using FamilyConstructorRepositoryTypes = ygg::ConcatTypeListsT<FamilyConceptTypes<Family>,
+                                                               FamilyRoleTypes<Family>,
+                                                               FamilyBooleanTypes<Family>,
+                                                               FamilyNumericalTypes<Family>,
+                                                               FamilyConstructorTypes<Family>,
+                                                               FamilyConstructorOrNonTerminalTypes<Family>,
+                                                               FamilyNonTerminalTypes<Family>,
+                                                               FamilyDerivationRuleTypes<Family>,
+                                                               FamilyGrammarTypes<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using BasicConstructorRepository = runir::kr::dl::detail::ConstructorRepository<Family, FamilyConstructorRepositoryTypes<Family>>;
+
+template<runir::kr::dl::FamilyTag Family>
+using BasicConstructorRepositoryFactory = runir::kr::dl::detail::ConstructorRepositoryFactory<Family, FamilyConstructorRepositoryTypes<Family>>;
 
 template<runir::kr::dl::FamilyTag Family>
 using ConstructorRepositoryFor = BasicConstructorRepository<Family>;

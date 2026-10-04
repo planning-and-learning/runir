@@ -4,99 +4,25 @@
 #include "runir/kr/dl/semantics/call_arguments_view.hpp"
 #include "runir/kr/dl/semantics/canonicalization.hpp"
 #include "runir/kr/dl/semantics/declarations.hpp"
-#include "runir/kr/dl/semantics/denotation_builder.hpp"
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 #include "runir/kr/dl/semantics/denotation_index.hpp"
 #include "runir/kr/dl/semantics/denotation_view.hpp"
-#include "runir/kr/dl/semantics/evaluation_workspace.hpp"
 #include "runir/kr/dl/semantics/register_values_view.hpp"
 
 #include <cassert>
-#include <concepts>
 #include <memory>
 #include <optional>
-#include <tuple>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/containers/raw_vector_set.hpp>
-#include <yggdrasil/containers/unique_object_pool.hpp>
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/types.hpp>
-#include <yggdrasil/database/relation_pool.hpp>
 #include <yggdrasil/database/relation_repository.hpp>
-#include <yggdrasil/formalism/builder.hpp>
+#include <yggdrasil/formalism/interning.hpp>
 #include <yggdrasil/formalism/symbol_repository.hpp>
 
 namespace runir::kr::dl::semantics
 {
-
-template<typename T>
-class BasicBuilder
-{
-private:
-    ygg::UniqueObjectPool<ygg::Builder<T>> m_pool;
-
-public:
-    [[nodiscard]] auto get_builder() { return m_pool.get_or_allocate(); }
-
-    template<typename... Args>
-    [[nodiscard]] auto get_builder(Args&&... args)
-    {
-        return m_pool.get_or_allocate(std::forward<Args>(args)...);
-    }
-};
-
-class Builder
-{
-private:
-    using DenotationBuilderStorage = std::tuple<BasicBuilder<Denotation<BooleanTag>>,
-                                                BasicBuilder<Denotation<NumericalTag>>,
-                                                BasicBuilder<Denotation<ConceptTag>>,
-                                                BasicBuilder<Denotation<RoleTag>>>;
-    using DenotationDataStorage = ygg::formalism::
-        BuilderStorage<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>, RegisterValues, CallArguments>;
-
-    DenotationBuilderStorage m_builders;
-    DenotationDataStorage m_data;
-    ygg::database::RelationPool<> m_relation_builders;
-    EvaluationWorkspace m_workspace;
-
-public:
-    /// Shared evaluation scratch, retaining mutable buffers across states.
-    auto& get_workspace() noexcept { return m_workspace; }
-
-    template<typename T>
-    [[nodiscard]] auto get_builder()
-    {
-        if constexpr (std::same_as<T, ygg::database::Relation<>>)
-            return m_relation_builders.get_or_allocate({});
-        else
-            return std::get<BasicBuilder<T>>(m_builders).get_builder();
-    }
-
-    template<typename T, typename... Args>
-    [[nodiscard]] auto get_builder(Args&&... args)
-    {
-        if constexpr (std::same_as<T, ygg::database::Relation<>>)
-            return m_relation_builders.get_or_allocate(std::forward<Args>(args)...);
-        else
-            return std::get<BasicBuilder<T>>(m_builders).get_builder(std::forward<Args>(args)...);
-    }
-
-    template<typename T>
-    [[nodiscard]] auto get_data()
-    {
-        return m_data.template get_builder<T>();
-    }
-};
-
-template<typename T>
-[[nodiscard]] auto checkout(Builder& builder)
-{
-    auto data = builder.template get_data<T>();
-    data->clear();
-    return data;
-}
 
 class DenotationRepositoryFactory
 {
@@ -121,6 +47,7 @@ class DenotationRepository
 public:
     using SymbolRepository = ygg::formalism::
         SymbolRepository<Denotation<BooleanTag>, Denotation<NumericalTag>, Denotation<ConceptTag>, Denotation<RoleTag>, RegisterValues, CallArguments>;
+    using SymbolTypes = SymbolRepository::SymbolTypes;
     using VectorRepository = ygg::RawVectorSet<ygg::uint_t, ygg::uint_t>;
 
 private:
@@ -166,6 +93,7 @@ public:
     }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
     std::optional<ygg::View<ygg::Index<T>, DenotationRepository>> find(const ygg::Data<T>& data) const noexcept
     {
         if (auto index = m_symbol_repository.template find_local<T>(data))
@@ -174,6 +102,7 @@ public:
     }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
     std::pair<ygg::View<ygg::Index<T>, DenotationRepository>, bool> get_or_create(ygg::Data<T>& data)
     {
         const auto [index, created] = m_symbol_repository.template get_or_create_local<T>(data);
@@ -181,6 +110,7 @@ public:
     }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
     const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
     {
         assert(m_symbol_repository.template is_local<T>(index));
@@ -188,12 +118,14 @@ public:
     }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
     size_t size() const noexcept
     {
         return m_symbol_repository.template local_size<T>();
     }
 
     template<typename T>
+        requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
     const DenotationRepository& get_canonical_context(ygg::Index<T>) const noexcept
     {
         return *this;
@@ -228,11 +160,13 @@ inline DenotationRepository::VectorRepository& get_denotation_vector_repository(
 }
 
 template<typename T>
-[[nodiscard]] auto get_or_create(DenotationRepository& repository, ygg::Data<T>& data)
+    requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
+void prepare_for_interning(DenotationRepository&, ygg::Data<T>& data)
 {
     canonicalize(data);
-    return repository.get_or_create(data);
 }
+
+using ygg::formalism::get_or_create;
 
 }
 

@@ -6,8 +6,11 @@
 #include <cista/containers/optional.h>
 #include <cista/containers/pair.h>
 #include <cista/containers/vector.h>
+#include <cstddef>
 #include <tuple>
 #include <tyr/formalism/object_index.hpp>
+#include <tyr/formalism/object_view.hpp>
+#include <utility>
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/serialization/cista_equal_to.hpp>
 #include <yggdrasil/serialization/cista_hash.hpp>
@@ -34,5 +37,24 @@ struct Data<runir::kr::dl::semantics::RegisterValues>
 };
 
 }  // namespace ygg
+
+namespace runir::kr::dl::semantics
+{
+
+inline void assign_register(ygg::Data<RegisterValues>& data, RegisterIdentifier<ConceptTag> identifier, tyr::formalism::planning::ObjectView value)
+{
+    data.concept_values.at(static_cast<size_t>(ygg::uint_t(identifier))) = value.get_index();
+    ygg::clear(data.index);
+}
+
+inline void assign_register(ygg::Data<RegisterValues>& data,
+                            RegisterIdentifier<RoleTag> identifier,
+                            const std::pair<tyr::formalism::planning::ObjectView, tyr::formalism::planning::ObjectView>& value)
+{
+    data.role_values.at(static_cast<size_t>(ygg::uint_t(identifier))) = ::cista::pair(value.first.get_index(), value.second.get_index());
+    ygg::clear(data.index);
+}
+
+}  // namespace runir::kr::dl::semantics
 
 #endif

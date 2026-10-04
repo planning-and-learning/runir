@@ -53,6 +53,15 @@ bool is_compatible_with(ygg::View<ygg::Index<EffectVariant<Family>>, C> effect, 
     return ygg::visit([&](auto child) { return runir::kr::ps::is_compatible_with(child, context); }, effect.get_variant());
 }
 
+template<typename Range, typename Context>
+bool all_compatible(const Range& values, Context& context)
+{
+    for (const auto value : values)
+        if (!runir::kr::ps::is_compatible_with(value, context))
+            return false;
+    return true;
+}
+
 }  // namespace runir::kr::ps
 
 #endif

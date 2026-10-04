@@ -286,27 +286,49 @@ def test_concept_and_role_projection_bindings(gripper_planning_domain, ground_gr
     assert saved_boolean.get() is True
 
 
-def test_query_column_views_use_caller_owned_repository(gripper_planning_domain):
-    context = DomainContext(gripper_planning_domain)
+@pytest.mark.parametrize("module", [semantics, ext_semantics, uns_semantics], ids=["base", "ext", "uns"])
+@pytest.mark.parametrize("owner_kind", ["query", "concrete", "concept", "role"])
+def test_query_column_retains_owner_after_list_and_repository_scope(gripper_planning_domain, module, owner_kind):
+    def column_after_owner_scope():
+        factory = module.ConstructorRepositoryFactory()
+        repository = factory.create(gripper_planning_domain)
+        column_indices = []
+        for name in ("left", "right"):
+            data = module.QueryColumnData()
+            data.name = name
+            column_indices.append(repository.get_or_create(data).get_index())
 
-    def columns_after_owner_scope():
-        atom = '(q_atomic_state "at" (ball room))'
-        source = f'(c_project ball (q_project (ball room) {atom}))'
-        concept_owner = _sketch(f"(n_count {source})", "numerical", gripper_planning_domain, context)
-        role_owner = _sketch(f"(n_count (r_project room ball {atom}))", "numerical", gripper_planning_domain, context)
-        concept = concept_owner.get_numerical_features()[0].get_expression().get_variant().get_arg().get_variant()
-        role = role_owner.get_numerical_features()[0].get_expression().get_variant().get_arg().get_variant()
-        project = concept.get_arg().get_variant()
-        atom_view = project.get_arg().get_variant()
-        selected = []
-        for view in (concept, role, project, atom_view):
-            columns = view.get_columns()
-            selected.append(columns[0])
-        return selected
+        role_data = module.RoleData()
+        role_data.variant = repository.get_or_create(module.RoleUniversalData()).get_index()
+        role = repository.get_or_create(role_data)
+        concrete_data = module.QueryRoleData()
+        concrete_data.arg = role.get_index()
+        concrete_data.columns = column_indices
+        concrete = repository.get_or_create(concrete_data)
+        query_data = module.QueryData()
+        query_data.variant = concrete.get_index()
+        query = repository.get_or_create(query_data)
 
-    columns = columns_after_owner_scope()
+        if owner_kind in ("concept", "role"):
+            data = module.ConceptProjectData() if owner_kind == "concept" else module.RoleProjectData()
+            data.arg = query.get_index()
+            data.columns = column_indices[1:] if owner_kind == "concept" else column_indices[::-1]
+            owner = repository.get_or_create(data)
+            expected = ["right"] if owner_kind == "concept" else ["right", "left"]
+        else:
+            owner = query if owner_kind == "query" else concrete
+            expected = ["left", "right"]
+        columns = owner.get_columns()
+        assert isinstance(columns, list)
+        assert all(isinstance(column, module.QueryColumn) for column in columns)
+        assert [column.get_name() for column in columns] == expected
+        column = columns[0]
+        del columns
+        return column, expected[0]
+
+    column, expected = column_after_owner_scope()
     gc.collect()
-    assert [column.get_name() for column in columns] == ["ball", "room", "ball", "ball"]
+    assert column.get_name() == expected
 
 
 def test_native_ext_query_construction_derives_schema_and_evaluates(

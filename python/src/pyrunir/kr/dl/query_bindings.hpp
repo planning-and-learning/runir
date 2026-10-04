@@ -3,17 +3,34 @@
 
 #include "module.hpp"
 
+#include <pyrunir/kr/binding_utils.hpp>
+#include <pyrunir/kr/dl/evaluation_bindings.hpp>
 #include <runir/kr/dl/query_view.hpp>
 #include <runir/kr/dl/repository.hpp>
-#include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <string>
+#include <utility>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
 namespace runir::kr::dl::python
 {
+
+template<FamilyTag Family, typename View>
+void bind_query_columns(nb::class_<View>& cls)
+{
+    using ColumnView = ygg::View<ygg::Index<QueryColumn>, ConstructorRepositoryFor<Family>>;
+    const auto retain_owner = runir::kr::python::make_owner_retainer();
+    cls.def("get_columns",
+            [retain_owner](nb::typed<nb::handle, View> owner)
+            {
+                nb::typed<nb::list, ColumnView> result(nb::list {});
+                for (auto column : nb::cast<const View&>(owner).get_columns())
+                    result.append(retain_owner(nb::cast(std::move(column)), owner));
+                return result;
+            });
+}
 
 template<FamilyTag Family, typename Tag>
 void bind_query(nb::module_& m, const char* name)
@@ -49,26 +66,15 @@ void bind_query(nb::module_& m, const char* name)
     view.def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); });
     if constexpr (std::same_as<Tag, void>)
     {
-        using GroundContext = semantics::StateEvaluationContext<Family, tyr::GroundTag>;
-        using LiftedContext = semantics::StateEvaluationContext<Family, tyr::LiftedTag>;
-        view.def("get_variant", &View::get_variant, nb::keep_alive<0, 1>())
-            .def(
-                "evaluate",
-                [](const View& value, GroundContext& context) { return semantics::evaluate(value, context); },
-                nb::arg("context"),
-                nb::keep_alive<0, 2>())
-            .def(
-                "evaluate",
-                [](const View& value, LiftedContext& context) { return semantics::evaluate(value, context); },
-                nb::arg("context"),
-                nb::keep_alive<0, 2>());
+        view.def("get_variant", &View::get_variant, nb::keep_alive<0, 1>());
+        runir::kr::python::bind_evaluate<Family>(view);
         m.def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); }, nb::arg("query"));
     }
     if constexpr (requires(View value) { value.get_predicate(); })
         view.def("get_predicate", &View::get_predicate, nb::keep_alive<0, 1>());
     if constexpr (requires(View value) { value.get_polarity(); })
         view.def("get_polarity", &View::get_polarity);
-    view.def("get_columns", &View::get_columns);
+    bind_query_columns<Family>(view);
     if constexpr (requires(View value) { value.get_arg(); })
         view.def("get_arg", &View::get_arg, nb::keep_alive<0, 1>());
     if constexpr (requires(View value) { value.get_lhs(); })
@@ -95,8 +101,8 @@ void bind_query_projection(nb::module_& m, const char* name)
     auto view = nb::class_<View>(m, name)
                     .def("get_index", &View::get_index)
                     .def("get_arg", &View::get_arg, nb::keep_alive<0, 1>())
-                    .def("get_columns", &View::get_columns)
                     .def("syntactic_complexity", [](View value) { return semantics::syntactic_complexity(value); });
+    bind_query_columns<Family>(view);
     ygg::add_print(view);
     ygg::add_comparison(view);
     ygg::add_hash(view);

@@ -393,7 +393,7 @@ void check_cached_queries()
         if constexpr (requires { stale.position; })
             stale.position = 99;
         EXPECT_EQ(stale, concrete.get_data());
-        const auto [same, created] = dl::get_or_create(repo, stale);
+        const auto [same, created] = ygg::formalism::get_or_create(repo, stale);
         EXPECT_FALSE(created);
         EXPECT_EQ(same.get_index(), concrete.get_index());
         EXPECT_EQ(stale.columns, expected_columns);
@@ -878,7 +878,7 @@ TEST(RunirQueries, StaticnessIsInferredAndSerializedWithoutChangingIdentity)
         EXPECT_EQ(stale, expression.get_data());
         using Data = std::remove_cvref_t<decltype(stale)>;
         EXPECT_EQ(ygg::Hash<Data>()(stale), ygg::Hash<Data>()(expression.get_data()));
-        const auto [same, created] = dl::get_or_create(*repository, stale);
+        const auto [same, created] = ygg::formalism::get_or_create(*repository, stale);
         EXPECT_FALSE(created);
         EXPECT_EQ(same.get_index(), expression.get_index());
         EXPECT_EQ(stale.is_static, expected);
