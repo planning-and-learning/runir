@@ -6,6 +6,7 @@
 #include <concepts>
 #include <cstddef>
 #include <tuple>
+#include <type_traits>
 #include <tyr/formalism/object_view.hpp>
 #include <yggdrasil/containers/optional.hpp>
 #include <yggdrasil/containers/pair.hpp>
@@ -85,7 +86,9 @@ namespace runir::kr::dl::semantics
 {
 
 template<typename V>
-concept RegisterValuesViewConcept = requires(const V& values, RegisterIdentifier<ConceptTag> concept_id, RegisterIdentifier<RoleTag> role_id) {
+concept RegisterValuesViewConcept = requires(const std::remove_reference_t<V>& values,
+                                             RegisterIdentifier<ConceptTag> concept_id,
+                                             RegisterIdentifier<RoleTag> role_id) {
     { values.get_data() } -> std::same_as<const ygg::Data<RegisterValues>&>;
     { values.get_formalism_repository() } -> std::same_as<const tyr::formalism::planning::Repository&>;
     values.template get<ConceptTag>();

@@ -26,6 +26,11 @@ using StaticGraph = graphs::StaticGraph<std::string, std::string>;
 using DynamicGraph = graphs::DynamicGraph<std::string, std::string>;
 using BidirectionalGraph = graphs::BidirectionalStaticGraph<std::string, std::string>;
 
+static_assert(graphs::IsGraph<StaticGraph> && !graphs::IsGraph<int>);
+static_assert(graphs::IsDenseGraph<StaticGraph> && !graphs::IsDenseGraph<Builder> && !graphs::IsDenseGraph<int>);
+static_assert(graphs::IsVertex<StaticGraph::VertexType> && !graphs::IsVertex<int>);
+static_assert(graphs::IsEdge<StaticGraph::EdgeType> && !graphs::IsEdge<int>);
+
 template<typename Graph>
 void expect_vertex_and_edge_parents_rebound(const Graph& graph, graphs::VertexIndex vertex, graphs::EdgeIndex edge)
 {

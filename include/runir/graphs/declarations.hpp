@@ -101,20 +101,12 @@ concept IsGraphWithProperties = requires(const G& graph, VertexPropertyIndex<VP>
 };
 
 template<typename G>
-concept IsGraph = requires {
-    typename G::VertexPropertyType;
-    typename G::EdgePropertyType;
-} && IsGraphWithProperties<G, typename G::VertexPropertyType, typename G::EdgePropertyType>;
+concept IsGraph = IsGraphWithProperties<G, typename G::VertexPropertyType, typename G::EdgePropertyType>;
 
 template<typename G>
-concept IsDenseGraph =
-    requires {
-        typename GraphTraits<std::remove_cvref_t<G>>::VertexIndexRange;
-        typename GraphTraits<std::remove_cvref_t<G>>::EdgeIndexRange;
-        typename GraphTraits<std::remove_cvref_t<G>>::OutEdgeIndexRange;
-    } && std::same_as<typename GraphTraits<std::remove_cvref_t<G>>::VertexIndexRange, DenseIndexRangeTag>
-    && std::same_as<typename GraphTraits<std::remove_cvref_t<G>>::EdgeIndexRange, DenseIndexRangeTag>
-    && std::same_as<typename GraphTraits<std::remove_cvref_t<G>>::OutEdgeIndexRange, DenseIndexRangeTag>;
+concept IsDenseGraph = std::same_as<typename GraphTraits<std::remove_cvref_t<G>>::VertexIndexRange, DenseIndexRangeTag>
+                       && std::same_as<typename GraphTraits<std::remove_cvref_t<G>>::EdgeIndexRange, DenseIndexRangeTag>
+                       && std::same_as<typename GraphTraits<std::remove_cvref_t<G>>::OutEdgeIndexRange, DenseIndexRangeTag>;
 
 template<IsDenseGraph G>
 class BackwardStaticGraphView;
@@ -129,9 +121,6 @@ struct GraphTraits<BackwardStaticGraphView<G>>
 
 template<typename T>
 concept IsVertex = requires(T vertex) {
-    typename T::PropertyType;
-    typename T::PropertyIndexType;
-
     { vertex.get_index() } -> std::convertible_to<VertexIndex>;
     { vertex.get_property_index() } -> std::same_as<typename T::PropertyIndexType>;
     { vertex.get_property() } -> std::same_as<const typename T::PropertyType&>;
@@ -139,27 +128,11 @@ concept IsVertex = requires(T vertex) {
 
 template<typename T>
 concept IsEdge = requires(T edge) {
-    typename T::PropertyType;
-    typename T::PropertyIndexType;
-
     { edge.get_index() } -> std::convertible_to<EdgeIndex>;
     { edge.get_source() } -> std::convertible_to<VertexIndex>;
     { edge.get_target() } -> std::convertible_to<VertexIndex>;
     { edge.get_property_index() } -> std::same_as<typename T::PropertyIndexType>;
     { edge.get_property() } -> std::same_as<const typename T::PropertyType&>;
-};
-
-template<typename T>
-concept IsStaticGraphBuilder = requires(T graph, VertexIndex vertex, EdgeIndex edge) {
-    typename T::VertexType;
-    typename T::EdgeType;
-
-    { graph.get_vertices() } -> std::same_as<const std::vector<typename T::VertexType>&>;
-    { graph.get_edges() } -> std::same_as<const std::vector<typename T::EdgeType>&>;
-    { graph.get_vertex(vertex) } -> std::same_as<const typename T::VertexType&>;
-    { graph.get_edge(edge) } -> std::same_as<const typename T::EdgeType&>;
-    { graph.get_num_vertices() } -> std::same_as<std::size_t>;
-    { graph.get_num_edges() } -> std::same_as<std::size_t>;
 };
 
 }  // namespace runir::graphs

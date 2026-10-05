@@ -397,7 +397,7 @@ TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
                 auto expander = ext::SuccessorExpander<tyr::GroundTag>(context, program);
                 const auto initial_node = search->successor_generator->get_packed_initial_node(*search->state_repository, *search->axiom_evaluator);
                 const auto initial = expander.initial_state(initial_node.get_state().unpack());
-                auto classifier = kr::ps::NoUnsolvability {};
+                auto classifier = kr::ps::NoUnsolvability<tyr::GroundTag> {};
                 auto path_pool = ygg::SharedObjectPool<Path> {};
                 // Warm path and binding pools to the live DFS depth. Fresh search storage
                 // on each pass ensures memoization cannot skip any of the measured work.

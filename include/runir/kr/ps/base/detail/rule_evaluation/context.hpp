@@ -11,7 +11,6 @@ template<tyr::TaskKind Kind>
 struct RuleEvaluationContext<BaseFamilyTag, Kind>
 {
     using FamilyType = BaseFamilyTag;
-    using KindType = Kind;
 
     base::EvaluationEnvironment<Kind>& environment;
 

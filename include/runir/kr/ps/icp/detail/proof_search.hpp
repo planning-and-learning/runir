@@ -136,7 +136,7 @@ auto find_solution(TaskContextPtr<Kind> task, ProgramView program, const Program
         return detail::search(task, program, options, classifier);
     }
 
-    auto classifier = NoUnsolvability {};
+    auto classifier = NoUnsolvability<Kind> {};
     return detail::search(task, program, options, classifier);
 }
 

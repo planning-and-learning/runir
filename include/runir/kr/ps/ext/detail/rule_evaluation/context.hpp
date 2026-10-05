@@ -25,7 +25,6 @@ template<tyr::TaskKind Kind, ext::ExecutionStorageConcept<Kind> Storage, tyr::pl
 struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningState>
 {
     using FamilyType = runir::kr::ExtFamilyTag;
-    using KindType = Kind;
 
     const runir::kr::TaskContextPtr<Kind>& task_context;
     Storage& storage;

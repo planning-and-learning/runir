@@ -4,6 +4,7 @@
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/family_traits.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
+#include <runir/kr/ps/rule_evaluator_concepts.hpp>
 #include <utility>
 
 namespace runir::tests
@@ -48,6 +49,23 @@ using ExtContext = kr::ps::dl::TransitionEvaluationContext<kr::ExtFamilyTag, tyr
 using IcpContext = kr::ps::dl::TransitionEvaluationContext<kr::IcpFamilyTag, tyr::GroundTag>;
 using BaseStateContext = kr::dl::semantics::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>;
 using ExtStateContext = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
+
+// The returned resources identify the task kind; the PS family still distinguishes ICP from Ext.
+struct IcpResourceContext
+{
+    using FamilyType = kr::IcpFamilyTag;
+
+    ExtStateContext make_dl_context(tyr::planning::StateView<tyr::GroundTag>);
+    ExtStateContext& get_source_context();
+    ExtStateContext& get_target_context();
+};
+
+static_assert(kr::ps::RuleEvaluationContextConcept<IcpResourceContext, kr::IcpFamilyTag, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>);
+static_assert(!kr::ps::RuleEvaluationContextConcept<IcpResourceContext, kr::IcpFamilyTag, tyr::LiftedTag, tyr::planning::StateView<tyr::GroundTag>>);
+static_assert(!kr::ps::RuleEvaluationContextConcept<IcpResourceContext, kr::ExtFamilyTag, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>);
+static_assert(kr::ps::dl::TransitionEvaluationContextConcept<IcpResourceContext, kr::IcpFamilyTag, tyr::GroundTag>);
+static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpResourceContext, kr::IcpFamilyTag, tyr::LiftedTag>);
+static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpResourceContext, kr::ExtFamilyTag, tyr::GroundTag>);
 
 static_assert(kr::dl::semantics::StateEvaluationContextConcept<ExtStateContext, kr::ps::DlFamilyFor<kr::IcpFamilyTag>, tyr::GroundTag>);
 static_assert(!kr::dl::semantics::StateEvaluationContextConcept<BaseStateContext, kr::ps::DlFamilyFor<kr::IcpFamilyTag>, tyr::GroundTag>);

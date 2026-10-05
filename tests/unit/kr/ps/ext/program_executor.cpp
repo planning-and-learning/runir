@@ -24,6 +24,7 @@
 #include <runir/kr/uns/repository.hpp>
 #include <set>
 #include <stdexcept>
+#include <utility>
 #include <yggdrasil/containers/shared_object_pool.hpp>
 #include <yggdrasil/serialization/json.hpp>
 
@@ -1093,6 +1094,26 @@ TEST(RunirTests, ExtLiftedStateMemorizationPreservesSemanticsAndRetainsOnlyWitne
 namespace
 {
 
+template<typename View>
+struct MutableDataAccess : View
+{
+    auto get_data() -> decltype(std::declval<const View&>().get_data());
+};
+
+template<tyr::TaskKind Kind>
+struct ReferenceModuleStateAccess : kr::ps::ext::ModuleStateView<Kind>
+{
+    const tyr::planning::StateView<Kind>& get_state() const;
+    const kr::dl::semantics::RegisterValuesView& get_registers() const;
+};
+
+template<tyr::TaskKind Kind>
+struct ReferenceProgramStateAccess : kr::ps::ext::ProgramStateView<Kind>
+{
+    const tyr::planning::StateView<Kind>& get_state() const;
+    const ReferenceModuleStateAccess<Kind>& get_module_state() const;
+};
+
 template<tyr::TaskKind Kind>
 void check_transient_builder_values_and_reuse()
 {
@@ -1103,10 +1124,19 @@ void check_transient_builder_values_and_reuse()
     static_assert(ext::ProgramStateViewConcept<ext::ProgramStateView<Kind>, Kind>);
     static_assert(ext::ProgramStateViewConcept<ext::BorrowedProgramStateView<Kind>, Kind>);
     static_assert(ext::ProgramStateViewConcept<ext::BuilderProgramStateView<Kind>, Kind>);
-    static_assert(ext::RetainedStateFor<ygg::SharedObjectPoolPtr<ygg::Builder<ext::ProgramState<Kind>>>, ext::TransientExecutionStorage<Kind>>);
-    static_assert(!ext::RetainedStateFor<ygg::Builder<ext::ProgramState<Kind>>, ext::TransientExecutionStorage<Kind>>);
-    static_assert(!ext::RetainedStateFor<ext::BorrowedProgramStateView<Kind>, ext::TransientExecutionStorage<Kind>>);
-    static_assert(!ext::RetainedStateFor<ext::BuilderProgramStateView<Kind>, ext::TransientExecutionStorage<Kind>>);
+    static_assert(sem::RegisterValuesViewConcept<sem::RegisterValuesView&>);
+    static_assert(sem::RegisterValuesViewConcept<const sem::BorrowedRegisterValuesView&>);
+    static_assert(!sem::RegisterValuesViewConcept<volatile sem::RegisterValuesView&>);
+    static_assert(!sem::RegisterValuesViewConcept<MutableDataAccess<sem::BorrowedRegisterValuesView>&>);
+    static_assert(ext::ModuleStateViewConcept<ext::ModuleStateView<Kind>&, Kind>);
+    static_assert(ext::ModuleStateViewConcept<const ext::BuilderModuleStateView<Kind>&, Kind>);
+    static_assert(!ext::ModuleStateViewConcept<volatile ext::ModuleStateView<Kind>&, Kind>);
+    static_assert(!ext::ModuleStateViewConcept<MutableDataAccess<ext::ModuleStateView<Kind>>&, Kind>);
+    static_assert(ext::ProgramStateViewConcept<ext::ProgramStateView<Kind>&, Kind>);
+    static_assert(ext::ProgramStateViewConcept<const ext::BuilderProgramStateView<Kind>&, Kind>);
+    static_assert(!ext::ProgramStateViewConcept<volatile ext::ProgramStateView<Kind>&, Kind>);
+    static_assert(!ext::ProgramStateViewConcept<MutableDataAccess<ext::ProgramStateView<Kind>>&, Kind>);
+    static_assert(ext::ProgramStateViewConcept<ReferenceProgramStateAccess<Kind>, Kind>);
     constexpr auto has_index = []<typename V>() { return requires(const V& view) { view.get_index(); }; };
     static_assert(!has_index.template operator()<sem::BorrowedRegisterValuesView>());
     static_assert(!has_index.template operator()<ext::BorrowedProgramStateView<Kind>>());

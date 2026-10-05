@@ -170,7 +170,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner, SketchVie
         auto classifier = ClassifierUnsolvability<Kind>(*task_context_owner, *options.classifier);
         return detail::find_solution(task_context_owner, sketch, options, classifier);
     }
-    auto classifier = NoUnsolvability {};
+    auto classifier = NoUnsolvability<Kind> {};
     return detail::find_solution(task_context_owner, sketch, options, classifier);
 }
 

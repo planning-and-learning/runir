@@ -211,11 +211,11 @@ namespace runir::kr::ps::ext
 {
 
 template<typename S, typename Kind>
-concept ModuleStateViewConcept = tyr::TaskKind<Kind> && requires(const S& state) {
-    requires tyr::planning::StateViewConcept<std::remove_cvref_t<decltype(state.get_state())>, Kind>;
+concept ModuleStateViewConcept = tyr::TaskKind<Kind> && requires(const std::remove_reference_t<S>& state) {
+    { state.get_state() } -> tyr::planning::StateViewConcept<Kind>;
     { state.get_module() } -> std::same_as<ModuleView>;
     { state.get_memory_state() } -> std::same_as<MemoryStateView>;
-    requires runir::kr::dl::semantics::RegisterValuesViewConcept<std::remove_cvref_t<decltype(state.get_registers())>>;
+    { state.get_registers() } -> runir::kr::dl::semantics::RegisterValuesViewConcept;
     { state.get_arguments() } -> std::same_as<runir::kr::dl::semantics::CallArgumentsView>;
     state.get_data();
     state.get_context();
@@ -223,10 +223,10 @@ concept ModuleStateViewConcept = tyr::TaskKind<Kind> && requires(const S& state)
 
 /// Shared semantic access for indexed, borrowed-data and builder views; no registered identity is required.
 template<typename S, typename Kind>
-concept ProgramStateViewConcept = tyr::TaskKind<Kind> && requires(const S& state) {
-    requires tyr::planning::StateViewConcept<std::remove_cvref_t<decltype(state.get_state())>, Kind>;
+concept ProgramStateViewConcept = tyr::TaskKind<Kind> && requires(const std::remove_reference_t<S>& state) {
+    { state.get_state() } -> tyr::planning::StateViewConcept<Kind>;
     { state.get_program() } -> std::same_as<ProgramView>;
-    requires ModuleStateViewConcept<std::remove_cvref_t<decltype(state.get_module_state())>, Kind>;
+    { state.get_module_state() } -> ModuleStateViewConcept<Kind>;
     { state.get_call_stack() } -> std::same_as<std::optional<CallStackView<Kind>>>;
     state.get_data();
     state.get_context();

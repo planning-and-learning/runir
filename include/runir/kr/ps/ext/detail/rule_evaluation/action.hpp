@@ -26,7 +26,7 @@
 namespace runir::kr::ps::ext::detail
 {
 
-template<tyr::planning::StateViewConcept State, ygg::SizedForwardRangeOf<ygg::Index<tyr::formalism::Object>> Row>
+template<tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State, ygg::SizedForwardRangeOf<ygg::Index<tyr::formalism::Object>> Row>
 [[noreturn]] void action_rule_contract_error(RuleView<ActionTag> rule, const State& state, const Row& tuple, std::string_view reason)
 {
     auto message = std::ostringstream {};
@@ -56,16 +56,16 @@ class ActionRuleEvaluator
     {
         // Query contracts are checked only when the rule is evaluated.
         if (m_action.get_arity() != arity)
-            action_rule_contract_error(m_rule, state, std::span<const ygg::Index<tyr::formalism::Object>> {}, "query arity does not match action arity");
+            action_rule_contract_error<Kind>(m_rule, state, std::span<const ygg::Index<tyr::formalism::Object>> {}, "query arity does not match action arity");
     }
 
     template<tyr::planning::StateViewConcept<Kind> State, ygg::SizedForwardRangeOf<ygg::Index<tyr::formalism::Object>> Row>
     void require_applicable(tyr::planning::ActionBindingStatus status, const State& planning_state, const Row& objects) const
     {
         if (status == tyr::planning::ActionBindingStatus::OUTSIDE_PARAMETER_DOMAIN)
-            action_rule_contract_error(m_rule, planning_state, objects, "object is outside the action parameter domain");
+            action_rule_contract_error<Kind>(m_rule, planning_state, objects, "object is outside the action parameter domain");
         if (status != tyr::planning::ActionBindingStatus::APPLICABLE)
-            action_rule_contract_error(m_rule, planning_state, objects, "offered action is not applicable");
+            action_rule_contract_error<Kind>(m_rule, planning_state, objects, "offered action is not applicable");
     }
 
 public:
@@ -98,7 +98,7 @@ private:
                                                                          state.get_module_state().get_registers(),
                                                                          state.get_module_state().get_registers());
         if (!all_compatible<Kind>(rule.get_effects(), transition))
-            detail::action_rule_contract_error(rule, planning_state, tuple, "offered transition violates declared effects");
+            detail::action_rule_contract_error<Kind>(rule, planning_state, tuple, "offered transition violates declared effects");
     }
 
 public:

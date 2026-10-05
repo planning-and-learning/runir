@@ -345,7 +345,7 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
             auto classifier = ClassifierUnsolvability<Kind>(*task_context_owner, *options.classifier);
             return detail::find_solution<Kind>(expander, storage, options, classifier);
         }
-        auto classifier = NoUnsolvability {};
+        auto classifier = NoUnsolvability<Kind> {};
         return detail::find_solution<Kind>(expander, storage, options, classifier);
     };
     // Validate the task and program before constructing a classifier that borrows the task context.

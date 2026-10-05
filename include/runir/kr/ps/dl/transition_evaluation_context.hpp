@@ -14,7 +14,6 @@ namespace runir::kr::ps::dl
 template<typename Context, typename Family, typename Kind>
 concept TransitionEvaluationContextConcept = runir::kr::FamilyTag<Family> && tyr::TaskKind<Kind> && requires(Context& context) {
     requires std::same_as<typename Context::FamilyType, Family>;
-    requires std::same_as<typename Context::KindType, Kind>;
     { context.get_source_context() } -> runir::kr::dl::semantics::StateEvaluationContextConcept<DlFamilyFor<Family>, Kind>;
     { context.get_target_context() } -> runir::kr::dl::semantics::StateEvaluationContextConcept<DlFamilyFor<Family>, Kind>;
 };
@@ -24,7 +23,6 @@ class TransitionEvaluationContext
 {
 public:
     using FamilyType = Family;
-    using KindType = Kind;
     using DlFamily = DlFamilyFor<Family>;
     using DlContext = runir::kr::dl::semantics::StateEvaluationContext<DlFamily, Kind, S, R>;
 

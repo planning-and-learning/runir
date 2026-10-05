@@ -4,7 +4,6 @@
 #include "runir/kr/dl/semantics/declarations.hpp"
 
 #include <memory>
-#include <type_traits>
 #include <tyr/planning/declarations.hpp>
 #include <yggdrasil/containers/shared_object_pool.hpp>
 #include <yggdrasil/core/types.hpp>
@@ -61,10 +60,6 @@ using BuilderModuleStateView = ygg::View<ygg::Builder<ModuleState<Kind>>, Execut
 
 template<tyr::TaskKind Kind>
 using BuilderProgramStateView = ygg::View<ygg::Builder<ProgramState<Kind>>, ExecutionRepository<Kind>>;
-
-/// Storage selects the handles whose contents survive reuse of its scratch buffers.
-template<typename S, typename Storage>
-concept RetainedStateFor = std::same_as<std::remove_cvref_t<S>, typename Storage::StoredState>;
 
 }  // namespace runir::kr::ps::ext
 

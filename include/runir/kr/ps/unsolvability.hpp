@@ -8,9 +8,10 @@
 namespace runir::kr::ps
 {
 
+template<tyr::TaskKind Kind>
 struct NoUnsolvability
 {
-    template<tyr::planning::StateViewConcept State>
+    template<tyr::planning::StateViewConcept<Kind> State>
     bool is_unsolvable(const State&) const noexcept
     {
         return false;

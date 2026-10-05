@@ -189,7 +189,9 @@ continue; `StopConcept` requires a mutable callback returning whether to stop.
 The context/source pairing must provide the family's DL state context, and a
 matching context must also provide the candidate's DL transition context.
 The context and evaluator concepts take the PS family and task kind explicitly;
-the context contract verifies that both match the supplied context.
+`FamilyType` preserves PS family identity, while the returned DL contexts
+validate the task kind through their state views. Ext and ICP must remain
+distinct PS families even though both use Ext DL resources.
 Feature evaluation, compatibility checks, and rule contexts use the DL contract
 `StateEvaluationContextConcept<Context, DlFamilyFor<Family>, Kind>` directly.
 `DlFamilyFor` centralizes the mapping to DL families: ICP uses Ext DL resources.
@@ -198,6 +200,15 @@ explicitly and validate the state and cache types without inferring them from
 context aliases. C++ compatibility and classification calls likewise supply
 `Kind`: `is_compatible_with<Kind>`, `all_compatible<Kind>`, and `classify<Kind>`.
 Adding another evaluator category requires explicit developer confirmation.
+
+Tyr's state contract likewise requires `StateViewConcept<State, Kind>`. Free
+planning atom projections use `get_atoms_view<Kind, FactKind>(state, ...)`, and
+successor storage types use `SuccessorStorage<Kind, State>` or
+`SuccessorListStorage<Kind, State>`. Goal-condition member projections retain
+`condition.get_atoms_view<FactKind>(...)` because the condition already carries
+its task kind. The no-op classifier is `NoUnsolvability<Kind>`.
+Generic `Node` constructor deduction and state formatting retain `KindType`
+as their discovery mechanism; ordinary evaluation APIs receive `Kind` directly.
 
 These contracts cover evaluation, while aggregates also use explicit coordination
 hooks: Ext resumes retained choices through `choice_step`, and ICP groups and

@@ -14,7 +14,6 @@ template<tyr::TaskKind Kind>
 struct RuleEvaluationContext<IcpFamilyTag, Kind>
 {
     using FamilyType = IcpFamilyTag;
-    using KindType = Kind;
 
     icp::detail::RuleEvaluationWorkspace<Kind>& workspace;
     const tyr::planning::StateView<Kind> planning_state;

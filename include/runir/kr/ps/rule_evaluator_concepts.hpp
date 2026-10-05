@@ -21,7 +21,6 @@ struct RuleEvaluationContext;
 template<typename Context, typename Family, typename Kind, typename State>
 concept RuleEvaluationContextConcept = FamilyTag<Family> && tyr::TaskKind<Kind> && std::copy_constructible<State> && requires(Context& context, State source) {
     requires std::same_as<typename Context::FamilyType, Family>;
-    requires std::same_as<typename Context::KindType, Kind>;
     { context.make_dl_context(source) } -> runir::kr::dl::semantics::StateEvaluationContextConcept<DlFamilyFor<Family>, Kind>;
 };
 
