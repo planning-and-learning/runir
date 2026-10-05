@@ -23,19 +23,20 @@ namespace runir::kr::ps::ext
 {
 
 template<tyr::TaskKind Kind>
-using ExecutionSymbolRepository = ygg::formalism::SymbolRepository<ModuleState<Kind>, CallStack, ProgramState<Kind>>;
+using ExecutionRepositoryTypes = ygg::TypeList<ModuleState<Kind>, CallStack, ProgramState<Kind>>;
 
 template<tyr::TaskKind Kind>
-using ExecutionBuilder = ygg::formalism::BuilderStorage<ModuleState<Kind>, CallStack, ProgramState<Kind>>;
+using ExecutionBuilder = ygg::ApplyTypeListT<ygg::formalism::BuilderStorage, ExecutionRepositoryTypes<Kind>>;
 
 template<tyr::TaskKind Kind>
-class ExecutionRepository
+class ExecutionRepository : public ygg::formalism::SymbolRepositoryBase<ExecutionRepository<Kind>, ExecutionRepositoryTypes<Kind>>
 {
+    using Base = ygg::formalism::SymbolRepositoryBase<ExecutionRepository<Kind>, ExecutionRepositoryTypes<Kind>>;
+
     friend class ExecutionRepositoryFactory<Kind>;
 
 private:
     ygg::uint_t m_index;
-    ExecutionSymbolRepository<Kind> m_symbol_repository;
     tyr::planning::StateRepositoryPtr<Kind> m_state_repository;
     runir::kr::dl::semantics::DenotationRepositoryPtr m_denotation_repository;
     RepositoryPtr m_program_repository;
@@ -45,7 +46,6 @@ private:
                         runir::kr::dl::semantics::DenotationRepositoryPtr denotation_repository,
                         RepositoryPtr program_repository) :
         m_index(index),
-        m_symbol_repository(nullptr),
         m_state_repository(std::move(state_repository)),
         m_denotation_repository(std::move(denotation_repository)),
         m_program_repository(std::move(program_repository))
@@ -56,8 +56,6 @@ private:
     }
 
 public:
-    using SymbolTypes = typename ExecutionSymbolRepository<Kind>::SymbolTypes;
-
     ExecutionRepository(const ExecutionRepository&) = delete;
     ExecutionRepository& operator=(const ExecutionRepository&) = delete;
     ExecutionRepository(ExecutionRepository&&) = delete;
@@ -68,16 +66,13 @@ public:
     const auto& get_denotation_repository() const noexcept { return *m_denotation_repository; }
     const auto& get_program_repository() const noexcept { return *m_program_repository; }
     const auto& get_formalism_repository() const noexcept { return m_denotation_repository->get_formalism_repository(); }
-    void clear() noexcept { m_symbol_repository.clear(); }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
     std::optional<ygg::View<ygg::Index<T>, ExecutionRepository>> find(const ygg::Data<T>& data) const noexcept
     {
         assert(is_canonical(data));
-        if (auto index = m_symbol_repository.template find_local<T>(data))
-            return ygg::View<ygg::Index<T>, ExecutionRepository>(*index, *this);
-        return std::nullopt;
+        return Base::find(data);
     }
 
     template<typename T>
@@ -85,23 +80,22 @@ public:
     std::pair<ygg::View<ygg::Index<T>, ExecutionRepository>, bool> insert(ygg::Data<T>& data)
     {
         assert(is_canonical(data));
-        const auto [index, success] = m_symbol_repository.template insert_local<T>(data);
-        return { ygg::View<ygg::Index<T>, ExecutionRepository>(index, *this), success };
+        return Base::insert(data);
     }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
     const ygg::Data<T>& operator[](ygg::Index<T> index) const
     {
-        assert(m_symbol_repository.template is_local<T>(index));
-        return m_symbol_repository.template at_local<T>(index);
+        assert(this->template is_local<T>(index));
+        return this->template at_local<T>(index);
     }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ExecutionRepository, T>
-    size_t size() const noexcept
+    const ExecutionRepository& get_canonical_context(ygg::Index<T>) const noexcept
     {
-        return m_symbol_repository.template local_size<T>();
+        return *this;
     }
 };
 

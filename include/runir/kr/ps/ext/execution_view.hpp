@@ -16,91 +16,71 @@
 #include <yggdrasil/containers/pair.hpp>
 #include <yggdrasil/containers/vector.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<tyr::TaskKind Kind, typename C>
-class View<Index<runir::kr::ps::ext::ModuleState<Kind>>, C>
+template<tyr::TaskKind Kind, formalism::SymbolContextFor<runir::kr::ps::ext::ModuleState<Kind>> C>
+class View<Index<runir::kr::ps::ext::ModuleState<Kind>>, C> : public formalism::detail::View<Index<runir::kr::ps::ext::ModuleState<Kind>>, C>
 {
-private:
-    Index<runir::kr::ps::ext::ModuleState<Kind>> m_handle;
-    const C* m_context;
-
 public:
-    View(Index<runir::kr::ps::ext::ModuleState<Kind>> handle, const C& context) noexcept : m_handle(handle), m_context(&context) {}
+    View(Index<runir::kr::ps::ext::ModuleState<Kind>> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::ps::ext::ModuleState<Kind>>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-    auto get_index() const noexcept { return m_handle; }
-
-    auto get_state() const { return get_repository(*m_context).get_state_repository().get_registered_state(get_data().state); }
-    auto get_module() const noexcept { return make_view(get_data().module_, get_repository(*m_context).get_program_repository()); }
-    auto get_memory_state() const noexcept { return make_view(get_data().memory_state, get_repository(*m_context).get_program_repository()); }
-    auto get_registers() const noexcept { return make_view(get_data().registers, get_repository(*m_context).get_denotation_repository()); }
-    auto get_arguments() const noexcept { return make_view(get_data().arguments, get_repository(*m_context).get_denotation_repository()); }
-
-    auto identifying_members() const noexcept { return std::make_tuple(get_handle(), m_context->get_index()); }
+    auto get_state() const { return get_repository(*this->m_context).get_state_repository().get_registered_state(this->get_data().state); }
+    auto get_module() const noexcept { return make_view(this->get_data().module_, get_repository(*this->m_context).get_program_repository()); }
+    auto get_memory_state() const noexcept { return make_view(this->get_data().memory_state, get_repository(*this->m_context).get_program_repository()); }
+    auto get_registers() const noexcept { return make_view(this->get_data().registers, get_repository(*this->m_context).get_denotation_repository()); }
+    auto get_arguments() const noexcept { return make_view(this->get_data().arguments, get_repository(*this->m_context).get_denotation_repository()); }
 };
 
-template<typename C>
-class View<Index<runir::kr::ps::ext::CallStack>, C>
+template<formalism::SymbolContextFor<runir::kr::ps::ext::CallStack> C>
+class View<Index<runir::kr::ps::ext::CallStack>, C> : public formalism::detail::View<Index<runir::kr::ps::ext::CallStack>, C>
 {
-private:
-    Index<runir::kr::ps::ext::CallStack> m_handle;
-    const C* m_context;
-
 public:
-    View(Index<runir::kr::ps::ext::CallStack> handle, const C& context) noexcept : m_handle(handle), m_context(&context) {}
+    View(Index<runir::kr::ps::ext::CallStack> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::ps::ext::CallStack>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-    auto get_index() const noexcept { return m_handle; }
-
-    auto get_module() const noexcept { return make_view(get_data().module_, get_repository(*m_context).get_program_repository()); }
-    auto get_return_memory_state() const noexcept { return make_view(get_data().return_memory_state, get_repository(*m_context).get_program_repository()); }
-    auto get_registers() const noexcept { return make_view(get_data().registers, get_repository(*m_context).get_denotation_repository()); }
-    auto get_arguments() const noexcept { return make_view(get_data().arguments, get_repository(*m_context).get_denotation_repository()); }
+    auto get_module() const noexcept { return make_view(this->get_data().module_, get_repository(*this->m_context).get_program_repository()); }
+    auto get_return_memory_state() const noexcept
+    {
+        return make_view(this->get_data().return_memory_state, get_repository(*this->m_context).get_program_repository());
+    }
+    auto get_registers() const noexcept { return make_view(this->get_data().registers, get_repository(*this->m_context).get_denotation_repository()); }
+    auto get_arguments() const noexcept { return make_view(this->get_data().arguments, get_repository(*this->m_context).get_denotation_repository()); }
 
     auto get_caller() const -> std::optional<View>
     {
-        if (!get_data().caller)
+        if (!this->get_data().caller)
             return std::nullopt;
-        return make_view(*get_data().caller, *m_context);
+        return make_view(*this->get_data().caller, *this->m_context);
     }
-
-    auto identifying_members() const noexcept { return std::make_tuple(get_handle(), m_context->get_index()); }
 };
 
-template<tyr::TaskKind Kind, typename C>
-class View<Index<runir::kr::ps::ext::ProgramState<Kind>>, C>
+template<tyr::TaskKind Kind, formalism::SymbolContextFor<runir::kr::ps::ext::ProgramState<Kind>> C>
+class View<Index<runir::kr::ps::ext::ProgramState<Kind>>, C> : public formalism::detail::View<Index<runir::kr::ps::ext::ProgramState<Kind>>, C>
 {
-private:
-    Index<runir::kr::ps::ext::ProgramState<Kind>> m_handle;
-    const C* m_context;
-
 public:
-    View(Index<runir::kr::ps::ext::ProgramState<Kind>> handle, const C& context) noexcept : m_handle(handle), m_context(&context) {}
-
-    const auto& get_data() const { return get_repository(*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-    auto get_index() const noexcept { return m_handle; }
+    View(Index<runir::kr::ps::ext::ProgramState<Kind>> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::ps::ext::ProgramState<Kind>>, C>(handle, context)
+    {
+    }
 
     auto get_state() const { return get_module_state().get_state(); }
-    auto get_program() const noexcept { return make_view(get_data().program, get_repository(*m_context).get_program_repository()); }
-    auto get_module_state() const noexcept { return make_view(get_data().module_state, *m_context); }
+    auto get_program() const noexcept { return make_view(this->get_data().program, get_repository(*this->m_context).get_program_repository()); }
+    auto get_module_state() const noexcept { return make_view(this->get_data().module_state, *this->m_context); }
 
     auto get_call_stack() const -> std::optional<View<Index<runir::kr::ps::ext::CallStack>, C>>
     {
-        if (!get_data().call_stack)
+        if (!this->get_data().call_stack)
             return std::nullopt;
-        return make_view(*get_data().call_stack, *m_context);
+        return make_view(*this->get_data().call_stack, *this->m_context);
     }
-
-    auto identifying_members() const noexcept { return std::make_tuple(get_handle(), m_context->get_index()); }
 };
 
 /// Borrows data whose children remain in their repositories.

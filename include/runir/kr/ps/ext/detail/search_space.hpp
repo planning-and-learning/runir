@@ -18,16 +18,8 @@ tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(std::span<const tyr::
                                                            const tyr::planning::PackedNode<Kind>& initial_node,
                                                            runir::kr::TaskContext<Kind>& context)
 {
-    auto steps = tyr::planning::PackedLabeledNodeList<Kind> {};
-    steps.reserve(actions.size());
-    auto node = initial_node.unpack();
     auto& search = *context.search_context;
-    for (const auto action : actions)
-    {
-        node = search.successor_generator->get_successor_node(node, action, *search.state_repository, *search.axiom_evaluator);
-        steps.push_back({ action, node.pack() });
-    }
-    return tyr::planning::PackedPlan<Kind>(initial_node, std::move(steps));
+    return tyr::planning::replay_plan<Kind>(initial_node, actions, *search.successor_generator, *search.state_repository, *search.axiom_evaluator);
 }
 
 template<tyr::TaskKind Kind>

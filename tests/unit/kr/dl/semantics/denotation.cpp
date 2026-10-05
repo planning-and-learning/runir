@@ -210,4 +210,59 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsOutliveViewWrappers)
     EXPECT_TRUE(++role_iterator == role_end);
 }
 
+TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePadding)
+{
+    namespace dl = kr::dl;
+    namespace semantics = dl::semantics;
+    constexpr ygg::uint_t num_objects = 130;
+    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    for (ygg::uint_t i = 0; i < num_objects; ++i)
+    {
+        auto data = ygg::Data<tyr::formalism::Object>("object" + std::to_string(i));
+        (void) planning_repository->insert(data);
+    }
+    auto repository = semantics::DenotationRepositoryFactory().create(planning_repository);
+    auto concept_builder = ygg::Builder<Concept>(num_objects);
+    concept_builder.get().set(0);
+    concept_builder.get().set(64);
+    concept_builder.get().set(129);
+    auto concept_data = ygg::Data<Concept>(num_objects, repository.get_vector_repository().insert(concept_builder.blocks));
+    const auto concept_view = repository.insert(concept_data).first;
+    auto concept_iterator = ConceptView(concept_view).begin();
+    const auto concept_end = ConceptView(concept_view).end();
+
+    auto role_builder = ygg::Builder<Role>(num_objects);
+    role_builder.get(0).set(64);
+    role_builder.get(129).set(1);
+    auto role_data = ygg::Data<Role>(num_objects, repository.get_vector_repository().insert(role_builder.blocks));
+    const auto role_view = repository.insert(role_data).first;
+    auto role_iterator = RoleView(role_view).begin();
+    const auto role_end = RoleView(role_view).end();
+
+    for (ygg::uint_t i = 0; i < 1024; ++i)
+    {
+        concept_builder.initialize(num_objects);
+        concept_builder.blocks.front() = i;
+        auto data = ygg::Data<Concept>(num_objects, repository.get_vector_repository().insert(concept_builder.blocks));
+        (void) repository.insert(data);
+    }
+
+    EXPECT_TRUE(concept_iterator == concept_view.begin());
+    for (const auto expected : { 0U, 64U, 129U })
+    {
+        ASSERT_TRUE(concept_iterator != concept_end);
+        EXPECT_EQ((*concept_iterator).get_index(), ygg::Index<tyr::formalism::Object>(expected));
+        ++concept_iterator;
+    }
+    EXPECT_TRUE(concept_iterator == concept_end);
+    EXPECT_TRUE(role_iterator == role_view.begin());
+    ASSERT_TRUE(role_iterator != role_end);
+    EXPECT_EQ((*role_iterator).first.get_index(), ygg::Index<tyr::formalism::Object>(0));
+    EXPECT_EQ((*role_iterator).second.get_index(), ygg::Index<tyr::formalism::Object>(64));
+    ASSERT_TRUE(++role_iterator != role_end);
+    EXPECT_EQ((*role_iterator).first.get_index(), ygg::Index<tyr::formalism::Object>(129));
+    EXPECT_EQ((*role_iterator).second.get_index(), ygg::Index<tyr::formalism::Object>(1));
+    EXPECT_TRUE(++role_iterator == role_end);
+}
+
 }

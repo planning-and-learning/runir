@@ -7,7 +7,6 @@
 
 #include <cassert>
 #include <memory>
-#include <optional>
 #include <utility>
 #include <yggdrasil/core/type_list.hpp>
 #include <yggdrasil/core/types.hpp>
@@ -17,24 +16,24 @@ namespace runir::kr::ps
 {
 
 template<FamilyTag Family, typename RepositoryTypes>
-class BasicRepository
+class BasicRepository : public ygg::formalism::SymbolRepositoryBase<BasicRepository<Family, RepositoryTypes>, RepositoryTypes>
 {
+    using Base = ygg::formalism::SymbolRepositoryBase<BasicRepository<Family, RepositoryTypes>, RepositoryTypes>;
+
 public:
-    using SymbolTypes = RepositoryTypes;
     using DlRepositoryPtr = runir::kr::dl::ConstructorRepositoryPtrFor<typename PsFamilyTraits<Family>::DlFamily>;
 
 private:
     template<FamilyTag, typename>
     friend class BasicRepositoryFactory;
 
-    ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, RepositoryTypes> m_symbol_repository;
     DlRepositoryPtr m_dl_repository;
     size_t m_index;
 
-    BasicRepository(size_t index, DlRepositoryPtr dl_repository) : m_symbol_repository(nullptr), m_dl_repository(std::move(dl_repository)), m_index(index)
+    BasicRepository(size_t index, DlRepositoryPtr dl_repository) : m_dl_repository(std::move(dl_repository)), m_index(index)
     {
         assert(m_dl_repository);
-        clear();
+        this->clear();
     }
 
 public:
@@ -48,37 +47,11 @@ public:
     const auto& get_dl_repository() const noexcept { return *m_dl_repository; }
     const auto& get_dl_repository_ptr() const noexcept { return m_dl_repository; }
 
-    void clear() noexcept { m_symbol_repository.clear(); }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<BasicRepository, T>
-    std::optional<ygg::View<ygg::Index<T>, BasicRepository>> find(const ygg::Data<T>& data) const noexcept
-    {
-        if (auto index = m_symbol_repository.template find_local<T>(data))
-            return ygg::View<ygg::Index<T>, BasicRepository>(*index, *this);
-        return std::nullopt;
-    }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<BasicRepository, T>
-    std::pair<ygg::View<ygg::Index<T>, BasicRepository>, bool> insert(ygg::Data<T>& data)
-    {
-        const auto [index, success] = m_symbol_repository.template insert_local<T>(data);
-        return { ygg::View<ygg::Index<T>, BasicRepository>(index, *this), success };
-    }
-
     template<typename T>
         requires ygg::formalism::SupportsSymbol<BasicRepository, T>
     const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
     {
-        return m_symbol_repository.template at_local<T>(index);
-    }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<BasicRepository, T>
-    size_t size() const noexcept
-    {
-        return m_symbol_repository.template local_size<T>();
+        return this->template at_local<T>(index);
     }
 
     template<typename T>

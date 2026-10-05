@@ -11,7 +11,6 @@
 
 #include <cassert>
 #include <memory>
-#include <optional>
 #include <tyr/formalism/planning/declarations.hpp>
 #include <utility>
 #include <yggdrasil/containers/raw_vector_set.hpp>
@@ -40,17 +39,16 @@ public:
     DenotationRepositoryPtr create_shared(std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository);
 };
 
-class DenotationRepository
+class DenotationRepository : public ygg::formalism::SymbolRepositoryBase<DenotationRepository, DenotationRecordTypes>
 {
+    using Base = ygg::formalism::SymbolRepositoryBase<DenotationRepository, DenotationRecordTypes>;
+
     friend class DenotationRepositoryFactory;
 
 public:
-    using SymbolRepository = ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, DenotationRecordTypes>;
-    using SymbolTypes = SymbolRepository::SymbolTypes;
     using VectorRepository = ygg::RawVectorSet<ygg::uint_t, ygg::uint_t>;
 
 private:
-    SymbolRepository m_symbol_repository;
     VectorRepository m_vector_repository;
     ygg::database::RelationRepository<ygg::Index<tyr::formalism::Object>> m_relation_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_formalism_repository;
@@ -58,7 +56,6 @@ private:
     size_t m_index;
 
     DenotationRepository(size_t index, DenotationRepositoryFactory factory, std::shared_ptr<const tyr::formalism::planning::Repository> formalism_repository) :
-        m_symbol_repository(nullptr),
         m_vector_repository(),
         m_relation_repository(factory.m_relation_factory.create()),
         m_formalism_repository(std::move(formalism_repository)),
@@ -66,7 +63,7 @@ private:
         m_index(index)
     {
         assert(m_formalism_repository);
-        clear();
+        this->clear();
     }
 
 public:
@@ -86,41 +83,17 @@ public:
 
     void clear() noexcept
     {
-        m_symbol_repository.clear();
+        Base::clear();
         m_vector_repository.clear();
         m_relation_repository.clear();
     }
 
     template<typename T>
         requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-    std::optional<ygg::View<ygg::Index<T>, DenotationRepository>> find(const ygg::Data<T>& data) const noexcept
-    {
-        if (auto index = m_symbol_repository.template find_local<T>(data))
-            return ygg::View<ygg::Index<T>, DenotationRepository>(*index, *this);
-        return std::nullopt;
-    }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-    std::pair<ygg::View<ygg::Index<T>, DenotationRepository>, bool> insert(ygg::Data<T>& data)
-    {
-        const auto [index, created] = m_symbol_repository.template insert_local<T>(data);
-        return { ygg::View<ygg::Index<T>, DenotationRepository>(index, *this), created };
-    }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
     const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
     {
-        assert(m_symbol_repository.template is_local<T>(index));
-        return m_symbol_repository.template at_local<T>(index);
-    }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<DenotationRepository, T>
-    size_t size() const noexcept
-    {
-        return m_symbol_repository.template local_size<T>();
+        assert(this->template is_local<T>(index));
+        return this->template at_local<T>(index);
     }
 
     template<typename T>

@@ -40,7 +40,6 @@ action_rule_contract_error(RuleView<ActionTag> rule, const State& state, std::sp
 
 struct ActionRuleWorkspace
 {
-    ygg::Data<tyr::formalism::RelationBinding<tyr::formalism::planning::Action<tyr::LiftedTag>>> binding;
     std::vector<ygg::Index<tyr::formalism::Object>> tuple;
 };
 
@@ -60,23 +59,12 @@ class ActionRuleEvaluator
     }
 
     template<tyr::planning::StateViewConcept<Kind> State>
-    tyr::formalism::planning::ActionBindingView applicable_binding(tyr::planning::SuccessorGenerator<Kind>& generator,
-                                                                   const State& planning_state,
-                                                                   tyr::formalism::planning::ObjectSpanView objects,
-                                                                   ActionRuleWorkspace& workspace) const
+    void require_applicable(tyr::planning::ActionBindingStatus status, const State& planning_state, tyr::formalism::planning::ObjectSpanView objects) const
     {
-        auto& binding = workspace.binding;
-        binding.relation = m_action.get_index();
-        binding.objects.clear();
-        for (const auto index : objects.get_data())
-            binding.objects.push_back(index);
-        // Policy applicability has no carried path metric.
-        const auto status = generator.check_action_binding(tyr::planning::Node<State>(planning_state, 0), m_action, objects);
         if (status == tyr::planning::ActionBindingStatus::OUTSIDE_PARAMETER_DOMAIN)
             action_rule_contract_error(m_rule, planning_state, objects.get_data(), "object is outside the action parameter domain");
         if (status != tyr::planning::ActionBindingStatus::APPLICABLE)
             action_rule_contract_error(m_rule, planning_state, objects.get_data(), "offered action is not applicable");
-        return tyr::formalism::planning::insert(*generator.get_task()->get_repository(), binding).first;
     }
 
 public:
@@ -111,7 +99,7 @@ private:
 
 public:
     template<typename Context, typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool emit(Context& context, S state, const PS& planning_state, Emit&& emit, Stop&& stop, ActionRuleWorkspace& workspace)
+    bool emit(Context& context, S state, const PS& planning_state, Emit&& emit, Stop&& stop, ActionRuleWorkspace&)
     {
         const auto rule = m_rule;
         const auto rule_variant = m_variant;
@@ -125,8 +113,13 @@ public:
         {
             if (stop())
                 return false;
-            const auto binding = applicable_binding(*context.task_context->search_context->successor_generator, planning_state, objects, workspace);
-            const auto candidate = context.storage.successor(planning_state, binding);
+            // Policy applicability has no carried path metric.
+            const auto offered =
+                context.task_context->search_context->successor_generator->try_get_applicable_action_binding(tyr::planning::Node<PS>(planning_state, 0),
+                                                                                                             m_action,
+                                                                                                             objects);
+            require_applicable(offered.status, planning_state, objects);
+            const auto candidate = context.storage.successor(planning_state, *offered.binding);
             check_action_effects(context, rule, state, planning_state, candidate, objects.get_data());
             if (!emit(detail::planning_step(context.storage, state, candidate, rule_variant, rule.get_target(), context.task_context)))
                 return false;
@@ -151,7 +144,9 @@ public:
         if (workspace.tuple.size() != query.arity() || !query.contains(std::span<const ygg::Index<tyr::formalism::Object>>(workspace.tuple)))
             return false;
         const auto objects = ygg::make_view(std::span<const ygg::Index<tyr::formalism::Object>>(workspace.tuple), candidate.label.get_context());
-        applicable_binding(*context.task_context->search_context->successor_generator, planning_state, objects, workspace);
+        const auto status =
+            context.task_context->search_context->successor_generator->check_action_binding(tyr::planning::Node<PS>(planning_state, 0), m_action, objects);
+        require_applicable(status, planning_state, objects);
         check_action_effects(context, rule, state, planning_state, candidate, workspace.tuple);
         return true;
     }

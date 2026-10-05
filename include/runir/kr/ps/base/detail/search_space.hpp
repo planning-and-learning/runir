@@ -31,17 +31,8 @@ tyr::planning::PackedPlan<Kind> extract_total_ordered_plan(tyr::planning::Packed
         state = *node.parent_state;
     }
     std::ranges::reverse(actions);
-    // Reconstruct plan states and cumulative metrics from the recorded actions.
-    auto steps = tyr::planning::PackedLabeledNodeList<Kind> {};
-    steps.reserve(actions.size());
-    auto node = initial_node.unpack();
     auto& search = *context.search_context;
-    for (const auto action : actions)
-    {
-        node = search.successor_generator->get_successor_node(node, action, *search.state_repository, *search.axiom_evaluator);
-        steps.push_back({ action, node.pack() });
-    }
-    return tyr::planning::PackedPlan<Kind>(initial_node, std::move(steps));
+    return tyr::planning::replay_plan<Kind>(initial_node, actions, *search.successor_generator, *search.state_repository, *search.axiom_evaluator);
 }
 
 }  // namespace runir::kr::ps::base::detail

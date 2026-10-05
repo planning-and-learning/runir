@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <cassert>
 #include <concepts>
-#include <functional>
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
@@ -395,8 +394,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyConcept<Family, Tag>>, C> construc
 
         for (ygg::uint_t object = 0; object < num_objects; ++object)
         {
-            auto count = ygg::uint_t { 0 };
-            ygg::for_each_bit([&](size_t) { ++count; }, std::bit_and {}, role.get(object), concept_bitset);
+            const auto count = role.get(object).count_intersection(concept_bitset);
             if constexpr (std::same_as<Tag, QualifiedAtLeastNumberRestrictionTag>)
             {
                 if (count >= constructor.get_n())
@@ -540,7 +538,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
         for (ygg::uint_t lhs = 0; lhs < num_objects; ++lhs)
         {
             const auto row = arg.get(lhs);
-            ygg::for_each_bit([&](size_t rhs) { result->get(static_cast<ygg::uint_t>(rhs)).set(lhs); }, std::identity {}, row);
+            for (const auto rhs : ygg::set_bit_indices(row))
+                result->get(static_cast<ygg::uint_t>(rhs)).set(lhs);
         }
     }
     else if constexpr (std::same_as<Tag, CompositionTag>)
@@ -553,7 +552,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
             auto result_row = result->get(source);
             const auto lhs_row = lhs.get(source);
 
-            ygg::for_each_bit([&](size_t mid) { result_row |= rhs.get(static_cast<ygg::uint_t>(mid)); }, std::identity {}, lhs_row);
+            for (const auto mid : ygg::set_bit_indices(lhs_row))
+                result_row |= rhs.get(static_cast<ygg::uint_t>(mid));
         }
     }
     else if constexpr (std::same_as<Tag, TransitiveClosureTag> || std::same_as<Tag, ReflexiveTransitiveClosureTag>)
@@ -594,7 +594,8 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyRole<Family, Tag>>, C> constructor
         const auto concept_denotation = evaluate(constructor.get_arg(), children);
         const auto bitset = concept_denotation.get();
 
-        ygg::for_each_bit([&](size_t object) { result->get(static_cast<ygg::uint_t>(object)).set(object); }, std::identity {}, bitset);
+        for (const auto object : ygg::set_bit_indices(bitset))
+            result->get(static_cast<ygg::uint_t>(object)).set(object);
     }
     else
     {
@@ -694,14 +695,11 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
                     auto& distances = context.get_workspace().get_distance_values();
                     size_t queue_pos = 0;
 
-                    ygg::for_each_bit(
-                        [&](size_t object)
-                        {
-                            queue.push_back(static_cast<ygg::uint_t>(object));
-                            distances[object] = 0;
-                        },
-                        std::identity {},
-                        lhs_bitset);
+                    for (const auto object : ygg::set_bit_indices(lhs_bitset))
+                    {
+                        queue.push_back(static_cast<ygg::uint_t>(object));
+                        distances[object] = 0;
+                    }
 
                     while (queue_pos < queue.size())
                     {
@@ -710,7 +708,7 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
                         assert(source_distance != infinity);
 
                         const auto row = role.get(source);
-                        for (auto target = row.find_first(); target != decltype(row)::npos; target = row.find_next(target))
+                        for (const auto target : ygg::set_bit_indices(row))
                         {
                             auto& target_distance = distances[target];
                             if (target_distance != infinity)

@@ -3,14 +3,37 @@
 #include <runir/kr/ps/ext/execution_index.hpp>
 #include <runir/kr/ps/ext/execution_repository.hpp>
 #include <runir/kr/ps/ext/execution_view.hpp>
+#include <runir/kr/ps/icp/execution_view.hpp>
 #include <tyr/planning/ground/state_repository.hpp>
 #include <tyr/planning/lifted/state_repository.hpp>
+#include <utility>
 
 namespace runir::tests
 {
 
 namespace
 {
+
+template<typename Repository, typename Entity>
+constexpr bool flat_view_is_nothrow = noexcept(ygg::make_view(std::declval<ygg::Index<Entity>>(), std::declval<const Repository&>()));
+
+template<typename Repository, typename Entity>
+constexpr bool indexed_access_is_nothrow = noexcept(std::declval<const Repository&>()[std::declval<ygg::Index<Entity>>()]);
+
+using Constructors = kr::dl::ExtConstructorRepository;
+using Register = kr::dl::Register<kr::dl::ConceptTag>;
+using Denotations = kr::dl::semantics::DenotationRepository;
+using Registers = kr::dl::semantics::RegisterValues;
+static_assert(flat_view_is_nothrow<Constructors, Register>);
+static_assert(indexed_access_is_nothrow<Constructors, Register>);
+static_assert(flat_view_is_nothrow<Denotations, Registers>);
+static_assert(indexed_access_is_nothrow<Denotations, Registers>);
+static_assert(flat_view_is_nothrow<kr::ps::ext::Repository, kr::ps::ext::MemoryState>);
+static_assert(indexed_access_is_nothrow<kr::ps::ext::Repository, kr::ps::ext::MemoryState>);
+static_assert(flat_view_is_nothrow<kr::ps::ext::ExecutionRepository<tyr::GroundTag>, kr::ps::ext::ModuleState<tyr::GroundTag>>);
+static_assert(!indexed_access_is_nothrow<kr::ps::ext::ExecutionRepository<tyr::GroundTag>, kr::ps::ext::ModuleState<tyr::GroundTag>>);
+static_assert(flat_view_is_nothrow<kr::ps::icp::ExecutionRepository<tyr::GroundTag>, kr::ps::icp::Histories>);
+static_assert(!indexed_access_is_nothrow<kr::ps::icp::ExecutionRepository<tyr::GroundTag>, kr::ps::icp::Histories>);
 
 template<typename Entity, tyr::TaskKind Kind>
 using View = ygg::View<ygg::Index<Entity>, kr::ps::ext::ExecutionRepository<Kind>>;

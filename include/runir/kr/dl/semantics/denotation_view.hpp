@@ -66,6 +66,7 @@ private:
     Index<runir::kr::dl::semantics::Denotation<Category>> m_handle;
 
     static constexpr auto npos = BitsetSpan<const ygg::uint_t>::npos;
+    using BitIterator = SetBitIndices<ygg::uint_t>::Iterator;
 
     auto get_vector() const noexcept
         requires(std::same_as<Category, runir::kr::dl::ConceptTag> || std::same_as<Category, runir::kr::dl::RoleTag>)
@@ -79,20 +80,25 @@ public:
     private:
         Index<runir::kr::dl::semantics::Denotation<Category>> m_handle;
         const C* m_context = nullptr;
-        size_t m_object = npos;
+        BitIterator m_object;
 
     public:
         ConceptIterator() = default;
-        ConceptIterator(const View& view, size_t object) noexcept : m_handle(view.get_handle()), m_context(&view.get_context()), m_object(object) {}
+        ConceptIterator(const View& view, bool begin) noexcept :
+            m_handle(view.get_handle()),
+            m_context(&view.get_context()),
+            m_object(begin ? set_bit_indices(view.get()).begin() : BitIterator(view.get(), npos))
+        {
+        }
 
         auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElementView<runir::kr::dl::ConceptTag>
         {
-            return make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_object)), m_context->get_formalism_repository());
+            return make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(*m_object)), m_context->get_formalism_repository());
         }
 
         ConceptIterator& operator++() noexcept
         {
-            m_object = View(m_handle, *m_context).get().find_next(m_object);
+            ++m_object;
             return *this;
         }
 
@@ -110,7 +116,7 @@ public:
         Index<runir::kr::dl::semantics::Denotation<Category>> m_handle;
         const C* m_context = nullptr;
         size_t m_source = npos;
-        size_t m_target = npos;
+        BitIterator m_target;
 
         void advance_to_next_nonempty_row() noexcept
         {
@@ -119,39 +125,38 @@ public:
             while (m_source < num_objects)
             {
                 const auto row = view.get(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)));
-                m_target = row.find_first();
-                if (m_target != npos)
+                const auto targets = set_bit_indices(row);
+                m_target = targets.begin();
+                if (m_target != targets.end())
                     return;
                 ++m_source;
             }
 
             m_source = npos;
-            m_target = npos;
+            m_target = {};
         }
 
     public:
         RoleIterator() = default;
-        RoleIterator(const View& view, size_t source, size_t target) noexcept :
+        RoleIterator(const View& view, size_t source) noexcept :
             m_handle(view.get_handle()),
             m_context(&view.get_context()),
-            m_source(source),
-            m_target(target)
+            m_source(source)
         {
-            if (m_source != npos && m_target == npos)
+            if (m_source != npos)
                 advance_to_next_nonempty_row();
         }
 
         auto operator*() const noexcept -> runir::kr::dl::semantics::DenotationElementView<runir::kr::dl::RoleTag>
         {
             return std::pair(make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)), m_context->get_formalism_repository()),
-                             make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_target)), m_context->get_formalism_repository()));
+                             make_view(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(*m_target)), m_context->get_formalism_repository()));
         }
 
         RoleIterator& operator++() noexcept
         {
-            const auto row = View(m_handle, *m_context).get(Index<::tyr::formalism::Object>(static_cast<ygg::uint_t>(m_source)));
-            m_target = row.find_next(m_target);
-            if (m_target == npos)
+            ++m_target;
+            if (m_target == std::default_sentinel)
             {
                 ++m_source;
                 advance_to_next_nonempty_row();
@@ -243,25 +248,25 @@ public:
     auto begin() const noexcept
         requires(std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
-        return ConceptIterator(*this, get().find_first());
+        return ConceptIterator(*this, true);
     }
 
     auto end() const noexcept
         requires(std::same_as<Category, runir::kr::dl::ConceptTag>)
     {
-        return ConceptIterator(*this, npos);
+        return ConceptIterator(*this, false);
     }
 
     auto begin() const noexcept
         requires(std::same_as<Category, runir::kr::dl::RoleTag>)
     {
-        return RoleIterator(*this, 0, npos);
+        return RoleIterator(*this, 0);
     }
 
     auto end() const noexcept
         requires(std::same_as<Category, runir::kr::dl::RoleTag>)
     {
-        return RoleIterator(*this, npos, npos);
+        return RoleIterator(*this, npos);
     }
 
     auto identifying_members() const noexcept { return std::make_tuple(m_handle, get_denotation_repository(*m_context).get_index()); }

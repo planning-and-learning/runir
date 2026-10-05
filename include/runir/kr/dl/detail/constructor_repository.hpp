@@ -5,7 +5,6 @@
 
 #include <cassert>
 #include <memory>
-#include <optional>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
 #include <yggdrasil/core/type_list.hpp>
@@ -16,27 +15,25 @@ namespace runir::kr::dl::detail
 {
 
 template<FamilyTag Family, typename RepositoryTypes>
-class ConstructorRepository
+class ConstructorRepository : public ygg::formalism::SymbolRepositoryBase<ConstructorRepository<Family, RepositoryTypes>, RepositoryTypes>
 {
+    using Base = ygg::formalism::SymbolRepositoryBase<ConstructorRepository<Family, RepositoryTypes>, RepositoryTypes>;
+
     friend class ConstructorRepositoryFactory<Family, RepositoryTypes>;
 
 private:
-    ygg::ApplyTypeListT<ygg::formalism::SymbolRepository, RepositoryTypes> m_symbol_repository;
     std::shared_ptr<const tyr::formalism::planning::Repository> m_planning_repository;
     size_t m_index;
 
     ConstructorRepository(size_t index, std::shared_ptr<const tyr::formalism::planning::Repository> planning_repository) :
-        m_symbol_repository(nullptr),
         m_planning_repository(std::move(planning_repository)),
         m_index(index)
     {
         assert(m_planning_repository);
-        clear();
+        this->clear();
     }
 
 public:
-    using SymbolTypes = RepositoryTypes;
-
     ConstructorRepository(const ConstructorRepository&) = delete;
     ConstructorRepository& operator=(const ConstructorRepository&) = delete;
     ConstructorRepository(ConstructorRepository&&) = delete;
@@ -50,39 +47,12 @@ public:
     }
     const auto& get_planning_repository_ptr() const noexcept { return m_planning_repository; }
 
-    void clear() noexcept { m_symbol_repository.clear(); }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
-    std::optional<ygg::View<ygg::Index<T>, ConstructorRepository>> find(const ygg::Data<T>& data) const noexcept
-    {
-        if (auto index = m_symbol_repository.template find_local<T>(data))
-            return ygg::View<ygg::Index<T>, ConstructorRepository>(*index, *this);
-        return std::nullopt;
-    }
-
-    /// Raw symbol interning. Use the language-specific free insert() to canonicalize and prepare data.
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
-    std::pair<ygg::View<ygg::Index<T>, ConstructorRepository>, bool> insert(ygg::Data<T>& data)
-    {
-        const auto [index, created] = m_symbol_repository.template insert_local<T>(data);
-        return { ygg::View<ygg::Index<T>, ConstructorRepository>(index, *this), created };
-    }
-
     template<typename T>
         requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
     const ygg::Data<T>& operator[](ygg::Index<T> index) const noexcept
     {
-        assert(m_symbol_repository.template is_local<T>(index));
-        return m_symbol_repository.template at_local<T>(index);
-    }
-
-    template<typename T>
-        requires ygg::formalism::SupportsSymbol<ConstructorRepository, T>
-    size_t size() const noexcept
-    {
-        return m_symbol_repository.template local_size<T>();
+        assert(this->template is_local<T>(index));
+        return this->template at_local<T>(index);
     }
 
     template<typename T>

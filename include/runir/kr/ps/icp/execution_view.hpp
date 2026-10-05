@@ -5,51 +5,38 @@
 #include "runir/kr/ps/icp/execution_repository.hpp"
 
 #include <yggdrasil/containers/vector.hpp>
+#include <yggdrasil/formalism/detail/view.hpp>
 
 namespace ygg
 {
 
-template<typename C>
-class View<Index<runir::kr::ps::icp::Histories>, C>
+template<formalism::SymbolContextFor<runir::kr::ps::icp::Histories> C>
+class View<Index<runir::kr::ps::icp::Histories>, C> : public formalism::detail::View<Index<runir::kr::ps::icp::Histories>, C>
 {
-    Index<runir::kr::ps::icp::Histories> m_handle;
-    const C* m_context;
-
 public:
-    View(Index<runir::kr::ps::icp::Histories> handle, const C& context) noexcept : m_handle(handle), m_context(&context) {}
+    View(Index<runir::kr::ps::icp::Histories> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::ps::icp::Histories>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const { return (*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    auto get_concepts() const { return make_view(get_data().concepts, m_context->get_denotation_repository()); }
-
-    auto identifying_members() const noexcept { return std::make_tuple(m_handle, m_context->get_index()); }
+    auto get_concepts() const { return make_view(this->get_data().concepts, this->m_context->get_denotation_repository()); }
 };
 
-template<tyr::TaskKind Kind, typename C>
-class View<Index<runir::kr::ps::icp::ProgramState<Kind>>, C>
+template<tyr::TaskKind Kind, formalism::SymbolContextFor<runir::kr::ps::icp::ProgramState<Kind>> C>
+class View<Index<runir::kr::ps::icp::ProgramState<Kind>>, C> : public formalism::detail::View<Index<runir::kr::ps::icp::ProgramState<Kind>>, C>
 {
-    Index<runir::kr::ps::icp::ProgramState<Kind>> m_handle;
-    const C* m_context;
-
 public:
-    View(Index<runir::kr::ps::icp::ProgramState<Kind>> handle, const C& context) noexcept : m_handle(handle), m_context(&context) {}
+    View(Index<runir::kr::ps::icp::ProgramState<Kind>> handle, const C& context) noexcept :
+        formalism::detail::View<Index<runir::kr::ps::icp::ProgramState<Kind>>, C>(handle, context)
+    {
+    }
 
-    const auto& get_data() const { return (*m_context)[m_handle]; }
-    const auto& get_context() const noexcept { return *m_context; }
-    const auto& get_handle() const noexcept { return m_handle; }
-
-    auto get_index() const noexcept { return m_handle; }
-    auto get_program() const { return make_view(get_data().program, m_context->get_program_repository()); }
+    auto get_program() const { return make_view(this->get_data().program, this->m_context->get_program_repository()); }
     auto get_module() const { return get_program().get_module(); }
-    auto get_memory_state() const { return make_view(get_data().memory_state, m_context->get_program_repository()); }
-    auto get_registers() const { return make_view(get_data().registers, m_context->get_denotation_repository()); }
-    auto get_histories() const { return make_view(get_data().histories, *m_context); }
-    auto get_state() const { return m_context->get_state_repository().get_registered_state(get_data().state); }
-
-    auto identifying_members() const noexcept { return std::make_tuple(m_handle, m_context->get_index()); }
+    auto get_memory_state() const { return make_view(this->get_data().memory_state, this->m_context->get_program_repository()); }
+    auto get_registers() const { return make_view(this->get_data().registers, this->m_context->get_denotation_repository()); }
+    auto get_histories() const { return make_view(this->get_data().histories, *this->m_context); }
+    auto get_state() const { return this->m_context->get_state_repository().get_registered_state(this->get_data().state); }
 };
 
 }

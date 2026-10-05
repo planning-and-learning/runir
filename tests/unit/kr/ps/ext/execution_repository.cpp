@@ -204,9 +204,14 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
 
     {
         auto data = callee_configuration.get_data();
+        data.index = ygg::Index<kr::ps::ext::ModuleState<tyr::GroundTag>>::max();
         const auto [duplicate, created] = execution_repository->insert(data);
         EXPECT_FALSE(created);
         EXPECT_EQ(duplicate, callee_configuration);
+        EXPECT_EQ(data.index, duplicate.get_index());
+        EXPECT_EQ(&duplicate.get_context(), execution_repository.get());
+        EXPECT_EQ(&duplicate.get_module().get_context(), repository.get());
+        EXPECT_EQ(&duplicate.get_registers().get_context(), &denotations);
         const auto found = execution_repository->find(data);
         ASSERT_TRUE(found);
         EXPECT_EQ(*found, callee_configuration);
@@ -218,6 +223,8 @@ TEST(RunirTests, ExtExecutionRepositoryPersistsRecordsAndSharesCallers)
         ygg::set(changed->get_state(), data.state);
         const auto [changed_configuration, changed_created] = execution_repository->insert(data);
         EXPECT_TRUE(changed_created);
+        EXPECT_EQ(data.index, changed_configuration.get_index());
+        EXPECT_EQ(&changed_configuration.get_context(), execution_repository.get());
         EXPECT_NE(changed_configuration, callee_configuration);
         EXPECT_EQ(changed_configuration.get_state().get_index(), changed->get_state().get_index());
         EXPECT_EQ(callee_configuration.get_state().get_index(), state.get_index());
