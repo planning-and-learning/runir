@@ -38,9 +38,9 @@ private:
 
 public:
     template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool matches(Context& context, S state, const PS& planning_state, const tyr::planning::LabeledNode<PS>& candidate)
+    bool matches(Context& context, S state, const PS& planning_state, const tyr::planning::Node<PS>& candidate)
     {
-        return !m_rule.get_effects().empty() && sketch_rule_matches_state(context, m_rule, state, planning_state, candidate.node.get_state());
+        return !m_rule.get_effects().empty() && sketch_rule_matches_state(context, m_rule, state, planning_state, candidate.get_state());
     }
 
     template<typename Context, ProgramStateViewConcept<Kind> S>

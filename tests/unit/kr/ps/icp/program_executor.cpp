@@ -319,6 +319,56 @@ void check_normalized_arguments()
 }
 
 template<tyr::TaskKind Kind>
+void check_rejected_bindings_stay_unpublished()
+{
+    for (const auto scenario : { 0, 1, 2 })
+    {
+        SCOPED_TRACE(scenario);
+        auto context = make_context<Kind>("choose");
+        auto body = move(scenario == 0 ? "Empty" : "Candidates");
+        if (scenario == 1)
+            body.replace(body.find("unchanged Count"), std::string("unchanged Count").size(), "increases Count");
+        auto source = module(rule("reject", "m0", "m1", body));
+        if (scenario == 2)
+            source = R"((:module (:symbol policy) (:arguments) (:registers) (:entry m0) (:memory m0 m1)
+                (:features (:concept (:symbol Candidates) (:expression (c_atomic_state "candidate"))))
+                (:rules )"
+                     + rule("reject", "m0", "m1", R"((:crule (:action "move") (:arguments from to) (:conditions) (:xconditions) (:xeffects)))")
+                     + ") (:reset-spo))";
+        const auto rejected = program(context, source);
+        auto expander = icp::SuccessorExpander<Kind>(context, rejected);
+        const auto state = initial(expander);
+        const auto count_bindings = [&]
+        {
+            size_t count = 0;
+            for (const auto action : context->search_context->task->get_task().get_domain().get_actions())
+                count += context->search_context->task->get_repository()->size(action.get_index());
+            return count;
+        };
+        const auto before = count_bindings();
+        const auto rejected_steps = successors(expander, state);
+        ASSERT_EQ(rejected_steps.size(), 1);
+        EXPECT_EQ(rejected_steps.front().status, Outcome::NO_APPLICABLE_ACTION);
+        EXPECT_EQ(count_bindings(), before);
+
+        const auto admitted = program(context, module(rule("accept", "m0", "m1", move("Candidates"))));
+        auto accepted_expander = icp::SuccessorExpander<Kind>(context, admitted);
+        const auto accepted_state = initial(accepted_expander);
+        const auto accepted_steps = successors(accepted_expander, accepted_state);
+        ASSERT_EQ(accepted_steps.size(), 2);
+        EXPECT_EQ(count_bindings(), before + (std::same_as<Kind, tyr::LiftedTag> ? 2 : 0));
+        const auto repeated = successors(accepted_expander, accepted_state);
+        ASSERT_EQ(repeated.size(), accepted_steps.size());
+        for (size_t i = 0; i < accepted_steps.size(); ++i)
+        {
+            ASSERT_TRUE(accepted_steps[i].planning_successor);
+            EXPECT_EQ(accepted_steps[i].planning_successor->label, repeated[i].planning_successor->label);
+            EXPECT_EQ(accepted_steps[i].planning_successor->unpack().label.get_objects().size(), 2);
+        }
+    }
+}
+
+template<tyr::TaskKind Kind>
 void check_rule_evaluator_scheduling()
 {
     auto context = make_context<Kind>("choose");
@@ -406,6 +456,7 @@ TEST(RunirTests, IcpGroundExecution)
     check_executor<tyr::GroundTag>();
     check_histories<tyr::GroundTag>();
     check_normalized_arguments<tyr::GroundTag>();
+    check_rejected_bindings_stay_unpublished<tyr::GroundTag>();
     check_rule_evaluator_scheduling<tyr::GroundTag>();
 }
 
@@ -414,6 +465,7 @@ TEST(RunirTests, IcpLiftedExecution)
     check_executor<tyr::LiftedTag>();
     check_histories<tyr::LiftedTag>();
     check_normalized_arguments<tyr::LiftedTag>();
+    check_rejected_bindings_stay_unpublished<tyr::LiftedTag>();
     check_rule_evaluator_scheduling<tyr::LiftedTag>();
 }
 

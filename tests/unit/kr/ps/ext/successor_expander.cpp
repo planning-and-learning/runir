@@ -414,10 +414,22 @@ void expect_lazy_do_successors()
         const auto planning_node = initial_planning_node(expander);
         const auto initial = expander.initial_state(planning_node.get_state());
         ASSERT_EQ(states.num_states(), 1);
+        const auto count_bindings = [&]
+        {
+            size_t count = 0;
+            for (const auto action : task_context->search_context->task->get_task().get_domain().get_actions())
+                count += task_context->search_context->task->get_repository()->size(action.get_index());
+            return count;
+        };
+        const auto initial_binding_count = count_bindings();
         EXPECT_TRUE(collect_steps(expander, initial, false, [] { return true; }).empty());
         EXPECT_EQ(states.num_states(), 1);
 
         const auto steps = collect_steps(expander, initial);
+        if constexpr (std::same_as<Kind, tyr::LiftedTag>)
+            EXPECT_EQ(count_bindings(), initial_binding_count + (scenario == 0 ? 2 : scenario == 4 ? 4 : 0));
+        else
+            EXPECT_EQ(count_bindings(), initial_binding_count);
         if (scenario < 2)
         {
             // Only ball2's two pick bindings construct states. Other balls and
@@ -608,18 +620,17 @@ TEST(RunirTests, ExtTransientProgramStatesRetainValuesAndInternCallers)
         EXPECT_FALSE(outer_caller.get_caller());
 
         const auto first = storage.successor(source, bindings.front());
-        const auto scratch = &first.node.get_state().get_state_builder();
+        const auto scratch = &first.get_state().get_state_builder();
         const auto expected = *scratch;
-        const auto retained =
-            storage.store(first.node.get_state(), module_, entry, initial_module.get_registers(), initial_module.get_arguments(), inner_caller);
+        const auto retained = storage.store(first.get_state(), module_, entry, initial_module.get_registers(), initial_module.get_arguments(), inner_caller);
         ASSERT_TRUE(retained->call_stack);
         EXPECT_EQ(*retained->call_stack, inner_caller.get_index());
 
         // Generating another candidate overwrites scratch, but not the accepted program state.
         const auto second = storage.successor(source, bindings.back());
-        EXPECT_EQ(&second.node.get_state().get_state_builder(), scratch);
+        EXPECT_EQ(&second.get_state().get_state_builder(), scratch);
         EXPECT_TRUE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, expected));
-        EXPECT_FALSE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, second.node.get_state().get_state_builder()));
+        EXPECT_FALSE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(retained->module_state.state, second.get_state().get_state_builder()));
         EXPECT_TRUE(ygg::EqualTo<ygg::Builder<tyr::planning::State<Kind>>> {}(initial->module_state.state, initial_node.get_state().get_state_builder()));
 
         const auto copy = storage.retain(storage.view(retained));
@@ -1729,6 +1740,14 @@ void expect_callback_sketch_order_and_cancellation()
         auto expander = ext::SuccessorExpander<Kind>(task_context, program);
         const auto planning_node = initial_planning_node(expander);
         const auto initial = expander.initial_state(planning_node.get_state());
+        const auto count_bindings = [&]
+        {
+            size_t count = 0;
+            for (const auto action : task_context->search_context->task->get_task().get_domain().get_actions())
+                count += task_context->search_context->task->get_repository()->size(action.get_index());
+            return count;
+        };
+        const auto initial_binding_count = count_bindings();
         using Step = ext::detail::ProgramStep<Kind>;
         auto selected = std::vector<Step> {};
         auto statistics = ext::ProgramSearchStatistics {};
@@ -1745,14 +1764,18 @@ void expect_callback_sketch_order_and_cancellation()
         EXPECT_TRUE(selected.empty());
         EXPECT_EQ(statistics.num_generated, 0);
         EXPECT_EQ(states.num_states(), 1);
+        EXPECT_EQ(count_bindings(), initial_binding_count);
         const auto stop = [&] { return cancelled && states.num_states() > 1; };
         EXPECT_FALSE(expander.for_each_successor(initial, statistics, emit, stop));
         if (cancelled)
         {
             EXPECT_TRUE(selected.empty());
             EXPECT_EQ(states.num_states(), 2);
+            EXPECT_EQ(count_bindings(), initial_binding_count);
             continue;
         }
+        ASSERT_EQ(selected.size(), 1);
+        EXPECT_EQ(count_bindings(), initial_binding_count + (std::same_as<Kind, tyr::LiftedTag> ? 1 : 0));
         auto complete = std::vector<Step> {};
         EXPECT_TRUE(expander.for_each_successor(
             initial,
@@ -1767,7 +1790,6 @@ void expect_callback_sketch_order_and_cancellation()
             },
             [] { return false; }));
         ASSERT_GT(complete.size(), 1);
-        ASSERT_EQ(selected.size(), 1);
         EXPECT_EQ(selected.front().get_target().get_index(), complete.front().get_target().get_index());
         EXPECT_EQ(selected.front().planning_successor->label, complete.front().planning_successor->label);
         EXPECT_EQ(statistics.num_expanded, 0);

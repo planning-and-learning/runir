@@ -29,7 +29,9 @@ repository even after the tuple is discarded. There are no old-name aliases.
 `register_values_data.hpp` provides typed `assign_register(data, identifier, value)`
 overloads with bounds checking and identity invalidation. Rule binding and
 transient execution use assignment before register updates. Fused denotation set
-operations keep their existing bitset loops. Database relation copying interns
+operations use Yggdrasil bitsets. Role `storage_bits()` includes physical row
+padding; union, intersection, and reductions use that span, while complement
+and universal roles operate rowwise to keep padding clear. Database relation copying interns
 source rows directly into destination storage without an intermediate builder.
 
 Mutable `Data` uses Yggdrasil's shared `insert(repository, data)` from
@@ -190,6 +192,25 @@ Applicability checks live in `compatibility.hpp`;
 Load and Choose share register-binding helpers in `rule_evaluation/binding.hpp`.
 Execution-step helpers, including `planning_step`, live in
 `detail/execution_step.hpp`.
+
+Planning candidates use Tyr's borrowed binding enumeration. Ground bindings
+already have repository indices; lifted bindings view reusable `Data` and remain
+valid throughout their callback, including single-successor generation and
+applicability checks. Enumeration must not reenter itself. Execution storage's
+`successor` returns an unlabeled planning node. Base, Do, Sketch, and ICP intern
+its label only after the rule admits the transition, including ICP history
+admission. Grouped rules share the label after the first acceptance. Retained
+steps and graph edges always carry indexed bindings.
+
+Action rules already receive borrowed object spans from query rows. Matching
+an existing labeled transition uses its decoded object row directly for query
+membership and passes the binding to Tyr's applicability check, without a
+Runir tuple buffer.
+
+Warmed feature evaluation and query-driven Action expansion retain their
+zero-allocation checks. Do and Sketch expansion are checked against direct Tyr
+enumeration: lifted enumeration still allocates temporary Datalog cost buckets,
+and the borrowed binding and rule-evaluation layers add no allocations to it.
 
 Aggregates retain unique evaluator records and separate occurrence schedules.
 Program schedules are flat and selected by module and memory state where

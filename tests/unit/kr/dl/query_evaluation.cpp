@@ -141,6 +141,10 @@ void check_queries()
         { "(q_join (q_rename (u v w) " + triple + R"() (q_atomic_state "marker" (u))))", 2 },
         { "(q_join " + triple + R"( (q_concept x (c_nominal "a"))))", 2 },
         { "(q_join " + triple + R"( (q_role (x y) (r_atomic_state "edge"))))", 3 },
+        { R"((q_role (x y) (r_and (r_atomic_state "edge") (r_inverse (r_atomic_state "edge")))))", 0 },
+        { R"((q_role (x y) (r_or (r_atomic_state "edge") (r_inverse (r_atomic_state "edge")))))", 4 },
+        { R"((q_role (x y) (r_complement (r_atomic_state "edge"))))", 7 },
+        { R"((q_role (x y) (r_or (r_atomic_state "edge") (r_complement (r_atomic_state "edge")))))", 9 },
         { R"((q_join (q_join (q_atomic_state "marker" (a)) (q_atomic_state "marker" (b)))
                         (q_join (q_atomic_state "marker" (c)) (q_atomic_state "marker" (d)))))",
           16 },

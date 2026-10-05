@@ -5,7 +5,6 @@
 #include "runir/kr/dl/semantics/denotation_data.hpp"
 #include "runir/kr/dl/semantics/denotation_index.hpp"
 
-#include <bit>
 #include <cassert>
 #include <concepts>
 #include <tuple>
@@ -227,22 +226,25 @@ public:
         return get_data().num_objects;
     }
 
+    /// Includes the zero padding at the end of every role row.
+    auto storage_bits() const noexcept
+        requires(std::same_as<Category, runir::kr::dl::RoleTag>)
+    {
+        using Bitset = BitsetSpan<const ygg::uint_t>;
+        const auto vector = get_vector();
+        return Bitset(vector.data(), vector.size() * Bitset::Digits);
+    }
+
     bool any() const noexcept
         requires(std::same_as<Category, runir::kr::dl::RoleTag>)
     {
-        for (const auto block : get_vector())
-            if (block != ygg::uint_t { 0 })
-                return true;
-        return false;
+        return storage_bits().any();
     }
 
     auto count() const noexcept -> size_t
         requires(std::same_as<Category, runir::kr::dl::RoleTag>)
     {
-        auto result = size_t { 0 };
-        for (const auto block : get_vector())
-            result += std::popcount(block);
-        return result;
+        return storage_bits().count();
     }
 
     auto begin() const noexcept

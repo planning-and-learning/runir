@@ -18,30 +18,28 @@
 #include <tyr/planning/state_view.hpp>
 #include <tyr/planning/successor_generator.hpp>
 #include <utility>
-#include <vector>
+#include <yggdrasil/core/concepts.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
 
-template<tyr::planning::StateViewConcept State>
-[[noreturn]] void
-action_rule_contract_error(RuleView<ActionTag> rule, const State& state, std::span<const ygg::Index<tyr::formalism::Object>> tuple, std::string_view reason)
+template<tyr::planning::StateViewConcept State, ygg::SizedForwardRangeOf<ygg::Index<tyr::formalism::Object>> Row>
+[[noreturn]] void action_rule_contract_error(RuleView<ActionTag> rule, const State& state, const Row& tuple, std::string_view reason)
 {
     auto message = std::ostringstream {};
     message << "Action rule " << ygg::uint_t(rule.get_index()) << " for '" << rule.get_action_name().str() << "' in state";
     if constexpr (requires { state.get_index(); })
         message << ' ' << ygg::uint_t(state.get_index());
     message << " with tuple (";
-    for (size_t i = 0; i < tuple.size(); ++i)
-        message << (i ? ", " : "") << ygg::uint_t(tuple[i]);
+    auto separator = "";
+    for (const auto object : tuple)
+    {
+        message << separator << ygg::uint_t(object);
+        separator = ", ";
+    }
     message << "): " << reason;
     throw ActionRuleContractError(message.str());
 }
-
-struct ActionRuleWorkspace
-{
-    std::vector<ygg::Index<tyr::formalism::Object>> tuple;
-};
 
 template<tyr::TaskKind Kind>
 class ActionRuleEvaluator
@@ -55,16 +53,16 @@ class ActionRuleEvaluator
     {
         // Query contracts are checked only when the rule is evaluated.
         if (m_action.get_arity() != arity)
-            action_rule_contract_error(m_rule, state, {}, "query arity does not match action arity");
+            action_rule_contract_error(m_rule, state, std::span<const ygg::Index<tyr::formalism::Object>> {}, "query arity does not match action arity");
     }
 
-    template<tyr::planning::StateViewConcept<Kind> State>
-    void require_applicable(tyr::planning::ActionBindingStatus status, const State& planning_state, tyr::formalism::planning::ObjectSpanView objects) const
+    template<tyr::planning::StateViewConcept<Kind> State, ygg::SizedForwardRangeOf<ygg::Index<tyr::formalism::Object>> Row>
+    void require_applicable(tyr::planning::ActionBindingStatus status, const State& planning_state, const Row& objects) const
     {
         if (status == tyr::planning::ActionBindingStatus::OUTSIDE_PARAMETER_DOMAIN)
-            action_rule_contract_error(m_rule, planning_state, objects.get_data(), "object is outside the action parameter domain");
+            action_rule_contract_error(m_rule, planning_state, objects, "object is outside the action parameter domain");
         if (status != tyr::planning::ActionBindingStatus::APPLICABLE)
-            action_rule_contract_error(m_rule, planning_state, objects.get_data(), "offered action is not applicable");
+            action_rule_contract_error(m_rule, planning_state, objects, "offered action is not applicable");
     }
 
 public:
@@ -79,17 +77,20 @@ public:
     auto variant() const noexcept { return m_variant; }
 
 private:
-    template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    template<typename Context,
+             ProgramStateViewConcept<Kind> S,
+             tyr::planning::StateViewConcept<Kind> PS,
+             ygg::SizedForwardRangeOf<ygg::Index<tyr::formalism::Object>> Row>
     void check_action_effects(Context& context,
                               RuleView<ActionTag> rule,
                               S state,
                               const PS& planning_state,
-                              const tyr::planning::LabeledNode<PS>& candidate,
-                              std::span<const ygg::Index<tyr::formalism::Object>> tuple)
+                              const tyr::planning::Node<PS>& candidate,
+                              const Row& tuple)
     {
         context.environment.reset_target();
         auto transition = context.environment.make_dl_transition_context(planning_state,
-                                                                         candidate.node.get_state(),
+                                                                         candidate.get_state(),
                                                                          state.get_module_state().get_arguments(),
                                                                          state.get_module_state().get_registers(),
                                                                          state.get_module_state().get_registers());
@@ -99,7 +100,7 @@ private:
 
 public:
     template<typename Context, typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool emit(Context& context, S state, const PS& planning_state, Emit&& emit, Stop&& stop, ActionRuleWorkspace&)
+    bool emit(Context& context, S state, const PS& planning_state, Emit&& emit, Stop&& stop)
     {
         const auto rule = m_rule;
         const auto rule_variant = m_variant;
@@ -118,16 +119,17 @@ public:
                 context.task_context->search_context->successor_generator->try_get_applicable_action_binding(tyr::planning::Node<PS>(planning_state, 0),
                                                                                                              m_action,
                                                                                                              objects);
-            require_applicable(offered.status, planning_state, objects);
+            require_applicable(offered.status, planning_state, objects.get_data());
             const auto candidate = context.storage.successor(planning_state, *offered.binding);
             check_action_effects(context, rule, state, planning_state, candidate, objects.get_data());
-            if (!emit(detail::planning_step(context.storage, state, candidate, rule_variant, rule.get_target(), context.task_context)))
+            const auto labeled = tyr::planning::LabeledNode<PS> { *offered.binding, candidate };
+            if (!emit(detail::planning_step(context.storage, state, labeled, rule_variant, rule.get_target(), context.task_context)))
                 return false;
         }
         return true;
     }
     template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool matches(Context& context, S state, const PS& planning_state, const tyr::planning::LabeledNode<PS>& candidate, ActionRuleWorkspace& workspace)
+    bool matches(Context& context, S state, const PS& planning_state, const tyr::planning::LabeledNode<PS>& candidate)
     {
         const auto rule = m_rule;
         const auto action = candidate.label.get_relation();
@@ -138,16 +140,13 @@ public:
             context.environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
         const auto query = evaluate(rule.get_query_feature(), state_context);
         validate_query(planning_state, query.arity());
-        workspace.tuple.clear();
-        for (const auto object : candidate.label.get_objects())
-            workspace.tuple.push_back(object.get_index());
-        if (workspace.tuple.size() != query.arity() || !query.contains(std::span<const ygg::Index<tyr::formalism::Object>>(workspace.tuple)))
+        const auto objects = candidate.label.get_data();
+        if (objects.size() != query.arity() || !query.contains(objects))
             return false;
-        const auto objects = ygg::make_view(std::span<const ygg::Index<tyr::formalism::Object>>(workspace.tuple), candidate.label.get_context());
         const auto status =
-            context.task_context->search_context->successor_generator->check_action_binding(tyr::planning::Node<PS>(planning_state, 0), m_action, objects);
+            context.task_context->search_context->successor_generator->check_action_binding(tyr::planning::Node<PS>(planning_state, 0), candidate.label);
         require_applicable(status, planning_state, objects);
-        check_action_effects(context, rule, state, planning_state, candidate, workspace.tuple);
+        check_action_effects(context, rule, state, planning_state, candidate.node, objects);
         return true;
     }
 };

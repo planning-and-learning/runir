@@ -55,8 +55,9 @@ private:
         return denotations;
     }
 
-    template<typename ConceptDenotations>
-    static bool action_matches_do_arguments(RuleView<DoTag> rule, tyr::formalism::planning::ActionBindingView action, const ConceptDenotations& denotations)
+    template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding,
+             typename ConceptDenotations>
+    static bool action_matches_do_arguments(RuleView<DoTag> rule, Binding action, const ConceptDenotations& denotations)
     {
         if (action.get_relation().get_name() != rule.get_action_name())
             return false;
@@ -109,7 +110,7 @@ public:
         auto& search = *context.task_context->search_context;
         if (m_action)
         {
-            const auto visit = [&](tyr::formalism::planning::ActionBindingView binding)
+            const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
             {
                 if (stop())
                     return false;
@@ -117,11 +118,16 @@ public:
                     return true;
                 const auto candidate = context.storage.successor(planning_state, binding);
                 context.environment.reset_target();
-                if (!do_effects_match(context, rule, state, planning_state, candidate.node.get_state()))
+                if (!do_effects_match(context, rule, state, planning_state, candidate.get_state()))
                     return true;
-                return emit(detail::planning_step(context.storage, state, candidate, rule_variant, rule.get_target(), context.task_context));
+                if (stop())
+                    return false;
+                const auto labeled = tyr::planning::LabeledNode<PS> { search.successor_generator->materialize_action_binding(binding), candidate };
+                return emit(detail::planning_step(context.storage, state, labeled, rule_variant, rule.get_target(), context.task_context));
             };
-            return search.successor_generator->for_each_applicable_action_binding(tyr::planning::Node<PS>(planning_state, 0), *m_action, std::ref(visit));
+            return search.successor_generator->for_each_borrowed_applicable_action_binding(tyr::planning::Node<PS>(planning_state, 0),
+                                                                                           *m_action,
+                                                                                           std::ref(visit));
         }
         return true;
     }

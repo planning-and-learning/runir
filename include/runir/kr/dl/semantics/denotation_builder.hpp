@@ -3,7 +3,6 @@
 
 #include "runir/kr/dl/semantics/denotation_index.hpp"
 
-#include <bit>
 #include <cassert>
 #include <cstddef>
 #include <tuple>
@@ -159,21 +158,12 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
     auto get_num_objects() const noexcept { return num_objects; }
     auto identifying_members() const noexcept { return std::tie(num_objects, blocks); }
 
-    bool any() const noexcept
-    {
-        for (const auto block : blocks)
-            if (block != Block { 0 })
-                return true;
-        return false;
-    }
+    /// Includes per-row padding; bulk operations must preserve its zero bits.
+    auto storage_bits() noexcept -> Bitset { return Bitset(blocks.data(), blocks.size() * Bitset::Digits); }
+    auto storage_bits() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), blocks.size() * ConstBitset::Digits); }
 
-    auto count() const noexcept -> size_t
-    {
-        auto result = size_t { 0 };
-        for (const auto block : blocks)
-            result += std::popcount(block);
-        return result;
-    }
+    bool any() const noexcept { return storage_bits().any(); }
+    auto count() const noexcept -> size_t { return storage_bits().count(); }
 };
 
 }

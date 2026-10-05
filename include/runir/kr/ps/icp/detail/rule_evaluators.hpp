@@ -46,7 +46,7 @@ class RuleEvaluators
         auto& search = *get_task_context()->search_context;
         auto& environment = m_workspace.get_environment();
         auto context = environment.make_dl_context(source);
-        const auto visit = [&](tyr::formalism::planning::ActionBindingView binding)
+        const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
         {
             if (stop())
                 return false;
@@ -56,17 +56,14 @@ class RuleEvaluators
                     m_matching.push_back(slot);
             if (m_matching.empty())
                 return true;
-            const auto candidate = tyr::planning::LabeledNode<tyr::planning::StateView<Kind>> {
-                binding,
-                search.successor_generator->get_successor_node(tyr::planning::Node<tyr::planning::StateView<Kind>>(source.get_state(), 0),
-                                                               binding,
-                                                               *search.state_repository,
-                                                               *search.axiom_evaluator)
-            };
+            const auto candidate = search.successor_generator->get_successor_node(tyr::planning::Node<tyr::planning::StateView<Kind>>(source.get_state(), 0),
+                                                                                  binding,
+                                                                                  *search.state_repository,
+                                                                                  *search.axiom_evaluator);
             environment.reset_target();
-            auto transition =
-                environment.make_dl_transition_context(source.get_state(), candidate.node.get_state(), source.get_registers(), source.get_registers());
+            auto transition = environment.make_dl_transition_context(source.get_state(), candidate.get_state(), source.get_registers(), source.get_registers());
             auto histories = std::optional<HistoriesView<Kind>> {};
+            auto label = std::optional<tyr::formalism::planning::ActionBindingView> {};
             for (const auto slot : m_matching)
             {
                 if (stop())
@@ -80,14 +77,20 @@ class RuleEvaluators
                     if (!histories)
                         return !stop();
                 }
-                if (!emit(evaluator.apply(source, candidate, *histories, m_workspace)))
+                if (stop())
+                    return false;
+                if (!label)
+                    label = search.successor_generator->materialize_action_binding(binding);
+                const auto labeled = tyr::planning::LabeledNode<tyr::planning::StateView<Kind>> { *label, candidate };
+                if (!emit(evaluator.apply(source, labeled, *histories, m_workspace)))
                     return false;
             }
             return true;
         };
-        return search.successor_generator->for_each_applicable_action_binding(tyr::planning::Node<tyr::planning::StateView<Kind>>(source.get_state(), 0),
-                                                                              action,
-                                                                              std::ref(visit));
+        return search.successor_generator->for_each_borrowed_applicable_action_binding(
+            tyr::planning::Node<tyr::planning::StateView<Kind>>(source.get_state(), 0),
+            action,
+            std::ref(visit));
     }
 
 public:

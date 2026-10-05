@@ -28,7 +28,7 @@ class RuleEvaluator<Kind, CruleTag>
     std::optional<ygg::uint_t>
     resolve(const ::cista::offset::variant<ArgumentPosition, ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>& reference,
             runir::kr::dl::semantics::RegisterValuesView registers,
-            tyr::formalism::planning::ActionBindingView binding) const
+            tyr::planning::BorrowedActionBindingView<Kind> binding) const
     {
         return reference.apply(
             [&](auto ref) -> std::optional<ygg::uint_t>
@@ -56,7 +56,7 @@ public:
     auto get_action() const noexcept { return m_action; }
     bool applicable(auto& context) const { return conditions_are_compatible(m_rule, context); }
 
-    bool xconditions_match(ProgramStateView<Kind> state, tyr::formalism::planning::ActionBindingView binding, auto& context) const
+    bool xconditions_match(ProgramStateView<Kind> state, tyr::planning::BorrowedActionBindingView<Kind> binding, auto& context) const
     {
         for (const auto condition : m_rule.get_xconditions())
         {
@@ -70,7 +70,7 @@ public:
         return true;
     }
 
-    bool transition_matches(ProgramStateView<Kind> state, tyr::formalism::planning::ActionBindingView binding, auto& transition) const
+    bool transition_matches(ProgramStateView<Kind> state, tyr::planning::BorrowedActionBindingView<Kind> binding, auto& transition) const
     {
         for (const auto effect : m_rule.get_xeffects())
         {

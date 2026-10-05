@@ -81,11 +81,13 @@ static_assert(requires(ygg::Data<Role>& data, const ygg::Builder<Role>& builder,
     builder.get(object);
     builder.get(ygg::uint_t {});
     builder.get_num_objects();
+    builder.storage_bits();
     builder.any();
     builder.count();
     view.get(object);
     view.get(ygg::uint_t {});
     view.get_num_objects();
+    view.storage_bits();
     view.any();
     view.count();
     view.begin();
@@ -263,6 +265,76 @@ TEST(RunirKrDlSemanticsDenotation, IteratorsSurviveRepositoryGrowthAndSkipRolePa
     EXPECT_EQ((*role_iterator).first.get_index(), ygg::Index<tyr::formalism::Object>(129));
     EXPECT_EQ((*role_iterator).second.get_index(), ygg::Index<tyr::formalism::Object>(1));
     EXPECT_TRUE(++role_iterator == role_end);
+}
+
+TEST(RunirKrDlSemanticsDenotation, RoleStorageBitsetsPreserveRowPadding)
+{
+    namespace semantics = kr::dl::semantics;
+    using RoleBuilder = ygg::Builder<Role>;
+    constexpr auto digits = static_cast<ygg::uint_t>(RoleBuilder::Bitset::Digits);
+    auto planning_repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    for (ygg::uint_t i = 0; i < 130; ++i)
+    {
+        auto data = ygg::Data<tyr::formalism::Object>("object" + std::to_string(i));
+        (void) planning_repository->insert(data);
+    }
+    auto repository = semantics::DenotationRepositoryFactory().create(planning_repository);
+    for (const auto size : { ygg::uint_t { 0 }, ygg::uint_t { 1 }, digits - 1, digits, digits + 1, ygg::uint_t { 130 } })
+    {
+        SCOPED_TRACE(size);
+        auto lhs = RoleBuilder(size);
+        auto rhs = RoleBuilder(size);
+        auto result = RoleBuilder(size);
+        EXPECT_FALSE(result.any());
+        EXPECT_EQ(result.count(), 0);
+        EXPECT_EQ(result.storage_bits().size(), result.blocks.size() * RoleBuilder::Bitset::Digits);
+        const auto* storage = result.blocks.data();
+        for (ygg::uint_t source = 0; source < size; ++source)
+            for (ygg::uint_t target = 0; target < size; ++target)
+            {
+                lhs.get(source).set(target, (source + 2 * target) % 7 == 0);
+                rhs.get(source).set(target, (2 * source + target) % 11 == 0);
+            }
+
+        for (const auto intersection : { false, true })
+        {
+            result.storage_bits().copy_from(std::as_const(lhs).storage_bits());
+            if (intersection)
+                result.storage_bits() &= std::as_const(rhs).storage_bits();
+            else
+                result.storage_bits() |= std::as_const(rhs).storage_bits();
+            EXPECT_EQ(result.blocks.data(), storage);
+            auto count = size_t { 0 };
+            for (ygg::uint_t source = 0; source < size; ++source)
+            {
+                EXPECT_TRUE(result.get(source).trailing_bits_zero());
+                for (ygg::uint_t target = 0; target < size; ++target)
+                {
+                    const auto left = lhs.get(source).test(target);
+                    const auto right = rhs.get(source).test(target);
+                    const auto expected = intersection ? left && right : left || right;
+                    EXPECT_EQ(result.get(source).test(target), expected);
+                    count += expected;
+                }
+            }
+            EXPECT_EQ(result.count(), count);
+            EXPECT_EQ(result.any(), count != 0);
+            auto data = ygg::Data<Role>(size, repository.get_vector_repository().insert(result.blocks));
+            const auto view = repository.insert(data).first;
+            EXPECT_EQ(view.storage_bits(), std::as_const(result).storage_bits());
+            EXPECT_EQ(view.count(), count);
+            EXPECT_EQ(view.any(), count != 0);
+            auto iterated = size_t { 0 };
+            for (const auto [source, target] : view)
+            {
+                EXPECT_LT(ygg::uint_t(source.get_index()), size);
+                EXPECT_LT(ygg::uint_t(target.get_index()), size);
+                EXPECT_TRUE(result.get(source.get_index()).test(ygg::uint_t(target.get_index())));
+                ++iterated;
+            }
+            EXPECT_EQ(iterated, count);
+        }
+    }
 }
 
 }

@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <filesystem>
+#include <functional>
 #include <gtest/gtest.h>
 #include <new>
 #include <runir/kr/dl/repository.hpp>
@@ -16,6 +17,7 @@
 #include <string>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <tyr/planning/lifted/successor_generator.hpp>
+#include <utility>
 #include <variant>
 
 #if defined(_MSC_VER)
@@ -427,8 +429,39 @@ TEST(RunirSearch, WarmedProgramSearchAllocationsGrowWithContainerCapacity)
 
 namespace
 {
+template<tyr::TaskKind Kind>
+allocation_tracking::Counts measure_warmed_binding_enumeration(const kr::TaskContextPtr<Kind>& context, bool borrowed)
+{
+    auto& search = *context->search_context;
+    auto& generator = *search.successor_generator;
+    const auto node = generator.get_initial_node(*search.state_repository, *search.axiom_evaluator);
+    bool valid = true;
+    const auto enumerate = [&]
+    {
+        size_t emitted = 0;
+        const auto visit = [&](auto)
+        {
+            ++emitted;
+            return true;
+        };
+        valid &= borrowed ? generator.for_each_borrowed_applicable_action_binding(node, std::ref(visit)) :
+                            generator.for_each_applicable_action_binding(node, std::ref(visit));
+        valid &= emitted == 2;
+    };
+    for (size_t i = 0; i < 8; ++i)
+        enumerate();
+    EXPECT_TRUE(valid);
+
+    allocation_tracking::Scope measured;
+    for (size_t i = 0; i < 512; ++i)
+        enumerate();
+    const auto counts = measured.finish();
+    EXPECT_TRUE(valid);
+    return counts;
+}
+
 template<tyr::TaskKind Kind, kr::ps::ext::ExecutionStorageConcept<Kind> Storage>
-void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr::ps::ext::ProgramView program)
+void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr::ps::ext::ProgramView program, allocation_tracking::Counts expected)
 {
     namespace ext = kr::ps::ext;
     auto expander = ext::SuccessorExpander<Kind, Storage>(context, program);
@@ -466,8 +499,8 @@ void expect_warmed_action_expansions(const kr::TaskContextPtr<Kind>& context, kr
         expand();
     const auto counts = measured.finish();
     EXPECT_TRUE(valid);
-    EXPECT_EQ(counts.allocated, 0);
-    EXPECT_EQ(counts.deallocated, 0);
+    EXPECT_EQ(counts.allocated, expected.allocated);
+    EXPECT_EQ(counts.deallocated, expected.deallocated);
 }
 
 template<tyr::TaskKind Kind>
@@ -483,22 +516,36 @@ void expect_warmed_action_storage()
             return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
     }();
     const auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
-    const auto program = ext::dl::parse_program(R"(
+    // Lifted Datalog cost buckets allocate during existing indexed enumeration. Borrowed
+    // traversal and policy expansion must add nothing to that measured baseline.
+    const auto baseline = measure_warmed_binding_enumeration(context, false);
+    const auto borrowed = measure_warmed_binding_enumeration(context, true);
+    EXPECT_EQ(borrowed.allocated, baseline.allocated);
+    EXPECT_EQ(borrowed.deallocated, baseline.deallocated);
+    // This fixture has one action, so the all-schema baseline also covers scoped Do.
+    for (const auto& [rule, enumerates] : { std::pair { R"((:action (:conditions) (:action "move") (:query Moves) (:effects (unchanged N))))", false },
+                                            std::pair { R"((:do (:conditions) (:action "move") (:arguments From To) (:effects (unchanged N))))", true },
+                                            std::pair { R"((:sketch (:conditions) (:effects (unchanged N))))", true } })
+    {
+        SCOPED_TRACE(rule);
+        const auto source = std::string(R"(
 (:program (:entry actions)
   (:module (:symbol actions) (:arguments) (:registers)
     (:entry source) (:memory source target)
     (:features
       (:query (:symbol Moves) (:expression
         (q_join (q_atomic_state "edge" (from to)) (q_atomic_state "at" (from)))))
+      (:concept (:symbol From) (:expression (c_atomic_state "at")))
+      (:concept (:symbol To) (:expression (c_top)))
       (:numerical (:symbol N) (:expression (n_count (c_atomic_state "at")))))
     (:rules (:rule (:symbol move) (:expression
       (:source-memory source) (:target-memory target)
-      (:action (:conditions) (:action "move") (:query Moves) (:effects (unchanged N))))))))
-)",
-                                                search->task->get_domain().get_domain(),
-                                                *context->domain_context->ext_repository);
-    expect_warmed_action_expansions<Kind, ext::InternedExecutionStorage<Kind>>(context, program);
-    expect_warmed_action_expansions<Kind, ext::TransientExecutionStorage<Kind>>(context, program);
+)") + rule + ")))))";
+        const auto program = ext::dl::parse_program(source, search->task->get_domain().get_domain(), *context->domain_context->ext_repository);
+        const auto expected = enumerates ? baseline : allocation_tracking::Counts {};
+        expect_warmed_action_expansions<Kind, ext::InternedExecutionStorage<Kind>>(context, program, expected);
+        expect_warmed_action_expansions<Kind, ext::TransientExecutionStorage<Kind>>(context, program, expected);
+    }
 }
 }  // namespace
 

@@ -62,7 +62,6 @@ class RuleEvaluators
     std::vector<std::pair<ygg::Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>, size_t>> m_lookup;
     ChooseRuleWorkspace m_choose;
     DoRuleWorkspace m_do;
-    ActionRuleWorkspace m_action;
     std::vector<size_t> m_sketch_rules;
 
     template<RuleKind Tag>
@@ -127,9 +126,7 @@ class RuleEvaluators
     bool emit_rule(RuleEvaluator& evaluator, Context& context, S state, const PS& planning_state, Emit&& emit, Stop&& stop)
     {
         using Tag = typename RuleEvaluator::RuleTag;
-        if constexpr (std::same_as<Tag, ActionTag>)
-            return evaluator.emit(context, state, planning_state, emit, stop, m_action);
-        else if constexpr (std::same_as<Tag, DoTag>)
+        if constexpr (std::same_as<Tag, DoTag>)
             return evaluator.emit(context, state, planning_state, emit, stop, m_do);
         else if constexpr (ChooseRuleView<RuleView<Tag>>)
             return evaluator.emit(context, state, planning_state, emit, stop, m_choose);
@@ -150,11 +147,11 @@ class RuleEvaluators
     {
         using Tag = typename RuleEvaluator::RuleTag;
         if constexpr (std::same_as<Tag, ActionTag>)
-            return evaluator.matches(context, state, planning_state, candidate, m_action);
+            return evaluator.matches(context, state, planning_state, candidate);
         else if constexpr (std::same_as<Tag, DoTag>)
             return evaluator.matches(context, state, planning_state, candidate, m_do);
         else if constexpr (std::same_as<Tag, SketchTag>)
-            return evaluator.matches(context, state, planning_state, candidate);
+            return evaluator.matches(context, state, planning_state, candidate.node);
         else
             return false;
     }
@@ -246,24 +243,32 @@ public:
             return true;
         // Each successor is generated once for the complete effectful Sketch batch.
         auto& generator = *m_task_context->search_context->successor_generator;
-        const auto visit = [&](tyr::formalism::planning::ActionBindingView binding)
+        const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
         {
             if (stop())
                 return false;
             const auto candidate = context.storage.successor(planning_state, binding);
             context.environment.reset_target();
+            auto label = std::optional<tyr::formalism::planning::ActionBindingView> {};
             for (const auto slot : m_sketch_rules)
             {
+                if (stop())
+                    return false;
                 auto& evaluator = std::get<SketchRuleEvaluator<Kind>>(m_rules[slot]);
-                if (evaluator.matches(context, state, planning_state, candidate)
-                    && !emit(
-                        detail::planning_step(context.storage, state, candidate, evaluator.variant(), evaluator.rule().get_target(), context.task_context)))
+                if (!evaluator.matches(context, state, planning_state, candidate))
+                    continue;
+                if (stop())
+                    return false;
+                if (!label)
+                    label = generator.materialize_action_binding(binding);
+                const auto labeled = tyr::planning::LabeledNode<std::remove_cvref_t<decltype(planning_state)>> { *label, candidate };
+                if (!emit(detail::planning_step(context.storage, state, labeled, evaluator.variant(), evaluator.rule().get_target(), context.task_context)))
                     return false;
             }
             return true;
         };
-        return generator.for_each_applicable_action_binding(tyr::planning::Node<std::remove_cvref_t<decltype(planning_state)>>(planning_state, 0),
-                                                            std::ref(visit));
+        return generator.for_each_borrowed_applicable_action_binding(tyr::planning::Node<std::remove_cvref_t<decltype(planning_state)>>(planning_state, 0),
+                                                                     std::ref(visit));
     }
 
     template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>

@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <concepts>
 #include <cstdint>
 #include <filesystem>
 #include <gtest/gtest.h>
@@ -271,8 +272,23 @@ void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> protot
     auto expander = kr::ps::base::SuccessorExpander<Kind>(*context, sketch);
     const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
     const auto state = initial.get_state();
-    const auto num_bindings = search->successor_generator->get_applicable_action_bindings(initial).size();
+    const auto count_bindings = [&]
+    {
+        size_t count = 0;
+        for (const auto action : task->get_task().get_domain().get_actions())
+            count += task->get_repository()->size(action.get_index());
+        return count;
+    };
+    const auto initial_binding_count = count_bindings();
+    auto num_bindings = size_t(0);
+    EXPECT_TRUE(search->successor_generator->for_each_borrowed_applicable_action_binding(initial,
+                                                                                         [&](auto)
+                                                                                         {
+                                                                                             ++num_bindings;
+                                                                                             return true;
+                                                                                         }));
     ASSERT_GT(num_bindings, 2);
+    EXPECT_EQ(count_bindings(), initial_binding_count);
     auto num_emitted = uint64_t(0);
     auto statistics = kr::ps::base::SketchSearchStatistics {};
     const auto emit_one = [&](const auto& successor, auto rule)
@@ -288,34 +304,14 @@ void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> protot
     EXPECT_EQ(statistics.num_generated, 0);
     EXPECT_EQ(num_emitted, 0);
     EXPECT_EQ(search->state_repository->num_states(), 1);
+    EXPECT_EQ(count_bindings(), initial_binding_count);
 
     auto stop_polls = 0;
     EXPECT_FALSE(expander.for_each_successor(initial.get_state(), statistics, emit_one, [&] { return ++stop_polls >= 2; }));
     EXPECT_EQ(statistics.num_generated, 0);
     EXPECT_EQ(num_emitted, 0);
     EXPECT_EQ(search->state_repository->num_states(), 1);
-
-    EXPECT_FALSE(expander.for_each_successor(initial.get_state(), statistics, emit_one, [] { return false; }));
-    const auto generated = statistics.num_generated;
-    EXPECT_EQ(num_emitted, 1);
-    EXPECT_GE(generated, 1);
-    EXPECT_LT(generated, num_bindings);
-    EXPECT_EQ(search->state_repository->num_states(), 2);
-
-    num_emitted = 0;
-    EXPECT_TRUE(expander.for_each_successor(
-        initial.get_state(),
-        statistics,
-        [&](const auto&, auto)
-        {
-            ++num_emitted;
-            return true;
-        },
-        [] { return false; }));
-    EXPECT_EQ(statistics.num_generated, generated + num_bindings);
-    EXPECT_EQ(statistics.num_expanded, 0);
-    EXPECT_GT(num_emitted, 1);
-    EXPECT_LT(num_emitted, num_bindings);  // The self-transition counts as generated, but is rejected.
+    EXPECT_EQ(count_bindings(), initial_binding_count);
 
     auto rejected_search = datasets::TaskSearchContext<Kind>::create(task, ygg::ExecutionContext::create(1));
     auto rejected_context = kr::TaskContext<Kind>::create(domain_context, rejected_search);
@@ -334,6 +330,42 @@ void check_base_successor_early_stop(datasets::TaskSearchContextPtr<Kind> protot
     EXPECT_GE(rejected_statistics.num_generated, 1);
     EXPECT_LT(rejected_statistics.num_generated, num_bindings);
     EXPECT_EQ(rejected_search->state_repository->num_states(), 2);
+    EXPECT_EQ(count_bindings(), initial_binding_count);
+    rejected_statistics = {};
+    EXPECT_TRUE(rejecting_expander.for_each_successor(
+        rejected_initial.get_state(),
+        rejected_statistics,
+        [](const auto&, auto)
+        {
+            ADD_FAILURE() << "Unexpected accepted successor";
+            return false;
+        },
+        [] { return false; }));
+    EXPECT_EQ(rejected_statistics.num_generated, num_bindings);
+    EXPECT_EQ(count_bindings(), initial_binding_count);
+
+    EXPECT_FALSE(expander.for_each_successor(initial.get_state(), statistics, emit_one, [] { return false; }));
+    const auto generated = statistics.num_generated;
+    EXPECT_EQ(num_emitted, 1);
+    EXPECT_GE(generated, 1);
+    EXPECT_LT(generated, num_bindings);
+    EXPECT_EQ(search->state_repository->num_states(), 2);
+    EXPECT_EQ(count_bindings(), initial_binding_count + (std::same_as<Kind, tyr::LiftedTag> ? 1 : 0));
+
+    num_emitted = 0;
+    EXPECT_TRUE(expander.for_each_successor(
+        initial.get_state(),
+        statistics,
+        [&](const auto&, auto)
+        {
+            ++num_emitted;
+            return true;
+        },
+        [] { return false; }));
+    EXPECT_EQ(statistics.num_generated, generated + num_bindings);
+    EXPECT_EQ(statistics.num_expanded, 0);
+    EXPECT_GT(num_emitted, 1);
+    EXPECT_LT(num_emitted, num_bindings);  // The self-transition counts as generated, but is rejected.
 }
 
 }  // namespace

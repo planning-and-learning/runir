@@ -47,23 +47,22 @@ public:
         // Tyr requires a Node, but policy expansion does not carry a path metric.
         const auto node = tyr::planning::Node<tyr::planning::StateView<Kind>>(state, 0);
 
-        const auto visit_binding = [&](tyr::formalism::planning::ActionBindingView binding)
+        const auto visit_binding = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
         {
             if (stop())
                 return false;
-            const auto successor =
-                LabeledNode { binding, generator.get_successor_node(node, binding, *search_context.state_repository, *search_context.axiom_evaluator) };
+            const auto successor = generator.get_successor_node(node, binding, *search_context.state_repository, *search_context.axiom_evaluator);
             ++statistics.num_generated;
 
-            const auto rule = m_rules.matching_rule(state, successor.node.get_state(), stop);
+            const auto rule = m_rules.matching_rule(state, successor.get_state(), stop);
             if (stop())
                 return false;
             if (!rule)
                 return true;
-            return emit(successor, *rule);
+            return emit(LabeledNode { generator.materialize_action_binding(binding), successor }, *rule);
         };
 
-        return generator.for_each_applicable_action_binding(node, std::ref(visit_binding));
+        return generator.for_each_borrowed_applicable_action_binding(node, std::ref(visit_binding));
     }
 
     std::optional<RuleView> matching_rule(const tyr::planning::StateView<Kind>& source_state, const tyr::planning::StateView<Kind>& target_state)
