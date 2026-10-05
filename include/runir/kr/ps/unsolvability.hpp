@@ -38,7 +38,7 @@ public:
     {
         m_storage.reset_dynamic();
         auto context = runir::kr::dl::semantics::StateEvaluationContext<runir::kr::UnsFamilyTag, Kind, State>(state, m_task_context.dl_builder, m_storage);
-        return runir::kr::uns::classify(m_classifier, context);
+        return runir::kr::uns::classify<Kind>(m_classifier, context);
     }
 };
 

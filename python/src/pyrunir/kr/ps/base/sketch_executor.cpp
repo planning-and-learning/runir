@@ -106,7 +106,7 @@ void bind_sketch_executor(nb::module_& m)
             [](Expander& self,
                tyr::planning::StateView<Kind> state,
                SketchSearchStatistics& statistics,
-               const std::function<bool(tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>, RuleView)>& emit,
+               const std::function<bool(tyr::planning::LabeledNode<Kind>, RuleView)>& emit,
                const std::function<bool()>& stop) { return self.for_each_successor(state, statistics, emit, stop); },
             "state"_a,
             "statistics"_a,

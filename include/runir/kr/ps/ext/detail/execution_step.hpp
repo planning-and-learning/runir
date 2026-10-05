@@ -96,7 +96,7 @@ ProgramStep<Kind, Storage> applied(typename Storage::StoredState state, RuleVari
 template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
 auto planning_step(Storage& storage,
                    S state,
-                   const tyr::planning::LabeledNode<PS>& successor,
+                   const tyr::planning::LabeledNode<Kind, PS>& successor,
                    RuleVariantView rule,
                    MemoryStateView memory_state,
                    const runir::kr::TaskContextPtr<Kind>& task_context)

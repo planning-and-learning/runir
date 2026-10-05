@@ -20,9 +20,9 @@ void bind_observation(nb::module_& m, RepositoryBinding& repository, const char*
     runir::kr::python::bind_observation<T>(m, repository, name)
         .def(
             "is_compatible_with",
-            [](View value, GroundContext& context) { return runir::kr::ps::is_compatible_with(value, context); },
+            [](View value, GroundContext& context) { return runir::kr::ps::is_compatible_with<tyr::GroundTag>(value, context); },
             nb::arg("context"))
-        .def("is_compatible_with", [](View value, LiftedContext& context) { return runir::kr::ps::is_compatible_with(value, context); }, nb::arg("context"));
+        .def("is_compatible_with", [](View value, LiftedContext& context) { return runir::kr::ps::is_compatible_with<tyr::LiftedTag>(value, context); }, nb::arg("context"));
 }
 
 }  // namespace

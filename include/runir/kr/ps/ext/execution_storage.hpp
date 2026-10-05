@@ -44,9 +44,13 @@ concept ExecutionStorageConcept = requires(Storage& storage,
     { storage.store(state.get_state(), module_, memory, saved_registers, arguments, caller) } -> std::same_as<typename Storage::StoredState>;
     { storage.save_caller(state, memory) } -> std::same_as<CallStackView<Kind>>;
     { storage.materialize(state) } -> std::same_as<ProgramStateView<Kind>>;
-    { storage.successor(state.get_state(), binding) } -> std::same_as<tyr::planning::Node<decltype(state.get_state())>>;
-    { storage.successor(state.get_state(), borrowed_binding) } -> std::same_as<tyr::planning::Node<decltype(state.get_state())>>;
+    { storage.successor(state.get_state(), binding) } -> std::same_as<tyr::planning::Node<Kind, decltype(state.get_state())>>;
+    { storage.successor(state.get_state(), borrowed_binding) } -> std::same_as<tyr::planning::Node<Kind, decltype(state.get_state())>>;
 };
+
+/// Emission consumes this storage's source view; matching may inspect other program-state views.
+template<typename State, typename Storage>
+concept ExecutionStateViewConcept = std::same_as<State, typename Storage::StateView>;
 
 /// Repository-backed construction used when the full explored graph is retained.
 template<tyr::TaskKind Kind>
@@ -103,10 +107,10 @@ public:
     }
 
     template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
-    tyr::planning::Node<tyr::planning::StateView<Kind>> successor(const tyr::planning::StateView<Kind>& state, Binding binding)
+    tyr::planning::Node<Kind> successor(const tyr::planning::StateView<Kind>& state, Binding binding)
     {
         auto& search = *m_context->search_context;
-        return search.successor_generator->get_successor_node(tyr::planning::Node<tyr::planning::StateView<Kind>>(state, 0),
+        return search.successor_generator->get_successor_node(tyr::planning::Node<Kind>(state, 0),
                                                               binding,
                                                               *search.state_repository,
                                                               *search.axiom_evaluator);
@@ -206,10 +210,10 @@ public:
     /// The returned state borrows scratch storage until the next successor() call.
     /// Consume or copy it before then; the source must not borrow this same scratch storage.
     template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
-    tyr::planning::Node<tyr::planning::BuilderStateView<Kind>> successor(const tyr::planning::BuilderStateView<Kind>& state, Binding binding)
+    tyr::planning::Node<Kind, tyr::planning::BuilderStateView<Kind>> successor(const tyr::planning::BuilderStateView<Kind>& state, Binding binding)
     {
         auto& search = *m_context->search_context;
-        return search.successor_generator->get_successor_node(tyr::planning::Node<tyr::planning::BuilderStateView<Kind>>(state, 0),
+        return search.successor_generator->get_successor_node(tyr::planning::Node<Kind, tyr::planning::BuilderStateView<Kind>>(state, 0),
                                                               binding,
                                                               m_planning,
                                                               *search.axiom_evaluator);

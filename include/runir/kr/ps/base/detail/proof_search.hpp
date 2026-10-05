@@ -93,7 +93,7 @@ SketchProofStatus depth_first_search(runir::kr::TaskContext<Kind>& task_context,
         const auto state = source.unpack();
         auto expansion_status = SketchProofStatus::SUCCESS;
         bool is_open = true;
-        const auto accept_successor = [&](const tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>& successor, RuleView rule)
+        const auto accept_successor = [&](const tyr::planning::LabeledNode<Kind>& successor, RuleView rule)
         {
             if (out_of_time())
             {

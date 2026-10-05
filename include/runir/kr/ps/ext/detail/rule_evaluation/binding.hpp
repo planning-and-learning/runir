@@ -32,7 +32,7 @@ bool binding_effects_match(RuleView<Tag> rule, S state, const PS& planning_state
                                                              state.get_module_state().get_arguments(),
                                                              state.get_module_state().get_registers(),
                                                              registers);
-    return is_compatible_with(rule, transition);
+    return is_compatible_with<Kind>(rule, transition);
 }
 
 }  // namespace runir::kr::ps::ext::detail

@@ -44,9 +44,9 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     ygg::add_hash(view);
     view.def(
             "is_compatible_with",
-            [](View value, GroundContext& context) { return runir::kr::ps::base::is_compatible_with(value, context); },
+            [](View value, GroundContext& context) { return runir::kr::ps::base::is_compatible_with<tyr::GroundTag>(value, context); },
             "context"_a)
-        .def("is_compatible_with", [](View value, LiftedContext& context) { return runir::kr::ps::base::is_compatible_with(value, context); }, "context"_a);
+        .def("is_compatible_with", [](View value, LiftedContext& context) { return runir::kr::ps::base::is_compatible_with<tyr::LiftedTag>(value, context); }, "context"_a);
 
     runir::kr::python::bind_insert<T>(repository);
 }

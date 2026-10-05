@@ -93,12 +93,12 @@ public:
                 statistics.num_generated += expansion.status == detail::ProgramOutcome::APPLIED || expansion.status == detail::ProgramOutcome::RESTORED_CALLER;
             return emit(std::move(expansion));
         };
-        auto context = evaluation_context();
+        auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
         if (!m_rule_evaluators.for_each_successor(context, state, emit_expansion, stop))
             return false;
         if (stop())
             return false;
-        return emitted || emit_expansion(fallback(state));
+        return emitted || emit_expansion(fallback(state, context.planning_state));
     }
 
     /// Apply the current admitted binding without advancing its cursor; an exhausted choice reports FAILURE.
@@ -106,20 +106,20 @@ public:
     auto apply_choice(S state, const detail::Choice<Category>& choice, ProgramSearchStatistics& statistics)
     {
         validate_source(state);
-        auto context = evaluation_context();
+        auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
         auto step = m_rule_evaluators.apply_choice(context, state, choice);
         statistics.num_generated += step.status == detail::ProgramOutcome::APPLIED;
         return step;
     }
 
     /// Find the first rule that admits this planning successor; control-only rules do not match planning actions.
-    std::optional<RuleVariantView> matching_rule(ProgramStateView<Kind> state, const tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>& candidate)
+    std::optional<RuleVariantView> matching_rule(ProgramStateView<Kind> state, const tyr::planning::LabeledNode<Kind>& candidate)
     {
         validate_source(state);
         validate_planning_state(candidate.node.get_state());
         get_environment().reset_source();
         get_environment().reset_target();
-        auto context = evaluation_context();
+        auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
         return m_rule_evaluators.matching_rule(context, state, candidate);
     }
 
@@ -128,14 +128,14 @@ public:
     std::optional<detail::ProgramStep<Kind, ExecutionStorage>>
     apply(typename ExecutionStorage::StateView state,
           RuleVariantView rule,
-          std::optional<tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>> candidate = std::nullopt)
+          std::optional<tyr::planning::LabeledNode<Kind>> candidate = std::nullopt)
     {
         validate_source(state);
         if (candidate)
             validate_planning_state(candidate->node.get_state());
         get_environment().reset_source();
         get_environment().reset_target();
-        auto context = evaluation_context();
+        auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
         return m_rule_evaluators.apply(context, state, rule, candidate);
     }
 
@@ -163,16 +163,14 @@ private:
             throw std::invalid_argument("SuccessorExpander requires an execution state from the selected program.");
     }
 
-    auto evaluation_context() { return detail::RuleEvaluationContext<Kind, ExecutionStorage> { m_task_context, m_storage, get_environment() }; }
-
     /// With no emitted rule outcome, return to the caller or report an open top-level state.
     /// Restore caller control and bindings while retaining the planning state reached by the callee.
-    template<ProgramStateViewConcept<Kind> S>
-    auto fallback(S state)
+    template<ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
+    auto fallback(S state, const PS& planning_state)
     {
         if (const auto caller = state.get_call_stack())
         {
-            auto target = m_storage.store(state.get_state(),
+            auto target = m_storage.store(planning_state,
                                           caller->get_module(),
                                           caller->get_return_memory_state(),
                                           caller->get_registers(),

@@ -4,8 +4,11 @@
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/binding.hpp"
+#include "runir/kr/ps/ext/detail/rule_evaluation/context.hpp"
+#include "runir/kr/ps/rule_evaluator_concepts.hpp"
 
 #include <algorithm>
+#include <concepts>
 #include <utility>
 #include <vector>
 
@@ -29,33 +32,34 @@ class ChooseRuleEvaluator
 public:
     using RuleTag = ChooseTag<Category>;
     ChooseRuleEvaluator(RuleView<ChooseTag<Category>> rule, RuleVariantView variant) : m_rule(rule), m_variant(variant) {}
-    auto rule() const noexcept { return m_rule; }
-    auto variant() const noexcept { return m_variant; }
+    auto get_rule() const noexcept { return m_rule; }
+    auto get_variant() const noexcept { return m_variant; }
 
+    /// Resume a retained choice after child search; emit() only enumerates and prepares its alternatives.
     /// Bind a register and move memory while preserving the planning state and caller stack.
-    template<typename Context, ProgramStateViewConcept<Kind> S>
-    auto choice_step(Context& context, S state, const Choice<Category>& choice)
+    template<ExecutionStorageConcept<Kind> Storage, ExecutionStateViewConcept<Storage> State, tyr::planning::StateViewConcept<Kind> PlanningState>
+    auto choice_step(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, const Choice<Category>& choice) const
     {
         if (choice.exhausted())
         {
-            auto failure = detail::make_step<Kind, typename Context::StorageType>(ProgramOutcome::FAILURE, context.storage.retain(state), context.task_context);
+            auto failure = detail::make_step<Kind, Storage>(ProgramOutcome::FAILURE, context.storage.retain(state), context.task_context);
             failure.rule = choice.rule;
             return failure;
         }
         const auto rule = m_rule;
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(context.task_context->dl_builder);
         const auto module_ = state.get_module_state();
-        auto target = context.storage.store(state.get_state(),
+        auto target = context.storage.store(context.planning_state,
                                             module_.get_module(),
                                             rule.get_target(),
                                             bound_registers(rule, module_.get_registers(), choice.current(), *registers, context.storage),
                                             module_.get_arguments(),
                                             state.get_call_stack());
-        return detail::applied<Kind, typename Context::StorageType>(std::move(target), choice.rule, context.task_context);
+        return detail::applied<Kind, Storage>(std::move(target), choice.rule, context.task_context);
     }
 
 private:
-    auto make_choice(ChooseRuleWorkspace& workspace, RuleVariantView rule, runir::kr::dl::semantics::DenotationView<Category> denotation)
+    auto make_choice(ChooseRuleWorkspace& workspace, RuleVariantView rule, runir::kr::dl::semantics::DenotationView<Category> denotation) const
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
             return detail::Choice<Category>(rule, denotation, workspace.concept_bindings);
@@ -63,16 +67,20 @@ private:
             return detail::Choice<Category>(rule, denotation, workspace.role_bindings);
     }
     /// Ordering is evaluated after binding, and only rearranges the admitted values.
-    template<typename Context, typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool emit_choice(Context& context,
+    template<ExecutionStorageConcept<Kind> Storage,
+             EmitConcept<Choice<Category>> Emit,
+             StopConcept Stop,
+             ProgramStateViewConcept<Kind> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    bool emit_choice(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
                      ChooseRuleWorkspace& workspace,
                      RuleView<ChooseTag<Category>> rule,
                      RuleVariantView rule_variant,
-                     S state,
-                     const PS& planning_state,
+                     State state,
+                     const PlanningState& planning_state,
                      runir::kr::dl::semantics::DenotationView<Category> denotation,
                      Emit&& emit,
-                     Stop&& stop)
+                     Stop&& stop) const
     {
         auto choice = make_choice(workspace, rule_variant, denotation);
         if (stop())
@@ -118,7 +126,7 @@ private:
                 if (stop())
                     return false;
                 workspace.order_scores.push_back(
-                    ygg::visit([&](auto feature) { return ygg::uint_t(evaluate(feature, transition.get_target_context()).get()); }, term.get_feature()));
+                    ygg::visit([&](auto feature) { return ygg::uint_t(evaluate<Kind>(feature, transition.get_target_context()).get()); }, term.get_feature()));
             }
             workspace.order_indices.push_back(workspace.order_indices.size());
         }
@@ -158,16 +166,21 @@ private:
     }
 
 public:
-    template<typename Context, typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool emit(Context& context, S state, const PS& planning_state, Emit&& emit, Stop&& stop, ChooseRuleWorkspace& workspace)
+    template<ExecutionStorageConcept<Kind> Storage,
+             EmitConcept<Choice<Category>> Emit,
+             StopConcept Stop,
+             ExecutionStateViewConcept<Storage> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop) const
     {
+        const auto& planning_state = context.planning_state;
+        auto& workspace = context.choose_workspace;
         const auto rule = m_rule;
         const auto rule_variant = m_variant;
         if (!ext::rule_is_applicable(rule, state, planning_state, context.environment))
             return true;
-        auto state_context =
-            context.environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
-        const auto denotation = evaluate(rule.get_feature(), state_context);
+        auto state_context = context.make_dl_context(state);
+        const auto denotation = evaluate<Kind>(rule.get_feature(), state_context);
         return emit_choice(context, workspace, rule, rule_variant, state, planning_state, denotation, emit, stop);
     }
 };

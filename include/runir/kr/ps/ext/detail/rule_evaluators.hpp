@@ -6,12 +6,14 @@
 #include "runir/kr/ps/ext/detail/rule_evaluation/action.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/call.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/choose.hpp"
+#include "runir/kr/ps/ext/detail/rule_evaluation/context.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/do.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/load.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/sketch.hpp"
 #include "runir/kr/ps/ext/evaluation_environment.hpp"
 #include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/ext/program_view.hpp"
+#include "runir/kr/ps/rule_evaluator_concepts.hpp"
 #include "runir/kr/task_context.hpp"
 
 #include <algorithm>
@@ -23,6 +25,7 @@
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
+#include <tyr/planning/node.hpp>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -110,48 +113,70 @@ class RuleEvaluators
             const auto found =
                 std::lower_bound(m_lookup.begin(), m_lookup.end(), rule.get_index(), [](const auto& entry, auto index) { return entry.first < index; });
             if (found != m_lookup.end() && found->first == rule.get_index())
-                return std::visit(function, m_rules[found->second]);
+                return std::visit(function, std::as_const(m_rules[found->second]));
         }
         // Direct application historically accepts rules outside the prepared program.
         return ygg::visit(
             [&](auto concrete) -> decltype(auto)
             {
-                auto evaluator = prepare(concrete, rule);
+                const auto evaluator = prepare(concrete, rule);
                 return function(evaluator);
             },
             rule.get_variant());
     }
 
-    template<typename RuleEvaluator, typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS, typename Emit, typename Stop>
-    bool emit_rule(RuleEvaluator& evaluator, Context& context, S state, const PS& planning_state, Emit&& emit, Stop&& stop)
+    template<typename Evaluator,
+             ExecutionStorageConcept<Kind> Storage,
+             ExecutionStateViewConcept<Storage> State,
+             typename Emit,
+             StopConcept Stop,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    bool
+    emit_rule(const Evaluator& evaluator, RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop)
     {
-        using Tag = typename RuleEvaluator::RuleTag;
-        if constexpr (std::same_as<Tag, DoTag>)
-            return evaluator.emit(context, state, planning_state, emit, stop, m_do);
-        else if constexpr (ChooseRuleView<RuleView<Tag>>)
-            return evaluator.emit(context, state, planning_state, emit, stop, m_choose);
-        else if constexpr (std::same_as<Tag, SketchTag>)
-        {
-            if (!ext::rule_is_applicable(evaluator.rule(), state, planning_state, context.environment))
-                return true;
-            if (stop())
-                return false;
-            return emit(evaluator.control_step(context, state));
-        }
+        using Tag = typename Evaluator::RuleTag;
+        if constexpr (ChooseRuleView<RuleView<Tag>>)
+            static_assert(EmittingRuleEvaluatorConcept<Evaluator,
+                                                       ExtFamilyTag,
+                                                       Kind,
+                                                       RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>,
+                                                       State,
+                                                       Choice<typename Tag::Category>,
+                                                       Emit,
+                                                       Stop>);
         else
-            return evaluator.emit(context, state, planning_state, emit, stop);
+            static_assert(EmittingRuleEvaluatorConcept<Evaluator,
+                                                       ExtFamilyTag,
+                                                       Kind,
+                                                       RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>,
+                                                       State,
+                                                       ProgramStep<Kind, Storage>,
+                                                       Emit,
+                                                       Stop>);
+        return evaluator.emit(context, state, emit, stop);
     }
 
-    template<typename RuleEvaluator, typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool matches(RuleEvaluator& evaluator, Context& context, S state, const PS& planning_state, const tyr::planning::LabeledNode<PS>& candidate)
+    template<typename Evaluator,
+             ExecutionStorageConcept<Kind> Storage,
+             ProgramStateViewConcept<Kind> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState,
+             ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+    bool matches(const Evaluator& evaluator,
+                 RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+                 State state,
+                 const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate)
     {
-        using Tag = typename RuleEvaluator::RuleTag;
-        if constexpr (std::same_as<Tag, ActionTag>)
-            return evaluator.matches(context, state, planning_state, candidate);
-        else if constexpr (std::same_as<Tag, DoTag>)
-            return evaluator.matches(context, state, planning_state, candidate, m_do);
-        else if constexpr (std::same_as<Tag, SketchTag>)
-            return evaluator.matches(context, state, planning_state, candidate.node);
+        using Tag = typename Evaluator::RuleTag;
+        if constexpr (std::same_as<Tag, ActionTag> || std::same_as<Tag, DoTag> || std::same_as<Tag, SketchTag>)
+        {
+            static_assert(MatchingRuleEvaluatorConcept<Evaluator,
+                                                       ExtFamilyTag,
+                                                       Kind,
+                                                       RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>,
+                                                       State,
+                                                       tyr::planning::LabeledNode<Kind, PlanningState, Binding>>);
+            return evaluator.matches(context, state, candidate);
+        }
         else
             return false;
     }
@@ -199,7 +224,7 @@ public:
                         found->second = m_rules.size();
                         m_rules.push_back(ygg::visit([&](auto concrete) -> Evaluator { return prepare(concrete, rule); }, rule.get_variant()));
                     }
-                    const auto source = std::visit([](const auto& evaluator) { return evaluator.rule().get_source().get_index(); }, m_rules[found->second]);
+                    const auto source = std::visit([](const auto& evaluator) { return evaluator.get_rule().get_source().get_index(); }, m_rules[found->second]);
                     scheduled.emplace_back(module_.get_index(), source, scheduled.size(), found->second);
                 }
         std::sort(scheduled.begin(), scheduled.end());
@@ -214,27 +239,39 @@ public:
 
     auto& get_environment() noexcept { return m_environment; }
 
-    template<typename Context, ProgramStateViewConcept<Kind> S, typename Emit, typename Stop>
-    bool for_each_successor(Context& context, S state, Emit&& emit, Stop&& stop)
+    template<ExecutionStorageConcept<Kind> Storage, tyr::planning::StateViewConcept<Kind> PlanningState>
+    auto make_context(Storage& storage, PlanningState planning_state)
     {
-        const auto planning_state = state.get_state();
+        return runir::kr::ps::RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningState> {
+            m_task_context, storage, m_environment, m_do, m_choose, std::move(planning_state)
+        };
+    }
+
+    template<ExecutionStorageConcept<Kind> Storage,
+             ExecutionStateViewConcept<Storage> State,
+             typename Emit,
+             StopConcept Stop,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    bool for_each_successor(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop)
+    {
+        const auto& planning_state = context.planning_state;
         m_sketch_rules.clear();
         for (const auto slot : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
         {
-            auto& evaluator = m_rules[slot];
+            const auto& evaluator = m_rules[slot];
             if (stop())
                 return false;
             if (!std::visit(
-                    [&](auto& concrete)
+                    [&]<typename Concrete>(const Concrete& concrete)
                     {
-                        if constexpr (std::same_as<typename std::remove_cvref_t<decltype(concrete)>::RuleTag, SketchTag>)
-                            if (!concrete.rule().get_effects().empty())
+                        if constexpr (std::same_as<Concrete, SketchRuleEvaluator<Kind>>)
+                            if (!concrete.get_rule().get_effects().empty())
                             {
-                                if (ext::rule_is_applicable(concrete.rule(), state, planning_state, context.environment))
+                                if (ext::rule_is_applicable(concrete.get_rule(), state, planning_state, context.environment))
                                     m_sketch_rules.push_back(slot);
                                 return true;
                             }
-                        return emit_rule(concrete, context, state, planning_state, emit, stop);
+                        return emit_rule(concrete, context, state, emit, stop);
                     },
                     evaluator))
                 return false;
@@ -248,41 +285,47 @@ public:
             if (stop())
                 return false;
             const auto candidate = context.storage.successor(planning_state, binding);
+            const auto borrowed_candidate = tyr::planning::LabeledNode { binding, candidate };
             context.environment.reset_target();
             auto label = std::optional<tyr::formalism::planning::ActionBindingView> {};
             for (const auto slot : m_sketch_rules)
             {
                 if (stop())
                     return false;
-                auto& evaluator = std::get<SketchRuleEvaluator<Kind>>(m_rules[slot]);
-                if (!evaluator.matches(context, state, planning_state, candidate))
+                const auto& evaluator = std::get<SketchRuleEvaluator<Kind>>(m_rules[slot]);
+                if (!matches(evaluator, context, state, borrowed_candidate))
                     continue;
                 if (stop())
                     return false;
                 if (!label)
                     label = generator.materialize_action_binding(binding);
-                const auto labeled = tyr::planning::LabeledNode<std::remove_cvref_t<decltype(planning_state)>> { *label, candidate };
-                if (!emit(detail::planning_step(context.storage, state, labeled, evaluator.variant(), evaluator.rule().get_target(), context.task_context)))
+                const auto labeled = tyr::planning::LabeledNode<Kind, PlanningState> { *label, candidate };
+                if (!emit(detail::planning_step(context.storage,
+                                                state,
+                                                labeled,
+                                                evaluator.get_variant(),
+                                                evaluator.get_rule().get_target(),
+                                                context.task_context)))
                     return false;
             }
             return true;
         };
-        return generator.for_each_borrowed_applicable_action_binding(tyr::planning::Node<std::remove_cvref_t<decltype(planning_state)>>(planning_state, 0),
-                                                                     std::ref(visit));
+        return generator.for_each_borrowed_applicable_action_binding(tyr::planning::Node<Kind, PlanningState>(planning_state, 0), std::ref(visit));
     }
 
-    template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    std::optional<RuleVariantView> matching_rule(Context& context, S state, const tyr::planning::LabeledNode<PS>& candidate)
+    template<ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> State, tyr::planning::StateViewConcept<Kind> PlanningState>
+    std::optional<RuleVariantView> matching_rule(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+                                                 State state,
+                                                 const tyr::planning::LabeledNode<Kind, PlanningState>& candidate)
     {
-        const auto planning_state = state.get_state();
         for (const auto slot : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
         {
-            auto& evaluator = m_rules[slot];
+            const auto& evaluator = m_rules[slot];
             const auto matched = std::visit(
-                [&](auto& concrete) -> std::optional<RuleVariantView>
+                [&](const auto& concrete) -> std::optional<RuleVariantView>
                 {
-                    if (matches(concrete, context, state, planning_state, candidate))
-                        return concrete.variant();
+                    if (matches(concrete, context, state, candidate))
+                        return concrete.get_variant();
                     return std::nullopt;
                 },
                 evaluator);
@@ -292,58 +335,56 @@ public:
         return std::nullopt;
     }
 
-    template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    auto apply(Context& context, S state, RuleVariantView rule, const std::optional<tyr::planning::LabeledNode<PS>>& candidate)
+    template<ExecutionStorageConcept<Kind> Storage, ExecutionStateViewConcept<Storage> State, tyr::planning::StateViewConcept<Kind> PlanningState>
+    auto apply(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+               State state,
+               RuleVariantView rule,
+               const std::optional<tyr::planning::LabeledNode<Kind, PlanningState>>& candidate)
     {
-        using Result = std::optional<ProgramStep<Kind, typename Context::StorageType>>;
-        const auto planning_state = state.get_state();
-        return with_rule(rule,
-                         [&](auto& evaluator) -> Result
-                         {
-                             using Tag = typename std::remove_cvref_t<decltype(evaluator)>::RuleTag;
-                             if constexpr (BindingRuleKind<Tag> || std::same_as<Tag, CallTag>)
-                             {
-                                 auto result = Result {};
-                                 emit_rule(
-                                     evaluator,
-                                     context,
-                                     state,
-                                     planning_state,
-                                     [&](auto expansion)
-                                     {
-                                         if constexpr (ChooseRuleView<RuleView<Tag>>)
-                                             result = evaluator.choice_step(context, state, expansion);
-                                         else
-                                             result = std::move(expansion);
-                                         return false;
-                                     },
-                                     [] { return false; });
-                                 return result;
-                             }
-                             else
-                             {
-                                 if constexpr (std::same_as<Tag, SketchTag>)
-                                     if (evaluator.rule().get_effects().empty())
-                                     {
-                                         if (!ext::rule_is_applicable(evaluator.rule(), state, planning_state, context.environment))
-                                             return {};
-                                         return evaluator.control_step(context, state);
-                                     }
-                                 if (!candidate || !matches(evaluator, context, state, planning_state, *candidate))
-                                     return {};
-                                 return detail::planning_step(context.storage, state, *candidate, rule, evaluator.rule().get_target(), context.task_context);
-                             }
-                         });
+        using Result = std::optional<ProgramStep<Kind, Storage>>;
+        return with_rule(
+            rule,
+            [&]<typename Concrete>(const Concrete& evaluator) -> Result
+            {
+                using Tag = typename Concrete::RuleTag;
+                if constexpr (!BindingRuleKind<Tag> && !std::same_as<Tag, CallTag>)
+                {
+                    if (!std::same_as<Tag, SketchTag> || !evaluator.get_rule().get_effects().empty())
+                    {
+                        if (!candidate || !matches(evaluator, context, state, *candidate))
+                            return {};
+                        return detail::planning_step(context.storage, state, *candidate, rule, evaluator.get_rule().get_target(), context.task_context);
+                    }
+                }
+                auto result = Result {};
+                emit_rule(
+                    evaluator,
+                    context,
+                    state,
+                    [&](auto expansion)
+                    {
+                        if constexpr (ChooseRuleView<RuleView<Tag>>)
+                            result = evaluator.choice_step(context, state, expansion);
+                        else
+                            result = std::move(expansion);
+                        return false;
+                    },
+                    [] { return false; });
+                return result;
+            });
     }
 
-    template<runir::kr::dl::ConceptOrRoleTag Category, typename Context, ProgramStateViewConcept<Kind> S>
-    auto apply_choice(Context& context, S state, const Choice<Category>& choice)
+    template<runir::kr::dl::ConceptOrRoleTag Category,
+             ExecutionStorageConcept<Kind> Storage,
+             ExecutionStateViewConcept<Storage> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    auto apply_choice(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, const Choice<Category>& choice)
     {
-        using Step = ProgramStep<Kind, typename Context::StorageType>;
+        using Step = ProgramStep<Kind, Storage>;
         return with_rule(choice.rule,
-                         [&](auto& evaluator) -> Step
+                         [&]<typename Concrete>(const Concrete& evaluator) -> Step
                          {
-                             if constexpr (std::same_as<std::remove_cvref_t<decltype(evaluator)>, ChooseRuleEvaluator<Kind, Category>>)
+                             if constexpr (std::same_as<Concrete, ChooseRuleEvaluator<Kind, Category>>)
                                  return evaluator.choice_step(context, state, choice);
                              else
                                  throw std::invalid_argument("Choice requires a rule of its binding category.");

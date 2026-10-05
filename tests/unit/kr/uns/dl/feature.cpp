@@ -42,10 +42,10 @@ static_assert(requires(const View& view) {
 });
 
 static_assert(requires(View feature, kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>& context) {
-    { kr::ps::evaluate(feature, context) } -> std::same_as<kr::dl::semantics::DenotationView<kr::dl::BooleanTag>>;
+    { kr::ps::evaluate<tyr::GroundTag>(feature, context) } -> std::same_as<kr::dl::semantics::DenotationView<kr::dl::BooleanTag>>;
 });
 static_assert(requires(View feature, kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, tyr::LiftedTag>& context) {
-    { kr::ps::evaluate(feature, context) } -> std::same_as<kr::dl::semantics::DenotationView<kr::dl::BooleanTag>>;
+    { kr::ps::evaluate<tyr::LiftedTag>(feature, context) } -> std::same_as<kr::dl::semantics::DenotationView<kr::dl::BooleanTag>>;
 });
 
 }

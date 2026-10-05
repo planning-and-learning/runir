@@ -6,6 +6,7 @@
 #include "runir/kr/ps/icp/compatibility.hpp"
 #include "runir/kr/ps/icp/detail/execution_step.hpp"
 #include "runir/kr/ps/icp/evaluation_environment.hpp"
+#include "runir/kr/ps/rule_evaluator_concepts.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -71,7 +72,7 @@ public:
         return intern(data);
     }
 
-    template<typename Transition, typename Stop>
+    template<runir::kr::ps::dl::TransitionEvaluationContextConcept<IcpFamilyTag, Kind> Transition, StopConcept Stop>
     std::optional<HistoriesView<Kind>>
     update_histories(ProgramStateView<Kind> state, Transition& transition, std::optional<tyr::planning::BorrowedActionBindingView<Kind>> binding, Stop&& stop)
     {
@@ -85,8 +86,8 @@ public:
         {
             if (stop())
                 return std::nullopt;
-            const auto before = evaluate(features[i], transition.get_source_context());
-            const auto after = evaluate(features[i], transition.get_target_context());
+            const auto before = evaluate<Kind>(features[i], transition.get_source_context());
+            const auto after = evaluate<Kind>(features[i], transition.get_target_context());
             auto entered = m_task->dl_builder.template get_builder<Denotation>(before.get_data().num_objects);
             entered->get().copy_from(after.get());
             entered->get() -= before.get();

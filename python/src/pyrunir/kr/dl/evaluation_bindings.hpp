@@ -20,10 +20,10 @@ void bind_evaluate(nanobind::class_<View>& cls)
     using LiftedContext = sem::StateEvaluationContext<Family, tyr::LiftedTag>;
     cls.def(
            "evaluate",
-           [](const View& view, GroundContext& context) { return sem::evaluate(view, context); },
+           [](const View& view, GroundContext& context) { return sem::evaluate<tyr::GroundTag>(view, context); },
            nb::arg("context"),
            nb::keep_alive<0, 2>())
-        .def("evaluate", [](const View& view, LiftedContext& context) { return sem::evaluate(view, context); }, nb::arg("context"), nb::keep_alive<0, 2>());
+        .def("evaluate", [](const View& view, LiftedContext& context) { return sem::evaluate<tyr::LiftedTag>(view, context); }, nb::arg("context"), nb::keep_alive<0, 2>());
 }
 
 template<runir::kr::FamilyTag Family, tyr::TaskKind Kind>

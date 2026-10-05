@@ -42,11 +42,11 @@ void bind_sketch(nb::module_& m, RepositoryBinding& repository)
                     .def("get_rules", &View::get_rules)
                     .def(
                         "is_compatible_with",
-                        [](View value, GroundContext& context) { return runir::kr::ps::base::is_compatible_with(value, context); },
+                        [](View value, GroundContext& context) { return runir::kr::ps::base::is_compatible_with<tyr::GroundTag>(value, context); },
                         "context"_a)
                     .def(
                         "is_compatible_with",
-                        [](View value, LiftedContext& context) { return runir::kr::ps::base::is_compatible_with(value, context); },
+                        [](View value, LiftedContext& context) { return runir::kr::ps::base::is_compatible_with<tyr::LiftedTag>(value, context); },
                         "context"_a)
                     .def("syntactic_complexity", [](View value) { return runir::kr::ps::base::syntactic_complexity(value); });
     ygg::add_print(view);

@@ -5,9 +5,11 @@
 #include <chrono>
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <runir/kr/ps/icp/detail/rule_evaluation/context.hpp>
 #include <runir/kr/ps/icp/dl/parser.hpp>
 #include <runir/kr/ps/icp/program_executor.hpp>
 #include <runir/kr/ps/icp/successor_expander.hpp>
+#include <runir/kr/ps/rule_evaluator_concepts.hpp>
 #include <runir/kr/task_context.hpp>
 
 namespace runir::tests
@@ -19,6 +21,40 @@ namespace
 namespace icp = kr::ps::icp;
 using Status = icp::ProgramProofStatus;
 using Outcome = icp::detail::ProgramOutcome;
+
+template<tyr::TaskKind Kind>
+consteval bool rule_evaluator_contracts_hold()
+{
+    using Context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind>;
+    using State = icp::ProgramStateView<Kind>;
+    using PlanningState = tyr::planning::StateView<Kind>;
+    using Step = icp::detail::ProgramStep<Kind>;
+    using Crule = icp::detail::RuleEvaluator<Kind, icp::CruleTag>;
+    using ConceptLoad = icp::detail::RuleEvaluator<Kind, icp::LoadTag<kr::dl::ConceptTag>>;
+    using RoleLoad = icp::detail::RuleEvaluator<Kind, icp::LoadTag<kr::dl::RoleTag>>;
+    using BorrowedCandidate = tyr::planning::LabeledNode<Kind, PlanningState, tyr::planning::BorrowedActionBindingView<Kind>>;
+    using IndexedCandidate = tyr::planning::LabeledNode<Kind, PlanningState>;
+    using Emit = bool (*)(Step);
+    using Stop = bool (*)();
+
+    static_assert(kr::ps::RuleEvaluationContextConcept<Context, kr::IcpFamilyTag, Kind, State>);
+    static_assert(!kr::ps::RuleEvaluationContextConcept<const Context, kr::IcpFamilyTag, Kind, State>);
+    static_assert(!kr::ps::RuleEvaluationContextConcept<Context, kr::IcpFamilyTag, Kind, PlanningState>);
+    static_assert(kr::ps::MatchingRuleEvaluatorConcept<Crule, kr::IcpFamilyTag, Kind, Context, State, BorrowedCandidate>);
+    static_assert(kr::ps::MatchingRuleEvaluatorConcept<Crule, kr::IcpFamilyTag, Kind, Context, State, IndexedCandidate>);
+    static_assert(!kr::ps::MatchingRuleEvaluatorConcept<Crule, kr::IcpFamilyTag, Kind, const Context, State, IndexedCandidate>);
+    static_assert(!kr::ps::MatchingRuleEvaluatorConcept<ConceptLoad, kr::IcpFamilyTag, Kind, Context, State, BorrowedCandidate>);
+    static_assert(kr::ps::EmittingRuleEvaluatorConcept<ConceptLoad, kr::IcpFamilyTag, Kind, Context, State, Step, Emit, Stop>);
+    static_assert(kr::ps::EmittingRuleEvaluatorConcept<RoleLoad, kr::IcpFamilyTag, Kind, Context, State, Step, Emit, Stop>);
+    static_assert(!kr::ps::EmittingRuleEvaluatorConcept<Crule, kr::IcpFamilyTag, Kind, Context, State, Step, Emit, Stop>);
+    static_assert(!kr::ps::EmittingRuleEvaluatorConcept<ConceptLoad, kr::IcpFamilyTag, Kind, Context, State, Step, void (*)(Step), Stop>);
+    static_assert(!kr::ps::EmittingRuleEvaluatorConcept<ConceptLoad, kr::IcpFamilyTag, Kind, Context, State, Step, Emit, void (*)()>);
+    static_assert(!kr::ps::EmittingRuleEvaluatorConcept<ConceptLoad, kr::IcpFamilyTag, Kind, const Context, State, Step, Emit, Stop>);
+    return true;
+}
+
+static_assert(rule_evaluator_contracts_hold<tyr::GroundTag>());
+static_assert(rule_evaluator_contracts_hold<tyr::LiftedTag>());
 
 std::string rule(const std::string& name, const std::string& source, const std::string& target, const std::string& body)
 {
@@ -321,13 +357,15 @@ void check_normalized_arguments()
 template<tyr::TaskKind Kind>
 void check_rejected_bindings_stay_unpublished()
 {
-    for (const auto scenario : { 0, 1, 2 })
+    for (const auto scenario : { 0, 1, 2, 3 })
     {
         SCOPED_TRACE(scenario);
         auto context = make_context<Kind>("choose");
         auto body = move(scenario == 0 ? "Empty" : "Candidates");
         if (scenario == 1)
             body.replace(body.find("unchanged Count"), std::string("unchanged Count").size(), "increases Count");
+        if (scenario == 3)
+            body.replace(body.find("(:conditions)"), std::string("(:conditions)").size(), "(:conditions (equal_zero Count))");
         auto source = module(rule("reject", "m0", "m1", body));
         if (scenario == 2)
             source = R"((:module (:symbol policy) (:arguments) (:registers) (:entry m0) (:memory m0 m1)
@@ -357,6 +395,29 @@ void check_rejected_bindings_stay_unpublished()
         const auto accepted_steps = successors(accepted_expander, accepted_state);
         ASSERT_EQ(accepted_steps.size(), 2);
         EXPECT_EQ(count_bindings(), before + (std::same_as<Kind, tyr::LiftedTag> ? 2 : 0));
+        // Direct matching also checks conditions, argument filters, and memory before effects.
+        // Scenario 2 passes the rule itself and is rejected separately by history admission.
+        ASSERT_TRUE(accepted_steps.front().planning_successor);
+        const auto candidate = accepted_steps.front().planning_successor->unpack();
+        auto workspace = icp::detail::RuleEvaluationWorkspace<Kind>(context, rejected);
+        auto evaluation_context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { workspace, state.get_state() };
+        const auto published_before_matching = count_bindings();
+        for (const auto rules : rejected.get_module().get_memory_transitions())
+            for (const auto variant : rules)
+                ygg::visit(
+                    [&]<icp::RuleKind Tag>(icp::RuleView<Tag> concrete)
+                    {
+                        if constexpr (std::same_as<Tag, icp::CruleTag>)
+                        {
+                            const auto evaluator = icp::detail::RuleEvaluator<Kind, Tag>(*context, concrete, variant);
+                            EXPECT_EQ(evaluator.matches(evaluation_context, state, candidate), scenario == 2);
+                            EXPECT_FALSE(evaluator.matches(evaluation_context, accepted_steps.front().target, candidate));
+                        }
+                        else
+                            ADD_FAILURE() << "Expected a crule";
+                    },
+                    variant.get_variant());
+        EXPECT_EQ(count_bindings(), published_before_matching);
         const auto repeated = successors(accepted_expander, accepted_state);
         ASSERT_EQ(repeated.size(), accepted_steps.size());
         for (size_t i = 0; i < accepted_steps.size(); ++i)
@@ -364,6 +425,72 @@ void check_rejected_bindings_stay_unpublished()
             ASSERT_TRUE(accepted_steps[i].planning_successor);
             EXPECT_EQ(accepted_steps[i].planning_successor->label, repeated[i].planning_successor->label);
             EXPECT_EQ(accepted_steps[i].planning_successor->unpack().label.get_objects().size(), 2);
+        }
+    }
+}
+
+template<tyr::TaskKind Kind>
+void check_load_evaluator_entry_checks()
+{
+    for (const auto scenario : { 0, 1, 2, 3, 4 })
+    {
+        SCOPED_TRACE(scenario);
+        auto task = make_context<Kind>("choose");
+        auto body = load(scenario == 2 || scenario == 4 ? "Empty" : "Candidates");
+        if (scenario == 0)
+            body.replace(body.find("(:conditions)"), std::string("(:conditions)").size(), "(:conditions (equal_zero Count))");
+        const auto policy = program(task, module(rule("load", scenario == 1 ? "m1" : "m0", "m2", body)));
+        auto workspace = icp::detail::RuleEvaluationWorkspace<Kind>(task, policy);
+        auto& search = *task->search_context;
+        const auto planning_state = search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator).get_state();
+        const auto source = workspace.initial_state(planning_state);
+        auto context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind> { workspace, planning_state };
+        const auto states_before = task->icp_execution_repository->template size<icp::ProgramState<Kind>>();
+        const auto histories_before = task->icp_execution_repository->template size<icp::Histories>();
+        const auto registers_before = task->dl_denotation_repository->template size<kr::dl::semantics::RegisterValues>();
+        auto steps = std::vector<icp::detail::ProgramStep<Kind>> {};
+        for (const auto rules : policy.get_module().get_memory_transitions())
+            for (const auto variant : rules)
+                ygg::visit(
+                    [&]<icp::RuleKind Tag>(icp::RuleView<Tag> concrete)
+                    {
+                        if constexpr (std::same_as<Tag, icp::LoadTag<kr::dl::ConceptTag>>)
+                        {
+                            const auto evaluator = icp::detail::RuleEvaluator<Kind, Tag>(*task, concrete, variant);
+                            EXPECT_EQ(evaluator.emit(
+                                          context,
+                                          source,
+                                          [&](auto step)
+                                          {
+                                              steps.push_back(std::move(step));
+                                              return true;
+                                          },
+                                          [&] { return scenario == 2; }),
+                                      scenario != 2);
+                        }
+                        else
+                            ADD_FAILURE() << "Expected a concept load rule";
+                    },
+                    variant.get_variant());
+        if (scenario == 3)
+        {
+            ASSERT_EQ(steps.size(), 2);
+            for (const auto& step : steps)
+                EXPECT_EQ(step.status, Outcome::APPLIED);
+        }
+        else
+        {
+            if (scenario == 4)
+            {
+                ASSERT_EQ(steps.size(), 1);
+                EXPECT_EQ(steps.front().status, Outcome::FAILURE);
+                EXPECT_EQ(steps.front().target, source);
+            }
+            else
+                EXPECT_TRUE(steps.empty());
+            EXPECT_EQ(task->icp_execution_repository->template size<icp::ProgramState<Kind>>(), states_before);
+            EXPECT_EQ(task->icp_execution_repository->template size<icp::Histories>(), histories_before);
+            EXPECT_EQ(task->dl_denotation_repository->template size<kr::dl::semantics::RegisterValues>(), registers_before);
         }
     }
 }
@@ -458,6 +585,7 @@ TEST(RunirTests, IcpGroundExecution)
     check_normalized_arguments<tyr::GroundTag>();
     check_rejected_bindings_stay_unpublished<tyr::GroundTag>();
     check_rule_evaluator_scheduling<tyr::GroundTag>();
+    check_load_evaluator_entry_checks<tyr::GroundTag>();
 }
 
 TEST(RunirTests, IcpLiftedExecution)
@@ -467,6 +595,7 @@ TEST(RunirTests, IcpLiftedExecution)
     check_normalized_arguments<tyr::LiftedTag>();
     check_rejected_bindings_stay_unpublished<tyr::LiftedTag>();
     check_rule_evaluator_scheduling<tyr::LiftedTag>();
+    check_load_evaluator_entry_checks<tyr::LiftedTag>();
 }
 
 }  // namespace runir::tests

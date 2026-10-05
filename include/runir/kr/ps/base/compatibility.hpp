@@ -12,17 +12,17 @@
 namespace runir::kr::ps::base
 {
 
-template<typename C, typename Context>
+template<tyr::TaskKind Kind, typename C, runir::kr::ps::dl::TransitionEvaluationContextConcept<BaseFamilyTag, Kind> Context>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, C> rule, Context& context)
 {
-    return all_compatible(rule.get_conditions(), context) && all_compatible(rule.get_effects(), context);
+    return all_compatible<Kind>(rule.get_conditions(), context) && all_compatible<Kind>(rule.get_effects(), context);
 }
 
-template<typename C, typename Context>
+template<tyr::TaskKind Kind, typename C, runir::kr::ps::dl::TransitionEvaluationContextConcept<BaseFamilyTag, Kind> Context>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::base::Sketch>, C> sketch, Context& context)
 {
     for (auto rule : sketch.get_rules())
-        if (runir::kr::ps::base::is_compatible_with(rule, context))
+        if (runir::kr::ps::base::is_compatible_with<Kind>(rule, context))
             return true;
 
     return false;

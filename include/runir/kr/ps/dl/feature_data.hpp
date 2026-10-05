@@ -27,13 +27,13 @@ using FeatureCategory = std::conditional_t<std::same_as<FeatureTag, BooleanFeatu
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag>
 struct FeatureExpression
 {
-    using Type = runir::kr::dl::Constructor<typename runir::kr::ps::PsFamilyTraits<Family>::DlFamily, FeatureCategory<FeatureTag>>;
+    using Type = runir::kr::dl::Constructor<runir::kr::ps::DlFamilyFor<Family>, FeatureCategory<FeatureTag>>;
 };
 
 template<runir::kr::FamilyTag Family>
 struct FeatureExpression<Family, QueryFeature>
 {
-    using Type = runir::kr::dl::Query<typename runir::kr::ps::PsFamilyTraits<Family>::DlFamily>;
+    using Type = runir::kr::dl::Query<runir::kr::ps::DlFamilyFor<Family>>;
 };
 
 }  // namespace runir::kr::ps::dl

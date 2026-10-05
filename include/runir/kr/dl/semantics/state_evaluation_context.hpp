@@ -22,12 +22,9 @@ namespace runir::kr::dl::semantics
 {
 
 /// Evaluation reads state contents; it does not require registered state identity.
-template<typename Context, typename Family = typename Context::FamilyType>
-concept StateEvaluationResourcesConcept = FamilyTag<Family> && requires(Context& context, const Context& const_context) {
-    typename Context::KindType;
-    requires tyr::TaskKind<typename Context::KindType>;
-    requires std::same_as<typename Context::FamilyType, Family>;
-    requires tyr::planning::StateViewConcept<std::remove_cvref_t<decltype(const_context.get_state())>, typename Context::KindType>;
+template<typename Context, typename Family, typename Kind>
+concept StateEvaluationResourcesConcept = FamilyTag<Family> && tyr::TaskKind<Kind> && requires(Context& context, const Context& const_context) {
+    { const_context.get_state() } -> tyr::planning::StateViewConcept<Kind>;
     { context.get_builder() } -> std::same_as<Builder&>;
     { context.get_denotation_repository() } -> std::same_as<DenotationRepository&>;
     { context.get_workspace() } -> std::same_as<EvaluationWorkspace&>;
@@ -39,17 +36,17 @@ concept StateEvaluationResourcesConcept = FamilyTag<Family> && requires(Context&
 
 /// Recursive contexts retain their family, task kind, resources, and navigation.
 template<typename Context, typename Family, typename Kind>
-concept StateEvaluationNavigationConcept =
-    StateEvaluationResourcesConcept<Context, Family> && std::same_as<typename Context::KindType, Kind> && requires(const Context& context) {
-        { context.for_result(false) } -> std::same_as<Context>;
-        { context.child_context() } -> std::same_as<Context>;
-    };
-
-template<typename Context, typename Family = typename Context::FamilyType>
-concept StateEvaluationContextConcept = StateEvaluationResourcesConcept<Context, Family> && requires(const Context& context) {
-    { context.for_result(false) } -> StateEvaluationNavigationConcept<Family, typename Context::KindType>;
-    { context.child_context() } -> StateEvaluationNavigationConcept<Family, typename Context::KindType>;
+concept StateEvaluationNavigationConcept = StateEvaluationResourcesConcept<Context, Family, Kind> && requires(const Context& context) {
+    { context.for_result(false) } -> std::same_as<Context>;
+    { context.child_context() } -> std::same_as<Context>;
 };
+
+template<typename Context, typename Family, typename Kind>
+concept StateEvaluationContextConcept = StateEvaluationResourcesConcept<std::remove_reference_t<Context>, Family, Kind>
+                                       && requires(const std::remove_reference_t<Context>& context) {
+                                              { context.for_result(false) } -> StateEvaluationNavigationConcept<Family, Kind>;
+                                              { context.child_context() } -> StateEvaluationNavigationConcept<Family, Kind>;
+                                          };
 
 template<FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S = tyr::planning::StateView<Kind>>
 class BaseStateEvaluationContext
@@ -137,8 +134,8 @@ public:
     using BaseStateEvaluationContext<Family, Kind, S>::BaseStateEvaluationContext;
 };
 
-template<StateEvaluationContextConcept Context>
-const auto& get_repository(const Context& context) noexcept
+template<FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> State>
+const auto& get_repository(const BaseStateEvaluationContext<Family, Kind, State>& context) noexcept
 {
     return context.get_state().get_repository();
 }

@@ -17,12 +17,12 @@ void bind_boolean_feature(nb::module_& m, RepositoryBinding& repository)
     {
         cls.def(
                "evaluate",
-               [](View value, GroundContext& context) { return runir::kr::ps::evaluate(value, context); },
+               [](View value, GroundContext& context) { return runir::kr::ps::evaluate<tyr::GroundTag>(value, context); },
                nb::arg("context"),
                nb::keep_alive<0, 2>())
             .def(
                 "evaluate",
-                [](View value, LiftedContext& context) { return runir::kr::ps::evaluate(value, context); },
+                [](View value, LiftedContext& context) { return runir::kr::ps::evaluate<tyr::LiftedTag>(value, context); },
                 nb::arg("context"),
                 nb::keep_alive<0, 2>());
     };

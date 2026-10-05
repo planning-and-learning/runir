@@ -101,6 +101,10 @@ struct PsFamilyTraits<runir::kr::UnsFamilyTag>
     using EffectTypes = ygg::TypeList<>;
 };
 
+/// DL expression family used by a policy family.
+template<runir::kr::FamilyTag Family>
+using DlFamilyFor = typename PsFamilyTraits<Family>::DlFamily;
+
 template<runir::kr::FamilyTag Family>
 using PsFeatureTypes = typename PsFamilyTraits<Family>::FeatureTypes;
 

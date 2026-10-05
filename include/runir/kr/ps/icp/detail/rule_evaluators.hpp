@@ -3,6 +3,7 @@
 
 #include "runir/kr/ps/icp/detail/rule_evaluation/crule.hpp"
 #include "runir/kr/ps/icp/detail/rule_evaluation/load.hpp"
+#include "runir/kr/ps/rule_evaluator_concepts.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -40,28 +41,40 @@ class RuleEvaluators
     std::vector<ActionRules> m_enabled;
     std::vector<std::size_t> m_matching;
 
-    template<typename Emit, typename Stop>
-    bool emit_crules(Action action, std::span<const std::size_t> rules, ProgramStateView<Kind> source, Emit&& emit, Stop&& stop)
+    template<EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
+    bool emit_crules(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind>& context,
+                     Action action,
+                     std::span<const std::size_t> rules,
+                     ProgramStateView<Kind> source,
+                     Emit&& emit,
+                     Stop&& stop)
     {
         auto& search = *get_task_context()->search_context;
         auto& environment = m_workspace.get_environment();
-        auto context = environment.make_dl_context(source);
+        auto source_context = context.make_dl_context(source);
         const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
         {
             if (stop())
                 return false;
             m_matching.clear();
             for (const auto slot : rules)
-                if (std::get<CruleEvaluator>(m_evaluators[slot]).xconditions_match(source, binding, context))
+                if (std::get<CruleEvaluator>(m_evaluators[slot]).xconditions_match(source_context, source, binding))
                     m_matching.push_back(slot);
             if (m_matching.empty())
                 return true;
-            const auto candidate = search.successor_generator->get_successor_node(tyr::planning::Node<tyr::planning::StateView<Kind>>(source.get_state(), 0),
-                                                                                  binding,
-                                                                                  *search.state_repository,
-                                                                                  *search.axiom_evaluator);
+            const auto node = search.successor_generator->get_successor_node(tyr::planning::Node<Kind>(context.planning_state, 0),
+                                                                             binding,
+                                                                             *search.state_repository,
+                                                                             *search.axiom_evaluator);
+            const auto candidate = tyr::planning::LabeledNode { binding, node };
             environment.reset_target();
-            auto transition = environment.make_dl_transition_context(source.get_state(), candidate.get_state(), source.get_registers(), source.get_registers());
+            auto transition = context.make_dl_transition_context(source, candidate);
+            static_assert(runir::kr::ps::MatchingRuleEvaluatorConcept<CruleEvaluator,
+                                                                      IcpFamilyTag,
+                                                                      Kind,
+                                                                      runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind>,
+                                                                      ProgramStateView<Kind>,
+                                                                      decltype(candidate)>);
             auto histories = std::optional<HistoriesView<Kind>> {};
             auto label = std::optional<tyr::formalism::planning::ActionBindingView> {};
             for (const auto slot : m_matching)
@@ -69,7 +82,7 @@ class RuleEvaluators
                 if (stop())
                     return false;
                 const auto& evaluator = std::get<CruleEvaluator>(m_evaluators[slot]);
-                if (!evaluator.transition_matches(source, binding, transition))
+                if (!evaluator.matches(context, source, candidate))
                     continue;
                 if (!histories)
                 {
@@ -81,14 +94,14 @@ class RuleEvaluators
                     return false;
                 if (!label)
                     label = search.successor_generator->materialize_action_binding(binding);
-                const auto labeled = tyr::planning::LabeledNode<tyr::planning::StateView<Kind>> { *label, candidate };
-                if (!emit(evaluator.apply(source, labeled, *histories, m_workspace)))
+                const auto labeled = tyr::planning::LabeledNode<Kind> { *label, candidate.node };
+                if (!emit(evaluator.apply(m_workspace, source, labeled, *histories)))
                     return false;
             }
             return true;
         };
         return search.successor_generator->for_each_borrowed_applicable_action_binding(
-            tyr::planning::Node<tyr::planning::StateView<Kind>>(source.get_state(), 0),
+            tyr::planning::Node<Kind>(context.planning_state, 0),
             action,
             std::ref(visit));
     }
@@ -128,14 +141,15 @@ public:
     auto initial_state(tyr::planning::StateView<Kind> state) { return m_workspace.initial_state(state); }
 
     /// Callbacks borrow shared scratch and must not reenter the evaluators or planning generator.
-    template<typename Emit, typename Stop>
+    template<EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
     bool for_each_successor(ProgramStateView<Kind> state, Emit&& emit, Stop&& stop, bool grouped)
     {
         if (stop())
             return false;
         auto& environment = m_workspace.get_environment();
         environment.reset_source();
-        auto context = environment.make_dl_context(state);
+        auto source_context = environment.make_dl_context(state);
+        auto context = runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind> { m_workspace, source_context.get_state() };
         bool emitted = false;
         const auto output = [&](ProgramStep<Kind> step)
         {
@@ -154,13 +168,13 @@ public:
                 const auto exhausted = std::visit(
                     [&](const auto& evaluator)
                     {
-                        if (!evaluator.applicable(context))
-                            return true;
                         if constexpr (std::same_as<std::remove_cvref_t<decltype(evaluator)>, CruleEvaluator>)
                         {
+                            if (!evaluator.is_applicable(source_context))
+                                return true;
                             const auto action = evaluator.get_action();
                             if (!grouped)
-                                return emit_crules(action, std::span<const std::size_t>(&slot, 1), state, output, stop);
+                                return emit_crules(context, action, std::span<const std::size_t>(&slot, 1), state, output, stop);
                             auto group =
                                 std::find_if(m_enabled.begin(), m_enabled.begin() + num_enabled, [&](const auto& entry) { return entry.action == action; });
                             if (group == m_enabled.begin() + num_enabled)
@@ -175,14 +189,24 @@ public:
                             return true;
                         }
                         else
-                            return evaluator.emit(state, m_workspace, output, stop);
+                        {
+                            static_assert(runir::kr::ps::EmittingRuleEvaluatorConcept<std::remove_cvref_t<decltype(evaluator)>,
+                                                                                      IcpFamilyTag,
+                                                                                      Kind,
+                                                                                      runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind>,
+                                                                                      ProgramStateView<Kind>,
+                                                                                      ProgramStep<Kind>,
+                                                                                      decltype(output),
+                                                                                      Stop>);
+                            return evaluator.emit(context, state, output, stop);
+                        }
                     },
                     m_evaluators[slot]);
                 if (!exhausted)
                     return false;
             }
         for (std::size_t i = 0; i < num_enabled; ++i)
-            if (!emit_crules(m_enabled[i].action, m_enabled[i].rules, state, output, stop))
+            if (!emit_crules(context, m_enabled[i].action, m_enabled[i].rules, state, output, stop))
                 return false;
         if (stop())
             return false;

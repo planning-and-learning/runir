@@ -3,7 +3,11 @@
 
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
+#include "runir/kr/ps/ext/detail/rule_evaluation/context.hpp"
+#include "runir/kr/ps/rule_evaluator_concepts.hpp"
 
+#include <cassert>
+#include <concepts>
 #include <tyr/planning/node.hpp>
 #include <utility>
 
@@ -19,41 +23,44 @@ class SketchRuleEvaluator
 public:
     using RuleTag = SketchTag;
     SketchRuleEvaluator(RuleView<SketchTag> rule, RuleVariantView variant) : m_rule(rule), m_variant(variant) {}
-    auto rule() const noexcept { return m_rule; }
-    auto variant() const noexcept { return m_variant; }
+    auto get_rule() const noexcept { return m_rule; }
+    auto get_variant() const noexcept { return m_variant; }
 
-private:
-    template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool sketch_rule_matches_state(Context& context, RuleView<SketchTag> rule, S state, const PS& planning_state, const PS& target_state)
+    /// Emit a control-only rule; effectful rules must use matches() on the shared successor batch.
+    template<ExecutionStorageConcept<Kind> Storage,
+             EmitConcept<ProgramStep<Kind, Storage>> Emit,
+             StopConcept Stop,
+             ExecutionStateViewConcept<Storage> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop) const
     {
-        if (!ext::has_current_source(rule, state))
+        assert(m_rule.get_effects().empty() && "Effectful Sketch rules require the shared successor batch.");
+        if (!ext::rule_is_applicable(m_rule, state, context.planning_state, context.environment))
+            return true;
+        if (stop())
             return false;
-        auto transition = context.environment.make_dl_transition_context(planning_state,
-                                                                         target_state,
-                                                                         state.get_module_state().get_arguments(),
-                                                                         state.get_module_state().get_registers(),
-                                                                         state.get_module_state().get_registers());
-        return is_compatible_with(rule, transition);
-    }
-
-public:
-    template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool matches(Context& context, S state, const PS& planning_state, const tyr::planning::Node<PS>& candidate)
-    {
-        return !m_rule.get_effects().empty() && sketch_rule_matches_state(context, m_rule, state, planning_state, candidate.get_state());
-    }
-
-    template<typename Context, ProgramStateViewConcept<Kind> S>
-    auto control_step(Context& context, S state)
-    {
         const auto module_ = state.get_module_state();
-        auto target = context.storage.store(state.get_state(),
+        auto target = context.storage.store(context.planning_state,
                                             module_.get_module(),
                                             m_rule.get_target(),
                                             module_.get_registers(),
                                             module_.get_arguments(),
                                             state.get_call_stack());
-        return detail::applied<Kind, typename Context::StorageType>(std::move(target), m_variant, context.task_context);
+        return emit(detail::applied<Kind, Storage>(std::move(target), m_variant, context.task_context));
+    }
+
+    template<ExecutionStorageConcept<Kind> Storage,
+             ProgramStateViewConcept<Kind> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState,
+             ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+    bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+                 State state,
+                 const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate) const
+    {
+        if (m_rule.get_effects().empty() || !ext::has_current_source(m_rule, state))
+            return false;
+        auto transition = context.make_dl_transition_context(state, candidate);
+        return is_compatible_with<Kind>(m_rule, transition);
     }
 };
 

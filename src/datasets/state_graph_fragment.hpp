@@ -72,7 +72,7 @@ public:
         return { index, state.get_index() };
     }
 
-    void record(const tyr::planning::Node<tyr::planning::StateView<Kind>>& source, const tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>& target)
+    void record(const tyr::planning::Node<Kind>& source, const tyr::planning::LabeledNode<Kind>& target)
     {
         m_transitions.push_back(StateGraphTransition<Kind> { locate(source.get_state()),
                                                              locate(target.node.get_state()),
@@ -103,7 +103,7 @@ public:
     explicit StateGraphWorkerEventHandler(StateGraphFragment<Kind>& fragment) : m_fragment(&fragment) {}
 
     void
-    on_generate_transition(const tyr::planning::Node<tyr::planning::StateView<Kind>>& source, const tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>& target, tyr::planning::TransitionOutcome) override
+    on_generate_transition(const tyr::planning::Node<Kind>& source, const tyr::planning::LabeledNode<Kind>& target, tyr::planning::TransitionOutcome) override
     {
         m_fragment->record(source, target);
     }
@@ -118,7 +118,7 @@ class StateGraphEventHandler final : public tyr::planning::astar_eager::EventHan
 public:
     explicit StateGraphEventHandler(const tyr::planning::StateView<Kind>& start) : m_workers(1), m_start(m_root.locate(start)) {}
 
-    void on_start_search([[maybe_unused]] const tyr::planning::Node<tyr::planning::StateView<Kind>>& node, ygg::float_t) override
+    void on_start_search([[maybe_unused]] const tyr::planning::Node<Kind>& node, ygg::float_t) override
     {
         assert(m_start == m_root.locate(node.get_state()));
     }

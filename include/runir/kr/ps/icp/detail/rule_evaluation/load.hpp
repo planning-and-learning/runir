@@ -1,7 +1,10 @@
 #ifndef RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_LOAD_HPP_
 #define RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_LOAD_HPP_
 
-#include "runir/kr/ps/icp/detail/rule_evaluation/workspace.hpp"
+#include "runir/kr/ps/icp/detail/rule_evaluation/context.hpp"
+#include "runir/kr/ps/rule_evaluator_concepts.hpp"
+
+#include <utility>
 
 namespace runir::kr::ps::icp::detail
 {
@@ -16,16 +19,24 @@ public:
     RuleEvaluator(TaskContext<Kind>&, RuleView<LoadTag<Category>> rule, RuleVariantView variant) : m_rule(rule), m_variant(variant) {}
 
     auto get_rule() const noexcept { return m_rule; }
-    bool applicable(auto& context) const { return conditions_are_compatible(m_rule, context); }
 
-    template<typename Emit, typename Stop>
-    bool emit(ProgramStateView<Kind> source, RuleEvaluationWorkspace<Kind>& workspace, Emit&& output, Stop&& stop) const
+    template<EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
+    bool emit(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind>& context, ProgramStateView<Kind> source, Emit&& output, Stop&& stop) const
     {
+        if (stop())
+            return false;
+        const auto memory = source.get_memory_state();
+        const auto required_memory = m_rule.get_source();
+        if (&memory.get_context() != &required_memory.get_context() || memory != required_memory)
+            return true;
         using Registers = runir::kr::dl::semantics::RegisterValues;
+        auto& workspace = context.workspace;
         const auto& task = workspace.get_task_context();
         auto& environment = workspace.get_environment();
-        auto context = environment.make_dl_context(source);
-        const auto denotation = evaluate(m_rule.get_feature(), context);
+        auto source_context = context.make_dl_context(source);
+        if (!conditions_are_compatible<Kind>(m_rule, source_context))
+            return true;
+        const auto denotation = evaluate<Kind>(m_rule.get_feature(), source_context);
         if (denotation.begin() == denotation.end())
         {
             auto step = ProgramStep<Kind>(ProgramOutcome::FAILURE, source, task);
@@ -41,8 +52,8 @@ public:
             runir::kr::dl::semantics::assign_register(*registers, m_rule.get_register().get_identifier(), value);
             const auto target_registers = insert(*task->dl_denotation_repository, *registers).first;
             environment.reset_target();
-            auto transition = environment.make_dl_transition_context(source.get_state(), source.get_state(), source.get_registers(), target_registers);
-            if (!runir::kr::ps::all_compatible(m_rule.get_effects(), transition))
+            auto transition = context.make_dl_transition_context(source, target_registers);
+            if (!runir::kr::ps::all_compatible<Kind>(m_rule.get_effects(), transition))
                 continue;
             const auto histories = workspace.update_histories(source, transition, std::nullopt, stop);
             if (!histories)

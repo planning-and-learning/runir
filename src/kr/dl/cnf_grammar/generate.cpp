@@ -188,7 +188,7 @@ public:
                                                                                           m_intermediate_storage[i]);
             // Roots share one canonical repository across example states; their
             // intermediate results remain in the per-state reusable storage.
-            seen.scratch.push_back(runir::kr::dl::semantics::evaluate(constructor, context));
+            seen.scratch.push_back(runir::kr::dl::semantics::evaluate<Kind>(constructor, context));
         }
 
         const auto vector = seen.vectors.insert(seen.scratch);

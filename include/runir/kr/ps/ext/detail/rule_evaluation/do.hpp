@@ -4,12 +4,16 @@
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
+#include "runir/kr/ps/ext/detail/rule_evaluation/context.hpp"
+#include "runir/kr/ps/rule_evaluator_concepts.hpp"
 
 #include <algorithm>
+#include <concepts>
 #include <functional>
 #include <optional>
 #include <tyr/formalism/planning/action_view.hpp>
 #include <tyr/planning/node.hpp>
+#include <utility>
 #include <vector>
 
 namespace runir::kr::ps::ext::detail
@@ -38,20 +42,22 @@ public:
                 break;
             }
     }
-    auto rule() const noexcept { return m_rule; }
-    auto variant() const noexcept { return m_variant; }
+    auto get_rule() const noexcept { return m_rule; }
+    auto get_variant() const noexcept { return m_variant; }
 
 private:
-    template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    auto& evaluate_do_arguments(Context& context, DoRuleWorkspace& workspace, RuleView<DoTag> rule, S state, const PS& planning_state)
+    template<ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> State, tyr::planning::StateViewConcept<Kind> PlanningState>
+    auto& evaluate_do_arguments(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+                                DoRuleWorkspace& workspace,
+                                RuleView<DoTag> rule,
+                                State state) const
     {
         const auto arguments = rule.get_action_arguments();
         auto& denotations = workspace.denotations;
         denotations.clear();
-        auto state_context =
-            context.environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
+        auto state_context = context.make_dl_context(state);
         for (auto argument : arguments)
-            denotations.push_back(evaluate(argument, state_context));
+            denotations.push_back(evaluate<Kind>(argument, state_context));
         return denotations;
     }
 
@@ -70,41 +76,54 @@ private:
         return true;
     }
 
-    template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool do_effects_match(Context& context, RuleView<DoTag> rule, S state, const PS& planning_state, const PS& target_state)
+    template<ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> State, tyr::planning::StateViewConcept<Kind> PlanningState>
+    bool do_effects_match(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+                          RuleView<DoTag> rule,
+                          State state,
+                          const PlanningState& planning_state,
+                          const PlanningState& target_state) const
     {
         auto transition = context.environment.make_dl_transition_context(planning_state,
                                                                          target_state,
                                                                          state.get_module_state().get_arguments(),
                                                                          state.get_module_state().get_registers(),
                                                                          state.get_module_state().get_registers());
-        return is_compatible_with(rule, transition);
+        return is_compatible_with<Kind>(rule, transition);
     }
 
-    template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool do_rule_matches(Context& context,
+    template<ExecutionStorageConcept<Kind> Storage,
+             ProgramStateViewConcept<Kind> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState,
+             ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+    bool do_rule_matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
                          DoRuleWorkspace& workspace,
                          RuleView<DoTag> rule,
-                         S state,
-                         const PS& planning_state,
-                         tyr::formalism::planning::ActionBindingView action,
-                         const PS& target_state)
+                         State state,
+                         const PlanningState& planning_state,
+                         Binding action,
+                         const PlanningState& target_state) const
     {
         if (!ext::rule_is_applicable(rule, state, planning_state, context.environment))
             return false;
-        const auto& denotations = evaluate_do_arguments(context, workspace, rule, state, planning_state);
+        const auto& denotations = evaluate_do_arguments(context, workspace, rule, state);
         return action_matches_do_arguments(rule, action, denotations) && do_effects_match(context, rule, state, planning_state, target_state);
     }
 
 public:
-    template<typename Context, typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool emit(Context& context, S state, const PS& planning_state, Emit&& emit, Stop&& stop, DoRuleWorkspace& workspace)
+    template<ExecutionStorageConcept<Kind> Storage,
+             EmitConcept<ProgramStep<Kind, Storage>> Emit,
+             StopConcept Stop,
+             ExecutionStateViewConcept<Storage> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop) const
     {
+        const auto& planning_state = context.planning_state;
+        auto& workspace = context.do_workspace;
         const auto rule = m_rule;
         const auto rule_variant = m_variant;
         if (!ext::rule_is_applicable(rule, state, planning_state, context.environment))
             return true;
-        const auto& denotations = evaluate_do_arguments(context, workspace, rule, state, planning_state);
+        const auto& denotations = evaluate_do_arguments(context, workspace, rule, state);
         if (std::ranges::any_of(denotations, [](const auto& denotation) { return denotation.get().count() == 0; }))
             return true;
         auto& search = *context.task_context->search_context;
@@ -122,19 +141,23 @@ public:
                     return true;
                 if (stop())
                     return false;
-                const auto labeled = tyr::planning::LabeledNode<PS> { search.successor_generator->materialize_action_binding(binding), candidate };
+                const auto labeled = tyr::planning::LabeledNode { search.successor_generator->materialize_action_binding(binding), candidate };
                 return emit(detail::planning_step(context.storage, state, labeled, rule_variant, rule.get_target(), context.task_context));
             };
-            return search.successor_generator->for_each_borrowed_applicable_action_binding(tyr::planning::Node<PS>(planning_state, 0),
-                                                                                           *m_action,
-                                                                                           std::ref(visit));
+            return search.successor_generator->for_each_borrowed_applicable_action_binding(tyr::planning::Node(planning_state, 0), *m_action, std::ref(visit));
         }
         return true;
     }
-    template<typename Context, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool matches(Context& context, S state, const PS& planning_state, const tyr::planning::LabeledNode<PS>& candidate, DoRuleWorkspace& workspace)
+    template<ExecutionStorageConcept<Kind> Storage,
+             ProgramStateViewConcept<Kind> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState,
+             ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+    bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+                 State state,
+                 const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate) const
     {
-        return do_rule_matches(context, workspace, m_rule, state, planning_state, candidate.label, candidate.node.get_state());
+        const auto& planning_state = context.planning_state;
+        return do_rule_matches(context, context.do_workspace, m_rule, state, planning_state, candidate.label, candidate.node.get_state());
     }
 };
 

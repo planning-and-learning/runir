@@ -215,7 +215,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
                                                                                     storage,
                                                                                     empty_arguments,
                                                                                     register_values);
-    arguments.concept_arguments.push_back(sem::evaluate(nominal, persistent).get_index());
+    arguments.concept_arguments.push_back(sem::evaluate<tyr::GroundTag>(nominal, persistent).get_index());
     const auto argument_values = sem::insert(denotations, arguments).first;
     const auto expression = kr::ps::ext::dl::parse_numerical(
         R"((n_count (q_rename (source target)
@@ -228,7 +228,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
     for (size_t i = 0; i < 8; ++i)
     {
         storage.reset_dynamic();
-        ASSERT_EQ(sem::evaluate(expression, context).get(), 3);
+        ASSERT_EQ(sem::evaluate<tyr::GroundTag>(expression, context).get(), 3);
     }
 
     bool valid = true;
@@ -244,7 +244,7 @@ TEST(RunirQueries, WarmedExtFeatureEvaluationAllocatesAndFreesNothing)
         valid &= copied.registers().at(dl::RegisterIdentifier<dl::RoleTag>(7)).value().get_second().get_index() == object.get_index();
         valid &= copied.arguments().at(dl::ArgumentIdentifier<dl::ConceptTag>(0)).get().count() == 1;
         storage.reset_dynamic();
-        valid &= sem::evaluate(expression, copied).get() == 3;
+        valid &= sem::evaluate<tyr::GroundTag>(expression, copied).get() == 3;
     }
     const auto counts = measured.finish();
 

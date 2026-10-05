@@ -43,13 +43,13 @@ struct WrongKindContext : GroundExtContext
 {
     sem::StateEvaluationContext<Ext, tyr::LiftedTag> child_context() const;
 };
-static_assert(sem::StateEvaluationContextConcept<GroundExtContext>);
-static_assert(sem::StateEvaluationContextConcept<sem::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>>);
-static_assert(sem::StateEvaluationContextConcept<sem::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>>);
-static_assert(!sem::StateEvaluationContextConcept<InvalidResultContext>);
-static_assert(!sem::StateEvaluationContextConcept<MissingExtInputs>);
-static_assert(!sem::StateEvaluationContextConcept<WrongFamilyContext>);
-static_assert(!sem::StateEvaluationContextConcept<WrongKindContext>);
+static_assert(sem::StateEvaluationContextConcept<GroundExtContext, Ext, tyr::GroundTag>);
+static_assert(sem::StateEvaluationContextConcept<sem::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>, kr::BaseFamilyTag, tyr::GroundTag>);
+static_assert(sem::StateEvaluationContextConcept<sem::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>, kr::UnsFamilyTag, tyr::GroundTag>);
+static_assert(!sem::StateEvaluationContextConcept<InvalidResultContext, Ext, tyr::GroundTag>);
+static_assert(!sem::StateEvaluationContextConcept<MissingExtInputs, Ext, tyr::GroundTag>);
+static_assert(!sem::StateEvaluationContextConcept<WrongFamilyContext, Ext, tyr::GroundTag>);
+static_assert(!sem::StateEvaluationContextConcept<WrongKindContext, Ext, tyr::GroundTag>);
 
 constexpr auto acquires_builder = []<typename T, typename... Args>()
 { return requires(sem::Builder& builder, Args&&... args) { builder.template get_builder<T>(std::forward<Args>(args)...); }; };
@@ -353,21 +353,21 @@ TEST(RunirEvaluationStorage, DurableRootsDoNotReuseTransientRootEntries)
     EXPECT_EQ(&transient.get_workspace(), &builder.get_workspace());
     EXPECT_EQ(&durable.get_workspace(), &builder.get_workspace());
 
-    const auto temporary = sem::evaluate(expression, transient);
+    const auto temporary = sem::evaluate<tyr::GroundTag>(expression, transient);
     EXPECT_EQ(&temporary.get_context(), &storage.get_denotation_repository(false));
     EXPECT_EQ(persistent.size<sem::Denotation<dl::RoleTag>>(), 0);
-    const auto retained = sem::evaluate(expression, durable);
+    const auto retained = sem::evaluate<tyr::GroundTag>(expression, durable);
     EXPECT_EQ(&retained.get_context(), &persistent);
     EXPECT_NE(retained, temporary);
     EXPECT_EQ(retained.count(), temporary.count());
-    EXPECT_EQ(sem::evaluate(expression, durable), retained);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(expression, durable), retained);
     EXPECT_TRUE(root_caches.get<dl::RoleTag>(false).contains(expression));
 
     root_caches.reset_dynamic();
     storage.reset_dynamic();
     EXPECT_TRUE(root_caches.get<dl::RoleTag>(false).empty());
     EXPECT_EQ(retained.count(), 4);
-    EXPECT_EQ(sem::evaluate(expression, durable), retained);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(expression, durable), retained);
     EXPECT_EQ(persistent.size<sem::Denotation<dl::RoleTag>>(), 1);
     EXPECT_EQ(storage.get_denotation_repository(false).size<sem::Denotation<dl::RoleTag>>(), 0);
 }
@@ -396,9 +396,9 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     const auto fixed_query = query(R"((q_atomic_state "fixed" (x y z)))");
     const auto renamed_query = query(R"((q_rename (a b c) (q_atomic_state "fixed" (x y z))))");
     const auto dynamic_query = query(R"((q_atomic_state "triple" (x y z)))");
-    const auto fixed = sem::evaluate(fixed_query, context);
-    const auto alias = sem::evaluate(renamed_query, context);
-    EXPECT_EQ(sem::evaluate(dynamic_query, context).size(), 4);
+    const auto fixed = sem::evaluate<tyr::GroundTag>(fixed_query, context);
+    const auto alias = sem::evaluate<tyr::GroundTag>(renamed_query, context);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(dynamic_query, context).size(), 4);
     const auto keys = std::array<size_t, 1> { 0 };
     storage.get_caches().get_static_join_indexes().get_or_create(fixed, keys);
     EXPECT_EQ(alias.get_storage_address(), fixed.get_storage_address());
@@ -408,17 +408,17 @@ TEST(RunirEvaluationStorage, DynamicResetPreservesStaticRowsAndJoinIndexes)
     EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().empty());
     EXPECT_EQ(fixed.size(), 2);
     EXPECT_EQ(storage.get_caches().get_static_join_indexes().size(), 1);
-    EXPECT_EQ(sem::evaluate(fixed_query, context), fixed);
-    EXPECT_EQ(sem::evaluate(renamed_query, context), alias);
-    EXPECT_EQ(sem::evaluate(dynamic_query, context).size(), 4);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(fixed_query, context), fixed);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(renamed_query, context), alias);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(dynamic_query, context).size(), 4);
 
     storage.reset_all();
     EXPECT_TRUE(storage.get_denotation_repository(false).get_relation_repository().empty());
     EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().empty());
     EXPECT_EQ(storage.get_caches().get_static_join_indexes().size(), 0);
-    const auto rebuilt = sem::evaluate(fixed_query, context);
+    const auto rebuilt = sem::evaluate<tyr::GroundTag>(fixed_query, context);
     EXPECT_EQ(rebuilt.size(), 2);
-    EXPECT_EQ(sem::evaluate(renamed_query, context).get_storage_address(), rebuilt.get_storage_address());
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(renamed_query, context).get_storage_address(), rebuilt.get_storage_address());
 }
 
 TEST(RunirEvaluationStorage, PreparedContextsRejectForeignTaskRepositories)
@@ -502,8 +502,8 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     const auto columns = std::array { ColumnIndex(0), ColumnIndex(1) };
     const auto reversed_columns = std::array { ColumnIndex(1), ColumnIndex(0) };
     auto& results = persistent.get_relation_repository();
-    const auto left_result = sem::evaluate(left, context);
-    const auto right_result = sem::evaluate(right, context);
+    const auto left_result = sem::evaluate<tyr::GroundTag>(left, context);
+    const auto right_result = sem::evaluate<tyr::GroundTag>(right, context);
     ASSERT_EQ(left_result.size(), 9);
     EXPECT_TRUE(std::ranges::equal(left_result.columns(), columns));
     EXPECT_EQ(&left_result.get_context(), &persistent);
@@ -514,8 +514,8 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     const auto left_alias = query("(q_rename (left_target left_source) (q_role (left_source left_target) (r_universal)))", *first_repository);
     const auto right_alias = query("(q_rename (right_target right_source) (q_role (right_source right_target) (r_universal)))", *second_repository);
     ASSERT_EQ(left_alias.get_columns()[0].get_index(), right_alias.get_columns()[0].get_index());
-    const auto renamed_left = sem::evaluate(left_alias, context);
-    const auto renamed_right = sem::evaluate(right_alias, context);
+    const auto renamed_left = sem::evaluate<tyr::GroundTag>(left_alias, context);
+    const auto renamed_right = sem::evaluate<tyr::GroundTag>(right_alias, context);
     EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns));
     EXPECT_EQ(renamed_left, renamed_right);
     EXPECT_NE(renamed_left, left_result);
@@ -542,9 +542,9 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_TRUE(std::ranges::equal(renamed_left.columns(), reversed_columns));
     auto fresh_repository = factory.create(search->task->get_repository());
     const auto fresh = query("(q_role (fresh_source fresh_target) (r_universal))", *fresh_repository);
-    EXPECT_EQ(sem::evaluate(fresh, context), left_result);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(fresh, context), left_result);
     const auto fresh_alias = query("(q_rename (fresh_target fresh_source) (q_role (fresh_source fresh_target) (r_universal)))", *fresh_repository);
-    EXPECT_EQ(sem::evaluate(fresh_alias, context), renamed_left);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(fresh_alias, context), renamed_left);
     EXPECT_EQ(results.size(), 2);
 }
 

@@ -10,24 +10,24 @@
 namespace runir::kr::ps
 {
 
-template<typename Family, typename LanguageTag, typename Context, typename StorageContext>
+template<typename Kind, typename Family, typename LanguageTag, typename Context, typename StorageContext>
 concept IsConditionVariantView = IsTransitionEvaluationContext<Family, LanguageTag, Context>
                                  && requires(ygg::View<ygg::Index<ConditionVariant<Family>>, StorageContext> condition, Context& context) {
-                                        { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
+                                        { runir::kr::ps::is_compatible_with<Kind>(condition, context) } -> std::same_as<bool>;
                                     };
 
-template<typename Family, typename LanguageTag, typename Context, typename StorageContext>
+template<typename Kind, typename Family, typename LanguageTag, typename Context, typename StorageContext>
 concept IsConcreteConditionVariantView =
     IsTransitionEvaluationContext<Family, LanguageTag, Context>
     && requires(ygg::View<ygg::Index<ConcreteConditionVariant<Family, LanguageTag>>, StorageContext> condition, Context& context) {
-           { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
+           { runir::kr::ps::is_compatible_with<Kind>(condition, context) } -> std::same_as<bool>;
        };
 
-template<typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename Context, typename StorageContext>
+template<typename Kind, typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename Context, typename StorageContext>
 concept IsConcreteConditionView =
     IsTransitionEvaluationContext<Family, LanguageTag, Context> && dl::ConditionObservationTag<ObservationTag, FeatureTag>
     && requires(ygg::View<ygg::Index<ConcreteCondition<Family, LanguageTag, FeatureTag, ObservationTag>>, StorageContext> condition, Context& context) {
-           { runir::kr::ps::is_compatible_with(condition, context) } -> std::same_as<bool>;
+           { runir::kr::ps::is_compatible_with<Kind>(condition, context) } -> std::same_as<bool>;
        };
 
 }  // namespace runir::kr::ps

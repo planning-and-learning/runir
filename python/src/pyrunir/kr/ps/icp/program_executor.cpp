@@ -44,7 +44,7 @@ void bind_feature_evaluation(nb::module_& m)
 
     m.def(
         "evaluate",
-        [](const FeatureView& feature, Context& context) { return runir::kr::ps::evaluate(feature, context); },
+        [](const FeatureView& feature, Context& context) { return runir::kr::ps::evaluate<Kind>(feature, context); },
         "feature"_a,
         "context"_a,
         nb::keep_alive<0, 2>());

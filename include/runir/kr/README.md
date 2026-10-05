@@ -39,7 +39,7 @@ only implemented `LanguageTag`; its expressions include DL constructors and
 relational queries. There is no second interchangeable feature language today.
 
 [FeatureExpression](ps/dl/feature_data.hpp) maps a concrete feature to an expression
-in `PsFamilyTraits<Family>::DlFamily`:
+in `DlFamilyFor<Family>`:
 
 | Policy `FeatureTag` | Expression type in `kr::dl` |
 | --- | --- |
@@ -89,13 +89,13 @@ currently available for Base with both task kinds.
 ## Evaluation and storage
 
 State evaluation uses the **DL family**, while transition evaluation uses the
-**policy family** and derives its DL family through the traits:
+**policy family** and derives its DL family through `ps::DlFamilyFor<Family>`:
 
 ```cpp
 // Type composition for a lifted ICP numerical feature.
 namespace kr = runir::kr;
 using Family = kr::IcpFamilyTag;
-using DlFamily = kr::ps::PsFamilyTraits<Family>::DlFamily;  // ExtFamilyTag
+using DlFamily = kr::ps::DlFamilyFor<Family>;  // ExtFamilyTag
 
 using Feature = kr::ps::ConcreteFeature<Family, kr::DlTag,
                                       kr::ps::dl::NumericalFeature>;
@@ -131,7 +131,7 @@ or feature-language dimension.
 | `ObservationTag` | Selects Boolean or numerical conditions/effects, such as `Positive`, `EqualZero`, or `Decreases`. Valid pairs depend on the feature category and condition/effect inventory. |
 | Rule tag | Selects a family's concrete rule body. Shared feature types do not imply shared rule semantics. |
 
-Shared code should derive the expression family from `PsFamilyTraits`. Use the
+Shared code should derive the expression family through `ps::DlFamilyFor<Family>`. Use the
 weakest constraint required by the implementation: a default repository's
 inventory does not define every valid generic instantiation. Family-specific
 data and execution behavior remain specialized where their semantics differ.

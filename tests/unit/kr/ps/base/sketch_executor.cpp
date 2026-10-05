@@ -20,6 +20,25 @@
 namespace runir::tests
 {
 
+static_assert(kr::ps::MatchingRuleEvaluatorConcept<kr::ps::base::detail::RuleEvaluator,
+                                                   kr::BaseFamilyTag,
+                                                   tyr::GroundTag,
+                                                   kr::ps::RuleEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>,
+                                                   tyr::planning::StateView<tyr::GroundTag>,
+                                                   tyr::planning::StateView<tyr::GroundTag>>);
+static_assert(kr::ps::MatchingRuleEvaluatorConcept<kr::ps::base::detail::RuleEvaluator,
+                                                   kr::BaseFamilyTag,
+                                                   tyr::LiftedTag,
+                                                   kr::ps::RuleEvaluationContext<kr::BaseFamilyTag, tyr::LiftedTag>,
+                                                   tyr::planning::StateView<tyr::LiftedTag>,
+                                                   tyr::planning::StateView<tyr::LiftedTag>>);
+static_assert(!kr::ps::MatchingRuleEvaluatorConcept<kr::ps::base::detail::RuleEvaluator,
+                                                    kr::BaseFamilyTag,
+                                                    tyr::GroundTag,
+                                                    kr::ps::RuleEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>,
+                                                    tyr::planning::StateView<tyr::GroundTag>,
+                                                    tyr::planning::StateView<tyr::LiftedTag>>);
+
 TEST(RunirTests, SketchProofStatusToString)
 {
     using kr::ps::base::SketchProofStatus;

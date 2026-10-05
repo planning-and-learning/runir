@@ -1,9 +1,11 @@
 # KR evaluation storage and rule evaluators
 
-All DL expressions use `evaluate(expression, context)` in C++, or
+All DL expressions use `evaluate<Kind>(expression, context)` in C++, or
 `expression.evaluate(context)` in Python. Policy features use
-`evaluate(feature, context)`. The context selects result repositories and
-memoization; an additional repository argument is no longer part of evaluation.
+`evaluate<Kind>(feature, context)`. The caller supplies the task kind explicitly
+(`tyr::GroundTag` or `tyr::LiftedTag`); the expression determines its family.
+The context selects result repositories and memoization; an additional
+repository argument is no longer part of evaluation.
 Concept, role, Boolean, and numerical results are interned denotation views.
 Queries return `QueryDenotationView`, a Yggdrasil relation view over typed Tyr
 object indices with `DenotationRepository` as its context. Its rows are borrowed
@@ -179,10 +181,46 @@ evaluators live under their respective `detail/rule_evaluation/` directories,
 with aggregate dispatch in `detail/rule_evaluators.hpp`. Base's single rule
 evaluator lives in `detail/rule_evaluation/rule.hpp`.
 
-Ext's `detail/rule_evaluation/context.hpp` contains only borrowed task, storage,
-and environment references. Its storage and the successor expander's storage
+`rule_evaluator_concepts.hpp` defines two evaluator contracts: emitting results
+through `emit(context, source, emit, stop)`, and checking supplied candidates
+through `matches(context, source, candidate)`. Both operate on const evaluators.
+`EmitConcept<Emit, Result>` requires a mutable callback returning whether to
+continue; `StopConcept` requires a mutable callback returning whether to stop.
+The context/source pairing must provide the family's DL state context, and a
+matching context must also provide the candidate's DL transition context.
+The context and evaluator concepts take the PS family and task kind explicitly;
+the context contract verifies that both match the supplied context.
+Feature evaluation, compatibility checks, and rule contexts use the DL contract
+`StateEvaluationContextConcept<Context, DlFamilyFor<Family>, Kind>` directly.
+`DlFamilyFor` centralizes the mapping to DL families: ICP uses Ext DL resources.
+The DL resource, navigation, and context concepts take family and task kind
+explicitly and validate the state and cache types without inferring them from
+context aliases. C++ compatibility and classification calls likewise supply
+`Kind`: `is_compatible_with<Kind>`, `all_compatible<Kind>`, and `classify<Kind>`.
+Adding another evaluator category requires explicit developer confirmation.
+
+These contracts cover evaluation, while aggregates also use explicit coordination
+hooks: Ext resumes retained choices through `choice_step`, and ICP groups and
+prefilters crules before applying admitted histories. These hooks preserve shared
+candidate generation and history processing. ICP Load checks its own source,
+conditions, and cancellation in `emit`; direct Sketch application also uses
+`emit` instead of a separate control-step interface.
+
+`RuleEvaluationContext` is specialized by family in each
+`detail/rule_evaluation/context.hpp`. These contexts borrow execution services;
+aggregates own the environments and reusable workspaces. Ext and ICP retain
+one prepared source planning view per evaluation, avoiding repeated unpacking
+for each rule or candidate. Matching takes Tyr's `LabeledNode<Kind, State, Binding>`,
+which accepts borrowed action bindings without requiring their publication.
+The task kind constrains the state directly; the default state and binding give
+`Node<Kind>` and `LabeledNode<Kind>` for ordinary indexed results.
+
+Ext's context storage and the successor expander's storage
 are constrained by `ExecutionStorageConcept<Storage, Kind>`, which checks the
-shared interface. `StoredState` names the returned state handle: an interned program
+shared interface. Concrete Ext evaluators take the Ext context specialization
+directly. `ExecutionStateViewConcept<State, Storage>` ties an emitting rule's
+source to its storage; matchers can inspect other program-state views.
+`StoredState` names the returned state handle: an interned program
 state view or a pooled builder handle. `StateView` names the borrowed view used
 for evaluation. Rules create a complete successor with
 `storage.store(planning_state, module, memory, registers, arguments, call_stack)`.

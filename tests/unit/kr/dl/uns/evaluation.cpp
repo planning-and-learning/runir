@@ -106,28 +106,28 @@ TEST(RunirTests, UnsFamilyComparisonsAndConstantsEvaluateAndFormat)
     auto context = sem::StateEvaluationContext<Uns, tyr::GroundTag>(state, builder, storage);
 
     // |c_top| is the number of objects; build n_const with exactly that value.
-    const auto num_objects = sem::evaluate(count_ctor, context).get();
+    const auto num_objects = sem::evaluate<tyr::GroundTag>(count_ctor, context).get();
     EXPECT_GT(num_objects, 0u);
 
     auto n_const_eq = numerical_constant(repo, num_objects);
     auto n_const_zero = numerical_constant(repo, 0);
 
     // Numerical comparisons against |c_top|.
-    EXPECT_TRUE(sem::evaluate(numerical_comparison<dl::EqTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
-    EXPECT_FALSE(sem::evaluate(numerical_comparison<dl::NeqTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
-    EXPECT_FALSE(sem::evaluate(numerical_comparison<dl::LtTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
-    EXPECT_TRUE(sem::evaluate(numerical_comparison<dl::LeTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
-    EXPECT_TRUE(sem::evaluate(numerical_comparison<dl::GtTag<dl::NumericalTag>>(repo, count_ctor, n_const_zero), context).get());
-    EXPECT_TRUE(sem::evaluate(numerical_comparison<dl::GeTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
+    EXPECT_TRUE(sem::evaluate<tyr::GroundTag>(numerical_comparison<dl::EqTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
+    EXPECT_FALSE(sem::evaluate<tyr::GroundTag>(numerical_comparison<dl::NeqTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
+    EXPECT_FALSE(sem::evaluate<tyr::GroundTag>(numerical_comparison<dl::LtTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
+    EXPECT_TRUE(sem::evaluate<tyr::GroundTag>(numerical_comparison<dl::LeTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
+    EXPECT_TRUE(sem::evaluate<tyr::GroundTag>(numerical_comparison<dl::GtTag<dl::NumericalTag>>(repo, count_ctor, n_const_zero), context).get());
+    EXPECT_TRUE(sem::evaluate<tyr::GroundTag>(numerical_comparison<dl::GeTag<dl::NumericalTag>>(repo, count_ctor, n_const_eq), context).get());
 
     // Boolean constants and comparisons.
     auto b_true = boolean_constant(repo, true);
     auto b_false = boolean_constant(repo, false);
-    EXPECT_TRUE(sem::evaluate(b_true, context).get());
-    EXPECT_FALSE(sem::evaluate(b_false, context).get());
-    EXPECT_TRUE(sem::evaluate(boolean_comparison<dl::EqTag<dl::BooleanTag>>(repo, b_true, b_true), context).get());
-    EXPECT_FALSE(sem::evaluate(boolean_comparison<dl::EqTag<dl::BooleanTag>>(repo, b_true, b_false), context).get());
-    EXPECT_TRUE(sem::evaluate(boolean_comparison<dl::NeqTag<dl::BooleanTag>>(repo, b_true, b_false), context).get());
+    EXPECT_TRUE(sem::evaluate<tyr::GroundTag>(b_true, context).get());
+    EXPECT_FALSE(sem::evaluate<tyr::GroundTag>(b_false, context).get());
+    EXPECT_TRUE(sem::evaluate<tyr::GroundTag>(boolean_comparison<dl::EqTag<dl::BooleanTag>>(repo, b_true, b_true), context).get());
+    EXPECT_FALSE(sem::evaluate<tyr::GroundTag>(boolean_comparison<dl::EqTag<dl::BooleanTag>>(repo, b_true, b_false), context).get());
+    EXPECT_TRUE(sem::evaluate<tyr::GroundTag>(boolean_comparison<dl::NeqTag<dl::BooleanTag>>(repo, b_true, b_false), context).get());
 
     // Formatting round-trips the keywords and nested children.
     const auto lt = numerical_comparison<dl::LtTag<dl::NumericalTag>>(repo, count_ctor, n_const_zero);
@@ -165,24 +165,24 @@ TEST(RunirTests, UnsFamilyArithmeticLogicalOperatorsEvaluateAndFormat)
     auto zero = numerical_constant(repo, 0);
 
     // Arithmetic.
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::AddTag>(repo, two, five), context).get(), 7u);
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::SubTag>(repo, two, five), context).get(), 0u);  // saturates at 0
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::SubTag>(repo, five, two), context).get(), 3u);
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::MulTag>(repo, two, five), context).get(), 10u);
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::DivTag>(repo, five, two), context).get(), 2u);
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::DivTag>(repo, five, zero), context).get(), inf);  // div by zero -> inf
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::MinTag>(repo, two, five), context).get(), 2u);
-    EXPECT_EQ(sem::evaluate(numerical_binary<dl::MaxTag>(repo, two, five), context).get(), 5u);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(numerical_binary<dl::AddTag>(repo, two, five), context).get(), 7u);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(numerical_binary<dl::SubTag>(repo, two, five), context).get(), 0u);  // saturates at 0
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(numerical_binary<dl::SubTag>(repo, five, two), context).get(), 3u);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(numerical_binary<dl::MulTag>(repo, two, five), context).get(), 10u);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(numerical_binary<dl::DivTag>(repo, five, two), context).get(), 2u);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(numerical_binary<dl::DivTag>(repo, five, zero), context).get(), inf);  // div by zero -> inf
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(numerical_binary<dl::MinTag>(repo, two, five), context).get(), 2u);
+    EXPECT_EQ(sem::evaluate<tyr::GroundTag>(numerical_binary<dl::MaxTag>(repo, two, five), context).get(), 5u);
 
     // Logical.
     auto b_true = boolean_constant(repo, true);
     auto b_false = boolean_constant(repo, false);
-    EXPECT_FALSE(sem::evaluate(logical_binary<dl::AndTag>(repo, b_true, b_false), context).get());
-    EXPECT_TRUE(sem::evaluate(logical_binary<dl::AndTag>(repo, b_true, b_true), context).get());
-    EXPECT_TRUE(sem::evaluate(logical_binary<dl::OrTag>(repo, b_true, b_false), context).get());
-    EXPECT_FALSE(sem::evaluate(logical_binary<dl::OrTag>(repo, b_false, b_false), context).get());
-    EXPECT_TRUE(sem::evaluate(logical_not(repo, b_false), context).get());
-    EXPECT_FALSE(sem::evaluate(logical_not(repo, b_true), context).get());
+    EXPECT_FALSE(sem::evaluate<tyr::GroundTag>(logical_binary<dl::AndTag>(repo, b_true, b_false), context).get());
+    EXPECT_TRUE(sem::evaluate<tyr::GroundTag>(logical_binary<dl::AndTag>(repo, b_true, b_true), context).get());
+    EXPECT_TRUE(sem::evaluate<tyr::GroundTag>(logical_binary<dl::OrTag>(repo, b_true, b_false), context).get());
+    EXPECT_FALSE(sem::evaluate<tyr::GroundTag>(logical_binary<dl::OrTag>(repo, b_false, b_false), context).get());
+    EXPECT_TRUE(sem::evaluate<tyr::GroundTag>(logical_not(repo, b_false), context).get());
+    EXPECT_FALSE(sem::evaluate<tyr::GroundTag>(logical_not(repo, b_true), context).get());
 
     // Formatting.
     const auto add = numerical_binary<dl::AddTag>(repo, two, five);

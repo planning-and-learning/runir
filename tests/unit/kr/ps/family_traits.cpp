@@ -91,7 +91,7 @@ struct BaseFeatureStorage
 };
 
 template<typename Type, typename Repository, typename Context>
-concept CanEvaluate = StoredType<Type> && requires(ygg::View<ygg::Index<Type>, Repository>& view, Context& context) { kr::ps::evaluate(view, context); };
+concept CanEvaluate = StoredType<Type> && requires(ygg::View<ygg::Index<Type>, Repository>& view, Context& context) { kr::ps::evaluate<tyr::GroundTag>(view, context); };
 
 using BaseStateContext = kr::dl::semantics::StateEvaluationContext<kr::BaseFamilyTag, tyr::GroundTag>;
 using UnsStateContext = kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>;
@@ -126,11 +126,11 @@ consteval bool observation_contracts()
     using Context = kr::ps::dl::TransitionEvaluationContext<Family, tyr::GroundTag>;
     using Boolean = kr::ps::dl::BooleanFeature;
     using Numerical = kr::ps::dl::NumericalFeature;
-    static_assert(kr::ps::IsConcreteConditionView<Family, kr::DlTag, Boolean, kr::ps::dl::Positive, Context, Repository>);
-    static_assert(kr::ps::IsConcreteEffectView<Family, kr::DlTag, Numerical, kr::ps::dl::Decreases, Context, Repository>);
-    static_assert(!kr::ps::IsConcreteConditionView<Family, kr::DlTag, Numerical, kr::ps::dl::Positive, Context, Repository>);
-    static_assert(!kr::ps::IsConcreteEffectView<Family, kr::DlTag, Boolean, kr::ps::dl::Decreases, Context, Repository>);
-    static_assert(!kr::ps::IsConcreteConditionView<Family, void, Boolean, kr::ps::dl::Positive, Context, Repository>);
+    static_assert(kr::ps::IsConcreteConditionView<tyr::GroundTag, Family, kr::DlTag, Boolean, kr::ps::dl::Positive, Context, Repository>);
+    static_assert(kr::ps::IsConcreteEffectView<tyr::GroundTag, Family, kr::DlTag, Numerical, kr::ps::dl::Decreases, Context, Repository>);
+    static_assert(!kr::ps::IsConcreteConditionView<tyr::GroundTag, Family, kr::DlTag, Numerical, kr::ps::dl::Positive, Context, Repository>);
+    static_assert(!kr::ps::IsConcreteEffectView<tyr::GroundTag, Family, kr::DlTag, Boolean, kr::ps::dl::Decreases, Context, Repository>);
+    static_assert(!kr::ps::IsConcreteConditionView<tyr::GroundTag, Family, void, Boolean, kr::ps::dl::Positive, Context, Repository>);
 
     // The variant alternatives and repository inventory share one ordered list.
     using Conditions = ygg::ApplyTypeListT<::cista::offset::variant, ygg::MapTypeListT<ygg::Index, kr::ps::detail::PsConcreteConditionTypes<Family>>>;
@@ -148,7 +148,7 @@ static_assert(observation_contracts<kr::UnsFamilyTag, UnsCustomRepository>());
 // Compile the implementation body as well as checking its callable signature.
 [[maybe_unused]] bool check_custom_uns_condition(ygg::View<ygg::Index<UnsPositive>, UnsCustomRepository> condition, UnsStateContext& context)
 {
-    return kr::ps::is_compatible_with(condition, context);
+    return kr::ps::is_compatible_with<tyr::GroundTag>(condition, context);
 }
 
 }  // namespace

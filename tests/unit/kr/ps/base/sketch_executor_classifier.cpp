@@ -76,7 +76,7 @@ void check_classifier_failures(datasets::TaskSearchContextPtr<Kind> search_conte
             continue;
         auto context = kr::dl::semantics::StateEvaluationContext<kr::UnsFamilyTag, Kind>(goal_label.state.unpack(), task_context->dl_builder, storage);
         storage.reset_dynamic();
-        EXPECT_TRUE(kr::uns::classify(goal_classifier, context));
+        EXPECT_TRUE(kr::uns::classify<Kind>(goal_classifier, context));
         EXPECT_FALSE(goal_label.is_unsolvable);
         found_goal = true;
     }

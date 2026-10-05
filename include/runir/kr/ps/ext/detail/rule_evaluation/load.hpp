@@ -4,6 +4,11 @@
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/binding.hpp"
+#include "runir/kr/ps/ext/detail/rule_evaluation/context.hpp"
+#include "runir/kr/ps/rule_evaluator_concepts.hpp"
+
+#include <concepts>
+#include <utility>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -17,19 +22,23 @@ class LoadRuleEvaluator
 public:
     using RuleTag = LoadTag<Category>;
     LoadRuleEvaluator(RuleView<LoadTag<Category>> rule, RuleVariantView variant) : m_rule(rule), m_variant(variant) {}
-    auto rule() const noexcept { return m_rule; }
-    auto variant() const noexcept { return m_variant; }
+    auto get_rule() const noexcept { return m_rule; }
+    auto get_variant() const noexcept { return m_variant; }
 
-    template<typename Context, typename Emit, typename Stop, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-    bool emit(Context& context, S state, const PS& planning_state, Emit&& emit, Stop&& stop)
+    template<ExecutionStorageConcept<Kind> Storage,
+             EmitConcept<ProgramStep<Kind, Storage>> Emit,
+             StopConcept Stop,
+             ExecutionStateViewConcept<Storage> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop) const
     {
+        const auto& planning_state = context.planning_state;
         const auto rule = m_rule;
         const auto rule_variant = m_variant;
         if (!ext::rule_is_applicable(rule, state, planning_state, context.environment))
             return true;
-        auto state_context =
-            context.environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
-        const auto denotation = evaluate(rule.get_feature(), state_context);
+        auto state_context = context.make_dl_context(state);
+        const auto denotation = evaluate<Kind>(rule.get_feature(), state_context);
         auto registers = checkout<runir::kr::dl::semantics::RegisterValues>(context.task_context->dl_builder);
         for (const auto value : denotation)
         {
@@ -45,7 +54,7 @@ public:
                                                 target_registers,
                                                 module_.get_arguments(),
                                                 state.get_call_stack());
-            if (!emit(detail::applied<Kind, typename Context::StorageType>(std::move(target), rule_variant, context.task_context)))
+            if (!emit(detail::applied<Kind, Storage>(std::move(target), rule_variant, context.task_context)))
                 return false;
         }
         return true;

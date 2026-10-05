@@ -11,10 +11,10 @@
 namespace runir::kr::ps::base
 {
 
-template<typename LanguageTag, typename Context, typename StorageContext>
+template<typename Kind, typename LanguageTag, typename Context, typename StorageContext>
 concept IsRuleView = runir::kr::ps::IsTransitionEvaluationContext<runir::kr::BaseFamilyTag, LanguageTag, Context>
                      && requires(ygg::View<ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>, StorageContext> rule, Context& context) {
-                            { runir::kr::ps::base::is_compatible_with(rule, context) } -> std::same_as<bool>;
+                            { runir::kr::ps::base::is_compatible_with<Kind>(rule, context) } -> std::same_as<bool>;
                         };
 
 }  // namespace runir::kr::ps::base

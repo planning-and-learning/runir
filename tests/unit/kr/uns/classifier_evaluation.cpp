@@ -27,7 +27,7 @@ TEST(RunirTests, UnsClassifierClassifies)
     auto context = sem::StateEvaluationContext<kr::UnsFamilyTag, tyr::GroundTag>(state, builder, storage);
 
     // some_ball is true and no_object is false, so the first clause (some_ball AND NOT no_object) holds.
-    EXPECT_TRUE(kr::uns::classify(classifier, context));
+    EXPECT_TRUE(kr::uns::classify<tyr::GroundTag>(classifier, context));
 }
 
 }  // namespace runir::tests

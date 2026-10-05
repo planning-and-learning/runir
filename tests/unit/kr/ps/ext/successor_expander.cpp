@@ -51,7 +51,8 @@ struct WrongRetainStorage : ext::InternedExecutionStorage<tyr::GroundTag>
 
 template<typename Storage, tyr::TaskKind Kind, bool Expected>
 constexpr bool execution_storage_constraints_match =
-    (ext::ExecutionStorageConcept<Storage, Kind> == Expected) && ((requires { typename ext::detail::RuleEvaluationContext<Kind, Storage>; }) == Expected)
+    (ext::ExecutionStorageConcept<Storage, Kind> == Expected)
+    && ((requires { sizeof(kr::ps::RuleEvaluationContext<kr::ExtFamilyTag, Kind, Storage, tyr::planning::StateView<Kind>>); }) == Expected)
     && ((requires { typename ext::SuccessorExpander<Kind, Storage>; }) == Expected);
 
 static_assert(execution_storage_constraints_match<ext::InternedExecutionStorage<tyr::GroundTag>, tyr::GroundTag, true>);
@@ -66,6 +67,119 @@ static_assert(execution_storage_constraints_match<int, tyr::GroundTag, false>);
 static_assert(execution_storage_constraints_match<UnrelatedExecutionStorage, tyr::GroundTag, false>);
 static_assert(execution_storage_constraints_match<MissingStoreStorage, tyr::GroundTag, false>);
 static_assert(execution_storage_constraints_match<WrongRetainStorage, tyr::GroundTag, false>);
+
+static_assert(!ext::ExecutionStateViewConcept<ext::ProgramStateView<tyr::GroundTag>, int>);
+static_assert(!ext::ExecutionStateViewConcept<ext::ProgramStateView<tyr::GroundTag>, ext::TransientExecutionStorage<tyr::GroundTag>>);
+static_assert(!ext::ExecutionStateViewConcept<ext::BuilderProgramStateView<tyr::GroundTag>, ext::InternedExecutionStorage<tyr::GroundTag>>);
+
+template<tyr::TaskKind Kind, typename Storage>
+constexpr bool check_rule_evaluator_contracts()
+{
+    using State = typename Storage::StateView;
+    using PlanningState = std::remove_cvref_t<decltype(std::declval<State>().get_state())>;
+    using Context = kr::ps::RuleEvaluationContext<kr::ExtFamilyTag, Kind, Storage, PlanningState>;
+    using Candidate = tyr::planning::LabeledNode<Kind, PlanningState, tyr::planning::BorrowedActionBindingView<Kind>>;
+    using IndexedCandidate = tyr::planning::LabeledNode<Kind, PlanningState>;
+    using Step = ext::detail::ProgramStep<Kind, Storage>;
+    using Emit = bool (*)(Step);
+    using Stop = bool (*)();
+    static_assert(ext::ExecutionStateViewConcept<State, Storage>);
+    static_assert(kr::ps::RuleEvaluationContextConcept<Context, kr::ExtFamilyTag, Kind, State>);
+    // ICP uses the same DL family, but a rule context still belongs to its declared PS family.
+    static_assert(!kr::ps::RuleEvaluationContextConcept<Context, kr::IcpFamilyTag, Kind, State>);
+    static_assert(!kr::ps::RuleEvaluationContextConcept<Context, int, Kind, State>);
+    static_assert(!kr::ps::RuleEvaluationContextConcept<int, kr::ExtFamilyTag, Kind, State>);
+    static_assert(!kr::ps::RuleEvaluationContextConcept<Context, kr::ExtFamilyTag, int, State>);
+    static_assert(!kr::ps::RuleEvaluationContextConcept<Context, kr::ExtFamilyTag, Kind, int>);
+    static_assert(!ext::ExecutionStateViewConcept<int, Storage>);
+    static_assert(kr::ps::EmitConcept<Emit, Step>);
+    static_assert(!kr::ps::EmitConcept<void (*)(Step), Step>);
+    static_assert(kr::ps::StopConcept<Stop>);
+    static_assert(!kr::ps::StopConcept<void (*)()>);
+    const auto emits = []<typename Evaluator, typename Result>()
+    { return kr::ps::EmittingRuleEvaluatorConcept<Evaluator, kr::ExtFamilyTag, Kind, Context, State, Result, bool (*)(Result), Stop>; };
+    static_assert(emits.template operator()<ext::detail::LoadRuleEvaluator<Kind, kr::dl::ConceptTag>, Step>());
+    static_assert(emits.template operator()<ext::detail::LoadRuleEvaluator<Kind, kr::dl::RoleTag>, Step>());
+    static_assert(emits.template operator()<ext::detail::CallRuleEvaluator<Kind>, Step>());
+    static_assert(emits.template operator()<ext::detail::DoRuleEvaluator<Kind>, Step>());
+    static_assert(emits.template operator()<ext::detail::ActionRuleEvaluator<Kind>, Step>());
+    static_assert(emits.template operator()<ext::detail::SketchRuleEvaluator<Kind>, Step>());
+    static_assert(emits.template operator()<ext::detail::ChooseRuleEvaluator<Kind, kr::dl::ConceptTag>, ext::detail::Choice<kr::dl::ConceptTag>>());
+    static_assert(emits.template operator()<ext::detail::ChooseRuleEvaluator<Kind, kr::dl::RoleTag>, ext::detail::Choice<kr::dl::RoleTag>>());
+    static_assert(!emits.template operator()<ext::detail::ChooseRuleEvaluator<Kind, kr::dl::ConceptTag>, Step>());
+    const auto accepts_any_result = [](auto&&) { return true; };
+    static_assert(!kr::ps::EmittingRuleEvaluatorConcept<ext::detail::ChooseRuleEvaluator<Kind, kr::dl::ConceptTag>,
+                                                        kr::ExtFamilyTag,
+                                                        Kind,
+                                                        Context,
+                                                        State,
+                                                        Step,
+                                                        decltype(accepts_any_result),
+                                                        Stop>);
+    static_assert(
+        !kr::ps::EmittingRuleEvaluatorConcept<ext::detail::ActionRuleEvaluator<Kind>, kr::ExtFamilyTag, Kind, Context, State, Step, void (*)(Step), Stop>);
+    static_assert(
+        !kr::ps::EmittingRuleEvaluatorConcept<ext::detail::ActionRuleEvaluator<Kind>, kr::ExtFamilyTag, Kind, Context, State, Step, Emit, void (*)()>);
+    const auto matches = []<typename Evaluator>()
+    {
+        return kr::ps::MatchingRuleEvaluatorConcept<Evaluator, kr::ExtFamilyTag, Kind, Context, State, Candidate>
+               && kr::ps::MatchingRuleEvaluatorConcept<Evaluator, kr::ExtFamilyTag, Kind, Context, State, IndexedCandidate>;
+    };
+    static_assert(matches.template operator()<ext::detail::ActionRuleEvaluator<Kind>>());
+    static_assert(matches.template operator()<ext::detail::DoRuleEvaluator<Kind>>());
+    static_assert(matches.template operator()<ext::detail::SketchRuleEvaluator<Kind>>());
+    static_assert(!matches.template operator()<ext::detail::LoadRuleEvaluator<Kind, kr::dl::ConceptTag>>());
+    static_assert(!kr::ps::MatchingRuleEvaluatorConcept<ext::detail::ActionRuleEvaluator<Kind>, kr::ExtFamilyTag, Kind, int, State, Candidate>);
+    static_assert(!kr::ps::EmittingRuleEvaluatorConcept<ext::detail::ActionRuleEvaluator<Kind>, kr::ExtFamilyTag, Kind, int, State, Step, Emit, Stop>);
+    return true;
+}
+
+static_assert(check_rule_evaluator_contracts<tyr::GroundTag, ext::InternedExecutionStorage<tyr::GroundTag>>());
+static_assert(check_rule_evaluator_contracts<tyr::LiftedTag, ext::InternedExecutionStorage<tyr::LiftedTag>>());
+static_assert(check_rule_evaluator_contracts<tyr::GroundTag, ext::TransientExecutionStorage<tyr::GroundTag>>());
+static_assert(check_rule_evaluator_contracts<tyr::LiftedTag, ext::TransientExecutionStorage<tyr::LiftedTag>>());
+
+struct MutableMatchingRule : ext::detail::SketchRuleEvaluator<tyr::GroundTag>
+{
+    bool matches(auto&, auto, const auto&);
+};
+
+struct WrongEmittingResult : ext::detail::ActionRuleEvaluator<tyr::GroundTag>
+{
+    int emit(auto&, auto, auto&, auto&) const;
+};
+
+static_assert(
+    !kr::ps::MatchingRuleEvaluatorConcept<
+        MutableMatchingRule,
+        kr::ExtFamilyTag,
+        tyr::GroundTag,
+        kr::ps::
+            RuleEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag, ext::InternedExecutionStorage<tyr::GroundTag>, tyr::planning::StateView<tyr::GroundTag>>,
+        ext::ProgramStateView<tyr::GroundTag>,
+        tyr::planning::LabeledNode<tyr::GroundTag>>);
+static_assert(
+    !kr::ps::EmittingRuleEvaluatorConcept<
+        WrongEmittingResult,
+        kr::ExtFamilyTag,
+        tyr::GroundTag,
+        kr::ps::
+            RuleEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag, ext::InternedExecutionStorage<tyr::GroundTag>, tyr::planning::StateView<tyr::GroundTag>>,
+        ext::ProgramStateView<tyr::GroundTag>,
+        ext::detail::ProgramStep<tyr::GroundTag>,
+        bool (*)(ext::detail::ProgramStep<tyr::GroundTag>),
+        bool (*)()>);
+
+// Indexed sources can be inspected by transient execution, but emission needs its builder views.
+static_assert(
+    !kr::ps::EmittingRuleEvaluatorConcept<ext::detail::ActionRuleEvaluator<tyr::GroundTag>,
+                                          kr::ExtFamilyTag,
+                                          tyr::GroundTag,
+                                          kr::ps::RuleEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag, ext::TransientExecutionStorage<tyr::GroundTag>>,
+                                          ext::ProgramStateView<tyr::GroundTag>,
+                                          ext::detail::ProgramStep<tyr::GroundTag, ext::TransientExecutionStorage<tyr::GroundTag>>,
+                                          bool (*)(ext::detail::ProgramStep<tyr::GroundTag, ext::TransientExecutionStorage<tyr::GroundTag>>),
+                                          bool (*)()>);
 
 auto create_register(kr::ps::ext::Repository& repository, const std::string& name, ygg::uint_t identifier)
 {
@@ -234,9 +348,9 @@ void expect_borrowed_query_evaluation()
     const auto feature = module_.get_query_features()[0];
     const auto query = feature.get_expression();
     {
-        const auto rows = kr::ps::evaluate(feature, state_context);
+        const auto rows = kr::ps::evaluate<Kind>(feature, state_context);
         ASSERT_EQ(rows.size(), 1);
-        EXPECT_EQ(kr::ps::evaluate(feature, state_context).get_storage_address(), rows.get_storage_address());
+        EXPECT_EQ(kr::ps::evaluate<Kind>(feature, state_context).get_storage_address(), rows.get_storage_address());
         const auto& cached = environment.get_dl_caches().get_queries(false).at(query);
         EXPECT_EQ(rows.get_storage_address(), cached.get_storage_address());
         EXPECT_EQ(rows.columns().data(), cached.columns().data());
@@ -251,7 +365,7 @@ void expect_borrowed_query_evaluation()
                                                                  stack.get_registers(),
                                                                  stack.get_registers());
         {
-            const auto target_rows = kr::ps::evaluate(feature, transition.get_target_context());
+            const auto target_rows = kr::ps::evaluate<Kind>(feature, transition.get_target_context());
             ASSERT_EQ(target_rows.size(), 1);
             EXPECT_NE(target_rows[0][0], rows[0][0]);
             EXPECT_NE(target_rows.get_storage_address(), rows.get_storage_address());
@@ -260,11 +374,11 @@ void expect_borrowed_query_evaluation()
         environment.reset_target();
         EXPECT_TRUE(environment.get_dl_caches().get_queries(false).contains(query));
         EXPECT_EQ(rows.size(), 1);
-        EXPECT_EQ(kr::ps::evaluate(feature, state_context).get_storage_address(), rows.get_storage_address());
+        EXPECT_EQ(kr::ps::evaluate<Kind>(feature, state_context).get_storage_address(), rows.get_storage_address());
     }
     environment.reset_source();
     EXPECT_TRUE(environment.get_dl_caches().get_queries(false).empty());
-    const auto rebuilt = kr::ps::evaluate(feature, state_context);
+    const auto rebuilt = kr::ps::evaluate<Kind>(feature, state_context);
     EXPECT_EQ(rebuilt.size(), 1);
     EXPECT_TRUE(std::ranges::equal(rebuilt.columns(), query.get_schema()));
 }
@@ -530,6 +644,12 @@ void expect_control_only_steps_do_not_generate_planning_successors()
         EXPECT_EQ(step.status, ext::detail::ProgramOutcome::APPLIED);
         EXPECT_EQ(step.get_target().get_state().get_index(), initial.get_state().get_index());
         EXPECT_FALSE(step.planning_successor.has_value());
+        ASSERT_TRUE(step.rule);
+        const auto applied = expander.apply(initial, *step.rule);
+        ASSERT_TRUE(applied);
+        EXPECT_EQ(applied->get_target().get_index(), step.get_target().get_index());
+        if (step.get_target().get_module_state().get_memory_state().get_name() == "skipped")
+            EXPECT_FALSE(expander.apply(step.get_target(), *step.rule));
     }
     EXPECT_EQ(states.num_states(), 1);
     for (const auto universal : { false, true })
@@ -1647,6 +1767,38 @@ void expect_query_action_contracts()
             EXPECT_THROW(ext::find_solution(task_context, program, options), ext::ActionRuleContractError);
             EXPECT_THROW(collect_steps(expander, initial), ext::ActionRuleContractError);
             continue;
+        }
+        if (scenario == 0)
+        {
+            auto storage = ext::InternedExecutionStorage<Kind>(task_context, program);
+            auto evaluators = ext::detail::RuleEvaluators<Kind>(task_context, program);
+            auto context = evaluators.make_context(storage, planning_node.get_state());
+            auto& generator = *task_context->search_context->successor_generator;
+            ygg::visit(
+                [&]<ext::RuleKind Tag>(ext::RuleView<Tag> concrete)
+                {
+                    if constexpr (std::same_as<Tag, ext::ActionTag>)
+                        for (const auto action : task_context->search_context->task->get_task().get_domain().get_actions())
+                            if (action.get_name().str() == concrete.get_action_name())
+                            {
+                                const auto evaluator = ext::detail::ActionRuleEvaluator<Kind>(concrete, rule, action);
+                                const auto count = task_context->search_context->task->get_repository()->size(action.get_index());
+                                auto matched = size_t(0);
+                                EXPECT_TRUE(generator.for_each_borrowed_applicable_action_binding(
+                                    planning_node,
+                                    action,
+                                    [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
+                                    {
+                                        const auto target = storage.successor(planning_node.get_state(), binding);
+                                        EXPECT_TRUE(evaluator.matches(context, initial, tyr::planning::LabeledNode { binding, target }));
+                                        ++matched;
+                                        return true;
+                                    }));
+                                EXPECT_EQ(matched, 2);
+                                EXPECT_EQ(task_context->search_context->task->get_repository()->size(action.get_index()), count);
+                            }
+                },
+                rule.get_variant());
         }
         const auto steps = collect_steps(expander, initial);
         if (scenario == 1)

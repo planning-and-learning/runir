@@ -3,6 +3,7 @@
 
 #include "runir/kr/ps/base/detail/rule_evaluation/rule.hpp"
 #include "runir/kr/ps/base/evaluation_environment.hpp"
+#include "runir/kr/ps/rule_evaluator_concepts.hpp"
 
 #include <optional>
 #include <unordered_map>
@@ -35,18 +36,24 @@ public:
     void begin_source() { m_environment.reset_source(); }
 
     /// Reuse source evaluations across candidates and target evaluations across rules.
-    std::optional<RuleView> matching_rule(const tyr::planning::StateView<Kind>& source, const tyr::planning::StateView<Kind>& target, auto&& stop)
+    std::optional<RuleView> matching_rule(const tyr::planning::StateView<Kind>& source, const tyr::planning::StateView<Kind>& target, StopConcept auto&& stop)
     {
         if (source == target)
             return std::nullopt;
         m_environment.reset_target();
-        auto transition = m_environment.make_dl_transition_context(source, target);
+        auto context = RuleEvaluationContext<BaseFamilyTag, Kind> { m_environment };
+        static_assert(MatchingRuleEvaluatorConcept<RuleEvaluator,
+                                                   BaseFamilyTag,
+                                                   Kind,
+                                                   decltype(context),
+                                                   tyr::planning::StateView<Kind>,
+                                                   tyr::planning::StateView<Kind>>);
         for (const auto slot : m_schedule)
         {
             if (stop())
                 return std::nullopt;
             const auto& evaluator = m_evaluators[slot];
-            if (evaluator.matches(transition))
+            if (evaluator.matches(context, source, target))
                 return evaluator.get_rule();
         }
         return std::nullopt;

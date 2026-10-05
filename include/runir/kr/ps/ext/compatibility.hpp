@@ -15,10 +15,10 @@ namespace runir::kr::ps::ext
 
 using runir::kr::ps::is_compatible_with;
 
-template<RuleKind Kind, typename C, typename Context>
-bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Kind>>, C> rule, Context& context)
+template<tyr::TaskKind Kind, RuleKind Tag, typename C, typename Context>
+bool conditions_are_compatible(ygg::View<ygg::Index<Rule<Tag>>, C> rule, Context& context)
 {
-    return all_compatible(rule.get_conditions(), context);
+    return all_compatible<Kind>(rule.get_conditions(), context);
 }
 
 template<RuleKind RuleKindT, typename C, typename S>
@@ -34,25 +34,25 @@ bool rule_is_applicable(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, S state,
     if (!has_current_source(rule, state))
         return false;
     auto state_context = environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
-    return conditions_are_compatible(rule, state_context);
+    return conditions_are_compatible<Kind>(rule, state_context);
 }
 
-template<RuleKind Kind, typename C, typename Context>
-bool is_compatible_with(ygg::View<ygg::Index<Rule<Kind>>, C> rule, Context& context)
+template<tyr::TaskKind Kind, RuleKind Tag, typename C, typename Context>
+bool is_compatible_with(ygg::View<ygg::Index<Rule<Tag>>, C> rule, Context& context)
 {
-    if (!conditions_are_compatible(rule, context))
+    if (!conditions_are_compatible<Kind>(rule, context))
         return false;
 
     if constexpr (requires { rule.get_effects(); })
-        return all_compatible(rule.get_effects(), context);
+        return all_compatible<Kind>(rule.get_effects(), context);
 
     return true;
 }
 
-template<typename C, typename Context>
+template<tyr::TaskKind Kind, typename C, typename Context>
 bool is_compatible_with(ygg::View<ygg::Index<ps::Rule<ExtFamilyTag>>, C> rule, Context& context)
 {
-    return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with(child, context); }, rule.get_variant());
+    return ygg::visit([&](auto child) { return runir::kr::ps::ext::is_compatible_with<Kind>(child, context); }, rule.get_variant());
 }
 
 }  // namespace runir::kr::ps::ext

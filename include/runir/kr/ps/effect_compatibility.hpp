@@ -10,23 +10,23 @@
 namespace runir::kr::ps
 {
 
-template<typename Family, typename LanguageTag, typename Context, typename StorageContext>
+template<typename Kind, typename Family, typename LanguageTag, typename Context, typename StorageContext>
 concept IsEffectVariantView = IsTransitionEvaluationContext<Family, LanguageTag, Context>
                               && requires(ygg::View<ygg::Index<EffectVariant<Family>>, StorageContext> effect, Context& context) {
-                                     { runir::kr::ps::is_compatible_with(effect, context) } -> std::same_as<bool>;
+                                     { runir::kr::ps::is_compatible_with<Kind>(effect, context) } -> std::same_as<bool>;
                                  };
 
-template<typename Family, typename LanguageTag, typename Context, typename StorageContext>
+template<typename Kind, typename Family, typename LanguageTag, typename Context, typename StorageContext>
 concept IsConcreteEffectVariantView = IsTransitionEvaluationContext<Family, LanguageTag, Context>
                                       && requires(ygg::View<ygg::Index<ConcreteEffectVariant<Family, LanguageTag>>, StorageContext> effect, Context& context) {
-                                             { runir::kr::ps::is_compatible_with(effect, context) } -> std::same_as<bool>;
+                                             { runir::kr::ps::is_compatible_with<Kind>(effect, context) } -> std::same_as<bool>;
                                          };
 
-template<typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename Context, typename StorageContext>
+template<typename Kind, typename Family, typename LanguageTag, typename FeatureTag, typename ObservationTag, typename Context, typename StorageContext>
 concept IsConcreteEffectView =
     IsTransitionEvaluationContext<Family, LanguageTag, Context> && dl::EffectObservationTag<ObservationTag, FeatureTag>
     && requires(ygg::View<ygg::Index<ConcreteEffect<Family, LanguageTag, FeatureTag, ObservationTag>>, StorageContext> effect, Context& context) {
-           { runir::kr::ps::is_compatible_with(effect, context) } -> std::same_as<bool>;
+           { runir::kr::ps::is_compatible_with<Kind>(effect, context) } -> std::same_as<bool>;
        };
 
 }  // namespace runir::kr::ps

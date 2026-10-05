@@ -1,7 +1,7 @@
 #ifndef RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_CRULE_HPP_
 #define RUNIR_KR_PS_ICP_DETAIL_RULE_EVALUATION_CRULE_HPP_
 
-#include "runir/kr/ps/icp/detail/rule_evaluation/workspace.hpp"
+#include "runir/kr/ps/icp/detail/rule_evaluation/context.hpp"
 
 #include <cista/containers/variant.h>
 #include <tyr/formalism/planning/action_view.hpp>
@@ -25,10 +25,11 @@ class RuleEvaluator<Kind, CruleTag>
         throw std::invalid_argument("Unknown ICP action schema.");
     }
 
+    template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
     std::optional<ygg::uint_t>
     resolve(const ::cista::offset::variant<ArgumentPosition, ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>& reference,
             runir::kr::dl::semantics::RegisterValuesView registers,
-            tyr::planning::BorrowedActionBindingView<Kind> binding) const
+            Binding binding) const
     {
         return reference.apply(
             [&](auto ref) -> std::optional<ygg::uint_t>
@@ -53,42 +54,66 @@ public:
     }
 
     auto get_rule() const noexcept { return m_rule; }
+    /// The aggregate groups rules by their resolved action before generating candidates.
     auto get_action() const noexcept { return m_action; }
-    bool applicable(auto& context) const { return conditions_are_compatible(m_rule, context); }
+    /// Skip disabled rules before action enumeration; matches() also checks this for direct callers.
+    template<runir::kr::dl::semantics::StateEvaluationContextConcept<ExtFamilyTag, Kind> Context>
+    bool is_applicable(Context& context) const
+    {
+        return conditions_are_compatible<Kind>(m_rule, context);
+    }
 
-    bool xconditions_match(ProgramStateView<Kind> state, tyr::planning::BorrowedActionBindingView<Kind> binding, auto& context) const
+    /// Reject a binding before generating its target; matches() also checks this for direct callers.
+    template<runir::kr::dl::semantics::StateEvaluationContextConcept<ExtFamilyTag, Kind> Context,
+             ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+    bool xconditions_match(Context& context, ProgramStateView<Kind> state, Binding binding) const
     {
         for (const auto condition : m_rule.get_xconditions())
         {
             const auto object = resolve(condition.get_object_reference(), state.get_registers(), binding);
             if (!object)
                 return false;
-            const auto contains = evaluate(condition.get_concept_feature(), context).get().test(*object);
+            const auto contains = evaluate<Kind>(condition.get_concept_feature(), context).get().test(*object);
             if (contains != (condition.get_operation() == ConditionOperation::BELONGS))
                 return false;
         }
         return true;
     }
 
-    bool transition_matches(ProgramStateView<Kind> state, tyr::planning::BorrowedActionBindingView<Kind> binding, auto& transition) const
+    /// Match a supplied candidate independently of the aggregate's early binding filter.
+    /// History admission remains shared by the aggregate across matching rules.
+    template<ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
+    bool matches(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind>& context,
+                 ProgramStateView<Kind> state,
+                 const tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, Binding>& candidate) const
     {
+        const auto memory = state.get_memory_state();
+        const auto source = m_rule.get_source();
+        const auto action = candidate.label.get_relation();
+        if (&memory.get_context() != &source.get_context() || memory != source || &action.get_context() != &m_action.get_context() || action != m_action)
+            return false;
+        auto source_context = context.make_dl_context(state);
+        if (!is_applicable(source_context) || !xconditions_match(source_context, state, candidate.label))
+            return false;
+        auto transition = context.make_dl_transition_context(state, candidate);
         for (const auto effect : m_rule.get_xeffects())
         {
-            const auto object = resolve(effect.get_object_reference(), state.get_registers(), binding);
+            const auto object = resolve(effect.get_object_reference(), state.get_registers(), candidate.label);
             if (!object)
                 return false;
-            const auto before = evaluate(effect.get_concept_feature(), transition.get_source_context()).get().test(*object);
-            const auto after = evaluate(effect.get_concept_feature(), transition.get_target_context()).get().test(*object);
+            const auto before = evaluate<Kind>(effect.get_concept_feature(), transition.get_source_context()).get().test(*object);
+            const auto after = evaluate<Kind>(effect.get_concept_feature(), transition.get_target_context()).get().test(*object);
             if (effect.get_operation() == EffectOperation::ENTER ? (before || !after) : (!before || after))
                 return false;
         }
-        return all_compatible(m_rule.get_effects(), transition);
+        return all_compatible<Kind>(m_rule.get_effects(), transition);
     }
 
-    ProgramStep<Kind> apply(ProgramStateView<Kind> source,
-                            const tyr::planning::LabeledNode<tyr::planning::StateView<Kind>>& candidate,
-                            HistoriesView<Kind> histories,
-                            RuleEvaluationWorkspace<Kind>& workspace) const
+    /// Apply a match after the aggregate admits shared histories and publishes the binding.
+    ProgramStep<Kind> apply(RuleEvaluationWorkspace<Kind>& workspace,
+                            ProgramStateView<Kind> source,
+                            const tyr::planning::LabeledNode<Kind>& candidate,
+                            HistoriesView<Kind> histories) const
     {
         auto target = source.get_data();
         target.state = candidate.node.get_state().get_index();
