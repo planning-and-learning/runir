@@ -33,24 +33,27 @@ public:
     }
 };
 
-/// Borrows already updated results; evaluating another feature does not mutate the graph.
-template<FamilyTag Family, tyr::TaskKind Kind>
+/// Owns borrowed input views. Each demand updates only its dependency graph;
+/// results already read in this state remain stable as other roots are evaluated.
+template<FamilyTag Family, tyr::TaskKind Kind, StateEvaluationContextConcept<Family, Kind> Context>
 struct DeltaEvaluationContext
 {
-    const incremental::EvaluationGraph<Family, Kind>& graph;
-    const tyr::formalism::planning::Repository& repository;
+    incremental::EvaluationGraph<Family, Kind>& graph;
+    Context inputs;
+    const incremental::Delta<Family>& delta;
 };
 
-template<tyr::TaskKind Kind, FamilyTag Family, runir::kr::dl::CategoryTag Category>
-auto evaluate(runir::kr::dl::FamilyConstructorView<Family, Category> expression, DeltaEvaluationContext<Family, Kind>& context)
+template<tyr::TaskKind Kind, FamilyTag Family, runir::kr::dl::CategoryTag Category, StateEvaluationContextConcept<Family, Kind> Context>
+auto evaluate(runir::kr::dl::FamilyConstructorView<Family, Category> expression, DeltaEvaluationContext<Family, Kind, Context>& context)
 {
-    return context.graph.get_result(context.graph.get_index(expression));
+    return context.graph.evaluate(context.graph.get_index(expression), context.inputs, context.delta);
 }
 
-template<tyr::TaskKind Kind, FamilyTag Family>
-auto evaluate(runir::kr::dl::FamilyQueryView<Family> expression, DeltaEvaluationContext<Family, Kind>& context)
+template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
+auto evaluate(runir::kr::dl::FamilyQueryView<Family> expression, DeltaEvaluationContext<Family, Kind, Context>& context)
 {
-    return ygg::make_view(context.graph.get_result(context.graph.get_index(expression)), context.repository);
+    return ygg::make_view(context.graph.evaluate(context.graph.get_index(expression), context.inputs, context.delta),
+                          *context.inputs.get_state().get_task().get_repository());
 }
 
 /// Independent source and target graphs retain their input snapshots and result buffers.
@@ -81,9 +84,9 @@ class DeltaEvaluationPolicy
             if (&context.get_state().get_task() != &task)
                 throw std::invalid_argument("Delta evaluation requires states from its planning task.");
             const auto& repository = *task.get_repository();
-            if (!m_ready)
+            if (!m_ready || !m_graph.is_valid())
             {
-                const auto initialized = std::exchange(m_initialized, false);
+                const auto initialized = std::exchange(m_initialized, false) && m_graph.is_valid();
                 if (initialized)
                 {
                     if constexpr (std::same_as<Family, ExtFamilyTag>)
@@ -93,16 +96,16 @@ class DeltaEvaluationPolicy
                                                       context.registers());
                     else
                         m_delta.template assign<Kind>(ygg::make_view(m_state, task), context.get_state());
-                    m_graph.update(m_delta, context.get_workspace().get_database_workspace());
+                    m_graph.advance();
                 }
                 else
-                    m_graph.initialize(context);
+                    m_graph.reset();
                 m_state = context.get_state().get_state_builder();
                 if constexpr (std::same_as<Family, ExtFamilyTag>)
                     assign(m_registers, context.registers());
                 m_initialized = m_ready = true;
             }
-            return DeltaEvaluationContext<Family, Kind> { m_graph, repository };
+            return DeltaEvaluationContext<Family, Kind, Context> { m_graph, context, m_delta };
         }
     };
 

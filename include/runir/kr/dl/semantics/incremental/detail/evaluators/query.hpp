@@ -6,6 +6,7 @@
 #include "runir/kr/dl/semantics/incremental/detail/atomic_query.hpp"
 
 #include <array>
+#include <concepts>
 #include <span>
 
 namespace runir::kr::dl::semantics::incremental::detail
@@ -18,10 +19,11 @@ class QueryValue
 
 protected:
     explicit QueryValue(std::span<const ygg::Index<ygg::database::Column>> columns) : m_result(columns), m_delta(columns) {}
-    void clear() noexcept
+    auto& clear() noexcept
     {
         m_result.clear();
         m_delta.clear();
+        return m_result;
     }
     void clear_delta() noexcept { m_delta.clear(); }
     template<ygg::database::RelationViewConcept<ygg::Index<tyr::formalism::Object>> Source>
@@ -160,15 +162,14 @@ struct QueryFromDenotationEvaluator : QueryValue
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
     {
-        this->clear();
+        auto& output = this->clear();
         for (const auto element : graph.result(argument).indices())
         {
             if constexpr (std::same_as<Category, ConceptTag>)
-                this->set(std::array { element }, true);
+                output.insert(std::array { element });
             else
-                this->set(std::array { element.first, element.second }, true);
+                output.insert(std::array { element.first, element.second });
         }
-        this->clear_delta();
     }
     void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>&)
     {
@@ -193,8 +194,9 @@ struct QuerySetCombinationEvaluator : QueryValue
         rhs(rhs)
     {
     }
-    template<ygg::database::RelationViewConcept<ygg::Index<tyr::formalism::Object>> Rows>
-    void update_rows(EvaluationGraph<Family, Kind>& graph, const Rows& rows)
+    template<ygg::database::RelationViewConcept<ygg::Index<tyr::formalism::Object>> Rows,
+             std::invocable<std::span<const ygg::Index<tyr::formalism::Object>>, bool> Emit>
+    void evaluate_rows(EvaluationGraph<Family, Kind>& graph, const Rows& rows, Emit emit)
     {
         const auto& left = graph.result(lhs);
         const auto& right = graph.result(rhs);
@@ -204,27 +206,32 @@ struct QuerySetCombinationEvaluator : QueryValue
             const auto present = std::same_as<Tag, QueryUnionTag> ? left.contains(row) || right.contains(row) : left.contains(row) && !right.contains(row);
             // Children hold their final contents: a row mentioned by both
             // deltas must not produce a temporary removal/addition pair.
-            this->set(row, present);
+            emit(row, present);
         }
     }
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
     {
-        this->clear();
-        update_rows(graph, graph.result(lhs));
+        auto& output = this->clear();
+        const auto emit = [&output](auto row, bool present)
+        {
+            if (present)
+                output.insert(row);
+        };
+        evaluate_rows(graph, graph.result(lhs), emit);
         if constexpr (std::same_as<Tag, QueryUnionTag>)
-            update_rows(graph, graph.result(rhs));
-        this->clear_delta();
+            evaluate_rows(graph, graph.result(rhs), emit);
     }
     void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>&)
     {
         this->clear_delta();
         const auto& left = graph.change(lhs);
         const auto& right = graph.change(rhs);
-        update_rows(graph, left.added);
-        update_rows(graph, left.removed);
-        update_rows(graph, right.added);
-        update_rows(graph, right.removed);
+        const auto emit = [this](auto row, bool present) { this->set(row, present); };
+        evaluate_rows(graph, left.added, emit);
+        evaluate_rows(graph, left.removed, emit);
+        evaluate_rows(graph, right.added, emit);
+        evaluate_rows(graph, right.removed, emit);
     }
 };
 
@@ -240,8 +247,9 @@ struct QuerySelectionEvaluator : QueryValue
         expression(expression)
     {
     }
-    template<ygg::database::RelationViewConcept<ygg::Index<tyr::formalism::Object>> Rows>
-    void update_rows(const Rows& rows, bool present)
+    template<ygg::database::RelationViewConcept<ygg::Index<tyr::formalism::Object>> Rows,
+             std::invocable<std::span<const ygg::Index<tyr::formalism::Object>>> Emit>
+    void evaluate_rows(const Rows& rows, Emit emit)
     {
         for (size_t i = 0; i < rows.size(); ++i)
         {
@@ -256,22 +264,21 @@ struct QuerySelectionEvaluator : QueryValue
                 if (row[expression.get_data().position] != expression.get_object().get_index())
                     continue;
             }
-            this->set(row, present);
+            emit(row);
         }
     }
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
     {
-        this->clear();
-        update_rows(graph.result(argument), true);
-        this->clear_delta();
+        auto& output = this->clear();
+        evaluate_rows(graph.result(argument), [&output](auto row) { output.insert(row); });
     }
     void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>&)
     {
         this->clear_delta();
         const auto& delta = graph.change(argument);
-        update_rows(delta.removed, false);
-        update_rows(delta.added, true);
+        evaluate_rows(delta.removed, [this](auto row) { this->set(row, false); });
+        evaluate_rows(delta.added, [this](auto row) { this->set(row, true); });
     }
 };
 

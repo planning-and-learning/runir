@@ -5,6 +5,7 @@
 #include "runir/kr/dl/semantics/incremental/detail/feature_node.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/query_node.hpp"
 
+#include <algorithm>
 #include <initializer_list>
 #include <optional>
 #include <span>
@@ -73,7 +74,15 @@ class EvaluationGraph
         m_nodes;
     detail::SetOperationWorkspace m_set_workspace;
     const tyr::planning::Task<Kind>& m_task;
-    bool m_initialized = false;
+    enum class Mode
+    {
+        UNINITIALIZED,
+        EAGER,
+        DEMAND
+    };
+    Mode m_mode = Mode::UNINITIALIZED;
+    size_t m_epoch = 1;
+    std::vector<size_t> m_evaluated;
 
     template<CategoryTag Category>
     const auto& node(EvaluationIndex<Category> index) const
@@ -115,9 +124,22 @@ class EvaluationGraph
     detail::SetOperationWorkspace& set_workspace() noexcept { return m_set_workspace; }
 
     void require_initialized() const;
+    void require_eager() const;
+    void require_ready(ygg::uint_t index) const;
+    template<StateEvaluationContextConcept<Family, Kind> Context>
+    void evaluate_node(ygg::uint_t index, Context& context, const Delta<Family>& delta);
+    template<StateEvaluationContextConcept<Family, Kind> Context>
+    void demand(ygg::uint_t index, Context& context, const Delta<Family>& delta);
     template<CategoryTag Category>
     EvaluationIndex<Category> prepare(FamilyConstructorView<Family, Category> expression);
     QueryEvaluationIndex prepare(FamilyQueryView<Family> expression);
+    template<typename Expression>
+    auto prepare(Expression expression, std::vector<ygg::uint_t>& dependencies)
+    {
+        const auto index = prepare(expression);
+        dependencies.push_back(ygg::uint_t(index));
+        return index;
+    }
 
 public:
     EvaluationGraph(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot<Family>> roots);
@@ -140,17 +162,36 @@ public:
     /// Failed updates invalidate the graph until initialize() replaces its baseline.
     void update(const Delta<Family>& delta, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>& workspace);
 
+    /// Start a demand-driven invocation, retaining buffers and task-static values.
+    void reset() noexcept;
+    /// Begin the next state. Unrequested results are left untouched.
+    void advance();
+    /// Demand a root and its dependencies. A skipped state requires a fresh baseline;
+    /// exact change publication remains the responsibility of initialize()/update().
+    template<CategoryTag Category, StateEvaluationContextConcept<Family, Kind> Context>
+    BorrowedDenotationView<Category> evaluate(EvaluationIndex<Category> index, Context& context, const Delta<Family>& delta)
+    {
+        demand(ygg::uint_t(index), context, delta);
+        return get_result(index);
+    }
+    template<StateEvaluationContextConcept<Family, Kind> Context>
+    const auto& evaluate(QueryEvaluationIndex index, Context& context, const Delta<Family>& delta)
+    {
+        demand(ygg::uint_t(index), context, delta);
+        return get_result(index);
+    }
+
     template<CategoryTag Category>
     BorrowedDenotationView<Category> get_result(EvaluationIndex<Category> index) const&
     {
-        require_initialized();
+        require_ready(ygg::uint_t(index));
         return result(index);
     }
     template<CategoryTag Category>
     BorrowedDenotationView<Category> get_result(EvaluationIndex<Category>) const&& = delete;
     const auto& get_result(QueryEvaluationIndex index) const&
     {
-        require_initialized();
+        require_ready(ygg::uint_t(index));
         return result(index);
     }
     const auto& get_result(QueryEvaluationIndex) const&& = delete;
@@ -158,14 +199,14 @@ public:
     template<ConceptOrRoleTag Category>
     const DenotationDelta<Category>& get_delta(EvaluationIndex<Category> index) const&
     {
-        require_initialized();
+        require_eager();
         return change(index);
     }
     template<ConceptOrRoleTag Category>
     const DenotationDelta<Category>& get_delta(EvaluationIndex<Category>) const&& = delete;
     const auto& get_delta(QueryEvaluationIndex index) const&
     {
-        require_initialized();
+        require_eager();
         return change(index);
     }
     const auto& get_delta(QueryEvaluationIndex) const&& = delete;
@@ -173,21 +214,23 @@ public:
     template<ConceptOrRoleTag Category>
     size_t size(EvaluationIndex<Category> index) const
     {
-        require_initialized();
+        require_ready(ygg::uint_t(index));
         return cardinality(index);
     }
     size_t size(QueryEvaluationIndex index) const
     {
-        require_initialized();
+        require_ready(ygg::uint_t(index));
         return cardinality(index);
     }
     template<BooleanOrNumericalTag Category>
     bool changed(EvaluationIndex<Category> index) const
     {
-        require_initialized();
+        require_eager();
         return node(index).changed();
     }
     size_t node_count() const noexcept { return m_nodes.size(); }
+    /// False before initialization or after an evaluation failure.
+    bool is_valid() const noexcept { return m_mode != Mode::UNINITIALIZED; }
 };
 
 /// Convenience owner for one root. Use EvaluationGraph to share children across roots.
@@ -256,8 +299,81 @@ public:
 template<FamilyTag Family, tyr::TaskKind Kind>
 void EvaluationGraph<Family, Kind>::require_initialized() const
 {
-    if (!m_initialized)
+    if (m_mode == Mode::UNINITIALIZED)
         throw std::logic_error("Incremental evaluation: initialize before reading or updating results.");
+}
+
+template<FamilyTag Family, tyr::TaskKind Kind>
+void EvaluationGraph<Family, Kind>::require_eager() const
+{
+    if (m_mode != Mode::EAGER)
+        throw std::logic_error("Incremental evaluation: exact deltas require initialize/update evaluation.");
+}
+
+template<FamilyTag Family, tyr::TaskKind Kind>
+void EvaluationGraph<Family, Kind>::require_ready(ygg::uint_t index) const
+{
+    require_initialized();
+    if (m_mode == Mode::DEMAND && m_evaluated.at(index) != m_epoch)
+        throw std::logic_error("Incremental evaluation: demand this result before reading it.");
+}
+
+template<FamilyTag Family, tyr::TaskKind Kind>
+void EvaluationGraph<Family, Kind>::reset() noexcept
+{
+    std::fill(m_evaluated.begin(), m_evaluated.end(), 0);
+    m_epoch = 1;
+    m_mode = Mode::DEMAND;
+}
+
+template<FamilyTag Family, tyr::TaskKind Kind>
+void EvaluationGraph<Family, Kind>::advance()
+{
+    if (m_mode != Mode::DEMAND)
+        throw std::logic_error("Incremental evaluation: reset before advancing demand evaluation.");
+    if (++m_epoch == 0)
+        reset();
+}
+
+template<FamilyTag Family, tyr::TaskKind Kind>
+template<StateEvaluationContextConcept<Family, Kind> Context>
+void EvaluationGraph<Family, Kind>::demand(ygg::uint_t index, Context& context, const Delta<Family>& delta)
+{
+    if (m_mode != Mode::DEMAND)
+        throw std::logic_error("Incremental evaluation: reset before demand evaluation.");
+    if (&context.get_state().get_task() != &m_task)
+        throw std::invalid_argument("Incremental evaluation: graph belongs to a different task.");
+    try
+    {
+        evaluate_node(index, context, delta);
+    }
+    catch (...)
+    {
+        m_mode = Mode::UNINITIALIZED;
+        throw;
+    }
+}
+
+template<FamilyTag Family, tyr::TaskKind Kind>
+template<StateEvaluationContextConcept<Family, Kind> Context>
+void EvaluationGraph<Family, Kind>::evaluate_node(ygg::uint_t index, Context& context, const Delta<Family>& delta)
+{
+    auto& previous = m_evaluated.at(index);
+    if (previous == m_epoch)
+        return;
+    std::visit(
+        [&](auto& evaluator)
+        {
+            // Finish children before borrowing the shared operation workspace.
+            for (const auto child : evaluator.get_dependencies())
+                evaluate_node(child, context, delta);
+            if (previous != 0 && previous == m_epoch - 1)
+                evaluator.update(*this, delta, context.get_workspace().get_database_workspace());
+            else
+                evaluator.initialize(*this, context);
+        },
+        m_nodes.at(index));
+    previous = m_epoch;
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
@@ -266,6 +382,7 @@ EvaluationGraph<Family, Kind>::EvaluationGraph(const tyr::planning::Task<Kind>& 
     m_set_workspace.initialize(ygg::to_uint_t(task.get_task().get_num_objects()));
     for (const auto& root : roots)
         std::visit([&](auto expression) { prepare(expression); }, root);
+    m_evaluated.resize(m_nodes.size());
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
@@ -342,20 +459,20 @@ void EvaluationGraph<Family, Kind>::initialize(Context& context)
     const auto* task = &context.get_state().get_task();
     if (&m_task != task)
         throw std::invalid_argument("Incremental evaluation: graph belongs to a different task.");
-    m_initialized = false;
+    m_mode = Mode::UNINITIALIZED;
     for (auto& node : m_nodes)
         std::visit([&](auto& evaluator) { evaluator.initialize(*this, context); }, node);
-    m_initialized = true;
+    m_mode = Mode::EAGER;
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
 void EvaluationGraph<Family, Kind>::update(const Delta<Family>& delta, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>& workspace)
 {
-    require_initialized();
-    m_initialized = false;
+    require_eager();
+    m_mode = Mode::UNINITIALIZED;
     for (auto& node : m_nodes)
         std::visit([&](auto& evaluator) { evaluator.update(*this, delta, workspace); }, node);
-    m_initialized = true;
+    m_mode = Mode::EAGER;
 }
 
 }  // namespace runir::kr::dl::semantics::incremental
