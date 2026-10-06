@@ -2,8 +2,8 @@
 #define RUNIR_KR_DL_SEMANTICS_INCREMENTAL_EVALUATION_HPP_
 
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
-#include "runir/kr/dl/semantics/incremental/detail/feature_evaluators.hpp"
-#include "runir/kr/dl/semantics/incremental/detail/query_evaluators.hpp"
+#include "runir/kr/dl/semantics/incremental/detail/feature_node.hpp"
+#include "runir/kr/dl/semantics/incremental/detail/query_node.hpp"
 
 #include <initializer_list>
 #include <optional>
@@ -29,6 +29,41 @@ class EvaluationGraph
     friend class detail::FeatureNode;
     template<FamilyTag, tyr::TaskKind>
     friend class detail::QueryNode;
+
+    template<FamilyTag, tyr::TaskKind, CategoryTag, tyr::formalism::FactKind>
+    friend struct detail::AtomicEvaluator;
+    template<FamilyTag, tyr::TaskKind, CategoryTag, typename, ConceptOrRoleTag>
+    friend struct detail::UnarySetEvaluator;
+    template<FamilyTag, tyr::TaskKind, CategoryTag, typename, ConceptOrRoleTag, ConceptOrRoleTag>
+    friend struct detail::BinarySetEvaluator;
+    template<FamilyTag, tyr::TaskKind, typename>
+    friend struct detail::NumberRestrictionEvaluator;
+    template<FamilyTag, tyr::TaskKind, typename>
+    friend struct detail::QualifiedNumberRestrictionEvaluator;
+    template<FamilyTag, tyr::TaskKind>
+    friend struct detail::FillersEvaluator;
+    template<FamilyTag, tyr::TaskKind, CategoryTag, typename, BooleanOrNumericalTag>
+    friend struct detail::ScalarBinaryEvaluator;
+    template<FamilyTag, tyr::TaskKind>
+    friend struct detail::LogicalNotEvaluator;
+    template<FamilyTag, tyr::TaskKind>
+    friend struct detail::CountEvaluator;
+    template<FamilyTag, tyr::TaskKind>
+    friend struct detail::NonemptyEvaluator;
+    template<FamilyTag, tyr::TaskKind>
+    friend struct detail::DistanceFeatureEvaluator;
+    template<FamilyTag, tyr::TaskKind, CategoryTag>
+    friend struct detail::ProjectionEvaluator;
+    template<FamilyTag, tyr::TaskKind>
+    friend struct detail::QueryProjectionEvaluator;
+    template<FamilyTag, tyr::TaskKind>
+    friend struct detail::QueryJoinEvaluator;
+    template<FamilyTag, tyr::TaskKind, ConceptOrRoleTag>
+    friend struct detail::QueryFromDenotationEvaluator;
+    template<FamilyTag, tyr::TaskKind, typename>
+    friend struct detail::QuerySetCombinationEvaluator;
+    template<FamilyTag, tyr::TaskKind, typename>
+    friend struct detail::QuerySelectionEvaluator;
 
     std::vector<std::variant<detail::FeatureNode<Family, Kind, ConceptTag>,
                              detail::FeatureNode<Family, Kind, RoleTag>,

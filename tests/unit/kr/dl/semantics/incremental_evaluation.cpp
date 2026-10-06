@@ -222,6 +222,15 @@ void check_incremental_evaluation()
     auto deltas = std::array<sem::incremental::Delta<Ext>, 2> {};
     for (size_t i = 0; i < deltas.size(); ++i)
         deltas[i].template assign<Kind>(nodes[i].get_state(), registers(i), nodes[i + 1].get_state(), registers(i + 1));
+    // Count regressions need a replacement with unchanged cardinality, followed by removal to empty.
+    ASSERT_EQ(deltas[0].added.concept_registers.size(), 2);
+    ASSERT_EQ(deltas[0].removed.concept_registers.size(), 2);
+    ASSERT_EQ(deltas[0].added.role_registers.size(), 1);
+    ASSERT_EQ(deltas[0].removed.role_registers.size(), 1);
+    ASSERT_TRUE(deltas[1].added.concept_registers.empty());
+    ASSERT_EQ(deltas[1].removed.concept_registers.size(), 2);
+    ASSERT_TRUE(deltas[1].added.role_registers.empty());
+    ASSERT_EQ(deltas[1].removed.role_registers.size(), 1);
     const auto empty_delta = sem::incremental::Delta<Ext> {};
     const auto expect_unpublished = [&]
     {
@@ -429,6 +438,14 @@ void check_incremental_evaluation()
     check(parser::parse_boolean("(b_argument 0)", domain, *constructors));
     check(parser::parse_numerical("(n_argument 0)", domain, *constructors));
     check(parser::parse_numerical(R"((n_count (q_atomic_state "edge" (x y))))", domain, *constructors));
+    // Query cardinality follows 1→1→0 and undo. Count and nonempty must report unchanged
+    // on replacement/no-op, and reload the empty baseline on reinitialization.
+    for (const auto* text : { "(q_concept x (c_register 0))", "(q_role (x y) (r_register 0))" })
+    {
+        SCOPED_TRACE(text);
+        check(parser::parse_numerical("(n_count " + std::string(text) + ")", domain, *constructors));
+        check(parser::parse_boolean("(b_nonempty " + std::string(text) + ")", domain, *constructors));
+    }
     check(parser::parse_boolean(R"((b_nonempty (q_atomic_state "edge" (x y))))", domain, *constructors));
     for (const auto* predicate : { "ready", "copied-ready" })
         for (const auto* polarity : { "true", "false" })
@@ -603,6 +620,28 @@ void check_incremental_evaluation()
     EXPECT_THROW(graph.update(empty_delta, workspace), std::logic_error);
     graph.initialize(invocation_context);
     compare_graph(invocation_context);
+
+    const auto reject_multiple_values = [&]<dl::ConceptOrRoleTag Category>(dl::FamilyConstructorView<Ext, Category> expression)
+    {
+        auto evaluator = sem::incremental::Evaluator<Ext, Kind, Category>(*search->task, expression);
+        evaluator.initialize(invocation_context);
+        auto invalid = sem::incremental::Delta<Ext> {};
+        for (const auto index : { a, b })
+        {
+            const auto object = ygg::make_view(index, *search->task->get_repository());
+            if constexpr (std::same_as<Category, dl::ConceptTag>)
+                invalid.added.concept_registers.emplace_back(dl::RegisterIdentifier<Category>(0), object);
+            else
+                invalid.added.role_registers.emplace_back(dl::RegisterIdentifier<Category>(0),
+                                                          std::pair(object, ygg::make_view(c, *search->task->get_repository())));
+        }
+        EXPECT_THROW(evaluator.update(invalid, workspace), std::invalid_argument);
+        EXPECT_THROW(evaluator.get_result(), std::logic_error);
+        evaluator.initialize(invocation_context);
+        EXPECT_EQ(evaluator.size(), 0);
+    };
+    reject_multiple_values(source);
+    reject_multiple_values(parser::parse_role("(r_register 0)", domain, *constructors));
 }
 }  // namespace
 
