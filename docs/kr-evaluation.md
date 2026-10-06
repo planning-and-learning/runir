@@ -181,25 +181,29 @@ evaluators live under their respective `detail/rule_evaluation/` directories,
 with aggregate dispatch in `detail/rule_evaluators.hpp`. Base's single rule
 evaluator lives in `detail/rule_evaluation/rule.hpp`.
 
-`rule_evaluator_concepts.hpp` defines two evaluator contracts: emitting results
-through `emit(context, source, emit, stop)`, and checking supplied candidates
-through `matches(context, source, candidate)`. Both operate on const evaluators.
+Rule evaluators emit results through `emit(context, source, emit, stop)` and
+check supplied candidates through `matches(context, source, candidate)`. Both
+operate on const evaluators; their method signatures express the required
+context, state, candidate and callback types. Aggregates call these methods
+directly without a separate evaluator-conformance concept.
+`rule_evaluator_concepts.hpp` retains the callback constraints:
 `EmitConcept<Emit, Result>` requires a mutable callback returning whether to
 continue; `StopConcept` requires a mutable callback returning whether to stop.
-The context/source pairing must provide the family's DL state context, and a
-matching context must also provide the candidate's DL transition context.
-The context and evaluator concepts take the PS family and task kind explicitly;
-`FamilyType` preserves PS family identity, while the returned DL contexts
-validate the task kind through their state views. Ext and ICP must remain
+Rule contexts are specialized by PS family and task kind. Ext and ICP remain
 distinct PS families even though both use Ext DL resources.
-Feature evaluation, compatibility checks, and rule contexts use the DL contract
+Feature evaluation and compatibility checks use the DL contract
 `StateEvaluationContextConcept<Context, DlFamilyFor<Family>, Kind>` directly.
 `DlFamilyFor` centralizes the mapping to DL families: ICP uses Ext DL resources.
 The DL resource, navigation, and context concepts take family and task kind
 explicitly and validate the state and cache types without inferring them from
 context aliases. C++ compatibility and classification calls likewise supply
 `Kind`: `is_compatible_with<Kind>`, `all_compatible<Kind>`, and `classify<Kind>`.
-Adding another evaluator category requires explicit developer confirmation.
+
+Compatibility checks accept structural contexts. Conditions use a state context
+or the source of a transition context; effects use its source and target contexts.
+Transition contexts preserve the PS family and expose DL resources for the supplied
+task kind. Supported languages and observation pairs are constrained by the actual
+`is_compatible_with<Kind>` overloads.
 
 Tyr's state contract likewise requires `StateViewConcept<State, Kind>`. Free
 planning atom projections use `get_atoms_view<Kind, FactKind>(state, ...)`, and
@@ -207,8 +211,9 @@ successor storage types use `SuccessorStorage<Kind, State>` or
 `SuccessorListStorage<Kind, State>`. Goal-condition member projections retain
 `condition.get_atoms_view<FactKind>(...)` because the condition already carries
 its task kind. The no-op classifier is `NoUnsolvability<Kind>`.
-Generic `Node` constructor deduction and state formatting retain `KindType`
-as their discovery mechanism; ordinary evaluation APIs receive `Kind` directly.
+`Node` and `LabeledNode` construction supplies `Kind` explicitly, with state and
+binding types supplied for nondefault representations. State formatting uses
+`IterableViewStateConcept` and does not require task metadata.
 
 These contracts cover evaluation, while aggregates also use explicit coordination
 hooks: Ext resumes retained choices through `choice_step`, and ICP groups and
@@ -221,7 +226,11 @@ conditions, and cancellation in `emit`; direct Sketch application also uses
 `detail/rule_evaluation/context.hpp`. These contexts borrow execution services;
 aggregates own the environments and reusable workspaces. Ext and ICP retain
 one prepared source planning view per evaluation, avoiding repeated unpacking
-for each rule or candidate. Matching takes Tyr's `LabeledNode<Kind, State, Binding>`,
+for each rule or candidate. Ext builds DL contexts from that prepared view and
+reads arguments and registers from the program state. The two planning-view
+representations may differ; the prepared view must describe the same source
+configuration, and its backing storage must remain alive.
+Matching takes Tyr's `LabeledNode<Kind, State, Binding>`,
 which accepts borrowed action bindings without requiring their publication.
 The task kind constrains the state directly; the default state and binding give
 `Node<Kind>` and `LabeledNode<Kind>` for ordinary indexed results.
@@ -261,11 +270,12 @@ zero-allocation checks. Do and Sketch expansion are checked against direct Tyr
 enumeration: lifted enumeration still allocates temporary Datalog cost buckets,
 and the borrowed binding and rule-evaluation layers add no allocations to it.
 
-Aggregates retain unique evaluator records and separate occurrence schedules.
-Program schedules are flat and selected by module and memory state where
-applicable. This keeps rule occurrence order and parallel outcomes intact even
-when evaluator records are shared. Dispatch remains templated and uses
-value-held variants for heterogeneous rule kinds.
+Base reads rule views directly from its sketch. Ext reads rule occurrences from
+the current module, filters them by source memory, and finds its prepared
+evaluators by rule view using a linear scan. ICP retains lightweight prepared
+evaluators in occurrence order and filters them by source memory. No aggregate
+needs an index-based occurrence schedule. Order and repetitions are preserved;
+dispatch remains templated and uses value-held variants for heterogeneous rules.
 
 Base selects the first compatible rule for each planning successor. Ext
 preserves natural rule order, deferring effect-bearing Sketch rules into one

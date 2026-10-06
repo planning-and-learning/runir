@@ -16,7 +16,6 @@
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/ps/dl/declarations.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
-#include <runir/kr/ps/ext/action_rule_contract_error.hpp>
 #include <runir/kr/ps/ext/evaluation_environment.hpp>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/program_executor.hpp>
@@ -251,8 +250,6 @@ void bind_execution_types(nb::module_& m, const char* prefix)
 
 void bind_program_executor(nb::module_& m)
 {
-    nb::exception<ActionRuleContractError>(m, "ActionRuleContractError", PyExc_RuntimeError);
-
     nb::enum_<StateMemorization>(m, "StateMemorization")
         .value("NONE", StateMemorization::NONE)
         .value("CHOICE", StateMemorization::CHOICE)

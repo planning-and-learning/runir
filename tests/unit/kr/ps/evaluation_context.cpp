@@ -1,10 +1,10 @@
 #include <concepts>
+#include <runir/kr/ps/base/compatibility.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/compatibility.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/family_traits.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
-#include <runir/kr/ps/rule_evaluator_concepts.hpp>
 #include <utility>
 
 namespace runir::tests
@@ -20,7 +20,7 @@ constexpr bool mapped_context()
     using StateContext = kr::dl::semantics::StateEvaluationContext<DlFamily, Kind>;
     using ResultContext = decltype(std::declval<const StateContext&>().for_result(false));
     using ChildContext = decltype(std::declval<const StateContext&>().child_context());
-    return kr::ps::IsTransitionEvaluationContext<Family, kr::DlTag, Context>
+    return kr::ps::dl::TransitionEvaluationContextConcept<Context, Family, Kind>
            && std::same_as<decltype(std::declval<Context&>().get_source_context()), StateContext&>
            && std::same_as<decltype(std::declval<Context&>().get_target_context()), StateContext&>
            && kr::dl::semantics::StateEvaluationContextConcept<StateContext&, DlFamily, Kind>
@@ -51,18 +51,18 @@ using BaseStateContext = kr::dl::semantics::StateEvaluationContext<kr::BaseFamil
 using ExtStateContext = kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>;
 
 // The returned resources identify the task kind; the PS family still distinguishes ICP from Ext.
-struct IcpResourceContext
+template<kr::FamilyTag Family>
+struct ResourceContext
 {
-    using FamilyType = kr::IcpFamilyTag;
+    using FamilyType = Family;
 
-    ExtStateContext make_dl_context(tyr::planning::StateView<tyr::GroundTag>);
-    ExtStateContext& get_source_context();
-    ExtStateContext& get_target_context();
+    kr::ps::dl::TransitionEvaluationContext<Family, tyr::GroundTag>& transition;
+    auto& get_source_context() { return transition.get_source_context(); }
+    auto& get_target_context() { return transition.get_target_context(); }
 };
+using IcpResourceContext = ResourceContext<kr::IcpFamilyTag>;
+using BaseResourceContext = ResourceContext<kr::BaseFamilyTag>;
 
-static_assert(kr::ps::RuleEvaluationContextConcept<IcpResourceContext, kr::IcpFamilyTag, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>);
-static_assert(!kr::ps::RuleEvaluationContextConcept<IcpResourceContext, kr::IcpFamilyTag, tyr::LiftedTag, tyr::planning::StateView<tyr::GroundTag>>);
-static_assert(!kr::ps::RuleEvaluationContextConcept<IcpResourceContext, kr::ExtFamilyTag, tyr::GroundTag, tyr::planning::StateView<tyr::GroundTag>>);
 static_assert(kr::ps::dl::TransitionEvaluationContextConcept<IcpResourceContext, kr::IcpFamilyTag, tyr::GroundTag>);
 static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpResourceContext, kr::IcpFamilyTag, tyr::LiftedTag>);
 static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpResourceContext, kr::ExtFamilyTag, tyr::GroundTag>);
@@ -83,30 +83,56 @@ static_assert(!kr::dl::semantics::StateEvaluationContextConcept<BaseStateContext
 static_assert(kr::ps::dl::TransitionEvaluationContextConcept<IcpContext, kr::IcpFamilyTag, tyr::GroundTag>);
 static_assert(!kr::ps::dl::TransitionEvaluationContextConcept<IcpContext, kr::IcpFamilyTag, tyr::LiftedTag>);
 
-static_assert(!kr::ps::IsTransitionEvaluationContext<kr::BaseFamilyTag, kr::DlTag, NameOnlyContext>);
-static_assert(!kr::ps::IsTransitionEvaluationContext<kr::BaseFamilyTag, int, BaseContext>);
-static_assert(!kr::ps::IsTransitionEvaluationContext<kr::BaseFamilyTag, kr::DlTag, ExtContext>);
-static_assert(!kr::ps::IsTransitionEvaluationContext<kr::ExtFamilyTag, kr::DlTag, IcpContext>);
-
 using BaseCondition = ygg::View<ygg::Index<kr::ps::ConditionVariant<kr::BaseFamilyTag>>, kr::ps::base::Repository>;
 using ExtCondition = ygg::View<ygg::Index<kr::ps::ConditionVariant<kr::ExtFamilyTag>>, kr::ps::ext::Repository>;
 using IcpCondition = ygg::View<ygg::Index<kr::ps::ConditionVariant<kr::IcpFamilyTag>>, kr::ps::icp::Repository>;
+using IcpEffect = ygg::View<ygg::Index<kr::ps::EffectVariant<kr::IcpFamilyTag>>, kr::ps::icp::Repository>;
 
-template<typename Kind, typename Condition, typename Context>
-concept CanCheckCondition = requires(Condition condition, Context& context) {
-    { kr::ps::is_compatible_with<Kind>(condition, context) } -> std::same_as<bool>;
+using kr::ps::is_compatible_with;
+using kr::ps::base::is_compatible_with;
+
+template<typename Kind, typename Value, typename Context>
+concept CanCheckCompatibility = requires(Value value, Context& context) {
+    { is_compatible_with<Kind>(value, context) } -> std::same_as<bool>;
 };
 
-static_assert(CanCheckCondition<tyr::GroundTag, BaseCondition, BaseContext> && CanCheckCondition<tyr::GroundTag, BaseCondition, BaseStateContext>);
-static_assert(CanCheckCondition<tyr::GroundTag, ExtCondition, ExtContext> && CanCheckCondition<tyr::GroundTag, ExtCondition, ExtStateContext>);
-static_assert(CanCheckCondition<tyr::GroundTag, IcpCondition, IcpContext> && CanCheckCondition<tyr::GroundTag, IcpCondition, ExtStateContext>);
-static_assert(!CanCheckCondition<tyr::GroundTag, BaseCondition, ExtStateContext>);
-static_assert(!CanCheckCondition<tyr::GroundTag, ExtCondition, BaseStateContext>);
-static_assert(!CanCheckCondition<tyr::GroundTag, IcpCondition, ExtContext>);
-static_assert(!CanCheckCondition<tyr::GroundTag, ExtCondition, IcpContext>);
-static_assert(!CanCheckCondition<tyr::GroundTag, BaseCondition, NameOnlyContext>);
-static_assert(!CanCheckCondition<tyr::LiftedTag, BaseCondition, BaseStateContext>);
-static_assert(!CanCheckCondition<tyr::LiftedTag, BaseCondition, BaseContext>);
+static_assert(CanCheckCompatibility<tyr::GroundTag, BaseCondition, BaseContext> && CanCheckCompatibility<tyr::GroundTag, BaseCondition, BaseStateContext>);
+static_assert(CanCheckCompatibility<tyr::GroundTag, ExtCondition, ExtContext> && CanCheckCompatibility<tyr::GroundTag, ExtCondition, ExtStateContext>);
+static_assert(CanCheckCompatibility<tyr::GroundTag, IcpCondition, IcpContext> && CanCheckCompatibility<tyr::GroundTag, IcpCondition, ExtStateContext>);
+static_assert(!CanCheckCompatibility<tyr::GroundTag, BaseCondition, ExtStateContext>);
+static_assert(!CanCheckCompatibility<tyr::GroundTag, ExtCondition, BaseStateContext>);
+static_assert(!CanCheckCompatibility<tyr::GroundTag, IcpCondition, ExtContext>);
+static_assert(!CanCheckCompatibility<tyr::GroundTag, ExtCondition, IcpContext>);
+static_assert(!CanCheckCompatibility<tyr::GroundTag, BaseCondition, NameOnlyContext>);
+static_assert(!CanCheckCompatibility<tyr::LiftedTag, BaseCondition, BaseStateContext>);
+static_assert(!CanCheckCompatibility<tyr::LiftedTag, BaseCondition, BaseContext>);
+
+static_assert(CanCheckCompatibility<tyr::GroundTag, IcpCondition, IcpResourceContext>);
+static_assert(CanCheckCompatibility<tyr::GroundTag, IcpEffect, IcpResourceContext>);
+static_assert(!CanCheckCompatibility<tyr::LiftedTag, IcpCondition, IcpResourceContext>);
+static_assert(!CanCheckCompatibility<tyr::LiftedTag, IcpEffect, IcpResourceContext>);
+static_assert(!CanCheckCompatibility<tyr::GroundTag, ExtCondition, IcpResourceContext>);
+static_assert(!CanCheckCompatibility<tyr::GroundTag, IcpEffect, ExtContext>);
+static_assert(!CanCheckCompatibility<tyr::GroundTag, IcpEffect, ExtStateContext>);
+
+static_assert(CanCheckCompatibility<tyr::GroundTag, kr::ps::base::RuleView, BaseResourceContext>);
+static_assert(CanCheckCompatibility<tyr::GroundTag, kr::ps::base::SketchView, BaseResourceContext>);
+static_assert(!CanCheckCompatibility<tyr::LiftedTag, kr::ps::base::RuleView, BaseResourceContext>);
+static_assert(!CanCheckCompatibility<tyr::LiftedTag, kr::ps::base::SketchView, BaseResourceContext>);
+static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::base::RuleView, IcpResourceContext>);
+static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::base::SketchView, IcpResourceContext>);
+
+// Instantiate the compatibility bodies through a structural transition context.
+[[maybe_unused]] bool check_structural_compatibility(IcpCondition condition,
+                                                     IcpEffect effect,
+                                                     IcpResourceContext& context,
+                                                     kr::ps::base::RuleView rule,
+                                                     kr::ps::base::SketchView sketch,
+                                                     BaseResourceContext& base_context)
+{
+    return kr::ps::is_compatible_with<tyr::GroundTag>(condition, context) && kr::ps::is_compatible_with<tyr::GroundTag>(effect, context)
+           && kr::ps::base::is_compatible_with<tyr::GroundTag>(rule, base_context) && kr::ps::base::is_compatible_with<tyr::GroundTag>(sketch, base_context);
+}
 
 }  // namespace
 }  // namespace runir::tests

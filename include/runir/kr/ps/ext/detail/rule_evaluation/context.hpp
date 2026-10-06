@@ -5,7 +5,6 @@
 #include "runir/kr/ps/ext/execution_storage.hpp"
 #include "runir/kr/ps/rule_evaluator_concepts.hpp"
 
-#include <type_traits>
 #include <tyr/planning/node.hpp>
 
 namespace runir::kr::ps::ext::detail
@@ -35,7 +34,6 @@ struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningSta
 
     template<ext::ProgramStateViewConcept<Kind> State>
     auto make_dl_context(State state)
-        requires std::same_as<std::remove_cvref_t<decltype(state.get_state())>, PlanningState>
     {
         const auto module_ = state.get_module_state();
         return environment.make_dl_context(planning_state, module_.get_arguments(), module_.get_registers());
@@ -44,7 +42,6 @@ struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningSta
     template<ext::ProgramStateViewConcept<Kind> State,
              ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
     auto make_dl_transition_context(State state, const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate)
-        requires std::same_as<std::remove_cvref_t<decltype(state.get_state())>, PlanningState>
     {
         const auto module_ = state.get_module_state();
         return environment.make_dl_transition_context(planning_state,

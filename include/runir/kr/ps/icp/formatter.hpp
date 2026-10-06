@@ -96,7 +96,7 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::icp:
     else
     {
         append_conditions(os, view.get_conditions());
-        using Category = typename Kind::Category;
+        using Category = RuleCategoryFor<Kind>;
         os << ygg::print_indent << "(:" << Category::name << ' ' << view.get_feature().get_symbol() << ")\n";
         os << ygg::print_indent << "(:register (:" << Category::name << ' ' << view.get_register().get_name() << "))\n";
         append_effects(os, view.get_effects());

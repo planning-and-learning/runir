@@ -255,10 +255,10 @@ def test_query_objects_iterators_and_renames_retain_owners(kind, access):
 @pytest.mark.parametrize("kind", ["ground", "lifted"])
 def test_action_effect_contract_violation_is_an_exception(kind):
     task_context, program, expander, state, environment = _runtime(kind, _program(effects="(decreases count)"))
-    with pytest.raises(ext.ActionRuleContractError):
+    with pytest.raises(RuntimeError, match="offered transition violates declared effects"):
         collect_steps(expander, state)
     options = getattr(ext, f"{kind.title()}ProgramSearchOptions")()
-    with pytest.raises(ext.ActionRuleContractError):
+    with pytest.raises(RuntimeError, match="offered transition violates declared effects"):
         getattr(ext, f"find_{kind}_solution")(task_context, program, options)
 
 
@@ -295,7 +295,7 @@ def test_action_rejects_visited_inapplicable_query_tuple(kind):
     task_context, program, expander, state, environment = _runtime(
         kind, _program(query='(q_atomic_state "edge" (from to))'),
     )
-    with pytest.raises(ext.ActionRuleContractError):
+    with pytest.raises(RuntimeError, match="offered action is not applicable"):
         collect_steps(expander, state)
 
 

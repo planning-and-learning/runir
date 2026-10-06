@@ -29,7 +29,8 @@ product of separate concept denotations.
 
 Here `move` has two parameters. Each query row supplies the complete normalized
 action binding, in schema-variable order (`get_variables()`). The parser checks
-the query width against the normalized schema's `get_arity()`. This includes any
+that the action exists in the supplied domain and that the query width matches
+the normalized schema's `get_arity()`. This includes any
 existential witness variables introduced during Tyr normalization. Use
 `q_project` to reorder output columns and `q_rename` to rename them;
 column names need not equal the PDDL parameter names. Query features belong to
@@ -51,7 +52,7 @@ remain unconstrained. In the example, moving preserves the number of occupied
 positions.
 
 Execution checks applicability and the effects on transitions it visits. It
-raises `pyrunir.kr.ps.ext.ActionRuleContractError` if a visited tuple is
+raises `std::logic_error` in C++ (`RuntimeError` in Python) if a visited tuple is
 inapplicable or its successor violates the declaration.
 A violation is an error, not an alternative to silently discard. Successful
 execution checks only the transitions actually visited; it does not verify the

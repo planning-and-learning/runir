@@ -1,8 +1,7 @@
 #include <concepts>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/repository.hpp>
-#include <runir/kr/ps/condition_compatibility.hpp>
-#include <runir/kr/ps/effect_compatibility.hpp>
+#include <runir/kr/ps/compatibility.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/uns/repository.hpp>
@@ -120,17 +119,29 @@ static_assert(!StoredType<NumericalPositive>);
 static_assert(!StoredType<BooleanDecreases>);
 static_assert(!CanEvaluate<InvalidFeature, BaseCustomRepository, BaseStateContext>);
 
+template<typename Kind, typename Type, typename Repository, typename Context>
+concept CanCheckCompatibility = requires(ygg::View<ygg::Index<Type>, Repository> view, Context& context) {
+    { kr::ps::is_compatible_with<Kind>(view, context) } -> std::same_as<bool>;
+};
+
 template<typename Family, typename Repository>
 consteval bool observation_contracts()
 {
     using Context = kr::ps::dl::TransitionEvaluationContext<Family, tyr::GroundTag>;
     using Boolean = kr::ps::dl::BooleanFeature;
     using Numerical = kr::ps::dl::NumericalFeature;
-    static_assert(kr::ps::IsConcreteConditionView<tyr::GroundTag, Family, kr::DlTag, Boolean, kr::ps::dl::Positive, Context, Repository>);
-    static_assert(kr::ps::IsConcreteEffectView<tyr::GroundTag, Family, kr::DlTag, Numerical, kr::ps::dl::Decreases, Context, Repository>);
-    static_assert(!kr::ps::IsConcreteConditionView<tyr::GroundTag, Family, kr::DlTag, Numerical, kr::ps::dl::Positive, Context, Repository>);
-    static_assert(!kr::ps::IsConcreteEffectView<tyr::GroundTag, Family, kr::DlTag, Boolean, kr::ps::dl::Decreases, Context, Repository>);
-    static_assert(!kr::ps::IsConcreteConditionView<tyr::GroundTag, Family, void, Boolean, kr::ps::dl::Positive, Context, Repository>);
+    using Condition = kr::ps::ConcreteCondition<Family, kr::DlTag, Boolean, kr::ps::dl::Positive>;
+    using Effect = kr::ps::ConcreteEffect<Family, kr::DlTag, Numerical, kr::ps::dl::Decreases>;
+    static_assert(CanCheckCompatibility<tyr::GroundTag, Condition, Repository, Context>);
+    static_assert(CanCheckCompatibility<tyr::GroundTag, Effect, Repository, Context>);
+    static_assert(!CanCheckCompatibility<tyr::LiftedTag, Condition, Repository, Context>);
+    static_assert(!CanCheckCompatibility<tyr::LiftedTag, Effect, Repository, Context>);
+    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteCondition<Family, kr::DlTag, Numerical, kr::ps::dl::Positive>, Repository, Context>);
+    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteEffect<Family, kr::DlTag, Boolean, kr::ps::dl::Decreases>, Repository, Context>);
+    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteCondition<Family, void, Boolean, kr::ps::dl::Positive>, Repository, Context>);
+    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteEffect<Family, void, Numerical, kr::ps::dl::Decreases>, Repository, Context>);
+    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteConditionVariant<Family, void>, Repository, Context>);
+    static_assert(!CanCheckCompatibility<tyr::GroundTag, kr::ps::ConcreteEffectVariant<Family, void>, Repository, Context>);
 
     // The variant alternatives and repository inventory share one ordered list.
     using Conditions = ygg::ApplyTypeListT<::cista::offset::variant, ygg::MapTypeListT<ygg::Index, kr::ps::detail::PsConcreteConditionTypes<Family>>>;

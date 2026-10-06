@@ -2,6 +2,7 @@
 #include "planning_fixtures.hpp"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <filesystem>
 #include <gtest/gtest.h>
@@ -9,7 +10,6 @@
 #include <runir/kr/ps/icp/dl/parser.hpp>
 #include <runir/kr/ps/icp/program_executor.hpp>
 #include <runir/kr/ps/icp/successor_expander.hpp>
-#include <runir/kr/ps/rule_evaluator_concepts.hpp>
 #include <runir/kr/task_context.hpp>
 
 namespace runir::tests
@@ -21,40 +21,6 @@ namespace
 namespace icp = kr::ps::icp;
 using Status = icp::ProgramProofStatus;
 using Outcome = icp::detail::ProgramOutcome;
-
-template<tyr::TaskKind Kind>
-consteval bool rule_evaluator_contracts_hold()
-{
-    using Context = kr::ps::RuleEvaluationContext<kr::IcpFamilyTag, Kind>;
-    using State = icp::ProgramStateView<Kind>;
-    using PlanningState = tyr::planning::StateView<Kind>;
-    using Step = icp::detail::ProgramStep<Kind>;
-    using Crule = icp::detail::RuleEvaluator<Kind, icp::CruleTag>;
-    using ConceptLoad = icp::detail::RuleEvaluator<Kind, icp::LoadTag<kr::dl::ConceptTag>>;
-    using RoleLoad = icp::detail::RuleEvaluator<Kind, icp::LoadTag<kr::dl::RoleTag>>;
-    using BorrowedCandidate = tyr::planning::LabeledNode<Kind, PlanningState, tyr::planning::BorrowedActionBindingView<Kind>>;
-    using IndexedCandidate = tyr::planning::LabeledNode<Kind, PlanningState>;
-    using Emit = bool (*)(Step);
-    using Stop = bool (*)();
-
-    static_assert(kr::ps::RuleEvaluationContextConcept<Context, kr::IcpFamilyTag, Kind, State>);
-    static_assert(!kr::ps::RuleEvaluationContextConcept<const Context, kr::IcpFamilyTag, Kind, State>);
-    static_assert(!kr::ps::RuleEvaluationContextConcept<Context, kr::IcpFamilyTag, Kind, PlanningState>);
-    static_assert(kr::ps::MatchingRuleEvaluatorConcept<Crule, kr::IcpFamilyTag, Kind, Context, State, BorrowedCandidate>);
-    static_assert(kr::ps::MatchingRuleEvaluatorConcept<Crule, kr::IcpFamilyTag, Kind, Context, State, IndexedCandidate>);
-    static_assert(!kr::ps::MatchingRuleEvaluatorConcept<Crule, kr::IcpFamilyTag, Kind, const Context, State, IndexedCandidate>);
-    static_assert(!kr::ps::MatchingRuleEvaluatorConcept<ConceptLoad, kr::IcpFamilyTag, Kind, Context, State, BorrowedCandidate>);
-    static_assert(kr::ps::EmittingRuleEvaluatorConcept<ConceptLoad, kr::IcpFamilyTag, Kind, Context, State, Step, Emit, Stop>);
-    static_assert(kr::ps::EmittingRuleEvaluatorConcept<RoleLoad, kr::IcpFamilyTag, Kind, Context, State, Step, Emit, Stop>);
-    static_assert(!kr::ps::EmittingRuleEvaluatorConcept<Crule, kr::IcpFamilyTag, Kind, Context, State, Step, Emit, Stop>);
-    static_assert(!kr::ps::EmittingRuleEvaluatorConcept<ConceptLoad, kr::IcpFamilyTag, Kind, Context, State, Step, void (*)(Step), Stop>);
-    static_assert(!kr::ps::EmittingRuleEvaluatorConcept<ConceptLoad, kr::IcpFamilyTag, Kind, Context, State, Step, Emit, void (*)()>);
-    static_assert(!kr::ps::EmittingRuleEvaluatorConcept<ConceptLoad, kr::IcpFamilyTag, Kind, const Context, State, Step, Emit, Stop>);
-    return true;
-}
-
-static_assert(rule_evaluator_contracts_hold<tyr::GroundTag>());
-static_assert(rule_evaluator_contracts_hold<tyr::LiftedTag>());
 
 std::string rule(const std::string& name, const std::string& source, const std::string& target, const std::string& body)
 {
@@ -573,6 +539,37 @@ void check_rule_evaluator_scheduling()
             false));
         EXPECT_EQ(accepted, 1);
         EXPECT_EQ(statistics.num_generated, 1);
+    }
+
+    // Repeated occurrences keep module order in both natural and grouped expansion.
+    auto& repository = *context->domain_context->icp_repository;
+    auto module_data = policy.get_module().get_data();
+    module_data.memory_transitions.clear();
+    for (const auto row : { 1, 0, 1 })
+        module_data.memory_transitions.push_back(policy.get_module().get_data().memory_transitions[row]);
+    auto program_data = policy.get_data();
+    program_data.module = icp::insert(repository, module_data).first.get_index();
+    const auto repeated_policy = icp::insert(repository, program_data).first;
+    auto repeated_expander = icp::SuccessorExpander<Kind>(context, repeated_policy);
+    const auto repeated_source = initial(repeated_expander);
+    const auto expected = std::array { natural[2].rule, natural[0].rule, natural[2].rule };
+    for (const auto grouped : { false, true })
+    {
+        auto steps = std::vector<typename icp::SuccessorExpander<Kind>::Step> {};
+        auto statistics = icp::ProgramSearchStatistics {};
+        EXPECT_TRUE(repeated_expander.for_each_successor(
+            repeated_source,
+            statistics,
+            [&](auto step)
+            {
+                steps.push_back(std::move(step));
+                return true;
+            },
+            [] { return false; },
+            grouped));
+        ASSERT_EQ(steps.size(), 6);
+        for (size_t i = 0; i < steps.size(); ++i)
+            EXPECT_EQ(steps[i].rule, expected[grouped ? i % 3 : i / 2]);
     }
 }
 

@@ -9,11 +9,12 @@
 #include <functional>
 #include <span>
 #include <variant>
+#include <vector>
 
 namespace runir::kr::ps::icp::detail
 {
 
-/// Frozen rule records and occurrence schedules, with one shared evaluation workspace.
+/// Prepared rule occurrences in module order, with one shared evaluation workspace.
 template<tyr::TaskKind Kind>
 class RuleEvaluators
 {
@@ -21,30 +22,22 @@ class RuleEvaluators
     using Evaluator =
         std::variant<RuleEvaluator<Kind, LoadTag<runir::kr::dl::ConceptTag>>, RuleEvaluator<Kind, LoadTag<runir::kr::dl::RoleTag>>, CruleEvaluator>;
     using Action = tyr::formalism::planning::ActionView<tyr::LiftedTag>;
-    struct Schedule
-    {
-        ygg::uint_t memory;
-        std::size_t begin;
-        std::size_t end;
-    };
     struct ActionRules
     {
         Action action;
-        std::vector<std::size_t> rules;
+        std::vector<CruleEvaluator> rules;
     };
 
     RuleEvaluationWorkspace<Kind> m_workspace;
     std::vector<Evaluator> m_evaluators;
-    std::vector<std::size_t> m_schedule;
-    std::vector<Schedule> m_sources;
-    // Slots retain their inner capacities even when fewer action groups are enabled.
+    // Groups retain their inner capacities even when fewer actions are enabled.
     std::vector<ActionRules> m_enabled;
-    std::vector<std::size_t> m_matching;
+    std::vector<CruleEvaluator> m_matching;
 
     template<EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
     bool emit_crules(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind>& context,
                      Action action,
-                     std::span<const std::size_t> rules,
+                     std::span<const CruleEvaluator> rules,
                      ProgramStateView<Kind> source,
                      Emit&& emit,
                      Stop&& stop)
@@ -57,31 +50,25 @@ class RuleEvaluators
             if (stop())
                 return false;
             m_matching.clear();
-            for (const auto slot : rules)
-                if (std::get<CruleEvaluator>(m_evaluators[slot]).xconditions_match(source_context, source, binding))
-                    m_matching.push_back(slot);
+            for (const auto& evaluator : rules)
+                if (evaluator.xconditions_match(source_context, source, binding))
+                    m_matching.push_back(evaluator);
             if (m_matching.empty())
                 return true;
             const auto node = search.successor_generator->get_successor_node(tyr::planning::Node<Kind>(context.planning_state, 0),
                                                                              binding,
                                                                              *search.state_repository,
                                                                              *search.axiom_evaluator);
-            const auto candidate = tyr::planning::LabeledNode { binding, node };
+            const auto candidate =
+                tyr::planning::LabeledNode<Kind, tyr::planning::StateView<Kind>, tyr::planning::BorrowedActionBindingView<Kind>> { binding, node };
             environment.reset_target();
             auto transition = context.make_dl_transition_context(source, candidate);
-            static_assert(runir::kr::ps::MatchingRuleEvaluatorConcept<CruleEvaluator,
-                                                                      IcpFamilyTag,
-                                                                      Kind,
-                                                                      runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind>,
-                                                                      ProgramStateView<Kind>,
-                                                                      decltype(candidate)>);
             auto histories = std::optional<HistoriesView<Kind>> {};
             auto label = std::optional<tyr::formalism::planning::ActionBindingView> {};
-            for (const auto slot : m_matching)
+            for (const auto& evaluator : m_matching)
             {
                 if (stop())
                     return false;
-                const auto& evaluator = std::get<CruleEvaluator>(m_evaluators[slot]);
                 if (!evaluator.matches(context, source, candidate))
                     continue;
                 if (!histories)
@@ -100,39 +87,20 @@ class RuleEvaluators
             }
             return true;
         };
-        return search.successor_generator->for_each_borrowed_applicable_action_binding(
-            tyr::planning::Node<Kind>(context.planning_state, 0),
-            action,
-            std::ref(visit));
+        return search.successor_generator->for_each_borrowed_applicable_action_binding(tyr::planning::Node<Kind>(context.planning_state, 0),
+                                                                                       action,
+                                                                                       std::ref(visit));
     }
 
 public:
     RuleEvaluators(TaskContextPtr<Kind> task, ProgramView program) : m_workspace(std::move(task), program)
     {
-        auto slots = std::unordered_map<ygg::uint_t, std::size_t> {};
-        auto occurrences = std::vector<std::pair<ygg::uint_t, std::size_t>> {};
         for (const auto transition : program.get_module().get_memory_transitions())
             for (const auto variant : transition)
-            {
-                const auto [slot, inserted] = slots.try_emplace(ygg::uint_t(variant.get_index()), m_evaluators.size());
-                if (inserted)
-                    m_evaluators.push_back(ygg::visit([&]<RuleKind Tag>(RuleView<Tag> rule) -> Evaluator
-                                                      { return RuleEvaluator<Kind, Tag>(*get_task_context(), rule, variant); },
-                                                      variant.get_variant()));
-                const auto memory =
-                    std::visit([](const auto& evaluator) { return ygg::uint_t(evaluator.get_rule().get_source().get_index()); }, m_evaluators[slot->second]);
-                occurrences.emplace_back(memory, slot->second);
-            }
-        std::stable_sort(occurrences.begin(), occurrences.end(), [](const auto& lhs, const auto& rhs) { return lhs.first < rhs.first; });
-        m_schedule.reserve(occurrences.size());
-        for (const auto& [memory, slot] : occurrences)
-        {
-            if (m_sources.empty() || m_sources.back().memory != memory)
-                m_sources.push_back({ memory, m_schedule.size(), m_schedule.size() });
-            m_schedule.push_back(slot);
-            m_sources.back().end = m_schedule.size();
-        }
-        m_matching.reserve(m_schedule.size());
+                m_evaluators.push_back(ygg::visit([&]<RuleKind Tag>(RuleView<Tag> rule) -> Evaluator
+                                                  { return RuleEvaluator<Kind, Tag>(*get_task_context(), rule, variant); },
+                                                  variant.get_variant()));
+        m_matching.reserve(m_evaluators.size());
         m_enabled.reserve(m_evaluators.size());
     }
 
@@ -157,54 +125,43 @@ public:
             return emit(std::move(step));
         };
         std::size_t num_enabled = 0;
-        const auto memory = ygg::uint_t(state.get_memory_state().get_index());
-        const auto found = std::lower_bound(m_sources.begin(), m_sources.end(), memory, [](const auto& entry, auto value) { return entry.memory < value; });
-        if (found != m_sources.end() && found->memory == memory)
-            for (auto position = found->begin; position != found->end; ++position)
-            {
-                if (stop())
-                    return false;
-                const auto slot = m_schedule[position];
-                const auto exhausted = std::visit(
-                    [&](const auto& evaluator)
+        const auto memory = state.get_memory_state();
+        for (const auto& rule : m_evaluators)
+        {
+            const auto exhausted = std::visit(
+                [&]<typename Concrete>(const Concrete& evaluator)
+                {
+                    if (evaluator.get_rule().get_source() != memory)
+                        return true;
+                    if (stop())
+                        return false;
+                    if constexpr (std::same_as<Concrete, CruleEvaluator>)
                     {
-                        if constexpr (std::same_as<std::remove_cvref_t<decltype(evaluator)>, CruleEvaluator>)
-                        {
-                            if (!evaluator.is_applicable(source_context))
-                                return true;
-                            const auto action = evaluator.get_action();
-                            if (!grouped)
-                                return emit_crules(context, action, std::span<const std::size_t>(&slot, 1), state, output, stop);
-                            auto group =
-                                std::find_if(m_enabled.begin(), m_enabled.begin() + num_enabled, [&](const auto& entry) { return entry.action == action; });
-                            if (group == m_enabled.begin() + num_enabled)
-                            {
-                                if (num_enabled == m_enabled.size())
-                                    m_enabled.push_back({ action, {} });
-                                group = m_enabled.begin() + num_enabled++;
-                                group->action = action;
-                                group->rules.clear();
-                            }
-                            group->rules.push_back(slot);
+                        if (!evaluator.is_applicable(source_context))
                             return true;
-                        }
-                        else
+                        const auto action = evaluator.get_action();
+                        if (!grouped)
+                            return emit_crules(context, action, std::span<const CruleEvaluator>(&evaluator, 1), state, output, stop);
+                        auto group =
+                            std::find_if(m_enabled.begin(), m_enabled.begin() + num_enabled, [&](const auto& entry) { return entry.action == action; });
+                        if (group == m_enabled.begin() + num_enabled)
                         {
-                            static_assert(runir::kr::ps::EmittingRuleEvaluatorConcept<std::remove_cvref_t<decltype(evaluator)>,
-                                                                                      IcpFamilyTag,
-                                                                                      Kind,
-                                                                                      runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind>,
-                                                                                      ProgramStateView<Kind>,
-                                                                                      ProgramStep<Kind>,
-                                                                                      decltype(output),
-                                                                                      Stop>);
-                            return evaluator.emit(context, state, output, stop);
+                            if (num_enabled == m_enabled.size())
+                                m_enabled.push_back({ action, {} });
+                            group = m_enabled.begin() + num_enabled++;
+                            group->action = action;
+                            group->rules.clear();
                         }
-                    },
-                    m_evaluators[slot]);
-                if (!exhausted)
-                    return false;
-            }
+                        group->rules.push_back(evaluator);
+                        return true;
+                    }
+                    else
+                        return evaluator.emit(context, state, output, stop);
+                },
+                rule);
+            if (!exhausted)
+                return false;
+        }
         for (std::size_t i = 0; i < num_enabled; ++i)
             if (!emit_crules(context, m_enabled[i].action, m_enabled[i].rules, state, output, stop))
                 return false;

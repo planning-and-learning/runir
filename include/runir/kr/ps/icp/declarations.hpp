@@ -69,6 +69,10 @@ concept BindingRuleKind = std::same_as<T, LoadTag<runir::kr::dl::ConceptTag>> ||
 template<typename T>
 concept RuleKind = BindingRuleKind<T> || std::same_as<T, CruleTag>;
 
+/// DL category bound by a rule tag.
+template<BindingRuleKind Tag>
+using RuleCategoryFor = typename Tag::Category;
+
 template<RuleKind Kind>
 struct Rule
 {

@@ -55,7 +55,7 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext:
     append_conditions(os, view.get_conditions());
     if constexpr (runir::kr::ps::ext::BindingRuleKind<Kind>)
     {
-        using Category = typename Kind::Category;
+        using Category = RuleCategoryFor<Kind>;
         os << ygg::print_indent << "(:" << Category::name << ' ' << view.get_feature().get_symbol() << ")\n";
         os << ygg::print_indent << "(:register\n";
         {
@@ -65,7 +65,7 @@ void append_rule_body(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext:
         os << ygg::print_indent << ")\n";
         if (!view.get_effects().empty())
             append_effects(os, view.get_effects());
-        if constexpr (std::same_as<Kind, ChooseTag<typename Kind::Category>>)
+        if constexpr (std::same_as<Kind, ChooseTag<Category>>)
             if (!view.get_order().empty())
                 append_inline_section(os,
                                       "order",

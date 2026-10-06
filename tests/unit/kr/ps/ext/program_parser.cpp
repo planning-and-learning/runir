@@ -206,7 +206,16 @@ TEST(RunirTests, ExtModuleParserRejectsInvalidDoActions)
     auto repository = repository_factory.create(dl_repository);
 
     const auto unknown_action = read_fixture("kr/ps/ext/executor/ext_module_parser_rejects_invalid_do_actions/unknown_action.module");
-    EXPECT_THROW(kr::ps::ext::dl::parse_module(unknown_action, planning_task.get_domain().get_domain(), *repository), std::runtime_error);
+    try
+    {
+        kr::ps::ext::dl::parse_module(unknown_action, planning_task.get_domain().get_domain(), *repository);
+        FAIL() << "Expected a do-action missing from the domain to be rejected.";
+    }
+    catch (const kr::UndefinedSymbolError& error)
+    {
+        EXPECT_EQ(error.message(), fmt::format("Undefined action in domain '{}': missing-action", planning_task.get_domain().get_domain().get_name().str()));
+        EXPECT_TRUE(error.diagnostic().location.has_value()) << error.what();
+    }
 
     const auto wrong_arity = std::string(read_fixture("kr/ps/ext/executor/ext_module_parser_rejects_invalid_do_actions/wrong_arity.module"));
     try

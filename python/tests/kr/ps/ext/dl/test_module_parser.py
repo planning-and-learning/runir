@@ -464,7 +464,7 @@ def test_executor_fixture(case: ExecutionFixture) -> None:
 
 def test_program_parser_rejects_missing_action() -> None:
     task_context, planning_domain, _ground_task = _ground_context_and_domain()
-    with pytest.raises(UndefinedSymbolError, match=r"Undefined action: missing-action"):
+    with pytest.raises(UndefinedSymbolError, match=rf"Undefined action in domain '{planning_domain.get_domain().get_name()}': missing-action"):
         dl.parse_program(
             read_fixture("kr/ps/ext/execution/missing_action.program"),
             planning_domain,

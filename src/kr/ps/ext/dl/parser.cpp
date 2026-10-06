@@ -521,7 +521,7 @@ void validate_do_action(tyr::formalism::planning::DomainView domain, const ast::
 {
     const auto action = find_action(domain, rule.action.text);
     if (!action)
-        diagnostics.throw_at(rule.action, runir::kr::UndefinedSymbolError("action", rule.action.text));
+        diagnostics.throw_at(rule.action, runir::kr::UndefinedSymbolError("action in domain '" + domain.get_name().str() + "'", rule.action.text));
 
     if (rule.arguments.size() != action->get_original_arity())
         diagnostics.throw_at(rule.action, runir::kr::ArityMismatchError("action " + rule.action.text, action->get_original_arity(), rule.arguments.size()));
@@ -542,7 +542,7 @@ auto parse_binding_rule(
     const std::string& symbol,
     runir::kr::parser::DiagnosticContext& diagnostics)
 {
-    using Category = typename Kind::Category;
+    using Category = RuleCategoryFor<Kind>;
     auto data = runir::kr::ps::ext::checkout<Rule<Kind>>(builder);
     data->source = source;
     data->target = target;
@@ -595,7 +595,7 @@ auto parse_rule(
         [&](const auto& concrete) -> RuleVariantView
         {
             using RuleAst = std::remove_cvref_t<decltype(concrete)>;
-            if constexpr (requires { typename AstCategory<RuleAst>::Type; })
+            if constexpr (requires { typename AstCategory<RuleAst>::Kind; })
             {
                 using Kind = typename AstCategory<RuleAst>::Kind;
                 return parse_binding_rule<Kind>(repository,
@@ -638,7 +638,8 @@ auto parse_rule(
             {
                 const auto action = find_action(domain, concrete.action.text);
                 if (!action)
-                    diagnostics.throw_at(concrete.action, runir::kr::UndefinedSymbolError("action", concrete.action.text));
+                    diagnostics.throw_at(concrete.action,
+                                         runir::kr::UndefinedSymbolError("action in domain '" + domain.get_name().str() + "'", concrete.action.text));
                 const auto query_feature = require_feature(query_features, concrete.query_feature, diagnostics);
                 const auto query_arity = ygg::make_view(query_feature, repository).get_expression().get_schema().size();
                 if (query_arity != action->get_arity())

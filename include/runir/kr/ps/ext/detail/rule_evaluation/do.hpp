@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <concepts>
 #include <functional>
-#include <optional>
 #include <tyr/formalism/planning/action_view.hpp>
 #include <tyr/planning/node.hpp>
 #include <utility>
@@ -29,18 +28,15 @@ class DoRuleEvaluator
 {
     RuleView<DoTag> m_rule;
     RuleVariantView m_variant;
-    std::optional<tyr::formalism::planning::ActionView<tyr::LiftedTag>> m_action;
+    tyr::formalism::planning::ActionView<tyr::LiftedTag> m_action;
 
 public:
     using RuleTag = DoTag;
-    DoRuleEvaluator(RuleView<DoTag> rule, RuleVariantView variant, const tyr::planning::Task<Kind>& task) : m_rule(rule), m_variant(variant)
+    DoRuleEvaluator(RuleView<DoTag> rule, RuleVariantView variant, tyr::formalism::planning::ActionView<tyr::LiftedTag> action) :
+        m_rule(rule),
+        m_variant(variant),
+        m_action(action)
     {
-        for (const auto action : task.get_task().get_domain().get_actions())
-            if (action.get_name().str() == rule.get_action_name())
-            {
-                m_action = action;
-                break;
-            }
     }
     auto get_rule() const noexcept { return m_rule; }
     auto get_variant() const noexcept { return m_variant; }
@@ -127,26 +123,24 @@ public:
         if (std::ranges::any_of(denotations, [](const auto& denotation) { return denotation.get().count() == 0; }))
             return true;
         auto& search = *context.task_context->search_context;
-        if (m_action)
+        const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
         {
-            const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
-            {
-                if (stop())
-                    return false;
-                if (!action_matches_do_arguments(rule, binding, denotations))
-                    return true;
-                const auto candidate = context.storage.successor(planning_state, binding);
-                context.environment.reset_target();
-                if (!do_effects_match(context, rule, state, planning_state, candidate.get_state()))
-                    return true;
-                if (stop())
-                    return false;
-                const auto labeled = tyr::planning::LabeledNode { search.successor_generator->materialize_action_binding(binding), candidate };
-                return emit(detail::planning_step(context.storage, state, labeled, rule_variant, rule.get_target(), context.task_context));
-            };
-            return search.successor_generator->for_each_borrowed_applicable_action_binding(tyr::planning::Node(planning_state, 0), *m_action, std::ref(visit));
-        }
-        return true;
+            if (stop())
+                return false;
+            if (!action_matches_do_arguments(rule, binding, denotations))
+                return true;
+            const auto candidate = context.storage.successor(planning_state, binding);
+            context.environment.reset_target();
+            if (!do_effects_match(context, rule, state, planning_state, candidate.get_state()))
+                return true;
+            if (stop())
+                return false;
+            const auto labeled = tyr::planning::LabeledNode<Kind, PlanningState> { search.successor_generator->materialize_action_binding(binding), candidate };
+            return emit(detail::planning_step(context.storage, state, labeled, rule_variant, rule.get_target(), context.task_context));
+        };
+        return search.successor_generator->for_each_borrowed_applicable_action_binding(tyr::planning::Node<Kind, PlanningState>(planning_state, 0),
+                                                                                       m_action,
+                                                                                       std::ref(visit));
     }
     template<ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,

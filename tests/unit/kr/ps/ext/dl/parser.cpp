@@ -236,7 +236,16 @@ TEST(RunirTests, ExtendedQueryActionRuleRejectsInvalidReferencesAndArity)
             *repository);
     };
     const auto binary = std::string(R"((:query (:symbol Q) (:expression (q_role (X Y) (r_universal)))))");
-    EXPECT_THROW(parse("missing", "Q", binary), kr::UndefinedSymbolError);
+    try
+    {
+        parse("missing", "Q", binary);
+        FAIL() << "Expected an action missing from the domain to be rejected.";
+    }
+    catch (const kr::UndefinedSymbolError& error)
+    {
+        EXPECT_EQ(error.message(), fmt::format("Undefined action in domain '{}': missing", domain.get_name().str()));
+        EXPECT_TRUE(error.diagnostic().location.has_value()) << error.what();
+    }
     EXPECT_THROW(parse("move", "missing", binary), kr::UndefinedSymbolError);
     EXPECT_THROW(parse("move", "Q", "(:concept (:symbol Q) (:expression (c_top)))"), kr::UndefinedSymbolError);
     EXPECT_THROW(parse("move", "Q", "(:query (:symbol Q) (:expression (q_concept X (c_top))))"), kr::ArityMismatchError);
