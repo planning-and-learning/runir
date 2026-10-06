@@ -33,27 +33,25 @@ public:
     }
 };
 
-/// Owns borrowed input views. Each demand updates only its dependency graph;
+/// Owns borrowed input views. First demand initializes its inactive dependencies;
 /// results already read in this state remain stable as other roots are evaluated.
 template<FamilyTag Family, tyr::TaskKind Kind, StateEvaluationContextConcept<Family, Kind> Context>
 struct DeltaEvaluationContext
 {
     incremental::EvaluationGraph<Family, Kind>& graph;
     Context inputs;
-    const incremental::Delta<Family>& delta;
 };
 
 template<tyr::TaskKind Kind, FamilyTag Family, runir::kr::dl::CategoryTag Category, StateEvaluationContextConcept<Family, Kind> Context>
 auto evaluate(runir::kr::dl::FamilyConstructorView<Family, Category> expression, DeltaEvaluationContext<Family, Kind, Context>& context)
 {
-    return context.graph.evaluate(context.graph.get_index(expression), context.inputs, context.delta);
+    return context.graph.evaluate(context.graph.get_index(expression), context.inputs);
 }
 
 template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context>
 auto evaluate(runir::kr::dl::FamilyQueryView<Family> expression, DeltaEvaluationContext<Family, Kind, Context>& context)
 {
-    return ygg::make_view(context.graph.evaluate(context.graph.get_index(expression), context.inputs, context.delta),
-                          *context.inputs.get_state().get_task().get_repository());
+    return ygg::make_view(context.graph.evaluate(context.graph.get_index(expression), context.inputs), *context.inputs.get_state().get_task().get_repository());
 }
 
 /// Independent source and target graphs retain their input snapshots and result buffers.
@@ -96,7 +94,7 @@ class DeltaEvaluationPolicy
                                                       context.registers());
                     else
                         m_delta.template assign<Kind>(ygg::make_view(m_state, task), context.get_state());
-                    m_graph.advance();
+                    m_graph.advance(m_delta, context.get_workspace().get_database_workspace());
                 }
                 else
                     m_graph.reset();
@@ -105,7 +103,7 @@ class DeltaEvaluationPolicy
                     assign(m_registers, context.registers());
                 m_initialized = m_ready = true;
             }
-            return DeltaEvaluationContext<Family, Kind, Context> { m_graph, context, m_delta };
+            return DeltaEvaluationContext<Family, Kind, Context> { m_graph, context };
         }
     };
 

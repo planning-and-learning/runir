@@ -655,11 +655,13 @@ void check_incremental_evaluation()
     graph.initialize(invocation_context);
     compare_graph(invocation_context);
 
-    // A skipped parent must rebuild even when other roots kept its shared child current.
+    // Active roots stay current without demands; a later parent starts from its current child.
     storage.reset_all();
     graph.reset();
     EXPECT_THROW(graph.get_result(query_id), std::logic_error);
-    EXPECT_EQ(graph.evaluate(query_count_id, initial_context, empty_delta).get(), sem::evaluate<Kind>(query_count, initial_context).get());
+    EXPECT_EQ(query_rows(graph.evaluate(query_id, initial_context)), query_rows(sem::evaluate<Kind>(query, initial_context)));
+    EXPECT_EQ(graph.evaluate(edge_count_id, initial_context).get(), sem::evaluate<Kind>(edge_count, initial_context).get());
+    EXPECT_THROW(graph.get_result(query_count_id), std::logic_error);
     EXPECT_THROW(graph.get_result(distance_id), std::logic_error);  // Unrelated roots remain unmaterialized.
     EXPECT_THROW(graph.get_delta(query_id), std::logic_error);      // Demand evaluation publishes results, not historical deltas.
     size_t previous_state = 0;
@@ -668,20 +670,27 @@ void check_incremental_evaluation()
     {
         storage.reset_dynamic();
         demand_delta.template assign<Kind>(nodes[previous_state].get_state(), registers(previous_state), nodes[i].get_state(), registers(i));
-        graph.advance();
+        graph.advance(demand_delta, workspace);
         auto context = context_for(nodes[i].get_state(), i, arguments);
-        EXPECT_EQ(query_rows(graph.evaluate(query_id, context, demand_delta)), query_rows(sem::evaluate<Kind>(query, context)));
-        EXPECT_EQ(graph.evaluate(edge_count_id, context, demand_delta).get(), sem::evaluate<Kind>(edge_count, context).get());
+        EXPECT_EQ(query_rows(graph.evaluate(query_id, context)), query_rows(sem::evaluate<Kind>(query, context)));
+        EXPECT_EQ(graph.get_result(edge_count_id).get(), sem::evaluate<Kind>(edge_count, context).get());
+        EXPECT_THROW(graph.get_result(query_count_id), std::logic_error);
+        EXPECT_THROW(graph.get_result(distance_id), std::logic_error);
         if (i == 0)
         {
-            EXPECT_EQ(graph.evaluate(query_count_id, context, demand_delta).get(), sem::evaluate<Kind>(query_count, context).get());
+            EXPECT_EQ(graph.evaluate(query_count_id, context).get(), sem::evaluate<Kind>(query_count, context).get());
             const auto retained_rows = query_rows(graph.get_result(query_id));
             for (size_t j = 0; j < scalar_ids.size(); ++j)
-                EXPECT_EQ(graph.evaluate(scalar_ids[j], context, demand_delta).get(), sem::evaluate<Kind>(scalar_expressions[j], context).get());
+                EXPECT_EQ(graph.evaluate(scalar_ids[j], context).get(), sem::evaluate<Kind>(scalar_expressions[j], context).get());
             EXPECT_EQ(query_rows(graph.get_result(query_id)), retained_rows);
         }
         previous_state = i;
     }
+    graph.reset();
+    EXPECT_THROW(graph.get_result(query_id), std::logic_error);
+    EXPECT_THROW(graph.get_result(edge_count_id), std::logic_error);
+    storage.reset_all();
+    EXPECT_EQ(graph.evaluate(query_count_id, invocation_context).get(), sem::evaluate<Kind>(query_count, invocation_context).get());
 
     const auto reject_multiple_values = [&]<dl::ConceptOrRoleTag Category>(dl::FamilyConstructorView<Ext, Category> expression)
     {
@@ -705,13 +714,23 @@ void check_incremental_evaluation()
         auto demand = sem::incremental::EvaluationGraph<Ext, Kind>(*search->task, { expression });
         const auto root = demand.get_index(expression);
         demand.reset();
-        EXPECT_NO_THROW(demand.evaluate(root, invocation_context, empty_delta));
-        demand.advance();
-        EXPECT_THROW(demand.evaluate(root, invocation_context, invalid), std::invalid_argument);
+        EXPECT_NO_THROW(demand.evaluate(root, invocation_context));
+        EXPECT_THROW(demand.advance(invalid, workspace), std::invalid_argument);
         EXPECT_FALSE(demand.is_valid());
         EXPECT_THROW(demand.get_result(root), std::logic_error);
+        EXPECT_THROW(demand.advance(empty_delta, workspace), std::logic_error);
         demand.reset();
-        EXPECT_EQ(demand.evaluate(root, invocation_context, empty_delta).count(), 0);
+        EXPECT_EQ(demand.evaluate(root, invocation_context).count(), 0);
+        demand.advance(empty_delta, workspace);
+        EXPECT_EQ(demand.get_result(root).count(), 0);
+
+        const auto roots = std::array<sem::incremental::EvaluationRoot<Ext>, 1> { expression };
+        auto policy = sem::DeltaEvaluationPolicy<Ext, Kind>(*search->task, roots);
+        auto context = policy.make_source_context(invocation_context);
+        EXPECT_EQ(sem::evaluate<Kind>(expression, context).count(), 0);
+        EXPECT_THROW(context.graph.advance(invalid, workspace), std::invalid_argument);
+        auto recovered = policy.make_source_context(invocation_context);
+        EXPECT_EQ(sem::evaluate<Kind>(expression, recovered).count(), 0);
     };
     reject_multiple_values(source);
     reject_multiple_values(parser::parse_role("(r_register 0)", domain, *constructors));
