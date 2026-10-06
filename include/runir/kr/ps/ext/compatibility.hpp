@@ -28,11 +28,20 @@ bool has_current_source(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, S state)
 }
 
 // Reject the source memory before evaluating conditions in the reusable environment.
-template<tyr::TaskKind Kind, RuleKind RuleKindT, typename C, ProgramStateViewConcept<Kind> S, tyr::planning::StateViewConcept<Kind> PS>
-bool rule_is_applicable(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule, S state, const PS& planning_state, EvaluationEnvironment<Kind>& environment)
+template<tyr::TaskKind Kind,
+         RuleKind RuleKindT,
+         typename C,
+         ProgramStateViewConcept<Kind> S,
+         tyr::planning::StateViewConcept<Kind> PS,
+         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy>
+bool rule_is_applicable(ygg::View<ygg::Index<Rule<RuleKindT>>, C> rule,
+                        S state,
+                        const PS& planning_state,
+                        EvaluationEnvironment<Kind, EvaluationPolicy>& environment)
 {
     if (!has_current_source(rule, state))
         return false;
+    environment.select_source(state);
     auto state_context = environment.make_dl_context(planning_state, state.get_module_state().get_arguments(), state.get_module_state().get_registers());
     return conditions_are_compatible<Kind>(rule, state_context);
 }

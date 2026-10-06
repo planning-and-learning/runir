@@ -17,8 +17,10 @@ public:
 
     auto get_rule() const noexcept { return m_rule; }
 
-    template<tyr::TaskKind Kind>
-    bool matches(RuleEvaluationContext<BaseFamilyTag, Kind>& context, tyr::planning::StateView<Kind> source, tyr::planning::StateView<Kind> target) const
+    template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<BaseFamilyTag, Kind> EvaluationPolicy>
+    bool matches(RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
+                 tyr::planning::StateView<Kind> source,
+                 tyr::planning::StateView<Kind> target) const
     {
         auto transition = context.make_dl_transition_context(source, target);
         return runir::kr::ps::base::is_compatible_with<Kind>(m_rule, transition);

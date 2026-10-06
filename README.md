@@ -70,6 +70,7 @@ CMake options:
 | `RUNIR_BUILD_EXECUTABLES` | `OFF` | Build Runir executables. |
 | `RUNIR_BUILD_PYRUNIR` | `OFF` | Build `pyrunir` Python bindings. |
 | `RUNIR_HEADER_INSTANTIATION` | `OFF` | Instantiate templates in in-tree translation units at higher compile-time cost. |
+| `RUNIR_DELTA_EVALUATION` | `OFF` | Use incremental feature evaluation in Ext `find_solution`. |
 | `RUNIR_USE_LLD` | `ON` | Use LLVM `lld` with Clang when available. |
 | `RUNIR_ENABLE_LTO` | `ON` | Enable link-time optimization for Release builds. |
 

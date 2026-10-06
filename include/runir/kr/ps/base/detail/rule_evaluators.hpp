@@ -11,14 +11,14 @@
 namespace runir::kr::ps::base::detail
 {
 
-template<tyr::TaskKind Kind>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<BaseFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<BaseFamilyTag, Kind>>
 class RuleEvaluators
 {
-    EvaluationEnvironment<Kind> m_environment;
+    EvaluationEnvironment<Kind, EvaluationPolicy> m_environment;
     SketchView m_sketch;
 
 public:
-    RuleEvaluators(runir::kr::TaskContext<Kind>& task, SketchView sketch) : m_environment(task), m_sketch(sketch) {}
+    RuleEvaluators(runir::kr::TaskContext<Kind>& task, SketchView sketch) : m_environment(task, sketch), m_sketch(sketch) {}
 
     auto& get_environment() noexcept { return m_environment; }
     void begin_source() { m_environment.reset_source(); }
@@ -29,7 +29,7 @@ public:
         if (source == target)
             return std::nullopt;
         m_environment.reset_target();
-        auto context = RuleEvaluationContext<BaseFamilyTag, Kind> { m_environment };
+        auto context = RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { m_environment };
         for (const auto rule : m_sketch.get_rules())
         {
             if (stop())

@@ -12,12 +12,14 @@
 #include <concepts>
 #include <cstddef>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <string_view>
 #include <tyr/planning/node.hpp>
 #include <utility>
 #include <variant>
 #include <yggdrasil/containers/unique_object_pool.hpp>
+#include <yggdrasil/core/concepts.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -123,9 +125,8 @@ public:
     RuleVariantView rule;
     size_t position = 0;
 
-    Choice(RuleVariantView rule_,
-           runir::kr::dl::semantics::DenotationView<Category> denotation,
-           ygg::UniqueObjectPool<runir::kr::dl::semantics::DenotationElementViewList<Category>>& pool) :
+    template<ygg::InputRangeOf<runir::kr::dl::semantics::DenotationElementView<Category>> Denotation>
+    Choice(RuleVariantView rule_, Denotation denotation, ygg::UniqueObjectPool<runir::kr::dl::semantics::DenotationElementViewList<Category>>& pool) :
         m_bindings(pool.get_or_allocate()),
         rule(rule_)
     {

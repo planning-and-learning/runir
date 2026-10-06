@@ -55,6 +55,7 @@ target_compile_features(kr PUBLIC cxx_std_20)
 target_compile_definitions(kr
     PUBLIC
         FMT_HEADER_ONLY
+        $<$<BOOL:${RUNIR_DELTA_EVALUATION}>:RUNIR_DELTA_EVALUATION=1>
 )
 
 target_include_directories(kr

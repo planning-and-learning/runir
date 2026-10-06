@@ -1,6 +1,7 @@
 #ifndef RUNIR_KR_PS_DL_TRANSITION_EVALUATION_CONTEXT_HPP_
 #define RUNIR_KR_PS_DL_TRANSITION_EVALUATION_CONTEXT_HPP_
 
+#include "runir/kr/dl/semantics/evaluation_context.hpp"
 #include "runir/kr/dl/semantics/ext/state_evaluation_context.hpp"
 #include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/family_traits.hpp"
@@ -8,14 +9,40 @@
 #include <concepts>
 #include <utility>
 
+namespace runir::kr::ps
+{
+
+/// Keep source results alive while a candidate's target results are evaluated.
+template<FamilyTag Family, typename SourceContext, typename TargetContext>
+class EvaluationTransitionContext
+{
+    SourceContext m_source;
+    TargetContext m_target;
+
+public:
+    using FamilyType = Family;
+
+    EvaluationTransitionContext(SourceContext source, TargetContext target) : m_source(std::move(source)), m_target(std::move(target)) {}
+    auto& get_source_context() noexcept { return m_source; }
+    auto& get_target_context() noexcept { return m_target; }
+};
+
+template<FamilyTag Family, typename SourceContext, typename TargetContext>
+auto make_evaluation_transition_context(SourceContext source, TargetContext target)
+{
+    return EvaluationTransitionContext<Family, SourceContext, TargetContext>(std::move(source), std::move(target));
+}
+
+}  // namespace runir::kr::ps
+
 namespace runir::kr::ps::dl
 {
 
 template<typename Context, typename Family, typename Kind>
 concept TransitionEvaluationContextConcept = runir::kr::FamilyTag<Family> && tyr::TaskKind<Kind> && requires(Context& context) {
     requires std::same_as<typename Context::FamilyType, Family>;
-    { context.get_source_context() } -> runir::kr::dl::semantics::StateEvaluationContextConcept<DlFamilyFor<Family>, Kind>;
-    { context.get_target_context() } -> runir::kr::dl::semantics::StateEvaluationContextConcept<DlFamilyFor<Family>, Kind>;
+    { context.get_source_context() } -> runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind>;
+    { context.get_target_context() } -> runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind>;
 };
 
 template<runir::kr::FamilyTag Family, tyr::TaskKind Kind, tyr::planning::StateViewConcept<Kind> S, runir::kr::dl::semantics::RegisterValuesViewConcept R>
@@ -37,7 +64,9 @@ public:
                                 runir::kr::dl::semantics::EvaluationStorage<DlFamily>& source,
                                 runir::kr::dl::semantics::EvaluationStorage<DlFamily>& target)
         requires(!std::same_as<DlFamily, runir::kr::ExtFamilyTag>)
-        : m_source_context(std::move(source_state), dl_builder, source), m_target_context(std::move(target_state), dl_builder, target)
+        :
+        m_source_context(std::move(source_state), dl_builder, source),  //
+        m_target_context(std::move(target_state), dl_builder, target)
     {
     }
 

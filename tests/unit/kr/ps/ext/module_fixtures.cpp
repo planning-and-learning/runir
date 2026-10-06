@@ -58,7 +58,7 @@ auto create_top_concept(kr::dl::ExtConstructorRepository& repository) -> kr::dl:
     auto top_data = ygg::Data<kr::dl::Concept<kr::ExtFamilyTag, kr::dl::TopTag>>();
     const auto top = repository.insert(top_data).first;
     auto constructor_data = ygg::Data<kr::dl::Constructor<kr::ExtFamilyTag, kr::dl::ConceptTag>>(top.get_index());
-    return repository.insert(constructor_data).first;
+    return kr::dl::insert(repository, constructor_data).first;
 }
 
 }  // namespace runir::tests

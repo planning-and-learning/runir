@@ -1,0 +1,18 @@
+(define (domain incremental-dl)
+  (:requirements :strips :negative-preconditions :derived-predicates)
+  (:constants a b c)
+  (:predicates
+    (present ?x)
+    (edge ?x ?y)
+    (copied-present ?x)
+    (copied-edge ?x ?y)
+    (ready)
+    (copied-ready)
+    (fixed ?x))
+  (:derived (copied-present ?x) (present ?x))
+  (:derived (copied-edge ?x ?y) (edge ?x ?y))
+  (:derived (copied-ready) (ready))
+  (:action remove
+    :parameters (?x ?y)
+    :precondition (and (present ?x) (edge ?x ?y))
+    :effect (and (not (present ?x)) (not (edge ?x ?y)) (not (ready)))))

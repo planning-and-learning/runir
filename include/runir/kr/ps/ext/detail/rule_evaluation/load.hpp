@@ -25,12 +25,13 @@ public:
     auto get_rule() const noexcept { return m_rule; }
     auto get_variant() const noexcept { return m_variant; }
 
-    template<ExecutionStorageConcept<Kind> Storage,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
              EmitConcept<ProgramStep<Kind, Storage>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop) const
+    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop) const
     {
         const auto& planning_state = context.planning_state;
         const auto rule = m_rule;

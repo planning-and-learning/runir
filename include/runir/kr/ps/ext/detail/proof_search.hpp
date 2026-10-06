@@ -348,24 +348,25 @@ auto find_solution(runir::kr::TaskContextPtr<Kind> task_context_owner,
         auto classifier = NoUnsolvability<Kind> {};
         return detail::find_solution<Kind>(expander, storage, options, classifier);
     };
+    using EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>;
     // Validate the task and program before constructing a classifier that borrows the task context.
     switch (options.state_memorization)
     {
         case StateMemorization::ALL:
         {
-            auto expander = SuccessorExpander<Kind>(task_context_owner, program);
+            auto expander = SuccessorExpander<Kind, InternedExecutionStorage<Kind>, EvaluationPolicy>(task_context_owner, program);
             auto storage = detail::SearchStorage<Kind, StateMemorization::ALL>(options);
             return execute(expander, storage);
         }
         case StateMemorization::NONE:
         {
-            auto expander = SuccessorExpander<Kind, TransientExecutionStorage<Kind>>(task_context_owner, program);
+            auto expander = SuccessorExpander<Kind, TransientExecutionStorage<Kind>, EvaluationPolicy>(task_context_owner, program);
             auto storage = detail::SearchStorage<Kind, StateMemorization::NONE>(options);
             return execute(expander, storage);
         }
         case StateMemorization::CHOICE:
         {
-            auto expander = SuccessorExpander<Kind, TransientExecutionStorage<Kind>>(task_context_owner, program);
+            auto expander = SuccessorExpander<Kind, TransientExecutionStorage<Kind>, EvaluationPolicy>(task_context_owner, program);
             auto storage = detail::SearchStorage<Kind, StateMemorization::CHOICE>(options);
             return execute(expander, storage);
         }

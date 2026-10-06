@@ -866,6 +866,37 @@ void check_state_memorization()
                         select + choice_rule("call", "m1", "m2", "(:call (:conditions) (:callee grandchild) (:arguments))")
                             + choice_rule("move", "m2", "m3", move_to_register))
         + choice_module("grandchild", choice_rule("load", "m0", "m1", load_goal));
+    const auto repeated_call = std::string(R"(
+      (:module (:symbol main) (:arguments) (:registers (:concept r0))
+        (:entry m0) (:memory m0 m1 m2 m3 m4 m5)
+        (:features
+          (:concept (:symbol Here) (:expression (c_atomic_state "at")))
+          (:concept (:symbol Good) (:expression (c_and (c_atomic_state "candidate") (c_not (c_atomic_state "bad")))))
+          (:concept (:symbol Goal) (:expression (c_atomic_goal "at" true)))
+          (:concept (:symbol R) (:expression (c_register r0)))
+          (:role (:symbol Links) (:expression (r_atomic_state "edge")))
+          (:role (:symbol Reverse) (:expression (r_inverse (r_atomic_state "edge"))))
+          (:boolean (:symbol Enabled) (:expression (b_nonempty (c_top))))
+          (:boolean (:symbol Disabled) (:expression (b_nonempty (c_bot))))
+          (:numerical (:symbol One) (:expression (n_count (c_atomic_state "at"))))
+          (:numerical (:symbol Zero) (:expression (n_count (c_bot)))))
+        (:rules )") + choice_rule("save-goal", "m0", "m1", load_goal)
+                               + choice_rule("first-call", "m1", "m2", "(:call (:conditions) (:callee child) (:arguments Good Links Enabled One))")
+                               + choice_rule("move", "m2", "m3", R"((:do (:conditions) (:action "move") (:arguments Here Good) (:effects)))")
+                               + choice_rule("second-call", "m3", "m4", "(:call (:conditions) (:callee child) (:arguments Goal Reverse Disabled Zero))")
+                               + choice_rule("finish", "m4", "m5", move_to_register) + R"())
+      (:module (:symbol child)
+        (:arguments (:concept choices) (:role links) (:boolean enabled) (:numerical count))
+        (:registers (:concept r0)) (:entry m0) (:memory m0 first second)
+        (:features
+          (:concept (:symbol Targets) (:expression (c_and (c_argument choices) (c_some (r_argument links) (c_top)))))
+          (:boolean (:symbol Enabled) (:expression (b_argument enabled)))
+          (:numerical (:symbol Count) (:expression (n_argument count))))
+        (:rules
+          (:rule (:symbol first) (:expression (:source-memory m0) (:target-memory first)
+            (:load (:conditions (positive Enabled) (greater_zero Count)) (:concept Targets) (:register (:concept r0)))))
+          (:rule (:symbol second) (:expression (:source-memory m0) (:target-memory second)
+            (:load (:conditions (negative Enabled) (equal_zero Count)) (:concept Targets) (:register (:concept r0))))))))";
     const auto choose_all = std::string("(:choose (:conditions) (:concept All) (:register (:concept r0)))");
     const auto load_good = std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))");
     const auto wider_failure =
@@ -997,6 +1028,36 @@ void check_state_memorization()
                 EXPECT_FALSE(saved_main->get_caller());
             }
             EXPECT_GT(grandchild_states, 0);
+
+            // Reusing a callee must reload every argument category and restore the caller's same-numbered register.
+            const auto recalled = run(repeated_call, options);
+            ASSERT_EQ(recalled.status, Status::SUCCESS);
+            if (recalled.plan)
+                EXPECT_EQ(recalled.plan->get_length(), 2);
+            auto first_invocations = 0;
+            auto second_invocations = 0;
+            auto restored_callers = 0;
+            for (const auto vertex : recalled.graph->get_vertex_indices())
+            {
+                const auto frame = recalled.graph->get_vertex(vertex).get_property().program_state.get_module_state();
+                const auto memory = frame.get_memory_state().get_name();
+                if (frame.get_module().get_name() == "child" && (memory == "first" || memory == "second"))
+                {
+                    first_invocations += memory == "first";
+                    second_invocations += memory == "second";
+                    EXPECT_EQ(frame.get_registers().template get<kr::dl::ConceptTag>().at(0).value().get_name(), memory == "first" ? "good" : "goal");
+                    EXPECT_EQ(frame.get_arguments().template get<kr::dl::BooleanTag>().at(0).get(), memory == "first");
+                    EXPECT_EQ(frame.get_arguments().template get<kr::dl::NumericalTag>().at(0).get(), memory == "first" ? 1 : 0);
+                }
+                if (frame.get_module().get_name() == "main" && (memory == "m2" || memory == "m4"))
+                {
+                    ++restored_callers;
+                    EXPECT_EQ(frame.get_registers().template get<kr::dl::ConceptTag>().at(0).value().get_name(), "goal");
+                }
+            }
+            EXPECT_EQ(first_invocations, 1);
+            EXPECT_EQ(second_invocations, 1);
+            EXPECT_EQ(restored_callers, 2);
 
             for (const auto maximum : { 0u, 1u })
             {

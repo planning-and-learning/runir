@@ -15,6 +15,7 @@
                     (:conditions)
                     (:action "missing-action")
                     (:arguments)
+                    (:effects)
                 )
             )
         )

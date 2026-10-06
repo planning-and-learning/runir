@@ -20,7 +20,7 @@ namespace runir::kr::ps::ext::detail
 
 struct DoRuleWorkspace
 {
-    std::vector<runir::kr::dl::semantics::ConceptDenotationView> denotations;
+    std::vector<ygg::BitsetSpan<const ygg::uint_t>> denotations;
 };
 
 template<tyr::TaskKind Kind>
@@ -42,8 +42,11 @@ public:
     auto get_variant() const noexcept { return m_variant; }
 
 private:
-    template<ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> State, tyr::planning::StateViewConcept<Kind> PlanningState>
-    auto& evaluate_do_arguments(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
+             ProgramStateViewConcept<Kind> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    auto& evaluate_do_arguments(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                                 DoRuleWorkspace& workspace,
                                 RuleView<DoTag> rule,
                                 State state) const
@@ -53,7 +56,7 @@ private:
         denotations.clear();
         auto state_context = context.make_dl_context(state);
         for (auto argument : arguments)
-            denotations.push_back(evaluate<Kind>(argument, state_context));
+            denotations.push_back(evaluate<Kind>(argument, state_context).get());
         return denotations;
     }
 
@@ -67,13 +70,16 @@ private:
         if (objects.size() != denotations.size())
             return false;
         for (size_t i = 0; i < denotations.size(); ++i)
-            if (!denotations[i].get().test(ygg::uint_t(objects[i].get_index())))
+            if (!denotations[i].test(ygg::uint_t(objects[i].get_index())))
                 return false;
         return true;
     }
 
-    template<ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> State, tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool do_effects_match(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
+             ProgramStateViewConcept<Kind> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    bool do_effects_match(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                           RuleView<DoTag> rule,
                           State state,
                           const PlanningState& planning_state,
@@ -87,11 +93,12 @@ private:
         return is_compatible_with<Kind>(rule, transition);
     }
 
-    template<ExecutionStorageConcept<Kind> Storage,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
-    bool do_rule_matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+    bool do_rule_matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                          DoRuleWorkspace& workspace,
                          RuleView<DoTag> rule,
                          State state,
@@ -106,12 +113,13 @@ private:
     }
 
 public:
-    template<ExecutionStorageConcept<Kind> Storage,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
              EmitConcept<ProgramStep<Kind, Storage>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop) const
+    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop) const
     {
         const auto& planning_state = context.planning_state;
         auto& workspace = context.do_workspace;
@@ -120,7 +128,7 @@ public:
         if (!ext::rule_is_applicable(rule, state, planning_state, context.environment))
             return true;
         const auto& denotations = evaluate_do_arguments(context, workspace, rule, state);
-        if (std::ranges::any_of(denotations, [](const auto& denotation) { return denotation.get().count() == 0; }))
+        if (std::ranges::any_of(denotations, [](const auto& denotation) { return denotation.count() == 0; }))
             return true;
         auto& search = *context.task_context->search_context;
         const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
@@ -142,11 +150,12 @@ public:
                                                                                        m_action,
                                                                                        std::ref(visit));
     }
-    template<ExecutionStorageConcept<Kind> Storage,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
-    bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+    bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
                  const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate) const
     {

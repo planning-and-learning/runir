@@ -2,12 +2,12 @@
 #define RUNIR_KR_PS_DL_COMPATIBILITY_HPP_
 
 #include "runir/kr/dl/semantics/ext/evaluation.hpp"
-#include "runir/kr/dl/semantics/state_evaluation_context.hpp"
 #include "runir/kr/ps/dl/condition_view.hpp"
 #include "runir/kr/ps/dl/effect_view.hpp"
 #include "runir/kr/ps/dl/evaluation.hpp"
 #include "runir/kr/ps/dl/transition_evaluation_context.hpp"
 #include "runir/kr/ps/family_traits.hpp"
+#include "runir/kr/dl/semantics/evaluation_context.hpp"
 
 #include <concepts>
 #include <tyr/planning/declarations.hpp>
@@ -21,7 +21,7 @@ template<tyr::TaskKind Kind,
          runir::kr::ps::dl::FeatureTag FeatureTag,
          runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag,
          typename C,
-         runir::kr::dl::semantics::StateEvaluationContextConcept<DlFamilyFor<Family>, Kind> Context>
+         runir::kr::dl::semantics::EvaluationContextConcept<DlFamilyFor<Family>, Kind> Context>
 bool is_compatible_with(ygg::View<ygg::Index<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTag, ObservationTag>>, C> condition,
                         Context& context)
 {

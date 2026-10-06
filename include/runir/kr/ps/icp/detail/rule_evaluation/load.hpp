@@ -20,8 +20,11 @@ public:
 
     auto get_rule() const noexcept { return m_rule; }
 
-    template<EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
-    bool emit(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind>& context, ProgramStateView<Kind> source, Emit&& output, Stop&& stop) const
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy, EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
+    bool emit(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
+              ProgramStateView<Kind> source,
+              Emit&& output,
+              Stop&& stop) const
     {
         if (stop())
             return false;

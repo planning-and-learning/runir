@@ -32,7 +32,7 @@ void bind_denotation_view(nb::module_& m, const char* name)
     ygg::add_comparison(cls);
     ygg::add_hash(cls);
 
-    if constexpr (std::same_as<Category, BooleanTag> || std::same_as<Category, NumericalTag>)
+    if constexpr (BooleanOrNumericalTag<Category>)
         cls.def("get", [](View view) { return view.get(); });
 
     if constexpr (std::same_as<Category, ConceptTag>)

@@ -49,8 +49,11 @@ public:
     auto get_variant() const noexcept { return m_variant; }
 
 private:
-    template<ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> State, tyr::planning::StateViewConcept<Kind> PlanningState>
-    void check_action_effects(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
+             ProgramStateViewConcept<Kind> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    void check_action_effects(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                               State state,
                               const tyr::planning::Node<Kind, PlanningState>& candidate) const
     {
@@ -65,12 +68,13 @@ private:
     }
 
 public:
-    template<ExecutionStorageConcept<Kind> Storage,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
              EmitConcept<ProgramStep<Kind, Storage>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop) const
+    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop) const
     {
         const auto& planning_state = context.planning_state;
         const auto rule = m_rule;
@@ -97,11 +101,12 @@ public:
         }
         return true;
     }
-    template<ExecutionStorageConcept<Kind> Storage,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
-    bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+    bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
                  const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate) const
     {

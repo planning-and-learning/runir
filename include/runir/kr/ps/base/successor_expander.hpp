@@ -15,12 +15,12 @@
 namespace runir::kr::ps::base
 {
 
-template<tyr::TaskKind Kind>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<BaseFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<BaseFamilyTag, Kind>>
 class SuccessorExpander
 {
 private:
     runir::kr::TaskContext<Kind>& m_task_context;
-    detail::RuleEvaluators<Kind> m_rules;
+    detail::RuleEvaluators<Kind, EvaluationPolicy> m_rules;
 
 public:
     using LabeledNode = tyr::planning::LabeledNode<Kind>;

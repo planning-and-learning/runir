@@ -6,10 +6,10 @@
 namespace runir::kr::ps::icp
 {
 
-template<tyr::TaskKind Kind>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
 class SuccessorExpander
 {
-    detail::RuleEvaluators<Kind> m_rules;
+    detail::RuleEvaluators<Kind, EvaluationPolicy> m_rules;
 
     void validate(tyr::planning::StateView<Kind> state) const
     {

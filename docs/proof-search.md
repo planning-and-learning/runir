@@ -23,6 +23,30 @@ The shared DFS enumerates an expansion before descending, then processes ordinar
 successors and Choose obligations in reverse order. Storage policies preserve
 `ALL`'s first-parent plan reconstruction without a separate traversal algorithm.
 
+## Feature evaluation
+
+Configure with `-DRUNIR_DELTA_EVALUATION=ON` to select
+`DeltaEvaluationPolicy<Family, Kind>` for Base, Ext, and ICP proof search and Uns
+classification during search. The default is `OFF`, which uses
+`FullEvaluationPolicy<Family, Kind>` and the existing memoized, interned results.
+Both live in `runir::kr::dl::semantics` and satisfy
+`EvaluationPolicyConcept<Policy, Family, Kind>`. Their family is the DL family;
+ICP uses `ExtFamilyTag`.
+C++ expanders can select an explicit policy; their default follows the flag.
+
+Delta evaluation prepares separate source and target graphs from the sketch,
+module, or classifier’s feature catalogs. Every rule feature must be declared
+in its catalog.
+It retains input snapshots, computes state/register differences between evaluations,
+and reuses result buffers across forward steps and backtracking. The DFS path
+does not retain deltas. Module, caller, or argument changes reinitialize dynamic
+results; task-static results remain reusable. Call arguments still use full
+evaluation and interning because their results must survive the caller.
+
+Query relations keep set semantics, but incremental row updates can change Action
+enumeration order. Plans, traversal statistics, and resource-limited outcomes may
+therefore differ from full evaluation.
+
 ## State memorization and returned paths
 
 `ProgramSearchOptions.state_memorization` controls reuse of completed search

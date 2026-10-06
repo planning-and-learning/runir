@@ -9,8 +9,10 @@
 
 #include <algorithm>
 #include <concepts>
+#include <ranges>
 #include <utility>
 #include <vector>
+#include <yggdrasil/core/concepts.hpp>
 
 namespace runir::kr::ps::ext::detail
 {
@@ -37,8 +39,12 @@ public:
 
     /// Resume a retained choice after child search; emit() only enumerates and prepares its alternatives.
     /// Bind a register and move memory while preserving the planning state and caller stack.
-    template<ExecutionStorageConcept<Kind> Storage, ExecutionStateViewConcept<Storage> State, tyr::planning::StateViewConcept<Kind> PlanningState>
-    auto choice_step(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, const Choice<Category>& choice) const
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
+             ExecutionStateViewConcept<Storage> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    auto
+    choice_step(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Choice<Category>& choice) const
     {
         if (choice.exhausted())
         {
@@ -59,7 +65,8 @@ public:
     }
 
 private:
-    auto make_choice(ChooseRuleWorkspace& workspace, RuleVariantView rule, runir::kr::dl::semantics::DenotationView<Category> denotation) const
+    template<ygg::InputRangeOf<runir::kr::dl::semantics::DenotationElementView<Category>> Denotation>
+    auto make_choice(ChooseRuleWorkspace& workspace, RuleVariantView rule, Denotation denotation) const
     {
         if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
             return detail::Choice<Category>(rule, denotation, workspace.concept_bindings);
@@ -67,18 +74,20 @@ private:
             return detail::Choice<Category>(rule, denotation, workspace.role_bindings);
     }
     /// Ordering is evaluated after binding, and only rearranges the admitted values.
-    template<ExecutionStorageConcept<Kind> Storage,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
              EmitConcept<Choice<Category>> Emit,
              StopConcept Stop,
              ProgramStateViewConcept<Kind> State,
-             tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit_choice(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+             tyr::planning::StateViewConcept<Kind> PlanningState,
+             ygg::InputRangeOf<runir::kr::dl::semantics::DenotationElementView<Category>> Denotation>
+    bool emit_choice(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                      ChooseRuleWorkspace& workspace,
                      RuleView<ChooseTag<Category>> rule,
                      RuleVariantView rule_variant,
                      State state,
                      const PlanningState& planning_state,
-                     runir::kr::dl::semantics::DenotationView<Category> denotation,
+                     Denotation denotation,
                      Emit&& emit,
                      Stop&& stop) const
     {
@@ -166,12 +175,13 @@ private:
     }
 
 public:
-    template<ExecutionStorageConcept<Kind> Storage,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
              EmitConcept<Choice<Category>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop) const
+    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop) const
     {
         const auto& planning_state = context.planning_state;
         auto& workspace = context.choose_workspace;

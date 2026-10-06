@@ -246,6 +246,7 @@ TEST(RunirTests, ExtendedQueryActionRuleRejectsInvalidReferencesAndArity)
         EXPECT_EQ(error.message(), fmt::format("Undefined action in domain '{}': missing", domain.get_name().str()));
         EXPECT_TRUE(error.diagnostic().location.has_value()) << error.what();
     }
+    EXPECT_THROW(parse("move", "(q_role (X Y) (r_universal))", ""), kr::ParseError);
     EXPECT_THROW(parse("move", "missing", binary), kr::UndefinedSymbolError);
     EXPECT_THROW(parse("move", "Q", "(:concept (:symbol Q) (:expression (c_top)))"), kr::UndefinedSymbolError);
     EXPECT_THROW(parse("move", "Q", "(:query (:symbol Q) (:expression (q_concept X (c_top))))"), kr::ArityMismatchError);

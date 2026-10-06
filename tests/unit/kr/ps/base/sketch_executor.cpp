@@ -106,7 +106,7 @@ TEST(RunirTests, FranceEtAlAaai2021SketchFactoriesExecuteOnExampleTasks)
         EXPECT_TRUE(terminal.is_goal);
         EXPECT_EQ(replay.get_state().get_index(), terminal.state.get_index());
 
-        auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, sketch);
+        auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag, kr::dl::semantics::FullEvaluationPolicy<kr::BaseFamilyTag, tyr::GroundTag>>(*task_context, sketch);
         const auto state = context->successor_generator->get_initial_node(*context->state_repository, *context->axiom_evaluator).get_state();
         auto dl_context = expander.get_environment().make_dl_context(state);
         EXPECT_EQ(task_context->search_context.get(), context.get());
@@ -380,45 +380,66 @@ TEST(RunirTests, BaseLiftedSuccessorsStopWithoutGeneratingAllStates)
 
 TEST(RunirTests, BaseSketchTransitionsRefreshDynamicQueriesAndReuseStaticQueries)
 {
-    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/dl/query";
-    auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
-    auto task_context = kr::TaskContext<tyr::GroundTag>::create(kr::DomainContext::create(search->task->get_domain()), search);
-    const auto sketch = kr::ps::base::dl::parse_sketch(
-        R"((:sketch
-            (:features
-                (:numerical (:symbol fixed) (:expression (n_count (q_atomic_state "fixed" (x y z)))))
-                (:numerical (:symbol remaining) (:expression (n_count (q_atomic_state "triple" (x y z))))))
-            (:rules
-                (:rule (:symbol remove)
-                    (:expression
-                        (:conditions (greater_zero fixed) (greater_zero remaining))
-                        (:effects (decreases remaining)))))))",
-        search->task->get_domain().get_domain(),
-        *task_context->domain_context->base_repository);
+    const auto check = []<tyr::TaskKind Kind>()
+    {
+        const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/dl/query";
+        datasets::TaskSearchContextPtr<Kind> search;
+        if constexpr (std::same_as<Kind, tyr::GroundTag>)
+            search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
+        else
+            search = make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
+        auto task_context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
+        const auto sketch = kr::ps::base::dl::parse_sketch(
+            R"((:sketch
+                (:features
+                    (:boolean (:symbol ready) (:expression (b_atomic_state "ready" true)))
+                    (:numerical (:symbol fixed) (:expression (n_count (q_atomic_state "fixed" (x y z)))))
+                    (:numerical (:symbol remaining) (:expression (n_count (q_atomic_state "triple" (x y z))))))
+                (:rules
+                    (:rule (:symbol remove)
+                        (:expression
+                            (:conditions (positive ready) (greater_zero fixed) (greater_zero remaining))
+                            (:effects (negative ready) (decreases remaining))))
+                    (:rule (:symbol continue)
+                        (:expression
+                            (:conditions (negative ready) (greater_zero remaining))
+                            (:effects (unchanged ready) (decreases remaining)))))))",
+            search->task->get_domain().get_domain(),
+            *task_context->domain_context->base_repository);
 
-    auto expander = kr::ps::base::SuccessorExpander<tyr::GroundTag>(*task_context, sketch);
-    auto& generator = *search->successor_generator;
-    const auto initial = generator.get_initial_node(*search->state_repository, *search->axiom_evaluator);
-    const auto source = initial.get_state();
-    const auto successors = generator.get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
-    ASSERT_GT(successors.size(), 1);
-    ASSERT_TRUE(expander.matching_rule(source, successors.front().node.get_state()));
+        auto expander = kr::ps::base::SuccessorExpander<Kind, kr::dl::semantics::FullEvaluationPolicy<kr::BaseFamilyTag, Kind>>(*task_context, sketch);
+        auto incremental = kr::ps::base::SuccessorExpander<Kind, kr::dl::semantics::DeltaEvaluationPolicy<kr::BaseFamilyTag, Kind>>(*task_context, sketch);
+        const auto matches = [&](const auto& source, const auto& target)
+        {
+            const auto full = expander.matching_rule(source, target);
+            EXPECT_EQ(incremental.matching_rule(source, target), full);
+            return full;
+        };
+        auto& generator = *search->successor_generator;
+        const auto initial = generator.get_initial_node(*search->state_repository, *search->axiom_evaluator);
+        const auto source = initial.get_state();
+        const auto successors = generator.get_labeled_successor_nodes(initial, *search->state_repository, *search->axiom_evaluator);
+        ASSERT_GT(successors.size(), 1);
+        ASSERT_TRUE(matches(source, successors.front().node.get_state()));
 
-    auto& static_queries = expander.get_environment().get_dl_caches().get_queries(true);
-    ASSERT_EQ(static_queries.size(), 1);
-    const auto* static_storage = static_queries.begin()->second.get_storage_address();
-    EXPECT_EQ(static_queries.begin()->second.size(), 2);
+        auto& static_queries = expander.get_environment().get_dl_caches().get_queries(true);
+        ASSERT_EQ(static_queries.size(), 1);
+        const auto* static_storage = static_queries.begin()->second.get_storage_address();
+        EXPECT_EQ(static_queries.begin()->second.size(), 2);
 
-    EXPECT_TRUE(expander.matching_rule(source, successors.back().node.get_state()));
-    const auto target = successors.front().node.get_state();
-    EXPECT_FALSE(expander.matching_rule(target, source));
-    const auto next = generator.get_labeled_successor_nodes(successors.front().node, *search->state_repository, *search->axiom_evaluator);
-    ASSERT_FALSE(next.empty());
-    EXPECT_TRUE(expander.matching_rule(target, next.front().node.get_state()));
-    EXPECT_TRUE(expander.matching_rule(source, target));
+        EXPECT_TRUE(matches(source, successors.back().node.get_state()));
+        const auto target = successors.front().node.get_state();
+        EXPECT_FALSE(matches(target, source));
+        const auto next = generator.get_labeled_successor_nodes(successors.front().node, *search->state_repository, *search->axiom_evaluator);
+        ASSERT_FALSE(next.empty());
+        EXPECT_TRUE(matches(target, next.front().node.get_state()));
+        EXPECT_TRUE(matches(source, target));
 
-    ASSERT_EQ(static_queries.size(), 1);
-    EXPECT_EQ(static_queries.begin()->second.get_storage_address(), static_storage);
+        ASSERT_EQ(static_queries.size(), 1);
+        EXPECT_EQ(static_queries.begin()->second.get_storage_address(), static_storage);
+    };
+    check.template operator()<tyr::GroundTag>();
+    check.template operator()<tyr::LiftedTag>();
 }
 
 }  // namespace runir::tests

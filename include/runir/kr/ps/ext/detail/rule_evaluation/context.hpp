@@ -20,14 +20,17 @@ namespace runir::kr::ps
 
 /// Borrows execution services and retains one prepared planning-state view for the evaluation.
 /// Rule evaluators never own or refer back to an expander.
-template<tyr::TaskKind Kind, ext::ExecutionStorageConcept<Kind> Storage, tyr::planning::StateViewConcept<Kind> PlanningState>
-struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningState>
+template<tyr::TaskKind Kind,
+         ext::ExecutionStorageConcept<Kind> Storage,
+         tyr::planning::StateViewConcept<Kind> PlanningState,
+         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy>
+struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>
 {
     using FamilyType = runir::kr::ExtFamilyTag;
 
     const runir::kr::TaskContextPtr<Kind>& task_context;
     Storage& storage;
-    ext::EvaluationEnvironment<Kind>& environment;
+    ext::EvaluationEnvironment<Kind, EvaluationPolicy>& environment;
     ext::detail::DoRuleWorkspace& do_workspace;
     ext::detail::ChooseRuleWorkspace& choose_workspace;
     const PlanningState planning_state;
@@ -35,6 +38,7 @@ struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningSta
     template<ext::ProgramStateViewConcept<Kind> State>
     auto make_dl_context(State state)
     {
+        environment.select_source(state);
         const auto module_ = state.get_module_state();
         return environment.make_dl_context(planning_state, module_.get_arguments(), module_.get_registers());
     }
@@ -43,6 +47,7 @@ struct RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningSta
              ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
     auto make_dl_transition_context(State state, const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate)
     {
+        environment.select_source(state);
         const auto module_ = state.get_module_state();
         return environment.make_dl_transition_context(planning_state,
                                                       candidate.node.get_state(),

@@ -15,7 +15,7 @@ namespace runir::kr::ps::icp::detail
 {
 
 /// Prepared rule occurrences in module order, with one shared evaluation workspace.
-template<tyr::TaskKind Kind>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
 class RuleEvaluators
 {
     using CruleEvaluator = RuleEvaluator<Kind, CruleTag>;
@@ -28,14 +28,14 @@ class RuleEvaluators
         std::vector<CruleEvaluator> rules;
     };
 
-    RuleEvaluationWorkspace<Kind> m_workspace;
+    RuleEvaluationWorkspace<Kind, EvaluationPolicy> m_workspace;
     std::vector<Evaluator> m_evaluators;
     // Groups retain their inner capacities even when fewer actions are enabled.
     std::vector<ActionRules> m_enabled;
     std::vector<CruleEvaluator> m_matching;
 
     template<EmitConcept<ProgramStep<Kind>> Emit, StopConcept Stop>
-    bool emit_crules(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind>& context,
+    bool emit_crules(runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>& context,
                      Action action,
                      std::span<const CruleEvaluator> rules,
                      ProgramStateView<Kind> source,
@@ -117,7 +117,8 @@ public:
         auto& environment = m_workspace.get_environment();
         environment.reset_source();
         auto source_context = environment.make_dl_context(state);
-        auto context = runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind> { m_workspace, source_context.get_state() };
+        auto context = runir::kr::ps::RuleEvaluationContext<IcpFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy> { m_workspace,
+                                                                                                                                   state.get_state() };
         bool emitted = false;
         const auto output = [&](ProgramStep<Kind> step)
         {

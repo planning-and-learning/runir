@@ -1,4 +1,5 @@
 #include <concepts>
+#include <runir/kr/dl/semantics/evaluation_policy.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
 #include <runir/kr/ps/base/repository.hpp>
 #include <runir/kr/ps/compatibility.hpp>
@@ -37,6 +38,19 @@ static_assert(mapped_context<kr::IcpFamilyTag, tyr::GroundTag>());
 static_assert(mapped_context<kr::IcpFamilyTag, tyr::LiftedTag>());
 static_assert(mapped_context<kr::UnsFamilyTag, tyr::GroundTag>());
 static_assert(mapped_context<kr::UnsFamilyTag, tyr::LiftedTag>());
+
+static_assert(kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>, kr::ExtFamilyTag, tyr::GroundTag>);
+static_assert(kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::LiftedTag>, kr::ExtFamilyTag, tyr::LiftedTag>);
+static_assert(kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::DeltaEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>, kr::ExtFamilyTag, tyr::GroundTag>);
+static_assert(kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::DeltaEvaluationPolicy<kr::ExtFamilyTag, tyr::LiftedTag>, kr::ExtFamilyTag, tyr::LiftedTag>);
+static_assert(!kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>, kr::ExtFamilyTag, tyr::LiftedTag>);
+
+struct InvalidTargetPolicy : kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>
+{
+    using FullEvaluationPolicy::FullEvaluationPolicy;
+    int make_target_context(kr::dl::semantics::StateEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag>);
+};
+static_assert(!kr::dl::semantics::EvaluationPolicyConcept<InvalidTargetPolicy, kr::ExtFamilyTag, tyr::GroundTag>);
 
 struct NameOnlyContext
 {

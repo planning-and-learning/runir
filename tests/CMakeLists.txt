@@ -42,6 +42,11 @@ set(RUNIR_KR_DL_TYPE_TEST_SOURCES
     unit/kr/dl/semantics/denotation.cpp
 )
 add_runir_test(runir_kr_dl_types "${RUNIR_KR_DL_TYPE_TEST_SOURCES}" runir::kr)
+add_runir_test(runir_kr_dl_delta unit/kr/dl/semantics/delta.cpp runir::kr runir_test_planning_fixtures)
+add_runir_test(runir_kr_dl_incremental_query unit/kr/dl/semantics/incremental_query.cpp runir::kr runir_test_planning_fixtures)
+add_runir_test(runir_kr_dl_incremental_evaluation unit/kr/dl/semantics/incremental_evaluation.cpp runir::kr runir_test_planning_fixtures)
+add_runir_test(runir_kr_dl_incremental_distance unit/kr/dl/semantics/incremental_distance.cpp runir::kr)
+add_runir_test(runir_kr_dl_incremental_set_operations unit/kr/dl/semantics/incremental_set_operations.cpp runir::kr)
 
 set(RUNIR_KR_DL_GRAMMAR_TYPE_TEST_SOURCES
     unit/kr/dl/grammar/boolean.cpp

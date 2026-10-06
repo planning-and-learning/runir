@@ -5,8 +5,10 @@
 #include <concepts>
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <ranges>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/builder.hpp>
+#include <runir/kr/dl/semantics/denotation_view.hpp>
 #include <runir/kr/dl/semantics/evaluation_storage.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/dl/semantics/interning.hpp>
@@ -14,6 +16,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <tyr/formalism/object_data.hpp>
 #include <tyr/planning/ground/successor_generator.hpp>
 #include <utility>
 
@@ -116,6 +119,121 @@ TEST(RunirEvaluationStorage, DenotationBuildersInternValuesAndUpdateTheirIndices
     };
     check.template operator()<dl::BooleanTag>();
     check.template operator()<dl::NumericalTag>();
+    check.template operator()<dl::ConceptTag>();
+    check.template operator()<dl::RoleTag>();
+}
+
+TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchIndexedIteration)
+{
+    constexpr auto digits = static_cast<ygg::uint_t>(ygg::BitsetSpan<const ygg::uint_t>::Digits);
+    constexpr auto num_objects = digits + 3;
+    auto formalism = tyr::formalism::planning::RepositoryFactory().create_shared();
+    for (ygg::uint_t i = 0; i < num_objects; ++i)
+    {
+        auto object = ygg::Data<tyr::formalism::Object>("object" + std::to_string(i));
+        (void) formalism->insert(object);
+    }
+    auto repository = sem::DenotationRepositoryFactory().create(formalism);
+    auto scratch = sem::Builder();
+    const auto object = [&](ygg::uint_t index) { return ygg::make_view(ObjectIndex(index), *formalism); };
+
+    auto boolean = ygg::Builder<sem::Denotation<dl::BooleanTag>>(true);
+    auto numerical = ygg::Builder<sem::Denotation<dl::NumericalTag>>(7);
+    const auto boolean_view = ygg::make_view(boolean, *formalism);
+    const auto numerical_view = ygg::make_view(numerical, *formalism);
+    static_assert(std::same_as<decltype(boolean_view.get()), bool>);
+    static_assert(std::same_as<decltype(numerical_view.get()), ygg::uint_t>);
+    EXPECT_TRUE(boolean_view.get());
+    EXPECT_EQ(numerical_view.get(), 7);
+    EXPECT_EQ(&boolean_view.get_handle(), &boolean);
+    EXPECT_EQ(&numerical_view.get_context(), formalism.get());
+
+    const auto check = [&]<dl::ConceptOrRoleTag Category>()
+    {
+        static_assert(std::ranges::forward_range<const sem::BorrowedDenotationView<Category>>);
+        static_assert(std::ranges::forward_range<const sem::DenotationView<Category>>);
+        auto builder = ygg::Builder<sem::Denotation<Category>>(num_objects);
+        const auto borrowed = ygg::make_view(builder, *formalism);
+        static_assert(std::same_as<decltype(borrowed.get_handle()), const ygg::Builder<sem::Denotation<Category>>&>);
+        EXPECT_EQ(borrowed.begin(), borrowed.end());
+        EXPECT_FALSE(borrowed.any());
+        EXPECT_EQ(borrowed.count(), 0);
+        EXPECT_EQ(borrowed.get_num_objects(), num_objects);
+        EXPECT_EQ(&borrowed.get_formalism_repository(), formalism.get());
+
+        const auto expected = [&]
+        {
+            if constexpr (std::same_as<Category, dl::ConceptTag>)
+            {
+                static_assert(std::same_as<decltype(borrowed.get()), ygg::BitsetSpan<const ygg::uint_t>>);
+                builder.get().set(0);
+                builder.get().set(digits);
+                builder.get().set(num_objects - 1);
+                return std::array { object(0), object(digits), object(num_objects - 1) };
+            }
+            else
+            {
+                static_assert(std::same_as<decltype(borrowed.get(ObjectIndex(0))), ygg::BitsetSpan<const ygg::uint_t>>);
+                static_assert(std::same_as<decltype(borrowed.storage_bits()), ygg::BitsetSpan<const ygg::uint_t>>);
+                builder.get(0).set(num_objects - 1);
+                builder.get(digits).set(1);
+                builder.get(num_objects - 1).set(digits);
+                return std::array { std::pair(object(0), object(num_objects - 1)),
+                                    std::pair(object(digits), object(1)),
+                                    std::pair(object(num_objects - 1), object(digits)) };
+            }
+        }();
+        const auto indexed = sem::insert(repository, builder, scratch).first;
+        EXPECT_EQ(indexed.get_num_objects(), num_objects);
+        EXPECT_EQ(&indexed.get_formalism_repository(), formalism.get());
+        EXPECT_TRUE(borrowed.any());
+        EXPECT_EQ(borrowed.count(), expected.size());
+        EXPECT_EQ(indexed.count(), expected.size());
+        EXPECT_TRUE(std::ranges::equal(borrowed, expected));
+        EXPECT_TRUE(std::ranges::equal(indexed, expected));
+        EXPECT_TRUE(std::ranges::equal(borrowed.range(), expected));
+        EXPECT_TRUE(std::ranges::equal(indexed.range(), expected));
+        EXPECT_EQ(borrowed.range().begin(), borrowed.begin());
+        EXPECT_EQ(borrowed.range().end(), borrowed.end());
+        EXPECT_EQ(indexed.range().begin(), indexed.begin());
+        EXPECT_EQ(indexed.range().end(), indexed.end());
+        auto borrowed_iterator = ygg::make_view(builder, *formalism).begin();
+        auto indexed_iterator = sem::DenotationView<Category>(indexed).begin();
+        for (const auto& value : expected)
+        {
+            ASSERT_NE(borrowed_iterator, borrowed.end());
+            ASSERT_NE(indexed_iterator, indexed.end());
+            EXPECT_EQ(*borrowed_iterator++, value);
+            EXPECT_EQ(*indexed_iterator++, value);
+        }
+        EXPECT_EQ(borrowed_iterator, borrowed.end());
+        EXPECT_EQ(indexed_iterator, indexed.end());
+        if constexpr (std::same_as<Category, dl::RoleTag>)
+        {
+            const auto borrowed_row = borrowed.range(object(0));
+            const auto indexed_row = indexed.range(object(0));
+            static_assert(std::ranges::forward_range<decltype(borrowed_row)>);
+            static_assert(std::ranges::forward_range<decltype(indexed_row)>);
+            static_assert(std::same_as<decltype(borrowed.begin(object(0))), decltype(indexed.begin(object(0)))>);
+            static_assert(std::same_as<std::iter_value_t<decltype(borrowed.begin(object(0)))>, tyr::formalism::planning::ObjectView>);
+            EXPECT_EQ(borrowed.begin(object(0)), borrowed_row.begin());
+            EXPECT_EQ(borrowed.end(object(0)), borrowed_row.end());
+            EXPECT_EQ(indexed.begin(object(0)), indexed_row.begin());
+            EXPECT_EQ(indexed.end(object(0)), indexed_row.end());
+            const auto targets = std::array { object(num_objects - 1) };
+            EXPECT_TRUE(std::ranges::equal(borrowed_row, targets));
+            EXPECT_TRUE(std::ranges::equal(indexed_row, targets));
+            EXPECT_TRUE(borrowed.range(object(1)).empty());
+            EXPECT_TRUE(indexed.range(object(1)).empty());
+            // Row iterators borrow storage directly, not the temporary view or range.
+            auto borrowed_target = ygg::make_view(builder, *formalism).range(object(0)).begin();
+            auto indexed_target = sem::DenotationView<Category>(indexed).range(object(0)).begin();
+            EXPECT_EQ(*borrowed_target++, targets.front());
+            EXPECT_EQ(*indexed_target++, targets.front());
+            EXPECT_EQ(borrowed_target, borrowed_row.end());
+            EXPECT_EQ(indexed_target, indexed_row.end());
+        }
+    };
     check.template operator()<dl::ConceptTag>();
     check.template operator()<dl::RoleTag>();
 }

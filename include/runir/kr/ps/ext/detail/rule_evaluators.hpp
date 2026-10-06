@@ -33,7 +33,7 @@ namespace runir::kr::ps::ext::detail
 
 /// Prepared rule instances and reusable scratch for one task/program pair.
 /// Records stay in place after construction; pending Choices borrow this owner's pools.
-template<tyr::TaskKind Kind>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
 class RuleEvaluators
 {
     using Concept = runir::kr::dl::ConceptTag;
@@ -48,7 +48,7 @@ class RuleEvaluators
                                    ActionRuleEvaluator<Kind>>;
     runir::kr::TaskContextPtr<Kind> m_task_context;
     ProgramView m_program;
-    EvaluationEnvironment<Kind> m_environment;
+    EvaluationEnvironment<Kind, EvaluationPolicy> m_environment;
     std::vector<Evaluator> m_rules;
     ChooseRuleWorkspace m_choose;
     DoRuleWorkspace m_do;
@@ -126,7 +126,7 @@ class RuleEvaluators
              tyr::planning::StateViewConcept<Kind> PlanningState,
              ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
     bool matches(const Evaluator& evaluator,
-                 RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+                 RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
                  const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate)
     {
@@ -163,7 +163,7 @@ public:
     template<ExecutionStorageConcept<Kind> Storage, tyr::planning::StateViewConcept<Kind> PlanningState>
     auto make_context(Storage& storage, PlanningState planning_state)
     {
-        return runir::kr::ps::RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningState> {
+        return runir::kr::ps::RuleEvaluationContext<runir::kr::ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy> {
             m_task_context, storage, m_environment, m_do, m_choose, std::move(planning_state)
         };
     }
@@ -173,7 +173,7 @@ public:
              typename Emit,
              StopConcept Stop,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool for_each_successor(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop)
+    bool for_each_successor(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop)
     {
         const auto& planning_state = context.planning_state;
         m_sketch_rules.clear();
@@ -233,7 +233,7 @@ public:
     }
 
     template<ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> State, tyr::planning::StateViewConcept<Kind> PlanningState>
-    std::optional<RuleVariantView> matching_rule(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+    std::optional<RuleVariantView> matching_rule(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                                                  State state,
                                                  const tyr::planning::LabeledNode<Kind, PlanningState>& candidate)
     {
@@ -253,7 +253,7 @@ public:
     }
 
     template<ExecutionStorageConcept<Kind> Storage, ExecutionStateViewConcept<Storage> State, tyr::planning::StateViewConcept<Kind> PlanningState>
-    auto apply(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+    auto apply(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                State state,
                RuleVariantView rule,
                const std::optional<tyr::planning::LabeledNode<Kind, PlanningState>>& candidate)
@@ -294,7 +294,7 @@ public:
              ExecutionStorageConcept<Kind> Storage,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    auto apply_choice(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, const Choice<Category>& choice)
+    auto apply_choice(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, const Choice<Category>& choice)
     {
         using Step = ProgramStep<Kind, Storage>;
         return with_rule(choice.rule,

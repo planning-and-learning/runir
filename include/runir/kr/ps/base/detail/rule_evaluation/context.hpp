@@ -7,12 +7,12 @@
 namespace runir::kr::ps
 {
 
-template<tyr::TaskKind Kind>
-struct RuleEvaluationContext<BaseFamilyTag, Kind>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<BaseFamilyTag, Kind> EvaluationPolicy>
+struct RuleEvaluationContext<BaseFamilyTag, Kind, void, tyr::planning::StateView<Kind>, EvaluationPolicy>
 {
     using FamilyType = BaseFamilyTag;
 
-    base::EvaluationEnvironment<Kind>& environment;
+    base::EvaluationEnvironment<Kind, EvaluationPolicy>& environment;
 
     auto make_dl_context(tyr::planning::StateView<Kind> source) { return environment.make_dl_context(source); }
 

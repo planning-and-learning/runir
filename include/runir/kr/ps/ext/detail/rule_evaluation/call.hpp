@@ -41,8 +41,11 @@ private:
                && arguments.template get<runir::kr::dl::BooleanTag>().size() == callee.template get_arguments<runir::kr::dl::BooleanTag>().size()
                && arguments.template get<runir::kr::dl::NumericalTag>().size() == callee.template get_arguments<runir::kr::dl::NumericalTag>().size();
     }
-    template<ExecutionStorageConcept<Kind> Storage, ProgramStateViewConcept<Kind> State, tyr::planning::StateViewConcept<Kind> PlanningState>
-    auto evaluate_call_arguments(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
+             ProgramStateViewConcept<Kind> State,
+             tyr::planning::StateViewConcept<Kind> PlanningState>
+    auto evaluate_call_arguments(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                                  RuleView<CallTag> rule,
                                  State state,
                                  const PlanningState& planning_state) const
@@ -67,12 +70,13 @@ private:
     }
 
 public:
-    template<ExecutionStorageConcept<Kind> Storage,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
              EmitConcept<ProgramStep<Kind, Storage>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop) const
+    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop) const
     {
         const auto& planning_state = context.planning_state;
         const auto rule = m_rule;

@@ -15,14 +15,14 @@ namespace runir::kr::ps::icp::detail
 {
 
 /// Shared evaluation and history scratch; individual rule records own no buffers.
-template<tyr::TaskKind Kind>
+template<tyr::TaskKind Kind, runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
 class RuleEvaluationWorkspace
 {
     using Concept = runir::kr::dl::ConceptTag;
     using Denotation = runir::kr::dl::semantics::Denotation<Concept>;
     TaskContextPtr<Kind> m_task;
     ProgramView m_program;
-    EvaluationEnvironment<Kind> m_environment;
+    EvaluationEnvironment<Kind, EvaluationPolicy> m_environment;
     std::vector<std::vector<std::size_t>> m_reset_predecessors;
     std::vector<bool> m_changed;
     ygg::Index<Denotation> m_empty;
@@ -88,7 +88,7 @@ public:
                 return std::nullopt;
             const auto before = evaluate<Kind>(features[i], transition.get_source_context());
             const auto after = evaluate<Kind>(features[i], transition.get_target_context());
-            auto entered = m_task->dl_builder.template get_builder<Denotation>(before.get_data().num_objects);
+            auto entered = m_task->dl_builder.template get_builder<Denotation>(before.get_num_objects());
             entered->get().copy_from(after.get());
             entered->get() -= before.get();
             if (entered->get().intersects(previous[i].get()))

@@ -49,6 +49,9 @@ concept CategoryTag = std::same_as<T, ConceptTag> || std::same_as<T, RoleTag> ||
 template<typename T>
 concept ConceptOrRoleTag = std::same_as<T, ConceptTag> || std::same_as<T, RoleTag>;
 
+template<typename T>
+concept BooleanOrNumericalTag = std::same_as<T, BooleanTag> || std::same_as<T, NumericalTag>;
+
 using CategoryTags = ygg::TypeList<ConceptTag, RoleTag, BooleanTag, NumericalTag>;
 
 /**

@@ -82,17 +82,17 @@ auto program(const kr::TaskContextPtr<Kind>& context, const std::string& text)
                                   *context->domain_context->icp_repository);
 }
 
-template<tyr::TaskKind Kind>
-auto initial(icp::SuccessorExpander<Kind>& expander)
+template<tyr::TaskKind Kind, kr::dl::semantics::EvaluationPolicyConcept<kr::ExtFamilyTag, Kind> EvaluationPolicy>
+auto initial(icp::SuccessorExpander<Kind, EvaluationPolicy>& expander)
 {
     auto& search = *expander.get_task_context()->search_context;
     return expander.initial_state(search.successor_generator->get_initial_node(*search.state_repository, *search.axiom_evaluator).get_state());
 }
 
-template<tyr::TaskKind Kind>
-auto successors(icp::SuccessorExpander<Kind>& expander, icp::ProgramStateView<Kind> source)
+template<tyr::TaskKind Kind, kr::dl::semantics::EvaluationPolicyConcept<kr::ExtFamilyTag, Kind> EvaluationPolicy>
+auto successors(icp::SuccessorExpander<Kind, EvaluationPolicy>& expander, icp::ProgramStateView<Kind> source, bool grouped = false)
 {
-    auto result = std::vector<typename icp::SuccessorExpander<Kind>::Step> {};
+    auto result = std::vector<typename icp::SuccessorExpander<Kind, EvaluationPolicy>::Step> {};
     auto stats = icp::ProgramSearchStatistics {};
     expander.for_each_successor(
         source,
@@ -102,8 +102,64 @@ auto successors(icp::SuccessorExpander<Kind>& expander, icp::ProgramStateView<Ki
             result.push_back(step);
             return true;
         },
-        [] { return false; });
+        [] { return false; },
+        grouped);
     return result;
+}
+
+template<tyr::TaskKind Kind>
+void check_evaluation_policies()
+{
+    auto context = make_context<Kind>("choose");
+    const auto policy = program(context,
+                                module(rule("load-bad", "m0", "m1", load("Candidates", "r0", "(positive Bad)"))
+                                       + rule("load-good", "m0", "m1", load("Candidates", "r0", "(negative Bad)"))
+                                       + rule("move", "m1", "m2", move("R")) + rule("finish", "m2", "m3", move("Goal"))));
+    auto full = icp::SuccessorExpander<Kind, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context, policy);
+    auto delta = icp::SuccessorExpander<Kind, kr::dl::semantics::DeltaEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context, policy);
+    const auto source = initial(full);
+    EXPECT_EQ(initial(delta), source);
+
+    for (const auto grouped : { false, true })
+    {
+        SCOPED_TRACE(grouped);
+        const auto compare = [&](icp::ProgramStateView<Kind> state)
+        {
+            const auto expected = successors(full, state, grouped);
+            const auto actual = successors(delta, state, grouped);
+            EXPECT_EQ(actual.size(), expected.size());
+            for (size_t i = 0; i < std::min(actual.size(), expected.size()); ++i)
+            {
+                EXPECT_EQ(actual[i].status, expected[i].status);
+                EXPECT_EQ(actual[i].target, expected[i].target);
+                EXPECT_EQ(actual[i].rule, expected[i].rule);
+                EXPECT_EQ(actual[i].planning_successor.has_value(), expected[i].planning_successor.has_value());
+                if (actual[i].planning_successor && expected[i].planning_successor)
+                    EXPECT_EQ(actual[i].planning_successor->label, expected[i].planning_successor->label);
+            }
+            return expected;
+        };
+        const auto loaded = compare(source);
+        ASSERT_EQ(loaded.size(), 2);
+        EXPECT_NE(loaded.front().target.get_registers(), loaded.back().target.get_registers());
+        auto finishes = 0;
+        for (const auto& step : loaded)
+        {
+            ASSERT_EQ(step.status, Outcome::APPLIED);
+            EXPECT_EQ(step.target.get_state(), source.get_state());
+            EXPECT_NE(step.target.get_registers(), source.get_registers());
+            const auto moved = compare(step.target);
+            ASSERT_EQ(moved.size(), 1);
+            ASSERT_EQ(moved.front().status, Outcome::APPLIED);
+            EXPECT_NE(moved.front().target.get_state(), source.get_state());
+            const auto finished = compare(moved.front().target);
+            ASSERT_EQ(finished.size(), 1);
+            finishes += finished.front().status == Outcome::APPLIED;
+            compare(step.target);
+            compare(source);
+        }
+        EXPECT_EQ(finishes, 1);
+    }
 }
 
 template<tyr::TaskKind Kind>
@@ -574,6 +630,10 @@ void check_rule_evaluator_scheduling()
 }
 
 }  // namespace
+
+TEST(RunirTests, IcpGroundEvaluationPoliciesAgreeAfterBacktracking) { check_evaluation_policies<tyr::GroundTag>(); }
+
+TEST(RunirTests, IcpLiftedEvaluationPoliciesAgreeAfterBacktracking) { check_evaluation_policies<tyr::LiftedTag>(); }
 
 TEST(RunirTests, IcpGroundExecution)
 {

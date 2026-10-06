@@ -35,7 +35,9 @@ namespace runir::kr::ps::ext
 
 /// Returned choices must not outlive this expander.
 /// With TransientExecutionStorage, returned states and steps must not outlive it either.
-template<tyr::TaskKind Kind, ExecutionStorageConcept<Kind> ExecutionStorage = InternedExecutionStorage<Kind>>
+template<tyr::TaskKind Kind,
+         ExecutionStorageConcept<Kind> ExecutionStorage = InternedExecutionStorage<Kind>,
+         runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy = runir::kr::dl::semantics::DefaultEvaluationPolicy<ExtFamilyTag, Kind>>
 class SuccessorExpander
 {
 public:
@@ -85,6 +87,7 @@ public:
             return false;
         validate_source(state);
         get_environment().reset_source();
+        get_environment().select_source(state);
         bool emitted = false;
         const auto emit_expansion = [&](auto expansion)
         {
@@ -118,6 +121,7 @@ public:
         validate_source(state);
         validate_planning_state(candidate.node.get_state());
         get_environment().reset_source();
+        get_environment().select_source(state);
         get_environment().reset_target();
         auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
         return m_rule_evaluators.matching_rule(context, state, candidate);
@@ -126,14 +130,13 @@ public:
     /// Apply one rule, using a supplied planning successor for Do, Action, or a Sketch with effects.
     /// Load, Choose, Call, and empty-effect Sketch rules derive their own control transition.
     std::optional<detail::ProgramStep<Kind, ExecutionStorage>>
-    apply(typename ExecutionStorage::StateView state,
-          RuleVariantView rule,
-          std::optional<tyr::planning::LabeledNode<Kind>> candidate = std::nullopt)
+    apply(typename ExecutionStorage::StateView state, RuleVariantView rule, std::optional<tyr::planning::LabeledNode<Kind>> candidate = std::nullopt)
     {
         validate_source(state);
         if (candidate)
             validate_planning_state(candidate->node.get_state());
         get_environment().reset_source();
+        get_environment().select_source(state);
         get_environment().reset_target();
         auto context = m_rule_evaluators.make_context(m_storage, state.get_state());
         return m_rule_evaluators.apply(context, state, rule, candidate);
@@ -184,7 +187,7 @@ private:
     runir::kr::TaskContextPtr<Kind> m_task_context;
     ProgramView m_program;
     ExecutionStorage m_storage;
-    detail::RuleEvaluators<Kind> m_rule_evaluators;
+    detail::RuleEvaluators<Kind, EvaluationPolicy> m_rule_evaluators;
 };
 
 template<tyr::TaskKind Kind>

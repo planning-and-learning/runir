@@ -54,7 +54,8 @@ struct WrongRetainStorage : ext::InternedExecutionStorage<tyr::GroundTag>
 template<typename Storage, tyr::TaskKind Kind, bool Expected>
 constexpr bool execution_storage_constraints_match =
     (ext::ExecutionStorageConcept<Storage, Kind> == Expected)
-    && ((requires { sizeof(kr::ps::RuleEvaluationContext<kr::ExtFamilyTag, Kind, Storage, tyr::planning::StateView<Kind>>); }) == Expected)
+    && ((requires { sizeof(kr::ps::RuleEvaluationContext<kr::ExtFamilyTag, Kind, Storage, tyr::planning::StateView<Kind>, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>); })
+        == Expected)
     && ((requires { typename ext::SuccessorExpander<Kind, Storage>; }) == Expected);
 
 static_assert(execution_storage_constraints_match<ext::InternedExecutionStorage<tyr::GroundTag>, tyr::GroundTag, true>);
@@ -93,7 +94,11 @@ static_assert(
     []<typename State>()
     {
         using Storage = ext::TransientExecutionStorage<tyr::GroundTag>;
-        using Context = kr::ps::RuleEvaluationContext<kr::ExtFamilyTag, tyr::GroundTag, Storage>;
+        using Context = kr::ps::RuleEvaluationContext<kr::ExtFamilyTag,
+                                                      tyr::GroundTag,
+                                                      Storage,
+                                                      tyr::planning::StateView<tyr::GroundTag>,
+                                                      kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>>;
         using Step = ext::detail::ProgramStep<tyr::GroundTag, Storage>;
         return !requires(const ext::detail::ActionRuleEvaluator<tyr::GroundTag>& evaluator, Context& context, State state, bool (*emit)(Step), bool (*stop)()) {
             evaluator.emit(context, state, emit, stop);
@@ -262,7 +267,7 @@ void expect_borrowed_query_evaluation()
     auto expander = ext::SuccessorExpander<Kind>(task_context, program);
     const auto planning_node = initial_planning_node(expander);
     const auto state = expander.initial_state(planning_node.get_state());
-    auto environment = ext::EvaluationEnvironment<Kind>(*task_context, program);
+    auto environment = ext::EvaluationEnvironment<Kind, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(*task_context, program);
     auto state_context = environment.make_dl_context(state);
     const auto feature = module_.get_query_features()[0];
     const auto query = feature.get_expression();
@@ -293,7 +298,7 @@ void expect_borrowed_query_evaluation()
             const auto prepared_source = ygg::make_view(planning_node.get_state().get_state_builder(), *search.task);
             const auto prepared_target = ygg::make_view(successors.front().node.get_state().get_state_builder(), *search.task);
             auto storage = ext::InternedExecutionStorage<Kind>(task_context, program);
-            auto evaluators = ext::detail::RuleEvaluators<Kind>(task_context, program);
+            auto evaluators = ext::detail::RuleEvaluators<Kind, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(task_context, program);
             auto context = evaluators.make_context(storage, prepared_source);
             auto prepared_context = context.make_dl_context(state);
             static_assert(std::same_as<std::remove_cvref_t<decltype(prepared_context.get_state())>, tyr::planning::BuilderStateView<Kind>>);
@@ -1202,6 +1207,10 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     caller_data.entry_memory_state = caller_entry.get_index();
     caller_data.memory_states.push_back(caller_entry.get_index());
     caller_data.memory_states.push_back(caller_return.get_index());
+    caller_data.concept_features.push_back(top_feature.get_index());
+    caller_data.role_features.push_back(universal_feature.get_index());
+    caller_data.boolean_features.push_back(true_feature.get_index());
+    caller_data.numerical_features.push_back(count_feature.get_index());
     auto transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>> {};
     transition.push_back(variant.get_index());
     ygg::canonicalize(transition);
@@ -1246,7 +1255,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     EXPECT_GT(numerical_arguments[0].get(), 0);
 
     // Contexts borrow the persistent data; preparing another context does not replace it.
-    auto environment = kr::ps::ext::EvaluationEnvironment<tyr::GroundTag>(*task_context, program);
+    auto environment = kr::ps::ext::EvaluationEnvironment<tyr::GroundTag, kr::dl::semantics::FullEvaluationPolicy<kr::ExtFamilyTag, tyr::GroundTag>>(*task_context, program);
     auto evaluation_context = environment.make_dl_context(call_target);
     const auto initial_context = environment.make_dl_context(initial_state);
     EXPECT_TRUE(initial_context.arguments().template get<kr::dl::ConceptTag>().empty());
@@ -1365,6 +1374,9 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     module_data.entry_memory_state = source.get_index();
     module_data.memory_states.push_back(source.get_index());
     module_data.memory_states.push_back(target.get_index());
+    module_data.concept_features.push_back(ball_feature.get_index());
+    module_data.concept_features.push_back(room_feature.get_index());
+    module_data.concept_features.push_back(gripper_feature.get_index());
     auto transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>> {};
     transition.push_back(variant.get_index());
     ygg::canonicalize(transition);
@@ -1492,6 +1504,9 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     module_data.memory_states.push_back(source.get_index());
     module_data.memory_states.push_back(move_target.get_index());
     module_data.memory_states.push_back(pick_target.get_index());
+    module_data.concept_features.push_back(ball_feature.get_index());
+    module_data.concept_features.push_back(room_feature.get_index());
+    module_data.concept_features.push_back(gripper_feature.get_index());
 
     auto move_transition = ygg::IndexList<kr::ps::Rule<kr::ExtFamilyTag>>();
     move_transition.push_back(move_variant.get_index());

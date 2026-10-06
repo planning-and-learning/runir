@@ -27,12 +27,13 @@ public:
     auto get_variant() const noexcept { return m_variant; }
 
     /// Emit a control-only rule; effectful rules must use matches() on the shared successor batch.
-    template<ExecutionStorageConcept<Kind> Storage,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
              EmitConcept<ProgramStep<Kind, Storage>> Emit,
              StopConcept Stop,
              ExecutionStateViewConcept<Storage> State,
              tyr::planning::StateViewConcept<Kind> PlanningState>
-    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context, State state, Emit&& emit, Stop&& stop) const
+    bool emit(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context, State state, Emit&& emit, Stop&& stop) const
     {
         assert(m_rule.get_effects().empty() && "Effectful Sketch rules require the shared successor batch.");
         if (!ext::rule_is_applicable(m_rule, state, context.planning_state, context.environment))
@@ -49,11 +50,12 @@ public:
         return emit(detail::applied<Kind, Storage>(std::move(target), m_variant, context.task_context));
     }
 
-    template<ExecutionStorageConcept<Kind> Storage,
+    template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
+             ExecutionStorageConcept<Kind> Storage,
              ProgramStateViewConcept<Kind> State,
              tyr::planning::StateViewConcept<Kind> PlanningState,
              ygg::formalism::RelationBindingViewConcept<tyr::formalism::planning::Action<tyr::LiftedTag>, tyr::formalism::ObjectTag> Binding>
-    bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState>& context,
+    bool matches(RuleEvaluationContext<ExtFamilyTag, Kind, Storage, PlanningState, EvaluationPolicy>& context,
                  State state,
                  const tyr::planning::LabeledNode<Kind, PlanningState, Binding>& candidate) const
     {

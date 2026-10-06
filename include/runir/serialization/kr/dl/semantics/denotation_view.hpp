@@ -13,7 +13,7 @@ namespace ygg::serialization
 template<typename Archive, runir::kr::dl::CategoryTag Category, typename C>
 void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::dl::semantics::Denotation<Category>>, C>>)
 {
-    if constexpr (std::same_as<Category, runir::kr::dl::BooleanTag> || std::same_as<Category, runir::kr::dl::NumericalTag>)
+    if constexpr (runir::kr::dl::BooleanOrNumericalTag<Category>)
     {
         ar.field("value", [](const auto& value) -> decltype(auto) { return (value.get()); });
     }

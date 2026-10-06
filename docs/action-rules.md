@@ -36,6 +36,8 @@ existential witness variables introduced during Tyr normalization. Use
 column names need not equal the PDDL parameter names. Query features belong to
 extended modules and are not Boolean or numerical conditions/effects or module
 call arguments. Queries can read the module's existing registers and arguments.
+An Action rule's `:query` must reference a query feature declared in the module's
+`:features` section; inline query expressions are not allowed in rule bodies.
 
 An empty query selects no tuple. A query with no columns distinguishes false
 (no rows) from true (one empty row), allowing zero-parameter actions. Conditions
@@ -89,8 +91,8 @@ their action schema and filter arguments before constructing successor states.
 Nonuniversal execution stops ordinary expansion at its first compatible
 outcome. Universal execution requires every ordinary outcome and one successful
 binding for each Choose rule. Rule occurrences retain their existing order.
-Action tuples follow their relation's canonical row order; Choose bindings
-follow their denotation order. Enumeration supports early termination.
+Action tuples follow their relation's iteration order, which can differ between
+full and incremental evaluation; Choose bindings follow their denotation order. Enumeration supports early termination.
 Action applicability and effect contracts are checked
 only for visited tuples, so unvisited invalid tuples remain unchecked.
 Query evaluation still materializes the selected relation.
