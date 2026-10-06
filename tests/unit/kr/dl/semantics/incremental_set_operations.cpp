@@ -11,13 +11,14 @@ namespace runir::tests
 namespace
 {
 
-TEST(RunirIncrementalSetOperations, CompositionAndClosuresMatchFreshResultsAndExactDeltas)
+template<ygg::uint_t size>
+void check_composition_and_closures()
 {
     namespace dl = kr::dl;
     namespace sem = dl::semantics;
     namespace inc = sem::incremental;
     namespace kernels = inc::detail;
-    constexpr ygg::uint_t size = 10;
+    SCOPED_TRACE(size);
     auto repository = tyr::formalism::planning::RepositoryFactory().create_shared();
     for (ygg::uint_t i = 0; i < size; ++i)
     {
@@ -133,6 +134,42 @@ TEST(RunirIncrementalSetOperations, CompositionAndClosuresMatchFreshResultsAndEx
         previous_rhs = rhs;
     };
     check(true);
+    for (const auto* output : { &composition, &transitive, &reflexive })
+    {
+        EXPECT_EQ(output->get_delta().added.capacity(), 0);
+        EXPECT_EQ(output->get_delta().removed.capacity(), 0);
+    }
+
+    if constexpr (size >= 5)
+    {
+        SCOPED_TRACE("directed SCC splits, merges, and a clean suffix");
+        lhs.storage_bits().reset();
+        lhs.get(0).set(1);
+        lhs.get(1).set(2);
+        lhs.get(2).set(1);
+        lhs.get(2).set(3);
+        lhs.get(3).set(size - 1);
+        check();
+
+        // The surviving cycle must not preserve reachability from the disconnected source.
+        lhs.get(0).reset(1);
+        check();
+        lhs.get(0).set(1);
+        check();
+
+        // Split and merge the cycle while the downstream suffix stays clean.
+        lhs.get(2).reset(1);
+        check();
+        lhs.get(2).set(1);
+        check();
+
+        // Merge the suffix into the cycle, then split it back out.
+        lhs.get(size - 1).set(1);
+        check();
+        lhs.get(size - 1).reset(1);
+        check();
+        check();
+    }
 
     auto random = std::mt19937(1009);
     for (size_t iteration = 0; iteration < 200; ++iteration)
@@ -162,6 +199,63 @@ TEST(RunirIncrementalSetOperations, CompositionAndClosuresMatchFreshResultsAndEx
     }
 }
 
+TEST(RunirIncrementalSetOperations, CompositionAndClosuresMatchFreshResultsAndExactDeltas)
+{
+    check_composition_and_closures<1>();
+    check_composition_and_closures<10>();
+    check_composition_and_closures<static_cast<ygg::uint_t>(ygg::BitsetSpan<const ygg::uint_t>::Digits + 3)>();
+}
+
+TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundaries)
+{
+    namespace dl = kr::dl;
+    namespace inc = dl::semantics::incremental;
+    constexpr auto digits = static_cast<ygg::uint_t>(ygg::BitsetSpan<const ygg::uint_t>::Digits), size = digits + 2;
+    auto repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    for (ygg::uint_t i = 0; i < size; ++i)
+    {
+        auto data = ygg::Data<tyr::formalism::Object>("o" + std::to_string(i));
+        (void) repository->insert(data);
+    }
+    const auto object = [&](ygg::uint_t i) { return ygg::make_view(ygg::Index<tyr::formalism::Object>(i), *repository); };
+    const auto check = [&](auto tag)
+    {
+        constexpr auto intersection = std::same_as<decltype(tag), dl::IntersectionTag>;
+        SCOPED_TRACE(intersection);
+        auto lhs = ygg::Builder<dl::semantics::Denotation<dl::ConceptTag>>(size), rhs = lhs;
+        for (const auto i : { digits - 1, digits, digits + 1 })
+            lhs.get().set(i);
+        for (const auto i : { ygg::uint_t { 0 }, digits, digits + 1 })
+            rhs.get().set(i);
+        const auto left = ygg::make_view(lhs, *repository), right = ygg::make_view(rhs, *repository);
+        auto lhs_delta = inc::DenotationDelta<dl::ConceptTag>(), rhs_delta = lhs_delta;
+        auto output = inc::detail::DenotationState<dl::ConceptTag>();
+        auto workspace = inc::detail::SetOperationWorkspace();
+        workspace.initialize(size);
+        inc::detail::initialize_set(tag, output, left, lhs_delta, right, rhs_delta, workspace);
+        EXPECT_TRUE(output.get_delta().empty());
+        EXPECT_EQ(output.size(), intersection ? 2 : 4);
+        for (ygg::uint_t i = 0; i < size; ++i)
+            EXPECT_EQ(output.contains(object(i)), i == digits || i == digits + 1 || (!intersection && (i == 0 || i == digits - 1)));
+        lhs.get().reset(digits + 1);
+        lhs.get().set(1);
+        rhs.get().reset(digits + 1);
+        rhs.get().set(digits - 1);
+        lhs_delta.removed = rhs_delta.removed = { object(digits + 1) };
+        lhs_delta.added = { object(1) };
+        rhs_delta.added = { object(digits - 1) };
+        inc::detail::update_set(tag, output, left, lhs_delta, right, rhs_delta, workspace);
+        EXPECT_EQ(output.get_delta().added, std::vector { object(intersection ? digits - 1 : 1) });
+        EXPECT_EQ(output.get_delta().removed, std::vector { object(digits + 1) });
+        for (ygg::uint_t i = 0; i < size; ++i)
+            EXPECT_EQ(output.contains(object(i)), i == digits || i == digits - 1 || (!intersection && (i == 0 || i == 1)));
+        EXPECT_EQ(output.size(), intersection ? 2 : 4);
+        EXPECT_TRUE(output.get_builder().get().trailing_bits_zero());
+    };
+    check(dl::IntersectionTag {});
+    check(dl::UnionTag {});
+}
+
 TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWordBoundaries)
 {
     namespace dl = kr::dl;
@@ -187,8 +281,12 @@ TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWor
     const auto view = ygg::make_view(role, *repository);
     kernels::initialize_set(dl::InverseTag {}, inverse, view, delta, workspace);
     kernels::initialize_set(dl::ComplementTag {}, complement, view, delta, workspace);
-    EXPECT_TRUE(inverse.get_delta().empty());
-    EXPECT_TRUE(complement.get_delta().empty());
+    for (const auto* output : { &inverse, &complement })
+    {
+        EXPECT_TRUE(output->get_delta().empty());
+        EXPECT_EQ(output->get_delta().added.capacity(), 0);
+        EXPECT_EQ(output->get_delta().removed.capacity(), 0);
+    }
     role.get(0).reset(size - 1);
     role.get(size - 2).set(size - 1);
     delta.removed.emplace_back(object(0), object(size - 1));
@@ -205,16 +303,32 @@ TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWor
     EXPECT_EQ(inverse.get_delta().removed.front(), std::pair(object(size - 1), object(0)));
     EXPECT_EQ(complement.get_delta().added.front(), delta.removed.front());
     EXPECT_EQ(complement.get_delta().removed.front(), delta.added.front());
-    for (ygg::uint_t source = 0; source < size; ++source)
+    const auto check_result = [&]
     {
-        EXPECT_TRUE(inverse.get_builder().get(source).trailing_bits_zero());
-        EXPECT_TRUE(complement.get_builder().get(source).trailing_bits_zero());
-        for (ygg::uint_t target = 0; target < size; ++target)
+        for (ygg::uint_t source = 0; source < size; ++source)
         {
-            EXPECT_EQ(inverse.get_builder().get(source)[target], role.get(target)[source]);
-            EXPECT_EQ(complement.get_builder().get(source)[target], !role.get(source)[target]);
+            EXPECT_TRUE(inverse.get_builder().get(source).trailing_bits_zero());
+            EXPECT_TRUE(complement.get_builder().get(source).trailing_bits_zero());
+            for (ygg::uint_t target = 0; target < size; ++target)
+            {
+                EXPECT_EQ(inverse.get_builder().get(source)[target], role.get(target)[source]);
+                EXPECT_EQ(complement.get_builder().get(source)[target], !role.get(source)[target]);
+            }
         }
-    }
+    };
+    check_result();
+    const auto inverse_capacity = std::pair(inverse.get_delta().added.capacity(), inverse.get_delta().removed.capacity());
+    const auto complement_capacity = std::pair(complement.get_delta().added.capacity(), complement.get_delta().removed.capacity());
+    role.get(2).set(3);
+    kernels::initialize_set(dl::InverseTag {}, inverse, view, delta, workspace);
+    kernels::initialize_set(dl::ComplementTag {}, complement, view, delta, workspace);
+    EXPECT_TRUE(inverse.get_delta().empty());
+    EXPECT_TRUE(complement.get_delta().empty());
+    EXPECT_EQ(std::pair(inverse.get_delta().added.capacity(), inverse.get_delta().removed.capacity()), inverse_capacity);
+    EXPECT_EQ(std::pair(complement.get_delta().added.capacity(), complement.get_delta().removed.capacity()), complement_capacity);
+    EXPECT_EQ(inverse.size(), 3);
+    EXPECT_EQ(complement.size(), static_cast<size_t>(size) * size - 3);
+    check_result();
 }
 
 }  // namespace

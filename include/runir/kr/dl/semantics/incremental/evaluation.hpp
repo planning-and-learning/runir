@@ -70,6 +70,12 @@ class EvaluationGraph
         return node(index).size();
     }
     size_t cardinality(QueryEvaluationIndex index) const { return result(index).size(); }
+    template<ConceptOrRoleTag Category>
+    bool nonempty(EvaluationIndex<Category> index) const
+    {
+        return result(index).any();
+    }
+    bool nonempty(QueryEvaluationIndex index) const { return !result(index).empty(); }
     const tyr::formalism::planning::Repository& repository() const { return *m_task.get_repository(); }
     detail::SetOperationWorkspace& set_workspace() noexcept { return m_set_workspace; }
 

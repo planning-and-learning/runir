@@ -95,6 +95,31 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>
     auto get() noexcept -> Bitset { return Bitset(blocks.data(), num_bits(num_objects)); }
     auto get() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), num_bits(num_objects)); }
     auto identifying_members() const noexcept { return std::tie(num_objects, blocks); }
+
+    bool contains(Index<tyr::formalism::Object> object) const noexcept { return get().test(ygg::uint_t(object)); }
+
+    /// Set membership and invalidate published identity; return whether it changed.
+    bool set(Index<tyr::formalism::Object> object, bool present) noexcept
+    {
+        auto bits = get();
+        const auto changed = bits.test(ygg::uint_t(object)) != present;
+        bits.set(ygg::uint_t(object), present);
+        ygg::clear(index);
+        return changed;
+    }
+
+    void flip() noexcept
+    {
+        get().flip();
+        ygg::clear(index);
+    }
+
+    /// Includes trailing padding; bulk operations must preserve its zero bits.
+    auto storage_bits() noexcept -> Bitset { return Bitset(blocks.data(), blocks.size() * Bitset::Digits); }
+    auto storage_bits() const noexcept -> ConstBitset { return ConstBitset(blocks.data(), blocks.size() * ConstBitset::Digits); }
+
+    bool any() const noexcept { return get().any(); }
+    auto count() const noexcept -> size_t { return get().count(); }
 };
 
 template<>
@@ -157,6 +182,31 @@ struct Builder<runir::kr::dl::semantics::Denotation<runir::kr::dl::RoleTag>>
     auto get(ygg::uint_t object) const noexcept -> ConstBitset { return get(ygg::Index<tyr::formalism::Object>(object)); }
     auto get_num_objects() const noexcept { return num_objects; }
     auto identifying_members() const noexcept { return std::tie(num_objects, blocks); }
+
+    bool contains(Index<tyr::formalism::Object> source, Index<tyr::formalism::Object> target) const noexcept { return get(source).test(ygg::uint_t(target)); }
+
+    /// Set membership and invalidate published identity; return whether it changed.
+    bool set(Index<tyr::formalism::Object> source, Index<tyr::formalism::Object> target, bool present) noexcept
+    {
+        auto row = get(source);
+        const auto changed = row.test(ygg::uint_t(target)) != present;
+        row.set(ygg::uint_t(target), present);
+        ygg::clear(index);
+        return changed;
+    }
+
+    void assign_row(Index<tyr::formalism::Object> source, ConstBitset row)
+    {
+        get(source).copy_from(row);
+        ygg::clear(index);
+    }
+
+    void flip() noexcept
+    {
+        for (ygg::uint_t source = 0; source < num_objects; ++source)
+            get(source).flip();
+        ygg::clear(index);
+    }
 
     /// Includes per-row padding; bulk operations must preserve its zero bits.
     auto storage_bits() noexcept -> Bitset { return Bitset(blocks.data(), blocks.size() * Bitset::Digits); }

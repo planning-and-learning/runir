@@ -7,8 +7,8 @@
 #include "runir/kr/dl/semantics/incremental/detail/distance.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/set_operations.hpp"
 
+#include <span>
 #include <variant>
-#include <yggdrasil/containers/span.hpp>
 #include <yggdrasil/database/incremental/projection.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
@@ -153,11 +153,17 @@ private:
             }
             else
             {
-                value.initialize(semantics::detail::num_objects<Kind, Family>(context));
+                auto& builder = value.initialize(semantics::detail::num_objects<Kind, Family>(context));
                 for (const auto atom : tyr::planning::get_atoms_view<Kind>(context.get_state(), predicate))
-                    value.set(atom_element<Category>(atom), true);
+                {
+                    const auto objects = atom.get_row().get_objects();
+                    if constexpr (std::same_as<Category, ConceptTag>)
+                        builder.set(objects[0].get_index(), true);
+                    else
+                        builder.set(objects[0].get_index(), objects[1].get_index(), true);
+                }
                 if (!polarity)
-                    value.flip();
+                    builder.flip();
             }
         }
         void update(EvaluationGraph<Family, Kind>&, const Delta<Family>& delta, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>&)
@@ -178,14 +184,14 @@ private:
         template<StateEvaluationContextConcept<Family, Kind> Context>
         void initialize(EvaluationGraph<Family, Kind>&, Context& context)
         {
-            value.initialize(semantics::detail::num_objects<Kind, Family>(context));
+            auto& builder = value.initialize(semantics::detail::num_objects<Kind, Family>(context));
             const auto slot = context.registers().at(identifier);
             if (slot)
             {
                 if constexpr (std::same_as<Category, ConceptTag>)
-                    value.set(slot.value(), true);
+                    builder.set(slot.value().get_index(), true);
                 else
-                    value.set(std::pair(slot.value().get_first(), slot.value().get_second()), true);
+                    builder.set(slot.value().get_first().get_index(), slot.value().get_second().get_index(), true);
             }
         }
         void update(EvaluationGraph<Family, Kind>&, const Delta<Family>& delta, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>&)
@@ -377,11 +383,10 @@ private:
         explicit Cardinality(std::variant<EvaluationIndex<ConceptTag>, EvaluationIndex<RoleTag>, QueryEvaluationIndex> child) : child(child) {}
         void refresh(EvaluationGraph<Family, Kind>& graph)
         {
-            const auto count = std::visit([&](auto index) { return graph.cardinality(index); }, child);
             if constexpr (std::same_as<Category, BooleanTag>)
-                value.set(count != 0);
+                value.set(std::visit([&](auto index) { return graph.nonempty(index); }, child));
             else
-                value.set(ygg::to_uint_t(count));
+                value.set(ygg::to_uint_t(std::visit([&](auto index) { return graph.cardinality(index); }, child)));
         }
         template<StateEvaluationContextConcept<Family, Kind> Context>
         void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
@@ -431,20 +436,25 @@ private:
         Projection(QueryEvaluationIndex child, const ygg::database::ProjectionPlan& plan) : child(child), operation(plan) {}
         void set_row(EvaluationGraph<Family, Kind>& graph, std::span<const ygg::Index<tyr::formalism::Object>> row, bool present)
         {
-            const auto objects = ygg::make_view(row, graph.repository());
             if constexpr (std::same_as<Category, ConceptTag>)
-                value.set(objects[0], present);
+                value.set(row[0], present, graph.repository());
             else
-                value.set(std::pair(objects[0], objects[1]), present);
+                value.set(row[0], row[1], present, graph.repository());
         }
         template<StateEvaluationContextConcept<Family, Kind> Context>
         void initialize(EvaluationGraph<Family, Kind>& graph, Context& context)
         {
-            value.initialize(semantics::detail::num_objects<Kind, Family>(context));
+            auto& builder = value.initialize(semantics::detail::num_objects<Kind, Family>(context));
             operation.initialize(graph.result(child), context.get_workspace().get_database_workspace());
             const auto& rows = operation.get_result();
             for (size_t i = 0; i < rows.size(); ++i)
-                set_row(graph, rows.row(i), true);
+            {
+                const auto row = rows.row(i);
+                if constexpr (std::same_as<Category, ConceptTag>)
+                    builder.set(row[0], true);
+                else
+                    builder.set(row[0], row[1], true);
+            }
         }
         void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>& workspace)
         {

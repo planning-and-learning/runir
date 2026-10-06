@@ -191,12 +191,12 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
         EXPECT_EQ(indexed.count(), expected.size());
         EXPECT_TRUE(std::ranges::equal(borrowed, expected));
         EXPECT_TRUE(std::ranges::equal(indexed, expected));
-        EXPECT_TRUE(std::ranges::equal(borrowed.range(), expected));
-        EXPECT_TRUE(std::ranges::equal(indexed.range(), expected));
-        EXPECT_EQ(borrowed.range().begin(), borrowed.begin());
-        EXPECT_EQ(borrowed.range().end(), borrowed.end());
-        EXPECT_EQ(indexed.range().begin(), indexed.begin());
-        EXPECT_EQ(indexed.range().end(), indexed.end());
+        EXPECT_TRUE(std::ranges::equal(borrowed.views(), expected));
+        EXPECT_TRUE(std::ranges::equal(indexed.views(), expected));
+        EXPECT_EQ(borrowed.views().begin(), borrowed.begin());
+        EXPECT_EQ(borrowed.views().end(), borrowed.end());
+        EXPECT_EQ(indexed.views().begin(), indexed.begin());
+        EXPECT_EQ(indexed.views().end(), indexed.end());
         auto borrowed_iterator = ygg::make_view(builder, *formalism).begin();
         auto indexed_iterator = sem::DenotationView<Category>(indexed).begin();
         for (const auto& value : expected)
@@ -210,8 +210,8 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
         EXPECT_EQ(indexed_iterator, indexed.end());
         if constexpr (std::same_as<Category, dl::RoleTag>)
         {
-            const auto borrowed_row = borrowed.range(object(0));
-            const auto indexed_row = indexed.range(object(0));
+            const auto borrowed_row = borrowed.views(object(0));
+            const auto indexed_row = indexed.views(object(0));
             static_assert(std::ranges::forward_range<decltype(borrowed_row)>);
             static_assert(std::ranges::forward_range<decltype(indexed_row)>);
             static_assert(std::same_as<decltype(borrowed.begin(object(0))), decltype(indexed.begin(object(0)))>);
@@ -223,11 +223,11 @@ TEST(RunirEvaluationStorage, BorrowedDenotationsExposeReadOnlyValuesAndMatchInde
             const auto targets = std::array { object(num_objects - 1) };
             EXPECT_TRUE(std::ranges::equal(borrowed_row, targets));
             EXPECT_TRUE(std::ranges::equal(indexed_row, targets));
-            EXPECT_TRUE(borrowed.range(object(1)).empty());
-            EXPECT_TRUE(indexed.range(object(1)).empty());
+            EXPECT_TRUE(borrowed.views(object(1)).empty());
+            EXPECT_TRUE(indexed.views(object(1)).empty());
             // Row iterators borrow storage directly, not the temporary view or range.
-            auto borrowed_target = ygg::make_view(builder, *formalism).range(object(0)).begin();
-            auto indexed_target = sem::DenotationView<Category>(indexed).range(object(0)).begin();
+            auto borrowed_target = ygg::make_view(builder, *formalism).views(object(0)).begin();
+            auto indexed_target = sem::DenotationView<Category>(indexed).views(object(0)).begin();
             EXPECT_EQ(*borrowed_target++, targets.front());
             EXPECT_EQ(*indexed_target++, targets.front());
             EXPECT_EQ(borrowed_target, borrowed_row.end());

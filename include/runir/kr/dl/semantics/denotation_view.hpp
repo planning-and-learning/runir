@@ -11,6 +11,7 @@
 #include <iterator>
 #include <ranges>
 #include <tuple>
+#include <type_traits>
 #include <tyr/formalism/object_index.hpp>
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
@@ -57,14 +58,61 @@ using DenotationElementViewList = std::vector<DenotationElementView<Category>>;
 
 namespace detail
 {
+/// Borrows the bits independently of the view and range wrappers.
+/// Comparing iterators requires that they belong to the same sequence.
+template<ConceptOrRoleTag Category>
+class DenotationIndexIterator
+{
+    ygg::SetBitIndices<ygg::uint_t>::Iterator m_bit;
+    size_t m_row_bits = 0;
+
+public:
+    using value_type = std::conditional_t<std::same_as<Category, ConceptTag>,
+                                          ygg::Index<tyr::formalism::Object>,
+                                          std::pair<ygg::Index<tyr::formalism::Object>, ygg::Index<tyr::formalism::Object>>>;
+    using difference_type = std::ptrdiff_t;
+    using reference = value_type;
+    using pointer = void;
+    using iterator_category = std::forward_iterator_tag;
+    using iterator_concept = std::forward_iterator_tag;
+
+    DenotationIndexIterator() noexcept = default;
+    DenotationIndexIterator(ygg::BitsetSpan<const ygg::uint_t> bits, bool begin, ygg::uint_t num_objects = 0) noexcept :
+        m_bit(bits, begin ? bits.find_first() : ygg::BitsetSpan<const ygg::uint_t>::npos),
+        m_row_bits(ygg::BitsetSpan<const ygg::uint_t>::num_blocks(num_objects) * ygg::BitsetSpan<const ygg::uint_t>::Digits)
+    {
+    }
+
+    reference operator*() const noexcept
+    {
+        if constexpr (std::same_as<Category, ConceptTag>)
+            return ygg::Index<tyr::formalism::Object>(static_cast<ygg::uint_t>(*m_bit));
+        else
+            return std::pair(ygg::Index<tyr::formalism::Object>(static_cast<ygg::uint_t>(*m_bit / m_row_bits)),
+                             ygg::Index<tyr::formalism::Object>(static_cast<ygg::uint_t>(*m_bit % m_row_bits)));
+    }
+
+    DenotationIndexIterator& operator++() noexcept
+    {
+        ++m_bit;
+        return *this;
+    }
+    DenotationIndexIterator operator++(int) noexcept
+    {
+        auto previous = *this;
+        ++*this;
+        return previous;
+    }
+    friend bool operator==(const DenotationIndexIterator& lhs, const DenotationIndexIterator& rhs) noexcept { return lhs.m_bit == rhs.m_bit; }
+};
+
 /// Borrows the bits and repository independently of the view object.
 /// Comparing iterators requires that they belong to the same sequence.
 template<ConceptOrRoleTag Category>
 class DenotationIterator
 {
-    ygg::SetBitIndices<ygg::uint_t>::Iterator m_bit;
+    DenotationIndexIterator<Category> m_index;
     const tyr::formalism::planning::Repository* m_repository = nullptr;
-    size_t m_row_bits = 0;
 
 public:
     using value_type = DenotationElementView<Category>;
@@ -79,24 +127,25 @@ public:
                        const tyr::formalism::planning::Repository& repository,
                        bool begin,
                        ygg::uint_t num_objects = 0) noexcept :
-        m_bit(bits, begin ? bits.find_first() : ygg::BitsetSpan<const ygg::uint_t>::npos),
-        m_repository(&repository),
-        m_row_bits(ygg::BitsetSpan<const ygg::uint_t>::num_blocks(num_objects) * ygg::BitsetSpan<const ygg::uint_t>::Digits)
+        m_index(bits, begin, num_objects),
+        m_repository(&repository)
     {
     }
 
     reference operator*() const noexcept
     {
         if constexpr (std::same_as<Category, ConceptTag>)
-            return ygg::make_view(ygg::Index<tyr::formalism::Object>(static_cast<ygg::uint_t>(*m_bit)), *m_repository);
+            return ygg::make_view(*m_index, *m_repository);
         else
-            return std::pair(ygg::make_view(ygg::Index<tyr::formalism::Object>(static_cast<ygg::uint_t>(*m_bit / m_row_bits)), *m_repository),
-                             ygg::make_view(ygg::Index<tyr::formalism::Object>(static_cast<ygg::uint_t>(*m_bit % m_row_bits)), *m_repository));
+        {
+            const auto [source, target] = *m_index;
+            return std::pair(ygg::make_view(source, *m_repository), ygg::make_view(target, *m_repository));
+        }
     }
 
     DenotationIterator& operator++() noexcept
     {
-        ++m_bit;
+        ++m_index;
         return *this;
     }
     DenotationIterator operator++(int) noexcept
@@ -105,7 +154,7 @@ public:
         ++*this;
         return previous;
     }
-    friend bool operator==(const DenotationIterator& lhs, const DenotationIterator& rhs) noexcept { return lhs.m_bit == rhs.m_bit; }
+    friend bool operator==(const DenotationIterator& lhs, const DenotationIterator& rhs) noexcept { return lhs.m_index == rhs.m_index; }
 };
 }  // namespace detail
 
@@ -129,60 +178,10 @@ public:
     const auto& get_context() const noexcept { return *m_context; }
     const auto& get_formalism_repository() const noexcept { return *m_context; }
 
-    auto get() const noexcept
-        requires(!std::same_as<Category, runir::kr::dl::RoleTag>)
-    {
-        return m_handle->get();
-    }
-
-    auto get(Index<tyr::formalism::Object> object) const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return m_handle->get(object);
-    }
-
-    auto get(ygg::uint_t object) const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return get(Index<tyr::formalism::Object>(object));
-    }
-
-    auto begin(tyr::formalism::planning::ObjectView source) const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), true);
-    }
-
-    auto end(tyr::formalism::planning::ObjectView source) const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), false);
-    }
-
-    auto range() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        return std::ranges::subrange(begin(), end());
-    }
-
-    /// Objects reached from this source, borrowing the row and repository.
-    auto range(tyr::formalism::planning::ObjectView source) const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return std::ranges::subrange(begin(source), end(source));
-    }
-
     auto get_num_objects() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     {
         return m_handle->num_objects;
-    }
-
-    /// Includes the zero padding at the end of every role row.
-    auto storage_bits() const noexcept
-        requires std::same_as<Category, runir::kr::dl::RoleTag>
-    {
-        return m_handle->storage_bits();
     }
 
     bool any() const noexcept
@@ -203,22 +202,87 @@ public:
             return storage_bits().count();
     }
 
+    // Internal interface: raw values, bitsets and typed indices avoid constructing object views.
+
+    auto get() const noexcept
+        requires(!std::same_as<Category, runir::kr::dl::RoleTag>)
+    {
+        return m_handle->get();
+    }
+
+    auto get(Index<tyr::formalism::Object> object) const noexcept
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        return m_handle->get(object);
+    }
+
+    auto get(ygg::uint_t object) const noexcept
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        return get(Index<tyr::formalism::Object>(object));
+    }
+
+    /// Includes zero padding: trailing concept bits or padding after each role row.
+    auto storage_bits() const noexcept
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    {
+        return m_handle->storage_bits();
+    }
+
+    /// Typed indices borrowing only the bits, independently of the view and range wrappers.
+    auto indices() const noexcept
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    {
+        const auto bits = storage_bits();
+        return std::ranges::subrange(runir::kr::dl::semantics::detail::DenotationIndexIterator<Category>(bits, true, get_num_objects()),
+                                     runir::kr::dl::semantics::detail::DenotationIndexIterator<Category>(bits, false, get_num_objects()));
+    }
+
+    auto indices(Index<tyr::formalism::Object> source) const noexcept
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        const auto row = get(source);
+        return std::ranges::subrange(runir::kr::dl::semantics::detail::DenotationIndexIterator<runir::kr::dl::ConceptTag>(row, true),
+                                     runir::kr::dl::semantics::detail::DenotationIndexIterator<runir::kr::dl::ConceptTag>(row, false));
+    }
+
+    // External interface: iterate object views bound to the formalism repository.
+
     auto begin() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return runir::kr::dl::semantics::detail::DenotationIterator<Category>(get(), get_formalism_repository(), true);
-        else
-            return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), true, get_num_objects());
+        return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), true, get_num_objects());
+    }
+
+    auto begin(tyr::formalism::planning::ObjectView source) const noexcept
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), true);
     }
 
     auto end() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return runir::kr::dl::semantics::detail::DenotationIterator<Category>(get(), get_formalism_repository(), false);
-        else
-            return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), false, get_num_objects());
+        return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), false, get_num_objects());
+    }
+
+    auto end(tyr::formalism::planning::ObjectView source) const noexcept
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), false);
+    }
+
+    auto views() const noexcept
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    {
+        return std::ranges::subrange(begin(), end());
+    }
+
+    /// Objects reached from this source, borrowing the row and repository.
+    auto views(tyr::formalism::planning::ObjectView source) const noexcept
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        return std::ranges::subrange(begin(source), end(source));
     }
 };
 
@@ -244,6 +308,34 @@ public:
 
     auto get_index() const noexcept { return m_handle; }
     const auto& get_formalism_repository() const noexcept { return get_denotation_repository(*m_context).get_formalism_repository(); }
+
+    auto get_num_objects() const noexcept
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    {
+        return get_data().num_objects;
+    }
+
+    bool any() const noexcept
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    {
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+            return get().any();
+        else
+            return storage_bits().any();
+    }
+
+    size_t count() const noexcept
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    {
+        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
+            return get().count();
+        else
+            return storage_bits().count();
+    }
+
+    auto identifying_members() const noexcept { return std::make_tuple(m_handle, get_denotation_repository(*m_context).get_index()); }
+
+    // Internal interface: raw values, bitsets and typed indices avoid constructing object views.
 
     auto get() const noexcept
         requires runir::kr::dl::BooleanOrNumericalTag<Category>
@@ -286,10 +378,50 @@ public:
         return get(Index<::tyr::formalism::Object>(object));
     }
 
+    /// Includes zero padding: trailing concept bits or padding after each role row.
+    auto storage_bits() const noexcept
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    {
+        using Bitset = BitsetSpan<const ygg::uint_t>;
+        const auto vector = get_vector();
+        return Bitset(vector.data(), vector.size() * Bitset::Digits);
+    }
+
+    /// Typed indices borrowing only the bits, independently of the view and range wrappers.
+    auto indices() const noexcept
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    {
+        const auto bits = storage_bits();
+        return std::ranges::subrange(runir::kr::dl::semantics::detail::DenotationIndexIterator<Category>(bits, true, get_num_objects()),
+                                     runir::kr::dl::semantics::detail::DenotationIndexIterator<Category>(bits, false, get_num_objects()));
+    }
+
+    auto indices(Index<tyr::formalism::Object> source) const noexcept
+        requires std::same_as<Category, runir::kr::dl::RoleTag>
+    {
+        const auto row = get(source);
+        return std::ranges::subrange(runir::kr::dl::semantics::detail::DenotationIndexIterator<runir::kr::dl::ConceptTag>(row, true),
+                                     runir::kr::dl::semantics::detail::DenotationIndexIterator<runir::kr::dl::ConceptTag>(row, false));
+    }
+
+    // External interface: iterate object views bound to the formalism repository.
+
+    auto begin() const noexcept
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    {
+        return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), true, get_num_objects());
+    }
+
     auto begin(tyr::formalism::planning::ObjectView source) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
         return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), true);
+    }
+
+    auto end() const noexcept
+        requires runir::kr::dl::ConceptOrRoleTag<Category>
+    {
+        return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), false, get_num_objects());
     }
 
     auto end(tyr::formalism::planning::ObjectView source) const noexcept
@@ -298,71 +430,18 @@ public:
         return runir::kr::dl::semantics::detail::DenotationIterator<runir::kr::dl::ConceptTag>(get(source.get_index()), get_formalism_repository(), false);
     }
 
-    auto range() const noexcept
+    auto views() const noexcept
         requires runir::kr::dl::ConceptOrRoleTag<Category>
     {
         return std::ranges::subrange(begin(), end());
     }
 
     /// Objects reached from this source, borrowing the row and repository.
-    auto range(tyr::formalism::planning::ObjectView source) const noexcept
+    auto views(tyr::formalism::planning::ObjectView source) const noexcept
         requires std::same_as<Category, runir::kr::dl::RoleTag>
     {
         return std::ranges::subrange(begin(source), end(source));
     }
-
-    auto get_num_objects() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        return get_data().num_objects;
-    }
-
-    /// Includes the zero padding at the end of every role row.
-    auto storage_bits() const noexcept
-        requires(std::same_as<Category, runir::kr::dl::RoleTag>)
-    {
-        using Bitset = BitsetSpan<const ygg::uint_t>;
-        const auto vector = get_vector();
-        return Bitset(vector.data(), vector.size() * Bitset::Digits);
-    }
-
-    bool any() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return get().any();
-        else
-            return storage_bits().any();
-    }
-
-    size_t count() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return get().count();
-        else
-            return storage_bits().count();
-    }
-
-    auto begin() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return runir::kr::dl::semantics::detail::DenotationIterator<Category>(get(), get_formalism_repository(), true);
-        else
-            return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), true, get_num_objects());
-    }
-
-    auto end() const noexcept
-        requires runir::kr::dl::ConceptOrRoleTag<Category>
-    {
-        if constexpr (std::same_as<Category, runir::kr::dl::ConceptTag>)
-            return runir::kr::dl::semantics::detail::DenotationIterator<Category>(get(), get_formalism_repository(), false);
-        else
-            return runir::kr::dl::semantics::detail::DenotationIterator<Category>(storage_bits(), get_formalism_repository(), false, get_num_objects());
-    }
-
-    auto identifying_members() const noexcept { return std::make_tuple(m_handle, get_denotation_repository(*m_context).get_index()); }
 };
 
 }

@@ -44,6 +44,23 @@ ygg::Builder<Denotation<Category>>& assign(ygg::Builder<Denotation<Category>>& d
     return destination;
 }
 
+template<CategoryTag Category>
+ygg::Builder<Denotation<Category>>& assign(ygg::Builder<Denotation<Category>>& destination, BorrowedDenotationView<Category> source)
+{
+    if constexpr (ConceptOrRoleTag<Category>)
+    {
+        if (&destination != &source.get_handle())
+        {
+            destination.blocks = source.get_handle().blocks;
+            destination.num_objects = source.get_num_objects();
+        }
+    }
+    else
+        destination.value = source.get();
+    ygg::clear(destination.index);
+    return destination;
+}
+
 /// Intern a computed denotation using reusable scratch; record the resulting index on its builder.
 template<CategoryTag Category>
 [[nodiscard]] auto insert(DenotationRepository& repository, ygg::Builder<Denotation<Category>>& source, Builder& builder)

@@ -161,8 +161,13 @@ private:
         void initialize(EvaluationGraph<Family, Kind>& graph, Context&)
         {
             this->clear();
-            for (const auto element : graph.result(argument))
-                set_element(element, true);
+            for (const auto element : graph.result(argument).indices())
+            {
+                if constexpr (std::same_as<Category, ConceptTag>)
+                    this->set(std::array { element }, true);
+                else
+                    this->set(std::array { element.first, element.second }, true);
+            }
             this->clear_delta();
         }
         void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ygg::Index<tyr::formalism::Object>>&)
