@@ -131,12 +131,12 @@ public:
         if (std::ranges::any_of(denotations, [](const auto& denotation) { return denotation.count() == 0; }))
             return true;
         auto& search = *context.task_context->search_context;
+        const auto accept = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
+        { return action_matches_do_arguments(rule, binding, denotations); };
         const auto visit = [&](tyr::planning::BorrowedActionBindingView<Kind> binding)
         {
             if (stop())
                 return false;
-            if (!action_matches_do_arguments(rule, binding, denotations))
-                return true;
             const auto candidate = context.storage.successor(planning_state, binding);
             context.environment.reset_target();
             if (!do_effects_match(context, rule, state, planning_state, candidate.get_state()))
@@ -148,7 +148,9 @@ public:
         };
         return search.successor_generator->for_each_borrowed_applicable_action_binding(tyr::planning::Node<Kind, PlanningState>(planning_state, 0),
                                                                                        m_action,
-                                                                                       std::ref(visit));
+                                                                                       std::ref(accept),
+                                                                                       std::ref(visit),
+                                                                                       std::ref(stop));
     }
     template<runir::kr::dl::semantics::EvaluationPolicyConcept<ExtFamilyTag, Kind> EvaluationPolicy,
              ExecutionStorageConcept<Kind> Storage,

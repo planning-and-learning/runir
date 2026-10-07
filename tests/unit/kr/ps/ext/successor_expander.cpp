@@ -433,7 +433,7 @@ template<tyr::TaskKind Kind>
 void expect_lazy_do_successors()
 {
     namespace ext = kr::ps::ext;
-    for (const auto scenario : { 0, 1, 2, 3, 4 })
+    for (const auto scenario : { 0, 1, 2, 3, 4, 5 })
     {
         SCOPED_TRACE(fmt::format("scenario={}", scenario));
         const auto task_context =
@@ -441,7 +441,9 @@ void expect_lazy_do_successors()
         auto& repository = *task_context->domain_context->ext_repository;
         auto& states = *task_context->search_context->state_repository;
         const auto domain = task_context->search_context->task->get_domain().get_domain();
-        const auto selected_ball = scenario == 2 ? "(c_bot)" : "(c_some (r_atomic_goal \"at\" true) (c_top))";
+        const auto selected_ball = scenario == 2 ? "(c_bot)" :
+                                   scenario == 5 ? "(c_atomic_state \"room\")" :
+                                                   "(c_some (r_atomic_goal \"at\" true) (c_top))";
         const auto sketch = scenario == 4 ? R"(
     (:rule (:symbol move) (:expression
       (:source-memory source) (:target-memory sketch-target)
@@ -495,8 +497,9 @@ void expect_lazy_do_successors()
             // the unrelated move schema must not be expanded before filtering.
             EXPECT_EQ(states.num_states(), 3);
         }
-        else if (scenario < 4)
+        else if (scenario < 4 || scenario == 5)
         {
+            // A nonempty argument denotation can still reject every candidate.
             EXPECT_EQ(states.num_states(), 1);
         }
         if (scenario == 0 || scenario == 4)

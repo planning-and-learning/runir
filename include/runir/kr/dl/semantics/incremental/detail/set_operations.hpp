@@ -82,13 +82,36 @@ inline void mark_predecessors(SetOperationWorkspace& workspace, const ygg::Build
 {
     const auto index = ygg::uint_t(target);
     for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
-        if (role.get(source).test(index))
+        if (!workspace.marked[source] && role.get(source).test(index))
             workspace.mark(ygg::Index<tyr::formalism::Object>(source));
 }
 
-inline void mark_predecessors(SetOperationWorkspace& workspace, const ygg::Builder<Denotation<RoleTag>>& role, const DenotationDelta<ConceptTag>& delta)
+template<ConceptOrRoleTag Category>
+void mark_predecessors(SetOperationWorkspace& workspace, const ygg::Builder<Denotation<RoleTag>>& role, const DenotationDelta<Category>& delta)
 {
-    for_changed(delta, [&](auto target) { mark_predecessors(workspace, role, target.get_index()); });
+    if (delta.empty())
+        return;
+
+    // Row evaluation starts after discovery, so its scratch can first deduplicate changed targets.
+    auto targets = workspace.row.get();
+    targets.reset();
+    for_changed(delta,
+                [&](auto value)
+                {
+                    if constexpr (std::same_as<Category, ConceptTag>)
+                        targets.set(ygg::uint_t(value.get_index()));
+                    else
+                        targets.set(ygg::uint_t(value.first.get_index()));
+                });
+    const auto first = targets.find_first();
+    if (targets.find_next(first) == ygg::BitsetSpan<ygg::uint_t>::npos)
+    {
+        mark_predecessors(workspace, role, ygg::Index<tyr::formalism::Object>(static_cast<ygg::uint_t>(first)));
+        return;
+    }
+    for (ygg::uint_t source = 0; source < role.get_num_objects(); ++source)
+        if (!workspace.marked[source] && role.get(source).intersects(targets))
+            workspace.mark(ygg::Index<tyr::formalism::Object>(source));
 }
 
 template<BaseConceptConstructorTag Tag>
@@ -543,7 +566,7 @@ inline void update_set(CompositionTag,
     output.clear_delta();
     workspace.clear_rows();
     mark_sources(workspace, lhs_delta);
-    for_changed(rhs_delta, [&](auto edge) { mark_predecessors(workspace, lhs.get_handle(), edge.first.get_index()); });
+    mark_predecessors(workspace, lhs.get_handle(), rhs_delta);
     // ponytail: affected rows are rebuilt; retain witness counts if dense rows dominate profiling.
     evaluate_rows(CompositionTag {}, lhs, rhs, workspace, [&](auto source, auto row) { output.update_row(source, row, lhs.get_formalism_repository()); });
 }
@@ -570,12 +593,8 @@ void update_set(Tag,
     output.clear_delta();
     workspace.clear_rows();
     // Read all dirty predecessors from the old closure before modifying it.
-    for_changed(delta,
-                [&](auto edge)
-                {
-                    workspace.mark(edge.first.get_index());
-                    mark_predecessors(workspace, output.get_builder(), edge.first.get_index());
-                });
+    mark_sources(workspace, delta);
+    mark_predecessors(workspace, output.get_builder(), delta);
     evaluate_rows(Tag {},
                   output.get_builder(),
                   role,

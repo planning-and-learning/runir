@@ -142,6 +142,19 @@ void check_composition_and_closures()
 
     if constexpr (size >= 5)
     {
+        // Repeated changed middle objects must be discovered once, including simultaneous left changes.
+        rhs.get(1).set(0);
+        rhs.get(1).set(1);
+        rhs.get(1).set(size - 1);
+        lhs.get(0).set(1);
+        lhs.get(2).set(1);
+        check();
+        rhs.get(1).reset(0);
+        rhs.get(1).reset(1);
+        rhs.get(2).set(size - 1);
+        lhs.get(0).reset(1);
+        check();
+
         SCOPED_TRACE("directed SCC splits, merges, and a clean suffix");
         lhs.storage_bits().reset();
         lhs.get(0).set(1);
@@ -254,6 +267,61 @@ TEST(RunirIncrementalSetOperations, ConceptIntersectionAndUnionAcrossWordBoundar
     };
     check(dl::IntersectionTag {});
     check(dl::UnionTag {});
+}
+
+TEST(RunirIncrementalSetOperations, RestrictionBatchesConceptChangesWithChangedRoleRows)
+{
+    namespace dl = kr::dl;
+    namespace sem = dl::semantics;
+    namespace inc = sem::incremental;
+    namespace kernels = inc::detail;
+    constexpr auto size = static_cast<ygg::uint_t>(ygg::BitsetSpan<const ygg::uint_t>::Digits + 3);
+    auto repository = tyr::formalism::planning::RepositoryFactory().create_shared();
+    for (ygg::uint_t i = 0; i < size; ++i)
+    {
+        auto data = ygg::Data<tyr::formalism::Object>("o" + std::to_string(i));
+        (void) repository->insert(data);
+    }
+    const auto object = [&](ygg::uint_t i) { return ygg::make_view(ygg::Index<tyr::formalism::Object>(i), *repository); };
+    auto role = ygg::Builder<sem::Denotation<dl::RoleTag>>(size);
+    auto concept_ = ygg::Builder<sem::Denotation<dl::ConceptTag>>(size);
+    role.get(0).set(1);
+    role.get(1).set(size - 1);
+    role.get(2).set(1);
+    role.get(2).set(size - 1);
+    role.get(3).set(2);
+    concept_.get().set(1);
+    auto role_delta = inc::DenotationDelta<dl::RoleTag>();
+    auto concept_delta = inc::DenotationDelta<dl::ConceptTag>();
+    auto restricted = kernels::DenotationState<dl::RoleTag>();
+    auto existential = kernels::DenotationState<dl::ConceptTag>();
+    auto workspace = kernels::SetOperationWorkspace();
+    workspace.initialize(size);
+    const auto role_view = ygg::make_view(role, *repository);
+    const auto concept_view = ygg::make_view(concept_, *repository);
+    kernels::initialize_set(dl::RestrictionTag {}, restricted, role_view, role_delta, concept_view, concept_delta, workspace);
+    kernels::initialize_set(dl::ExistentialQuantificationTag {}, existential, role_view, role_delta, concept_view, concept_delta, workspace);
+
+    role.get(0).reset(1);
+    role.get(0).set(size - 1);
+    role_delta.removed.emplace_back(object(0), object(1));
+    role_delta.added.emplace_back(object(0), object(size - 1));
+    concept_.get().reset(1);
+    concept_.get().set(size - 1);
+    concept_delta.removed.push_back(object(1));
+    concept_delta.added.push_back(object(size - 1));
+    kernels::update_set(dl::RestrictionTag {}, restricted, role_view, role_delta, concept_view, concept_delta, workspace);
+    kernels::update_set(dl::ExistentialQuantificationTag {}, existential, role_view, role_delta, concept_view, concept_delta, workspace);
+    for (ygg::uint_t source = 0; source < size; ++source)
+    {
+        EXPECT_EQ(existential.get_builder().get().test(source), source < 3);
+        for (ygg::uint_t target = 0; target < size; ++target)
+            EXPECT_EQ(restricted.get_builder().get(source).test(target), source < 3 && target == size - 1);
+    }
+    EXPECT_EQ(restricted.get_delta().added.size(), 3);
+    EXPECT_EQ(restricted.get_delta().removed.size(), 2);
+    EXPECT_EQ(existential.get_delta().added, std::vector { object(1) });
+    EXPECT_TRUE(existential.get_delta().removed.empty());
 }
 
 TEST(RunirIncrementalSetOperations, InverseAndComplementPreservePaddingAcrossWordBoundaries)
