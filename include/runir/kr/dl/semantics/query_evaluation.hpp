@@ -23,20 +23,30 @@ auto evaluate_impl(ygg::View<ygg::Index<Query<Family, QueryRenameTag>>, C> const
     return results.get_relation_repository().rename(child, constructor.get_schema());
 }
 
+namespace detail
+{
+
+/// Materialize rows into an empty, matching builder without publishing the root.
 template<tyr::TaskKind Kind, FamilyTag Family, typename Tag, typename C, StateEvaluationContextConcept<Family, Kind> Context>
-    requires(!std::same_as<Tag, void> && !std::same_as<Tag, QueryRenameTag>)
-auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context& context) -> QueryDenotationView
+    requires(!std::same_as<Tag, void>)
+void evaluate_query(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
+                    Context& context,
+                    ygg::Builder<ygg::database::Relation<ygg::Index<tyr::formalism::Object>>>& result)
 {
     const auto& data = constructor.get_data();
-    const auto schema = constructor.get_schema();
-    auto result = context.get_builder().template get_builder<ygg::database::Relation<ygg::Index<tyr::formalism::Object>>>(schema);
     auto children = context.child_context();
-    if constexpr (is_atomic_state_tag_v<Tag>)
+    if constexpr (std::same_as<Tag, QueryRenameTag>)
+    {
+        const auto child = evaluate<Kind>(constructor.get_arg(), children);
+        for (size_t i = 0; i < child.size(); ++i)
+            result.insert(child.row(i));
+    }
+    else if constexpr (is_atomic_state_tag_v<Tag>)
     {
         const auto predicate = constructor.get_predicate();
         for (const auto atom : tyr::planning::get_atoms_view<Kind, typename Tag::FactKind>(context.get_state(), predicate))
         {
-            result->insert(atom.get_row().get_data());
+            result.insert(atom.get_row().get_data());
         }
     }
     else if constexpr (is_atomic_goal_tag_v<Tag>)
@@ -45,25 +55,20 @@ auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Con
         for (const auto atom :
              context.get_state().get_task().get_task().get_goal().template get_atoms_view<typename Tag::FactKind>(constructor.get_polarity(), predicate))
         {
-            result->insert(atom.get_row().get_data());
+            result.insert(atom.get_row().get_data());
         }
     }
     else if constexpr (std::same_as<Tag, QueryConceptTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        const auto bits = child.get();
-        for (const auto object : ygg::set_bit_indices(bits))
-            result->insert({ ygg::Index<tyr::formalism::Object>(static_cast<ygg::uint_t>(object)) });
+        for (const auto object : child.indices())
+            result.insert({ object });
     }
     else if constexpr (std::same_as<Tag, QueryRoleTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        for (ygg::uint_t source = 0; source < detail::num_objects<Kind, Family>(context); ++source)
-        {
-            const auto row = child.get(source);
-            for (const auto target : ygg::set_bit_indices(row))
-                result->insert({ ygg::Index<tyr::formalism::Object>(source), ygg::Index<tyr::formalism::Object>(static_cast<ygg::uint_t>(target)) });
-        }
+        for (const auto [source, target] : child.indices())
+            result.insert({ source, target });
     }
     else if constexpr (std::same_as<Tag, QueryJoinTag> || std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
     {
@@ -79,18 +84,18 @@ auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Con
                                 data.plan,
                                 children.get_caches().get_static_join_indexes(),
                                 { .lhs = lhs_static && !rhs_static, .rhs = rhs_static && !lhs_static },
-                                *result,
+                                result,
                                 context.get_workspace().get_database_workspace());
         }
         else if constexpr (std::same_as<Tag, QueryUnionTag>)
-            ygg::database::union_(lhs, rhs, *result);
+            ygg::database::union_(lhs, rhs, result);
         else
-            ygg::database::difference(lhs, rhs, *result);
+            ygg::database::difference(lhs, rhs, result);
     }
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
-        ygg::database::project(child, data.plan, *result, context.get_workspace().get_database_workspace());
+        ygg::database::project(child, data.plan, result, context.get_workspace().get_database_workspace());
     }
     else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
     {
@@ -98,18 +103,28 @@ auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Con
         ygg::database::select(
             child,
             [&](std::span<const ygg::Index<tyr::formalism::Object>> row) { return row[data.lhs_position] == row[data.rhs_position]; },
-            *result);
+            result);
     }
     else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
     {
         const auto child = evaluate<Kind>(constructor.get_arg(), children);
         const auto object = constructor.get_object().get_index();
-        ygg::database::select(child, [&](std::span<const ygg::Index<tyr::formalism::Object>> row) { return row[data.position] == object; }, *result);
+        ygg::database::select(child, [&](std::span<const ygg::Index<tyr::formalism::Object>> row) { return row[data.position] == object; }, result);
     }
     else
     {
         static_assert(ygg::dependent_false<Tag>::value, "unhandled relational query constructor");
     }
+}
+
+}  // namespace detail
+
+template<tyr::TaskKind Kind, FamilyTag Family, typename Tag, typename C, StateEvaluationContextConcept<Family, Kind> Context>
+    requires(!std::same_as<Tag, void> && !std::same_as<Tag, QueryRenameTag>)
+auto evaluate_impl(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor, Context& context) -> QueryDenotationView
+{
+    auto result = context.get_builder().template get_builder<ygg::database::Relation<ygg::Index<tyr::formalism::Object>>>(constructor.get_schema());
+    detail::evaluate_query<Kind>(constructor, context, *result);
     return insert(context.get_denotation_repository(), *result).first;
 }
 

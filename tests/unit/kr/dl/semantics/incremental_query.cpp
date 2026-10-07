@@ -252,8 +252,12 @@ void check_query_graph()
     const auto triple = std::string(R"((q_atomic_state "triple" (x y z)))");
     const auto copied = std::string(R"((q_atomic_state "copied" (x y z)))");
     const auto fixed = std::string(R"((q_atomic_state "fixed" (x y z)))");
+    const auto static_role = std::string(R"((q_role (x y) (r_complement (r_identity (c_top)))))");
     const auto expressions = std::vector<std::string> {
         triple,
+        fixed,
+        static_role,
+        R"((q_concept x (c_top)))",
         "(q_project () (q_project (x) " + triple + "))",
         "(q_join " + triple + " " + fixed + ")",
         "(q_join " + fixed + " " + triple + ")",
@@ -271,6 +275,7 @@ void check_query_graph()
         "(q_difference " + fixed + " " + triple + ")",
         "(q_difference " + triple + " " + copied + ")",
         "(q_rename (u v w) " + triple + ")",
+        "(q_rename (u v w) " + fixed + ")",
         "(q_select_equal y z " + triple + ")",
         "(q_select_value x \"a\" " + triple + ")",
         "(q_concept x (c_project x " + triple + "))",
@@ -311,6 +316,13 @@ void check_query_graph()
         auto initial_context = context_for(nodes.front().get_state());
         evaluator.initialize(initial_context);
         expect_unpublished();
+        EXPECT_TRUE(std::ranges::equal(evaluator.get_result().columns().span(), query.get_schema().span()));
+        if (expression == static_role)
+        {
+            // Its feature child may be interned; the static query root is owned here.
+            EXPECT_TRUE(storage.get_caches().get_queries(true).empty());
+            EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().empty());
+        }
         expect_empty_delta(evaluator);
         EXPECT_EQ(evaluator.get_delta().memory_usage(), db::incremental::Delta<Object>(query.get_schema().span()).memory_usage());
         compare_full(nodes.front().get_state());

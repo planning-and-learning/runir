@@ -150,6 +150,14 @@ inline void DistanceEvaluator::update(BorrowedDenotationView<ConceptTag> sources
     if (sources.get_num_objects() != size || edges.get_num_objects() != size || targets.get_num_objects() != size)
         throw std::invalid_argument("Incremental distance: different object universes.");
 
+    // No old source remains to anchor incremental repair. Restart the unit-edge
+    // BFS instead of invalidating and repairing every reachable vertex.
+    if (!source_delta.removed.empty() && sources.get().count() == source_delta.added.size())
+    {
+        initialize(sources, edges, targets);
+        return;
+    }
+
     // Remove all deleted shortest-path supports before changing any distance.
     // The reverse relation temporarily holds exactly the surviving old edges.
     for (const auto& [source, target] : edge_delta.removed)

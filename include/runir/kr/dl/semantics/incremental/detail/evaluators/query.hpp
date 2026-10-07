@@ -26,12 +26,6 @@ protected:
         return m_result;
     }
     void clear_delta() noexcept { m_delta.clear(); }
-    template<ygg::database::RelationViewConcept<ygg::Index<tyr::formalism::Object>> Source>
-    void assign(const Source& source)
-    {
-        ygg::database::assign(m_result, source);
-        m_delta.clear();
-    }
     void set(std::span<const ygg::Index<tyr::formalism::Object>> row, bool present)
     {
         const auto position = m_result.find(row);
@@ -66,7 +60,9 @@ struct QueryStaticEvaluator : QueryValue
     {
         if (!initialized)
         {
-            this->assign(semantics::evaluate<Kind>(expression, context));
+            auto& result = this->clear();
+            auto output = context.for_result(true);
+            ygg::visit([&](auto concrete) { semantics::detail::evaluate_query<Kind>(concrete, output, result); }, expression.get_variant());
             initialized = true;
         }
         this->clear_delta();

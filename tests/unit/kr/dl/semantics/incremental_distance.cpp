@@ -101,6 +101,18 @@ TEST(RunirIncrementalDistance, RepairsMixedChangesAndUndoAgainstFreshBreadthFirs
         previous_edges = edges;
         previous_targets = targets;
     };
+    const auto check_all_targets = [&]
+    {
+        const auto selected_targets = targets;
+        for (ygg::uint_t target = 0; target < size; ++target)
+        {
+            targets.get().reset();
+            targets.get().set(target);
+            check();
+        }
+        targets = selected_targets;
+        check();
+    };
 
     edges.get(1).reset(3);  // The other shortest predecessor still supports 3.
     check();
@@ -127,6 +139,46 @@ TEST(RunirIncrementalDistance, RepairsMixedChangesAndUndoAgainstFreshBreadthFirs
     check();
     EXPECT_EQ(evaluator.get_result(), 1);
     check();  // Empty deltas leave the retained state intact.
+
+    // Replace every source while changing edges, then empty both endpoint sets.
+    const auto saved_sources = sources;
+    const auto saved_edges = edges;
+    const auto saved_targets = targets;
+    sources.get().reset();
+    sources.get().set(2);
+    sources.get().set(8);
+    edges.get(9).reset(3);
+    edges.get(8).set(4);
+    edges.get(2).set(3);
+    check();
+    check_all_targets();
+    sources.get().reset();
+    sources.get().set(0);
+    sources.get().set(4);
+    edges.get(0).set(5);
+    check();
+    check_all_targets();
+    sources.get().reset();
+    targets.get().reset();
+    check();
+    EXPECT_EQ(evaluator.get_result(), infinity);
+    check_all_targets();
+
+    sources.get().set(0);
+    sources.get().set(4);
+    targets.get().set(3);
+    check();
+    sources.get().reset(0);  // A surviving source still uses incremental repair.
+    sources.get().set(8);
+    edges.get(4).reset(3);
+    edges.get(8).set(3);
+    check();
+    check_all_targets();
+    sources = saved_sources;
+    edges = saved_edges;
+    targets = saved_targets;
+    check();
+    check_all_targets();
 
     // Mixed batches include source/target swaps, equal-length alternatives,
     // self loops, cycles, changes in disconnected components, and cancellation.
@@ -171,15 +223,7 @@ TEST(RunirIncrementalDistance, RepairsMixedChangesAndUndoAgainstFreshBreadthFirs
         }
         // Probe every retained distance: a multi-target minimum alone can hide
         // an incorrect distance whenever another target is already a source.
-        const auto selected_targets = targets;
-        for (ygg::uint_t target = 0; target < size; ++target)
-        {
-            targets.get().reset();
-            targets.get().set(target);
-            check();
-        }
-        targets = selected_targets;
-        check();
+        check_all_targets();
     }
 }
 
