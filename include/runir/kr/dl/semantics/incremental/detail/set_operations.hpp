@@ -103,8 +103,10 @@ void mark_predecessors(SetOperationWorkspace& workspace, const ygg::Builder<Deno
                     else
                         targets.set(ygg::uint_t(value.first.get_index()));
                 });
-    const auto first = targets.find_first();
-    if (targets.find_next(first) == ygg::BitsetSpan<ygg::uint_t>::npos)
+    const auto indices = ygg::set_bit_indices(targets);
+    auto it = indices.begin();
+    const auto first = *it;
+    if (++it == indices.end())
     {
         mark_predecessors(workspace, role, ygg::Index<tyr::formalism::Object>(static_cast<ygg::uint_t>(first)));
         return;
