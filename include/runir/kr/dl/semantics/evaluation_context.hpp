@@ -3,8 +3,6 @@
 
 #include "runir/kr/dl/semantics/evaluation.hpp"
 
-#include <concepts>
-#include <ranges>
 #include <yggdrasil/database/relation_view.hpp>
 
 namespace runir::kr::dl::semantics
@@ -12,17 +10,17 @@ namespace runir::kr::dl::semantics
 
 /// Evaluate DL expressions without requiring their results to own or intern storage.
 template<typename Context, typename Family, typename Kind>
-concept EvaluationContextConcept = runir::kr::FamilyTag<Family> && tyr::TaskKind<Kind>
+concept EvaluationContextConcept = FamilyTag<Family> && tyr::TaskKind<Kind>
                                    && requires(Context& context,
-                                               runir::kr::dl::FamilyConstructorView<Family, runir::kr::dl::BooleanTag> boolean,
-                                               runir::kr::dl::FamilyConstructorView<Family, runir::kr::dl::NumericalTag> numerical,
-                                               runir::kr::dl::FamilyConstructorView<Family, runir::kr::dl::ConceptTag> concept_,
-                                               runir::kr::dl::FamilyConstructorView<Family, runir::kr::dl::RoleTag> role,
-                                               runir::kr::dl::FamilyQueryView<Family> query) {
-                                          { evaluate<Kind>(boolean, context).get() } -> std::same_as<bool>;
-                                          { evaluate<Kind>(numerical, context).get() } -> std::same_as<ygg::uint_t>;
-                                          { evaluate<Kind>(concept_, context) } -> std::ranges::forward_range;
-                                          { evaluate<Kind>(role, context) } -> std::ranges::forward_range;
+                                               FamilyConstructorView<Family, BooleanTag> boolean,
+                                               FamilyConstructorView<Family, NumericalTag> numerical,
+                                               FamilyConstructorView<Family, ConceptTag> concept_,
+                                               FamilyConstructorView<Family, RoleTag> role,
+                                               FamilyQueryView<Family> query) {
+                                          { evaluate<Kind>(boolean, context) } -> DenotationViewConcept<BooleanTag>;
+                                          { evaluate<Kind>(numerical, context) } -> DenotationViewConcept<NumericalTag>;
+                                          { evaluate<Kind>(concept_, context) } -> DenotationViewConcept<ConceptTag>;
+                                          { evaluate<Kind>(role, context) } -> DenotationViewConcept<RoleTag>;
                                           { evaluate<Kind>(query, context) } -> ygg::database::RelationViewConcept<ygg::Index<tyr::formalism::Object>>;
                                       };
 

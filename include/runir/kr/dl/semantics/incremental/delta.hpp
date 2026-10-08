@@ -25,17 +25,16 @@ void assign_atom_delta(const Source& source, const Target& target, Changes& delt
     delta.clear();
     // ponytail: compare dynamic state contents for now; capture changes during
     // successor construction if this scan becomes a measured bottleneck.
-    // FDR variables, rather than projected atom order, identify fluent changes.
-    for (const auto fact : source.get_fluent_facts_view())
-        if (target.get(fact.get_data().variable) != fact.get_value())
-            delta.removed.fluent_atoms.push_back(*fact.get_atom());
-    for (const auto fact : target.get_fluent_facts_view())
-        if (source.get(fact.get_data().variable) != fact.get_value())
-            delta.added.fluent_atoms.push_back(*fact.get_atom());
-    for (const auto atom : source.get_derived_atoms_view())
+    for (const auto atom : source.template get_atoms_view<tyr::formalism::FluentTag>())
+        if (!target.test(atom))
+            delta.removed.fluent_atoms.push_back(atom);
+    for (const auto atom : target.template get_atoms_view<tyr::formalism::FluentTag>())
+        if (!source.test(atom))
+            delta.added.fluent_atoms.push_back(atom);
+    for (const auto atom : source.template get_atoms_view<tyr::formalism::DerivedTag>())
         if (!target.test(atom))
             delta.removed.derived_atoms.push_back(atom);
-    for (const auto atom : target.get_derived_atoms_view())
+    for (const auto atom : target.template get_atoms_view<tyr::formalism::DerivedTag>())
         if (!source.test(atom))
             delta.added.derived_atoms.push_back(atom);
 }

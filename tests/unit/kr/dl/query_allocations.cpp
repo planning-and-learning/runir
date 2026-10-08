@@ -316,7 +316,7 @@ TEST(RunirQueries, WarmedIncrementalQueryEvaluationAllocatesAndFreesNothing)
         const auto next = successors.front();
         changes[i].assign<tyr::GroundTag>(current.get_state(), register_view, next.get_state(), register_view);
         auto objects = std::set<ObjectIndex> {};
-        for (const auto atom : tyr::planning::get_atoms_view<tyr::GroundTag, Fluent>(next.get_state(), atomic.get_predicate()))
+        for (const auto atom : next.get_state().get_atoms_view(atomic.get_predicate()))
             objects.insert(atom.get_row().get_data()[0]);
         projected_sizes[i + 1] = objects.size();
         current = next;

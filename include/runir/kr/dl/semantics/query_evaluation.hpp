@@ -44,7 +44,7 @@ void evaluate_query(ygg::View<ygg::Index<Query<Family, Tag>>, C> constructor,
     else if constexpr (is_atomic_state_tag_v<Tag>)
     {
         const auto predicate = constructor.get_predicate();
-        for (const auto atom : tyr::planning::get_atoms_view<Kind, typename Tag::FactKind>(context.get_state(), predicate))
+        for (const auto atom : context.get_state().get_atoms_view(predicate))
         {
             result.insert(atom.get_row().get_data());
         }

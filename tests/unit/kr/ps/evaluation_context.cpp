@@ -52,6 +52,58 @@ struct InvalidTargetPolicy : kr::dl::semantics::FullEvaluationPolicy<kr::ExtFami
 };
 static_assert(!kr::dl::semantics::EvaluationPolicyConcept<InvalidTargetPolicy, kr::ExtFamilyTag, tyr::GroundTag>);
 
+template<typename ConceptResult, typename RoleResult>
+struct ResultContext
+{
+};
+
+template<tyr::TaskKind Kind, kr::FamilyTag Family, typename ConceptResult, typename RoleResult>
+ConceptResult evaluate(kr::dl::FamilyConstructorView<Family, kr::dl::ConceptTag>, ResultContext<ConceptResult, RoleResult>&);
+template<tyr::TaskKind Kind, kr::FamilyTag Family, typename ConceptResult, typename RoleResult>
+RoleResult evaluate(kr::dl::FamilyConstructorView<Family, kr::dl::RoleTag>, ResultContext<ConceptResult, RoleResult>&);
+template<tyr::TaskKind Kind, kr::FamilyTag Family, kr::dl::BooleanOrNumericalTag Category, typename ConceptResult, typename RoleResult>
+kr::dl::semantics::DenotationView<Category>
+evaluate(kr::dl::FamilyConstructorView<Family, Category>, ResultContext<ConceptResult, RoleResult>&);
+template<tyr::TaskKind Kind, kr::FamilyTag Family, typename ConceptResult, typename RoleResult>
+kr::dl::semantics::QueryDenotationView evaluate(kr::dl::FamilyQueryView<Family>, ResultContext<ConceptResult, RoleResult>&);
+
+using ConceptResult = kr::dl::semantics::DenotationView<kr::dl::ConceptTag>;
+using RoleResult = kr::dl::semantics::DenotationView<kr::dl::RoleTag>;
+static_assert(kr::dl::semantics::EvaluationContextConcept<ResultContext<ConceptResult, RoleResult>, kr::ExtFamilyTag, tyr::GroundTag>);
+static_assert(!kr::dl::semantics::EvaluationContextConcept<ResultContext<int, RoleResult>, kr::ExtFamilyTag, tyr::GroundTag>);
+static_assert(!kr::dl::semantics::EvaluationContextConcept<ResultContext<RoleResult, ConceptResult>, kr::ExtFamilyTag, tyr::GroundTag>);
+
+template<kr::dl::CategoryTag Category>
+constexpr bool denotation_views()
+{
+    return kr::dl::semantics::DenotationViewConcept<kr::dl::semantics::DenotationView<Category>, Category>
+           && kr::dl::semantics::DenotationViewConcept<const kr::dl::semantics::BorrowedDenotationView<Category>&, Category>
+           && !kr::dl::semantics::DenotationViewConcept<int, Category>;
+}
+static_assert(denotation_views<kr::dl::BooleanTag>());
+static_assert(denotation_views<kr::dl::NumericalTag>());
+static_assert(denotation_views<kr::dl::ConceptTag>());
+static_assert(denotation_views<kr::dl::RoleTag>());
+
+template<kr::FamilyTag Family, tyr::TaskKind Kind>
+constexpr bool evaluation_policies_accept_borrowed_states()
+{
+    using Inputs = kr::dl::semantics::StateEvaluationContext<Family,
+                                                         Kind,
+                                                         tyr::planning::BuilderStateView<Kind>,
+                                                         kr::dl::semantics::BorrowedRegisterValuesView>;
+    return kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::FullEvaluationPolicy<Family, Kind>, Family, Kind>
+           && kr::dl::semantics::EvaluationPolicyConcept<kr::dl::semantics::DeltaEvaluationPolicy<Family, Kind>, Family, Kind>
+           && kr::dl::semantics::EvaluationContextConcept<Inputs, Family, Kind>
+           && kr::dl::semantics::EvaluationContextConcept<kr::dl::semantics::DeltaEvaluationContext<Family, Kind, Inputs>, Family, Kind>;
+}
+static_assert(evaluation_policies_accept_borrowed_states<kr::BaseFamilyTag, tyr::GroundTag>());
+static_assert(evaluation_policies_accept_borrowed_states<kr::BaseFamilyTag, tyr::LiftedTag>());
+static_assert(evaluation_policies_accept_borrowed_states<kr::ExtFamilyTag, tyr::GroundTag>());
+static_assert(evaluation_policies_accept_borrowed_states<kr::ExtFamilyTag, tyr::LiftedTag>());
+static_assert(evaluation_policies_accept_borrowed_states<kr::UnsFamilyTag, tyr::GroundTag>());
+static_assert(evaluation_policies_accept_borrowed_states<kr::UnsFamilyTag, tyr::LiftedTag>());
+
 struct NameOnlyContext
 {
     void get_source_state() const;

@@ -125,7 +125,7 @@ void add_objects(tyr::planning::StateView<Kind> state, ObjectGraphConstructionCo
 template<tyr::TaskKind Kind>
 void add_atoms(tyr::planning::StateView<Kind> state, ObjectGraphConstructionContext& context)
 {
-    for (auto atom : state.get_static_atoms_view())
+    for (auto atom : state.template get_atoms_view<tyr::formalism::StaticTag>())
         context.template add_atom<PredicateContext::STATE>(atom);
 
     for (auto fact : state.get_fluent_facts_view())

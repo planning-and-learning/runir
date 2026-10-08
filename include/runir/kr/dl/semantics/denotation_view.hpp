@@ -446,4 +446,15 @@ public:
 
 }
 
+namespace runir::kr::dl::semantics
+{
+
+/// The interned and borrowed representations share the denotation interface for this category.
+template<typename V, typename Category>
+concept DenotationViewConcept = CategoryTag<Category>
+                                && (std::same_as<std::remove_cvref_t<V>, DenotationView<Category>>
+                                    || std::same_as<std::remove_cvref_t<V>, BorrowedDenotationView<Category>>);
+
+}  // namespace runir::kr::dl::semantics
+
 #endif

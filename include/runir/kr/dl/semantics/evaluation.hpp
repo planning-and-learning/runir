@@ -98,7 +98,7 @@ void evaluate_atomic_state_concept(ygg::View<ygg::Index<FamilyConcept<Family, At
     auto bitset = result.get();
 
     const auto predicate = constructor.get_predicate();
-    for (const auto atom : tyr::planning::get_atoms_view<Kind, T>(context.get_state(), predicate))
+    for (const auto atom : context.get_state().get_atoms_view(predicate))
     {
         const auto object = detail::object_index(atom, 0);
         assert(ygg::uint_t(object) < num_objects);
@@ -134,7 +134,7 @@ void evaluate_atomic_state_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicSt
     [[maybe_unused]] const auto num_objects = detail::num_objects<Kind, Family>(context);
 
     const auto predicate = constructor.get_predicate();
-    for (const auto atom : tyr::planning::get_atoms_view<Kind, T>(context.get_state(), predicate))
+    for (const auto atom : context.get_state().get_atoms_view(predicate))
     {
         const auto lhs = detail::object_index(atom, 0);
         const auto rhs = detail::object_index(atom, 1);
@@ -169,7 +169,7 @@ void evaluate_atomic_goal_role(ygg::View<ygg::Index<FamilyRole<Family, AtomicGoa
 template<tyr::TaskKind Kind, FamilyTag Family, tyr::formalism::FactKind T, StateEvaluationContextConcept<Family, Kind> Context, typename C>
 bool evaluate_atomic_state_boolean(ygg::View<ygg::Index<FamilyBoolean<Family, AtomicStateTag<T>>>, C> constructor, Context& context)
 {
-    auto atoms = tyr::planning::get_atoms_view<Kind, T>(context.get_state(), constructor.get_predicate());
+    auto atoms = context.get_state().get_atoms_view(constructor.get_predicate());
     const auto value = atoms.begin() != atoms.end();
     return constructor.get_polarity() ? value : !value;
 }

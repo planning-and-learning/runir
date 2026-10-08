@@ -1,5 +1,6 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <iterator>
 #include <ranges>
 #include <runir/graphs/bgl/graph_adapters.hpp>
 #include <runir/graphs/bidirectional_static_graph.hpp>
@@ -9,6 +10,7 @@
 #include <runir/graphs/properties.hpp>
 #include <runir/graphs/static_graph.hpp>
 #include <runir/graphs/static_graph_builder.hpp>
+#include <span>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -27,9 +29,39 @@ using DynamicGraph = graphs::DynamicGraph<std::string, std::string>;
 using BidirectionalGraph = graphs::BidirectionalStaticGraph<std::string, std::string>;
 
 static_assert(graphs::IsGraph<StaticGraph> && !graphs::IsGraph<int>);
+static_assert(graphs::IsGraph<Builder> && graphs::IsGraph<DynamicGraph>);
+static_assert(graphs::IsGraph<graphs::BackwardStaticGraphView<StaticGraph>>);
 static_assert(graphs::IsDenseGraph<StaticGraph> && !graphs::IsDenseGraph<Builder> && !graphs::IsDenseGraph<int>);
 static_assert(graphs::IsVertex<StaticGraph::VertexType> && !graphs::IsVertex<int>);
 static_assert(graphs::IsEdge<StaticGraph::EdgeType> && !graphs::IsEdge<int>);
+
+struct PropertyOnlyGraph
+{
+    using VertexPropertyType = std::string;
+    using EdgePropertyType = std::string;
+    const std::string& get_vertex_property(graphs::VertexPropertyIndex<std::string>) const;
+    const std::string& get_edge_property(graphs::EdgePropertyIndex<std::string>) const;
+};
+static_assert(graphs::IsGraphWithProperties<PropertyOnlyGraph, std::string, std::string>);
+static_assert(!graphs::IsGraph<PropertyOnlyGraph>);
+
+struct OwningVertexRange : StaticGraph
+{
+    std::vector<graphs::VertexIndex> get_vertex_indices() const;
+};
+struct WrongEdgeRange : StaticGraph
+{
+    std::span<const std::string> get_edge_indices() const;
+};
+struct NonCommonOutgoingRange : StaticGraph
+{
+    std::ranges::subrange<std::counted_iterator<const graphs::EdgeIndex*>, std::default_sentinel_t>
+    get_out_edge_indices(graphs::VertexIndex) const;
+};
+static_assert(!graphs::IsGraph<OwningVertexRange>);
+static_assert(!graphs::IsDenseGraph<OwningVertexRange>);
+static_assert(!graphs::IsGraph<WrongEdgeRange>);
+static_assert(!graphs::IsGraph<NonCommonOutgoingRange>);
 
 template<typename Graph>
 void expect_vertex_and_edge_parents_rebound(const Graph& graph, graphs::VertexIndex vertex, graphs::EdgeIndex edge)

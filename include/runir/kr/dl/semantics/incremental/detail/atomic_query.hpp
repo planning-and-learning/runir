@@ -73,7 +73,7 @@ void AtomicQueryEvaluator<Fact>::initialize(const State& state)
     m_initialized = false;
     m_result.clear();
     m_delta.clear();
-    for (const auto atom : tyr::planning::get_atoms_view<Kind, Fact>(state, m_predicate))
+    for (const auto atom : state.get_atoms_view(m_predicate))
         m_result.insert(atom.get_row().get_data());
     m_initialized = true;
 }

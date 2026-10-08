@@ -1251,7 +1251,7 @@ void check_transient_builder_values_and_reuse()
     EXPECT_EQ(&borrowed_registers.at(concept_id).value().get_context(), &registered_registers.at(concept_id).value().get_context());
     EXPECT_EQ(borrowed_registers.at(role_id).value().get_first().get_index(), registered_registers.at(role_id).value().get_first().get_index());
     EXPECT_EQ(borrowed_registers.at(role_id).value().get_second().get_index(), registered_registers.at(role_id).value().get_second().get_index());
-    auto& facts = first_module.state.template get_atoms<tyr::formalism::FluentTag>();
+    auto& facts = first_module.state.template get_atom_storage<tyr::formalism::FluentTag>();
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
         facts.values = { 1, 0 };
     else
@@ -1295,13 +1295,13 @@ void check_transient_builder_values_and_reuse()
     EXPECT_EQ(*separate->call_stack, *first->call_stack);
     EXPECT_TRUE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
     EXPECT_EQ(ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*separate));
-    separate_module.state.template get_atoms<tyr::formalism::DerivedTag>().indices.resize(1, true);
+    separate_module.state.template get_atom_storage<tyr::formalism::DerivedTag>().indices.resize(1, true);
     EXPECT_TRUE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
     EXPECT_EQ(ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*first), ygg::Hash<ygg::Builder<ext::ProgramState<Kind>>> {}(*separate));
     if constexpr (std::same_as<Kind, tyr::GroundTag>)
-        separate_module.state.template get_atoms<tyr::formalism::FluentTag>().values.front() = 0;
+        separate_module.state.template get_atom_storage<tyr::formalism::FluentTag>().values.front() = 0;
     else
-        separate_module.state.template get_atoms<tyr::formalism::FluentTag>().indices.flip(0);
+        separate_module.state.template get_atom_storage<tyr::formalism::FluentTag>().indices.flip(0);
     EXPECT_FALSE(ygg::EqualTo<ygg::Builder<ext::ProgramState<Kind>>> {}(*first, *separate));
     separate_module.state = first_module.state;
     separate_module.state.get_numeric_variables().values.front() = 4.0;

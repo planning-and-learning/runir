@@ -43,7 +43,7 @@ template<tyr::TaskKind Kind, tyr::formalism::FactKind Fact, typename State>
 auto atoms(const State& state)
 {
     auto result = std::vector<fp::AtomView<tyr::GroundTag, Fact>> {};
-    for (const auto atom : tyr::planning::get_atoms_view<Kind, Fact>(state))
+    for (const auto atom : state.template get_atoms_view<Fact>())
         result.push_back(atom);
     std::ranges::sort(result);
     return result;
