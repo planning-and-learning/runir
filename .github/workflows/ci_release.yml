@@ -8,6 +8,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: "2"
+  RUNIR_JOBS: "2"
+  TYR_JOBS: "2"
+  LOKI_JOBS: "2"
+  YGGDRASIL_JOBS: "2"
+
 jobs:
   build_sdist:
     runs-on: ubuntu-latest
@@ -59,7 +66,7 @@ jobs:
           CIBW_SKIP: "*-musllinux_*"
           CIBW_ARCHS: "${{ matrix.architecture }}"
           CIBW_BUILD_VERBOSITY: "1"
-          CIBW_ENVIRONMENT: "RUNIR_JOBS=2 TYR_JOBS=2 LOKI_JOBS=2 YGGDRASIL_JOBS=2 PIP_NO_CACHE_DIR=1"
+          CIBW_ENVIRONMENT: "CMAKE_BUILD_PARALLEL_LEVEL=2 RUNIR_JOBS=2 TYR_JOBS=2 LOKI_JOBS=2 YGGDRASIL_JOBS=2 PIP_NO_CACHE_DIR=1"
 
   build_wheels_macos:
     runs-on: macos-latest
@@ -89,4 +96,4 @@ jobs:
           CIBW_BUILD: "${{ matrix.python-version }}-*"
           CIBW_ARCHS: arm64
           CIBW_BUILD_VERBOSITY: "1"
-          CIBW_ENVIRONMENT: "RUNIR_JOBS=2 TYR_JOBS=2 LOKI_JOBS=2 YGGDRASIL_JOBS=2 PIP_NO_CACHE_DIR=1"
+          CIBW_ENVIRONMENT: "CMAKE_BUILD_PARALLEL_LEVEL=2 RUNIR_JOBS=2 TYR_JOBS=2 LOKI_JOBS=2 YGGDRASIL_JOBS=2 PIP_NO_CACHE_DIR=1"
