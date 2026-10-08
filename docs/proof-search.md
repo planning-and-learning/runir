@@ -25,9 +25,9 @@ successors and Choose obligations in reverse order. Storage policies preserve
 
 ## Feature evaluation
 
-Configure with `-DRUNIR_DELTA_EVALUATION=ON` to select
-`DeltaEvaluationPolicy<Family, Kind>` for Base, Ext, and ICP proof search and Uns
-classification during search. The default is `OFF`, which uses
+`RUNIR_DELTA_EVALUATION` defaults to `ON`, selecting
+`DeltaEvaluationPolicy<Family, Kind>` for Base, Ext, and ICP proof search and UNS
+classification during search. Configure with `-DRUNIR_DELTA_EVALUATION=OFF` to use
 `FullEvaluationPolicy<Family, Kind>` and the existing memoized, interned results.
 Both live in `runir::kr::dl::semantics` and satisfy
 `EvaluationPolicyConcept<Policy, Family, Kind>`. Their family is the DL family;

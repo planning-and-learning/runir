@@ -25,7 +25,7 @@ option(
 option(RUNIR_BUILD_PYRUNIR "Build pyrunir Python bindings." OFF)
 option(RUNIR_BUILD_TESTS "Build Runir tests." OFF)
 option(RUNIR_BUILD_EXECUTABLES "Build Runir executables." OFF)
-option(RUNIR_DELTA_EVALUATION "Use incremental feature evaluation in proof search and unsolvability checks." OFF)
+option(RUNIR_DELTA_EVALUATION "Use incremental feature evaluation in find_solution." ON)
 
 # Build configuration
 
