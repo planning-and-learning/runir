@@ -114,10 +114,35 @@ TEST(RunirIncrementalDistance, RepairsMixedChangesAndUndoAgainstFreshBreadthFirs
         check();
     };
 
+    // Reuse the reverse relation after a source-only replacement, then repair an edge deletion and undo it.
+    sources.get().reset(0);
+    sources.get().set(5);
+    check();
+    EXPECT_EQ(evaluator.get_result(), 4);
+    check_all_targets();
+    edges.get(5).reset(6);
+    check();
+    EXPECT_EQ(evaluator.get_result(), infinity);
+    check_all_targets();
+    edges.get(5).set(6);
+    check();
+    EXPECT_EQ(evaluator.get_result(), 4);
+    check_all_targets();
+    sources.get().reset(5);
+    sources.get().set(0);
+    check();
+    EXPECT_EQ(evaluator.get_result(), 2);
+    check_all_targets();
+
     edges.get(1).reset(3);  // The other shortest predecessor still supports 3.
     check();
     EXPECT_EQ(evaluator.get_result(), 2);
-    edges.get(2).reset(3);  // Repair through the longer boundary path and cycle.
+    edges.get(1).set(3);  // An equal-length insertion must restore its support.
+    check();
+    edges.get(2).reset(3);
+    check();
+    EXPECT_EQ(evaluator.get_result(), 2);
+    edges.get(1).reset(3);  // Repair through the longer boundary path and cycle.
     check();
     EXPECT_EQ(evaluator.get_result(), 5);
     edges.get(0).reset(5);  // An unrooted cycle must become unreachable.

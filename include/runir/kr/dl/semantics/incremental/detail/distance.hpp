@@ -15,7 +15,7 @@
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
-/// Retains shortest distances from every source, reverse edges, and the number
+/// Retains each vertex's distance from its nearest source, reverse edges, and the number
 /// of predecessors supporting each shortest distance. Deletions invalidate only
 /// vertices losing all such support; a min-heap repairs their distances from the
 /// surviving boundary and propagates improvements from inserted edges/sources.
@@ -40,6 +40,7 @@ class DistanceEvaluator
     void relax(ygg::uint_t object, ygg::uint_t distance);
     void mark_dirty(ygg::uint_t object);
     void select_targets(BorrowedDenotationView<ConceptTag> targets);
+    void initialize_distances(BorrowedDenotationView<ConceptTag> sources, BorrowedDenotationView<RoleTag> edges, BorrowedDenotationView<ConceptTag> targets);
 
 public:
     void initialize(BorrowedDenotationView<ConceptTag> sources, BorrowedDenotationView<RoleTag> edges, BorrowedDenotationView<ConceptTag> targets);
@@ -66,7 +67,11 @@ inline void DistanceEvaluator::remove_support(ygg::uint_t object)
 
 inline void DistanceEvaluator::relax(ygg::uint_t object, ygg::uint_t distance)
 {
-    if (distance >= m_distances[object])
+    if (distance > m_distances[object])
+        return;
+    // An equally short path can change support without changing distance.
+    mark_dirty(object);
+    if (distance == m_distances[object])
         return;
     m_distances[object] = distance;
     m_pending.emplace_back(distance, object);
@@ -89,14 +94,11 @@ inline void DistanceEvaluator::select_targets(BorrowedDenotationView<ConceptTag>
         m_result = std::min(m_result, m_distances[object]);
 }
 
-inline void
-DistanceEvaluator::initialize(BorrowedDenotationView<ConceptTag> sources, BorrowedDenotationView<RoleTag> edges, BorrowedDenotationView<ConceptTag> targets)
+inline void DistanceEvaluator::initialize_distances(BorrowedDenotationView<ConceptTag> sources,
+                                                    BorrowedDenotationView<RoleTag> edges,
+                                                    BorrowedDenotationView<ConceptTag> targets)
 {
-    m_initialized = false;
     const auto size = sources.get_num_objects();
-    if (edges.get_num_objects() != size || targets.get_num_objects() != size)
-        throw std::invalid_argument("Incremental distance: different object universes.");
-    m_reverse.initialize(size);
     m_distances.assign(size, infinity);
     m_supports.assign(size, 0);
     m_dirty_flags.assign(size, false);
@@ -106,9 +108,6 @@ DistanceEvaluator::initialize(BorrowedDenotationView<ConceptTag> sources, Borrow
     m_pending.reserve(size);
     m_dirty.clear();
     m_dirty.reserve(size);
-    for (ygg::uint_t source = 0; source < size; ++source)
-        for (const auto target : ygg::set_bit_indices(edges.get(source)))
-            m_reverse.get(static_cast<ygg::uint_t>(target)).set(source);
 
     for (const auto source : ygg::set_bit_indices(sources.get()))
     {
@@ -136,6 +135,20 @@ DistanceEvaluator::initialize(BorrowedDenotationView<ConceptTag> sources, Borrow
     m_initialized = true;
 }
 
+inline void
+DistanceEvaluator::initialize(BorrowedDenotationView<ConceptTag> sources, BorrowedDenotationView<RoleTag> edges, BorrowedDenotationView<ConceptTag> targets)
+{
+    m_initialized = false;
+    const auto size = sources.get_num_objects();
+    if (edges.get_num_objects() != size || targets.get_num_objects() != size)
+        throw std::invalid_argument("Incremental distance: different object universes.");
+    m_reverse.initialize(size);
+    for (ygg::uint_t source = 0; source < size; ++source)
+        for (const auto target : ygg::set_bit_indices(edges.get(source)))
+            m_reverse.get(static_cast<ygg::uint_t>(target)).set(source);
+    initialize_distances(sources, edges, targets);
+}
+
 inline void DistanceEvaluator::update(BorrowedDenotationView<ConceptTag> sources,
                                       BorrowedDenotationView<RoleTag> edges,
                                       BorrowedDenotationView<ConceptTag> targets,
@@ -154,7 +167,11 @@ inline void DistanceEvaluator::update(BorrowedDenotationView<ConceptTag> sources
     // BFS instead of invalidating and repairing every reachable vertex.
     if (!source_delta.removed.empty() && sources.get().count() == source_delta.added.size())
     {
-        initialize(sources, edges, targets);
+        // Source changes alone leave the retained reverse relation valid.
+        if (edge_delta.empty())
+            initialize_distances(sources, edges, targets);
+        else
+            initialize(sources, edges, targets);
         return;
     }
 
@@ -196,7 +213,6 @@ inline void DistanceEvaluator::update(BorrowedDenotationView<ConceptTag> sources
         if (m_reverse.get(to)[from])
             throw std::invalid_argument("Incremental distance: added edge is already present.");
         m_reverse.get(to).set(from);
-        mark_dirty(to);
         if (m_distances[from] != infinity)
             relax(to, m_distances[from] + 1);
     }
@@ -220,12 +236,8 @@ inline void DistanceEvaluator::update(BorrowedDenotationView<ConceptTag> sources
         m_pending.pop_back();
         if (distance != m_distances[source])
             continue;
-        mark_dirty(source);
         for (const auto target : ygg::set_bit_indices(edges.get(source)))
-        {
-            mark_dirty(static_cast<ygg::uint_t>(target));
             relax(static_cast<ygg::uint_t>(target), distance + 1);
-        }
     }
 
     // Recount only vertices whose shortest predecessors may have changed.
