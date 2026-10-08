@@ -277,10 +277,12 @@ evaluators in occurrence order and filters them by source memory. No aggregate
 needs an index-based occurrence schedule. Order and repetitions are preserved;
 dispatch remains templated and uses value-held variants for heterogeneous rules.
 
-Base selects the first compatible rule for each planning successor. Ext
-preserves natural rule order, deferring effect-bearing Sketch rules into one
-binding-major enumeration. ICP keeps natural rule order for greedy execution
-and groups applicable crules by action for universal execution. Grouped crules
+Base selects the first compatible rule for each planning successor. Ext checks
+Backtrack guards before emitting any ordinary outcome; a match emits only a
+terminal failure. Otherwise it preserves natural rule order, deferring
+effect-bearing Sketch rules into one binding-major enumeration. ICP keeps natural
+rule order for greedy execution and groups applicable crules by action for
+universal execution. Grouped crules
 share one planning candidate and one admitted history update per binding.
 ICP history builders and action-group buffers retain capacity between uses.
 Ext Action applicability and effect validation remain lazy for visited tuples;

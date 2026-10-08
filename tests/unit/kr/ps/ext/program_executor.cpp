@@ -281,6 +281,175 @@ const auto move_to_register = std::string(R"((:do (:conditions) (:action "move")
 const auto move_to_goal = std::string(R"((:do (:conditions) (:action "move") (:arguments Here Goal) (:effects)))");
 const auto move_rules = choice_rule("move-selected", "m1", "m2", move_to_register) + choice_rule("finish", "m2", "m3", move_to_goal);
 
+std::string backtrack_rule(const std::string& name, const std::string& source, const std::string& conditions = "")
+{
+    return "(:rule (:symbol " + name + ") (:expression (:source-memory " + source + ") (:backtrack (:conditions " + conditions + "))))";
+}
+
+template<tyr::TaskKind Kind>
+void check_backtrack_execution()
+{
+    namespace ext = kr::ps::ext;
+    using Status = ext::ProgramProofStatus;
+    using Mode = ext::StateMemorization;
+    using Outcome = ext::detail::ProgramOutcome;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto search = [&]
+    {
+        if constexpr (std::same_as<Kind, tyr::GroundTag>)
+            return make_ground_context(directory / "domain.pddl", directory / "task.pddl");
+        else
+            return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
+    }();
+    auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
+    auto& repository = *context->domain_context->ext_repository;
+    const auto parse = [&](const std::string& text) { return ext::dl::parse_module(text, search->task->get_domain().get_domain(), repository); };
+    const auto wrap = [&](ext::ModuleView module_) { return create_program(repository, module_, { module_ }); };
+    const auto ordinary = choice_rule("advance", "m0", "m1", "(:sketch (:conditions) (:effects))");
+    const auto priority_module = parse(choice_module("priority", ordinary + backtrack_rule("reject", "m0")));
+    const auto priority = wrap(priority_module);
+    auto expander = ext::SuccessorExpander<Kind>(context, priority);
+    const auto planning_node = initial_planning_node(expander);
+    const auto initial = expander.initial_state(planning_node.get_state());
+    const auto guard = priority_module.get_memory_transitions().back().front();
+    const auto retained = context->execution_repository->template size<ext::ProgramState<Kind>>();
+    const auto step = expander.apply(initial, guard);
+    ASSERT_TRUE(step);
+    EXPECT_EQ(step->status, Outcome::FAILURE);
+    EXPECT_EQ(step->target, initial);
+    ASSERT_TRUE(step->rule);
+    EXPECT_EQ(*step->rule, guard);
+    EXPECT_FALSE(step->state_transition);
+    EXPECT_FALSE(step->planning_successor);
+    EXPECT_EQ(context->execution_repository->template size<ext::ProgramState<Kind>>(), retained);
+    const auto candidates = search->successor_generator->get_labeled_successor_nodes(planning_node, *search->state_repository, *search->axiom_evaluator);
+    ASSERT_FALSE(candidates.empty());
+    const auto planning_rule = choice_rule("move", "m0", "m1", "(:sketch (:conditions) (:effects (unchanged Bad)))");
+    for (const auto guarded : { false, true })
+    {
+        SCOPED_TRACE(guarded);
+        const auto module_ = parse(choice_module(guarded ? "matching-guarded" : "matching", planning_rule + (guarded ? backtrack_rule("reject", "m0") : "")));
+        auto matching = ext::SuccessorExpander<Kind>(context, wrap(module_));
+        const auto source = matching.initial_state(planning_node.get_state());
+        EXPECT_EQ(bool(matching.matching_rule(source, candidates.front())), !guarded);
+    }
+
+    const auto unmatched_module =
+        parse(choice_module("unmatched", ordinary + backtrack_rule("wrong-mode", "m7") + backtrack_rule("false-condition", "m0", "(positive Bad)")));
+    auto unmatched = ext::SuccessorExpander<Kind>(context, wrap(unmatched_module));
+    const auto unmatched_source = unmatched.initial_state(planning_node.get_state());
+    const auto unmatched_steps = collect_steps(unmatched, unmatched_source);
+    ASSERT_EQ(unmatched_steps.size(), 1);
+    EXPECT_EQ(unmatched_steps.front().status, Outcome::APPLIED);
+    for (size_t i = 1; i < unmatched_module.get_memory_transitions().size(); ++i)
+        EXPECT_FALSE(unmatched.apply(unmatched_source, unmatched_module.get_memory_transitions()[i].front()));
+
+    // Reject after the bad binding has moved, then unwind to Choose and try the good binding.
+    // A goal-state guard must not override goal success.
+    const auto choices_module = parse(choice_module("choices",
+                                                    choice_rule("select", "m0", "m1", choose_candidates) + move_rules
+                                                        + backtrack_rule("bad-binding", "m2", "(positive Bad)") + backtrack_rule("goal-guard", "m3")));
+    const auto choices = wrap(choices_module);
+    const auto caller = parse(choice_module("caller",
+                                            choice_rule("call", "m0", "m1", "(:call (:conditions) (:callee callee) (:arguments))")
+                                                + choice_rule("finish", "m1", "m2", move_to_goal)));
+    const auto callee = parse(
+        choice_module("callee",
+                      choice_rule("load-good", "m0", "m1", "(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))")
+                          + choice_rule("move-good", "m1", "m2", move_to_register) + backtrack_rule("no-return", "m2")));
+    const auto called = create_program(repository, caller, { caller, callee });
+
+    for (const auto mode : { Mode::NONE, Mode::CHOICE, Mode::ALL })
+        for (const auto universal : { false, true })
+        {
+            SCOPED_TRACE(static_cast<int>(mode));
+            SCOPED_TRACE(universal);
+            auto options = ext::ProgramSearchOptions<Kind> {};
+            options.state_memorization = mode;
+            options.universal = universal;
+            const auto rejected = ext::find_solution(context, priority, options);
+            EXPECT_EQ(rejected.status, Status::FAILURE);
+            EXPECT_EQ(rejected.statistics.num_generated, 0);
+            EXPECT_EQ(rejected.statistics.num_expanded, 1);
+            ASSERT_TRUE(rejected.graph);
+            EXPECT_EQ(rejected.graph->get_num_vertices(), 1);
+            EXPECT_EQ(rejected.graph->get_num_edges(), 0);
+            ASSERT_EQ(rejected.deadend_states.size(), 1);
+            EXPECT_TRUE(rejected.open_states.empty());
+            EXPECT_FALSE(rejected.graph->get_vertex(rejected.deadend_states.front()).get_property().is_unsolvable);
+
+            const auto selected = ext::find_solution(context, choices, options);
+            ASSERT_EQ(selected.status, Status::SUCCESS);
+            EXPECT_EQ(selected.statistics.num_generated, 5);
+            EXPECT_EQ(selected.statistics.num_expanded, 5);
+            EXPECT_EQ(selected.statistics.choice_depth, 1);
+            EXPECT_TRUE(selected.open_states.empty());
+            if (mode == Mode::ALL)
+            {
+                ASSERT_EQ(selected.deadend_states.size(), 1);
+                EXPECT_FALSE(selected.graph->get_vertex(selected.deadend_states.front()).get_property().is_unsolvable);
+            }
+            if (!universal)
+            {
+                ASSERT_TRUE(selected.plan);
+                ASSERT_EQ(selected.plan->get_length(), 2);
+                EXPECT_EQ(selected.plan->get_labeled_succ_nodes().front().label.get_objects()[1].get_name(), "good");
+            }
+
+            const auto blocked = ext::find_solution(context, called, options);
+            EXPECT_EQ(blocked.status, Status::FAILURE);
+            EXPECT_EQ(blocked.statistics.num_generated, 3);  // Call, load, move; never return to the caller.
+            ASSERT_TRUE(blocked.graph);
+            ASSERT_EQ(blocked.deadend_states.size(), 1);
+            EXPECT_TRUE(blocked.open_states.empty());
+            const auto& deadend = blocked.graph->get_vertex(blocked.deadend_states.front()).get_property();
+            EXPECT_FALSE(deadend.is_unsolvable);
+            EXPECT_EQ(deadend.program_state.get_module_state().get_module().get_name(), "callee");
+            EXPECT_EQ(deadend.program_state.get_module_state().get_memory_state().get_name(), "m2");
+            EXPECT_TRUE(deadend.program_state.get_call_stack());
+        }
+}
+
+template<typename Policy>
+void check_backtrack_evaluation_policy(const kr::TaskContextPtr<tyr::GroundTag>& context,
+                                       kr::ps::ext::ProgramView program,
+                                       kr::ps::ext::ProgramStateView<tyr::GroundTag> bad,
+                                       kr::ps::ext::ProgramStateView<tyr::GroundTag> good)
+{
+    namespace ext = kr::ps::ext;
+    using Kind = tyr::GroundTag;
+    using Step = ext::detail::ProgramStep<Kind>;
+    using Outcome = ext::detail::ProgramOutcome;
+    auto expander = ext::SuccessorExpander<Kind, ext::InternedExecutionStorage<Kind>, Policy>(context, program);
+    // Revisit an earlier binding after a different register value, as DFS backtracking does.
+    for (const auto source : { bad, good, bad })
+    {
+        const bool reject = source == bad;
+        auto statistics = ext::ProgramSearchStatistics {};
+        auto steps = std::vector<Step> {};
+        EXPECT_TRUE(expander.for_each_successor(
+            source,
+            statistics,
+            [&](auto outcome)
+            {
+                if constexpr (std::same_as<decltype(outcome), Step>)
+                    steps.push_back(std::move(outcome));
+                else
+                    ADD_FAILURE() << "No Choose rule is applicable at these states.";
+                return true;
+            },
+            [] { return false; }));
+        ASSERT_EQ(steps.size(), 1);
+        EXPECT_EQ(steps.front().status, reject ? Outcome::FAILURE : Outcome::APPLIED);
+        EXPECT_EQ(statistics.num_generated, reject ? 0 : 1);
+        if (reject)
+        {
+            EXPECT_EQ(steps.front().target, source);
+            EXPECT_FALSE(steps.front().state_transition);
+        }
+    }
+}
+
 template<tyr::TaskKind Kind>
 void check_choice_execution()
 {
@@ -692,6 +861,31 @@ void check_choice_execution()
 }
 
 }  // namespace
+
+TEST(RunirTests, ExtBacktrackRulesInGroundExecution) { check_backtrack_execution<tyr::GroundTag>(); }
+TEST(RunirTests, ExtBacktrackRulesInLiftedExecution) { check_backtrack_execution<tyr::LiftedTag>(); }
+
+TEST(RunirTests, ExtBacktrackRulesUseFullAndDeltaEvaluation)
+{
+    namespace ext = kr::ps::ext;
+    namespace sem = kr::dl::semantics;
+    using Kind = tyr::GroundTag;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto search = make_ground_context(directory / "domain.pddl", directory / "task.pddl");
+    auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
+    auto& repository = *context->domain_context->ext_repository;
+    const auto module_ = ext::dl::parse_module(
+        choice_module("incremental", choice_rule("select", "m0", "m1", choose_candidates) + move_rules + backtrack_rule("bad-binding", "m1", "(positive Bad)")),
+        search->task->get_domain().get_domain(),
+        repository);
+    const auto program = create_program(repository, module_, { module_ });
+    auto expander = ext::SuccessorExpander<Kind>(context, program);
+    const auto bindings = collect_steps(expander, expander.initial_state(initial_planning_node(expander).get_state()));
+    ASSERT_EQ(bindings.size(), 2);
+    ASSERT_EQ(bindings.front().target.get_module_state().get_registers().template get<kr::dl::ConceptTag>()[0].value().get_name(), "bad");
+    check_backtrack_evaluation_policy<sem::FullEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context, program, bindings[0].target, bindings[1].target);
+    check_backtrack_evaluation_policy<sem::DeltaEvaluationPolicy<kr::ExtFamilyTag, Kind>>(context, program, bindings[0].target, bindings[1].target);
+}
 
 TEST(RunirTests, ExtChooseBacktracksInGroundExecution) { check_choice_execution<tyr::GroundTag>(); }
 TEST(RunirTests, ExtChooseBacktracksInLiftedExecution) { check_choice_execution<tyr::LiftedTag>(); }

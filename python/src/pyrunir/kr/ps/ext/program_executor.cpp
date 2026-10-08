@@ -13,6 +13,7 @@
 #include <optional>
 #include <pyrunir/graphs/graph.hpp>
 #include <pyrunir/kr/binding_utils.hpp>
+#include <runir/kr/dl/semantics/evaluation_policy.hpp>
 #include <runir/kr/dl/semantics/ext/evaluation.hpp>
 #include <runir/kr/ps/dl/declarations.hpp>
 #include <runir/kr/ps/dl/evaluation.hpp>
@@ -104,7 +105,8 @@ void bind_execution_types(nb::module_& m, const char* prefix)
     using Options = ProgramSearchOptions<Kind>;
     using Step = detail::ProgramStep<Kind>;
     using Expander = SuccessorExpander<Kind>;
-    using Environment = EvaluationEnvironment<Kind>;
+    // Standalone Python evaluation returns the registered contexts with interned results.
+    using Environment = EvaluationEnvironment<Kind, runir::kr::dl::semantics::FullEvaluationPolicy<runir::kr::ExtFamilyTag, Kind>>;
     // Callback results may outlive the expander that owns their binding pool.
     const auto retain_expander = ygg::python::make_owner_retainer();
 

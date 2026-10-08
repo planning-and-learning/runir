@@ -124,6 +124,38 @@ The second implication is enabled only after successor enumeration finishes and 
 
 With `universal=false`, enumeration retains the first ordinary outcome or selected Choose obligation. With `universal=true`, every ordinary outcome and every enabled Choose rule is required. Different bindings of one Choose share an OR obligation; different Choose rules never share one.
 
+## Backtrack rules
+
+A Backtrack rule rejects the current continuation when its source memory and
+conditions match. It has no target memory or effects:
+
+```lisp
+(:rule (:symbol reject)
+  (:expression
+    (:source-memory m0)
+    (:backtrack (:conditions (positive Bad)))))
+```
+
+`Bad` is a declared Boolean feature evaluated with the current planning state,
+registers, and arguments. An empty condition list always matches at the source
+memory. A source-only rule entry contains only Backtrack bodies; ordinary rule
+entries still require a target and cannot contain Backtrack bodies.
+
+After the goal check, expansion tests Backtrack rules before ordinary rules,
+regardless of their declaration order. A match produces a terminal failure with
+no successor or caller return. Search marks the source as a dead end and uses
+the existing backtracking: a containing Choose may try its next binding. This
+applies in both universal modes and every memorization mode. Backtrack does not
+mark the planning state as unsolvable, and a reached goal still succeeds.
+
+Guards are checked during greedy continuations too. Failure unwinds intervening
+steps to the nearest Choose with an untried binding, passing exhausted choices
+on the way. If no alternative remains, the search fails.
+
+Structural termination analysis omits Backtrack rules because they create no
+transitions. It remains conservative about other rules: a Backtrack guard does
+not remove an ordinary cycle or recursive call from that analysis.
+
 ## Depth-first evaluation
 
 DFS frames are small values in one stack vector: a pooled path handle, offsets

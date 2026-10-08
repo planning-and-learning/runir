@@ -27,7 +27,8 @@ void describe_fields(Archive& ar, std::type_identity<View<Index<runir::kr::ps::e
     using Value = View<Index<runir::kr::ps::ext::Rule<Kind>>, C>;
 
     ar.field("source", [](const auto& value) -> decltype(auto) { return (value.get_source()); });
-    ar.field("target", [](const auto& value) -> decltype(auto) { return (value.get_target()); });
+    if constexpr (requires(const Value& value) { value.get_target(); })
+        ar.field("target", [](const auto& value) -> decltype(auto) { return (value.get_target()); });
     ar.field("conditions", [](const auto& value) -> decltype(auto) { return (value.get_conditions()); });
     if constexpr (requires(const Value& value) { value.get_effects(); })
         ar.field("effects", [](const auto& value) -> decltype(auto) { return (value.get_effects()); });

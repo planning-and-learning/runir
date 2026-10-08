@@ -88,6 +88,7 @@ sketch_rule_type const sketch_rule = "sketch_rule";
 do_rule_type const do_rule = "do_rule";
 call_rule_type const call_rule = "call_rule";
 action_rule_type const action_rule = "action_rule";
+backtrack_rule_type const backtrack_rule = "backtrack_rule";
 rule_type const rule = "rule";
 rule_entry_type const rule_entry = "rule_entry";
 rules_section_type const rules_section = ":rules";
@@ -190,12 +191,14 @@ const auto do_rule_def =
 const auto action_rule_def =
     context("query action rule")[keyword("(:action") > conditions_section > action_section > query_feature_section_def > effects_section > lit(")")];
 const auto call_rule_def = context("call rule")[keyword("(:call") > conditions_section > callee_section > arguments_expression_section > lit(")")];
-const auto rule_def = concept_load_rule | role_load_rule | sketch_rule | do_rule | call_rule | concept_choose_rule | role_choose_rule | action_rule;
+const auto backtrack_rule_def = context("backtrack rule")[keyword("(:backtrack") > conditions_section > lit(")")];
+const auto rule_def = concept_load_rule | role_load_rule | sketch_rule | do_rule | call_rule | concept_choose_rule | role_choose_rule | action_rule
+                      | backtrack_rule;
 const auto required_rules = x3::rule<class RequiredRules, std::vector<ast::Rule>> { "one or more rules" } = +rule;
 
 const auto rule_entry_def = context(
     "rule")[(lit("(") >> keyword(":rule")) > symbol_section
-            > context("rule expression")[(lit("(") >> keyword(":expression")) > source_memory_section > target_memory_section > required_rules > lit(")")]
+            > context("rule expression")[(lit("(") >> keyword(":expression")) > source_memory_section > -target_memory_section > required_rules > lit(")")]
             > lit(")")];
 const auto rules_section_def = context(":rules")[(lit("(") >> keyword(":rules")) > *rule_entry > lit(")")];
 
@@ -263,6 +266,7 @@ BOOST_SPIRIT_DEFINE(identifier,
                     do_rule,
                     action_rule,
                     call_rule,
+                    backtrack_rule,
                     rule,
                     rule_entry,
                     rules_section,
@@ -435,6 +439,9 @@ struct CallRuleClass : x3::annotate_on_success
 {
 };
 struct ActionRuleClass : x3::annotate_on_success
+{
+};
+struct BacktrackRuleClass : x3::annotate_on_success
 {
 };
 struct RuleClass : x3::annotate_on_success

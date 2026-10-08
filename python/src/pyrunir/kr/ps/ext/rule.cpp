@@ -25,8 +25,9 @@ auto bind_rule_data(nb::module_& m, const char* name)
                    .def(nb::init<>())
                    .def_rw("index", &Data::index)
                    .def_rw("source", &Data::source)
-                   .def_rw("target", &Data::target)
                    .def_rw("conditions", &Data::conditions);
+    if constexpr (requires { &Data::target; })
+        cls.def_rw("target", &Data::target);
     if constexpr (requires { &Data::effects; })
         cls.def_rw("effects", &Data::effects);
     if constexpr (requires { &Data::order; })
@@ -42,8 +43,9 @@ auto bind_rule_view(nb::module_& m, const char* name)
     auto cls = nb::class_<View>(m, name)
                    .def("get_index", &View::get_index)
                    .def("get_source", &View::get_source, nb::keep_alive<0, 1>())
-                   .def("get_target", &View::get_target, nb::keep_alive<0, 1>())
                    .def("get_conditions", &View::get_conditions);
+    if constexpr (requires(View view) { view.get_target(); })
+        cls.def("get_target", &View::get_target, nb::keep_alive<0, 1>());
     if constexpr (requires { &View::get_effects; })
         cls.def("get_effects", &View::get_effects);
     if constexpr (requires(View view) { view.get_order(); })
@@ -84,6 +86,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     using Do = Rule<DoTag>;
     using Action = Rule<ActionTag>;
     using Call = Rule<CallTag>;
+    using Backtrack = Rule<BacktrackTag>;
 
     ygg::bind_index<ygg::Index<ConceptLoad>>(m, "ConceptLoadRuleIndex");
     ygg::bind_index<ygg::Index<RoleLoad>>(m, "RoleLoadRuleIndex");
@@ -93,6 +96,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     ygg::bind_index<ygg::Index<Do>>(m, "DoRuleIndex");
     ygg::bind_index<ygg::Index<Action>>(m, "ActionRuleIndex");
     ygg::bind_index<ygg::Index<Call>>(m, "CallRuleIndex");
+    ygg::bind_index<ygg::Index<Backtrack>>(m, "BacktrackRuleIndex");
 
     bind_rule_data<ConceptLoad>(m, "ConceptLoadRuleData").def_rw("feature", &ygg::Data<ConceptLoad>::feature).def_rw("reg", &ygg::Data<ConceptLoad>::reg);
     bind_rule_data<RoleLoad>(m, "RoleLoadRuleData").def_rw("feature", &ygg::Data<RoleLoad>::feature).def_rw("reg", &ygg::Data<RoleLoad>::reg);
@@ -106,6 +110,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
         .def_rw("query_feature", &ygg::Data<Action>::query_feature);
     bind_rule_data<Do>(m, "DoRuleData").def_rw("action_name", &ygg::Data<Do>::action_name).def_rw("arguments", &ygg::Data<Do>::arguments);
     bind_rule_data<Call>(m, "CallRuleData").def_rw("callee", &ygg::Data<Call>::callee).def_rw("arguments", &ygg::Data<Call>::arguments);
+    bind_rule_data<Backtrack>(m, "BacktrackRuleData");
 
     bind_rule_view<ConceptLoad>(m, "ConceptLoadRule")
         .def("get_feature", &ygg::View<ygg::Index<ConceptLoad>, Repository>::get_feature, nb::keep_alive<0, 1>())
@@ -130,6 +135,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     bind_rule_view<Call>(m, "CallRule")
         .def("get_callee", &CallView::get_callee, nb::keep_alive<0, 1>())
         .def("get_call_arguments", &CallView::get_call_arguments);
+    bind_rule_view<Backtrack>(m, "BacktrackRule");
 
     runir::kr::python::bind_insert<ConceptLoad>(repository);
     runir::kr::python::bind_insert<RoleLoad>(repository);
@@ -139,6 +145,7 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     runir::kr::python::bind_insert<Do>(repository);
     runir::kr::python::bind_insert<Action>(repository);
     runir::kr::python::bind_insert<Call>(repository);
+    runir::kr::python::bind_insert<Backtrack>(repository);
 }
 
 }  // namespace runir::kr::ps::ext

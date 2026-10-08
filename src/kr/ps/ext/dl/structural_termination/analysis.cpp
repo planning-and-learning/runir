@@ -92,15 +92,10 @@ Analysis analyze_module(ModuleView module_)
 {
     const auto memory_states = module_.get_memory_states();
 
-    auto rules = std::vector<RuleVariantView> {};
-    for (auto transition : module_.get_memory_transitions())
-        for (auto rule : transition)
-            rules.push_back(rule);
-
     const auto booleans = module_.get_features<runir::kr::ps::dl::BooleanFeature>();
     const auto numericals = module_.get_features<runir::kr::ps::dl::NumericalFeature>();
     auto policy = runir::kr::ps::detail::QualitativePolicy(memory_states.size(), booleans.size(), numericals.size());
-    auto analysis = Analysis { std::move(rules), std::move(policy) };
+    auto analysis = Analysis { {}, std::move(policy) };
     const auto memory_position = [&](MemoryStateView memory_state)
     {
         for (std::size_t position = 0; position < memory_states.size(); ++position)
@@ -109,35 +104,43 @@ Analysis analyze_module(ModuleView module_)
         throw std::logic_error("structural_termination: rule references a memory state not listed in the module.");
     };
 
-    for (auto rule : analysis.rules)
-    {
-        auto profile = runir::kr::ps::detail::RuleProfile(booleans.size(), numericals.size());
-        ygg::visit(
-            [&](auto concrete_rule)
-            {
-                profile.source_memory_position = memory_position(concrete_rule.get_source());
-                profile.target_memory_position = memory_position(concrete_rule.get_target());
-                for (auto condition : concrete_rule.get_conditions())
-                    ygg::visit(
-                        [&](auto concrete_variant)
-                        { ygg::visit([&](auto concrete) { ps::detail::record_condition(module_, profile, concrete); }, concrete_variant.get_variant()); },
-                        condition.get_variant());
-                if constexpr (requires { concrete_rule.get_effects(); })
+    for (auto transition : module_.get_memory_transitions())
+        for (auto rule : transition)
+            ygg::visit(
+                [&](auto concrete_rule)
                 {
-                    for (auto effect : concrete_rule.get_effects())
-                        ygg::visit(
-                            [&](auto concrete_variant)
-                            { ygg::visit([&](auto concrete) { ps::detail::record_effect(module_, profile, concrete); }, concrete_variant.get_variant()); },
-                            effect.get_variant());
-                }
-                if constexpr (requires { concrete_rule.get_register(); })
-                    record_binding_effects(module_, profile, concrete_rule.get_register().get_identifier());
-                // Other rules leave unmentioned features unconstrained.
-                // Call rules have no effect entries.
-            },
-            rule.get_variant());
-        analysis.policy.rule_profiles.push_back(std::move(profile));
-    }
+                    // Terminal rules have no outgoing qualitative transition.
+                    if constexpr (requires { concrete_rule.get_target(); })
+                    {
+                        auto profile = runir::kr::ps::detail::RuleProfile(booleans.size(), numericals.size());
+                        profile.source_memory_position = memory_position(concrete_rule.get_source());
+                        profile.target_memory_position = memory_position(concrete_rule.get_target());
+                        for (auto condition : concrete_rule.get_conditions())
+                            ygg::visit(
+                                [&](auto concrete_variant) {
+                                    ygg::visit([&](auto concrete) { ps::detail::record_condition(module_, profile, concrete); },
+                                               concrete_variant.get_variant());
+                                },
+                                condition.get_variant());
+                        if constexpr (requires { concrete_rule.get_effects(); })
+                        {
+                            for (auto effect : concrete_rule.get_effects())
+                                ygg::visit(
+                                    [&](auto concrete_variant) {
+                                        ygg::visit([&](auto concrete) { ps::detail::record_effect(module_, profile, concrete); },
+                                                   concrete_variant.get_variant());
+                                    },
+                                    effect.get_variant());
+                        }
+                        if constexpr (requires { concrete_rule.get_register(); })
+                            record_binding_effects(module_, profile, concrete_rule.get_register().get_identifier());
+                        // Other rules leave unmentioned features unconstrained.
+                        // Call rules have no effect entries.
+                        analysis.rules.push_back(rule);
+                        analysis.policy.rule_profiles.push_back(std::move(profile));
+                    }
+                },
+                rule.get_variant());
 
     runir::kr::ps::detail::validate_policy(analysis.policy);
     return analysis;

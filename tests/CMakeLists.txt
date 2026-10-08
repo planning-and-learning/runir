@@ -7,16 +7,17 @@ target_link_libraries(runir_test_fixtures PRIVATE Boost::json)
 target_compile_definitions(runir_test_fixtures PRIVATE ROOT_DIR="${PROJECT_SOURCE_DIR}")
 
 function(add_runir_test test_name source_file)
-    add_executable(${test_name} ${source_file})
+    add_executable(${test_name} ${source_file} unit/main.cpp)
     target_link_libraries(${test_name}
         PRIVATE
             ${ARGN}
             TBB::tbb
             Boost::json
-            GTest::gtest_main
+            GTest::gtest
             runir_test_fixtures
     )
     add_test(NAME ${test_name} COMMAND ${test_name})
+    set_tests_properties(${test_name} PROPERTIES FAIL_REGULAR_EXPRESSION "does NOT link in any test case;Running 0 tests")
 endfunction()
 
 add_library(runir_test_planning_fixtures STATIC unit/planning_fixtures.cpp)
@@ -98,7 +99,8 @@ set(RUNIR_KR_PS_TYPE_TEST_SOURCES
     unit/kr/ps/ext/dl/effect.cpp
     unit/kr/ps/ext/dl/feature.cpp
 )
-add_runir_test(runir_kr_ps_types "${RUNIR_KR_PS_TYPE_TEST_SOURCES}" runir::kr)
+add_library(runir_kr_ps_types OBJECT ${RUNIR_KR_PS_TYPE_TEST_SOURCES})
+target_link_libraries(runir_kr_ps_types PRIVATE runir::kr)
 
 add_runir_test(runir_kr_ps_abstract_structural_termination unit/kr/ps/structural_termination.cpp runir::kr)
 target_include_directories(runir_kr_ps_abstract_structural_termination PRIVATE ${PROJECT_SOURCE_DIR}/src)

@@ -191,6 +191,24 @@ struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>
     auto identifying_members() const noexcept { return std::tie(source, target, conditions, callee, arguments); }
 };
 
+template<>
+struct Data<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>>
+{
+    Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>> index;
+    Index<runir::kr::ps::ext::MemoryState> source;
+    IndexList<runir::kr::ps::ConditionVariant<runir::kr::ExtFamilyTag>> conditions;
+
+    void clear() noexcept
+    {
+        ygg::clear(index);
+        ygg::clear(source);
+        ygg::clear(conditions);
+    }
+
+    auto cista_members() const noexcept { return std::tie(index, source, conditions); }
+    auto identifying_members() const noexcept { return std::tie(source, conditions); }
+};
+
 }  // namespace ygg
 
 #endif

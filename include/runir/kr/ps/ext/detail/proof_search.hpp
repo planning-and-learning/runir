@@ -152,7 +152,10 @@ ProgramProofStatus depth_first_search(Expander& expander,
                         }
                         else
                         {
-                            frame.path->is_open = true;
+                            if (expansion.status == ProgramOutcome::FAILURE)
+                                frame.path->is_deadend = true;
+                            else
+                                frame.path->is_open = true;
                             frame.succeeded = false;
                             if (!first_failure)
                                 first_failure = frame.path;

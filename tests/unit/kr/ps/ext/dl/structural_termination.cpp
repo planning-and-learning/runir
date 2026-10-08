@@ -43,6 +43,59 @@ TEST(RunirTests, ExtStructuralTerminationEmptyModuleIsTerminating)
     EXPECT_TRUE(without_incomplete.sieve_result->surviving_rules.empty());
 }
 
+TEST(RunirTests, ExtStructuralTerminationBacktrackHasNoEdgesAndDoesNotPruneOtherRules)
+{
+    namespace fp = tyr::formalism::planning;
+    const auto domain = fp::Parser(benchmark_path("classical/tests/gripper/domain.pddl")).get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(domain.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    for (const auto cycle : { false, true })
+    {
+        SCOPED_TRACE(cycle);
+        const auto source = fmt::format(R"(
+(:module (:symbol worker) (:arguments) (:registers) (:entry m0) (:memory m0) (:features)
+  (:rules
+    (:rule (:symbol reject)
+      (:expression (:source-memory m0) (:backtrack (:conditions))))
+    {}
+  )
+))",
+                                        cycle ? R"((:rule (:symbol loop)
+      (:expression (:source-memory m0) (:target-memory m0) (:sketch (:conditions) (:effects)))))" :
+                                                "");
+        const auto module_ = kr::ps::ext::dl::parse_module(source, domain.get_domain(), *repository);
+        const auto incomplete = kr::ps::ext::dl::incomplete_structural_termination(module_);
+        EXPECT_EQ(incomplete.is_terminating(), !cycle);
+        ASSERT_EQ(incomplete.surviving_rules.size(), cycle ? 1 : 0);
+        if (cycle)
+            EXPECT_EQ(incomplete.surviving_rules.front().rule.get_symbol(), "loop");
+        for (const auto preprocessing : { false, true })
+        {
+            SCOPED_TRACE(preprocessing);
+            const auto result = kr::ps::ext::dl::structural_termination(module_, kr::ps::dl::default_max_features, preprocessing);
+            EXPECT_EQ(result.is_terminating(), !cycle);
+            if (!preprocessing || cycle)
+            {
+                ASSERT_TRUE(result.sieve_result.has_value());
+                const auto& sieve = *result.sieve_result;
+                ASSERT_EQ(sieve.surviving_rules.size(), cycle ? 1 : 0);
+                if (cycle)
+                {
+                    EXPECT_EQ(sieve.surviving_rules.front().get_symbol(), "loop");
+                    ASSERT_NE(sieve.counterexample, nullptr);
+                    ASSERT_EQ(sieve.counterexample->get_num_edges(), 1);
+                    EXPECT_EQ(sieve.counterexample->get_edges().front().get_property().get_symbol(), "loop");
+                }
+                else
+                {
+                    EXPECT_EQ(sieve.counterexample, nullptr);
+                    EXPECT_TRUE(sieve.scc_results.empty());
+                }
+            }
+        }
+    }
+}
+
 TEST(RunirTests, ExtStructuralTerminationDecreaseWithUnchangedReturnIsTerminating)
 {
     namespace fp = tyr::formalism::planning;
@@ -358,7 +411,10 @@ TEST(RunirTests, ExtStructuralTerminationPreservesSparseMemoryStateIdentities)
                 [&](auto rule)
                 {
                     EXPECT_EQ(graph.get_vertex(edge.get_source()).get_property().memory_state.get_index(), rule.get_source().get_index());
-                    EXPECT_EQ(graph.get_vertex(edge.get_target()).get_property().memory_state.get_index(), rule.get_target().get_index());
+                    if constexpr (requires { rule.get_target(); })
+                        EXPECT_EQ(graph.get_vertex(edge.get_target()).get_property().memory_state.get_index(), rule.get_target().get_index());
+                    else
+                        ADD_FAILURE() << "Terminal rules cannot label structural termination edges.";
                 },
                 edge.get_property().get_variant());
     }

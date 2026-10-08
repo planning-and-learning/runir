@@ -25,7 +25,8 @@ struct Data<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>
                                              Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::CallTag>>,
                                              Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<runir::kr::dl::ConceptTag>>>,
                                              Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ChooseTag<runir::kr::dl::RoleTag>>>,
-                                             Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>>;
+                                             Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::ActionTag>>,
+                                             Index<runir::kr::ps::ext::Rule<runir::kr::ps::ext::BacktrackTag>>>;
 
     Index<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>> index;
     ::cista::offset::string symbol;

@@ -247,8 +247,24 @@ void validate_module_declarations(const ast::Module& module_, const runir::kr::p
 
     auto rule_symbols = std::unordered_set<std::string> {};
     for (const auto& entry : module_.rule_entries)
+    {
         if (!rule_symbols.emplace(entry.symbol.text).second)
             diagnostics.throw_at(entry.symbol, runir::kr::DuplicateDefinitionError("rule", entry.symbol.text));
+        for (const auto& rule : entry.rules)
+            boost::apply_visitor(
+                [&](const auto& concrete)
+                {
+                    if constexpr (std::same_as<std::remove_cvref_t<decltype(concrete)>, ast::BacktrackRule>)
+                    {
+                        if (entry.target)
+                            diagnostics.throw_at(*entry.target,
+                                                 runir::kr::InvalidExpressionError("Backtrack rules must not declare a target memory state."));
+                    }
+                    else if (!entry.target)
+                        diagnostics.throw_at(concrete, runir::kr::InvalidExpressionError("Transition rules require a target memory state."));
+                },
+                rule.get());
+    }
 }
 
 void append_argument(Repository& repository,
@@ -579,7 +595,7 @@ auto parse_rule(
     runir::kr::ps::ext::Builder& builder,
     const ast::Rule& rule,
     ygg::Index<MemoryState> source,
-    ygg::Index<MemoryState> target,
+    std::optional<ygg::Index<MemoryState>> target,
     tyr::formalism::planning::DomainView domain,
     const std::unordered_map<std::string, ygg::Index<ModuleSymbol>>& modules,
     const std::unordered_map<std::string, ygg::Index<runir::kr::ps::Feature<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>>& concept_features,
@@ -602,7 +618,7 @@ auto parse_rule(
                                                 builder,
                                                 concrete,
                                                 source,
-                                                target,
+                                                *target,
                                                 concept_features,
                                                 role_features,
                                                 boolean_features,
@@ -615,7 +631,7 @@ auto parse_rule(
             {
                 auto data = runir::kr::ps::ext::checkout<Rule<SketchTag>>(builder);
                 data->source = source;
-                data->target = target;
+                data->target = *target;
                 append_conditions(repository, builder, concrete.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
                 append_effects(repository, builder, concrete.effects, boolean_features, numerical_features, diagnostics, data->effects);
                 return intern_rule_variant(repository, builder, *data, symbol);
@@ -625,7 +641,7 @@ auto parse_rule(
                 validate_do_action(domain, concrete, diagnostics);
                 auto data = runir::kr::ps::ext::checkout<Rule<DoTag>>(builder);
                 data->source = source;
-                data->target = target;
+                data->target = *target;
                 data->action_name = concrete.action.text;
                 append_conditions(repository, builder, concrete.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
                 append_effects(repository, builder, concrete.effects, boolean_features, numerical_features, diagnostics, data->effects);
@@ -647,7 +663,7 @@ auto parse_rule(
                                          runir::kr::ArityMismatchError("action " + concrete.action.text, action->get_arity(), query_arity));
                 auto data = runir::kr::ps::ext::checkout<Rule<ActionTag>>(builder);
                 data->source = source;
-                data->target = target;
+                data->target = *target;
                 data->action_name = concrete.action.text;
                 data->query_feature = query_feature;
                 append_conditions(repository, builder, concrete.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
@@ -658,7 +674,7 @@ auto parse_rule(
             {
                 auto data = runir::kr::ps::ext::checkout<Rule<CallTag>>(builder);
                 data->source = source;
-                data->target = target;
+                data->target = *target;
                 append_conditions(repository, builder, concrete.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
                 if (const auto callee = find_module(modules, concrete.callee.text))
                     data->callee = *callee;
@@ -672,6 +688,13 @@ auto parse_rule(
                 for (const auto& argument : concrete.arguments)
                     data->arguments.push_back(
                         parse_call_argument(argument, concept_features, role_features, boolean_features, numerical_features, diagnostics));
+                return intern_rule_variant(repository, builder, *data, symbol);
+            }
+            else if constexpr (std::same_as<RuleAst, ast::BacktrackRule>)
+            {
+                auto data = runir::kr::ps::ext::checkout<Rule<BacktrackTag>>(builder);
+                data->source = source;
+                append_conditions(repository, builder, concrete.conditions, boolean_features, numerical_features, diagnostics, data->conditions);
                 return intern_rule_variant(repository, builder, *data, symbol);
             }
         },
@@ -896,7 +919,8 @@ ModuleView lower_module(const ast::Module& ast,
         auto& parsed_transition = data->memory_transitions.back();
         parsed_transition.reserve(transition.rules.size());
         const auto source = require_memory_state(memory_states, transition.source, diagnostics);
-        const auto target = require_memory_state(memory_states, transition.target, diagnostics);
+        const auto target = transition.target ? std::optional(require_memory_state(memory_states, *transition.target, diagnostics))
+                                              : std::nullopt;
         for (const auto& rule : transition.rules)
             parsed_transition.push_back(parse_rule(repository,
                                                    builders.ps,

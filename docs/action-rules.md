@@ -122,7 +122,8 @@ corresponding `GroundEvaluationEnvironment` or `LiftedEvaluationEnvironment`.
 Call `expander.initial_state(planning_state)` with a Tyr planning state, such as
 `initial_node.get_state()`. Python exposes
 `expander.for_each_successor(state, statistics, emit, stop)` in natural
-order, with a constructible `ext.ProgramSearchStatistics` object.
+order after checking [Backtrack guards](proof-search.md#backtrack-rules), with a
+constructible `ext.ProgramSearchStatistics` object.
 
 Each callback receives a step or a `ConceptChoice`/`RoleChoice` by value.
 Choices expose `rule`, `bindings`, `current()`, `advance()`, `exhausted()`,
@@ -134,7 +135,9 @@ expander, which owns the binding pool. Python choices retain their expander, and
 binding views retain their choice. Accessing or advancing an exhausted Python
 choice raises `IndexError`.
 
-Continue execution with `step.target` for both planning and control-only steps.
+Continue execution with `step.target` for applied planning and control-only steps.
+A Backtrack match instead emits a `failure` step whose target retains the source;
+it terminates that continuation and is not an execution transition.
 A planning step also exposes its owned `planning_successor`.
 `matching_rule(state, successor)` and `apply(state, rule, successor)` accept a
 Tyr labeled successor. Ext expansion uses states without accumulated metrics;

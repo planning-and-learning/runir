@@ -198,7 +198,8 @@ void append_module(std::ostream& os, ygg::View<ygg::Index<runir::kr::ps::ext::Mo
                             [&](auto first_rule)
                             {
                                 os << ygg::print_indent << "(:source-memory " << first_rule.get_source().get_name() << ")\n";
-                                os << ygg::print_indent << "(:target-memory " << first_rule.get_target().get_name() << ")\n";
+                                if constexpr (requires { first_rule.get_target(); })
+                                    os << ygg::print_indent << "(:target-memory " << first_rule.get_target().get_name() << ")\n";
                             },
                             first.get_variant());
                         for (auto item : transition)

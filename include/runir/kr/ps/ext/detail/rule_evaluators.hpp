@@ -4,6 +4,7 @@
 #include "runir/kr/ps/ext/compatibility.hpp"
 #include "runir/kr/ps/ext/detail/execution_step.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/action.hpp"
+#include "runir/kr/ps/ext/detail/rule_evaluation/backtrack.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/call.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/choose.hpp"
 #include "runir/kr/ps/ext/detail/rule_evaluation/context.hpp"
@@ -45,7 +46,8 @@ class RuleEvaluators
                                    CallRuleEvaluator<Kind>,
                                    ChooseRuleEvaluator<Kind, Concept>,
                                    ChooseRuleEvaluator<Kind, Role>,
-                                   ActionRuleEvaluator<Kind>>;
+                                   ActionRuleEvaluator<Kind>,
+                                   BacktrackRuleEvaluator<Kind>>;
     runir::kr::TaskContextPtr<Kind> m_task_context;
     ProgramView m_program;
     EvaluationEnvironment<Kind, EvaluationPolicy> m_environment;
@@ -76,6 +78,8 @@ class RuleEvaluators
             return CallRuleEvaluator<Kind>(rule, variant, m_program);
         else if constexpr (std::same_as<Tag, SketchTag>)
             return SketchRuleEvaluator<Kind>(rule, variant);
+        else if constexpr (std::same_as<Tag, BacktrackTag>)
+            return BacktrackRuleEvaluator<Kind>(rule, variant);
         else if constexpr (ChooseRuleView<RuleView<Tag>>)
             return ChooseRuleEvaluator<Kind, RuleCategoryFor<Tag>>(rule, variant);
         else
@@ -177,6 +181,30 @@ public:
     {
         const auto& planning_state = context.planning_state;
         m_sketch_rules.clear();
+        // Pruning takes precedence over every ordinary rule, including caller-return fallback.
+        bool backtracked = false;
+        const auto emit_backtrack = [&](auto failure)
+        {
+            backtracked = true;
+            return emit(std::move(failure));
+        };
+        for (const auto rule : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
+        {
+            if (stop())
+                return false;
+            if (!rule.get_variant().template is<ygg::Index<Rule<BacktrackTag>>>())
+                continue;
+            if (!with_rule(rule,
+                           [&]<typename Concrete>(const Concrete& concrete)
+                           {
+                               if constexpr (std::same_as<Concrete, BacktrackRuleEvaluator<Kind>>)
+                                   return concrete.emit(context, state, emit_backtrack, stop);
+                               return true;
+                           }))
+                return false;
+            if (backtracked)
+                return true;
+        }
         for (const auto rule : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
         {
             if (stop())
@@ -184,6 +212,8 @@ public:
             if (!with_rule(rule,
                            [&]<typename Concrete>(const Concrete& concrete)
                            {
+                               if constexpr (std::same_as<Concrete, BacktrackRuleEvaluator<Kind>>)
+                                   return true;
                                if constexpr (std::same_as<Concrete, SketchRuleEvaluator<Kind>>)
                                    if (!concrete.get_rule().get_effects().empty())
                                    {
@@ -239,6 +269,13 @@ public:
     {
         for (const auto rule : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
         {
+            const auto variant = rule.get_variant();
+            if (variant.template is<ygg::Index<Rule<BacktrackTag>>>()
+                && ext::rule_is_applicable(variant.template get<ygg::Index<Rule<BacktrackTag>>>(), state, context.planning_state, context.environment))
+                return std::nullopt;
+        }
+        for (const auto rule : source_rules(state.get_module_state().get_module(), state.get_module_state().get_memory_state()))
+        {
             const auto matched = with_rule(rule,
                                            [&](const auto& concrete) -> std::optional<RuleVariantView>
                                            {
@@ -264,7 +301,7 @@ public:
             [&]<typename Concrete>(const Concrete& evaluator) -> Result
             {
                 using Tag = typename Concrete::RuleTag;
-                if constexpr (!BindingRuleKind<Tag> && !std::same_as<Tag, CallTag>)
+                if constexpr (std::same_as<Tag, ActionTag> || std::same_as<Tag, DoTag> || std::same_as<Tag, SketchTag>)
                 {
                     if (!std::same_as<Tag, SketchTag> || !evaluator.get_rule().get_effects().empty())
                     {

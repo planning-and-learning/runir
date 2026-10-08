@@ -74,8 +74,8 @@ public:
         return m_storage.materialize(state);
     }
 
-    /// Emit a program step or a compact Choose obligation in natural rule and binding order,
-    /// except that sketch rules with effects are emitted together, binding-major, after all other rules.
+    /// Emit a program step or a compact Choose obligation in natural rule and binding order.
+    /// A matching Backtrack emits only failure; effectful Sketch rules are batched after other ordinary rules.
     /// Return true on exhaustion; emit returning false or stop returning true ends enumeration.
     /// Count applied successors and caller returns, not Choice descriptors or failure markers.
     /// Callbacks may materialize the source, but must not generate successors or apply choices. Apply choices after enumeration.
@@ -129,6 +129,7 @@ public:
 
     /// Apply one rule, using a supplied planning successor for Do, Action, or a Sketch with effects.
     /// Load, Choose, Call, and empty-effect Sketch rules derive their own control transition.
+    /// Backtrack emits failure without requiring a planning successor.
     std::optional<detail::ProgramStep<Kind, ExecutionStorage>>
     apply(typename ExecutionStorage::StateView state, RuleVariantView rule, std::optional<tyr::planning::LabeledNode<Kind>> candidate = std::nullopt)
     {

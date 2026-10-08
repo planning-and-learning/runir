@@ -96,6 +96,76 @@ TEST(RunirTests, ExtendedModuleFormatterPreservesAlternativeRuleGrouping)
     EXPECT_EQ(fmt::format("{}", reparsed), formatted);
 }
 
+TEST(RunirTests, ExtendedBacktrackRulesRoundTripWithoutTargetOrEffects)
+{
+    const auto planning_domain = parse_gripper_domain();
+    const auto domain = planning_domain.get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    const auto description = R"((:module
+      (:symbol pruning)
+      (:arguments)
+      (:registers)
+      (:entry start)
+      (:memory start done)
+      (:features (:boolean (:symbol Bad) (:expression (b_nonempty (c_bot)))))
+      (:rules
+        (:rule (:symbol reject) (:expression (:source-memory start)
+          (:backtrack (:conditions (positive Bad) (positive Bad)))
+          (:backtrack (:conditions))))
+        (:rule (:symbol advance) (:expression (:source-memory start) (:target-memory done)
+          (:sketch (:conditions) (:effects)))))
+    ))";
+    const auto module_ = kr::ps::ext::dl::parse_module(description, domain, *repository);
+    ASSERT_EQ(module_.get_memory_transitions().size(), 2);
+    const auto rules = module_.get_memory_transitions().front();
+    ASSERT_EQ(rules.size(), 2);
+    size_t condition_count = 0;
+    for (const auto variant : rules)
+        ygg::visit(
+            [&](auto rule)
+            {
+                if constexpr (std::same_as<decltype(rule), kr::ps::ext::RuleView<kr::ps::ext::BacktrackTag>>)
+                {
+                    EXPECT_EQ(rule.get_source(), module_.get_entry_memory_state());
+                    condition_count += rule.get_conditions().size();
+                }
+                else
+                    ADD_FAILURE() << "Expected a backtrack rule.";
+            },
+            variant.get_variant());
+    EXPECT_EQ(condition_count, 1);
+
+    const auto formatted = fmt::format("{}", module_);
+    EXPECT_NE(formatted.find("(:backtrack"), std::string::npos);
+    const auto reparsed = kr::ps::ext::dl::parse_module(formatted, domain, *repository);
+    EXPECT_EQ(reparsed, module_);
+    EXPECT_EQ(fmt::format("{}", reparsed), formatted);
+}
+
+TEST(RunirTests, ExtendedBacktrackRulesRejectInvalidTargetsAndConditions)
+{
+    const auto planning_domain = parse_gripper_domain();
+    const auto domain = planning_domain.get_domain();
+    auto dl_repository = kr::dl::ConstructorRepositoryFactoryFor<kr::ExtFamilyTag>().create(planning_domain.get_repository());
+    auto repository = kr::ps::ext::RepositoryFactory().create(dl_repository);
+    const auto parse = [&](const std::string& expression)
+    {
+        return kr::ps::ext::dl::parse_module(
+            "(:module (:symbol pruning) (:arguments) (:registers) (:entry start) (:memory start done) (:features) "
+            "(:rules (:rule (:symbol reject) (:expression (:source-memory start) " + expression + "))))",
+            domain,
+            *repository);
+    };
+    expect_error_containing([&] { parse("(:target-memory done) (:backtrack (:conditions))"); }, "Backtrack rules must not declare a target");
+    expect_error_containing([&] { parse("(:sketch (:conditions) (:effects))"); }, "Transition rules require a target");
+    expect_error_containing([&] { parse("(:backtrack (:conditions)) (:sketch (:conditions) (:effects))"); }, "Transition rules require a target");
+    expect_error_containing([&] { parse("(:target-memory done) (:sketch (:conditions) (:effects)) (:backtrack (:conditions))"); },
+                           "Backtrack rules must not declare a target");
+    EXPECT_THROW(parse("(:backtrack (:conditions (positive missing)))"), kr::UndefinedSymbolError);
+    EXPECT_THROW(parse("(:backtrack (:conditions) (:effects))"), kr::ParseError);
+}
+
 TEST(RunirTests, RelationalExpressionsRoundTripAndRejectGenerationGrammars)
 {
     const auto planning_domain = parse_gripper_domain();

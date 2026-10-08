@@ -7,6 +7,7 @@
 #include "runir/kr/ps/base/dl/ast/ast.hpp"
 #include "runir/kr/ps/ext/declarations.hpp"
 
+#include <boost/optional.hpp>
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <string>
@@ -130,6 +131,11 @@ struct CallRule : x3::position_tagged
     std::vector<SymbolExpression> arguments;
 };
 
+struct BacktrackRule : x3::position_tagged
+{
+    std::vector<Condition> conditions;
+};
+
 using Rule = PositionedVariant<LoadRule<runir::kr::dl::ConceptTag>,
                                LoadRule<runir::kr::dl::RoleTag>,
                                SketchRule,
@@ -137,13 +143,14 @@ using Rule = PositionedVariant<LoadRule<runir::kr::dl::ConceptTag>,
                                CallRule,
                                ChooseRule<runir::kr::dl::ConceptTag>,
                                ChooseRule<runir::kr::dl::RoleTag>,
-                               ActionRule>;
+                               ActionRule,
+                               BacktrackRule>;
 
 struct RuleEntry : x3::position_tagged
 {
     Identifier symbol;
     Identifier source;
-    Identifier target;
+    boost::optional<Identifier> target;
     std::vector<Rule> rules;
 };
 

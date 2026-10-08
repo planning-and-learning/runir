@@ -22,20 +22,30 @@ concept RuleContract = kr::ps::ext::RuleKind<Kind> && std::constructible_from<yg
                        && std::same_as<View<Kind>, kr::ps::ext::RuleView<Kind>> && requires(ygg::Data<Entity<Kind>>& data, const View<Kind>& view) {
                               data.index;
                               data.source;
-                              data.target;
                               data.conditions;
                               data.clear();
                               view.get_index();
                               view.get_source();
-                              view.get_target();
                               view.get_conditions();
                           };
+
+template<typename Kind>
+concept TransitionRuleContract = RuleContract<Kind> && requires(ygg::Data<Entity<Kind>>& data, const View<Kind>& view) {
+    data.target;
+    view.get_target();
+};
+
+template<typename Kind>
+concept HasEffects = requires(ygg::Data<Entity<Kind>>& data, const View<Kind>& view) {
+    data.effects;
+    view.get_effects();
+};
 
 template<kr::dl::CategoryTag Category>
 using Load = kr::ps::ext::LoadTag<Category>;
 
 template<typename Kind>
-concept BindingRuleContract = kr::ps::ext::BindingRuleKind<Kind> && RuleContract<Kind>
+concept BindingRuleContract = kr::ps::ext::BindingRuleKind<Kind> && TransitionRuleContract<Kind>
                              && requires(ygg::Data<Entity<Kind>>& data, const View<Kind>& view) {
         data.feature;
         data.reg;
@@ -49,6 +59,11 @@ using Sketch = kr::ps::ext::SketchTag;
 using Do = kr::ps::ext::DoTag;
 using Action = kr::ps::ext::ActionTag;
 using Call = kr::ps::ext::CallTag;
+using Backtrack = kr::ps::ext::BacktrackTag;
+
+static_assert(RuleContract<Backtrack>);
+static_assert(!TransitionRuleContract<Backtrack>);
+static_assert(!HasEffects<Backtrack>);
 
 static_assert(BindingRuleContract<Load<kr::dl::ConceptTag>>);
 static_assert(BindingRuleContract<Load<kr::dl::RoleTag>>);
@@ -56,11 +71,11 @@ static_assert(BindingRuleContract<kr::ps::ext::ChooseTag<kr::dl::ConceptTag>>);
 static_assert(BindingRuleContract<kr::ps::ext::ChooseTag<kr::dl::RoleTag>>);
 static_assert(kr::ps::ext::ChooseRuleView<View<kr::ps::ext::ChooseTag<kr::dl::ConceptTag>>>);
 static_assert(!kr::ps::ext::LoadRuleView<View<kr::ps::ext::ChooseTag<kr::dl::RoleTag>>>);
-static_assert(RuleContract<Sketch> && requires(ygg::Data<Entity<Sketch>>& data, const View<Sketch>& view) {
+static_assert(TransitionRuleContract<Sketch> && requires(ygg::Data<Entity<Sketch>>& data, const View<Sketch>& view) {
     data.effects;
     view.get_effects();
 });
-static_assert(RuleContract<Do> && requires(ygg::Data<Entity<Do>>& data, const View<Do>& view) {
+static_assert(TransitionRuleContract<Do> && requires(ygg::Data<Entity<Do>>& data, const View<Do>& view) {
     data.effects;
     data.action_name;
     data.arguments;
@@ -68,7 +83,7 @@ static_assert(RuleContract<Do> && requires(ygg::Data<Entity<Do>>& data, const Vi
     view.get_action_name();
     view.get_action_arguments();
 });
-static_assert(RuleContract<Action> && requires(ygg::Data<Entity<Action>>& data, const View<Action>& view) {
+static_assert(TransitionRuleContract<Action> && requires(ygg::Data<Entity<Action>>& data, const View<Action>& view) {
     data.effects;
     data.action_name;
     data.query_feature;
@@ -76,7 +91,7 @@ static_assert(RuleContract<Action> && requires(ygg::Data<Entity<Action>>& data, 
     view.get_action_name();
     view.get_query_feature();
 });
-static_assert(RuleContract<Call> && requires(ygg::Data<Entity<Call>>& data, const View<Call>& view) {
+static_assert(TransitionRuleContract<Call> && requires(ygg::Data<Entity<Call>>& data, const View<Call>& view) {
     data.callee;
     data.arguments;
     view.get_callee();

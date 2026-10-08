@@ -29,7 +29,11 @@ public:
     }
 
     auto get_source() const noexcept { return View<Index<runir::kr::ps::ext::MemoryState>, C>(this->get_data().source, *this->m_context); }
-    auto get_target() const noexcept { return View<Index<runir::kr::ps::ext::MemoryState>, C>(this->get_data().target, *this->m_context); }
+    auto get_target() const noexcept
+        requires(!std::same_as<Kind, runir::kr::ps::ext::BacktrackTag>)
+    {
+        return View<Index<runir::kr::ps::ext::MemoryState>, C>(this->get_data().target, *this->m_context);
+    }
     auto get_conditions() const noexcept { return make_view(this->get_data().conditions, *this->m_context); }
 
     auto get_effects() const noexcept

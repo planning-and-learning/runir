@@ -69,12 +69,18 @@ struct CallTag
     static constexpr auto keyword = "call";
 };
 
+struct BacktrackTag
+{
+    static constexpr auto keyword = "backtrack";
+};
+
 template<typename T>
 concept BindingRuleKind = std::same_as<T, LoadTag<runir::kr::dl::ConceptTag>> || std::same_as<T, LoadTag<runir::kr::dl::RoleTag>>
                           || std::same_as<T, ChooseTag<runir::kr::dl::ConceptTag>> || std::same_as<T, ChooseTag<runir::kr::dl::RoleTag>>;
 
 template<typename T>
-concept RuleKind = BindingRuleKind<T> || std::same_as<T, SketchTag> || std::same_as<T, DoTag> || std::same_as<T, CallTag> || std::same_as<T, ActionTag>;
+concept RuleKind = BindingRuleKind<T> || std::same_as<T, SketchTag> || std::same_as<T, DoTag> || std::same_as<T, CallTag> || std::same_as<T, ActionTag>
+                   || std::same_as<T, BacktrackTag>;
 
 /// DL category bound by a rule tag.
 template<BindingRuleKind Tag>
@@ -96,7 +102,7 @@ struct Program
 using LoadRuleTypes = ygg::TypeList<Rule<LoadTag<runir::kr::dl::ConceptTag>>, Rule<LoadTag<runir::kr::dl::RoleTag>>>;
 using ChooseRuleTypes = ygg::TypeList<Rule<ChooseTag<runir::kr::dl::ConceptTag>>, Rule<ChooseTag<runir::kr::dl::RoleTag>>>;
 using ControlRuleTypes = ygg::MapTypeListT<Rule, ygg::TypeList<SketchTag, DoTag, CallTag, ActionTag>>;
-using ConcreteRuleTypes = ygg::ConcatTypeListsT<LoadRuleTypes, ControlRuleTypes, ChooseRuleTypes>;
+using ConcreteRuleTypes = ygg::ConcatTypeListsT<LoadRuleTypes, ControlRuleTypes, ChooseRuleTypes, ygg::TypeList<Rule<BacktrackTag>>>;
 using RuleTypes = ygg::ConcatTypeListsT<ygg::TypeList<ps::Rule<ExtFamilyTag>>, ConcreteRuleTypes>;
 using FeatureTypes = runir::kr::ps::PsFeatureTypes<runir::kr::ExtFamilyTag>;
 using ConditionTypes = runir::kr::ps::PsConditionTypes<runir::kr::ExtFamilyTag>;
