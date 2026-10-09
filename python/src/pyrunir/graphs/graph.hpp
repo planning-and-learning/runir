@@ -45,12 +45,12 @@ namespace ygg
 template<>
 struct Hash<runir::graphs::PyObjectProperty>
 {
-    auto operator()(const runir::graphs::PyObjectProperty& property) const -> std::size_t
+    auto operator()(const runir::graphs::PyObjectProperty& property) const -> ygg::hash_t
     {
         const auto hash = PyObject_Hash(property.value.ptr());
         if (hash == -1 && PyErr_Occurred())
             throw nb::python_error();
-        return static_cast<std::size_t>(hash);
+        return static_cast<ygg::hash_t>(hash);
     }
 };
 
