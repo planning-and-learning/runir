@@ -8,8 +8,7 @@
 #include <runir/kr/dl/datas.hpp>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
-#include <tyr/planning/ground/state_view.hpp>
-#include <tyr/planning/lifted/state_view.hpp>
+#include <tyr/planning/state_view.hpp>
 
 namespace runir::kr::dl::base
 {

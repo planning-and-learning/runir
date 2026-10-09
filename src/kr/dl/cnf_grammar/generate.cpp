@@ -21,10 +21,9 @@
 #include <tuple>
 #include <type_traits>
 #include <tyr/planning/ground/state_repository.hpp>
-#include <tyr/planning/ground/state_view.hpp>
+#include <tyr/planning/state_view.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/state_repository.hpp>
-#include <tyr/planning/lifted/state_view.hpp>
 #include <tyr/planning/lifted/task.hpp>
 #include <utility>
 #include <vector>

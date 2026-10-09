@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <limits>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/dl/semantics/evaluation.hpp>
 #include <runir/kr/ps/ext/detail/search_path.hpp>
@@ -408,6 +409,100 @@ void check_backtrack_execution()
             EXPECT_EQ(deadend.program_state.get_module_state().get_memory_state().get_name(), "m2");
             EXPECT_TRUE(deadend.program_state.get_call_stack());
         }
+}
+
+template<tyr::TaskKind Kind>
+void check_and_backtracking()
+{
+    namespace ext = kr::ps::ext;
+    using Status = ext::ProgramProofStatus;
+    using Mode = ext::StateMemorization;
+    const auto directory = std::filesystem::path(__FILE__).parent_path() / "../../../../fixtures/kr/ps/ext/choose";
+    const auto search = [&]
+    {
+        if constexpr (std::same_as<Kind, tyr::GroundTag>)
+            return make_ground_context(directory / "domain.pddl", directory / "task.pddl");
+        else
+            return make_lifted_context(directory / "domain.pddl", directory / "task.pddl");
+    }();
+    auto context = kr::TaskContext<Kind>::create(kr::DomainContext::create(search->task->get_domain()), search);
+    auto& repository = *context->domain_context->ext_repository;
+    const auto run = [&](const std::string& name, const std::string& rules, const ext::ProgramSearchOptions<Kind>& options)
+    {
+        const auto module_ = ext::dl::parse_module(choice_module(name, rules), search->task->get_domain().get_domain(), repository);
+        return ext::find_solution(context, create_program(repository, module_, { module_ }), options);
+    };
+    const auto skip = std::string("(:sketch (:conditions) (:effects))");
+    const auto load_good = std::string("(:load (:conditions) (:concept Candidates) (:register (:concept r0)) (:effects (negative Bad)))");
+    const auto finish = choice_rule("move", "m4", "m5", move_to_register) + choice_rule("finish", "m5", "m6", move_to_goal);
+    // Both ends fail: greedy takes the first, while exhaustive LIFO traversal tries the last before the successful middle.
+    const auto branches = choice_rule("first-failure", "m0", "m1", skip) + choice_rule("middle-success", "m0", "m2", skip)
+                          + choice_rule("last-failure", "m0", "m3", skip) + choice_rule("load-good", "m2", "m4", load_good) + finish;
+    const auto guarded = branches + backtrack_rule("reject-first", "m1") + backtrack_rule("reject-last", "m3");
+    const auto failed = choice_rule("first", "m0", "m1", skip) + choice_rule("second", "m0", "m3", skip);
+    const auto mixed = branches + choice_rule("empty", "m0", "m7", choose_empty) + choice_rule("untried", "m0", "m7", choose_candidates);
+    const auto choose_fallback = choice_rule("ordinary-failure", "m0", "m1", skip) + choice_rule("choose", "m0", "m4", choose_candidates) + finish;
+
+    for (const auto mode : { Mode::NONE, Mode::CHOICE, Mode::ALL })
+    {
+        SCOPED_TRACE(static_cast<int>(mode));
+        auto options = ext::ProgramSearchOptions<Kind> {};
+        EXPECT_FALSE(options.and_backtracking);
+        options.state_memorization = mode;
+        EXPECT_EQ(run("greedy-ordinary", branches, options).status, Status::FAILURE);
+
+        options.and_backtracking = true;
+        const auto result = run("exhaustive-ordinary", branches, options);
+        ASSERT_EQ(result.status, Status::SUCCESS);
+        ASSERT_TRUE(result.plan);
+        EXPECT_EQ(result.plan->get_length(), 2);
+        EXPECT_EQ(result.statistics.num_expanded, 5);
+        EXPECT_EQ(result.statistics.num_generated, 6);
+        EXPECT_EQ(result.statistics.choice_depth, 0);
+        EXPECT_EQ(result.statistics.choice_width, 0);
+        ASSERT_TRUE(result.graph);
+        EXPECT_TRUE(result.deadend_states.empty());
+        EXPECT_EQ(result.open_states.size(), mode == Mode::ALL ? 1 : 0);
+
+        const auto pruned = run("exhaustive-guarded", guarded, options);
+        EXPECT_EQ(pruned.status, Status::SUCCESS);
+        EXPECT_EQ(pruned.statistics.num_expanded, 5);
+        EXPECT_EQ(pruned.deadend_states.size(), mode == Mode::ALL ? 1 : 0);
+        const auto rejected = run("exhaustive-root-guard", branches + backtrack_rule("reject-root", "m0"), options);
+        EXPECT_EQ(rejected.status, Status::FAILURE);
+        EXPECT_EQ(rejected.statistics.num_generated, 0);
+        EXPECT_EQ(rejected.deadend_states.size(), 1);
+
+        const auto all_failed = run("exhaustive-failure", failed, options);
+        EXPECT_EQ(all_failed.status, Status::FAILURE);
+        EXPECT_FALSE(all_failed.plan);
+        EXPECT_EQ(all_failed.statistics.num_expanded, 3);
+
+        // Ordinary success discards both pending buffers; an empty alternative must not mark the successful source dead.
+        const auto mixed_result = run("exhaustive-mixed", mixed, options);
+        ASSERT_EQ(mixed_result.status, Status::SUCCESS);
+        EXPECT_EQ(mixed_result.statistics.num_expanded, 5);
+        EXPECT_EQ(mixed_result.statistics.num_generated, 6);
+        EXPECT_EQ(mixed_result.statistics.choice_width, 0);
+        EXPECT_TRUE(mixed_result.deadend_states.empty());
+        const auto chosen = run("exhaustive-choice-fallback", choose_fallback, options);
+        EXPECT_EQ(chosen.status, Status::SUCCESS);
+        ASSERT_TRUE(chosen.plan);
+        EXPECT_EQ(chosen.plan->get_length(), 2);
+        EXPECT_EQ(chosen.statistics.num_expanded, 6);
+        EXPECT_EQ(chosen.statistics.choice_width, 2);
+
+        options.universal = true;
+        const auto universal = run("exhaustive-universal", branches, options);
+        EXPECT_EQ(universal.status, Status::FAILURE);
+        EXPECT_FALSE(universal.plan);
+        options.universal = false;
+        options.max_num_states = 1;
+        EXPECT_EQ(run("exhaustive-state-limit", branches, options).status, Status::OUT_OF_STATES);
+        options.max_num_states = std::numeric_limits<ygg::uint_t>::max();
+        options.max_time = std::chrono::steady_clock::duration::zero();
+        EXPECT_EQ(run("exhaustive-time-limit", branches, options).status, Status::OUT_OF_TIME);
+    }
 }
 
 template<typename Policy>
@@ -864,6 +959,8 @@ void check_choice_execution()
 
 TEST(RunirTests, ExtBacktrackRulesInGroundExecution) { check_backtrack_execution<tyr::GroundTag>(); }
 TEST(RunirTests, ExtBacktrackRulesInLiftedExecution) { check_backtrack_execution<tyr::LiftedTag>(); }
+TEST(RunirTests, ExtAndBacktrackingInGroundExecution) { check_and_backtracking<tyr::GroundTag>(); }
+TEST(RunirTests, ExtAndBacktrackingInLiftedExecution) { check_and_backtracking<tyr::LiftedTag>(); }
 
 TEST(RunirTests, ExtBacktrackRulesUseFullAndDeltaEvaluation)
 {

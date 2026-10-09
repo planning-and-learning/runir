@@ -11,8 +11,7 @@
 
 #include <cista/containers/optional.h>
 #include <tuple>
-#include <tyr/planning/ground/state_builder.hpp>
-#include <tyr/planning/lifted/state_builder.hpp>
+#include <tyr/planning/state_builder.hpp>
 #include <yggdrasil/serialization/cista_equal_to.hpp>
 #include <yggdrasil/serialization/cista_hash.hpp>
 

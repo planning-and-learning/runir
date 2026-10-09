@@ -7,9 +7,9 @@
 
 namespace runir::kr::ps::ext
 {
-/// Execute greedily, or require all ordinary continuations when options.universal is true.
+/// Execute greedily, retry ordinary alternatives with and_backtracking, or prove every continuation with universal.
 /// Requires whole-program structural termination; throws std::invalid_argument otherwise.
-/// Every selected Choose rule needs one successful binding; distinct Choose rules remain separate obligations.
+/// Each Choose needs one successful binding; universal search requires every enabled Choose rule.
 /// ALL memoizes every state and returns the full explored graph, including rejected branches.
 /// NONE and CHOICE return only a selected solution or diagnostic path; they never retain the full graph.
 /// Materializing that returned path is separate from search memorization. Unmemorized states may be expanded again.

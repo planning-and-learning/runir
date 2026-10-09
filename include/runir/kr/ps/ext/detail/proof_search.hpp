@@ -53,6 +53,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
 
     const auto& task_context = expander.get_task_context();
     auto& search = *task_context->search_context;
+    const bool and_backtracking = options.and_backtracking && !options.universal;
     const auto stopwatch = options.max_time ? std::optional<ygg::CountdownWatch>(*options.max_time) : std::nullopt;
     const auto initial_planning_state = initial_state.unpack();
     auto goal_strategy = tyr::planning::ConjunctiveGoalStrategy<Kind>(*search.task);
@@ -130,6 +131,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
             }
             ++statistics.num_expanded;
             auto frame = Frame { std::move(path), successors.size(), choices.size(), memo_state };
+            frame.succeeded = !and_backtracking;
             auto limit = std::optional<ProgramProofStatus> {};
             expander.for_each_successor(
                 state,
@@ -184,7 +186,7 @@ ProgramProofStatus depth_first_search(Expander& expander,
                         }
                         choices.emplace_back(std::move(expansion));
                     }
-                    return !limit && options.universal;
+                    return !limit && (options.universal || and_backtracking);
                 },
                 out_of_time);
             storage.record_flags(state, *frame.path);
@@ -211,7 +213,16 @@ ProgramProofStatus depth_first_search(Expander& expander,
         const auto state = expander.view(*frame.path->state);
         if (completed)
         {
-            if (frame.choice_child)
+            if (and_backtracking && *completed)
+            {
+                frame.succeeded = true;
+                frame.path->is_deadend = false;
+                frame.path->is_open = false;
+                storage.record_flags(state, *frame.path);
+                successors.erase(successors.begin() + frame.successors_begin, successors.end());
+                choices.erase(choices.begin() + frame.choices_begin, choices.end());
+            }
+            else if (frame.choice_child)
             {
                 if (*completed)
                     choices.pop_back();

@@ -9,7 +9,7 @@ grounded and lifted execution, in both universal and nonuniversal modes.
 With this precondition, concrete execution has no cycles and results can be
 computed directly in depth-first postorder:
 
-- One [`depth_first_search`](../include/runir/kr/ps/ext/detail/proof_search.hpp) evaluates the same AND/OR obligations in every mode.
+- One [`depth_first_search`](../include/runir/kr/ps/ext/detail/proof_search.hpp) handles greedy execution, backtracking and universal proofs with every storage mode.
 - [`SearchStorage<Kind, StateMemorization>`](../include/runir/kr/ps/ext/detail/search_storage.hpp) specializes admission, memoization and retained transitions for each mode. The entry-point switch selects the policy once; the DFS performs no runtime memorization-mode checks. `NONE` has no memo table.
 - Pooled [`SearchPath`](../include/runir/kr/ps/ext/detail/search_path.hpp) records retain active prefixes and selected witnesses; released paths return their storage to the pool.
 
@@ -59,8 +59,10 @@ results. It defaults to `StateMemorization.ALL`, preserving the existing behavio
 | `ALL` | Every admitted program state; shared continuations reuse their completed result. | The full explored graph, including failed alternatives and repeated transitions. |
 
 In `CHOICE`, the memoized result belongs to the source state's **combined**
-obligations. It includes every required ordinary successor and every selected
-Choose rule; satisfying one Choose does not satisfy its siblings. The first
+continuations under the selected search mode. In universal search, it includes
+every ordinary successor and every selected Choose rule; satisfying one Choose
+does not satisfy its siblings. With AND backtracking, one successful continuation
+suffices. The first
 admitted Choose interns the complete source program state, including registers
 and caller frames. Its `ProgramStateView` is the memo key; the table does not
 copy builders. Choice sources remain in the task repository even when they are
@@ -122,7 +124,24 @@ W(t1) AND ... AND W(tn) AND C(s,r1) AND ... => W(s)
 
 The second implication is enabled only after successor enumeration finishes and only for states without a local failure. An empty Choose remains unsatisfied; a non-goal state with no applicable continuation is a failure, not an empty successful conjunction. Classifier-pruned states do not seed success.
 
-With `universal=false`, enumeration retains the first ordinary outcome or selected Choose obligation. With `universal=true`, every ordinary outcome and every enabled Choose rule is required. Different bindings of one Choose share an OR obligation; different Choose rules never share one.
+The options select which continuations must succeed:
+
+| `universal` | `and_backtracking` | Behavior |
+| --- | --- | --- |
+| `false` | `false` (default) | Retain the first ordinary outcome or selected Choose obligation. |
+| `false` | `true` | Try alternative continuations after failure; stop at the first success. |
+| `true` | Either | Require every ordinary outcome and every enabled Choose rule to succeed. |
+
+`and_backtracking` enables exhaustive scout search at ordinary (AND) branch
+points. A failed or empty Choose does not rule out another continuation from
+the same source. Within each Choose, bindings remain alternatives in all modes.
+The option uses the existing DFS order: ordinary successors in reverse emission
+order, then Choose rules in reverse emission order. Enumeration remains eager,
+so all admitted ordinary siblings count toward the state budget even if an
+earlier successful continuation makes exploring them unnecessary.
+
+In Python, set `options.and_backtracking = True` on either
+`GroundProgramSearchOptions` or `LiftedProgramSearchOptions`.
 
 ## Backtrack rules
 
@@ -144,13 +163,15 @@ entries still require a target and cannot contain Backtrack bodies.
 After the goal check, expansion tests Backtrack rules before ordinary rules,
 regardless of their declaration order. A match produces a terminal failure with
 no successor or caller return. Search marks the source as a dead end and uses
-the existing backtracking: a containing Choose may try its next binding. This
+the existing backtracking: a containing Choose may try its next binding, or
+AND backtracking may try another ordinary continuation. This
 applies in both universal modes and every memorization mode. Backtrack does not
 mark the planning state as unsolvable, and a reached goal still succeeds.
 
 Guards are checked during greedy continuations too. Failure unwinds intervening
-steps to the nearest Choose with an untried binding, passing exhausted choices
-on the way. If no alternative remains, the search fails.
+steps to the nearest permitted alternative: a Choose with an untried binding,
+or a remaining continuation when AND backtracking is enabled. If no alternative
+remains, the search fails.
 
 Structural termination analysis omits Backtrack rules because they create no
 transitions. It remains conservative about other rules: a Backtrack guard does
@@ -166,9 +187,11 @@ buffers and consume their entries before returning, preserving pending siblings.
 The next path is processed before returning to its parent frame.
 
 A failed Choose binding advances the same cursor; a successful binding completes
-that Choose without trying the remaining alternatives. Every selected Choose
-must succeed. Empty choices, local failures and failed ordinary successors make
-their state fail.
+that Choose without trying the remaining alternatives. In universal search,
+every selected Choose must succeed; empty choices, local failures and failed
+ordinary successors make their state fail. With AND backtracking, the first
+successful continuation completes the state and releases its pending siblings;
+only exhaustion of all alternatives makes the state fail.
 
 Once its children and choices finish, the state receives its final success or
 failure. `ALL` reuses a completed state before expansion. `CHOICE` detects a

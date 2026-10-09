@@ -7,6 +7,15 @@ from pyrunir.serialization import register_table, serialize, table
 from pyyggdrasil.serialization import Dictionaries
 
 
+@pytest.mark.parametrize("kind", ["Ground", "Lifted"])
+def test_and_backtracking_option_defaults_to_false(kind):
+    options = getattr(ext, f"{kind}ProgramSearchOptions")()
+    assert options.and_backtracking is False
+    options.and_backtracking = True
+    assert options.and_backtracking is True
+    assert options.universal is False
+
+
 @pytest.mark.parametrize("conditions", ["", "(positive bad)", "(positive bad) (positive bad)"])
 def test_backtrack_rule_construct_format_and_serialize(gripper_planning_domain, conditions):
     repository = DomainContext(gripper_planning_domain).ext_repository

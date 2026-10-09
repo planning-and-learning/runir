@@ -25,8 +25,7 @@
 #include <cstddef>
 #include <memory>
 #include <tuple>
-#include <tyr/planning/ground/state_view.hpp>
-#include <tyr/planning/lifted/state_view.hpp>
+#include <tyr/planning/state_view.hpp>
 #include <utility>
 #include <variant>
 #include <vector>

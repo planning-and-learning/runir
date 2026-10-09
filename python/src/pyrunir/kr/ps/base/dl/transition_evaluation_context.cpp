@@ -3,8 +3,7 @@
 #include <runir/kr/dl/semantics/denotation_caches.hpp>
 #include <runir/kr/dl/semantics/denotation_repository.hpp>
 #include <runir/kr/ps/dl/transition_evaluation_context.hpp>
-#include <tyr/planning/ground/state_view.hpp>
-#include <tyr/planning/lifted/state_view.hpp>
+#include <tyr/planning/state_view.hpp>
 
 namespace runir::kr::ps::base::dl
 {

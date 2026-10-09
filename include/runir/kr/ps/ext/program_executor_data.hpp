@@ -62,6 +62,8 @@ struct ProgramSearchOptions
     ygg::uint_t max_num_states = std::numeric_limits<ygg::uint_t>::max();
     std::optional<std::chrono::steady_clock::duration> max_time = std::nullopt;
     StateMemorization state_memorization = StateMemorization::ALL;
+    /// Try alternative ordinary continuations after failure; ignored by universal search.
+    bool and_backtracking = false;
 };
 
 struct ProgramSearchStatistics
