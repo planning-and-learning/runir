@@ -9,6 +9,7 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <vector>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -29,15 +30,13 @@ struct Data<runir::kr::uns::ClassifierLiteral>
     Data() = default;
     Data(Variant variant_, bool polarity_) : index(), variant(std::move(variant_)), polarity(polarity_) {}
 
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(variant);
-        ygg::clear(polarity);
-    }
-
+    auto cista_members() noexcept { return std::tie(index, variant, polarity); }
     auto cista_members() const noexcept { return std::tie(index, variant, polarity); }
     auto identifying_members() const noexcept { return std::tie(variant, polarity); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 // A clause: a conjunction of literals.
@@ -47,14 +46,21 @@ struct Data<runir::kr::uns::ClassifierClause>
     Index<runir::kr::uns::ClassifierClause> index;
     IndexList<runir::kr::uns::ClassifierLiteral> literals;
 
-    void clear() noexcept
+    Data() = default;
+    Data(IndexList<runir::kr::uns::ClassifierLiteral> literals_) : index(), literals(std::move(literals_)) {}
+    template<typename C>
+    Data(const std::vector<::ygg::View<Index<runir::kr::uns::ClassifierLiteral>, C>>& literals_) : index(), literals()
     {
-        ygg::clear(index);
-        ygg::clear(literals);
+        set(literals_, literals);
     }
 
+    auto cista_members() noexcept { return std::tie(index, literals); }
     auto cista_members() const noexcept { return std::tie(index, literals); }
     auto identifying_members() const noexcept { return std::tie(literals); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 // A classifier: named boolean features + a DNF (disjunction of clauses).
@@ -67,19 +73,35 @@ struct Data<runir::kr::uns::Classifier>
     IndexList<runir::kr::uns::ClassifierClause> clauses;
 
     Data() = default;
-    Data(::cista::offset::string symbol_) : index(), symbol(std::move(symbol_)) {}
-    Data(const std::string& symbol_) : index(), symbol(symbol_) {}
-
-    void clear() noexcept
+    Data(::cista::offset::string symbol_,
+         IndexList<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>> features_,
+         IndexList<runir::kr::uns::ClassifierClause> clauses_) :
+        index(),
+        symbol(std::move(symbol_)),
+        features(std::move(features_)),
+        clauses(std::move(clauses_))
     {
-        ygg::clear(index);
-        ygg::clear(symbol);
-        ygg::clear(features);
-        ygg::clear(clauses);
+    }
+    template<typename C>
+    Data(::cista::offset::string symbol_,
+         const std::vector<::ygg::View<Index<runir::kr::ps::Feature<runir::kr::UnsFamilyTag, runir::kr::ps::dl::BooleanFeature>>, C>>& features_,
+         const std::vector<::ygg::View<Index<runir::kr::uns::ClassifierClause>, C>>& clauses_) :
+        index(),
+        symbol(std::move(symbol_)),
+        features(),
+        clauses()
+    {
+        set(features_, features);
+        set(clauses_, clauses);
     }
 
+    auto cista_members() noexcept { return std::tie(index, symbol, features, clauses); }
     auto cista_members() const noexcept { return std::tie(index, symbol, features, clauses); }
     auto identifying_members() const noexcept { return std::tie(symbol, features, clauses); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

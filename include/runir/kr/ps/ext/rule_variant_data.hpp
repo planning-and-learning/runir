@@ -33,19 +33,15 @@ struct Data<runir::kr::ps::Rule<runir::kr::ExtFamilyTag>>
     Variant variant;
 
     Data() = default;
-    Data(Variant variant_) : index(), variant(std::move(variant_)) {}
     Data(::cista::offset::string symbol_, Variant variant_) : index(), symbol(std::move(symbol_)), variant(std::move(variant_)) {}
-    Data(const std::string& symbol_, Variant variant_) : index(), symbol(symbol_), variant(std::move(variant_)) {}
 
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(symbol);
-        ygg::clear(variant);
-    }
-
+    auto cista_members() noexcept { return std::tie(index, symbol, variant); }
     auto cista_members() const noexcept { return std::tie(index, symbol, variant); }
     auto identifying_members() const noexcept { return std::tie(symbol, variant); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

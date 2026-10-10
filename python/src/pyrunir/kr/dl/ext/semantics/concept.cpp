@@ -1,3 +1,4 @@
+#include "../../data_bindings.hpp"
 #include "bindings.hpp"
 
 #include <concepts>
@@ -19,6 +20,10 @@ void bind_concept_data(nb::module_& m, const char* name)
     using Data = ygg::Data<Concept<runir::kr::ExtFamilyTag, Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
     ygg::add_comparison(cls);
+    python::def_concept_data_constructors<Tag,
+                                          ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::ConceptTag>>,
+                                          ygg::Index<runir::kr::dl::Constructor<runir::kr::ExtFamilyTag, runir::kr::dl::RoleTag>>,
+                                          runir::kr::dl::ExtConstructorRepository>(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
         cls.def_rw("predicate", &Data::predicate).def_rw("polarity", &Data::polarity);

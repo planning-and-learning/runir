@@ -6,6 +6,7 @@
 
 #include <tuple>
 #include <utility>
+#include <vector>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -22,18 +23,28 @@ struct Data<runir::kr::dl::grammar::DerivationRule<Family, Category>>
     Data(Index<runir::kr::dl::grammar::NonTerminal<Family, Category>> lhs_,
          IndexList<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>> rhs_) :
         index(),
-        lhs(lhs_),
+        lhs(std::move(lhs_)),
         rhs(std::move(rhs_))
     {
     }
-    void clear() noexcept
+    template<typename C>
+    Data(::ygg::View<Index<runir::kr::dl::grammar::NonTerminal<Family, Category>>, C> lhs_,
+         const std::vector<::ygg::View<Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>>, C>>& rhs_) :
+        index(),
+        lhs(),
+        rhs()
     {
-        ygg::clear(index);
-        ygg::clear(lhs);
-        ygg::clear(rhs);
+        set(lhs_, lhs);
+        set(rhs_, rhs);
     }
+
+    auto cista_members() noexcept { return std::tie(index, lhs, rhs); }
     auto cista_members() const noexcept { return std::tie(index, lhs, rhs); }
     auto identifying_members() const noexcept { return std::tie(lhs, rhs); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

@@ -95,21 +95,27 @@ struct Data<runir::datasets::PredicateColor<T>>
         context(context_)
     {
     }
+    template<typename C>
+    Data(::ygg::View<Index<::tyr::formalism::Predicate<T>>, C> predicate_, uint_t argument_position_, runir::datasets::PredicateContext context_) noexcept :
+        index(),
+        predicate(),
+        argument_position(argument_position_),
+        context(context_)
+    {
+        set(predicate_, predicate);
+    }
     Data(const Data&) = default;
     Data& operator=(const Data&) = default;
     Data(Data&&) = default;
     Data& operator=(Data&&) = default;
 
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(predicate);
-        ygg::clear(argument_position);
-        ygg::clear(context);
-    }
-
+    auto cista_members() noexcept { return std::tie(index, predicate, argument_position, context); }
     auto cista_members() const noexcept { return std::tie(index, predicate, argument_position, context); }
     auto identifying_members() const noexcept { return std::tie(predicate, argument_position, context); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<>
@@ -129,14 +135,13 @@ struct Data<runir::datasets::Color>
     Data(Data&&) = default;
     Data& operator=(Data&&) = default;
 
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(values);
-    }
-
+    auto cista_members() noexcept { return std::tie(index, values); }
     auto cista_members() const noexcept { return std::tie(index, values); }
     auto identifying_members() const noexcept { return std::tie(values); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<::tyr::formalism::FactKind T, typename C>

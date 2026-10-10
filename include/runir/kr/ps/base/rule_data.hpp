@@ -9,9 +9,10 @@
 #include <cista/containers/string.h>
 #include <string>
 #include <tuple>
+#include <utility>
+#include <vector>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
-#include <vector>
 
 namespace ygg
 {
@@ -25,20 +26,35 @@ struct Data<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>
     IndexList<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>> effects;
 
     Data() = default;
-    Data(const std::string& symbol_) : index(), symbol(symbol_)
+    Data(::cista::offset::string symbol_,
+         IndexList<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>> conditions_,
+         IndexList<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>> effects_) :
+        index(),
+        symbol(std::move(symbol_)),
+        conditions(std::move(conditions_)),
+        effects(std::move(effects_))
     {
     }
-
-    void clear() noexcept
+    template<typename C>
+    Data(::cista::offset::string symbol_,
+         const std::vector<::ygg::View<Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>, C>>& conditions_,
+         const std::vector<::ygg::View<Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>, C>>& effects_) :
+        index(),
+        symbol(std::move(symbol_)),
+        conditions(),
+        effects()
     {
-        ygg::clear(index);
-        ygg::clear(symbol);
-        ygg::clear(conditions);
-        ygg::clear(effects);
+        set(conditions_, conditions);
+        set(effects_, effects);
     }
 
+    auto cista_members() noexcept { return std::tie(index, symbol, conditions, effects); }
     auto cista_members() const noexcept { return std::tie(index, symbol, conditions, effects); }
     auto identifying_members() const noexcept { return std::tie(symbol, conditions, effects); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

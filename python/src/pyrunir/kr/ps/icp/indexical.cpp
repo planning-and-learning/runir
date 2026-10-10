@@ -16,14 +16,18 @@ using namespace nanobind::literals;
 namespace
 {
 
-template<typename T>
+template<typename T, typename Operation>
 void bind_indexical_type(nb::module_& m, RepositoryBinding& repository, const char* name)
 {
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
+    using ObjectReference = ::cista::offset::variant<ArgumentPosition, ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>>;
+    using FeatureIndex = ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>;
     ygg::bind_index<ygg::Index<T>>(m, (std::string(name) + "Index").c_str());
     auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str())
                     .def(nb::init<>())
+                    .def(nb::init<Operation, ObjectReference, FeatureIndex>(), "operation"_a, "object"_a, "feature"_a)
+                    .def(nb::init<Operation, ObjectReference, ygg::View<FeatureIndex, Repository>>(), "operation"_a, "object"_a, "feature"_a)
                     .def_rw("index", &Data::index)
                     .def_rw("operation", &Data::operation)
                     .def_rw("object", &Data::object)
@@ -49,8 +53,8 @@ void bind_indexical(nb::module_& m, RepositoryBinding& repository)
     ygg::bind_fixed_uint<ArgumentPosition>(m, "ArgumentPosition");
     auto reset_pair = nb::class_<ResetPair>(m, "ResetPair").def(nb::init<>()).def_rw("before", &ResetPair::before).def_rw("after", &ResetPair::after);
     reset_pair.def(nb::self == nb::self).def(nb::self != nb::self);
-    bind_indexical_type<XCondition>(m, repository, "XCondition");
-    bind_indexical_type<XEffect>(m, repository, "XEffect");
+    bind_indexical_type<XCondition, ConditionOperation>(m, repository, "XCondition");
+    bind_indexical_type<XEffect, EffectOperation>(m, repository, "XEffect");
 }
 
 }

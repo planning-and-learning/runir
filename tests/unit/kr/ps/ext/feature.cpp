@@ -3,6 +3,7 @@
 #include <runir/kr/ps/feature_data.hpp>
 #include <runir/kr/ps/feature_index.hpp>
 #include <runir/kr/ps/feature_view.hpp>
+#include <utility>
 
 namespace runir::tests
 {
@@ -21,7 +22,7 @@ concept FeatureContract =
            data.index;
            data.variant;
            data.clear();
-           { data.cista_members() } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const typename ygg::Data<Entity>::Variant&>>;
+           { std::as_const(data).cista_members() } -> std::same_as<std::tuple<const ygg::Index<Entity>&, const typename ygg::Data<Entity>::Variant&>>;
            { data.identifying_members() } -> std::same_as<std::tuple<const typename ygg::Data<Entity>::Variant&>>;
            view.get_index();
            view.get_variant();

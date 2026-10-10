@@ -21,6 +21,7 @@ void bind_register_data(nb::module_& m, const char* name)
 
     auto data = nb::class_<Data>(m, name)
                     .def(nb::init<>())
+                    .def(nb::init<::cista::offset::string, RegisterIdentifier<Category>>(), nb::arg("name"), nb::arg("identifier"))
                     .def_rw("index", &Data::index)
                     .def_rw("name", &Data::name)
                     .def_rw("identifier", &Data::identifier);

@@ -3,6 +3,8 @@
 
 #include "module.hpp"
 
+#include <concepts>
+#include <nanobind/stl/vector.h>
 #include <pyrunir/kr/binding_utils.hpp>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
 #include <runir/kr/dl/query_view.hpp>
@@ -10,7 +12,10 @@
 #include <runir/kr/dl/semantics/formatter.hpp>
 #include <runir/kr/dl/semantics/syntactic_complexity.hpp>
 #include <string>
+#include <type_traits>
 #include <utility>
+#include <vector>
+#include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -32,6 +37,50 @@ void bind_query_columns(nb::class_<View>& cls)
             });
 }
 
+template<FamilyTag Family, typename Tag, typename Class>
+void def_query_data_constructors(Class& cls)
+{
+    using namespace nb::literals;
+    using Repository = ConstructorRepositoryFor<Family>;
+    using ColumnIndexList = ygg::IndexList<QueryColumn>;
+    using ColumnViewList = std::vector<ygg::View<ygg::Index<QueryColumn>, Repository>>;
+    using QueryIndex = ygg::Index<Query<Family>>;
+    using QueryView = ygg::View<ygg::Index<Query<Family>>, Repository>;
+
+    if constexpr (std::same_as<Tag, void>)
+        cls.def(nb::init<typename ygg::Data<Query<Family>>::Variant>(), "variant"_a);
+    else if constexpr (is_atomic_state_tag_v<Tag>)
+        cls.def(nb::init<ygg::Index<tyr::formalism::Predicate<typename Tag::FactKind>>, ColumnIndexList>(), "predicate"_a, "columns"_a)
+            .def(nb::init<tyr::formalism::planning::PredicateView<typename Tag::FactKind>, const ColumnViewList&>(), "predicate"_a, "columns"_a);
+    else if constexpr (is_atomic_goal_tag_v<Tag>)
+        cls.def(nb::init<ygg::Index<tyr::formalism::Predicate<typename Tag::FactKind>>, bool, ColumnIndexList>(), "predicate"_a, "polarity"_a, "columns"_a)
+            .def(nb::init<tyr::formalism::planning::PredicateView<typename Tag::FactKind>, bool, const ColumnViewList&>(),
+                 "predicate"_a,
+                 "polarity"_a,
+                 "columns"_a);
+    else if constexpr (std::same_as<Tag, QueryConceptTag> || std::same_as<Tag, QueryRoleTag>)
+    {
+        using ArgIndex = ygg::Index<Constructor<Family, std::conditional_t<std::same_as<Tag, QueryConceptTag>, ConceptTag, RoleTag>>>;
+        cls.def(nb::init<ArgIndex, ColumnIndexList>(), "arg"_a, "columns"_a)
+            .def(nb::init<ygg::View<ArgIndex, Repository>, const ColumnViewList&>(), "arg"_a, "columns"_a);
+    }
+    else if constexpr (std::same_as<Tag, QueryJoinTag> || std::same_as<Tag, QueryUnionTag> || std::same_as<Tag, QueryDifferenceTag>)
+        cls.def(nb::init<QueryIndex, QueryIndex>(), "lhs"_a, "rhs"_a).def(nb::init<QueryView, QueryView>(), "lhs"_a, "rhs"_a);
+    else if constexpr (std::same_as<Tag, QueryProjectTag> || std::same_as<Tag, QueryRenameTag>)
+        cls.def(nb::init<QueryIndex, ColumnIndexList>(), "arg"_a, "columns"_a).def(nb::init<QueryView, const ColumnViewList&>(), "arg"_a, "columns"_a);
+    else if constexpr (std::same_as<Tag, QuerySelectEqualTag>)
+        cls.def(nb::init<QueryIndex, ygg::Index<QueryColumn>, ygg::Index<QueryColumn>>(), "arg"_a, "lhs_column"_a, "rhs_column"_a)
+            .def(nb::init<QueryView, ygg::View<ygg::Index<QueryColumn>, Repository>, ygg::View<ygg::Index<QueryColumn>, Repository>>(),
+                 "arg"_a,
+                 "lhs_column"_a,
+                 "rhs_column"_a);
+    else if constexpr (std::same_as<Tag, QuerySelectValueTag>)
+        cls.def(nb::init<QueryIndex, ygg::Index<QueryColumn>, ygg::Index<tyr::formalism::Object>>(), "arg"_a, "column"_a, "object"_a)
+            .def(nb::init<QueryView, ygg::View<ygg::Index<QueryColumn>, Repository>, tyr::formalism::planning::ObjectView>(), "arg"_a, "column"_a, "object"_a);
+    else
+        static_assert(ygg::dependent_false<Tag>::value);
+}
+
 template<FamilyTag Family, typename Tag>
 void bind_query(nb::module_& m, const char* name)
 {
@@ -42,6 +91,7 @@ void bind_query(nb::module_& m, const char* name)
     ygg::bind_index<ygg::Index<Type>>(m, (std::string(name) + "Index").c_str());
     auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str()).def(nb::init<>()).def_rw("index", &Data::index);
     ygg::add_comparison(data);
+    def_query_data_constructors<Family, Tag>(data);
     if constexpr (std::same_as<Tag, void>)
         data.def_rw("variant", &Data::variant);
     if constexpr (requires(Data value) { value.predicate; })
@@ -94,6 +144,11 @@ void bind_query_projection(nb::module_& m, const char* name)
     ygg::bind_index<ygg::Index<Type>>(m, (std::string(name) + "Index").c_str());
     auto data = nb::class_<Data>(m, (std::string(name) + "Data").c_str())
                     .def(nb::init<>())
+                    .def(nb::init<ygg::Index<Query<Family>>, ygg::IndexList<QueryColumn>>(), nb::arg("arg"), nb::arg("columns"))
+                    .def(nb::init<ygg::View<ygg::Index<Query<Family>>, ConstructorRepositoryFor<Family>>,
+                                  const std::vector<ygg::View<ygg::Index<QueryColumn>, ConstructorRepositoryFor<Family>>>&>(),
+                         nb::arg("arg"),
+                         nb::arg("columns"))
                     .def_rw("index", &Data::index)
                     .def_rw("arg", &Data::arg)
                     .def_rw("columns", &Data::columns);

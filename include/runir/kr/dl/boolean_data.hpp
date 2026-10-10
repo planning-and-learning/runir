@@ -33,6 +33,7 @@ template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>>
 {
     using ConstructorVariant = ::cista::offset::variant<Index<DlConcept<Family>>, Index<DlRole<Family>>, Index<runir::kr::dl::Query<Family>>>;
+    using Arg = ConstructorVariant;
 
     Index<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>> index;
     ConstructorVariant arg;
@@ -40,14 +41,13 @@ struct Data<runir::kr::dl::Boolean<Family, runir::kr::dl::NonemptyTag>>
     Data() = default;
     explicit Data(ConstructorVariant arg_) : index(), arg(std::move(arg_)) {}
 
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(arg);
-    }
-
+    auto cista_members() noexcept { return std::tie(index, arg); }
     auto cista_members() const noexcept { return std::tie(index, arg); }
     auto identifying_members() const noexcept { return std::tie(arg); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<>

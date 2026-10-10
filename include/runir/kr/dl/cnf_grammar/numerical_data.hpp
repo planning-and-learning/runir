@@ -3,7 +3,12 @@
 
 #include "runir/kr/dl/cnf_grammar/data_helpers.hpp"
 
+#include <cista/containers/variant.h>
+#include <tuple>
+#include <utility>
 #include <yggdrasil/containers/variant.hpp>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
 namespace ygg
 {
@@ -20,14 +25,13 @@ struct Data<runir::kr::dl::cnf_grammar::Numerical<Family, runir::kr::dl::CountTa
     Data() = default;
     explicit Data(Arg arg_) : index(), arg(std::move(arg_)) {}
 
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(arg);
-    }
-
+    auto cista_members() noexcept { return std::tie(index, arg); }
     auto cista_members() const noexcept { return std::tie(index, arg); }
     auto identifying_members() const noexcept { return std::tie(arg); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<runir::kr::dl::FamilyTag Family>

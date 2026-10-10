@@ -1,6 +1,7 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/binding_utils.hpp"
 
+#include <nanobind/stl/vector.h>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
@@ -9,6 +10,7 @@
 #include <runir/kr/ps/base/sketch_view.hpp>
 #include <runir/kr/ps/base/syntactic_complexity.hpp>
 #include <runir/kr/ps/dl/transition_evaluation_context.hpp>
+#include <vector>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -27,8 +29,23 @@ void bind_sketch(nb::module_& m, RepositoryBinding& repository)
 
     ygg::bind_index<ygg::Index<T>>(m, "SketchIndex");
 
+    using BooleanFeatureIndex = ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>;
+    using NumericalFeatureIndex = ygg::Index<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>;
+    using RuleIndex = ygg::Index<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>;
     auto data = nb::class_<Data>(m, "SketchData")
                     .def(nb::init<>())
+                    .def(nb::init<ygg::IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::BooleanFeature>>,
+                                  ygg::IndexList<runir::kr::ps::Feature<runir::kr::BaseFamilyTag, runir::kr::ps::dl::NumericalFeature>>,
+                                  ygg::IndexList<runir::kr::ps::Rule<runir::kr::BaseFamilyTag>>>(),
+                         "boolean_features"_a,
+                         "numerical_features"_a,
+                         "rules"_a)
+                    .def(nb::init<const std::vector<ygg::View<BooleanFeatureIndex, Repository>>&,
+                                  const std::vector<ygg::View<NumericalFeatureIndex, Repository>>&,
+                                  const std::vector<ygg::View<RuleIndex, Repository>>&>(),
+                         "boolean_features"_a,
+                         "numerical_features"_a,
+                         "rules"_a)
                     .def_rw("index", &Data::index)
                     .def_rw("boolean_features", &Data::boolean_features)
                     .def_rw("numerical_features", &Data::numerical_features)

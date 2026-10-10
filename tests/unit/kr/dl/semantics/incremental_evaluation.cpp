@@ -111,7 +111,7 @@ void check_planning_graph(tyr::planning::StateView<Kind> source, tyr::planning::
         {
             if (predicate.get_arity() != 1)
                 continue;
-            auto atom = ygg::Data<dl::Concept<Family, dl::AtomicStateTag<Fact>>>(predicate.get_index());
+            auto atom = ygg::Data<dl::Concept<Family, dl::AtomicStateTag<Fact>>>(predicate.get_index(), true);
             auto concept_data = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(dl::insert(*constructors, atom).first.get_index());
             const auto concept_ = dl::insert(*constructors, concept_data).first;
             auto query_data = ygg::Data<dl::Query<Family, dl::QueryConceptTag>> {};

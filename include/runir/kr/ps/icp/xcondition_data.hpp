@@ -7,6 +7,7 @@
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
+#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
 namespace ygg
@@ -25,22 +26,30 @@ struct Data<runir::kr::ps::icp::XCondition>
          ::cista::offset::variant<runir::kr::ps::icp::ArgumentPosition, Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object_,
          Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>> feature_) :
         index(),
-        operation(operation_),
+        operation(std::move(operation_)),
         object(std::move(object_)),
-        feature(feature_)
+        feature(std::move(feature_))
     {
     }
-
-    void clear() noexcept
+    template<typename C>
+    Data(runir::kr::ps::icp::ConditionOperation operation_,
+         ::cista::offset::variant<runir::kr::ps::icp::ArgumentPosition, Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>> object_,
+         ::ygg::View<Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>, C> feature_) :
+        index(),
+        operation(std::move(operation_)),
+        object(std::move(object_)),
+        feature()
     {
-        ygg::clear(index);
-        operation = {};
-        object = runir::kr::ps::icp::ArgumentPosition {};
-        ygg::clear(feature);
+        set(feature_, feature);
     }
 
+    auto cista_members() noexcept { return std::tie(index, operation, object, feature); }
     auto cista_members() const noexcept { return std::tie(index, operation, object, feature); }
     auto identifying_members() const noexcept { return std::tie(operation, object, feature); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

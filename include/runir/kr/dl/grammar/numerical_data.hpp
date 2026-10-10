@@ -21,13 +21,14 @@ struct Data<runir::kr::dl::grammar::Numerical<Family, runir::kr::dl::CountTag>>
     ConstructorVariant arg;
     Data() = default;
     explicit Data(ConstructorVariant arg_) : index(), arg(std::move(arg_)) {}
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(arg);
-    }
+
+    auto cista_members() noexcept { return std::tie(index, arg); }
     auto cista_members() const noexcept { return std::tie(index, arg); }
     auto identifying_members() const noexcept { return std::tie(arg); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<runir::kr::dl::FamilyTag Family>

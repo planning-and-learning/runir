@@ -26,14 +26,13 @@ struct Data<runir::kr::ps::ConcreteConditionVariant<Family, runir::kr::DlTag>>
     Data() = default;
     Data(Variant variant_) : index(), variant(std::move(variant_)) {}
 
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(variant);
-    }
-
+    auto cista_members() noexcept { return std::tie(index, variant); }
     auto cista_members() const noexcept { return std::tie(index, variant); }
     auto identifying_members() const noexcept { return std::tie(variant); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<runir::kr::FamilyTag Family, runir::kr::ps::dl::FeatureTag FeatureTag, runir::kr::ps::dl::ConditionObservationTag<FeatureTag> ObservationTag>
@@ -43,16 +42,20 @@ struct Data<runir::kr::ps::ConcreteCondition<Family, runir::kr::DlTag, FeatureTa
     Index<runir::kr::ps::Feature<Family, FeatureTag>> feature;
 
     Data() = default;
-    Data(Index<runir::kr::ps::Feature<Family, FeatureTag>> feature_) : index(), feature(feature_) {}
-
-    void clear() noexcept
+    Data(Index<runir::kr::ps::Feature<Family, FeatureTag>> feature_) : index(), feature(std::move(feature_)) {}
+    template<typename C>
+    Data(::ygg::View<Index<runir::kr::ps::Feature<Family, FeatureTag>>, C> feature_) : index(), feature()
     {
-        ygg::clear(index);
-        ygg::clear(feature);
+        set(feature_, feature);
     }
 
+    auto cista_members() noexcept { return std::tie(index, feature); }
     auto cista_members() const noexcept { return std::tie(index, feature); }
     auto identifying_members() const noexcept { return std::tie(feature); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

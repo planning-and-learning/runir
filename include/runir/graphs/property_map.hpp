@@ -48,9 +48,13 @@ struct Data<runir::graphs::VertexProperty<P>>
     Data() = default;
     explicit Data(P value_) noexcept : value(std::move(value_)) {}
 
-    void clear() noexcept { ygg::clear(value); }
+    auto cista_members() noexcept { return std::tie(value); }
     auto cista_members() const noexcept { return std::tie(value); }
     auto identifying_members() const noexcept { return std::tie(value); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<runir::graphs::Property P>
@@ -61,9 +65,13 @@ struct Data<runir::graphs::EdgeProperty<P>>
     Data() = default;
     explicit Data(P value_) noexcept : value(std::move(value_)) {}
 
-    void clear() noexcept { ygg::clear(value); }
+    auto cista_members() noexcept { return std::tie(value); }
     auto cista_members() const noexcept { return std::tie(value); }
     auto identifying_members() const noexcept { return std::tie(value); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<runir::graphs::Property P>

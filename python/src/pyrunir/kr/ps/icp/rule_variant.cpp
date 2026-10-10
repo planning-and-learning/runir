@@ -21,6 +21,7 @@ void bind_rule_variant(nb::module_& m, RepositoryBinding& repository)
     ygg::bind_index<ygg::Index<T>>(m, "RuleVariantIndex");
     auto data = nb::class_<Data>(m, "RuleVariantData")
                     .def(nb::init<>())
+                    .def(nb::init<::cista::offset::string, Data::Variant>(), nb::arg("symbol"), nb::arg("variant"))
                     .def_rw("index", &Data::index)
                     .def_rw("symbol", &Data::symbol)
                     .def_rw("variant", &Data::variant);

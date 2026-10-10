@@ -1,11 +1,13 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/binding_utils.hpp"
 
+#include <nanobind/stl/vector.h>
 #include <runir/kr/ps/ext/formatter.hpp>
 #include <runir/kr/ps/ext/program_data.hpp>
 #include <runir/kr/ps/ext/program_view.hpp>
 #include <runir/kr/ps/ext/repository.hpp>
 #include <runir/kr/ps/ext/syntactic_complexity.hpp>
+#include <vector>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -22,6 +24,10 @@ void bind_program(nb::module_& m, RepositoryBinding& repository)
     ygg::bind_index<ygg::Index<T>>(m, "ProgramIndex");
     auto data = nb::class_<Data>(m, "ProgramData")
                     .def(nb::init<>())
+                    .def(nb::init<ygg::Index<Module>, ygg::IndexList<Module>>(), nb::arg("entry_module"), nb::arg("modules"))
+                    .def(nb::init<ygg::View<ygg::Index<Module>, Repository>, const std::vector<ygg::View<ygg::Index<Module>, Repository>>&>(),
+                         nb::arg("entry_module"),
+                         nb::arg("modules"))
                     .def_rw("index", &Data::index)
                     .def_rw("entry_module", &Data::entry_module)
                     .def_rw("modules", &Data::modules);

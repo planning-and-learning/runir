@@ -898,15 +898,15 @@ void check_predicate_repository_identity()
         auto context = sem::StateEvaluationContext<Family, Kind>(initial.get_state(), builder, storage);
         const auto check = [&]<typename Tag>()
         {
-            auto concept_data = ygg::Data<dl::Concept<Family, Tag>>(predicates[1]);
+            auto concept_data = ygg::Data<dl::Concept<Family, Tag>>(predicates[1], true);
             auto concept_wrapper = ygg::Data<dl::Constructor<Family, dl::ConceptTag>>(dl::insert(*repository, concept_data).first.get_index());
             EXPECT_EQ(sem::evaluate<Kind>(dl::insert(*repository, concept_wrapper).first, context).get().count(), size_t(expected));
 
-            auto role_data = ygg::Data<dl::Role<Family, Tag>>(predicates[2]);
+            auto role_data = ygg::Data<dl::Role<Family, Tag>>(predicates[2], true);
             auto role_wrapper = ygg::Data<dl::Constructor<Family, dl::RoleTag>>(dl::insert(*repository, role_data).first.get_index());
             EXPECT_EQ(sem::evaluate<Kind>(dl::insert(*repository, role_wrapper).first, context).count(), size_t(expected));
 
-            auto boolean_data = ygg::Data<dl::Boolean<Family, Tag>>(predicates[0]);
+            auto boolean_data = ygg::Data<dl::Boolean<Family, Tag>>(predicates[0], true);
             auto boolean_wrapper = ygg::Data<dl::Constructor<Family, dl::BooleanTag>>(dl::insert(*repository, boolean_data).first.get_index());
             EXPECT_EQ(sem::evaluate<Kind>(dl::insert(*repository, boolean_wrapper).first, context).get(), expected);
 

@@ -1,13 +1,14 @@
 #ifndef RUNIR_KR_PS_EXT_ORDER_TERM_DATA_HPP_
 #define RUNIR_KR_PS_EXT_ORDER_TERM_DATA_HPP_
 
+#include "runir/kr/ps/dl/declarations.hpp"
 #include "runir/kr/ps/ext/order_term_index.hpp"
 #include "runir/kr/ps/feature_index.hpp"
-#include "runir/kr/ps/dl/declarations.hpp"
 
 #include <cista/containers/variant.h>
 #include <tuple>
 #include <utility>
+#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
 namespace ygg
@@ -26,15 +27,13 @@ struct Data<runir::kr::ps::ext::OrderTerm>
     Data() = default;
     Data(runir::kr::ps::ext::OrderDirection direction_, Feature feature_) : index(), direction(direction_), feature(std::move(feature_)) {}
 
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        direction = runir::kr::ps::ext::OrderDirection::MIN;
-        ygg::clear(feature);
-    }
-
+    auto cista_members() noexcept { return std::tie(index, direction, feature); }
     auto cista_members() const noexcept { return std::tie(index, direction, feature); }
     auto identifying_members() const noexcept { return std::tie(direction, feature); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

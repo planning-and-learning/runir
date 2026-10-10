@@ -6,6 +6,7 @@
 #include <runir/kr/ps/feature_index.hpp>
 #include <runir/kr/ps/feature_view.hpp>
 #include <runir/kr/uns/repository.hpp>
+#include <utility>
 
 namespace runir::tests
 {
@@ -29,7 +30,7 @@ static_assert(requires(Data& data) {
     data.symbol;
     data.clear();
     { data.feature } -> std::same_as<ExpressionIndex&>;
-    { data.cista_members() } -> std::same_as<std::tuple<const Index&, const ExpressionIndex&, const ::cista::offset::string&>>;
+    { std::as_const(data).cista_members() } -> std::same_as<std::tuple<const Index&, const ExpressionIndex&, const ::cista::offset::string&>>;
     { data.identifying_members() } -> std::same_as<std::tuple<const ExpressionIndex&, const ::cista::offset::string&>>;
     { canonicalize(data) } -> std::same_as<void>;
     { is_canonical(data) } -> std::same_as<bool>;

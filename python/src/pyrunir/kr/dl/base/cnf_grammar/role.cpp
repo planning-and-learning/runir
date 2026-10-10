@@ -1,3 +1,4 @@
+#include "../../data_bindings.hpp"
 #include "bindings.hpp"
 
 #include <concepts>
@@ -18,6 +19,10 @@ void bind_role_data(nb::module_& m, const char* name)
     using Data = ygg::Data<runir::kr::dl::cnf_grammar::Role<runir::kr::BaseFamilyTag, Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
     ygg::add_comparison(cls);
+    python::def_role_data_constructors<Tag,
+                                       ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::BaseFamilyTag, runir::kr::dl::ConceptTag>>,
+                                       ygg::Index<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::BaseFamilyTag, runir::kr::dl::RoleTag>>,
+                                       runir::kr::dl::cnf_grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>(cls);
 
     if constexpr (is_atomic_state_tag_v<Tag> || is_atomic_goal_tag_v<Tag>)
         cls.def_rw("predicate", &Data::predicate).def_rw("polarity", &Data::polarity);

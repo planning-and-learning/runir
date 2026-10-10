@@ -1,6 +1,7 @@
 #include "bindings.hpp"
 #include "pyrunir/kr/binding_utils.hpp"
 
+#include <nanobind/stl/vector.h>
 #include <runir/kr/dl/repository.hpp>
 #include <runir/kr/ps/base/compatibility.hpp>
 #include <runir/kr/ps/base/formatter.hpp>
@@ -8,6 +9,7 @@
 #include <runir/kr/ps/base/rule_data.hpp>
 #include <runir/kr/ps/base/rule_view.hpp>
 #include <runir/kr/ps/dl/transition_evaluation_context.hpp>
+#include <vector>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -26,8 +28,22 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
 
     ygg::bind_index<ygg::Index<T>>(m, "RuleIndex");
 
+    using ConditionIndex = ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>;
+    using EffectIndex = ygg::Index<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>;
     auto data = nb::class_<Data>(m, "RuleData")
                     .def(nb::init<>())
+                    .def(nb::init<::cista::offset::string,
+                                  ygg::IndexList<runir::kr::ps::ConditionVariant<runir::kr::BaseFamilyTag>>,
+                                  ygg::IndexList<runir::kr::ps::EffectVariant<runir::kr::BaseFamilyTag>>>(),
+                         "symbol"_a,
+                         "conditions"_a,
+                         "effects"_a)
+                    .def(nb::init<::cista::offset::string,
+                                  const std::vector<ygg::View<ConditionIndex, Repository>>&,
+                                  const std::vector<ygg::View<EffectIndex, Repository>>&>(),
+                         "symbol"_a,
+                         "conditions"_a,
+                         "effects"_a)
                     .def_rw("index", &Data::index)
                     .def_rw("symbol", &Data::symbol)
                     .def_rw("conditions", &Data::conditions)

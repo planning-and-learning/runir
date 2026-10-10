@@ -51,18 +51,20 @@ struct Data<runir::kr::ps::ConcreteFeature<Family, runir::kr::DlTag, FeatureTag>
     ::cista::offset::string symbol;
 
     Data() = default;
-    Data(Index<Expression> feature_, ::cista::offset::string symbol_) : index(), feature(feature_), symbol(std::move(symbol_)) {}
-    Data(Index<Expression> feature_, const std::string& symbol_) : index(), feature(feature_), symbol(symbol_) {}
-
-    void clear() noexcept
+    Data(Index<Expression> feature_, ::cista::offset::string symbol_) : index(), feature(std::move(feature_)), symbol(std::move(symbol_)) {}
+    template<typename C>
+    Data(::ygg::View<Index<Expression>, C> feature_, ::cista::offset::string symbol_) : index(), feature(), symbol(std::move(symbol_))
     {
-        ygg::clear(index);
-        ygg::clear(feature);
-        ygg::clear(symbol);
+        set(feature_, feature);
     }
 
+    auto cista_members() noexcept { return std::tie(index, feature, symbol); }
     auto cista_members() const noexcept { return std::tie(index, feature, symbol); }
     auto identifying_members() const noexcept { return std::tie(feature, symbol); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

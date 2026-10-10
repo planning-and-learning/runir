@@ -19,7 +19,11 @@ void bind_memory_state(nb::module_& m, RepositoryBinding& repository)
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
     ygg::bind_index<ygg::Index<T>>(m, "MemoryStateIndex");
-    auto data = nb::class_<Data>(m, "MemoryStateData").def(nb::init<>()).def_rw("index", &Data::index).def_rw("name", &Data::name);
+    auto data = nb::class_<Data>(m, "MemoryStateData")
+                    .def(nb::init<>())
+                    .def(nb::init<::cista::offset::string>(), nb::arg("name"))
+                    .def_rw("index", &Data::index)
+                    .def_rw("name", &Data::name);
     ygg::add_comparison(data);
     auto view = nb::class_<View>(m, "MemoryState").def("get_index", &View::get_index).def("get_name", &View::get_name);
     ygg::add_print(view);

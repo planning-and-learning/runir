@@ -1,3 +1,4 @@
+#include "../../data_bindings.hpp"
 #include "bindings.hpp"
 
 #include <concepts>
@@ -18,6 +19,11 @@ void bind_numerical_data(nb::module_& m, const char* name)
     using Data = ygg::Data<runir::kr::dl::grammar::Numerical<runir::kr::BaseFamilyTag, Tag>>;
     auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index);
     ygg::add_comparison(cls);
+    python::def_numerical_data_constructors<Tag,
+                                            ygg::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::BaseFamilyTag, runir::kr::dl::ConceptTag>>,
+                                            ygg::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::BaseFamilyTag, runir::kr::dl::RoleTag>>,
+                                            ygg::Index<runir::kr::dl::grammar::ConstructorOrNonTerminal<runir::kr::BaseFamilyTag, runir::kr::dl::NumericalTag>>,
+                                            runir::kr::dl::grammar::ConstructorRepositoryFor<runir::kr::BaseFamilyTag>>(cls);
 
     if constexpr (std::same_as<Tag, CountTag>)
         cls.def_rw("arg", &Data::arg);

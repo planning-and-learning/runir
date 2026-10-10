@@ -6,8 +6,9 @@
 
 #include <cista/containers/variant.h>
 #include <tuple>
-#include <yggdrasil/core/types.hpp>
 #include <utility>
+#include <yggdrasil/core/types.hpp>
+#include <yggdrasil/core/types_utils.hpp>
 
 namespace ygg
 {
@@ -21,13 +22,14 @@ struct Data<runir::kr::dl::grammar::ConstructorOrNonTerminal<Family, Category>>
     Variant variant;
     Data() = default;
     explicit Data(Variant variant_) : index(), variant(std::move(variant_)) {}
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(variant);
-    }
+
+    auto cista_members() noexcept { return std::tie(index, variant); }
     auto cista_members() const noexcept { return std::tie(index, variant); }
     auto identifying_members() const noexcept { return std::tie(variant); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

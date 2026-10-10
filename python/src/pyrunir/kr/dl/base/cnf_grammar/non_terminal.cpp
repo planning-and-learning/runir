@@ -15,7 +15,11 @@ template<CategoryTag Category>
 void bind_non_terminal_data(nb::module_& m, const char* name)
 {
     using Data = ygg::Data<runir::kr::dl::cnf_grammar::NonTerminal<runir::kr::BaseFamilyTag, Category>>;
-    auto cls = nb::class_<Data>(m, name).def(nb::init<>()).def_rw("index", &Data::index).def_rw("name", &Data::name);
+    auto cls = nb::class_<Data>(m, name)
+                   .def(nb::init<>())
+                   .def(nb::init<::cista::offset::string>(), nb::arg("name"))
+                   .def_rw("index", &Data::index)
+                   .def_rw("name", &Data::name);
     ygg::add_comparison(cls);
 }
 

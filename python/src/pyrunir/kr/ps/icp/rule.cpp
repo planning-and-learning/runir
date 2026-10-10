@@ -2,10 +2,12 @@
 #include "pyrunir/kr/binding_utils.hpp"
 
 #include <nanobind/stl/list.h>
+#include <nanobind/stl/vector.h>
 #include <runir/kr/ps/icp/formatter.hpp>
 #include <runir/kr/ps/icp/repository.hpp>
 #include <runir/kr/ps/icp/rule_data.hpp>
 #include <runir/kr/ps/icp/rule_view.hpp>
+#include <vector>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -61,9 +63,95 @@ void bind_rule(nb::module_& m, RepositoryBinding& repository)
     ygg::bind_index<ygg::Index<ConceptLoad>>(m, "ConceptLoadRuleIndex");
     ygg::bind_index<ygg::Index<RoleLoad>>(m, "RoleLoadRuleIndex");
     ygg::bind_index<ygg::Index<Crule>>(m, "CruleRuleIndex");
-    bind_rule_data<ConceptLoad>(m, "ConceptLoadRuleData").def_rw("feature", &ygg::Data<ConceptLoad>::feature).def_rw("reg", &ygg::Data<ConceptLoad>::reg);
-    bind_rule_data<RoleLoad>(m, "RoleLoadRuleData").def_rw("feature", &ygg::Data<RoleLoad>::feature).def_rw("reg", &ygg::Data<RoleLoad>::reg);
+    using DlRepository = runir::kr::dl::ConstructorRepositoryFor<runir::kr::ps::DlFamilyFor<runir::kr::IcpFamilyTag>>;
+    using MemoryStateIndex = ygg::Index<MemoryState>;
+    using MemoryStateView = ygg::View<ygg::Index<MemoryState>, Repository>;
+    using ConditionIndexList = ygg::IndexList<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>>;
+    using ConditionViewList = std::vector<ygg::View<ygg::Index<runir::kr::ps::ConditionVariant<runir::kr::IcpFamilyTag>>, Repository>>;
+    using EffectIndexList = ygg::IndexList<runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>>;
+    using EffectViewList = std::vector<ygg::View<ygg::Index<runir::kr::ps::EffectVariant<runir::kr::IcpFamilyTag>>, Repository>>;
+    using ConceptFeatureIndex = ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::ConceptTag>>;
+    using RoleFeatureIndex = ygg::Index<runir::kr::ps::Feature<runir::kr::IcpFamilyTag, runir::kr::dl::RoleTag>>;
+    using ConceptRegisterIndex = ygg::Index<runir::kr::dl::Register<runir::kr::dl::ConceptTag>>;
+    using RoleRegisterIndex = ygg::Index<runir::kr::dl::Register<runir::kr::dl::RoleTag>>;
+
+    bind_rule_data<ConceptLoad>(m, "ConceptLoadRuleData")
+        .def(nb::init<MemoryStateIndex, MemoryStateIndex, ConditionIndexList, ConceptFeatureIndex, ConceptRegisterIndex, EffectIndexList>(),
+             "source"_a,
+             "target"_a,
+             "conditions"_a,
+             "feature"_a,
+             "reg"_a,
+             "effects"_a)
+        .def(nb::init<MemoryStateView,
+                      MemoryStateView,
+                      const ConditionViewList&,
+                      ygg::View<ConceptFeatureIndex, Repository>,
+                      ygg::View<ConceptRegisterIndex, DlRepository>,
+                      const EffectViewList&>(),
+             "source"_a,
+             "target"_a,
+             "conditions"_a,
+             "feature"_a,
+             "reg"_a,
+             "effects"_a)
+        .def_rw("feature", &ygg::Data<ConceptLoad>::feature)
+        .def_rw("reg", &ygg::Data<ConceptLoad>::reg);
+    bind_rule_data<RoleLoad>(m, "RoleLoadRuleData")
+        .def(nb::init<MemoryStateIndex, MemoryStateIndex, ConditionIndexList, RoleFeatureIndex, RoleRegisterIndex, EffectIndexList>(),
+             "source"_a,
+             "target"_a,
+             "conditions"_a,
+             "feature"_a,
+             "reg"_a,
+             "effects"_a)
+        .def(nb::init<MemoryStateView,
+                      MemoryStateView,
+                      const ConditionViewList&,
+                      ygg::View<RoleFeatureIndex, Repository>,
+                      ygg::View<RoleRegisterIndex, DlRepository>,
+                      const EffectViewList&>(),
+             "source"_a,
+             "target"_a,
+             "conditions"_a,
+             "feature"_a,
+             "reg"_a,
+             "effects"_a)
+        .def_rw("feature", &ygg::Data<RoleLoad>::feature)
+        .def_rw("reg", &ygg::Data<RoleLoad>::reg);
     bind_rule_data<Crule>(m, "CruleRuleData")
+        .def(nb::init<MemoryStateIndex,
+                      MemoryStateIndex,
+                      ConditionIndexList,
+                      EffectIndexList,
+                      ::cista::offset::string,
+                      ::cista::offset::vector<::cista::offset::string>,
+                      ygg::IndexList<XCondition>,
+                      ygg::IndexList<XEffect>>(),
+             "source"_a,
+             "target"_a,
+             "conditions"_a,
+             "effects"_a,
+             "action_name"_a,
+             "argument_names"_a,
+             "xconditions"_a,
+             "xeffects"_a)
+        .def(nb::init<MemoryStateView,
+                      MemoryStateView,
+                      const ConditionViewList&,
+                      const EffectViewList&,
+                      ::cista::offset::string,
+                      ::cista::offset::vector<::cista::offset::string>,
+                      const std::vector<ygg::View<ygg::Index<XCondition>, Repository>>&,
+                      const std::vector<ygg::View<ygg::Index<XEffect>, Repository>>&>(),
+             "source"_a,
+             "target"_a,
+             "conditions"_a,
+             "effects"_a,
+             "action_name"_a,
+             "argument_names"_a,
+             "xconditions"_a,
+             "xeffects"_a)
         .def_rw("action_name", &ygg::Data<Crule>::action_name)
         .def_rw("argument_names", &ygg::Data<Crule>::argument_names)
         .def_rw("xconditions", &ygg::Data<Crule>::xconditions)

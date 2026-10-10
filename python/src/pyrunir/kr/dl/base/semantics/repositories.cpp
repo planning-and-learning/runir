@@ -4,6 +4,7 @@
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/vector.h>
 #include <pyrunir/kr/binding_utils.hpp>
 #include <pyrunir/kr/dl/evaluation_bindings.hpp>
 #include <runir/kr/dl/repository.hpp>
@@ -15,6 +16,7 @@
 #include <tyr/formalism/planning/planning_domain.hpp>
 #include <tyr/planning/ground/task.hpp>
 #include <tyr/planning/lifted/task.hpp>
+#include <vector>
 #include <yggdrasil/python/bindings.hpp>
 #include <yggdrasil/python/type_casters.hpp>
 
@@ -64,14 +66,40 @@ void bind_semantics_repositories(nb::module_& m)
     ygg::bind_index<ygg::Index<semantics::CallArguments>>(m, "CallArgumentsIndex");
     ygg::bind_index<ygg::Index<semantics::RegisterValues>>(m, "RegisterValuesIndex");
 
+    using ConceptDenotation = semantics::Denotation<ConceptTag>;
+    using RoleDenotation = semantics::Denotation<RoleTag>;
+    using BooleanDenotation = semantics::Denotation<BooleanTag>;
+    using NumericalDenotation = semantics::Denotation<NumericalTag>;
     nb::class_<CallArgumentsData>(m, "CallArgumentsData")
         .def(nb::init<>())
+        .def(nb::init<ygg::IndexList<ConceptDenotation>,
+                      ygg::IndexList<RoleDenotation>,
+                      ygg::IndexList<BooleanDenotation>,
+                      ygg::IndexList<NumericalDenotation>>(),
+             nb::arg("concept_arguments"),
+             nb::arg("role_arguments"),
+             nb::arg("boolean_arguments"),
+             nb::arg("numerical_arguments"))
+        .def(nb::init<const std::vector<ygg::View<ygg::Index<ConceptDenotation>, DenotationRepository>>&,
+                      const std::vector<ygg::View<ygg::Index<RoleDenotation>, DenotationRepository>>&,
+                      const std::vector<ygg::View<ygg::Index<BooleanDenotation>, DenotationRepository>>&,
+                      const std::vector<ygg::View<ygg::Index<NumericalDenotation>, DenotationRepository>>&>(),
+             nb::arg("concept_arguments"),
+             nb::arg("role_arguments"),
+             nb::arg("boolean_arguments"),
+             nb::arg("numerical_arguments"))
+        .def_rw("index", &CallArgumentsData::index)
         .def_rw("concept_arguments", &CallArgumentsData::concept_arguments)
         .def_rw("role_arguments", &CallArgumentsData::role_arguments)
         .def_rw("boolean_arguments", &CallArgumentsData::boolean_arguments)
         .def_rw("numerical_arguments", &CallArgumentsData::numerical_arguments);
     nb::class_<RegisterValuesData>(m, "RegisterValuesData")
         .def(nb::init<>())
+        .def(nb::init<::cista::offset::vector<::cista::optional<ygg::Index<tyr::formalism::Object>>>,
+                      ::cista::offset::vector<::cista::optional<::cista::pair<ygg::Index<tyr::formalism::Object>, ygg::Index<tyr::formalism::Object>>>>>(),
+             nb::arg("concept_values"),
+             nb::arg("role_values"))
+        .def_rw("index", &RegisterValuesData::index)
         .def_rw("concept_values", &RegisterValuesData::concept_values)
         .def_rw("role_values", &RegisterValuesData::role_values);
 

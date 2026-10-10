@@ -22,17 +22,14 @@ struct Data<runir::kr::dl::Argument<Category>>
 
     Data() = default;
     Data(::cista::offset::string name_, runir::kr::dl::ArgumentIdentifier<Category> identifier_) : index(), name(std::move(name_)), identifier(identifier_) {}
-    Data(const std::string& name_, runir::kr::dl::ArgumentIdentifier<Category> identifier_) : index(), name(name_), identifier(identifier_) {}
 
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(name);
-        ygg::clear(identifier);
-    }
-
+    auto cista_members() noexcept { return std::tie(index, name, identifier); }
     auto cista_members() const noexcept { return std::tie(index, name, identifier); }
     auto identifying_members() const noexcept { return std::tie(name, identifier); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

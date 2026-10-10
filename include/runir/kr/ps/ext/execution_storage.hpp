@@ -82,7 +82,7 @@ public:
                                                         memory_state.get_index(),
                                                         registers.get_index(),
                                                         arguments.get_index());
-        auto data = ygg::Data<ProgramState<Kind>>(m_program.get_index(), insert(*m_context->execution_repository, module_data).first.get_index());
+        auto data = ygg::Data<ProgramState<Kind>>(m_program.get_index(), insert(*m_context->execution_repository, module_data).first.get_index(), {});
         ygg::set(caller, data.call_stack);
         return insert(*m_context->execution_repository, data).first;
     }

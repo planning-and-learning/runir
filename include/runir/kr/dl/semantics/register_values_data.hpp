@@ -12,6 +12,7 @@
 #include <tyr/formalism/object_view.hpp>
 #include <tyr/formalism/planning/repository.hpp>
 #include <utility>
+#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/serialization/cista_equal_to.hpp>
 #include <yggdrasil/serialization/cista_hash.hpp>
@@ -26,15 +27,23 @@ struct Data<runir::kr::dl::semantics::RegisterValues>
     ::cista::offset::vector<::cista::optional<Index<tyr::formalism::Object>>> concept_values;
     ::cista::offset::vector<::cista::optional<::cista::pair<Index<tyr::formalism::Object>, Index<tyr::formalism::Object>>>> role_values;
 
-    void clear() noexcept
+    Data() = default;
+    // No view constructor: register slots are optional object (pairs), for which yggdrasil provides no ygg::set overload.
+    Data(::cista::offset::vector<::cista::optional<Index<tyr::formalism::Object>>> concept_values_,
+         ::cista::offset::vector<::cista::optional<::cista::pair<Index<tyr::formalism::Object>, Index<tyr::formalism::Object>>>> role_values_) :
+        index(),
+        concept_values(std::move(concept_values_)),
+        role_values(std::move(role_values_))
     {
-        ygg::clear(index);
-        ygg::clear(concept_values);
-        ygg::clear(role_values);
     }
 
+    auto cista_members() noexcept { return std::tie(index, concept_values, role_values); }
     auto cista_members() const noexcept { return std::tie(index, concept_values, role_values); }
     auto identifying_members() const noexcept { return std::tie(concept_values, role_values); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

@@ -5,6 +5,8 @@
 #include "runir/kr/ps/ext/program_index.hpp"
 
 #include <tuple>
+#include <utility>
+#include <vector>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -18,15 +20,30 @@ struct Data<runir::kr::ps::ext::Program>
     Index<runir::kr::ps::ext::Module> entry_module;
     IndexList<runir::kr::ps::ext::Module> modules;
 
-    void clear() noexcept
+    Data() = default;
+    Data(Index<runir::kr::ps::ext::Module> entry_module_, IndexList<runir::kr::ps::ext::Module> modules_) :
+        index(),
+        entry_module(std::move(entry_module_)),
+        modules(std::move(modules_))
     {
-        ygg::clear(index);
-        ygg::clear(entry_module);
-        ygg::clear(modules);
+    }
+    template<typename C>
+    Data(::ygg::View<Index<runir::kr::ps::ext::Module>, C> entry_module_, const std::vector<::ygg::View<Index<runir::kr::ps::ext::Module>, C>>& modules_) :
+        index(),
+        entry_module(),
+        modules()
+    {
+        set(entry_module_, entry_module);
+        set(modules_, modules);
     }
 
+    auto cista_members() noexcept { return std::tie(index, entry_module, modules); }
     auto cista_members() const noexcept { return std::tie(index, entry_module, modules); }
     auto identifying_members() const noexcept { return std::tie(entry_module, modules); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

@@ -1553,12 +1553,12 @@ void check_transient_builder_values_and_reuse()
     first_module.state.get_numeric_variables().values = { 3.0 };
 
     // Transient module values use the same interned callers as registered execution states.
-    auto tail_data = ygg::Data<ext::CallStack>(first_module.module_, first_module.memory_state, registered_registers.get_index(), first_module.arguments);
+    auto tail_data = ygg::Data<ext::CallStack>(first_module.module_, first_module.memory_state, registered_registers.get_index(), first_module.arguments, {});
     const auto tail = ext::insert(*context->execution_repository, tail_data).first;
     auto head_registers = first_module.registers;
     head_registers.concept_values.front() = ygg::Index<tyr::formalism::Object>(1);
     const auto head_register_values = sem::insert(*context->dl_denotation_repository, head_registers).first;
-    auto head_data = ygg::Data<ext::CallStack>(first_module.module_, first_module.memory_state, head_register_values.get_index(), first_module.arguments);
+    auto head_data = ygg::Data<ext::CallStack>(first_module.module_, first_module.memory_state, head_register_values.get_index(), first_module.arguments, {});
     head_data.caller = tail.get_index();
     const auto head = ext::insert(*context->execution_repository, head_data).first;
     first->call_stack = head.get_index();

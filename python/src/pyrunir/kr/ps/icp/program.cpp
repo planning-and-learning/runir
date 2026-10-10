@@ -20,7 +20,12 @@ void bind_program(nb::module_& m, RepositoryBinding& repository)
     using Data = ygg::Data<T>;
     using View = ygg::View<ygg::Index<T>, Repository>;
     ygg::bind_index<ygg::Index<T>>(m, "ProgramIndex");
-    auto data = nb::class_<Data>(m, "ProgramData").def(nb::init<>()).def_rw("index", &Data::index).def_rw("module", &Data::module);
+    auto data = nb::class_<Data>(m, "ProgramData")
+                    .def(nb::init<>())
+                    .def(nb::init<ygg::Index<Module>>(), nb::arg("module"))
+                    .def(nb::init<ygg::View<ygg::Index<Module>, Repository>>(), nb::arg("module"))
+                    .def_rw("index", &Data::index)
+                    .def_rw("module", &Data::module);
     ygg::add_comparison(data);
     auto view = nb::class_<View>(m, "Program")
                     .def("get_index", &View::get_index)

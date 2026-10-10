@@ -8,6 +8,9 @@
 
 #include <tuple>
 #include <tyr/planning/state_index.hpp>
+#include <utility>
+#include <vector>
+#include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/serialization/cista_equal_to.hpp>
 #include <yggdrasil/serialization/cista_hash.hpp>
@@ -21,14 +24,21 @@ struct Data<runir::kr::ps::icp::Histories>
     Index<runir::kr::ps::icp::Histories> index;
     IndexList<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> concepts;
 
-    void clear() noexcept
+    Data() = default;
+    Data(IndexList<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>> concepts_) : index(), concepts(std::move(concepts_)) {}
+    template<typename C>
+    Data(const std::vector<::ygg::View<Index<runir::kr::dl::semantics::Denotation<runir::kr::dl::ConceptTag>>, C>>& concepts_) : index(), concepts()
     {
-        ygg::clear(index);
-        ygg::clear(concepts);
+        set(concepts_, concepts);
     }
 
+    auto cista_members() noexcept { return std::tie(index, concepts); }
     auto cista_members() const noexcept { return std::tie(index, concepts); }
     auto identifying_members() const noexcept { return std::tie(concepts); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<tyr::TaskKind Kind>
@@ -42,31 +52,47 @@ struct Data<runir::kr::ps::icp::ProgramState<Kind>>
     Index<tyr::planning::State<Kind>> state;
 
     Data() = default;
+    // The referenced indices live in different repositories, hence the separate context parameters.
     Data(Index<runir::kr::ps::icp::Program> program_,
          Index<runir::kr::ps::icp::MemoryState> memory_state_,
          Index<runir::kr::dl::semantics::RegisterValues> registers_,
          Index<runir::kr::ps::icp::Histories> histories_,
-         Index<tyr::planning::State<Kind>> state_) noexcept :
-        program(program_),
-        memory_state(memory_state_),
-        registers(registers_),
-        histories(histories_),
-        state(state_)
+         Index<tyr::planning::State<Kind>> state_) :
+        index(),
+        program(std::move(program_)),
+        memory_state(std::move(memory_state_)),
+        registers(std::move(registers_)),
+        histories(std::move(histories_)),
+        state(std::move(state_))
     {
     }
-
-    void clear() noexcept
+    template<typename P, typename D, typename S>
+    Data(::ygg::View<Index<runir::kr::ps::icp::Program>, P> program_,
+         ::ygg::View<Index<runir::kr::ps::icp::MemoryState>, P> memory_state_,
+         ::ygg::View<Index<runir::kr::dl::semantics::RegisterValues>, D> registers_,
+         ::ygg::View<Index<runir::kr::ps::icp::Histories>, D> histories_,
+         ::ygg::View<Index<tyr::planning::State<Kind>>, S> state_) :
+        index(),
+        program(),
+        memory_state(),
+        registers(),
+        histories(),
+        state()
     {
-        ygg::clear(index);
-        ygg::clear(program);
-        ygg::clear(memory_state);
-        ygg::clear(registers);
-        ygg::clear(histories);
-        ygg::clear(state);
+        set(program_, program);
+        set(memory_state_, memory_state);
+        set(registers_, registers);
+        set(histories_, histories);
+        set(state_, state);
     }
 
+    auto cista_members() noexcept { return std::tie(index, program, memory_state, registers, histories, state); }
     auto cista_members() const noexcept { return std::tie(index, program, memory_state, registers, histories, state); }
     auto identifying_members() const noexcept { return std::tie(program, memory_state, registers, histories, state); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

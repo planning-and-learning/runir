@@ -25,7 +25,9 @@ auto make_module_data(kr::ps::ext::Repository& repository, const std::string& na
 {
     auto symbol_data = ygg::Data<kr::ps::ext::ModuleSymbol>(name);
     const auto symbol = repository.insert(symbol_data).first;
-    return ygg::Data<kr::ps::ext::Module>(symbol.get_index());
+    auto data = ygg::Data<kr::ps::ext::Module>();
+    data.symbol = symbol.get_index();
+    return data;
 }
 
 auto create_module(kr::ps::ext::Repository& repository,

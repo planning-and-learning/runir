@@ -6,6 +6,7 @@
 #include <cista/containers/string.h>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 
@@ -20,16 +21,14 @@ struct Data<runir::kr::ps::ext::MemoryState>
 
     Data() = default;
     Data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
-    Data(const std::string& name_) : index(), name(name_) {}
 
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(name);
-    }
-
+    auto cista_members() noexcept { return std::tie(index, name); }
     auto cista_members() const noexcept { return std::tie(index, name); }
     auto identifying_members() const noexcept { return std::tie(name); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

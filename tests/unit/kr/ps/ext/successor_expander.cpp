@@ -969,7 +969,7 @@ TEST(RunirTests, ExtLoadRuleEnumeratesAllObjectsAndAdvancesMemory)
     kr::ps::ext::canonicalize(load_data);
     const auto load = repository->insert(load_data).first;
 
-    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(load.get_index());
+    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>("", load.get_index());
     const auto variant = repository->insert(variant_data).first;
 
     auto module_data = make_module_data(*repository, "module");
@@ -1204,7 +1204,7 @@ TEST(RunirTests, ExtCallRulePassesArgumentDenotationsToCallee)
     kr::ps::ext::canonicalize(call_data);
     const auto call = repository->insert(call_data).first;
 
-    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(call.get_index());
+    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>("", call.get_index());
     const auto variant = repository->insert(variant_data).first;
     auto caller_data = make_module_data(*repository, "caller");
     caller_data.entry_memory_state = caller_entry.get_index();
@@ -1313,7 +1313,7 @@ TEST(RunirTests, ExtCallRuleResolvesNamedCalleeFromModuleRegistry)
     kr::ps::ext::canonicalize(call_data);
     const auto call = repository->insert(call_data).first;
 
-    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(call.get_index());
+    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>("", call.get_index());
     const auto variant = repository->insert(variant_data).first;
     auto caller_data = make_module_data(*repository, "caller");
     caller_data.entry_memory_state = caller_entry.get_index();
@@ -1362,7 +1362,8 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
                                kr::ps::ext::dl::parse_concept("(c_atomic_state \"gripper\")", task->get_domain().get_domain(), *dl_repository).get_index(),
                                "gripper");
 
-    auto do_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("pick"));
+    auto do_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>();
+    do_data.action_name = "pick";
     do_data.source = source.get_index();
     do_data.target = target.get_index();
     do_data.arguments.push_back(ball_feature.get_index());
@@ -1370,7 +1371,7 @@ TEST(RunirTests, ExtDoRuleAppliesMatchingActionAndAdvancesMemory)
     do_data.arguments.push_back(gripper_feature.get_index());
     kr::ps::ext::canonicalize(do_data);
     const auto rule = repository->insert(do_data).first;
-    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(rule.get_index());
+    auto variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>("", rule.get_index());
     const auto variant = repository->insert(variant_data).first;
 
     auto module_data = make_module_data(*repository, "module");
@@ -1480,7 +1481,8 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
                                kr::ps::ext::dl::parse_concept("(c_atomic_state \"gripper\")", task->get_domain().get_domain(), *dl_repository).get_index(),
                                "gripper");
 
-    auto move_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("pick"));
+    auto move_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>();
+    move_data.action_name = "pick";
     move_data.source = source.get_index();
     move_data.target = move_target.get_index();
     move_data.arguments.push_back(ball_feature.get_index());
@@ -1488,10 +1490,11 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     move_data.arguments.push_back(gripper_feature.get_index());
     kr::ps::ext::canonicalize(move_data);
     const auto move_rule = repository->insert(move_data).first;
-    auto move_variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(move_rule.get_index());
+    auto move_variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>("", move_rule.get_index());
     const auto move_variant = repository->insert(move_variant_data).first;
 
-    auto pick_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>(std::string("pick"));
+    auto pick_data = ygg::Data<kr::ps::ext::Rule<kr::ps::ext::DoTag>>();
+    pick_data.action_name = "pick";
     pick_data.source = source.get_index();
     pick_data.target = pick_target.get_index();
     pick_data.arguments.push_back(ball_feature.get_index());
@@ -1499,7 +1502,7 @@ TEST(RunirTests, ExtImmediateExternalRulesUseCanonicalFirstApplicableRule)
     pick_data.arguments.push_back(gripper_feature.get_index());
     kr::ps::ext::canonicalize(pick_data);
     const auto pick_rule = repository->insert(pick_data).first;
-    auto pick_variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>(pick_rule.get_index());
+    auto pick_variant_data = ygg::Data<kr::ps::Rule<kr::ExtFamilyTag>>("", pick_rule.get_index());
     const auto pick_variant = repository->insert(pick_variant_data).first;
 
     auto module_data = make_module_data(*repository, "module");

@@ -73,14 +73,13 @@ struct Data<runir::kr::dl::grammar::Constructor<Family, Category>>
     Data() = default;
     explicit Data(Variant variant_) : index(), variant(std::move(variant_)) {}
 
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(variant);
-    }
-
+    auto cista_members() noexcept { return std::tie(index, variant); }
     auto cista_members() const noexcept { return std::tie(index, variant); }
     auto identifying_members() const noexcept { return std::tie(variant); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg

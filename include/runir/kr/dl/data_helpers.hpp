@@ -8,6 +8,7 @@
 #include <tyr/formalism/object_index.hpp>
 #include <tyr/formalism/predicate_index.hpp>
 #include <utility>
+#include <vector>
 #include <yggdrasil/core/types.hpp>
 #include <yggdrasil/core/types_utils.hpp>
 #include <yggdrasil/semantics/comparison.hpp>
@@ -22,10 +23,13 @@ struct NullaryData : ygg::comparison::Mixin<NullaryData<Self>>
 
     NullaryData() = default;
 
-    void clear() noexcept { ygg::clear(index); }
-
+    auto cista_members() noexcept { return std::tie(index); }
     auto cista_members() const noexcept { return std::tie(index); }
     auto identifying_members() const noexcept { return std::tie(); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<typename Self, typename Identifier>
@@ -37,14 +41,13 @@ struct IdentifierData : ygg::comparison::Mixin<IdentifierData<Self, Identifier>>
     IdentifierData() = default;
     explicit IdentifierData(Identifier identifier_) : index(), identifier(std::move(identifier_)) {}
 
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(identifier);
-    }
-
+    auto cista_members() noexcept { return std::tie(index, identifier); }
     auto cista_members() const noexcept { return std::tie(index, identifier); }
     auto identifying_members() const noexcept { return std::tie(identifier); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<typename Self, typename Identifier>
@@ -69,15 +72,19 @@ struct ReferenceData : ygg::comparison::Mixin<ReferenceData<Self, Reference>>
 
     ReferenceData() = default;
     explicit ReferenceData(ygg::Index<Reference> reference_) : index(), reference(std::move(reference_)) {}
-
-    void clear() noexcept
+    template<typename C>
+    explicit ReferenceData(::ygg::View<ygg::Index<Reference>, C> reference_) : index(), reference()
     {
-        ygg::clear(index);
-        ygg::clear(reference);
+        ygg::set(reference_, reference);
     }
 
+    auto cista_members() noexcept { return std::tie(index, reference); }
     auto cista_members() const noexcept { return std::tie(index, reference); }
     auto identifying_members() const noexcept { return std::tie(reference); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<typename Self, typename Arg>
@@ -88,15 +95,19 @@ struct UnaryData : ygg::comparison::Mixin<UnaryData<Self, Arg>>
 
     UnaryData() = default;
     UnaryData(ygg::Index<Arg> arg_) : index(), arg(std::move(arg_)) {}
-
-    void clear() noexcept
+    template<typename C>
+    UnaryData(::ygg::View<ygg::Index<Arg>, C> arg_) : index(), arg()
     {
-        ygg::clear(index);
-        ygg::clear(arg);
+        ygg::set(arg_, arg);
     }
 
+    auto cista_members() noexcept { return std::tie(index, arg); }
     auto cista_members() const noexcept { return std::tie(index, arg); }
     auto identifying_members() const noexcept { return std::tie(arg); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<typename Self, typename Lhs, typename Rhs>
@@ -108,16 +119,20 @@ struct BinaryData : ygg::comparison::Mixin<BinaryData<Self, Lhs, Rhs>>
 
     BinaryData() = default;
     BinaryData(ygg::Index<Lhs> lhs_, ygg::Index<Rhs> rhs_) : index(), lhs(std::move(lhs_)), rhs(std::move(rhs_)) {}
-
-    void clear() noexcept
+    template<typename C>
+    BinaryData(::ygg::View<ygg::Index<Lhs>, C> lhs_, ::ygg::View<ygg::Index<Rhs>, C> rhs_) : index(), lhs(), rhs()
     {
-        ygg::clear(index);
-        ygg::clear(lhs);
-        ygg::clear(rhs);
+        ygg::set(lhs_, lhs);
+        ygg::set(rhs_, rhs);
     }
 
+    auto cista_members() noexcept { return std::tie(index, lhs, rhs); }
     auto cista_members() const noexcept { return std::tie(index, lhs, rhs); }
     auto identifying_members() const noexcept { return std::tie(lhs, rhs); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<typename Self, typename Lhs, typename Mid, typename Rhs>
@@ -130,17 +145,21 @@ struct TernaryData : ygg::comparison::Mixin<TernaryData<Self, Lhs, Mid, Rhs>>
 
     TernaryData() = default;
     TernaryData(ygg::Index<Lhs> lhs_, ygg::Index<Mid> mid_, ygg::Index<Rhs> rhs_) : index(), lhs(std::move(lhs_)), mid(std::move(mid_)), rhs(std::move(rhs_)) {}
-
-    void clear() noexcept
+    template<typename C>
+    TernaryData(::ygg::View<ygg::Index<Lhs>, C> lhs_, ::ygg::View<ygg::Index<Mid>, C> mid_, ::ygg::View<ygg::Index<Rhs>, C> rhs_) : index(), lhs(), mid(), rhs()
     {
-        ygg::clear(index);
-        ygg::clear(lhs);
-        ygg::clear(mid);
-        ygg::clear(rhs);
+        ygg::set(lhs_, lhs);
+        ygg::set(mid_, mid);
+        ygg::set(rhs_, rhs);
     }
 
+    auto cista_members() noexcept { return std::tie(index, lhs, mid, rhs); }
     auto cista_members() const noexcept { return std::tie(index, lhs, mid, rhs); }
     auto identifying_members() const noexcept { return std::tie(lhs, mid, rhs); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<typename Self, tyr::formalism::FactKind T>
@@ -151,18 +170,20 @@ struct PredicateData : ygg::comparison::Mixin<PredicateData<Self, T>>
     bool polarity;
 
     PredicateData() = default;
-    PredicateData(ygg::Index<tyr::formalism::Predicate<T>> predicate_) : index(), predicate(predicate_), polarity(true) {}
     PredicateData(ygg::Index<tyr::formalism::Predicate<T>> predicate_, bool polarity_) : index(), predicate(predicate_), polarity(polarity_) {}
-
-    void clear() noexcept
+    template<typename C>
+    PredicateData(::ygg::View<ygg::Index<tyr::formalism::Predicate<T>>, C> predicate_, bool polarity_) : index(), predicate(), polarity(polarity_)
     {
-        ygg::clear(index);
-        ygg::clear(predicate);
-        ygg::clear(polarity);
+        ygg::set(predicate_, predicate);
     }
 
+    auto cista_members() noexcept { return std::tie(index, predicate, polarity); }
     auto cista_members() const noexcept { return std::tie(index, predicate, polarity); }
     auto identifying_members() const noexcept { return std::tie(predicate, polarity); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<typename Self>
@@ -173,15 +194,19 @@ struct ObjectData : ygg::comparison::Mixin<ObjectData<Self>>
 
     ObjectData() = default;
     ObjectData(ygg::Index<tyr::formalism::Object> object_) : index(), object(object_) {}
-
-    void clear() noexcept
+    template<typename C>
+    ObjectData(::ygg::View<ygg::Index<tyr::formalism::Object>, C> object_) : index(), object()
     {
-        ygg::clear(index);
-        ygg::clear(object);
+        ygg::set(object_, object);
     }
 
+    auto cista_members() noexcept { return std::tie(index, object); }
     auto cista_members() const noexcept { return std::tie(index, object); }
     auto identifying_members() const noexcept { return std::tie(object); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<typename Self, typename Role>
@@ -193,16 +218,19 @@ struct NumberRestrictionData : ygg::comparison::Mixin<NumberRestrictionData<Self
 
     NumberRestrictionData() = default;
     NumberRestrictionData(ygg::uint_t n_, ygg::Index<Role> role_) : index(), n(n_), role(std::move(role_)) {}
-
-    void clear() noexcept
+    template<typename C>
+    NumberRestrictionData(ygg::uint_t n_, ::ygg::View<ygg::Index<Role>, C> role_) : index(), n(n_), role()
     {
-        ygg::clear(index);
-        ygg::clear(n);
-        ygg::clear(role);
+        ygg::set(role_, role);
     }
 
+    auto cista_members() noexcept { return std::tie(index, n, role); }
     auto cista_members() const noexcept { return std::tie(index, n, role); }
     auto identifying_members() const noexcept { return std::tie(n, role); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<typename Self, typename Role, typename Concept>
@@ -221,17 +249,24 @@ struct QualifiedNumberRestrictionData : ygg::comparison::Mixin<QualifiedNumberRe
         concept_(std::move(concept__))
     {
     }
-
-    void clear() noexcept
+    template<typename C>
+    QualifiedNumberRestrictionData(ygg::uint_t n_, ::ygg::View<ygg::Index<Role>, C> role_, ::ygg::View<ygg::Index<Concept>, C> concept__) :
+        index(),
+        n(n_),
+        role(),
+        concept_()
     {
-        ygg::clear(index);
-        ygg::clear(n);
-        ygg::clear(role);
-        ygg::clear(concept_);
+        ygg::set(role_, role);
+        ygg::set(concept__, concept_);
     }
 
+    auto cista_members() noexcept { return std::tie(index, n, role, concept_); }
     auto cista_members() const noexcept { return std::tie(index, n, role, concept_); }
     auto identifying_members() const noexcept { return std::tie(n, role, concept_); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<typename Self, typename Role>
@@ -243,16 +278,24 @@ struct RoleFillersData : ygg::comparison::Mixin<RoleFillersData<Self, Role>>
 
     RoleFillersData() = default;
     RoleFillersData(ygg::Index<Role> role_, ygg::IndexList<tyr::formalism::Object> objects_) : index(), role(std::move(role_)), objects(std::move(objects_)) {}
-
-    void clear() noexcept
+    // Roles and objects live in different repositories, hence the separate context parameters.
+    template<typename C, typename P>
+    RoleFillersData(::ygg::View<ygg::Index<Role>, C> role_, const std::vector<::ygg::View<ygg::Index<tyr::formalism::Object>, P>>& objects_) :
+        index(),
+        role(),
+        objects()
     {
-        ygg::clear(index);
-        ygg::clear(role);
-        ygg::clear(objects);
+        ygg::set(role_, role);
+        ygg::set(objects_, objects);
     }
 
+    auto cista_members() noexcept { return std::tie(index, role, objects); }
     auto cista_members() const noexcept { return std::tie(index, role, objects); }
     auto identifying_members() const noexcept { return std::tie(role, objects); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 template<typename Self>
@@ -263,15 +306,19 @@ struct ObjectListData : ygg::comparison::Mixin<ObjectListData<Self>>
 
     ObjectListData() = default;
     explicit ObjectListData(ygg::IndexList<tyr::formalism::Object> objects_) : index(), objects(std::move(objects_)) {}
-
-    void clear() noexcept
+    template<typename C>
+    explicit ObjectListData(const std::vector<::ygg::View<ygg::Index<tyr::formalism::Object>, C>>& objects_) : index(), objects()
     {
-        ygg::clear(index);
-        ygg::clear(objects);
+        ygg::set(objects_, objects);
     }
 
+    auto cista_members() noexcept { return std::tie(index, objects); }
     auto cista_members() const noexcept { return std::tie(index, objects); }
     auto identifying_members() const noexcept { return std::tie(objects); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }

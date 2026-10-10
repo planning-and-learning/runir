@@ -18,16 +18,17 @@ struct Data<runir::kr::dl::grammar::NonTerminal<Family, Category>>
 {
     Index<runir::kr::dl::grammar::NonTerminal<Family, Category>> index;
     ::cista::offset::string name;
+
     Data() = default;
     explicit Data(::cista::offset::string name_) : index(), name(std::move(name_)) {}
-    explicit Data(const std::string& name_) : index(), name(name_) {}
-    void clear() noexcept
-    {
-        ygg::clear(index);
-        ygg::clear(name);
-    }
+
+    auto cista_members() noexcept { return std::tie(index, name); }
     auto cista_members() const noexcept { return std::tie(index, name); }
     auto identifying_members() const noexcept { return std::tie(name); }
+    void clear() noexcept
+    {
+        std::apply([](auto&... member) { (ygg::clear(member), ...); }, cista_members());
+    }
 };
 
 }  // namespace ygg
