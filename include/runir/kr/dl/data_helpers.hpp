@@ -137,6 +137,10 @@ struct BinaryData : ygg::comparison::Mixin<BinaryData<Self, Lhs, Rhs>>
 template<typename Self, typename Lhs, typename Mid, typename Rhs>
 struct TernaryData : ygg::comparison::Mixin<TernaryData<Self, Lhs, Mid, Rhs>>
 {
+    /// Operand types under the names of the semantic distance record; grammars accept no queries.
+    using Vertex = ygg::Index<Lhs>;
+    using Edge = ygg::Index<Mid>;
+
     ygg::Index<Self> index;
     ygg::Index<Lhs> lhs;
     ygg::Index<Mid> mid;

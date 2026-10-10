@@ -33,7 +33,7 @@ struct ScalarBinaryEvaluator
     {
         refresh(graph);
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ObjectValues>&) { refresh(graph); }
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&) { refresh(graph); }
 };
 
 template<FamilyTag Family, tyr::TaskKind Kind>
@@ -48,7 +48,7 @@ struct LogicalNotEvaluator
     {
         value.set(!graph.result(child).get());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ObjectValues>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
     {
         value.set(!graph.result(child).get());
     }

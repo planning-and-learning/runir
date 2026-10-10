@@ -110,11 +110,17 @@ TEST(RunirKrDlNumerical, RoutesValueBinaryAndDistanceData)
     EXPECT_EQ(binary.get_lhs().get_index(), ygg::Index<Numerical>(1));
     EXPECT_EQ(binary.get_rhs().get_index(), ygg::Index<Numerical>(2));
 
-    auto distance_data = ygg::Data<dl::Numerical<Family, dl::DistanceTag>>(ygg::Index<Concept>(3), ygg::Index<Role>(4), ygg::Index<Concept>(5));
+    // Vertices are concept-or-query and edges role-or-query variants.
+    using Query = dl::Query<Family>;
+    using DistanceData = ygg::Data<dl::Numerical<Family, dl::DistanceTag>>;
+    static_assert(std::same_as<DistanceData::Vertex, ygg::IndexVariant<ygg::TypeList<Concept, Query>>>);
+    static_assert(std::same_as<DistanceData::Edge, ygg::IndexVariant<ygg::TypeList<Role, Query>>>);
+    auto distance_data = DistanceData(ygg::Index<Concept>(3), ygg::Index<Query>(4), ygg::Index<Query>(5));
     const auto distance = repository->insert(distance_data).first;
-    EXPECT_EQ(distance.get_lhs().get_index(), ygg::Index<Concept>(3));
-    EXPECT_EQ(distance.get_mid().get_index(), ygg::Index<Role>(4));
-    EXPECT_EQ(distance.get_rhs().get_index(), ygg::Index<Concept>(5));
+    EXPECT_EQ(distance.get_lhs().get<ygg::Index<Concept>>().get_index(), ygg::Index<Concept>(3));
+    EXPECT_EQ(distance.get_mid().get<ygg::Index<Query>>().get_index(), ygg::Index<Query>(4));
+    EXPECT_EQ(distance.get_rhs().get<ygg::Index<Query>>().get_index(), ygg::Index<Query>(5));
+    EXPECT_TRUE(distance.get_mid().is<ygg::Index<Query>>());
 }
 
 }

@@ -49,7 +49,7 @@ template<CategoryTag Category>
 using BorrowedDenotationView = ygg::View<ygg::Builder<Denotation<Category>>, tyr::formalism::planning::Repository>;
 
 using ConceptDenotationView = DenotationView<ConceptTag>;
-using QueryDenotationView = ygg::database::RelationView<ObjectValues>;
+using QueryDenotationView = ygg::database::RelationView<QueryValues>;
 using DenotationRepositoryPtr = std::shared_ptr<DenotationRepository>;
 
 }

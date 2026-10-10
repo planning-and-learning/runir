@@ -140,11 +140,22 @@ void def_numerical_data_constructors(Class& cls)
     if constexpr (std::same_as<Tag, CountTag>)
         cls.def(nb::init<typename Class::Type::Arg>(), "arg"_a).def(nb::init<typename Class::Type::template ViewVariant<Repository>>(), "arg"_a);
     else if constexpr (std::same_as<Tag, DistanceTag>)
-        cls.def(nb::init<ConceptIndex, RoleIndex, ConceptIndex>(), "lhs"_a, "mid"_a, "rhs"_a)
-            .def(nb::init<ygg::View<ConceptIndex, Repository>, ygg::View<RoleIndex, Repository>, ygg::View<ConceptIndex, Repository>>(),
-                 "lhs"_a,
-                 "mid"_a,
-                 "rhs"_a);
+    {
+        using Vertex = typename Class::Type::Vertex;
+        using Edge = typename Class::Type::Edge;
+        cls.def(nb::init<Vertex, Edge, Vertex>(), "lhs"_a, "mid"_a, "rhs"_a);
+        // Semantic operands are concept/role-or-query variants; grammar operands are concept/role indices.
+        if constexpr (std::same_as<Vertex, ConceptIndex>)
+            cls.def(nb::init<ygg::View<ConceptIndex, Repository>, ygg::View<RoleIndex, Repository>, ygg::View<ConceptIndex, Repository>>(),
+                    "lhs"_a,
+                    "mid"_a,
+                    "rhs"_a);
+        else
+            cls.def(nb::init<ygg::ViewVariant<Vertex, Repository>, ygg::ViewVariant<Edge, Repository>, ygg::ViewVariant<Vertex, Repository>>(),
+                    "lhs"_a,
+                    "mid"_a,
+                    "rhs"_a);
+    }
     else if constexpr (std::same_as<Tag, NumericalConstantTag>)
         cls.def(nb::init<ygg::uint_t>(), "identifier"_a);
     else if constexpr (NumericalBinaryTag<Tag>)

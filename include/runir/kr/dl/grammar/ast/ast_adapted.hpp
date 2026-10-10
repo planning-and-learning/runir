@@ -109,8 +109,8 @@ BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::ast::ConstructorOrNonTerminalVariant<Family>, arg))
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::ast::NumericalDistance)(Family),
-                              (runir::kr::dl::grammar::ast::ConceptChoice<Family>, lhs)(runir::kr::dl::grammar::ast::RoleChoice<Family>,
-                                                                                        mid)(runir::kr::dl::grammar::ast::ConceptChoice<Family>, rhs))
+                              (runir::kr::dl::grammar::ast::ConceptOrQueryVariant<Family>, lhs)(runir::kr::dl::grammar::ast::RoleOrQueryVariant<Family>,
+                                                                                                mid)(runir::kr::dl::grammar::ast::ConceptOrQueryVariant<Family>, rhs))
 
 BOOST_FUSION_ADAPT_TPL_STRUCT((Family),
                               (runir::kr::dl::grammar::ast::Grammar)(Family),

@@ -252,10 +252,17 @@ QueryView<Family> parse(const runir::kr::dl::grammar::ast::Query<Family>& node, 
         node.get());
 }
 
-template<typename Node, typename Context>
-auto parse_collection_operand(const Node& node, tyr::formalism::planning::DomainView domain, const Context& context)
+/// Parses one alternative of a concept/role/query operand into the member variant Result.
+template<typename Result, typename Node, typename Context>
+Result parse_collection_operand(const Node& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    return parse(node, domain, context).get_index();
+    return Result(parse(node, domain, context).get_index());
+}
+
+template<typename Result, typename Operand, typename Context>
+Result parse_operand(const Operand& node, tyr::formalism::planning::DomainView domain, const Context& context)
+{
+    return boost::apply_visitor([&](const auto& value) { return parse_collection_operand<Result>(unwrap(value), domain, context); }, node.get());
 }
 
 template<runir::kr::dl::FamilyTag Family, runir::kr::dl::CategoryTag Category, typename Context>
@@ -642,9 +649,7 @@ template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::BooleanNonempty<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     using Data = ygg::Data<typename Context::Target::template Boolean<runir::kr::dl::NonemptyTag>>;
-    const auto arg =
-        boost::apply_visitor([&](const auto& value) -> typename Data::ConstructorVariant { return parse_collection_operand(unwrap(value), domain, context); },
-                             node.arg.get());
+    const auto arg = parse_operand<typename Data::ConstructorVariant>(node.arg, domain, context);
 
     auto data = checkout<typename Context::Target::template Boolean<runir::kr::dl::NonemptyTag>>(context);
     data->arg = arg;
@@ -655,9 +660,7 @@ template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::NumericalCount<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
     using Data = ygg::Data<typename Context::Target::template Numerical<runir::kr::dl::CountTag>>;
-    const auto arg =
-        boost::apply_visitor([&](const auto& value) -> typename Data::ConstructorVariant { return parse_collection_operand(unwrap(value), domain, context); },
-                             node.arg.get());
+    const auto arg = parse_operand<typename Data::ConstructorVariant>(node.arg, domain, context);
 
     auto data = checkout<typename Context::Target::template Numerical<runir::kr::dl::CountTag>>(context);
     data->arg = arg;
@@ -667,13 +670,14 @@ auto parse(const runir::kr::dl::grammar::ast::NumericalCount<Family>& node, tyr:
 template<runir::kr::dl::FamilyTag Family, typename Context>
 auto parse(const runir::kr::dl::grammar::ast::NumericalDistance<Family>& node, tyr::formalism::planning::DomainView domain, const Context& context)
 {
-    const auto lhs = parse(node.lhs, domain, context);
-    const auto mid = parse(node.mid, domain, context);
-    const auto rhs = parse(node.rhs, domain, context);
+    using Data = ygg::Data<typename Context::Target::template Numerical<runir::kr::dl::DistanceTag>>;
+    const auto lhs = parse_operand<typename Data::Vertex>(node.lhs, domain, context);
+    const auto mid = parse_operand<typename Data::Edge>(node.mid, domain, context);
+    const auto rhs = parse_operand<typename Data::Vertex>(node.rhs, domain, context);
     auto data = checkout<typename Context::Target::template Numerical<runir::kr::dl::DistanceTag>>(context);
-    data->lhs = lhs.get_index();
-    data->mid = mid.get_index();
-    data->rhs = rhs.get_index();
+    data->lhs = lhs;
+    data->mid = mid;
+    data->rhs = rhs;
     return intern_constructor<runir::kr::dl::NumericalTag>(context, intern(context, *data).get_index());
 }
 

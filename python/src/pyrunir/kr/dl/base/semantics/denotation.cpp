@@ -61,10 +61,10 @@ void bind_denotation_view(nb::module_& m, const char* name)
 void bind_query_denotation(nb::module_& m)
 {
     using ObjectIndex = ygg::Index<tyr::formalism::Object>;
-    using Type = ygg::database::Relation<ObjectValues>;
+    using Type = ygg::database::Relation<QueryValues>;
     using View = semantics::QueryDenotationView;
-    using Repository = ygg::database::RelationRepository<ObjectValues>;
-    using Row = ygg::View<ygg::database::Row<ObjectValues>, Repository>;
+    using Repository = ygg::database::RelationRepository<QueryValues>;
+    using Row = ygg::View<ygg::database::Row<QueryValues>, Repository>;
 
     ygg::bind_index<ygg::Index<Type>>(m, "QueryDenotationIndex");
     nb::class_<Row>(m, "QueryDenotationRow", "Read-only borrowed row of raw object indices; keeps its query result alive.")

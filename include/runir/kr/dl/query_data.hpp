@@ -76,7 +76,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::AtomicStateTag<T>>>
     Index<runir::kr::dl::Query<Family, runir::kr::dl::AtomicStateTag<T>>> index;
     Index<tyr::formalism::Predicate<T>> predicate {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
-    ygg::Builder<ygg::database::Columns<runir::kr::dl::ObjectValues>> schema {};
+    ygg::Builder<ygg::database::Columns<runir::kr::dl::QueryValues>> schema {};
 
     Data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
@@ -112,7 +112,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::AtomicGoalTag<T>>>
     Index<tyr::formalism::Predicate<T>> predicate {};
     bool polarity {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
-    ygg::Builder<ygg::database::Columns<runir::kr::dl::ObjectValues>> schema {};
+    ygg::Builder<ygg::database::Columns<runir::kr::dl::QueryValues>> schema {};
 
     Data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
@@ -151,7 +151,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryConceptTag>>
     Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryConceptTag>> index;
     Index<runir::kr::dl::Constructor<Family, runir::kr::dl::ConceptTag>> arg {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
-    ygg::Builder<ygg::database::Columns<runir::kr::dl::ObjectValues>> schema {};
+    ygg::Builder<ygg::database::Columns<runir::kr::dl::QueryValues>> schema {};
 
     Data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
@@ -187,7 +187,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryRoleTag>>
     Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryRoleTag>> index;
     Index<runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>> arg {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
-    ygg::Builder<ygg::database::Columns<runir::kr::dl::ObjectValues>> schema {};
+    ygg::Builder<ygg::database::Columns<runir::kr::dl::QueryValues>> schema {};
 
     Data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
@@ -224,7 +224,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryJoinTag>>
     Index<runir::kr::dl::Query<Family>> lhs {};
     Index<runir::kr::dl::Query<Family>> rhs {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
-    ygg::database::JoinPlan<runir::kr::dl::ObjectValues> plan {};
+    ygg::database::JoinPlan<runir::kr::dl::QueryValues> plan {};
 
     Data() = default;
     // columns and plan are derived during insertion and therefore not constructor parameters.
@@ -253,7 +253,7 @@ struct Data<runir::kr::dl::Query<Family, Tag>>
     Index<runir::kr::dl::Query<Family>> lhs {};
     Index<runir::kr::dl::Query<Family>> rhs {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
-    ygg::Builder<ygg::database::Columns<runir::kr::dl::ObjectValues>> schema {};
+    ygg::Builder<ygg::database::Columns<runir::kr::dl::QueryValues>> schema {};
 
     Data() = default;
     // columns and schema are derived during insertion and therefore not constructor parameters.
@@ -280,7 +280,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryProjectTag>>
     Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryProjectTag>> index;
     Index<runir::kr::dl::Query<Family>> arg {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
-    ygg::database::ProjectionPlan<runir::kr::dl::ObjectValues> plan {};
+    ygg::database::ProjectionPlan<runir::kr::dl::QueryValues> plan {};
 
     Data() = default;
     // plan is derived during insertion and therefore not a constructor parameter.
@@ -312,7 +312,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QueryRenameTag>>
     Index<runir::kr::dl::Query<Family, runir::kr::dl::QueryRenameTag>> index;
     Index<runir::kr::dl::Query<Family>> arg {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
-    ygg::Builder<ygg::database::Columns<runir::kr::dl::ObjectValues>> schema {};
+    ygg::Builder<ygg::database::Columns<runir::kr::dl::QueryValues>> schema {};
 
     Data() = default;
     // schema is derived during insertion and therefore not a constructor parameter.
@@ -346,7 +346,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectEqualTag>>
     Index<runir::kr::dl::QueryColumn> lhs_column {};
     Index<runir::kr::dl::QueryColumn> rhs_column {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
-    ygg::Builder<ygg::database::Columns<runir::kr::dl::ObjectValues>> schema {};
+    ygg::Builder<ygg::database::Columns<runir::kr::dl::QueryValues>> schema {};
     size_t lhs_position {};
     size_t rhs_position {};
 
@@ -390,7 +390,7 @@ struct Data<runir::kr::dl::Query<Family, runir::kr::dl::QuerySelectValueTag>>
     Index<runir::kr::dl::QueryColumn> column {};
     Index<tyr::formalism::Object> object {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
-    ygg::Builder<ygg::database::Columns<runir::kr::dl::ObjectValues>> schema {};
+    ygg::Builder<ygg::database::Columns<runir::kr::dl::QueryValues>> schema {};
     size_t position {};
 
     Data() = default;
@@ -431,7 +431,7 @@ struct Data<runir::kr::dl::QueryProjection<Family, Category>>
     Index<runir::kr::dl::QueryProjection<Family, Category>> index;
     Index<runir::kr::dl::Query<Family>> arg {};
     IndexList<runir::kr::dl::QueryColumn> columns {};
-    ygg::database::ProjectionPlan<runir::kr::dl::ObjectValues> plan {};
+    ygg::database::ProjectionPlan<runir::kr::dl::QueryValues> plan {};
 
     Data() = default;
     // plan is derived during insertion and therefore not a constructor parameter.

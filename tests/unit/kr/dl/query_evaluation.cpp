@@ -37,7 +37,7 @@ namespace sem = dl::semantics;
 namespace parser = kr::ps::ext::dl;
 using Ext = kr::ExtFamilyTag;
 using ObjectIndex = ygg::Index<tyr::formalism::Object>;
-using ObjectValues = kr::dl::ObjectValues;
+using QueryValues = kr::dl::QueryValues;
 using ColumnIndex = ygg::Index<ygg::database::Column>;
 
 /// The raw object indices of a relation row.
@@ -327,6 +327,55 @@ void check_queries()
     EXPECT_EQ(retained_distance.get(), 2);
 }
 
+/// Distance arguments may be concepts/roles or queries; every form shares one evaluation.
+template<tyr::TaskKind Kind>
+void check_distance_queries()
+{
+    const auto search = query_search_context<Kind>();
+    const auto initial = search->successor_generator->get_initial_node(*search->state_repository, *search->axiom_evaluator);
+    const auto domain = search->task->get_domain().get_domain();
+    auto repository = dl::ConstructorRepositoryFactoryFor<Ext>().create(search->task->get_repository());
+    auto builder = sem::Builder();
+    auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
+    auto storage = sem::EvaluationStorage<Ext>(denotations);
+    auto arguments = ygg::Data<sem::CallArguments>();
+    auto registers = ygg::Data<sem::RegisterValues>();
+    auto context = sem::StateEvaluationContext<Ext, Kind>(initial.get_state(),
+                                                          builder,
+                                                          storage,
+                                                          sem::insert(denotations, arguments).first,
+                                                          sem::insert(denotations, registers).first);
+    const auto number = [&](const std::string& expression) { return sem::evaluate<Kind>(parser::parse_numerical(expression, domain, *repository), context).get(); };
+    constexpr auto infinity = std::numeric_limits<ygg::uint_t>::max();
+
+    // edge: a -> b -> c.
+    const auto edge = std::string(R"((r_atomic_state "edge"))");
+    const auto edges = "(q_role (x y) " + edge + ")";
+    const auto vertex = [](const char* name) { return "(q_concept x (c_nominal \"" + std::string(name) + "\"))"; };
+    EXPECT_EQ(number("(n_distance " + vertex("a") + " " + edges + " " + vertex("c") + ")"), 2);
+    EXPECT_EQ(number("(n_distance (c_nominal \"a\") " + edges + " (c_nominal \"c\"))"), 2);
+    EXPECT_EQ(number("(n_distance " + vertex("a") + " " + edge + " (c_nominal \"b\"))"), 1);
+    EXPECT_EQ(number("(n_distance " + vertex("c") + " " + edges + " " + vertex("a") + ")"), infinity);
+    EXPECT_EQ(number("(n_distance " + vertex("b") + " " + edges + " " + vertex("b") + ")"), 0);
+    EXPECT_EQ(number("(n_distance (q_concept x (c_bot)) " + edges + " " + vertex("b") + ")"), infinity);
+
+    // k = 2: both tuple fields step along edges simultaneously, (x u) -> (y v).
+    const auto pair_edges = "(q_project (x u y v) (q_join " + edges + " (q_role (u v) " + edge + ")))";
+    const auto pair = [](const char* name) { return "(q_role (x u) (r_identity (c_nominal \"" + std::string(name) + "\")))"; };
+    EXPECT_EQ(number("(n_distance " + pair("a") + " " + pair_edges + " " + pair("c") + ")"), 2);
+    EXPECT_EQ(number("(n_distance " + pair("c") + " " + pair_edges + " " + pair("a") + ")"), infinity);
+    EXPECT_EQ(number("(n_distance " + pair("c") + " " + pair_edges + " " + pair("c") + ")"), 0);
+
+    // Insertion requires arities k, 2k, k.
+    using Distance = ygg::Data<dl::Numerical<Ext, dl::DistanceTag>>;
+    const auto source = parser::parse_concept(R"((c_nominal "a"))", domain, *repository);
+    const auto role = parser::parse_role(edge, domain, *repository);
+    auto mismatched = Distance(source.get_index(), role.get_index(), parse_query(pair("c"), domain, *repository).get_index());
+    EXPECT_THROW(static_cast<void>(dl::insert(*repository, mismatched)), std::invalid_argument);
+    mismatched = Distance(source.get_index(), parse_query(pair_edges, domain, *repository).get_index(), source.get_index());
+    EXPECT_THROW(static_cast<void>(dl::insert(*repository, mismatched)), std::invalid_argument);
+}
+
 template<dl::FamilyTag Family>
 void check_cached_queries()
 {
@@ -411,7 +460,7 @@ void check_cached_queries()
         stale.columns.push_back(x);
         stale.columns.push_back(x);
         if constexpr (requires { stale.schema; })
-            stale.schema = {};
+            stale.schema.clear();
         if constexpr (requires { stale.plan; })
             stale.plan = {};
         if constexpr (requires { stale.lhs_position; })
@@ -473,12 +522,12 @@ void check_cached_queries()
     check_relocated_data(join_data,
                          [&](const auto& decoded)
                          {
-                             ygg::Builder<ygg::database::Relation<ObjectValues>> lhs(decoded.plan.lhs_columns().span()),
+                             ygg::Builder<ygg::database::Relation<QueryValues>> lhs(decoded.plan.lhs_columns().span()),
                                  rhs(decoded.plan.rhs_columns().span()), result(decoded.plan.output_columns().span());
                              lhs.insert(std::tuple { ObjectIndex(10), ObjectIndex(20) });
                              lhs.insert(std::tuple { ObjectIndex(30), ObjectIndex(40) });
                              rhs.insert(std::tuple { ObjectIndex(20) });
-                             ygg::database::Workspace<ObjectValues> scratch;
+                             ygg::database::Workspace<QueryValues> scratch;
                              ygg::database::join(lhs, rhs, decoded.plan, result, scratch);
                              EXPECT_EQ(result.size(), 1);
                              EXPECT_TRUE(result.contains(std::tuple { ObjectIndex(10), ObjectIndex(20) }));
@@ -491,14 +540,14 @@ void check_cached_queries()
                              [&](const auto& decoded)
                              {
                                  EXPECT_TRUE(std::ranges::equal(decoded.plan.positions(), positions, {}, slice_position));
-                                 ygg::Builder<ygg::database::Relation<ObjectValues>> input(decoded.plan.input_columns().span()),
+                                 ygg::Builder<ygg::database::Relation<QueryValues>> input(decoded.plan.input_columns().span()),
                                      result(decoded.plan.output_columns().span());
                                  std::vector<ObjectIndex> row;
                                  for (size_t i = 0; i < input.arity(); ++i)
                                      row.emplace_back(10 + i);
                                  std::vector<std::byte> bytes;
-                                 input.insert(ygg::database::encode_row<ObjectValues, ObjectIndex>(row, bytes));
-                                 ygg::database::Workspace<ObjectValues> scratch;
+                                 input.insert(ygg::database::encode_row<QueryValues, ObjectIndex>(row, bytes));
+                                 ygg::database::Workspace<QueryValues> scratch;
                                  ygg::database::project(input, decoded.plan, result, scratch);
                                  ASSERT_EQ(result.size(), 1);
                                  for (size_t i = 0; i < positions.size(); ++i)
@@ -1113,6 +1162,8 @@ TEST(RunirQueries, GroundAtomicEvaluationChecksPredicateRepository) { check_pred
 TEST(RunirQueries, LiftedAtomicEvaluationChecksPredicateRepository) { check_predicate_repository_identity<tyr::LiftedTag>(); }
 TEST(RunirQueries, GroundRelationsAndMutableBindings) { check_queries<tyr::GroundTag>(); }
 TEST(RunirQueries, LiftedRelationsAndMutableBindings) { check_queries<tyr::LiftedTag>(); }
+TEST(RunirQueries, GroundDistanceOverQueries) { check_distance_queries<tyr::GroundTag>(); }
+TEST(RunirQueries, LiftedDistanceOverQueries) { check_distance_queries<tyr::LiftedTag>(); }
 TEST(RunirQueries, BaseCachingAndBorrowedRenameLifetime) { check_cached_queries<kr::BaseFamilyTag>(); }
 TEST(RunirQueries, UnsInheritsQueryEvaluation) { check_cached_queries<kr::UnsFamilyTag>(); }
 TEST(RunirQueries, GroundQueryCachePreservesStaticResultsAcrossStates) { check_query_cache_across_states<tyr::GroundTag>(); }
@@ -1273,7 +1324,7 @@ TEST(RunirQueries, QueryResultIdentityIncludesOrderedSchemaAndUnorderedRows)
     using Row = std::array<ObjectIndex, 2>;
     const auto intern = [&](std::array<ColumnIndex, 2> columns, std::array<Row, 2> rows)
     {
-        auto result = builder.get_builder<ygg::database::Relation<ObjectValues>>(columns);
+        auto result = builder.get_builder<ygg::database::Relation<QueryValues>>(columns);
         for (const auto& row : rows)
             result->insert(std::tuple { row[0], row[1] });
         return ygg::database::insert(repository, *result).first;

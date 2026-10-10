@@ -77,9 +77,8 @@ FamilyConstructorView<Family, RoleTag> parse(const ast::RoleProject<Family>& nod
     context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars."));
 }
 
-template<runir::kr::dl::FamilyTag Family>
-auto parse_collection_operand(const ast::Query<Family>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context) ->
-    typename ygg::Data<Boolean<Family, NonemptyTag>>::ConstructorVariant
+template<typename Result, runir::kr::dl::FamilyTag Family>
+Result parse_collection_operand(const ast::Query<Family>& node, tyr::formalism::planning::DomainView, const ConstructorContext& context)
 {
     context.diagnostics.throw_at(node, runir::kr::InvalidExpressionError("Relational expressions are not supported in generation grammars."));
 }

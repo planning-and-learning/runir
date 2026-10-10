@@ -230,6 +230,24 @@ struct ConstructorOrNonTerminalVariant : PositionedVariant<ConceptChoice<Family>
     using Base::operator=;
 };
 
+/// Distance vertices (sources/targets): a concept or a query.
+template<runir::kr::dl::FamilyTag Family>
+struct ConceptOrQueryVariant : PositionedVariant<ConceptChoice<Family>, Query<Family>>
+{
+    using Base = PositionedVariant<ConceptChoice<Family>, Query<Family>>;
+    using Base::Base;
+    using Base::operator=;
+};
+
+/// Distance edges: a role or a query.
+template<runir::kr::dl::FamilyTag Family>
+struct RoleOrQueryVariant : PositionedVariant<RoleChoice<Family>, Query<Family>>
+{
+    using Base = PositionedVariant<RoleChoice<Family>, Query<Family>>;
+    using Base::Base;
+    using Base::operator=;
+};
+
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::ConceptTag, runir::kr::dl::BotTag> : x3::position_tagged
 {
@@ -777,9 +795,9 @@ struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::CountTag>
 template<runir::kr::dl::FamilyTag Family>
 struct Constructor<Family, runir::kr::dl::NumericalTag, runir::kr::dl::DistanceTag> : x3::position_tagged
 {
-    ConceptChoice<Family> lhs;
-    RoleChoice<Family> mid;
-    ConceptChoice<Family> rhs;
+    ConceptOrQueryVariant<Family> lhs;
+    RoleOrQueryVariant<Family> mid;
+    ConceptOrQueryVariant<Family> rhs;
 };
 
 template<runir::kr::dl::FamilyTag Family>

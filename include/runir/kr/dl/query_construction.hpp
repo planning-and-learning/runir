@@ -10,6 +10,7 @@
 #include <tyr/formalism/predicate_view.hpp>
 #include <variant>
 #include <vector>
+#include <yggdrasil/database/semantics/distance.hpp>
 #include <yggdrasil/database/semantics/plans.hpp>
 #include <yggdrasil/database/syntax/columns.hpp>
 
@@ -25,9 +26,9 @@ inline std::vector<ygg::Index<ygg::database::Column>> query_labels(const ygg::In
     return labels;
 }
 
-inline ygg::Builder<ygg::database::Columns<ObjectValues>> query_columns(const ygg::IndexList<QueryColumn>& columns)
+inline ygg::Builder<ygg::database::Columns<QueryValues>> query_columns(const ygg::IndexList<QueryColumn>& columns)
 {
-    return ygg::Builder<ygg::database::Columns<ObjectValues>>(std::span<const ygg::Index<ygg::database::Column>>(query_labels(columns)));
+    return ygg::Builder<ygg::database::Columns<QueryValues>>(std::span<const ygg::Index<ygg::database::Column>>(query_labels(columns)));
 }
 
 inline void require_query_arity(size_t actual, size_t expected)
@@ -55,7 +56,7 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
     {
         const auto lhs = ygg::make_view(data.lhs, repository).get_schema();
         const auto rhs = ygg::make_view(data.rhs, repository).get_schema();
-        data.plan = ygg::database::JoinPlan<ObjectValues>(lhs.span(), rhs.span());
+        data.plan = ygg::database::JoinPlan<QueryValues>(lhs.span(), rhs.span());
         data.columns.clear();
         data.columns.reserve(data.plan.output_columns().size());
         for (const auto column : data.plan.output_columns())
@@ -64,7 +65,7 @@ void prepare(ygg::Data<Query<Family, Tag>>& data, const ConstructorRepositoryFor
     else if constexpr (std::same_as<Tag, QueryProjectTag>)
     {
         const auto arg = ygg::make_view(data.arg, repository).get_schema();
-        data.plan = ygg::database::ProjectionPlan<ObjectValues>(arg.span(), query_labels(data.columns));
+        data.plan = ygg::database::ProjectionPlan<QueryValues>(arg.span(), query_labels(data.columns));
     }
     else
     {
@@ -108,7 +109,41 @@ void prepare(ygg::Data<QueryProjection<Family, Category>>& data, const Construct
     const auto columns = query_columns(data.columns);
     require_query_arity(columns.size(), std::same_as<Category, ConceptTag> ? 1 : 2);
     const auto arg = ygg::make_view(data.arg, repository).get_schema();
-    data.plan = ygg::database::ProjectionPlan<ObjectValues>(arg.span(), query_labels(data.columns));
+    data.plan = ygg::database::ProjectionPlan<QueryValues>(arg.span(), query_labels(data.columns));
+}
+
+/// The distance plan's output column; interned query column labels never reach the maximum.
+inline constexpr auto distance_column = ygg::Index<ygg::database::Column>::max();
+
+/// A concept (k = 1) or role (k = 2) lifted into a relation: object columns labeled 0..k-1.
+inline ygg::Builder<ygg::database::Columns<QueryValues>> lifted_columns(size_t arity)
+{
+    ygg::Builder<ygg::database::Columns<QueryValues>> columns;
+    for (size_t i = 0; i < arity; ++i)
+        columns.template push_back<ygg::Index<tyr::formalism::Object>>(ygg::Index<ygg::database::Column>(i));
+    return columns;
+}
+
+/// Constructing the plan rejects arguments whose arities are not k, 2k, k.
+template<FamilyTag Family>
+void prepare(ygg::Data<Numerical<Family, DistanceTag>>& data, const ConstructorRepositoryFor<Family>& repository)
+{
+    const auto columns = [&](const auto& argument)
+    {
+        return std::visit(
+            [&]<typename T>(ygg::Index<T> index) -> ygg::Builder<ygg::database::Columns<QueryValues>>
+            {
+                if constexpr (std::same_as<T, Query<Family>>)
+                    return ygg::Builder<ygg::database::Columns<QueryValues>>(ygg::make_view(index, repository).get_schema().span());
+                else
+                    return lifted_columns(std::same_as<T, Constructor<Family, ConceptTag>> ? 1 : 2);
+            },
+            argument);
+    };
+    const auto sources = columns(data.lhs);
+    const auto edges = columns(data.mid);
+    const auto targets = columns(data.rhs);
+    data.plan = ygg::database::DistancePlan<QueryValues>(sources.span(), edges.span(), targets.span(), distance_column);
 }
 
 }  // namespace runir::kr::dl::detail

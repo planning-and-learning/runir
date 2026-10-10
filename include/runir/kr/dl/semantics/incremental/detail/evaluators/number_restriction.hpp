@@ -23,7 +23,7 @@ struct NumberRestrictionEvaluator
     {
         initialize_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ObjectValues>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
     {
         update_set(Tag {}, value, graph.result(role), graph.change(role), threshold, graph.set_workspace());
     }
@@ -55,7 +55,7 @@ struct QualifiedNumberRestrictionEvaluator
                        threshold,
                        graph.set_workspace());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ObjectValues>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
     {
         update_set(Tag {},
                    value,

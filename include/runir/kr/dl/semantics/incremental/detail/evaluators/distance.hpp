@@ -5,24 +5,33 @@
 #include "runir/kr/dl/semantics/incremental/declarations.hpp"
 #include "runir/kr/dl/semantics/incremental/delta.hpp"
 #include "runir/kr/dl/semantics/incremental/detail/denotation_state.hpp"
-#include "runir/kr/dl/semantics/incremental/detail/distance.hpp"
+
+#include <span>
+#include <vector>
+#include <yggdrasil/database/semantics/incremental/distance.hpp>
 
 namespace runir::kr::dl::semantics::incremental::detail
 {
 
+/// Wiring only: every argument is a relation in the graph (a query, or a concept or role lifted by
+/// the graph), and yggdrasil maintains the minimum distance over them.
 template<FamilyTag Family, tyr::TaskKind Kind>
 struct DistanceFeatureEvaluator
 {
-    EvaluationIndex<ConceptTag> sources;
-    EvaluationIndex<RoleTag> edges;
-    EvaluationIndex<ConceptTag> targets;
-    DistanceEvaluator operation;
+    QueryEvaluationIndex sources;
+    QueryEvaluationIndex edges;
+    QueryEvaluationIndex targets;
+    ygg::database::incremental::MinDistanceEvaluator<QueryValues> operation;
     DenotationState<NumericalTag> value;
 
-    DistanceFeatureEvaluator(EvaluationIndex<ConceptTag> sources, EvaluationIndex<RoleTag> edges, EvaluationIndex<ConceptTag> targets) :
-        sources(sources),
-        edges(edges),
-        targets(targets)
+    template<typename C>
+    DistanceFeatureEvaluator(ygg::View<ygg::Index<FamilyNumerical<Family, DistanceTag>>, C> expression,
+                             EvaluationGraph<Family, Kind>& graph,
+                             std::vector<ygg::uint_t>& dependencies) :
+        sources(prepare(expression.get_lhs(), expression.get_data().plan.source_columns().span(), graph, dependencies)),
+        edges(prepare(expression.get_mid(), expression.get_data().plan.edge_columns().span(), graph, dependencies)),
+        targets(prepare(expression.get_rhs(), expression.get_data().plan.target_columns().span(), graph, dependencies)),
+        operation(expression.get_data().plan)
     {
     }
     template<StateEvaluationContextConcept<Family, Kind> Context>
@@ -31,10 +40,20 @@ struct DistanceFeatureEvaluator
         operation.initialize(graph.result(sources), graph.result(edges), graph.result(targets));
         value.set(operation.get_result());
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ObjectValues>&)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>&)
     {
-        operation.update(graph.result(sources), graph.result(edges), graph.result(targets), graph.change(sources), graph.change(edges), graph.change(targets));
+        operation.update(graph.change(sources).change(), graph.change(edges).change(), graph.change(targets).change());
         value.set(operation.get_result());
+    }
+
+private:
+    template<typename Operand>
+    static QueryEvaluationIndex prepare(Operand operand,
+                                        std::span<const ygg::database::ColumnLayout> columns,
+                                        EvaluationGraph<Family, Kind>& graph,
+                                        std::vector<ygg::uint_t>& dependencies)
+    {
+        return ygg::visit([&](auto child) { return graph.prepare_relation(child, columns, dependencies); }, operand);
     }
 };
 

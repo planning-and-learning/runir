@@ -39,7 +39,7 @@ private:
     };
 
     std::array<Partition, 2> m_partitions;
-    ygg::database::JoinIndexCache<ObjectValues> m_static_join_indexes;
+    ygg::database::JoinIndexCache<QueryValues> m_static_join_indexes;
 
 public:
     DenotationCaches() = default;

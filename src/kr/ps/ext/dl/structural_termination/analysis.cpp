@@ -32,21 +32,23 @@ bool references_register(View view, runir::kr::dl::RegisterIdentifier<Category> 
         if constexpr (std::same_as<View, RegisterConstructorView<Category>>)
             return view.get_register().get_identifier() == reg;
 
+        // Count, nonempty and distance operands are variant views over concept, role or query.
+        const auto child_references_register = [&](auto child)
+        {
+            if constexpr (requires { child.get_variant(); })
+                return references_register(child, reg);
+            else
+                return variant_references_register(child, reg);
+        };
         auto result = false;
         if constexpr (requires { view.get_arg(); })
-        {
-            auto arg = view.get_arg();
-            if constexpr (requires { arg.get_variant(); })
-                result = result || references_register(arg, reg);
-            else
-                result = result || variant_references_register(arg, reg);
-        }
+            result = result || child_references_register(view.get_arg());
         if constexpr (requires { view.get_lhs(); })
-            result = result || references_register(view.get_lhs(), reg);
+            result = result || child_references_register(view.get_lhs());
         if constexpr (requires { view.get_rhs(); })
-            result = result || references_register(view.get_rhs(), reg);
+            result = result || child_references_register(view.get_rhs());
         if constexpr (requires { view.get_mid(); })
-            result = result || references_register(view.get_mid(), reg);
+            result = result || child_references_register(view.get_mid());
         if constexpr (requires { view.get_role(); })
             result = result || references_register(view.get_role(), reg);
         if constexpr (requires { view.get_concept(); })

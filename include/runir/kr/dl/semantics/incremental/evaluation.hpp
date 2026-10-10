@@ -139,6 +139,30 @@ class EvaluationGraph
         dependencies.push_back(ygg::uint_t(index));
         return index;
     }
+    /// The relation of a query, or of a concept or role lifted into the given columns. Identical
+    /// lifts share one node.
+    QueryEvaluationIndex prepare_relation(FamilyQueryView<Family> expression, std::span<const ygg::database::ColumnLayout>, std::vector<ygg::uint_t>& dependencies)
+    {
+        return prepare(expression, dependencies);
+    }
+    template<ConceptOrRoleTag Category>
+    QueryEvaluationIndex prepare_relation(FamilyConstructorView<Family, Category> expression,
+                                          std::span<const ygg::database::ColumnLayout> columns,
+                                          std::vector<ygg::uint_t>& dependencies)
+    {
+        const auto argument = prepare(expression);
+        auto index = std::optional<QueryEvaluationIndex> {};
+        for (size_t i = 0; i < m_nodes.size() && !index; ++i)
+            if (const auto* candidate = std::get_if<detail::QueryNode<Family, Kind>>(&m_nodes[i]); candidate && candidate->lifts(argument, columns))
+                index = QueryEvaluationIndex(ygg::to_uint_t(i));
+        if (!index)
+        {
+            index = QueryEvaluationIndex(ygg::to_uint_t(m_nodes.size()));
+            m_nodes.emplace_back(detail::QueryNode<Family, Kind>(argument, columns));
+        }
+        dependencies.push_back(ygg::uint_t(*index));
+        return *index;
+    }
 
 public:
     EvaluationGraph(const tyr::planning::Task<Kind>& task, std::span<const EvaluationRoot<Family>> roots);
@@ -159,13 +183,13 @@ public:
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(Context& context);
     /// Failed updates invalidate the graph until initialize() replaces its baseline.
-    void update(const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace);
+    void update(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace);
 
     /// Start a demand-driven invocation, retaining buffers and task-static values.
     void reset() noexcept;
     /// Maintain previously demanded nodes in the next state; inactive nodes stay untouched.
     /// A failed advance invalidates the graph until reset() starts a fresh invocation.
-    void advance(const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace);
+    void advance(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace);
     /// Initialize a root and its inactive dependencies on first demand. Later states
     /// maintain them through advance(); exact deltas are exposed only in eager mode.
     template<CategoryTag Category, StateEvaluationContextConcept<Family, Kind> Context>
@@ -251,7 +275,7 @@ public:
     {
         m_graph.initialize(context);
     }
-    void update(const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace) { m_graph.update(delta, workspace); }
+    void update(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace) { m_graph.update(delta, workspace); }
     auto get_result() const& { return m_graph.get_result(m_root); }
     auto get_result() const&& = delete;
     const auto& get_delta() const&
@@ -289,7 +313,7 @@ public:
     {
         m_graph.initialize(context);
     }
-    void update(const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace) { m_graph.update(delta, workspace); }
+    void update(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace) { m_graph.update(delta, workspace); }
     const auto& get_result() const& { return m_graph.get_result(m_root); }
     const auto& get_result() const&& = delete;
     const auto& get_delta() const& { return m_graph.get_delta(m_root); }
@@ -326,7 +350,7 @@ void EvaluationGraph<Family, Kind>::reset() noexcept
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-void EvaluationGraph<Family, Kind>::advance(const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace)
+void EvaluationGraph<Family, Kind>::advance(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace)
 {
     if (m_mode != Mode::DEMAND)
         throw std::logic_error("Incremental evaluation: reset before advancing demand evaluation.");
@@ -465,7 +489,7 @@ void EvaluationGraph<Family, Kind>::initialize(Context& context)
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-void EvaluationGraph<Family, Kind>::update(const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace)
+void EvaluationGraph<Family, Kind>::update(const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace)
 {
     require_eager();
     m_mode = Mode::UNINITIALIZED;

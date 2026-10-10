@@ -237,6 +237,29 @@ def test_query_count_evaluation(gripper_planning_domain, ground_gripper_search_c
     assert str(expression) == f"(n_count {query})"
 
 
+_AT = '(q_atomic_state "at" (ball room))'
+
+
+@pytest.mark.parametrize("expression, expected", [
+    (f'(n_distance (q_concept ball (c_atomic_state "ball")) {_AT} (q_concept room (c_atomic_state "at-robby")))', 1),
+    (f'(n_distance (c_atomic_state "ball") {_AT} (c_atomic_state "at-robby"))', 1),
+    ('(n_distance (q_concept ball (c_atomic_state "ball")) (r_atomic_state "at") (c_atomic_state "at-robby"))', 1),
+    (f'(n_distance (c_atomic_state "ball") {_AT} (c_atomic_state "ball"))', 0),
+    (f'(n_distance (c_atomic_state "room") {_AT} (c_atomic_state "ball"))', 2**32 - 1),
+])
+def test_query_distance_evaluation(gripper_planning_domain, ground_gripper_search_context, expression, expected):
+    domain = DomainContext(gripper_planning_domain)
+    search = ground_gripper_search_context
+    task = GroundTaskContext(domain, search)
+    state = search.state_repository.get_initial_state(search.axiom_evaluator)
+    storage = semantics.EvaluationStorage(task.dl_denotation_repository)
+    context = semantics.GroundStateEvaluationContext(state, task.dl_builder, storage)
+    owner = _sketch(expression, "numerical", gripper_planning_domain, domain)
+    feature = owner.get_numerical_features()[0].get_expression()
+    assert feature.evaluate(context).get() == expected
+    assert str(feature) == expression
+
+
 def test_concept_and_role_projection_bindings(gripper_planning_domain, ground_gripper_search_context):
     domain = DomainContext(gripper_planning_domain)
     search = ground_gripper_search_context

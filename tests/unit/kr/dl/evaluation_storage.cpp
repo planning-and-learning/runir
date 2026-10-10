@@ -29,7 +29,7 @@ namespace dl = kr::dl;
 namespace sem = dl::semantics;
 using Ext = kr::ExtFamilyTag;
 using ObjectIndex = ygg::Index<tyr::formalism::Object>;
-using ObjectValues = kr::dl::ObjectValues;
+using QueryValues = kr::dl::QueryValues;
 
 using GroundExtContext = sem::StateEvaluationContext<Ext, tyr::GroundTag>;
 struct InvalidResultContext : GroundExtContext
@@ -59,7 +59,7 @@ static_assert(!sem::StateEvaluationContextConcept<WrongKindContext, Ext, tyr::Gr
 constexpr auto acquires_builder = []<typename T, typename... Args>()
 { return requires(sem::Builder& builder, Args&&... args) { builder.template get_builder<T>(std::forward<Args>(args)...); }; };
 static_assert(acquires_builder.template operator()<sem::Denotation<dl::ConceptTag>, ygg::uint_t>());
-static_assert(acquires_builder.template operator()<ygg::database::Relation<ObjectValues>, std::span<const ygg::Index<ygg::database::Column>>>());
+static_assert(acquires_builder.template operator()<ygg::database::Relation<QueryValues>, std::span<const ygg::Index<ygg::database::Column>>>());
 static_assert(!acquires_builder.template operator()<int>());
 static_assert(!acquires_builder.template operator()<sem::Denotation<dl::ConceptTag>, std::string>());
 
@@ -645,7 +645,7 @@ TEST(RunirEvaluationStorage, QueryResultsInternByOrderedNumericSchemaAndRows)
     EXPECT_EQ(results.size(), 2);
 
     {
-        auto direct = builder.get_builder<ygg::database::Relation<ObjectValues>>(columns);
+        auto direct = builder.get_builder<ygg::database::Relation<QueryValues>>(columns);
         for (size_t i = 0; i < left_result.size(); ++i)
             direct->insert(left_result.row(i));
         const auto [interned, inserted] = sem::insert(persistent, *direct);

@@ -17,12 +17,12 @@ template<FamilyTag Family, tyr::TaskKind Kind, CategoryTag Category>
 struct ProjectionEvaluator
 {
     QueryEvaluationIndex child;
-    ygg::database::incremental::ProjectionEvaluator<ObjectValues> operation;
+    ygg::database::incremental::ProjectionEvaluator<QueryValues> operation;
     DenotationState<Category> value;
 
-    ProjectionEvaluator(QueryEvaluationIndex child, const ygg::database::ProjectionPlan<ObjectValues>& plan) : child(child), operation(plan) {}
+    ProjectionEvaluator(QueryEvaluationIndex child, const ygg::database::ProjectionPlan<QueryValues>& plan) : child(child), operation(plan) {}
     template<typename Builder>
-    static void set_row(Builder& builder, ygg::database::Row<ObjectValues> row, bool present, auto&&... context)
+    static void set_row(Builder& builder, ygg::database::Row<QueryValues> row, bool present, auto&&... context)
     {
         using ObjectIndex = ygg::Index<tyr::formalism::Object>;
         if constexpr (std::same_as<Category, ConceptTag>)
@@ -39,7 +39,7 @@ struct ProjectionEvaluator
         for (size_t i = 0; i < rows.size(); ++i)
             set_row(builder, rows[i], true);
     }
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<ObjectValues>& workspace)
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>&, ygg::database::Workspace<QueryValues>& workspace)
     {
         operation.update(graph.change(child).change(), workspace);
         const auto& change = operation.get_delta();

@@ -123,7 +123,7 @@ public:
         auto state_context = context.make_dl_context(state);
         const auto query = evaluate<Kind>(rule.get_query_feature(), state_context);
         const auto objects = candidate.label.get_objects();
-        if (objects.size() != query.arity() || !query.contains(ygg::database::encode_row<runir::kr::dl::ObjectValues, ygg::Index<tyr::formalism::Object>>(objects.get_data(), m_row)))
+        if (objects.size() != query.arity() || !query.contains(ygg::database::encode_row<runir::kr::dl::QueryValues, ygg::Index<tyr::formalism::Object>>(objects.get_data(), m_row)))
             return false;
         auto& generator = *context.task_context->search_context->successor_generator;
         const auto node = tyr::planning::Node<Kind, PlanningState>(planning_state, 0);

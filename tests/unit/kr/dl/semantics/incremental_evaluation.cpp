@@ -29,7 +29,7 @@ namespace sem = dl::semantics;
 namespace parser = kr::ps::ext::dl;
 using Ext = kr::ExtFamilyTag;
 using Object = ygg::Index<tyr::formalism::Object>;
-using ObjectValues = kr::dl::ObjectValues;
+using QueryValues = kr::dl::QueryValues;
 
 template<typename Index>
 concept HasGraphDelta = requires(const sem::incremental::EvaluationGraph<Ext, tyr::GroundTag>& graph, Index index) { graph.get_delta(index); };
@@ -179,7 +179,7 @@ void check_incremental_evaluation()
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = sem::EvaluationStorage<Ext>(denotations);
     auto builder = sem::Builder {};
-    auto workspace = ygg::database::Workspace<ObjectValues> {};
+    auto workspace = ygg::database::Workspace<QueryValues> {};
     auto register_data = std::array<ygg::Data<sem::RegisterValues>, 3> {};
     for (auto& data : register_data)
     {
@@ -500,6 +500,14 @@ void check_incremental_evaluation()
         distance,
         "(n_add " + distance + " (n_const 1))",
         "(n_div (n_count " + edge_text + ") " + count_present + ")",
+        // Query arguments (k = 1), mixed forms, k = 2 tuple vertices, unreachable and equal endpoints.
+        "(n_distance (q_concept x (c_register 0)) (q_role (x y) " + edge_text + ") (q_concept x (c_register 1)))",
+        "(n_distance (c_register 0) (q_role (x y) " + edge_text + ") (c_register 1))",
+        "(n_distance (q_concept x " + present_text + ") " + edge_text + " (c_register 1))",
+        "(n_distance (q_role (x u) (r_identity (c_register 0))) (q_project (x u y v) (q_join (q_role (x y) " + edge_text + ") (q_role (u v) "
+            + edge_text + "))) (q_role (x u) (r_identity (c_register 1))))",
+        "(n_distance (q_concept x (c_register 0)) (q_role (x y) (r_identity (c_bot))) (q_concept x (c_register 1)))",
+        "(n_distance (q_concept x (c_register 0)) (q_role (x y) " + edge_text + ") (q_concept x (c_register 0)))",
     };
     for (const auto& text : additional_numericals)
     {
@@ -552,7 +560,7 @@ void check_incremental_evaluation()
         auto result = std::vector<std::vector<Object>> {};
         for (size_t i = 0; i < relation.size(); ++i)
         {
-            const auto row = ygg::database::Row<ObjectValues>(relation.row(i), relation.columns().span());
+            const auto row = ygg::database::Row<QueryValues>(relation.row(i), relation.columns().span());
             auto& values = result.emplace_back();
             for (size_t j = 0; j < row.size(); ++j)
                 values.push_back(row.get<Object>(j));

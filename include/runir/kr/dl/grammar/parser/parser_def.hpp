@@ -394,7 +394,8 @@ auto non_terminal_string_parser()
     const auto prefix##_numerical_count_def =                                                                                                                  \
         with_constructor_parentheses(keyword(runir::kr::dl::CountTag::keyword) > prefix##_constructor_or_non_terminal_variant);                                \
     const auto prefix##_numerical_distance_def =                                                                                                               \
-        with_constructor_parentheses(keyword(runir::kr::dl::DistanceTag::keyword) > prefix##_concept_choice > prefix##_role_choice > prefix##_concept_choice); \
+        with_constructor_parentheses(keyword(runir::kr::dl::DistanceTag::keyword) > (prefix##_concept_choice | prefix##_query)                                  \
+                                     > (prefix##_role_choice | prefix##_query) > (prefix##_concept_choice | prefix##_query));                                  \
     const auto prefix##_numerical_constant_def = with_constructor_parentheses(keyword(runir::kr::dl::NumericalConstantTag::keyword) > unsigned_integer);       \
     const auto prefix##_numerical_add_def =                                                                                                                    \
         with_constructor_parentheses(keyword(runir::kr::dl::AddTag::keyword) > prefix##_numerical_choice > prefix##_numerical_choice);                         \

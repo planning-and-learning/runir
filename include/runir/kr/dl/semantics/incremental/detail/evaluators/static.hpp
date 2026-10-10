@@ -26,7 +26,7 @@ struct StaticEvaluator
             initialized = true;
         }
     }
-    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>&, ygg::database::Workspace<ObjectValues>&) {}
+    void update(EvaluationGraph<Family, Kind>&, const Delta<Family>&, ygg::database::Workspace<QueryValues>&) {}
 };
 
 }  // namespace runir::kr::dl::semantics::incremental::detail

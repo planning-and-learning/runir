@@ -80,7 +80,7 @@ template<CategoryTag Category>
 
 /// Publish typed query rows in the denotation repository's relation repository, which owns them.
 [[nodiscard]] inline std::pair<QueryDenotationView, bool> insert(DenotationRepository& repository,
-                                                                 ygg::Builder<ygg::database::Relation<ObjectValues>>& source)
+                                                                 ygg::Builder<ygg::database::Relation<QueryValues>>& source)
 {
     return ygg::database::insert(repository.get_relation_repository(), source);
 }

@@ -21,6 +21,12 @@ using DlRole = runir::kr::dl::Constructor<Family, runir::kr::dl::RoleTag>;
 template<runir::kr::dl::FamilyTag Family>
 using DlArgumentTypes = ygg::TypeList<DlConcept<Family>, DlRole<Family>, runir::kr::dl::Query<Family>>;
 
+/// The vertex (sources/targets) and edge arguments of distance: a concept or role, or a query.
+template<runir::kr::dl::FamilyTag Family>
+using VertexArgumentTypes = ygg::TypeList<DlConcept<Family>, runir::kr::dl::Query<Family>>;
+template<runir::kr::dl::FamilyTag Family>
+using EdgeArgumentTypes = ygg::TypeList<DlRole<Family>, runir::kr::dl::Query<Family>>;
+
 template<runir::kr::dl::FamilyTag Family>
 struct Data<runir::kr::dl::Concept<Family, runir::kr::dl::BotTag>> : runir::kr::dl::NullaryData<runir::kr::dl::Concept<Family, runir::kr::dl::BotTag>>
 {

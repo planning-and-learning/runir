@@ -34,7 +34,7 @@ using Ext = kr::ExtFamilyTag;
 using Fluent = tyr::formalism::FluentTag;
 using Derived = tyr::formalism::DerivedTag;
 using Object = ygg::Index<tyr::formalism::Object>;
-using ObjectValues = kr::dl::ObjectValues;
+using QueryValues = kr::dl::QueryValues;
 
 auto parse_query(const std::string& expression, tyr::formalism::planning::DomainView domain, dl::ConstructorRepositoryFor<Ext>& repository)
 {
@@ -47,7 +47,7 @@ auto rows(const auto& relation)
     auto result = std::vector<std::vector<Object>> {};
     for (size_t i = 0; i < relation.size(); ++i)
     {
-        const auto row = db::Row<ObjectValues>(relation.row(i), relation.columns().span());
+        const auto row = db::Row<QueryValues>(relation.row(i), relation.columns().span());
         auto& values = result.emplace_back();
         for (size_t j = 0; j < row.size(); ++j)
             values.push_back(row.get<Object>(j));
@@ -109,11 +109,11 @@ void check_atomic_projection()
         sem::incremental::detail::AtomicQueryEvaluator<Derived>(copied.get_variant().template get<ygg::Index<dl::Query<Ext, dl::AtomicStateTag<Derived>>>>());
     auto ready_leaf =
         sem::incremental::detail::AtomicQueryEvaluator<Fluent>(ready.get_variant().template get<ygg::Index<dl::Query<Ext, dl::AtomicStateTag<Fluent>>>>());
-    auto triple_projection = db::incremental::ProjectionEvaluator<ObjectValues>(
+    auto triple_projection = db::incremental::ProjectionEvaluator<QueryValues>(
         projected_triple.get_variant().template get<ygg::Index<dl::Query<Ext, dl::QueryProjectTag>>>().get_data().plan);
-    auto copied_projection = db::incremental::ProjectionEvaluator<ObjectValues>(
+    auto copied_projection = db::incremental::ProjectionEvaluator<QueryValues>(
         projected_copied.get_variant().template get<ygg::Index<dl::Query<Ext, dl::QueryProjectTag>>>().get_data().plan);
-    auto workspace = db::Workspace<ObjectValues> {};
+    auto workspace = db::Workspace<QueryValues> {};
     auto denotations = sem::DenotationRepositoryFactory().create(search->task->get_repository());
     auto storage = sem::EvaluationStorage<Ext>(denotations);
     auto builder = sem::Builder {};
@@ -251,7 +251,7 @@ void check_query_graph()
     auto deltas = std::vector<sem::incremental::Delta<Ext>>(4);
     for (size_t i = 0; i < deltas.size(); ++i)
         deltas[i].template assign<Kind>(nodes[i].get_state(), registers, nodes[i + 1].get_state(), registers);
-    auto workspace = db::Workspace<ObjectValues> {};
+    auto workspace = db::Workspace<QueryValues> {};
     const auto empty_delta = sem::incremental::Delta<Ext> {};
     const auto triple = std::string(R"((q_atomic_state "triple" (x y z)))");
     const auto copied = std::string(R"((q_atomic_state "copied" (x y z)))");
@@ -328,7 +328,7 @@ void check_query_graph()
             EXPECT_TRUE(storage.get_denotation_repository(true).get_relation_repository().empty());
         }
         expect_empty_delta(evaluator);
-        EXPECT_EQ(evaluator.get_delta().memory_usage(), db::incremental::Delta<ObjectValues>(query.get_schema().span()).memory_usage());
+        EXPECT_EQ(evaluator.get_delta().memory_usage(), db::incremental::Delta<QueryValues>(query.get_schema().span()).memory_usage());
         compare_full(nodes.front().get_state());
         for (size_t i = 0; i < deltas.size(); ++i)
             update(deltas[i], nodes[i + 1].get_state());

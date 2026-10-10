@@ -29,6 +29,7 @@
 #include <yggdrasil/core/config.hpp>
 #include <yggdrasil/core/dependent_false.hpp>
 #include <yggdrasil/core/types.hpp>
+#include <yggdrasil/database/semantics/distance.hpp>
 
 namespace runir::kr::dl::semantics
 {
@@ -259,6 +260,42 @@ constexpr ygg::uint_t apply_numerical_binary(ygg::uint_t lhs, ygg::uint_t rhs) n
     {
         return std::max(lhs, rhs);
     }
+}
+
+/// Inserts a concept's objects or a role's pairs as rows of a 1- or 2-column relation.
+template<ConceptOrRoleTag Category, typename Denotation>
+void insert_denotation_rows(const Denotation& denotation, ygg::Builder<ygg::database::Relation<QueryValues>>& result)
+{
+    for (const auto element : denotation.indices())
+    {
+        if constexpr (std::same_as<Category, ConceptTag>)
+            result.insert(std::tuple { element });
+        else
+        {
+            const auto [source, target] = element;
+            result.insert(std::tuple { source, target });
+        }
+    }
+}
+
+/// A distance argument as a relation over the plan's columns for it.
+template<tyr::TaskKind Kind, FamilyTag Family, StateEvaluationContextConcept<Family, Kind> Context, typename C>
+auto evaluate_relation(ygg::View<ygg::Index<Query<Family>>, C> argument, std::span<const ygg::database::ColumnLayout>, Context& context)
+    -> QueryDenotationView
+{
+    return evaluate<Kind>(argument, context);
+}
+
+/// Concepts and roles are lifted, so all argument forms share one distance evaluation.
+template<tyr::TaskKind Kind, FamilyTag Family, ConceptOrRoleTag Category, StateEvaluationContextConcept<Family, Kind> Context, typename C>
+auto evaluate_relation(ygg::View<ygg::Index<Constructor<Family, Category>>, C> argument,
+                       std::span<const ygg::database::ColumnLayout> columns,
+                       Context& context) -> QueryDenotationView
+{
+    const auto denotation = evaluate<Kind>(argument, context);
+    auto result = context.get_builder().template get_builder<ygg::database::Relation<QueryValues>>(columns);
+    insert_denotation_rows<Category>(denotation, *result);
+    return insert(context.get_denotation_repository(), *result).first;
 }
 
 }  // namespace detail
@@ -634,63 +671,14 @@ auto evaluate_impl(ygg::View<ygg::Index<FamilyNumerical<Family, Tag>>, C> constr
     }
     else if constexpr (std::same_as<Tag, DistanceTag>)
     {
-        constexpr auto infinity = std::numeric_limits<ygg::uint_t>::max();
-
-        const auto lhs = evaluate<Kind>(constructor.get_lhs(), children);
-        const auto lhs_bitset = lhs.get();
-        result_value = infinity;
-
-        if (lhs_bitset.any())
-        {
-            const auto rhs = evaluate<Kind>(constructor.get_rhs(), children);
-            const auto rhs_bitset = rhs.get();
-
-            if (rhs_bitset.any())
-            {
-                if (lhs_bitset.intersects(rhs_bitset))
-                {
-                    result_value = 0;
-                }
-                else
-                {
-                    const auto role = evaluate<Kind>(constructor.get_mid(), children);
-                    context.get_workspace().prepare_distance(static_cast<ygg::uint_t>(lhs_bitset.size()));
-                    auto& queue = context.get_workspace().get_distance_queue();
-                    auto& distances = context.get_workspace().get_distance_values();
-                    size_t queue_pos = 0;
-
-                    for (const auto object : ygg::set_bit_indices(lhs_bitset))
-                    {
-                        queue.push_back(static_cast<ygg::uint_t>(object));
-                        distances[object] = 0;
-                    }
-
-                    while (queue_pos < queue.size())
-                    {
-                        const auto source = queue[queue_pos++];
-                        const auto source_distance = distances[source];
-                        assert(source_distance != infinity);
-
-                        const auto row = role.get(source);
-                        for (const auto target : ygg::set_bit_indices(row))
-                        {
-                            auto& target_distance = distances[target];
-                            if (target_distance != infinity)
-                                continue;
-
-                            target_distance = source_distance + 1;
-                            if (rhs_bitset[target])
-                            {
-                                auto result = context.get_builder().template get_builder<Denotation<NumericalTag>>(target_distance);
-                                return insert(repository, *result, context.get_builder()).first;
-                            }
-
-                            queue.push_back(static_cast<ygg::uint_t>(target));
-                        }
-                    }
-                }
-            }
-        }
+        const auto& plan = constructor.get_data().plan;
+        const auto relation = [&](auto argument, auto columns)
+        { return ygg::visit([&](auto child) { return detail::evaluate_relation<Kind>(child, columns.span(), children); }, argument); };
+        const auto sources = relation(constructor.get_lhs(), plan.source_columns());
+        const auto edges = relation(constructor.get_mid(), plan.edge_columns());
+        const auto targets = relation(constructor.get_rhs(), plan.target_columns());
+        auto distances = context.get_builder().template get_builder<ygg::database::Relation<QueryValues>>(plan.output_columns().span());
+        result_value = ygg::database::min_distance(sources, edges, targets, plan, *distances, context.get_workspace().get_distance_workspace(plan));
     }
     else if constexpr (std::same_as<Tag, NumericalConstantTag>)
     {

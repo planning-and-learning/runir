@@ -3,6 +3,8 @@
 
 #include "runir/kr/dl/semantics/incremental/detail/evaluators/query.hpp"
 
+#include <algorithm>
+#include <optional>
 #include <span>
 #include <variant>
 #include <vector>
@@ -17,13 +19,27 @@ class QueryNode
 {
 public:
     QueryNode(FamilyQueryView<Family> expression, EvaluationGraph<Family, Kind>& graph);
-    FamilyQueryView<Family> get_expression() const noexcept { return m_expression; }
+    /// A concept or role lifted into a relation with the given columns; it has no query expression.
+    template<ConceptOrRoleTag Category>
+    QueryNode(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) :
+        m_dependencies { ygg::uint_t(argument) },
+        m_operation(QueryFromDenotationEvaluator<Family, Kind, Category>(argument, columns))
+    {
+    }
+    std::optional<FamilyQueryView<Family>> get_expression() const noexcept { return m_expression; }
+    /// Whether this node lifts argument into a relation with exactly these columns.
+    template<ConceptOrRoleTag Category>
+    bool lifts(EvaluationIndex<Category> argument, std::span<const ygg::database::ColumnLayout> columns) const
+    {
+        const auto* lifted = std::get_if<QueryFromDenotationEvaluator<Family, Kind, Category>>(&m_operation);
+        return !m_expression && lifted && lifted->argument == argument && std::ranges::equal(lifted->result.columns().span(), columns);
+    }
     template<StateEvaluationContextConcept<Family, Kind> Context>
     void initialize(EvaluationGraph<Family, Kind>& graph, Context& context);
-    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>& delta, ygg::database::Workspace<ObjectValues>& workspace);
+    void update(EvaluationGraph<Family, Kind>& graph, const Delta<Family>& delta, ygg::database::Workspace<QueryValues>& workspace);
     std::span<const ygg::uint_t> get_dependencies() const noexcept { return m_dependencies; }
-    const ygg::Builder<ygg::database::Relation<ObjectValues>>& get_result() const;
-    const ygg::database::incremental::Delta<ObjectValues>& get_delta() const;
+    const ygg::Builder<ygg::database::Relation<QueryValues>>& get_result() const;
+    const ygg::database::incremental::Delta<QueryValues>& get_delta() const;
 
 private:
     using Operation = std::variant<QueryStaticEvaluator<Family, Kind>,
@@ -39,7 +55,7 @@ private:
                                    QuerySelectionEvaluator<Family, Kind, QuerySelectEqualTag>,
                                    QuerySelectionEvaluator<Family, Kind, QuerySelectValueTag>>;
 
-    FamilyQueryView<Family> m_expression;
+    std::optional<FamilyQueryView<Family>> m_expression;
     std::vector<ygg::uint_t> m_dependencies;
     Operation m_operation;
     Operation prepare_operation(FamilyQueryView<Family> expression, EvaluationGraph<Family, Kind>& graph);
@@ -62,19 +78,19 @@ void QueryNode<Family, Kind>::initialize(EvaluationGraph<Family, Kind>& graph, C
 template<FamilyTag Family, tyr::TaskKind Kind>
 void QueryNode<Family, Kind>::update(EvaluationGraph<Family, Kind>& graph,
                                      const Delta<Family>& delta,
-                                     ygg::database::Workspace<ObjectValues>& workspace)
+                                     ygg::database::Workspace<QueryValues>& workspace)
 {
     std::visit([&](auto& operation) { operation.update(graph, delta, workspace); }, m_operation);
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-const ygg::Builder<ygg::database::Relation<ObjectValues>>& QueryNode<Family, Kind>::get_result() const
+const ygg::Builder<ygg::database::Relation<QueryValues>>& QueryNode<Family, Kind>::get_result() const
 {
     return std::visit([](const auto& operation) -> const auto& { return operation.get_result(); }, m_operation);
 }
 
 template<FamilyTag Family, tyr::TaskKind Kind>
-const ygg::database::incremental::Delta<ObjectValues>& QueryNode<Family, Kind>::get_delta() const
+const ygg::database::incremental::Delta<QueryValues>& QueryNode<Family, Kind>::get_delta() const
 {
     return std::visit([](const auto& operation) -> const auto& { return operation.get_delta(); }, m_operation);
 }
